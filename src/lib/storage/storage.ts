@@ -5,8 +5,8 @@
  * Uses Supabase Storage with dedicated buckets for Guidon.
  */
 
-import { createClient } from "@/lib/supabase";
 import { createServiceClient } from "@/lib/supabase-server";
+import { getStorageProvider } from "./provider";
 import { 
   STORAGE_BUCKETS, 
   ALLOWED_FILE_EXTENSIONS, 
@@ -28,9 +28,9 @@ import {
  */
 export async function checkBucketExists(bucket: string): Promise<boolean> {
   try {
-    const client = createServiceClient();
-    const { data, error } = await client.storage.getBucket(bucket);
-    return !error && !!data;
+    const provider = await getStorageProvider();
+    await provider.ensureBucket(bucket);
+    return true;
   } catch {
     return false;
   }
@@ -44,30 +44,13 @@ export async function ensureBucketExists(
   options?: { public?: boolean; fileSizeLimit?: number }
 ): Promise<{ created: boolean; error?: string }> {
   try {
-    const client = createServiceClient();
-    
-    // Check if bucket already exists
-    const { data: existingBucket, error: getError } = await client.storage.getBucket(bucket);
-    if (!getError && existingBucket) {
-      return { created: false };
-    }
-
-    // Create the bucket
-    const { error: createError } = await client.storage.createBucket(bucket, {
-      public: options?.public ?? true,
-      fileSizeLimit: options?.fileSizeLimit ?? 10 * 1024 * 1024, // 10MB default
-    });
-
-    if (createError) {
-      console.error(`[Storage] Failed to create bucket '${bucket}':`, createError);
-      return { created: false, error: createError.message };
-    }
-
-    console.log(`[Storage] Created bucket '${bucket}'`);
+    const provider = await getStorageProvider();
+    await provider.ensureBucket(bucket, { public: options?.public ?? false });
     return { created: true };
-  } catch (error: any) {
-    console.error(`[Storage] Error ensuring bucket '${bucket}':`, error);
-    return { created: false, error: error.message };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[Storage] Error ensuring bucket '${bucket}':`, message);
+    return { created: false, error: message };
   }
 }
 
@@ -105,31 +88,28 @@ export async function uploadFile(
     contentType?: string;
   }
 ) {
-  const client = createServiceClient();
+  const provider = await getStorageProvider();
 
-  const { data, error } = await client.storage
-    .from(bucket)
-    .upload(filePath, file, {
+  try {
+    await provider.upload(bucket, filePath, file, {
       upsert: options?.upsert ?? false,
       contentType: options?.contentType ?? file.type,
     });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[Storage] Upload error:', message);
 
-  if (error) {
-    console.error('[Storage] Upload error:', error);
-    if (error.message.includes('Bucket not found') || error.message.includes('NoSuchBucket')) {
-      throw new Error(`Storage bucket '${bucket}' does not exist or is not accessible. Check Supabase Storage configuration and RLS policies.`);
+    if (/bucket not found|nosuchbucket|enoent/i.test(message)) {
+      throw new Error(
+        `Storage bucket '${bucket}' does not exist or is not accessible.`
+      );
     }
-    throw new Error(`Upload failed: ${error.message}`);
+    throw new Error(`Upload failed: ${message}`);
   }
 
-  // Get public URL
-  const { data: { publicUrl } } = client.storage
-    .from(bucket)
-    .getPublicUrl(filePath);
-
   return {
-    path: data.path,
-    publicUrl,
+    path: filePath,
+    publicUrl: await provider.getUrl(bucket, filePath),
   };
 }
 
@@ -228,15 +208,14 @@ export async function uploadTaskAttachment(
  * Delete a file from Supabase storage
  */
 export async function deleteFile(bucket: string, filePath: string): Promise<boolean> {
-  const supabase = createServiceClient();
+  const provider = await getStorageProvider();
 
-  const { error } = await supabase.storage
-    .from(bucket)
-    .remove([filePath]);
-
-  if (error) {
-    console.error('[Storage] Delete error:', error);
-    throw new Error(`Delete failed: ${error.message}`);
+  try {
+    await provider.remove(bucket, [filePath]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[Storage] Delete error:', message);
+    throw new Error(`Delete failed: ${message}`);
   }
 
   return true;
@@ -264,13 +243,8 @@ export async function deleteTaskAttachment(storagePath: string): Promise<boolean
  * Get a public URL for a file
  */
 export async function getPublicUrl(bucket: string, filePath: string): Promise<string> {
-  const supabase = createServiceClient();
-
-  const { data } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
+  const provider = await getStorageProvider();
+  return provider.getUrl(bucket, filePath);
 }
 
 /**
@@ -281,18 +255,15 @@ export async function getSignedUrl(
   filePath: string, 
   expiresIn: number = 3600
 ): Promise<string> {
-  const supabase = createServiceClient();
+  const provider = await getStorageProvider();
 
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(filePath, expiresIn);
-
-  if (error) {
-    console.error('[Storage] Signed URL error:', error);
-    throw new Error(`Failed to create signed URL: ${error.message}`);
+  try {
+    return await provider.getUrl(bucket, filePath, expiresIn);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[Storage] Signed URL error:', message);
+    throw new Error(`Failed to create signed URL: ${message}`);
   }
-
-  return data.signedUrl;
 }
 
 // ============================================
@@ -366,7 +337,10 @@ export function getFileCategoryFromMimeType(mimeType: string): FileCategory {
  * Get project storage usage
  */
 export async function getProjectStorageUsage(projectId: string): Promise<number> {
-  const supabase = createClient();
+  // Was createClient() — the BROWSER client — inside a server-only module.
+  // With no cookies it is unauthenticated, so RLS returned nothing and usage
+  // was always 0, which silently disabled every storage quota check.
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from('project_files')
