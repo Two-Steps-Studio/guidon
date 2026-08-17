@@ -71,29 +71,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Create organization
+    // Note: created_by is auto-set by database trigger, and owner membership is auto-created
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .insert({
         name,
         slug,
         description: description || null,
-        created_by: auth.user.id,
       })
       .select()
       .single();
 
     if (orgError) throw orgError;
-
-    // Add creator as owner
-    const { error: memberError } = await supabase
-      .from('organization_members')
-      .insert({
-        organization_id: organization.id,
-        user_id: auth.user.id,
-        role: 'owner',
-      });
-
-    if (memberError) throw memberError;
 
     return NextResponse.json({ organization }, { status: 201 });
   } catch (error: any) {

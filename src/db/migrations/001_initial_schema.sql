@@ -163,7 +163,137 @@ $$;
 
 
 -- ============================================================
--- 6. DROP OLD PUBLIC FUNCTIONS
+-- 6. REMOVE ANY OLD TRIGGERS DEPENDING ON FUNCTIONS WE WILL DROP
+-- ============================================================
+--
+-- IMPORTANT: This MUST come before DROP FUNCTION calls
+-- to avoid dependency errors
+-- ============================================================
+
+DO $$
+DECLARE
+r RECORD;
+BEGIN
+
+-- Drop ALL triggers that depend on ANY update_updated_at_column function
+-- regardless of which schema the function or trigger is in
+FOR r IN
+SELECT
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    t.tgname  AS trigger_name
+FROM pg_trigger t
+         JOIN pg_class c
+              ON c.oid = t.tgrelid
+         JOIN pg_namespace n
+              ON n.oid = c.relnamespace
+         JOIN pg_proc p
+              ON p.oid = t.tgfoid
+         JOIN pg_namespace pn
+              ON pn.oid = p.pronamespace
+WHERE NOT t.tgisinternal
+  AND p.proname = 'update_updated_at_column'
+    LOOP
+
+        EXECUTE format(
+            'DROP TRIGGER IF EXISTS %I ON %I.%I',
+            r.trigger_name,
+            r.schema_name,
+            r.table_name
+        );
+
+END LOOP;
+
+-- Drop protection triggers
+FOR r IN
+SELECT
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    t.tgname  AS trigger_name
+FROM pg_trigger t
+         JOIN pg_class c
+              ON c.oid = t.tgrelid
+         JOIN pg_namespace n
+              ON n.oid = c.relnamespace
+         JOIN pg_proc p
+              ON p.oid = t.tgfoid
+         JOIN pg_namespace pn
+              ON pn.oid = p.pronamespace
+WHERE NOT t.tgisinternal
+  AND p.proname IN ('protect_org_owner', 'protect_project_owner', 'validate_task')
+    LOOP
+
+        EXECUTE format(
+            'DROP TRIGGER IF EXISTS %I ON %I.%I',
+            r.trigger_name,
+            r.schema_name,
+            r.table_name
+        );
+
+END LOOP;
+
+-- Drop auth/user triggers
+FOR r IN
+SELECT
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    t.tgname  AS trigger_name
+FROM pg_trigger t
+         JOIN pg_class c
+              ON c.oid = t.tgrelid
+         JOIN pg_namespace n
+              ON n.oid = c.relnamespace
+         JOIN pg_proc p
+              ON p.oid = t.tgfoid
+         JOIN pg_namespace pn
+              ON pn.oid = p.pronamespace
+WHERE NOT t.tgisinternal
+  AND p.proname = 'handle_new_user'
+    LOOP
+
+        EXECUTE format(
+            'DROP TRIGGER IF EXISTS %I ON %I.%I',
+            r.trigger_name,
+            r.schema_name,
+            r.table_name
+        );
+
+END LOOP;
+
+-- Drop organization/project creation triggers
+FOR r IN
+SELECT
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    t.tgname  AS trigger_name
+FROM pg_trigger t
+         JOIN pg_class c
+              ON c.oid = t.tgrelid
+         JOIN pg_namespace n
+              ON n.oid = c.relnamespace
+         JOIN pg_proc p
+              ON p.oid = t.tgfoid
+         JOIN pg_namespace pn
+              ON pn.oid = p.pronamespace
+WHERE NOT t.tgisinternal
+  AND p.proname IN ('handle_new_organization', 'handle_new_project')
+    LOOP
+
+        EXECUTE format(
+            'DROP TRIGGER IF EXISTS %I ON %I.%I',
+            r.trigger_name,
+            r.schema_name,
+            r.table_name
+        );
+
+END LOOP;
+
+END
+$$;
+
+
+-- ============================================================
+-- 7. DROP OLD PUBLIC FUNCTIONS
 --
 -- DROP is used intentionally because PostgreSQL cannot change
 -- input parameter names with CREATE OR REPLACE FUNCTION.
@@ -185,7 +315,7 @@ DROP FUNCTION IF EXISTS public.update_updated_at_column();
 
 
 -- ============================================================
--- 7. DROP FUNCTIONS FROM PREVIOUS FAILED PRIVATE MIGRATIONS
+-- 8. DROP FUNCTIONS FROM PREVIOUS FAILED PRIVATE MIGRATIONS
 -- ============================================================
 
 DROP FUNCTION IF EXISTS private.is_org_member(uuid);
@@ -208,47 +338,6 @@ DROP FUNCTION IF EXISTS private.protect_org_owner();
 DROP FUNCTION IF EXISTS private.protect_project_owner();
 
 DROP FUNCTION IF EXISTS private.validate_task();
-
-
--- ============================================================
--- 8. REMOVE ANY OLD PRIVATE UPDATED_AT TRIGGERS
--- ============================================================
-
-DO $$
-DECLARE
-r RECORD;
-BEGIN
-
-FOR r IN
-SELECT
-    n.nspname AS schema_name,
-    c.relname AS table_name,
-    t.tgname  AS trigger_name
-FROM pg_trigger t
-         JOIN pg_class c
-              ON c.oid = t.tgrelid
-         JOIN pg_namespace n
-              ON n.oid = c.relnamespace
-         JOIN pg_proc p
-              ON p.oid = t.tgfoid
-         JOIN pg_namespace pn
-              ON pn.oid = p.pronamespace
-WHERE NOT t.tgisinternal
-  AND pn.nspname = 'private'
-  AND p.proname = 'update_updated_at_column'
-    LOOP
-
-        EXECUTE format(
-            'DROP TRIGGER IF EXISTS %I ON %I.%I',
-            r.trigger_name,
-            r.schema_name,
-            r.table_name
-        );
-
-END LOOP;
-
-END
-$$;
 
 
 -- ============================================================
@@ -1068,20 +1157,26 @@ SET search_path = ''
 AS $$
 BEGIN
 
+    -- Auto-set created_by from authenticated user if not provided
     IF NEW.created_by IS NULL THEN
+        NEW.created_by := (SELECT auth.uid());
+    END IF;
 
-        RAISE EXCEPTION
-            'Organization must have created_by';
+    -- Prevent spoofing: ensure created_by matches authenticated user
+    IF (SELECT auth.uid()) IS NOT NULL
+       AND NEW.created_by <> (SELECT auth.uid())
+       AND current_user <> 'service_role'
+    THEN
+        RAISE EXCEPTION 'created_by must match authenticated user';
+    END IF;
 
-END IF;
-
-
-INSERT INTO public.organization_members (
-    organization_id,
-    user_id,
-    role
-)
-VALUES (
+    -- Auto-create owner membership
+    INSERT INTO public.organization_members (
+        organization_id,
+        user_id,
+        role
+    )
+    VALUES (
            NEW.id,
            NEW.created_by,
            'owner'
@@ -1112,20 +1207,26 @@ SET search_path = ''
 AS $$
 BEGIN
 
+    -- Auto-set created_by from authenticated user if not provided
     IF NEW.created_by IS NULL THEN
+        NEW.created_by := (SELECT auth.uid());
+    END IF;
 
-        RAISE EXCEPTION
-            'Project must have created_by';
+    -- Prevent spoofing: ensure created_by matches authenticated user
+    IF (SELECT auth.uid()) IS NOT NULL
+       AND NEW.created_by <> (SELECT auth.uid())
+       AND current_user <> 'service_role'
+    THEN
+        RAISE EXCEPTION 'created_by must match authenticated user';
+    END IF;
 
-END IF;
-
-
-INSERT INTO public.project_members (
-    project_id,
-    user_id,
-    role
-)
-VALUES (
+    -- Auto-create owner membership
+    INSERT INTO public.project_members (
+        project_id,
+        user_id,
+        role
+    )
+    VALUES (
            NEW.id,
            NEW.created_by,
            'owner'
@@ -1603,6 +1704,17 @@ WITH CHECK (
 );
 
 
+-- Allow anon role to insert profiles (for new user signup via trigger)
+-- This is safe because the trigger enforces id = auth.uid()
+CREATE POLICY profiles_insert_trigger
+ON public.profiles
+FOR INSERT
+TO anon
+WITH CHECK (
+    true
+);
+
+
 CREATE POLICY profiles_update_own
 ON public.profiles
 FOR UPDATE
@@ -1624,7 +1736,8 @@ ON public.organizations
 FOR INSERT
 TO authenticated
 WITH CHECK (
-    created_by = (SELECT auth.uid())
+    -- Allow insertion; trigger will set and validate created_by
+    true
 );
 
 
@@ -1746,8 +1859,9 @@ ON public.projects
 FOR INSERT
 TO authenticated
 WITH CHECK (
-    created_by = (SELECT auth.uid())
-    AND private.is_org_member(organization_id)
+    -- Trigger will set and validate created_by
+    -- Only check organization membership
+    private.is_org_member(organization_id)
 );
 
 

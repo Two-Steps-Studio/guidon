@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create project
+    // Note: created_by is auto-set by database trigger, and owner membership is auto-created
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({
@@ -96,23 +97,11 @@ export async function POST(request: NextRequest) {
         visibility: visibility || 'private',
         color: color || null,
         planned_end_date: planned_end_date || null,
-        created_by: auth.user.id,
       })
       .select()
       .single();
 
     if (projectError) throw projectError;
-
-    // Add creator as project owner
-    const { error: memberError } = await supabase
-      .from('project_members')
-      .insert({
-        project_id: project.id,
-        user_id: auth.user.id,
-        role: 'owner',
-      });
-
-    if (memberError) throw memberError;
 
     return NextResponse.json({ project }, { status: 201 });
   } catch (error: any) {
