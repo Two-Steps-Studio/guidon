@@ -16,6 +16,7 @@ import {
   Brain,
   FolderOpen,
   Settings,
+  Users,
   Menu,
   X,
   ChevronRight,
@@ -74,7 +75,10 @@ const navGroups: NavGroup[] = [
   },
   {
     label: null,
-    items: [{ href: 'settings', label: 'Settings', icon: Settings }],
+    items: [
+      { href: 'members', label: 'Members', icon: Users },
+      { href: 'settings', label: 'Settings', icon: Settings },
+    ],
   },
 ];
 
