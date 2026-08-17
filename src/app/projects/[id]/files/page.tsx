@@ -25,6 +25,8 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { ProjectFile } from '@/types/api';
+import { FileViewer } from '@/components/files/file-viewer';
+import { STORAGE_BUCKETS } from '@/lib/storage/storage-constants';
 
 const FILE_TYPE_ICONS: Record<string, any> = {
   'application/pdf': FileText,
@@ -77,6 +79,7 @@ export default function ProjectFilesPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
+  const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -120,7 +123,7 @@ export default function ProjectFilesPage() {
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
-        .from('guidon-files')
+        .from(STORAGE_BUCKETS.FILES)
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
@@ -180,7 +183,7 @@ export default function ProjectFilesPage() {
       const supabase = createClient();
       if (!file.storage_path) return;
       const { data, error } = await supabase.storage
-        .from('guidon-files')
+        .from(STORAGE_BUCKETS.FILES)
         .download(file.storage_path);
 
       if (error) throw error;
@@ -206,7 +209,7 @@ export default function ProjectFilesPage() {
       if (file && file.storage_path) {
         // Delete from storage
         const { error: storageError } = await supabase.storage
-          .from('guidon-files')
+          .from(STORAGE_BUCKETS.FILES)
           .remove([file.storage_path]);
 
         if (storageError) throw storageError;
@@ -334,7 +337,19 @@ export default function ProjectFilesPage() {
                 <Card key={file.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Preview ${file.name}`}
+                        onClick={() => setPreviewFile(file)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setPreviewFile(file);
+                          }
+                        }}
+                        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
                         <div className={`p-2 rounded-lg ${colorClass}`}>
                           <Icon className="h-5 w-5" />
                         </div>
@@ -381,6 +396,13 @@ export default function ProjectFilesPage() {
           </div>
         )}
       </div>
+
+      <FileViewer
+        file={previewFile}
+        files={files}
+        onClose={() => setPreviewFile(null)}
+        onNavigate={setPreviewFile}
+      />
     </ProjectSidebar>
   );
 }
