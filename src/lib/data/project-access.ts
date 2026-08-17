@@ -1,0 +1,125 @@
+import "server-only";
+
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase-server";
+import type { ProjectRole } from "@/types/project";
+
+/**
+ * Server-side project authorisation — one gate for every project page.
+ *
+ * Before this existed, each of the 11 project pages ran its own
+ * getUser() + membership lookup, and 7 of them did not check the role at all;
+ * they simply let RLS reject the query and surfaced the raw Postgres error.
+ * That is both duplicated work and an inconsistent user experience
+ * (TODO.md §33, §38).
+ *
+ * RLS remains the real boundary. This layer exists so the UI can answer
+ * "what may this person do here" once, on the server, before rendering.
+ */
+
+export interface ProjectAccess {
+  userId: string;
+  project: {
+    id: string;
+    name: string;
+    slug: string | null;
+    organization_id: string;
+    description: string | null;
+    status: string;
+    visibility: string;
+  };
+  /** Null when the user can see the project but is not a member of it —
+   *  possible for `organization` and `public` visibility. */
+  role: ProjectRole | null;
+}
+
+const MANAGE_ROLES: ProjectRole[] = ["owner", "admin"];
+const WRITE_ROLES: ProjectRole[] = ["owner", "admin", "developer"];
+const COMMENT_ROLES: ProjectRole[] = ["owner", "admin", "developer", "tester"];
+
+export function canManageProject(role: ProjectRole | null): boolean {
+  return role !== null && MANAGE_ROLES.includes(role);
+}
+
+export function canWriteProject(role: ProjectRole | null): boolean {
+  return role !== null && WRITE_ROLES.includes(role);
+}
+
+export function canCommentOnProject(role: ProjectRole | null): boolean {
+  return role !== null && COMMENT_ROLES.includes(role);
+}
+
+/**
+ * Resolve the caller's access to a project.
+ *
+ * Returns null rather than throwing when the project is invisible, so callers
+ * can decide between "not found" and "sign in" — RLS makes those two cases
+ * indistinguishable at the query level, and leaking the difference would tell
+ * an outsider which project ids exist.
+ */
+export async function getProjectAccess(
+  projectId: string
+): Promise<ProjectAccess | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const [projectResult, membershipResult] = await Promise.all([
+    supabase
+      .from("projects")
+      .select(
+        "id, name, slug, organization_id, description, status, visibility"
+      )
+      .eq("id", projectId)
+      .maybeSingle(),
+    supabase
+      .from("project_members")
+      .select("role")
+      .eq("project_id", projectId)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  // RLS already filtered this: no row means no access, whatever the reason.
+  if (projectResult.error || !projectResult.data) return null;
+
+  return {
+    userId: user.id,
+    project: projectResult.data,
+    role: (membershipResult.data?.role as ProjectRole) ?? null,
+  };
+}
+
+/**
+ * Same as getProjectAccess, but sends the caller somewhere sensible instead of
+ * returning null: unauthenticated users to sign-in with a return path, and
+ * everyone else to the project list.
+ *
+ * Use this in layouts and pages; use getProjectAccess when the caller wants to
+ * render its own empty state.
+ */
+export async function requireProjectAccess(
+  projectId: string
+): Promise<ProjectAccess> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/auth/login?redirect=${encodeURIComponent(`/projects/${projectId}`)}`);
+  }
+
+  const access = await getProjectAccess(projectId);
+
+  if (!access) {
+    redirect("/projects?error=no-access");
+  }
+
+  return access;
+}

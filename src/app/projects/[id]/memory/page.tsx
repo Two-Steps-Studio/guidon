@@ -26,7 +26,6 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { ProjectMemory } from '@/types/context';
 
 const MEMORY_TYPE_CONFIG: Record<ProjectMemory['memory_type'], { label: string; color: string; icon: any }> = {
@@ -177,7 +176,7 @@ export default function ProjectMemoryPage() {
   }
 
   return (
-    <ProjectSidebar projectId={projectId}>
+    <>
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -393,6 +392,6 @@ export default function ProjectMemoryPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </ProjectSidebar>
+    </>
   );
 }

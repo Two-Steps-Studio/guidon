@@ -25,7 +25,6 @@ import {
   Users,
   Plus
 } from 'lucide-react';
-import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { Project, ProjectStats } from '@/types/project';
 
 export default function ProjectPage() {
@@ -164,7 +163,7 @@ export default function ProjectPage() {
   }
 
   return (
-    <ProjectSidebar projectId={projectId}>
+    <>
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -424,6 +423,6 @@ export default function ProjectPage() {
           </div>
         </div>
       </div>
-    </ProjectSidebar>
+    </>
   );
 }

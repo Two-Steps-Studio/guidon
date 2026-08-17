@@ -18,7 +18,6 @@ import {
   AlertTriangle,
   X,
 } from 'lucide-react';
-import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { Project, ProjectStatus } from '@/types/project';
 import type { Technology } from '@/types/technology';
 import { guessTechnologyCategory, technologySlug } from '@/types/technology';
@@ -212,7 +211,7 @@ export default function ProjectSettingsPage() {
 
   if (!project) {
     return (
-      <ProjectSidebar projectId={projectId}>
+      <>
         <div className="container mx-auto p-6 max-w-7xl">
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
@@ -221,12 +220,12 @@ export default function ProjectSettingsPage() {
             <Button onClick={() => router.push('/organizations')}>Go to Organizations</Button>
           </div>
         </div>
-      </ProjectSidebar>
+      </>
     );
   }
 
   return (
-    <ProjectSidebar projectId={projectId}>
+    <>
       <div className="container mx-auto p-6 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
@@ -390,6 +389,6 @@ export default function ProjectSettingsPage() {
           </div>
         </form>
       </div>
-    </ProjectSidebar>
+    </>
   );
 }

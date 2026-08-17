@@ -27,7 +27,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ProjectSidebar } from "@/components/layout/project-sidebar";
 import { cn } from "@/lib/utils";
 import type { ContextSource, SourceType } from "@/types/context";
 import type { ProjectRole } from "@/types/project";
@@ -196,20 +195,20 @@ export default function ProjectKnowledgePage() {
 
   if (loading) {
     return (
-      <ProjectSidebar projectId={projectId}>
+      <>
         <div className="flex min-h-[60vh] items-center justify-center">
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading knowledge...
           </p>
         </div>
-      </ProjectSidebar>
+      </>
     );
   }
 
   if (forbidden) {
     return (
-      <ProjectSidebar projectId={projectId}>
+      <>
         <div className="flex min-h-[60vh] items-center justify-center p-6">
           <div className="max-w-sm text-center">
             <h2 className="text-base font-medium text-foreground">
@@ -220,12 +219,12 @@ export default function ProjectKnowledgePage() {
             </p>
           </div>
         </div>
-      </ProjectSidebar>
+      </>
     );
   }
 
   return (
-    <ProjectSidebar projectId={projectId}>
+    <>
       <div className="mx-auto max-w-5xl p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
@@ -386,7 +385,7 @@ export default function ProjectKnowledgePage() {
           }}
         />
       )}
-    </ProjectSidebar>
+    </>
   );
 }
 

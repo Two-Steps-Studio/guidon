@@ -24,7 +24,6 @@ import {
   GitBranch,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { Decision } from '@/types/context';
 
 const STATUS_CONFIG: Record<Decision['status'], { label: string; color: string; icon: any }> = {
@@ -213,7 +212,7 @@ export default function ProjectDecisionsPage() {
   }
 
   return (
-    <ProjectSidebar projectId={projectId}>
+    <>
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -532,6 +531,6 @@ export default function ProjectDecisionsPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </ProjectSidebar>
+    </>
   );
 }

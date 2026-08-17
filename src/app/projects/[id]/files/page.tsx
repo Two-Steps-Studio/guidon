@@ -23,7 +23,6 @@ import {
   X,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { ProjectFile } from '@/types/api';
 import { FileViewer } from '@/components/files/file-viewer';
 import { STORAGE_BUCKETS } from '@/lib/storage/storage-constants';
@@ -241,7 +240,7 @@ export default function ProjectFilesPage() {
   }
 
   return (
-    <ProjectSidebar projectId={projectId}>
+    <>
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -403,6 +402,6 @@ export default function ProjectFilesPage() {
         onClose={() => setPreviewFile(null)}
         onNavigate={setPreviewFile}
       />
-    </ProjectSidebar>
+    </>
   );
 }

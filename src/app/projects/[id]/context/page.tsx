@@ -25,7 +25,6 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { Decision, ContextRelation, ContextSource } from '@/types/context';
 import { fetchProjectRelations } from '@/lib/context/project-relations';
 
@@ -351,7 +350,7 @@ export default function ProjectContextPage() {
   ];
 
   return (
-    <ProjectSidebar projectId={projectId}>
+    <>
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
@@ -879,6 +878,6 @@ export default function ProjectContextPage() {
           </div>
         )}
       </div>
-    </ProjectSidebar>
+    </>
   );
 }
