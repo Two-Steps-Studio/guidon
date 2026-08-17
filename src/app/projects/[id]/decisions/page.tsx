@@ -108,7 +108,9 @@ export default function ProjectDecisionsPage() {
           alternatives: decisionForm.alternatives || null,
           status: decisionForm.status,
           decision_type: decisionForm.decision_type,
-          created_by: user.id,
+          // context_decisions records the author as made_by, not created_by.
+          made_by: user.id,
+          made_at: new Date().toISOString(),
         });
 
       if (error) throw error;

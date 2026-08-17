@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { Project, ProjectStatus } from '@/types/project';
+import type { Technology } from '@/types/technology';
+import { guessTechnologyCategory, technologySlug } from '@/types/technology';
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
   { value: 'active', label: 'Active' },
@@ -38,10 +40,13 @@ export default function ProjectSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Technologies live in their own table; these are the rows as last loaded,
+  // kept so a save can diff names back onto real ids.
+  const [techRows, setTechRows] = useState<Technology[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'planning' as ProjectStatus,
+    status: 'active' as ProjectStatus,
     technologies: [] as string[],
   });
 
@@ -52,19 +57,29 @@ export default function ProjectSettingsPage() {
   const fetchProject = async () => {
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', projectId)
-        .single();
+      const [projectRes, techRes] = await Promise.all([
+        supabase.from('projects').select('*').eq('id', projectId).single(),
+        supabase
+          .from('technologies')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('sort_order', { ascending: true, nullsFirst: false })
+          .order('name', { ascending: true }),
+      ]);
 
-      if (error) throw error;
+      if (projectRes.error) throw projectRes.error;
+      if (techRes.error) throw techRes.error;
+
+      const data = projectRes.data;
+      const technologies = (techRes.data ?? []) as Technology[];
+
       setProject(data);
+      setTechRows(technologies);
       setFormData({
         name: data.name,
         description: data.description || '',
         status: data.status,
-        technologies: data.technologies || [],
+        technologies: technologies.map((tech) => tech.name),
       });
     } catch (err: any) {
       setError(err.message);
@@ -80,22 +95,70 @@ export default function ProjectSettingsPage() {
 
     try {
       const supabase = createClient();
+
+      // `technologies` is a separate table, not a column on projects.
+      // Sending it here is what made every save fail with PGRST204.
       const { error } = await supabase
         .from('projects')
         .update({
           name: formData.name,
           description: formData.description || null,
           status: formData.status,
-          technologies: formData.technologies,
         })
         .eq('id', projectId);
 
       if (error) throw error;
+
+      await syncTechnologies();
       await fetchProject();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  /**
+   * Reconcile the edited technology names against the technologies table:
+   * insert what was added, delete what was removed, leave the rest alone.
+   * Matching is by case-insensitive name, which is how the chip UI treats them.
+   */
+  const syncTechnologies = async () => {
+    const supabase = createClient();
+
+    const key = (value: string) => value.trim().toLowerCase();
+    const desired = formData.technologies;
+    const desiredKeys = new Set(desired.map(key));
+    const existingKeys = new Set(techRows.map((tech) => key(tech.name)));
+
+    const toAdd = desired.filter((name) => !existingKeys.has(key(name)));
+    const toRemove = techRows.filter(
+      (tech) => !desiredKeys.has(key(tech.name))
+    );
+
+    if (toAdd.length > 0) {
+      const { error } = await supabase.from('technologies').insert(
+        toAdd.map((name, index) => ({
+          project_id: projectId,
+          name: name.trim(),
+          icon_slug: technologySlug(name),
+          // NOT NULL in the database; guessTechnologyCategory always resolves.
+          category: guessTechnologyCategory(name),
+          sort_order: techRows.length + index,
+        }))
+      );
+      if (error) throw error;
+    }
+
+    if (toRemove.length > 0) {
+      const { error } = await supabase
+        .from('technologies')
+        .delete()
+        .in(
+          'id',
+          toRemove.map((tech) => tech.id)
+        );
+      if (error) throw error;
     }
   };
 

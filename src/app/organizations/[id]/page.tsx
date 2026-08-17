@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Plus, Loader2, AlertCircle, ArrowLeft, FolderKanban, Settings, Users } from 'lucide-react';
 import type { Organization, Project } from '@/types/project';
+import { uniqueSlug } from '@/lib/slug';
 
 export default function OrganizationDetailPage() {
   const router = useRouter();
@@ -72,11 +73,27 @@ export default function OrganizationDetailPage() {
 
       if (!user) throw new Error('Not authenticated');
 
+      // projects.slug is NOT NULL and unique per organization. Migration 004
+      // also derives it in a BEFORE INSERT trigger; computing it here keeps
+      // creation working if that migration has not been applied yet.
+      const { data: siblingSlugs } = await supabase
+        .from('projects')
+        .select('slug')
+        .eq('organization_id', orgId);
+
+      const slug = uniqueSlug(
+        newProject.name,
+        (siblingSlugs ?? [])
+          .map((row: { slug: string | null }) => row.slug)
+          .filter((value): value is string => Boolean(value))
+      );
+
       const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
           organization_id: orgId,
           name: newProject.name,
+          slug,
           description: newProject.description || null,
           created_by: user.id,
         })
@@ -85,16 +102,9 @@ export default function OrganizationDetailPage() {
 
       if (projectError) throw projectError;
 
-      // Add user as project owner
-      const { error: memberError } = await supabase
-        .from('project_members')
-        .insert({
-          project_id: project.id,
-          user_id: user.id,
-          role: 'owner',
-        });
-
-      if (memberError) throw memberError;
+      // The owner membership is created by private.handle_new_project().
+      // Inserting it again here duplicates the row and fails the unique
+      // constraint — the same bug that broke organization creation.
 
       setShowCreateProject(false);
       setNewProject({ name: '', description: '' });

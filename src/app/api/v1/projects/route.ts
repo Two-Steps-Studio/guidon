@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { requireAuth, isAuthError } from '@/lib/auth/auth-helpers';
 import type { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
+import { uniqueSlug } from '@/lib/slug';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth();
@@ -84,13 +85,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create project
-    // Note: created_by is auto-set by database trigger, and owner membership is auto-created
+    // projects.slug is NOT NULL with no default, and must be unique within the
+    // organization. Migration 004 also derives it via a BEFORE INSERT trigger;
+    // computing it here keeps creation working if that has not been run yet.
+    const { data: siblingSlugs } = await supabase
+      .from('projects')
+      .select('slug')
+      .eq('organization_id', organization_id);
+
+    const requestedSlug = body.slug?.trim().toLowerCase();
+    const slug = uniqueSlug(
+      requestedSlug || name,
+      (siblingSlugs ?? [])
+        .map((row: { slug: string | null }) => row.slug)
+        .filter((value): value is string => Boolean(value))
+    );
+
+    // created_by is sent explicitly. The previous comment here claimed a
+    // database trigger set it, but private.handle_new_project() runs AFTER
+    // INSERT, where assigning NEW.created_by has no effect on the stored row —
+    // and projects.created_by has no column default. Every project created
+    // through this route was therefore persisted with created_by = NULL.
+    // Migration 005 adds a BEFORE trigger that enforces this server-side too.
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({
         organization_id,
         name,
+        slug,
+        created_by: auth.user.id,
         description: description || null,
         description_markdown: description_markdown || null,
         status: status || 'active',

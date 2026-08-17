@@ -1,249 +1,388 @@
 @import "tailwindcss";
 
 /* ============================================
-   GUIDON DESIGN TOKENS - LIGHT MODE
-   ============================================ */
-:root {
-  /* Brand Colors */
-  --color-primary: #176B5B;
-  --color-primary-hover: #145a4d;
-  --color-primary-active: #124940;
-  --color-primary-foreground: #ffffff;
-  
-  --color-accent: #57D6B3;
-  --color-accent-hover: #4bc49f;
-  --color-accent-active: #3fb28b;
-  --color-accent-foreground: #0a2e26;
+   GUIDON DESIGN TOKENS
 
-  /* Background Colors */
+   Dark-first developer SaaS palette.
+   Light mode is defined on :root so that any token
+   referenced by a utility always resolves; the dark
+   palette overrides it under prefers-color-scheme and
+   under an explicit [data-theme="dark"].
+
+   Every token used by a Tailwind utility MUST be
+   mirrored in the @theme inline block below, otherwise
+   the utility silently resolves to nothing.
+   ============================================ */
+
+:root {
+  /* Brand */
+  --color-primary: #0f6b5a;
+  --color-primary-hover: #127e69;
+  --color-primary-active: #0c5647;
+  --color-primary-foreground: #ffffff;
+
+  --color-accent: #f1f5f9;
+  --color-accent-hover: #e2e8f0;
+  --color-accent-active: #cbd5e1;
+  --color-accent-foreground: #0f172a;
+
+  --color-brand: #176b5b;
+  --color-brand-accent: #57d6b3;
+
+  /* Backgrounds */
   --color-background: #ffffff;
   --color-background-secondary: #f8fafc;
   --color-background-tertiary: #f1f5f9;
-  
-  /* Surface Colors */
+
+  /* Surfaces */
   --color-surface: #ffffff;
   --color-surface-hover: #f8fafc;
   --color-surface-active: #f1f5f9;
   --color-surface-elevated: #ffffff;
 
-  /* Border Colors */
+  /* Muted — used pervasively for secondary text and inset panels */
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+
+  /* Borders */
   --color-border: #e2e8f0;
   --color-border-hover: #cbd5e1;
   --color-border-active: #94a3b8;
 
-  /* Text Colors */
+  /* Text */
   --color-text: #0f172a;
   --color-text-secondary: #475569;
   --color-text-muted: #64748b;
   --color-text-disabled: #94a3b8;
   --color-text-inverted: #ffffff;
+  --color-foreground: #0f172a;
 
-  /* Semantic Colors */
-  --color-success: #10b981;
-  --color-success-hover: #059669;
+  /* Semantic */
+  --color-success: #059669;
+  --color-success-hover: #047857;
   --color-success-foreground: #ffffff;
-  
-  --color-warning: #f59e0b;
-  --color-warning-hover: #d97706;
+
+  --color-warning: #d97706;
+  --color-warning-hover: #b45309;
   --color-warning-foreground: #ffffff;
-  
-  --color-danger: #ef4444;
-  --color-danger-hover: #dc2626;
+
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
   --color-danger-foreground: #ffffff;
-  
-  --color-info: #3b82f6;
-  --color-info-hover: #2563eb;
+
+  --color-info: #2563eb;
+  --color-info-hover: #1d4ed8;
   --color-info-foreground: #ffffff;
 
-  /* Component Colors */
+  /* Components */
   --color-secondary: #f1f5f9;
   --color-secondary-hover: #e2e8f0;
   --color-secondary-foreground: #0f172a;
-  
-  --color-destructive: #ef4444;
-  --color-destructive-hover: #dc2626;
+
+  --color-destructive: #dc2626;
+  --color-destructive-hover: #b91c1c;
   --color-destructive-foreground: #ffffff;
-  
+
   --color-card: #ffffff;
   --color-card-foreground: #0f172a;
-  
+
   --color-popover: #ffffff;
   --color-popover-foreground: #0f172a;
-  
-  --color-input: #e2e8f0;
-  --color-ring: #176B5B;
 
-  /* Legacy mapping for compatibility */
+  --color-input: #e2e8f0;
+  --color-ring: #0f6b5a;
+
+  /* Priority / status accents (Kanban, badges) */
+  --color-priority-low: #64748b;
+  --color-priority-medium: #2563eb;
+  --color-priority-high: #d97706;
+  --color-priority-critical: #dc2626;
+
   --background: var(--color-background);
   --foreground: var(--color-text);
 }
 
-/* ============================================
-   GUIDON DESIGN TOKENS - DARK MODE
-   ============================================ */
+/* ---- Dark palette (system preference) ---- */
 @media (prefers-color-scheme: dark) {
-  :root {
-    /* Brand Colors - adjusted for dark mode contrast */
-    --color-primary: #57D6B3;
-    --color-primary-hover: #4bc49f;
-    --color-primary-active: #3fb28b;
-    --color-primary-foreground: #0a2e26;
-    
-    --color-accent: #176B5B;
-    --color-accent-hover: #1a7d6a;
-    --color-accent-active: #1d8f79;
-    --color-accent-foreground: #ffffff;
+  :root:not([data-theme="light"]) {
+    --color-primary: #2dd4a7;
+    --color-primary-hover: #4ee0b8;
+    --color-primary-active: #22b98f;
+    --color-primary-foreground: #05221b;
 
-    /* Background Colors */
-    --color-background: #0a0a0a;
-    --color-background-secondary: #171717;
-    --color-background-tertiary: #262626;
-    
-    /* Surface Colors */
-    --color-surface: #171717;
-    --color-surface-hover: #262626;
-    --color-surface-active: #404040;
-    --color-surface-elevated: #262626;
+    --color-accent: #1c1f26;
+    --color-accent-hover: #242832;
+    --color-accent-active: #2d323e;
+    --color-accent-foreground: #e8eaed;
 
-    /* Border Colors */
-    --color-border: #404040;
-    --color-border-hover: #525252;
-    --color-border-active: #737373;
+    --color-background: #0b0d10;
+    --color-background-secondary: #101317;
+    --color-background-tertiary: #16191f;
 
-    /* Text Colors */
-    --color-text: #fafafa;
-    --color-text-secondary: #d4d4d4;
-    --color-text-muted: #a3a3a3;
-    --color-text-disabled: #737373;
-    --color-text-inverted: #0a0a0a;
+    --color-surface: #101317;
+    --color-surface-hover: #16191f;
+    --color-surface-active: #1c1f26;
+    --color-surface-elevated: #14171c;
 
-    /* Semantic Colors - adjusted for dark mode */
+    --color-muted: #16191f;
+    --color-muted-foreground: #8b93a1;
+
+    --color-border: #23272f;
+    --color-border-hover: #2f343e;
+    --color-border-active: #3d434f;
+
+    --color-text: #e8eaed;
+    --color-text-secondary: #b4bac4;
+    --color-text-muted: #8b93a1;
+    --color-text-disabled: #5d6472;
+    --color-text-inverted: #0b0d10;
+    --color-foreground: #e8eaed;
+
     --color-success: #34d399;
-    --color-success-hover: #10b981;
-    --color-success-foreground: #0a0a0a;
-    
+    --color-success-hover: #6ee7b7;
+    --color-success-foreground: #05221b;
+
     --color-warning: #fbbf24;
-    --color-warning-hover: #f59e0b;
-    --color-warning-foreground: #0a0a0a;
-    
+    --color-warning-hover: #fcd34d;
+    --color-warning-foreground: #1a1206;
+
     --color-danger: #f87171;
-    --color-danger-hover: #ef4444;
-    --color-danger-foreground: #0a0a0a;
-    
+    --color-danger-hover: #fca5a5;
+    --color-danger-foreground: #1f0808;
+
     --color-info: #60a5fa;
-    --color-info-hover: #3b82f6;
-    --color-info-foreground: #0a0a0a;
+    --color-info-hover: #93c5fd;
+    --color-info-foreground: #06121f;
 
-    /* Component Colors - dark mode */
-    --color-secondary: #262626;
-    --color-secondary-hover: #404040;
-    --color-secondary-foreground: #fafafa;
-    
+    --color-secondary: #1c1f26;
+    --color-secondary-hover: #242832;
+    --color-secondary-foreground: #e8eaed;
+
     --color-destructive: #f87171;
-    --color-destructive-hover: #ef4444;
-    --color-destructive-foreground: #0a0a0a;
-    
-    --color-card: #171717;
-    --color-card-foreground: #fafafa;
-    
-    --color-popover: #171717;
-    --color-popover-foreground: #fafafa;
-    
-    --color-input: #404040;
-    --color-ring: #57D6B3;
+    --color-destructive-hover: #fca5a5;
+    --color-destructive-foreground: #1f0808;
 
-    /* Legacy mapping */
-    --background: var(--color-background);
-    --foreground: var(--color-text);
+    --color-card: #101317;
+    --color-card-foreground: #e8eaed;
+
+    --color-popover: #14171c;
+    --color-popover-foreground: #e8eaed;
+
+    --color-input: #23272f;
+    --color-ring: #2dd4a7;
+
+    --color-priority-low: #8b93a1;
+    --color-priority-medium: #60a5fa;
+    --color-priority-high: #fbbf24;
+    --color-priority-critical: #f87171;
   }
 }
 
+/* ---- Dark palette (explicit opt-in, wins over system) ---- */
+:root[data-theme="dark"] {
+  --color-primary: #2dd4a7;
+  --color-primary-hover: #4ee0b8;
+  --color-primary-active: #22b98f;
+  --color-primary-foreground: #05221b;
+
+  --color-accent: #1c1f26;
+  --color-accent-hover: #242832;
+  --color-accent-active: #2d323e;
+  --color-accent-foreground: #e8eaed;
+
+  --color-background: #0b0d10;
+  --color-background-secondary: #101317;
+  --color-background-tertiary: #16191f;
+
+  --color-surface: #101317;
+  --color-surface-hover: #16191f;
+  --color-surface-active: #1c1f26;
+  --color-surface-elevated: #14171c;
+
+  --color-muted: #16191f;
+  --color-muted-foreground: #8b93a1;
+
+  --color-border: #23272f;
+  --color-border-hover: #2f343e;
+  --color-border-active: #3d434f;
+
+  --color-text: #e8eaed;
+  --color-text-secondary: #b4bac4;
+  --color-text-muted: #8b93a1;
+  --color-text-disabled: #5d6472;
+  --color-text-inverted: #0b0d10;
+  --color-foreground: #e8eaed;
+
+  --color-success: #34d399;
+  --color-success-hover: #6ee7b7;
+  --color-success-foreground: #05221b;
+
+  --color-warning: #fbbf24;
+  --color-warning-hover: #fcd34d;
+  --color-warning-foreground: #1a1206;
+
+  --color-danger: #f87171;
+  --color-danger-hover: #fca5a5;
+  --color-danger-foreground: #1f0808;
+
+  --color-info: #60a5fa;
+  --color-info-hover: #93c5fd;
+  --color-info-foreground: #06121f;
+
+  --color-secondary: #1c1f26;
+  --color-secondary-hover: #242832;
+  --color-secondary-foreground: #e8eaed;
+
+  --color-destructive: #f87171;
+  --color-destructive-hover: #fca5a5;
+  --color-destructive-foreground: #1f0808;
+
+  --color-card: #101317;
+  --color-card-foreground: #e8eaed;
+
+  --color-popover: #14171c;
+  --color-popover-foreground: #e8eaed;
+
+  --color-input: #23272f;
+  --color-ring: #2dd4a7;
+
+  --color-priority-low: #8b93a1;
+  --color-priority-medium: #60a5fa;
+  --color-priority-high: #fbbf24;
+  --color-priority-critical: #f87171;
+}
+
 /* ============================================
-   TAILWIND CSS INTEGRATION
+   TAILWIND THEME BRIDGE
+
+   Anything omitted here is NOT available as a utility.
    ============================================ */
 @theme inline {
-  /* Brand Colors */
   --color-primary: var(--color-primary);
   --color-primary-hover: var(--color-primary-hover);
   --color-primary-active: var(--color-primary-active);
   --color-primary-foreground: var(--color-primary-foreground);
-  
+
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-active: var(--color-accent-active);
   --color-accent-foreground: var(--color-accent-foreground);
 
-  /* Background Colors */
+  --color-brand: var(--color-brand);
+  --color-brand-accent: var(--color-brand-accent);
+
   --color-background: var(--color-background);
   --color-background-secondary: var(--color-background-secondary);
   --color-background-tertiary: var(--color-background-tertiary);
-  
-  /* Surface Colors */
+
   --color-surface: var(--color-surface);
   --color-surface-hover: var(--color-surface-hover);
   --color-surface-active: var(--color-surface-active);
   --color-surface-elevated: var(--color-surface-elevated);
 
-  /* Border Colors */
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+
   --color-border: var(--color-border);
   --color-border-hover: var(--color-border-hover);
   --color-border-active: var(--color-border-active);
 
-  /* Text Colors */
   --color-text: var(--color-text);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
   --color-text-disabled: var(--color-text-disabled);
   --color-text-inverted: var(--color-text-inverted);
+  --color-foreground: var(--color-foreground);
 
-  /* Semantic Colors */
   --color-success: var(--color-success);
   --color-success-hover: var(--color-success-hover);
   --color-success-foreground: var(--color-success-foreground);
-  
+
   --color-warning: var(--color-warning);
   --color-warning-hover: var(--color-warning-hover);
   --color-warning-foreground: var(--color-warning-foreground);
-  
+
   --color-danger: var(--color-danger);
   --color-danger-hover: var(--color-danger-hover);
   --color-danger-foreground: var(--color-danger-foreground);
-  
+
   --color-info: var(--color-info);
   --color-info-hover: var(--color-info-hover);
   --color-info-foreground: var(--color-info-foreground);
 
-  /* Component Colors */
   --color-secondary: var(--color-secondary);
   --color-secondary-hover: var(--color-secondary-hover);
   --color-secondary-foreground: var(--color-secondary-foreground);
-  
+
   --color-destructive: var(--color-destructive);
   --color-destructive-hover: var(--color-destructive-hover);
   --color-destructive-foreground: var(--color-destructive-foreground);
-  
+
   --color-card: var(--color-card);
   --color-card-foreground: var(--color-card-foreground);
-  
+
   --color-popover: var(--color-popover);
   --color-popover-foreground: var(--color-popover-foreground);
-  
+
   --color-input: var(--color-input);
   --color-ring: var(--color-ring);
 
-  /* Legacy compatibility */
-  --color-foreground: var(--color-text);
-  
-  /* Fonts */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-priority-low: var(--color-priority-low);
+  --color-priority-medium: var(--color-priority-medium);
+  --color-priority-high: var(--color-priority-high);
+  --color-priority-critical: var(--color-priority-critical);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
 }
 
 /* ============================================
-   BASE STYLES
+   BASE
    ============================================ */
+
+/* Tailwind v4 defaults the `border` utility to currentColor, which made
+   every hairline in the app inherit the text colour. Anchor it to the
+   design-system border token instead. */
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-border);
+  }
+}
+
+html {
+  color-scheme: light dark;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Restrained, product-grade scrollbars for the dense board/list views. */
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-active) transparent;
+  }
+}
+
+/* Respect users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

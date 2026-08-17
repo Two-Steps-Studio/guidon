@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('user_id', auth.user.id)
-      .order('created_at', { ascending: false });
+      // organization_members records joined_at, not created_at — ordering by
+      // created_at made this endpoint fail outright.
+      .order('joined_at', { ascending: false });
 
     if (error) throw error;
 

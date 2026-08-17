@@ -27,6 +27,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ProjectSidebar } from '@/components/layout/project-sidebar';
 import type { Decision, ContextRelation, ContextSource } from '@/types/context';
+import { fetchProjectRelations } from '@/lib/context/project-relations';
 
 type TabType = 'decisions' | 'relations' | 'sources';
 
@@ -86,18 +87,19 @@ export default function ProjectContextPage() {
     try {
       const supabase = createClient();
 
-      const [decisionsRes, relationsRes, sourcesRes] = await Promise.all([
+      // context_relations has no project_id column — relations are scoped
+      // through their source entity. See lib/context/project-relations.ts.
+      const [decisionsRes, sourcesRes, projectRelations] = await Promise.all([
         supabase.from('context_decisions').select('*').eq('project_id', projectId).order('created_at', { ascending: false }),
-        supabase.from('context_relations').select('*').eq('project_id', projectId),
         supabase.from('context_sources').select('*').eq('project_id', projectId).order('created_at', { ascending: false }),
+        fetchProjectRelations(supabase, projectId),
       ]);
 
       if (decisionsRes.error) throw decisionsRes.error;
-      if (relationsRes.error) throw relationsRes.error;
       if (sourcesRes.error) throw sourcesRes.error;
 
       setDecisions(decisionsRes.data || []);
-      setRelations(relationsRes.data || []);
+      setRelations(projectRelations);
       setSources(sourcesRes.data || []);
     } catch (err: any) {
       setError(err.message);
@@ -127,7 +129,9 @@ export default function ProjectContextPage() {
           alternatives: decisionForm.alternatives || null,
           status: decisionForm.status,
           decision_type: decisionForm.decision_type,
-          created_by: user.id,
+          // context_decisions records the author as made_by, not created_by.
+          made_by: user.id,
+          made_at: new Date().toISOString(),
         });
 
       if (error) throw error;
@@ -208,10 +212,11 @@ export default function ProjectContextPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // No project_id column here — the source entity anchors the relation,
+      // and RLS requires source and target to resolve to the same project.
       const { error } = await supabase
         .from('context_relations')
         .insert({
-          project_id: projectId,
           source_type: relationForm.source_type,
           source_id: relationForm.source_id,
           target_type: relationForm.target_type,
@@ -261,7 +266,8 @@ export default function ProjectContextPage() {
           content: sourceForm.content || null,
           source_type: sourceForm.source_type,
           url: sourceForm.url || null,
-          created_by: user.id,
+          // context_sources records the author as `author`, not created_by.
+          author: user.id,
         });
 
       if (error) throw error;

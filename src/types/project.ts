@@ -9,6 +9,8 @@ export interface Project {
   id: string;
   organization_id: string;
   name: string;
+  /** NOT NULL in the database, unique within the organization. */
+  slug: string;
   description: string | null;
   description_markdown: string | null;
   status: ProjectStatus;
@@ -23,6 +25,7 @@ export interface Project {
 export interface CreateProjectData {
   organization_id: string;
   name: string;
+  slug?: string;
   description?: string;
   description_markdown?: string;
   status?: ProjectStatus;
@@ -34,6 +37,7 @@ export interface CreateProjectData {
 export interface UpdateProjectData {
   id: string;
   name?: string;
+  slug?: string;
   description?: string;
   description_markdown?: string;
   status?: ProjectStatus;

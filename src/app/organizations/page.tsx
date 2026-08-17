@@ -92,16 +92,11 @@ export default function OrganizationsPage() {
 
       if (orgError) throw orgError;
 
-      // Add user as owner
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: org.id,
-          user_id: user.id,
-          role: 'owner',
-        });
-
-      if (memberError) throw memberError;
+      // The owner membership is created by private.handle_new_organization().
+      // Inserting it again here violated
+      // organization_members_organization_id_user_id_key, which surfaced as a
+      // "duplicate key" error even though the organization had been created
+      // correctly — and aborted before the list was refreshed.
 
       setShowCreateDialog(false);
       setNewOrg({ name: '', slug: '', description: '' });

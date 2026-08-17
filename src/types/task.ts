@@ -2,7 +2,23 @@
 // TASK TYPE DEFINITIONS
 // ============================================
 
-export type TaskStatus = "todo" | "in_progress" | "testing" | "completed";
+/**
+ * Guidon task vocabulary.
+ *
+ * `TaskStatus` is what the application reads and writes. `LegacyTaskStatus`
+ * covers rows written before migration 002; they are folded into the current
+ * vocabulary on read by `normalizeTaskStatus`, so the board renders correctly
+ * whether or not the migration has been applied yet.
+ */
+export type TaskStatus =
+  | "backlog"
+  | "todo"
+  | "in_progress"
+  | "review"
+  | "done";
+
+export type LegacyTaskStatus = "testing" | "completed";
+
 export type TaskPriority = "low" | "medium" | "high" | "critical";
 
 export interface Task {
@@ -10,7 +26,8 @@ export interface Task {
   project_id: string;
   title: string;
   description: string | null;
-  status: TaskStatus;
+  /** May still hold a legacy value if migration 002 has not been applied. */
+  status: TaskStatus | LegacyTaskStatus;
   priority: TaskPriority;
   tags: string[];
   due_date: string | null;
