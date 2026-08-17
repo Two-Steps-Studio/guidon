@@ -23,17 +23,18 @@ export interface Technology {
 }
 
 /**
- * Mirrors the CHECK constraint on technologies.category exactly:
+ * Mirrors the CHECK constraint on technologies.category exactly.
  *
- *   CHECK (category IN ('frontend','backend','database','devops','ai','other'))
- *   NOT NULL DEFAULT 'other'
+ * `game_engine` requires migration 008; without it the database rejects
+ * that value. Every other category works on the pre-008 schema.
  *
- * Do not add values here without a migration widening that constraint first —
+ * Do not add values here without a migration widening the constraint first —
  * an unknown value is rejected by the database, not silently stored.
  */
 export type TechnologyCategory =
   | "frontend"
   | "backend"
+  | "game_engine"
   | "database"
   | "devops"
   | "ai"
@@ -42,6 +43,7 @@ export type TechnologyCategory =
 export const TECHNOLOGY_CATEGORIES: readonly TechnologyCategory[] = [
   "frontend",
   "backend",
+  "game_engine",
   "database",
   "devops",
   "ai",
@@ -54,11 +56,23 @@ export const DEFAULT_TECHNOLOGY_CATEGORY: TechnologyCategory = "other";
 export const TECHNOLOGY_CATEGORY_LABELS: Record<TechnologyCategory, string> = {
   frontend: "Frontend",
   backend: "Backend",
+  game_engine: "Game engine",
   database: "Database",
   devops: "DevOps",
   ai: "AI",
   other: "Other",
 };
+
+/** Display order on the technology page — engines sit next to the languages. */
+export const TECHNOLOGY_CATEGORY_ORDER: readonly TechnologyCategory[] = [
+  "game_engine",
+  "frontend",
+  "backend",
+  "database",
+  "devops",
+  "ai",
+  "other",
+] as const;
 
 export interface CreateTechnologyData {
   project_id: string;
@@ -102,8 +116,16 @@ const CATEGORY_HINTS: Record<string, TechnologyCategory> = {
   "three.js": "frontend",
   electron: "frontend",
 
-  // Backend — game engines and systems languages land here, since the
-  // current constraint has no 'engine' or 'language' category.
+  // Game engines (migration 008)
+  unity: "game_engine",
+  unreal: "game_engine",
+  "unreal engine": "game_engine",
+  godot: "game_engine",
+  bevy: "game_engine",
+  cryengine: "game_engine",
+
+  // Backend — systems languages land here; the constraint has no
+  // dedicated 'language' category.
   "node.js": "backend",
   nodejs: "backend",
   express: "backend",
@@ -119,11 +141,6 @@ const CATEGORY_HINTS: Record<string, TechnologyCategory> = {
   "c++": "backend",
   "c#": "backend",
   lua: "backend",
-  unity: "backend",
-  unreal: "backend",
-  "unreal engine": "backend",
-  godot: "backend",
-  bevy: "backend",
 
   // Database
   postgresql: "database",

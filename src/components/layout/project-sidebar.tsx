@@ -11,6 +11,7 @@ import {
   GitBranch,
   Network,
   BookOpen,
+  Cpu,
   FileText,
   Brain,
   FolderOpen,
@@ -61,6 +62,7 @@ const navGroups: NavGroup[] = [
       { href: 'knowledge', label: 'Knowledge', icon: BookOpen },
       { href: 'decisions', label: 'Decisions', icon: FileText },
       { href: 'files', label: 'Files', icon: FolderOpen },
+      { href: 'technology', label: 'Technologies', icon: Cpu },
     ],
   },
   {
