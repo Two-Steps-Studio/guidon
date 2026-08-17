@@ -1,10 +1,22 @@
 # Guidon database migrations
 
-Apply in numeric order in the Supabase SQL editor. Each file is wrapped in a
-transaction and is safe to re-run.
+```bash
+npm run migrate:status   # what is applied, what is pending — changes nothing
+npm run migrate          # apply everything pending
+```
+
+Requires `DATABASE_URL` (Supabase: Project Settings → Database → Connection
+string, **not** the REST URL). The runner records every applied file in
+`guidon_migrations` with a checksum, so a migration edited after it ran is a
+hard error rather than a silent skip.
+
+Files can still be pasted into the Supabase SQL editor by hand — each one is
+transactional and safe to re-run — but then the registry will not know about
+them. Prefer the runner.
 
 | File | What it does | Required for |
 |---|---|---|
+| `000_baseline_schema.sql` | Creates all 16 tables. Reproduces the schema **as it was before 002**, so the whole chain applies normally on a fresh database. | Any fresh install |
 | `001_initial_schema.sql` | RLS policies, helper functions, triggers, foreign keys, indexes, grants. Assumes the tables already exist. | Everything |
 | `002_task_status_and_project_slug.sql` | Normalises `tasks.status` to `backlog / todo / in_progress / review / done` (remapping `testing → review`, `completed → done`), pins `tasks.priority`, adds `projects.slug` unique per organization. | The Work board's Backlog and Review columns |
 | `003_profile_visibility.sql` | Lets a user read the profiles of people they share an organization or project with. Drops a dead `anon` insert policy and revokes `anon` table grants. | Member lists, assignee names, comment authors |
@@ -13,19 +25,12 @@ transaction and is safe to re-run.
 | `006_fix_service_role_detection.sql` | **Required after 005.** 005 detected the service role with `current_user`, which is the function owner inside `SECURITY DEFINER` and never matches. Replaces it with a JWT-claim check. | Server-side project creation |
 | `007_allow_parent_delete.sql` | The last-owner guards fired on `ON DELETE CASCADE`, making projects and organizations impossible to delete. Skips the guard when the parent row is already gone, and clears two smoke-test projects. | Deleting projects/organizations at all |
 
-## Note on 001 — this repo cannot rebuild the database
+## Drift
 
-Two separate gaps:
-
-1. `001_initial_schema.sql` **alters** the schema, it does not create the
-   tables. There is no `CREATE TABLE` baseline, so a fresh Supabase project
-   cannot be provisioned from these files. Writing `000_baseline_schema.sql`
-   is outstanding.
-
-2. The live database contained `private.set_organization_creator()`, which
-   appeared in no migration file. 005 brings it into the repo. Until a
-   baseline exists, treat the live database — not `001` — as the source of
-   truth, and re-run the drift check below after any manual SQL-editor change:
+`000` closed the "no baseline" gap, but one lesson stands: the live database
+once contained `private.set_organization_creator()` which appeared in no
+migration file at all. 005 brought it into the repo. Re-run this after any
+manual change made directly in the SQL editor:
 
 ```sql
 SELECT p.proname, pg_get_functiondef(p.oid)
