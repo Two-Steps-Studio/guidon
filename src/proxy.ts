@@ -10,7 +10,12 @@ type CookieToSet = { name: string; value: string; options: CookieOptions }
  * entry, and because `'/'` is a prefix of every path, `startsWith` made the
  * whole application public and the redirect below unreachable.
  */
-const EXACT_PUBLIC_ROUTES = new Set(['/'])
+const EXACT_PUBLIC_ROUTES = new Set([
+  '/',
+  // Container and load-balancer probes cannot authenticate (TODO.md §12).
+  // The endpoint reports status only — no secrets, no counts.
+  '/api/health',
+])
 const PUBLIC_ROUTE_PREFIXES = ['/auth/']
 
 /** Signed-in users are bounced away from these. */
