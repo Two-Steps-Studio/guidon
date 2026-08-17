@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { OAuthButtons } from "@/components/auth/oauth-buttons"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -112,6 +113,11 @@ export default function SignupPage() {
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
           </form>
+
+          <div className="mt-4">
+            <OAuthButtons />
+          </div>
+
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link href="/auth/login" className="text-primary hover:underline">
