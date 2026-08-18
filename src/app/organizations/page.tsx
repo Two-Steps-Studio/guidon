@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, Plus, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 
 interface OrganizationRow {
@@ -16,17 +18,33 @@ interface OrganizationRow {
 
 export default async function OrganizationsPage() {
   const user = await getCurrentUser();
-  const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("organization_members")
-    .select("role, organizations (id, name, slug, description, created_at, updated_at)")
-    .eq("user_id", user.id);
+  let organizations: OrganizationRow[];
 
-  const organizations: OrganizationRow[] = (data ?? []).map((member: any) => ({
-    ...member.organizations,
-    role: member.role,
-  }));
+  if (hasDirectDatabase()) {
+    const result = await withUser(user.id, ({ query }) =>
+      query(
+        `SELECT o.id, o.name, o.slug, o.description, om.role
+         FROM organization_members om
+         JOIN organizations o ON o.id = om.organization_id
+         WHERE om.user_id = $1`,
+        [user.id]
+      )
+    );
+    organizations = result.rows;
+  } else {
+    const supabase = await createClient();
+
+    const { data } = await supabase
+      .from("organization_members")
+      .select("role, organizations (id, name, slug, description, created_at, updated_at)")
+      .eq("user_id", user.id);
+
+    organizations = (data ?? []).map((member: any) => ({
+      ...member.organizations,
+      role: member.role,
+    }));
+  }
 
   return (
     <div className="min-h-screen bg-background">

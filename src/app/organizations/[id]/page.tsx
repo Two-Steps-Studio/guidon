@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, FolderKanban, Plus, Settings } from "lucide-react";
 import { requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { CreateProjectDialog } from "./create-project-dialog";
 import type { Project } from "@/types/project";
 
@@ -16,14 +18,23 @@ export default async function OrganizationDetailPage({
   const access = await requireOrgAccess(orgId);
   const { organization } = access;
 
-  const supabase = await createClient();
-  const { data: projectsData } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("organization_id", orgId)
-    .order("created_at", { ascending: false });
+  let projects: Project[];
 
-  const projects = (projectsData ?? []) as Project[];
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query("SELECT * FROM projects WHERE organization_id = $1 ORDER BY created_at DESC", [orgId])
+    );
+    projects = result.rows;
+  } else {
+    const supabase = await createClient();
+    const { data: projectsData } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false });
+
+    projects = (projectsData ?? []) as Project[];
+  }
 
   return (
     <div className="min-h-screen bg-background">

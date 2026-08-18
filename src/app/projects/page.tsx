@@ -6,6 +6,8 @@ import { Plus, ArrowRight, FolderKanban, Building2 } from "lucide-react";
 import { Navigation } from "@/components/layout/navigation";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 
 interface ProjectRow {
   id: string;
@@ -25,24 +27,63 @@ interface OrganizationRow {
 
 export default async function ProjectsPage() {
   const user = await getCurrentUser();
-  const supabase = await createClient();
 
-  const [orgResult, projectResult] = await Promise.all([
-    supabase
-      .from("organization_members")
-      .select("role, organizations (id, name, slug, description)")
-      .eq("user_id", user.id),
-    supabase
-      .from("projects")
-      .select("id, name, description, status, organizations (id, name)")
-      .order("created_at", { ascending: false }),
-  ]);
+  let organizations: OrganizationRow[];
+  let projects: ProjectRow[];
 
-  const organizations: OrganizationRow[] = (orgResult.data ?? []).map((member: any) => ({
-    ...member.organizations,
-    user_role: member.role,
-  }));
-  const projects = (projectResult.data ?? []) as unknown as ProjectRow[];
+  if (hasDirectDatabase()) {
+    const [orgResult, projectResult] = await withUser(user.id, ({ query }) =>
+      Promise.all([
+        query(
+          `SELECT o.id, o.name, o.slug, o.description, om.role
+           FROM organization_members om
+           JOIN organizations o ON o.id = om.organization_id
+           WHERE om.user_id = $1`,
+          [user.id]
+        ),
+        query(
+          `SELECT p.id, p.name, p.description, p.status, o.id AS org_id, o.name AS org_name
+           FROM projects p
+           JOIN organizations o ON o.id = p.organization_id
+           ORDER BY p.created_at DESC`
+        ),
+      ])
+    );
+
+    organizations = orgResult.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      user_role: row.role,
+    }));
+    projects = projectResult.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
+    }));
+  } else {
+    const supabase = await createClient();
+
+    const [orgResult, projectResult] = await Promise.all([
+      supabase
+        .from("organization_members")
+        .select("role, organizations (id, name, slug, description)")
+        .eq("user_id", user.id),
+      supabase
+        .from("projects")
+        .select("id, name, description, status, organizations (id, name)")
+        .order("created_at", { ascending: false }),
+    ]);
+
+    organizations = (orgResult.data ?? []).map((member: any) => ({
+      ...member.organizations,
+      user_role: member.role,
+    }));
+    projects = (projectResult.data ?? []) as unknown as ProjectRow[];
+  }
 
   return (
     <div className="min-h-screen bg-background">

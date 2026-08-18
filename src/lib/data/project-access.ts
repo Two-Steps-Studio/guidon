@@ -3,6 +3,9 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
+import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import type { ProjectRole } from "@/types/project";
 
 /**
@@ -67,6 +70,33 @@ export function canCommentOnProject(role: ProjectRole | null): boolean {
 export const getProjectAccess = cache(async function getProjectAccess(
   projectId: string
 ): Promise<ProjectAccess | null> {
+  if (hasDirectDatabase()) {
+    const userId = await getLocalSessionUserId();
+    if (!userId) return null;
+
+    const [projectResult, membershipResult] = await withUser(userId, ({ query }) =>
+      Promise.all([
+        query(
+          `SELECT id, name, slug, organization_id, description, status, visibility
+           FROM projects WHERE id = $1`,
+          [projectId]
+        ),
+        query("SELECT role FROM project_members WHERE project_id = $1 AND user_id = $2", [
+          projectId,
+          userId,
+        ]),
+      ])
+    );
+
+    if (projectResult.rows.length === 0) return null;
+
+    return {
+      userId,
+      project: projectResult.rows[0],
+      role: (membershipResult.rows[0]?.role as ProjectRole) ?? null,
+    };
+  }
+
   const supabase = await createClient();
 
   const {
@@ -112,6 +142,19 @@ export const getProjectAccess = cache(async function getProjectAccess(
 export async function requireProjectAccess(
   projectId: string
 ): Promise<ProjectAccess> {
+  if (hasDirectDatabase()) {
+    const userId = await getLocalSessionUserId();
+    if (!userId) {
+      redirect(`/auth/login?redirect=${encodeURIComponent(`/projects/${projectId}`)}`);
+    }
+
+    const access = await getProjectAccess(projectId);
+    if (!access) {
+      redirect("/projects?error=no-access");
+    }
+    return access;
+  }
+
   const supabase = await createClient();
 
   const {
@@ -150,6 +193,18 @@ export interface SwitchableProject {
 export async function getSwitchableProjects(
   organizationId: string
 ): Promise<SwitchableProject[]> {
+  if (hasDirectDatabase()) {
+    const userId = await getLocalSessionUserId();
+    if (!userId) return [];
+
+    const result = await withUser(userId, ({ query }) =>
+      query("SELECT id, name, slug FROM projects WHERE organization_id = $1 ORDER BY name ASC", [
+        organizationId,
+      ])
+    );
+    return result.rows;
+  }
+
   const supabase = await createClient();
 
   const { data } = await supabase

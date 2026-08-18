@@ -3,6 +3,9 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
+import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import type { OrganizationRole } from "@/types/project";
 
 export interface OrgAccess {
@@ -24,10 +27,44 @@ export function canManageOrg(role: OrganizationRole | null): boolean {
   return role !== null && MANAGE_ROLES.includes(role);
 }
 
-/** Same shape and same reasoning as getProjectAccess (src/lib/data/project-access.ts). */
+/**
+ * Same shape and same reasoning as getProjectAccess (src/lib/data/project-access.ts).
+ *
+ * Branches on hasDirectDatabase() the same way getCurrentUser() does — see
+ * src/lib/data/current-user.ts for the fuller explanation. Both queries run
+ * concurrently under the same withUser() transaction; node-postgres queues
+ * multiple in-flight .query() calls on one client internally, so this is
+ * safe (the same pattern src/app/dashboard/page.tsx already uses).
+ */
 export const getOrgAccess = cache(async function getOrgAccess(
   orgId: string
 ): Promise<OrgAccess | null> {
+  if (hasDirectDatabase()) {
+    const userId = await getLocalSessionUserId();
+    if (!userId) return null;
+
+    const [orgResult, membershipResult] = await withUser(userId, ({ query }) =>
+      Promise.all([
+        query(
+          "SELECT id, name, slug, description, created_at, updated_at FROM organizations WHERE id = $1",
+          [orgId]
+        ),
+        query(
+          "SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2",
+          [orgId, userId]
+        ),
+      ])
+    );
+
+    if (orgResult.rows.length === 0) return null;
+
+    return {
+      userId,
+      organization: orgResult.rows[0],
+      role: (membershipResult.rows[0]?.role as OrganizationRole) ?? null,
+    };
+  }
+
   const supabase = await createClient();
 
   const {
@@ -60,6 +97,19 @@ export const getOrgAccess = cache(async function getOrgAccess(
 });
 
 export async function requireOrgAccess(orgId: string): Promise<OrgAccess> {
+  if (hasDirectDatabase()) {
+    const userId = await getLocalSessionUserId();
+    if (!userId) {
+      redirect(`/auth/login?redirect=${encodeURIComponent(`/organizations/${orgId}`)}`);
+    }
+
+    const access = await getOrgAccess(orgId);
+    if (!access) {
+      redirect("/organizations?error=no-access");
+    }
+    return access;
+  }
+
   const supabase = await createClient();
 
   const {
