@@ -27,12 +27,8 @@ import {
   compareTasks,
   normalizeTaskStatus,
 } from "@/lib/work/task-board";
-import type { ProjectRole } from "@/types/project";
+import { useProjectAccess } from "@/contexts/project-access-context";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
-
-const CAN_MANAGE_TASKS: ProjectRole[] = ["owner", "admin", "developer"];
-const CAN_DELETE_TASKS: ProjectRole[] = ["owner", "admin"];
-const CAN_COMMENT: ProjectRole[] = ["owner", "admin", "developer", "tester"];
 
 interface ProfileRow {
   id: string;
@@ -51,16 +47,12 @@ interface MemberRow {
 }
 
 interface WorkState {
-  project: { id: string; name: string } | null;
-  role: ProjectRole | null;
   tasks: Task[];
   members: TaskCardMember[];
   commentCounts: Record<string, number>;
 }
 
 const EMPTY_STATE: WorkState = {
-  project: null,
-  role: null,
   tasks: [],
   members: [],
   commentCounts: {},
@@ -70,11 +62,14 @@ export default function ProjectWorkPage() {
   const params = useParams();
   const projectId = params.id as string;
 
+  // Project, role and identity are resolved server-side in
+  // /projects/[id]/layout.tsx; this page only loads its own data.
+  const { userId, project, role, canWrite, canComment } = useProjectAccess();
+  const canDelete = role === "owner" || role === "admin";
+
   const [state, setState] = useState<WorkState>(EMPTY_STATE);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [forbidden, setForbidden] = useState(false);
 
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
@@ -82,44 +77,6 @@ export default function ProjectWorkPage() {
   const load = useCallback(async () => {
     try {
       const supabase = createClient();
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      // State is only touched past this first await, so an effect-triggered
-      // load never re-renders synchronously from the effect body.
-      setError(null);
-      setForbidden(false);
-
-      if (!user) {
-        setForbidden(true);
-        return;
-      }
-      setCurrentUserId(user.id);
-
-      const [projectRes, membershipRes] = await Promise.all([
-        supabase
-          .from("projects")
-          .select("id, name")
-          .eq("id", projectId)
-          .maybeSingle(),
-        supabase
-          .from("project_members")
-          .select("role")
-          .eq("project_id", projectId)
-          .eq("user_id", user.id)
-          .maybeSingle(),
-      ]);
-
-      if (projectRes.error) throw projectRes.error;
-
-      // RLS hides projects the user cannot see, so "no row" and
-      // "no permission" are the same signal here.
-      if (!projectRes.data) {
-        setForbidden(true);
-        return;
-      }
 
       const [tasksRes, membersRes] = await Promise.all([
         supabase
@@ -131,6 +88,8 @@ export default function ProjectWorkPage() {
           .select("user_id, profiles ( id, full_name, email, avatar_url )")
           .eq("project_id", projectId),
       ]);
+
+      setError(null);
 
       if (tasksRes.error) throw tasksRes.error;
       if (membersRes.error) throw membersRes.error;
@@ -159,13 +118,7 @@ export default function ProjectWorkPage() {
         tasks.map((task) => task.id)
       );
 
-      setState({
-        project: projectRes.data,
-        role: (membershipRes.data?.role as ProjectRole) ?? null,
-        tasks,
-        members,
-        commentCounts,
-      });
+      setState({ tasks, members, commentCounts });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load work");
     } finally {
@@ -183,10 +136,7 @@ export default function ProjectWorkPage() {
     void load();
   }, [load]);
 
-  const canEdit = state.role !== null && CAN_MANAGE_TASKS.includes(state.role);
-  const canDelete =
-    state.role !== null && CAN_DELETE_TASKS.includes(state.role);
-  const canComment = state.role !== null && CAN_COMMENT.includes(state.role);
+  const canEdit = canWrite;
 
   const progress = useMemo(() => boardProgress(state.tasks), [state.tasks]);
 
@@ -252,23 +202,6 @@ export default function ProjectWorkPage() {
     );
   }
 
-  if (forbidden) {
-    return (
-      <>
-        <div className="flex min-h-[60vh] items-center justify-center p-6">
-          <div className="max-w-sm text-center">
-            <h2 className="text-base font-medium text-foreground">
-              You don&apos;t have permission to access this project
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Ask an owner or admin of the project to add you as a member.
-            </p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       <div className="mx-auto max-w-[1600px] p-6">
@@ -278,7 +211,7 @@ export default function ProjectWorkPage() {
               Work
             </h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {state.project?.name}
+              {project.name}
               {progress.total > 0 && (
                 <>
                   {" · "}
@@ -323,9 +256,9 @@ export default function ProjectWorkPage() {
           </div>
         )}
 
-        {!canEdit && state.role && (
+        {!canEdit && role && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            You have <strong className="font-medium">{state.role}</strong>{" "}
+            You have <strong className="font-medium">{role}</strong>{" "}
             access — the board is read-only.
           </p>
         )}
@@ -371,7 +304,7 @@ export default function ProjectWorkPage() {
         canEdit={canEdit}
         canDelete={canDelete}
         canComment={canComment}
-        currentUserId={currentUserId}
+        currentUserId={userId}
         onClose={() => setOpenTask(null)}
         onSaved={upsertTask}
         onDeleted={removeTask}
@@ -382,7 +315,7 @@ export default function ProjectWorkPage() {
         projectId={projectId}
         status={createFor}
         members={state.members}
-        currentUserId={currentUserId}
+        currentUserId={userId}
         existingTasks={state.tasks}
         onClose={() => setCreateFor(null)}
         onCreated={upsertTask}

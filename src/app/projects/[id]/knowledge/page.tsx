@@ -29,9 +29,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { ContextSource, SourceType } from "@/types/context";
-import type { ProjectRole } from "@/types/project";
-
-const CAN_MANAGE: ProjectRole[] = ["owner", "admin", "developer"];
+import { useProjectAccess } from "@/contexts/project-access-context";
 
 /**
  * The knowledge layer is deliberately built on context_sources rather than a
@@ -80,48 +78,28 @@ export default function ProjectKnowledgePage() {
   const params = useParams();
   const projectId = params.id as string;
 
+  // Resolved server-side in /projects/[id]/layout.tsx.
+  // Knowledge entries are writable by owner/admin/developer — that is canWrite.
+  const { userId, canWrite: canManage } = useProjectAccess();
+
   const [sources, setSources] = useState<ContextSource[]>([]);
   const [counts, setCounts] = useState<KnowledgeCounts>({
     decisions: 0,
     files: 0,
     memory: 0,
   });
-  const [role, setRole] = useState<ProjectRole | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [forbidden, setForbidden] = useState(false);
+
   const [showCreate, setShowCreate] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      // State is only touched past this first await, so an effect-triggered
-      // load never re-renders synchronously from the effect body.
       setError(null);
-      setForbidden(false);
 
-      if (!user) {
-        setForbidden(true);
-        return;
-      }
-
-      const { data: project, error: projectError } = await supabase
-        .from("projects")
-        .select("id")
-        .eq("id", projectId)
-        .maybeSingle();
-
-      if (projectError) throw projectError;
-      if (!project) {
-        setForbidden(true);
-        return;
-      }
-
-      const [sourcesRes, decisionsRes, filesRes, memoryRes, membershipRes] =
+      const [sourcesRes, decisionsRes, filesRes, memoryRes] =
         await Promise.all([
           supabase
             .from("context_sources")
@@ -140,12 +118,6 @@ export default function ProjectKnowledgePage() {
             .from("project_memory")
             .select("id")
             .eq("project_id", projectId),
-          supabase
-            .from("project_members")
-            .select("role")
-            .eq("project_id", projectId)
-            .eq("user_id", user.id)
-            .maybeSingle(),
         ]);
 
       if (sourcesRes.error) throw sourcesRes.error;
@@ -156,7 +128,6 @@ export default function ProjectKnowledgePage() {
         files: filesRes.data?.length ?? 0,
         memory: memoryRes.data?.length ?? 0,
       });
-      setRole((membershipRes.data?.role as ProjectRole) ?? null);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load knowledge"
@@ -173,7 +144,6 @@ export default function ProjectKnowledgePage() {
     void load();
   }, [load]);
 
-  const canManage = role !== null && CAN_MANAGE.includes(role);
 
   const handleDelete = async (sourceId: string) => {
     const previous = sources;
@@ -201,23 +171,6 @@ export default function ProjectKnowledgePage() {
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading knowledge...
           </p>
-        </div>
-      </>
-    );
-  }
-
-  if (forbidden) {
-    return (
-      <>
-        <div className="flex min-h-[60vh] items-center justify-center p-6">
-          <div className="max-w-sm text-center">
-            <h2 className="text-base font-medium text-foreground">
-              You don&apos;t have permission to access this project
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Ask an owner or admin of the project to add you as a member.
-            </p>
-          </div>
         </div>
       </>
     );
@@ -378,6 +331,7 @@ export default function ProjectKnowledgePage() {
       {showCreate && (
         <CreateSourceDialog
           projectId={projectId}
+          authorId={userId}
           onClose={() => setShowCreate(false)}
           onCreated={(source) => {
             setSources((current) => [source, ...current]);
@@ -426,10 +380,12 @@ function KnowledgeLink({
 
 function CreateSourceDialog({
   projectId,
+  authorId,
   onClose,
   onCreated,
 }: {
   projectId: string;
+  authorId: string;
   onClose: () => void;
   onCreated: (source: ContextSource) => void;
 }) {
@@ -449,9 +405,6 @@ function CreateSourceDialog({
 
     try {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
       const { data, error: insertError } = await supabase
         .from("context_sources")
@@ -461,7 +414,7 @@ function CreateSourceDialog({
           title: title.trim() || null,
           content: content.trim() || null,
           url: url.trim() || null,
-          author: user?.id ?? null,
+          author: authorId,
         })
         .select()
         .single();

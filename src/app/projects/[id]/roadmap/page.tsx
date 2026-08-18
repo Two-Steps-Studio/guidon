@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { RoadmapPhase, PhaseStatus } from '@/types/task';
+import { useProjectAccess } from "@/contexts/project-access-context";
 
 const STATUS_CONFIG: Record<PhaseStatus, { label: string; color: string; icon: any }> = {
   planned: { label: 'Planned', color: 'bg-blue-100 text-blue-800', icon: Clock },
@@ -36,6 +37,9 @@ export default function ProjectRoadmapPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
+
+  // Identity resolved server-side in /projects/[id]/layout.tsx.
+  const { userId } = useProjectAccess();
 
   const [phases, setPhases] = useState<RoadmapPhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,10 +87,6 @@ export default function ProjectRoadmapPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) throw new Error('Not authenticated');
-
       const maxSortOrder = phases.length > 0 ? Math.max(...phases.map(p => p.sort_order || 0)) : 0;
 
       const { error } = await supabase
@@ -100,7 +100,7 @@ export default function ProjectRoadmapPage() {
           status: phaseForm.status,
           completion_percentage: phaseForm.completion_percentage,
           sort_order: maxSortOrder + 1,
-          created_by: user.id,
+          created_by: userId,
         });
 
       if (error) throw error;

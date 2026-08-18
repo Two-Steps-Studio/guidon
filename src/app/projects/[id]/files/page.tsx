@@ -26,6 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { ProjectFile } from '@/types/api';
 import { FileViewer } from '@/components/files/file-viewer';
 import { STORAGE_BUCKETS } from '@/lib/storage/storage-constants';
+import { useProjectAccess } from "@/contexts/project-access-context";
 
 const FILE_TYPE_ICONS: Record<string, any> = {
   'application/pdf': FileText,
@@ -72,6 +73,9 @@ export default function ProjectFilesPage() {
   const params = useParams();
   const projectId = params.id as string;
 
+  // Identity resolved server-side in /projects/[id]/layout.tsx.
+  const { userId } = useProjectAccess();
+
   const [files, setFiles] = useState<ProjectFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,10 +116,6 @@ export default function ProjectFilesPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) throw new Error('Not authenticated');
-
       const file = fileList[0];
       const fileExt = file.name.split('.').pop();
       const fileName = `${projectId}/${Date.now()}_${file.name}`;
@@ -136,7 +136,7 @@ export default function ProjectFilesPage() {
           storage_path: fileName,
           size_bytes: file.size,
           mime_type: file.type || 'application/octet-stream',
-          uploaded_by: user.id,
+          uploaded_by: userId,
         });
 
       if (dbError) throw dbError;

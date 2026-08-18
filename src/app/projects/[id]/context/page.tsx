@@ -27,6 +27,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Decision, ContextRelation, ContextSource } from '@/types/context';
 import { fetchProjectRelations } from '@/lib/context/project-relations';
+import { useProjectAccess } from "@/contexts/project-access-context";
 
 type TabType = 'decisions' | 'relations' | 'sources';
 
@@ -34,6 +35,9 @@ export default function ProjectContextPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
+
+  // Identity resolved server-side in /projects/[id]/layout.tsx.
+  const { userId } = useProjectAccess();
 
   const [activeTab, setActiveTab] = useState<TabType>('decisions');
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -115,9 +119,6 @@ export default function ProjectContextPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { error } = await supabase
         .from('context_decisions')
         .insert({
@@ -129,7 +130,7 @@ export default function ProjectContextPage() {
           status: decisionForm.status,
           decision_type: decisionForm.decision_type,
           // context_decisions records the author as made_by, not created_by.
-          made_by: user.id,
+          made_by: userId,
           made_at: new Date().toISOString(),
         });
 
@@ -208,9 +209,6 @@ export default function ProjectContextPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       // No project_id column here — the source entity anchors the relation,
       // and RLS requires source and target to resolve to the same project.
       const { error } = await supabase
@@ -221,7 +219,7 @@ export default function ProjectContextPage() {
           target_type: relationForm.target_type,
           target_id: relationForm.target_id,
           relation_type: relationForm.relation_type,
-          created_by: user.id,
+          created_by: userId,
         });
 
       if (error) throw error;
@@ -254,9 +252,6 @@ export default function ProjectContextPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { error } = await supabase
         .from('context_sources')
         .insert({
@@ -266,7 +261,7 @@ export default function ProjectContextPage() {
           source_type: sourceForm.source_type,
           url: sourceForm.url || null,
           // context_sources records the author as `author`, not created_by.
-          author: user.id,
+          author: userId,
         });
 
       if (error) throw error;

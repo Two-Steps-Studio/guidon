@@ -39,7 +39,6 @@ export default function ProjectPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', description: '' });
-  const [user, setUser] = useState<{ email?: string; full_name?: string; avatar_url?: string } | null>(null);
 
   useEffect(() => {
     fetchProjectData();
@@ -48,18 +47,10 @@ export default function ProjectPage() {
   const fetchProjectData = async () => {
     try {
       const supabase = createClient();
-      const { data: { user: authUser } } = await supabase.auth.getUser();
 
-      if (!authUser) throw new Error('Not authenticated');
-
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email, full_name, avatar_url')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      setUser(profile || { email: authUser.email || undefined });
+      // The profile fetch that used to live here fed a `user` state nothing
+      // ever rendered — the header it belonged to moved into the layout. It
+      // was one wasted round-trip per visit.
 
       // Fetch project
       const { data: projectData, error: projectError } = await supabase

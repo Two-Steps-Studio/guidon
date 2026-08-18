@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { Decision } from '@/types/context';
+import { useProjectAccess } from "@/contexts/project-access-context";
 
 const STATUS_CONFIG: Record<Decision['status'], { label: string; color: string; icon: any }> = {
   proposed: { label: 'Proposed', color: 'bg-blue-100 text-blue-800', icon: Clock },
@@ -46,6 +47,9 @@ export default function ProjectDecisionsPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
+
+  // Identity resolved server-side in /projects/[id]/layout.tsx.
+  const { userId } = useProjectAccess();
 
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,10 +97,6 @@ export default function ProjectDecisionsPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) throw new Error('Not authenticated');
-
       const { error } = await supabase
         .from('context_decisions')
         .insert({
@@ -108,7 +108,7 @@ export default function ProjectDecisionsPage() {
           status: decisionForm.status,
           decision_type: decisionForm.decision_type,
           // context_decisions records the author as made_by, not created_by.
-          made_by: user.id,
+          made_by: userId,
           made_at: new Date().toISOString(),
         });
 

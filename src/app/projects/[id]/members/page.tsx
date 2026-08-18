@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
 import type { ProjectRole } from "@/types/project";
+import { useProjectAccess } from "@/contexts/project-access-context";
 
 /**
  * Roles each actor may assign, mirroring the RLS policies exactly:
@@ -72,43 +73,20 @@ export default function ProjectMembersPage() {
   const params = useParams();
   const projectId = params.id as string;
 
+  // Resolved server-side in /projects/[id]/layout.tsx.
+  const { userId: currentUserId, project, role: myRole } = useProjectAccess();
+
   const [members, setMembers] = useState<ProjectMemberRow[]>([]);
   const [candidates, setCandidates] = useState<TaskCardMember[]>([]);
-  const [myRole, setMyRole] = useState<ProjectRole | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [forbidden, setForbidden] = useState(false);
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       setError(null);
-      setForbidden(false);
-
-      if (!user) {
-        setForbidden(true);
-        return;
-      }
-      setCurrentUserId(user.id);
-
-      const { data: project, error: projectError } = await supabase
-        .from("projects")
-        .select("id, organization_id")
-        .eq("id", projectId)
-        .maybeSingle();
-
-      if (projectError) throw projectError;
-      if (!project) {
-        setForbidden(true);
-        return;
-      }
 
       const [memberRes, orgRes] = await Promise.all([
         supabase
@@ -166,9 +144,6 @@ export default function ProjectMembersPage() {
 
       setMembers(rows);
       setCandidates(available);
-      setMyRole(
-        (rows.find((r) => r.user_id === user.id)?.role as ProjectRole) ?? null
-      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load members");
     } finally {
@@ -255,23 +230,6 @@ export default function ProjectMembersPage() {
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading members...
           </p>
-        </div>
-      </>
-    );
-  }
-
-  if (forbidden) {
-    return (
-      <>
-        <div className="flex min-h-[60vh] items-center justify-center p-6">
-          <div className="max-w-sm text-center">
-            <h2 className="text-base font-medium text-foreground">
-              You don&apos;t have permission to access this project
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Ask an owner or admin of the project to add you as a member.
-            </p>
-          </div>
         </div>
       </>
     );

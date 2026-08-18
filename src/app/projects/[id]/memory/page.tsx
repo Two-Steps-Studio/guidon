@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { ProjectMemory } from '@/types/context';
+import { useProjectAccess } from "@/contexts/project-access-context";
 
 const MEMORY_TYPE_CONFIG: Record<ProjectMemory['memory_type'], { label: string; color: string; icon: any }> = {
   fact: { label: 'Fact', color: 'bg-blue-100 text-blue-800', icon: FileText },
@@ -42,6 +43,9 @@ export default function ProjectMemoryPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
+
+  // Identity resolved server-side in /projects/[id]/layout.tsx.
+  const { userId } = useProjectAccess();
 
   const [memories, setMemories] = useState<ProjectMemory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,17 +89,13 @@ export default function ProjectMemoryPage() {
 
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) throw new Error('Not authenticated');
-
       const { error } = await supabase
         .from('project_memory')
         .insert({
           project_id: projectId,
           content: memoryForm.content,
           memory_type: memoryForm.memory_type,
-          created_by: user.id,
+          created_by: userId,
         });
 
       if (error) throw error;
