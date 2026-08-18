@@ -9,6 +9,7 @@ import {
   groupTasksByStatus,
   normalizeTaskStatus,
   sortOrderForPosition,
+  type SubtaskProgress,
 } from "@/lib/work/task-board";
 import { TaskCard, type TaskCardMember } from "@/components/work/task-card";
 import type { Task, TaskStatus } from "@/types/task";
@@ -17,6 +18,7 @@ interface KanbanBoardProps {
   tasks: Task[];
   members: TaskCardMember[];
   commentCounts?: Record<string, number>;
+  subtaskCounts?: Record<string, SubtaskProgress>;
   /** When false the board is read-only (viewer/tester roles). */
   canEdit: boolean;
   onOpenTask: (task: Task) => void;
@@ -41,6 +43,7 @@ export function KanbanBoard({
   tasks,
   members,
   commentCounts = {},
+  subtaskCounts = {},
   canEdit,
   onOpenTask,
   onCreateTask,
@@ -168,6 +171,7 @@ export function KanbanBoard({
                         : undefined
                     }
                     commentCount={commentCounts[task.id]}
+                    subtaskProgress={subtaskCounts[task.id]}
                     draggable={canEdit}
                     isDragging={draggingTask?.id === task.id}
                     onOpen={onOpenTask}

@@ -18,14 +18,19 @@ export async function getProjectStats(projectId: string): Promise<ProjectStats> 
   const supabase = await createClient();
 
   const [tasksRes, phasesRes, filesRes, decisionsRes, memoryRes] = await Promise.all([
-    supabase.from("tasks").select("id, status").eq("project_id", projectId),
+    supabase.from("tasks").select("id, status, parent_task_id").eq("project_id", projectId),
     supabase.from("roadmap_phases").select("id, status").eq("project_id", projectId),
     supabase.from("project_files").select("id").eq("project_id", projectId),
     supabase.from("context_decisions").select("id").eq("project_id", projectId),
     supabase.from("project_memory").select("id").eq("project_id", projectId),
   ]);
 
-  const tasks = tasksRes.data ?? [];
+  // Subtasks (migration 010) are plain rows in `tasks`, so counting every row
+  // would silently double-count work once a task gets subtasks: the parent
+  // and its children are the same unit of work on the board. Match the work
+  // board's convention (src/app/projects/[id]/work/work-board.tsx) and count
+  // top-level tasks only.
+  const tasks = (tasksRes.data ?? []).filter((t) => !t.parent_task_id);
   const phases = phasesRes.data ?? [];
 
   const totalTasks = tasks.length;

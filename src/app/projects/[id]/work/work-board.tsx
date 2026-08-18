@@ -22,7 +22,9 @@ import {
   PRIORITY_LABELS,
   TASK_PRIORITIES,
   boardProgress,
+  groupSubtasksByParent,
   normalizeTaskStatus,
+  subtaskProgress,
 } from "@/lib/work/task-board";
 import { createTask, moveTask } from "./actions";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
@@ -65,7 +67,31 @@ export function WorkBoard({
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
 
-  const progress = useMemo(() => boardProgress(state.tasks), [state.tasks]);
+  // Subtasks (migration 010) are plain rows in `tasks` with a parent_task_id.
+  // They are not shown as their own board cards — only nested under their
+  // parent in TaskDetailDialog and rolled up into the "3/5" badge on the
+  // parent's card — so the board columns and progress header only count
+  // top-level tasks.
+  const topLevelTasks = useMemo(
+    () => state.tasks.filter((task) => !task.parent_task_id),
+    [state.tasks]
+  );
+  const subtasksByParent = useMemo(
+    () => groupSubtasksByParent(state.tasks),
+    [state.tasks]
+  );
+  const subtaskCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(subtasksByParent).map(([taskId, subtasks]) => [
+          taskId,
+          subtaskProgress(subtasks),
+        ])
+      ),
+    [subtasksByParent]
+  );
+
+  const progress = useMemo(() => boardProgress(topLevelTasks), [topLevelTasks]);
 
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
     const previous = state.tasks;
@@ -151,7 +177,7 @@ export function WorkBoard({
           </p>
         )}
 
-        {state.tasks.length === 0 ? (
+        {topLevelTasks.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-16 text-center">
             <h2 className="text-sm font-medium text-foreground">No tasks yet</h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
@@ -168,9 +194,10 @@ export function WorkBoard({
           </div>
         ) : (
           <KanbanBoard
-            tasks={state.tasks}
+            tasks={topLevelTasks}
             members={members}
             commentCounts={state.commentCounts}
+            subtaskCounts={subtaskCounts}
             canEdit={canEdit}
             onOpenTask={setOpenTask}
             onCreateTask={setCreateFor}
@@ -183,6 +210,7 @@ export function WorkBoard({
         key={openTask?.id ?? "no-task"}
         projectId={projectId}
         task={openTask}
+        subtasks={openTask ? subtasksByParent[openTask.id] ?? [] : []}
         members={members}
         canEdit={canEdit}
         canDelete={canDelete}
@@ -199,7 +227,7 @@ export function WorkBoard({
         status={createFor}
         members={members}
         currentUserId={userId}
-        existingTasks={state.tasks}
+        existingTasks={topLevelTasks}
         onClose={() => setCreateFor(null)}
         onCreated={upsertTask}
       />

@@ -233,6 +233,42 @@ export function boardProgress(tasks: Task[]): BoardProgress {
 }
 
 // ============================================
+// SUBTASKS
+// ============================================
+
+/**
+ * Groups tasks by parent_task_id (migration 010). Top-level tasks (no
+ * parent) are not represented in the result — only entries that have at
+ * least one subtask appear.
+ */
+export function groupSubtasksByParent(tasks: Task[]): Record<string, Task[]> {
+  const groups: Record<string, Task[]> = {};
+
+  for (const task of tasks) {
+    if (!task.parent_task_id) continue;
+    (groups[task.parent_task_id] ??= []).push(task);
+  }
+
+  for (const key of Object.keys(groups)) {
+    groups[key].sort(compareTasks);
+  }
+
+  return groups;
+}
+
+export interface SubtaskProgress {
+  done: number;
+  total: number;
+}
+
+export function subtaskProgress(subtasks: Task[]): SubtaskProgress {
+  return {
+    done: subtasks.filter((task) => isDone(task.status)).length,
+    total: subtasks.length,
+  };
+}
+
+// ============================================
 // DUE DATES
 // ============================================
 

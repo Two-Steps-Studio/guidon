@@ -346,5 +346,56 @@ try {
   check("ponowne uruchomienie nie rusza danych", false, error.message);
 }
 
+// ------------------------------------------------------------------
+section("9. subtaski (migracja 010)");
+
+let parentTaskId;
+let subtaskId;
+
+await withUser(A, async () => {
+  const parent = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Rodzic') RETURNING id",
+    [projectId]
+  );
+  parentTaskId = parent.rows[0].id;
+
+  const subtask = await db.query(
+    "INSERT INTO public.tasks (project_id, title, parent_task_id) VALUES ($1,'Subtask',$2) RETURNING id, parent_task_id",
+    [projectId, parentTaskId]
+  );
+  subtaskId = subtask.rows[0].id;
+  check(
+    "subtask wskazuje rodzica",
+    subtask.rows[0].parent_task_id === parentTaskId,
+    subtask.rows[0].parent_task_id
+  );
+});
+
+await expectRejected(
+  "task nie moze byc wlasnym rodzicem",
+  () =>
+    withUser(A, () =>
+      db.query("UPDATE public.tasks SET parent_task_id = id WHERE id = $1", [parentTaskId])
+    ),
+  /parent_task_id_not_self|check constraint/i
+);
+
+await withUser(B, async () => {
+  const { rows } = await db.query(
+    "SELECT count(*)::int n FROM public.tasks WHERE id = $1",
+    [subtaskId]
+  );
+  check("B nie widzi subtaska A (te same polityki co tasks)", rows[0].n === 0, rows[0].n);
+});
+
+await withUser(A, async () => {
+  await db.query("DELETE FROM public.tasks WHERE id = $1", [parentTaskId]);
+  const { rows } = await db.query(
+    "SELECT count(*)::int n FROM public.tasks WHERE id = $1",
+    [subtaskId]
+  );
+  check("ON DELETE CASCADE usuwa subtask z rodzicem", rows[0].n === 0, rows[0].n);
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

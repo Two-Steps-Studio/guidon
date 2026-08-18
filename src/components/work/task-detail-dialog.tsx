@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Send, Trash2 } from "lucide-react";
+import { Check, Loader2, Plus, Send, Trash2, X } from "lucide-react";
 import {
+  createSubtask,
   deleteTask,
   loadComments as loadCommentsAction,
   postComment,
+  toggleSubtask,
   updateTask,
   type TaskComment,
 } from "@/app/projects/[id]/work/actions";
@@ -26,6 +28,7 @@ import {
   BOARD_COLUMNS,
   PRIORITY_LABELS,
   TASK_PRIORITIES,
+  isDone,
   normalizeTaskPriority,
   normalizeTaskStatus,
 } from "@/lib/work/task-board";
@@ -35,6 +38,8 @@ import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/tas
 interface TaskDetailDialogProps {
   projectId: string;
   task: Task | null;
+  /** Subtasks (migration 010) of `task`, already sorted. Empty when task is null. */
+  subtasks: Task[];
   members: TaskCardMember[];
   canEdit: boolean;
   canDelete: boolean;
@@ -70,6 +75,7 @@ function formToTask(task: Task): TaskForm {
 export function TaskDetailDialog({
   projectId,
   task,
+  subtasks,
   members,
   canEdit,
   canDelete,
@@ -204,6 +210,66 @@ export function TaskDetailDialog({
       );
     } finally {
       setPosting(false);
+    }
+  };
+
+  const [subtaskDraft, setSubtaskDraft] = useState("");
+  const [addingSubtask, setAddingSubtask] = useState(false);
+  const [subtaskError, setSubtaskError] = useState<string | null>(null);
+  const [togglingSubtaskId, setTogglingSubtaskId] = useState<string | null>(null);
+  const [deletingSubtaskId, setDeletingSubtaskId] = useState<string | null>(null);
+
+  const handleAddSubtask = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!task || !subtaskDraft.trim()) return;
+
+    setAddingSubtask(true);
+    setSubtaskError(null);
+
+    try {
+      const result = await createSubtask(projectId, task.id, subtaskDraft.trim());
+      if (result.error || !result.task) throw new Error(result.error ?? "Failed to create subtask");
+
+      // Subtasks are plain tasks, so the same onSaved callback that updates
+      // the board's task list handles them — no separate state to sync.
+      onSaved(result.task);
+      setSubtaskDraft("");
+    } catch (err) {
+      setSubtaskError(err instanceof Error ? err.message : "Failed to create subtask");
+    } finally {
+      setAddingSubtask(false);
+    }
+  };
+
+  const handleToggleSubtask = async (subtask: Task) => {
+    setTogglingSubtaskId(subtask.id);
+    setSubtaskError(null);
+
+    try {
+      const result = await toggleSubtask(projectId, subtask.id, !isDone(subtask.status));
+      if (result.error || !result.task) throw new Error(result.error ?? "Failed to update subtask");
+
+      onSaved(result.task);
+    } catch (err) {
+      setSubtaskError(err instanceof Error ? err.message : "Failed to update subtask");
+    } finally {
+      setTogglingSubtaskId(null);
+    }
+  };
+
+  const handleDeleteSubtask = async (subtaskId: string) => {
+    setDeletingSubtaskId(subtaskId);
+    setSubtaskError(null);
+
+    try {
+      const result = await deleteTask(projectId, subtaskId);
+      if (result.error) throw new Error(result.error);
+
+      onDeleted(subtaskId);
+    } catch (err) {
+      setSubtaskError(err instanceof Error ? err.message : "Failed to delete subtask");
+    } finally {
+      setDeletingSubtaskId(null);
     }
   };
 
@@ -390,6 +456,111 @@ export function TaskDetailDialog({
             </div>
           )}
         </form>
+
+        <section
+          aria-label="Subtasks"
+          className="space-y-3 border-t border-border pt-4"
+        >
+          <h3 className="text-sm font-medium text-foreground">
+            Subtasks
+            {subtasks.length > 0 && (
+              <span className="ml-1.5 text-xs font-normal tabular-nums text-muted-foreground">
+                {subtasks.filter((subtask) => isDone(subtask.status)).length}/{subtasks.length}
+              </span>
+            )}
+          </h3>
+
+          {subtasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No subtasks yet.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {subtasks.map((subtask) => {
+                const done = isDone(subtask.status);
+                return (
+                  <li key={subtask.id} className="group flex items-center gap-2">
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={done}
+                      aria-label={
+                        done
+                          ? `Mark "${subtask.title}" as not done`
+                          : `Mark "${subtask.title}" as done`
+                      }
+                      disabled={!canEdit || togglingSubtaskId === subtask.id}
+                      onClick={() => void handleToggleSubtask(subtask)}
+                      className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border text-primary-foreground",
+                        "disabled:cursor-not-allowed disabled:opacity-60",
+                        done && "border-primary bg-primary"
+                      )}
+                    >
+                      {togglingSubtaskId === subtask.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : done ? (
+                        <Check className="h-3 w-3" />
+                      ) : null}
+                    </button>
+                    <span
+                      className={cn(
+                        "flex-1 truncate text-sm text-foreground",
+                        done && "text-muted-foreground line-through"
+                      )}
+                    >
+                      {subtask.title}
+                    </span>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        aria-label={`Delete subtask "${subtask.title}"`}
+                        disabled={deletingSubtaskId === subtask.id}
+                        onClick={() => void handleDeleteSubtask(subtask.id)}
+                        className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 disabled:opacity-60"
+                      >
+                        {deletingSubtaskId === subtask.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <X className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {subtaskError && (
+            <p role="alert" className="text-sm text-destructive">
+              {subtaskError}
+            </p>
+          )}
+
+          {canEdit && (
+            <form onSubmit={handleAddSubtask} className="flex gap-2">
+              <Input
+                value={subtaskDraft}
+                placeholder="Add a subtask..."
+                aria-label="Add a subtask"
+                disabled={addingSubtask}
+                onChange={(event) => setSubtaskDraft(event.target.value)}
+              />
+              <Button
+                type="submit"
+                size="icon"
+                aria-label="Add subtask"
+                disabled={addingSubtask || !subtaskDraft.trim()}
+                className="shrink-0"
+              >
+                {addingSubtask ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
+          )}
+        </section>
 
         <section
           aria-label="Comments"

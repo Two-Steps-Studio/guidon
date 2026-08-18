@@ -167,6 +167,67 @@ export async function updateTask(
   return { task: data as Task, error: null };
 }
 
+export async function createSubtask(
+  projectId: string,
+  parentTaskId: string,
+  title: string
+): Promise<TaskActionResult> {
+  const access = await getProjectAccess(projectId);
+  // A subtask is a plain row in `tasks`, so it is gated by the same policy
+  // as any other task: tasks_insert (001), owner/admin/developer.
+  if (!access || !canWriteProject(access.role)) {
+    return { task: null, error: "You do not have permission to create subtasks." };
+  }
+  if (!title.trim()) {
+    return { task: null, error: "Title is required." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert({
+      project_id: projectId,
+      parent_task_id: parentTaskId,
+      title: title.trim(),
+      status: "todo",
+      priority: "medium",
+      tags: [],
+      created_by: access.userId,
+    })
+    .select()
+    .single();
+
+  if (error) return { task: null, error: error.message };
+
+  revalidatePath(`/projects/${projectId}/work`);
+  return { task: data as Task, error: null };
+}
+
+export async function toggleSubtask(
+  projectId: string,
+  subtaskId: string,
+  done: boolean
+): Promise<TaskActionResult> {
+  const access = await getProjectAccess(projectId);
+  // Mirrors tasks_update (001): owner/admin/developer.
+  if (!access || !canWriteProject(access.role)) {
+    return { task: null, error: "You do not have permission to update this subtask." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ status: done ? "done" : "todo" })
+    .eq("id", subtaskId)
+    .select()
+    .single();
+
+  if (error) return { task: null, error: error.message };
+
+  revalidatePath(`/projects/${projectId}/work`);
+  return { task: data as Task, error: null };
+}
+
 export async function deleteTask(
   projectId: string,
   taskId: string

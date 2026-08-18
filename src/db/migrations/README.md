@@ -26,6 +26,7 @@ them. Prefer the runner.
 | `007_allow_parent_delete.sql` | The last-owner guards fired on `ON DELETE CASCADE`, making projects and organizations impossible to delete. Skips the guard when the parent row is already gone, and clears two smoke-test projects. | Deleting projects/organizations at all |
 | `008_technology_game_engine.sql` | Adds `game_engine` to the `technologies.category` vocabulary. | Unity/Unreal in the Technology tab |
 | `009_creator_visibility.sql` | **Fixes organization and project creation.** See below. | Creating organizations or projects at all |
+| `010_task_subtasks.sql` | Adds `tasks.parent_task_id` (self-referencing FK, `ON DELETE CASCADE`, indexed) so a task can have subtasks. No RLS change — subtasks are plain `tasks` rows covered by the existing four policies. | Subtask checklist in `TaskDetailDialog` and the `3/5` counter on task cards |
 
 ## The compatibility layer runs before all of this
 

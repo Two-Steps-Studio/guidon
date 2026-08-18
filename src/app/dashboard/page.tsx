@@ -34,11 +34,14 @@ export default async function DashboardPage() {
 
   if (projectIds.length > 0) {
     const [tasksRes, decisionsRes] = await Promise.all([
-      supabase.from("tasks").select("status").in("project_id", projectIds),
+      supabase.from("tasks").select("status, parent_task_id").in("project_id", projectIds),
       supabase.from("context_decisions").select("id").in("project_id", projectIds),
     ]);
 
-    const tasks = tasksRes.data ?? [];
+    // Subtasks (migration 010) are plain `tasks` rows — count top-level tasks
+    // only, matching src/lib/data/project-stats.ts and the work board, so a
+    // task with subtasks isn't counted twice in the dashboard totals.
+    const tasks = (tasksRes.data ?? []).filter((t) => !t.parent_task_id);
     totalTasks = tasks.length;
     // isDone folds the legacy 'completed' status onto 'done' (migration
     // 002 renamed the vocabulary) — comparing to 'completed' directly

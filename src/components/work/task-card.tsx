@@ -10,7 +10,8 @@ import {
   normalizeTaskPriority,
 } from "@/lib/work/task-board";
 import type { Task } from "@/types/task";
-import { CalendarDays, MessageSquare } from "lucide-react";
+import type { SubtaskProgress } from "@/lib/work/task-board";
+import { CalendarDays, ListChecks, MessageSquare } from "lucide-react";
 
 export interface TaskCardMember {
   id: string;
@@ -23,6 +24,7 @@ interface TaskCardProps {
   task: Task;
   assignee?: TaskCardMember;
   commentCount?: number;
+  subtaskProgress?: SubtaskProgress;
   draggable: boolean;
   isDragging: boolean;
   onOpen: (task: Task) => void;
@@ -44,6 +46,7 @@ export function TaskCard({
   task,
   assignee,
   commentCount = 0,
+  subtaskProgress,
   draggable,
   isDragging,
   onOpen,
@@ -130,6 +133,14 @@ export function TaskCard({
           <span className="flex items-center gap-1">
             <MessageSquare className="h-3 w-3" aria-hidden />
             {commentCount}
+          </span>
+        )}
+
+        {subtaskProgress && subtaskProgress.total > 0 && (
+          <span className="flex items-center gap-1">
+            <ListChecks className="h-3 w-3" aria-hidden />
+            <span className="sr-only">Subtasks: </span>
+            {subtaskProgress.done}/{subtaskProgress.total}
           </span>
         )}
 

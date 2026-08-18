@@ -37,6 +37,8 @@ export interface Task {
   actual_hours: number | null;
   sort_order: number | null;
   decision_id: string | null; // Link to decision
+  /** Self-reference (migration 010). Null for a top-level task. */
+  parent_task_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
