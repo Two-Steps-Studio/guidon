@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Brain, Plus } from "lucide-react";
 import { requireProjectAccess, canWriteProject } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { CreateMemoryDialog } from "./create-memory-dialog";
 import { InsightReviewCard } from "./insight-review-card";
 import { MemoryCardMenu } from "./memory-card-menu";
@@ -30,14 +32,25 @@ export default async function ProjectMemoryPage({
   const access = await requireProjectAccess(projectId);
   const canWrite = canWriteProject(access.role);
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("project_memory")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+  let memories: ProjectMemory[];
 
-  const memories = (data ?? []) as ProjectMemory[];
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query("SELECT * FROM project_memory WHERE project_id = $1 ORDER BY created_at DESC", [
+        projectId,
+      ])
+    );
+    memories = result.rows;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("project_memory")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+
+    memories = (data ?? []) as ProjectMemory[];
+  }
 
   // A pending insight is unverified AI output — TODO.md §20 is explicit that
   // this must not blend in with trusted project truth, so it gets a
@@ -51,15 +64,29 @@ export default async function ProjectMemoryPage({
   // separately rather than embedded, since PostgREST needs an explicit FK
   // hint to embed two relations to the same table and there is no existing
   // precedent for that in this codebase; a plain id lookup avoids it.
-  const profileIds = new Set<string>();
-  for (const memory of memories) {
-    if (memory.verified_by) profileIds.add(memory.verified_by);
+  const profileIds = Array.from(
+    new Set(memories.map((memory) => memory.verified_by).filter((id): id is string => !!id))
+  );
+
+  let profilesData: MemoryProfile[];
+
+  if (profileIds.length === 0) {
+    profilesData = [];
+  } else if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query("SELECT id, full_name, email FROM profiles WHERE id = ANY($1::uuid[])", [profileIds])
+    );
+    profilesData = result.rows;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", profileIds);
+    profilesData = (data ?? []) as MemoryProfile[];
   }
-  const { data: profilesData } =
-    profileIds.size > 0
-      ? await supabase.from("profiles").select("id, full_name, email").in("id", Array.from(profileIds))
-      : { data: [] as MemoryProfile[] };
-  const profilesById = new Map(((profilesData ?? []) as MemoryProfile[]).map((p) => [p.id, p]));
+
+  const profilesById = new Map(profilesData.map((p) => [p.id, p]));
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">

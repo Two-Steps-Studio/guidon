@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import type { MemoryType } from "@/types/context";
 
 export type MemoryFormState = {
@@ -52,6 +54,23 @@ export async function createMemory(
   const parsed = parseMemoryForm(formData);
   if (parsed.error) return { error: parsed.error };
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO project_memory (project_id, content, memory_type, created_by)
+           VALUES ($1, $2, $3, $4)`,
+          [projectId, parsed.content, parsed.memoryType, access.userId]
+        )
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to add memory entry." };
+    }
+
+    revalidatePath(`/projects/${projectId}/memory`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.from("project_memory").insert({
     project_id: projectId,
@@ -81,6 +100,23 @@ export async function updateMemory(
   const parsed = parseMemoryForm(formData);
   if (parsed.error) return { error: parsed.error };
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("UPDATE project_memory SET content = $1, memory_type = $2 WHERE id = $3", [
+          parsed.content,
+          parsed.memoryType,
+          memoryId,
+        ])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to update memory entry." };
+    }
+
+    revalidatePath(`/projects/${projectId}/memory`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("project_memory")
@@ -102,6 +138,19 @@ export async function deleteMemory(
   // Mirrors project_memory_delete (001): owner/admin only.
   if (!access || !canManageProject(access.role)) {
     return { error: "You do not have permission to delete memory entries." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM project_memory WHERE id = $1", [memoryId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to delete memory entry." };
+    }
+
+    revalidatePath(`/projects/${projectId}/memory`);
+    return { error: null };
   }
 
   const supabase = await createClient();
@@ -135,6 +184,24 @@ export async function acceptInsight(
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
     return { error: "You do not have permission to review insights." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          `UPDATE project_memory
+           SET memory_type = 'fact', verified = true, verified_by = $1, verified_at = now()
+           WHERE id = $2`,
+          [access.userId, memoryId]
+        )
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to accept insight." };
+    }
+
+    revalidatePath(`/projects/${projectId}/memory`);
+    return { error: null };
   }
 
   const supabase = await createClient();
@@ -176,6 +243,24 @@ export async function correctAndAcceptInsight(
     return { error: "Content is required." };
   }
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          `UPDATE project_memory
+           SET content = $1, memory_type = 'fact', verified = true, verified_by = $2, verified_at = now()
+           WHERE id = $3`,
+          [content.trim(), access.userId, memoryId]
+        )
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to accept insight." };
+    }
+
+    revalidatePath(`/projects/${projectId}/memory`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("project_memory")
@@ -207,6 +292,19 @@ export async function rejectInsight(
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
     return { error: "You do not have permission to reject insights." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM project_memory WHERE id = $1", [memoryId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to reject insight." };
+    }
+
+    revalidatePath(`/projects/${projectId}/memory`);
+    return { error: null };
   }
 
   const supabase = await createClient();

@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import type { ContextEntityType, RelationType } from "@/types/context";
 
 export type RelationFormState = { error: string | null };
@@ -72,6 +74,23 @@ export async function createRelation(
     return { error: "Target is required." };
   }
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO context_relations (source_type, source_id, target_type, target_id, relation_type, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [sourceType, sourceId.trim(), targetType, targetId.trim(), relationType, access.userId]
+        )
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to create relation." };
+    }
+
+    revalidatePath(`/projects/${projectId}/context`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.from("context_relations").insert({
     source_type: sourceType,
@@ -95,6 +114,19 @@ export async function deleteRelation(
   const access = await getProjectAccess(projectId);
   if (!access || (access.role !== "owner" && access.role !== "admin")) {
     return { error: "You do not have permission to delete relations." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM context_relations WHERE id = $1", [relationId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to delete relation." };
+    }
+
+    revalidatePath(`/projects/${projectId}/context`);
+    return { error: null };
   }
 
   const supabase = await createClient();
