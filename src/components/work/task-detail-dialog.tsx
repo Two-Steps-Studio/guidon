@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Send, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase";
+import {
+  deleteTask,
+  loadComments as loadCommentsAction,
+  postComment,
+  updateTask,
+  type TaskComment,
+} from "@/app/projects/[id]/work/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,15 +32,8 @@ import {
 import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
-interface TaskComment {
-  id: string;
-  task_id: string;
-  author_id: string;
-  content: string;
-  created_at: string;
-}
-
 interface TaskDetailDialogProps {
+  projectId: string;
   task: Task | null;
   members: TaskCardMember[];
   canEdit: boolean;
@@ -69,6 +68,7 @@ function formToTask(task: Task): TaskForm {
 }
 
 export function TaskDetailDialog({
+  projectId,
   task,
   members,
   canEdit,
@@ -97,25 +97,22 @@ export function TaskDetailDialog({
 
   const membersById = new Map(members.map((member) => [member.id, member]));
 
-  const loadComments = useCallback(async (taskId: string) => {
-    try {
-      const supabase = createClient();
-      const { data, error: queryError } = await supabase
-        .from("task_comments")
-        .select("id, task_id, author_id, content, created_at")
-        .eq("task_id", taskId)
-        .order("created_at", { ascending: true });
-
-      if (queryError) throw queryError;
-      setComments(data ?? []);
-    } catch (err) {
-      setCommentsError(
-        err instanceof Error ? err.message : "Failed to load comments"
-      );
-    } finally {
-      setCommentsLoading(false);
-    }
-  }, []);
+  const loadComments = useCallback(
+    async (taskId: string) => {
+      try {
+        const result = await loadCommentsAction(projectId, taskId);
+        if (result.error) throw new Error(result.error);
+        setComments(result.comments);
+      } catch (err) {
+        setCommentsError(
+          err instanceof Error ? err.message : "Failed to load comments"
+        );
+      } finally {
+        setCommentsLoading(false);
+      }
+    },
+    [projectId]
+  );
 
   const taskId = task?.id;
 
@@ -150,25 +147,17 @@ export function TaskDetailDialog({
           .filter(Boolean),
       };
 
-      const supabase = createClient();
-      const { data, error: updateError } = await supabase
-        .from("tasks")
-        .update({
-          ...patch,
-          // Explicit nulls: an empty field means "clear", not "leave alone".
-          description: form.description.trim() || null,
-          assignee_id: form.assignee_id || null,
-          due_date: form.due_date
-            ? new Date(form.due_date).toISOString()
-            : null,
-        })
-        .eq("id", task.id)
-        .select()
-        .single();
+      const result = await updateTask(projectId, task.id, {
+        ...patch,
+        // Explicit nulls: an empty field means "clear", not "leave alone".
+        description: form.description.trim() || null,
+        assignee_id: form.assignee_id || null,
+        due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+      });
 
-      if (updateError) throw updateError;
+      if (result.error || !result.task) throw new Error(result.error ?? "Failed to save task");
 
-      onSaved(data as Task);
+      onSaved(result.task);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save task");
@@ -184,13 +173,8 @@ export function TaskDetailDialog({
     setError(null);
 
     try {
-      const supabase = createClient();
-      const { error: deleteError } = await supabase
-        .from("tasks")
-        .delete()
-        .eq("id", task.id);
-
-      if (deleteError) throw deleteError;
+      const result = await deleteTask(projectId, task.id);
+      if (result.error) throw new Error(result.error);
 
       onDeleted(task.id);
       onClose();
@@ -209,20 +193,10 @@ export function TaskDetailDialog({
     setCommentsError(null);
 
     try {
-      const supabase = createClient();
-      const { data, error: insertError } = await supabase
-        .from("task_comments")
-        .insert({
-          task_id: task.id,
-          author_id: currentUserId,
-          content: draft.trim(),
-        })
-        .select("id, task_id, author_id, content, created_at")
-        .single();
+      const result = await postComment(projectId, task.id, draft.trim());
+      if (result.error || !result.comment) throw new Error(result.error ?? "Failed to post comment");
 
-      if (insertError) throw insertError;
-
-      setComments((current) => [...current, data as TaskComment]);
+      setComments((current) => [...current, result.comment as TaskComment]);
       setDraft("");
     } catch (err) {
       setCommentsError(

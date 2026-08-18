@@ -10,7 +10,6 @@ import {
   FileQuestion,
   Loader2,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
+import { getDownloadUrl } from "@/app/projects/[id]/files/actions";
 import {
   MAX_INLINE_PREVIEW_BYTES,
   detectFileKind,
@@ -149,15 +148,12 @@ function useSignedUrl(file: ProjectFile, enabled: boolean) {
 
     (async () => {
       try {
-        const supabase = createClient();
-        const { data, error: signError } = await supabase.storage
-          .from(STORAGE_BUCKETS.FILES)
-          .createSignedUrl(file.storage_path!, 60 * 10);
+        const result = await getDownloadUrl(file.project_id, file.storage_path!);
 
         if (cancelled) return;
-        if (signError) throw signError;
+        if (result.error) throw new Error(result.error);
 
-        setUrl(data?.signedUrl ?? null);
+        setUrl(result.url);
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -172,7 +168,7 @@ function useSignedUrl(file: ProjectFile, enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [file.storage_path, shouldFetch]);
+  }, [file.project_id, file.storage_path, shouldFetch]);
 
   return { url, error, loading };
 }
@@ -298,13 +294,15 @@ function DownloadButton({ file }: { file: ProjectFile }) {
     setError(null);
 
     try {
-      const supabase = createClient();
-      const { data, error: downloadError } = await supabase.storage
-        .from(STORAGE_BUCKETS.FILES)
-        .download(file.storage_path);
+      const result = await getDownloadUrl(file.project_id, file.storage_path);
+      if (result.error) throw new Error(result.error);
+      if (!result.url) throw new Error("Empty response");
 
-      if (downloadError) throw downloadError;
-      if (!data) throw new Error("Empty response");
+      // Fetched as a blob (rather than just navigating to the signed URL) so
+      // the browser always saves to disk instead of rendering the file
+      // inline for types like PDFs and images.
+      const response = await fetch(result.url);
+      const data = await response.blob();
 
       const href = URL.createObjectURL(data);
       const link = document.createElement("a");
