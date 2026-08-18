@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Plus } from "lucide-react";
 import { canManageProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { CreateDecisionDialog } from "./create-decision-dialog";
 import { DecisionCardMenu } from "./decision-card-menu";
 import { STATUS_CONFIG, TYPE_COLORS } from "./decision-config";
@@ -19,14 +21,25 @@ export default async function ProjectDecisionsPage({
   const canWrite = canWriteProject(access.role);
   const canDelete = canManageProject(access.role);
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("context_decisions")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+  let decisions: Decision[];
 
-  const decisions = (data ?? []) as Decision[];
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query("SELECT * FROM context_decisions WHERE project_id = $1 ORDER BY created_at DESC", [
+        projectId,
+      ])
+    );
+    decisions = result.rows;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("context_decisions")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+
+    decisions = (data ?? []) as Decision[];
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">

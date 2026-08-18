@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Plus, TrendingUp } from "lucide-react";
 import { canManageProject, requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { CreatePhaseDialog } from "./create-phase-dialog";
 import { PhaseCardMenu } from "./phase-card-menu";
 import { STATUS_CONFIG } from "./phase-status-config";
@@ -18,14 +20,26 @@ export default async function ProjectRoadmapPage({
   const access = await requireProjectAccess(projectId);
   const canManage = canManageProject(access.role);
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("roadmap_phases")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("sort_order", { ascending: true, nullsFirst: false });
+  let phases: RoadmapPhase[];
 
-  const phases = (data ?? []) as RoadmapPhase[];
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query(
+        "SELECT * FROM roadmap_phases WHERE project_id = $1 ORDER BY sort_order ASC NULLS LAST",
+        [projectId]
+      )
+    );
+    phases = result.rows;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("roadmap_phases")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("sort_order", { ascending: true, nullsFirst: false });
+
+    phases = (data ?? []) as RoadmapPhase[];
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
