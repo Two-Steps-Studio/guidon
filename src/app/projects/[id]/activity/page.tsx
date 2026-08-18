@@ -3,6 +3,8 @@ import { Activity as ActivityIcon } from "lucide-react";
 import { requireProjectAccess } from "@/lib/data/project-access";
 import { getRecentActivity } from "@/lib/data/activity";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { configFor } from "./action-config";
 
 interface ActorProfile {
@@ -31,21 +33,32 @@ export default async function ProjectActivityPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
-  await requireProjectAccess(projectId);
+  const access = await requireProjectAccess(projectId);
 
   const entries = await getRecentActivity(projectId);
 
   // user_id references profiles(id) ON DELETE SET NULL (000_baseline_schema.sql)
   // — resolved separately, same pattern as memory/page.tsx's verified_by lookup.
-  const supabase = await createClient();
   const userIds = Array.from(
     new Set(entries.map((entry) => entry.user_id).filter((id): id is string => !!id))
   );
-  const { data: profilesData } =
-    userIds.length > 0
-      ? await supabase.from("profiles").select("id, full_name, email").in("id", userIds)
-      : { data: [] as ActorProfile[] };
-  const profilesById = new Map(((profilesData ?? []) as ActorProfile[]).map((p) => [p.id, p]));
+
+  let profilesData: ActorProfile[];
+
+  if (userIds.length === 0) {
+    profilesData = [];
+  } else if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query("SELECT id, full_name, email FROM profiles WHERE id = ANY($1::uuid[])", [userIds])
+    );
+    profilesData = result.rows;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds);
+    profilesData = (data ?? []) as ActorProfile[];
+  }
+
+  const profilesById = new Map(profilesData.map((p) => [p.id, p]));
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">

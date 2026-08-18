@@ -1,6 +1,9 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
+import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import type { ActivityAction } from "@/types/api";
 
 export interface ActivityLogRow {
@@ -34,6 +37,23 @@ export async function getRecentActivity(
   projectId: string,
   limit = 50
 ): Promise<ActivityLogRow[]> {
+  if (hasDirectDatabase()) {
+    const userId = await getLocalSessionUserId();
+    if (!userId) return [];
+
+    const result = await withUser(userId, ({ query }) =>
+      query(
+        `SELECT id, project_id, organization_id, user_id, action, entity_type, entity_id, details, created_at
+         FROM activity_logs
+         WHERE project_id = $1
+         ORDER BY created_at DESC
+         LIMIT $2`,
+        [projectId, limit]
+      )
+    );
+    return result.rows;
+  }
+
   const supabase = await createClient();
 
   const { data } = await supabase
