@@ -148,7 +148,7 @@ function useSignedUrl(file: ProjectFile, enabled: boolean) {
 
     (async () => {
       try {
-        const result = await getDownloadUrl(file.project_id, file.storage_path!);
+        const result = await getDownloadUrl(file.project_id, file.id);
 
         if (cancelled) return;
         if (result.error) throw new Error(result.error);
@@ -168,7 +168,7 @@ function useSignedUrl(file: ProjectFile, enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [file.project_id, file.storage_path, shouldFetch]);
+  }, [file.project_id, file.id, shouldFetch]);
 
   return { url, error, loading };
 }
@@ -294,7 +294,7 @@ function DownloadButton({ file }: { file: ProjectFile }) {
     setError(null);
 
     try {
-      const result = await getDownloadUrl(file.project_id, file.storage_path);
+      const result = await getDownloadUrl(file.project_id, file.id);
       if (result.error) throw new Error(result.error);
       if (!result.url) throw new Error("Empty response");
 

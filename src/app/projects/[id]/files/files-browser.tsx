@@ -223,7 +223,7 @@ function FileCard({
   const handleDownload = () => {
     if (!file.storage_path) return;
     startTransition(async () => {
-      const result = await getDownloadUrl(projectId, file.storage_path!);
+      const result = await getDownloadUrl(projectId, file.id);
       if (result.url) {
         window.location.href = result.url;
       } else {
@@ -234,7 +234,7 @@ function FileCard({
 
   const handleDelete = () => {
     startTransition(async () => {
-      const result = await deleteFile(projectId, file.id, file.storage_path);
+      const result = await deleteFile(projectId, file.id);
       setError(result.error);
     });
   };

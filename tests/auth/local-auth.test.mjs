@@ -198,9 +198,74 @@ async function testSessionCookies() {
   );
 }
 
+// ============================================================
+// Mirrors src/lib/auth/rate-limit.ts
+// ============================================================
+
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000;
+
+function makeLimiter() {
+  const attempts = new Map();
+
+  const isExpired = (entry) => Date.now() - entry.windowStart > WINDOW_MS;
+
+  return {
+    isLockedOut(key) {
+      const entry = attempts.get(key);
+      if (!entry) return false;
+      if (isExpired(entry)) {
+        attempts.delete(key);
+        return false;
+      }
+      return entry.count >= MAX_ATTEMPTS;
+    },
+    recordFailedAttempt(key) {
+      const entry = attempts.get(key);
+      if (!entry || isExpired(entry)) {
+        attempts.set(key, { count: 1, windowStart: Date.now() });
+        return;
+      }
+      entry.count += 1;
+    },
+    clearAttempts(key) {
+      attempts.delete(key);
+    },
+  };
+}
+
+function testRateLimit() {
+  section("blokada po nieudanych probach logowania");
+
+  const limiter = makeLimiter();
+  const email = "victim@example.test";
+
+  check("swiezy email nie jest zablokowany", !limiter.isLockedOut(email));
+
+  for (let i = 0; i < MAX_ATTEMPTS - 1; i++) limiter.recordFailedAttempt(email);
+  check(
+    `${MAX_ATTEMPTS - 1} nieudanych prob jeszcze nie blokuje`,
+    !limiter.isLockedOut(email)
+  );
+
+  limiter.recordFailedAttempt(email);
+  check(`${MAX_ATTEMPTS}. proba blokuje`, limiter.isLockedOut(email));
+
+  limiter.clearAttempts(email);
+  check("clearAttempts odblokowuje (udane logowanie czysci licznik)", !limiter.isLockedOut(email));
+
+  const other = "someone-else@example.test";
+  for (let i = 0; i < MAX_ATTEMPTS; i++) limiter.recordFailedAttempt(email);
+  check(
+    "blokada jednego emaila nie dotyka innego",
+    limiter.isLockedOut(email) && !limiter.isLockedOut(other)
+  );
+}
+
 async function main() {
   await testPasswordHashing();
   await testSessionCookies();
+  testRateLimit();
 
   console.log(`\n  ${pass} pass / ${fail} fail\n`);
   process.exit(fail > 0 ? 1 : 0);

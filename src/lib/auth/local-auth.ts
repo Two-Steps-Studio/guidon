@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { cookies } from "next/headers";
 import { withServiceRole } from "@/lib/db/session";
 import { SESSION_COOKIE_NAME, signSession, verifySessionCookie } from "@/lib/auth/session-cookie";
+import { isLockedOut, recordFailedAttempt, clearAttempts } from "@/lib/auth/rate-limit";
 
 /**
  * Self-hosted email/password authentication (TODO.md §8, §30).
@@ -95,8 +96,14 @@ export async function signUpLocal(
   });
 }
 
+const LOCKED_OUT = "Too many failed attempts. Try again in a few minutes.";
+
 export async function signInLocal(email: string, password: string): Promise<LocalAuthResult> {
   const normalizedEmail = email.trim().toLowerCase();
+
+  if (isLockedOut(normalizedEmail)) {
+    return { error: LOCKED_OUT };
+  }
 
   return withServiceRole(async ({ query }) => {
     const result = await query(
@@ -104,14 +111,24 @@ export async function signInLocal(email: string, password: string): Promise<Loca
       [normalizedEmail]
     );
 
-    if (result.rows.length === 0) return { error: INVALID_CREDENTIALS };
+    if (result.rows.length === 0) {
+      recordFailedAttempt(normalizedEmail);
+      return { error: INVALID_CREDENTIALS };
+    }
 
     const row = result.rows[0] as { id: string; encrypted_password: string | null };
-    if (!row.encrypted_password) return { error: INVALID_CREDENTIALS };
+    if (!row.encrypted_password) {
+      recordFailedAttempt(normalizedEmail);
+      return { error: INVALID_CREDENTIALS };
+    }
 
     const valid = await verifyPassword(password, row.encrypted_password);
-    if (!valid) return { error: INVALID_CREDENTIALS };
+    if (!valid) {
+      recordFailedAttempt(normalizedEmail);
+      return { error: INVALID_CREDENTIALS };
+    }
 
+    clearAttempts(normalizedEmail);
     return { userId: row.id };
   });
 }
