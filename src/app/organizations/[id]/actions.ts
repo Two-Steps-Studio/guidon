@@ -7,6 +7,7 @@ import { getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { uniqueSlug } from "@/lib/slug";
+import { isHostedProjectLimitReached, HOSTED_PROJECT_LIMIT_MESSAGE } from "@/lib/limits";
 
 export type CreateProjectState = {
   error: string | null;
@@ -72,6 +73,15 @@ export async function createProject(
       .from("projects")
       .select("slug")
       .eq("organization_id", orgId);
+
+    // Guidon Cloud's 1-project-per-organization cap (src/lib/limits.ts) —
+    // self-hosted installs never hit this, see isHostedProjectLimitReached().
+    // Checked here, not just hidden in the UI (organizations/[id]/page.tsx),
+    // because this Server Action is reachable directly regardless of what
+    // the page renders.
+    if (isHostedProjectLimitReached(siblingSlugs?.length ?? 0)) {
+      return { error: HOSTED_PROJECT_LIMIT_MESSAGE };
+    }
 
     const slug = uniqueSlug(
       name,

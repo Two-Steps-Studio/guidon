@@ -6,6 +6,7 @@ import { requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { isHostedProjectLimitReached, HOSTED_PROJECT_LIMIT_MESSAGE } from "@/lib/limits";
 import { CreateProjectDialog } from "./create-project-dialog";
 import type { Project } from "@/types/project";
 
@@ -36,6 +37,8 @@ export default async function OrganizationDetailPage({
     projects = (projectsData ?? []) as Project[];
   }
 
+  const limitReached = isHostedProjectLimitReached(projects.length);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 max-w-6xl">
@@ -57,8 +60,16 @@ export default async function OrganizationDetailPage({
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Projects</h2>
-          <CreateProjectDialog orgId={orgId} orgName={organization.name} />
+          {!limitReached && <CreateProjectDialog orgId={orgId} orgName={organization.name} />}
         </div>
+
+        {limitReached && (
+          <Card className="mb-6 border-dashed">
+            <CardContent className="py-4 text-sm text-muted-foreground">
+              {HOSTED_PROJECT_LIMIT_MESSAGE}
+            </CardContent>
+          </Card>
+        )}
 
         {projects.length === 0 ? (
           <Card className="border-dashed">
@@ -68,16 +79,18 @@ export default async function OrganizationDetailPage({
               <p className="text-muted-foreground text-center mb-4">
                 Create your first project to start managing work
               </p>
-              <CreateProjectDialog
-                orgId={orgId}
-                orgName={organization.name}
-                trigger={
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Project
-                  </Button>
-                }
-              />
+              {!limitReached && (
+                <CreateProjectDialog
+                  orgId={orgId}
+                  orgName={organization.name}
+                  trigger={
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Project
+                    </Button>
+                  }
+                />
+              )}
             </CardContent>
           </Card>
         ) : (
