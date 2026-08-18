@@ -1,58 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import {
-  AlertCircle,
-  ArrowRight,
-  ExternalLink,
-  FileText,
-  FolderOpen,
-  Loader2,
-  Plus,
-  StickyNote,
-  Trash2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { ArrowRight, ExternalLink, FileText, FolderOpen, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createSource, deleteSource } from "./actions";
-import type { ContextSource, SourceType } from "@/types/context";
-
-/**
- * The knowledge layer is deliberately built on context_sources rather than a
- * new documents table: a source already carries a title, body, url and author,
- * and is already reachable from the project graph via context_relations. When
- * a richer editor arrives it can upgrade these rows in place.
- */
-const AUTHORABLE_TYPES: { value: SourceType; label: string; hint: string }[] = [
-  { value: "document", label: "Document", hint: "Specs, design docs, onboarding notes" },
-  { value: "meeting", label: "Meeting note", hint: "What was discussed and agreed" },
-  { value: "external_url", label: "Link", hint: "Reference material living elsewhere" },
-  { value: "other", label: "Note", hint: "Anything else worth remembering" },
-];
-
-const TYPE_LABELS: Record<SourceType, string> = {
-  document: "Document",
-  comment: "Comment",
-  commit: "Commit",
-  pull_request: "Pull request",
-  issue: "Issue",
-  external_url: "Link",
-  meeting: "Meeting note",
-  file: "File",
-  other: "Note",
-};
+import { CreateSourceDialog } from "./create-source-dialog";
+import { SourceCardMenu } from "./source-card-menu";
+import { TYPE_LABELS } from "./source-config";
+import type { ContextSource } from "@/types/context";
 
 interface KnowledgeCounts {
   decisions: number;
@@ -73,171 +27,113 @@ export function KnowledgeList({
   canWrite: boolean;
   canDelete: boolean;
 }) {
-  const [sources, setSources] = useState(initialSources);
-  const [error, setError] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-
-  const handleDelete = async (sourceId: string) => {
-    const previous = sources;
-    setSources((current) => current.filter((item) => item.id !== sourceId));
-
-    const result = await deleteSource(projectId, sourceId);
-    if (result.error) {
-      setSources(previous);
-      setError(result.error);
-    }
-  };
+  const sources = initialSources;
 
   return (
-    <>
-      <div className="mx-auto max-w-5xl p-6">
-        <header className="mb-6 flex flex-wrap items-end gap-4">
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Knowledge</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Documentation, notes and references that explain this project.
-            </p>
-          </div>
-
-          {canWrite && (
-            <Button size="sm" onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4" />
-              New entry
-            </Button>
-          )}
-        </header>
-
-        {error && (
-          <div
-            role="alert"
-            className="mb-4 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span className="flex-1">{error}</span>
-            <button type="button" onClick={() => setError(null)} className="underline underline-offset-2">
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        <div className="mb-8 grid gap-3 sm:grid-cols-3">
-          <KnowledgeLink
-            href={`/projects/${projectId}/decisions`}
-            icon={FileText}
-            label="Decisions"
-            count={counts.decisions}
-            description="Why the project is the way it is"
-          />
-          <KnowledgeLink
-            href={`/projects/${projectId}/files`}
-            icon={FolderOpen}
-            label="Files"
-            count={counts.files}
-            description="Documents, art and source assets"
-          />
-          <KnowledgeLink
-            href={`/projects/${projectId}/memory`}
-            icon={StickyNote}
-            label="Memory"
-            count={counts.memory}
-            description="Rules, constraints and observations"
-          />
+    <div className="mx-auto max-w-5xl p-6">
+      <header className="mb-6 flex flex-wrap items-end gap-4">
+        <div className="flex-1">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Knowledge</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Documentation, notes and references that explain this project.
+          </p>
         </div>
 
-        <h2 className="mb-3 text-sm font-medium text-foreground">
-          Entries
-          {sources.length > 0 && (
-            <span className="ml-1.5 text-xs font-normal tabular-nums text-muted-foreground">
-              {sources.length}
-            </span>
-          )}
-        </h2>
+        {canWrite && <CreateSourceDialog projectId={projectId} />}
+      </header>
 
-        {sources.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border py-16 text-center">
-            <h3 className="text-sm font-medium text-foreground">No knowledge entries yet</h3>
-            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              {canWrite
-                ? "Capture a spec, a meeting note or a reference link so the context outlives the conversation."
-                : "Nothing has been documented for this project yet."}
-            </p>
-            {canWrite && (
-              <Button size="sm" className="mt-4" onClick={() => setShowCreate(true)}>
-                <Plus className="h-4 w-4" />
-                New entry
-              </Button>
-            )}
-          </div>
-        ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
-            {sources.map((source) => (
-              <li
-                key={source.id}
-                className="group flex gap-3 bg-card p-4 transition-colors hover:bg-surface-hover"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-medium text-foreground">
-                      {source.title || "Untitled"}
-                    </h3>
-                    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground">
-                      {TYPE_LABELS[source.source_type] ?? source.source_type}
-                    </span>
-                  </div>
-
-                  {source.content && (
-                    <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-muted-foreground">
-                      {source.content}
-                    </p>
-                  )}
-
-                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-                    <time dateTime={source.created_at}>
-                      {new Date(source.created_at).toLocaleDateString()}
-                    </time>
-                    {source.url && (
-                      <a
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-primary hover:underline"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Open link
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                {canDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Delete ${source.title || "entry"}`}
-                    className="h-7 w-7 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-                    onClick={() => void handleDelete(source.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="mb-8 grid gap-3 sm:grid-cols-3">
+        <KnowledgeLink
+          href={`/projects/${projectId}/decisions`}
+          icon={FileText}
+          label="Decisions"
+          count={counts.decisions}
+          description="Why the project is the way it is"
+        />
+        <KnowledgeLink
+          href={`/projects/${projectId}/files`}
+          icon={FolderOpen}
+          label="Files"
+          count={counts.files}
+          description="Documents, art and source assets"
+        />
+        <KnowledgeLink
+          href={`/projects/${projectId}/memory`}
+          icon={StickyNote}
+          label="Memory"
+          count={counts.memory}
+          description="Rules, constraints and observations"
+        />
       </div>
 
-      {showCreate && (
-        <CreateSourceDialog
-          projectId={projectId}
-          onClose={() => setShowCreate(false)}
-          onCreated={(source) => {
-            setSources((current) => [source, ...current]);
-            setShowCreate(false);
-          }}
-        />
+      <h2 className="mb-3 text-sm font-medium text-foreground">
+        Entries
+        {sources.length > 0 && (
+          <span className="ml-1.5 text-xs font-normal tabular-nums text-muted-foreground">
+            {sources.length}
+          </span>
+        )}
+      </h2>
+
+      {sources.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border py-16 text-center">
+          <h3 className="text-sm font-medium text-foreground">No knowledge entries yet</h3>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+            {canWrite
+              ? "Capture a spec, a meeting note or a reference link so the context outlives the conversation."
+              : "Nothing has been documented for this project yet."}
+          </p>
+          {canWrite && (
+            <div className="mt-4 flex justify-center">
+              <CreateSourceDialog projectId={projectId} />
+            </div>
+          )}
+        </div>
+      ) : (
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+          {sources.map((source) => (
+            <li key={source.id} className="group flex gap-3 bg-card p-4 transition-colors hover:bg-surface-hover">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-medium text-foreground">{source.title || "Untitled"}</h3>
+                  <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground">
+                    {TYPE_LABELS[source.source_type] ?? source.source_type}
+                  </span>
+                </div>
+
+                {source.content && (
+                  <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                    {source.content}
+                  </p>
+                )}
+
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                  <time dateTime={source.created_at}>{new Date(source.created_at).toLocaleDateString()}</time>
+                  {source.url && (
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Open link
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {canWrite && (
+                <div className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                  <SourceCardMenu projectId={projectId} source={source} canDelete={canDelete} />
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
-    </>
+    </div>
   );
 }
 
@@ -271,117 +167,5 @@ function KnowledgeLink({
       </div>
       <p className="mt-1 text-xs text-muted-foreground">{description}</p>
     </Link>
-  );
-}
-
-function CreateSourceDialog({
-  projectId,
-  onClose,
-  onCreated,
-}: {
-  projectId: string;
-  onClose: () => void;
-  onCreated: (source: ContextSource) => void;
-}) {
-  const [type, setType] = useState<SourceType>("document");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [url, setUrl] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const activeType = AUTHORABLE_TYPES.find((item) => item.value === type);
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
-
-    const result = await createSource(projectId, { type, title, content, url });
-
-    if (result.error || !result.source) {
-      setError(result.error ?? "Failed to create entry");
-      setSubmitting(false);
-      return;
-    }
-
-    onCreated(result.source);
-  };
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-base">New knowledge entry</DialogTitle>
-          <DialogDescription>{activeType?.hint ?? "Capture something worth remembering."}</DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="source-type">Type</Label>
-            <Select id="source-type" value={type} onChange={(event) => setType(event.target.value as SourceType)}>
-              {AUTHORABLE_TYPES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="source-title">Title</Label>
-            <Input
-              id="source-title"
-              value={title}
-              required
-              autoFocus
-              placeholder="Rendering pipeline overview"
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="source-content">Content</Label>
-            <Textarea
-              id="source-content"
-              rows={6}
-              value={content}
-              placeholder="Plain text for now. A richer editor can upgrade these entries later."
-              onChange={(event) => setContent(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="source-url">Link (optional)</Label>
-            <Input
-              id="source-url"
-              type="url"
-              value={url}
-              placeholder="https://..."
-              onChange={(event) => setUrl(event.target.value)}
-            />
-          </div>
-
-          {error && (
-            <p
-              role="alert"
-              className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {error}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 border-t border-border pt-4">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" disabled={submitting || !title.trim()}>
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Create entry
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }

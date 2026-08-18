@@ -88,6 +88,7 @@ export async function createDecision(
   if (error) return { error: error.message };
 
   revalidatePath(`/projects/${projectId}/decisions`);
+  revalidatePath(`/projects/${projectId}/context`);
   return { error: null };
 }
 
@@ -121,6 +122,7 @@ export async function updateDecision(
   if (error) return { error: error.message };
 
   revalidatePath(`/projects/${projectId}/decisions`);
+  revalidatePath(`/projects/${projectId}/context`);
   return { error: null };
 }
 
@@ -139,5 +141,6 @@ export async function deleteDecision(
   if (error) return { error: error.message };
 
   revalidatePath(`/projects/${projectId}/decisions`);
+  revalidatePath(`/projects/${projectId}/context`);
   return { error: null };
 }

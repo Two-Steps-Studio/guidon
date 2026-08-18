@@ -3,43 +3,98 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
-import type { ContextSource, SourceType } from "@/types/context";
+import { AUTHORABLE_TYPES } from "./source-config";
+import type { SourceType } from "@/types/context";
 
-export type CreateSourceResult = { source: ContextSource | null; error: string | null };
+export type SourceFormState = { error: string | null };
 export type DeleteSourceResult = { error: string | null };
 
-// Mirrors context_sources_insert (001): owner/admin/developer; delete: owner/admin only.
+const VALID_TYPES = AUTHORABLE_TYPES.map((item) => item.value);
+
+function parseSourceForm(formData: FormData) {
+  const type = formData.get("type");
+  const title = formData.get("title");
+  const content = formData.get("content");
+  const url = formData.get("url");
+
+  if (typeof type !== "string" || !VALID_TYPES.includes(type as SourceType)) {
+    return { error: "Invalid type." } as const;
+  }
+  if (typeof title !== "string" || title.trim().length === 0) {
+    return { error: "Title is required." } as const;
+  }
+
+  return {
+    error: null,
+    type: type as SourceType,
+    title: title.trim(),
+    content: typeof content === "string" && content.trim() ? content.trim() : null,
+    url: typeof url === "string" && url.trim() ? url.trim() : null,
+  } as const;
+}
+
+// Mirrors context_sources_insert/update (001): owner/admin/developer; delete: owner/admin only.
 
 export async function createSource(
   projectId: string,
-  input: { type: SourceType; title: string; content: string; url: string }
-): Promise<CreateSourceResult> {
+  _prevState: SourceFormState,
+  formData: FormData
+): Promise<SourceFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { source: null, error: "You do not have permission to add knowledge entries." };
+    return { error: "You do not have permission to add knowledge entries." };
   }
-  if (!input.title.trim()) {
-    return { source: null, error: "Title is required." };
-  }
+
+  const parsed = parseSourceForm(formData);
+  if (parsed.error) return { error: parsed.error };
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("context_sources")
-    .insert({
-      project_id: projectId,
-      source_type: input.type,
-      title: input.title.trim() || null,
-      content: input.content.trim() || null,
-      url: input.url.trim() || null,
-      author: access.userId,
-    })
-    .select()
-    .single();
+  const { error } = await supabase.from("context_sources").insert({
+    project_id: projectId,
+    source_type: parsed.type,
+    title: parsed.title,
+    content: parsed.content,
+    url: parsed.url,
+    author: access.userId,
+  });
 
-  if (error) return { source: null, error: error.message };
+  if (error) return { error: error.message };
 
   revalidatePath(`/projects/${projectId}/knowledge`);
-  return { source: data as ContextSource, error: null };
+  revalidatePath(`/projects/${projectId}/context`);
+  return { error: null };
+}
+
+export async function updateSource(
+  projectId: string,
+  sourceId: string,
+  _prevState: SourceFormState,
+  formData: FormData
+): Promise<SourceFormState> {
+  const access = await getProjectAccess(projectId);
+  if (!access || !canWriteProject(access.role)) {
+    return { error: "You do not have permission to edit knowledge entries." };
+  }
+
+  const parsed = parseSourceForm(formData);
+  if (parsed.error) return { error: parsed.error };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("context_sources")
+    .update({
+      source_type: parsed.type,
+      title: parsed.title,
+      content: parsed.content,
+      url: parsed.url,
+    })
+    .eq("id", sourceId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/projects/${projectId}/knowledge`);
+  revalidatePath(`/projects/${projectId}/context`);
+  return { error: null };
 }
 
 export async function deleteSource(
@@ -57,5 +112,6 @@ export async function deleteSource(
   if (error) return { error: error.message };
 
   revalidatePath(`/projects/${projectId}/knowledge`);
+  revalidatePath(`/projects/${projectId}/context`);
   return { error: null };
 }

@@ -24,23 +24,54 @@ z pomiaru repozytorium i żywej bazy, nie z założeń.
 
 Uporządkowane wg trudności. Pierwszy jest strukturalny, reszta to praca do wykonania.
 
-### 1. Przeglądarka rozmawia bezpośrednio z PostgREST — blokada krytyczna
+### 1. Przeglądarka rozmawia bezpośrednio z PostgREST — ROZWIĄZANE
 
-13 stron woła Supabase z przeglądarki. Architektura zakłada, że istnieje
-**HTTP API zgodne z PostgREST, osiągalne z przeglądarki**, które tłumaczy
-zapytania na SQL i egzekwuje RLS.
+Było: 13 stron (18 licząc komponenty poza `page.tsx`) wołało Supabase
+bezpośrednio z przeglądarki. Architektura zakładała **HTTP API zgodne z
+PostgREST, osiągalne z przeglądarki**, którego na czystym PostgreSQL nie ma —
+self-hosting wymagałby uruchomienia PostgREST + GoTrue, czyli w praktyce
+całego self-hosted Supabase, wbrew §4.
 
-Na czystym PostgreSQL czegoś takiego nie ma.
+Wszystkie strony odczytujące dane pod `/projects/[id]` i `/organizations`
+przeszły na Server Components; każdy zapis przeszedł na Server Actions
+(pierwsza w repo — `src/app/projects/[id]/actions.ts`). Ostały się wyłącznie
+trzy strony, które **muszą** zostać po stronie klienta z definicji: logowanie,
+rejestracja i wylogowanie ustanawiają sesję w przeglądarce, a OAuth wymaga
+przekierowania przeglądarki do dostawcy.
 
-To nie jest kwestia podmiany biblioteki. Dopóki dostęp do danych jest po
-stronie klienta, self-hosting wymaga uruchomienia PostgREST + GoTrue — czyli
-w praktyce całego self-hosted Supabase, wbrew §4 („nie zaszywaj zależności od
-zarządzanego Supabase").
+```bash
+grep -rl "'use client'" src/app --include=*.tsx | \
+  xargs grep -l "from '@/lib/supabase'" 2>/dev/null
+# → tylko auth/login, auth/logout, auth/signup
+```
 
-**Wniosek:** przeniesienie odczytów do Server Components i zapisów do Server
-Actions nie jest opcjonalnym usprawnieniem — jest **warunkiem koniecznym**
-self-hostingu na czystym Postgresie. To dokładnie Etap 1 zatwierdzonego już
-planu. Oba cele zbiegają się w jednym zadaniu.
+Efekty uboczne warte odnotowania:
+
+* **Trzy błędy CHECK constraint znalezione i naprawione.** Dialog decyzji na
+  starej stronie `/context` oferował `accepted`/`superseded`, których baza
+  nigdy nie akceptowała (`proposed/approved/rejected/deprecated`); dialog
+  źródeł oferował `url`/`note`/`code`, żaden z nich nie istnieje w
+  `SourceType` (`document/comment/commit/pull_request/issue/external_url/
+  meeting/file/other`). Każda próba zapisania takiej wartości kończyła się
+  odrzuceniem przez CHECK. Wybór typu decyzji na `/decisions` nie miał opcji
+  `product`, mimo że schemat i UI kolorów już ją znały.
+* **Dwa liczniki zawsze pokazywały 0.** `completed_tasks` na przeglądzie
+  projektu i na dashboardzie porównywały `status === 'completed'`, a
+  migracja 002 dawno zmieniła słownik na `'done'`.
+* **`ContextLayerProvider`, `AuthProvider`, `ProjectProvider` usunięte.**
+  Były martwe od początku (§C techdebt, zero montowań). Czwarty —
+  `ProjectAccessProvider` — stał się martwy w trakcie tej migracji: skoro
+  każda strona i tak woła `requireProjectAccess()` bezpośrednio (owinięte w
+  `cache()`, więc bez dodatkowego zapytania), Kontekst kliencki przestał mieć
+  konsumentów. Usunięty razem z resztą zamiast zostać jako martwy kod.
+* **Upload plików przechodzi teraz przez `StorageProvider`.** Wcześniej strona
+  wołała `supabase.storage` wprost, ignorując całą warstwę z §5 — na
+  self-hosted z lokalnym storage nigdy by to nie zadziałało, bo przeglądarka
+  nie ma dostępu do dysku serwera.
+
+**Pozostaje:** trasy `/api/v1/*` nadal istnieją równolegle (nieużywane przez
+UI, wspomniane w §C jako martwy kod do wyczyszczenia — poza zakresem tej
+migracji).
 
 ### 2. RLS opiera się na prymitywach Supabase — ROZWIĄZANE
 
@@ -74,8 +105,9 @@ Uruchomienie tego łańcucha ujawniło błąd, którego sam SQL nie pokazywał:
 bo polityka SELECT jest stosowana do zwracanego wiersza, zanim trigger AFTER
 utworzy członkostwo. Dotyczy to również Supabase — naprawia migracja `009`.
 
-**Pozostaje warunek z blokera 1:** GUC może ustawiać wyłącznie kod serwerowy.
-Dopóki 13 stron woła Supabase z przeglądarki, ta ścieżka ich nie obsługuje.
+Warunek z blokera 1 — GUC może ustawiać wyłącznie kod serwerowy — jest teraz
+spełniony: strony pod `/projects` i `/organizations` przeszły na Server
+Components/Actions, więc ta ścieżka faktycznie obsługuje ich zapytania.
 
 ### 3. Brak jakiejkolwiek infrastruktury wdrożeniowej
 

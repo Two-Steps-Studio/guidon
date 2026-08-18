@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import {
-  canCommentOnProject,
-  canManageProject,
-  canWriteProject,
-  requireProjectAccess,
-} from "@/lib/data/project-access";
-import { ProjectAccessProvider } from "@/contexts/project-access-context";
+import { requireProjectAccess } from "@/lib/data/project-access";
 import { ProjectSidebar } from "@/components/layout/project-sidebar";
 
 /**
@@ -18,6 +12,12 @@ import { ProjectSidebar } from "@/components/layout/project-sidebar";
  *
  * Pages below no longer wrap themselves in ProjectSidebar; the shell lives
  * here, so switching tabs keeps the sidebar mounted.
+ *
+ * requireProjectAccess() is cached (src/lib/data/project-access.ts), so
+ * calling it again here costs nothing: every page under this layout now
+ * calls it itself to get typed access to `role`/`project` as props, rather
+ * than through a client Context — there is no client state left that needs
+ * one, so ProjectAccessProvider was removed rather than left unconsumed.
  */
 
 export async function generateMetadata({
@@ -44,20 +44,7 @@ export default async function ProjectLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const access = await requireProjectAccess(id);
+  await requireProjectAccess(id);
 
-  return (
-    <ProjectAccessProvider
-      value={{
-        userId: access.userId,
-        project: access.project,
-        role: access.role,
-        canManage: canManageProject(access.role),
-        canWrite: canWriteProject(access.role),
-        canComment: canCommentOnProject(access.role),
-      }}
-    >
-      <ProjectSidebar projectId={id}>{children}</ProjectSidebar>
-    </ProjectAccessProvider>
-  );
+  return <ProjectSidebar projectId={id}>{children}</ProjectSidebar>;
 }
