@@ -1,0 +1,24 @@
+# Build artefacts and local state — never belong in the image context.
+node_modules
+.next
+storage
+
+# Secrets. Configuration is injected at runtime, never baked in (§10).
+.env
+.env.*
+!.env.example
+
+# Local tooling
+.git
+.gitignore
+.idea
+.vscode
+*.log
+npm-debug.log*
+
+# Docs and CI do not affect the build
+docs
+README.md
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,100 @@
+# =====================================================
+# GUIDON — self-hosted (TODO.md §2, §3)
+# =====================================================
+#
+#   cp .env.example .env
+#   # uzupełnij .env
+#   docker compose up -d
+#
+# Aktualizacja (§15):
+#   docker compose pull && docker compose up -d
+#
+# UWAGA O STANIE FAKTYCZNYM
+# -------------------------
+# Usługa `db` jest gotowa i migracje stosują się do niej, ale aplikacja
+# nadal uwierzytelnia się przez Supabase Auth i przez jego klienta czyta
+# większość danych. Pełne odcięcie od Supabase wymaga warstwy zgodności
+# dla auth.uid() i ról — patrz docs/self-hosting-audit.md, bloker 2.
+#
+# Ten plik jest więc uczciwie: działającą konteneryzacją z gotową bazą,
+# a nie jeszcze pełnym self-hostingiem z §1.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-guidon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD jest wymagane}
+      POSTGRES_DB: ${POSTGRES_DB:-guidon}
+    volumes:
+      # Nazwany wolumen — dane przeżywają `docker compose down` (§30).
+      - guidon-db:/var/lib/postgresql/data
+    healthcheck:
+      # Aplikacja i migracje czekają, aż baza faktycznie przyjmuje połączenia,
+      # a nie tylko aż kontener wystartował.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-guidon} -d ${POSTGRES_DB:-guidon}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    # Port nie jest publikowany — baza jest dostępna tylko w sieci compose.
+    # Do debugowania: docker compose exec db psql -U guidon
+
+  migrate:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Guidon}
+        NEXT_PUBLIC_AUTH_PROVIDERS: ${NEXT_PUBLIC_AUTH_PROVIDERS:-}
+    # Jednorazowa: stosuje migracje i kończy pracę. Aplikacja startuje
+    # dopiero po jej pomyślnym zakończeniu, więc schemat nigdy nie jest
+    # o krok w tyle za kodem (§13, §15).
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-guidon}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-guidon}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Guidon}
+        NEXT_PUBLIC_AUTH_PROVIDERS: ${NEXT_PUBLIC_AUTH_PROVIDERS:-}
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-guidon}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-guidon}
+
+      # Sekrety wstrzykiwane w runtime, nigdy wkompilowane w obraz (§10).
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET jest wymagane — openssl rand -hex 32}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_PATH: /app/storage
+
+      AI_PROVIDER: ${AI_PROVIDER:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
+    volumes:
+      # Uploady muszą przeżyć restart kontenera (§30).
+      - guidon-storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  guidon-db:
+  guidon-storage:

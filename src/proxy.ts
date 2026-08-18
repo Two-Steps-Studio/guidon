@@ -15,6 +15,11 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // Container and load-balancer probes cannot authenticate (TODO.md §12).
   // The endpoint reports status only — no secrets, no counts.
   '/api/health',
+  // Local-storage objects carry their own authorisation: an HMAC over
+  // bucket + path + expiry that only the server can mint. Bouncing these to
+  // the login page made every signed URL unusable. The route verifies the
+  // signature itself and 403s without it.
+  '/api/storage',
 ])
 const PUBLIC_ROUTE_PREFIXES = ['/auth/']
 
