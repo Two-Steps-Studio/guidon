@@ -5,9 +5,21 @@ import { Brain, Plus } from "lucide-react";
 import { requireProjectAccess, canWriteProject } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
 import { CreateMemoryDialog } from "./create-memory-dialog";
+import { InsightReviewCard } from "./insight-review-card";
 import { MemoryCardMenu } from "./memory-card-menu";
 import { MEMORY_TYPE_CONFIG } from "./memory-type-config";
 import type { ProjectMemory } from "@/types/context";
+
+interface MemoryProfile {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+function nameFor(profile: MemoryProfile | undefined): string {
+  if (!profile) return "Unknown";
+  return profile.full_name || profile.email;
+}
 
 export default async function ProjectMemoryPage({
   params,
@@ -27,6 +39,28 @@ export default async function ProjectMemoryPage({
 
   const memories = (data ?? []) as ProjectMemory[];
 
+  // A pending insight is unverified AI output — TODO.md §20 is explicit that
+  // this must not blend in with trusted project truth, so it gets a
+  // distinct section and a review flow (Accept/Correct/Reject) instead of
+  // the normal Edit/Delete menu. Everything else (including already-accepted
+  // insights, now memory_type 'fact') renders through the regular list.
+  const pending = memories.filter((memory) => memory.memory_type === "ai_insight" && !memory.verified);
+  const rest = memories.filter((memory) => !(memory.memory_type === "ai_insight" && !memory.verified));
+
+  // verified_by and created_by both reference profiles(id) (001) — fetched
+  // separately rather than embedded, since PostgREST needs an explicit FK
+  // hint to embed two relations to the same table and there is no existing
+  // precedent for that in this codebase; a plain id lookup avoids it.
+  const profileIds = new Set<string>();
+  for (const memory of memories) {
+    if (memory.verified_by) profileIds.add(memory.verified_by);
+  }
+  const { data: profilesData } =
+    profileIds.size > 0
+      ? await supabase.from("profiles").select("id, full_name, email").in("id", Array.from(profileIds))
+      : { data: [] as MemoryProfile[] };
+  const profilesById = new Map(((profilesData ?? []) as MemoryProfile[]).map((p) => [p.id, p]));
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex items-center gap-4 mb-8">
@@ -36,6 +70,15 @@ export default async function ProjectMemoryPage({
         </div>
         {canWrite && <CreateMemoryDialog projectId={projectId} />}
       </div>
+
+      {pending.length > 0 && (
+        <div className="mb-8 space-y-4">
+          <h2 className="text-xl font-semibold">Pending Review ({pending.length})</h2>
+          {pending.map((memory) => (
+            <InsightReviewCard key={memory.id} projectId={projectId} memory={memory} />
+          ))}
+        </div>
+      )}
 
       {memories.length === 0 ? (
         <Card className="border-dashed">
@@ -59,43 +102,52 @@ export default async function ProjectMemoryPage({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {memories.map((memory) => {
-            const typeConfig = MEMORY_TYPE_CONFIG[memory.memory_type];
-            const TypeIcon = typeConfig.icon;
+        rest.length > 0 && (
+          <div className="space-y-4">
+            {rest.map((memory) => {
+              const typeConfig = MEMORY_TYPE_CONFIG[memory.memory_type];
+              const TypeIcon = typeConfig.icon;
 
-            return (
-              <Card key={memory.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <TypeIcon className="h-5 w-5 text-muted-foreground" />
-                        <Badge className={typeConfig.color}>{typeConfig.label}</Badge>
+              return (
+                <Card key={memory.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <TypeIcon className="h-5 w-5 text-muted-foreground" />
+                          <Badge className={typeConfig.color}>{typeConfig.label}</Badge>
+                          {memory.verified && <Badge variant="outline">Verified</Badge>}
+                        </div>
+                        <CardDescription className="text-base whitespace-pre-wrap">
+                          {memory.content}
+                        </CardDescription>
                       </div>
-                      <CardDescription className="text-base whitespace-pre-wrap">
-                        {memory.content}
-                      </CardDescription>
+                      {canWrite && (
+                        <MemoryCardMenu
+                          projectId={projectId}
+                          memoryId={memory.id}
+                          content={memory.content}
+                          memoryType={memory.memory_type}
+                        />
+                      )}
                     </div>
-                    {canWrite && (
-                      <MemoryCardMenu
-                        projectId={projectId}
-                        memoryId={memory.id}
-                        content={memory.content}
-                        memoryType={memory.memory_type}
-                      />
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground">
+                      Created {new Date(memory.created_at).toLocaleDateString()}
+                    </p>
+                    {memory.verified && memory.verified_by && memory.verified_at && (
+                      <p className="text-xs text-muted-foreground">
+                        Verified by {nameFor(profilesById.get(memory.verified_by))},{" "}
+                        {new Date(memory.verified_at).toLocaleDateString()}
+                      </p>
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">
-                    Created {new Date(memory.created_at).toLocaleDateString()}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );
