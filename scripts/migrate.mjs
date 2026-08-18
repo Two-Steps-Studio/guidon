@@ -62,6 +62,64 @@ async function loadMigrations() {
   );
 }
 
+/**
+ * Applies the Supabase compatibility layer, but only where it is missing.
+ *
+ * The schema is built on `auth.uid()`, `auth.users` and the anon/authenticated/
+ * service_role roles. Supabase provides all of them; a plain PostgreSQL
+ * provides none, and migration 000 fails on its very first foreign key.
+ *
+ * The probe is `auth.uid()` rather than a version flag or an env var: it asks
+ * the database what it actually has. On Supabase the answer is yes and the file
+ * is never even read, so a managed install cannot be altered by this code path.
+ *
+ * This runs before the numbered migrations and outside their history — it is
+ * infrastructure provisioning, not a schema change. It is still recorded, so
+ * `--status` shows what a given database was built from.
+ */
+async function ensureAuthCompat(client) {
+  const { rows } = await client.query(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'auth' AND p.proname = 'uid'
+    ) AS present
+  `);
+
+  if (rows[0].present) return { applied: false };
+
+  const file = path.join(HERE, "..", "src", "db", "bootstrap", "000_auth_compat.sql");
+  const sql = await readFile(file, "utf8");
+
+  console.log("\n  No auth.uid() found — this is a plain PostgreSQL.");
+  process.stdout.write("  Applying Supabase compatibility layer ... ");
+
+  try {
+    await client.query(sql);
+  } catch (error) {
+    console.log("FAILED");
+    fail(
+      `The compatibility layer could not be applied:\n    ${error.message}\n\n` +
+        "  It needs a role that may CREATE ROLE and CREATE SCHEMA — the\n" +
+        "  database owner. Nothing was changed."
+    );
+  }
+
+  await client.query(
+    `INSERT INTO public.guidon_migrations (name, checksum, duration_ms)
+     VALUES ($1, $2, 0)
+     ON CONFLICT (name) DO UPDATE SET checksum = EXCLUDED.checksum`,
+    [
+      "bootstrap/000_auth_compat.sql",
+      createHash("sha256").update(sql).digest("hex").slice(0, 16),
+    ]
+  );
+
+  console.log("ok");
+  return { applied: true };
+}
+
 async function ensureRegistry(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS public.guidon_migrations (
@@ -98,6 +156,13 @@ async function main() {
 
   try {
     await ensureRegistry(client);
+
+    // Must precede the migrations: 000 declares a foreign key to auth.users
+    // and 001 grants to `authenticated` 97 times. Skipped entirely when
+    // reporting rather than applying.
+    if (!STATUS_ONLY && !DRY_RUN) {
+      await ensureAuthCompat(client);
+    }
 
     const { rows } = await client.query(
       "SELECT name, checksum FROM public.guidon_migrations"

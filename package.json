@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "migrate": "node scripts/migrate.mjs",
-    "migrate:status": "node scripts/migrate.mjs --status"
+    "migrate:status": "node scripts/migrate.mjs --status",
+    "test:db": "node tests/db/compat.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.1",
@@ -30,6 +31,7 @@
     "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",

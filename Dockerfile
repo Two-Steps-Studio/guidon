@@ -70,6 +70,9 @@ COPY --from=builder --chown=guidon:nodejs /app/.next/static ./.next/static
 # stosuje je przed startem aplikacji (§13, §15).
 COPY --from=builder --chown=guidon:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=guidon:nodejs /app/src/db/migrations ./src/db/migrations
+# The compat bootstrap must ship too: against a fresh PostgreSQL the runner
+# applies it before migration 000, which declares a foreign key to auth.users.
+COPY --from=builder --chown=guidon:nodejs /app/src/db/bootstrap ./src/db/bootstrap
 COPY --from=deps --chown=guidon:nodejs /app/node_modules/pg ./node_modules/pg
 COPY --from=deps --chown=guidon:nodejs /app/node_modules/pg-protocol ./node_modules/pg-protocol
 COPY --from=deps --chown=guidon:nodejs /app/node_modules/pg-types ./node_modules/pg-types

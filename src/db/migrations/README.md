@@ -24,6 +24,57 @@ them. Prefer the runner.
 | `005_project_creator_and_drift.sql` | Fixes `projects.created_by` being silently NULL, backfills it from the owner membership, and adds the live-only `set_organization_creator` to the repo. | Correct project attribution |
 | `006_fix_service_role_detection.sql` | **Required after 005.** 005 detected the service role with `current_user`, which is the function owner inside `SECURITY DEFINER` and never matches. Replaces it with a JWT-claim check. | Server-side project creation |
 | `007_allow_parent_delete.sql` | The last-owner guards fired on `ON DELETE CASCADE`, making projects and organizations impossible to delete. Skips the guard when the parent row is already gone, and clears two smoke-test projects. | Deleting projects/organizations at all |
+| `008_technology_game_engine.sql` | Adds `game_engine` to the `technologies.category` vocabulary. | Unity/Unreal in the Technology tab |
+| `009_creator_visibility.sql` | **Fixes organization and project creation.** See below. | Creating organizations or projects at all |
+
+## The compatibility layer runs before all of this
+
+`src/db/bootstrap/000_auth_compat.sql` is not a migration and is not listed
+above. It recreates what Supabase provides for free — the `auth` schema,
+`auth.users`, `auth.uid()`, and the `anon` / `authenticated` / `service_role`
+roles — so that the 70 RLS policies work unchanged on a plain PostgreSQL.
+
+It has to come first, because `000` declares a foreign key to `auth.users` and
+`001` grants to `authenticated` 97 times.
+
+The runner applies it only when `auth.uid()` is missing from the database. On
+Supabase it exists, so the file is never even read and a managed install cannot
+be altered by this path.
+
+Verify the whole chain against a real PostgreSQL, without Docker or a server:
+
+```bash
+npm run test:db
+```
+
+## Why 009 exists
+
+Creating an organization or a project failed with:
+
+```
+new row violates row-level security policy for table "organizations"
+```
+
+PostgreSQL applies the `SELECT` policy to the row returned by `RETURNING`, and
+`.select()` in supabase-js *is* `RETURNING`. The order is:
+
+1. `BEFORE` trigger sets `created_by`
+2. row is inserted
+3. `WITH CHECK` of the INSERT policy — passes
+4. `USING` of the SELECT policy, for RETURNING — **rejects**
+5. `AFTER` trigger creates the owner membership
+
+At step 4 the membership does not exist yet, so `is_org_member()` is false. The
+row was written correctly and then rolled back on the way out, which is why the
+table looked fine afterwards and the bug was easy to misattribute.
+
+Only `organizations` and `projects` are affected — their SELECT policy asks
+about their own `id`. Child tables ask about `project_id` of a parent that is
+already visible, and were verified to be unaffected.
+
+009 lets the creator see what they just created. The trade-off is deliberate
+and documented in the file: the clause does not expire, so someone later removed
+from an organization keeps read access to that one row.
 
 ## Drift
 

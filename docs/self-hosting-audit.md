@@ -42,30 +42,40 @@ Actions nie jest opcjonalnym usprawnieniem — jest **warunkiem koniecznym**
 self-hostingu na czystym Postgresie. To dokładnie Etap 1 zatwierdzonego już
 planu. Oba cele zbiegają się w jednym zadaniu.
 
-### 2. RLS opiera się na prymitywach Supabase
+### 2. RLS opiera się na prymitywach Supabase — ROZWIĄZANE
 
-| Prymityw | Wystąpień |
-|---|---|
-| `auth.uid()` | 46 |
-| `TO authenticated` | 97 |
-| `auth.users` | 7 |
-| `service_role` | 14 |
-| `request.jwt.claims` | 1 |
-| polityki RLS łącznie | 70 |
+| Prymityw | Wystąpień | Stan |
+|---|---|---|
+| `auth.uid()` | 47 | odtworzone |
+| `TO authenticated` | 97 | rola utworzona |
+| `auth.users` | 9 | tabela utworzona |
+| `service_role` | 14 | rola + BYPASSRLS + uprawnienia |
+| `request.jwt.claims` | 1 | ustawiane per transakcja |
+| polityki RLS łącznie | 70 | **bez zmian** |
 
-Na czystym Postgresie nie istnieje ani schemat `auth`, ani role `anon` /
-`authenticated` / `service_role`, ani GUC `request.jwt.claims` (ustawia go
-PostgREST).
+Warstwa zgodności `src/db/bootstrap/000_auth_compat.sql` odtwarza te prymitywy
+jako zwykłe obiekty PostgreSQL. Żadna z 70 polityk nie została przepisana —
+istnieje jedna definicja zabezpieczeń dla obu baz, a nie dwie rozjeżdżające się.
 
-**Nie oznacza to jednak konieczności przepisania 70 polityk.** Wszystkie te
-elementy da się odtworzyć jako warstwę zgodności:
+Druga połowa to `src/lib/db/session.ts`: otwiera transakcję, ustawia
+`request.jwt.claims` przez `set_config(..., true)` i schodzi do roli przez
+`SET LOCAL ROLE`. Oba są lokalne dla transakcji, więc pula połączeń nie przenosi
+tożsamości między żądaniami — sprawdzone testem, także po ROLLBACK.
 
-* role `anon`, `authenticated`, `service_role` — zwykłe `CREATE ROLE`
-* `auth.uid()` — funkcja czytająca GUC ustawiany przez aplikację na transakcję
-* `auth.users` — lokalna tabela użytkowników
-* `request.jwt.claims` — `SET LOCAL` w opakowaniu dostępu do bazy
+Runner stosuje warstwę tylko wtedy, gdy w bazie brak `auth.uid()`. Na Supabase
+plik nie jest w ogóle czytany.
 
-Warunkiem jest jednak punkt 1: GUC może ustawiać tylko kod serwerowy.
+**Weryfikacja:** `npm run test:db` — 44 asercje na PostgreSQL 18 (PGlite), bez
+Dockera i bez Supabase: pełny łańcuch migracji na pustej bazie, izolacja między
+użytkownikami, brak śladu tożsamości na połączeniu, zachowanie `service_role`.
+
+Uruchomienie tego łańcucha ujawniło błąd, którego sam SQL nie pokazywał:
+`INSERT ... RETURNING` na `organizations` i `projects` był odrzucany przez RLS,
+bo polityka SELECT jest stosowana do zwracanego wiersza, zanim trigger AFTER
+utworzy członkostwo. Dotyczy to również Supabase — naprawia migracja `009`.
+
+**Pozostaje warunek z blokera 1:** GUC może ustawiać wyłącznie kod serwerowy.
+Dopóki 13 stron woła Supabase z przeglądarki, ta ścieżka ich nie obsługuje.
 
 ### 3. Brak jakiejkolwiek infrastruktury wdrożeniowej
 
