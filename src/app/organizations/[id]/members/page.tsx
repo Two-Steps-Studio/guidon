@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Plus, Shield, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberActionsMenu } from "./member-actions-menu";
 
@@ -31,20 +33,43 @@ export default async function OrganizationMembersPage({
   const access = await requireOrgAccess(orgId);
   const canManage = canManageOrg(access.role);
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("organization_members")
-    .select("id, user_id, role, joined_at, profiles (id, email, full_name, avatar_url)")
-    .eq("organization_id", orgId)
-    .order("joined_at", { ascending: true });
+  let members: MemberRow[];
 
-  const members: MemberRow[] = (data ?? []).map((member: any) => ({
-    id: member.id,
-    user_id: member.user_id,
-    role: member.role,
-    joined_at: member.joined_at,
-    profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles,
-  }));
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query(
+        `SELECT om.id, om.user_id, om.role, om.joined_at,
+                p.id AS profile_id, p.email, p.full_name, p.avatar_url
+         FROM organization_members om
+         LEFT JOIN profiles p ON p.id = om.user_id
+         WHERE om.organization_id = $1
+         ORDER BY om.joined_at ASC`,
+        [orgId]
+      )
+    );
+    members = result.rows.map((row) => ({
+      id: row.id,
+      user_id: row.user_id,
+      role: row.role,
+      joined_at: row.joined_at,
+      profiles: { id: row.profile_id, email: row.email, full_name: row.full_name, avatar_url: row.avatar_url },
+    }));
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("organization_members")
+      .select("id, user_id, role, joined_at, profiles (id, email, full_name, avatar_url)")
+      .eq("organization_id", orgId)
+      .order("joined_at", { ascending: true });
+
+    members = (data ?? []).map((member: any) => ({
+      id: member.id,
+      user_id: member.user_id,
+      role: member.role,
+      joined_at: member.joined_at,
+      profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles,
+    }));
+  }
 
   return (
     <div className="min-h-screen bg-background">

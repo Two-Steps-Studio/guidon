@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import type { OrganizationRole } from "@/types/project";
 
 export type MemberActionState = {
@@ -34,6 +36,29 @@ export async function addMember(
   // of a raw Postgres RLS rejection.
   if (role === "owner" && access.role !== "owner") {
     return { error: "Only an owner can grant ownership." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, async ({ query }) => {
+        const profileResult = await query("SELECT id FROM profiles WHERE email = $1", [
+          email.trim(),
+        ]);
+        if (profileResult.rows.length === 0) {
+          throw new Error("User with this email not found.");
+        }
+
+        await query(
+          "INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, $3)",
+          [orgId, profileResult.rows[0].id, role]
+        );
+      });
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to add member." };
+    }
+
+    revalidatePath(`/organizations/${orgId}/members`);
+    return { error: null };
   }
 
   const supabase = await createClient();
@@ -76,6 +101,19 @@ export async function updateMemberRole(
     return { error: "Only an owner can grant ownership." };
   }
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("UPDATE organization_members SET role = $1 WHERE id = $2", [role, memberId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to change role." };
+    }
+
+    revalidatePath(`/organizations/${orgId}/members`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("organization_members")
@@ -98,6 +136,19 @@ export async function removeMember(
 
   if (!access || !canManageOrg(access.role)) {
     return { error: "You do not have permission to remove members." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM organization_members WHERE id = $1", [memberId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to remove member." };
+    }
+
+    revalidatePath(`/organizations/${orgId}/members`);
+    return { error: null };
   }
 
   const supabase = await createClient();
