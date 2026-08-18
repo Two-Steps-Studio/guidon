@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createServiceClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withServiceRole } from "@/lib/db/session";
 
 /**
  * Cross-tenant queries for the admin panel (TODO.md §25).
@@ -27,6 +29,22 @@ export interface AdminCounts {
 }
 
 export async function getAdminCounts(): Promise<AdminCounts> {
+  if (hasDirectDatabase()) {
+    const [orgs, projects, users] = await withServiceRole(({ query }) =>
+      Promise.all([
+        query("SELECT COUNT(*) FROM organizations"),
+        query("SELECT COUNT(*) FROM projects"),
+        query("SELECT COUNT(*) FROM profiles"),
+      ])
+    );
+
+    return {
+      organizations: Number(orgs.rows[0].count),
+      projects: Number(projects.rows[0].count),
+      users: Number(users.rows[0].count),
+    };
+  }
+
   const supabase = createServiceClient();
 
   const [orgs, projects, users] = await Promise.all([
@@ -67,26 +85,58 @@ export async function listOrganizationsForAdmin(): Promise<{
   rows: AdminOrganizationRow[];
   truncated: boolean;
 }> {
-  const supabase = createServiceClient();
+  let organizations: { id: string; name: string; slug: string; created_at: string }[];
+  let memberRows: OrganizationMemberJoinRow[];
 
-  const { data: orgs } = await supabase
-    .from("organizations")
-    .select("id, name, slug, created_at")
-    .order("created_at", { ascending: false })
-    .limit(LIST_LIMIT);
+  if (hasDirectDatabase()) {
+    organizations = await withServiceRole(({ query }) =>
+      query("SELECT id, name, slug, created_at FROM organizations ORDER BY created_at DESC LIMIT $1", [
+        LIST_LIMIT,
+      ]).then((result) => result.rows)
+    );
 
-  const organizations = orgs ?? [];
-  if (organizations.length === 0) {
-    return { rows: [], truncated: false };
+    if (organizations.length === 0) {
+      return { rows: [], truncated: false };
+    }
+
+    const orgIds = organizations.map((org) => org.id);
+    memberRows = await withServiceRole(({ query }) =>
+      query(
+        `SELECT om.organization_id, om.role, p.email, p.full_name
+         FROM organization_members om
+         LEFT JOIN profiles p ON p.id = om.user_id
+         WHERE om.organization_id = ANY($1::uuid[])`,
+        [orgIds]
+      ).then((result) =>
+        result.rows.map((row) => ({
+          organization_id: row.organization_id,
+          role: row.role,
+          profiles: row.email ? { email: row.email, full_name: row.full_name } : null,
+        }))
+      )
+    );
+  } else {
+    const supabase = createServiceClient();
+
+    const { data: orgs } = await supabase
+      .from("organizations")
+      .select("id, name, slug, created_at")
+      .order("created_at", { ascending: false })
+      .limit(LIST_LIMIT);
+
+    organizations = orgs ?? [];
+    if (organizations.length === 0) {
+      return { rows: [], truncated: false };
+    }
+
+    const orgIds = organizations.map((org) => org.id);
+    const { data: members } = await supabase
+      .from("organization_members")
+      .select("organization_id, role, profiles(email, full_name)")
+      .in("organization_id", orgIds);
+
+    memberRows = (members ?? []) as unknown as OrganizationMemberJoinRow[];
   }
-
-  const orgIds = organizations.map((org) => org.id);
-  const { data: members } = await supabase
-    .from("organization_members")
-    .select("organization_id, role, profiles(email, full_name)")
-    .in("organization_id", orgIds);
-
-  const memberRows = (members ?? []) as unknown as OrganizationMemberJoinRow[];
 
   const countByOrg = new Map<string, number>();
   const ownerByOrg = new Map<string, { email: string; full_name: string | null }>();
@@ -121,6 +171,16 @@ export async function listUsersForAdmin(): Promise<{
   rows: AdminUserRow[];
   truncated: boolean;
 }> {
+  if (hasDirectDatabase()) {
+    const rows = await withServiceRole(({ query }) =>
+      query(
+        "SELECT id, email, full_name, created_at FROM profiles ORDER BY created_at DESC LIMIT $1",
+        [LIST_LIMIT]
+      ).then((result) => result.rows as AdminUserRow[])
+    );
+    return { rows, truncated: rows.length === LIST_LIMIT };
+  }
+
   const supabase = createServiceClient();
 
   const { data } = await supabase
@@ -153,6 +213,18 @@ export interface AdminActivityRow {
  * without assuming any particular action vocabulary is enforced.
  */
 export async function listRecentActivityForAdmin(limit = 100): Promise<AdminActivityRow[]> {
+  if (hasDirectDatabase()) {
+    return withServiceRole(({ query }) =>
+      query(
+        `SELECT id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at
+         FROM activity_logs
+         ORDER BY created_at DESC
+         LIMIT $1`,
+        [limit]
+      ).then((result) => result.rows as AdminActivityRow[])
+    );
+  }
+
   const supabase = createServiceClient();
 
   const { data } = await supabase
