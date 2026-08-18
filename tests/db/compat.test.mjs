@@ -480,5 +480,177 @@ await withUser(A, async () => {
   check("owner moze usunac relacje", rows[0].n === 0, rows[0].n);
 });
 
+// ------------------------------------------------------------------
+section("11. sprzatanie sierot context_relations (migracja 012)");
+
+/**
+ * Bypasses RLS deliberately: the old policy already masked orphans from a
+ * normal user's view (entity_project_id() returns NULL for a deleted
+ * entity, so the SELECT policy's IS NOT NULL check never passes). Counting
+ * as service_role is what actually distinguishes "the trigger deleted the
+ * row" from "RLS is merely hiding a row that is still physically there" —
+ * the whole point of migration 012.
+ */
+async function countRelationAsServiceRole(relationId) {
+  return withServiceRole(async () => {
+    const { rows } = await db.query(
+      "SELECT count(*)::int n FROM public.context_relations WHERE id = $1",
+      [relationId]
+    );
+    return rows[0].n;
+  });
+}
+
+// One source-side check per entity table — this is what actually exercises
+// each of the six triggers individually. A copy-paste mistake in migration
+// 012 (wrong table attached to a trigger, or the wrong TG_ARGV literal)
+// would only be caught by testing every table, not just one.
+const sourceSideCases = [
+  {
+    type: "task",
+    insert: () =>
+      db.query(
+        "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Zrodlowy task') RETURNING id",
+        [projectId]
+      ),
+    deleteEntity: (id) => db.query("DELETE FROM public.tasks WHERE id = $1", [id]),
+  },
+  {
+    type: "phase",
+    insert: () =>
+      db.query(
+        "INSERT INTO public.roadmap_phases (project_id, name) VALUES ($1,'Faza') RETURNING id",
+        [projectId]
+      ),
+    deleteEntity: (id) => db.query("DELETE FROM public.roadmap_phases WHERE id = $1", [id]),
+  },
+  {
+    type: "decision",
+    insert: () =>
+      db.query(
+        "INSERT INTO public.context_decisions (project_id, title, made_by) VALUES ($1,'Decyzja',$2) RETURNING id",
+        [projectId, A]
+      ),
+    deleteEntity: (id) => db.query("DELETE FROM public.context_decisions WHERE id = $1", [id]),
+  },
+  {
+    type: "file",
+    insert: () =>
+      db.query(
+        "INSERT INTO public.project_files (project_id, name, uploaded_by) VALUES ($1,'plik.txt',$2) RETURNING id",
+        [projectId, A]
+      ),
+    deleteEntity: (id) => db.query("DELETE FROM public.project_files WHERE id = $1", [id]),
+  },
+  {
+    type: "source",
+    insert: () =>
+      db.query(
+        "INSERT INTO public.context_sources (project_id, source_type, title) VALUES ($1,'document','Zrodlo') RETURNING id",
+        [projectId]
+      ),
+    deleteEntity: (id) => db.query("DELETE FROM public.context_sources WHERE id = $1", [id]),
+  },
+  {
+    type: "memory",
+    insert: () =>
+      db.query(
+        "INSERT INTO public.project_memory (project_id, content, memory_type, created_by) VALUES ($1,'Fakt','fact',$2) RETURNING id",
+        [projectId, A]
+      ),
+    deleteEntity: (id) => db.query("DELETE FROM public.project_memory WHERE id = $1", [id]),
+  },
+];
+
+for (const { type, insert, deleteEntity } of sourceSideCases) {
+  await withUser(A, async () => {
+    const anchor = await db.query(
+      "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Kotwica') RETURNING id",
+      [projectId]
+    );
+    const anchorId = anchor.rows[0].id;
+
+    const entity = await insert();
+    const entityId = entity.rows[0].id;
+
+    const relation = await db.query(
+      `INSERT INTO public.context_relations
+         (source_type, source_id, target_type, target_id, relation_type, created_by)
+       VALUES ($1, $2, 'task', $3, 'related_to', $4)
+       RETURNING id`,
+      [type, entityId, anchorId, A]
+    );
+    const relId = relation.rows[0].id;
+
+    await deleteEntity(entityId);
+
+    const remaining = await countRelationAsServiceRole(relId);
+    check(`usuniecie '${type}' jako source kasuje relacje`, remaining === 0, remaining);
+  });
+}
+
+// Target-side: the OR branch in cleanup_context_relations_on_delete(). Only
+// one table needs covering here — the string-matching logic is identical
+// regardless of which table's trigger fires it, unlike the source-side loop
+// above where each table's trigger is a distinct, independently-wireable
+// object in migration 012.
+await withUser(A, async () => {
+  const source = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Source') RETURNING id",
+    [projectId]
+  );
+  const target = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Target') RETURNING id",
+    [projectId]
+  );
+
+  const relation = await db.query(
+    `INSERT INTO public.context_relations
+       (source_type, source_id, target_type, target_id, relation_type, created_by)
+     VALUES ('task', $1, 'task', $2, 'related_to', $3)
+     RETURNING id`,
+    [source.rows[0].id, target.rows[0].id, A]
+  );
+  const relId = relation.rows[0].id;
+
+  await db.query("DELETE FROM public.tasks WHERE id = $1", [target.rows[0].id]);
+
+  const remaining = await countRelationAsServiceRole(relId);
+  check("usuniecie encji jako target kasuje relacje", remaining === 0, remaining);
+});
+
+// Negative control: deleting an unrelated task must not touch a relation
+// that never referenced it — otherwise the WHERE clause could be too broad
+// (e.g. matching on id alone regardless of source_type) and this whole
+// section would pass for the wrong reason.
+await withUser(A, async () => {
+  const t1 = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'T1') RETURNING id",
+    [projectId]
+  );
+  const t2 = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'T2') RETURNING id",
+    [projectId]
+  );
+  const unrelated = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Niepowiazany') RETURNING id",
+    [projectId]
+  );
+
+  const relation = await db.query(
+    `INSERT INTO public.context_relations
+       (source_type, source_id, target_type, target_id, relation_type, created_by)
+     VALUES ('task', $1, 'task', $2, 'related_to', $3)
+     RETURNING id`,
+    [t1.rows[0].id, t2.rows[0].id, A]
+  );
+  const relId = relation.rows[0].id;
+
+  await db.query("DELETE FROM public.tasks WHERE id = $1", [unrelated.rows[0].id]);
+
+  const remaining = await countRelationAsServiceRole(relId);
+  check("usuniecie niepowiazanej encji nie rusza relacji", remaining === 1, remaining);
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
