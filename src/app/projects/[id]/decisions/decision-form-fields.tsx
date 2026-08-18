@@ -9,9 +9,11 @@ export function DecisionFormFields({
   defaults,
 }: {
   idPrefix: string;
-  defaults?: Pick<
-    Decision,
-    "title" | "description" | "impact" | "alternatives" | "status" | "decision_type"
+  /** Partial on purpose: the "mark comment as decision" flow (TaskDetailDialog)
+   *  only prefills title/description, unlike the edit dialog which passes a
+   *  full Decision. */
+  defaults?: Partial<
+    Pick<Decision, "title" | "description" | "impact" | "alternatives" | "status" | "decision_type">
   >;
 }) {
   return (

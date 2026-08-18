@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Loader2, Plus, Send, Trash2, X } from "lucide-react";
+import { Check, Gavel, Loader2, Plus, Send, Trash2, X } from "lucide-react";
 import {
   createSubtask,
   deleteTask,
@@ -11,6 +11,9 @@ import {
   updateTask,
   type TaskComment,
 } from "@/app/projects/[id]/work/actions";
+import { CreateDecisionDialog } from "@/app/projects/[id]/decisions/create-decision-dialog";
+import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
+import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -101,6 +104,10 @@ export function TaskDetailDialog({
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
 
+  const [whyContext, setWhyContext] = useState<TaskWhyContext | null>(null);
+  const [whyLoading, setWhyLoading] = useState(true);
+  const [whyError, setWhyError] = useState<string | null>(null);
+
   const membersById = new Map(members.map((member) => [member.id, member]));
 
   const loadComments = useCallback(
@@ -120,15 +127,35 @@ export function TaskDetailDialog({
     [projectId]
   );
 
+  // Fetched lazily when the dialog opens rather than prefetched for every
+  // task on the board — see the module comment in task-why.ts for why.
+  const loadWhy = useCallback(
+    async (taskId: string) => {
+      setWhyLoading(true);
+      setWhyError(null);
+      try {
+        const result = await getTaskWhyContext(projectId, taskId);
+        if (result.error) throw new Error(result.error);
+        setWhyContext(result);
+      } catch (err) {
+        setWhyError(err instanceof Error ? err.message : "Failed to load context");
+      } finally {
+        setWhyLoading(false);
+      }
+    },
+    [projectId]
+  );
+
   const taskId = task?.id;
 
-  // Comments are fetched for the task this dialog was mounted for; all state
-  // updates inside loadComments happen after an await.
+  // Comments and "why" context are fetched for the task this dialog was
+  // mounted for; all state updates inside these loaders happen after an await.
   useEffect(() => {
     if (!taskId) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadComments(taskId);
-  }, [taskId, loadComments]);
+    void loadWhy(taskId);
+  }, [taskId, loadComments, loadWhy]);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -457,6 +484,8 @@ export function TaskDetailDialog({
           )}
         </form>
 
+        <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />
+
         <section
           aria-label="Subtasks"
           className="space-y-3 border-t border-border pt-4"
@@ -597,7 +626,7 @@ export function TaskDetailDialog({
                 const author = membersById.get(comment.author_id);
 
                 return (
-                  <li key={comment.id} className="flex gap-2.5">
+                  <li key={comment.id} className="group flex gap-2.5">
                     <span
                       aria-hidden
                       className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
@@ -605,12 +634,34 @@ export function TaskDetailDialog({
                       {author ? initialsFor(author) : "?"}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span className="font-medium text-foreground">
                           {author?.full_name || author?.email || "Unknown"}
                         </span>
                         {" · "}
                         {new Date(comment.created_at).toLocaleString()}
+                        {canEdit && task && (
+                          <CreateDecisionDialog
+                            projectId={projectId}
+                            idPrefix={`comment-decision-${comment.id}`}
+                            defaults={{
+                              title: comment.content.length > 60 ? `${comment.content.slice(0, 60)}…` : comment.content,
+                              description: comment.content,
+                            }}
+                            link={{ sourceType: "task", sourceId: task.id }}
+                            onCreated={() => void loadWhy(task.id)}
+                            trigger={
+                              <button
+                                type="button"
+                                title="Mark as decision"
+                                aria-label="Mark this comment as a decision"
+                                className="ml-auto text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                              >
+                                <Gavel className="h-3 w-3" />
+                              </button>
+                            }
+                          />
+                        )}
                       </p>
                       <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground">
                         {comment.content}
