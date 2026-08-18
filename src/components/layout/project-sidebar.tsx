@@ -17,6 +17,7 @@ import {
   FolderOpen,
   Settings,
   Users,
+  Activity,
   Menu,
   X,
   ChevronRight,
@@ -77,6 +78,7 @@ const navGroups: NavGroup[] = [
     label: null,
     items: [
       { href: 'members', label: 'Members', icon: Users },
+      { href: 'activity', label: 'Activity', icon: Activity },
       { href: 'settings', label: 'Settings', icon: Settings },
     ],
   },
