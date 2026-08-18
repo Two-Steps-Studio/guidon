@@ -8,6 +8,8 @@ import {
   canWriteProject,
   getProjectAccess,
 } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
 export type TaskActionResult = { task: Task | null; error: string | null };
@@ -27,6 +29,20 @@ export async function loadComments(
 ): Promise<{ comments: TaskComment[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access) return { comments: [], error: "You do not have access to this project." };
+
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          "SELECT id, task_id, author_id, content, created_at FROM task_comments WHERE task_id = $1 ORDER BY created_at ASC",
+          [taskId]
+        )
+      );
+      return { comments: result.rows, error: null };
+    } catch (error) {
+      return { comments: [], error: error instanceof Error ? error.message : "Failed to load comments." };
+    }
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -53,6 +69,22 @@ export async function postComment(
     return { comment: null, error: "Comment cannot be empty." };
   }
 
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO task_comments (task_id, author_id, content)
+           VALUES ($1, $2, $3)
+           RETURNING id, task_id, author_id, content, created_at`,
+          [taskId, access.userId, content.trim()]
+        )
+      );
+      return { comment: result.rows[0] as TaskComment, error: null };
+    } catch (error) {
+      return { comment: null, error: error instanceof Error ? error.message : "Failed to post comment." };
+    }
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("task_comments")
@@ -73,6 +105,23 @@ export async function moveTask(
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
     return { error: "You do not have permission to move tasks." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("UPDATE tasks SET status = $1, sort_order = $2 WHERE id = $3", [
+          status,
+          Math.round(sortOrder),
+          taskId,
+        ])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to move task." };
+    }
+
+    revalidatePath(`/projects/${projectId}/work`);
+    return { error: null };
   }
 
   const supabase = await createClient();
@@ -108,17 +157,49 @@ export async function createTask(
     return { task: null, error: "Title is required." };
   }
 
+  const description = input.description.trim() || null;
+  const assigneeId = input.assigneeId || null;
+  const dueDate = input.dueDate ? new Date(input.dueDate).toISOString() : null;
+
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO tasks (project_id, title, description, status, priority, assignee_id, due_date, tags, created_by, sort_order)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           RETURNING *`,
+          [
+            projectId,
+            input.title.trim(),
+            description,
+            input.status,
+            input.priority,
+            assigneeId,
+            dueDate,
+            [],
+            access.userId,
+            input.sortOrder,
+          ]
+        )
+      );
+      revalidatePath(`/projects/${projectId}/work`);
+      return { task: result.rows[0] as Task, error: null };
+    } catch (error) {
+      return { task: null, error: error instanceof Error ? error.message : "Failed to create task." };
+    }
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tasks")
     .insert({
       project_id: projectId,
       title: input.title.trim(),
-      description: input.description.trim() || null,
+      description,
       status: input.status,
       priority: input.priority,
-      assignee_id: input.assigneeId || null,
-      due_date: input.dueDate ? new Date(input.dueDate).toISOString() : null,
+      assignee_id: assigneeId,
+      due_date: dueDate,
       tags: [],
       created_by: access.userId,
       sort_order: input.sortOrder,
@@ -142,6 +223,36 @@ type TaskPatch = Omit<UpdateTaskData, "id" | "description" | "assignee_id" | "du
   due_date?: string | null;
 };
 
+/**
+ * `patch` is caller-constructed TypeScript, not raw request input, but this
+ * whitelist is what keeps a raw `SET ${col} = $n` build safe regardless —
+ * only these column names can ever reach the query string, no matter what
+ * TaskPatch's shape does in the future.
+ */
+const TASK_PATCH_COLUMNS = [
+  "title",
+  "description",
+  "status",
+  "priority",
+  "tags",
+  "due_date",
+  "progress_percent",
+  "assignee_id",
+  "estimated_hours",
+  "actual_hours",
+  "sort_order",
+  "decision_id",
+] as const;
+
+function buildTaskUpdateClause(patch: TaskPatch): { setClause: string; values: unknown[] } {
+  const entries = Object.entries(patch).filter(([key]) =>
+    (TASK_PATCH_COLUMNS as readonly string[]).includes(key)
+  );
+  const setClause = entries.map(([key], i) => `${key} = $${i + 1}`).join(", ");
+  const values = entries.map(([, value]) => value);
+  return { setClause, values };
+}
+
 export async function updateTask(
   projectId: string,
   taskId: string,
@@ -151,6 +262,24 @@ export async function updateTask(
   // Mirrors tasks_update (001): owner/admin/developer.
   if (!access || !canWriteProject(access.role)) {
     return { task: null, error: "You do not have permission to edit this task." };
+  }
+
+  if (hasDirectDatabase()) {
+    const { setClause, values } = buildTaskUpdateClause(patch);
+    if (!setClause) return { task: null, error: "Nothing to update." };
+
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(`UPDATE tasks SET ${setClause} WHERE id = $${values.length + 1} RETURNING *`, [
+          ...values,
+          taskId,
+        ])
+      );
+      revalidatePath(`/projects/${projectId}/work`);
+      return { task: result.rows[0] as Task, error: null };
+    } catch (error) {
+      return { task: null, error: error instanceof Error ? error.message : "Failed to update task." };
+    }
   }
 
   const supabase = await createClient();
@@ -180,6 +309,23 @@ export async function createSubtask(
   }
   if (!title.trim()) {
     return { task: null, error: "Title is required." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO tasks (project_id, parent_task_id, title, status, priority, tags, created_by)
+           VALUES ($1, $2, $3, 'todo', 'medium', $4, $5)
+           RETURNING *`,
+          [projectId, parentTaskId, title.trim(), [], access.userId]
+        )
+      );
+      revalidatePath(`/projects/${projectId}/work`);
+      return { task: result.rows[0] as Task, error: null };
+    } catch (error) {
+      return { task: null, error: error instanceof Error ? error.message : "Failed to create subtask." };
+    }
   }
 
   const supabase = await createClient();
@@ -214,10 +360,24 @@ export async function toggleSubtask(
     return { task: null, error: "You do not have permission to update this subtask." };
   }
 
+  const newStatus = done ? "done" : "todo";
+
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query("UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *", [newStatus, subtaskId])
+      );
+      revalidatePath(`/projects/${projectId}/work`);
+      return { task: result.rows[0] as Task, error: null };
+    } catch (error) {
+      return { task: null, error: error instanceof Error ? error.message : "Failed to update this subtask." };
+    }
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tasks")
-    .update({ status: done ? "done" : "todo" })
+    .update({ status: newStatus })
     .eq("id", subtaskId)
     .select()
     .single();
@@ -236,6 +396,17 @@ export async function deleteTask(
   // Mirrors tasks_delete (001): owner/admin only.
   if (!access || !canManageProject(access.role)) {
     return { error: "You do not have permission to delete this task." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) => query("DELETE FROM tasks WHERE id = $1", [taskId]));
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to delete this task." };
+    }
+
+    revalidatePath(`/projects/${projectId}/work`);
+    return { error: null };
   }
 
   const supabase = await createClient();

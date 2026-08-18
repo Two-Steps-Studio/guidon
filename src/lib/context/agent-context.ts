@@ -34,6 +34,8 @@
 
 import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { getTaskWhyContext } from "@/lib/context/task-why";
 import { MEMORY_TYPE_CONFIG } from "@/app/projects/[id]/memory/memory-type-config";
 import { TYPE_LABELS as SOURCE_TYPE_LABELS } from "@/app/projects/[id]/knowledge/source-config";
@@ -94,26 +96,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
   const access = await getProjectAccess(projectId);
   if (!access) return FAIL("You do not have access to this project.");
 
-  const supabase = await createClient();
-
-  const [taskRes, whyContext, memoryRes] = await Promise.all([
-    supabase
-      .from("tasks")
-      .select("id, title, description, status, priority, tags")
-      .eq("id", taskId)
-      .maybeSingle(),
-    getTaskWhyContext(projectId, taskId),
-    supabase
-      .from("project_memory")
-      .select("id, content, memory_type, verified, confidence")
-      .eq("project_id", projectId)
-      .order("created_at", { ascending: false }),
-  ]);
-
-  if (taskRes.error || !taskRes.data) return FAIL(taskRes.error?.message ?? "Task not found.");
-  if (whyContext.error) return FAIL(whyContext.error);
-
-  const task = taskRes.data as {
+  type TaskRow = {
     id: string;
     title: string;
     description: string | null;
@@ -122,7 +105,56 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
     tags: string[] | null;
   };
 
-  const memory = (memoryRes.data ?? []) as MemoryRow[];
+  let task: TaskRow;
+  let whyContext: Awaited<ReturnType<typeof getTaskWhyContext>>;
+  let memory: MemoryRow[];
+
+  if (hasDirectDatabase()) {
+    const [taskRows, why, memoryRows] = await Promise.all([
+      withUser(access.userId, ({ query }) =>
+        query("SELECT id, title, description, status, priority, tags FROM tasks WHERE id = $1", [
+          taskId,
+        ])
+      ),
+      getTaskWhyContext(projectId, taskId),
+      withUser(access.userId, ({ query }) =>
+        query(
+          "SELECT id, content, memory_type, verified, confidence FROM project_memory WHERE project_id = $1 ORDER BY created_at DESC",
+          [projectId]
+        )
+      ),
+    ]);
+
+    if (taskRows.rows.length === 0) return FAIL("Task not found.");
+    if (why.error) return FAIL(why.error);
+
+    task = taskRows.rows[0] as TaskRow;
+    whyContext = why;
+    memory = memoryRows.rows;
+  } else {
+    const supabase = await createClient();
+
+    const [taskRes, why, memoryRes] = await Promise.all([
+      supabase
+        .from("tasks")
+        .select("id, title, description, status, priority, tags")
+        .eq("id", taskId)
+        .maybeSingle(),
+      getTaskWhyContext(projectId, taskId),
+      supabase
+        .from("project_memory")
+        .select("id, content, memory_type, verified, confidence")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (taskRes.error || !taskRes.data) return FAIL(taskRes.error?.message ?? "Task not found.");
+    if (why.error) return FAIL(why.error);
+
+    task = taskRes.data as TaskRow;
+    whyContext = why;
+    memory = (memoryRes.data ?? []) as MemoryRow[];
+  }
 
   // Related decisions / files / sources need fuller rows than task-why.ts's
   // Why-panel preview carries (untruncated content, plus columns like
@@ -141,27 +173,59 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
     whyContext.related.filter((item) => item.entityType === "source" && !item.missing).map((item) => item.entityId)
   );
 
-  const [decisionsRes, filesRes, sourcesRes] = await Promise.all([
-    relatedDecisionIds.size > 0
-      ? supabase
-          .from("context_decisions")
-          .select("id, title, status, decision_type, description")
-          .in("id", Array.from(relatedDecisionIds))
-      : Promise.resolve({ data: [] as DecisionRow[] }),
-    relatedFileIds.size > 0
-      ? supabase.from("project_files").select("id, name, category, file_url").in("id", Array.from(relatedFileIds))
-      : Promise.resolve({ data: [] as FileRow[] }),
-    relatedSourceIds.size > 0
-      ? supabase
-          .from("context_sources")
-          .select("id, title, content, url, source_type")
-          .in("id", Array.from(relatedSourceIds))
-      : Promise.resolve({ data: [] as SourceRow[] }),
-  ]);
+  let decisions: DecisionRow[];
+  let files: FileRow[];
+  let sources: SourceRow[];
 
-  const decisions = (decisionsRes.data ?? []) as DecisionRow[];
-  const files = (filesRes.data ?? []) as FileRow[];
-  const sources = (sourcesRes.data ?? []) as SourceRow[];
+  if (hasDirectDatabase()) {
+    [decisions, files, sources] = await withUser(access.userId, async ({ query }) => {
+      const [decisionsRows, filesRows, sourcesRows] = await Promise.all([
+        relatedDecisionIds.size > 0
+          ? query(
+              "SELECT id, title, status, decision_type, description FROM context_decisions WHERE id = ANY($1::uuid[])",
+              [Array.from(relatedDecisionIds)]
+            )
+          : Promise.resolve({ rows: [] as DecisionRow[] }),
+        relatedFileIds.size > 0
+          ? query("SELECT id, name, category, file_url FROM project_files WHERE id = ANY($1::uuid[])", [
+              Array.from(relatedFileIds),
+            ])
+          : Promise.resolve({ rows: [] as FileRow[] }),
+        relatedSourceIds.size > 0
+          ? query(
+              "SELECT id, title, content, url, source_type FROM context_sources WHERE id = ANY($1::uuid[])",
+              [Array.from(relatedSourceIds)]
+            )
+          : Promise.resolve({ rows: [] as SourceRow[] }),
+      ]);
+
+      return [decisionsRows.rows, filesRows.rows, sourcesRows.rows] as const;
+    });
+  } else {
+    const supabase = await createClient();
+
+    const [decisionsRes, filesRes, sourcesRes] = await Promise.all([
+      relatedDecisionIds.size > 0
+        ? supabase
+            .from("context_decisions")
+            .select("id, title, status, decision_type, description")
+            .in("id", Array.from(relatedDecisionIds))
+        : Promise.resolve({ data: [] as DecisionRow[] }),
+      relatedFileIds.size > 0
+        ? supabase.from("project_files").select("id, name, category, file_url").in("id", Array.from(relatedFileIds))
+        : Promise.resolve({ data: [] as FileRow[] }),
+      relatedSourceIds.size > 0
+        ? supabase
+            .from("context_sources")
+            .select("id, title, content, url, source_type")
+            .in("id", Array.from(relatedSourceIds))
+        : Promise.resolve({ data: [] as SourceRow[] }),
+    ]);
+
+    decisions = (decisionsRes.data ?? []) as DecisionRow[];
+    files = (filesRes.data ?? []) as FileRow[];
+    sources = (sourcesRes.data ?? []) as SourceRow[];
+  }
 
   // --- Task ---------------------------------------------------------------
   const taskSection = section("Task", [

@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 
 export type UpdateProjectState = {
   error: string | null;
@@ -33,12 +35,32 @@ export async function updateProject(
     return { error: "Project name is required." };
   }
 
+  const trimmedDescription =
+    typeof description === "string" && description.trim() ? description.trim() : null;
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("UPDATE projects SET name = $1, description = $2 WHERE id = $3", [
+          name.trim(),
+          trimmedDescription,
+          projectId,
+        ])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to update project." };
+    }
+
+    revalidatePath(`/projects/${projectId}`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("projects")
     .update({
       name: name.trim(),
-      description: typeof description === "string" && description.trim() ? description.trim() : null,
+      description: trimmedDescription,
     })
     .eq("id", projectId);
 

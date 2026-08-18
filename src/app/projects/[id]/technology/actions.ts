@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { technologySlug } from "@/types/technology";
 import type { Technology, TechnologyCategory } from "@/types/technology";
 
@@ -30,7 +32,6 @@ export async function saveTechnology(
     return { technology: null, error: "Name is required." };
   }
 
-  const supabase = await createClient();
   const payload = {
     name: input.name.trim(),
     category: input.category,
@@ -38,6 +39,51 @@ export async function saveTechnology(
     description: input.description.trim() || null,
     icon_slug: technologySlug(input.name),
   };
+
+  // Most likely cause when the value is game_engine and migration 008 has
+  // not run yet.
+  const gameEngineHint = (message: string): string =>
+    /violates check constraint/i.test(message) && input.category === "game_engine"
+      ? "The database does not accept 'Game engine' yet — run migration 008."
+      : message;
+
+  if (hasDirectDatabase()) {
+    try {
+      const technology = await withUser(access.userId, ({ query }) => {
+        if (input.id) {
+          return query(
+            `UPDATE technologies SET name = $1, category = $2, version = $3, description = $4, icon_slug = $5
+             WHERE id = $6
+             RETURNING *`,
+            [payload.name, payload.category, payload.version, payload.description, payload.icon_slug, input.id]
+          ).then((result) => result.rows[0]);
+        }
+
+        return query(
+          `INSERT INTO technologies (name, category, version, description, icon_slug, project_id, sort_order)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING *`,
+          [
+            payload.name,
+            payload.category,
+            payload.version,
+            payload.description,
+            payload.icon_slug,
+            projectId,
+            input.existingCount,
+          ]
+        ).then((result) => result.rows[0]);
+      });
+
+      revalidatePath(`/projects/${projectId}/technology`);
+      return { technology: technology as Technology, error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save technology.";
+      return { technology: null, error: gameEngineHint(message) };
+    }
+  }
+
+  const supabase = await createClient();
 
   const query = input.id
     ? supabase.from("technologies").update(payload).eq("id", input.id)
@@ -50,13 +96,7 @@ export async function saveTechnology(
   const { data, error } = await query.select().single();
 
   if (error) {
-    // Most likely cause when the value is game_engine and migration 008 has
-    // not run yet.
-    const message =
-      /violates check constraint/i.test(error.message) && input.category === "game_engine"
-        ? "The database does not accept 'Game engine' yet — run migration 008."
-        : error.message;
-    return { technology: null, error: message };
+    return { technology: null, error: gameEngineHint(error.message) };
   }
 
   revalidatePath(`/projects/${projectId}/technology`);
@@ -70,6 +110,19 @@ export async function deleteTechnology(
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
     return { error: "You do not have permission to change the stack." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM technologies WHERE id = $1", [technologyId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to change the stack." };
+    }
+
+    revalidatePath(`/projects/${projectId}/technology`);
+    return { error: null };
   }
 
   const supabase = await createClient();

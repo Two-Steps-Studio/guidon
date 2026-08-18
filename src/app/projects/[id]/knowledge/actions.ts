@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { AUTHORABLE_TYPES } from "./source-config";
 import type { SourceType } from "@/types/context";
 
@@ -48,6 +50,24 @@ export async function createSource(
   const parsed = parseSourceForm(formData);
   if (parsed.error) return { error: parsed.error };
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO context_sources (project_id, source_type, title, content, url, author)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [projectId, parsed.type, parsed.title, parsed.content, parsed.url, access.userId]
+        )
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to add knowledge entry." };
+    }
+
+    revalidatePath(`/projects/${projectId}/knowledge`);
+    revalidatePath(`/projects/${projectId}/context`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.from("context_sources").insert({
     project_id: projectId,
@@ -79,6 +99,23 @@ export async function updateSource(
   const parsed = parseSourceForm(formData);
   if (parsed.error) return { error: parsed.error };
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          "UPDATE context_sources SET source_type = $1, title = $2, content = $3, url = $4 WHERE id = $5",
+          [parsed.type, parsed.title, parsed.content, parsed.url, sourceId]
+        )
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to update knowledge entry." };
+    }
+
+    revalidatePath(`/projects/${projectId}/knowledge`);
+    revalidatePath(`/projects/${projectId}/context`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("context_sources")
@@ -104,6 +141,20 @@ export async function deleteSource(
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
     return { error: "You do not have permission to delete knowledge entries." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM context_sources WHERE id = $1", [sourceId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to delete knowledge entry." };
+    }
+
+    revalidatePath(`/projects/${projectId}/knowledge`);
+    revalidatePath(`/projects/${projectId}/context`);
+    return { error: null };
   }
 
   const supabase = await createClient();

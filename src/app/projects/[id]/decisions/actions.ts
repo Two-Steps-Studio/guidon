@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import type { Decision } from "@/types/context";
 
 export type DecisionFormState = {
@@ -95,6 +97,65 @@ export async function createDecision(
   const linkSourceType = hasLink ? (linkSourceTypeRaw as string) : null;
   const linkSourceId = hasLink ? (linkSourceIdRaw as string).trim() : null;
 
+  if (hasDirectDatabase()) {
+    let relationErrorMessage: string | null;
+
+    try {
+      [, relationErrorMessage] = await withUser(access.userId, async ({ query }) => {
+        const result = await query(
+          `INSERT INTO context_decisions
+             (project_id, title, description, impact, alternatives, status, decision_type, made_by, made_at, source_type, source_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), $9, $10)
+           RETURNING id`,
+          [
+            projectId,
+            parsed.title,
+            parsed.description,
+            parsed.impact,
+            parsed.alternatives,
+            parsed.status,
+            parsed.decision_type,
+            access.userId,
+            linkSourceType,
+            linkSourceId,
+          ]
+        );
+        const id = result.rows[0].id as string;
+
+        // Same "not rolled back together" reasoning as the Supabase branch
+        // below — no cross-table transaction spanning both inserts at this
+        // layer, so a relation failure here doesn't undo the decision.
+        let relationError: string | null = null;
+        if (hasLink) {
+          try {
+            await query(
+              `INSERT INTO context_relations (source_type, source_id, target_type, target_id, relation_type, created_by)
+               VALUES ($1, $2, 'decision', $3, 'decided_by', $4)`,
+              [linkSourceType, linkSourceId, id, access.userId]
+            );
+          } catch (error) {
+            relationError = error instanceof Error ? error.message : "Failed to link decision.";
+          }
+        }
+
+        return [id, relationError] as const;
+      });
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to create decision." };
+    }
+
+    if (relationErrorMessage) {
+      return { error: `Decision saved, but linking it failed: ${relationErrorMessage}` };
+    }
+
+    revalidatePath(`/projects/${projectId}/decisions`);
+    revalidatePath(`/projects/${projectId}/context`);
+    if (linkSourceType === "task") {
+      revalidatePath(`/projects/${projectId}/work`);
+    }
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("context_decisions")
@@ -160,6 +221,33 @@ export async function updateDecision(
   const parsed = parseDecisionForm(formData);
   if (parsed.error) return { error: parsed.error };
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          `UPDATE context_decisions
+           SET title = $1, description = $2, impact = $3, alternatives = $4, status = $5, decision_type = $6
+           WHERE id = $7`,
+          [
+            parsed.title,
+            parsed.description,
+            parsed.impact,
+            parsed.alternatives,
+            parsed.status,
+            parsed.decision_type,
+            decisionId,
+          ]
+        )
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to update decision." };
+    }
+
+    revalidatePath(`/projects/${projectId}/decisions`);
+    revalidatePath(`/projects/${projectId}/context`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("context_decisions")
@@ -187,6 +275,20 @@ export async function deleteDecision(
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
     return { error: "You do not have permission to delete decisions." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM context_decisions WHERE id = $1", [decisionId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to delete decision." };
+    }
+
+    revalidatePath(`/projects/${projectId}/decisions`);
+    revalidatePath(`/projects/${projectId}/context`);
+    return { error: null };
   }
 
   const supabase = await createClient();

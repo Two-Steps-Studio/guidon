@@ -29,6 +29,8 @@
 
 import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser, type DbSession } from "@/lib/db/session";
 import type { ContextEntityType, ContextRelation, RelationType } from "@/types/context";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -83,6 +85,30 @@ async function fetchMap(
   const { data } = await supabase.from(table).select(columns).in("id", Array.from(ids));
   const map = new Map<string, Record<string, unknown>>();
   for (const row of (data ?? []) as unknown as Record<string, unknown>[]) {
+    map.set(row.id as string, row);
+  }
+  return map;
+}
+
+/**
+ * Same as fetchMap, against a pg session instead of the Supabase client.
+ * `table`/`columns` are always call-site string literals here, never
+ * request input, same trust boundary as every other raw-SQL query built in
+ * this codebase's self-hosted branches.
+ */
+async function fetchMapLocal(
+  query: DbSession["query"],
+  table: string,
+  columns: string,
+  ids: Set<string> | undefined
+): Promise<Map<string, Record<string, unknown>>> {
+  if (!ids || ids.size === 0) return new Map();
+
+  const result = await query(`SELECT ${columns} FROM ${table} WHERE id = ANY($1::uuid[])`, [
+    Array.from(ids),
+  ]);
+  const map = new Map<string, Record<string, unknown>>();
+  for (const row of result.rows as Record<string, unknown>[]) {
     map.set(row.id as string, row);
   }
   return map;
@@ -154,35 +180,69 @@ export async function getTaskWhyContext(projectId: string, taskId: string): Prom
   const access = await getProjectAccess(projectId);
   if (!access) return EMPTY_ERROR("You do not have access to this project.");
 
-  const supabase = await createClient();
-
-  const [taskRes, relationsRes] = await Promise.all([
-    supabase.from("tasks").select("decision_id").eq("id", taskId).maybeSingle(),
-    supabase
-      .from("context_relations")
-      .select("*")
-      .eq("project_id", projectId)
-      .or(
-        `and(source_type.eq.task,source_id.eq.${taskId}),and(target_type.eq.task,target_id.eq.${taskId})`
-      )
-      .order("created_at", { ascending: false }),
-  ]);
-
-  if (taskRes.error) return EMPTY_ERROR(taskRes.error.message);
-  if (relationsRes.error) return EMPTY_ERROR(relationsRes.error.message);
-
+  let decisionId: string | null;
+  let relations: ContextRelation[];
   let decision: TaskWhyDecision | null = null;
-  const decisionId = (taskRes.data as { decision_id: string | null } | null)?.decision_id ?? null;
-  if (decisionId) {
-    const { data } = await supabase
-      .from("context_decisions")
-      .select("id, title, status, decision_type, description")
-      .eq("id", decisionId)
-      .maybeSingle();
-    if (data) decision = data as TaskWhyDecision;
-  }
 
-  const relations = (relationsRes.data ?? []) as ContextRelation[];
+  if (hasDirectDatabase()) {
+    try {
+      [decisionId, relations, decision] = await withUser(access.userId, async ({ query }) => {
+        const [taskRes, relationsRes] = await Promise.all([
+          query("SELECT decision_id FROM tasks WHERE id = $1", [taskId]),
+          query(
+            `SELECT * FROM context_relations
+             WHERE project_id = $1
+               AND ((source_type = 'task' AND source_id = $2) OR (target_type = 'task' AND target_id = $2))
+             ORDER BY created_at DESC`,
+            [projectId, taskId]
+          ),
+        ]);
+
+        const id = (taskRes.rows[0]?.decision_id as string | null) ?? null;
+        let dec: TaskWhyDecision | null = null;
+        if (id) {
+          const decisionRes = await query(
+            "SELECT id, title, status, decision_type, description FROM context_decisions WHERE id = $1",
+            [id]
+          );
+          if (decisionRes.rows.length > 0) dec = decisionRes.rows[0] as TaskWhyDecision;
+        }
+
+        return [id, relationsRes.rows, dec] as const;
+      });
+    } catch (error) {
+      return EMPTY_ERROR(error instanceof Error ? error.message : "Failed to load context.");
+    }
+  } else {
+    const supabase = await createClient();
+
+    const [taskRes, relationsRes] = await Promise.all([
+      supabase.from("tasks").select("decision_id").eq("id", taskId).maybeSingle(),
+      supabase
+        .from("context_relations")
+        .select("*")
+        .eq("project_id", projectId)
+        .or(
+          `and(source_type.eq.task,source_id.eq.${taskId}),and(target_type.eq.task,target_id.eq.${taskId})`
+        )
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (taskRes.error) return EMPTY_ERROR(taskRes.error.message);
+    if (relationsRes.error) return EMPTY_ERROR(relationsRes.error.message);
+
+    decisionId = (taskRes.data as { decision_id: string | null } | null)?.decision_id ?? null;
+    if (decisionId) {
+      const { data } = await supabase
+        .from("context_decisions")
+        .select("id, title, status, decision_type, description")
+        .eq("id", decisionId)
+        .maybeSingle();
+      if (data) decision = data as TaskWhyDecision;
+    }
+
+    relations = (relationsRes.data ?? []) as ContextRelation[];
+  }
 
   const otherSide = (
     relation: ContextRelation
@@ -199,15 +259,56 @@ export async function getTaskWhyContext(projectId: string, taskId: string): Prom
     (idsByType[type] ??= new Set()).add(id);
   }
 
-  const [decisionsMap, sourcesMap, memoryMap, phasesMap, filesMap, tasksMap, projectsMap] = await Promise.all([
-    fetchMap(supabase, "context_decisions", "id, title, status, description, made_by, made_at", idsByType.decision),
-    fetchMap(supabase, "context_sources", "id, title, content, author, created_at", idsByType.source),
-    fetchMap(supabase, "project_memory", "id, content, memory_type, created_by, created_at", idsByType.memory),
-    fetchMap(supabase, "roadmap_phases", "id, name, description, created_by, created_at", idsByType.phase),
-    fetchMap(supabase, "project_files", "id, name, uploaded_by, created_at", idsByType.file),
-    fetchMap(supabase, "tasks", "id, title, created_by, created_at", idsByType.task),
-    fetchMap(supabase, "projects", "id, name, created_by, created_at", idsByType.project),
-  ]);
+  let decisionsMap: Map<string, Record<string, unknown>>;
+  let sourcesMap: Map<string, Record<string, unknown>>;
+  let memoryMap: Map<string, Record<string, unknown>>;
+  let phasesMap: Map<string, Record<string, unknown>>;
+  let filesMap: Map<string, Record<string, unknown>>;
+  let tasksMap: Map<string, Record<string, unknown>>;
+  let projectsMap: Map<string, Record<string, unknown>>;
+
+  if (hasDirectDatabase()) {
+    [decisionsMap, sourcesMap, memoryMap, phasesMap, filesMap, tasksMap, projectsMap] = await withUser(
+      access.userId,
+      ({ query }) =>
+        Promise.all([
+          fetchMapLocal(
+            query,
+            "context_decisions",
+            "id, title, status, description, made_by, made_at",
+            idsByType.decision
+          ),
+          fetchMapLocal(query, "context_sources", "id, title, content, author, created_at", idsByType.source),
+          fetchMapLocal(
+            query,
+            "project_memory",
+            "id, content, memory_type, created_by, created_at",
+            idsByType.memory
+          ),
+          fetchMapLocal(
+            query,
+            "roadmap_phases",
+            "id, name, description, created_by, created_at",
+            idsByType.phase
+          ),
+          fetchMapLocal(query, "project_files", "id, name, uploaded_by, created_at", idsByType.file),
+          fetchMapLocal(query, "tasks", "id, title, created_by, created_at", idsByType.task),
+          fetchMapLocal(query, "projects", "id, name, created_by, created_at", idsByType.project),
+        ])
+    );
+  } else {
+    const supabase = await createClient();
+
+    [decisionsMap, sourcesMap, memoryMap, phasesMap, filesMap, tasksMap, projectsMap] = await Promise.all([
+      fetchMap(supabase, "context_decisions", "id, title, status, description, made_by, made_at", idsByType.decision),
+      fetchMap(supabase, "context_sources", "id, title, content, author, created_at", idsByType.source),
+      fetchMap(supabase, "project_memory", "id, content, memory_type, created_by, created_at", idsByType.memory),
+      fetchMap(supabase, "roadmap_phases", "id, name, description, created_by, created_at", idsByType.phase),
+      fetchMap(supabase, "project_files", "id, name, uploaded_by, created_at", idsByType.file),
+      fetchMap(supabase, "tasks", "id, title, created_by, created_at", idsByType.task),
+      fetchMap(supabase, "projects", "id, name, created_by, created_at", idsByType.project),
+    ]);
+  }
 
   const mapsByType: Partial<Record<ContextEntityType, Map<string, Record<string, unknown>>>> = {
     decision: decisionsMap,
