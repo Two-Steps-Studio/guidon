@@ -54,15 +54,22 @@ definition of the security model instead of two that could drift. This is
 verified by `npm run test:db` (49 assertions against a real PostgreSQL via
 PGlite, no Docker, no Supabase).
 
-**The gap:** nothing outside `src/lib/db/session.ts`, `src/lib/db/pool.ts`,
-and the test suite imports this layer. `withUser()`, `withServiceRole()`,
-and `getPool()` have zero call sites in `src/app` or `src/lib/data`. So a
-self-hosted Postgres today has a correct, tested, migrated schema — but the
-running application still talks to Supabase for every read and write,
-regardless of whether `DATABASE_URL` is also set. Wiring the two together
-(making Server Components/Actions call through `session.ts` when
-`DATABASE_URL` is configured, instead of the Supabase client) is the
-remaining step, tracked in `docs/self-hosting-audit.md`.
+**The gap, narrowing:** `src/lib/auth/local-auth.ts` (sign-up/sign-in via
+`withServiceRole()`, writing straight to `auth.users`), `src/proxy.ts`
+(route protection via a self-signed session cookie, no Supabase call), and
+`src/lib/data/current-user.ts` (`withUser()`, reading the profile) all
+branch on `hasDirectDatabase()` and use this layer for real when
+`DATABASE_URL` is set. The dashboard (`src/app/dashboard/page.tsx`) is the
+first data page converted the same way — its three queries run as SQL under
+`withUser()` instead of `.from()`, proving RLS applies identically either
+path.
+
+Every other page — organizations, projects, work, roadmap, knowledge,
+decisions, files, memory, context, settings, the admin panel — still talks
+to Supabase unconditionally, regardless of `DATABASE_URL`. Converting each
+one (replace `.from()` calls with SQL under `withUser()`/`withServiceRole()`,
+verify against real RLS) is the remaining step, tracked in
+`docs/self-hosting-audit.md`.
 
 ## Provider abstractions
 

@@ -8,11 +8,9 @@ page is about the deployment mechanics.
 ## Read this first: current state
 
 Guidon's self-hosting work has shipped a real Docker deployment, a real
-migration runner, and a real PostgreSQL-compatibility layer for the schema's
-70 Row-Level-Security policies — all independently verified
-(`npm run test:db`). What it has **not** shipped yet is the wiring that
-would let the running application actually authenticate users and read/write
-data through that self-hosted PostgreSQL instead of through Supabase.
+migration runner, a real PostgreSQL-compatibility layer for the schema's 70
+Row-Level-Security policies, and — as of this milestone — a real self-hosted
+identity path. Sign-in no longer requires Supabase software to exist.
 
 Concretely, as of today:
 
@@ -22,35 +20,44 @@ Concretely, as of today:
   five backends) works for the one thing AI currently does, which is get
   constructed and health-checked. No feature calls it yet (see
   [configuration.md](./configuration.md#ai-todomd-67)).
-- **Authentication and data access are not yet pluggable.** `src/proxy.ts`
-  (route protection), `src/lib/data/current-user.ts` (the signed-in user),
-  every organization/project access check, every Server Action, and the
-  admin panel all go through the Supabase client. They require
-  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to be set
-  and reachable — even when `DATABASE_URL` also points at a fully migrated,
-  working self-hosted PostgreSQL. `DATABASE_URL` today is consumed by the
-  migration runner and by an internal compatibility layer
-  (`src/lib/db/session.ts`, `src/lib/db/pool.ts`) that is tested in
-  isolation but has no callers anywhere else in the app.
+- **Authentication is genuinely pluggable.** When `DATABASE_URL` is set
+  (self-hosted), `src/proxy.ts` (route protection), sign-up, sign-in,
+  sign-out, and `src/lib/data/current-user.ts` (the signed-in user) all run
+  against `auth.users` directly — email/password only, hashed with `scrypt`,
+  sessions are a self-signed cookie (`src/lib/auth/local-auth.ts`,
+  `src/lib/auth/session-cookie.ts`). No `NEXT_PUBLIC_SUPABASE_URL` reachable
+  at runtime is required for this path. OAuth (Google/Discord) is not
+  available in this mode — there is no GoTrue to redirect to, so the
+  sign-in/sign-up pages hide those buttons automatically when self-hosted.
+- **Data access is pluggable for exactly one page so far: the dashboard.**
+  Its three queries run as SQL under `withUser()` instead of through the
+  Supabase client, proving RLS applies identically either way. Every other
+  page — organizations, projects, work, roadmap, knowledge, decisions,
+  files, memory, context, settings, the admin panel — still calls the
+  Supabase client unconditionally. Visiting one of those in a self-hosted
+  install with no Supabase project configured at all will error, loudly, not
+  silently: `createClient()` throws rather than returning something that
+  looks like it worked.
 
-So: you can self-host your files and (soon) your AI backend. You cannot yet
-self-host your identity provider or your primary database in the sense of
-"no Supabase account required" — a Supabase project (their cloud, or one you
-run yourself) is currently a hard requirement for sign-in and data on every
-path below, Docker Compose included. This is the accurate, current state,
-not the end goal — track further progress in
-`docs/self-hosting-audit.md`.
+So: you can now sign up, sign in, and see your dashboard on a plain
+PostgreSQL with zero Supabase software running. You cannot yet use the rest
+of the application that way — the remaining pages need the same
+`supabase.from()` → SQL-under-`withUser()` conversion the dashboard already
+got, one at a time, each verified against real RLS. That conversion work,
+and how to add it, is tracked in `docs/self-hosting-audit.md`.
 
-Everything below still stands: it's real infrastructure, correctly
-documented, just not the full "point Guidon at your own Postgres and forget
-Supabase exists" outcome yet.
+If you *do* configure a Supabase project alongside `DATABASE_URL` (i.e. you
+don't mind Supabase existing, you just want your own Postgres), everything
+below works today: sign-in and the dashboard use the local path, every other
+page uses Supabase, and both point at data that's visible to the same user
+because RLS is the same policies either way.
 
 ## Which path do I want?
 
 | | Cloud | Self-hosted (this page) | Development |
 |---|---|---|---|
 | Where it runs | Guidon Cloud infrastructure | Your server, via Docker Compose or bare Node | Your machine, `npm run dev` |
-| Database | Supabase, managed | Supabase project required today (see above); `DATABASE_URL` also set up and migrated, ready for when the app is wired to it | Supabase project |
+| Database | Supabase, managed | `DATABASE_URL` — self-hosted PostgreSQL, no Supabase account needed for sign-in and the dashboard; a Supabase project is still needed for every other page until they're converted (see above) | Supabase project |
 | Storage | Supabase Storage | `local` (filesystem) or `supabase` | Either |
 | AI | Optional, any provider | Optional, `ollama` for a fully local backend | Optional |
 | You run | Nothing | `db` + `migrate` + `app` containers, or your own Postgres + Node | `npm run dev` |
@@ -64,8 +71,8 @@ Guidon's code: see the Development section in the root
 
 - Docker and Docker Compose (Compose path), **or** Node.js 22 and a
   PostgreSQL 17+ server you control (bare-metal path)
-- A Supabase project (see the callout above — currently required regardless
-  of path)
+- A Supabase project — not needed to sign up, sign in, or use the dashboard
+  (see the callout above), but still needed for every other page today
 - `openssl` or any way to generate a random hex string, for `AUTH_SECRET`
 
 ## Docker Compose (primary path)
@@ -86,11 +93,13 @@ Required in `.env` for this to start:
 - `POSTGRES_PASSWORD` — the compose file hard-fails without it
   (`POSTGRES_PASSWORD jest wymagane`)
 - `AUTH_SECRET` — same, hard-fails without it
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — needed as
-  Docker **build args** (baked into the client bundle at build time — see
-  `next.config.ts`'s standalone-output comment and the Dockerfile's `ARG`
-  list) and `SUPABASE_SERVICE_ROLE_KEY` needed at **runtime** for the reasons
-  in the callout above
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Docker
+  **build args** (baked into the client bundle — see `next.config.ts`'s
+  standalone-output comment and the Dockerfile's `ARG` list), and
+  `SUPABASE_SERVICE_ROLE_KEY` at **runtime** — required for every page except
+  sign-up/sign-in/sign-out/dashboard, per the callout above. Leaving them
+  unset gets you a working self-hosted identity and dashboard today; every
+  other page will error until it's converted the same way.
 
 What happens on `docker compose up -d`:
 
@@ -134,23 +143,20 @@ point `AI_BASE_URL` at your Ollama daemon to keep AI fully local; leave
 `AI_PROVIDER` unset to disable AI entirely (a normal, supported state, not a
 degraded one).
 
-Be aware this only covers the AI subsystem — per the current-state callout,
-sign-in and data still depend on a reachable Supabase project today, so a
-Guidon deployment is not yet fully air-gapped end to end even with
-`AI_PROVIDER=ollama` and `STORAGE_PROVIDER=local` set.
+Sign-in and the dashboard now work with zero external network access —
+`DATABASE_URL` being set is what switches the app onto the local auth path,
+per the current-state callout. The rest of the application still depends on a
+reachable Supabase project until it's converted the same way, so a Guidon
+deployment is not yet fully air-gapped end to end even with
+`AI_PROVIDER=ollama` and `STORAGE_PROVIDER=local` set — but the sign-in wall
+that used to block that goal outright is gone.
 
 ### Admin panel access
 
 Set `ADMIN_EMAILS` in `.env` to a comma-separated list of emails that should
-be able to reach `/admin`. **This currently has no effect under
-`docker compose up`** — `docker-compose.yml`'s `app` service does not list
-`ADMIN_EMAILS` in its `environment:` block, so the value never reaches the
-container. Until that's fixed, either:
-
-- run the bare-metal path below (which does read `ADMIN_EMAILS` from the
-  process environment directly), or
-- add `ADMIN_EMAILS: ${ADMIN_EMAILS:-}` to the `app.environment` block in
-  your own copy of `docker-compose.yml` before deploying.
+be able to reach `/admin`. `docker-compose.yml`'s `app` service forwards it
+through, same as the bare-metal path. Leaving it unset (the default) keeps
+`/admin` unreachable by anyone — the safe default, not a degraded state.
 
 See [configuration.md](./configuration.md#admin-todomd-25) for what the admin panel
 covers once reachable.
@@ -180,10 +186,17 @@ process normally here, since there's no compose layer in between.
 ## Auth providers
 
 Google and Discord sign-in are supported once enabled in your Supabase
-project. See [auth-setup.md](./auth-setup.md) for the full walkthrough —
-not repeated here. Set `NEXT_PUBLIC_AUTH_PROVIDERS=google,discord` (or
-either alone) once configured; leaving it unset keeps the install
-password-only, which is a valid default for a fresh instance.
+project — this requires Supabase, cloud or self-run, since it's GoTrue doing
+the OAuth handshake. See [auth-setup.md](./auth-setup.md) for the full
+walkthrough — not repeated here. Set
+`NEXT_PUBLIC_AUTH_PROVIDERS=google,discord` (or either alone) once
+configured; leaving it unset keeps the install password-only, which is a
+valid default for a fresh instance.
+
+**With `DATABASE_URL` set and no Supabase project configured at all**, OAuth
+is not available — the sign-in and sign-up pages detect this and don't render
+the buttons, rather than showing something that fails on click. Email and
+password is the only sign-in method in that mode today.
 
 ## Related
 
