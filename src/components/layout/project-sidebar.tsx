@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ProjectSwitcher } from '@/components/layout/project-switcher';
+import type { SwitchableProject } from '@/lib/data/project-access';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -25,6 +27,8 @@ import {
 
 interface ProjectSidebarProps {
   projectId: string;
+  currentProjectName: string;
+  projects: SwitchableProject[];
   children: React.ReactNode;
 }
 
@@ -84,7 +88,7 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-export function ProjectSidebar({ projectId, children }: ProjectSidebarProps) {
+export function ProjectSidebar({ projectId, currentProjectName, projects, children }: ProjectSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -121,6 +125,10 @@ export function ProjectSidebar({ projectId, children }: ProjectSidebarProps) {
           `}
         >
           <div className="p-3">
+            <div className="mb-2 border-b border-border pb-2">
+              <ProjectSwitcher projectId={projectId} currentProjectName={currentProjectName} projects={projects} />
+            </div>
+
             <nav className="space-y-4" aria-label="Project">
               {navGroups.map((group, groupIndex) => (
                 <div key={group.label ?? `group-${groupIndex}`}>

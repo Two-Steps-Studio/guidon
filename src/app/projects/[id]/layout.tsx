@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireProjectAccess } from "@/lib/data/project-access";
+import { requireProjectAccess, getSwitchableProjects } from "@/lib/data/project-access";
 import { ProjectSidebar } from "@/components/layout/project-sidebar";
 
 /**
@@ -44,7 +44,12 @@ export default async function ProjectLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireProjectAccess(id);
+  const access = await requireProjectAccess(id);
+  const switchableProjects = await getSwitchableProjects(access.project.organization_id);
 
-  return <ProjectSidebar projectId={id}>{children}</ProjectSidebar>;
+  return (
+    <ProjectSidebar projectId={id} currentProjectName={access.project.name} projects={switchableProjects}>
+      {children}
+    </ProjectSidebar>
+  );
 }

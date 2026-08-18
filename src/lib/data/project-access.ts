@@ -130,3 +130,33 @@ export async function requireProjectAccess(
 
   return access;
 }
+
+export interface SwitchableProject {
+  id: string;
+  name: string;
+  slug: string | null;
+}
+
+/**
+ * Projects the caller may switch to from the project sidebar, scoped to the
+ * current project's organization (a global list across every org the user
+ * belongs to would mix unrelated workspaces into one dropdown).
+ *
+ * No separate membership check here: `projects_select` RLS
+ * (001_initial_schema.sql) already applies `private.project_access(id)` —
+ * same visibility rule as everywhere else — so this returns exactly what the
+ * caller is allowed to see, same guarantee as the `projects` page.
+ */
+export async function getSwitchableProjects(
+  organizationId: string
+): Promise<SwitchableProject[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("projects")
+    .select("id, name, slug")
+    .eq("organization_id", organizationId)
+    .order("name", { ascending: true });
+
+  return (data ?? []) as SwitchableProject[];
+}
