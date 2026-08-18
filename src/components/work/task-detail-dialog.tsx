@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Gavel, Loader2, Plus, Send, Trash2, X } from "lucide-react";
+import { Bot, Check, Copy, Gavel, Loader2, Plus, Send, Trash2, X } from "lucide-react";
 import {
   createSubtask,
   deleteTask,
@@ -13,6 +13,7 @@ import {
 } from "@/app/projects/[id]/work/actions";
 import { CreateDecisionDialog } from "@/app/projects/[id]/decisions/create-decision-dialog";
 import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
+import { getTaskAgentContext } from "@/lib/context/agent-context";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,6 +109,14 @@ export function TaskDetailDialog({
   const [whyLoading, setWhyLoading] = useState(true);
   const [whyError, setWhyError] = useState<string | null>(null);
 
+  // Generic Agent Context export (TODO.md §18) — generated on demand rather
+  // than alongside Why/comments, since most task views never open it.
+  const [agentContextOpen, setAgentContextOpen] = useState(false);
+  const [agentContextMarkdown, setAgentContextMarkdown] = useState("");
+  const [agentContextLoading, setAgentContextLoading] = useState(false);
+  const [agentContextError, setAgentContextError] = useState<string | null>(null);
+  const [agentContextCopied, setAgentContextCopied] = useState(false);
+
   const membersById = new Map(members.map((member) => [member.id, member]));
 
   const loadComments = useCallback(
@@ -145,6 +154,35 @@ export function TaskDetailDialog({
     },
     [projectId]
   );
+
+  const handleExportAgentContext = async () => {
+    if (!task) return;
+
+    setAgentContextOpen(true);
+    setAgentContextLoading(true);
+    setAgentContextError(null);
+    setAgentContextCopied(false);
+
+    try {
+      const result = await getTaskAgentContext(projectId, task.id);
+      if (result.error) throw new Error(result.error);
+      setAgentContextMarkdown(result.markdown);
+    } catch (err) {
+      setAgentContextError(err instanceof Error ? err.message : "Failed to generate agent context");
+    } finally {
+      setAgentContextLoading(false);
+    }
+  };
+
+  const handleCopyAgentContext = async () => {
+    try {
+      await navigator.clipboard.writeText(agentContextMarkdown);
+      setAgentContextCopied(true);
+      setTimeout(() => setAgentContextCopied(false), 2000);
+    } catch {
+      setAgentContextError("Failed to copy to clipboard");
+    }
+  };
 
   const taskId = task?.id;
 
@@ -303,6 +341,7 @@ export function TaskDetailDialog({
   if (!task || !form) return null;
 
   return (
+    <>
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
@@ -485,6 +524,13 @@ export function TaskDetailDialog({
         </form>
 
         <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />
+
+        <section aria-label="Agent context" className="border-t border-border pt-4">
+          <Button type="button" variant="outline" size="sm" onClick={() => void handleExportAgentContext()}>
+            <Bot className="h-4 w-4" />
+            Export agent context
+          </Button>
+        </section>
 
         <section
           aria-label="Subtasks"
@@ -700,5 +746,45 @@ export function TaskDetailDialog({
         </section>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={agentContextOpen} onOpenChange={setAgentContextOpen}>
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Agent context</DialogTitle>
+          <DialogDescription>
+            Provider-neutral Markdown for this task — paste it into Claude Code, Cursor, Codex, Windsurf,
+            or any other AI coding agent.
+          </DialogDescription>
+        </DialogHeader>
+
+        {agentContextLoading ? (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Generating context...
+          </p>
+        ) : agentContextError ? (
+          <p role="alert" className="text-sm text-destructive">
+            {agentContextError}
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <Textarea
+              readOnly
+              rows={16}
+              value={agentContextMarkdown}
+              className="font-mono text-xs"
+              onFocus={(event) => event.currentTarget.select()}
+            />
+            <div className="flex justify-end">
+              <Button type="button" size="sm" onClick={() => void handleCopyAgentContext()}>
+                {agentContextCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {agentContextCopied ? "Copied" : "Copy to clipboard"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
