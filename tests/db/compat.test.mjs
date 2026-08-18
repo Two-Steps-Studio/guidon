@@ -90,6 +90,20 @@ async function withServiceRole(fn) {
   }
 }
 
+/** Mirrors src/lib/db/session.ts's withAnon — no identity at all. */
+async function withAnon(fn) {
+  await db.exec("BEGIN");
+  await db.exec("SET LOCAL ROLE anon");
+  try {
+    const value = await fn();
+    await db.exec("COMMIT");
+    return value;
+  } catch (error) {
+    await db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 async function expectRejected(label, run, pattern) {
   try {
     await run();
@@ -651,6 +665,60 @@ await withUser(A, async () => {
   const remaining = await countRelationAsServiceRole(relId);
   check("usuniecie niepowiazanej encji nie rusza relacji", remaining === 1, remaining);
 });
+
+// ------------------------------------------------------------------
+section("12. auth.users jako sluzy self-hosted logowaniu (src/lib/auth/local-auth.ts)");
+
+// signUpLocal() i signInLocal() dzialaja wylacznie przez withServiceRole() —
+// nigdy pod tozsamoscia authenticated/anon — bo auth.users ma RLS wlaczone
+// bez zadnej polityki (000_auth_compat.sql §3: "odmow wszystkim poza
+// wlascicielem i BYPASSRLS"). Ta sekcja dowodzi, ze to zalozenie jest
+// prawdziwe, nie zakladane.
+let localUserId;
+
+await withServiceRole(async () => {
+  const inserted = await db.query(
+    `INSERT INTO auth.users (email, encrypted_password, email_confirmed_at, raw_user_meta_data)
+     VALUES ($1, $2, now(), $3::jsonb)
+     RETURNING id`,
+    ["local@example.test", "scrypt:aa:bb", JSON.stringify({ full_name: "Local User" })]
+  );
+  localUserId = inserted.rows[0].id;
+  check("insert do auth.users jako service_role", Boolean(localUserId));
+
+  const profile = await db.query("SELECT full_name FROM public.profiles WHERE id = $1", [
+    localUserId,
+  ]);
+  check(
+    "trigger tworzy profil tez dla insertu przez service_role",
+    profile.rows[0]?.full_name === "Local User",
+    JSON.stringify(profile.rows)
+  );
+});
+
+await expectRejected(
+  "duplikat email odrzucony (UNIQUE, jak sprawdza signUpLocal)",
+  () =>
+    withServiceRole(() =>
+      db.query(
+        "INSERT INTO auth.users (email, encrypted_password) VALUES ($1, $2)",
+        ["local@example.test", "scrypt:cc:dd"]
+      )
+    ),
+  /duplicate key|unique/i
+);
+
+await expectRejected(
+  "authenticated nie moze czytac auth.users",
+  () => withUser(A, () => db.query("SELECT 1 FROM auth.users WHERE id = $1", [localUserId])),
+  /permission denied/i
+);
+
+await expectRejected(
+  "anon nie moze czytac auth.users",
+  () => withAnon(() => db.query("SELECT 1 FROM auth.users WHERE id = $1", [localUserId])),
+  /permission denied/i
+);
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

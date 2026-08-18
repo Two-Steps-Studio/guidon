@@ -6,6 +6,8 @@ import { Plus, ArrowRight, FolderKanban } from "lucide-react";
 import { Navigation } from "@/components/layout/navigation";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import { isDone } from "@/lib/work/task-board";
 
 interface ProjectRow {
@@ -16,39 +18,99 @@ interface ProjectRow {
   organizations: { id: string; name: string } | null;
 }
 
+/**
+ * Self-hosted path: no PostgREST, so the same three queries the Supabase
+ * branch below expresses with `.from()` are written as SQL and run under
+ * withUser() — RLS applies identically either way, since both paths end up
+ * as `SET LOCAL ROLE authenticated` + the same policies (see
+ * src/lib/db/session.ts). This is the first page in the app proven to render
+ * end-to-end against a plain PostgreSQL with no Supabase software running;
+ * every other page still requires Supabase's REST layer until converted the
+ * same way (see docs/self-hosting.md).
+ */
+async function loadDashboardDataLocal(userId: string) {
+  return withUser(userId, async ({ query }) => {
+    const projectsResult = await query(
+      `SELECT p.id, p.name, p.description, p.status, o.id AS org_id, o.name AS org_name
+       FROM projects p
+       JOIN organizations o ON o.id = p.organization_id
+       ORDER BY p.created_at DESC`
+    );
+
+    const projects: ProjectRow[] = projectsResult.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      status: row.status,
+      organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
+    }));
+
+    const projectIds = projects.map((p) => p.id);
+
+    let tasks: { status: string; parent_task_id: string | null }[] = [];
+    let totalDecisions = 0;
+
+    if (projectIds.length > 0) {
+      const [tasksResult, decisionsResult] = await Promise.all([
+        query("SELECT status, parent_task_id FROM tasks WHERE project_id = ANY($1::uuid[])", [
+          projectIds,
+        ]),
+        query("SELECT id FROM context_decisions WHERE project_id = ANY($1::uuid[])", [projectIds]),
+      ]);
+      tasks = tasksResult.rows;
+      totalDecisions = decisionsResult.rows.length;
+    }
+
+    return { projects, tasks, totalDecisions };
+  });
+}
+
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  const supabase = await createClient();
 
-  const { data: projectsData } = await supabase
-    .from("projects")
-    .select("id, name, description, status, organizations (id, name)")
-    .order("created_at", { ascending: false });
+  let projects: ProjectRow[];
+  let rawTasks: { status: string; parent_task_id: string | null }[];
+  let totalDecisions: number;
 
-  const projects = (projectsData ?? []) as unknown as ProjectRow[];
-  const projectIds = projects.map((p) => p.id);
+  if (hasDirectDatabase()) {
+    const data = await loadDashboardDataLocal(user.id);
+    projects = data.projects;
+    rawTasks = data.tasks;
+    totalDecisions = data.totalDecisions;
+  } else {
+    const supabase = await createClient();
 
-  let totalTasks = 0;
-  let completedTasks = 0;
-  let totalDecisions = 0;
+    const { data: projectsData } = await supabase
+      .from("projects")
+      .select("id, name, description, status, organizations (id, name)")
+      .order("created_at", { ascending: false });
 
-  if (projectIds.length > 0) {
-    const [tasksRes, decisionsRes] = await Promise.all([
-      supabase.from("tasks").select("status, parent_task_id").in("project_id", projectIds),
-      supabase.from("context_decisions").select("id").in("project_id", projectIds),
-    ]);
+    projects = (projectsData ?? []) as unknown as ProjectRow[];
+    const projectIds = projects.map((p) => p.id);
 
-    // Subtasks (migration 010) are plain `tasks` rows — count top-level tasks
-    // only, matching src/lib/data/project-stats.ts and the work board, so a
-    // task with subtasks isn't counted twice in the dashboard totals.
-    const tasks = (tasksRes.data ?? []).filter((t) => !t.parent_task_id);
-    totalTasks = tasks.length;
-    // isDone folds the legacy 'completed' status onto 'done' (migration
-    // 002 renamed the vocabulary) — comparing to 'completed' directly
-    // silently shows 0 for every task created since.
-    completedTasks = tasks.filter((t) => isDone(t.status)).length;
-    totalDecisions = decisionsRes.data?.length ?? 0;
+    rawTasks = [];
+    totalDecisions = 0;
+
+    if (projectIds.length > 0) {
+      const [tasksRes, decisionsRes] = await Promise.all([
+        supabase.from("tasks").select("status, parent_task_id").in("project_id", projectIds),
+        supabase.from("context_decisions").select("id").in("project_id", projectIds),
+      ]);
+
+      rawTasks = tasksRes.data ?? [];
+      totalDecisions = decisionsRes.data?.length ?? 0;
+    }
   }
+
+  // Subtasks (migration 010) are plain `tasks` rows — count top-level tasks
+  // only, matching src/lib/data/project-stats.ts and the work board, so a
+  // task with subtasks isn't counted twice in the dashboard totals.
+  const tasks = rawTasks.filter((t) => !t.parent_task_id);
+  const totalTasks = tasks.length;
+  // isDone folds the legacy 'completed' status onto 'done' (migration
+  // 002 renamed the vocabulary) — comparing to 'completed' directly
+  // silently shows 0 for every task created since.
+  const completedTasks = tasks.filter((t) => isDone(t.status)).length;
 
   const stats = {
     total_projects: projects.length,

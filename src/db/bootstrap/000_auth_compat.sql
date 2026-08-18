@@ -129,13 +129,22 @@ CREATE TABLE IF NOT EXISTS auth.users (
 );
 
 
--- Tabela tożsamości nie jest odpytywana przez aplikację — profile
--- publiczne żyją w public.profiles. RLS włączone BEZ POLITYK oznacza
--- "odmów wszystkim poza właścicielem i BYPASSRLS", co jest tu
--- pożądanym stanem domyślnym.
+-- Profile publiczne żyją w public.profiles — auth.users nie jest odpytywana
+-- pod tożsamością authenticated/anon. RLS włączone BEZ POLITYK oznacza
+-- "odmów wszystkim poza właścicielem i BYPASSRLS", co jest tu pożądanym
+-- stanem domyślnym.
+--
+-- src/lib/auth/local-auth.ts (self-hosted logowanie, TODO.md §8) PISZE i
+-- CZYTA tę tabelę, ale wyłącznie pod withServiceRole() — nigdy pod
+-- withUser(). GRANT poniżej jest więc konieczny, nie kosmetyczny: bez niego
+-- signUpLocal()/signInLocal() dostają "permission denied for table users",
+-- bo BYPASSRLS omija polityki RLS, ale nie zastępuje uprawnień GRANT — a
+-- sekcja 8 tego pliku nadaje service_role uprawnienia tylko w schemacie
+-- public, auth.users leży w schemacie auth.
 ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON auth.users FROM PUBLIC, anon, authenticated;
+GRANT ALL ON auth.users TO service_role;
 
 
 -- ============================================================

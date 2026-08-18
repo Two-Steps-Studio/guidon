@@ -10,7 +10,8 @@
     "migrate": "node scripts/migrate.mjs",
     "migrate:status": "node scripts/migrate.mjs --status",
     "test:db": "node tests/db/compat.test.mjs",
-    "test:ai": "node tests/ai/provider.test.mjs"
+    "test:ai": "node tests/ai/provider.test.mjs",
+    "test:auth": "node tests/auth/local-auth.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.1",
