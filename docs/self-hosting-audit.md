@@ -5,7 +5,14 @@ z pomiaru repozytorium i żywej bazy, nie z założeń.
 
 ---
 
-## Current architecture
+## Current architecture (stan pomiaru — Faza 1, przed Etapem 1)
+
+Tabela poniżej to zdjęcie repozytorium z chwili audytu, **zanim** zaczęła się
+migracja na Server Components/Actions opisana w bloku 1. Liczby stron,
+Server Actions i tras API poniżej są dziś nieaktualne — patrz blok 1 (0 → 1
+Server Action stał się kilkanaście, 17 stron klienckich → 3) i sekcja
+„Deployment problems" niżej. Wiersze o RLS/Supabase w bazie nadal są
+aktualne, opisuje je blok 2.
 
 | | |
 |---|---|
@@ -13,8 +20,8 @@ z pomiaru repozytorium i żywej bazy, nie z założeń.
 | Baza | Supabase PostgreSQL (projekt `thtzae…`, osobny od TSS) |
 | Auth | Supabase Auth przez `@supabase/ssr` 0.5.2 |
 | Storage | Supabase Storage, 3 buckety |
-| Strony | 19, z czego **17 to `'use client'`** |
-| Server Actions | **0** |
+| Strony | 19, z czego **17 to `'use client'`** *(stan przed blokiem 1 — dziś: 3)* |
+| Server Actions | **0** *(stan przed blokiem 1 — dziś: kilkanaście, w `actions.ts` pod `/organizations` i `/projects/[id]`)* |
 | Trasy API | 16 pod `/api/v1`, UI używa jednej |
 | Autoryzacja | wyłącznie RLS — 70 polityk |
 
@@ -96,7 +103,7 @@ tożsamości między żądaniami — sprawdzone testem, także po ROLLBACK.
 Runner stosuje warstwę tylko wtedy, gdy w bazie brak `auth.uid()`. Na Supabase
 plik nie jest w ogóle czytany.
 
-**Weryfikacja:** `npm run test:db` — 44 asercje na PostgreSQL 18 (PGlite), bez
+**Weryfikacja:** `npm run test:db` — 49 asercji na PostgreSQL 18 (PGlite), bez
 Dockera i bez Supabase: pełny łańcuch migracji na pustej bazie, izolacja między
 użytkownikami, brak śladu tożsamości na połączeniu, zachowanie `service_role`.
 
@@ -109,29 +116,62 @@ Warunek z blokera 1 — GUC może ustawiać wyłącznie kod serwerowy — jest t
 spełniony: strony pod `/projects` i `/organizations` przeszły na Server
 Components/Actions, więc ta ścieżka faktycznie obsługuje ich zapytania.
 
-### 3. Brak jakiejkolwiek infrastruktury wdrożeniowej
+### 3. Brak jakiejkolwiek infrastruktury wdrożeniowej — ROZWIĄZANE
 
-`Dockerfile`, `docker-compose.yml`, `.dockerignore` — **żaden nie istnieje**.
-`.env.example` istnieje, ale opisuje wyłącznie Supabase.
+Było: żaden z `Dockerfile`, `docker-compose.yml`, `.dockerignore` nie istniał;
+`.env.example` opisywał wyłącznie Supabase.
 
-### 4. Brak migracji uruchamialnych automatycznie
+Wszystkie trzy pliki istnieją. `Dockerfile` jest wieloetapowy
+(deps → builder → runtime, `node:22-alpine`), instaluje zależności z
+`--ignore-scripts`, przyjmuje zmienne `NEXT_PUBLIC_*` jako build args (bo
+wkompilowują się w bundle klienta) i kopiuje do runtime'u wyłącznie
+`.next/standalone` — możliwe dzięki `output: "standalone"`, dodanemu do
+`next.config.ts`. `docker-compose.yml` (100 linii) definiuje trzy usługi: `db`
+(Postgres 17, wolumen nazwany, `healthcheck` przez `pg_isready`, port
+niepublikowany), `migrate` (jednorazowa, `node scripts/migrate.mjs`,
+`depends_on: db.condition: service_healthy`) i `app` (startuje dopiero po
+`migrate.condition: service_completed_successfully`). `.env.example` (4 KB)
+opisuje teraz sekcje `DATABASE`, `SELF-HOSTED POSTGRESQL`, `STORAGE` i `AI`
+obok Supabase.
 
-§13 wymaga determinizmu. Obecnie migracje `001`–`007` to pliki SQL wklejane
-ręcznie do edytora Supabase. Nie ma runnera, tabeli wersji ani `000_baseline`
-— **repozytorium nie odtworzy bazy od zera**.
+**Uwaga:** komentarz w samym `docker-compose.yml` ("UWAGA O STANIE
+FAKTYCZNYM") wciąż twierdzi, że aplikacja "nadal uwierzytelnia się przez
+Supabase Auth i przez jego klienta czyta większość danych" i odsyła do
+bloku 2 tego audytu jako nierozwiązanego. To jest nieaktualne od czasu, gdy
+blok 2 (poniżej) i cała migracja stron `/projects` i `/organizations` na
+Server Components/Actions zostały domknięte — ale ten plik nie jest w
+zakresie tej sesji (kod, nie `.md`), więc nie został poprawiony tutaj i
+zasługuje na osobną poprawkę.
+
+### 4. Brak migracji uruchamialnych automatycznie — ROZWIĄZANE
+
+Było: migracje `001`–`007` to pliki SQL wklejane ręcznie do edytora Supabase,
+bez runnera, tabeli wersji ani `000_baseline`.
+
+`scripts/migrate.mjs` (245 linii) istnieje: `npm run migrate` /
+`npm run migrate:status` / `--dry-run`. Stosuje migracje w kolejności nazw
+pliku, każdą w osobnej transakcji, i zapisuje checksumę w
+`guidon_migrations` — plik zmieniony po zastosowaniu jest twardym błędem, nie
+cichym pominięciem. `000_baseline_schema.sql` odtwarza schemat sprzed
+migracji `002`, więc cały łańcuch stosuje się na pustej bazie. Runner
+dodatkowo wykrywa brak `auth.uid()` i wtedy sam stosuje
+`src/db/bootstrap/000_auth_compat.sql` przed czymkolwiek innym (patrz blok 2).
+Zweryfikowane: `npm run test:db` uruchamia cały łańcuch (compat + 000–009) na
+realnym PostgreSQL 18 (PGlite) i przechodzi w kilka sekund, bez Dockera.
 
 ---
 
 ## Supabase coupling
 
-Dobra wiadomość: sprzężenie jest **skoncentrowane, nie rozlane**.
+Dobra wiadomość: sprzężenie jest **skoncentrowane, nie rozlane** — i skurczyło
+się dalej od chwili audytu.
 
-* tylko **6 z 73** plików importuje `@supabase/*`
-* łącznie 5 instrukcji importu (3 × `@supabase/ssr`, 2 × `@supabase/supabase-js`)
+* dziś **5 z 120** plików (`src/**/*.ts(x)`) importuje `@supabase/*` — repo
+  urosło (73 → 120 plików, głównie `actions.ts` i strony Server Component z
+  bloku 1), a lista importerów Supabase zmalała
 * tworzenie klienta w 2 plikach: `lib/supabase.ts`, `lib/supabase-server.ts`
 
 ```
-contexts/auth-context.tsx        (martwy kod)
 lib/auth/auth-helpers.ts
 lib/context/project-relations.ts
 lib/supabase-server.ts
@@ -139,41 +179,57 @@ lib/supabase.ts
 proxy.ts
 ```
 
+`contexts/auth-context.tsx`, wcześniej wymieniony tu jako martwy kod, nie
+istnieje — cały `src/contexts/` (`AuthProvider`, `ProjectProvider`,
+`ContextLayerProvider`, `ProjectAccessProvider`) został usunięty, patrz blok 1.
+
 To są gotowe punkty zaczepienia dla adapterów. Rozproszone jest natomiast
 **użycie** klienta — `.auth.getUser()` w ~10 stronach.
 
 ---
 
-## Storage coupling
+## Storage coupling — ROZWIĄZANE
 
-**Najsłabsze sprzężenie w całym projekcie.** Wszystkie 3 wywołania
-`.storage.` żyją w jednym pliku: `lib/storage/storage.ts`.
+Stan z chwili audytu: wszystkie wywołania `.storage.` żyły w jednym pliku,
+`lib/storage/storage.ts`, którego publiczny interfejs (`uploadProjectFile`,
+`deleteFile`, `getSignedUrl`, kwoty, walidacja) był już zorientowany
+domenowo, nie providerowo — więc podmiana wnętrza na `StorageProvider` z §5
+nie wymagałaby zmian w kodzie wołającym. Dokładnie to się stało.
 
-Publiczny interfejs (16 funkcji: `uploadProjectFile`, `deleteFile`,
-`getSignedUrl`, kwoty, walidacja) jest już zorientowany domenowo, nie
-providerowo. Wystarczy podmienić wnętrze na `StorageProvider` z §5
-(`LocalFilesystem` / `S3` / `Supabase`) — **bez zmian w kodzie wołającym**.
+`src/lib/storage/provider.ts` definiuje interfejs `StorageProvider` i wybiera
+implementację na podstawie `STORAGE_PROVIDER` (`supabase` domyślnie, `local`,
+`s3` — zarezerwowany, rzuca „not implemented"). Wywołania `.storage.`
+(Supabase SDK) żyją teraz w `src/lib/storage/providers/supabase.ts`, obok
+`providers/local.ts` (filesystem pod `STORAGE_PATH`, serwowany przez
+`/api/storage`). `storage.ts` sam nie zawiera już żadnego `.storage.` —
+woła wyłącznie `getStorageProvider()`.
 
-To najtańszy punkt do zrealizowania i dobry pierwszy krok Fazy 4.
+Efekt uboczny: upload plików przeszedł z bezpośredniego wywołania w
+przeglądarce na Server Action (`src/app/projects/[id]/files/actions.ts`),
+bo `local` wymaga zapisu na dysku serwera, do którego przeglądarka nie ma
+dostępu — patrz blok 1.
 
 ---
 
-## Auth coupling
+## Auth coupling — powierzchnia zmalała
 
-Powierzchnia jest mała — **7 metod**:
+Stan z chwili audytu: **7 metod**, z czego trzy (`getSession`,
+`onAuthStateChange`, `refreshSession`) żyły wyłącznie w niezamontowanym
+`auth-context.tsx`, więc realnie do zaadaptowania było cztery.
+
+Dziś, po usunięciu `src/contexts/` (blok 1), te trzy metody **nie
+występują nigdzie w kodzie** — usunięte razem z kontekstem, nie
+przeniesione. Powierzchnia to więc już tylko cztery metody:
 
 | Metoda | Gdzie |
 |---|---|
 | `signInWithPassword` | `auth/login` |
 | `signUp` | `auth/signup` |
-| `signOut` | `auth/logout`, `auth-context` |
-| `getUser` | ~10 stron + `proxy.ts` + `auth-helpers` |
-| `getSession` | `auth-context` (martwy) |
-| `onAuthStateChange` | `auth-context` (martwy) |
-| `refreshSession` | `auth-context` (martwy) |
+| `signOut` | `auth/logout` |
+| `getUser` | 6 plików: `proxy.ts`, `lib/auth/auth-helpers.ts`, `lib/data/current-user.ts`, `lib/data/org-access.ts`, `lib/data/project-access.ts`, `organizations/actions.ts` — skoncentrowane w warstwie danych/serwerowej, nie rozsiane po stronach |
 
-Trzy ostatnie są w niezamontowanym kontekście, więc realnie do zaadaptowania
-są **cztery**. To mieści się w interfejsie `AuthProvider` z §24.
+To mieści się w interfejsie `AuthProvider` z §24 bez zmian w samym
+interfejsie — zmalała tylko liczba wywołań do zaadaptowania.
 
 Głębszy problem nie leży w API, tylko w tym, że tożsamość użytkownika
 przenosi **JWT Supabase**, który PostgREST tłumaczy na `auth.uid()`. Zamiennik
@@ -193,13 +249,19 @@ i bez wyrywania zaszytego providera. Żadnego sprzężenia do rozplątania.
 
 ## Deployment problems
 
-* brak Dockerfile i docker-compose (§2, §3)
-* brak health checka `/api/health` (§12)
-* brak runnera migracji (§13)
-* `.env.example` opisuje tylko Supabase — brak `DATABASE_URL`,
+Stan z chwili audytu (Fazy 1) — wszystkie poniższe zostały od tego czasu
+zaadresowane, patrz blokery 3 i 4 wyżej:
+
+* ~~brak Dockerfile i docker-compose (§2, §3)~~ — istnieją
+* ~~brak health checka `/api/health` (§12)~~ — istnieje, sprawdza
+  database/storage/auth/ai, nie ujawnia sekretów
+* ~~brak runnera migracji (§13)~~ — `scripts/migrate.mjs` istnieje
+* ~~`.env.example` opisuje tylko Supabase~~ — opisuje teraz `DATABASE_URL`,
   `STORAGE_PROVIDER`, `AI_PROVIDER` (§11)
-* Next.js nie ma `output: 'standalone'`, co jest praktycznie wymagane
-  dla sensownego obrazu produkcyjnego
+* ~~Next.js nie ma `output: 'standalone'`~~ — ustawione w `next.config.ts`
+
+Pozostaje: `AIProvider` (§6/§7) nie istnieje — `/api/health` zgłasza `ai` jako
+`not_configured` bez względu na zmienne środowiskowe, uczciwie.
 
 ---
 
@@ -216,11 +278,17 @@ Sprawdzone, **wypada dobrze**:
 
 Do poprawy:
 
-* brak bramkowania UI po uprawnieniach na 15 z 19 stron — RLS rzuca surowym
-  błędem Postgresa zamiast czytelnego stanu (łamie §38)
+* brak bramkowania UI po uprawnieniach — stan sprzed migracji na Server
+  Components; wymaga ponownego sprawdzenia teraz, gdy większość stron czyta
+  dane po stronie serwera (blok 1) zamiast liczyć na to, że RLS przechwyci
+  błędny dostęp w przeglądarce
 * brak rate limitingu (§10)
-* walidacja uploadów istnieje, ale nie ma ochrony przed path traversal przy
-  storage lokalnym — dziś nieistotne, przy `LocalFilesystem` **krytyczne**
+* ~~walidacja uploadów istnieje, ale nie ma ochrony przed path traversal przy
+  storage lokalnym~~ — **naprawione**: `src/lib/storage/providers/local.ts`
+  odrzuca `..` przez `assertSafeStoragePath`/`assertSafeBucket` i osobno
+  weryfikuje, że ścieżka po `path.resolve()` zostaje wewnątrz roota bucketa
+  (`prefix` check) — druga warstwa istnieje właśnie dlatego, że symlinki i
+  normalizacja unicode potrafią ominąć samą kontrolę stringów
 
 ---
 
@@ -228,19 +296,20 @@ Do poprawy:
 
 | Ryzyko | Waga | Uwagi |
 |---|---|---|
-| Przeniesienie dostępu do danych na serwer dotyka 17 stron | **wysokie** | robić stopniowo, strona po stronie; RLS zostaje siatką bezpieczeństwa |
-| Warstwa zgodności `auth.uid()` musi być 1:1 | **wysokie** | rozjazd = ciche obejście autoryzacji |
-| Brak `000_baseline` | średnie | do napisania przed czymkolwiek dockerowym |
-| Rozjazd repo ↔ baza | średnie | precedens: `set_organization_creator` istniał tylko w bazie |
-| Storage lokalny bez sanityzacji ścieżek | średnie | wprowadzić razem z adapterem, nie po |
+| Przeniesienie dostępu do danych na serwer dotyka 17 stron | ~~**wysokie**~~ zrobione | wykonane stopniowo, strona po stronie (blok 1); RLS zostało siatką bezpieczeństwa przez całą migrację |
+| Warstwa zgodności `auth.uid()` musi być 1:1 | ~~**wysokie**~~ zrobione | `000_auth_compat.sql` + `npm run test:db` (49 asercji), błąd RETURNING wykryty i naprawiony migracją 009 |
+| Brak `000_baseline` | ~~średnie~~ zrobione | `000_baseline_schema.sql` istnieje |
+| Rozjazd repo ↔ baza | średnie | precedens: `set_organization_creator` istniał tylko w bazie; dalej aktualne jako ryzyko procesowe |
+| Storage lokalny bez sanityzacji ścieżek | ~~średnie~~ zrobione | wprowadzone razem z adapterem (`assertSafeStoragePath`/`assertSafeBucket` w `providers/local.ts`) |
 | Electron dzieli `package.json` ze stroną | niskie | dotyczy `tss-website`, nie Guidona |
 
 ---
 
 ## Wniosek Fazy 1
 
-Sprzężenie z Supabase jest **płytsze, niż wygląda** — 6 plików, 5 importów,
-storage w jednym miejscu, AI w ogóle nie istnieje. Adaptery z §24 są tanie.
+Sprzężenie z Supabase jest **płytsze, niż wygląda** — 6 plików, 5 importów w
+chwili audytu (dziś: 5 plików, patrz „Supabase coupling" wyżej), storage w
+jednym miejscu, AI w ogóle nie istnieje. Adaptery z §24 są tanie.
 
 Prawdziwym blokerem jest **kierunek przepływu danych**: przeglądarka →
 PostgREST. Dopóki to się nie zmieni, self-hosting oznacza uruchomienie
@@ -253,9 +322,15 @@ PostgREST — czyli dokładnie to, czemu §4 ma zapobiegać.
 
 Proponowana kolejność:
 
-1. **Etap 1 z zatwierdzonego planu** — Server Components + Server Actions
+1. ✅ **Etap 1 z zatwierdzonego planu** — Server Components + Server Actions
    (i tak zaplanowane, teraz okazuje się warunkiem koniecznym)
-2. `StorageProvider` — najtańszy, całkowicie izolowany
-3. `000_baseline` + runner migracji
-4. `AIProvider` — zielone pole
-5. Docker Compose + health check — dopiero gdy 1–3 są gotowe
+2. ✅ `StorageProvider` — najtańszy, całkowicie izolowany
+3. ✅ `000_baseline` + runner migracji, oraz warstwa zgodności `auth.uid()`
+   (blok 2)
+4. ⬜ `AIProvider` — zielone pole, wciąż nie istnieje
+5. ✅ Docker Compose + health check
+
+Cztery z pięciu kroków są zrobione i zweryfikowane (`npm run test:db`, 49
+asercji; `grep` na `'use client'` + `@/lib/supabase` zwraca tylko trzy strony
+auth). Jedyny pozostały punkt tej listy to `AIProvider` — poza tym
+self-hosting bez PostgREST/GoTrue jest dziś realny, nie tylko teoretyczny.

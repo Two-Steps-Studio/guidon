@@ -1,5 +1,16 @@
 # Guidon Database Security Fix - Comprehensive Analysis
 
+> **Addendum:** Ten dokument opisuje wykryty i naprawiony wówczas problem —
+> trigger wymagający `created_by` od frontendu i konflikt z RLS przy INSERT.
+> Migracja `009_creator_visibility.sql` naprawiła osobny, powiązany błąd w tym
+> samym obszarze: RLS odrzucał `INSERT ... RETURNING` na `organizations` i
+> `projects`, ponieważ polityka SELECT (używana przy RETURNING) sprawdzała
+> członkostwo, które trigger AFTER tworzył dopiero o krok później. Dotyczyło to
+> również produkcji. Zobacz `src/db/migrations/README.md` (sekcja „Why 009
+> exists”) i `src/db/migrations/009_creator_visibility.sql`. Stwierdzenie
+> „production-ready" poniżej odnosi się do problemów opisanych w tym
+> dokumencie, nie do tego, który naprawiła 009.
+
 ## A. ANALIZA PROBLEMÓW
 
 ### 1. GŁÓWNY PROBLEM: Organizations RLS Violation
