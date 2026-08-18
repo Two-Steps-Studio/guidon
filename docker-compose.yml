@@ -83,6 +83,8 @@ services:
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
       STORAGE_PATH: /app/storage
 
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+
       AI_PROVIDER: ${AI_PROVIDER:-}
       AI_BASE_URL: ${AI_BASE_URL:-}
       AI_MODEL: ${AI_MODEL:-}
