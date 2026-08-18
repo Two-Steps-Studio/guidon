@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { activeStorageProviderName } from "@/lib/storage/provider";
+import { activeAIProviderName } from "@/lib/ai/provider";
 
 /**
  * Health endpoint (TODO.md §12).
@@ -121,20 +122,37 @@ async function checkStorage(): Promise<Component> {
   }
 }
 
-function checkAI(): Component {
-  const provider = process.env.AI_PROVIDER?.trim();
+async function checkAI(): Promise<Component> {
+  let provider: string | null;
 
-  // §6/§7 — the abstraction does not exist yet. Reporting "not configured"
-  // is honest; claiming "ok" because a variable is set would not be.
+  try {
+    provider = activeAIProviderName();
+  } catch (error) {
+    return { status: "down", detail: safeReason(error) };
+  }
+
+  // §6/§7 — AI is an optional subsystem: an unset AI_PROVIDER is a
+  // legitimate "not configured" state, not a failure (same treatment as
+  // checkStorage's "not implemented" branch and checkAuth's
+  // no-Supabase-configured branch).
   if (!provider) {
     return { status: "not_configured", detail: "no AI provider configured" };
   }
 
-  return {
-    status: "not_configured",
-    provider,
-    detail: "AI provider abstraction is not implemented yet",
-  };
+  try {
+    const { getAIProvider } = await import("@/lib/ai/provider");
+    // Construct only — never call .complete() here. This is an
+    // unauthenticated container health probe; it must not make a real,
+    // possibly-billed request to an external AI vendor on every check.
+    // Construction alone still proves the config is present and
+    // well-shaped: a missing API key or model throws right here, matching
+    // how checkStorage only constructs the storage provider rather than
+    // performing a real upload.
+    const instance = await withTimeout(getAIProvider(), 5000, "ai");
+    return { status: "ok", provider: instance.name, model: instance.model };
+  } catch (error) {
+    return { status: "down", provider, detail: safeReason(error) };
+  }
 }
 
 function checkAuth(): Component {
@@ -162,9 +180,10 @@ function checkAuth(): Component {
 export async function GET() {
   const started = Date.now();
 
-  const [database, storage] = await Promise.all([
+  const [database, storage, ai] = await Promise.all([
     checkDatabase(),
     checkStorage(),
+    checkAI(),
   ]);
 
   const components = {
@@ -172,7 +191,7 @@ export async function GET() {
     database,
     storage,
     auth: checkAuth(),
-    ai: checkAI(),
+    ai,
   };
 
   // `not_configured` is a valid state for optional subsystems, so only a
