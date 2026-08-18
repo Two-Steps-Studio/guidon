@@ -54,21 +54,25 @@ definition of the security model instead of two that could drift. This is
 verified by `npm run test:db` (49 assertions against a real PostgreSQL via
 PGlite, no Docker, no Supabase).
 
-**The gap, narrowing:** `src/lib/auth/local-auth.ts` (sign-up/sign-in via
-`withServiceRole()`, writing straight to `auth.users`), `src/proxy.ts`
-(route protection via a self-signed session cookie, no Supabase call), and
-`src/lib/data/current-user.ts` (`withUser()`, reading the profile) all
-branch on `hasDirectDatabase()` and use this layer for real when
-`DATABASE_URL` is set. The dashboard (`src/app/dashboard/page.tsx`) is the
-first data page converted the same way — its three queries run as SQL under
-`withUser()` instead of `.from()`, proving RLS applies identically either
-path.
+**The gap is closed, with two named exceptions.** `src/lib/auth/local-auth.ts`
+(sign-up/sign-in via `withServiceRole()`, writing straight to `auth.users`),
+`src/proxy.ts` (route protection via a self-signed session cookie, no
+Supabase call), `src/lib/data/current-user.ts`, every `src/lib/data/*-access.ts`
+module, every page under `src/app/{dashboard,organizations,projects}`, every
+Server Action in those trees, and `src/lib/data/admin.ts` all branch on
+`hasDirectDatabase()` and run their queries as SQL under
+`withUser()`/`withServiceRole()` — never `.from()` — when `DATABASE_URL` is
+set. Each conversion mirrors its Supabase-branch sibling exactly: same RLS
+policies, same authorization checks, same triggers (Postgres triggers fire
+identically whether the `INSERT` arrived via PostgREST or a direct `pg`
+connection — nothing about them is Supabase-specific).
 
-Every other page — organizations, projects, work, roadmap, knowledge,
-decisions, files, memory, context, settings, the admin panel — still talks
-to Supabase unconditionally, regardless of `DATABASE_URL`. Converting each
-one (replace `.from()` calls with SQL under `withUser()`/`withServiceRole()`,
-verify against real RLS) is the remaining step, tracked in
+Two things remain Supabase-only, both narrow and named rather than "most of
+the app": `src/app/api/v1/search` (a Route Handler with a
+Supabase-`User`-typed auth helper, a different shape from the
+Server Component/Action pattern everything else uses) and
+`checkDatabase()` in `src/lib/health/checks.ts` (still probes reachability
+via `SUPABASE_SERVICE_ROLE_KEY`, not `DATABASE_URL`). Tracked in
 `docs/self-hosting-audit.md`.
 
 ## Provider abstractions

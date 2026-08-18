@@ -29,35 +29,44 @@ Concretely, as of today:
   at runtime is required for this path. OAuth (Google/Discord) is not
   available in this mode — there is no GoTrue to redirect to, so the
   sign-in/sign-up pages hide those buttons automatically when self-hosted.
-- **Data access is pluggable for exactly one page so far: the dashboard.**
-  Its three queries run as SQL under `withUser()` instead of through the
-  Supabase client, proving RLS applies identically either way. Every other
-  page — organizations, projects, work, roadmap, knowledge, decisions,
-  files, memory, context, settings, the admin panel — still calls the
-  Supabase client unconditionally. Visiting one of those in a self-hosted
-  install with no Supabase project configured at all will error, loudly, not
-  silently: `createClient()` throws rather than returning something that
-  looks like it worked.
+- **Data access is pluggable everywhere the UI reaches, with two named
+  exceptions.** Dashboard, organizations, projects, work (the kanban board),
+  roadmap, knowledge, decisions, files, memory (including the FACT/AI
+  INSIGHT review workflow), context (the relations graph and the task "Why"
+  panel), settings, and both organization- and project-level member
+  management all run their queries as SQL under `withUser()`/
+  `withServiceRole()` when `DATABASE_URL` is set — no Supabase client call
+  anywhere in that path. Every one of those pages and Server Actions mirrors
+  its Supabase-branch counterpart exactly: same RLS policies, same
+  authorization checks, same triggers (a self-hosted `INSERT INTO
+  organizations` fires `private.handle_new_organization()` the same way a
+  PostgREST insert does — it's a plain Postgres trigger, not something
+  Supabase-specific).
+  - **Not converted:** `src/app/api/v1/search` (the one still-live `/api/v1`
+    route — a different shape, a Route Handler returning `NextResponse.json`
+    with a Supabase-`User`-typed auth helper, not a Server Component/Action)
+    and `checkDatabase()` in the admin panel's health check (still verifies
+    reachability via `SUPABASE_SERVICE_ROLE_KEY`, not `DATABASE_URL`).
+    Neither blocks the core workflow below.
 
-So: you can now sign up, sign in, and see your dashboard on a plain
-PostgreSQL with zero Supabase software running. You cannot yet use the rest
-of the application that way — the remaining pages need the same
-`supabase.from()` → SQL-under-`withUser()` conversion the dashboard already
-got, one at a time, each verified against real RLS. That conversion work,
-and how to add it, is tracked in `docs/self-hosting-audit.md`.
+So: you can sign up, sign in, create an organization, create a project, and
+use essentially the whole application on a plain PostgreSQL with zero
+Supabase software running. The two gaps above are narrow and named, not a
+"most of the app still needs Supabase" caveat — track them in
+`docs/self-hosting-audit.md` if they matter for your install.
 
 If you *do* configure a Supabase project alongside `DATABASE_URL` (i.e. you
 don't mind Supabase existing, you just want your own Postgres), everything
-below works today: sign-in and the dashboard use the local path, every other
-page uses Supabase, and both point at data that's visible to the same user
-because RLS is the same policies either way.
+below still works exactly as before: every page uses the local path, and
+data stays consistent because RLS is the same policies either way — nothing
+about adding the self-hosted path changed the Supabase path's behavior.
 
 ## Which path do I want?
 
 | | Cloud | Self-hosted (this page) | Development |
 |---|---|---|---|
 | Where it runs | Guidon Cloud infrastructure | Your server, via Docker Compose or bare Node | Your machine, `npm run dev` |
-| Database | Supabase, managed | `DATABASE_URL` — self-hosted PostgreSQL, no Supabase account needed for sign-in and the dashboard; a Supabase project is still needed for every other page until they're converted (see above) | Supabase project |
+| Database | Supabase, managed | `DATABASE_URL` — self-hosted PostgreSQL, no Supabase account needed (two narrow exceptions, see above) | Supabase project |
 | Storage | Supabase Storage | `local` (filesystem) or `supabase` | Either |
 | AI | Optional, any provider | Optional, `ollama` for a fully local backend | Optional |
 | You run | Nothing | `db` + `migrate` + `app` containers, or your own Postgres + Node | `npm run dev` |
@@ -80,8 +89,9 @@ limit at all.
 
 - Docker and Docker Compose (Compose path), **or** Node.js 22 and a
   PostgreSQL 17+ server you control (bare-metal path)
-- A Supabase project — not needed to sign up, sign in, or use the dashboard
-  (see the callout above), but still needed for every other page today
+- A Supabase project — not needed for the application itself (see the
+  callout above); only relevant if you want `/api/v1/search` or the admin
+  panel's database health check to work too
 - `openssl` or any way to generate a random hex string, for `AUTH_SECRET`
 
 ## Docker Compose (primary path)
@@ -102,13 +112,10 @@ Required in `.env` for this to start:
 - `POSTGRES_PASSWORD` — the compose file hard-fails without it
   (`POSTGRES_PASSWORD jest wymagane`)
 - `AUTH_SECRET` — same, hard-fails without it
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Docker
-  **build args** (baked into the client bundle — see `next.config.ts`'s
-  standalone-output comment and the Dockerfile's `ARG` list), and
-  `SUPABASE_SERVICE_ROLE_KEY` at **runtime** — required for every page except
-  sign-up/sign-in/sign-out/dashboard, per the callout above. Leaving them
-  unset gets you a working self-hosted identity and dashboard today; every
-  other page will error until it's converted the same way.
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` /
+  `SUPABASE_SERVICE_ROLE_KEY` — **not required** for the application itself
+  with `DATABASE_URL` set (per the callout above); only `/api/v1/search` and
+  the admin panel's database health-check row still need them
 
 What happens on `docker compose up -d`:
 
