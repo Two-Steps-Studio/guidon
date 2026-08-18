@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import type { ProjectRole } from "@/types/project";
 
 /**
@@ -40,6 +42,25 @@ export async function addMember(
     return { member: null, error: "You cannot assign that role." };
   }
 
+  if (hasDirectDatabase()) {
+    try {
+      const member = await withUser(access.userId, async ({ query }) => {
+        const result = await query(
+          `INSERT INTO project_members (project_id, user_id, role)
+           VALUES ($1, $2, $3)
+           RETURNING id, user_id, role, joined_at`,
+          [projectId, userId, role]
+        );
+        return result.rows[0] as MemberRow;
+      });
+
+      revalidatePath(`/projects/${projectId}/members`);
+      return { member, error: null };
+    } catch (error) {
+      return { member: null, error: error instanceof Error ? error.message : "Failed to add member." };
+    }
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("project_members")
@@ -71,6 +92,19 @@ export async function changeMemberRole(
     return { error: "You cannot assign that role." };
   }
 
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("UPDATE project_members SET role = $1 WHERE id = $2", [role, memberId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to change role." };
+    }
+
+    revalidatePath(`/projects/${projectId}/members`);
+    return { error: null };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.from("project_members").update({ role }).eq("id", memberId);
 
@@ -92,6 +126,19 @@ export async function removeMember(
   // Mirrors project_members_delete_admin: an admin may not remove an owner.
   if (access.role === "admin" && currentMemberRole === "owner") {
     return { error: "Only an owner can remove another owner." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM project_members WHERE id = $1", [memberId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to remove member." };
+    }
+
+    revalidatePath(`/projects/${projectId}/members`);
+    return { error: null };
   }
 
   const supabase = await createClient();

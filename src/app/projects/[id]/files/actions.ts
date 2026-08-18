@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
 import {
   deleteProjectFile,
   getFileCategoryFromMimeType,
@@ -42,18 +44,36 @@ export async function uploadFile(
     const category = getFileCategoryFromMimeType(file.type);
     const uploaded = await uploadProjectFile(projectId, file, category, access.userId);
 
-    const supabase = await createClient();
-    const { error } = await supabase.from("project_files").insert({
-      project_id: projectId,
-      name: file.name,
-      storage_path: uploaded.path,
-      category,
-      size_bytes: file.size,
-      mime_type: file.type || "application/octet-stream",
-      uploaded_by: access.userId,
-    });
+    if (hasDirectDatabase()) {
+      await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO project_files (project_id, name, storage_path, category, size_bytes, mime_type, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            projectId,
+            file.name,
+            uploaded.path,
+            category,
+            file.size,
+            file.type || "application/octet-stream",
+            access.userId,
+          ]
+        )
+      );
+    } else {
+      const supabase = await createClient();
+      const { error } = await supabase.from("project_files").insert({
+        project_id: projectId,
+        name: file.name,
+        storage_path: uploaded.path,
+        category,
+        size_bytes: file.size,
+        mime_type: file.type || "application/octet-stream",
+        uploaded_by: access.userId,
+      });
 
-    if (error) return { error: error.message };
+      if (error) return { error: error.message };
+    }
   } catch (uploadError) {
     return { error: uploadError instanceof Error ? uploadError.message : "Upload failed." };
   }
@@ -91,22 +111,36 @@ export async function deleteFile(
     return { error: "You do not have permission to delete files." };
   }
 
-  const supabase = await createClient();
+  let storagePath: string | null;
 
-  const { data, error } = await supabase
-    .from("project_files")
-    .delete()
-    .eq("id", fileId)
-    .eq("project_id", projectId)
-    .select("storage_path")
-    .maybeSingle();
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query(
+        "DELETE FROM project_files WHERE id = $1 AND project_id = $2 RETURNING storage_path",
+        [fileId, projectId]
+      )
+    );
+    if (result.rows.length === 0) return { error: "File not found in this project." };
+    storagePath = result.rows[0].storage_path;
+  } else {
+    const supabase = await createClient();
 
-  if (error) return { error: error.message };
-  if (!data) return { error: "File not found in this project." };
+    const { data, error } = await supabase
+      .from("project_files")
+      .delete()
+      .eq("id", fileId)
+      .eq("project_id", projectId)
+      .select("storage_path")
+      .maybeSingle();
+
+    if (error) return { error: error.message };
+    if (!data) return { error: "File not found in this project." };
+    storagePath = data.storage_path;
+  }
 
   try {
-    if (data.storage_path) {
-      await deleteProjectFile(data.storage_path);
+    if (storagePath) {
+      await deleteProjectFile(storagePath);
     }
   } catch (deleteError) {
     return { error: deleteError instanceof Error ? deleteError.message : "Delete failed." };
@@ -137,20 +171,34 @@ export async function getDownloadUrl(
     return { url: null, error: "You do not have access to this project." };
   }
 
-  const supabase = await createClient();
+  let storagePath: string | null;
 
-  const { data, error: lookupError } = await supabase
-    .from("project_files")
-    .select("storage_path")
-    .eq("id", fileId)
-    .eq("project_id", projectId)
-    .maybeSingle();
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query("SELECT storage_path FROM project_files WHERE id = $1 AND project_id = $2", [
+        fileId,
+        projectId,
+      ])
+    );
+    storagePath = result.rows[0]?.storage_path ?? null;
+  } else {
+    const supabase = await createClient();
 
-  if (lookupError) return { url: null, error: lookupError.message };
-  if (!data?.storage_path) return { url: null, error: "File not found in this project." };
+    const { data, error: lookupError } = await supabase
+      .from("project_files")
+      .select("storage_path")
+      .eq("id", fileId)
+      .eq("project_id", projectId)
+      .maybeSingle();
+
+    if (lookupError) return { url: null, error: lookupError.message };
+    storagePath = data?.storage_path ?? null;
+  }
+
+  if (!storagePath) return { url: null, error: "File not found in this project." };
 
   try {
-    const url = await getSignedUrl(STORAGE_BUCKETS.FILES, data.storage_path);
+    const url = await getSignedUrl(STORAGE_BUCKETS.FILES, storagePath);
     return { url, error: null };
   } catch (error) {
     return { url: null, error: error instanceof Error ? error.message : "Failed to create download link." };
