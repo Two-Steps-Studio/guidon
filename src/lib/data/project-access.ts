@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import type { ProjectRole } from "@/types/project";
@@ -57,7 +58,13 @@ export function canCommentOnProject(role: ProjectRole | null): boolean {
  * indistinguishable at the query level, and leaking the difference would tell
  * an outsider which project ids exist.
  */
-export async function getProjectAccess(
+/**
+ * Wrapped in React's `cache()` because the layout resolves access once for
+ * generateMetadata and once more for the render itself — same request, same
+ * answer. Without this every project page paid for that query twice before
+ * even starting its own work.
+ */
+export const getProjectAccess = cache(async function getProjectAccess(
   projectId: string
 ): Promise<ProjectAccess | null> {
   const supabase = await createClient();
@@ -92,7 +99,7 @@ export async function getProjectAccess(
     project: projectResult.data,
     role: (membershipResult.data?.role as ProjectRole) ?? null,
   };
-}
+});
 
 /**
  * Same as getProjectAccess, but sends the caller somewhere sensible instead of

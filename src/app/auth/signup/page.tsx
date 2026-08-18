@@ -26,7 +26,7 @@ export default function SignupPage() {
     try {
       const supabase = createClient()
       
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -38,18 +38,14 @@ export default function SignupPage() {
 
       if (signUpError) throw signUpError
 
-      // Create profile
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email!,
-            full_name: fullName,
-          })
-
-        if (profileError) throw profileError
-      }
+      // The profile row is created by private.handle_new_user(), an AFTER
+      // INSERT trigger on auth.users (SECURITY DEFINER, runs regardless of
+      // email confirmation status). Inserting it again here ran as `anon` —
+      // signUp() does not establish a session when email confirmation is
+      // required — and anon has no grants on profiles at all, so every
+      // signup failed with "permission denied for table profiles". Same
+      // class of bug as the duplicate organization/project membership
+      // inserts fixed earlier: the trigger already does this.
 
       router.push('/auth/login?message=Check your email to confirm your account')
     } catch (err: any) {
