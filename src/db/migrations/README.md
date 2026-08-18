@@ -27,6 +27,7 @@ them. Prefer the runner.
 | `008_technology_game_engine.sql` | Adds `game_engine` to the `technologies.category` vocabulary. | Unity/Unreal in the Technology tab |
 | `009_creator_visibility.sql` | **Fixes organization and project creation.** See below. | Creating organizations or projects at all |
 | `010_task_subtasks.sql` | Adds `tasks.parent_task_id` (self-referencing FK, `ON DELETE CASCADE`, indexed) so a task can have subtasks. No RLS change — subtasks are plain `tasks` rows covered by the existing four policies. | Subtask checklist in `TaskDetailDialog` and the `3/5` counter on task cards |
+| `011_context_relations_project_id.sql` | Adds `context_relations.project_id`, backfilled and set by a `BEFORE INSERT` trigger from `source_type`/`source_id` (never client input). Rewrites the three RLS policies to use it. Deletes relations whose source no longer resolves to any project — they were already permanently invisible under the old SELECT policy, see the file's own comment block. | `src/lib/context/project-relations.ts` querying relations by project directly instead of collecting every entity id in the project first |
 
 ## The compatibility layer runs before all of this
 

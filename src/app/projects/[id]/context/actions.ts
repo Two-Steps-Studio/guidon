@@ -33,14 +33,12 @@ const RELATION_TYPES: RelationType[] = [
 ];
 
 /**
- * Mirrors context_relations_insert (001): the source and target must resolve
- * to the same project (via private.entity_project_id, enforced by RLS itself
- * — a mismatch is rejected at the database, not just here), and the caller
- * needs owner/admin/developer on that project. Delete requires owner/admin.
- *
- * The role check here is by source project role specifically, same as RLS:
- * the caller's access to *this* project (the page they are on) is what's
- * checked, since context_relations has no project_id of its own.
+ * Mirrors context_relations_insert (001, rewritten by migration 011): a
+ * BEFORE INSERT trigger derives project_id from source_type/source_id (never
+ * client input), and RLS rejects the insert if target_type/target_id does
+ * not resolve to that same project — a relation can never cross projects.
+ * The caller needs owner/admin/developer on that project; delete requires
+ * owner/admin.
  */
 export async function createRelation(
   projectId: string,

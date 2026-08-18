@@ -13,8 +13,6 @@ export default async function ProjectContextPage({
   const access = await requireProjectAccess(projectId);
   const supabase = await createClient();
 
-  // context_relations has no project_id column — relations are scoped
-  // through their source entity. See lib/context/project-relations.ts.
   const [decisionsRes, sourcesRes, relations] = await Promise.all([
     supabase
       .from("context_decisions")

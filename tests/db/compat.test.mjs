@@ -397,5 +397,88 @@ await withUser(A, async () => {
   check("ON DELETE CASCADE usuwa subtask z rodzicem", rows[0].n === 0, rows[0].n);
 });
 
+// ------------------------------------------------------------------
+section("10. context_relations.project_id (migracja 011)");
+
+let taskOneId;
+let taskTwoId;
+let relationId;
+
+await withUser(A, async () => {
+  const t1 = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Relacja 1') RETURNING id",
+    [projectId]
+  );
+  taskOneId = t1.rows[0].id;
+
+  const t2 = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Relacja 2') RETURNING id",
+    [projectId]
+  );
+  taskTwoId = t2.rows[0].id;
+
+  const relation = await db.query(
+    `INSERT INTO public.context_relations
+       (source_type, source_id, target_type, target_id, relation_type, created_by)
+     VALUES ('task', $1, 'task', $2, 'related_to', $3)
+     RETURNING id, project_id`,
+    [taskOneId, taskTwoId, A]
+  );
+  relationId = relation.rows[0].id;
+  check(
+    "project_id ustawiony triggerem z source, nie z inputu",
+    relation.rows[0].project_id === projectId,
+    relation.rows[0].project_id
+  );
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query(
+    "SELECT count(*)::int n FROM public.context_relations WHERE id = $1",
+    [relationId]
+  );
+  check("B nie widzi relacji A", rows[0].n === 0, rows[0].n);
+});
+
+let otherProjectId;
+let otherTaskId;
+
+await withUser(A, async () => {
+  const project = await db.query(
+    "INSERT INTO public.projects (organization_id, name) VALUES ($1,'Projekt B') RETURNING id",
+    [orgId]
+  );
+  otherProjectId = project.rows[0].id;
+
+  const task = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'W innym projekcie') RETURNING id",
+    [otherProjectId]
+  );
+  otherTaskId = task.rows[0].id;
+});
+
+await expectRejected(
+  "relacja nie moze przeciac projektow",
+  () =>
+    withUser(A, () =>
+      db.query(
+        `INSERT INTO public.context_relations
+           (source_type, source_id, target_type, target_id, relation_type, created_by)
+         VALUES ('task', $1, 'task', $2, 'related_to', $3)`,
+        [taskOneId, otherTaskId, A]
+      )
+    ),
+  /row-level security|violates/i
+);
+
+await withUser(A, async () => {
+  await db.query("DELETE FROM public.context_relations WHERE id = $1", [relationId]);
+  const { rows } = await db.query(
+    "SELECT count(*)::int n FROM public.context_relations WHERE id = $1",
+    [relationId]
+  );
+  check("owner moze usunac relacje", rows[0].n === 0, rows[0].n);
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

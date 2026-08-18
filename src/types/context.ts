@@ -98,6 +98,8 @@ export type RelationType =
 
 export interface ContextRelation {
   id: string;
+  /** Denormalized from source_type/source_id by a trigger (migration 011). */
+  project_id: string;
   source_type: ContextEntityType;
   source_id: string;
   target_type: ContextEntityType;
