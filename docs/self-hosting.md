@@ -29,31 +29,29 @@ Concretely, as of today:
   at runtime is required for this path. OAuth (Google/Discord) is not
   available in this mode — there is no GoTrue to redirect to, so the
   sign-in/sign-up pages hide those buttons automatically when self-hosted.
-- **Data access is pluggable everywhere the UI reaches, with two named
-  exceptions.** Dashboard, organizations, projects, work (the kanban board),
-  roadmap, knowledge, decisions, files, memory (including the FACT/AI
-  INSIGHT review workflow), context (the relations graph and the task "Why"
-  panel), settings, and both organization- and project-level member
-  management all run their queries as SQL under `withUser()`/
+- **Data access is pluggable everywhere the UI and API reach.** Dashboard,
+  organizations, projects, work (the kanban board), roadmap, knowledge,
+  decisions, files, memory (including the FACT/AI INSIGHT review workflow),
+  context (the relations graph and the task "Why" panel), settings,
+  organization- and project-level member management, the admin panel, and
+  `GET /api/v1/search` all run their queries as SQL under `withUser()`/
   `withServiceRole()` when `DATABASE_URL` is set — no Supabase client call
-  anywhere in that path. Every one of those pages and Server Actions mirrors
-  its Supabase-branch counterpart exactly: same RLS policies, same
-  authorization checks, same triggers (a self-hosted `INSERT INTO
-  organizations` fires `private.handle_new_organization()` the same way a
-  PostgREST insert does — it's a plain Postgres trigger, not something
-  Supabase-specific).
-  - **Not converted:** `src/app/api/v1/search` (the one still-live `/api/v1`
-    route — a different shape, a Route Handler returning `NextResponse.json`
-    with a Supabase-`User`-typed auth helper, not a Server Component/Action)
-    and `checkDatabase()` in the admin panel's health check (still verifies
-    reachability via `SUPABASE_SERVICE_ROLE_KEY`, not `DATABASE_URL`).
-    Neither blocks the core workflow below.
+  anywhere in that path. Every one of those mirrors its Supabase-branch
+  counterpart exactly: same RLS policies, same authorization checks, same
+  triggers (a self-hosted `INSERT INTO organizations` fires
+  `private.handle_new_organization()` the same way a PostgREST insert does —
+  it's a plain Postgres trigger, not something Supabase-specific).
+- **The health check reports self-hosted status honestly.** `checkDatabase()`
+  and `checkAuth()` (`src/lib/health/checks.ts`, surfaced at `GET
+  /api/health` and the admin panel's System Status) both check the
+  self-hosted path first — a genuinely working self-hosted install no longer
+  gets reported as `not_configured`/`down` just because no Supabase project
+  exists.
 
 So: you can sign up, sign in, create an organization, create a project, and
-use essentially the whole application on a plain PostgreSQL with zero
-Supabase software running. The two gaps above are narrow and named, not a
-"most of the app still needs Supabase" caveat — track them in
-`docs/self-hosting-audit.md` if they matter for your install.
+use the whole application — UI and the `/api/v1/search` surface alike — on a
+plain PostgreSQL with zero Supabase software running, verified live against
+a real `docker compose up` stack, not just by reading the code.
 
 If you *do* configure a Supabase project alongside `DATABASE_URL` (i.e. you
 don't mind Supabase existing, you just want your own Postgres), everything
@@ -66,7 +64,7 @@ about adding the self-hosted path changed the Supabase path's behavior.
 | | Cloud | Self-hosted (this page) | Development |
 |---|---|---|---|
 | Where it runs | Guidon Cloud infrastructure | Your server, via Docker Compose or bare Node | Your machine, `npm run dev` |
-| Database | Supabase, managed | `DATABASE_URL` — self-hosted PostgreSQL, no Supabase account needed (two narrow exceptions, see above) | Supabase project |
+| Database | Supabase, managed | `DATABASE_URL` — self-hosted PostgreSQL, no Supabase account needed | Supabase project |
 | Storage | Supabase Storage | `local` (filesystem) or `supabase` | Either |
 | AI | Optional, any provider | Optional, `ollama` for a fully local backend | Optional |
 | You run | Nothing | `db` + `migrate` + `app` containers, or your own Postgres + Node | `npm run dev` |
@@ -89,9 +87,7 @@ limit at all.
 
 - Docker and Docker Compose (Compose path), **or** Node.js 22 and a
   PostgreSQL 17+ server you control (bare-metal path)
-- A Supabase project — not needed for the application itself (see the
-  callout above); only relevant if you want `/api/v1/search` or the admin
-  panel's database health check to work too
+- A Supabase project — not needed at all (see the callout above)
 - `openssl` or any way to generate a random hex string, for `AUTH_SECRET`
 
 ## Docker Compose (primary path)
@@ -113,9 +109,8 @@ Required in `.env` for this to start:
   (`POSTGRES_PASSWORD jest wymagane`)
 - `AUTH_SECRET` — same, hard-fails without it
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` /
-  `SUPABASE_SERVICE_ROLE_KEY` — **not required** for the application itself
-  with `DATABASE_URL` set (per the callout above); only `/api/v1/search` and
-  the admin panel's database health-check row still need them
+  `SUPABASE_SERVICE_ROLE_KEY` — **not required** at all with `DATABASE_URL`
+  set (per the callout above)
 
 What happens on `docker compose up -d`:
 

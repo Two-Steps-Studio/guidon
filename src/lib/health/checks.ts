@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createServiceClient } from "@/lib/supabase-server";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withServiceRole } from "@/lib/db/session";
 import { activeStorageProviderName } from "@/lib/storage/provider";
 import { activeAIProviderName } from "@/lib/ai/provider";
 
@@ -86,6 +88,24 @@ export function safeReason(error: unknown): string {
 }
 
 export async function checkDatabase(): Promise<DatabaseCheck> {
+  if (hasDirectDatabase()) {
+    try {
+      const started = Date.now();
+      // withServiceRole(), not withUser() — there is no request-scoped
+      // identity for an unauthenticated container probe to assert, and
+      // BYPASSRLS is fine here: this proves the connection and role
+      // switching work, not that any particular row is readable.
+      await withTimeout(
+        withServiceRole(({ query }) => query("SELECT 1")),
+        5000,
+        "database"
+      );
+      return { status: "ok", latency_ms: Date.now() - started };
+    } catch (error) {
+      return { status: "down", detail: safeReason(error) };
+    }
+  }
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return { status: "not_configured", detail: "no database configured" };
   }
@@ -177,6 +197,16 @@ export async function checkAI(): Promise<AICheck> {
 }
 
 export function checkAuth(): AuthCheck {
+  // Self-hosted email/password auth (src/lib/auth/local-auth.ts) needs no
+  // Supabase project at all — reporting "down" here whenever
+  // NEXT_PUBLIC_SUPABASE_URL is unset would call a fully working self-hosted
+  // login broken. OAuth is never available in this mode (no GoTrue to
+  // redirect to — the sign-in page hides those buttons itself), so
+  // NEXT_PUBLIC_AUTH_PROVIDERS is irrelevant here too.
+  if (hasDirectDatabase()) {
+    return { status: "ok", providers: ["password"] };
+  }
+
   const providers = (process.env.NEXT_PUBLIC_AUTH_PROVIDERS ?? "")
     .split(",")
     .map((value) => value.trim())

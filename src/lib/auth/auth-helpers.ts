@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { User } from "@supabase/supabase-js";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withUser } from "@/lib/db/session";
+import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 
 /**
  * Auth check for the narrow /api/v1 surface (currently only `search`).
@@ -16,10 +18,16 @@ import { User } from "@supabase/supabase-js";
  * Keep this file minimal: it exists only so /api/v1 routes (present and future,
  * e.g. GitHub webhooks, agent integrations) have a single place to check
  * "is there a logged-in user" without duplicating the Supabase call.
+ *
+ * `AuthContext.userId` is a plain string, not Supabase's `User` type — the
+ * only field any caller ever read was `user.id`, so there was nothing
+ * provider-specific worth keeping. Branches on hasDirectDatabase() the same
+ * way every other identity-resolving function in this codebase does (see
+ * src/lib/data/current-user.ts).
  */
 
 export interface AuthContext {
-  user: User;
+  userId: string;
   profile?: {
     id: string;
     email: string;
@@ -36,6 +44,17 @@ const SERVICE_DISABLED = NextResponse.json({ error: "Service disabled" }, { stat
  * @returns AuthContext or NextResponse with 401/503 error
  */
 export async function requireAuth(): Promise<AuthContext | NextResponse> {
+  if (hasDirectDatabase()) {
+    const userId = await getLocalSessionUserId();
+    if (!userId) return UNAUTHORIZED;
+
+    const result = await withUser(userId, ({ query }) =>
+      query("SELECT id, email, full_name, avatar_url FROM profiles WHERE id = $1", [userId])
+    );
+
+    return { userId, profile: result.rows[0] ?? undefined };
+  }
+
   let supabase;
   try {
     supabase = await createClient();
@@ -56,7 +75,7 @@ export async function requireAuth(): Promise<AuthContext | NextResponse> {
     .maybeSingle();
 
   return {
-    user,
+    userId: user.id,
     profile: profile || undefined,
   };
 }

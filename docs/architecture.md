@@ -54,26 +54,25 @@ definition of the security model instead of two that could drift. This is
 verified by `npm run test:db` (49 assertions against a real PostgreSQL via
 PGlite, no Docker, no Supabase).
 
-**The gap is closed, with two named exceptions.** `src/lib/auth/local-auth.ts`
-(sign-up/sign-in via `withServiceRole()`, writing straight to `auth.users`),
-`src/proxy.ts` (route protection via a self-signed session cookie, no
-Supabase call), `src/lib/data/current-user.ts`, every `src/lib/data/*-access.ts`
-module, every page under `src/app/{dashboard,organizations,projects}`, every
-Server Action in those trees, and `src/lib/data/admin.ts` all branch on
-`hasDirectDatabase()` and run their queries as SQL under
-`withUser()`/`withServiceRole()` — never `.from()` — when `DATABASE_URL` is
-set. Each conversion mirrors its Supabase-branch sibling exactly: same RLS
-policies, same authorization checks, same triggers (Postgres triggers fire
-identically whether the `INSERT` arrived via PostgREST or a direct `pg`
-connection — nothing about them is Supabase-specific).
-
-Two things remain Supabase-only, both narrow and named rather than "most of
-the app": `src/app/api/v1/search` (a Route Handler with a
-Supabase-`User`-typed auth helper, a different shape from the
-Server Component/Action pattern everything else uses) and
-`checkDatabase()` in `src/lib/health/checks.ts` (still probes reachability
-via `SUPABASE_SERVICE_ROLE_KEY`, not `DATABASE_URL`). Tracked in
-`docs/self-hosting-audit.md`.
+**The gap is closed.** `src/lib/auth/local-auth.ts` (sign-up/sign-in via
+`withServiceRole()`, writing straight to `auth.users`), `src/proxy.ts`
+(route protection via a self-signed session cookie, no Supabase call),
+`src/lib/data/current-user.ts`, every `src/lib/data/*-access.ts` module,
+every page under `src/app/{dashboard,organizations,projects}`, every Server
+Action in those trees, `src/lib/data/admin.ts`, `GET /api/v1/search`
+(`src/lib/auth/auth-helpers.ts`'s `AuthContext` was redesigned to carry a
+plain `userId: string` instead of Supabase's `User` type — the only field
+any caller ever read was `user.id`), and `src/lib/health/checks.ts`'s
+`checkDatabase()`/`checkAuth()` all branch on `hasDirectDatabase()` and run
+their queries as SQL under `withUser()`/`withServiceRole()` — never
+`.from()` — when `DATABASE_URL` is set. Each conversion mirrors its
+Supabase-branch sibling exactly: same RLS policies, same authorization
+checks, same triggers (Postgres triggers fire identically whether the
+`INSERT` arrived via PostgREST or a direct `pg` connection — nothing about
+them is Supabase-specific). Verified live against a real `docker compose up`
+stack — signup, login, dashboard, org/project creation, the kanban board,
+the task "Why" panel, agent-context export, and `/api/v1/search` all
+exercised end to end with zero Supabase software running.
 
 ## Provider abstractions
 
