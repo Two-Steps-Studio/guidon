@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { Navigation } from "@/components/layout/navigation";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 
 interface OrganizationRow {
@@ -48,6 +49,8 @@ export default async function OrganizationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation user={user} />
+
       <div className="container mx-auto p-6 max-w-6xl">
         <div className="flex items-center justify-between mb-8">
           <div>

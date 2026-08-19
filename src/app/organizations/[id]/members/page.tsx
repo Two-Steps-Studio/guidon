@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Plus, Shield, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
+import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { Navigation } from "@/components/layout/navigation";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberActionsMenu } from "./member-actions-menu";
 
@@ -30,7 +32,7 @@ export default async function OrganizationMembersPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: orgId } = await params;
-  const access = await requireOrgAccess(orgId);
+  const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
   const canManage = canManageOrg(access.role);
 
   let members: MemberRow[];
@@ -73,6 +75,8 @@ export default async function OrganizationMembersPage({
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation user={user} />
+
       <div className="container mx-auto p-6 max-w-6xl">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>

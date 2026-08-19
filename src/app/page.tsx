@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -7,9 +9,14 @@ export default function Home() {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="space-y-4">
-            <h1 className="text-5xl font-bold tracking-tight text-text dark:text-text">
-              Guidon
-            </h1>
+            <Image
+              src="/assets/guidon-wordmark.png"
+              alt="Guidon"
+              width={769}
+              height={285}
+              priority
+              className="mx-auto h-14 w-auto dark:invert"
+            />
             <p className="text-xl text-text-secondary dark:text-text-secondary">
               Context-First Project Management
             </p>
@@ -59,10 +66,10 @@ export default function Home() {
           <div className="pt-8 space-y-4">
             <div className="flex gap-4 justify-center">
               <Button size="lg" asChild>
-                <a href="/auth/signup">Get Started</a>
+                <Link href="/auth/signup">Get Started</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <a href="/auth/login">Sign In</a>
+                <Link href="/auth/login">Sign In</Link>
               </Button>
             </div>
           </div>

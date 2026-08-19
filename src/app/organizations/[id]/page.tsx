@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, FolderKanban, Plus, Settings } from "lucide-react";
+import { ArrowLeft, FolderKanban, Plus, Users } from "lucide-react";
 import { requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
+import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isHostedProjectLimitReached, HOSTED_PROJECT_LIMIT_MESSAGE } from "@/lib/limits";
+import { Navigation } from "@/components/layout/navigation";
 import { CreateProjectDialog } from "./create-project-dialog";
 import type { Project } from "@/types/project";
 
@@ -16,7 +18,7 @@ export default async function OrganizationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: orgId } = await params;
-  const access = await requireOrgAccess(orgId);
+  const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
   const { organization } = access;
 
   let projects: Project[];
@@ -41,6 +43,8 @@ export default async function OrganizationDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation user={user} />
+
       <div className="container mx-auto p-6 max-w-6xl">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>
@@ -52,9 +56,11 @@ export default async function OrganizationDetailPage({
             <h1 className="text-3xl font-bold">{organization.name}</h1>
             <p className="text-muted-foreground">{organization.description || "No description"}</p>
           </div>
-          <Button variant="outline">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+          <Button variant="outline" asChild>
+            <Link href={`/organizations/${orgId}/members`}>
+              <Users className="h-4 w-4 mr-2" />
+              Members
+            </Link>
           </Button>
         </div>
 

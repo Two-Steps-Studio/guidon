@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -15,12 +16,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Network, 
-  Brain, 
-  Settings,
+import {
+  LayoutDashboard,
+  FileText,
   LogOut,
   User,
   ChevronDown,
@@ -64,6 +62,12 @@ export function Navigation({ user, projectId }: NavigationProps) {
     }
   }
 
+  // Context and Memory are project-scoped (/projects/[id]/context,
+  // /projects/[id]/memory) — there is no project-independent destination for
+  // them, so they don't belong in this global nav. This bar previously
+  // linked to /context, /memory, and /settings, none of which exist as
+  // top-level routes; every project's own sidebar (ProjectSidebar) is where
+  // those features actually live, scoped to the project the user is in.
   const navItems = [
     {
       name: "Dashboard",
@@ -75,21 +79,6 @@ export function Navigation({ user, projectId }: NavigationProps) {
       href: "/projects",
       icon: FileText,
     },
-    {
-      name: "Context",
-      href: "/context",
-      icon: Network,
-    },
-    {
-      name: "Memory",
-      href: "/memory",
-      icon: Brain,
-    },
-    {
-      name: "Settings",
-      href: "/settings",
-      icon: Settings,
-    },
   ]
 
   return (
@@ -97,11 +86,15 @@ export function Navigation({ user, projectId }: NavigationProps) {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">G</span>
-            </div>
-            <span className="text-xl font-bold">Guidon</span>
+          <Link href="/dashboard" className="flex items-center">
+            <Image
+              src="/assets/guidon-wordmark.png"
+              alt="Guidon"
+              width={769}
+              height={285}
+              priority
+              className="h-6 w-auto dark:invert"
+            />
           </Link>
 
           {/* Navigation Links */}
@@ -226,12 +219,6 @@ export function Navigation({ user, projectId }: NavigationProps) {
                     <Link href="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
