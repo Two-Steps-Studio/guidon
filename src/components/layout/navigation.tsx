@@ -82,7 +82,7 @@ export function Navigation({ user, projectId }: NavigationProps) {
   ]
 
   return (
-    <nav className="border-b bg-background">
+    <nav className="relative border-b bg-background">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -123,7 +123,7 @@ export function Navigation({ user, projectId }: NavigationProps) {
 
           {/* Search */}
           {projectId && (
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -215,6 +215,18 @@ export function Navigation({ user, projectId }: NavigationProps) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {/* Mirrors navItems above — hidden md:flex hides those links on
+                      mobile with no other way to reach them, so this repeats them
+                      here (md:hidden) as the mobile substitute. */}
+                  {navItems.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild className="md:hidden">
+                      <Link href={item.href} className="cursor-pointer">
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {item.name}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator className="md:hidden" />
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
