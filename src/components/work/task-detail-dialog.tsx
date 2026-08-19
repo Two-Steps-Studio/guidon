@@ -15,6 +15,7 @@ import { CreateDecisionDialog } from "@/app/projects/[id]/decisions/create-decis
 import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
 import { getTaskAgentContext } from "@/lib/context/agent-context";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
+import { TaskAttemptsSection } from "@/components/work/task-attempts-section";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -636,6 +637,13 @@ export function TaskDetailDialog({
             </form>
           )}
         </section>
+
+        <TaskAttemptsSection
+          projectId={projectId}
+          taskId={task.id}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
 
         <section
           aria-label="Comments"

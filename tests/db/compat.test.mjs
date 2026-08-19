@@ -136,8 +136,8 @@ for (const name of migrations) {
 }
 
 for (const [label, sql, expected] of [
-  ["16 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 16],
-  ["70 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 70],
+  ["17 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 17],
+  ["73 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 73],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -719,6 +719,63 @@ await expectRejected(
   () => withAnon(() => db.query("SELECT 1 FROM auth.users WHERE id = $1", [localUserId])),
   /permission denied/i
 );
+
+// ------------------------------------------------------------------
+section("13. task_attempts — Previous Attempts (migracja 013)");
+
+let attemptTaskId;
+let attemptId;
+
+await withUser(A, async () => {
+  const task = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1,'Zadanie z probami') RETURNING id",
+    [projectId]
+  );
+  attemptTaskId = task.rows[0].id;
+
+  const attempt = await db.query(
+    `INSERT INTO public.task_attempts
+       (task_id, problem, approach, outcome, failure_reason, files_changed, created_by)
+     VALUES ($1, 'Test timed out', 'Zwiekszono timeout do 30s', 'failed',
+             'Root cause bylo deadlockowanie polaczen, nie za maly timeout',
+             ARRAY['tests/db/compat.test.mjs'], $2)
+     RETURNING id, outcome`,
+    [attemptTaskId, A]
+  );
+  attemptId = attempt.rows[0].id;
+  check("insert proby z RETURNING", Boolean(attemptId));
+  check("outcome zapisany", attempt.rows[0].outcome === "failed", attempt.rows[0].outcome);
+});
+
+await expectRejected(
+  "outcome poza dozwolonym zbiorem odrzucony",
+  () =>
+    withUser(A, () =>
+      db.query(
+        `INSERT INTO public.task_attempts (task_id, problem, approach, outcome, created_by)
+         VALUES ($1, 'p', 'a', 'abandoned', $2)`,
+        [attemptTaskId, A]
+      )
+    ),
+  /violates check constraint/i
+);
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT id FROM public.task_attempts WHERE id = $1", [attemptId]);
+  check("B nie widzi proby A (RLS przez project_access taska)", rows.length === 0, rows.length);
+});
+
+await withUser(A, async () => {
+  await db.query("DELETE FROM public.tasks WHERE id = $1", [attemptTaskId]);
+});
+
+const remainingAttempts = await withServiceRole(async () => {
+  const { rows } = await db.query("SELECT count(*)::int n FROM public.task_attempts WHERE id = $1", [
+    attemptId,
+  ]);
+  return rows[0].n;
+});
+check("ON DELETE CASCADE z tasks kasuje probe", remainingAttempts === 0, remainingAttempts);
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

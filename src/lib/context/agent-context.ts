@@ -11,9 +11,10 @@
  *   - MCP transport/server — this only produces the data package.
  *   - AI-generated summarization — everything below is assembled verbatim
  *     from rows that already exist; nothing is passed through src/lib/ai/*.
- *   - "Acceptance Criteria" and "Previous Attempts" as first-class data —
- *     grepped the schema, neither is tracked anywhere yet. Noted as gaps in
- *     the output rather than fabricated.
+ *   - "Acceptance Criteria" as first-class data — grepped the schema, not
+ *     tracked anywhere yet. Noted as a gap in the output rather than
+ *     fabricated. "Previous Attempts" WAS this kind of gap until migration
+ *     013 (task_attempts, TODO.md §22) — it's real data now, pulled below.
  *
  * Reuses getTaskWhyContext (src/lib/context/task-why.ts) for the task's
  * linked decision and everything reachable via context_relations, then adds
@@ -79,6 +80,18 @@ interface SourceRow {
   source_type: string;
 }
 
+interface AttemptRow {
+  problem: string;
+  approach: string;
+  outcome: string;
+  result: string | null;
+  failure_reason: string | null;
+  files_changed: string[];
+  related_pr_url: string | null;
+  agent: string | null;
+  created_at: string;
+}
+
 function heading(level: number, text: string): string {
   return `${"#".repeat(level)} ${text}`;
 }
@@ -108,9 +121,10 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
   let task: TaskRow;
   let whyContext: Awaited<ReturnType<typeof getTaskWhyContext>>;
   let memory: MemoryRow[];
+  let attempts: AttemptRow[];
 
   if (hasDirectDatabase()) {
-    const [taskRows, why, memoryRows] = await Promise.all([
+    const [taskRows, why, memoryRows, attemptRows] = await Promise.all([
       withUser(access.userId, ({ query }) =>
         query("SELECT id, title, description, status, priority, tags FROM tasks WHERE id = $1", [
           taskId,
@@ -123,6 +137,13 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
           [projectId]
         )
       ),
+      withUser(access.userId, ({ query }) =>
+        query(
+          `SELECT problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_at
+           FROM task_attempts WHERE task_id = $1 ORDER BY created_at DESC`,
+          [taskId]
+        )
+      ),
     ]);
 
     if (taskRows.rows.length === 0) return FAIL("Task not found.");
@@ -131,10 +152,11 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
     task = taskRows.rows[0] as TaskRow;
     whyContext = why;
     memory = memoryRows.rows;
+    attempts = attemptRows.rows;
   } else {
     const supabase = await createClient();
 
-    const [taskRes, why, memoryRes] = await Promise.all([
+    const [taskRes, why, memoryRes, attemptsRes] = await Promise.all([
       supabase
         .from("tasks")
         .select("id, title, description, status, priority, tags")
@@ -146,6 +168,11 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
         .select("id, content, memory_type, verified, confidence")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("task_attempts")
+        .select("problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_at")
+        .eq("task_id", taskId)
+        .order("created_at", { ascending: false }),
     ]);
 
     if (taskRes.error || !taskRes.data) return FAIL(taskRes.error?.message ?? "Task not found.");
@@ -154,6 +181,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
     task = taskRes.data as TaskRow;
     whyContext = why;
     memory = (memoryRes.data ?? []) as MemoryRow[];
+    attempts = (attemptsRes.data ?? []) as AttemptRow[];
   }
 
   // Related decisions / files / sources need fuller rows than task-why.ts's
@@ -298,10 +326,30 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
 
   const prsSection = section("Related PRs", prs.map(sourceLine));
 
-  // --- Previous Attempts (not tracked) ---------------------------------------
-  const attemptsSection = section("Previous Attempts", [
-    "_Not yet tracked in Guidon._",
-  ]);
+  // --- Previous Attempts (migration 013, TODO.md §22) ------------------------
+  // Failed/partial attempts are what an agent actually needs before proposing
+  // another fix — listed first within the section, succeeded ones after, so
+  // the highest-value lines aren't buried if there are many attempts.
+  const failedOrPartial = attempts.filter((row) => row.outcome !== "succeeded");
+  const succeededAttempts = attempts.filter((row) => row.outcome === "succeeded");
+
+  const attemptLine = (row: AttemptRow): string => {
+    const lines = [
+      `- **[${row.outcome.toUpperCase()}]** ${row.problem}`,
+      `  Approach: ${row.approach}`,
+    ];
+    if (row.failure_reason?.trim()) lines.push(`  Why it failed: ${row.failure_reason.trim()}`);
+    if (row.result?.trim()) lines.push(`  Result: ${row.result.trim()}`);
+    if (row.files_changed.length > 0) lines.push(`  Files: ${row.files_changed.join(", ")}`);
+    if (row.related_pr_url?.trim()) lines.push(`  PR: ${row.related_pr_url.trim()}`);
+    if (row.agent?.trim()) lines.push(`  Agent: ${row.agent.trim()}`);
+    return lines.join("\n");
+  };
+
+  const attemptsSection = section(
+    "Previous Attempts",
+    [...failedOrPartial, ...succeededAttempts].map(attemptLine)
+  );
 
   // --- Other Project Memory (unverified facts + preference/decision_summary/observation) ---
   const otherMemorySection = section(

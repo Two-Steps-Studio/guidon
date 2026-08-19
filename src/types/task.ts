@@ -140,3 +140,36 @@ export interface CreateCommentData {
 export interface UpdateCommentData {
   content: string;
 }
+
+// ============================================
+// TASK ATTEMPT TYPES (Previous Attempts, TODO.md §22, migration 013)
+// ============================================
+
+export type AttemptOutcome = "failed" | "partial" | "succeeded";
+
+export interface TaskAttempt {
+  id: string;
+  task_id: string;
+  problem: string;
+  approach: string;
+  outcome: AttemptOutcome;
+  result: string | null;
+  failure_reason: string | null;
+  files_changed: string[];
+  related_pr_url: string | null;
+  agent: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface CreateAttemptData {
+  task_id: string;
+  problem: string;
+  approach: string;
+  outcome: AttemptOutcome;
+  result?: string;
+  failure_reason?: string;
+  files_changed?: string[];
+  related_pr_url?: string;
+  agent?: string;
+}

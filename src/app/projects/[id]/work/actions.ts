@@ -10,7 +10,7 @@ import {
 } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
+import type { AttemptOutcome, Task, TaskAttempt, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
 export type TaskActionResult = { task: Task | null; error: string | null };
 export type TaskMutationResult = { error: string | null };
@@ -94,6 +94,160 @@ export async function postComment(
 
   if (error) return { comment: null, error: error.message };
   return { comment: data as TaskComment, error: null };
+}
+
+// ============================================================
+// PREVIOUS ATTEMPTS (TODO.md §22, migration 013)
+// ============================================================
+
+const ATTEMPT_COLUMNS =
+  "id, task_id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_by, created_at";
+
+export async function loadAttempts(
+  projectId: string,
+  taskId: string
+): Promise<{ attempts: TaskAttempt[]; error: string | null }> {
+  const access = await getProjectAccess(projectId);
+  if (!access) return { attempts: [], error: "You do not have access to this project." };
+
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          `SELECT ${ATTEMPT_COLUMNS} FROM task_attempts WHERE task_id = $1 ORDER BY created_at DESC`,
+          [taskId]
+        )
+      );
+      return { attempts: result.rows, error: null };
+    } catch (error) {
+      return { attempts: [], error: error instanceof Error ? error.message : "Failed to load attempts." };
+    }
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("task_attempts")
+    .select(ATTEMPT_COLUMNS)
+    .eq("task_id", taskId)
+    .order("created_at", { ascending: false });
+
+  if (error) return { attempts: [], error: error.message };
+  return { attempts: (data ?? []) as unknown as TaskAttempt[], error: null };
+}
+
+export async function createAttempt(
+  projectId: string,
+  input: {
+    task_id: string;
+    problem: string;
+    approach: string;
+    outcome: AttemptOutcome;
+    result: string;
+    failure_reason: string;
+    files_changed: string;
+    related_pr_url: string;
+    agent: string;
+  }
+): Promise<{ attempt: TaskAttempt | null; error: string | null }> {
+  const access = await getProjectAccess(projectId);
+  // Mirrors task_attempts_insert (013): owner/admin/developer — not tester,
+  // recording an implementation attempt is developer-tier work.
+  if (!access || !canWriteProject(access.role)) {
+    return { attempt: null, error: "You do not have permission to record an attempt." };
+  }
+  if (!input.problem.trim() || !input.approach.trim()) {
+    return { attempt: null, error: "Problem and approach are required." };
+  }
+
+  const filesChanged = input.files_changed
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const values = {
+    task_id: input.task_id,
+    problem: input.problem.trim(),
+    approach: input.approach.trim(),
+    outcome: input.outcome,
+    result: input.result.trim() || null,
+    failure_reason: input.failure_reason.trim() || null,
+    files_changed: filesChanged,
+    related_pr_url: input.related_pr_url.trim() || null,
+    agent: input.agent.trim() || null,
+  };
+
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          `INSERT INTO task_attempts
+             (task_id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           RETURNING ${ATTEMPT_COLUMNS}`,
+          [
+            values.task_id,
+            values.problem,
+            values.approach,
+            values.outcome,
+            values.result,
+            values.failure_reason,
+            values.files_changed,
+            values.related_pr_url,
+            values.agent,
+            access.userId,
+          ]
+        )
+      );
+      revalidatePath(`/projects/${projectId}/work`);
+      return { attempt: result.rows[0] as TaskAttempt, error: null };
+    } catch (error) {
+      return { attempt: null, error: error instanceof Error ? error.message : "Failed to record attempt." };
+    }
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("task_attempts")
+    .insert({ ...values, created_by: access.userId })
+    .select(ATTEMPT_COLUMNS)
+    .single();
+
+  if (error) return { attempt: null, error: error.message };
+
+  revalidatePath(`/projects/${projectId}/work`);
+  return { attempt: data as unknown as TaskAttempt, error: null };
+}
+
+export async function deleteAttempt(
+  projectId: string,
+  attemptId: string
+): Promise<TaskMutationResult> {
+  const access = await getProjectAccess(projectId);
+  // Mirrors task_attempts_delete (013): owner/admin only.
+  if (!access || !canManageProject(access.role)) {
+    return { error: "You do not have permission to delete this attempt." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM task_attempts WHERE id = $1", [attemptId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to delete attempt." };
+    }
+
+    revalidatePath(`/projects/${projectId}/work`);
+    return { error: null };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("task_attempts").delete().eq("id", attemptId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/projects/${projectId}/work`);
+  return { error: null };
 }
 
 export async function moveTask(
