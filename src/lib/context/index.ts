@@ -60,6 +60,10 @@ export function isValidRelationType(type: string): type is RelationType {
  * Check if a self-relation is allowed
  * Most relations should not point to the same entity
  */
+// Parameter kept (unused for now) to document the function's contract —
+// which relation is being checked — even though every type is currently
+// disallowed; see body below.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function isSelfRelationAllowed(relationType: RelationType): boolean {
   // Some relations might allow self-reference in specific cases
   // For now, disallow all self-relations

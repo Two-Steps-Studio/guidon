@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ProjectSwitcher } from '@/components/layout/project-switcher';
 import type { SwitchableProject } from '@/lib/data/project-access';
 import {

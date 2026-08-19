@@ -7,15 +7,14 @@
 
 import { createServiceClient } from "@/lib/supabase-server";
 import { getStorageProvider } from "./provider";
-import { 
-  STORAGE_BUCKETS, 
-  ALLOWED_FILE_EXTENSIONS, 
+import {
+  STORAGE_BUCKETS,
+  ALLOWED_FILE_EXTENSIONS,
   ALLOWED_IMAGE_TYPES,
   ALLOWED_DOCUMENT_TYPES,
   ALLOWED_ARCHIVE_TYPES,
   FILE_SIZE_LIMITS,
   PROJECT_STORAGE_QUOTA,
-  FILE_CATEGORIES,
   type FileCategory
 } from "./storage-constants";
 

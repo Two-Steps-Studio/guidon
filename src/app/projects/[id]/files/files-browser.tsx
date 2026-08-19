@@ -215,6 +215,10 @@ function FileCard({
   canManage: boolean;
   onPreview: () => void;
 }) {
+  /* eslint-disable react-hooks/static-components -- getFileIcon returns a
+     stable reference from a module-level lookup table (FILE_TYPE_ICONS), not
+     a freshly constructed component, so this is safe despite the lint rule's
+     static analysis being unable to prove it. */
   const Icon = getFileIcon(file.mime_type || "");
   const colorClass = getFileColor(file.mime_type || "");
   const [pending, startTransition] = useTransition();
@@ -258,6 +262,7 @@ function FileCard({
           >
             <div className={`p-2 rounded-lg ${colorClass}`}>
               <Icon className="h-5 w-5" />
+              {/* eslint-enable react-hooks/static-components */}
             </div>
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm font-medium truncate">{file.name}</CardTitle>
