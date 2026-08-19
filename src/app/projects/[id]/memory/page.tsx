@@ -6,7 +6,9 @@ import { requireProjectAccess, canWriteProject } from "@/lib/data/project-access
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { activeAIProviderName } from "@/lib/ai/provider";
 import { CreateMemoryDialog } from "./create-memory-dialog";
+import { GenerateInsightButton } from "./generate-insight-button";
 import { InsightReviewCard } from "./insight-review-card";
 import { MemoryCardMenu } from "./memory-card-menu";
 import { MEMORY_TYPE_CONFIG } from "./memory-type-config";
@@ -87,6 +89,7 @@ export default async function ProjectMemoryPage({
   }
 
   const profilesById = new Map(profilesData.map((p) => [p.id, p]));
+  const canGenerateInsight = canWrite && activeAIProviderName() !== null;
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -95,7 +98,10 @@ export default async function ProjectMemoryPage({
           <h1 className="text-3xl font-bold">Memory</h1>
           <p className="text-muted-foreground">Persistent project knowledge and insights</p>
         </div>
-        {canWrite && <CreateMemoryDialog projectId={projectId} />}
+        <div className="flex items-start gap-2">
+          {canGenerateInsight && <GenerateInsightButton projectId={projectId} />}
+          {canWrite && <CreateMemoryDialog projectId={projectId} />}
+        </div>
       </div>
 
       {pending.length > 0 && (
