@@ -166,6 +166,7 @@ export function KanbanBoard({
                       setDropTarget({ status: column.status, index })
                     }
                     onDrop={() => void handleDrop(column.status, index)}
+                    projectColor={projectColor}
                   />
                   <TaskCard
                     task={task}
@@ -199,6 +200,7 @@ export function KanbanBoard({
                 }
                 onDrop={() => void handleDrop(column.status, columnTasks.length)}
                 grow
+                projectColor={projectColor}
               />
 
               {columnTasks.length === 0 && !draggingTask && (
@@ -224,12 +226,14 @@ function DropZone({
   onEnter,
   onDrop,
   grow = false,
+  projectColor,
 }: {
   active: boolean;
   enabled: boolean;
   onEnter: () => void;
   onDrop: () => void;
   grow?: boolean;
+  projectColor?: string;
 }) {
   if (!enabled) {
     return grow ? <div className="flex-1" /> : null;
