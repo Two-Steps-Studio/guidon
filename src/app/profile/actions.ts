@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { uploadFile, ensureBucketExists } from "@/lib/storage/storage";
+import { assertSafeStoragePath } from "@/lib/storage/provider";
 
 export type ProfileFormState = {
   error: string | null;
@@ -26,14 +28,46 @@ export async function updateProfile(
   const user = await getCurrentUser();
 
   const fullName = formData.get("full_name");
-  const avatarUrl = formData.get("avatar_url");
+  const avatarFile = formData.get("avatar") as File | null;
 
   if (typeof fullName !== "string" || fullName.trim().length === 0) {
     return { error: "Name is required." };
   }
 
   const trimmedName = fullName.trim();
-  const trimmedAvatar = typeof avatarUrl === "string" && avatarUrl.trim() ? avatarUrl.trim() : null;
+  let trimmedAvatar = user.avatar_url;
+
+  // Handle avatar upload if a file was provided
+  if (avatarFile && avatarFile.size > 0) {
+    try {
+      // Ensure avatars bucket exists
+      const bucketResult = await ensureBucketExists("avatars", { public: true });
+      if (bucketResult.error) {
+        return { error: `Storage bucket could not be created: ${bucketResult.error}` };
+      }
+
+      // Validate file type
+      if (!avatarFile.type.startsWith("image/")) {
+        return { error: "Avatar must be an image file." };
+      }
+
+      // Validate file size (max 2MB)
+      if (avatarFile.size > 2 * 1024 * 1024) {
+        return { error: "Avatar file is too large. Maximum size: 2MB" };
+      }
+
+      // Generate safe file path
+      const timestamp = Date.now();
+      const extension = avatarFile.name.split('.').pop() || 'jpg';
+      const filePath = assertSafeStoragePath(`${user.id}/${timestamp}.${extension}`);
+
+      // Upload file
+      const uploadResult = await uploadFile("avatars", filePath, avatarFile, { upsert: true });
+      trimmedAvatar = uploadResult.publicUrl;
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to upload avatar." };
+    }
+  }
 
   if (hasDirectDatabase()) {
     try {

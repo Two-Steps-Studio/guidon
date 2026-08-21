@@ -45,16 +45,15 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="avatar_url">Avatar URL</Label>
+            <Label htmlFor="avatar">Avatar</Label>
             <Input
-              id="avatar_url"
-              name="avatar_url"
-              type="url"
-              defaultValue={user.avatar_url ?? ""}
-              placeholder="https://..."
+              id="avatar"
+              name="avatar"
+              type="file"
+              accept="image/*"
             />
             <p className="text-xs text-muted-foreground">
-              A direct link to an image. Leave blank to use your initials instead.
+              Upload an image for your avatar. Leave blank to keep current or use your initials.
             </p>
           </div>
 
