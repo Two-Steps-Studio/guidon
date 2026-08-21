@@ -30,6 +30,7 @@ interface TaskCardProps {
   onOpen: (task: Task) => void;
   onDragStart: (task: Task) => void;
   onDragEnd: () => void;
+  projectColor?: string;
 }
 
 export function initialsFor(member: TaskCardMember): string {
@@ -52,6 +53,7 @@ export function TaskCard({
   onOpen,
   onDragStart,
   onDragEnd,
+  projectColor,
 }: TaskCardProps) {
   const priority = normalizeTaskPriority(task.priority);
   const due = dueState(task.due_date, task.status);
@@ -91,8 +93,9 @@ export function TaskCard({
           aria-hidden
           className={cn(
             "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-            PRIORITY_DOT_CLASSES[priority]
+            projectColor ? "" : PRIORITY_DOT_CLASSES[priority]
           )}
+          style={projectColor ? { backgroundColor: projectColor } : undefined}
         />
         <h4 className="flex-1 text-sm font-medium leading-snug text-foreground line-clamp-3">
           {task.title}

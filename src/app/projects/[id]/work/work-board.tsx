@@ -153,7 +153,11 @@ export function WorkBoard({
           </div>
 
           {canEdit && (
-            <Button size="sm" onClick={() => setCreateFor("todo")}>
+            <Button 
+              size="sm" 
+              onClick={() => setCreateFor("todo")}
+              style={projectColor ? { backgroundColor: projectColor } : undefined}
+            >
               <Plus className="h-4 w-4" />
               New task
             </Button>

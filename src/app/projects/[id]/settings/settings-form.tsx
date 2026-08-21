@@ -37,6 +37,7 @@ export function SettingsForm({
   const updateWithId = updateProjectSettings.bind(null, project.id);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
   const [technologies, setTechnologies] = useState<string[]>(initialTechnologies);
+  const [color, setColor] = useState(project.color || "#0f6b5a");
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, startDelete] = useTransition();
@@ -107,14 +108,16 @@ export function SettingsForm({
                 id="color"
                 name="color"
                 type="color"
-                defaultValue={project.color || "#0f6b5a"}
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
                 className="h-10 w-16 rounded cursor-pointer border border-border"
               />
               <Input
                 id="colorHex"
                 name="colorHex"
                 type="text"
-                defaultValue={project.color || "#0f6b5a"}
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
                 placeholder="#000000"
                 className="flex-1"
                 pattern="^#[0-9A-Fa-f]{6}$"

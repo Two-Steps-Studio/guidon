@@ -192,6 +192,7 @@ export async function updateProjectSettings(
 
   revalidatePath(`/projects/${projectId}/settings`);
   revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/layout`);
   return { error: null };
 }
 

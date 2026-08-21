@@ -103,6 +103,7 @@ export function KanbanBoard({
               "flex w-72 shrink-0 flex-col rounded-xl border border-border bg-background-secondary",
               isTargetColumn && "border-primary/40"
             )}
+            style={isTargetColumn && projectColor ? { borderColor: projectColor } : undefined}
             onDragOver={(event) => {
               if (!draggingTask || !canEdit) return;
               event.preventDefault();
@@ -180,6 +181,7 @@ export function KanbanBoard({
                     onOpen={onOpenTask}
                     onDragStart={setDraggingTask}
                     onDragEnd={resetDrag}
+                    projectColor={projectColor}
                   />
                 </div>
               ))}
@@ -256,6 +258,7 @@ function DropZone({
           "h-0.5 rounded-full transition-colors",
           active ? "bg-primary" : "bg-transparent"
         )}
+        style={active && projectColor ? { backgroundColor: projectColor } : undefined}
       />
     </div>
   );
