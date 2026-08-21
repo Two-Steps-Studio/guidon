@@ -101,6 +101,31 @@ export function SettingsForm({
             </select>
           </div>
           <div className="space-y-2">
+            <Label htmlFor="color">Project Color</Label>
+            <div className="flex items-center gap-3">
+              <input
+                id="color"
+                name="color"
+                type="color"
+                defaultValue={project.color || "#0f6b5a"}
+                className="h-10 w-16 rounded cursor-pointer border border-border"
+              />
+              <Input
+                id="colorHex"
+                name="colorHex"
+                type="text"
+                defaultValue={project.color || "#0f6b5a"}
+                placeholder="#000000"
+                className="flex-1"
+                pattern="^#[0-9A-Fa-f]{6}$"
+                maxLength={7}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Choose a color to personalize your project. It will be used throughout the interface.
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="technologiesInput">Technologies (press Enter to add)</Label>
             <Input id="technologiesInput" onKeyDown={handleTechnologyAdd} placeholder="Add technology..." />
             {technologies.length > 0 && (

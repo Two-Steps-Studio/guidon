@@ -135,6 +135,7 @@ export default async function ProjectWorkPage({
       initialTasks={tasks}
       members={members}
       initialCommentCounts={commentCounts}
+      projectColor={access.project.color}
     />
   );
 }

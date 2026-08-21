@@ -32,6 +32,7 @@ interface KanbanBoardProps {
     status: TaskStatus,
     sortOrder: number
   ) => Promise<void> | void;
+  projectColor?: string;
 }
 
 interface DropTarget {
@@ -48,6 +49,7 @@ export function KanbanBoard({
   onOpenTask,
   onCreateTask,
   onMoveTask,
+  projectColor,
 }: KanbanBoardProps) {
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
@@ -127,7 +129,8 @@ export function KanbanBoard({
             <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
               <span
                 aria-hidden
-                className={cn("h-2 w-2 rounded-full", column.accentClass)}
+                className={cn("h-2 w-2 rounded-full", projectColor ? "" : column.accentClass)}
+                style={projectColor ? { backgroundColor: projectColor } : undefined}
               />
               <h3 className="text-sm font-medium text-foreground">
                 {column.label}

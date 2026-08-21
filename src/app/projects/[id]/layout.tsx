@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireProjectAccess, getSwitchableProjects } from "@/lib/data/project-access";
+import { getCurrentUser } from "@/lib/data/current-user";
 import { ProjectSidebar } from "@/components/layout/project-sidebar";
 
 /**
@@ -46,9 +47,10 @@ export default async function ProjectLayout({
   const { id } = await params;
   const access = await requireProjectAccess(id);
   const switchableProjects = await getSwitchableProjects(access.project.organization_id);
+  const user = await getCurrentUser();
 
   return (
-    <ProjectSidebar projectId={id} currentProjectName={access.project.name} projects={switchableProjects}>
+    <ProjectSidebar projectId={id} currentProjectName={access.project.name} projects={switchableProjects} user={user} projectColor={access.project.color}>
       {children}
     </ProjectSidebar>
   );

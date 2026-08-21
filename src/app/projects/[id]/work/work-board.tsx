@@ -45,6 +45,7 @@ export function WorkBoard({
   initialTasks,
   members,
   initialCommentCounts,
+  projectColor,
 }: {
   projectId: string;
   projectName: string;
@@ -55,6 +56,7 @@ export function WorkBoard({
   initialTasks: Task[];
   members: TaskCardMember[];
   initialCommentCounts: Record<string, number>;
+  projectColor?: string;
 }) {
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
@@ -202,6 +204,7 @@ export function WorkBoard({
             onOpenTask={setOpenTask}
             onCreateTask={setCreateFor}
             onMoveTask={handleMove}
+            projectColor={projectColor}
           />
         )}
       </div>

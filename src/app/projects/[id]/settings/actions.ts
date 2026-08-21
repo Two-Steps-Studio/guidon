@@ -107,6 +107,7 @@ export async function updateProjectSettings(
   const name = formData.get("name");
   const description = formData.get("description");
   const status = formData.get("status");
+  const colorHex = formData.get("colorHex");
   const technologiesRaw = formData.get("technologies");
 
   if (typeof name !== "string" || name.trim().length === 0) {
@@ -129,13 +130,25 @@ export async function updateProjectSettings(
   const trimmedDescription =
     typeof description === "string" && description.trim() ? description.trim() : null;
 
+  // Validate color format
+  let trimmedColor = null;
+  if (typeof colorHex === "string" && colorHex.trim()) {
+    const colorMatch = colorHex.trim().match(/^#([0-9A-Fa-f]{6})$/);
+    if (colorMatch) {
+      trimmedColor = colorMatch[0];
+    } else {
+      return { error: "Invalid color format. Use hex format like #0f6b5a." };
+    }
+  }
+
   if (hasDirectDatabase()) {
     try {
       await withUser(access.userId, async ({ query }) => {
-        await query("UPDATE projects SET name = $1, description = $2, status = $3 WHERE id = $4", [
+        await query("UPDATE projects SET name = $1, description = $2, status = $3, color = $4 WHERE id = $5", [
           name.trim(),
           trimmedDescription,
           status,
+          trimmedColor,
           projectId,
         ]);
 
@@ -158,6 +171,7 @@ export async function updateProjectSettings(
         name: name.trim(),
         description: trimmedDescription,
         status: status as ProjectStatus,
+        color: trimmedColor,
       })
       .eq("id", projectId);
 
