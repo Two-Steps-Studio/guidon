@@ -31,6 +31,7 @@ export interface ProjectAccess {
     description: string | null;
     status: string;
     visibility: string;
+    color: string | null;
   };
   /** Null when the user can see the project but is not a member of it —
    *  possible for `organization` and `public` visibility. */
@@ -77,7 +78,7 @@ export const getProjectAccess = cache(async function getProjectAccess(
     const [projectResult, membershipResult] = await withUser(userId, ({ query }) =>
       Promise.all([
         query(
-          `SELECT id, name, slug, organization_id, description, status, visibility
+          `SELECT id, name, slug, organization_id, description, status, visibility, color
            FROM projects WHERE id = $1`,
           [projectId]
         ),
@@ -109,7 +110,7 @@ export const getProjectAccess = cache(async function getProjectAccess(
     supabase
       .from("projects")
       .select(
-        "id, name, slug, organization_id, description, status, visibility"
+        "id, name, slug, organization_id, description, status, visibility, color"
       )
       .eq("id", projectId)
       .maybeSingle(),
