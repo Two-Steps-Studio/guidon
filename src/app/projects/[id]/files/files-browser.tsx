@@ -68,11 +68,13 @@ export function FilesBrowser({
   files,
   canWrite,
   canManage,
+  projectColor,
 }: {
   projectId: string;
   files: ProjectFile[];
   canWrite: boolean;
   canManage: boolean;
+  projectColor?: string;
 }) {
   const uploadWithProject = uploadFile.bind(null, projectId);
   const [uploadState, uploadAction, uploading] = useActionState(uploadWithProject, initialUploadState);

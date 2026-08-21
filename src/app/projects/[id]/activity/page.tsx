@@ -88,7 +88,10 @@ export default async function ProjectActivityPage({
 
                 return (
                   <li key={entry.id} className="flex items-start gap-3 px-4 py-3">
-                    <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${config.color}`} />
+                    <Icon 
+                      className={`h-4 w-4 mt-0.5 shrink-0 ${config.color}`}
+                      style={access.project.color ? { color: access.project.color } : undefined}
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">
                         <span className="font-medium">{nameFor(actor)}</span>{" "}

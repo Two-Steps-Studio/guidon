@@ -40,6 +40,7 @@ export default async function ProjectFilesPage({
         files={files}
         canWrite={canWriteProject(access.role)}
         canManage={canManageProject(access.role)}
+        projectColor={access.project.color}
       />
     </div>
   );

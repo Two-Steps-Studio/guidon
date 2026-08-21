@@ -135,6 +135,7 @@ export default async function ProjectMembersPage({
       myRole={access.role}
       initialMembers={members}
       initialCandidates={candidates}
+      projectColor={access.project.color}
     />
   );
 }

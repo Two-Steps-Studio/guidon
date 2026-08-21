@@ -51,12 +51,14 @@ export function MemberList({
   myRole,
   initialMembers,
   initialCandidates,
+  projectColor,
 }: {
   projectId: string;
   currentUserId: string;
   myRole: ProjectRole | null;
   initialMembers: ProjectMemberRow[];
   initialCandidates: TaskCardMember[];
+  projectColor?: string;
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [candidates, setCandidates] = useState(initialCandidates);
@@ -128,6 +130,7 @@ export function MemberList({
                   ? "Everyone in the organization is already on this project"
                   : undefined
               }
+              style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <UserPlus className="h-4 w-4" />
               Add member

@@ -16,7 +16,7 @@ import { SourceFormFields } from "./source-form-fields";
 
 const initialState: SourceFormState = { error: null };
 
-export function CreateSourceDialog({ projectId, trigger }: { projectId: string; trigger?: React.ReactNode }) {
+export function CreateSourceDialog({ projectId, trigger, projectColor }: { projectId: string; trigger?: React.ReactNode; projectColor?: string }) {
   const [open, setOpen] = useState(false);
   const createWithProject = createSource.bind(null, projectId);
   const [state, formAction, pending] = useActionState(createWithProject, initialState);
@@ -33,7 +33,7 @@ export function CreateSourceDialog({ projectId, trigger }: { projectId: string; 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button size="sm">
+          <Button size="sm" style={projectColor ? { backgroundColor: projectColor } : undefined}>
             <Plus className="h-4 w-4" />
             New entry
           </Button>

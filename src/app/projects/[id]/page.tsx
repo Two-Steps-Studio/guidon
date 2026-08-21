@@ -110,7 +110,7 @@ export default async function ProjectPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-            <FolderKanban className="h-4 w-4 text-muted-foreground" />
+            <FolderKanban className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total_tasks}</div>
@@ -121,7 +121,7 @@ export default async function ProjectPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.in_progress_tasks}</div>
@@ -132,7 +132,7 @@ export default async function ProjectPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Completion</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.completion_percentage}%</div>
@@ -143,7 +143,7 @@ export default async function ProjectPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Roadmap</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -159,17 +159,20 @@ export default async function ProjectPage({
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {quickAccess.map((item) => (
             <Link key={item.href} href={`/projects/${projectId}/${item.href}`}>
-              <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+              <Card 
+                className="cursor-pointer hover:border-primary transition-colors h-full"
+                style={project.color ? { '--tw-ring-color': project.color } as React.CSSProperties : undefined}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className="h-5 w-5" style={project.color ? { color: project.color } : undefined} />
                     {item.title}
                   </CardTitle>
                   <CardDescription>{item.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <item.metricIcon className="h-4 w-4 mr-1" />
+                    <item.metricIcon className="h-4 w-4 mr-1" style={project.color ? { color: project.color } : undefined} />
                     {item.metric}
                   </div>
                 </CardContent>

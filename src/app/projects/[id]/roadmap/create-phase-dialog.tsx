@@ -16,7 +16,7 @@ import { PhaseFormFields } from "./phase-form-fields";
 
 const initialState: PhaseFormState = { error: null };
 
-export function CreatePhaseDialog({ projectId, trigger }: { projectId: string; trigger?: React.ReactNode }) {
+export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projectId: string; trigger?: React.ReactNode; projectColor?: string }) {
   const [open, setOpen] = useState(false);
   const createWithProject = createPhase.bind(null, projectId);
   const [state, formAction, pending] = useActionState(createWithProject, initialState);
@@ -33,7 +33,7 @@ export function CreatePhaseDialog({ projectId, trigger }: { projectId: string; t
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button>
+          <Button style={projectColor ? { backgroundColor: projectColor } : undefined}>
             <Plus className="h-4 w-4 mr-2" />
             New Phase
           </Button>

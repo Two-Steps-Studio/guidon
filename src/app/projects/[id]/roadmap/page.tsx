@@ -48,7 +48,12 @@ export default async function ProjectRoadmapPage({
           <h1 className="text-3xl font-bold">Roadmap</h1>
           <p className="text-muted-foreground">Project phases and timeline</p>
         </div>
-        {canManage && <CreatePhaseDialog projectId={projectId} />}
+        {canManage && (
+          <CreatePhaseDialog 
+            projectId={projectId} 
+            projectColor={access.project.color}
+          />
+        )}
       </div>
 
       {phases.length === 0 ? (
@@ -81,7 +86,10 @@ export default async function ProjectRoadmapPage({
             return (
               <Card key={phase.id} className="relative">
                 <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
-                <div className="absolute left-4 top-6 w-4 h-4 rounded-full bg-primary border-4 border-background z-10" />
+                <div 
+                  className="absolute left-4 top-6 w-4 h-4 rounded-full bg-primary border-4 border-background z-10"
+                  style={access.project.color ? { backgroundColor: access.project.color } : undefined}
+                />
 
                 <CardHeader className="pl-12">
                   <div className="flex items-start justify-between gap-4">
@@ -127,7 +135,10 @@ export default async function ProjectRoadmapPage({
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${phase.completion_percentage}%` }}
+                        style={{ 
+                          width: `${phase.completion_percentage}%`,
+                          backgroundColor: access.project.color || undefined
+                        }}
                       />
                     </div>
                   </div>

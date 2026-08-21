@@ -48,7 +48,12 @@ export default async function ProjectDecisionsPage({
           <h1 className="text-3xl font-bold">Decisions</h1>
           <p className="text-muted-foreground">Track important project decisions and their rationale</p>
         </div>
-        {canWrite && <CreateDecisionDialog projectId={projectId} />}
+        {canWrite && (
+          <CreateDecisionDialog 
+            projectId={projectId} 
+            projectColor={access.project.color}
+          />
+        )}
       </div>
 
       {decisions.length === 0 ? (

@@ -24,6 +24,7 @@ export function CreateDecisionDialog({
   defaults,
   link,
   onCreated,
+  projectColor,
 }: {
   projectId: string;
   trigger?: React.ReactNode;
@@ -36,6 +37,7 @@ export function CreateDecisionDialog({
    *  created alongside it — see createDecision in ./actions.ts. */
   link?: { sourceType: ContextEntityType; sourceId: string };
   onCreated?: () => void;
+  projectColor?: string;
 }) {
   const [open, setOpen] = useState(false);
   const createWithProject = createDecision.bind(null, projectId);
@@ -54,7 +56,7 @@ export function CreateDecisionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button>
+          <Button style={projectColor ? { backgroundColor: projectColor } : undefined}>
             <Plus className="h-4 w-4 mr-2" />
             New Decision
           </Button>

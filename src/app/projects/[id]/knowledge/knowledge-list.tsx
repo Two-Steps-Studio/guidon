@@ -20,12 +20,14 @@ export function KnowledgeList({
   counts,
   canWrite,
   canDelete,
+  projectColor,
 }: {
   projectId: string;
   initialSources: ContextSource[];
   counts: KnowledgeCounts;
   canWrite: boolean;
   canDelete: boolean;
+  projectColor?: string;
 }) {
   const sources = initialSources;
 
@@ -39,7 +41,7 @@ export function KnowledgeList({
           </p>
         </div>
 
-        {canWrite && <CreateSourceDialog projectId={projectId} />}
+        {canWrite && <CreateSourceDialog projectId={projectId} projectColor={projectColor} />}
       </header>
 
       <div className="mb-8 grid gap-3 sm:grid-cols-3">
@@ -85,7 +87,7 @@ export function KnowledgeList({
           </p>
           {canWrite && (
             <div className="mt-4 flex justify-center">
-              <CreateSourceDialog projectId={projectId} />
+              <CreateSourceDialog projectId={projectId} projectColor={projectColor} />
             </div>
           )}
         </div>

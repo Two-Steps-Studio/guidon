@@ -66,6 +66,7 @@ export default async function ProjectKnowledgePage({
       counts={counts}
       canWrite={canWriteProject(access.role)}
       canDelete={canManageProject(access.role)}
+      projectColor={access.project.color}
     />
   );
 }
