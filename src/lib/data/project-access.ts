@@ -31,7 +31,7 @@ export interface ProjectAccess {
     description: string | null;
     status: string;
     visibility: string;
-    color: string | null;
+    color: string | undefined;
   };
   /** Null when the user can see the project but is not a member of it —
    *  possible for `organization` and `public` visibility. */
@@ -91,9 +91,13 @@ export const getProjectAccess = cache(async function getProjectAccess(
 
     if (projectResult.rows.length === 0) return null;
 
+    const projectRow = projectResult.rows[0];
     return {
       userId,
-      project: projectResult.rows[0],
+      project: {
+        ...projectRow,
+        color: projectRow.color ?? undefined,
+      },
       role: (membershipResult.rows[0]?.role as ProjectRole) ?? null,
     };
   }
@@ -127,7 +131,10 @@ export const getProjectAccess = cache(async function getProjectAccess(
 
   return {
     userId: user.id,
-    project: projectResult.data,
+    project: {
+      ...projectResult.data,
+      color: projectResult.data.color ?? undefined,
+    },
     role: (membershipResult.data?.role as ProjectRole) ?? null,
   };
 });
