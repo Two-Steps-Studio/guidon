@@ -15,6 +15,7 @@ export interface OrgAccess {
     name: string;
     slug: string;
     description: string | null;
+    project_limit: number;
     created_at: string;
     updated_at: string;
   };
@@ -46,7 +47,7 @@ export const getOrgAccess = cache(async function getOrgAccess(
     const [orgResult, membershipResult] = await withUser(userId, ({ query }) =>
       Promise.all([
         query(
-          "SELECT id, name, slug, description, created_at, updated_at FROM organizations WHERE id = $1",
+          "SELECT id, name, slug, description, project_limit, created_at, updated_at FROM organizations WHERE id = $1",
           [orgId]
         ),
         query(
@@ -76,7 +77,7 @@ export const getOrgAccess = cache(async function getOrgAccess(
   const [orgResult, membershipResult] = await Promise.all([
     supabase
       .from("organizations")
-      .select("id, name, slug, description, created_at, updated_at")
+      .select("id, name, slug, description, project_limit, created_at, updated_at")
       .eq("id", orgId)
       .maybeSingle(),
     supabase
