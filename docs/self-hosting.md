@@ -68,20 +68,23 @@ about adding the self-hosted path changed the Supabase path's behavior.
 | Storage | Supabase Storage | `local` (filesystem) or `supabase` | Either |
 | AI | Optional, any provider | Optional, `ollama` for a fully local backend | Optional |
 | You run | Nothing | `db` + `migrate` + `app` containers, or your own Postgres + Node | `npm run dev` |
-| Projects per organization | 1 (`src/lib/limits.ts`) | Unlimited | Unlimited |
+| Projects per organization | 1 by default, admin-adjustable per org (`src/lib/limits.ts`) | Unlimited | Unlimited |
 
 If you're evaluating Guidon or just want it running: use Cloud. If you're
 deploying it on infrastructure you control: this page. If you're changing
 Guidon's code: see the Development section in the root
 [README.md](../README.md).
 
-**The 1-project-per-organization cap is specific to Cloud.** It's enforced
-server-side (`isHostedProjectLimitReached()` in `src/lib/limits.ts`, checked
-in `organizations/[id]/actions.ts`'s `createProject`, not just hidden in the
+**The project-per-organization cap is specific to Cloud.** Every
+organization starts at 1 project. It's enforced server-side
+(`isHostedProjectLimitReached()` in `src/lib/limits.ts`, checked in
+`organizations/[id]/actions.ts`'s `createProject`, not just hidden in the
 UI) and keyed off the same `hasDirectDatabase()` check as everything else in
-this doc — self-hosted installs never hit it. Create additional
-organizations to get more than one project on Cloud, or self-host for no
-limit at all.
+this doc — self-hosted installs never hit it. An instance admin can raise a
+specific organization's limit from `/admin/organizations`
+(`organizations.project_limit`, migration 014); otherwise, create
+additional organizations to get more than one project on Cloud, or
+self-host for no limit at all.
 
 ## Prerequisites
 
