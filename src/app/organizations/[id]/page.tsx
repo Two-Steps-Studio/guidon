@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import { isHostedProjectLimitReached, HOSTED_PROJECT_LIMIT_MESSAGE } from "@/lib/limits";
+import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { Navigation } from "@/components/layout/navigation";
 import { CreateProjectDialog } from "./create-project-dialog";
 import type { Project } from "@/types/project";
@@ -39,7 +39,7 @@ export default async function OrganizationDetailPage({
     projects = (projectsData ?? []) as Project[];
   }
 
-  const limitReached = isHostedProjectLimitReached(projects.length);
+  const limitReached = isHostedProjectLimitReached(projects.length, organization.project_limit);
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,7 +72,7 @@ export default async function OrganizationDetailPage({
         {limitReached && (
           <Card className="mb-6 border-dashed">
             <CardContent className="py-4 text-sm text-muted-foreground">
-              {HOSTED_PROJECT_LIMIT_MESSAGE}
+              {hostedProjectLimitMessage(organization.project_limit)}
             </CardContent>
           </Card>
         )}
