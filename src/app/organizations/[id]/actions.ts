@@ -7,7 +7,7 @@ import { getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { uniqueSlug } from "@/lib/slug";
-import { isHostedProjectLimitReached, HOSTED_PROJECT_LIMIT_MESSAGE } from "@/lib/limits";
+import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 
 export type CreateProjectState = {
   error: string | null;
@@ -79,8 +79,8 @@ export async function createProject(
     // Checked here, not just hidden in the UI (organizations/[id]/page.tsx),
     // because this Server Action is reachable directly regardless of what
     // the page renders.
-    if (isHostedProjectLimitReached(siblingSlugs?.length ?? 0)) {
-      return { error: HOSTED_PROJECT_LIMIT_MESSAGE };
+    if (isHostedProjectLimitReached(siblingSlugs?.length ?? 0, access.organization.project_limit)) {
+      return { error: hostedProjectLimitMessage(access.organization.project_limit) };
     }
 
     const slug = uniqueSlug(
