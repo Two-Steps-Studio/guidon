@@ -777,5 +777,41 @@ const remainingAttempts = await withServiceRole(async () => {
 });
 check("ON DELETE CASCADE z tasks kasuje probe", remainingAttempts === 0, remainingAttempts);
 
+// ------------------------------------------------------------------
+section("14. project_limit — grant na poziomie kolumny (migracja 014)");
+
+await withUser(A, async () => {
+  const rename = await db.query(
+    "UPDATE public.organizations SET name = $1 WHERE id = $2 RETURNING name",
+    ["Test zmieniona", orgId]
+  );
+  check(
+    "wlasciciel moze zmienic name (dozwolona kolumna)",
+    rename.rows[0]?.name === "Test zmieniona",
+    JSON.stringify(rename.rows)
+  );
+});
+
+await expectRejected(
+  "wlasciciel NIE moze zmienic project_limit (kolumna zarezerwowana dla service_role)",
+  () =>
+    withUser(A, () =>
+      db.query("UPDATE public.organizations SET project_limit = 99 WHERE id = $1", [orgId])
+    ),
+  /permission denied/i
+);
+
+await withServiceRole(async () => {
+  const updated = await db.query(
+    "UPDATE public.organizations SET project_limit = 5 WHERE id = $1 RETURNING project_limit",
+    [orgId]
+  );
+  check(
+    "service_role moze podniesc project_limit",
+    updated.rows[0]?.project_limit === 5,
+    JSON.stringify(updated.rows)
+  );
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
