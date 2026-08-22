@@ -65,6 +65,7 @@ export interface AdminOrganizationRow {
   name: string;
   slug: string;
   created_at: string;
+  project_limit: number;
   memberCount: number;
   owner: { email: string; full_name: string | null } | null;
 }
@@ -85,12 +86,12 @@ export async function listOrganizationsForAdmin(): Promise<{
   rows: AdminOrganizationRow[];
   truncated: boolean;
 }> {
-  let organizations: { id: string; name: string; slug: string; created_at: string }[];
+  let organizations: { id: string; name: string; slug: string; created_at: string; project_limit: number }[];
   let memberRows: OrganizationMemberJoinRow[];
 
   if (hasDirectDatabase()) {
     organizations = await withServiceRole(({ query }) =>
-      query("SELECT id, name, slug, created_at FROM organizations ORDER BY created_at DESC LIMIT $1", [
+      query("SELECT id, name, slug, project_limit, created_at FROM organizations ORDER BY created_at DESC LIMIT $1", [
         LIST_LIMIT,
       ]).then((result) => result.rows)
     );
@@ -120,7 +121,7 @@ export async function listOrganizationsForAdmin(): Promise<{
 
     const { data: orgs } = await supabase
       .from("organizations")
-      .select("id, name, slug, created_at")
+      .select("id, name, slug, project_limit, created_at")
       .order("created_at", { ascending: false })
       .limit(LIST_LIMIT);
 
@@ -153,6 +154,7 @@ export async function listOrganizationsForAdmin(): Promise<{
     name: org.name,
     slug: org.slug,
     created_at: org.created_at,
+    project_limit: org.project_limit,
     memberCount: countByOrg.get(org.id) ?? 0,
     owner: ownerByOrg.get(org.id) ?? null,
   }));
