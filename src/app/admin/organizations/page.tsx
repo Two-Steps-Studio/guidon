@@ -2,6 +2,7 @@ import { Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listOrganizationsForAdmin } from "@/lib/data/admin";
+import { ProjectLimitEditor } from "./project-limit-editor";
 
 export default async function AdminOrganizationsPage() {
   await requireAdminAccess();
@@ -39,6 +40,7 @@ export default async function AdminOrganizationsPage() {
                   <th>Owner</th>
                   <th>Members</th>
                   <th>Created</th>
+                  <th>Project limit</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -49,6 +51,9 @@ export default async function AdminOrganizationsPage() {
                     <td>{org.owner ? org.owner.full_name || org.owner.email : "—"}</td>
                     <td>{org.memberCount}</td>
                     <td className="text-muted-foreground">{new Date(org.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <ProjectLimitEditor orgId={org.id} initialLimit={org.project_limit} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
