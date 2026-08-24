@@ -40,14 +40,14 @@ export interface StorageProvider {
   remove(bucket: string, paths: string[]): Promise<void>;
 
   /**
-   * A URL the browser can fetch. Providers backed by private storage return a
-   * time-limited signed URL; `expiresInSeconds` is advisory for providers that
-   * serve public objects.
+   * A URL the browser can fetch. `public: true` returns a permanent (or
+   * effectively permanent) URL for a bucket created with `public: true`;
+   * otherwise a time-limited signed URL, `expiresInSeconds` (default 600).
    */
   getUrl(
     bucket: string,
     path: string,
-    expiresInSeconds?: number
+    options?: { expiresInSeconds?: number; public?: boolean }
   ): Promise<string>;
 
   /** Bytes stored under a prefix, used for quota accounting. */
