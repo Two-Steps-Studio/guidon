@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, Building2 } from "lucide-react";
 import { Navigation } from "@/components/layout/navigation";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -141,37 +142,32 @@ export default async function ProjectsPage() {
         </div>
 
         {projects.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FolderKanban className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-              {organizations.length === 0 ? (
-                <>
-                  <p className="text-muted-foreground text-center mb-4">
-                    Create an organization first to start managing projects
-                  </p>
-                  <Button asChild>
-                    <Link href="/organizations">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Organization
-                    </Link>
-                  </Button>
-                </>
+          <EmptyState
+            icon={FolderKanban}
+            title="No projects yet"
+            description={
+              organizations.length === 0
+                ? "Create an organization first to start managing projects"
+                : "Create your first project to get started"
+            }
+            action={
+              organizations.length === 0 ? (
+                <Button asChild>
+                  <Link href="/organizations">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Organization
+                  </Link>
+                </Button>
               ) : (
-                <>
-                  <p className="text-muted-foreground text-center mb-4">
-                    Create your first project to get started
-                  </p>
-                  <Button asChild>
-                    <Link href="/organizations">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Project
-                    </Link>
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                <Button asChild>
+                  <Link href="/organizations">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Project
+                  </Link>
+                </Button>
+              )
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (

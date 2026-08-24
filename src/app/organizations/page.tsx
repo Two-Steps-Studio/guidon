@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Building2, Plus, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -61,13 +62,11 @@ export default async function OrganizationsPage() {
         </div>
 
         {organizations.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No organizations yet</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Create your first organization to start managing projects
-              </p>
+          <EmptyState
+            icon={Building2}
+            title="No organizations yet"
+            description="Create your first organization to start managing projects"
+            action={
               <CreateOrganizationDialog
                 trigger={
                   <Button>
@@ -76,8 +75,8 @@ export default async function OrganizationsPage() {
                   </Button>
                 }
               />
-            </CardContent>
-          </Card>
+            }
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {organizations.map((org) => (
