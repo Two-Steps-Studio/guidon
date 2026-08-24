@@ -14,6 +14,7 @@ export type TaskStatus =
   | "backlog"
   | "todo"
   | "in_progress"
+  | "ai_working"
   | "review"
   | "done";
 

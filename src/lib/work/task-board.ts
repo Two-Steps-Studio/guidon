@@ -51,6 +51,12 @@ export const BOARD_COLUMNS: readonly BoardColumn[] = [
     accentClass: "bg-warning",
   },
   {
+    status: "ai_working",
+    label: "AI Working",
+    hint: "An AI agent is working on this",
+    accentClass: "bg-info",
+  },
+  {
     status: "review",
     label: "Review",
     hint: "Awaiting review",
@@ -169,6 +175,7 @@ function emptyGroups(): TasksByStatus {
     backlog: [],
     todo: [],
     in_progress: [],
+    ai_working: [],
     review: [],
     done: [],
   };
