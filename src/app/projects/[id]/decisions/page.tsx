@@ -24,11 +24,16 @@ export default async function ProjectDecisionsPage({
 
   let decisions: Decision[];
 
+  // Safety cap, not pagination — see src/app/projects/[id]/work/page.tsx
+  // for the same reasoning applied to tasks.
+  const LIST_LIMIT = 500;
+
   if (hasDirectDatabase()) {
     const result = await withUser(access.userId, ({ query }) =>
-      query("SELECT * FROM context_decisions WHERE project_id = $1 ORDER BY created_at DESC", [
-        projectId,
-      ])
+      query(
+        "SELECT * FROM context_decisions WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
+        [projectId, LIST_LIMIT]
+      )
     );
     decisions = result.rows;
   } else {
@@ -37,7 +42,8 @@ export default async function ProjectDecisionsPage({
       .from("context_decisions")
       .select("*")
       .eq("project_id", projectId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(LIST_LIMIT);
 
     decisions = (data ?? []) as Decision[];
   }

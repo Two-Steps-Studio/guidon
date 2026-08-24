@@ -21,11 +21,14 @@ export async function fetchProjectRelations(
   supabase: SupabaseClient,
   projectId: string
 ): Promise<ContextRelation[]> {
+  // Safety cap, not pagination — matches the raw-SQL branch in
+  // src/app/projects/[id]/context/page.tsx (the only caller today).
   const { data, error } = await supabase
     .from("context_relations")
     .select("*")
     .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   if (error) throw error;
 

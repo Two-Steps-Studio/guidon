@@ -37,11 +37,16 @@ export default async function ProjectMemoryPage({
 
   let memories: ProjectMemory[];
 
+  // Safety cap, not pagination — see src/app/projects/[id]/work/page.tsx
+  // for the same reasoning applied to tasks.
+  const LIST_LIMIT = 500;
+
   if (hasDirectDatabase()) {
     const result = await withUser(access.userId, ({ query }) =>
-      query("SELECT * FROM project_memory WHERE project_id = $1 ORDER BY created_at DESC", [
-        projectId,
-      ])
+      query(
+        "SELECT * FROM project_memory WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
+        [projectId, LIST_LIMIT]
+      )
     );
     memories = result.rows;
   } else {
@@ -50,7 +55,8 @@ export default async function ProjectMemoryPage({
       .from("project_memory")
       .select("*")
       .eq("project_id", projectId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(LIST_LIMIT);
 
     memories = (data ?? []) as ProjectMemory[];
   }

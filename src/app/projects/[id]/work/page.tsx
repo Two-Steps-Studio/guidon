@@ -24,17 +24,19 @@ interface MemberRow {
  * task_comments has no aggregate endpoint through PostgREST without a view,
  * so counts are derived from a single scoped id fetch. Cheap at MVP volumes
  * and avoids adding a database view before it is needed.
+ *
+ * Scoped by project_id (via the tasks join) rather than a resolved task id
+ * list, so this can run in the same Promise.all as the tasks/members
+ * queries instead of waiting on tasks to resolve first.
  */
 async function loadCommentCounts(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  taskIds: string[]
+  projectId: string
 ): Promise<Record<string, number>> {
-  if (taskIds.length === 0) return {};
-
   const { data, error } = await supabase
     .from("task_comments")
-    .select("task_id")
-    .in("task_id", taskIds);
+    .select("task_id, tasks!inner(project_id)")
+    .eq("tasks.project_id", projectId);
 
   if (error || !data) return {};
 
@@ -46,12 +48,15 @@ async function loadCommentCounts(
 
 async function loadCommentCountsLocal(
   userId: string,
-  taskIds: string[]
+  projectId: string
 ): Promise<Record<string, number>> {
-  if (taskIds.length === 0) return {};
-
   const result = await withUser(userId, ({ query }) =>
-    query("SELECT task_id FROM task_comments WHERE task_id = ANY($1::uuid[])", [taskIds])
+    query(
+      `SELECT tc.task_id FROM task_comments tc
+       JOIN tasks t ON t.id = tc.task_id
+       WHERE t.project_id = $1`,
+      [projectId]
+    )
   );
 
   return result.rows.reduce<Record<string, number>>((counts, row) => {
@@ -72,19 +77,29 @@ export default async function ProjectWorkPage({
   let members: TaskCardMember[];
   let commentCounts: Record<string, number>;
 
+  // TASK_LIMIT is a safety cap, not pagination — high enough that no real
+  // project's board should ever hit it today, low enough to stop an
+  // unbounded SELECT * from becoming a real cost as projects grow.
+  const TASK_LIMIT = 1000;
+
   if (hasDirectDatabase()) {
-    const [tasksRes, membersRes] = await withUser(access.userId, ({ query }) =>
-      Promise.all([
-        query("SELECT * FROM tasks WHERE project_id = $1", [projectId]),
+    // Each withUser() call owns its own pooled connection, so these three
+    // run as genuinely concurrent queries rather than one after another.
+    const [tasksRes, membersRes, commentCountRows] = await Promise.all([
+      withUser(access.userId, ({ query }) =>
+        query("SELECT * FROM tasks WHERE project_id = $1 LIMIT $2", [projectId, TASK_LIMIT])
+      ),
+      withUser(access.userId, ({ query }) =>
         query(
           `SELECT pm.user_id, p.id AS profile_id, p.full_name, p.email, p.avatar_url
            FROM project_members pm
            LEFT JOIN profiles p ON p.id = pm.user_id
            WHERE pm.project_id = $1`,
           [projectId]
-        ),
-      ])
-    );
+        )
+      ),
+      loadCommentCountsLocal(access.userId, projectId),
+    ]);
 
     // profiles may be null for teammates until migration 003 is applied;
     // fall back to a stable placeholder rather than dropping the member.
@@ -96,16 +111,17 @@ export default async function ProjectWorkPage({
     }));
 
     tasks = tasksRes.rows.slice().sort(compareTasks);
-    commentCounts = await loadCommentCountsLocal(access.userId, tasks.map((task) => task.id));
+    commentCounts = commentCountRows;
   } else {
     const supabase = await createClient();
 
-    const [tasksRes, membersRes] = await Promise.all([
-      supabase.from("tasks").select("*").eq("project_id", projectId),
+    const [tasksRes, membersRes, commentCounts_] = await Promise.all([
+      supabase.from("tasks").select("*").eq("project_id", projectId).limit(TASK_LIMIT),
       supabase
         .from("project_members")
         .select("user_id, profiles ( id, full_name, email, avatar_url )")
         .eq("project_id", projectId),
+      loadCommentCounts(supabase, projectId),
     ]);
 
     // profiles may be null for teammates until migration 003 is applied;
@@ -121,7 +137,7 @@ export default async function ProjectWorkPage({
     });
 
     tasks = ((tasksRes.data ?? []) as Task[]).slice().sort(compareTasks);
-    commentCounts = await loadCommentCounts(supabase, tasks.map((task) => task.id));
+    commentCounts = commentCounts_;
   }
 
   return (

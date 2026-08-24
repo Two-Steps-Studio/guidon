@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { KanbanBoard } from "@/components/work/kanban-board";
-import { TaskDetailDialog } from "@/components/work/task-detail-dialog";
+
+// TaskDetailDialog (and the attempts/why-panel sections it always imports)
+// only matter once a task is actually opened — code-split so the board's
+// initial load doesn't pay for a dialog nobody may click into this visit.
+const TaskDetailDialog = dynamic(() =>
+  import("@/components/work/task-detail-dialog").then((mod) => mod.TaskDetailDialog)
+);
 import type { TaskCardMember } from "@/components/work/task-card";
 import {
   BOARD_COLUMNS,
@@ -213,20 +220,22 @@ export function WorkBoard({
         )}
       </div>
 
-      <TaskDetailDialog
-        key={openTask?.id ?? "no-task"}
-        projectId={projectId}
-        task={openTask}
-        subtasks={openTask ? subtasksByParent[openTask.id] ?? [] : []}
-        members={members}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        canComment={canComment}
-        currentUserId={userId}
-        onClose={() => setOpenTask(null)}
-        onSaved={upsertTask}
-        onDeleted={removeTask}
-      />
+      {openTask && (
+        <TaskDetailDialog
+          key={openTask.id}
+          projectId={projectId}
+          task={openTask}
+          subtasks={subtasksByParent[openTask.id] ?? []}
+          members={members}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          canComment={canComment}
+          currentUserId={userId}
+          onClose={() => setOpenTask(null)}
+          onSaved={upsertTask}
+          onDeleted={removeTask}
+        />
+      )}
 
       <CreateTaskDialog
         key={createFor ?? "no-column"}

@@ -72,16 +72,21 @@ async function syncTechnologiesLocal(
   const toAdd = desired.filter((name) => !existingKeys.has(key(name)));
   const toRemove = existing.filter((tech) => !desiredKeys.has(key(tech.name)));
 
-  for (const [index, name] of toAdd.entries()) {
+  if (toAdd.length > 0) {
+    // Single batched insert via unnest() rather than one INSERT per row —
+    // toAdd is small in practice, but there's no reason to pay for N
+    // sequential round trips when one query does the same job.
     await query(
       `INSERT INTO technologies (project_id, name, icon_slug, category, sort_order)
-       VALUES ($1, $2, $3, $4, $5)`,
+       SELECT $1, name, icon_slug, category, sort_order
+       FROM unnest($2::text[], $3::text[], $4::text[], $5::int[])
+         AS t(name, icon_slug, category, sort_order)`,
       [
         projectId,
-        name.trim(),
-        technologySlug(name),
-        guessTechnologyCategory(name),
-        existing.length + index,
+        toAdd.map((name) => name.trim()),
+        toAdd.map((name) => technologySlug(name)),
+        toAdd.map((name) => guessTechnologyCategory(name)),
+        toAdd.map((_, index) => existing.length + index),
       ]
     );
   }

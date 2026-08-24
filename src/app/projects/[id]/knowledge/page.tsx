@@ -16,14 +16,18 @@ export default async function ProjectKnowledgePage({
   let sources: ContextSource[];
   let counts: { decisions: number; files: number; memory: number };
 
+  // Safety cap, not pagination — see src/app/projects/[id]/work/page.tsx
+  // for the same reasoning applied to tasks.
+  const LIST_LIMIT = 500;
+
   if (hasDirectDatabase()) {
     const [sourcesRes, decisionsRes, filesRes, memoryRes] = await withUser(
       access.userId,
       ({ query }) =>
         Promise.all([
           query(
-            "SELECT * FROM context_sources WHERE project_id = $1 ORDER BY created_at DESC",
-            [projectId]
+            "SELECT * FROM context_sources WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
+            [projectId, LIST_LIMIT]
           ),
           query("SELECT id FROM context_decisions WHERE project_id = $1", [projectId]),
           query("SELECT id FROM project_files WHERE project_id = $1", [projectId]),
@@ -45,7 +49,8 @@ export default async function ProjectKnowledgePage({
         .from("context_sources")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false }),
+        .order("created_at", { ascending: false })
+        .limit(LIST_LIMIT),
       supabase.from("context_decisions").select("id").eq("project_id", projectId),
       supabase.from("project_files").select("id").eq("project_id", projectId),
       supabase.from("project_memory").select("id").eq("project_id", projectId),

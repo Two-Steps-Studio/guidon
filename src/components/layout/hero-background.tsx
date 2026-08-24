@@ -1,7 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import DarkVeil from "@/components/DarkVeil";
+import dynamic from "next/dynamic";
+
+// Code-split: DarkVeil pulls in the ogl WebGL renderer plus an inlined
+// shader, and a reduced-motion visitor renders this component's `null`
+// branch below without ever needing that bundle at all.
+const DarkVeil = dynamic(() => import("@/components/DarkVeil"), { ssr: false });
 
 const QUERY = "(prefers-reduced-motion: reduce)";
 

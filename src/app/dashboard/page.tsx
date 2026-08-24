@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, GitBranch, Network, BrainCircuit } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import CountUp from "@/components/CountUp";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -137,7 +136,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CountUp to={stats.total_projects} className="text-2xl font-bold font-mono" />
+              <span className="text-2xl font-bold font-mono">{stats.total_projects}</span>
             </CardContent>
           </Card>
           <Card>
@@ -147,7 +146,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CountUp to={stats.totalTasks} className="text-2xl font-bold font-mono" />
+              <span className="text-2xl font-bold font-mono">{stats.totalTasks}</span>
             </CardContent>
           </Card>
           <Card>
@@ -157,7 +156,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CountUp to={stats.completedTasks} className="text-2xl font-bold font-mono" />
+              <span className="text-2xl font-bold font-mono">{stats.completedTasks}</span>
             </CardContent>
           </Card>
           <Card>
@@ -167,7 +166,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CountUp to={stats.totalDecisions} className="text-2xl font-bold font-mono" />
+              <span className="text-2xl font-bold font-mono">{stats.totalDecisions}</span>
             </CardContent>
           </Card>
         </div>

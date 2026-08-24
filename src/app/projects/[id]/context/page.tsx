@@ -18,21 +18,30 @@ export default async function ProjectContextPage({
   let sources: ContextSource[];
   let relations: ContextRelation[];
 
+  // Safety cap, not pagination — there's no pagination UI here, so this
+  // stays high enough that no real project should hit it today; it only
+  // exists to stop an unbounded SELECT * from becoming a real cost as a
+  // project's context grows.
+  const LIST_LIMIT = 500;
+
   if (hasDirectDatabase()) {
     const [decisionsRes, sourcesRes, relationsRes] = await withUser(access.userId, ({ query }) =>
       Promise.all([
-        query("SELECT * FROM context_decisions WHERE project_id = $1 ORDER BY created_at DESC", [
-          projectId,
-        ]),
-        query("SELECT * FROM context_sources WHERE project_id = $1 ORDER BY created_at DESC", [
-          projectId,
-        ]),
+        query(
+          "SELECT * FROM context_decisions WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
+          [projectId, LIST_LIMIT]
+        ),
+        query(
+          "SELECT * FROM context_sources WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
+          [projectId, LIST_LIMIT]
+        ),
         // Same reasoning as fetchProjectRelations (project-relations.ts):
         // project_id is a direct, indexed column since migration 011, no
         // need to first collect every entity id in the project.
-        query("SELECT * FROM context_relations WHERE project_id = $1 ORDER BY created_at DESC", [
-          projectId,
-        ]),
+        query(
+          "SELECT * FROM context_relations WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
+          [projectId, LIST_LIMIT]
+        ),
       ])
     );
     decisions = decisionsRes.rows;
@@ -46,12 +55,14 @@ export default async function ProjectContextPage({
         .from("context_decisions")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false }),
+        .order("created_at", { ascending: false })
+        .limit(LIST_LIMIT),
       supabase
         .from("context_sources")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false }),
+        .order("created_at", { ascending: false })
+        .limit(LIST_LIMIT),
       fetchProjectRelations(supabase, projectId),
     ]);
 
