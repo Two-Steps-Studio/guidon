@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SignupForm } from "./signup-form";
 
@@ -6,5 +7,9 @@ import { SignupForm } from "./signup-form";
 export const dynamic = "force-dynamic";
 
 export default function SignupPage() {
-  return <SignupForm local={hasDirectDatabase()} />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupForm local={hasDirectDatabase()} />
+    </Suspense>
+  );
 }

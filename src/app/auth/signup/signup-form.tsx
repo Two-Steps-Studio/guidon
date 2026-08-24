@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
+import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
 
 /** `local` — see login-form.tsx's comment; same reasoning applies here. */
@@ -20,6 +21,8 @@ export function SignupForm({ local }: { local: boolean }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTarget = safeRedirect(searchParams.get("redirect"))
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,7 +33,7 @@ export function SignupForm({ local }: { local: boolean }) {
       if (local) {
         const result = await signupLocalAction(email, password, fullName)
         if ("error" in result) throw new Error(result.error)
-        router.push('/dashboard')
+        router.push(redirectTarget)
         return
       }
 
@@ -130,7 +133,7 @@ export function SignupForm({ local }: { local: boolean }) {
 
           {!local && (
             <div className="mt-4">
-              <OAuthButtons />
+              <OAuthButtons redirectTo={redirectTarget} />
             </div>
           )}
 
