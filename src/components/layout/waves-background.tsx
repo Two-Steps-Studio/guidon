@@ -40,8 +40,12 @@ function getServerSnapshot() {
  * a setState-in-effect render pass, and getServerSnapshot keeps SSR/the
  * first paint safely defaulted to "reduced motion" until the real value is
  * known client-side.
+ *
+ * `className` is expected to carry positioning/opacity for the caller's
+ * context — the landing page uses this both full-strength behind the hero
+ * and faded behind the pricing section beneath it.
  */
-export function HeroBackground() {
+export function WavesBackground({ className = "" }: { className?: string }) {
   const reducedMotion = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (reducedMotion) return null;
@@ -52,7 +56,7 @@ export function HeroBackground() {
       : "#1d4fd840";
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-60">
+    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
       <Waves
         lineColor={lineColor}
         backgroundColor="transparent"

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, GitBranch, Network, BrainCircuit } from "lucide-react";
-import { HeroBackground } from "@/components/layout/hero-background";
+import { WavesBackground } from "@/components/layout/waves-background";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 
@@ -78,7 +78,7 @@ export default async function Home() {
   return (
     <>
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
-      <HeroBackground />
+      <WavesBackground className="opacity-60" />
       <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="max-w-5xl mx-auto text-center space-y-12">
           <div className="space-y-6">
@@ -162,8 +162,9 @@ export default async function Home() {
     </div>
 
     {plans.length > 0 && (
-      <section className="border-t border-border bg-background-secondary/30 py-20">
-        <div className="container mx-auto max-w-6xl px-4">
+      <section className="relative overflow-hidden border-t border-border bg-background-secondary/30 py-20">
+        <WavesBackground className="opacity-20" />
+        <div className="container relative z-10 mx-auto max-w-6xl px-4">
           <div className="text-center mb-12 space-y-2">
             <h2 className="text-3xl font-bold">Simple, transparent pricing</h2>
             <p className="text-text-muted">Start free. Upgrade when you need more.</p>
