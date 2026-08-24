@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
+import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { loginLocalAction } from "./actions"
 
 /**
@@ -28,6 +29,7 @@ export function LoginForm({ local }: { local: boolean }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const message = searchParams.get("message")
+  const redirectTarget = safeRedirect(searchParams.get("redirect"))
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +40,7 @@ export function LoginForm({ local }: { local: boolean }) {
       if (local) {
         const result = await loginLocalAction(email, password)
         if ("error" in result) throw new Error(result.error)
-        router.push('/dashboard')
+        router.push(redirectTarget)
         return
       }
 
@@ -51,7 +53,7 @@ export function LoginForm({ local }: { local: boolean }) {
 
       if (signInError) throw signInError
 
-      router.push('/dashboard')
+      router.push(redirectTarget)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
@@ -117,7 +119,7 @@ export function LoginForm({ local }: { local: boolean }) {
 
           {!local && (
             <div className="mt-4">
-              <OAuthButtons />
+              <OAuthButtons redirectTo={redirectTarget} />
             </div>
           )}
 
