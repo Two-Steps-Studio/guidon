@@ -137,7 +137,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total_projects}</div>
+              <div className="text-2xl font-bold font-mono">{stats.total_projects}</div>
             </CardContent>
           </Card>
           <Card>
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTasks}</div>
+              <div className="text-2xl font-bold font-mono">{stats.totalTasks}</div>
             </CardContent>
           </Card>
           <Card>
@@ -157,7 +157,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.completedTasks}</div>
+              <div className="text-2xl font-bold font-mono">{stats.completedTasks}</div>
             </CardContent>
           </Card>
           <Card>
@@ -167,7 +167,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalDecisions}</div>
+              <div className="text-2xl font-bold font-mono">{stats.totalDecisions}</div>
             </CardContent>
           </Card>
         </div>
