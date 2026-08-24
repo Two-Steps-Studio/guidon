@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import { Navigation } from "@/components/layout/navigation";
+import { AppShell } from "@/components/layout/app-shell";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberActionsMenu } from "./member-actions-menu";
 
@@ -69,9 +69,7 @@ export default async function OrganizationMembersPage({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation user={user} />
-
+    <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>
@@ -141,6 +139,6 @@ export default async function OrganizationMembersPage({
           </div>
         )}
       </div>
-    </div>
+    </AppShell>
   );
 }

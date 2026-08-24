@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban } from "lucide-react";
-import { Navigation } from "@/components/layout/navigation";
+import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -121,9 +121,7 @@ export default async function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation user={user} />
-
+    <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -228,6 +226,6 @@ export default async function DashboardPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppShell>
   );
 }

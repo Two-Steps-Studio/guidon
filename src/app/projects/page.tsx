@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, Building2 } from "lucide-react";
-import { Navigation } from "@/components/layout/navigation";
+import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -87,9 +87,7 @@ export default async function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation user={user} />
-
+    <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -199,6 +197,6 @@ export default async function ProjectsPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppShell>
   );
 }
