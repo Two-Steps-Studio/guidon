@@ -1,7 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import DarkVeil from "@/components/DarkVeil";
+
+const QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribe(callback: () => void) {
+  const query = window.matchMedia(QUERY);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  return window.matchMedia(QUERY).matches;
+}
+
+function getServerSnapshot() {
+  return true;
+}
 
 /**
  * DarkVeil (React Bits) is a continuously-animating WebGL canvas with no
@@ -10,17 +26,15 @@ import DarkVeil from "@/components/DarkVeil";
  * block). This renders nothing at all for a user who has asked for less
  * motion, rather than adding a check DarkVeil's own generated source
  * doesn't have.
+ *
+ * useSyncExternalStore (not useState + useEffect) subscribes to the media
+ * query directly — the idiomatic way to read external mutable state without
+ * a setState-in-effect render pass, and getServerSnapshot keeps SSR/the
+ * first paint safely defaulted to "reduced motion" until the real value is
+ * known client-side.
  */
 export function HeroBackground() {
-  const [reducedMotion, setReducedMotion] = useState(true);
-
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(query.matches);
-    const handler = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
-    query.addEventListener("change", handler);
-    return () => query.removeEventListener("change", handler);
-  }, []);
+  const reducedMotion = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (reducedMotion) return null;
 
