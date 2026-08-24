@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, FolderKanban, Plus, Users } from "lucide-react";
+import { ArrowLeft, CreditCard, FolderKanban, Plus, Users } from "lucide-react";
 import { requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -58,6 +58,12 @@ export default async function OrganizationDetailPage({
             <Link href={`/organizations/${orgId}/members`}>
               <Users className="h-4 w-4 mr-2" />
               Members
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/organizations/${orgId}/billing`}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Billing
             </Link>
           </Button>
         </div>
