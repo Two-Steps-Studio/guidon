@@ -16,9 +16,9 @@
 
 :root {
   /* Brand */
-  --color-primary: #0f6b5a;
-  --color-primary-hover: #127e69;
-  --color-primary-active: #0c5647;
+  --color-primary: #1d4fd8;
+  --color-primary-hover: #1640b0;
+  --color-primary-active: #0f2f85;
   --color-primary-foreground: #ffffff;
 
   --color-accent: #f1f5f9;
@@ -26,8 +26,8 @@
   --color-accent-active: #cbd5e1;
   --color-accent-foreground: #0f172a;
 
-  --color-brand: #176b5b;
-  --color-brand-accent: #57d6b3;
+  --color-brand: #1d4fd8;
+  --color-brand-accent: #4d8dff;
 
   /* Backgrounds */
   --color-background: #ffffff;
@@ -90,7 +90,7 @@
   --color-popover-foreground: #0f172a;
 
   --color-input: #e2e8f0;
-  --color-ring: #0f6b5a;
+  --color-ring: #1d4fd8;
 
   /* Priority / status accents (Kanban, badges) */
   --color-priority-low: #64748b;
@@ -100,15 +100,17 @@
 
   --background: var(--color-background);
   --foreground: var(--color-text);
+
+  --radius: 0.375rem;
 }
 
 /* ---- Dark palette (system preference) ---- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-primary: #2dd4a7;
-    --color-primary-hover: #4ee0b8;
-    --color-primary-active: #22b98f;
-    --color-primary-foreground: #05221b;
+    --color-primary: #4d8dff;
+    --color-primary-hover: #6ea3ff;
+    --color-primary-active: #3a76e6;
+    --color-primary-foreground: #05142e;
 
     --color-accent: #1c1f26;
     --color-accent-hover: #242832;
@@ -169,7 +171,7 @@
     --color-popover-foreground: #e8eaed;
 
     --color-input: #23272f;
-    --color-ring: #2dd4a7;
+    --color-ring: #4d8dff;
 
     --color-priority-low: #8b93a1;
     --color-priority-medium: #60a5fa;
@@ -180,10 +182,10 @@
 
 /* ---- Dark palette (explicit opt-in, wins over system) ---- */
 :root[data-theme="dark"] {
-  --color-primary: #2dd4a7;
-  --color-primary-hover: #4ee0b8;
-  --color-primary-active: #22b98f;
-  --color-primary-foreground: #05221b;
+  --color-primary: #4d8dff;
+  --color-primary-hover: #6ea3ff;
+  --color-primary-active: #3a76e6;
+  --color-primary-foreground: #05142e;
 
   --color-accent: #1c1f26;
   --color-accent-hover: #242832;
@@ -244,7 +246,7 @@
   --color-popover-foreground: #e8eaed;
 
   --color-input: #23272f;
-  --color-ring: #2dd4a7;
+  --color-ring: #4d8dff;
 
   --color-priority-low: #8b93a1;
   --color-priority-medium: #60a5fa;
@@ -331,6 +333,8 @@
   --color-priority-medium: var(--color-priority-medium);
   --color-priority-high: var(--color-priority-high);
   --color-priority-critical: var(--color-priority-critical);
+
+  --radius: var(--radius);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, sans-serif;
