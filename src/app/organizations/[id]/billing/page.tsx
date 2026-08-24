@@ -108,7 +108,7 @@ export default async function BillingPage({
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Usage</CardTitle>
-            <CardDescription>Against your {planLimits.planName} plan's limits</CardDescription>
+            <CardDescription>Against your {planLimits.planName} plan&apos;s limits</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {usageRows.map((row) => {
