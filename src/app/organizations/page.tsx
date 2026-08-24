@@ -18,7 +18,12 @@ interface OrganizationRow {
   role: string;
 }
 
-export default async function OrganizationsPage() {
+export default async function OrganizationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ create?: string }>;
+}) {
+  const { create } = await searchParams;
   const user = await getCurrentUser();
 
   let organizations: OrganizationRow[];
@@ -56,7 +61,7 @@ export default async function OrganizationsPage() {
             <h1 className="text-3xl font-bold">Organizations</h1>
             <p className="text-muted-foreground">Manage your organizations and projects</p>
           </div>
-          <CreateOrganizationDialog />
+          <CreateOrganizationDialog openOnMount={create === "1"} />
         </div>
 
         {organizations.length === 0 ? (

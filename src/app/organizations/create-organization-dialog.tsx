@@ -22,8 +22,14 @@ const initialState: CreateOrganizationState = { error: null };
  * The action itself redirects to the new organization on success, so there
  * is no local "close on success" branch to manage here.
  */
-export function CreateOrganizationDialog({ trigger }: { trigger?: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+export function CreateOrganizationDialog({
+  trigger,
+  openOnMount = false,
+}: {
+  trigger?: React.ReactNode;
+  openOnMount?: boolean;
+}) {
+  const [open, setOpen] = useState(openOnMount);
   const [state, formAction, pending] = useActionState(createOrganization, initialState);
 
   return (
