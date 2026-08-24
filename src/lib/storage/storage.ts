@@ -85,6 +85,7 @@ export async function uploadFile(
   options?: {
     upsert?: boolean;
     contentType?: string;
+    public?: boolean;
   }
 ) {
   const provider = await getStorageProvider();
@@ -108,7 +109,7 @@ export async function uploadFile(
 
   return {
     path: filePath,
-    publicUrl: await provider.getUrl(bucket, filePath),
+    publicUrl: await provider.getUrl(bucket, filePath, { public: options?.public }),
   };
 }
 
@@ -243,7 +244,7 @@ export async function deleteTaskAttachment(storagePath: string): Promise<boolean
  */
 export async function getPublicUrl(bucket: string, filePath: string): Promise<string> {
   const provider = await getStorageProvider();
-  return provider.getUrl(bucket, filePath);
+  return provider.getUrl(bucket, filePath, { public: true });
 }
 
 /**
@@ -257,7 +258,7 @@ export async function getSignedUrl(
   const provider = await getStorageProvider();
 
   try {
-    return await provider.getUrl(bucket, filePath, expiresIn);
+    return await provider.getUrl(bucket, filePath, { expiresInSeconds: expiresIn });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('[Storage] Signed URL error:', message);
