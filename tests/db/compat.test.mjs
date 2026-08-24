@@ -136,8 +136,8 @@ for (const name of migrations) {
 }
 
 for (const [label, sql, expected] of [
-  ["19 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 19],
-  ["75 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 75],
+  ["21 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 21],
+  ["81 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 81],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -858,6 +858,50 @@ await withUser(A, async () => {
 await withServiceRole(async () => {
   const { rows } = await db.query("SELECT count(*)::int n FROM public.subscriptions");
   check("service_role widzi subskrypcje", rows[0].n >= 1, rows[0].n);
+});
+
+// ------------------------------------------------------------------
+section("16. AI Task API: status, permissions, api_keys (migracja 016)");
+
+await withUser(A, async () => {
+  const task = await db.query(
+    "INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'AI task', 'ai_working') RETURNING id, status",
+    [projectId]
+  );
+  check("ai_working jest dozwolonym statusem", task.rows[0].status === "ai_working", task.rows[0].status);
+
+  const perms = await db.query(
+    "INSERT INTO public.project_ai_permissions (project_id) VALUES ($1) RETURNING can_read_context, can_complete_tasks",
+    [projectId]
+  );
+  check(
+    "domyslne uprawnienia AI: read wl., complete wyl.",
+    perms.rows[0].can_read_context === true && perms.rows[0].can_complete_tasks === false,
+    JSON.stringify(perms.rows[0])
+  );
+
+  const key = await db.query(
+    "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, 'CI key', 'guidon_abcd', 'deadbeef', ARRAY['tasks:read']) RETURNING id, key_prefix"
+    , [A]
+  );
+  check("klucz API utworzony", Boolean(key.rows[0].id), JSON.stringify(key.rows[0]));
+
+  const revoke = await db.query(
+    "UPDATE public.api_keys SET revoked_at = now() WHERE id = $1 RETURNING revoked_at",
+    [key.rows[0].id]
+  );
+  check("wlasciciel moze odwolac wlasny klucz (revoked_at)", Boolean(revoke.rows[0].revoked_at));
+
+  await expectRejected(
+    "wlasciciel NIE moze zmienic scopes wlasnego klucza",
+    () => db.query("UPDATE public.api_keys SET scopes = ARRAY['tasks:write'] WHERE id = $1", [key.rows[0].id]),
+    /permission denied/i
+  );
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT count(*)::int n FROM public.api_keys");
+  check("B nie widzi kluczy API A", rows[0].n === 0, rows[0].n);
 });
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
