@@ -6,7 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="eb2433ed-318a-4796-bbb1-8503adb9f9ef" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/project-sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/project-sidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DATABASE_FIX_ANALYSIS.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/superpowers/plans/2026-08-22-per-org-project-limit.md" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +42,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
     "js.debugger.nextJs.config.created.client": "true",
     "js.debugger.nextJs.config.created.server": "true",
     "node.js.detected.package.eslint": "true",
@@ -57,6 +59,7 @@
       <map>
         <entry key="com.intellij.reactbuddy.reactComponents" value="false" />
         <entry key="com.intellij.reactbuddy.reactInspector" value="false" />
+        <entry key="com.intellij.reactbuddy.storybook" value="false" />
       </map>
     </option>
   </component>
@@ -83,6 +86,7 @@
       <option name="presentableId" value="Default" />
       <updated>1787406521101</updated>
       <workItem from="1787406523448" duration="3524000" />
+      <workItem from="1787556467189" duration="646000" />
     </task>
     <servers />
   </component>
