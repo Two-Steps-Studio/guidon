@@ -3,10 +3,7 @@
 import { useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 
-// Code-split: DarkVeil pulls in the ogl WebGL renderer plus an inlined
-// shader, and a reduced-motion visitor renders this component's `null`
-// branch below without ever needing that bundle at all.
-const DarkVeil = dynamic(() => import("@/components/DarkVeil"), { ssr: false });
+const Waves = dynamic(() => import("@/components/Waves"), { ssr: false });
 
 const QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -25,12 +22,18 @@ function getServerSnapshot() {
 }
 
 /**
- * DarkVeil (React Bits) is a continuously-animating WebGL canvas with no
- * built-in prefers-reduced-motion check, unlike every other animation in
- * this app (see globals.css's own @media (prefers-reduced-motion: reduce)
- * block). This renders nothing at all for a user who has asked for less
- * motion, rather than adding a check DarkVeil's own generated source
- * doesn't have.
+ * Waves (React Bits) draws onto a <canvas> with a fixed strokeStyle string,
+ * unlike CSS it won't live-update if the user toggles theme afterward. The
+ * line color is read from --color-primary once per render, which still
+ * means light vs dark mode each get the correct brand blue at first paint;
+ * falls back to the light-mode value during SSR, where `document` doesn't
+ * exist.
+ *
+ * Continuously-animating canvas with no built-in prefers-reduced-motion
+ * check, unlike every other animation in this app (see globals.css's own
+ * @media (prefers-reduced-motion: reduce) block). This renders nothing at
+ * all for a user who has asked for less motion, rather than adding a check
+ * Waves' own generated source doesn't have.
  *
  * useSyncExternalStore (not useState + useEffect) subscribes to the media
  * query directly — the idiomatic way to read external mutable state without
@@ -43,9 +46,26 @@ export function HeroBackground() {
 
   if (reducedMotion) return null;
 
+  const lineColor =
+    typeof document !== "undefined"
+      ? `${getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim()}40`
+      : "#1d4fd840";
+
   return (
-    <div className="pointer-events-none absolute inset-0 opacity-30">
-      <DarkVeil hueShift={200} speed={0.3} />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-60">
+      <Waves
+        lineColor={lineColor}
+        backgroundColor="transparent"
+        waveSpeedX={0.02}
+        waveSpeedY={0.01}
+        waveAmpX={40}
+        waveAmpY={20}
+        friction={0.9}
+        tension={0.01}
+        maxCursorMove={120}
+        xGap={12}
+        yGap={36}
+      />
     </div>
   );
 }
