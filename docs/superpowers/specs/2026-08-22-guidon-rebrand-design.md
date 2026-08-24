@@ -107,7 +107,14 @@ Replace all 14 existing inline empty-state blocks (found via `grep -rl "flex fle
 ## Concrete consistency fixes
 
 **Hardcoded status colors → tokens**, in the three files identified:
-- `files-browser.tsx`'s `FILE_TYPE_COLORS` map (PDF/image/text/video/fallback) moves from Tailwind palette classes to the existing semantic tokens (`bg-danger/10 text-danger`, `bg-info/10 text-info`, `bg-success/10 text-success`, `bg-warning/10 text-warning`, `bg-muted text-muted-foreground` for the fallback) — chosen by closest existing semantic match per file type, not a new color per type.
+- `files-browser.tsx`'s `FILE_TYPE_COLORS` map has five entries, not four —
+  `application/pdf`, `image/`, `text/`, `audio/`, `video/`, plus the
+  fallback — moving from Tailwind palette classes to the existing semantic
+  tokens: `application/pdf` → `bg-danger/10 text-danger`, `image/` →
+  `bg-info/10 text-info`, `text/` → `bg-success/10 text-success`, `video/` →
+  `bg-warning/10 text-warning`, `audio/` → `bg-primary/10 text-primary`
+  (there is no fifth semantic token, so audio reuses the brand accent rather
+  than inventing a new one), fallback → `bg-muted text-muted-foreground`.
 - `organizations/[id]/page.tsx`'s inline project-status ternary (`active` / `archived` / other) moves to the same success/muted/danger token set.
 - `organizations/[id]/members/page.tsx`'s `ROLE_COLORS` map (`owner: bg-purple-100 text-purple-800`, `admin: bg-blue-100 text-blue-800`, `member: bg-gray-100 text-gray-800`) is removed entirely and replaced with `Badge` component variants, matching how `Badge` is already used elsewhere (e.g. `dashboard/page.tsx`'s project-status badge) instead of a bespoke color map: `owner` → `default` (primary-filled, the most prominent role), `admin` → `secondary`, `member` → `outline`. This drops the purple hue (no token for it in this system) in favor of the existing three-tier Badge hierarchy, which already reads as "most → least prominent."
 
