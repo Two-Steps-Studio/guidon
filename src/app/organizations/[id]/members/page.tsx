@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ArrowLeft, Mail, Plus, Shield, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
@@ -92,14 +93,12 @@ export default async function OrganizationMembersPage({
         </div>
 
         {members.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No members yet</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Add team members to collaborate on projects
-              </p>
-              {canManage && (
+          <EmptyState
+            icon={Users}
+            title="No members yet"
+            description="Add team members to collaborate on projects"
+            action={
+              canManage ? (
                 <AddMemberDialog
                   orgId={orgId}
                   isOwner={access.role === "owner"}
@@ -110,9 +109,9 @@ export default async function OrganizationMembersPage({
                     </Button>
                   }
                 />
-              )}
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="space-y-3">
             {members.map((member) => (

@@ -1,5 +1,6 @@
 import { Activity as ActivityIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listRecentActivityForAdmin } from "@/lib/data/admin";
 import { createServiceClient } from "@/lib/supabase-server";
@@ -54,16 +55,11 @@ export default async function AdminLogsPage() {
       </div>
 
       {entries.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <ActivityIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No activity yet</h3>
-            <p className="max-w-md text-center text-muted-foreground">
-              Nothing in Guidon currently writes to activity_logs, so this stays empty until a future feature
-              starts logging here.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={ActivityIcon}
+          title="No activity yet"
+          description="Nothing in Guidon currently writes to activity_logs, so this stays empty until a future feature starts logging here."
+        />
       ) : (
         <Card>
           <CardContent className="p-0">

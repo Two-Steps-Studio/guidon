@@ -1,5 +1,6 @@
 import { Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listUsersForAdmin } from "@/lib/data/admin";
 
@@ -19,12 +20,7 @@ export default async function AdminUsersPage() {
       </div>
 
       {rows.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No users yet</h3>
-          </CardContent>
-        </Card>
+        <EmptyState icon={Users} title="No users yet" />
       ) : (
         <Card>
           <CardContent className="overflow-x-auto p-0">

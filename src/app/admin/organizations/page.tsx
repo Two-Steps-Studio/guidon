@@ -1,5 +1,6 @@
 import { Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listOrganizationsForAdmin } from "@/lib/data/admin";
 import { ProjectLimitEditor } from "./project-limit-editor";
@@ -20,15 +21,11 @@ export default async function AdminOrganizationsPage() {
       </div>
 
       {rows.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No organizations yet</h3>
-            <p className="max-w-md text-center text-muted-foreground">
-              Organizations created on this instance will show up here.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Building2}
+          title="No organizations yet"
+          description="Organizations created on this instance will show up here."
+        />
       ) : (
         <Card>
           <CardContent className="overflow-x-auto p-0">
@@ -45,7 +42,7 @@ export default async function AdminOrganizationsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((org) => (
-                  <tr key={org.id} className="[&>td]:px-4 [&>td]:py-3">
+                  <tr key={org.id} className="[&>td]:px-4 [&>td]:py-3 hover:bg-surface-hover">
                     <td className="font-medium">{org.name}</td>
                     <td className="font-mono text-xs text-muted-foreground">{org.slug}</td>
                     <td>{org.owner ? org.owner.full_name || org.owner.email : "—"}</td>

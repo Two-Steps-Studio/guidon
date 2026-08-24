@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FileText, Link2, Plus } from "lucide-react";
 import { CreateDecisionDialog } from "../decisions/create-decision-dialog";
 import { DecisionCardMenu } from "../decisions/decision-card-menu";
@@ -74,14 +75,12 @@ export function ContextTabs({
           </div>
 
           {decisions.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No decisions yet</h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  Record important project decisions to preserve context
-                </p>
-                {canWrite && (
+            <EmptyState
+              icon={FileText}
+              title="No decisions yet"
+              description="Record important project decisions to preserve context"
+              action={
+                canWrite ? (
                   <CreateDecisionDialog
                     projectId={projectId}
                     trigger={
@@ -91,9 +90,9 @@ export function ContextTabs({
                       </Button>
                     }
                   />
-                )}
-              </CardContent>
-            </Card>
+                ) : undefined
+              }
+            />
           ) : (
             <div className="space-y-4">
               {decisions.map((decision) => {
@@ -152,16 +151,12 @@ export function ContextTabs({
           </div>
 
           {relations.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Link2 className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No relations yet</h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  Create relations to link project entities together
-                </p>
-                {canWrite && <CreateRelationDialog projectId={projectId} />}
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Link2}
+              title="No relations yet"
+              description="Create relations to link project entities together"
+              action={canWrite ? <CreateRelationDialog projectId={projectId} /> : undefined}
+            />
           ) : (
             <div className="space-y-3">
               {relations.map((relation) => (
@@ -180,14 +175,12 @@ export function ContextTabs({
           </div>
 
           {sources.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No sources yet</h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  Add knowledge sources to build project context
-                </p>
-                {canWrite && (
+            <EmptyState
+              icon={FileText}
+              title="No sources yet"
+              description="Add knowledge sources to build project context"
+              action={
+                canWrite ? (
                   <CreateSourceDialog
                     projectId={projectId}
                     trigger={
@@ -197,9 +190,9 @@ export function ContextTabs({
                       </Button>
                     }
                   />
-                )}
-              </CardContent>
-            </Card>
+                ) : undefined
+              }
+            />
           ) : (
             <div className="space-y-4">
               {sources.map((source) => (
