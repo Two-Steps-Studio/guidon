@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Calendar, Plus, TrendingUp } from "lucide-react";
 import { canManageProject, requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
@@ -57,14 +58,12 @@ export default async function ProjectRoadmapPage({
       </div>
 
       {phases.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <TrendingUp className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No roadmap phases yet</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Create your first phase to start planning your project timeline
-            </p>
-            {canManage && (
+        <EmptyState
+          icon={TrendingUp}
+          title="No roadmap phases yet"
+          description="Create your first phase to start planning your project timeline"
+          action={
+            canManage ? (
               <CreatePhaseDialog
                 projectId={projectId}
                 trigger={
@@ -74,9 +73,9 @@ export default async function ProjectRoadmapPage({
                   </Button>
                 }
               />
-            )}
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="space-y-4">
           {phases.map((phase) => {

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { CheckCircle2, Plus } from "lucide-react";
 import { canManageProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
@@ -57,14 +58,12 @@ export default async function ProjectDecisionsPage({
       </div>
 
       {decisions.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <CheckCircle2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No decisions yet</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Record important project decisions to preserve context and rationale
-            </p>
-            {canWrite && (
+        <EmptyState
+          icon={CheckCircle2}
+          title="No decisions yet"
+          description="Record important project decisions to preserve context and rationale"
+          action={
+            canWrite ? (
               <CreateDecisionDialog
                 projectId={projectId}
                 trigger={
@@ -74,9 +73,9 @@ export default async function ProjectDecisionsPage({
                   </Button>
                 }
               />
-            )}
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="space-y-4">
           {decisions.map((decision) => {

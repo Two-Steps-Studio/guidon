@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Brain, Plus } from "lucide-react";
 import { requireProjectAccess, canWriteProject } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
@@ -114,14 +115,12 @@ export default async function ProjectMemoryPage({
       )}
 
       {memories.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Brain className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No memories yet</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Start capturing project knowledge and insights
-            </p>
-            {canWrite && (
+        <EmptyState
+          icon={Brain}
+          title="No memories yet"
+          description="Start capturing project knowledge and insights"
+          action={
+            canWrite ? (
               <CreateMemoryDialog
                 projectId={projectId}
                 trigger={
@@ -131,9 +130,9 @@ export default async function ProjectMemoryPage({
                   </Button>
                 }
               />
-            )}
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        />
       ) : (
         rest.length > 0 && (
           <div className="space-y-4">

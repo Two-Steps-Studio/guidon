@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Activity as ActivityIcon } from "lucide-react";
 import { requireProjectAccess } from "@/lib/data/project-access";
 import { getRecentActivity } from "@/lib/data/activity";
@@ -68,15 +69,11 @@ export default async function ProjectActivityPage({
       </div>
 
       {entries.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <ActivityIcon className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No activity yet</h3>
-            <p className="text-muted-foreground text-center max-w-md">
-              Changes on this project will show up here once they happen.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={ActivityIcon}
+          title="No activity yet"
+          description="Changes on this project will show up here once they happen."
+        />
       ) : (
         <Card>
           <CardContent className="p-0">
