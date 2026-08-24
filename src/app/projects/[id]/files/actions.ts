@@ -8,10 +8,12 @@ import { withUser } from "@/lib/db/session";
 import {
   deleteProjectFile,
   getFileCategoryFromMimeType,
+  getOrganizationStorageUsage,
   getSignedUrl,
   uploadProjectFile,
 } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
+import { getOrgPlanLimits, isStorageLimitReached } from "@/lib/limits";
 
 export type FileActionState = {
   error: string | null;
@@ -38,6 +40,17 @@ export async function uploadFile(
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { error: "No file selected." };
+  }
+
+  if (!hasDirectDatabase()) {
+    const { planName, storageLimitBytes } = await getOrgPlanLimits(access.project.organization_id);
+    const currentUsage = await getOrganizationStorageUsage(access.project.organization_id);
+
+    if (isStorageLimitReached(currentUsage + file.size, storageLimitBytes)) {
+      return {
+        error: `This upload would exceed your ${planName} plan's storage limit. Upgrade your plan to raise this limit.`,
+      };
+    }
   }
 
   try {
