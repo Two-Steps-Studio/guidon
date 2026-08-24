@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { safeRedirect } from "@/lib/auth/safe-redirect";
 
 /**
  * OAuth callback. Supabase redirects here with a one-time `code`, which is
@@ -42,14 +43,4 @@ export async function GET(request: NextRequest) {
       `${origin}/auth/login?error=${encodeURIComponent(message)}`
     );
   }
-}
-
-/**
- * Only same-site paths are accepted, so `?redirect=` cannot be used to bounce
- * a freshly authenticated user to another origin.
- */
-function safeRedirect(value: string | null): string {
-  if (!value) return "/dashboard";
-  if (!value.startsWith("/") || value.startsWith("//")) return "/dashboard";
-  return value;
 }
