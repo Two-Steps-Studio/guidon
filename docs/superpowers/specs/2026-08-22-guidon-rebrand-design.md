@@ -215,9 +215,14 @@ per-page-wrapper approach below avoids needing to do at all).
   content (same page file, same route, same data-fetching — only the layout
   wrapper changes): `dashboard/page.tsx`, `organizations/page.tsx`,
   `organizations/[id]/page.tsx`, `organizations/[id]/members/page.tsx`,
-  `projects/page.tsx`, `profile/page.tsx`, and the five `admin/*/page.tsx`
-  files (`admin/page.tsx`, `admin/organizations/page.tsx`,
-  `admin/users/page.tsx`, `admin/logs/page.tsx`, `admin/integrations/page.tsx`).
+  `projects/page.tsx`, `profile/page.tsx`. **Correction from initial research:**
+  the five `admin/*/page.tsx` files do NOT individually render `Navigation` —
+  `admin/layout.tsx` already wraps all five in one shared layout with its own
+  bespoke header/nav (`ADMIN_NAV`: Overview/Organizations/Users/Integrations/Logs)
+  and no link back to the rest of the app at all (a real, separate gap this
+  fixes as a side effect). So only `admin/layout.tsx` needs the swap — once,
+  not five times — with `ADMIN_NAV`'s items becoming an "Admin" nav group in
+  `AppShell`, shown only while inside `/admin`.
   `projects/[id]/layout.tsx` swaps `ProjectSidebar` for the same `AppShell`
   (with `projectId` passed so it renders the project-scoped nav items too).
   `components/layout/navigation.tsx` and `components/layout/project-sidebar.tsx`
