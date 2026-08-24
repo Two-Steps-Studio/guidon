@@ -75,7 +75,7 @@ export default async function AdminLogsPage() {
                     : "instance";
 
                 return (
-                  <li key={entry.id} className="flex items-start gap-3 px-4 py-3">
+                  <li key={entry.id} className="flex items-start gap-3 px-4 py-3 hover:bg-surface-hover">
                     <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${config.color}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm">

@@ -34,7 +34,7 @@ export default async function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((user) => (
-                  <tr key={user.id} className="[&>td]:px-4 [&>td]:py-3">
+                  <tr key={user.id} className="[&>td]:px-4 [&>td]:py-3 hover:bg-surface-hover">
                     <td className="font-medium">{user.email}</td>
                     <td className="text-muted-foreground">{user.full_name || "—"}</td>
                     <td className="text-muted-foreground">{new Date(user.created_at).toLocaleDateString()}</td>
