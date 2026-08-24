@@ -68,7 +68,7 @@ about adding the self-hosted path changed the Supabase path's behavior.
 | Storage | Supabase Storage | `local` (filesystem) or `supabase` | Either |
 | AI | Optional, any provider | Optional, `ollama` for a fully local backend | Optional |
 | You run | Nothing | `db` + `migrate` + `app` containers, or your own Postgres + Node | `npm run dev` |
-| Projects per organization | 1 by default, admin-adjustable per org (`src/lib/limits.ts`) | Unlimited | Unlimited |
+| Projects per organization | 2 by default (Free plan), admin-adjustable per org (`src/lib/limits.ts`) | Unlimited | Unlimited |
 
 If you're evaluating Guidon or just want it running: use Cloud. If you're
 deploying it on infrastructure you control: this page. If you're changing
@@ -76,15 +76,19 @@ Guidon's code: see the Development section in the root
 [README.md](../README.md).
 
 **The project-per-organization cap is specific to Cloud.** Every
-organization starts at 1 project. It's enforced server-side
+organization starts on the Free plan (2 projects, `plans`/`subscriptions`,
+migration 015) and gets that limit written to its own
+`organizations.project_limit` (migration 014) — the actual enforcement
+still reads that column, not the plan directly. It's enforced server-side
 (`isHostedProjectLimitReached()` in `src/lib/limits.ts`, checked in
 `organizations/[id]/actions.ts`'s `createProject`, not just hidden in the
 UI) and keyed off the same `hasDirectDatabase()` check as everything else in
-this doc — self-hosted installs never hit it. An instance admin can raise a
-specific organization's limit from `/admin/organizations`
-(`organizations.project_limit`, migration 014); otherwise, create
-additional organizations to get more than one project on Cloud, or
-self-host for no limit at all.
+this doc — self-hosted installs never hit it, and have no plans/billing at
+all. An instance admin can raise a specific organization's limit either by
+changing its plan or by directly adjusting `project_limit` from
+`/admin/organizations`; otherwise, create additional organizations to get
+more than one project on Cloud, or self-host for no limit at all. See
+`/organizations/[id]/billing` for an organization's current plan and usage.
 
 ## Prerequisites
 
