@@ -66,6 +66,8 @@ export interface AdminOrganizationRow {
   slug: string;
   created_at: string;
   project_limit: number;
+  planId: string;
+  planName: string;
   memberCount: number;
   owner: { email: string; full_name: string | null } | null;
 }
@@ -139,6 +141,37 @@ export async function listOrganizationsForAdmin(): Promise<{
     memberRows = (members ?? []) as unknown as OrganizationMemberJoinRow[];
   }
 
+  let subscriptionRows: { organization_id: string; plan_id: string; plan_name: string }[];
+
+  if (hasDirectDatabase()) {
+    subscriptionRows = await withServiceRole(({ query }) =>
+      query(
+        `SELECT s.organization_id, s.plan_id, p.name AS plan_name
+         FROM subscriptions s
+         JOIN plans p ON p.id = s.plan_id
+         WHERE s.organization_id = ANY($1::uuid[])`,
+        [organizations.map((org) => org.id)]
+      ).then((result) => result.rows)
+    );
+  } else {
+    const supabase = createServiceClient();
+    const { data: subs } = await supabase
+      .from("subscriptions")
+      .select("organization_id, plan_id, plans (name)")
+      .in(
+        "organization_id",
+        organizations.map((org) => org.id)
+      );
+
+    subscriptionRows = (subs ?? []).map((row) => ({
+      organization_id: row.organization_id,
+      plan_id: row.plan_id,
+      plan_name: (row.plans as unknown as { name: string } | null)?.name ?? "Free",
+    }));
+  }
+
+  const planByOrg = new Map(subscriptionRows.map((row) => [row.organization_id, row]));
+
   const countByOrg = new Map<string, number>();
   const ownerByOrg = new Map<string, { email: string; full_name: string | null }>();
 
@@ -155,6 +188,8 @@ export async function listOrganizationsForAdmin(): Promise<{
     slug: org.slug,
     created_at: org.created_at,
     project_limit: org.project_limit,
+    planId: planByOrg.get(org.id)?.plan_id ?? "free",
+    planName: planByOrg.get(org.id)?.plan_name ?? "Free",
     memberCount: countByOrg.get(org.id) ?? 0,
     owner: ownerByOrg.get(org.id) ?? null,
   }));

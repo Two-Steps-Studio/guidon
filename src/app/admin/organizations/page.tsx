@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listOrganizationsForAdmin } from "@/lib/data/admin";
 import { ProjectLimitEditor } from "./project-limit-editor";
+import { PlanEditor } from "./plan-editor";
 
 export default async function AdminOrganizationsPage() {
   await requireAdminAccess();
@@ -38,6 +39,7 @@ export default async function AdminOrganizationsPage() {
                   <th>Members</th>
                   <th>Created</th>
                   <th>Project limit</th>
+                  <th>Plan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -50,6 +52,9 @@ export default async function AdminOrganizationsPage() {
                     <td className="text-muted-foreground">{new Date(org.created_at).toLocaleDateString()}</td>
                     <td>
                       <ProjectLimitEditor orgId={org.id} initialLimit={org.project_limit} />
+                    </td>
+                    <td>
+                      <PlanEditor orgId={org.id} initialPlanId={org.planId} />
                     </td>
                   </tr>
                 ))}
