@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Copy, KeyRound, Trash2 } from "lucide-react";
-import { API_KEY_SCOPES } from "@/lib/api/api-keys";
+import { API_KEY_SCOPES } from "@/lib/api/scopes";
 import { createApiKey, revokeApiKey, type ApiKeyRow, type CreateApiKeyState } from "./api-keys-actions";
 
 const initialState: CreateApiKeyState = { error: null, fullKey: null };
