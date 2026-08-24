@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
 import type { AttemptOutcome, Task, TaskAttempt, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
 export type TaskActionResult = { task: Task | null; error: string | null };
@@ -307,6 +308,25 @@ export async function createTask(
   if (!access || !canWriteProject(access.role)) {
     return { task: null, error: "You do not have permission to create tasks." };
   }
+
+  if (!hasDirectDatabase()) {
+    const { planName, taskLimitPerProject } = await getOrgPlanLimits(access.project.organization_id);
+
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("parent_task_id", null);
+
+    if (isTaskLimitReached(count ?? 0, taskLimitPerProject)) {
+      return {
+        task: null,
+        error: `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`,
+      };
+    }
+  }
+
   if (!input.title.trim()) {
     return { task: null, error: "Title is required." };
   }
