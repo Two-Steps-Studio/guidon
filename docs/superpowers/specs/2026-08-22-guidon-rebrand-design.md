@@ -120,10 +120,174 @@ Replace all 14 existing inline empty-state blocks (found via `grep -rl "flex fle
 - `npm run build`, `npx tsc --noEmit`, `npm run lint` — same gate as the previous plan.
 - No automated visual test exists for this app (no Storybook, no screenshot diffing) — verification is a manual pass through the Browser pane (landing, dashboard, a project workspace page, admin) in both light and dark, if the pane is available in the execution environment; otherwise a DOM/text-based check (`read_page`, `get_page_text`) confirming the expected classes/tokens render, consistent with how the previous (project-limit) plan handled the same environment constraint.
 
+## Phase 1 addendum: unified navigation, onboarding, React Bits, color gaps
+
+Added after a much larger 28-point request from the user covering the whole
+product (auth, billing, AI task API, etc. — tracked as later phases, not
+here). This addendum extends Phase 1 (UI/UX) with four pieces the user
+specifically asked to fold into it, each investigated against the real
+codebase before being designed (not assumed from the request text):
+
+### Investigation findings (correcting assumptions in the original request)
+
+- **Project color system is not hardcoded.** `projects.color` (nullable hex,
+  `src/db/migrations/000_baseline_schema.sql:101`) is read by
+  `requireProjectAccess()` (`src/lib/data/project-access.ts`) and already
+  threaded as a `projectColor` prop through ~15 files: `project-sidebar.tsx`
+  (active nav item), `kanban-board.tsx` (column border, priority dot,
+  selected state), `task-card.tsx` (priority dot), `work-board.tsx`,
+  `member-list.tsx`, `files-browser.tsx`, `knowledge-list.tsx`, the four
+  create-dialogs (decision/phase/source), `projects/[id]/page.tsx` (header
+  icons, `--tw-ring-color`), `activity/page.tsx`, `roadmap/page.tsx`. The
+  real gaps are narrower than "fix hardcoded color": `Badge` has no color
+  override, no progress-bar component exists yet to color, and the ring/focus
+  treatment used at `projects/[id]/page.tsx:164` is not applied anywhere
+  else that has a focus/selected state.
+- **New-user onboarding is a real gap.** `signup-form.tsx` routes straight to
+  `/dashboard` (`router.push('/dashboard')` / server-side redirect for the
+  Supabase path). A brand-new user has 0 organizations and 0 projects.
+  `dashboard/page.tsx`'s current empty state (`projects.length === 0`) is a
+  generic "No projects yet" card with a button linking to `/organizations`,
+  which is *also* empty and requires creating an organization first before
+  a project can exist at all — nothing on either page explains what the
+  product does. The creation chain itself is not broken:
+  `organizations/actions.ts`'s `createOrganization` already
+  `redirect(`/organizations/${orgId}`)`s on success, and that page already
+  shows a prominent "Create Project" empty state for a 0-project org. No new
+  Server Action is needed — only a better on-ramp into the existing chain.
+- **Navigation is two separate layouts today**, confirmed by reading both:
+  `components/layout/navigation.tsx` (horizontal top bar — Dashboard,
+  Projects — rendered individually by `dashboard/page.tsx`,
+  `organizations/page.tsx`, `organizations/[id]/page.tsx`,
+  `organizations/[id]/members/page.tsx`, `projects/page.tsx`, `profile/page.tsx`,
+  and each `admin/*/page.tsx`) and `components/layout/project-sidebar.tsx`
+  (left sidebar, only rendered by `projects/[id]/layout.tsx`, so only visible
+  inside a project). The user's requested nav list reads as one persistent
+  sidebar for the whole authenticated app, confirmed with the user.
+- **React Bits** (reactbits.dev) is MIT + Commons Clause (free for commercial
+  use), installed per-component via the shadcn CLI
+  (`npx shadcn@latest add @react-bits/<Name>-TS-TW`), landing as plain
+  TS+Tailwind files in `src/components/ui/` — this matches Guidon's existing
+  shadcn setup (`components.json`) exactly, no new tooling required. No
+  "Pro" tier exists to gate on.
+
+### Unified sidebar
+
+Replace the two layouts with one persistent left sidebar, without moving any
+route files (keeps every URL and `generateMetadata` call exactly where it
+is — lower risk than restructuring into a Next.js route group, and doesn't
+require trusting possibly-stale assumptions about this project's
+non-standard Next.js build; see `AGENTS.md`'s instruction to check
+`node_modules/next/dist/docs/` before relying on routing APIs, which the
+per-page-wrapper approach below avoids needing to do at all).
+
+- Install shadcn's official `sidebar` primitive (`npx shadcn@latest add
+  sidebar`) as the base — it already provides collapsed-state persistence
+  (cookie-backed, so no flash-of-uncollapsed-sidebar on reload), a
+  `SidebarProvider`/`Sidebar`/`SidebarTrigger` composition, and mobile
+  responsiveness, rather than hand-rolling the same thing `project-sidebar.tsx`
+  already partially does with plain `useState` (which does *not* persist
+  across reloads today — confirmed by reading it, no cookie/localStorage
+  read on mount). The exact generated API (component names/props) will be
+  read directly from the generated file once installed, not guessed —
+  shadcn CLI additions are copied source, not a black-box package.
+- New `src/components/layout/app-sidebar.tsx` wraps that primitive with
+  Guidon's nav data: a project switcher at the top (reusing
+  `ProjectSwitcher`, already used by `project-sidebar.tsx`) when inside a
+  project, otherwise the organization/user context; below it, one flat list
+  built by merging the existing global items (Dashboard, Projects,
+  Organizations) with the project-scoped items from `project-sidebar.tsx`'s
+  `navGroups` **as they exist in the current uncommitted working tree**
+  (Overview; Work: Task Board, Roadmap, Files; Knowledge: Knowledge,
+  Decisions, Technologies; Context: Memory, Graph; Project: Members,
+  Activity, Settings) when a project is active — see the note below on why
+  this uses the working-tree version, not the last-committed one. No
+  AI/Billing/Workspace entries — those pages don't exist yet (later phases).
+- Every top-level page that currently renders `<Navigation user={user} />`
+  swaps that one line for `<AppShell user={user}>` wrapping its existing
+  content (same page file, same route, same data-fetching — only the layout
+  wrapper changes): `dashboard/page.tsx`, `organizations/page.tsx`,
+  `organizations/[id]/page.tsx`, `organizations/[id]/members/page.tsx`,
+  `projects/page.tsx`, `profile/page.tsx`, and the five `admin/*/page.tsx`
+  files (`admin/page.tsx`, `admin/organizations/page.tsx`,
+  `admin/users/page.tsx`, `admin/logs/page.tsx`, `admin/integrations/page.tsx`).
+  `projects/[id]/layout.tsx` swaps `ProjectSidebar` for the same `AppShell`
+  (with `projectId` passed so it renders the project-scoped nav items too).
+  `components/layout/navigation.tsx` and `components/layout/project-sidebar.tsx`
+  are deleted once nothing imports them — not kept as a parallel unused
+  system.
+- Auth pages (`auth/login`, `auth/signup`, etc.) and the public landing page
+  keep no sidebar, unchanged.
+
+### Onboarding
+
+- `dashboard/page.tsx`: when `projects.length === 0`, render a new
+  onboarding view instead of today's generic empty `Card` — short
+  explainer cards for Projects/Tasks/Knowledge/Context/AI (same content
+  pattern as the three feature cards already on `src/app/page.tsx`, reused
+  rather than re-invented) plus one primary CTA, **Create your first
+  project**, linking to `/organizations?create=1`.
+- `organizations/page.tsx` and its `CreateOrganizationDialog`
+  (`organizations/create-organization-dialog.tsx`): read a `create` search
+  param server-side and pass an `openOnMount` flag into the (client)
+  dialog component so it opens automatically when arriving from the
+  onboarding CTA — no new Server Action, the dialog's existing submit path
+  (`createOrganization`) is unchanged, including its existing
+  `redirect(`/organizations/${orgId}`)` on success.
+- No changes to `organizations/[id]/page.tsx`'s existing "Create Project"
+  empty state — it already does the right thing for a fresh organization.
+
+### React Bits usage
+
+- `src/app/page.tsx` (public landing): add a Spotlight-style background
+  effect behind the hero (`npx shadcn@latest add @react-bits/Spotlight-TS-TW`
+  or the closest matching component name found once browsing the installed
+  category — confirmed at implementation time against the actual component
+  list, not assumed), subtle, not covering the feature cards.
+- `dashboard/page.tsx`: the four stat values (`stats.total_projects`,
+  `totalTasks`, `completedTasks`, `totalDecisions`) get a Count Up animation
+  on mount (`npx shadcn@latest add @react-bits/CountUp-TS-TW`), replacing
+  the current static `<div className="text-2xl font-bold">{value}</div>`.
+- Nothing else in this phase — Magic Bento, Dock, Tilted Card, and the other
+  components the user listed are candidates for later UI phases once there's
+  more surface area (AI activity feed, pricing page) that actually calls for
+  them, not applied speculatively now.
+
+### Color system gaps
+
+- `src/components/ui/badge.tsx`: `Badge` accepts an optional `style` pass-
+  through already (it spreads `...props` onto the underlying element per
+  its current implementation) — confirmed sufficient for callers to pass
+  `style={{ backgroundColor: projectColor }}` directly; no component code
+  change needed here, only documentation of the pattern for the one caller
+  that currently reinvents it as a hardcoded color map
+  (`organizations/[id]/members/page.tsx`'s `ROLE_COLORS`, already covered by
+  the base rebrand spec above).
+- Ring/focus treatment: the `--tw-ring-color` pattern at
+  `projects/[id]/page.tsx:164` is applied consistently to the other
+  interactive project-colored elements introduced by the sidebar unification
+  above (the active nav item in `app-sidebar.tsx`) so keyboard focus is
+  visibly styled with the project's color where the project's color is
+  already the visual theme, not just on hover/active.
+
 ## Out of scope
 
 - New logo/wordmark.
-- Navigation/IA changes (the user has independent, uncommitted local changes to `project-sidebar.tsx`'s nav grouping — not part of this spec, not touched by it).
-- Marketing copy changes on the landing page.
+- Marketing copy changes on the landing page (beyond the onboarding cards reused verbatim from it, see addendum).
 - A shared `AdminTable` abstraction — the three admin tables get the same inline treatment (hover, inherited Card radius) rather than a new extracted component; three call sites don't justify the abstraction (YAGNI).
 - Light-mode/dark-mode priority change — dark-first stays dark-first.
+- A Next.js route-group restructure (`(app)/layout.tsx`) — the addendum's per-page `AppShell` wrapper achieves one persistent sidebar without moving route files; revisiting this as a cleanup is a later decision, not part of this phase.
+- Any page for AI, Billing, or Workspace — not built yet, so not linked from the new sidebar; later phases per the user's own priority ordering.
+- The remaining React Bits components the user listed (Magic Bento, Dock, Glass Surface, Tilted Card, Card Nav, Flowing Menu, Profile Card, text animations) — only Spotlight (landing) and Count Up (dashboard stats) are used in this phase.
+
+### Note on pre-existing local changes
+
+Before this addendum was written, an independent, uncommitted local edit to
+`project-sidebar.tsx`'s `navGroups` already existed (working tree, not part
+of any commit): renaming "Board" to "Task Board", moving "Files" from the
+Knowledge group into the Work group, and adding a "Project" label to the
+last group. Since `project-sidebar.tsx` is being replaced outright by
+`app-sidebar.tsx` in this addendum, that in-progress relabeling is folded
+into `app-sidebar.tsx`'s nav data as the starting point (not reverted, not
+lost) — the plan carries this forward explicitly rather than the
+implementer needing to rediscover it.
