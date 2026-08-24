@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, GitBranch, Network, BrainCircuit } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { DashboardBackground } from "@/components/layout/dashboard-background";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -123,9 +124,12 @@ export default async function DashboardPage() {
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user.full_name || "User"}</p>
+        <div className="relative mb-8 overflow-hidden rounded-lg border border-border px-6 py-10">
+          <DashboardBackground />
+          <div className="relative">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">Welcome back, {user.full_name || "User"}</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
