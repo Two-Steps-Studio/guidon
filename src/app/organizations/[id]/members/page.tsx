@@ -21,12 +21,6 @@ interface MemberRow {
   profiles: { id: string; email: string; full_name: string | null; avatar_url: string | null };
 }
 
-const ROLE_COLORS: Record<string, string> = {
-  owner: "bg-purple-100 text-purple-800",
-  admin: "bg-blue-100 text-blue-800",
-  member: "bg-gray-100 text-gray-800",
-};
-
 export default async function OrganizationMembersPage({
   params,
 }: {
@@ -129,7 +123,7 @@ export default async function OrganizationMembersPage({
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Badge className={ROLE_COLORS[member.role] || ROLE_COLORS.member}>
+                    <Badge variant={member.role === "owner" ? "default" : member.role === "admin" ? "secondary" : "outline"}>
                       <Shield className="h-3 w-3 mr-1" />
                       {member.role}
                     </Badge>

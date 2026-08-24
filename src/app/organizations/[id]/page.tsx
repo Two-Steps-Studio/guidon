@@ -116,10 +116,10 @@ export default async function OrganizationDetailPage({
                       <span
                         className={`px-2 py-1 rounded-full ${
                           project.status === "active"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-success/10 text-success"
                             : project.status === "archived"
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-danger/10 text-danger"
                         }`}
                       >
                         {project.status}

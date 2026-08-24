@@ -33,11 +33,11 @@ const FILE_TYPE_ICONS: Record<string, LucideIcon> = {
 };
 
 const FILE_TYPE_COLORS: Record<string, string> = {
-  "application/pdf": "bg-red-100 text-red-800",
-  "image/": "bg-blue-100 text-blue-800",
-  "text/": "bg-green-100 text-green-800",
-  "audio/": "bg-purple-100 text-purple-800",
-  "video/": "bg-orange-100 text-orange-800",
+  "application/pdf": "bg-danger/10 text-danger",
+  "image/": "bg-info/10 text-info",
+  "text/": "bg-success/10 text-success",
+  "audio/": "bg-primary/10 text-primary",
+  "video/": "bg-warning/10 text-warning",
 };
 
 function getFileIcon(mimeType: string): LucideIcon {
@@ -51,7 +51,7 @@ function getFileColor(mimeType: string): string {
   for (const [prefix, color] of Object.entries(FILE_TYPE_COLORS)) {
     if (mimeType.startsWith(prefix)) return color;
   }
-  return "bg-gray-100 text-gray-800";
+  return "bg-muted text-muted-foreground";
 }
 
 function formatFileSize(bytes: number): string {
