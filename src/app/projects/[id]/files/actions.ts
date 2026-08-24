@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import {
   deleteProjectFile,
   getFileCategoryFromMimeType,
@@ -91,6 +92,14 @@ export async function uploadFile(
     return { error: uploadError instanceof Error ? uploadError.message : "Upload failed." };
   }
 
+  await logActivity({
+    userId: access.userId,
+    action: "file_uploaded",
+    projectId,
+    entityType: "file",
+    details: { name: file.name },
+  });
+
   revalidatePath(`/projects/${projectId}/files`);
   return { error: null };
 }
@@ -158,6 +167,14 @@ export async function deleteFile(
   } catch (deleteError) {
     return { error: deleteError instanceof Error ? deleteError.message : "Delete failed." };
   }
+
+  await logActivity({
+    userId: access.userId,
+    action: "file_deleted",
+    projectId,
+    entityType: "file",
+    entityId: fileId,
+  });
 
   revalidatePath(`/projects/${projectId}/files`);
   return { error: null };

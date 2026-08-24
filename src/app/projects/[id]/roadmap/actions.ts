@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import type { PhaseStatus } from "@/types/task";
 
 export type PhaseFormState = {
@@ -71,10 +72,11 @@ export async function createPhase(
           0
         );
 
-        await query(
+        const result = await query(
           `INSERT INTO roadmap_phases
              (project_id, name, description, start_date, planned_end_date, status, completion_percentage, sort_order, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           RETURNING id`,
           [
             projectId,
             parsed.name,
@@ -87,6 +89,15 @@ export async function createPhase(
             access.userId,
           ]
         );
+
+        await logActivity({
+          userId: access.userId,
+          action: "phase_created",
+          projectId,
+          entityType: "phase",
+          entityId: result.rows[0].id,
+          details: { name: parsed.name },
+        });
       });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to add roadmap phase." };
@@ -104,19 +115,32 @@ export async function createPhase(
 
   const maxSortOrder = (siblings ?? []).reduce((max, p) => Math.max(max, p.sort_order ?? 0), 0);
 
-  const { error } = await supabase.from("roadmap_phases").insert({
-    project_id: projectId,
-    name: parsed.name,
-    description: parsed.description,
-    start_date: parsed.start_date,
-    planned_end_date: parsed.planned_end_date,
-    status: parsed.status,
-    completion_percentage: parsed.completion_percentage,
-    sort_order: maxSortOrder + 1,
-    created_by: access.userId,
-  });
+  const { data: created, error } = await supabase
+    .from("roadmap_phases")
+    .insert({
+      project_id: projectId,
+      name: parsed.name,
+      description: parsed.description,
+      start_date: parsed.start_date,
+      planned_end_date: parsed.planned_end_date,
+      status: parsed.status,
+      completion_percentage: parsed.completion_percentage,
+      sort_order: maxSortOrder + 1,
+      created_by: access.userId,
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "phase_created",
+    projectId,
+    entityType: "phase",
+    entityId: created.id,
+    details: { name: parsed.name },
+  });
 
   revalidatePath(`/projects/${projectId}/roadmap`);
   return { error: null };
@@ -158,6 +182,14 @@ export async function updatePhase(
       return { error: error instanceof Error ? error.message : "Failed to update roadmap phase." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "phase_updated",
+      projectId,
+      entityType: "phase",
+      entityId: phaseId,
+    });
+
     revalidatePath(`/projects/${projectId}/roadmap`);
     return { error: null };
   }
@@ -176,6 +208,14 @@ export async function updatePhase(
     .eq("id", phaseId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "phase_updated",
+    projectId,
+    entityType: "phase",
+    entityId: phaseId,
+  });
 
   revalidatePath(`/projects/${projectId}/roadmap`);
   return { error: null };
@@ -199,6 +239,14 @@ export async function deletePhase(
       return { error: error instanceof Error ? error.message : "Failed to delete roadmap phase." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "phase_deleted",
+      projectId,
+      entityType: "phase",
+      entityId: phaseId,
+    });
+
     revalidatePath(`/projects/${projectId}/roadmap`);
     return { error: null };
   }
@@ -207,6 +255,14 @@ export async function deletePhase(
   const { error } = await supabase.from("roadmap_phases").delete().eq("id", phaseId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "phase_deleted",
+    projectId,
+    entityType: "phase",
+    entityId: phaseId,
+  });
 
   revalidatePath(`/projects/${projectId}/roadmap`);
   return { error: null };

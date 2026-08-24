@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import { uniqueSlug } from "@/lib/slug";
 import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 
@@ -108,6 +109,15 @@ export async function createProject(
 
     projectId = project.id;
   }
+
+  await logActivity({
+    userId: access.userId,
+    action: "project_created",
+    projectId,
+    entityType: "project",
+    entityId: projectId,
+    details: { name: name.trim() },
+  });
 
   revalidatePath(`/organizations/${orgId}`);
   redirect(`/projects/${projectId}`);

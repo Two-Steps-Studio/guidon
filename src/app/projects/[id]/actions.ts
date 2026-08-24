@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 
 export type UpdateProjectState = {
   error: string | null;
@@ -51,6 +52,14 @@ export async function updateProject(
       return { error: error instanceof Error ? error.message : "Failed to update project." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "project_updated",
+      projectId,
+      entityType: "project",
+      entityId: projectId,
+    });
+
     revalidatePath(`/projects/${projectId}`);
     return { error: null };
   }
@@ -67,6 +76,14 @@ export async function updateProject(
   if (error) {
     return { error: error.message };
   }
+
+  await logActivity({
+    userId: access.userId,
+    action: "project_updated",
+    projectId,
+    entityType: "project",
+    entityId: projectId,
+  });
 
   revalidatePath(`/projects/${projectId}`);
   return { error: null };

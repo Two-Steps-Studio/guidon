@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import { AUTHORABLE_TYPES } from "./source-config";
 import type { SourceType } from "@/types/context";
 
@@ -51,17 +52,30 @@ export async function createSource(
   if (parsed.error) return { error: parsed.error };
 
   if (hasDirectDatabase()) {
+    let sourceId: string;
+
     try {
-      await withUser(access.userId, ({ query }) =>
-        query(
+      sourceId = await withUser(access.userId, async ({ query }) => {
+        const result = await query(
           `INSERT INTO context_sources (project_id, source_type, title, content, url, author)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
           [projectId, parsed.type, parsed.title, parsed.content, parsed.url, access.userId]
-        )
-      );
+        );
+        return result.rows[0].id as string;
+      });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to add knowledge entry." };
     }
+
+    await logActivity({
+      userId: access.userId,
+      action: "source_created",
+      projectId,
+      entityType: "source",
+      entityId: sourceId,
+      details: { title: parsed.title },
+    });
 
     revalidatePath(`/projects/${projectId}/knowledge`);
     revalidatePath(`/projects/${projectId}/context`);
@@ -69,16 +83,29 @@ export async function createSource(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("context_sources").insert({
-    project_id: projectId,
-    source_type: parsed.type,
-    title: parsed.title,
-    content: parsed.content,
-    url: parsed.url,
-    author: access.userId,
-  });
+  const { data, error } = await supabase
+    .from("context_sources")
+    .insert({
+      project_id: projectId,
+      source_type: parsed.type,
+      title: parsed.title,
+      content: parsed.content,
+      url: parsed.url,
+      author: access.userId,
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "source_created",
+    projectId,
+    entityType: "source",
+    entityId: data.id,
+    details: { title: parsed.title },
+  });
 
   revalidatePath(`/projects/${projectId}/knowledge`);
   revalidatePath(`/projects/${projectId}/context`);
@@ -111,6 +138,15 @@ export async function updateSource(
       return { error: error instanceof Error ? error.message : "Failed to update knowledge entry." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "source_updated",
+      projectId,
+      entityType: "source",
+      entityId: sourceId,
+      details: { title: parsed.title },
+    });
+
     revalidatePath(`/projects/${projectId}/knowledge`);
     revalidatePath(`/projects/${projectId}/context`);
     return { error: null };
@@ -128,6 +164,15 @@ export async function updateSource(
     .eq("id", sourceId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "source_updated",
+    projectId,
+    entityType: "source",
+    entityId: sourceId,
+    details: { title: parsed.title },
+  });
 
   revalidatePath(`/projects/${projectId}/knowledge`);
   revalidatePath(`/projects/${projectId}/context`);

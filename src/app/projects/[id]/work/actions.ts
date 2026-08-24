@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
 import type { AttemptOutcome, Task, TaskAttempt, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
@@ -275,6 +276,15 @@ export async function moveTask(
       return { error: error instanceof Error ? error.message : "Failed to move task." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "task_status_changed",
+      projectId,
+      entityType: "task",
+      entityId: taskId,
+      details: { status },
+    });
+
     revalidatePath(`/projects/${projectId}/work`);
     return { error: null };
   }
@@ -286,6 +296,15 @@ export async function moveTask(
     .eq("id", taskId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "task_status_changed",
+    projectId,
+    entityType: "task",
+    entityId: taskId,
+    details: { status },
+  });
 
   revalidatePath(`/projects/${projectId}/work`);
   return { error: null };
@@ -356,6 +375,14 @@ export async function createTask(
           ]
         )
       );
+      await logActivity({
+        userId: access.userId,
+        action: "task_created",
+        projectId,
+        entityType: "task",
+        entityId: result.rows[0].id,
+        details: { title: input.title.trim() },
+      });
       revalidatePath(`/projects/${projectId}/work`);
       return { task: result.rows[0] as Task, error: null };
     } catch (error) {
@@ -382,6 +409,15 @@ export async function createTask(
     .single();
 
   if (error) return { task: null, error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "task_created",
+    projectId,
+    entityType: "task",
+    entityId: data.id,
+    details: { title: input.title.trim() },
+  });
 
   revalidatePath(`/projects/${projectId}/work`);
   return { task: data as Task, error: null };
@@ -449,6 +485,13 @@ export async function updateTask(
           taskId,
         ])
       );
+      await logActivity({
+        userId: access.userId,
+        action: "task_updated",
+        projectId,
+        entityType: "task",
+        entityId: taskId,
+      });
       revalidatePath(`/projects/${projectId}/work`);
       return { task: result.rows[0] as Task, error: null };
     } catch (error) {
@@ -465,6 +508,14 @@ export async function updateTask(
     .single();
 
   if (error) return { task: null, error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "task_updated",
+    projectId,
+    entityType: "task",
+    entityId: taskId,
+  });
 
   revalidatePath(`/projects/${projectId}/work`);
   return { task: data as Task, error: null };
@@ -495,6 +546,14 @@ export async function createSubtask(
           [projectId, parentTaskId, title.trim(), [], access.userId]
         )
       );
+      await logActivity({
+        userId: access.userId,
+        action: "task_created",
+        projectId,
+        entityType: "task",
+        entityId: result.rows[0].id,
+        details: { title: title.trim() },
+      });
       revalidatePath(`/projects/${projectId}/work`);
       return { task: result.rows[0] as Task, error: null };
     } catch (error) {
@@ -518,6 +577,15 @@ export async function createSubtask(
     .single();
 
   if (error) return { task: null, error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "task_created",
+    projectId,
+    entityType: "task",
+    entityId: data.id,
+    details: { title: title.trim() },
+  });
 
   revalidatePath(`/projects/${projectId}/work`);
   return { task: data as Task, error: null };
@@ -579,6 +647,14 @@ export async function deleteTask(
       return { error: error instanceof Error ? error.message : "Failed to delete this task." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "task_deleted",
+      projectId,
+      entityType: "task",
+      entityId: taskId,
+    });
+
     revalidatePath(`/projects/${projectId}/work`);
     return { error: null };
   }
@@ -587,6 +663,14 @@ export async function deleteTask(
   const { error } = await supabase.from("tasks").delete().eq("id", taskId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "task_deleted",
+    projectId,
+    entityType: "task",
+    entityId: taskId,
+  });
 
   revalidatePath(`/projects/${projectId}/work`);
   return { error: null };

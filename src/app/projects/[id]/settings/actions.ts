@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser, type DbSession } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import { guessTechnologyCategory, technologySlug } from "@/types/technology";
 import type { ProjectStatus } from "@/types/project";
 import type { Technology } from "@/types/technology";
@@ -190,6 +191,14 @@ export async function updateProjectSettings(
     }
   }
 
+  await logActivity({
+    userId: access.userId,
+    action: "project_updated",
+    projectId,
+    entityType: "project",
+    entityId: projectId,
+  });
+
   revalidatePath(`/projects/${projectId}/settings`);
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/layout`);
@@ -202,6 +211,18 @@ export async function deleteProject(projectId: string): Promise<{ error: string 
   if (!access || !canManageProject(access.role)) {
     return { error: "You do not have permission to delete this project." };
   }
+
+  // Logged before the delete, with organization_id instead of project_id:
+  // activity_logs.project_id has ON DELETE CASCADE from projects (001), so a
+  // row scoped by the very project it records would be deleted along with it.
+  await logActivity({
+    userId: access.userId,
+    action: "project_deleted",
+    organizationId: access.project.organization_id,
+    entityType: "project",
+    entityId: projectId,
+    details: { name: access.project.name },
+  });
 
   if (hasDirectDatabase()) {
     try {

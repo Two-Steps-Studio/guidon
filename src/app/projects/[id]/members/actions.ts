@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import type { ProjectRole } from "@/types/project";
 
 /**
@@ -54,6 +55,15 @@ export async function addMember(
         return result.rows[0] as MemberRow;
       });
 
+      await logActivity({
+        userId: access.userId,
+        action: "member_added",
+        projectId,
+        entityType: "project_member",
+        entityId: userId,
+        details: { role },
+      });
+
       revalidatePath(`/projects/${projectId}/members`);
       return { member, error: null };
     } catch (error) {
@@ -69,6 +79,15 @@ export async function addMember(
     .single();
 
   if (error) return { member: null, error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "member_added",
+    projectId,
+    entityType: "project_member",
+    entityId: userId,
+    details: { role },
+  });
 
   revalidatePath(`/projects/${projectId}/members`);
   return { member: data as MemberRow, error: null };
@@ -101,6 +120,15 @@ export async function changeMemberRole(
       return { error: error instanceof Error ? error.message : "Failed to change role." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "member_role_changed",
+      projectId,
+      entityType: "project_member",
+      entityId: memberId,
+      details: { from: currentMemberRole, to: role },
+    });
+
     revalidatePath(`/projects/${projectId}/members`);
     return { error: null };
   }
@@ -109,6 +137,15 @@ export async function changeMemberRole(
   const { error } = await supabase.from("project_members").update({ role }).eq("id", memberId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "member_role_changed",
+    projectId,
+    entityType: "project_member",
+    entityId: memberId,
+    details: { from: currentMemberRole, to: role },
+  });
 
   revalidatePath(`/projects/${projectId}/members`);
   return { error: null };
@@ -137,6 +174,15 @@ export async function removeMember(
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "member_removed",
+      projectId,
+      entityType: "project_member",
+      entityId: memberId,
+      details: { role: currentMemberRole },
+    });
+
     revalidatePath(`/projects/${projectId}/members`);
     return { error: null };
   }
@@ -145,6 +191,15 @@ export async function removeMember(
   const { error } = await supabase.from("project_members").delete().eq("id", memberId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "member_removed",
+    projectId,
+    entityType: "project_member",
+    entityId: memberId,
+    details: { role: currentMemberRole },
+  });
 
   revalidatePath(`/projects/${projectId}/members`);
   return { error: null };

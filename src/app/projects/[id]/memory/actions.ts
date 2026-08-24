@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import { activeAIProviderName, getAIProvider } from "@/lib/ai/provider";
 import type { MemoryType } from "@/types/context";
 
@@ -56,31 +57,55 @@ export async function createMemory(
   if (parsed.error) return { error: parsed.error };
 
   if (hasDirectDatabase()) {
+    let memoryId: string;
+
     try {
-      await withUser(access.userId, ({ query }) =>
-        query(
+      memoryId = await withUser(access.userId, async ({ query }) => {
+        const result = await query(
           `INSERT INTO project_memory (project_id, content, memory_type, created_by)
-           VALUES ($1, $2, $3, $4)`,
+           VALUES ($1, $2, $3, $4)
+           RETURNING id`,
           [projectId, parsed.content, parsed.memoryType, access.userId]
-        )
-      );
+        );
+        return result.rows[0].id as string;
+      });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to add memory entry." };
     }
+
+    await logActivity({
+      userId: access.userId,
+      action: "memory_created",
+      projectId,
+      entityType: "memory",
+      entityId: memoryId,
+    });
 
     revalidatePath(`/projects/${projectId}/memory`);
     return { error: null };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("project_memory").insert({
-    project_id: projectId,
-    content: parsed.content,
-    memory_type: parsed.memoryType,
-    created_by: access.userId,
-  });
+  const { data, error } = await supabase
+    .from("project_memory")
+    .insert({
+      project_id: projectId,
+      content: parsed.content,
+      memory_type: parsed.memoryType,
+      created_by: access.userId,
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "memory_created",
+    projectId,
+    entityType: "memory",
+    entityId: data.id,
+  });
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
@@ -114,6 +139,14 @@ export async function updateMemory(
       return { error: error instanceof Error ? error.message : "Failed to update memory entry." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "memory_updated",
+      projectId,
+      entityType: "memory",
+      entityId: memoryId,
+    });
+
     revalidatePath(`/projects/${projectId}/memory`);
     return { error: null };
   }
@@ -125,6 +158,14 @@ export async function updateMemory(
     .eq("id", memoryId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "memory_updated",
+    projectId,
+    entityType: "memory",
+    entityId: memoryId,
+  });
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
@@ -201,6 +242,14 @@ export async function acceptInsight(
       return { error: error instanceof Error ? error.message : "Failed to accept insight." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "memory_verified",
+      projectId,
+      entityType: "memory",
+      entityId: memoryId,
+    });
+
     revalidatePath(`/projects/${projectId}/memory`);
     return { error: null };
   }
@@ -217,6 +266,14 @@ export async function acceptInsight(
     .eq("id", memoryId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "memory_verified",
+    projectId,
+    entityType: "memory",
+    entityId: memoryId,
+  });
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
@@ -258,6 +315,14 @@ export async function correctAndAcceptInsight(
       return { error: error instanceof Error ? error.message : "Failed to accept insight." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "memory_verified",
+      projectId,
+      entityType: "memory",
+      entityId: memoryId,
+    });
+
     revalidatePath(`/projects/${projectId}/memory`);
     return { error: null };
   }
@@ -275,6 +340,14 @@ export async function correctAndAcceptInsight(
     .eq("id", memoryId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "memory_verified",
+    projectId,
+    entityType: "memory",
+    entityId: memoryId,
+  });
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };

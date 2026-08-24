@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
+import type { ActivityAction } from "@/types/api";
 import type { Decision } from "@/types/context";
 
 export type DecisionFormState = {
@@ -98,10 +100,11 @@ export async function createDecision(
   const linkSourceId = hasLink ? (linkSourceIdRaw as string).trim() : null;
 
   if (hasDirectDatabase()) {
+    let decisionId: string;
     let relationErrorMessage: string | null;
 
     try {
-      [, relationErrorMessage] = await withUser(access.userId, async ({ query }) => {
+      [decisionId, relationErrorMessage] = await withUser(access.userId, async ({ query }) => {
         const result = await query(
           `INSERT INTO context_decisions
              (project_id, title, description, impact, alternatives, status, decision_type, made_by, made_at, source_type, source_id)
@@ -144,6 +147,15 @@ export async function createDecision(
       return { error: error instanceof Error ? error.message : "Failed to create decision." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "decision_created",
+      projectId,
+      entityType: "decision",
+      entityId: decisionId,
+      details: { title: parsed.title },
+    });
+
     if (relationErrorMessage) {
       return { error: `Decision saved, but linking it failed: ${relationErrorMessage}` };
     }
@@ -177,6 +189,15 @@ export async function createDecision(
     .single();
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action: "decision_created",
+    projectId,
+    entityType: "decision",
+    entityId: data.id,
+    details: { title: parsed.title },
+  });
 
   if (hasLink && data) {
     // Mirrors context_relations_insert (001, rewritten by migration 011):
@@ -221,6 +242,13 @@ export async function updateDecision(
   const parsed = parseDecisionForm(formData);
   if (parsed.error) return { error: parsed.error };
 
+  const action: ActivityAction =
+    parsed.status === "approved"
+      ? "decision_approved"
+      : parsed.status === "rejected"
+        ? "decision_rejected"
+        : "decision_updated";
+
   if (hasDirectDatabase()) {
     try {
       await withUser(access.userId, ({ query }) =>
@@ -243,6 +271,15 @@ export async function updateDecision(
       return { error: error instanceof Error ? error.message : "Failed to update decision." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action,
+      projectId,
+      entityType: "decision",
+      entityId: decisionId,
+      details: { title: parsed.title },
+    });
+
     revalidatePath(`/projects/${projectId}/decisions`);
     revalidatePath(`/projects/${projectId}/context`);
     return { error: null };
@@ -262,6 +299,15 @@ export async function updateDecision(
     .eq("id", decisionId);
 
   if (error) return { error: error.message };
+
+  await logActivity({
+    userId: access.userId,
+    action,
+    projectId,
+    entityType: "decision",
+    entityId: decisionId,
+    details: { title: parsed.title },
+  });
 
   revalidatePath(`/projects/${projectId}/decisions`);
   revalidatePath(`/projects/${projectId}/context`);

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { logActivity } from "@/lib/data/log-activity";
 import type { OrganizationRole } from "@/types/project";
 
 export type MemberActionState = {
@@ -39,8 +40,10 @@ export async function addMember(
   }
 
   if (hasDirectDatabase()) {
+    let addedUserId: string;
+
     try {
-      await withUser(access.userId, async ({ query }) => {
+      addedUserId = await withUser(access.userId, async ({ query }) => {
         const profileResult = await query("SELECT id FROM profiles WHERE email = $1", [
           email.trim(),
         ]);
@@ -52,10 +55,20 @@ export async function addMember(
           "INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, $3)",
           [orgId, profileResult.rows[0].id, role]
         );
+        return profileResult.rows[0].id as string;
       });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to add member." };
     }
+
+    await logActivity({
+      userId: access.userId,
+      action: "member_added",
+      organizationId: orgId,
+      entityType: "organization_member",
+      entityId: addedUserId,
+      details: { role },
+    });
 
     revalidatePath(`/organizations/${orgId}/members`);
     return { error: null };
@@ -82,6 +95,15 @@ export async function addMember(
   if (error) {
     return { error: error.message };
   }
+
+  await logActivity({
+    userId: access.userId,
+    action: "member_added",
+    organizationId: orgId,
+    entityType: "organization_member",
+    entityId: profile.id,
+    details: { role },
+  });
 
   revalidatePath(`/organizations/${orgId}/members`);
   return { error: null };
@@ -110,6 +132,15 @@ export async function updateMemberRole(
       return { error: error instanceof Error ? error.message : "Failed to change role." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "member_role_changed",
+      organizationId: orgId,
+      entityType: "organization_member",
+      entityId: memberId,
+      details: { to: role },
+    });
+
     revalidatePath(`/organizations/${orgId}/members`);
     return { error: null };
   }
@@ -123,6 +154,15 @@ export async function updateMemberRole(
   if (error) {
     return { error: error.message };
   }
+
+  await logActivity({
+    userId: access.userId,
+    action: "member_role_changed",
+    organizationId: orgId,
+    entityType: "organization_member",
+    entityId: memberId,
+    details: { to: role },
+  });
 
   revalidatePath(`/organizations/${orgId}/members`);
   return { error: null };
@@ -147,6 +187,14 @@ export async function removeMember(
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
     }
 
+    await logActivity({
+      userId: access.userId,
+      action: "member_removed",
+      organizationId: orgId,
+      entityType: "organization_member",
+      entityId: memberId,
+    });
+
     revalidatePath(`/organizations/${orgId}/members`);
     return { error: null };
   }
@@ -157,6 +205,14 @@ export async function removeMember(
   if (error) {
     return { error: error.message };
   }
+
+  await logActivity({
+    userId: access.userId,
+    action: "member_removed",
+    organizationId: orgId,
+    entityType: "organization_member",
+    entityId: memberId,
+  });
 
   revalidatePath(`/organizations/${orgId}/members`);
   return { error: null };
