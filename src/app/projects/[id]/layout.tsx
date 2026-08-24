@@ -1,25 +1,7 @@
 import type { Metadata } from "next";
 import { requireProjectAccess, getSwitchableProjects } from "@/lib/data/project-access";
 import { getCurrentUser } from "@/lib/data/current-user";
-import { ProjectSidebar } from "@/components/layout/project-sidebar";
-
-/**
- * Project workspace shell.
- *
- * A Server Component, so the project and the caller's role are resolved once
- * per navigation instead of once per page — and before any HTML is sent, which
- * is what lets an unauthorised visitor be redirected rather than shown a
- * loading spinner that resolves into an error (TODO.md §34, §38).
- *
- * Pages below no longer wrap themselves in ProjectSidebar; the shell lives
- * here, so switching tabs keeps the sidebar mounted.
- *
- * requireProjectAccess() is cached (src/lib/data/project-access.ts), so
- * calling it again here costs nothing: every page under this layout now
- * calls it itself to get typed access to `role`/`project` as props, rather
- * than through a client Context — there is no client state left that needs
- * one, so ProjectAccessProvider was removed rather than left unconsumed.
- */
+import { AppShell } from "@/components/layout/app-shell";
 
 export async function generateMetadata({
   params,
@@ -32,7 +14,6 @@ export async function generateMetadata({
     const { project } = await requireProjectAccess(id);
     return { title: `${project.name} — Guidon` };
   } catch {
-    // requireProjectAccess redirects; metadata must not crash the render.
     return { title: "Guidon" };
   }
 }
@@ -50,8 +31,14 @@ export default async function ProjectLayout({
   const user = await getCurrentUser();
 
   return (
-    <ProjectSidebar projectId={id} currentProjectName={access.project.name} projects={switchableProjects} user={user} projectColor={access.project.color}>
+    <AppShell
+      user={user}
+      projectId={id}
+      currentProjectName={access.project.name}
+      projects={switchableProjects}
+      projectColor={access.project.color}
+    >
       {children}
-    </ProjectSidebar>
+    </AppShell>
   );
 }
