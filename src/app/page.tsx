@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GitBranch, Network, BrainCircuit } from "lucide-react";
+import { HeroBackground } from "@/components/layout/hero-background";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
-      <div className="container mx-auto px-4 py-20">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
+      <HeroBackground />
+      <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="max-w-5xl mx-auto text-center space-y-12">
           <div className="space-y-6">
             <Image
