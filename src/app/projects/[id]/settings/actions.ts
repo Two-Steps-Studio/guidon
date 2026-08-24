@@ -7,6 +7,8 @@ import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser, type DbSession } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
+import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
+import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { guessTechnologyCategory, technologySlug } from "@/types/technology";
 import type { ProjectStatus } from "@/types/project";
 import type { Technology } from "@/types/technology";
@@ -115,12 +117,42 @@ export async function updateProjectSettings(
   const status = formData.get("status");
   const colorHex = formData.get("colorHex");
   const technologiesRaw = formData.get("technologies");
+  const avatarFile = formData.get("avatar") as File | null;
 
   if (typeof name !== "string" || name.trim().length === 0) {
     return { error: "Project name is required." };
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as ProjectStatus)) {
     return { error: "Invalid status." };
+  }
+
+  let avatarUrl: string | null | undefined;
+  if (avatarFile && avatarFile.size > 0) {
+    if (!avatarFile.type.startsWith("image/")) {
+      return { error: "Project image must be an image file." };
+    }
+    if (avatarFile.size > 2 * 1024 * 1024) {
+      return { error: "Project image is too large. Maximum size: 2MB" };
+    }
+
+    const bucketResult = await ensureBucketExists("avatars", { public: true });
+    if (bucketResult.error) {
+      return { error: `Storage bucket could not be created: ${bucketResult.error}` };
+    }
+
+    const timestamp = Date.now();
+    const extension = avatarFile.name.split(".").pop() || "jpg";
+    const filePath = assertSafeStoragePath(`projects/${projectId}/${timestamp}.${extension}`);
+
+    try {
+      const uploadResult = await uploadFile("avatars", filePath, avatarFile, {
+        upsert: true,
+        public: true,
+      });
+      avatarUrl = uploadResult.publicUrl;
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to upload project image." };
+    }
   }
 
   let technologies: string[] = [];
@@ -150,13 +182,13 @@ export async function updateProjectSettings(
   if (hasDirectDatabase()) {
     try {
       await withUser(access.userId, async ({ query }) => {
-        await query("UPDATE projects SET name = $1, description = $2, status = $3, color = $4 WHERE id = $5", [
-          name.trim(),
-          trimmedDescription,
-          status,
-          trimmedColor,
-          projectId,
-        ]);
+        await query(
+          `UPDATE projects
+           SET name = $1, description = $2, status = $3, color = $4,
+               avatar_url = COALESCE($5, avatar_url)
+           WHERE id = $6`,
+          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectId]
+        );
 
         const existingTech = await query("SELECT * FROM technologies WHERE project_id = $1", [
           projectId,
@@ -178,6 +210,7 @@ export async function updateProjectSettings(
         description: trimmedDescription,
         status: status as ProjectStatus,
         color: trimmedColor,
+        ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", projectId);
 

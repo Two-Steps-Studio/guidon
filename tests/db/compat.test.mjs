@@ -1013,5 +1013,30 @@ await withUser(A, async () => {
   );
 });
 
+// ------------------------------------------------------------------
+section("18. avatar_url dla organizacji i projektow (migracja 018)");
+
+await withUser(A, async () => {
+  const org = await db.query(
+    "UPDATE public.organizations SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url",
+    ["https://example.test/org.png", orgId]
+  );
+  check(
+    "wlasciciel moze ustawic avatar_url organizacji",
+    org.rows[0]?.avatar_url === "https://example.test/org.png",
+    JSON.stringify(org.rows)
+  );
+
+  const project = await db.query(
+    "UPDATE public.projects SET avatar_url = $1 WHERE id = $2 RETURNING avatar_url",
+    ["https://example.test/project.png", projectId]
+  );
+  check(
+    "wlasciciel moze ustawic avatar_url projektu",
+    project.rows[0]?.avatar_url === "https://example.test/project.png",
+    JSON.stringify(project.rows)
+  );
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { AppShell } from "@/components/layout/app-shell";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateOrganizationDialog } from "./create-organization-dialog";
 
 interface OrganizationRow {
@@ -15,6 +16,7 @@ interface OrganizationRow {
   name: string;
   slug: string;
   description: string | null;
+  avatar_url: string | null;
   role: string;
 }
 
@@ -31,7 +33,7 @@ export default async function OrganizationsPage({
   if (hasDirectDatabase()) {
     const result = await withUser(user.id, ({ query }) =>
       query(
-        `SELECT o.id, o.name, o.slug, o.description, om.role
+        `SELECT o.id, o.name, o.slug, o.description, o.avatar_url, om.role
          FROM organization_members om
          JOIN organizations o ON o.id = om.organization_id
          WHERE om.user_id = $1`,
@@ -44,7 +46,7 @@ export default async function OrganizationsPage({
 
     const { data } = await supabase
       .from("organization_members")
-      .select("role, organizations (id, name, slug, description, created_at, updated_at)")
+      .select("role, organizations (id, name, slug, description, avatar_url, created_at, updated_at)")
       .eq("user_id", user.id);
 
     organizations = (data ?? []).map((member: any) => ({
@@ -87,7 +89,12 @@ export default async function OrganizationsPage({
                 <Card className="cursor-pointer hover:border-primary transition-colors h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
+                      <Avatar className="h-5 w-5 rounded-sm">
+                        <AvatarImage src={org.avatar_url || undefined} alt={org.name} className="object-cover" />
+                        <AvatarFallback className="rounded-sm bg-transparent">
+                          <Building2 className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
                       {org.name}
                     </CardTitle>
                     <CardDescription>{org.description || "No description"}</CardDescription>

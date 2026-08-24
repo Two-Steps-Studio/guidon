@@ -3,12 +3,14 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
-import { getOrgAccess } from "@/lib/data/org-access";
+import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { uniqueSlug } from "@/lib/slug";
 import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
+import { assertSafeStoragePath } from "@/lib/storage/provider";
 
 export type CreateProjectState = {
   error: string | null;
@@ -121,4 +123,73 @@ export async function createProject(
 
   revalidatePath(`/organizations/${orgId}`);
   redirect(`/projects/${projectId}`);
+}
+
+export type OrgAvatarState = {
+  error: string | null;
+};
+
+export async function updateOrganizationAvatar(
+  orgId: string,
+  _prevState: OrgAvatarState,
+  formData: FormData
+): Promise<OrgAvatarState> {
+  const access = await getOrgAccess(orgId);
+
+  if (!access || !canManageOrg(access.role)) {
+    return { error: "You do not have permission to edit this organization." };
+  }
+
+  const avatarFile = formData.get("avatar") as File | null;
+  if (!avatarFile || avatarFile.size === 0) {
+    return { error: "No image selected." };
+  }
+  if (!avatarFile.type.startsWith("image/")) {
+    return { error: "Organization image must be an image file." };
+  }
+  if (avatarFile.size > 2 * 1024 * 1024) {
+    return { error: "Organization image is too large. Maximum size: 2MB" };
+  }
+
+  const bucketResult = await ensureBucketExists("avatars", { public: true });
+  if (bucketResult.error) {
+    return { error: `Storage bucket could not be created: ${bucketResult.error}` };
+  }
+
+  const timestamp = Date.now();
+  const extension = avatarFile.name.split(".").pop() || "jpg";
+  const filePath = assertSafeStoragePath(`organizations/${orgId}/${timestamp}.${extension}`);
+
+  let avatarUrl: string;
+  try {
+    const uploadResult = await uploadFile("avatars", filePath, avatarFile, {
+      upsert: true,
+      public: true,
+    });
+    avatarUrl = uploadResult.publicUrl;
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Failed to upload organization image." };
+  }
+
+  if (hasDirectDatabase()) {
+    try {
+      await withUser(access.userId, ({ query }) =>
+        query("UPDATE organizations SET avatar_url = $1 WHERE id = $2", [avatarUrl, orgId])
+      );
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Failed to update organization." };
+    }
+  } else {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("organizations")
+      .update({ avatar_url: avatarUrl })
+      .eq("id", orgId);
+
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/organizations/${orgId}`);
+  revalidatePath("/organizations");
+  return { error: null };
 }

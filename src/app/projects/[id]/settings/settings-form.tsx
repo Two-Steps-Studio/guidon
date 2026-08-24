@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -15,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, AlertTriangle, Loader2, Settings, Trash2, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, FolderKanban, Loader2, Settings, Trash2, X } from "lucide-react";
 import { deleteProject, updateProjectSettings, type SettingsFormState } from "./actions";
 import type { Project, ProjectStatus } from "@/types/project";
 
@@ -78,6 +79,23 @@ export function SettingsForm({
           <CardDescription>Basic project information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Project Image</Label>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16 rounded-md">
+                <AvatarImage src={project.avatar_url || undefined} className="object-cover" />
+                <AvatarFallback className="rounded-md">
+                  <FolderKanban className="h-6 w-6" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-1">
+                <Input id="avatar" name="avatar" type="file" accept="image/*" />
+                <p className="text-xs text-muted-foreground">
+                  Upload an image for this project. Leave blank to keep the current one.
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="name">Project Name</Label>
             <Input id="name" name="name" defaultValue={project.name} required />

@@ -2,14 +2,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, CreditCard, FolderKanban, Plus, Users } from "lucide-react";
-import { requireOrgAccess } from "@/lib/data/org-access";
+import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { AppShell } from "@/components/layout/app-shell";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateProjectDialog } from "./create-project-dialog";
+import { OrgAvatarUpload } from "./org-avatar-upload";
 import type { Project } from "@/types/project";
 
 export default async function OrganizationDetailPage({
@@ -50,6 +52,12 @@ export default async function OrganizationDetailPage({
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
+          <OrgAvatarUpload
+            orgId={orgId}
+            name={organization.name}
+            avatarUrl={organization.avatar_url}
+            canEdit={canManageOrg(access.role)}
+          />
           <div className="flex-1">
             <h1 className="text-3xl font-bold">{organization.name}</h1>
             <p className="text-muted-foreground">{organization.description || "No description"}</p>
@@ -110,7 +118,12 @@ export default async function OrganizationDetailPage({
                 <Card className="cursor-pointer hover:border-primary transition-colors h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <FolderKanban className="h-5 w-5" />
+                      <Avatar className="h-5 w-5 rounded-sm">
+                        <AvatarImage src={project.avatar_url || undefined} alt={project.name} className="object-cover" />
+                        <AvatarFallback className="rounded-sm bg-transparent">
+                          <FolderKanban className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
                       {project.name}
                     </CardTitle>
                     <CardDescription>{project.description || "No description"}</CardDescription>

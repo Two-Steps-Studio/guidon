@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, Building2 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -15,6 +16,7 @@ interface ProjectRow {
   name: string;
   description: string | null;
   status: string;
+  avatar_url: string | null;
   organizations: { id: string; name: string } | null;
 }
 
@@ -23,6 +25,7 @@ interface OrganizationRow {
   name: string;
   slug: string;
   description: string | null;
+  avatar_url: string | null;
   user_role: string;
 }
 
@@ -36,14 +39,14 @@ export default async function ProjectsPage() {
     const [orgResult, projectResult] = await withUser(user.id, ({ query }) =>
       Promise.all([
         query(
-          `SELECT o.id, o.name, o.slug, o.description, om.role
+          `SELECT o.id, o.name, o.slug, o.description, o.avatar_url, om.role
            FROM organization_members om
            JOIN organizations o ON o.id = om.organization_id
            WHERE om.user_id = $1`,
           [user.id]
         ),
         query(
-          `SELECT p.id, p.name, p.description, p.status, o.id AS org_id, o.name AS org_name
+          `SELECT p.id, p.name, p.description, p.status, p.avatar_url, o.id AS org_id, o.name AS org_name
            FROM projects p
            JOIN organizations o ON o.id = p.organization_id
            ORDER BY p.created_at DESC`
@@ -56,6 +59,7 @@ export default async function ProjectsPage() {
       name: row.name,
       slug: row.slug,
       description: row.description,
+      avatar_url: row.avatar_url,
       user_role: row.role,
     }));
     projects = projectResult.rows.map((row) => ({
@@ -63,6 +67,7 @@ export default async function ProjectsPage() {
       name: row.name,
       description: row.description,
       status: row.status,
+      avatar_url: row.avatar_url,
       organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
     }));
   } else {
@@ -71,11 +76,11 @@ export default async function ProjectsPage() {
     const [orgResult, projectResult] = await Promise.all([
       supabase
         .from("organization_members")
-        .select("role, organizations (id, name, slug, description)")
+        .select("role, organizations (id, name, slug, description, avatar_url)")
         .eq("user_id", user.id),
       supabase
         .from("projects")
-        .select("id, name, description, status, organizations (id, name)")
+        .select("id, name, description, status, avatar_url, organizations (id, name)")
         .order("created_at", { ascending: false }),
     ]);
 
@@ -114,7 +119,12 @@ export default async function ProjectsPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <Building2 className="h-5 w-5" />
+                          <Avatar className="h-5 w-5 rounded-sm">
+                            <AvatarImage src={org.avatar_url || undefined} alt={org.name} className="object-cover" />
+                            <AvatarFallback className="rounded-sm bg-transparent">
+                              <Building2 className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
                           {org.name}
                         </CardTitle>
                         <Badge variant="outline">{org.user_role}</Badge>
@@ -173,7 +183,15 @@ export default async function ProjectsPage() {
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Avatar className="h-5 w-5 rounded-sm">
+                          <AvatarImage src={project.avatar_url || undefined} alt={project.name} className="object-cover" />
+                          <AvatarFallback className="rounded-sm bg-transparent">
+                            <FolderKanban className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        {project.name}
+                      </CardTitle>
                       <Badge variant={project.status === "active" ? "default" : "secondary"}>
                         {project.status}
                       </Badge>

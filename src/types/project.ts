@@ -16,6 +16,7 @@ export interface Project {
   status: ProjectStatus;
   visibility: ProjectVisibility;
   color: string | null;
+  avatar_url: string | null;
   allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;
@@ -58,6 +59,7 @@ export interface Organization {
   name: string;
   slug: string;
   description: string | null;
+  avatar_url: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
