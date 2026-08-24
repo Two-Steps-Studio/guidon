@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Plus, ArrowRight, FolderKanban } from "lucide-react";
+import { Plus, ArrowRight, FolderKanban, GitBranch, Network, BrainCircuit } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
@@ -182,19 +182,51 @@ export default async function DashboardPage() {
         </div>
 
         {projects.length === 0 ? (
-          <EmptyState
-            icon={FolderKanban}
-            title="No projects yet"
-            description="Create your first project to get started with Guidon"
-            action={
-              <Button asChild>
-                <Link href="/organizations">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Project
-                </Link>
-              </Button>
-            }
-          />
+          <div className="space-y-8">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <GitBranch className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Decisions</CardTitle>
+                  <CardDescription>Track architectural and technical decisions</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <Network className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Context</CardTitle>
+                  <CardDescription>Connect entities through relations</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <BrainCircuit className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Memory</CardTitle>
+                  <CardDescription>Preserve project knowledge</CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+
+            <EmptyState
+              icon={FolderKanban}
+              title="Create your first project"
+              description="Projects live inside an organization. If you don't have one yet, you'll create it on the next step."
+              action={
+                <Button asChild>
+                  <Link href="/organizations?create=1">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create your first project
+                  </Link>
+                </Button>
+              }
+            />
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
