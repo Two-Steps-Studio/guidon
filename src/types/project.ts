@@ -16,6 +16,7 @@ export interface Project {
   status: ProjectStatus;
   visibility: ProjectVisibility;
   color: string | null;
+  allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;
   created_at: string;
