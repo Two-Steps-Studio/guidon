@@ -62,7 +62,7 @@ export async function updateProfile(
       const filePath = assertSafeStoragePath(`${user.id}/${timestamp}.${extension}`);
 
       // Upload file
-      const uploadResult = await uploadFile("avatars", filePath, avatarFile, { upsert: true });
+      const uploadResult = await uploadFile("avatars", filePath, avatarFile, { upsert: true, public: true });
       trimmedAvatar = uploadResult.publicUrl;
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to upload avatar." };
