@@ -904,5 +904,114 @@ await withUser(B, async () => {
   check("B nie widzi kluczy API A", rows[0].n === 0, rows[0].n);
 });
 
+// ------------------------------------------------------------------
+section("17. audyt RLS: braki GRANT na poziomie kolumny (migracja 017)");
+
+await withUser(A, async () => {
+  const rename = await db.query(
+    "UPDATE public.projects SET name = $1 WHERE id = $2 RETURNING name",
+    ["Projekt A zmieniony", projectId]
+  );
+  check(
+    "owner projektu moze zmienic name (dozwolona kolumna)",
+    rename.rows[0]?.name === "Projekt A zmieniony",
+    JSON.stringify(rename.rows)
+  );
+});
+
+await expectRejected(
+  "owner projektu NIE moze przeniesc go do innej organizacji (organization_id)",
+  () =>
+    withUser(A, () =>
+      db.query("UPDATE public.projects SET organization_id = gen_random_uuid() WHERE id = $1", [
+        projectId,
+      ])
+    ),
+  /permission denied/i
+);
+
+await expectRejected(
+  "owner projektu NIE moze podszyc sie pod innego tworce (created_by)",
+  () =>
+    withUser(A, () =>
+      db.query("UPDATE public.projects SET created_by = $1 WHERE id = $2", [B, projectId])
+    ),
+  /permission denied/i
+);
+
+await expectRejected(
+  "owner projektu NIE moze zaktualizowac project_files (cala kolumna UPDATE odwolana)",
+  () =>
+    withUser(A, async () => {
+      const file = await db.query(
+        "INSERT INTO public.project_files (project_id, name, uploaded_by) VALUES ($1, 'a.txt', $2) RETURNING id",
+        [projectId, A]
+      );
+      await db.query("UPDATE public.project_files SET name = 'b.txt' WHERE id = $1", [
+        file.rows[0].id,
+      ]);
+    }),
+  /permission denied/i
+);
+
+let inviteId;
+await withServiceRole(async () => {
+  const invite = await db.query(
+    `INSERT INTO public.invitations (organization_id, email, role, token, invited_by, expires_at)
+     VALUES ($1, 'ktos@example.test', 'member', 'tok-017', $2, now() + interval '7 days')
+     RETURNING id`,
+    [orgId, A]
+  );
+  inviteId = invite.rows[0].id;
+});
+
+await expectRejected(
+  "admin organizacji NIE moze podniesc roli istniejacego zaproszenia przez UPDATE",
+  () =>
+    withUser(A, () =>
+      db.query("UPDATE public.invitations SET role = 'owner' WHERE id = $1", [inviteId])
+    ),
+  /permission denied/i
+);
+
+await withUser(A, async () => {
+  const source = await db.query(
+    "INSERT INTO public.context_sources (project_id, source_type, title, author) VALUES ($1, 'document', 'Zrodlo', $2) RETURNING id",
+    [projectId, A]
+  );
+  const updated = await db.query(
+    "UPDATE public.context_sources SET title = $1 WHERE id = $2 RETURNING title",
+    ["Zrodlo zmienione", source.rows[0].id]
+  );
+  check(
+    "developer moze zmienic title zrodla (dozwolona kolumna)",
+    updated.rows[0]?.title === "Zrodlo zmienione",
+    JSON.stringify(updated.rows)
+  );
+
+  await expectRejected(
+    "NIE mozna podszyc sie pod innego autora zrodla (author)",
+    () => db.query("UPDATE public.context_sources SET author = $1 WHERE id = $2", [B, source.rows[0].id]),
+    /permission denied/i
+  );
+});
+
+await withUser(A, async () => {
+  const decision = await db.query(
+    "INSERT INTO public.context_decisions (project_id, title, made_by) VALUES ($1, 'Decyzja', $2) RETURNING id",
+    [projectId, A]
+  );
+
+  await expectRejected(
+    "NIE mozna podszyc sie pod innego autora decyzji (made_by)",
+    () =>
+      db.query("UPDATE public.context_decisions SET made_by = $1 WHERE id = $2", [
+        B,
+        decision.rows[0].id,
+      ]),
+    /permission denied/i
+  );
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
