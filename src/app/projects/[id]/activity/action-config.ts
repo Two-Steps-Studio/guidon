@@ -1,5 +1,6 @@
 import {
   Activity,
+  Bot,
   FileText,
   FolderKanban,
   GitBranch,
@@ -39,6 +40,10 @@ export const ACTION_CONFIG: Record<ActivityAction, ActionConfig> = {
   task_updated: { label: "Task updated", icon: Layers, color: "text-primary" },
   task_deleted: { label: "Task deleted", icon: Trash2, color: "text-destructive" },
   task_status_changed: { label: "Task status changed", icon: Layers, color: "text-primary" },
+  task_ai_started: { label: "AI started task", icon: Bot, color: "text-info" },
+  task_ai_commented: { label: "AI added comment", icon: Bot, color: "text-info" },
+  task_ai_status_changed: { label: "AI changed status", icon: Bot, color: "text-info" },
+  task_ai_completed: { label: "AI completed task", icon: Bot, color: "text-success" },
   phase_created: { label: "Phase created", icon: GitBranch, color: "text-success" },
   phase_updated: { label: "Phase updated", icon: GitBranch, color: "text-primary" },
   phase_deleted: { label: "Phase deleted", icon: Trash2, color: "text-destructive" },
