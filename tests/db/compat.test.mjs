@@ -136,8 +136,8 @@ for (const name of migrations) {
 }
 
 for (const [label, sql, expected] of [
-  ["17 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 17],
-  ["73 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 73],
+  ["19 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 19],
+  ["75 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 75],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -811,6 +811,53 @@ await withServiceRole(async () => {
     updated.rows[0]?.project_limit === 5,
     JSON.stringify(updated.rows)
   );
+});
+
+// ------------------------------------------------------------------
+section("15. plans + subscriptions (migracja 015)");
+
+await withServiceRole(async () => {
+  const { rows } = await db.query("SELECT id, project_limit FROM public.plans ORDER BY sort_order");
+  check(
+    "4 plany zaseedowane w kolejnosci",
+    rows.length === 4 && rows.map((r) => r.id).join(",") === "free,pro,team,business",
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(A, async () => {
+  const org = await db.query(
+    "INSERT INTO public.organizations (name, slug) VALUES ('Sub Test','sub-test') RETURNING id, project_limit"
+  );
+  check(
+    "nowa organizacja dostaje project_limit=2 (Free)",
+    org.rows[0].project_limit === 2,
+    org.rows[0].project_limit
+  );
+
+  const sub = await db.query(
+    "SELECT plan_id, status FROM public.subscriptions WHERE organization_id = $1",
+    [org.rows[0].id]
+  );
+  check(
+    "nowa organizacja dostaje subskrypcje Free automatycznie",
+    sub.rows[0]?.plan_id === "free" && sub.rows[0]?.status === "active",
+    JSON.stringify(sub.rows)
+  );
+
+  await expectRejected(
+    "wlasciciel NIE moze sam zmienic swojego planu",
+    () =>
+      db.query("UPDATE public.subscriptions SET plan_id = 'business' WHERE organization_id = $1", [
+        org.rows[0].id,
+      ]),
+    /permission denied/i
+  );
+});
+
+await withServiceRole(async () => {
+  const { rows } = await db.query("SELECT count(*)::int n FROM public.subscriptions");
+  check("service_role widzi subskrypcje", rows[0].n >= 1, rows[0].n);
 });
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
