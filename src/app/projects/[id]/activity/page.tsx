@@ -62,7 +62,7 @@ export default async function ProjectActivityPage({
   const profilesById = new Map(profilesData.map((p) => [p.id, p]));
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Activity</h1>
         <p className="text-muted-foreground">Recent changes on this project</p>

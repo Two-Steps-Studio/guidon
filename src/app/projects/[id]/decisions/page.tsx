@@ -43,7 +43,7 @@ export default async function ProjectDecisionsPage({
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1">
           <h1 className="text-3xl font-bold">Decisions</h1>

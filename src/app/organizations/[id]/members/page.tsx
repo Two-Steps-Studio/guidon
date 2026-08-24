@@ -72,7 +72,7 @@ export default async function OrganizationMembersPage({
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
 
-      <div className="container mx-auto p-6 max-w-6xl">
+      <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>
             <Link href={`/organizations/${orgId}`}>

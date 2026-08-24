@@ -34,7 +34,7 @@ export default async function ProjectFilesPage({
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto max-w-7xl px-6 py-8">
       <FilesBrowser
         projectId={projectId}
         files={files}
