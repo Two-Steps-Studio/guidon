@@ -85,15 +85,21 @@ export class SupabaseStorageProvider implements StorageProvider {
   async getUrl(
     bucket: string,
     path: string,
-    expiresInSeconds = 600
+    options?: { expiresInSeconds?: number; public?: boolean }
   ): Promise<string> {
     assertSafeBucket(bucket);
     const safePath = assertSafeStoragePath(path);
 
     const client = createServiceClient();
+
+    if (options?.public) {
+      const { data } = client.storage.from(bucket).getPublicUrl(safePath);
+      return data.publicUrl;
+    }
+
     const { data, error } = await client.storage
       .from(bucket)
-      .createSignedUrl(safePath, expiresInSeconds);
+      .createSignedUrl(safePath, options?.expiresInSeconds ?? 600);
 
     if (error) throw error;
     if (!data?.signedUrl) throw new Error(`Could not sign URL for ${safePath}`);

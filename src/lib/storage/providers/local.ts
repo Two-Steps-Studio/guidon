@@ -19,6 +19,9 @@ import {
  * application's authorisation and nothing under STORAGE_PATH is web-reachable
  * by guessing a filename.
  */
+/** Effectively permanent — see getUrl()'s `public` option. */
+const PUBLIC_URL_TTL_SECONDS = 50 * 365 * 24 * 60 * 60;
+
 export class LocalStorageProvider implements StorageProvider {
   readonly name = "local" as const;
 
@@ -98,16 +101,25 @@ export class LocalStorageProvider implements StorageProvider {
    * Signed URL pointing at the application's own storage route. The signature
    * covers bucket, path and expiry, so a URL cannot be edited to reach another
    * object or to extend its own lifetime.
+   *
+   * `public: true` doesn't add a separate unsigned serving path — it just
+   * signs for PUBLIC_URL_TTL_SECONDS (50 years) instead of the normal
+   * 10-minute default, so /api/storage's verification is unchanged either
+   * way. That's the whole fix for the avatars bucket: a permanent-in-practice
+   * URL using the same signing/verification code as every other object.
    */
   async getUrl(
     bucket: string,
     objectPath: string,
-    expiresInSeconds = 600
+    options?: { expiresInSeconds?: number; public?: boolean }
   ): Promise<string> {
     assertSafeBucket(bucket);
     const safePath = assertSafeStoragePath(objectPath);
 
-    const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
+    const ttl = options?.public
+      ? PUBLIC_URL_TTL_SECONDS
+      : options?.expiresInSeconds ?? 600;
+    const expires = Math.floor(Date.now() / 1000) + ttl;
     const signature = signStoragePath(bucket, safePath, expires);
 
     const params = new URLSearchParams({
