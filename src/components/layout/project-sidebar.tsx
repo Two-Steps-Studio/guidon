@@ -65,8 +65,9 @@ const navGroups: NavGroup[] = [
   {
     label: 'Work',
     items: [
-      { href: 'work', label: 'Board', icon: CheckSquare },
+      { href: 'work', label: 'Task Board', icon: CheckSquare },
       { href: 'roadmap', label: 'Roadmap', icon: GitBranch },
+      { href: 'files', label: 'Files', icon: FolderOpen },
     ],
   },
   {
@@ -74,7 +75,6 @@ const navGroups: NavGroup[] = [
     items: [
       { href: 'knowledge', label: 'Knowledge', icon: BookOpen },
       { href: 'decisions', label: 'Decisions', icon: FileText },
-      { href: 'files', label: 'Files', icon: FolderOpen },
       { href: 'technology', label: 'Technologies', icon: Cpu },
     ],
   },
@@ -86,7 +86,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: null,
+    label: 'Project',
     items: [
       { href: 'members', label: 'Members', icon: Users },
       { href: 'activity', label: 'Activity', icon: Activity },
