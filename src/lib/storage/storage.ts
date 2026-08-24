@@ -357,6 +357,29 @@ export async function getProjectStorageUsage(projectId: string): Promise<number>
 }
 
 /**
+ * Total bytes stored across every project in an organization. Sums
+ * project_files.size_bytes joined through projects, the same source
+ * getProjectStorageUsage reads — not StorageProvider.usage(), which would
+ * require listing every project's storage prefix separately for one
+ * number the database already has indexed.
+ */
+export async function getOrganizationStorageUsage(organizationId: string): Promise<number> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from('project_files')
+    .select('size_bytes, projects!inner(organization_id)')
+    .eq('projects.organization_id', organizationId);
+
+  if (error) {
+    console.error('[Storage] Error fetching organization storage:', error);
+    return 0;
+  }
+
+  return data?.reduce((sum, file) => sum + (file.size_bytes || 0), 0) || 0;
+}
+
+/**
  * Check if project is within storage quota
  */
 export async function checkProjectStorageQuota(projectId: string): Promise<{ 
