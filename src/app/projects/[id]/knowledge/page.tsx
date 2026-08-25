@@ -63,6 +63,10 @@ export default async function ProjectKnowledgePage({
       supabase.from("project_files").select("id").eq("project_id", projectId),
       supabase.from("project_memory").select("id").eq("project_id", projectId),
     ]);
+    if (sourcesRes.error) throw new Error(`Failed to load sources: ${sourcesRes.error.message}`);
+    if (decisionsRes.error) throw new Error(`Failed to load decisions: ${decisionsRes.error.message}`);
+    if (filesRes.error) throw new Error(`Failed to load files: ${filesRes.error.message}`);
+    if (memoryRes.error) throw new Error(`Failed to load memory: ${memoryRes.error.message}`);
 
     sources = (sourcesRes.data ?? []) as ContextSource[];
     counts = {

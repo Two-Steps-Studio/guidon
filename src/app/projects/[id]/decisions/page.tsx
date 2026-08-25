@@ -38,12 +38,13 @@ export default async function ProjectDecisionsPage({
     decisions = result.rows;
   } else {
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("context_decisions")
       .select("*")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(LIST_LIMIT);
+    if (error) throw new Error(`Failed to load decisions: ${error.message}`);
 
     decisions = (data ?? []) as Decision[];
   }

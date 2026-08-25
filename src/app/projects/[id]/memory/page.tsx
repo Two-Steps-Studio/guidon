@@ -51,12 +51,13 @@ export default async function ProjectMemoryPage({
     memories = result.rows;
   } else {
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("project_memory")
       .select("*")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(LIST_LIMIT);
+    if (error) throw new Error(`Failed to load memory: ${error.message}`);
 
     memories = (data ?? []) as ProjectMemory[];
   }
@@ -88,10 +89,11 @@ export default async function ProjectMemoryPage({
     profilesData = result.rows;
   } else {
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, email")
       .in("id", profileIds);
+    if (error) throw new Error(`Failed to load profiles: ${error.message}`);
     profilesData = (data ?? []) as MemoryProfile[];
   }
 

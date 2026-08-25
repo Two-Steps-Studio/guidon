@@ -24,11 +24,12 @@ export default async function ProjectFilesPage({
     files = result.rows;
   } else {
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("project_files")
       .select("*")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false });
+    if (error) throw new Error(`Failed to load files: ${error.message}`);
 
     files = (data ?? []) as ProjectFile[];
   }

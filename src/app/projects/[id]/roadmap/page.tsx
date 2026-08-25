@@ -33,11 +33,12 @@ export default async function ProjectRoadmapPage({
     phases = result.rows;
   } else {
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("roadmap_phases")
       .select("*")
       .eq("project_id", projectId)
       .order("sort_order", { ascending: true, nullsFirst: false });
+    if (error) throw new Error(`Failed to load roadmap phases: ${error.message}`);
 
     phases = (data ?? []) as RoadmapPhase[];
   }

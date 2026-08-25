@@ -92,10 +92,11 @@ export default async function DashboardPage() {
   } else {
     const supabase = await createClient();
 
-    const { data: projectsData } = await supabase
+    const { data: projectsData, error: projectsError } = await supabase
       .from("projects")
       .select("id, name, description, status, avatar_url, organizations (id, name)")
       .order("created_at", { ascending: false });
+    if (projectsError) throw new Error(`Failed to load projects: ${projectsError.message}`);
 
     projects = (projectsData ?? []) as unknown as ProjectRow[];
     const projectIds = projects.map((p) => p.id);
@@ -108,6 +109,8 @@ export default async function DashboardPage() {
         supabase.from("tasks").select("status, parent_task_id").in("project_id", projectIds),
         supabase.from("context_decisions").select("id").in("project_id", projectIds),
       ]);
+      if (tasksRes.error) throw new Error(`Failed to load tasks: ${tasksRes.error.message}`);
+      if (decisionsRes.error) throw new Error(`Failed to load decisions: ${decisionsRes.error.message}`);
 
       rawTasks = tasksRes.data ?? [];
       totalDecisions = decisionsRes.data?.length ?? 0;
