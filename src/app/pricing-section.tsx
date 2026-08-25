@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Fraunces } from "next/font/google";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { WavesBackground } from "@/components/layout/waves-background";
+
+// Matches the display font used for headlines on the rest of the landing
+// page (src/app/page.tsx) - kept as a separate call since next/font/google
+// requires the call at module scope in each file that uses it.
+const displayFont = Fraunces({ subsets: ["latin"], weight: ["600"] });
 
 export interface PlanRow {
   id: string;
@@ -72,7 +78,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
       <WavesBackground className="opacity-20" />
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <div className="mb-12 space-y-4 text-center">
-          <h2 className="text-3xl font-bold">Simple, transparent pricing</h2>
+          <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>Simple, transparent pricing</h2>
           <p className="text-text-muted">Start free. Upgrade when you need more.</p>
 
           <div

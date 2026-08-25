@@ -1,11 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Fraunces } from "next/font/google";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, type LucideIcon } from "lucide-react";
 import { WavesBackground } from "@/components/layout/waves-background";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
+
+// A display serif for headlines only, paired against the app-wide Geist Sans
+// body font - scoped to this marketing page so the rest of the app (which
+// has no room for a decorative font) is untouched.
+const displayFont = Fraunces({ subsets: ["latin"], weight: ["600"] });
 
 interface FeatureSection {
   icon: LucideIcon;
@@ -110,7 +116,7 @@ export default async function Home() {
 
   return (
     <>
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
+    <div className="relative flex min-h-screen items-center overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
       <WavesBackground className="opacity-60" />
       <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="max-w-5xl mx-auto text-center space-y-12">
@@ -121,10 +127,12 @@ export default async function Home() {
               width={769}
               height={285}
               priority
-              className="mx-auto h-16 w-auto dark:invert"
+              className="mx-auto h-24 w-auto dark:invert md:h-28"
             />
             <div className="space-y-3">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-text dark:text-text">
+              <h1
+                className={`${displayFont.className} text-5xl md:text-6xl tracking-tight text-text dark:text-text`}
+              >
                 Context-First Project Management
               </h1>
               <p className="text-xl text-text-muted dark:text-text-muted max-w-3xl mx-auto leading-relaxed">
@@ -150,7 +158,9 @@ export default async function Home() {
     <section className="border-t border-border py-20">
       <div className="container mx-auto max-w-5xl px-4">
         <div className="mb-16 text-center space-y-3">
-          <h2 className="text-3xl font-bold">Everything a project needs to explain itself</h2>
+          <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>
+            Everything a project needs to explain itself
+          </h2>
           <p className="text-text-muted max-w-2xl mx-auto">
             Tasks alone don&apos;t tell you why a project looks the way it does. Guidon tracks the
             context around the work, not just the work.
