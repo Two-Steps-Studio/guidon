@@ -23,14 +23,14 @@ const EMPTY_STATS: ProjectStats = {
  * Overview counters for the project dashboard.
  *
  * Five independent counts, so they run as one Promise.all round trip rather
- * than five sequential ones — the client-side version this replaced awaited
+ * than five sequential ones - the client-side version this replaced awaited
  * them one at a time inside a single fetch function, but that was an artifact
  * of them all being destructured from one Promise.all already; the only real
  * change here is running under RLS as the signed-in user via the server
  * client instead of the browser one.
  *
  * Self-hosted branch resolves identity itself (getLocalSessionUserId())
- * rather than taking a userId parameter — same choice as
+ * rather than taking a userId parameter - same choice as
  * getSwitchableProjects() in project-access.ts, to keep this call site
  * (src/app/projects/[id]/page.tsx) unchanged. requireProjectAccess() has
  * already gated the request by the time this runs, so an empty session here
@@ -41,17 +41,27 @@ export async function getProjectStats(projectId: string): Promise<ProjectStats> 
     const userId = await getLocalSessionUserId();
     if (!userId) return EMPTY_STATS;
 
-    const [tasksRes, phasesRes, filesRes, decisionsRes, memoryRes] = await withUser(
-      userId,
-      ({ query }) =>
-        Promise.all([
-          query("SELECT id, status, parent_task_id FROM tasks WHERE project_id = $1", [projectId]),
-          query("SELECT id, status FROM roadmap_phases WHERE project_id = $1", [projectId]),
-          query("SELECT id FROM project_files WHERE project_id = $1", [projectId]),
-          query("SELECT id FROM context_decisions WHERE project_id = $1", [projectId]),
-          query("SELECT id FROM project_memory WHERE project_id = $1", [projectId]),
-        ])
-    );
+    // Five withUser() calls, not one wrapping Promise.all([...]) - each
+    // checks out its own pooled connection, so this is genuinely concurrent
+    // instead of firing multiple queries on one pg client (the deprecated
+    // shape, removed in pg@9).
+    const [tasksRes, phasesRes, filesRes, decisionsRes, memoryRes] = await Promise.all([
+      withUser(userId, ({ query }) =>
+        query("SELECT id, status, parent_task_id FROM tasks WHERE project_id = $1", [projectId])
+      ),
+      withUser(userId, ({ query }) =>
+        query("SELECT id, status FROM roadmap_phases WHERE project_id = $1", [projectId])
+      ),
+      withUser(userId, ({ query }) =>
+        query("SELECT id FROM project_files WHERE project_id = $1", [projectId])
+      ),
+      withUser(userId, ({ query }) =>
+        query("SELECT id FROM context_decisions WHERE project_id = $1", [projectId])
+      ),
+      withUser(userId, ({ query }) =>
+        query("SELECT id FROM project_memory WHERE project_id = $1", [projectId])
+      ),
+    ]);
 
     return computeStats(
       tasksRes.rows,
@@ -98,7 +108,7 @@ function computeStats(
 
   const totalTasks = tasks.length;
   // isDone folds the legacy 'completed' status onto 'done' (see
-  // src/lib/work/task-board.ts) — reading task.status === 'completed'
+  // src/lib/work/task-board.ts) - reading task.status === 'completed'
   // directly here would silently show 0 for every task created after
   // migration 002 renamed the vocabulary.
   const completedTasks = tasks.filter((t) => isDone(t.status)).length;
@@ -106,7 +116,7 @@ function computeStats(
 
   const totalPhases = phases.length;
   // roadmap_phases has its own status vocabulary (planned/in_progress/
-  // completed/blocked) — 'completed' is correct here, unlike for tasks.
+  // completed/blocked) - 'completed' is correct here, unlike for tasks.
   const completedPhases = phases.filter((p) => p.status === "completed").length;
 
   return {

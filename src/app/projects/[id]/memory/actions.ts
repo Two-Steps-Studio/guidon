@@ -209,14 +209,14 @@ export async function deleteMemory(
 //
 // A `project_memory` row is a "pending insight" when
 // memory_type === 'ai_insight' AND verified === false. It stops being
-// pending through exactly one of these three actions — never automatically,
+// pending through exactly one of these three actions - never automatically,
 // per §20: "AI-generated information should NOT automatically become
 // trusted project truth."
 // ============================================================
 
 /**
  * Accept as-is: the insight's own content becomes the fact's content.
- * Mirrors project_memory_update (001): owner/admin/developer — same tier as
+ * Mirrors project_memory_update (001): owner/admin/developer - same tier as
  * updateMemory above (verified by reading the policy, not assumed).
  */
 export async function acceptInsight(
@@ -356,7 +356,7 @@ export async function correctAndAcceptInsight(
 /**
  * Reject: deletes the row outright. Mirrors project_memory_delete (001):
  * owner/admin only, same tier as deleteMemory above. No confirmation
- * dialog — this codebase doesn't add one for single-row deletes elsewhere
+ * dialog - this codebase doesn't add one for single-row deletes elsewhere
  * (MemoryCardMenu's delete above is the same direct action).
  */
 export async function rejectInsight(
@@ -394,7 +394,7 @@ export async function rejectInsight(
 // AI-GENERATED INSIGHT (TODO.md §6/§7 AIProvider, first real caller)
 //
 // src/lib/ai/provider.ts was built with exactly this feature named as the
-// reason it exists, but nothing called getAIProvider() until now — every
+// reason it exists, but nothing called getAIProvider() until now - every
 // other reference was the health check constructing (never completing) a
 // provider. This is the first request that actually spends tokens.
 // ============================================================
@@ -412,7 +412,7 @@ interface DecisionSummaryRow {
  * Assembles the same kind of project-wide context agent-context.ts builds
  * for an external agent, but scoped to what's useful for a one-shot
  * synthesis prompt: recent verified facts, constraints/rules, and recent
- * decisions. Capped at 20/20/10 rows — this is a prompt, not an export, and
+ * decisions. Capped at 20/20/10 rows - this is a prompt, not an export, and
  * an unbounded context would just get truncated by the model anyway.
  */
 async function gatherInsightContext(
@@ -420,28 +420,36 @@ async function gatherInsightContext(
   userId: string
 ): Promise<{ facts: MemoryContentRow[]; constraints: MemoryContentRow[]; decisions: DecisionSummaryRow[] }> {
   if (hasDirectDatabase()) {
-    const [facts, constraints, decisions] = await withUser(userId, ({ query }) =>
-      Promise.all([
+    // Three withUser() calls, not one wrapping Promise.all([...]) - each
+    // checks out its own pooled connection, so this is genuinely concurrent
+    // instead of firing multiple queries on one pg client (the deprecated
+    // shape, removed in pg@9).
+    const [facts, constraints, decisions] = await Promise.all([
+      withUser(userId, ({ query }) =>
         query(
           `SELECT content FROM project_memory
            WHERE project_id = $1 AND memory_type = 'fact' AND verified = true
            ORDER BY created_at DESC LIMIT 20`,
           [projectId]
-        ).then((result) => result.rows),
+        ).then((result) => result.rows)
+      ),
+      withUser(userId, ({ query }) =>
         query(
           `SELECT content FROM project_memory
            WHERE project_id = $1 AND memory_type IN ('constraint', 'project_rule')
            ORDER BY created_at DESC LIMIT 20`,
           [projectId]
-        ).then((result) => result.rows),
+        ).then((result) => result.rows)
+      ),
+      withUser(userId, ({ query }) =>
         query(
           `SELECT title, description FROM context_decisions
            WHERE project_id = $1
            ORDER BY created_at DESC LIMIT 10`,
           [projectId]
-        ).then((result) => result.rows),
-      ])
-    );
+        ).then((result) => result.rows)
+      ),
+    ]);
     return { facts, constraints, decisions };
   }
 
@@ -480,7 +488,7 @@ async function gatherInsightContext(
 export async function generateInsight(projectId: string): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
 
-  // Same tier as createMemory — generating an insight is a write.
+  // Same tier as createMemory - generating an insight is a write.
   if (!access || !canWriteProject(access.role)) {
     return { error: "You do not have permission to generate insights." };
   }
@@ -493,7 +501,7 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
 
   if (facts.length === 0 && constraints.length === 0 && decisions.length === 0) {
     return {
-      error: "Not enough project memory yet to generate an insight — add some facts or decisions first.",
+      error: "Not enough project memory yet to generate an insight - add some facts or decisions first.",
     };
   }
 
@@ -534,7 +542,7 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
     return { error: "The AI provider returned an empty response." };
   }
 
-  // Unverified ai_insight, same as one created by hand — goes through the
+  // Unverified ai_insight, same as one created by hand - goes through the
   // Accept/Correct/Reject review above (TODO.md §20). Nothing about coming
   // from generateInsight() instead of the create-memory form skips that gate.
   if (hasDirectDatabase()) {

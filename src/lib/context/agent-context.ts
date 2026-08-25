@@ -1,35 +1,35 @@
 "use server";
 
 /**
- * Generic Agent Context export — TODO.md §18 ("provider-neutral context
+ * Generic Agent Context export - TODO.md §18 ("provider-neutral context
  * package") applied to a single task. Assembles data Guidon already has into
  * a plain Markdown document that can be pasted into any external AI coding
  * agent (Claude Code, Cursor, Codex, Windsurf, OpenAI-compatible agents).
  *
- * Deliberately out of scope here (see TODO.md §18's own wording — "MCP
+ * Deliberately out of scope here (see TODO.md §18's own wording - "MCP
  * support should be designed as an interface, not as the core data model"):
- *   - MCP transport/server — this only produces the data package.
- *   - AI-generated summarization — everything below is assembled verbatim
+ *   - MCP transport/server - this only produces the data package.
+ *   - AI-generated summarization - everything below is assembled verbatim
  *     from rows that already exist; nothing is passed through src/lib/ai/*.
- *   - "Acceptance Criteria" as first-class data — grepped the schema, not
+ *   - "Acceptance Criteria" as first-class data - grepped the schema, not
  *     tracked anywhere yet. Noted as a gap in the output rather than
  *     fabricated. "Previous Attempts" WAS this kind of gap until migration
- *     013 (task_attempts, TODO.md §22) — it's real data now, pulled below.
+ *     013 (task_attempts, TODO.md §22) - it's real data now, pulled below.
  *
  * Reuses getTaskWhyContext (src/lib/context/task-why.ts) for the task's
  * linked decision and everything reachable via context_relations, then adds
  * two things task-why.ts doesn't need for the "Why" panel:
  *   1. Project-wide project_memory rows (constraints/rules apply to the
  *      whole project, not just what happens to be relation-linked to this
- *      task — TODO.md §19's model).
+ *      task - TODO.md §19's model).
  *   2. Fuller rows (untruncated content, plus columns task-why.ts's preview
  *      logic doesn't select, like context_sources.source_type and
  *      project_files.file_url/category) for the related decisions, files and
- *      sources it found — the Why panel only needs a short preview, an agent
+ *      sources it found - the Why panel only needs a short preview, an agent
  *      context package needs the whole thing.
  *
  * Per-item attribution (who created what) is deliberately left out of the
- * export — that's an audit-trail concern the Why panel already covers in the
+ * export - that's an audit-trail concern the Why panel already covers in the
  * UI, not something an external coding agent needs in its context window.
  */
 
@@ -186,7 +186,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
 
   // Related decisions / files / sources need fuller rows than task-why.ts's
   // Why-panel preview carries (untruncated content, plus columns like
-  // source_type and file_url the panel has no use for) — refetched here
+  // source_type and file_url the panel has no use for) - refetched here
   // rather than widening task-why.ts's queries for a UI that doesn't need them.
   const relatedDecisionIds = new Set(
     whyContext.related.filter((item) => item.entityType === "decision" && !item.missing).map((item) => item.entityId)
@@ -206,29 +206,39 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
   let sources: SourceRow[];
 
   if (hasDirectDatabase()) {
-    [decisions, files, sources] = await withUser(access.userId, async ({ query }) => {
-      const [decisionsRows, filesRows, sourcesRows] = await Promise.all([
-        relatedDecisionIds.size > 0
-          ? query(
+    // Three withUser() calls, not one wrapping Promise.all([...]) - each
+    // checks out its own pooled connection, so this is genuinely concurrent
+    // instead of firing multiple queries on one pg client (the deprecated
+    // shape, removed in pg@9).
+    const [decisionsRows, filesRows, sourcesRows] = await Promise.all([
+      relatedDecisionIds.size > 0
+        ? withUser(access.userId, ({ query }) =>
+            query(
               "SELECT id, title, status, decision_type, description FROM context_decisions WHERE id = ANY($1::uuid[])",
               [Array.from(relatedDecisionIds)]
             )
-          : Promise.resolve({ rows: [] as DecisionRow[] }),
-        relatedFileIds.size > 0
-          ? query("SELECT id, name, category, file_url FROM project_files WHERE id = ANY($1::uuid[])", [
+          )
+        : Promise.resolve({ rows: [] as DecisionRow[] }),
+      relatedFileIds.size > 0
+        ? withUser(access.userId, ({ query }) =>
+            query("SELECT id, name, category, file_url FROM project_files WHERE id = ANY($1::uuid[])", [
               Array.from(relatedFileIds),
             ])
-          : Promise.resolve({ rows: [] as FileRow[] }),
-        relatedSourceIds.size > 0
-          ? query(
+          )
+        : Promise.resolve({ rows: [] as FileRow[] }),
+      relatedSourceIds.size > 0
+        ? withUser(access.userId, ({ query }) =>
+            query(
               "SELECT id, title, content, url, source_type FROM context_sources WHERE id = ANY($1::uuid[])",
               [Array.from(relatedSourceIds)]
             )
-          : Promise.resolve({ rows: [] as SourceRow[] }),
-      ]);
+          )
+        : Promise.resolve({ rows: [] as SourceRow[] }),
+    ]);
 
-      return [decisionsRows.rows, filesRows.rows, sourcesRows.rows] as const;
-    });
+    decisions = decisionsRows.rows;
+    files = filesRows.rows;
+    sources = sourcesRows.rows;
   } else {
     const supabase = await createClient();
 
@@ -267,7 +277,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
 
   // --- Acceptance Criteria (not tracked) -----------------------------------
   const acceptanceSection = section("Acceptance Criteria", [
-    "_Not yet tracked in Guidon as structured data — check the task description above for anything written inline._",
+    "_Not yet tracked in Guidon as structured data - check the task description above for anything written inline._",
   ]);
 
   // --- Project Memory, bucketed --------------------------------------------
@@ -300,7 +310,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
 
   // --- Related Decisions ----------------------------------------------------
   const decisionLines = decisions.map((row) => {
-    const linked = whyContext.decision?.id === row.id ? " — linked decision" : "";
+    const linked = whyContext.decision?.id === row.id ? " - linked decision" : "";
     const description = row.description?.trim() ? `\n  ${row.description.trim()}` : "";
     return `- **${row.title}** (${row.decision_type}, ${row.status})${linked}${description}`;
   });
@@ -309,7 +319,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
   // --- Relevant Files ---------------------------------------------------------
   const filesSection = section(
     "Relevant Files",
-    files.map((row) => `- ${row.name}${row.category ? ` (${row.category})` : ""}${row.file_url ? ` — ${row.file_url}` : ""}`)
+    files.map((row) => `- ${row.name}${row.category ? ` (${row.category})` : ""}${row.file_url ? ` - ${row.file_url}` : ""}`)
   );
 
   // --- Related PRs / Relevant Sources, split by context_sources.source_type ---
@@ -319,7 +329,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
   const sourceLine = (row: SourceRow): string => {
     const label = SOURCE_TYPE_LABELS[row.source_type as keyof typeof SOURCE_TYPE_LABELS] ?? row.source_type;
     const title = row.title?.trim() || "Untitled";
-    const url = row.url ? ` — ${row.url}` : "";
+    const url = row.url ? ` - ${row.url}` : "";
     const body = row.content?.trim() ? `\n  ${row.content.trim()}` : "";
     return `- **${title}** (${label})${url}${body}`;
   };
@@ -328,7 +338,7 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
 
   // --- Previous Attempts (migration 013, TODO.md §22) ------------------------
   // Failed/partial attempts are what an agent actually needs before proposing
-  // another fix — listed first within the section, succeeded ones after, so
+  // another fix - listed first within the section, succeeded ones after, so
   // the highest-value lines aren't buried if there are many attempts.
   const failedOrPartial = attempts.filter((row) => row.outcome !== "succeeded");
   const succeededAttempts = attempts.filter((row) => row.outcome === "succeeded");

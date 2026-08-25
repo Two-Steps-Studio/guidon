@@ -32,11 +32,17 @@ export function canManageOrg(role: OrganizationRole | null): boolean {
 /**
  * Same shape and same reasoning as getProjectAccess (src/lib/data/project-access.ts).
  *
- * Branches on hasDirectDatabase() the same way getCurrentUser() does — see
- * src/lib/data/current-user.ts for the fuller explanation. Both queries run
- * concurrently under the same withUser() transaction; node-postgres queues
- * multiple in-flight .query() calls on one client internally, so this is
- * safe (the same pattern src/app/dashboard/page.tsx already uses).
+ * Branches on hasDirectDatabase() the same way getCurrentUser() does - see
+ * src/lib/data/current-user.ts for the fuller explanation. Two separate
+ * withUser() calls, not one withUser() wrapping Promise.all([query, query])
+ * - each withUser() checks out its own pooled connection, so this is
+ * genuinely concurrent. Firing two queries on one client is what triggers
+ * pg's "Calling client.query() when the client is already executing a
+ * query" deprecation warning (removed in pg@9) - a previous version of this
+ * comment claimed the single-client shape was safe because node-postgres
+ * queues concurrent calls internally, which is true today but is exactly
+ * the deprecated behavior; dashboard/page.tsx (the pattern this cited) has
+ * since been fixed the same way.
  */
 export const getOrgAccess = cache(async function getOrgAccess(
   orgId: string
@@ -45,18 +51,20 @@ export const getOrgAccess = cache(async function getOrgAccess(
     const userId = await getLocalSessionUserId();
     if (!userId) return null;
 
-    const [orgResult, membershipResult] = await withUser(userId, ({ query }) =>
-      Promise.all([
+    const [orgResult, membershipResult] = await Promise.all([
+      withUser(userId, ({ query }) =>
         query(
           "SELECT id, name, slug, description, avatar_url, project_limit, created_at, updated_at FROM organizations WHERE id = $1",
           [orgId]
-        ),
+        )
+      ),
+      withUser(userId, ({ query }) =>
         query(
           "SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2",
           [orgId, userId]
-        ),
-      ])
-    );
+        )
+      ),
+    ]);
 
     if (orgResult.rows.length === 0) return null;
 

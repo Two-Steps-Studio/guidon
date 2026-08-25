@@ -24,7 +24,7 @@ interface ProjectRow {
 /**
  * Self-hosted path: no PostgREST, so the same three queries the Supabase
  * branch below expresses with `.from()` are written as SQL and run under
- * withUser() — RLS applies identically either way, since both paths end up
+ * withUser() - RLS applies identically either way, since both paths end up
  * as `SET LOCAL ROLE authenticated` + the same policies (see
  * src/lib/db/session.ts). This is the first page in the app proven to render
  * end-to-end against a plain PostgreSQL with no Supabase software running;
@@ -32,41 +32,49 @@ interface ProjectRow {
  * same way (see docs/self-hosting.md).
  */
 async function loadDashboardDataLocal(userId: string) {
-  return withUser(userId, async ({ query }) => {
-    const projectsResult = await query(
+  // The tasks/decisions queries need projectIds from this one first, so
+  // they can't join the same withUser() call as a Promise.all - that would
+  // fire multiple queries on one pg client, which is deprecated (removed in
+  // pg@9). Each withUser() below owns its own pooled connection instead.
+  const projectsResult = await withUser(userId, ({ query }) =>
+    query(
       `SELECT p.id, p.name, p.description, p.status, p.avatar_url, o.id AS org_id, o.name AS org_name
        FROM projects p
        JOIN organizations o ON o.id = p.organization_id
        ORDER BY p.created_at DESC`
-    );
+    )
+  );
 
-    const projects: ProjectRow[] = projectsResult.rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      status: row.status,
-      avatar_url: row.avatar_url,
-      organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
-    }));
+  const projects: ProjectRow[] = projectsResult.rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    status: row.status,
+    avatar_url: row.avatar_url,
+    organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
+  }));
 
-    const projectIds = projects.map((p) => p.id);
+  const projectIds = projects.map((p) => p.id);
 
-    let tasks: { status: string; parent_task_id: string | null }[] = [];
-    let totalDecisions = 0;
+  let tasks: { status: string; parent_task_id: string | null }[] = [];
+  let totalDecisions = 0;
 
-    if (projectIds.length > 0) {
-      const [tasksResult, decisionsResult] = await Promise.all([
+  if (projectIds.length > 0) {
+    const [tasksResult, decisionsResult] = await Promise.all([
+      withUser(userId, ({ query }) =>
         query("SELECT status, parent_task_id FROM tasks WHERE project_id = ANY($1::uuid[])", [
           projectIds,
-        ]),
-        query("SELECT id FROM context_decisions WHERE project_id = ANY($1::uuid[])", [projectIds]),
-      ]);
-      tasks = tasksResult.rows;
-      totalDecisions = decisionsResult.rows.length;
-    }
+        ])
+      ),
+      withUser(userId, ({ query }) =>
+        query("SELECT id FROM context_decisions WHERE project_id = ANY($1::uuid[])", [projectIds])
+      ),
+    ]);
+    tasks = tasksResult.rows;
+    totalDecisions = decisionsResult.rows.length;
+  }
 
-    return { projects, tasks, totalDecisions };
-  });
+  return { projects, tasks, totalDecisions };
 }
 
 export default async function DashboardPage() {
@@ -106,13 +114,13 @@ export default async function DashboardPage() {
     }
   }
 
-  // Subtasks (migration 010) are plain `tasks` rows — count top-level tasks
+  // Subtasks (migration 010) are plain `tasks` rows - count top-level tasks
   // only, matching src/lib/data/project-stats.ts and the work board, so a
   // task with subtasks isn't counted twice in the dashboard totals.
   const tasks = rawTasks.filter((t) => !t.parent_task_id);
   const totalTasks = tasks.length;
   // isDone folds the legacy 'completed' status onto 'done' (migration
-  // 002 renamed the vocabulary) — comparing to 'completed' directly
+  // 002 renamed the vocabulary) - comparing to 'completed' directly
   // silently shows 0 for every task created since.
   const completedTasks = tasks.filter((t) => isDone(t.status)).length;
 

@@ -16,24 +16,32 @@ export default async function ProjectKnowledgePage({
   let sources: ContextSource[];
   let counts: { decisions: number; files: number; memory: number };
 
-  // Safety cap, not pagination — see src/app/projects/[id]/work/page.tsx
+  // Safety cap, not pagination - see src/app/projects/[id]/work/page.tsx
   // for the same reasoning applied to tasks.
   const LIST_LIMIT = 500;
 
   if (hasDirectDatabase()) {
-    const [sourcesRes, decisionsRes, filesRes, memoryRes] = await withUser(
-      access.userId,
-      ({ query }) =>
-        Promise.all([
-          query(
-            "SELECT * FROM context_sources WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
-            [projectId, LIST_LIMIT]
-          ),
-          query("SELECT id FROM context_decisions WHERE project_id = $1", [projectId]),
-          query("SELECT id FROM project_files WHERE project_id = $1", [projectId]),
-          query("SELECT id FROM project_memory WHERE project_id = $1", [projectId]),
-        ])
-    );
+    // Four withUser() calls, not one wrapping Promise.all([...]) - each
+    // checks out its own pooled connection, so this is genuinely concurrent
+    // instead of firing multiple queries on one pg client (the deprecated
+    // shape, removed in pg@9).
+    const [sourcesRes, decisionsRes, filesRes, memoryRes] = await Promise.all([
+      withUser(access.userId, ({ query }) =>
+        query(
+          "SELECT * FROM context_sources WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
+          [projectId, LIST_LIMIT]
+        )
+      ),
+      withUser(access.userId, ({ query }) =>
+        query("SELECT id FROM context_decisions WHERE project_id = $1", [projectId])
+      ),
+      withUser(access.userId, ({ query }) =>
+        query("SELECT id FROM project_files WHERE project_id = $1", [projectId])
+      ),
+      withUser(access.userId, ({ query }) =>
+        query("SELECT id FROM project_memory WHERE project_id = $1", [projectId])
+      ),
+    ]);
 
     sources = sourcesRes.rows;
     counts = {

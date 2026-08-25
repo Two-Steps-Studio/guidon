@@ -8,14 +8,14 @@ import { withServiceRole } from "@/lib/db/session";
  * Cross-tenant queries for the admin panel (TODO.md §25).
  *
  * Every function here uses createServiceClient() (src/lib/supabase-server.ts)
- * — the same service-role client already used elsewhere for privileged reads
- * (e.g. getProjectStorageUsage in src/lib/storage/storage.ts) — because an
+ * - the same service-role client already used elsewhere for privileged reads
+ * (e.g. getProjectStorageUsage in src/lib/storage/storage.ts) - because an
  * admin view of "every organization" or "every user" is definitionally a
  * cross-tenant read that RLS is designed to prevent for anyone else.
  *
  * This is only safe because every caller sits behind requireAdminAccess()
  * (src/lib/data/admin-access.ts), which every admin page calls before any
- * function here runs. Nothing in this file re-checks that gate — it isn't
+ * function here runs. Nothing in this file re-checks that gate - it isn't
  * the boundary, it relies on one already having run.
  */
 
@@ -30,13 +30,15 @@ export interface AdminCounts {
 
 export async function getAdminCounts(): Promise<AdminCounts> {
   if (hasDirectDatabase()) {
-    const [orgs, projects, users] = await withServiceRole(({ query }) =>
-      Promise.all([
-        query("SELECT COUNT(*) FROM organizations"),
-        query("SELECT COUNT(*) FROM projects"),
-        query("SELECT COUNT(*) FROM profiles"),
-      ])
-    );
+    // Three withServiceRole() calls, not one wrapping Promise.all([...]) -
+    // each checks out its own pooled connection, so this is genuinely
+    // concurrent instead of firing multiple queries on one pg client (the
+    // deprecated shape, removed in pg@9).
+    const [orgs, projects, users] = await Promise.all([
+      withServiceRole(({ query }) => query("SELECT COUNT(*) FROM organizations")),
+      withServiceRole(({ query }) => query("SELECT COUNT(*) FROM projects")),
+      withServiceRole(({ query }) => query("SELECT COUNT(*) FROM profiles")),
+    ]);
 
     return {
       organizations: Number(orgs.rows[0].count),
@@ -81,7 +83,7 @@ interface OrganizationMemberJoinRow {
 /**
  * Organizations across the whole instance: name, slug, owner, member count,
  * created_at. Owner is resolved via organization_members where role='owner'
- * (organization_members_user_id_fkey references profiles — 001_initial_schema.sql),
+ * (organization_members_user_id_fkey references profiles - 001_initial_schema.sql),
  * joined in one extra query rather than N+1 per organization.
  */
 export async function listOrganizationsForAdmin(): Promise<{
@@ -242,7 +244,7 @@ export interface AdminActivityRow {
 }
 
 /**
- * Instance-wide activity, most recent first — the same activity_logs table
+ * Instance-wide activity, most recent first - the same activity_logs table
  * src/lib/data/activity.ts reads per-project, without the project_id filter.
  *
  * Nothing in this codebase currently inserts into activity_logs (see the

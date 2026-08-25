@@ -39,8 +39,12 @@ export default async function ProjectMembersPage({
   let candidates: TaskCardMember[];
 
   if (hasDirectDatabase()) {
-    const [memberRows, orgRows] = await withUser(access.userId, ({ query }) =>
-      Promise.all([
+    // Two withUser() calls, not one wrapping Promise.all([query, query]) -
+    // each checks out its own pooled connection, so this is genuinely
+    // concurrent instead of firing multiple queries on one pg client (the
+    // deprecated shape, removed in pg@9).
+    const [memberRows, orgRows] = await Promise.all([
+      withUser(access.userId, ({ query }) =>
         query(
           `SELECT pm.id, pm.user_id, pm.role, pm.joined_at,
                   p.id AS profile_id, p.full_name, p.email, p.avatar_url
@@ -48,18 +52,20 @@ export default async function ProjectMembersPage({
            LEFT JOIN profiles p ON p.id = pm.user_id
            WHERE pm.project_id = $1`,
           [projectId]
-        ),
-        // Candidates come from the owning organization: project_members.user_id
-        // is a FK to profiles, so people must already exist in the workspace.
+        )
+      ),
+      // Candidates come from the owning organization: project_members.user_id
+      // is a FK to profiles, so people must already exist in the workspace.
+      withUser(access.userId, ({ query }) =>
         query(
           `SELECT om.user_id, p.id AS profile_id, p.full_name, p.email, p.avatar_url
            FROM organization_members om
            LEFT JOIN profiles p ON p.id = om.user_id
            WHERE om.organization_id = $1`,
           [access.project.organization_id]
-        ),
-      ])
-    );
+        )
+      ),
+    ]);
 
     members = memberRows.rows.map((row) => ({
       id: row.id,

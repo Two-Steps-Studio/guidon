@@ -9,7 +9,7 @@ import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import type { ProjectRole } from "@/types/project";
 
 /**
- * Server-side project authorisation — one gate for every project page.
+ * Server-side project authorisation - one gate for every project page.
  *
  * Before this existed, each of the 11 project pages ran its own
  * getUser() + membership lookup, and 7 of them did not check the role at all;
@@ -34,7 +34,7 @@ export interface ProjectAccess {
     color: string | undefined;
     avatar_url: string | null;
   };
-  /** Null when the user can see the project but is not a member of it —
+  /** Null when the user can see the project but is not a member of it -
    *  possible for `organization` and `public` visibility. */
   role: ProjectRole | null;
 }
@@ -59,13 +59,13 @@ export function canCommentOnProject(role: ProjectRole | null): boolean {
  * Resolve the caller's access to a project.
  *
  * Returns null rather than throwing when the project is invisible, so callers
- * can decide between "not found" and "sign in" — RLS makes those two cases
+ * can decide between "not found" and "sign in" - RLS makes those two cases
  * indistinguishable at the query level, and leaking the difference would tell
  * an outsider which project ids exist.
  */
 /**
  * Wrapped in React's `cache()` because the layout resolves access once for
- * generateMetadata and once more for the render itself — same request, same
+ * generateMetadata and once more for the render itself - same request, same
  * answer. Without this every project page paid for that query twice before
  * even starting its own work.
  */
@@ -76,19 +76,26 @@ export const getProjectAccess = cache(async function getProjectAccess(
     const userId = await getLocalSessionUserId();
     if (!userId) return null;
 
-    const [projectResult, membershipResult] = await withUser(userId, ({ query }) =>
-      Promise.all([
+    // Two withUser() calls, not one withUser() wrapping Promise.all([query, query]) -
+    // each withUser() checks out its own pooled connection (src/lib/db/session.ts),
+    // so this is genuinely concurrent. Firing two queries on the same client
+    // (the old shape) is what triggers pg's "Calling client.query() when the
+    // client is already executing a query" deprecation warning, removed in pg@9.
+    const [projectResult, membershipResult] = await Promise.all([
+      withUser(userId, ({ query }) =>
         query(
           `SELECT id, name, slug, organization_id, description, status, visibility, color, avatar_url
            FROM projects WHERE id = $1`,
           [projectId]
-        ),
+        )
+      ),
+      withUser(userId, ({ query }) =>
         query("SELECT role FROM project_members WHERE project_id = $1 AND user_id = $2", [
           projectId,
           userId,
-        ]),
-      ])
-    );
+        ])
+      ),
+    ]);
 
     if (projectResult.rows.length === 0) return null;
 
@@ -195,8 +202,8 @@ export interface SwitchableProject {
  * belongs to would mix unrelated workspaces into one dropdown).
  *
  * No separate membership check here: `projects_select` RLS
- * (001_initial_schema.sql) already applies `private.project_access(id)` —
- * same visibility rule as everywhere else — so this returns exactly what the
+ * (001_initial_schema.sql) already applies `private.project_access(id)` -
+ * same visibility rule as everywhere else - so this returns exactly what the
  * caller is allowed to see, same guarantee as the `projects` page.
  */
 export async function getSwitchableProjects(

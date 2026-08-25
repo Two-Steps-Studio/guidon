@@ -1,26 +1,26 @@
 "use server";
 
 /**
- * "Why" context for a single task — TODO.md §20 ("a record should be able to
+ * "Why" context for a single task - TODO.md §20 ("a record should be able to
  * answer: where did this information come from?") applied to the task detail
  * dialog specifically.
  *
  * Two things are surfaced:
  *   1. The task's directly-linked decision, via tasks.decision_id.
  *   2. Everything connected through context_relations where the task is
- *      either the source or the target — grouped by relation_type in the UI,
+ *      either the source or the target - grouped by relation_type in the UI,
  *      resolved here against whichever table source_type/target_type points
  *      at (context_decisions / context_sources / project_memory /
  *      roadmap_phases / project_files / tasks / projects).
  *
  * Called lazily as a Server Action from TaskDetailDialog when the dialog
  * opens (src/components/work/task-detail-dialog.tsx), the same pattern
- * loadComments already uses (src/app/projects/[id]/work/actions.ts) — not
+ * loadComments already uses (src/app/projects/[id]/work/actions.ts) - not
  * prefetched for every task on the board, since most tasks are never opened.
  *
  * Attribution: creator ids returned here (createdBy) are resolved against
  * `members` on the client, exactly like comment authors already are
- * (TaskDetailDialog's `membersById`) — every entity a project member could
+ * (TaskDetailDialog's `membersById`) - every entity a project member could
  * have created satisfies project_role(project_id) on insert, so the
  * project's member list is a complete lookup table. context_sources.author
  * is a free-text field with no profile FK (see types/context.ts), so it is
@@ -50,7 +50,7 @@ export interface TaskWhyRelatedItem {
   direction: "outgoing" | "incoming";
   entityType: ContextEntityType;
   entityId: string;
-  /** True when the other-side row no longer resolves (deleted, or an orphaned relation — see migration 011's comment block). */
+  /** True when the other-side row no longer resolves (deleted, or an orphaned relation - see migration 011's comment block). */
   missing: boolean;
   title: string;
   preview: string | null;
@@ -163,7 +163,7 @@ function creatorIdFor(type: ContextEntityType, row: Record<string, unknown> | un
     case "file":
       return (row.uploaded_by as string | null) ?? null;
     case "source":
-      // context_sources has no profile FK for authorship — see createdByText.
+      // context_sources has no profile FK for authorship - see createdByText.
       return null;
     default:
       return null;
@@ -186,30 +186,38 @@ export async function getTaskWhyContext(projectId: string, taskId: string): Prom
 
   if (hasDirectDatabase()) {
     try {
-      [decisionId, relations, decision] = await withUser(access.userId, async ({ query }) => {
-        const [taskRes, relationsRes] = await Promise.all([
-          query("SELECT decision_id FROM tasks WHERE id = $1", [taskId]),
+      // Two withUser() calls, not one wrapping Promise.all([query, query])
+      // - each checks out its own pooled connection, so this is genuinely
+      // concurrent instead of firing multiple queries on one pg client (the
+      // deprecated shape, removed in pg@9). The decision lookup depends on
+      // the task query's result, so it stays a separate sequential call.
+      const [taskRes, relationsRes] = await Promise.all([
+        withUser(access.userId, ({ query }) =>
+          query("SELECT decision_id FROM tasks WHERE id = $1", [taskId])
+        ),
+        withUser(access.userId, ({ query }) =>
           query(
             `SELECT * FROM context_relations
              WHERE project_id = $1
                AND ((source_type = 'task' AND source_id = $2) OR (target_type = 'task' AND target_id = $2))
              ORDER BY created_at DESC`,
             [projectId, taskId]
-          ),
-        ]);
+          )
+        ),
+      ]);
 
-        const id = (taskRes.rows[0]?.decision_id as string | null) ?? null;
-        let dec: TaskWhyDecision | null = null;
-        if (id) {
-          const decisionRes = await query(
+      decisionId = (taskRes.rows[0]?.decision_id as string | null) ?? null;
+      relations = relationsRes.rows;
+
+      if (decisionId) {
+        const decisionRes = await withUser(access.userId, ({ query }) =>
+          query(
             "SELECT id, title, status, decision_type, description FROM context_decisions WHERE id = $1",
-            [id]
-          );
-          if (decisionRes.rows.length > 0) dec = decisionRes.rows[0] as TaskWhyDecision;
-        }
-
-        return [id, relationsRes.rows, dec] as const;
-      });
+            [decisionId]
+          )
+        );
+        if (decisionRes.rows.length > 0) decision = decisionRes.rows[0] as TaskWhyDecision;
+      }
     } catch (error) {
       return EMPTY_ERROR(error instanceof Error ? error.message : "Failed to load context.");
     }
@@ -268,34 +276,26 @@ export async function getTaskWhyContext(projectId: string, taskId: string): Prom
   let projectsMap: Map<string, Record<string, unknown>>;
 
   if (hasDirectDatabase()) {
-    [decisionsMap, sourcesMap, memoryMap, phasesMap, filesMap, tasksMap, projectsMap] = await withUser(
-      access.userId,
-      ({ query }) =>
-        Promise.all([
-          fetchMapLocal(
-            query,
-            "context_decisions",
-            "id, title, status, description, made_by, made_at",
-            idsByType.decision
-          ),
-          fetchMapLocal(query, "context_sources", "id, title, content, author, created_at", idsByType.source),
-          fetchMapLocal(
-            query,
-            "project_memory",
-            "id, content, memory_type, created_by, created_at",
-            idsByType.memory
-          ),
-          fetchMapLocal(
-            query,
-            "roadmap_phases",
-            "id, name, description, created_by, created_at",
-            idsByType.phase
-          ),
-          fetchMapLocal(query, "project_files", "id, name, uploaded_by, created_at", idsByType.file),
-          fetchMapLocal(query, "tasks", "id, title, created_by, created_at", idsByType.task),
-          fetchMapLocal(query, "projects", "id, name, created_by, created_at", idsByType.project),
-        ])
-    );
+    // Seven withUser() calls, not one wrapping Promise.all([...]) - each
+    // checks out its own pooled connection, so this is genuinely concurrent
+    // instead of firing multiple queries on one pg client (the deprecated
+    // shape, removed in pg@9).
+    const withUserFetch = (table: string, columns: string, ids: Set<string> | undefined) =>
+      withUser(access.userId, ({ query }) => fetchMapLocal(query, table, columns, ids));
+
+    [decisionsMap, sourcesMap, memoryMap, phasesMap, filesMap, tasksMap, projectsMap] = await Promise.all([
+      withUserFetch(
+        "context_decisions",
+        "id, title, status, description, made_by, made_at",
+        idsByType.decision
+      ),
+      withUserFetch("context_sources", "id, title, content, author, created_at", idsByType.source),
+      withUserFetch("project_memory", "id, content, memory_type, created_by, created_at", idsByType.memory),
+      withUserFetch("roadmap_phases", "id, name, description, created_by, created_at", idsByType.phase),
+      withUserFetch("project_files", "id, name, uploaded_by, created_at", idsByType.file),
+      withUserFetch("tasks", "id, title, created_by, created_at", idsByType.task),
+      withUserFetch("projects", "id, name, created_by, created_at", idsByType.project),
+    ]);
   } else {
     const supabase = await createClient();
 

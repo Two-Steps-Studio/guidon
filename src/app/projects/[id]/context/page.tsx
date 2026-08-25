@@ -18,32 +18,40 @@ export default async function ProjectContextPage({
   let sources: ContextSource[];
   let relations: ContextRelation[];
 
-  // Safety cap, not pagination — there's no pagination UI here, so this
+  // Safety cap, not pagination - there's no pagination UI here, so this
   // stays high enough that no real project should hit it today; it only
   // exists to stop an unbounded SELECT * from becoming a real cost as a
   // project's context grows.
   const LIST_LIMIT = 500;
 
   if (hasDirectDatabase()) {
-    const [decisionsRes, sourcesRes, relationsRes] = await withUser(access.userId, ({ query }) =>
-      Promise.all([
+    // Three withUser() calls, not one wrapping Promise.all([...]) - each
+    // checks out its own pooled connection, so this is genuinely concurrent
+    // instead of firing multiple queries on one pg client (the deprecated
+    // shape, removed in pg@9).
+    const [decisionsRes, sourcesRes, relationsRes] = await Promise.all([
+      withUser(access.userId, ({ query }) =>
         query(
           "SELECT * FROM context_decisions WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
           [projectId, LIST_LIMIT]
-        ),
+        )
+      ),
+      withUser(access.userId, ({ query }) =>
         query(
           "SELECT * FROM context_sources WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
           [projectId, LIST_LIMIT]
-        ),
-        // Same reasoning as fetchProjectRelations (project-relations.ts):
-        // project_id is a direct, indexed column since migration 011, no
-        // need to first collect every entity id in the project.
+        )
+      ),
+      // Same reasoning as fetchProjectRelations (project-relations.ts):
+      // project_id is a direct, indexed column since migration 011, no
+      // need to first collect every entity id in the project.
+      withUser(access.userId, ({ query }) =>
         query(
           "SELECT * FROM context_relations WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2",
           [projectId, LIST_LIMIT]
-        ),
-      ])
-    );
+        )
+      ),
+    ]);
     decisions = decisionsRes.rows;
     sources = sourcesRes.rows;
     relations = relationsRes.rows;

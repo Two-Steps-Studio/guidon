@@ -41,24 +41,32 @@ export default async function ProjectSettingsPage({
   let boardColumns: BoardColumnOverride[];
 
   if (hasDirectDatabase()) {
-    const [projectRes, techRes, permsRes, columnsRes] = await withUser(access.userId, ({ query }) =>
-      Promise.all([
-        query("SELECT * FROM projects WHERE id = $1", [projectId]),
+    // Four withUser() calls, not one wrapping Promise.all([...]) - each
+    // checks out its own pooled connection, so this is genuinely concurrent
+    // instead of firing multiple queries on one pg client (the deprecated
+    // shape, removed in pg@9).
+    const [projectRes, techRes, permsRes, columnsRes] = await Promise.all([
+      withUser(access.userId, ({ query }) => query("SELECT * FROM projects WHERE id = $1", [projectId])),
+      withUser(access.userId, ({ query }) =>
         query(
           `SELECT * FROM technologies WHERE project_id = $1
            ORDER BY sort_order ASC NULLS LAST, name ASC`,
           [projectId]
-        ),
+        )
+      ),
+      withUser(access.userId, ({ query }) =>
         query(
           "SELECT can_read_context, can_create_comments, can_change_status, can_complete_tasks, can_modify_settings, can_delete_tasks FROM project_ai_permissions WHERE project_id = $1",
           [projectId]
-        ),
+        )
+      ),
+      withUser(access.userId, ({ query }) =>
         query(
           "SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1",
           [projectId]
-        ),
-      ])
-    );
+        )
+      ),
+    ]);
     project = projectRes.rows[0];
     technologies = techRes.rows;
     aiPermissions = permsRes.rows[0] ?? DEFAULT_AI_PERMISSIONS;

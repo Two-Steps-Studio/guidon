@@ -36,23 +36,29 @@ export default async function ProjectsPage() {
   let projects: ProjectRow[];
 
   if (hasDirectDatabase()) {
-    const [orgResult, projectResult] = await withUser(user.id, ({ query }) =>
-      Promise.all([
+    // Two withUser() calls, not one wrapping Promise.all([query, query]) -
+    // each checks out its own pooled connection, so this is genuinely
+    // concurrent instead of firing multiple queries on one pg client (the
+    // deprecated shape, removed in pg@9).
+    const [orgResult, projectResult] = await Promise.all([
+      withUser(user.id, ({ query }) =>
         query(
           `SELECT o.id, o.name, o.slug, o.description, o.avatar_url, om.role
            FROM organization_members om
            JOIN organizations o ON o.id = om.organization_id
            WHERE om.user_id = $1`,
           [user.id]
-        ),
+        )
+      ),
+      withUser(user.id, ({ query }) =>
         query(
           `SELECT p.id, p.name, p.description, p.status, p.avatar_url, o.id AS org_id, o.name AS org_name
            FROM projects p
            JOIN organizations o ON o.id = p.organization_id
            ORDER BY p.created_at DESC`
-        ),
-      ])
-    );
+        )
+      ),
+    ]);
 
     organizations = orgResult.rows.map((row) => ({
       id: row.id,
