@@ -23,7 +23,7 @@ export function isValidApiKeyFormat(value: string): boolean {
   return value.startsWith(KEY_PREFIX) && value.length > KEY_PREFIX.length + 20;
 }
 
-// Scopes moved to ./scopes.ts (client-safe — no "server-only" import) and
+// Scopes moved to ./scopes.ts (client-safe - no "server-only" import) and
 // re-exported here so existing server-side imports of API_KEY_SCOPES from
 // this file keep working unchanged.
 export { API_KEY_SCOPES, type ApiKeyScope } from "./scopes";

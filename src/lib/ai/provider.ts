@@ -5,9 +5,9 @@
  * able to run fully local AI (Ollama) without any project data leaving
  * their machine. The interface below is deliberately the smallest surface
  * a future concrete feature (e.g. generating an ai_insight from a memory
- * source — see src/app/projects/[id]/memory/) needs to call: one method,
+ * source - see src/app/projects/[id]/memory/) needs to call: one method,
  * plain text in and out. No tool-calling, no streaming, no multi-turn
- * state — TODO.md §18 frames MCP/agent context as an interface, not the
+ * state - TODO.md §18 frames MCP/agent context as an interface, not the
  * core data model, and that scope only starts once a real feature needs it.
  *
  * Five of the six providers (OpenAI, OpenRouter, Ollama, Azure OpenAI,
@@ -16,7 +16,7 @@
  * and auth convention differ enough (deployment-scoped path, api-version
  * query param, api-key header) that it gets its own thin file instead of a
  * config branch. Only Anthropic has a genuinely different wire format (the
- * Messages API), so it gets its own file too, with a plain fetch call —
+ * Messages API), so it gets its own file too, with a plain fetch call -
  * this codebase avoids adding a vendor SDK dependency where a small fetch
  * call suffices (no @anthropic-ai/sdk or openai package in package.json).
  *
@@ -64,7 +64,7 @@ export interface AIProvider {
 // CONFIG VALIDATION
 // ============================================
 //
-// Read once, here, rather than duplicated in every provider file — the same
+// Read once, here, rather than duplicated in every provider file - the same
 // philosophy as assertSafeStoragePath/assertSafeBucket in
 // storage/provider.ts: every provider is held to the same "missing config
 // fails loudly" contract, even though each provider still owns which vars
@@ -85,7 +85,7 @@ export function requireEnv(name: string, providerName: AIProviderName): string {
 
 /**
  * AI_MODEL is required for every provider except Azure, which selects the
- * model via AZURE_OPENAI_DEPLOYMENT instead. There is no default to guess —
+ * model via AZURE_OPENAI_DEPLOYMENT instead. There is no default to guess -
  * a wrong default model name fails in a more confusing way than an explicit
  * "set AI_MODEL" error.
  */
@@ -110,7 +110,7 @@ const VALID_PROVIDER_NAMES: readonly AIProviderName[] = [
  * Resolve the configured provider name, or `null` if AI is not configured.
  *
  * Unlike storage (which always needs a working provider), AI is an
- * optional subsystem — the health check treats an unset AI_PROVIDER as a
+ * optional subsystem - the health check treats an unset AI_PROVIDER as a
  * valid "not configured" state, not an error. So there is deliberately no
  * default here: defaulting to a cloud provider would silently start
  * sending project data off-device, and defaulting to "ollama" would
@@ -134,11 +134,11 @@ export function resolveProviderName(): AIProviderName | null {
 let cached: AIProvider | null = null;
 
 /**
- * Resolve the configured provider. Cached per process — the provider holds
+ * Resolve the configured provider. Cached per process - the provider holds
  * no request state, so a single instance is correct and avoids re-reading
  * env and re-validating config on every call.
  *
- * Throws if AI_PROVIDER is unset or its config is incomplete/invalid — same
+ * Throws if AI_PROVIDER is unset or its config is incomplete/invalid - same
  * philosophy as the storage factory's s3 branch: a provider that silently
  * no-ops (or silently sends data to the wrong place) is worse than a clear
  * failure. Callers that treat "AI not configured" as a legitimate, expected

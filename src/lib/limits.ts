@@ -3,14 +3,14 @@ import "server-only";
 import { hasDirectDatabase } from "@/lib/db/pool";
 
 /**
- * Guidon Cloud (hosted — no self-managed Postgres) caps an organization's
+ * Guidon Cloud (hosted - no self-managed Postgres) caps an organization's
  * project count. Self-hosted installs (DATABASE_URL set) have no such limit
- * — it's your own infrastructure, not a shared resource Guidon is paying for.
+ * - it's your own infrastructure, not a shared resource Guidon is paying for.
  *
  * The cap itself lives per-organization on organizations.project_limit
  * (migration 014), defaulting to HOSTED_PROJECT_LIMIT_PER_ORG for every new
  * organization. An instance admin can raise it for a specific organization
- * from /admin/organizations — see src/app/admin/organizations/actions.ts.
+ * from /admin/organizations - see src/app/admin/organizations/actions.ts.
  * Kept in one place so the UI's "hide the button" check and the Server
  * Action's actual enforcement can never drift apart from each other.
  */
@@ -38,7 +38,7 @@ export interface OrgPlanLimits {
 
 /**
  * Reads the organization's current plan limits via its subscription. Self-
- * hosted installs never call this — every enforcement point checks
+ * hosted installs never call this - every enforcement point checks
  * hasDirectDatabase() first, same convention as isHostedProjectLimitReached.
  */
 export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanLimits> {

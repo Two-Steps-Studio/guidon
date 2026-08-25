@@ -17,7 +17,7 @@ export default async function AdminOrganizationsPage() {
         <h2 className="text-2xl font-bold">Organizations</h2>
         <p className="text-muted-foreground">
           {rows.length} organization{rows.length === 1 ? "" : "s"} across this instance
-          {truncated ? ` (capped at ${rows.length} for this v1 view — no pagination yet)` : ""}.
+          {truncated ? ` (capped at ${rows.length} for this v1 view - no pagination yet)` : ""}.
         </p>
       </div>
 
@@ -47,7 +47,7 @@ export default async function AdminOrganizationsPage() {
                   <tr key={org.id} className="[&>td]:px-4 [&>td]:py-3 hover:bg-surface-hover">
                     <td className="font-medium">{org.name}</td>
                     <td className="font-mono text-xs text-muted-foreground">{org.slug}</td>
-                    <td>{org.owner ? org.owner.full_name || org.owner.email : "—"}</td>
+                    <td>{org.owner ? org.owner.full_name || org.owner.email : "-"}</td>
                     <td>{org.memberCount}</td>
                     <td className="text-muted-foreground">{new Date(org.created_at).toLocaleDateString()}</td>
                     <td>

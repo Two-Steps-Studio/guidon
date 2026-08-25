@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRACJA 008
+-- GUIDON - MIGRACJA 008
 -- Kategoria technologii: game_engine
 -- ============================================================
 --
@@ -10,7 +10,7 @@ BEGIN;
 -- POWÓD
 -- -----
 -- Moduł DEV w tss-website obsługuje kategorię `game_engine`
--- (Unity, Unreal, Godot). Guidon jej nie ma — jego CHECK
+-- (Unity, Unreal, Godot). Guidon jej nie ma - jego CHECK
 -- dopuszcza wyłącznie:
 --
 --     frontend | backend | database | devops | ai | other
@@ -19,7 +19,7 @@ BEGIN;
 -- gier wylądowałyby w `backend`, co dla studia gamedev jest
 -- realną utratą informacji. TODO.md §13 wprost wymienia gamedev
 -- jako pierwszy przypadek użycia, a §23 ostrzega, żeby nie
--- zaszywać produktu wokół gamedevu — ale jedna kategoria to nie
+-- zaszywać produktu wokół gamedevu - ale jedna kategoria to nie
 -- zaszywanie, tylko brak regresji wobec DEV.
 --
 -- BEZPIECZEŃSTWO

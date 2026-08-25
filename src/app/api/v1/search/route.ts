@@ -13,8 +13,8 @@ interface SearchResult {
 }
 
 /**
- * Both branches below run the identical set of queries — same tables, same
- * ILIKE pattern, same 10-row cap — the only difference is which client
+ * Both branches below run the identical set of queries - same tables, same
+ * ILIKE pattern, same 10-row cap - the only difference is which client
  * issues them. RLS is what actually scopes results to projects this caller
  * can see; project_id from the query string is never independently checked
  * against membership, on either path, because a project the caller can't

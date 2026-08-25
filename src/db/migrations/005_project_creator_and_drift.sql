@@ -1,13 +1,13 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRATION 005
+-- GUIDON - MIGRATION 005
 -- projects.created_by, and repo/database drift reconciliation
 -- ============================================================
 --
 -- Run AFTER 004.
 --
--- PROBLEM 1 — projects.created_by is silently NULL
+-- PROBLEM 1 - projects.created_by is silently NULL
 -- ------------------------------------------------
 -- public.projects.created_by has NO column default, and the only
 -- thing claiming to populate it is private.handle_new_project(),
@@ -17,7 +17,7 @@ BEGIN;
 --         AFTER INSERT ON public.projects
 --
 -- Assigning NEW.<column> inside an AFTER trigger has no effect on
--- the stored row — the return value is discarded. So:
+-- the stored row - the return value is discarded. So:
 --
 --   * the owner membership IS created correctly (the trigger reads
 --     its own local NEW.created_by before inserting the member row)
@@ -34,7 +34,7 @@ BEGIN;
 -- trigger (private.set_organization_creator).
 --
 --
--- PROBLEM 2 — the repository cannot rebuild the database
+-- PROBLEM 2 - the repository cannot rebuild the database
 -- ------------------------------------------------------
 -- private.set_organization_creator() exists in the live database
 -- but appears in no migration file in this repository. A fresh
@@ -98,7 +98,7 @@ CREATE TRIGGER set_organization_creator
 -- difference: a service_role caller may create a project on
 -- behalf of a user by supplying created_by explicitly.
 --
--- Rationale — organizations are only ever created by a person
+-- Rationale - organizations are only ever created by a person
 -- clicking "new organization", whereas projects are a plausible
 -- target for server-side automation (templates, imports,
 -- seeding). Blocking service_role outright would make those
@@ -151,7 +151,7 @@ DROP TRIGGER IF EXISTS set_project_creator ON public.projects;
 
 -- Named to sort before set_project_slug: BEFORE triggers on the same
 -- event fire in alphabetical order, and the slug trigger does not
--- depend on created_by, so either order is correct — this simply
+-- depend on created_by, so either order is correct - this simply
 -- keeps the ownership decision first and the derivation second.
 CREATE TRIGGER set_project_creator
     BEFORE INSERT ON public.projects

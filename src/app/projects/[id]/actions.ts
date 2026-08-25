@@ -14,7 +14,7 @@ export type UpdateProjectState = {
 /**
  * Updates a project's name and description.
  *
- * RLS is still the real boundary — this check exists so a developer or
+ * RLS is still the real boundary - this check exists so a developer or
  * tester gets "you can't edit this project" instead of a raw Postgres
  * error surfaced as a generic failure (TODO.md §33, §38).
  */

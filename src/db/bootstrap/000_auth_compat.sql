@@ -1,5 +1,5 @@
 -- ============================================================
--- GUIDON — WARSTWA ZGODNOŚCI Z SUPABASE
+-- GUIDON - WARSTWA ZGODNOŚCI Z SUPABASE
 -- (TODO.md §4 "PostgreSQL compatibility as a strategic goal";
 --  docs/self-hosting-audit.md, bloker 2)
 -- ============================================================
@@ -17,7 +17,7 @@
 --
 -- Ten plik odtwarza je jako zwykłe obiekty PostgreSQL, dzięki czemu
 -- 70 polityk RLS działa BEZ ŻADNEJ ZMIANY na obu bazach. Alternatywą
--- byłoby przepisanie tych polityk — czyli dwie rozjeżdżające się
+-- byłoby przepisanie tych polityk - czyli dwie rozjeżdżające się
 -- wersje zabezpieczeń. Jedna definicja jest bezpieczniejsza.
 --
 --
@@ -25,19 +25,19 @@
 -- -----------------------------
 -- Migracja 000 zakłada już istnienie auth.users (klucz obcy), a 001
 -- ról anon/authenticated. Warstwa zgodności musi więc powstać PRZED
--- pierwszą migracją, a nie po ostatniej — numer 009 byłby zbyt późny.
+-- pierwszą migracją, a nie po ostatniej - numer 009 byłby zbyt późny.
 -- To provisioning infrastruktury, nie historia schematu.
 --
 -- Runner (scripts/migrate.mjs) stosuje ten plik wyłącznie wtedy, gdy
 -- auth.uid() NIE istnieje. Na Supabase istnieje, więc plik nie jest
--- nawet czytany — produkcyjna baza nie jest dotykana w żaden sposób.
+-- nawet czytany - produkcyjna baza nie jest dotykana w żaden sposób.
 --
 --
 -- MODEL BEZPIECZEŃSTWA
 -- --------------------
 -- Na Supabase tożsamość pochodzi z JWT weryfikowanego przez PostgREST.
 -- Tutaj GUC `request.jwt.claims` ustawia kod serwerowy w transakcji
--- (src/lib/db/session.ts) — a ustawić go może WYŁĄCZNIE kod serwerowy,
+-- (src/lib/db/session.ts) - a ustawić go może WYŁĄCZNIE kod serwerowy,
 -- bo przeglądarka nie ma połączenia z bazą. To jest warunek konieczny
 -- i on właśnie czyni tę warstwę bezpieczną, a nie samo SQL.
 --
@@ -54,11 +54,11 @@ BEGIN;
 -- Odpowiedniki ról Supabase. NOINHERIT jest istotne: rola aplikacji
 -- dostaje je przez GRANT, ale uprawnienia zyskuje dopiero po jawnym
 -- SET ROLE. Bez NOINHERIT połączenie miałoby sumę uprawnień wszystkich
--- trzech ról od razu — w tym service_role z BYPASSRLS.
+-- trzech ról od razu - w tym service_role z BYPASSRLS.
 --
 -- service_role z BYPASSRLS odtwarza semantykę Supabase, gdzie klucz
 -- serwisowy omija RLS. Uwaga: private.is_service_role() z 006 czyta
--- claim z JWT, a nie rolę bazy — oba mechanizmy muszą istnieć, bo
+-- claim z JWT, a nie rolę bazy - oba mechanizmy muszą istnieć, bo
 -- migracje 005-007 zakładają pierwszy, a uprawnienia tabel drugi.
 -- ============================================================
 
@@ -109,7 +109,7 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 --   raw_user_meta_data  -> full_name, avatar_url w tym samym triggerze
 --
 -- Reszta (hasło, potwierdzenie e-maila, znaczniki czasu) to miejsce na
--- system uwierzytelniania z §8. Nie jest tu implementowany — kolumny
+-- system uwierzytelniania z §8. Nie jest tu implementowany - kolumny
 -- istnieją, żeby późniejsze dodanie go nie wymagało zmiany klucza
 -- obcego, na którym wisi cały schemat.
 --
@@ -129,16 +129,16 @@ CREATE TABLE IF NOT EXISTS auth.users (
 );
 
 
--- Profile publiczne żyją w public.profiles — auth.users nie jest odpytywana
+-- Profile publiczne żyją w public.profiles - auth.users nie jest odpytywana
 -- pod tożsamością authenticated/anon. RLS włączone BEZ POLITYK oznacza
 -- "odmów wszystkim poza właścicielem i BYPASSRLS", co jest tu pożądanym
 -- stanem domyślnym.
 --
 -- src/lib/auth/local-auth.ts (self-hosted logowanie, TODO.md §8) PISZE i
--- CZYTA tę tabelę, ale wyłącznie pod withServiceRole() — nigdy pod
+-- CZYTA tę tabelę, ale wyłącznie pod withServiceRole() - nigdy pod
 -- withUser(). GRANT poniżej jest więc konieczny, nie kosmetyczny: bez niego
 -- signUpLocal()/signInLocal() dostają "permission denied for table users",
--- bo BYPASSRLS omija polityki RLS, ale nie zastępuje uprawnień GRANT — a
+-- bo BYPASSRLS omija polityki RLS, ale nie zastępuje uprawnień GRANT - a
 -- sekcja 8 tego pliku nadaje service_role uprawnienia tylko w schemacie
 -- public, auth.users leży w schemacie auth.
 ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
@@ -154,7 +154,7 @@ GRANT ALL ON auth.users TO service_role;
 -- Zwraca komplet oświadczeń ustawionych na transakcję. Ładunek nie
 -- jest gwarantowany jako poprawny JSON (GUC to zwykły tekst), a błąd
 -- parsowania wewnątrz polityki RLS przerwałby zapytanie zamiast je
--- odrzucić. Dlatego wyjątek jest połykany i zwracany jest NULL —
+-- odrzucić. Dlatego wyjątek jest połykany i zwracany jest NULL -
 -- "brak tożsamości", czyli bezpieczna odmowa.
 -- ============================================================
 
@@ -189,7 +189,7 @@ $$;
 -- ============================================================
 --
 -- Serce warstwy: 47 odwołań w migracjach i 70 polityk RLS zależy od
--- tej jednej funkcji. Semantyka zgodna z Supabase — `sub` z JWT jako
+-- tej jednej funkcji. Semantyka zgodna z Supabase - `sub` z JWT jako
 -- uuid, NULL gdy brak sesji.
 --
 -- Niepoprawny uuid w `sub` również daje NULL, a nie błąd: polityka ma
@@ -247,7 +247,7 @@ $$;
 -- ============================================================
 --
 -- Polityki RLS wołają auth.uid() w kontekście roli wywołującego, więc
--- każda rola aplikacyjna musi mieć EXECUTE. anon też — polityki są
+-- każda rola aplikacyjna musi mieć EXECUTE. anon też - polityki są
 -- ewaluowane, zanim okaże się, że nic nie zwrócą.
 -- ============================================================
 
@@ -262,14 +262,14 @@ GRANT EXECUTE ON FUNCTION auth.role() TO anon, authenticated, service_role;
 --
 -- BYPASSRLS pomija polityki, ale NIE nadaje uprawnień. Bez tej sekcji
 -- withServiceRole() dostaje "permission denied for table ..." przy
--- każdej tabeli — migracja 001 nadaje uprawnienia wyłącznie roli
+-- każdej tabeli - migracja 001 nadaje uprawnienia wyłącznie roli
 -- `authenticated`, bo na Supabase service_role dostaje je z domyślnych
 -- uprawnień skonfigurowanych przez platformę.
 --
 -- Wykryte dopiero przy uruchomieniu; sam SQL wyglądał poprawnie.
 --
 -- ALTER DEFAULT PRIVILEGES działa na obiekty tworzone PÓŹNIEJ przez tę
--- samą rolę — czyli na wszystkie 16 tabel, bo warstwa zgodności
+-- samą rolę - czyli na wszystkie 16 tabel, bo warstwa zgodności
 -- powstaje przed migracją 000. Jawny GRANT poniżej obejmuje przypadek
 -- ponownego uruchomienia na gotowej bazie, gdzie tabele już istnieją.
 -- ============================================================

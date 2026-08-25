@@ -12,14 +12,14 @@ import {
 } from "../provider";
 
 /**
- * Local filesystem storage — the self-hosted default (TODO.md §5).
+ * Local filesystem storage - the self-hosted default (TODO.md §5).
  *
  * Objects live under STORAGE_PATH/<bucket>/<path>. Files are served back
  * through /api/storage rather than statically, so access stays behind the
  * application's authorisation and nothing under STORAGE_PATH is web-reachable
  * by guessing a filename.
  */
-/** Effectively permanent — see getUrl()'s `public` option. */
+/** Effectively permanent - see getUrl()'s `public` option. */
 const PUBLIC_URL_TTL_SECONDS = 50 * 365 * 24 * 60 * 60;
 
 export class LocalStorageProvider implements StorageProvider {
@@ -35,7 +35,7 @@ export class LocalStorageProvider implements StorageProvider {
   /**
    * Map bucket + object path to an absolute path, then verify the result is
    * still inside the root. `assertSafeStoragePath` already rejects `..`, but
-   * this second check is what actually guarantees containment — symlinks and
+   * this second check is what actually guarantees containment - symlinks and
    * unicode normalisation can defeat string-level checks alone.
    */
   private resolve(bucket: string, objectPath: string): string {
@@ -102,7 +102,7 @@ export class LocalStorageProvider implements StorageProvider {
    * covers bucket, path and expiry, so a URL cannot be edited to reach another
    * object or to extend its own lifetime.
    *
-   * `public: true` doesn't add a separate unsigned serving path — it just
+   * `public: true` doesn't add a separate unsigned serving path - it just
    * signs for PUBLIC_URL_TTL_SECONDS (50 years) instead of the normal
    * 10-minute default, so /api/storage's verification is unchanged either
    * way. That's the whole fix for the avatars bucket: a permanent-in-practice

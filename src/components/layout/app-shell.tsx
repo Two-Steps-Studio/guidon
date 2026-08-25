@@ -7,7 +7,7 @@ type AppShellProps = AppSidebarProps & { children: React.ReactNode };
 
 /**
  * Reads the sidebar's own persistence cookie server-side so the first paint
- * already matches the user's last collapsed/expanded choice — the shadcn
+ * already matches the user's last collapsed/expanded choice - the shadcn
  * sidebar primitive writes this cookie client-side on every toggle
  * (src/components/ui/sidebar.tsx's SIDEBAR_COOKIE_NAME), this just reads it
  * back before rendering instead of always defaulting to expanded.

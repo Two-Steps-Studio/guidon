@@ -1,5 +1,5 @@
 -- ============================================================
--- GUIDON — MIGRACJA 015
+-- GUIDON - MIGRACJA 015
 -- plans + subscriptions: Free/Pro/Team/Business (TODO §10-13)
 -- ============================================================
 --
@@ -8,17 +8,17 @@
 -- POWÓD
 -- -----
 -- Zero istniejącego kodu billingowego (grep po "stripe"/"subscription"/
--- "billing" w całym repo — nic). Ta migracja dodaje realny schemat planów
+-- "billing" w całym repo - nic). Ta migracja dodaje realny schemat planów
 -- i subskrypcji, budowany wokół istniejącego organizations.project_limit
 -- (migracja 014), nie zamiast niego.
 --
--- Free zmienia się z dzisiejszego project_limit DEFAULT 1 na 2 — patrz
+-- Free zmienia się z dzisiejszego project_limit DEFAULT 1 na 2 - patrz
 -- docs/superpowers/specs/2026-08-22-subscriptions-design.md, potwierdzone
 -- z użytkownikiem wprost. Istniejące organizacje NIE są retroaktywnie
--- dotykane — to zmiana DEFAULT dla nowych wierszy, nie migracja danych.
+-- dotykane - to zmiana DEFAULT dla nowych wierszy, nie migracja danych.
 --
 -- BEZPIECZEŃSTWO: subscriptions ma zero polityk INSERT/UPDATE/DELETE dla
--- authenticated — dokładnie ta sama lekcja co project_limit w 014: gdyby
+-- authenticated - dokładnie ta sama lekcja co project_limit w 014: gdyby
 -- właściciel organizacji mógł UPDATE własną subskrypcję, mógłby się sam
 -- awansować na dowolny plan za darmo. Jedyna legalna ścieżka zapisu to
 -- service_role (panel admina).
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.plans (
 
 
 -- Storage limits are written as X::bigint * 1024 * 1024 * 1024 rather than
--- bare integer literals — Postgres evaluates a bare `10 * 1024 * 1024 * 1024`
+-- bare integer literals - Postgres evaluates a bare `10 * 1024 * 1024 * 1024`
 -- as int4 arithmetic and overflows before it ever reaches the bigint
 -- column; casting the first factor forces bigint arithmetic throughout.
 INSERT INTO public.plans (id, name, price_cents, project_limit, task_limit_per_project, storage_limit_bytes, ai_request_limit, has_ai_features, has_github_integration, has_advanced_analytics, has_team_roles, has_audit_logs, has_priority_support, sort_order)
@@ -101,7 +101,7 @@ CREATE TRIGGER update_subscriptions_updated_at
     EXECUTE FUNCTION private.update_updated_at_column();
 
 
--- New organizations get a Free subscription automatically — same pattern
+-- New organizations get a Free subscription automatically - same pattern
 -- as on_organization_created (001) creating the owner membership, added
 -- as a second, independent trigger.
 CREATE FUNCTION private.handle_new_organization_subscription()

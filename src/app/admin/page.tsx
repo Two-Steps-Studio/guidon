@@ -23,7 +23,7 @@ function StatusBadge({ status }: { status: Status }) {
 }
 
 /**
- * Admin overview (TODO.md §25) — System Status, Database, Storage, AI
+ * Admin overview (TODO.md §25) - System Status, Database, Storage, AI
  * Provider, Authentication in one page, since all five are read from the
  * same four health checks (src/lib/health/checks.ts) plus one counts query.
  */
@@ -58,7 +58,7 @@ export default async function AdminOverviewPage() {
               <p className="text-sm text-muted-foreground">
                 {database.status === "ok" && typeof database.latency_ms === "number"
                   ? `${database.latency_ms}ms`
-                  : (database.detail ?? "—")}
+                  : (database.detail ?? "-")}
               </p>
             </CardContent>
           </Card>
@@ -72,7 +72,7 @@ export default async function AdminOverviewPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm capitalize text-muted-foreground">
-                {storage.provider ?? storage.detail ?? "—"}
+                {storage.provider ?? storage.detail ?? "-"}
               </p>
             </CardContent>
           </Card>
@@ -100,7 +100,7 @@ export default async function AdminOverviewPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {auth.providers ? auth.providers.join(", ") : (auth.detail ?? "—")}
+                {auth.providers ? auth.providers.join(", ") : (auth.detail ?? "-")}
               </p>
             </CardContent>
           </Card>
@@ -144,7 +144,7 @@ export default async function AdminOverviewPage() {
         <div>
           <h2 className="text-2xl font-bold">Storage</h2>
           <p className="text-muted-foreground">
-            Active provider and configuration status. Instance-wide usage/quota aggregation is not built here — see
+            Active provider and configuration status. Instance-wide usage/quota aggregation is not built here - see
             report notes.
           </p>
         </div>
@@ -162,7 +162,7 @@ export default async function AdminOverviewPage() {
       <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold">AI Provider</h2>
-          <p className="text-muted-foreground">Construct-only check — never calls the provider&apos;s completion API.</p>
+          <p className="text-muted-foreground">Construct-only check - never calls the provider&apos;s completion API.</p>
         </div>
         <Card>
           <CardContent className="flex items-center justify-between pt-6">

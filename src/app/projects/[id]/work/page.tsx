@@ -78,7 +78,7 @@ export default async function ProjectWorkPage({
   let commentCounts: Record<string, number>;
   let columnOverrides: BoardColumnOverride[];
 
-  // TASK_LIMIT is a safety cap, not pagination — high enough that no real
+  // TASK_LIMIT is a safety cap, not pagination - high enough that no real
   // project's board should ever hit it today, low enough to stop an
   // unbounded SELECT * from becoming a real cost as projects grow.
   const TASK_LIMIT = 1000;

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { projectId } = await params;
 
-  // Safety cap, not pagination — this endpoint has no cursor/page param yet;
+  // Safety cap, not pagination - this endpoint has no cursor/page param yet;
   // matches the cap applied to the human-facing task board
   // (src/app/projects/[id]/work/page.tsx).
   const TASK_LIMIT = 1000;

@@ -2,7 +2,7 @@
  * OAuth sign-in providers.
  *
  * Which buttons appear is driven by configuration, not hardcoded, so an
- * install that has not set a provider up simply does not offer it — rather
+ * install that has not set a provider up simply does not offer it - rather
  * than showing a button that fails on click.
  *
  * `guidon-tss` is Guidon-specific: signing in with a Two Steps Studio account.

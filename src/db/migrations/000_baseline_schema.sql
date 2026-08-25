@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRACJA 000
+-- GUIDON - MIGRACJA 000
 -- Baseline: tworzy tabele
 -- ============================================================
 --
@@ -9,7 +9,7 @@ BEGIN;
 --
 -- DLACZEGO ISTNIEJE
 -- -----------------
--- 001 zakłada, że tabele już są — wyłącznie je ALTERuje, dodaje
+-- 001 zakłada, że tabele już są - wyłącznie je ALTERuje, dodaje
 -- polityki RLS, funkcje i triggery. Do tej pory schemat powstawał
 -- ręcznie w edytorze Supabase, więc repozytorium NIE POTRAFIŁO
 -- odtworzyć bazy od zera. To blokowało wszystko, co wymaga
@@ -30,7 +30,7 @@ BEGIN;
 --
 -- ZAŁOŻENIA
 -- ---------
--- Wymaga schematu `auth` z tabelą auth.users — dostarcza go Supabase.
+-- Wymaga schematu `auth` z tabelą auth.users - dostarcza go Supabase.
 -- Przy self-hostingu na czystym PostgreSQL potrzebna będzie warstwa
 -- zgodności; patrz docs/self-hosting-audit.md, bloker 2.
 --
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS public.organization_members (
 -- PROJECTS
 -- ============================================================
 --
--- Bez kolumny slug — dodaje ją 002 wraz z wypełnieniem danych.
+-- Bez kolumny slug - dodaje ją 002 wraz z wypełnieniem danych.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS public.projects (
@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS public.project_files (
 );
 
 
--- technologies.category bez game_engine — dodaje je 008.
+-- technologies.category bez game_engine - dodaje je 008.
 CREATE TABLE IF NOT EXISTS public.technologies (
     id          uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     project_id  uuid NOT NULL,
@@ -252,7 +252,7 @@ CREATE TABLE IF NOT EXISTS public.context_sources (
 );
 
 
--- Bez project_id — relacja jest zakotwiczona przez encję źródłową,
+-- Bez project_id - relacja jest zakotwiczona przez encję źródłową,
 -- co egzekwują polityki RLS z 001. Patrz lib/context/project-relations.ts.
 CREATE TABLE IF NOT EXISTS public.context_relations (
     id            uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -345,7 +345,7 @@ END
 $$;
 
 
--- Pozostałe klucze obce ustawia migracja 001 (sekcja 9) — nie są tu
+-- Pozostałe klucze obce ustawia migracja 001 (sekcja 9) - nie są tu
 -- duplikowane, żeby istniała jedna definicja, a nie dwie rozjeżdżające się.
 
 

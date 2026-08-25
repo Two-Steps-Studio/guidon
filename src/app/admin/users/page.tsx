@@ -15,7 +15,7 @@ export default async function AdminUsersPage() {
         <h2 className="text-2xl font-bold">Users</h2>
         <p className="text-muted-foreground">
           {rows.length} user{rows.length === 1 ? "" : "s"} across this instance
-          {truncated ? ` (capped at ${rows.length} for this v1 view — no pagination yet)` : ""}.
+          {truncated ? ` (capped at ${rows.length} for this v1 view - no pagination yet)` : ""}.
         </p>
       </div>
 
@@ -36,7 +36,7 @@ export default async function AdminUsersPage() {
                 {rows.map((user) => (
                   <tr key={user.id} className="[&>td]:px-4 [&>td]:py-3 hover:bg-surface-hover">
                     <td className="font-medium">{user.email}</td>
-                    <td className="text-muted-foreground">{user.full_name || "—"}</td>
+                    <td className="text-muted-foreground">{user.full_name || "-"}</td>
                     <td className="text-muted-foreground">{new Date(user.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))}

@@ -18,7 +18,7 @@ import { loginLocalAction } from "./actions"
  * depends on DATABASE_URL, which a client component cannot read. In local
  * mode there is no GoTrue to hand the browser a session, so login goes
  * through a Server Action (loginLocalAction) instead of the Supabase SDK's
- * client-side signInWithPassword — and OAuth is hidden entirely, since
+ * client-side signInWithPassword - and OAuth is hidden entirely, since
  * self-hosted has no provider to redirect to.
  */
 export function LoginForm({ local }: { local: boolean }) {

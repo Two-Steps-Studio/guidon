@@ -22,7 +22,7 @@ export type FileActionState = {
 
 /**
  * File bytes travel through the Server Action body (not a direct browser ->
- * storage call), which is what makes this work under any storage provider —
+ * storage call), which is what makes this work under any storage provider -
  * the browser cannot write to local disk storage directly, only the server
  * can. next.config.ts raises the Server Action body limit to cover this.
  */
@@ -106,7 +106,7 @@ export async function uploadFile(
 
 /**
  * `storagePath` used to be a caller-supplied argument, trusted for the
- * actual storage delete without ever being checked against `projectId` —
+ * actual storage delete without ever being checked against `projectId` -
  * the access check above only verified the caller manages *some* project,
  * not that the path belonged to it. Any project manager could delete any
  * other project's file by passing its (predictable) storage path directly
@@ -114,7 +114,7 @@ export async function uploadFile(
  * §29 security audit.
  *
  * Fixed by dropping `storagePath` as an argument and instead deleting the
- * `project_files` row scoped to *both* `id` and `project_id` — a mismatched
+ * `project_files` row scoped to *both* `id` and `project_id` - a mismatched
  * `fileId` now matches zero rows, and the storage object is never touched
  * unless that row-scoped delete actually found one. The row's own
  * `storage_path` (via `.select()` on the delete) is the only path ever
@@ -185,7 +185,7 @@ export async function deleteFile(
  * Storage or the local filesystem (which the browser cannot reach directly).
  *
  * Same fix as deleteFile: takes `fileId`, not a raw `storagePath`, and looks
- * the path up scoped to `project_id` — the access check on `projectId` alone
+ * the path up scoped to `project_id` - the access check on `projectId` alone
  * previously let anyone who could see any project mint a signed download URL
  * for an arbitrary storage path in the bucket, since the path was never
  * verified to belong to that project. Found in the TODO.md §29 security

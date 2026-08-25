@@ -21,7 +21,7 @@ export interface ActivityLogRow {
 /**
  * Recent activity for a project, most recent first.
  *
- * `activity_logs.action` is plain `text` (000_baseline_schema.sql) — there is
+ * `activity_logs.action` is plain `text` (000_baseline_schema.sql) - there is
  * no CHECK constraint pinning it to `ActivityAction` (src/types/api.ts), and
  * nothing in this codebase currently inserts a row (no `.from("activity_logs")`
  * write anywhere under src/). That type was written for the `/api/v1` routes

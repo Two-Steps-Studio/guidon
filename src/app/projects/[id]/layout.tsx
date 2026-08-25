@@ -12,7 +12,7 @@ export async function generateMetadata({
 
   try {
     const { project } = await requireProjectAccess(id);
-    return { title: `${project.name} — Guidon` };
+    return { title: `${project.name} - Guidon` };
   } catch {
     return { title: "Guidon" };
   }

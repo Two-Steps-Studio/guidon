@@ -38,7 +38,7 @@ const RELATION_TYPES: RelationType[] = [
  * Mirrors context_relations_insert (001, rewritten by migration 011): a
  * BEFORE INSERT trigger derives project_id from source_type/source_id (never
  * client input), and RLS rejects the insert if target_type/target_id does
- * not resolve to that same project — a relation can never cross projects.
+ * not resolve to that same project - a relation can never cross projects.
  * The caller needs owner/admin/developer on that project; delete requires
  * owner/admin.
  */

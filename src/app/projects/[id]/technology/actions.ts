@@ -44,7 +44,7 @@ export async function saveTechnology(
   // not run yet.
   const gameEngineHint = (message: string): string =>
     /violates check constraint/i.test(message) && input.category === "game_engine"
-      ? "The database does not accept 'Game engine' yet — run migration 008."
+      ? "The database does not accept 'Game engine' yet - run migration 008."
       : message;
 
   if (hasDirectDatabase()) {

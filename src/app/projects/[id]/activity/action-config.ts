@@ -23,8 +23,8 @@ interface ActionConfig {
 
 /**
  * Icon + label per action type, keyed by the ActivityAction vocabulary
- * already defined in src/types/api.ts (written for the dead /api/v1 routes —
- * see docs/self-hosting-audit.md §1 — but not enforced by any CHECK
+ * already defined in src/types/api.ts (written for the dead /api/v1 routes -
+ * see docs/self-hosting-audit.md §1 - but not enforced by any CHECK
  * constraint on activity_logs.action, which is plain text). Nothing in this
  * codebase writes activity_logs rows today, so this map has never been
  * exercised against real data; ACTION_FALLBACK below covers any value that

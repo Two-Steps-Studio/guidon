@@ -33,7 +33,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
       <CardContent className="space-y-6">
         {state.fullKey && (
           <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
-            <p className="mb-2 font-medium">Copy this key now — it won&apos;t be shown again.</p>
+            <p className="mb-2 font-medium">Copy this key now - it won&apos;t be shown again.</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 overflow-x-auto rounded bg-background px-2 py-1 font-mono text-xs">
                 {state.fullKey}

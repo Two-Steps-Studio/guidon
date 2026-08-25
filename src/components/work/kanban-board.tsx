@@ -20,7 +20,7 @@ interface KanbanBoardProps {
   members: TaskCardMember[];
   commentCounts?: Record<string, number>;
   subtaskCounts?: Record<string, SubtaskProgress>;
-  /** The project's resolved (default + overrides) column set — see resolveBoardColumns(). */
+  /** The project's resolved (default + overrides) column set - see resolveBoardColumns(). */
   columns?: readonly BoardColumn[];
   /** When false the board is read-only (viewer/tester roles). */
   canEdit: boolean;

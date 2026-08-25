@@ -34,7 +34,7 @@ export function CreateDecisionDialog({
   defaults?: Partial<Pick<Decision, "title" | "description">>;
   /** When set, the created decision records where it came from and a
    *  context_relations row (`<sourceType> --decided_by--> decision`) is
-   *  created alongside it — see createDecision in ./actions.ts. */
+   *  created alongside it - see createDecision in ./actions.ts. */
   link?: { sourceType: ContextEntityType; sourceId: string };
   onCreated?: () => void;
   projectColor?: string;

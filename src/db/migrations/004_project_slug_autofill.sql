@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRATION 004
+-- GUIDON - MIGRATION 004
 -- Auto-fill projects.slug
 -- ============================================================
 --
@@ -25,8 +25,8 @@ BEGIN;
 -- NOT NULL and CHECK checks, so the row validates.
 --
 -- This is done in the database rather than only in the two call
--- sites so that any future insert path — a script, the SQL
--- editor, a seeding job — cannot reintroduce the same failure.
+-- sites so that any future insert path - a script, the SQL
+-- editor, a seeding job - cannot reintroduce the same failure.
 -- The application may still send an explicit slug; the trigger
 -- only fills in a missing one.
 -- ============================================================

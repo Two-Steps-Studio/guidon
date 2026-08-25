@@ -30,7 +30,7 @@ export type CurrentUser = {
  * identity comes from the signed session cookie (src/lib/auth/local-auth.ts)
  * and the profile is read straight from Postgres under withUser() instead of
  * through the Supabase client. Every other call site that still calls
- * createClient() is unaffected by this branch — this function only changes
+ * createClient() is unaffected by this branch - this function only changes
  * how identity itself is resolved.
  */
 export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser> {

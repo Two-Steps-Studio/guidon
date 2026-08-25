@@ -1,5 +1,5 @@
 -- ============================================================
--- GUIDON — MIGRACJA 010
+-- GUIDON - MIGRACJA 010
 -- Subtaski: tasks.parent_task_id
 -- ============================================================
 --
@@ -8,7 +8,7 @@
 -- POWÓD
 -- -----
 -- Plan architektury (Etap 2, §9 model encji) wymaga Subtaska jako
--- dziecka Taska. `roadmap_phases` zostaje bez zmian — w UI występuje
+-- dziecka Taska. `roadmap_phases` zostaje bez zmian - w UI występuje
 -- jako Milestone i to inna warstwa hierarchii (grupuje taski po
 -- fazie projektu, nie po zadaniu nadrzędnym). Tu chodzi o dekompozycję
 -- pojedynczego taska na mniejsze kroki (checklist z licznikiem "3/5"
@@ -18,14 +18,14 @@
 -- KSZTAŁT
 -- -------
 -- Jeden poziom zagnieżdżenia jest wystarczający dla V0.1 (subtask
--- subtaska nie jest w zakresie planu) — dlatego brak CHECK
+-- subtaska nie jest w zakresie planu) - dlatego brak CHECK
 -- ograniczającego głębokość: UI po prostu nie oferuje tworzenia
 -- subtaska z poziomu subtaska. Baza nie wymusza tego twardo, żeby
 -- nie trzeba było pisać rekurencyjnego CHECK-a dla przypadku, którego
 -- na razie nikt nie może wywołać z aplikacji.
 --
 -- ON DELETE CASCADE: usunięcie taska nadrzędnego usuwa jego subtaski.
--- Zgodne z zachowaniem reszty schematu (np. tasks_project_id_fkey) —
+-- Zgodne z zachowaniem reszty schematu (np. tasks_project_id_fkey) -
 -- dziecko nie przeżywa rodzica. `sort_order` już istnieje na `tasks`
 -- (kolumna z 000), więc subtaski dziedziczą porządkowanie za darmo,
 -- bez nowej kolumny.
@@ -33,7 +33,7 @@
 -- RLS
 -- ---
 -- Bez zmian w politykach tasks_select/insert/update/delete (001).
--- Subtask to zwykły wiersz w `tasks` ze swoim `project_id` — te same
+-- Subtask to zwykły wiersz w `tasks` ze swoim `project_id` - te same
 -- cztery polityki, które już sprawdzają project_access()/project_role(),
 -- obejmują go automatycznie. Nie trzeba nowej polityki dla samego
 -- faktu posiadania `parent_task_id`.

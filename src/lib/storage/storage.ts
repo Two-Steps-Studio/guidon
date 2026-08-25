@@ -337,7 +337,7 @@ export function getFileCategoryFromMimeType(mimeType: string): FileCategory {
  * Get project storage usage
  */
 export async function getProjectStorageUsage(projectId: string): Promise<number> {
-  // Was createClient() — the BROWSER client — inside a server-only module.
+  // Was createClient() - the BROWSER client - inside a server-only module.
   // With no cookies it is unauthenticated, so RLS returned nothing and usage
   // was always 0, which silently disabled every storage quota check.
   const supabase = createServiceClient();
@@ -359,7 +359,7 @@ export async function getProjectStorageUsage(projectId: string): Promise<number>
 /**
  * Total bytes stored across every project in an organization. Sums
  * project_files.size_bytes joined through projects, the same source
- * getProjectStorageUsage reads — not StorageProvider.usage(), which would
+ * getProjectStorageUsage reads - not StorageProvider.usage(), which would
  * require listing every project's storage prefix separately for one
  * number the database already has indexed.
  */

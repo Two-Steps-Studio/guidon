@@ -10,7 +10,7 @@ import { checkDatabase, checkStorage, checkAI, checkAuth, type Status } from "@/
  * diagnose an install without Two Steps Studio support (§16).
  *
  * The actual checks live in src/lib/health/checks.ts, shared with the admin
- * panel's System Status section (TODO.md §25) — this file only shapes the
+ * panel's System Status section (TODO.md §25) - this file only shapes the
  * HTTP response.
  */
 

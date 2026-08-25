@@ -77,7 +77,7 @@ export async function createProject(
       .select("slug")
       .eq("organization_id", orgId);
 
-    // Guidon Cloud's 1-project-per-organization cap (src/lib/limits.ts) —
+    // Guidon Cloud's 1-project-per-organization cap (src/lib/limits.ts) -
     // self-hosted installs never hit this, see isHostedProjectLimitReached().
     // Checked here, not just hidden in the UI (organizations/[id]/page.tsx),
     // because this Server Action is reachable directly regardless of what

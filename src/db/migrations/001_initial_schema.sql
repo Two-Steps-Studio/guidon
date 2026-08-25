@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — FINAL DATABASE + RLS MIGRATION
+-- GUIDON - FINAL DATABASE + RLS MIGRATION
 -- ============================================================
 --
 -- Designed for the existing Guidon schema.

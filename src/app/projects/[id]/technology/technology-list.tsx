@@ -153,7 +153,7 @@ export function TechnologyList({
 
         {!canManage && role && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            You have <strong className="font-medium">{role}</strong> access — only owners and admins can
+            You have <strong className="font-medium">{role}</strong> access - only owners and admins can
             change the stack.
           </p>
         )}
@@ -163,7 +163,7 @@ export function TechnologyList({
             <h2 className="text-sm font-medium text-foreground">No technologies yet</h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
               {canManage
-                ? "Record the stack so new people — and agents — know what this project is built with."
+                ? "Record the stack so new people - and agents - know what this project is built with."
                 : "Nobody has recorded this project's stack yet."}
             </p>
             {canManage && (

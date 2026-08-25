@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRATION 003
+-- GUIDON - MIGRATION 003
 -- Team profile visibility
 -- ============================================================
 --
@@ -27,7 +27,7 @@ BEGIN;
 -- FIX
 -- ---
 -- Allow a user to read the profile of anyone with whom they share
--- an organization or a project — and nobody else. Profiles remain
+-- an organization or a project - and nobody else. Profiles remain
 -- invisible across organization boundaries.
 --
 -- The lookup runs through a SECURITY DEFINER helper so that it does
@@ -112,8 +112,8 @@ USING (
 --
 --     profiles_insert_trigger  FOR INSERT TO anon  WITH CHECK (true)
 --
--- The stated rationale — "safe because the trigger enforces
--- id = auth.uid()" — does not hold: private.handle_new_user()
+-- The stated rationale - "safe because the trigger enforces
+-- id = auth.uid()" - does not hold: private.handle_new_user()
 -- fires on auth.users, and does not constrain direct inserts
 -- into public.profiles.
 --

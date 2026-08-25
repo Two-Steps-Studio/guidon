@@ -18,14 +18,14 @@ function nameFor(profile: ActorProfile | undefined): string {
 }
 
 /**
- * Instance-wide activity log (TODO.md §25) — the same activity_logs table
+ * Instance-wide activity log (TODO.md §25) - the same activity_logs table
  * src/app/projects/[id]/activity/page.tsx reads, without the project filter,
  * via createServiceClient() since this deliberately spans every tenant.
  *
  * Confirmed by the agent that built the per-project version: nothing in this
  * codebase currently writes to activity_logs (see src/lib/data/activity.ts),
  * so this renders correctly empty until a future feature starts logging
- * here. That's expected, not a bug — the empty state below matches the
+ * here. That's expected, not a bug - the empty state below matches the
  * per-project page's own empty-state pattern.
  */
 export default async function AdminLogsPage() {
@@ -33,7 +33,7 @@ export default async function AdminLogsPage() {
 
   const entries = await listRecentActivityForAdmin(100);
 
-  // user_id references profiles(id) ON DELETE SET NULL — resolved
+  // user_id references profiles(id) ON DELETE SET NULL - resolved
   // separately, same pattern as the per-project activity page.
   const supabase = createServiceClient();
   const userIds = Array.from(

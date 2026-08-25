@@ -5,7 +5,7 @@ import { signUpLocal, createLocalSession } from "@/lib/auth/local-auth";
 export type SignupActionResult = { error: string } | { ok: true };
 
 /**
- * Self-hosted signup. No email confirmation step — there is no mail sender
+ * Self-hosted signup. No email confirmation step - there is no mail sender
  * configured in this project (see docs/self-hosting.md); the account is
  * usable immediately, same as the trigger's `email_confirmed_at` default in
  * signUpLocal(). Creates and sets the session directly so signup logs the

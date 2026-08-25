@@ -7,7 +7,7 @@ import { generateInsight } from "./actions";
 
 /**
  * Only rendered when the page already confirmed an AI provider is
- * configured (activeAIProviderName() in page.tsx) — this component doesn't
+ * configured (activeAIProviderName() in page.tsx) - this component doesn't
  * re-check that itself, it just calls the action and surfaces whatever
  * error comes back (including "no provider configured", in case the config
  * changed between page load and click).

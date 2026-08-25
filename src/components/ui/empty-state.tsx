@@ -10,7 +10,7 @@ interface EmptyStateProps {
 
 /**
  * The icon-in-a-tinted-square treatment matches the feature cards on the
- * public landing page (src/app/page.tsx) — reused here so every empty state
+ * public landing page (src/app/page.tsx) - reused here so every empty state
  * in the app gets the same, more finished look instead of the plain muted
  * icon each of the 14 previous call sites hand-rolled slightly differently.
  */

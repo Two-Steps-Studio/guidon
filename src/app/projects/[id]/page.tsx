@@ -18,11 +18,11 @@ import { getProjectStats } from "@/lib/data/project-stats";
 import { EditProjectDialog } from "./edit-project-dialog";
 
 /**
- * Project overview — Server Component (TODO.md §34).
+ * Project overview - Server Component (TODO.md §34).
  *
  * requireProjectAccess() is cached (see src/lib/data/project-access.ts), so
  * calling it again here after the layout already did costs no extra query.
- * The two data calls that ARE new — project and stats — run without a
+ * The two data calls that ARE new - project and stats - run without a
  * client-side loading state because the whole page waits for them before
  * any HTML reaches the browser.
  */

@@ -28,7 +28,7 @@ export interface Technology {
  * `game_engine` requires migration 008; without it the database rejects
  * that value. Every other category works on the pre-008 schema.
  *
- * Do not add values here without a migration widening the constraint first —
+ * Do not add values here without a migration widening the constraint first -
  * an unknown value is rejected by the database, not silently stored.
  */
 export type TechnologyCategory =
@@ -63,7 +63,7 @@ export const TECHNOLOGY_CATEGORY_LABELS: Record<TechnologyCategory, string> = {
   other: "Other",
 };
 
-/** Display order on the technology page — engines sit next to the languages. */
+/** Display order on the technology page - engines sit next to the languages. */
 export const TECHNOLOGY_CATEGORY_ORDER: readonly TechnologyCategory[] = [
   "game_engine",
   "frontend",
@@ -96,7 +96,7 @@ export interface UpdateTechnologyData {
 
 /**
  * Best-effort category guess for common stacks, used to prefill the picker
- * when a technology is added by name alone. Purely a convenience — the user
+ * when a technology is added by name alone. Purely a convenience - the user
  * can always override it.
  */
 const CATEGORY_HINTS: Record<string, TechnologyCategory> = {
@@ -124,7 +124,7 @@ const CATEGORY_HINTS: Record<string, TechnologyCategory> = {
   bevy: "game_engine",
   cryengine: "game_engine",
 
-  // Backend — systems languages land here; the constraint has no
+  // Backend - systems languages land here; the constraint has no
   // dedicated 'language' category.
   "node.js": "backend",
   nodejs: "backend",

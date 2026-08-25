@@ -7,7 +7,7 @@ import { activeAIProviderName } from "@/lib/ai/provider";
 
 /**
  * Masked config-presence row (TODO.md §25's own example: "API key: ••••••••••••").
- * `isSet` never carries the secret itself — only whether the env var is non-empty.
+ * `isSet` never carries the secret itself - only whether the env var is non-empty.
  */
 function MaskedRow({ label, isSet }: { label: string; isSet: boolean }) {
   return (
@@ -19,7 +19,7 @@ function MaskedRow({ label, isSet }: { label: string; isSet: boolean }) {
 }
 
 /**
- * Integrations + Environment (TODO.md §25) in one page — both are compact
+ * Integrations + Environment (TODO.md §25) in one page - both are compact
  * status summaries and Environment necessarily overlaps in content with
  * Storage/AI/Auth/Integrations above it, so splitting them into separate
  * pages would mostly duplicate the same few lookups across two files.
@@ -56,7 +56,7 @@ export default async function AdminIntegrationsPage() {
         <div>
           <h2 className="text-2xl font-bold">Integrations</h2>
           <p className="text-muted-foreground">
-            Nothing in this codebase implements GitHub sync yet (docs/self-hosting-audit.md) — this reports
+            Nothing in this codebase implements GitHub sync yet (docs/self-hosting-audit.md) - this reports
             whether the OAuth credentials are present, not that a working integration exists.
           </p>
         </div>

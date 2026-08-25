@@ -3,7 +3,7 @@
  *
  * Guidon must run self-hosted without a managed bucket, so nothing above this
  * layer may talk to Supabase Storage directly. The interface is deliberately
- * small — it is the set of operations `storage.ts` actually performs, not a
+ * small - it is the set of operations `storage.ts` actually performs, not a
  * general-purpose object-store API.
  *
  * SERVER ONLY. `local` uses node:fs, and the Supabase implementation may use
@@ -130,7 +130,7 @@ function resolveProviderName(): StorageProviderName {
 let cached: StorageProvider | null = null;
 
 /**
- * Resolve the configured provider. Cached per process — the provider holds no
+ * Resolve the configured provider. Cached per process - the provider holds no
  * request state, so a single instance is correct and avoids re-reading env on
  * every call.
  */

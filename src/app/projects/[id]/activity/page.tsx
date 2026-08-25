@@ -23,7 +23,7 @@ function nameFor(profile: ActorProfile | undefined): string {
  * Activity log for a project.
  *
  * RLS mirror: activity_logs_select (001_initial_schema.sql) grants SELECT
- * when `project_id IS NOT NULL AND private.project_access(project_id)` —
+ * when `project_id IS NOT NULL AND private.project_access(project_id)` -
  * i.e. the same visibility check every other project page already passes
  * through requireProjectAccess(). No extra role gate is needed here: unlike
  * write actions, viewing the log follows plain project visibility.
@@ -39,7 +39,7 @@ export default async function ProjectActivityPage({
   const entries = await getRecentActivity(projectId);
 
   // user_id references profiles(id) ON DELETE SET NULL (000_baseline_schema.sql)
-  // — resolved separately, same pattern as memory/page.tsx's verified_by lookup.
+  // - resolved separately, same pattern as memory/page.tsx's verified_by lookup.
   const userIds = Array.from(
     new Set(entries.map((entry) => entry.user_id).filter((id): id is string => !!id))
   );

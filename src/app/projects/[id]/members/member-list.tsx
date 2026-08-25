@@ -153,7 +153,7 @@ export function MemberList({
 
         {!canManage && myRole && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            You have <strong className="font-medium">{myRole}</strong> access — only owners and admins
+            You have <strong className="font-medium">{myRole}</strong> access - only owners and admins
             can change membership.
           </p>
         )}
@@ -232,7 +232,7 @@ export function MemberList({
 
         {members.length > 0 && (
           <p className="mt-3 text-xs text-muted-foreground">
-            A project always keeps at least one owner — the last one cannot be removed or demoted.
+            A project always keeps at least one owner - the last one cannot be removed or demoted.
           </p>
         )}
       </div>

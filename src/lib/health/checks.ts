@@ -12,7 +12,7 @@ import { activeAIProviderName } from "@/lib/ai/provider";
  * checks for a human instead of duplicating them with slightly different
  * logic that would silently drift from the container probe's answer.
  *
- * `/api/health/route.ts` is the only other importer — it re-exports nothing
+ * `/api/health/route.ts` is the only other importer - it re-exports nothing
  * of its own, it just calls these and shapes the HTTP response.
  *
  * Deliberately exposes NO secrets: no connection strings, no keys, no host
@@ -33,18 +33,18 @@ export interface DatabaseCheck extends Component {
   latency_ms?: number;
 }
 
-/** checkStorage()'s return shape — `provider` is set whenever the STORAGE_PROVIDER env var parsed. */
+/** checkStorage()'s return shape - `provider` is set whenever the STORAGE_PROVIDER env var parsed. */
 export interface StorageCheck extends Component {
   provider?: string;
 }
 
-/** checkAI()'s return shape — `model` is only present when a provider actually constructed. */
+/** checkAI()'s return shape - `model` is only present when a provider actually constructed. */
 export interface AICheck extends Component {
   provider?: string;
   model?: string;
 }
 
-/** checkAuth()'s return shape — provider names only, never credentials. */
+/** checkAuth()'s return shape - provider names only, never credentials. */
 export interface AuthCheck extends Component {
   providers?: string[];
 }
@@ -69,7 +69,7 @@ export async function withTimeout<T>(
 }
 
 /**
- * Scrub anything that could carry configuration into the response — driver
+ * Scrub anything that could carry configuration into the response - driver
  * errors happily include hosts, ports and occasionally credentials.
  */
 export function safeReason(error: unknown): string {
@@ -91,7 +91,7 @@ export async function checkDatabase(): Promise<DatabaseCheck> {
   if (hasDirectDatabase()) {
     try {
       const started = Date.now();
-      // withServiceRole(), not withUser() — there is no request-scoped
+      // withServiceRole(), not withUser() - there is no request-scoped
       // identity for an unauthenticated container probe to assert, and
       // BYPASSRLS is fine here: this proves the connection and role
       // switching work, not that any particular row is readable.
@@ -116,7 +116,7 @@ export async function checkDatabase(): Promise<DatabaseCheck> {
     // Cheapest query that proves connectivity, auth and RLS plumbing without
     // reading anyone's data: a count over an empty selection.
     const started = Date.now();
-    // Supabase's builder is a PromiseLike, not a Promise — Promise.resolve
+    // Supabase's builder is a PromiseLike, not a Promise - Promise.resolve
     // adapts it so it can race against the timeout.
     const { error } = await withTimeout(
       Promise.resolve(
@@ -152,7 +152,7 @@ export async function checkStorage(): Promise<StorageCheck> {
 
     return { status: "ok", provider: instance.name };
   } catch (error) {
-    // s3 throws by design until implemented — report it as configuration,
+    // s3 throws by design until implemented - report it as configuration,
     // not as an outage.
     const raw = error instanceof Error ? error.message : "";
     if (/not implemented/i.test(raw)) {
@@ -172,7 +172,7 @@ export async function checkAI(): Promise<AICheck> {
     return { status: "down", detail: safeReason(error) };
   }
 
-  // §6/§7 — AI is an optional subsystem: an unset AI_PROVIDER is a
+  // §6/§7 - AI is an optional subsystem: an unset AI_PROVIDER is a
   // legitimate "not configured" state, not a failure (same treatment as
   // checkStorage's "not implemented" branch and checkAuth's
   // no-Supabase-configured branch).
@@ -182,7 +182,7 @@ export async function checkAI(): Promise<AICheck> {
 
   try {
     const { getAIProvider } = await import("@/lib/ai/provider");
-    // Construct only — never call .complete() here. This is an
+    // Construct only - never call .complete() here. This is an
     // unauthenticated container health probe; it must not make a real,
     // possibly-billed request to an external AI vendor on every check.
     // Construction alone still proves the config is present and
@@ -198,10 +198,10 @@ export async function checkAI(): Promise<AICheck> {
 
 export function checkAuth(): AuthCheck {
   // Self-hosted email/password auth (src/lib/auth/local-auth.ts) needs no
-  // Supabase project at all — reporting "down" here whenever
+  // Supabase project at all - reporting "down" here whenever
   // NEXT_PUBLIC_SUPABASE_URL is unset would call a fully working self-hosted
   // login broken. OAuth is never available in this mode (no GoTrue to
-  // redirect to — the sign-in page hides those buttons itself), so
+  // redirect to - the sign-in page hides those buttons itself), so
   // NEXT_PUBLIC_AUTH_PROVIDERS is irrelevant here too.
   if (hasDirectDatabase()) {
     return { status: "ok", providers: ["password"] };
@@ -223,7 +223,7 @@ export function checkAuth(): AuthCheck {
 
   return {
     status: "ok",
-    // Names only — never keys.
+    // Names only - never keys.
     providers: providers.length > 0 ? providers : ["password"],
   };
 }

@@ -11,10 +11,10 @@ import { createAttempt, deleteAttempt, loadAttempts } from "@/app/projects/[id]/
 import type { AttemptOutcome, TaskAttempt } from "@/types/task";
 
 /**
- * Previous Attempts (TODO.md §22) — a record of what's already been tried
+ * Previous Attempts (TODO.md §22) - a record of what's already been tried
  * on this task and failed, so a human or an AI agent doesn't propose the
  * same dead-end again. Self-contained: loads its own data on mount rather
- * than being fed by the parent dialog, since — unlike subtasks — nothing
+ * than being fed by the parent dialog, since - unlike subtasks - nothing
  * else in TaskDetailDialog needs to react to an attempt being logged.
  */
 

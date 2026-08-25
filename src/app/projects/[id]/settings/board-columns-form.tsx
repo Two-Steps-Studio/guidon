@@ -83,7 +83,7 @@ export function BoardColumnsForm({
         </CardTitle>
         <CardDescription>
           Rename, reorder, or hide columns on this project&apos;s task board. The underlying task
-          statuses don&apos;t change — this only affects labels and what&apos;s shown.
+          statuses don&apos;t change - this only affects labels and what&apos;s shown.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -124,7 +124,7 @@ export function BoardColumnsForm({
               variant="ghost"
               size="sm"
               onClick={() => toggleHidden(index)}
-              title={row.hidden ? "Hidden — click to show" : "Visible — click to hide"}
+              title={row.hidden ? "Hidden - click to show" : "Visible - click to hide"}
             >
               {row.hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>

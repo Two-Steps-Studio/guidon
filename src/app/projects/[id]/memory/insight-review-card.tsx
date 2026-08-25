@@ -2,7 +2,7 @@
 
 /**
  * Review UI for one pending AI insight (memory_type === 'ai_insight' AND
- * verified === false) — TODO.md §20's Accept / Correct / Reject workflow.
+ * verified === false) - TODO.md §20's Accept / Correct / Reject workflow.
  * Rendered instead of the normal Edit/Delete MemoryCardMenu for pending rows
  * only; once accepted or corrected, the row becomes a verified 'fact' and
  * memory-page.tsx renders it through the regular card path.

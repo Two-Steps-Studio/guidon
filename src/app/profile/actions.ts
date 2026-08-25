@@ -13,12 +13,12 @@ export type ProfileFormState = {
 };
 
 /**
- * Updates the signed-in user's own profile — full_name and avatar_url only.
- * Never touches email (that's identity, not a preference — auth.users is
+ * Updates the signed-in user's own profile - full_name and avatar_url only.
+ * Never touches email (that's identity, not a preference - auth.users is
  * the source of truth for it, changing it is a bigger, separate feature).
  *
  * Relies on profiles_update_own (001_initial_schema.sql): `id = auth.uid()`.
- * No extra permission check needed here — a user can only ever update the
+ * No extra permission check needed here - a user can only ever update the
  * row getCurrentUser() itself resolved to their own session.
  */
 export async function updateProfile(

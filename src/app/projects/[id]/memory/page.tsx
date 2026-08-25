@@ -37,7 +37,7 @@ export default async function ProjectMemoryPage({
 
   let memories: ProjectMemory[];
 
-  // Safety cap, not pagination — see src/app/projects/[id]/work/page.tsx
+  // Safety cap, not pagination - see src/app/projects/[id]/work/page.tsx
   // for the same reasoning applied to tasks.
   const LIST_LIMIT = 500;
 
@@ -61,7 +61,7 @@ export default async function ProjectMemoryPage({
     memories = (data ?? []) as ProjectMemory[];
   }
 
-  // A pending insight is unverified AI output — TODO.md §20 is explicit that
+  // A pending insight is unverified AI output - TODO.md §20 is explicit that
   // this must not blend in with trusted project truth, so it gets a
   // distinct section and a review flow (Accept/Correct/Reject) instead of
   // the normal Edit/Delete menu. Everything else (including already-accepted
@@ -69,7 +69,7 @@ export default async function ProjectMemoryPage({
   const pending = memories.filter((memory) => memory.memory_type === "ai_insight" && !memory.verified);
   const rest = memories.filter((memory) => !(memory.memory_type === "ai_insight" && !memory.verified));
 
-  // verified_by and created_by both reference profiles(id) (001) — fetched
+  // verified_by and created_by both reference profiles(id) (001) - fetched
   // separately rather than embedded, since PostgREST needs an explicit FK
   // hint to embed two relations to the same table and there is no existing
   // precedent for that in this codebase; a plain id lookup avoids it.

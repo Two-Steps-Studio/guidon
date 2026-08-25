@@ -1,5 +1,5 @@
 /**
- * Guidon work module — board vocabulary and helpers.
+ * Guidon work module - board vocabulary and helpers.
  *
  * Single source of truth for how tasks are grouped, ordered, labelled and
  * coloured. Pages should import from here rather than redeclaring column
@@ -83,14 +83,14 @@ export interface BoardColumnOverride {
 
 /**
  * Applies a project's saved column customizations (020_project_board_columns.sql)
- * on top of the fixed defaults — label and order can change, but the
+ * on top of the fixed defaults - label and order can change, but the
  * underlying status set cannot (tasks.status is still the same 6-value
  * CHECK constraint from 016; this only changes how those 6 are displayed).
  * A project with no saved overrides gets BOARD_COLUMNS back unchanged.
  *
  * Hidden columns are dropped entirely rather than kept-but-marked, since
  * the save path (project_board_columns actions) refuses to hide a column
- * that still has tasks in it — by the time a column can be hidden here,
+ * that still has tasks in it - by the time a column can be hidden here,
  * nothing on the board needs to reference it.
  */
 export function resolveBoardColumns(
@@ -282,7 +282,7 @@ export function boardProgress(tasks: Task[]): BoardProgress {
 
 /**
  * Groups tasks by parent_task_id (migration 010). Top-level tasks (no
- * parent) are not represented in the result — only entries that have at
+ * parent) are not represented in the result - only entries that have at
  * least one subtask appear.
  */
 export function groupSubtasksByParent(tasks: Task[]): Record<string, Task[]> {
@@ -378,6 +378,6 @@ export function sortOrderForPosition(
 
   const midpoint = (before + after) / 2;
 
-  // Ran out of room between neighbours — caller should renumber the column.
+  // Ran out of room between neighbours - caller should renumber the column.
   return Number.isFinite(midpoint) ? midpoint : before + 100;
 }

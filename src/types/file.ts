@@ -2,13 +2,13 @@
 // PROJECT FILE TYPES
 // ============================================
 
-// ProjectFile already lives in @/types/api — re-exported here so preview code
+// ProjectFile already lives in @/types/api - re-exported here so preview code
 // has one import, without introducing a second, drifting definition.
 export type { ProjectFile } from "@/types/api";
 
 /**
  * How a file should be previewed. Distinct from `category`, which is what the
- * user filed it under — a .png can be filed as `documentation` and still needs
+ * user filed it under - a .png can be filed as `documentation` and still needs
  * to render as an image.
  */
 export type FileKind =
@@ -97,7 +97,7 @@ export function prismLanguage(name: string): string {
 export const MAX_INLINE_PREVIEW_BYTES = 2 * 1024 * 1024;
 
 export function formatFileSize(bytes: number | null): string {
-  if (bytes === null || Number.isNaN(bytes)) return "—";
+  if (bytes === null || Number.isNaN(bytes)) return "-";
   if (bytes < 1024) return `${bytes} B`;
 
   const units = ["KB", "MB", "GB"];

@@ -8,7 +8,7 @@ import type { ActivityAction } from "@/types/api";
 interface LogActivityInput {
   userId: string;
   action: ActivityAction;
-  /** Exactly one of projectId/organizationId should usually be set — activity_logs_insert (001) requires it. */
+  /** Exactly one of projectId/organizationId should usually be set - activity_logs_insert (001) requires it. */
   projectId?: string | null;
   organizationId?: string | null;
   entityType?: string | null;
@@ -20,7 +20,7 @@ interface LogActivityInput {
  * Records one row to activity_logs for the project/organization Activity
  * page. Best-effort: a logging failure is swallowed (and reported to the
  * server console) rather than rolling back or failing the caller's actual
- * mutation, which has already committed by the time this runs — an audit
+ * mutation, which has already committed by the time this runs - an audit
  * trail gap is far cheaper than losing a user's edit over a logging bug.
  */
 export async function logActivity(input: LogActivityInput): Promise<void> {

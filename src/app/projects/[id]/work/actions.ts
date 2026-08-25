@@ -152,7 +152,7 @@ export async function createAttempt(
   }
 ): Promise<{ attempt: TaskAttempt | null; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  // Mirrors task_attempts_insert (013): owner/admin/developer — not tester,
+  // Mirrors task_attempts_insert (013): owner/admin/developer - not tester,
   // recording an implementation attempt is developer-tier work.
   if (!access || !canWriteProject(access.role)) {
     return { attempt: null, error: "You do not have permission to record an attempt." };
@@ -435,7 +435,7 @@ type TaskPatch = Omit<UpdateTaskData, "id" | "description" | "assignee_id" | "du
 
 /**
  * `patch` is caller-constructed TypeScript, not raw request input, but this
- * whitelist is what keeps a raw `SET ${col} = $n` build safe regardless —
+ * whitelist is what keeps a raw `SET ${col} = $n` build safe regardless -
  * only these column names can ever reach the query string, no matter what
  * TaskPatch's shape does in the future.
  */

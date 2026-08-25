@@ -75,7 +75,7 @@ async function syncTechnologiesLocal(
   const toRemove = existing.filter((tech) => !desiredKeys.has(key(tech.name)));
 
   if (toAdd.length > 0) {
-    // Single batched insert via unnest() rather than one INSERT per row —
+    // Single batched insert via unnest() rather than one INSERT per row -
     // toAdd is small in practice, but there's no reason to pay for N
     // sequential round trips when one query does the same job.
     await query(
@@ -201,7 +201,7 @@ export async function updateProjectSettings(
   } else {
     const supabase = await createClient();
 
-    // `technologies` is a separate table, not a column on projects — sending
+    // `technologies` is a separate table, not a column on projects - sending
     // it in this update is what made every save fail with PGRST204.
     const { error } = await supabase
       .from("projects")

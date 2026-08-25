@@ -62,7 +62,7 @@ export default async function BillingPage({
           </div>
           <Card>
             <CardContent className="py-6 text-muted-foreground">
-              Self-hosted installs have no plan limits — billing only applies to Guidon Cloud.
+              Self-hosted installs have no plan limits - billing only applies to Guidon Cloud.
             </CardContent>
           </Card>
         </div>

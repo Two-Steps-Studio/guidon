@@ -13,7 +13,7 @@ import { OAuthButtons } from "@/components/auth/oauth-buttons"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
 
-/** `local` — see login-form.tsx's comment; same reasoning applies here. */
+/** `local` - see login-form.tsx's comment; same reasoning applies here. */
 export function SignupForm({ local }: { local: boolean }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -53,9 +53,9 @@ export function SignupForm({ local }: { local: boolean }) {
 
       // The profile row is created by private.handle_new_user(), an AFTER
       // INSERT trigger on auth.users (SECURITY DEFINER, runs regardless of
-      // email confirmation status). Inserting it again here ran as `anon` —
+      // email confirmation status). Inserting it again here ran as `anon` -
       // signUp() does not establish a session when email confirmation is
-      // required — and anon has no grants on profiles at all, so every
+      // required - and anon has no grants on profiles at all, so every
       // signup failed with "permission denied for table profiles". Same
       // class of bug as the duplicate organization/project membership
       // inserts fixed earlier: the trigger already does this.

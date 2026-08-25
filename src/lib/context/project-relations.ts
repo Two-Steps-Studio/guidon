@@ -1,7 +1,7 @@
 /**
  * Scoping helper for context_relations.
  *
- * Before migration 011, context_relations had no project_id column — a
+ * Before migration 011, context_relations had no project_id column - a
  * relation was anchored to a project only through its source entity, which
  * meant fetching a project's relations required first collecting every
  * entity id in the project (tasks, phases, decisions, files, sources,
@@ -9,7 +9,7 @@
  * That does not scale with project size (docs/self-hosting-audit.md §D).
  *
  * 011 added `project_id`, populated by a trigger from source_type/source_id
- * (never client input — see the migration's own comment block), so this is
+ * (never client input - see the migration's own comment block), so this is
  * now a direct, indexed lookup.
  */
 
@@ -21,7 +21,7 @@ export async function fetchProjectRelations(
   supabase: SupabaseClient,
   projectId: string
 ): Promise<ContextRelation[]> {
-  // Safety cap, not pagination — matches the raw-SQL branch in
+  // Safety cap, not pagination - matches the raw-SQL branch in
   // src/app/projects/[id]/context/page.tsx (the only caller today).
   const { data, error } = await supabase
     .from("context_relations")

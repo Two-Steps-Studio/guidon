@@ -163,7 +163,7 @@ export interface ProjectFile {
   category: FileCategory;
   size_bytes: number | null;
   mime_type: string | null;
-  /** FK is ON DELETE SET NULL — the uploader's account may be gone. */
+  /** FK is ON DELETE SET NULL - the uploader's account may be gone. */
   uploaded_by: string | null;
   created_at: string;
 }

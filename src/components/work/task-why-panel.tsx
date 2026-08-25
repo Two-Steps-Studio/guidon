@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * "Why" panel for TaskDetailDialog — surfaces the task's linked decision plus
+ * "Why" panel for TaskDetailDialog - surfaces the task's linked decision plus
  * everything connected through context_relations, grouped by relation type.
  * Data comes from getTaskWhyContext (src/lib/context/task-why.ts), fetched
  * lazily by the parent when the dialog opens.
  *
  * The empty state ("No context linked yet") is intentional, not a fallback to
- * avoid writing — TODO.md §20 is about making absence of context visible too,
+ * avoid writing - TODO.md §20 is about making absence of context visible too,
  * and it nudges toward "Mark as decision" on a comment (also in
  * TaskDetailDialog) as the way to close that gap.
  */

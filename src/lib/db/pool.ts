@@ -9,7 +9,7 @@ import { Pool, type PoolClient } from "pg";
  * deployments keep talking to PostgREST; a self-hosted install has no
  * PostgREST, so the same queries have to reach PostgreSQL directly.
  *
- * `server-only` is not decoration here — the pool holds the database
+ * `server-only` is not decoration here - the pool holds the database
  * credentials, and the security model of the compat layer rests entirely on
  * the browser being unable to open a connection or set the identity GUC.
  */

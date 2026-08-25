@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRATION 007
+-- GUIDON - MIGRATION 007
 -- Allow organizations and projects to be deleted
 -- ============================================================
 --
@@ -24,7 +24,7 @@ BEGIN;
 --
 -- Net effect: DELETE FROM public.projects and
 -- DELETE FROM public.organizations always fail. Deleting a project
--- or an organization is impossible through any path — API, UI, or
+-- or an organization is impossible through any path - API, UI, or
 -- SQL editor. Confirmed empirically: deleting a freshly created
 -- test project returned exactly the error above.
 --

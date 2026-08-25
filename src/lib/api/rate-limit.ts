@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Per-API-key request rate limit. In-memory, per-process — same
+ * Per-API-key request rate limit. In-memory, per-process - same
  * documented limitation as src/lib/auth/rate-limit.ts (resets on restart,
  * doesn't share state across replicas); this deployment runs one `app`
  * container (docker-compose.yml), so that's acceptable today. A

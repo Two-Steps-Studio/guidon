@@ -11,11 +11,11 @@ import { isLockedOut, recordFailedAttempt, clearAttempts } from "@/lib/auth/rate
  * Self-hosted email/password authentication (TODO.md §8, §30).
  *
  * Replaces Supabase Auth (GoTrue) for installs with no Supabase software
- * running — DATABASE_URL set, talking to a plain PostgreSQL. Writes go
+ * running - DATABASE_URL set, talking to a plain PostgreSQL. Writes go
  * straight to auth.users (recreated by src/db/bootstrap/000_auth_compat.sql),
  * the same table Supabase's own GoTrue would own on a cloud install, so the
  * existing `AFTER INSERT ON auth.users` trigger (private.handle_new_user(),
- * migration 001) creates the profile row exactly as it does today — nothing
+ * migration 001) creates the profile row exactly as it does today - nothing
  * about the schema changes for this to work.
  *
  * Password hashing uses Node's built-in `scrypt`, not a dependency: the
@@ -23,7 +23,7 @@ import { isLockedOut, recordFailedAttempt, clearAttempts } from "@/lib/auth/rate
  * it (see the HMAC signing in src/lib/storage/providers/local.ts), and scrypt
  * needs no native bindings.
  *
- * auth.users has RLS enabled with zero policies (intentional — see
+ * auth.users has RLS enabled with zero policies (intentional - see
  * 000_auth_compat.sql §3), so every query here goes through
  * withServiceRole(), the same bypass the admin panel and migrations use. That
  * is correct, not a shortcut: nothing about "is this email taken" or
@@ -61,7 +61,7 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 
 export type LocalAuthResult = { userId: string } | { error: string };
 
-/** Generic on purpose — never reveals whether an email is registered. */
+/** Generic on purpose - never reveals whether an email is registered. */
 const INVALID_CREDENTIALS = "Invalid email or password.";
 
 export async function signUpLocal(
@@ -77,7 +77,7 @@ export async function signUpLocal(
   return withServiceRole(async ({ query }) => {
     const existing = await query("SELECT id FROM auth.users WHERE email = $1", [normalizedEmail]);
     if (existing.rows.length > 0) {
-      // Same generic message as a failed login — confirming an email exists
+      // Same generic message as a failed login - confirming an email exists
       // via signup is the same enumeration leak as confirming it via login.
       return { error: INVALID_CREDENTIALS };
     }

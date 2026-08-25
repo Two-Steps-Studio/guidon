@@ -14,7 +14,7 @@ import {
  *
  * Access is granted by the HMAC signature minted in LocalStorageProvider.getUrl,
  * which covers bucket, path and expiry. That keeps STORAGE_PATH off the public
- * filesystem — nothing is statically served, so an object cannot be reached by
+ * filesystem - nothing is statically served, so an object cannot be reached by
  * guessing a name.
  */
 export async function GET(request: NextRequest) {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   );
 
   if (!verifyStorageSignature(safeBucket, safePath, expires, signature)) {
-    // One response for bad signature and expired link — no oracle.
+    // One response for bad signature and expired link - no oracle.
     return NextResponse.json({ error: "Link is invalid or has expired" }, {
       status: 403,
     });

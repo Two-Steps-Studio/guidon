@@ -1,20 +1,20 @@
 -- ============================================================
--- GUIDON — MIGRACJA 020
+-- GUIDON - MIGRACJA 020
 -- Konfigurowalne kolumny tablicy Kanban per projekt
 -- ============================================================
 --
 -- Uruchomić PO 019.
 --
--- Nie zmienia tasks.status ani jego CHECK constraint (016) — te 6
+-- Nie zmienia tasks.status ani jego CHECK constraint (016) - te 6
 -- wartości ('backlog','todo','in_progress','ai_working','review','done')
 -- zostaje twardo zakodowane w bazie, bo AI Task API (016) i isDone()
 -- (src/lib/work/task-board.ts) zależą od dokładnie tych literałów.
 -- Ta migracja dodaje wyłącznie WARSTWĘ WYŚWIETLANIA per projekt: etykieta,
--- kolejność, widoczność — bez rzeczywistych, dowolnych kolumn.
+-- kolejność, widoczność - bez rzeczywistych, dowolnych kolumn.
 --
 -- Brak wiersza dla danego (project_id, status) = użyj domyślnej etykiety/
 -- kolejności/widoczności z BOARD_COLUMNS (kod). Projekt, który nigdy nie
--- dostosował tablicy, nie ma tu żadnych wierszy — to jest stan domyślny,
+-- dostosował tablicy, nie ma tu żadnych wierszy - to jest stan domyślny,
 -- nie wymaga seedowania.
 -- ============================================================
 
@@ -52,7 +52,7 @@ FOR SELECT
 TO authenticated
 USING (private.project_access(project_id));
 
--- Owner/admin only — mirrors roadmap_phases (001) and the AI Permissions
+-- Owner/admin only - mirrors roadmap_phases (001) and the AI Permissions
 -- form's own gate: board layout is project configuration, not day-to-day
 -- task work.
 DROP POLICY IF EXISTS project_board_columns_insert ON public.project_board_columns;
@@ -71,7 +71,7 @@ USING (private.project_role(project_id) IN ('owner', 'admin'))
 WITH CHECK (private.project_role(project_id) IN ('owner', 'admin'));
 
 
--- No self-elevation gap here (unlike 014/017's lesson) — every column on
+-- No self-elevation gap here (unlike 014/017's lesson) - every column on
 -- this row (label, sort_order, hidden) is legitimately editable by
 -- whoever the role-check already allows in; there is no column an owner/
 -- admin "shouldn't" be able to touch on their own project's board layout.

@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRATION 006
+-- GUIDON - MIGRATION 006
 -- Correct service-role detection in set_project_creator
 -- ============================================================
 --
@@ -20,7 +20,7 @@ BEGIN;
 --
 --     'Authentication required to create a project'
 --
--- for service-role requests as well — the exact opposite of
+-- for service-role requests as well - the exact opposite of
 -- the documented intent, which was to let server-side
 -- automation create projects by naming the creator explicitly.
 --
@@ -32,7 +32,7 @@ BEGIN;
 -- There it is dead code rather than a bug: each use is ANDed
 -- with `auth.uid() IS NOT NULL`, which is already false for a
 -- service-role request, so the RAISE cannot fire either way.
--- Those are deliberately left alone — the guards behave
+-- Those are deliberately left alone - the guards behave
 -- correctly, only the service_role exemption is unreachable.
 --
 -- FIX

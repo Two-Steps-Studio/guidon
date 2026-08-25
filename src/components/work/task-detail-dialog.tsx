@@ -51,7 +51,7 @@ interface TaskDetailDialogProps {
   canDelete: boolean;
   canComment: boolean;
   currentUserId: string | null;
-  /** The project's resolved (default + overrides) column set — see resolveBoardColumns(). */
+  /** The project's resolved (default + overrides) column set - see resolveBoardColumns(). */
   columns?: readonly BoardColumn[];
   onClose: () => void;
   onSaved: (task: Task) => void;
@@ -114,7 +114,7 @@ export function TaskDetailDialog({
   const [whyLoading, setWhyLoading] = useState(true);
   const [whyError, setWhyError] = useState<string | null>(null);
 
-  // Generic Agent Context export (TODO.md §18) — generated on demand rather
+  // Generic Agent Context export (TODO.md §18) - generated on demand rather
   // than alongside Why/comments, since most task views never open it.
   const [agentContextOpen, setAgentContextOpen] = useState(false);
   const [agentContextMarkdown, setAgentContextMarkdown] = useState("");
@@ -142,7 +142,7 @@ export function TaskDetailDialog({
   );
 
   // Fetched lazily when the dialog opens rather than prefetched for every
-  // task on the board — see the module comment in task-why.ts for why.
+  // task on the board - see the module comment in task-why.ts for why.
   const loadWhy = useCallback(
     async (taskId: string) => {
       setWhyLoading(true);
@@ -301,7 +301,7 @@ export function TaskDetailDialog({
       if (result.error || !result.task) throw new Error(result.error ?? "Failed to create subtask");
 
       // Subtasks are plain tasks, so the same onSaved callback that updates
-      // the board's task list handles them — no separate state to sync.
+      // the board's task list handles them - no separate state to sync.
       onSaved(result.task);
       setSubtaskDraft("");
     } catch (err) {
@@ -347,7 +347,7 @@ export function TaskDetailDialog({
 
   // A task can end up on a status its project has since hidden from the
   // board (e.g. the AI Task API sets ai_working without knowing about
-  // per-project column visibility) — keep the current value selectable
+  // per-project column visibility) - keep the current value selectable
   // even then, rather than silently rendering an option list that doesn't
   // contain the form's own value.
   const statusOptions = columns.some((c) => c.status === form.status)
@@ -773,7 +773,7 @@ export function TaskDetailDialog({
         <DialogHeader>
           <DialogTitle>Agent context</DialogTitle>
           <DialogDescription>
-            Provider-neutral Markdown for this task — paste it into Claude Code, Cursor, Codex, Windsurf,
+            Provider-neutral Markdown for this task - paste it into Claude Code, Cursor, Codex, Windsurf,
             or any other AI coding agent.
           </DialogDescription>
         </DialogHeader>

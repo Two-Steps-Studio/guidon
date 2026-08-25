@@ -9,7 +9,7 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
 
 // This page has no cookies()/headers() calls, so Next statically prerenders
-// it — without this, the pricing section's plan data would be baked in at
+// it - without this, the pricing section's plan data would be baked in at
 // build time and never reflect a price changed later via the admin plan
 // editor (src/app/admin/organizations/plan-editor.tsx) until the next
 // deploy. Revalidating hourly is enough freshness for prices that change
@@ -18,13 +18,13 @@ export const revalidate = 3600;
 
 export default async function Home() {
   // Self-hosted installs have no billing concept at all (mirrors
-  // organizations/[id]/billing/page.tsx) — Guidon Cloud pricing has no
+  // organizations/[id]/billing/page.tsx) - Guidon Cloud pricing has no
   // meaning on someone's own deployment, so the section is skipped rather
   // than showing SaaS prices that don't apply.
   //
   // plans has no `anon` grant (015_subscriptions.sql restricts it to
   // `authenticated`) since it's normally read from inside the authenticated
-  // app, not a public marketing page — createServiceClient() is the
+  // app, not a public marketing page - createServiceClient() is the
   // service-role bypass, safe here because this is read-only public pricing
   // copy, not anything user-scoped.
   const plans = hasDirectDatabase()

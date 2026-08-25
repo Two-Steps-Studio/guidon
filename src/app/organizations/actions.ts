@@ -14,15 +14,15 @@ export type CreateOrganizationState = {
 
 /**
  * Creates an organization. The owner membership and `created_by` are set by
- * private.handle_new_organization() and set_organization_creator() — do not
+ * private.handle_new_organization() and set_organization_creator() - do not
  * insert the membership again here, see migration 005/README for the
  * duplicate-key bug that caused.
  *
  * Relies on migration 009 (INSERT ... RETURNING previously failed RLS
  * because the owner membership does not exist yet at the instant the SELECT
  * policy runs against the returned row). That RLS behavior is identical
- * whether the INSERT arrives via PostgREST or a direct pg connection — it's
- * enforced by Postgres itself, not by the client — so the self-hosted branch
+ * whether the INSERT arrives via PostgREST or a direct pg connection - it's
+ * enforced by Postgres itself, not by the client - so the self-hosted branch
  * below relies on the exact same trigger and policy, just issues the SQL
  * directly under withUser() instead of through supabase.from().
  */

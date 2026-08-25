@@ -9,7 +9,7 @@ import { getPool, type PoolClient } from "./pool";
  * On Supabase, PostgREST verifies a JWT and exposes its claims to PostgreSQL
  * as the `request.jwt.claims` GUC. Every one of the 70 RLS policies reads that
  * GUC through `auth.uid()`. Connecting to a plain PostgreSQL with `pg` skips
- * PostgREST entirely, so nothing sets the GUC and `auth.uid()` returns NULL —
+ * PostgREST entirely, so nothing sets the GUC and `auth.uid()` returns NULL -
  * which makes every policy deny, silently and uniformly.
  *
  * This module is what sets it, and it is the reason the compat layer is safe:
@@ -53,7 +53,7 @@ async function withSession<T>(
 
     // Claims go in first, while the connection still has its own privileges,
     // and as a bind parameter so the payload can never be read as SQL.
-    // `true` is the is_local flag — this is the whole leak-prevention story.
+    // `true` is the is_local flag - this is the whole leak-prevention story.
     if (claims) {
       await client.query("SELECT set_config('request.jwt.claims', $1, true)", [
         JSON.stringify(claims),
@@ -103,7 +103,7 @@ export function withUser<T>(
 }
 
 /**
- * Runs `fn` with RLS bypassed — migrations, background jobs, webhooks and the
+ * Runs `fn` with RLS bypassed - migrations, background jobs, webhooks and the
  * admin panel (TODO.md §25). Never reachable from a user request path.
  *
  * Both halves of the service identity are asserted: the `service_role` database
@@ -117,7 +117,7 @@ export function withServiceRole<T>(
 }
 
 /**
- * Runs `fn` with no identity at all. Everything user-scoped is invisible —
+ * Runs `fn` with no identity at all. Everything user-scoped is invisible -
  * useful for health checks and for asserting that a table really is protected.
  */
 export function withAnon<T>(fn: (session: DbSession) => Promise<T>): Promise<T> {

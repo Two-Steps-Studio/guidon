@@ -9,7 +9,7 @@ import {
 } from "../provider";
 
 /**
- * Supabase Storage — the cloud default, and the behaviour Guidon shipped with.
+ * Supabase Storage - the cloud default, and the behaviour Guidon shipped with.
  *
  * Uses the service-role client because these operations run inside API routes
  * that have already authorised the caller against project_members. Storage

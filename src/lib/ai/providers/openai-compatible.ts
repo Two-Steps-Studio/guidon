@@ -13,11 +13,11 @@ import { requireEnv, requireModel } from "../provider";
  * REST shape (POST {baseUrl}/chat/completions with a {model, messages, ...}
  * body, choices[0].message.content back). OpenAI, OpenRouter, Ollama and a
  * generic "custom" endpoint differ only in base URL, whether an API key is
- * required, and where that URL comes from — everything else is identical,
+ * required, and where that URL comes from - everything else is identical,
  * so duplicating it four times would just be four copies of the same fetch
  * call. Azure OpenAI reuses this body/response shape too, but its URL is
  * deployment-scoped with an api-version query param and an `api-key`
- * header instead of `Authorization: Bearer` — different enough to live in
+ * header instead of `Authorization: Bearer` - different enough to live in
  * its own file (azure-openai.ts) rather than become a config branch here.
  */
 export class OpenAICompatibleProvider implements AIProvider {
@@ -53,7 +53,7 @@ export class OpenAICompatibleProvider implements AIProvider {
   }
 
   /**
-   * No API key required — this is the provider TODO.md §6 calls out by
+   * No API key required - this is the provider TODO.md §6 calls out by
    * name ("a user should be able to run Guidon without sending project
    * data to an external AI provider"). AI_BASE_URL defaults to a local
    * daemon on Ollama's standard port; its OpenAI-compatible surface lives
@@ -72,7 +72,7 @@ export class OpenAICompatibleProvider implements AIProvider {
   /**
    * Any other OpenAI-compatible endpoint. The base URL has no safe default
    * (unlike Ollama, there's no standard host), so it's required. The API
-   * key is optional — plenty of self-hosted gateways don't require one.
+   * key is optional - plenty of self-hosted gateways don't require one.
    */
   static forCustom(): OpenAICompatibleProvider {
     return new OpenAICompatibleProvider(
@@ -83,7 +83,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     );
   }
 
-  /** Pure request construction — no I/O, so it's unit-testable without a network stub. */
+  /** Pure request construction - no I/O, so it's unit-testable without a network stub. */
   buildRequest(input: AICompletionInput): {
     url: string;
     headers: Record<string, string>;

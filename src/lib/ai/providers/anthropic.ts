@@ -8,7 +8,7 @@ const ANTHROPIC_VERSION = "2023-06-01";
 const DEFAULT_MAX_TOKENS = 1024;
 
 /**
- * Native fetch, no SDK — the Messages API is a single POST with a plain
+ * Native fetch, no SDK - the Messages API is a single POST with a plain
  * JSON body, and this codebase avoids adding a vendor SDK dependency where
  * a small fetch call suffices (no @anthropic-ai/sdk in package.json). This
  * is the one provider that doesn't fit the OpenAI-compatible shape shared
@@ -26,7 +26,7 @@ export class AnthropicProvider implements AIProvider {
     this.model = requireModel("anthropic");
   }
 
-  /** Pure request construction — no I/O, so it's unit-testable without a network stub. */
+  /** Pure request construction - no I/O, so it's unit-testable without a network stub. */
   buildRequest(input: AICompletionInput): {
     url: string;
     headers: Record<string, string>;

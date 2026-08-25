@@ -24,7 +24,7 @@ export default async function ProjectDecisionsPage({
 
   let decisions: Decision[];
 
-  // Safety cap, not pagination — see src/app/projects/[id]/work/page.tsx
+  // Safety cap, not pagination - see src/app/projects/[id]/work/page.tsx
   // for the same reasoning applied to tasks.
   const LIST_LIMIT = 500;
 
@@ -121,7 +121,7 @@ export default async function ProjectDecisionsPage({
                     {decision.alternatives && decision.alternatives.length > 0 && (
                       <div>
                         <h4 className="text-sm font-semibold mb-1">Alternatives Considered</h4>
-                        {/* .join(', ') — the array previously rendered as raw
+                        {/* .join(', ') - the array previously rendered as raw
                             React children with no separator between entries. */}
                         <p className="text-sm text-muted-foreground">
                           {decision.alternatives.join(", ")}

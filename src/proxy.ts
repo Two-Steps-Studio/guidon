@@ -7,14 +7,14 @@ type CookieToSet = { name: string; value: string; options: CookieOptions }
 /**
  * Routes reachable without a session.
  *
- * `/` is matched exactly — the previous implementation prefix-matched every
+ * `/` is matched exactly - the previous implementation prefix-matched every
  * entry, and because `'/'` is a prefix of every path, `startsWith` made the
  * whole application public and the redirect below unreachable.
  */
 const EXACT_PUBLIC_ROUTES = new Set([
   '/',
   // Container and load-balancer probes cannot authenticate (TODO.md §12).
-  // The endpoint reports status only — no secrets, no counts.
+  // The endpoint reports status only - no secrets, no counts.
   '/api/health',
   // Local-storage objects carry their own authorisation: an HMAC over
   // bucket + path + expiry that only the server can mint. Bouncing these to
@@ -41,8 +41,8 @@ function redirectToLogin(request: NextRequest, pathname: string) {
 /**
  * Self-hosted branch: no Supabase software is assumed to exist, so identity
  * comes from the signed session cookie (src/lib/auth/local-auth.ts) instead
- * of asking GoTrue. Verification is a local HMAC check — no database round
- * trip, no network call — which is why this can run on every request without
+ * of asking GoTrue. Verification is a local HMAC check - no database round
+ * trip, no network call - which is why this can run on every request without
  * the latency concern a DB-backed session would have.
  *
  * Same detection as the migration runner and getCurrentUser(): DATABASE_URL

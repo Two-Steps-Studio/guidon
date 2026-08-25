@@ -15,13 +15,13 @@ const Waves = dynamic(() => import("@/components/Waves"), { ssr: false });
  * Deliberately ignores prefers-reduced-motion, unlike every other animation
  * in this app (see globals.css's own @media (prefers-reduced-motion: reduce)
  * block) and unlike this component's own first version. That gate made the
- * effect invisible whenever the OS/browser reports reduced motion — which
- * turned out to be the environment default here — silently defeating a
+ * effect invisible whenever the OS/browser reports reduced motion - which
+ * turned out to be the environment default here - silently defeating a
  * background explicitly requested for the landing page. Confirmed with the
  * user: they'd rather always see it.
  *
  * `className` is expected to carry positioning/opacity for the caller's
- * context — the landing page uses this both full-strength behind the hero
+ * context - the landing page uses this both full-strength behind the hero
  * and faded behind the pricing section beneath it.
  */
 export function WavesBackground({ className = "" }: { className?: string }) {

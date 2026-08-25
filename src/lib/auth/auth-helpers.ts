@@ -9,7 +9,7 @@ import { getLocalSessionUserId } from "@/lib/auth/local-auth";
  *
  * This module used to also gate 13 CRUD routes under /api/v1 with
  * requireOrganizationAccess() / requireProjectAccess() / requireProjectPermission().
- * Those routes were dead (the UI never called them — everything else moved to
+ * Those routes were dead (the UI never called them - everything else moved to
  * Server Components/Actions, see docs/self-hosting-audit.md blocker 1) and were
  * removed together with the org/project/permission helpers that only they used.
  * Real page-level authorization now lives in src/lib/data/project-access.ts and
@@ -19,7 +19,7 @@ import { getLocalSessionUserId } from "@/lib/auth/local-auth";
  * e.g. GitHub webhooks, agent integrations) have a single place to check
  * "is there a logged-in user" without duplicating the Supabase call.
  *
- * `AuthContext.userId` is a plain string, not Supabase's `User` type — the
+ * `AuthContext.userId` is a plain string, not Supabase's `User` type - the
  * only field any caller ever read was `user.id`, so there was nothing
  * provider-specific worth keeping. Branches on hasDirectDatabase() the same
  * way every other identity-resolving function in this codebase does (see

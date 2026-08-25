@@ -1,17 +1,17 @@
 -- ============================================================
--- GUIDON — MIGRACJA 018
+-- GUIDON - MIGRACJA 018
 -- Obrazki (avatar_url) dla organizacji i projektów
 -- ============================================================
 --
 -- Uruchomić PO 017.
 --
--- Ta sama kolumna i ten sam wzorzec co profiles.avatar_url (000/001) —
+-- Ta sama kolumna i ten sam wzorzec co profiles.avatar_url (000/001) -
 -- publiczny URL w bucketcie "avatars" (współdzielonym z avatarami
 -- profili, osobny prefiks ścieżki: organizations/<id>/... i
 -- projects/<id>/...), NIE binarne dane w wierszu.
 --
 -- WAŻNE: 014 i 017 już zawęziły GRANT UPDATE na obu tych tabelach do
--- konkretnej listy kolumn (patrz komentarze w tamtych migracjach — luka
+-- konkretnej listy kolumn (patrz komentarze w tamtych migracjach - luka
 -- self-elevation, ten sam wzorzec). Nowa kolumna musi trafić do tej
 -- listy w tej samej migracji, inaczej legalny upload obrazka dostanie
 -- "permission denied" mimo przejścia polityki RLS.

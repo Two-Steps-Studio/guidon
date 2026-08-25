@@ -28,7 +28,7 @@ export function OAuthButtons({ redirectTo = "/dashboard" }: { redirectTo?: strin
     setError(null);
 
     try {
-      // Two Steps Studio is not a Supabase provider — it is Guidon's own
+      // Two Steps Studio is not a Supabase provider - it is Guidon's own
       // flow, handled by /auth/tss. See docs/auth-setup.md.
       if (id === "tss") {
         router.push(`/auth/tss?redirect=${encodeURIComponent(redirectTo)}`);
@@ -95,7 +95,7 @@ export function OAuthButtons({ redirectTo = "/dashboard" }: { redirectTo?: strin
   );
 }
 
-/** Inline marks — avoids shipping an icon dependency for three logos. */
+/** Inline marks - avoids shipping an icon dependency for three logos. */
 function ProviderMark({ id }: { id: OAuthProviderId }) {
   if (id === "google") {
     return (

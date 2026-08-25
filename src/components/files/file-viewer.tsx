@@ -30,8 +30,8 @@ import {
 
 /**
  * The syntax highlighter is ~300KB with its Prism bundle. It is only pulled in
- * when a code file is actually opened, so the rest of the app — and the file
- * list itself — never pays for it (TODO.md §34).
+ * when a code file is actually opened, so the rest of the app - and the file
+ * list itself - never pays for it (TODO.md §34).
  */
 const CodeBlock = dynamic(() => import("./code-block"), {
   ssr: false,
@@ -186,7 +186,7 @@ function FilePreview({ file, kind }: { file: ProjectFile; kind: FileKind }) {
       <Unsupported
         reason={
           tooLarge
-            ? `This file is ${formatFileSize(file.size_bytes)} — too large to preview inline.`
+            ? `This file is ${formatFileSize(file.size_bytes)} - too large to preview inline.`
             : "No preview available for this file type."
         }
       />
@@ -218,7 +218,7 @@ function FilePreview({ file, kind }: { file: ProjectFile; kind: FileKind }) {
     case "image":
       return (
         <div className="flex items-center justify-center p-4">
-          {/* Signed URL from private storage — Next's optimizer cannot fetch it. */}
+          {/* Signed URL from private storage - Next's optimizer cannot fetch it. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}

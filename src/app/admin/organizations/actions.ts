@@ -51,7 +51,7 @@ export type UpdatePlanState = {
 };
 
 /**
- * Admin-only plan change (no self-service upgrade in this phase — see
+ * Admin-only plan change (no self-service upgrade in this phase - see
  * docs/superpowers/specs/2026-08-22-subscriptions-design.md's "Context"
  * section for why). Updates both the subscription's plan_id and
  * organizations.project_limit together, so the two stay in sync at the

@@ -1,5 +1,5 @@
 -- ============================================================
--- 009 — WIDOCZNOŚĆ DLA TWÓRCY: naprawa INSERT ... RETURNING
+-- 009 - WIDOCZNOŚĆ DLA TWÓRCY: naprawa INSERT ... RETURNING
 -- ============================================================
 --
 -- OBJAW
@@ -9,7 +9,7 @@
 --   new row violates row-level security policy for table "organizations"
 --   new row violates row-level security policy for table "projects"
 --
--- Dotyczy obu ścieżek zapisu w aplikacji — .insert().select().single()
+-- Dotyczy obu ścieżek zapisu w aplikacji - .insert().select().single()
 -- w src/app/organizations/page.tsx, src/app/organizations/[id]/page.tsx
 -- oraz /api/v1/organizations i /api/v1/projects.
 --
@@ -30,13 +30,13 @@
 -- project_access() zwracają false. Wiersz jest poprawnie zapisany,
 -- ale całość zostaje wycofana przy próbie jego odczytania.
 --
--- Dlatego INSERT bez RETURNING działał, a z RETURNING nie — co
+-- Dlatego INSERT bez RETURNING działał, a z RETURNING nie - co
 -- maskowało błąd, bo tabela po fakcie wyglądała poprawnie.
 --
 -- Problem dotyczy WYŁĄCZNIE tych dwóch tabel: ich polityka SELECT
 -- pyta o własne `id`. Tabele podrzędne (tasks, roadmap_phases,
 -- technologies, project_memory, context_sources) pytają o
--- project_id rodzica, który jest widoczny już przed zapisem —
+-- project_id rodzica, który jest widoczny już przed zapisem -
 -- sprawdzone, INSERT ... RETURNING przechodzi tam bez zmian.
 --
 --
@@ -48,12 +48,12 @@
 -- ŚWIADOMY KOMPROMIS: klauzula nie wygasa po zakończeniu instrukcji,
 -- więc osoba usunięta później z organizacji lub projektu zachowa
 -- prawo ODCZYTU tego jednego wiersza. Zakres wycieku jest ograniczony
--- do metadanych (nazwa, opis) — polityki UPDATE i DELETE pozostają
+-- do metadanych (nazwa, opis) - polityki UPDATE i DELETE pozostają
 -- nietknięte, a wiersze podrzędne dalej wymagają członkostwa, bo ich
 -- polityki pytają o project_access(project_id).
 --
 -- Rozważona alternatywa: odroczony klucz obcy i tworzenie członkostwa
--- w triggerze BEFORE. Odrzucona — DEFERRABLE INITIALLY DEFERRED na
+-- w triggerze BEFORE. Odrzucona - DEFERRABLE INITIALLY DEFERRED na
 -- kluczu obcym członkostwa zmienia zachowanie każdej transakcji
 -- dotykającej tych tabel, żeby naprawić jeden przypadek brzegowy.
 -- ============================================================

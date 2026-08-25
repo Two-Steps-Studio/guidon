@@ -126,7 +126,7 @@ export async function createDecision(
         const id = result.rows[0].id as string;
 
         // Same "not rolled back together" reasoning as the Supabase branch
-        // below — no cross-table transaction spanning both inserts at this
+        // below - no cross-table transaction spanning both inserts at this
         // layer, so a relation failure here doesn't undo the decision.
         let relationError: string | null = null;
         if (hasLink) {
@@ -201,7 +201,7 @@ export async function createDecision(
 
   if (hasLink && data) {
     // Mirrors context_relations_insert (001, rewritten by migration 011):
-    // owner/admin/developer — same tier already required above, so this
+    // owner/admin/developer - same tier already required above, so this
     // never fails on permissions when the first insert succeeded. Not
     // rolled back together with the decision (no cross-table transaction
     // available at this layer): if this second insert fails, the decision

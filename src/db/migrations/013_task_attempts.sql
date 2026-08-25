@@ -1,5 +1,5 @@
 -- ============================================================
--- GUIDON — MIGRACJA 013
+-- GUIDON - MIGRACJA 013
 -- Previous Attempts: task_attempts (TODO.md §22)
 -- ============================================================
 --
@@ -17,7 +17,7 @@
 --
 -- KSZTAŁT
 -- -------
--- Osobna tabela, nie kolejny memory_type w project_memory — próba ma
+-- Osobna tabela, nie kolejny memory_type w project_memory - próba ma
 -- strukturalne pola (outcome, files_changed, related_pr_url), które
 -- w jednym polu tekstowym project_memory.content straciłyby
 -- możliwość filtrowania ("pokaż agentowi tylko nieudane próby",
@@ -26,11 +26,11 @@
 -- `outcome` jest enumem (failed/partial/succeeded), bo to właśnie ta
 -- kolumna ma realny cel produktowy: agent-context.ts (§18) może
 -- wybrać `WHERE outcome != 'succeeded'` zamiast zgadywać z treści.
--- `result` zostaje wolnym tekstem — co się faktycznie stało, nie
+-- `result` zostaje wolnym tekstem - co się faktycznie stało, nie
 -- tylko klasyfikacja.
 --
 -- `agent` to wolny tekst (np. "Claude Code", "human", "Cursor"), nie
--- enum — zamknięta lista nazw narzędzi starzałaby się przy każdym
+-- enum - zamknięta lista nazw narzędzi starzałaby się przy każdym
 -- nowym agencie, a to pole jest czysto informacyjne, niczego nie
 -- bramkuje.
 --
@@ -38,21 +38,21 @@
 -- context_relations/ContextEntityType (§19 graf typowanych relacji).
 -- To osobna, większa decyzja integracyjna (nowy typ encji w całym
 -- systemie: entity_project_id(), triggery czyszczące z migracji 012,
--- UI grafu) — rdzeń funkcji (zapis/odczyt prób na tasku, eksport do
+-- UI grafu) - rdzeń funkcji (zapis/odczyt prób na tasku, eksport do
 -- agent-context.ts) nie tego wymaga.
 --
 -- Brak UPDATE: próba to log zdarzenia, nie edytowalny dokument jak
--- decyzja. Błędny wpis się usuwa i dodaje ponownie, nie edytuje —
+-- decyzja. Błędny wpis się usuwa i dodaje ponownie, nie edytuje -
 -- prostsza semantyka, mniej stanu do ogarnięcia w UI.
 --
 -- RLS
 -- ---
 -- Mirror task_comments (001): SELECT przez project_access() taska
 -- macierzystego, INSERT wymaga created_by = auth.uid() ORAZ
--- project_role() w ('owner','admin','developer') — bez 'tester',
+-- project_role() w ('owner','admin','developer') - bez 'tester',
 -- bo rejestrowanie próby implementacji to praca deweloperska, nie
 -- testerska (inaczej niż komentarze, które tester też dodaje).
--- DELETE: owner/admin, jak tasks_delete/decisions_delete — historia
+-- DELETE: owner/admin, jak tasks_delete/decisions_delete - historia
 -- projektu, nie własność autora jak w komentarzach.
 --
 -- BEZPIECZEŃSTWO
@@ -165,7 +165,7 @@ GRANT SELECT, INSERT, DELETE
 -- Redundant w praktyce (000_auth_compat.sql's ALTER DEFAULT PRIVILEGES
 -- już obejmuje tabele tworzone później przez tę samą rolę na self-hosted,
 -- Supabase daje service_role dostęp do nowych tabel z platformowych
--- default privileges) — ale jawny GRANT jest tani, idempotentny i nie
+-- default privileges) - ale jawny GRANT jest tani, idempotentny i nie
 -- zależy od żadnego z tych dwóch mechanizmów działających tak jak
 -- opisano, więc zostaje jako pas i szelki.
 GRANT SELECT, INSERT, UPDATE, DELETE

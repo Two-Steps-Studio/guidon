@@ -6,7 +6,7 @@ import type { SourceType } from "@/types/context";
  * and is already reachable from the project graph via context_relations. When
  * a richer editor arrives it can upgrade these rows in place.
  *
- * Only these four are offered for authoring — comment/commit/pull_request/
+ * Only these four are offered for authoring - comment/commit/pull_request/
  * issue are populated by future integrations (GitHub, etc.), not typed by hand.
  */
 export const AUTHORABLE_TYPES: { value: SourceType; label: string; hint: string }[] = [

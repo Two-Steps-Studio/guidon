@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { KanbanBoard } from "@/components/work/kanban-board";
 
 // TaskDetailDialog (and the attempts/why-panel sections it always imports)
-// only matter once a task is actually opened — code-split so the board's
+// only matter once a task is actually opened - code-split so the board's
 // initial load doesn't pay for a dialog nobody may click into this visit.
 const TaskDetailDialog = dynamic(() =>
   import("@/components/work/task-detail-dialog").then((mod) => mod.TaskDetailDialog)
@@ -80,9 +80,9 @@ export function WorkBoard({
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
 
   // Subtasks (migration 010) are plain rows in `tasks` with a parent_task_id.
-  // They are not shown as their own board cards — only nested under their
+  // They are not shown as their own board cards - only nested under their
   // parent in TaskDetailDialog and rolled up into the "3/5" badge on the
-  // parent's card — so the board columns and progress header only count
+  // parent's card - so the board columns and progress header only count
   // top-level tasks.
   const topLevelTasks = useMemo(
     () => state.tasks.filter((task) => !task.parent_task_id),
@@ -189,7 +189,7 @@ export function WorkBoard({
 
         {!canEdit && role && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            You have <strong className="font-medium">{role}</strong> access — the board is read-only.
+            You have <strong className="font-medium">{role}</strong> access - the board is read-only.
           </p>
         )}
 

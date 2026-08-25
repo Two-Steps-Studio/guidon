@@ -13,7 +13,7 @@ export interface ApiKeyIdentity {
 
 /**
  * Resolves a bearer token to the API key's owner, or null if it's missing,
- * malformed, unknown, or revoked. Updates last_used_at as a side effect —
+ * malformed, unknown, or revoked. Updates last_used_at as a side effect -
  * every caller of this function is about to actually use the key, there is
  * no separate "check without using" call site in this codebase.
  */
@@ -58,7 +58,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
 }
 
 /**
- * A Supabase client that operates under RLS as `userId` — for the hosted
+ * A Supabase client that operates under RLS as `userId` - for the hosted
  * path only (self-hosted route handlers call withUser(userId, ...)
  * directly instead, the same mechanism every other identity in this
  * codebase already uses; there is nothing for this function to do there).
@@ -67,7 +67,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
  * own session tokens carry ({ sub, role: "authenticated", exp }), signed
  * with SUPABASE_JWT_SECRET. PostgREST decodes it exactly like a real
  * session token, so auth.uid() resolves to userId and every existing RLS
- * policy applies unchanged — no authorization logic is reimplemented here.
+ * policy applies unchanged - no authorization logic is reimplemented here.
  */
 export async function getApiUserClient(userId: string) {
   const jwt = await signApiJwt(userId);

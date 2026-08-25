@@ -57,7 +57,7 @@ interface ProjectNavGroup {
 /**
  * Carries forward the nav grouping/labels from the pre-existing, uncommitted
  * local edit to the old project-sidebar.tsx (Task Board instead of Board,
- * Files moved into Work, "Project" group label) rather than reverting it —
+ * Files moved into Work, "Project" group label) rather than reverting it -
  * see the spec addendum's note on this.
  */
 const PROJECT_NAV: ProjectNavGroup[] = [

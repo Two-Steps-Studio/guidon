@@ -1,7 +1,7 @@
 BEGIN;
 
 -- ============================================================
--- GUIDON — MIGRATION 002
+-- GUIDON - MIGRATION 002
 -- Task status vocabulary + project slug
 -- ============================================================
 --
@@ -22,7 +22,7 @@ BEGIN;
 
 
 -- ============================================================
--- 1. TASKS — STATUS VOCABULARY
+-- 1. TASKS - STATUS VOCABULARY
 -- ============================================================
 
 -- 1a. Drop whatever CHECK constraint currently guards tasks.status.
@@ -108,7 +108,7 @@ ALTER TABLE public.tasks
         );
 
 
--- 1d. Priority vocabulary — align the same way, defensively.
+-- 1d. Priority vocabulary - align the same way, defensively.
 
 DO $$
 DECLARE
@@ -172,7 +172,7 @@ CREATE INDEX IF NOT EXISTS idx_tasks_project_status_sort
 
 
 -- ============================================================
--- 2. PROJECTS — SLUG
+-- 2. PROJECTS - SLUG
 -- ============================================================
 
 ALTER TABLE public.projects
@@ -253,7 +253,7 @@ END
 $$;
 
 
--- 2c. Unique per organization (not globally — two organizations
+-- 2c. Unique per organization (not globally - two organizations
 --     may both have a project called "website").
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_projects_org_slug

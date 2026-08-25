@@ -3,7 +3,7 @@ import "server-only";
 /**
  * Signed session cookie for self-hosted auth (TODO.md §8, §30 "Self-hosting").
  *
- * On Supabase, a session is a JWT that GoTrue issued and PostgREST verifies —
+ * On Supabase, a session is a JWT that GoTrue issued and PostgREST verifies -
  * neither exists in a self-hosted install with no Supabase software running.
  * This is the replacement for that pair: a cookie the server signs on login
  * and re-verifies on every request, with no database round trip and no
@@ -13,19 +13,19 @@ import "server-only";
  * module is imported from both `src/proxy.ts` (Next middleware, which can run
  * on the Edge runtime) and Server Actions (Node runtime). `crypto.subtle` is
  * the one HMAC implementation available in both, and `SubtleCrypto.verify`
- * does the signature comparison in constant time itself — there is no manual
+ * does the signature comparison in constant time itself - there is no manual
  * timing-safe-equal to get wrong here.
  *
  * The cookie carries no secrets beyond the user id: `{ sub, exp }`, base64url,
  * HMAC-SHA256'd with AUTH_SECRET (the same variable already used to sign
- * local storage URLs — see src/lib/storage/providers/local.ts). Losing
+ * local storage URLs - see src/lib/storage/providers/local.ts). Losing
  * AUTH_SECRET invalidates every session at once; that is the correct failure
  * mode, not a bug to work around.
  */
 
 export const SESSION_COOKIE_NAME = "guidon-session";
 
-/** 30 days. Self-hosted installs have no refresh-token dance (yet) — a
+/** 30 days. Self-hosted installs have no refresh-token dance (yet) - a
  * session is a flat expiry, and expiring means signing in again. */
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
 
@@ -87,7 +87,7 @@ export async function signSession(userId: string): Promise<{ value: string; expi
 /**
  * Verifies a cookie value and returns the user id, or null if it is missing,
  * malformed, unsigned by this AUTH_SECRET, or expired. Never throws on bad
- * input — an invalid session must fail closed like "not signed in", not like
+ * input - an invalid session must fail closed like "not signed in", not like
  * a server error.
  */
 export async function verifySessionCookie(cookieValue: string | undefined | null): Promise<string | null> {

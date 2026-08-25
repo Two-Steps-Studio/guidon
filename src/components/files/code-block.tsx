@@ -13,7 +13,7 @@ interface CodeBlockProps {
   /** Signed URL to fetch the file contents from. */
   url: string;
   language: string;
-  /** Plain text — skip highlighting, keep the monospace layout. */
+  /** Plain text - skip highlighting, keep the monospace layout. */
   plain?: boolean;
 }
 

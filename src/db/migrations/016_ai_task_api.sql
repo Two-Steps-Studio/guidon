@@ -1,22 +1,22 @@
 -- ============================================================
--- GUIDON — MIGRACJA 016
+-- GUIDON - MIGRACJA 016
 -- AI Task API: status ai_working, api_keys, project_ai_permissions
 -- ============================================================
 --
 -- Uruchomić PO 015.
 --
 -- Cykl życia taska dla agenta AI: todo/backlog -> ai_working -> review ->
--- done. `review` już istnieje (migracja 002) — jedyny nowy stan to
+-- done. `review` już istnieje (migracja 002) - jedyny nowy stan to
 -- ai_working. `ai_working -> done` bezpośrednio wymaga jednocześnie
--- projects.allow_ai_auto_complete=true I uprawnienia can_complete_tasks —
+-- projects.allow_ai_auto_complete=true I uprawnienia can_complete_tasks -
 -- domyślnie oba wyłączone, zgodnie z wprost wyrażonym wymogiem: AI nie
 -- oznacza tasków jako ukończone bez wyraźnej zgody.
 --
 -- api_keys: hash (sha256), nigdy plaintext. Revoke to UPDATE tylko kolumny
--- revoked_at (GRANT UPDATE na tej jednej kolumnie) — właściciel klucza NIE
+-- revoked_at (GRANT UPDATE na tej jednej kolumnie) - właściciel klucza NIE
 -- może zmienić scopes/key_hash własnego klucza, ta sama lekcja co
 -- project_limit w migracji 014. project_ai_permissions: domyślne wartości
--- dokładnie odzwierciedlają listę użytkownika — read/comment/status wł.,
+-- dokładnie odzwierciedlają listę użytkownika - read/comment/status wł.,
 -- complete/modify/delete wył.
 -- ============================================================
 
@@ -118,7 +118,7 @@ FOR INSERT
 TO authenticated
 WITH CHECK (user_id = (SELECT auth.uid()));
 
--- Revoke is an UPDATE of one column (see the GRANT below), not a DELETE —
+-- Revoke is an UPDATE of one column (see the GRANT below), not a DELETE -
 -- a revoked key stays as a row (name, scopes, history) rather than
 -- disappearing, matching task_attempts' (013) "log entry" instinct.
 DROP POLICY IF EXISTS api_keys_revoke ON public.api_keys;
@@ -133,7 +133,7 @@ WITH CHECK (user_id = (SELECT auth.uid()));
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_ai_permissions TO authenticated;
 
 -- api_keys: authenticated gets SELECT/INSERT freely, but UPDATE only on
--- revoked_at — the RLS policy above says "your own row," this GRANT says
+-- revoked_at - the RLS policy above says "your own row," this GRANT says
 -- "only this column," together closing the gap migration 014 first
 -- documented: RLS alone doesn't stop a caller from writing columns a
 -- policy's role-check never looks at.

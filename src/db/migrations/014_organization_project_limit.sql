@@ -1,5 +1,5 @@
 -- ============================================================
--- GUIDON — MIGRACJA 014
+-- GUIDON - MIGRACJA 014
 -- Limit projektów per organizacja: organizations.project_limit
 -- ============================================================
 --
@@ -12,7 +12,7 @@
 -- (src/lib/limits.ts). Nie było sposobu podnieść ten limit dla
 -- konkretnej organizacji bez zmiany kodu i redeployu. Self-hosted
 -- (DATABASE_URL ustawione) nie ma i nadal nie będzie miał żadnego
--- limitu — bez zmian.
+-- limitu - bez zmian.
 --
 -- Ta migracja dodaje project_limit jako kolumnę per-organizacja,
 -- domyślnie 1 (dzisiejsze zachowanie), edytowalną tylko przez panel
@@ -29,16 +29,16 @@
 -- 001 nadaje też GRANT UPDATE ... TO authenticated bez ograniczenia
 -- do kolumn. Bez interwencji właściciel organizacji mógłby więc sam
 -- podnieść sobie project_limit przez zwykłe wywołanie
--- supabase.from('organizations').update(...) — RLS by tego nie
+-- supabase.from('organizations').update(...) - RLS by tego nie
 -- zatrzymało, bo polityka nie patrzy na to, KTÓRE kolumny się zmieniają.
 --
 -- Rozwiązanie: REVOKE całościowego UPDATE od authenticated i GRANT
--- z powrotem tylko na (name, slug, description) — te trzy kolumny są
+-- z powrotem tylko na (name, slug, description) - te trzy kolumny są
 -- jedynymi, które kod aplikacji mógłby dziś aktualizować (obecnie
 -- żaden kod wcale nie robi UPDATE na organizations, więc to zawężenie
 -- niczego dziś nie psuje). service_role ma już GRANT ALL ON ALL TABLES
 -- (000_auth_compat.sql), więc panel admina (createServiceClient() /
--- withServiceRole()) zapisuje project_limit bez przeszkód — to jedyna
+-- withServiceRole()) zapisuje project_limit bez przeszkód - to jedyna
 -- uprawniona ścieżka zapisu tej kolumny.
 -- ============================================================
 

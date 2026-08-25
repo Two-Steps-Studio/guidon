@@ -9,7 +9,7 @@ import type { ApiKeyScope } from "./api-keys";
  * Runs the common checks every /api/v1 AI Task API route needs, in order:
  * valid key -> not rate-limited -> has the required scope. Returns either
  * the authenticated identity or a ready-to-return NextResponse for the
- * caller to `return` immediately — mirrors requireAuth()/isAuthError() in
+ * caller to `return` immediately - mirrors requireAuth()/isAuthError() in
  * src/lib/auth/auth-helpers.ts, the existing pattern for "check or bail"
  * in this codebase's API routes.
  */
