@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, GitBranch, Network, BrainCircuit } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -16,6 +17,7 @@ interface ProjectRow {
   name: string;
   description: string | null;
   status: string;
+  avatar_url: string | null;
   organizations: { id: string; name: string } | null;
 }
 
@@ -32,7 +34,7 @@ interface ProjectRow {
 async function loadDashboardDataLocal(userId: string) {
   return withUser(userId, async ({ query }) => {
     const projectsResult = await query(
-      `SELECT p.id, p.name, p.description, p.status, o.id AS org_id, o.name AS org_name
+      `SELECT p.id, p.name, p.description, p.status, p.avatar_url, o.id AS org_id, o.name AS org_name
        FROM projects p
        JOIN organizations o ON o.id = p.organization_id
        ORDER BY p.created_at DESC`
@@ -43,6 +45,7 @@ async function loadDashboardDataLocal(userId: string) {
       name: row.name,
       description: row.description,
       status: row.status,
+      avatar_url: row.avatar_url,
       organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
     }));
 
@@ -83,7 +86,7 @@ export default async function DashboardPage() {
 
     const { data: projectsData } = await supabase
       .from("projects")
-      .select("id, name, description, status, organizations (id, name)")
+      .select("id, name, description, status, avatar_url, organizations (id, name)")
       .order("created_at", { ascending: false });
 
     projects = (projectsData ?? []) as unknown as ProjectRow[];
@@ -234,7 +237,15 @@ export default async function DashboardPage() {
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Avatar className="h-5 w-5 rounded-sm">
+                          <AvatarImage src={project.avatar_url || undefined} alt={project.name} className="object-cover" />
+                          <AvatarFallback className="rounded-sm bg-transparent">
+                            <FolderKanban className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        {project.name}
+                      </CardTitle>
                       <Badge variant={project.status === "active" ? "default" : "secondary"}>
                         {project.status}
                       </Badge>
