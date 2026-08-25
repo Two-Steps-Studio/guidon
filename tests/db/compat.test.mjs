@@ -1038,5 +1038,29 @@ await withUser(A, async () => {
   );
 });
 
+// ------------------------------------------------------------------
+section("19. cena planow w PLN (migracja 019)");
+
+await withServiceRole(async () => {
+  const { rows } = await db.query(
+    "SELECT id, price_cents, price_pln_cents FROM public.plans ORDER BY sort_order"
+  );
+  check(
+    "kazdy plan ma ustawiona cene PLN",
+    rows.every((r) => r.price_pln_cents !== null),
+    JSON.stringify(rows)
+  );
+  check(
+    "free jest darmowy w obu walutach",
+    rows[0].price_cents === 0 && rows[0].price_pln_cents === 0,
+    JSON.stringify(rows[0])
+  );
+  check(
+    "pro ma dodatnia cene w PLN",
+    rows[1].id === "pro" && rows[1].price_pln_cents === 3900,
+    JSON.stringify(rows[1])
+  );
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
