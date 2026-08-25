@@ -111,13 +111,6 @@ export const FILE_SIZE_LIMITS = {
 } as const;
 
 // ============================================
-// PROJECT STORAGE QUOTAS
-// ============================================
-
-export const PROJECT_STORAGE_QUOTA = 5 * 1024 * 1024 * 1024; // 5GB per project
-export const ORGANIZATION_STORAGE_QUOTA = 50 * 1024 * 1024 * 1024; // 50GB per organization
-
-// ============================================
 // FILE CATEGORIES
 // ============================================
 

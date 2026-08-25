@@ -14,7 +14,6 @@ import {
   ALLOWED_DOCUMENT_TYPES,
   ALLOWED_ARCHIVE_TYPES,
   FILE_SIZE_LIMITS,
-  PROJECT_STORAGE_QUOTA,
   type FileCategory
 } from "./storage-constants";
 
@@ -377,25 +376,4 @@ export async function getOrganizationStorageUsage(organizationId: string): Promi
   }
 
   return data?.reduce((sum, file) => sum + (file.size_bytes || 0), 0) || 0;
-}
-
-/**
- * Check if project is within storage quota
- */
-export async function checkProjectStorageQuota(projectId: string): Promise<{ 
-  withinQuota: boolean; 
-  usedBytes: number; 
-  quotaBytes: number; 
-  percentage: number 
-}> {
-  const usedBytes = await getProjectStorageUsage(projectId);
-  const quotaBytes = PROJECT_STORAGE_QUOTA;
-  const percentage = (usedBytes / quotaBytes) * 100;
-  
-  return {
-    withinQuota: usedBytes < quotaBytes,
-    usedBytes,
-    quotaBytes,
-    percentage,
-  };
 }
