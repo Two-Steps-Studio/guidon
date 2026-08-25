@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next"
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { hasDirectDatabase } from "@/lib/db/pool";
 import "./globals.css";
+
+const GA_MEASUREMENT_ID = "G-7PBQ5Y339N";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -24,6 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-background text-foreground">
         {children}
       </body>
+      {/* Self-hosted installs have no relationship to the Guidon Cloud GA
+          property - only load it when this is actually Guidon Cloud, same
+          gating src/app/page.tsx already uses for cloud-only pricing. */}
+      {!hasDirectDatabase() && <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />}
     </html>
   );
 }
