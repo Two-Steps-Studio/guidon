@@ -9,6 +9,7 @@ import {
   groupTasksByStatus,
   normalizeTaskStatus,
   sortOrderForPosition,
+  type BoardColumn,
   type SubtaskProgress,
 } from "@/lib/work/task-board";
 import { TaskCard, type TaskCardMember } from "@/components/work/task-card";
@@ -19,6 +20,8 @@ interface KanbanBoardProps {
   members: TaskCardMember[];
   commentCounts?: Record<string, number>;
   subtaskCounts?: Record<string, SubtaskProgress>;
+  /** The project's resolved (default + overrides) column set — see resolveBoardColumns(). */
+  columns?: readonly BoardColumn[];
   /** When false the board is read-only (viewer/tester roles). */
   canEdit: boolean;
   onOpenTask: (task: Task) => void;
@@ -45,6 +48,7 @@ export function KanbanBoard({
   members,
   commentCounts = {},
   subtaskCounts = {},
+  columns = BOARD_COLUMNS,
   canEdit,
   onOpenTask,
   onCreateTask,
@@ -90,7 +94,7 @@ export function KanbanBoard({
       role="list"
       aria-label="Task board"
     >
-      {BOARD_COLUMNS.map((column) => {
+      {columns.map((column) => {
         const columnTasks = groups[column.status];
         const isTargetColumn = dropTarget?.status === column.status;
 

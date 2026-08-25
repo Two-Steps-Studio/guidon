@@ -4,8 +4,10 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
+import { BoardColumnsForm } from "./board-columns-form";
 import type { Project } from "@/types/project";
 import type { Technology } from "@/types/technology";
+import type { BoardColumnOverride } from "@/lib/work/task-board";
 
 interface AiPermissionsRow {
   can_read_context: boolean;
@@ -36,9 +38,10 @@ export default async function ProjectSettingsPage({
   let project: Project;
   let technologies: Technology[];
   let aiPermissions: AiPermissionsRow;
+  let boardColumns: BoardColumnOverride[];
 
   if (hasDirectDatabase()) {
-    const [projectRes, techRes, permsRes] = await withUser(access.userId, ({ query }) =>
+    const [projectRes, techRes, permsRes, columnsRes] = await withUser(access.userId, ({ query }) =>
       Promise.all([
         query("SELECT * FROM projects WHERE id = $1", [projectId]),
         query(
@@ -50,14 +53,19 @@ export default async function ProjectSettingsPage({
           "SELECT can_read_context, can_create_comments, can_change_status, can_complete_tasks, can_modify_settings, can_delete_tasks FROM project_ai_permissions WHERE project_id = $1",
           [projectId]
         ),
+        query(
+          "SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1",
+          [projectId]
+        ),
       ])
     );
     project = projectRes.rows[0];
     technologies = techRes.rows;
     aiPermissions = permsRes.rows[0] ?? DEFAULT_AI_PERMISSIONS;
+    boardColumns = columnsRes.rows;
   } else {
     const supabase = await createClient();
-    const [projectRes, techRes, permsRes] = await Promise.all([
+    const [projectRes, techRes, permsRes, columnsRes] = await Promise.all([
       supabase.from("projects").select("*").eq("id", projectId).single(),
       supabase
         .from("technologies")
@@ -70,11 +78,16 @@ export default async function ProjectSettingsPage({
         .select("can_read_context, can_create_comments, can_change_status, can_complete_tasks, can_modify_settings, can_delete_tasks")
         .eq("project_id", projectId)
         .maybeSingle(),
+      supabase
+        .from("project_board_columns")
+        .select("status, label, sort_order, hidden")
+        .eq("project_id", projectId),
     ]);
 
     project = projectRes.data as Project;
     technologies = (techRes.data ?? []) as Technology[];
     aiPermissions = (permsRes.data as AiPermissionsRow | null) ?? DEFAULT_AI_PERMISSIONS;
+    boardColumns = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
   return (
@@ -85,6 +98,7 @@ export default async function ProjectSettingsPage({
       </div>
 
       <SettingsForm project={project} initialTechnologies={technologies.map((t) => t.name)} />
+      <BoardColumnsForm projectId={projectId} overrides={boardColumns} />
       <AiPermissionsForm
         projectId={projectId}
         permissions={aiPermissions}

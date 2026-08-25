@@ -2,7 +2,7 @@ import { canCommentOnProject, canWriteProject, requireProjectAccess } from "@/li
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import { compareTasks } from "@/lib/work/task-board";
+import { compareTasks, resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
 import { WorkBoard } from "./work-board";
 import type { TaskCardMember } from "@/components/work/task-card";
 import type { Task } from "@/types/task";
@@ -76,6 +76,7 @@ export default async function ProjectWorkPage({
   let tasks: Task[];
   let members: TaskCardMember[];
   let commentCounts: Record<string, number>;
+  let columnOverrides: BoardColumnOverride[];
 
   // TASK_LIMIT is a safety cap, not pagination — high enough that no real
   // project's board should ever hit it today, low enough to stop an
@@ -83,9 +84,9 @@ export default async function ProjectWorkPage({
   const TASK_LIMIT = 1000;
 
   if (hasDirectDatabase()) {
-    // Each withUser() call owns its own pooled connection, so these three
+    // Each withUser() call owns its own pooled connection, so these four
     // run as genuinely concurrent queries rather than one after another.
-    const [tasksRes, membersRes, commentCountRows] = await Promise.all([
+    const [tasksRes, membersRes, commentCountRows, columnsRes] = await Promise.all([
       withUser(access.userId, ({ query }) =>
         query("SELECT * FROM tasks WHERE project_id = $1 LIMIT $2", [projectId, TASK_LIMIT])
       ),
@@ -99,6 +100,12 @@ export default async function ProjectWorkPage({
         )
       ),
       loadCommentCountsLocal(access.userId, projectId),
+      withUser(access.userId, ({ query }) =>
+        query(
+          "SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1",
+          [projectId]
+        )
+      ),
     ]);
 
     // profiles may be null for teammates until migration 003 is applied;
@@ -112,16 +119,21 @@ export default async function ProjectWorkPage({
 
     tasks = tasksRes.rows.slice().sort(compareTasks);
     commentCounts = commentCountRows;
+    columnOverrides = columnsRes.rows as BoardColumnOverride[];
   } else {
     const supabase = await createClient();
 
-    const [tasksRes, membersRes, commentCounts_] = await Promise.all([
+    const [tasksRes, membersRes, commentCounts_, columnsRes] = await Promise.all([
       supabase.from("tasks").select("*").eq("project_id", projectId).limit(TASK_LIMIT),
       supabase
         .from("project_members")
         .select("user_id, profiles ( id, full_name, email, avatar_url )")
         .eq("project_id", projectId),
       loadCommentCounts(supabase, projectId),
+      supabase
+        .from("project_board_columns")
+        .select("status, label, sort_order, hidden")
+        .eq("project_id", projectId),
     ]);
 
     // profiles may be null for teammates until migration 003 is applied;
@@ -138,7 +150,10 @@ export default async function ProjectWorkPage({
 
     tasks = ((tasksRes.data ?? []) as Task[]).slice().sort(compareTasks);
     commentCounts = commentCounts_;
+    columnOverrides = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
+
+  const columns = resolveBoardColumns(columnOverrides);
 
   return (
     <WorkBoard
@@ -152,6 +167,7 @@ export default async function ProjectWorkPage({
       members={members}
       initialCommentCounts={commentCounts}
       projectColor={access.project.color}
+      columns={columns}
     />
   );
 }

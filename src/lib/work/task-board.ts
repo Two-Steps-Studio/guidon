@@ -74,6 +74,43 @@ export const TASK_STATUSES: readonly TaskStatus[] = BOARD_COLUMNS.map(
   (column) => column.status
 );
 
+export interface BoardColumnOverride {
+  status: TaskStatus;
+  label: string | null;
+  sort_order: number;
+  hidden: boolean;
+}
+
+/**
+ * Applies a project's saved column customizations (020_project_board_columns.sql)
+ * on top of the fixed defaults — label and order can change, but the
+ * underlying status set cannot (tasks.status is still the same 6-value
+ * CHECK constraint from 016; this only changes how those 6 are displayed).
+ * A project with no saved overrides gets BOARD_COLUMNS back unchanged.
+ *
+ * Hidden columns are dropped entirely rather than kept-but-marked, since
+ * the save path (project_board_columns actions) refuses to hide a column
+ * that still has tasks in it — by the time a column can be hidden here,
+ * nothing on the board needs to reference it.
+ */
+export function resolveBoardColumns(
+  overrides: readonly BoardColumnOverride[]
+): BoardColumn[] {
+  const overrideByStatus = new Map(overrides.map((o) => [o.status, o]));
+
+  return BOARD_COLUMNS.map((column, index) => {
+    const override = overrideByStatus.get(column.status);
+    return {
+      column: { ...column, label: override?.label ?? column.label },
+      sortOrder: override?.sort_order ?? index,
+      hidden: override?.hidden ?? false,
+    };
+  })
+    .filter((entry) => !entry.hidden)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((entry) => entry.column);
+}
+
 /**
  * Rows written before migration 002 still carry the old vocabulary. Fold them
  * onto the current statuses so the board renders correctly either way.

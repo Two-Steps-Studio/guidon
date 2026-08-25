@@ -136,8 +136,8 @@ for (const name of migrations) {
 }
 
 for (const [label, sql, expected] of [
-  ["21 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 21],
-  ["81 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 81],
+  ["22 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 22],
+  ["84 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 84],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1061,6 +1061,55 @@ await withServiceRole(async () => {
     JSON.stringify(rows[1])
   );
 });
+
+// ------------------------------------------------------------------
+section("20. konfigurowalne kolumny tablicy Kanban (migracja 020)");
+
+await withUser(A, async () => {
+  const inserted = await db.query(
+    `INSERT INTO public.project_board_columns (project_id, status, label, sort_order, hidden)
+     VALUES ($1, 'todo', 'To Do', 0, false)
+     RETURNING label`,
+    [projectId]
+  );
+  check(
+    "wlasciciel moze dostosowac etykiete kolumny",
+    inserted.rows[0]?.label === "To Do",
+    JSON.stringify(inserted.rows)
+  );
+
+  const updated = await db.query(
+    `UPDATE public.project_board_columns SET hidden = true WHERE project_id = $1 AND status = 'todo'
+     RETURNING hidden`,
+    [projectId]
+  );
+  check(
+    "wlasciciel moze ukryc kolumne",
+    updated.rows[0]?.hidden === true,
+    JSON.stringify(updated.rows)
+  );
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query(
+    "SELECT * FROM public.project_board_columns WHERE project_id = $1",
+    [projectId]
+  );
+  check("B nie widzi kolumn projektu A", rows.length === 0, rows.length);
+});
+
+await expectRejected(
+  "B (spoza projektu) NIE moze dodac wlasnej kolumny do projektu A",
+  () =>
+    withUser(B, () =>
+      db.query(
+        `INSERT INTO public.project_board_columns (project_id, status, label, sort_order, hidden)
+         VALUES ($1, 'done', 'Shipped', 5, false)`,
+        [projectId]
+      )
+    ),
+  /permission denied|row-level security/i
+);
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

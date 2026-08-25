@@ -32,6 +32,7 @@ import {
   groupSubtasksByParent,
   normalizeTaskStatus,
   subtaskProgress,
+  type BoardColumn,
 } from "@/lib/work/task-board";
 import { createTask, moveTask } from "./actions";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
@@ -53,6 +54,7 @@ export function WorkBoard({
   members,
   initialCommentCounts,
   projectColor,
+  columns = BOARD_COLUMNS,
 }: {
   projectId: string;
   projectName: string;
@@ -64,6 +66,7 @@ export function WorkBoard({
   members: TaskCardMember[];
   initialCommentCounts: Record<string, number>;
   projectColor?: string;
+  columns?: readonly BoardColumn[];
 }) {
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
@@ -162,7 +165,7 @@ export function WorkBoard({
           {canEdit && (
             <Button 
               size="sm" 
-              onClick={() => setCreateFor("todo")}
+              onClick={() => setCreateFor(columns[0]?.status ?? "todo")}
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <Plus className="h-4 w-4" />
@@ -199,7 +202,7 @@ export function WorkBoard({
                 : "Nothing has been planned for this project yet."}
             </p>
             {canEdit && (
-              <Button size="sm" className="mt-4" onClick={() => setCreateFor("todo")}>
+              <Button size="sm" className="mt-4" onClick={() => setCreateFor(columns[0]?.status ?? "todo")}>
                 <Plus className="h-4 w-4" />
                 New task
               </Button>
@@ -211,6 +214,7 @@ export function WorkBoard({
             members={members}
             commentCounts={state.commentCounts}
             subtaskCounts={subtaskCounts}
+            columns={columns}
             canEdit={canEdit}
             onOpenTask={setOpenTask}
             onCreateTask={setCreateFor}
@@ -231,6 +235,7 @@ export function WorkBoard({
           canDelete={canDelete}
           canComment={canComment}
           currentUserId={userId}
+          columns={columns}
           onClose={() => setOpenTask(null)}
           onSaved={upsertTask}
           onDeleted={removeTask}
@@ -244,6 +249,7 @@ export function WorkBoard({
         members={members}
         currentUserId={userId}
         existingTasks={topLevelTasks}
+        columns={columns}
         onClose={() => setCreateFor(null)}
         onCreated={upsertTask}
       />
@@ -261,6 +267,7 @@ function CreateTaskDialog({
   members,
   currentUserId,
   existingTasks,
+  columns,
   onClose,
   onCreated,
 }: {
@@ -269,6 +276,7 @@ function CreateTaskDialog({
   members: TaskCardMember[];
   currentUserId: string | null;
   existingTasks: Task[];
+  columns: readonly BoardColumn[];
   onClose: () => void;
   onCreated: (task: Task) => void;
 }) {
@@ -318,7 +326,7 @@ function CreateTaskDialog({
     }
   };
 
-  const columnLabel = BOARD_COLUMNS.find((column) => column.status === status)?.label ?? status;
+  const columnLabel = columns.find((column) => column.status === status)?.label ?? status;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>

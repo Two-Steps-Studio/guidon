@@ -36,6 +36,7 @@ import {
   isDone,
   normalizeTaskPriority,
   normalizeTaskStatus,
+  type BoardColumn,
 } from "@/lib/work/task-board";
 import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
@@ -50,6 +51,8 @@ interface TaskDetailDialogProps {
   canDelete: boolean;
   canComment: boolean;
   currentUserId: string | null;
+  /** The project's resolved (default + overrides) column set — see resolveBoardColumns(). */
+  columns?: readonly BoardColumn[];
   onClose: () => void;
   onSaved: (task: Task) => void;
   onDeleted: (taskId: string) => void;
@@ -86,6 +89,7 @@ export function TaskDetailDialog({
   canDelete,
   canComment,
   currentUserId,
+  columns = BOARD_COLUMNS,
   onClose,
   onSaved,
   onDeleted,
@@ -341,6 +345,15 @@ export function TaskDetailDialog({
 
   if (!task || !form) return null;
 
+  // A task can end up on a status its project has since hidden from the
+  // board (e.g. the AI Task API sets ai_working without knowing about
+  // per-project column visibility) — keep the current value selectable
+  // even then, rather than silently rendering an option list that doesn't
+  // contain the form's own value.
+  const statusOptions = columns.some((c) => c.status === form.status)
+    ? columns
+    : [...columns, BOARD_COLUMNS.find((c) => c.status === form.status)!];
+
   return (
     <>
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -398,7 +411,7 @@ export function TaskDetailDialog({
                   })
                 }
               >
-                {BOARD_COLUMNS.map((column) => (
+                {statusOptions.map((column) => (
                   <option key={column.status} value={column.status}>
                     {column.label}
                   </option>
