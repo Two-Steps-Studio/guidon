@@ -58,7 +58,7 @@ export function SourceCardMenu({
       <div className="flex flex-col items-end gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={deleting}>
+            <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for ${source.title ?? "this source"}`}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

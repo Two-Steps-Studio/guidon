@@ -50,7 +50,7 @@ export function PhaseCardMenu({ projectId, phase }: { projectId: string; phase: 
       <div className="flex flex-col items-end gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={deleting}>
+            <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for ${phase.name}`}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

@@ -58,7 +58,7 @@ export function DecisionCardMenu({
       <div className="flex flex-col items-end gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={deleting}>
+            <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for ${decision.title}`}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

@@ -62,7 +62,7 @@ export function MemoryCardMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={deleting}>
+          <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for this ${memoryType} entry`}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
