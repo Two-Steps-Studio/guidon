@@ -5,7 +5,7 @@ import Editor, { loader } from "@monaco-editor/react";
 import { Loader2 } from "lucide-react";
 
 /**
- * Loaded only via next/dynamic (see code-editor-modal.tsx), same reasoning as
+ * Loaded only via next/dynamic (see code-workspace.tsx), same reasoning as
  * code-block.tsx: Monaco's bundle is multiple MB and must never reach a page
  * that hasn't opened the editor.
  *
@@ -40,7 +40,7 @@ export default function CodeEditor({ value, language, onChange, readOnly }: Code
 
   return (
     <Editor
-      height="60vh"
+      height="100%"
       language={language}
       value={value}
       theme={dark ? "vs-dark" : "vs"}

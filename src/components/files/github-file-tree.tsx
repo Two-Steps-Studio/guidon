@@ -1,19 +1,57 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, ChevronRight, File, Folder, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  Braces,
+  ChevronRight,
+  File,
+  FileCode,
+  FileText,
+  Folder,
+  Image as ImageIcon,
+  Loader2,
+  Palette,
+  type LucideIcon,
+} from "lucide-react";
 import { listRepoDirectory } from "@/app/projects/[id]/files/github-actions";
+import { fileExtension } from "@/types/file";
 import type { GithubTreeEntry } from "@/lib/github/client";
+
+const EXTENSION_ICONS: Record<string, { icon: LucideIcon; colorClass: string }> = {
+  ts: { icon: FileCode, colorClass: "text-info" },
+  tsx: { icon: FileCode, colorClass: "text-info" },
+  js: { icon: FileCode, colorClass: "text-warning" },
+  jsx: { icon: FileCode, colorClass: "text-warning" },
+  json: { icon: Braces, colorClass: "text-warning" },
+  md: { icon: FileText, colorClass: "text-muted-foreground" },
+  mdx: { icon: FileText, colorClass: "text-muted-foreground" },
+  css: { icon: Palette, colorClass: "text-primary" },
+  scss: { icon: Palette, colorClass: "text-primary" },
+  html: { icon: FileCode, colorClass: "text-danger" },
+  png: { icon: ImageIcon, colorClass: "text-success" },
+  jpg: { icon: ImageIcon, colorClass: "text-success" },
+  jpeg: { icon: ImageIcon, colorClass: "text-success" },
+  gif: { icon: ImageIcon, colorClass: "text-success" },
+  svg: { icon: ImageIcon, colorClass: "text-success" },
+  webp: { icon: ImageIcon, colorClass: "text-success" },
+};
+
+/** File-type icon for the tree/tab bar - a handful of recognizable buckets, not exhaustive. */
+export function fileIconFor(name: string): { icon: LucideIcon; colorClass: string } {
+  return EXTENSION_ICONS[fileExtension(name)] ?? { icon: File, colorClass: "text-muted-foreground" };
+}
 
 interface GithubFileTreeProps {
   projectId: string;
+  activePath: string | null;
   onOpenFile: (path: string) => void;
 }
 
-export function GithubFileTree({ projectId, onOpenFile }: GithubFileTreeProps) {
+export function GithubFileTree({ projectId, activePath, onOpenFile }: GithubFileTreeProps) {
   return (
-    <div className="rounded-md border border-border">
-      <DirectoryLevel projectId={projectId} path="" depth={0} onOpenFile={onOpenFile} />
+    <div className="h-full overflow-y-auto py-1">
+      <DirectoryLevel projectId={projectId} path="" depth={0} activePath={activePath} onOpenFile={onOpenFile} />
     </div>
   );
 }
@@ -22,11 +60,13 @@ function DirectoryLevel({
   projectId,
   path,
   depth,
+  activePath,
   onOpenFile,
 }: {
   projectId: string;
   path: string;
   depth: number;
+  activePath: string | null;
   onOpenFile: (path: string) => void;
 }) {
   const [entries, setEntries] = useState<GithubTreeEntry[] | null>(null);
@@ -74,6 +114,8 @@ function DirectoryLevel({
     <ul>
       {entries.map((entry) => {
         const isOpen = expanded.has(entry.path);
+        const isActive = entry.type === "file" && entry.path === activePath;
+        const { icon: FileIcon, colorClass } = entry.type === "file" ? fileIconFor(entry.name) : { icon: Folder, colorClass: "text-info" };
 
         return (
           <li key={entry.path}>
@@ -91,7 +133,9 @@ function DirectoryLevel({
                   onOpenFile(entry.path);
                 }
               }}
-              className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left text-sm hover:bg-accent"
+              className={`flex w-full items-center gap-1.5 px-2 py-1.5 text-left text-sm hover:bg-accent ${
+                isActive ? "bg-accent font-medium" : ""
+              }`}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
               {entry.type === "dir" ? (
@@ -103,16 +147,18 @@ function DirectoryLevel({
               ) : (
                 <span className="w-3.5 shrink-0" />
               )}
-              {entry.type === "dir" ? (
-                <Folder className="h-4 w-4 shrink-0 text-info" />
-              ) : (
-                <File className="h-4 w-4 shrink-0 text-muted-foreground" />
-              )}
+              <FileIcon className={`h-4 w-4 shrink-0 ${colorClass}`} />
               <span className="truncate">{entry.name}</span>
             </button>
 
             {entry.type === "dir" && isOpen && (
-              <DirectoryLevel projectId={projectId} path={entry.path} depth={depth + 1} onOpenFile={onOpenFile} />
+              <DirectoryLevel
+                projectId={projectId}
+                path={entry.path}
+                depth={depth + 1}
+                activePath={activePath}
+                onOpenFile={onOpenFile}
+              />
             )}
           </li>
         );

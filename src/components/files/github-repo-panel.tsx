@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { AlertCircle, Code2, Github, Loader2, Unlink } from "lucide-react";
+import { AlertCircle, Github, Loader2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GithubFileTree } from "./github-file-tree";
-import { CodeEditorModal } from "./code-editor-modal";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CodeWorkspace } from "./code-workspace";
 import { disconnectRepo } from "@/app/projects/[id]/files/github-actions";
 import type { ProjectGithubRepoInfo } from "@/lib/data/github-connection";
 
@@ -17,7 +16,6 @@ interface GithubRepoPanelProps {
 }
 
 export function GithubRepoPanel({ projectId, repoInfo, canManage, canWrite }: GithubRepoPanelProps) {
-  const [openPath, setOpenPath] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   // Errors from the OAuth connect/callback routes come back as a query param
@@ -99,26 +97,10 @@ export function GithubRepoPanel({ projectId, repoInfo, canManage, canWrite }: Gi
             </div>
           )}
         </CardHeader>
-
-        {repoInfo && (
-          <CardContent>
-            <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Code2 className="h-3.5 w-3.5" />
-              Click a file to open it in the code editor
-            </div>
-            <GithubFileTree projectId={projectId} onOpenFile={setOpenPath} />
-          </CardContent>
-        )}
       </Card>
 
       {repoInfo && (
-        <CodeEditorModal
-          projectId={projectId}
-          path={openPath}
-          defaultBranch={repoInfo.defaultBranch}
-          canWrite={canWrite}
-          onClose={() => setOpenPath(null)}
-        />
+        <CodeWorkspace projectId={projectId} defaultBranch={repoInfo.defaultBranch} canWrite={canWrite} />
       )}
     </>
   );
