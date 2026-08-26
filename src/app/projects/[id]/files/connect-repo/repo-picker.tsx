@@ -2,18 +2,18 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Building2, Lock, Loader2, Search, User } from "lucide-react";
+import { AlertCircle, Building2, Lock, Loader2, Plus, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { reposForPicker, orgsForPicker, connectRepo } from "../github-actions";
-import type { GithubOrgSummary, GithubRepoScope, GithubRepoSummary } from "@/lib/github/client";
+import { reposForPicker, installationsForPicker, connectRepo } from "../github-actions";
+import type { GithubInstallationSummary, GithubRepoSummary } from "@/lib/github/client";
 
-export function RepoPicker({ projectId }: { projectId: string }) {
+export function RepoPicker({ projectId, installUrl }: { projectId: string; installUrl: string | null }) {
   const router = useRouter();
-  const [orgs, setOrgs] = useState<GithubOrgSummary[]>([]);
-  const [orgsLoading, setOrgsLoading] = useState(true);
-  const [orgsError, setOrgsError] = useState<string | null>(null);
-  const [scope, setScope] = useState<GithubRepoScope>({ type: "user" });
+  const [installations, setInstallations] = useState<GithubInstallationSummary[]>([]);
+  const [installationsLoading, setInstallationsLoading] = useState(true);
+  const [installationsError, setInstallationsError] = useState<string | null>(null);
+  const [selectedInstallation, setSelectedInstallation] = useState<GithubInstallationSummary | null>(null);
   const [search, setSearch] = useState("");
   const [repos, setRepos] = useState<GithubRepoSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,22 +21,28 @@ export function RepoPicker({ projectId }: { projectId: string }) {
   const [connecting, startConnecting] = useTransition();
   const [connectingRepo, setConnectingRepo] = useState<string | null>(null);
 
-  // Orgs load once - which one is selected only changes `scope`, not this list.
   useEffect(() => {
-    orgsForPicker(projectId)
+    installationsForPicker(projectId)
       .then((result) => {
-        setOrgsError(result.error);
-        setOrgs(result.orgs);
+        setInstallationsError(result.error);
+        setInstallations(result.installations);
+        setSelectedInstallation((current) => current ?? result.installations[0] ?? null);
       })
-      .finally(() => setOrgsLoading(false));
+      .finally(() => setInstallationsLoading(false));
   }, [projectId]);
 
   useEffect(() => {
     let cancelled = false;
 
     const timeout = setTimeout(async () => {
+      if (!selectedInstallation) {
+        setRepos([]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      const result = await reposForPicker(projectId, scope, search || undefined);
+      const result = await reposForPicker(projectId, selectedInstallation.id, search || undefined);
       if (cancelled) return;
       setRepos(result.repos);
       setError(result.error);
@@ -47,12 +53,13 @@ export function RepoPicker({ projectId }: { projectId: string }) {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [projectId, scope, search]);
+  }, [projectId, selectedInstallation, search]);
 
   const handleSelect = (repo: GithubRepoSummary) => {
+    if (!selectedInstallation) return;
     setConnectingRepo(repo.fullName);
     startConnecting(async () => {
-      const result = await connectRepo(projectId, repo.owner, repo.name);
+      const result = await connectRepo(projectId, selectedInstallation.id, repo.owner, repo.name);
       if (result.error) {
         setError(result.error);
         setConnectingRepo(null);
@@ -62,67 +69,68 @@ export function RepoPicker({ projectId }: { projectId: string }) {
     });
   };
 
-  const scopeKey = (s: GithubRepoScope) => (s.type === "user" ? "user" : `org:${s.org}`);
-
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setScope({ type: "user" })}
-          className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm ${
-            scope.type === "user"
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <User className="h-3.5 w-3.5" />
-          Your account
-        </button>
-        {orgs.map((org) => (
+        {installations.map((installation) => (
           <button
-            key={org.login}
+            key={installation.id}
             type="button"
-            onClick={() => setScope({ type: "org", org: org.login })}
+            onClick={() => setSelectedInstallation(installation)}
             className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm ${
-              scopeKey(scope) === `org:${org.login}`
+              selectedInstallation?.id === installation.id
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-border text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Building2 className="h-3.5 w-3.5" />
-            {org.login}
+            {installation.accountType === "Organization" ? (
+              <Building2 className="h-3.5 w-3.5" />
+            ) : (
+              <User className="h-3.5 w-3.5" />
+            )}
+            {installation.accountLogin}
           </button>
         ))}
-        {orgsLoading && (
+        {installationsLoading && (
           <span className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
-            Checking organizations...
+            Checking accounts...
           </span>
         )}
-        {!orgsLoading && !orgsError && orgs.length === 0 && (
+        {!installationsLoading && !installationsError && installations.length === 0 && (
           <span className="px-2 text-xs text-muted-foreground">
-            No organizations found for this GitHub account.
+            The GitHub app isn&apos;t installed on any account yet.
           </span>
+        )}
+        {installUrl && (
+          <a
+            href={installUrl}
+            className="flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Install on another account
+          </a>
         )}
       </div>
 
-      {orgsError && (
+      {installationsError && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          Couldn&apos;t load organizations: {orgsError}
+          Couldn&apos;t load accounts: {installationsError}
         </div>
       )}
 
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={scope.type === "user" ? "Search your repositories..." : `Search ${scope.org}'s repositories...`}
-          className="pl-9"
-        />
-      </div>
+      {selectedInstallation && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Search ${selectedInstallation.accountLogin}'s repositories...`}
+            className="pl-9"
+          />
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">

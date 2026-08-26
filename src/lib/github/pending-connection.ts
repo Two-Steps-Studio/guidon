@@ -18,21 +18,27 @@ const MAX_AGE_SECONDS = 10 * 60;
 interface PendingConnection {
   projectId: string;
   githubLogin: string;
-  tokenScope: string | null;
-  encryptedToken: string;
+  encryptedAccessToken: string;
+  encryptedRefreshToken: string;
+  accessTokenExpiresAt: string;
+  refreshTokenExpiresAt: string;
 }
 
 export async function setPendingGithubConnection(input: {
   projectId: string;
   githubLogin: string;
-  tokenScope: string | null;
   accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: Date;
+  refreshTokenExpiresAt: Date;
 }): Promise<void> {
   const payload: PendingConnection = {
     projectId: input.projectId,
     githubLogin: input.githubLogin,
-    tokenScope: input.tokenScope,
-    encryptedToken: encryptSecret(input.accessToken, PENDING_TOKEN_KEY_INFO),
+    encryptedAccessToken: encryptSecret(input.accessToken, PENDING_TOKEN_KEY_INFO),
+    encryptedRefreshToken: encryptSecret(input.refreshToken, PENDING_TOKEN_KEY_INFO),
+    accessTokenExpiresAt: input.accessTokenExpiresAt.toISOString(),
+    refreshTokenExpiresAt: input.refreshTokenExpiresAt.toISOString(),
   };
 
   const store = await cookies();
@@ -46,9 +52,13 @@ export async function setPendingGithubConnection(input: {
 }
 
 /** Returns the pending token for `projectId`, or null if absent/expired/mismatched. */
-export async function getPendingGithubConnection(
-  projectId: string
-): Promise<{ githubLogin: string; tokenScope: string | null; accessToken: string } | null> {
+export async function getPendingGithubConnection(projectId: string): Promise<{
+  githubLogin: string;
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: Date;
+  refreshTokenExpiresAt: Date;
+} | null> {
   const store = await cookies();
   const raw = store.get(COOKIE_NAME)?.value;
   if (!raw) return null;
@@ -65,8 +75,10 @@ export async function getPendingGithubConnection(
   try {
     return {
       githubLogin: payload.githubLogin,
-      tokenScope: payload.tokenScope,
-      accessToken: decryptSecret(payload.encryptedToken, PENDING_TOKEN_KEY_INFO),
+      accessToken: decryptSecret(payload.encryptedAccessToken, PENDING_TOKEN_KEY_INFO),
+      refreshToken: decryptSecret(payload.encryptedRefreshToken, PENDING_TOKEN_KEY_INFO),
+      accessTokenExpiresAt: new Date(payload.accessTokenExpiresAt),
+      refreshTokenExpiresAt: new Date(payload.refreshTokenExpiresAt),
     };
   } catch {
     return null;

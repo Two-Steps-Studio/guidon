@@ -4,8 +4,11 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
+import { refreshUserToken } from "@/lib/github/client";
 
 const GITHUB_TOKEN_KEY_INFO = "github-token-v1";
+// Refresh a bit before the real expiry so a slow request never straddles it.
+const REFRESH_SKEW_MS = 60_000;
 
 /** Safe subset - no token. Fine to pass to a client component. */
 export interface ProjectGithubRepoInfo {
@@ -59,79 +62,158 @@ function toRepoInfo(row: {
   };
 }
 
+interface FullConnectionRow {
+  repo_owner: string;
+  repo_name: string;
+  default_branch: string;
+  github_login: string;
+  access_token_encrypted: string;
+  refresh_token_encrypted: string;
+  access_token_expires_at: string;
+  refresh_token_expires_at: string;
+}
+
+const TOKEN_COLUMNS =
+  "access_token_encrypted, refresh_token_encrypted, access_token_expires_at, refresh_token_expires_at";
+
+async function persistRefreshedTokens(
+  projectId: string,
+  userId: string,
+  refreshed: { accessToken: string; refreshToken: string; accessTokenExpiresAt: Date; refreshTokenExpiresAt: Date }
+): Promise<void> {
+  const encryptedAccess = encryptSecret(refreshed.accessToken, GITHUB_TOKEN_KEY_INFO);
+  const encryptedRefresh = encryptSecret(refreshed.refreshToken, GITHUB_TOKEN_KEY_INFO);
+
+  if (hasDirectDatabase()) {
+    await withUser(userId, ({ query }) =>
+      query(
+        `UPDATE github_connections
+           SET access_token_encrypted = $1, refresh_token_encrypted = $2,
+               access_token_expires_at = $3, refresh_token_expires_at = $4, updated_at = now()
+         WHERE project_id = $5`,
+        [
+          encryptedAccess,
+          encryptedRefresh,
+          refreshed.accessTokenExpiresAt.toISOString(),
+          refreshed.refreshTokenExpiresAt.toISOString(),
+          projectId,
+        ]
+      )
+    );
+    return;
+  }
+
+  const supabase = await createClient();
+  await supabase
+    .from("github_connections")
+    .update({
+      access_token_encrypted: encryptedAccess,
+      refresh_token_encrypted: encryptedRefresh,
+      access_token_expires_at: refreshed.accessTokenExpiresAt.toISOString(),
+      refresh_token_expires_at: refreshed.refreshTokenExpiresAt.toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("project_id", projectId);
+}
+
 /**
- * Full connection incl. the decrypted access token. Server-only, and only
- * ever called from inside a Server Action / route handler that is about to
- * call the GitHub API directly - never returned to a client component.
+ * Full connection incl. a live access token. Server-only, and only ever
+ * called from inside a Server Action / route handler that is about to call
+ * the GitHub API directly - never returned to a client component.
+ *
+ * GitHub App user tokens expire (~8h): if the stored one is expired or
+ * about to be, this transparently refreshes it (rotating the refresh token,
+ * per GitHub's requirement) and persists the new pair before returning. If
+ * the refresh token itself is dead, throws the same "reconnect" error a
+ * dead access token would - callers already handle that via GithubApiError.
  */
 export async function getProjectGithubToken(
   projectId: string,
   userId: string
 ): Promise<(ProjectGithubRepoInfo & { token: string }) | null> {
-  const columns = `${SAFE_COLUMNS}, access_token_encrypted`;
+  const columns = `${SAFE_COLUMNS}, ${TOKEN_COLUMNS}`;
+
+  let row: FullConnectionRow | null = null;
 
   if (hasDirectDatabase()) {
     const result = await withUser(userId, ({ query }) =>
       query(`SELECT ${columns} FROM github_connections WHERE project_id = $1`, [projectId])
     );
-    const row = result.rows[0];
-    if (!row) return null;
+    row = result.rows[0] ?? null;
+  } else {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("github_connections")
+      .select(columns)
+      .eq("project_id", projectId)
+      .maybeSingle();
+    row = error ? null : data;
+  }
+
+  if (!row) return null;
+
+  const expiresAt = new Date(row.access_token_expires_at);
+  if (Date.now() < expiresAt.getTime() - REFRESH_SKEW_MS) {
     return { ...toRepoInfo(row), token: decryptSecret(row.access_token_encrypted, GITHUB_TOKEN_KEY_INFO) };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("github_connections")
-    .select(columns)
-    .eq("project_id", projectId)
-    .maybeSingle();
+  const refreshToken = decryptSecret(row.refresh_token_encrypted, GITHUB_TOKEN_KEY_INFO);
+  const refreshed = await refreshUserToken(refreshToken);
+  await persistRefreshedTokens(projectId, userId, refreshed);
 
-  if (error || !data) return null;
-  return {
-    ...toRepoInfo(data),
-    token: decryptSecret(data.access_token_encrypted, GITHUB_TOKEN_KEY_INFO),
-  };
+  return { ...toRepoInfo(row), token: refreshed.accessToken };
 }
 
 export interface UpsertGithubConnectionInput {
   projectId: string;
   connectedBy: string;
   githubLogin: string;
+  installationId: number;
   repoOwner: string;
   repoName: string;
   defaultBranch: string;
   accessToken: string;
-  tokenScope?: string | null;
+  refreshToken: string;
+  accessTokenExpiresAt: Date;
+  refreshTokenExpiresAt: Date;
 }
 
 /** Connects (or re-connects/changes) the repo linked to a project. */
 export async function upsertGithubConnection(input: UpsertGithubConnectionInput): Promise<void> {
-  const encryptedToken = encryptSecret(input.accessToken, GITHUB_TOKEN_KEY_INFO);
+  const encryptedAccess = encryptSecret(input.accessToken, GITHUB_TOKEN_KEY_INFO);
+  const encryptedRefresh = encryptSecret(input.refreshToken, GITHUB_TOKEN_KEY_INFO);
 
   if (hasDirectDatabase()) {
     await withUser(input.connectedBy, ({ query }) =>
       query(
         `INSERT INTO github_connections
-           (project_id, connected_by, github_login, repo_owner, repo_name, default_branch, access_token_encrypted, token_scope, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+           (project_id, connected_by, github_login, installation_id, repo_owner, repo_name, default_branch,
+            access_token_encrypted, refresh_token_encrypted, access_token_expires_at, refresh_token_expires_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
          ON CONFLICT (project_id) DO UPDATE SET
            connected_by = EXCLUDED.connected_by,
            github_login = EXCLUDED.github_login,
+           installation_id = EXCLUDED.installation_id,
            repo_owner = EXCLUDED.repo_owner,
            repo_name = EXCLUDED.repo_name,
            default_branch = EXCLUDED.default_branch,
            access_token_encrypted = EXCLUDED.access_token_encrypted,
-           token_scope = EXCLUDED.token_scope,
+           refresh_token_encrypted = EXCLUDED.refresh_token_encrypted,
+           access_token_expires_at = EXCLUDED.access_token_expires_at,
+           refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
            updated_at = now()`,
         [
           input.projectId,
           input.connectedBy,
           input.githubLogin,
+          input.installationId,
           input.repoOwner,
           input.repoName,
           input.defaultBranch,
-          encryptedToken,
-          input.tokenScope ?? null,
+          encryptedAccess,
+          encryptedRefresh,
+          input.accessTokenExpiresAt.toISOString(),
+          input.refreshTokenExpiresAt.toISOString(),
         ]
       )
     );
@@ -144,11 +226,14 @@ export async function upsertGithubConnection(input: UpsertGithubConnectionInput)
       project_id: input.projectId,
       connected_by: input.connectedBy,
       github_login: input.githubLogin,
+      installation_id: input.installationId,
       repo_owner: input.repoOwner,
       repo_name: input.repoName,
       default_branch: input.defaultBranch,
-      access_token_encrypted: encryptedToken,
-      token_scope: input.tokenScope ?? null,
+      access_token_encrypted: encryptedAccess,
+      refresh_token_encrypted: encryptedRefresh,
+      access_token_expires_at: input.accessTokenExpiresAt.toISOString(),
+      refresh_token_expires_at: input.refreshTokenExpiresAt.toISOString(),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "project_id" }

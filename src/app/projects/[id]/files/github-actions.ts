@@ -16,12 +16,11 @@ import {
   getRepo,
   listBranches,
   listDirectory,
-  listRepos,
-  listUserOrgs,
+  listInstallationRepos,
+  listUserInstallations,
   putFile,
   type GithubBranch,
-  type GithubOrgSummary,
-  type GithubRepoScope,
+  type GithubInstallationSummary,
   type GithubRepoSummary,
   type GithubTreeEntry,
 } from "@/lib/github/client";
@@ -38,31 +37,31 @@ function apiErrorMessage(error: unknown): string {
 // Connect / disconnect
 // ---------------------------------------------------------------------------
 
-/** Orgs the connecting user belongs to, so the picker can offer "my account" vs. an org. */
-export async function orgsForPicker(
+/** Installations the connecting user can access, so the picker can offer "my account" vs. an org. */
+export async function installationsForPicker(
   projectId: string
-): Promise<{ orgs: GithubOrgSummary[]; error: string | null }> {
+): Promise<{ installations: GithubInstallationSummary[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { orgs: [], error: "You do not have permission to connect a repository." };
+    return { installations: [], error: "You do not have permission to connect a repository." };
   }
 
   const pending = await getPendingGithubConnection(projectId);
   if (!pending) {
-    return { orgs: [], error: "Your GitHub sign-in expired. Start over." };
+    return { installations: [], error: "Your GitHub sign-in expired. Start over." };
   }
 
   try {
-    const orgs = await listUserOrgs(pending.accessToken);
-    return { orgs, error: null };
+    const installations = await listUserInstallations(pending.accessToken);
+    return { installations, error: null };
   } catch (error) {
-    return { orgs: [], error: apiErrorMessage(error) };
+    return { installations: [], error: apiErrorMessage(error) };
   }
 }
 
 export async function reposForPicker(
   projectId: string,
-  scope: GithubRepoScope,
+  installationId: number,
   search?: string
 ): Promise<{ repos: GithubRepoSummary[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
@@ -76,7 +75,7 @@ export async function reposForPicker(
   }
 
   try {
-    const repos = await listRepos(pending.accessToken, scope, { search });
+    const repos = await listInstallationRepos(pending.accessToken, installationId, { search });
     return { repos, error: null };
   } catch (error) {
     return { repos: [], error: apiErrorMessage(error) };
@@ -85,6 +84,7 @@ export async function reposForPicker(
 
 export async function connectRepo(
   projectId: string,
+  installationId: number,
   owner: string,
   repo: string
 ): Promise<{ error: string | null }> {
@@ -105,11 +105,14 @@ export async function connectRepo(
       projectId,
       connectedBy: access.userId,
       githubLogin: pending.githubLogin,
+      installationId,
       repoOwner: repoDetails.owner,
       repoName: repoDetails.name,
       defaultBranch: repoDetails.defaultBranch,
       accessToken: pending.accessToken,
-      tokenScope: pending.tokenScope,
+      refreshToken: pending.refreshToken,
+      accessTokenExpiresAt: pending.accessTokenExpiresAt,
+      refreshTokenExpiresAt: pending.refreshTokenExpiresAt,
     });
   } catch (error) {
     return { error: apiErrorMessage(error) };

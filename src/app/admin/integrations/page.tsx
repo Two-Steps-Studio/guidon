@@ -27,9 +27,10 @@ function MaskedRow({ label, isSet }: { label: string; isSet: boolean }) {
 export default async function AdminIntegrationsPage() {
   await requireAdminAccess();
 
-  const githubClientId = Boolean(process.env.GITHUB_CLIENT_ID?.trim());
-  const githubClientSecret = Boolean(process.env.GITHUB_CLIENT_SECRET?.trim());
-  const githubConfigured = githubClientId && githubClientSecret;
+  const githubClientId = Boolean(process.env.GITHUB_APP_CLIENT_ID?.trim());
+  const githubClientSecret = Boolean(process.env.GITHUB_APP_CLIENT_SECRET?.trim());
+  const githubAppSlug = Boolean(process.env.GITHUB_APP_SLUG?.trim());
+  const githubConfigured = githubClientId && githubClientSecret && githubAppSlug;
 
   let storageProvider: string | null = null;
   try {
@@ -65,7 +66,7 @@ export default async function AdminIntegrationsPage() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>GitHub</CardTitle>
-              <CardDescription>OAuth client credentials (env only)</CardDescription>
+              <CardDescription>GitHub App credentials (env only)</CardDescription>
             </div>
             <Badge
               variant="outline"
@@ -80,8 +81,9 @@ export default async function AdminIntegrationsPage() {
             </Badge>
           </CardHeader>
           <CardContent className="space-y-2">
-            <MaskedRow label="GITHUB_CLIENT_ID" isSet={githubClientId} />
-            <MaskedRow label="GITHUB_CLIENT_SECRET" isSet={githubClientSecret} />
+            <MaskedRow label="GITHUB_APP_CLIENT_ID" isSet={githubClientId} />
+            <MaskedRow label="GITHUB_APP_CLIENT_SECRET" isSet={githubClientSecret} />
+            <MaskedRow label="GITHUB_APP_SLUG" isSet={githubAppSlug} />
           </CardContent>
         </Card>
       </section>

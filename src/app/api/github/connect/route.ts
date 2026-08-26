@@ -3,10 +3,16 @@ import { getProjectAccess, canManageProject } from "@/lib/data/project-access";
 import { createGithubOAuthState } from "@/lib/github/oauth-state";
 
 /**
- * Starts the "connect a GitHub repo to this project" OAuth flow. Distinct
- * from Guidon's login OAuth (src/app/auth/*): this authorizes an
- * already-signed-in Guidon user's GitHub account for `repo` scope, and the
- * resulting token is stored against the project, not used to sign anyone in.
+ * Starts the "connect a GitHub repo to this project" flow. Distinct from
+ * Guidon's login OAuth (src/app/auth/*): this identifies an already-signed-in
+ * Guidon user's GitHub account via the GitHub App's user-to-server OAuth
+ * flow, and the resulting token is stored against the project, not used to
+ * sign anyone in.
+ *
+ * No `scope` param: GitHub Apps declare permissions (Contents, Pull
+ * requests) on the app itself, not per-authorization like classic OAuth
+ * Apps. Which repos are actually reachable depends on where an org owner
+ * installed the app - see /api/github/setup for the install flow.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -16,11 +22,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
   }
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientId = process.env.GITHUB_APP_CLIENT_ID;
   if (!clientId) {
     return NextResponse.redirect(
       `${origin}/projects/${projectId}/files?githubError=${encodeURIComponent(
-        "GitHub integration is not configured on this server (GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET)."
+        "GitHub integration is not configured on this server (GITHUB_APP_CLIENT_ID/GITHUB_APP_CLIENT_SECRET)."
       )}`
     );
   }
@@ -38,9 +44,6 @@ export async function GET(request: NextRequest) {
   const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
   authorizeUrl.searchParams.set("client_id", clientId);
   authorizeUrl.searchParams.set("redirect_uri", `${origin}/api/github/callback`);
-  // read:org is needed for /user/orgs (the account/org picker) - repo alone
-  // only grants repository content access, not organization membership.
-  authorizeUrl.searchParams.set("scope", "repo read:org");
   authorizeUrl.searchParams.set("state", state);
 
   return NextResponse.redirect(authorizeUrl.toString());

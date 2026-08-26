@@ -191,7 +191,7 @@ Provider notes:
 
 | Variable | Meaning |
 |---|---|
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Optional. A GitHub OAuth App used by the "Connect repository" button on a project's Files page - lets a project owner/admin link one GitHub repo per project and edit its code in-app (Monaco). Separate from `NEXT_PUBLIC_AUTH_PROVIDERS`: this authorizes repo access for an already-signed-in user, it is not a login provider. Callback URL: `<origin>/api/github/callback`. Without these set, the Files page behaves exactly as before (uploaded documents only). |
+| `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_SLUG` | Optional. A GitHub **App** (not an OAuth App) used by the "Connect repository" button on a project's Files page - lets a project owner/admin link one GitHub repo per project and edit its code in-app (Monaco). Separate from `NEXT_PUBLIC_AUTH_PROVIDERS`: this authorizes repo access for an already-signed-in user, it is not a login provider. A GitHub App is required (rather than a classic OAuth App) so organizations work without a manual "Grant" step per org - an org owner installs the app once instead. Create it at `github.com/settings/apps/new` (or an org's equivalent) with Callback URL `<origin>/api/github/callback`, Setup URL `<origin>/api/github/setup`, repository permissions Contents (read & write) and Pull requests (read & write), and "Any account" install access if other people/orgs will use this Guidon instance. `GITHUB_APP_SLUG` is the app's URL slug (`github.com/apps/<slug>`). Without these set, the Files page behaves exactly as before (uploaded documents only). |
 
 ---
 

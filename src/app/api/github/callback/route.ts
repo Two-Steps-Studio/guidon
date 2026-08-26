@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
   if (oauthError) return failure(oauthError);
   if (!code || !projectId) return failure("GitHub sign-in did not complete.");
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  const clientId = process.env.GITHUB_APP_CLIENT_ID;
+  const clientSecret = process.env.GITHUB_APP_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return failure("GitHub integration is not configured on this server.");
   }
@@ -46,22 +46,27 @@ export async function GET(request: NextRequest) {
 
     const tokenData = (await tokenResponse.json()) as {
       access_token?: string;
-      scope?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      refresh_token_expires_in?: number;
       error?: string;
       error_description?: string;
     };
 
-    if (!tokenResponse.ok || !tokenData.access_token) {
+    if (!tokenResponse.ok || !tokenData.access_token || !tokenData.refresh_token) {
       throw new Error(tokenData.error_description ?? tokenData.error ?? "Token exchange failed");
     }
 
     const githubUser = await getAuthenticatedUser(tokenData.access_token);
+    const now = Date.now();
 
     await setPendingGithubConnection({
       projectId,
       githubLogin: githubUser.login,
-      tokenScope: tokenData.scope ?? null,
       accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      accessTokenExpiresAt: new Date(now + (tokenData.expires_in ?? 0) * 1000),
+      refreshTokenExpiresAt: new Date(now + (tokenData.refresh_token_expires_in ?? 0) * 1000),
     });
 
     return NextResponse.redirect(`${origin}/projects/${projectId}/files/connect-repo`);

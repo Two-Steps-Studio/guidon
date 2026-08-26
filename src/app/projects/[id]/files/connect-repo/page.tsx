@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { canManageProject, requireProjectAccess } from "@/lib/data/project-access";
+import { createGithubOAuthState } from "@/lib/github/oauth-state";
 import { RepoPicker } from "./repo-picker";
 
 /**
@@ -19,13 +20,18 @@ export default async function ConnectRepoPage({
     redirect(`/projects/${projectId}/files`);
   }
 
+  const appSlug = process.env.GITHUB_APP_SLUG?.trim();
+  const installUrl = appSlug
+    ? `https://github.com/apps/${appSlug}/installations/new?state=${createGithubOAuthState(projectId)}`
+    : null;
+
   return (
     <div className="container mx-auto max-w-2xl px-6 py-8">
       <h1 className="text-2xl font-bold">Choose a repository</h1>
       <p className="mb-6 text-muted-foreground">
         Pick which GitHub repository to link to this project.
       </p>
-      <RepoPicker projectId={projectId} />
+      <RepoPicker projectId={projectId} installUrl={installUrl} />
     </div>
   );
 }

@@ -66,6 +66,64 @@ export async function getAuthenticatedUser(token: string): Promise<GithubUser> {
   return githubFetch<GithubUser>(token, "/user");
 }
 
+export interface RefreshedGithubToken {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: Date;
+  refreshTokenExpiresAt: Date;
+}
+
+/**
+ * Exchanges a still-valid refresh token for a new user-to-server access
+ * token. GitHub Apps' user tokens expire (~8h) and rotate their refresh
+ * token (~6mo) on every use - the caller MUST persist the returned
+ * `refreshToken`, never reuse the one passed in, since GitHub invalidates
+ * it immediately once used.
+ */
+export async function refreshUserToken(refreshToken: string): Promise<RefreshedGithubToken> {
+  const clientId = process.env.GITHUB_APP_CLIENT_ID;
+  const clientSecret = process.env.GITHUB_APP_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new GithubApiError(500, "GitHub integration is not configured on this server.");
+  }
+
+  const response = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }),
+    cache: "no-store",
+  });
+
+  const data = (await response.json().catch(() => null)) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    refresh_token_expires_in?: number;
+    error?: string;
+    error_description?: string;
+  } | null;
+
+  if (!response.ok || !data?.access_token || !data.refresh_token) {
+    throw new GithubApiError(
+      401,
+      data?.error_description ?? data?.error ?? "GitHub connection expired - reconnect the repository."
+    );
+  }
+
+  const now = Date.now();
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    accessTokenExpiresAt: new Date(now + (data.expires_in ?? 0) * 1000),
+    refreshTokenExpiresAt: new Date(now + (data.refresh_token_expires_in ?? 0) * 1000),
+  };
+}
+
 export interface GithubRepoSummary {
   owner: string;
   name: string;
@@ -74,55 +132,60 @@ export interface GithubRepoSummary {
   defaultBranch: string;
 }
 
-export interface GithubOrgSummary {
-  login: string;
+export interface GithubInstallationSummary {
+  id: number;
+  accountLogin: string;
+  accountType: "User" | "Organization";
   avatarUrl: string;
 }
 
-/** Organizations the connecting user belongs to, for the account/org picker. */
-export async function listUserOrgs(token: string): Promise<GithubOrgSummary[]> {
-  const data = await githubFetch<Array<{ login: string; avatar_url: string }>>(
-    token,
-    "/user/orgs?per_page=100"
-  );
-  return data.map((org) => ({ login: org.login, avatarUrl: org.avatar_url }));
+/**
+ * GitHub App installations the connecting user can access, for the
+ * account/org picker. Unlike the old OAuth App's `/user/orgs`, this needs
+ * no per-org "Grant" step - an installation only appears here because an
+ * org owner already installed the app on it.
+ */
+export async function listUserInstallations(token: string): Promise<GithubInstallationSummary[]> {
+  const data = await githubFetch<{
+    installations: Array<{
+      id: number;
+      account: { login: string; type: string; avatar_url: string };
+    }>;
+  }>(token, "/user/installations?per_page=100");
+
+  return data.installations.map((installation) => ({
+    id: installation.id,
+    accountLogin: installation.account.login,
+    accountType: installation.account.type === "Organization" ? "Organization" : "User",
+    avatarUrl: installation.account.avatar_url,
+  }));
 }
 
-/** Which owner to list repos for: the connecting user's personal account, or one of their organizations. */
-export type GithubRepoScope = { type: "user" } | { type: "org"; org: string };
-
-/** Repos under the given scope (personal account or one organization), most-recently-pushed first. */
-export async function listRepos(
+/**
+ * Repos accessible to the connecting user under one installation, most-
+ * recently-pushed first. This endpoint has no text-search param (unlike
+ * `/search/repositories`), so `search` filters the fetched page client-side.
+ */
+export async function listInstallationRepos(
   token: string,
-  scope: GithubRepoScope,
+  installationId: number,
   { search, page = 1 }: { search?: string; page?: number } = {}
 ): Promise<GithubRepoSummary[]> {
-  type RawRepo = {
-    name: string;
-    full_name: string;
-    private: boolean;
-    default_branch: string;
-    owner: { login: string };
-  };
+  const data = await githubFetch<{
+    repositories: Array<{
+      name: string;
+      full_name: string;
+      private: boolean;
+      default_branch: string;
+      owner: { login: string };
+    }>;
+  }>(token, `/user/installations/${installationId}/repositories?per_page=100&page=${page}`);
 
-  const ownerQualifier = scope.type === "user" ? "user:@me" : `org:${scope.org}`;
+  const repos = data.repositories.map(toRepoSummary);
+  if (!search?.trim()) return repos;
 
-  if (search?.trim()) {
-    const q = encodeURIComponent(`${search.trim()} in:name fork:true`);
-    const data = await githubFetch<{ items: RawRepo[] }>(
-      token,
-      `/search/repositories?q=${q}+${ownerQualifier}&per_page=25`
-    );
-    return data.items.map(toRepoSummary);
-  }
-
-  const path =
-    scope.type === "user"
-      ? `/user/repos?per_page=50&page=${page}&sort=pushed&affiliation=owner`
-      : `/orgs/${scope.org}/repos?per_page=50&page=${page}&sort=pushed`;
-
-  const data = await githubFetch<RawRepo[]>(token, path);
-  return data.map(toRepoSummary);
+  const needle = search.trim().toLowerCase();
+  return repos.filter((repo) => repo.name.toLowerCase().includes(needle));
 }
 
 function toRepoSummary(raw: {
