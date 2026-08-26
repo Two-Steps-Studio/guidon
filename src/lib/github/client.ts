@@ -70,9 +70,27 @@ export interface GithubRepoSummary {
   defaultBranch: string;
 }
 
-/** Repos the connecting user can access, most-recently-pushed first. */
-export async function listUserRepos(
+export interface GithubOrgSummary {
+  login: string;
+  avatarUrl: string;
+}
+
+/** Organizations the connecting user belongs to, for the account/org picker. */
+export async function listUserOrgs(token: string): Promise<GithubOrgSummary[]> {
+  const data = await githubFetch<Array<{ login: string; avatar_url: string }>>(
+    token,
+    "/user/orgs?per_page=100"
+  );
+  return data.map((org) => ({ login: org.login, avatarUrl: org.avatar_url }));
+}
+
+/** Which owner to list repos for: the connecting user's personal account, or one of their organizations. */
+export type GithubRepoScope = { type: "user" } | { type: "org"; org: string };
+
+/** Repos under the given scope (personal account or one organization), most-recently-pushed first. */
+export async function listRepos(
   token: string,
+  scope: GithubRepoScope,
   { search, page = 1 }: { search?: string; page?: number } = {}
 ): Promise<GithubRepoSummary[]> {
   type RawRepo = {
@@ -83,19 +101,23 @@ export async function listUserRepos(
     owner: { login: string };
   };
 
+  const ownerQualifier = scope.type === "user" ? "user:@me" : `org:${scope.org}`;
+
   if (search?.trim()) {
     const q = encodeURIComponent(`${search.trim()} in:name fork:true`);
     const data = await githubFetch<{ items: RawRepo[] }>(
       token,
-      `/search/repositories?q=${q}+user:@me&per_page=25`
+      `/search/repositories?q=${q}+${ownerQualifier}&per_page=25`
     );
     return data.items.map(toRepoSummary);
   }
 
-  const data = await githubFetch<RawRepo[]>(
-    token,
-    `/user/repos?per_page=50&page=${page}&sort=pushed&affiliation=owner,collaborator,organization_member`
-  );
+  const path =
+    scope.type === "user"
+      ? `/user/repos?per_page=50&page=${page}&sort=pushed&affiliation=owner`
+      : `/orgs/${scope.org}/repos?per_page=50&page=${page}&sort=pushed`;
+
+  const data = await githubFetch<RawRepo[]>(token, path);
   return data.map(toRepoSummary);
 }
 

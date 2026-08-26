@@ -2,14 +2,16 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Lock, Loader2, Search } from "lucide-react";
+import { AlertCircle, Building2, Lock, Loader2, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { reposForPicker, connectRepo } from "../github-actions";
-import type { GithubRepoSummary } from "@/lib/github/client";
+import { reposForPicker, orgsForPicker, connectRepo } from "../github-actions";
+import type { GithubOrgSummary, GithubRepoScope, GithubRepoSummary } from "@/lib/github/client";
 
 export function RepoPicker({ projectId }: { projectId: string }) {
   const router = useRouter();
+  const [orgs, setOrgs] = useState<GithubOrgSummary[]>([]);
+  const [scope, setScope] = useState<GithubRepoScope>({ type: "user" });
   const [search, setSearch] = useState("");
   const [repos, setRepos] = useState<GithubRepoSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,12 +19,20 @@ export function RepoPicker({ projectId }: { projectId: string }) {
   const [connecting, startConnecting] = useTransition();
   const [connectingRepo, setConnectingRepo] = useState<string | null>(null);
 
+  // Orgs load once - which one is selected only changes `scope`, not this list.
+  useEffect(() => {
+    orgsForPicker(projectId).then((result) => {
+      if (result.error) setError(result.error);
+      setOrgs(result.orgs);
+    });
+  }, [projectId]);
+
   useEffect(() => {
     let cancelled = false;
 
     const timeout = setTimeout(async () => {
       setLoading(true);
-      const result = await reposForPicker(projectId, search || undefined);
+      const result = await reposForPicker(projectId, scope, search || undefined);
       if (cancelled) return;
       setRepos(result.repos);
       setError(result.error);
@@ -33,7 +43,7 @@ export function RepoPicker({ projectId }: { projectId: string }) {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [projectId, search]);
+  }, [projectId, scope, search]);
 
   const handleSelect = (repo: GithubRepoSummary) => {
     setConnectingRepo(repo.fullName);
@@ -48,14 +58,46 @@ export function RepoPicker({ projectId }: { projectId: string }) {
     });
   };
 
+  const scopeKey = (s: GithubRepoScope) => (s.type === "user" ? "user" : `org:${s.org}`);
+
   return (
     <div>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setScope({ type: "user" })}
+          className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm ${
+            scope.type === "user"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <User className="h-3.5 w-3.5" />
+          Your account
+        </button>
+        {orgs.map((org) => (
+          <button
+            key={org.login}
+            type="button"
+            onClick={() => setScope({ type: "org", org: org.login })}
+            className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm ${
+              scopeKey(scope) === `org:${org.login}`
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            {org.login}
+          </button>
+        ))}
+      </div>
+
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search your repositories..."
+          placeholder={scope.type === "user" ? "Search your repositories..." : `Search ${scope.org}'s repositories...`}
           className="pl-9"
         />
       </div>

@@ -16,9 +16,12 @@ import {
   getRepo,
   listBranches,
   listDirectory,
-  listUserRepos,
+  listRepos,
+  listUserOrgs,
   putFile,
   type GithubBranch,
+  type GithubOrgSummary,
+  type GithubRepoScope,
   type GithubRepoSummary,
   type GithubTreeEntry,
 } from "@/lib/github/client";
@@ -35,8 +38,31 @@ function apiErrorMessage(error: unknown): string {
 // Connect / disconnect
 // ---------------------------------------------------------------------------
 
+/** Orgs the connecting user belongs to, so the picker can offer "my account" vs. an org. */
+export async function orgsForPicker(
+  projectId: string
+): Promise<{ orgs: GithubOrgSummary[]; error: string | null }> {
+  const access = await getProjectAccess(projectId);
+  if (!access || !canManageProject(access.role)) {
+    return { orgs: [], error: "You do not have permission to connect a repository." };
+  }
+
+  const pending = await getPendingGithubConnection(projectId);
+  if (!pending) {
+    return { orgs: [], error: "Your GitHub sign-in expired. Start over." };
+  }
+
+  try {
+    const orgs = await listUserOrgs(pending.accessToken);
+    return { orgs, error: null };
+  } catch (error) {
+    return { orgs: [], error: apiErrorMessage(error) };
+  }
+}
+
 export async function reposForPicker(
   projectId: string,
+  scope: GithubRepoScope,
   search?: string
 ): Promise<{ repos: GithubRepoSummary[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
@@ -50,7 +76,7 @@ export async function reposForPicker(
   }
 
   try {
-    const repos = await listUserRepos(pending.accessToken, { search });
+    const repos = await listRepos(pending.accessToken, scope, { search });
     return { repos, error: null };
   } catch (error) {
     return { repos: [], error: apiErrorMessage(error) };
