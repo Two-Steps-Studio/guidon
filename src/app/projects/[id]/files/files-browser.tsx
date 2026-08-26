@@ -23,7 +23,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { FileViewer } from "@/components/files/file-viewer";
+import { GithubRepoPanel } from "@/components/files/github-repo-panel";
 import type { ProjectFile } from "@/types/api";
+import type { ProjectGithubRepoInfo } from "@/lib/data/github-connection";
 import { deleteFile, getDownloadUrl, uploadFile, type FileActionState } from "./actions";
 
 const FILE_TYPE_ICONS: Record<string, LucideIcon> = {
@@ -70,12 +72,14 @@ export function FilesBrowser({
   canWrite,
   canManage,
   projectColor,
+  githubRepoInfo,
 }: {
   projectId: string;
   files: ProjectFile[];
   canWrite: boolean;
   canManage: boolean;
   projectColor?: string;
+  githubRepoInfo: ProjectGithubRepoInfo | null;
 }) {
   const uploadWithProject = uploadFile.bind(null, projectId);
   const [uploadState, uploadAction, uploading] = useActionState(uploadWithProject, initialUploadState);
@@ -139,6 +143,8 @@ export function FilesBrowser({
           </>
         )}
       </div>
+
+      <GithubRepoPanel projectId={projectId} repoInfo={githubRepoInfo} canManage={canManage} canWrite={canWrite} />
 
       {uploadState.error && (
         <div className="mb-6 p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-2 text-destructive">

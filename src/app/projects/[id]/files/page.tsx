@@ -2,6 +2,7 @@ import { canManageProject, canWriteProject, requireProjectAccess } from "@/lib/d
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { getProjectGithubRepoInfo } from "@/lib/data/github-connection";
 import { FilesBrowser } from "./files-browser";
 import type { ProjectFile } from "@/types/api";
 
@@ -34,6 +35,8 @@ export default async function ProjectFilesPage({
     files = (data ?? []) as ProjectFile[];
   }
 
+  const githubRepoInfo = await getProjectGithubRepoInfo(projectId, access.userId);
+
   return (
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <FilesBrowser
@@ -42,6 +45,7 @@ export default async function ProjectFilesPage({
         canWrite={canWriteProject(access.role)}
         canManage={canManageProject(access.role)}
         projectColor={access.project.color}
+        githubRepoInfo={githubRepoInfo}
       />
     </div>
   );

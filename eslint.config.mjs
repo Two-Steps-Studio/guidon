@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored monaco-editor assets (scripts/copy-monaco-assets.mjs) - minified
+    // third-party code, not something this repo authors or should lint.
+    "public/monaco-editor/**",
   ]),
 ]);
 

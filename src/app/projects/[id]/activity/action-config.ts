@@ -3,6 +3,7 @@ import {
   Bot,
   FileText,
   FolderKanban,
+  Github,
   GitBranch,
   Layers,
   Link2,
@@ -11,6 +12,7 @@ import {
   UserCog,
   UserMinus,
   UserPlus,
+  Unlink,
   type LucideIcon,
 } from "lucide-react";
 import type { ActivityAction } from "@/types/api";
@@ -60,6 +62,9 @@ export const ACTION_CONFIG: Record<ActivityAction, ActionConfig> = {
   memory_verified: { label: "Memory verified", icon: FileText, color: "text-success" },
   file_uploaded: { label: "File uploaded", icon: FileText, color: "text-success" },
   file_deleted: { label: "File deleted", icon: Trash2, color: "text-destructive" },
+  github_repo_connected: { label: "GitHub repository connected", icon: Github, color: "text-success" },
+  github_repo_disconnected: { label: "GitHub repository disconnected", icon: Unlink, color: "text-destructive" },
+  github_file_committed: { label: "File committed to GitHub", icon: Github, color: "text-primary" },
   member_added: { label: "Member added", icon: UserPlus, color: "text-success" },
   member_removed: { label: "Member removed", icon: UserMinus, color: "text-destructive" },
   member_role_changed: { label: "Member role changed", icon: UserCog, color: "text-primary" },

@@ -93,6 +93,19 @@ export function prismLanguage(name: string): string {
   return LANGUAGE_ALIASES[ext] ?? ext ?? "text";
 }
 
+/** Monaco language ids diverge from Prism's in a few spots. */
+const MONACO_LANGUAGE_OVERRIDES: Record<string, string> = {
+  bash: "shell",
+  docker: "dockerfile",
+  jsx: "javascript",
+  tsx: "typescript",
+};
+
+export function monacoLanguage(name: string): string {
+  const base = prismLanguage(name);
+  return MONACO_LANGUAGE_OVERRIDES[base] ?? base;
+}
+
 /** Guard for previews that must not stream very large files into memory. */
 export const MAX_INLINE_PREVIEW_BYTES = 2 * 1024 * 1024;
 

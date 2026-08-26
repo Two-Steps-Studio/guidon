@@ -187,11 +187,11 @@ Provider notes:
 
 ---
 
-## INTEGRATIONS (not implemented yet)
+## INTEGRATIONS
 
 | Variable | Meaning |
 |---|---|
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Commented out in `.env.example`. No GitHub integration code exists in this repo yet. |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Optional. A GitHub OAuth App used by the "Connect repository" button on a project's Files page - lets a project owner/admin link one GitHub repo per project and edit its code in-app (Monaco). Separate from `NEXT_PUBLIC_AUTH_PROVIDERS`: this authorizes repo access for an already-signed-in user, it is not a login provider. Callback URL: `<origin>/api/github/callback`. Without these set, the Files page behaves exactly as before (uploaded documents only). |
 
 ---
 

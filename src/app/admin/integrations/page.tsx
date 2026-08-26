@@ -56,8 +56,8 @@ export default async function AdminIntegrationsPage() {
         <div>
           <h2 className="text-2xl font-bold">Integrations</h2>
           <p className="text-muted-foreground">
-            Nothing in this codebase implements GitHub sync yet (docs/self-hosting-audit.md) - this reports
-            whether the OAuth credentials are present, not that a working integration exists.
+            Projects can link one GitHub repo each (Files page → Connect repository) once the OAuth
+            credentials below are configured. This section reports whether they are present.
           </p>
         </div>
 
