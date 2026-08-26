@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
   const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
   authorizeUrl.searchParams.set("client_id", clientId);
   authorizeUrl.searchParams.set("redirect_uri", `${origin}/api/github/callback`);
-  authorizeUrl.searchParams.set("scope", "repo");
+  // read:org is needed for /user/orgs (the account/org picker) - repo alone
+  // only grants repository content access, not organization membership.
+  authorizeUrl.searchParams.set("scope", "repo read:org");
   authorizeUrl.searchParams.set("state", state);
 
   return NextResponse.redirect(authorizeUrl.toString());
