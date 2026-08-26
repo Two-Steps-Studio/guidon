@@ -5,6 +5,7 @@ import { withUser } from "@/lib/db/session";
 import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
 import { BoardColumnsForm } from "./board-columns-form";
+import { ExportProjectCard } from "./export-project-card";
 import type { Project } from "@/types/project";
 import type { Technology } from "@/types/technology";
 import type { BoardColumnOverride } from "@/lib/work/task-board";
@@ -112,6 +113,7 @@ export default async function ProjectSettingsPage({
         permissions={aiPermissions}
         allowAutoComplete={project.allow_ai_auto_complete}
       />
+      <ExportProjectCard projectId={projectId} />
     </div>
   );
 }

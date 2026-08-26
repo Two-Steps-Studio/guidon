@@ -103,6 +103,8 @@ export type ActivityAction =
   | "project_updated"
   | "project_archived"
   | "project_deleted"
+  | "project_exported"
+  | "project_imported"
   | "task_created"
   | "task_updated"
   | "task_deleted"

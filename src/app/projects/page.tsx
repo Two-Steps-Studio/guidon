@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
+import { ImportProjectDialog } from "./import-project-dialog";
 
 interface ProjectRow {
   id: string;
@@ -108,14 +109,20 @@ export default async function ProjectsPage() {
             <h1 className="text-3xl font-bold">Projects</h1>
             <p className="text-muted-foreground">Manage your projects and organizations</p>
           </div>
-          {organizations.length > 0 && (
-            <Button asChild>
-              <Link href="/organizations">
-                <Plus className="h-4 w-4 mr-2" />
-                New Project
-              </Link>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <ImportProjectDialog
+              organizations={organizations.map((org) => ({ id: org.id, name: org.name }))}
+              projects={projects.map((project) => ({ id: project.id, name: project.name }))}
+            />
+            {organizations.length > 0 && (
+              <Button asChild>
+                <Link href="/organizations">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Project
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         {organizations.length > 0 && (
