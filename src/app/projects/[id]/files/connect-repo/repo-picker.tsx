@@ -11,6 +11,8 @@ import type { GithubOrgSummary, GithubRepoScope, GithubRepoSummary } from "@/lib
 export function RepoPicker({ projectId }: { projectId: string }) {
   const router = useRouter();
   const [orgs, setOrgs] = useState<GithubOrgSummary[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(true);
+  const [orgsError, setOrgsError] = useState<string | null>(null);
   const [scope, setScope] = useState<GithubRepoScope>({ type: "user" });
   const [search, setSearch] = useState("");
   const [repos, setRepos] = useState<GithubRepoSummary[]>([]);
@@ -21,10 +23,12 @@ export function RepoPicker({ projectId }: { projectId: string }) {
 
   // Orgs load once - which one is selected only changes `scope`, not this list.
   useEffect(() => {
-    orgsForPicker(projectId).then((result) => {
-      if (result.error) setError(result.error);
-      setOrgs(result.orgs);
-    });
+    orgsForPicker(projectId)
+      .then((result) => {
+        setOrgsError(result.error);
+        setOrgs(result.orgs);
+      })
+      .finally(() => setOrgsLoading(false));
   }, [projectId]);
 
   useEffect(() => {
@@ -90,7 +94,25 @@ export function RepoPicker({ projectId }: { projectId: string }) {
             {org.login}
           </button>
         ))}
+        {orgsLoading && (
+          <span className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Checking organizations...
+          </span>
+        )}
+        {!orgsLoading && !orgsError && orgs.length === 0 && (
+          <span className="px-2 text-xs text-muted-foreground">
+            No organizations found for this GitHub account.
+          </span>
+        )}
       </div>
+
+      {orgsError && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Couldn&apos;t load organizations: {orgsError}
+        </div>
+      )}
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
