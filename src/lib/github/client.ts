@@ -29,6 +29,10 @@ async function githubFetch<T>(
 ): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
+    // Next.js's server-side fetch defaults to caching GET requests. GitHub
+    // API responses (repo lists, org membership, file contents/shas) must
+    // always reflect the live state, so opt every call out of that cache.
+    cache: "no-store",
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
