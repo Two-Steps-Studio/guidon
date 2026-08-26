@@ -10,7 +10,7 @@ import { logActivity } from "@/lib/data/log-activity";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { guessTechnologyCategory, technologySlug } from "@/types/technology";
-import type { ProjectStatus } from "@/types/project";
+import type { ProjectStatus, ProjectType } from "@/types/project";
 import type { Technology } from "@/types/technology";
 
 export type SettingsFormState = {
@@ -18,6 +18,7 @@ export type SettingsFormState = {
 };
 
 const VALID_STATUSES: ProjectStatus[] = ["active", "archived", "deleted"];
+const VALID_PROJECT_TYPES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
 
 /**
  * Reconciles the edited technology names against the technologies table:
@@ -118,12 +119,21 @@ export async function updateProjectSettings(
   const colorHex = formData.get("colorHex");
   const technologiesRaw = formData.get("technologies");
   const avatarFile = formData.get("avatar") as File | null;
+  const projectTypeRaw = formData.get("projectType");
 
   if (typeof name !== "string" || name.trim().length === 0) {
     return { error: "Project name is required." };
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as ProjectStatus)) {
     return { error: "Invalid status." };
+  }
+
+  let projectType: ProjectType | null = null;
+  if (typeof projectTypeRaw === "string" && projectTypeRaw.trim()) {
+    if (!VALID_PROJECT_TYPES.includes(projectTypeRaw as ProjectType)) {
+      return { error: "Invalid project type." };
+    }
+    projectType = projectTypeRaw as ProjectType;
   }
 
   let avatarUrl: string | null | undefined;
@@ -185,9 +195,9 @@ export async function updateProjectSettings(
         await query(
           `UPDATE projects
            SET name = $1, description = $2, status = $3, color = $4,
-               avatar_url = COALESCE($5, avatar_url)
-           WHERE id = $6`,
-          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectId]
+               avatar_url = COALESCE($5, avatar_url), project_type = $6
+           WHERE id = $7`,
+          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, projectId]
         );
 
         const existingTech = await query("SELECT * FROM technologies WHERE project_id = $1", [
@@ -210,6 +220,7 @@ export async function updateProjectSettings(
         description: trimmedDescription,
         status: status as ProjectStatus,
         color: trimmedColor,
+        project_type: projectType,
         ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", projectId);

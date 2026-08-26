@@ -18,13 +18,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, AlertTriangle, FolderKanban, Loader2, Settings, Trash2, X } from "lucide-react";
 import { deleteProject, updateProjectSettings, type SettingsFormState } from "./actions";
-import type { Project, ProjectStatus } from "@/types/project";
+import type { Project, ProjectStatus, ProjectType } from "@/types/project";
+import { PROJECT_TYPE_LABELS } from "@/types/project";
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
   { value: "active", label: "Active" },
   { value: "archived", label: "Archived" },
   { value: "deleted", label: "Deleted" },
 ];
+
+const PROJECT_TYPE_OPTIONS = Object.entries(PROJECT_TYPE_LABELS) as [ProjectType, string][];
 
 const initialState: SettingsFormState = { error: null };
 
@@ -115,6 +118,22 @@ export function SettingsForm({
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="projectType">Project Type</Label>
+            <select
+              id="projectType"
+              name="projectType"
+              defaultValue={project.project_type ?? ""}
+              className="w-full px-3 py-2 border rounded-md bg-background"
+            >
+              <option value="">Not set</option>
+              {PROJECT_TYPE_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
                 </option>
               ))}
             </select>

@@ -13,6 +13,7 @@ import {
   Calendar,
   Users,
 } from "lucide-react";
+import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 import { canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { getProjectStats } from "@/lib/data/project-stats";
 import { EditProjectDialog } from "./edit-project-dialog";
@@ -96,6 +97,11 @@ export default async function ProjectPage({
             <Badge variant={project.status === "active" ? "default" : "secondary"}>
               {project.status}
             </Badge>
+            {project.project_type && (
+              <Badge variant="outline">
+                {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}
+              </Badge>
+            )}
           </div>
           <p className="text-muted-foreground mt-1">{project.description || "No description"}</p>
         </div>

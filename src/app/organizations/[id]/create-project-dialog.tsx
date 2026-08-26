@@ -14,8 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createProject, type CreateProjectState } from "./actions";
+import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 
 const initialState: CreateProjectState = { error: null };
+
+const PROJECT_TYPE_OPTIONS = Object.entries(PROJECT_TYPE_LABELS) as [ProjectType, string][];
 
 export function CreateProjectDialog({
   orgId,
@@ -57,6 +60,22 @@ export function CreateProjectDialog({
               name="description"
               placeholder="Redesign the company website"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="projectType">Project Type (optional)</Label>
+            <select
+              id="projectType"
+              name="projectType"
+              defaultValue=""
+              className="w-full px-3 py-2 border rounded-md bg-background"
+            >
+              <option value="">Not set</option>
+              {PROJECT_TYPE_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </div>
           {state.error && (
             <div className="text-sm text-destructive flex items-center gap-2">

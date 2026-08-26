@@ -4,6 +4,16 @@
 
 export type ProjectStatus = "active" | "archived" | "deleted";
 export type ProjectVisibility = "private" | "organization" | "public";
+export type ProjectType = "game" | "website" | "mobile_app" | "api" | "tool" | "other";
+
+export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
+  game: "Game",
+  website: "Website",
+  mobile_app: "Mobile App",
+  api: "API",
+  tool: "Tool",
+  other: "Other",
+};
 
 export interface Project {
   id: string;
@@ -17,6 +27,7 @@ export interface Project {
   visibility: ProjectVisibility;
   color: string | null;
   avatar_url: string | null;
+  project_type: ProjectType | null;
   allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;
@@ -33,6 +44,7 @@ export interface CreateProjectData {
   status?: ProjectStatus;
   visibility?: ProjectVisibility;
   color?: string;
+  project_type?: ProjectType;
   planned_end_date?: string;
 }
 
@@ -45,6 +57,7 @@ export interface UpdateProjectData {
   status?: ProjectStatus;
   visibility?: ProjectVisibility;
   color?: string;
+  project_type?: ProjectType;
   planned_end_date?: string;
 }
 

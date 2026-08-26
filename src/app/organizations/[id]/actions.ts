@@ -11,10 +11,13 @@ import { uniqueSlug } from "@/lib/slug";
 import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
+import type { ProjectType } from "@/types/project";
 
 export type CreateProjectState = {
   error: string | null;
 };
+
+const VALID_PROJECT_TYPES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
 
 export async function createProject(
   orgId: string,
@@ -29,9 +32,18 @@ export async function createProject(
 
   const name = formData.get("name");
   const description = formData.get("description");
+  const projectTypeRaw = formData.get("projectType");
 
   if (typeof name !== "string" || name.trim().length === 0) {
     return { error: "Project name is required." };
+  }
+
+  let projectType: ProjectType | null = null;
+  if (typeof projectTypeRaw === "string" && projectTypeRaw.trim()) {
+    if (!VALID_PROJECT_TYPES.includes(projectTypeRaw as ProjectType)) {
+      return { error: "Invalid project type." };
+    }
+    projectType = projectTypeRaw as ProjectType;
   }
 
   const trimmedDescription =
@@ -59,10 +71,10 @@ export async function createProject(
         );
 
         const result = await query(
-          `INSERT INTO projects (organization_id, name, slug, description, created_by)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO projects (organization_id, name, slug, description, project_type, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [orgId, name.trim(), slug, trimmedDescription, access.userId]
+          [orgId, name.trim(), slug, trimmedDescription, projectType, access.userId]
         );
         return result.rows[0].id as string;
       });
@@ -100,6 +112,7 @@ export async function createProject(
         name: name.trim(),
         slug,
         description: trimmedDescription,
+        project_type: projectType,
         created_by: access.userId,
       })
       .select("id")

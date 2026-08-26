@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 
 interface ProjectRow {
   id: string;
@@ -17,6 +18,7 @@ interface ProjectRow {
   description: string | null;
   status: string;
   avatar_url: string | null;
+  project_type: string | null;
   organizations: { id: string; name: string } | null;
 }
 
@@ -52,7 +54,7 @@ export default async function ProjectsPage() {
       ),
       withUser(user.id, ({ query }) =>
         query(
-          `SELECT p.id, p.name, p.description, p.status, p.avatar_url, o.id AS org_id, o.name AS org_name
+          `SELECT p.id, p.name, p.description, p.status, p.avatar_url, p.project_type, o.id AS org_id, o.name AS org_name
            FROM projects p
            JOIN organizations o ON o.id = p.organization_id
            ORDER BY p.created_at DESC`
@@ -74,6 +76,7 @@ export default async function ProjectsPage() {
       description: row.description,
       status: row.status,
       avatar_url: row.avatar_url,
+      project_type: row.project_type,
       organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
     }));
   } else {
@@ -86,7 +89,7 @@ export default async function ProjectsPage() {
         .eq("user_id", user.id),
       supabase
         .from("projects")
-        .select("id, name, description, status, avatar_url, organizations (id, name)")
+        .select("id, name, description, status, avatar_url, project_type, organizations (id, name)")
         .order("created_at", { ascending: false }),
     ]);
 
@@ -205,6 +208,11 @@ export default async function ProjectsPage() {
                     <CardDescription>{project.organizations?.name}</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {project.project_type && (
+                      <Badge variant="outline" className="mb-2">
+                        {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}
+                      </Badge>
+                    )}
                     {project.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                         {project.description}
