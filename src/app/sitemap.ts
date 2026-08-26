@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://useguidon.com'
+  const baseUrl = process.env.APP_URL || 'https://useguidon.com'
   
   // Only include public pages that should be indexed by search engines
   const routes: MetadataRoute.Sitemap = [
