@@ -271,7 +271,8 @@ export async function getFile(
   owner: string,
   repo: string,
   path: string,
-  ref: string
+  ref: string,
+  options: { raw?: boolean } = {}
 ): Promise<GithubFileContent> {
   const encodedPath = path
     .split("/")
@@ -288,8 +289,10 @@ export async function getFile(
     throw new GithubApiError(400, "That path is a directory, not a file.");
   }
 
+  // Images must stay base64 (fed straight into a data: URL) - decoding as
+  // utf8 would corrupt binary bytes. Text files still get decoded as before.
   const content =
-    data.encoding === "base64"
+    !options.raw && data.encoding === "base64"
       ? Buffer.from(data.content, "base64").toString("utf8")
       : data.content;
 

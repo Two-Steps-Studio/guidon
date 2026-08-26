@@ -25,6 +25,7 @@ import {
   type GithubTreeEntry,
 } from "@/lib/github/client";
 import { getPendingGithubConnection, clearPendingGithubConnection } from "@/lib/github/pending-connection";
+import { detectFileKind } from "@/types/file";
 
 function apiErrorMessage(error: unknown): string {
   if (error instanceof GithubApiError) {
@@ -183,6 +184,11 @@ export async function listRepoDirectory(
   }
 }
 
+/**
+ * `content` is decoded UTF-8 text, except for image paths (detectFileKind)
+ * where it stays raw base64 - the workspace feeds that straight into a
+ * `data:` URL rather than trying to edit it as text.
+ */
 export async function getRepoFile(
   projectId: string,
   path: string,
@@ -200,7 +206,8 @@ export async function getRepoFile(
       connection.repoOwner,
       connection.repoName,
       path,
-      ref ?? connection.defaultBranch
+      ref ?? connection.defaultBranch,
+      { raw: detectFileKind({ name: path }) === "image" }
     );
     return { content: file.content, sha: file.sha, error: null };
   } catch (error) {
