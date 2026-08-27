@@ -191,7 +191,7 @@ export function AppSidebar({
                         asChild
                         isActive={active}
                         tooltip={item.label}
-                        className={active ? "focus-visible:ring-2 focus-visible:ring-[--tw-ring-color]" : undefined}
+                        className={active ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color)" : undefined}
                         style={active ? activeStyle : undefined}
                       >
                         <Link href={href}>
