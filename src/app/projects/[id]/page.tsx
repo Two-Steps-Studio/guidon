@@ -94,9 +94,6 @@ export default async function ProjectPage({
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold">{project.name}</h1>
-            <Badge variant={project.status === "active" ? "default" : "secondary"}>
-              {project.status}
-            </Badge>
             {project.project_type && (
               <Badge variant="outline">
                 {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}

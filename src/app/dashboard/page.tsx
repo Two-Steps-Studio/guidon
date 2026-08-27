@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, GitBranch, Network, BrainCircuit } from "lucide-react";
@@ -247,20 +246,15 @@ export default async function DashboardPage() {
               <Link key={project.id} href={`/projects/${project.id}`}>
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Avatar className="h-5 w-5 rounded-sm">
-                          <AvatarImage src={project.avatar_url || undefined} alt={project.name} className="object-cover" />
-                          <AvatarFallback className="rounded-sm bg-transparent">
-                            <FolderKanban className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        {project.name}
-                      </CardTitle>
-                      <Badge variant={project.status === "active" ? "default" : "secondary"}>
-                        {project.status}
-                      </Badge>
-                    </div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Avatar className="h-5 w-5 rounded-sm">
+                        <AvatarImage src={project.avatar_url || undefined} alt={project.name} className="object-cover" />
+                        <AvatarFallback className="rounded-sm bg-transparent">
+                          <FolderKanban className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      {project.name}
+                    </CardTitle>
                     <CardDescription>{project.organizations?.name}</CardDescription>
                   </CardHeader>
                   <CardContent>

@@ -129,18 +129,7 @@ export default async function OrganizationDetailPage({
                     <CardDescription>{project.description || "No description"}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <span
-                        className={`px-2 py-1 rounded-full ${
-                          project.status === "active"
-                            ? "bg-success/10 text-success"
-                            : project.status === "archived"
-                              ? "bg-muted text-muted-foreground"
-                              : "bg-danger/10 text-danger"
-                        }`}
-                      >
-                        {project.status}
-                      </span>
+                    <div className="flex items-center justify-end text-sm">
                       <span className="text-muted-foreground">
                         {new Date(project.created_at).toLocaleDateString()}
                       </span>
