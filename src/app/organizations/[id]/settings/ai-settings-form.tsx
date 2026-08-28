@@ -13,7 +13,11 @@ import {
   saveOrgAiSettings,
   type AiSettingsState,
 } from "./ai-settings-actions";
-import { ORG_AI_PROVIDER_NAMES, type OrgAiProviderName } from "@/lib/ai/org-ai-providers";
+import {
+  ORG_AI_PROVIDER_NAMES,
+  RECOMMENDED_MODELS,
+  type OrgAiProviderName,
+} from "@/lib/ai/org-ai-providers";
 
 const PROVIDER_LABELS: Record<OrgAiProviderName, string> = {
   anthropic: "Anthropic",
@@ -23,6 +27,13 @@ const PROVIDER_LABELS: Record<OrgAiProviderName, string> = {
 };
 
 const initialState: AiSettingsState = { error: null, saved: false };
+
+/** Sentinel for "type a model id myself" in the model <select> below. */
+const CUSTOM_MODEL = "__custom__";
+
+function isRecommendedModel(provider: OrgAiProviderName, model: string): boolean {
+  return RECOMMENDED_MODELS[provider].some((m) => m.value === model);
+}
 
 /**
  * Lets an organization plug in its own AI provider/model/key
@@ -45,6 +56,12 @@ export function AiSettingsForm({
   canManage: boolean;
 }) {
   const [editing, setEditing] = useState(!configured);
+  const [provider, setProvider] = useState<OrgAiProviderName | "">(configured?.provider ?? "");
+  const [modelChoice, setModelChoice] = useState<string>(() => {
+    if (!configured) return "";
+    return isRecommendedModel(configured.provider, configured.model) ? configured.model : CUSTOM_MODEL;
+  });
+  const [customModel, setCustomModel] = useState(configured?.model ?? "");
   const saveWithId = saveOrgAiSettings.bind(null, organizationId);
   const [state, formAction, saving] = useActionState(saveWithId, initialState);
   const [removing, startRemove] = useTransition();
@@ -127,7 +144,19 @@ export function AiSettingsForm({
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label htmlFor="ai-provider">Provider</Label>
-                <Select id="ai-provider" name="provider" defaultValue={configured?.provider ?? ""} required>
+                <Select
+                  id="ai-provider"
+                  name="provider"
+                  value={provider}
+                  onChange={(event) => {
+                    const next = event.target.value as OrgAiProviderName;
+                    setProvider(next);
+                    // Recommended models are provider-specific - the old
+                    // choice almost never applies to the new provider.
+                    setModelChoice(RECOMMENDED_MODELS[next][0].value);
+                  }}
+                  required
+                >
                   <option value="" disabled>
                     Choose a provider
                   </option>
@@ -140,15 +169,38 @@ export function AiSettingsForm({
               </div>
               <div className="space-y-1">
                 <Label htmlFor="ai-model">Model</Label>
-                <Input
+                <Select
                   id="ai-model"
+                  name={modelChoice === CUSTOM_MODEL ? undefined : "model"}
+                  value={modelChoice}
+                  onChange={(event) => setModelChoice(event.target.value)}
+                  disabled={!provider}
+                  required
+                >
+                  {!provider && <option value="">Choose a provider first</option>}
+                  {provider &&
+                    RECOMMENDED_MODELS[provider].map((model) => (
+                      <option key={model.value} value={model.value}>
+                        {model.label}
+                      </option>
+                    ))}
+                  <option value={CUSTOM_MODEL}>Other (type it myself)</option>
+                </Select>
+              </div>
+            </div>
+            {modelChoice === CUSTOM_MODEL && (
+              <div className="space-y-1">
+                <Label htmlFor="ai-model-custom">Model id</Label>
+                <Input
+                  id="ai-model-custom"
                   name="model"
-                  placeholder="e.g. llama-3.3-70b-versatile"
-                  defaultValue={configured?.model ?? ""}
+                  placeholder="e.g. llama-3.1-8b-instant"
+                  value={customModel}
+                  onChange={(event) => setCustomModel(event.target.value)}
                   required
                 />
               </div>
-            </div>
+            )}
             <div className="space-y-1">
               <Label htmlFor="ai-api-key">API key</Label>
               <Input
