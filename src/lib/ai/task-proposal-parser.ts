@@ -5,11 +5,20 @@
  *
  * AIProvider.complete() is deliberately "plain text in, plain text out" -
  * no tool-calling (see src/lib/ai/provider.ts's doc comment) - so structured
- * task proposals are carried as a fenced ```guidon-tasks JSON code block at
- * the end of the model's reply (see the system prompt built in
- * ai-chat-actions.ts). This file is the tolerant other half of that contract:
- * it never throws, and a malformed or missing block just means zero
- * proposals, not a broken chat.
+ * task proposals are carried as a plain fenced ```json code block at the end
+ * of the model's reply (see the system prompt built in ai-chat-actions.ts).
+ * Deliberately NOT a custom-named fence like ```guidon-tasks: some models
+ * (confirmed with Groq's gpt-oss models) are trained hard enough on native
+ * tool-calling that a fence label resembling a function name gets treated as
+ * an actual tool invocation attempt, which the provider then rejects outright
+ * (400 "tool_use_failed") since no tools were declared on the request - a
+ * plain, universally-recognized ```json fence carries no such name to latch
+ * onto. If the last fenced ```json block in a reply isn't a task array, this
+ * just yields zero proposals - see sanitizeProposal below.
+ *
+ * This file is the tolerant other half of that contract: it never throws,
+ * and a malformed or missing block just means zero proposals, not a broken
+ * chat.
  *
  * No `server-only` import - this runs both on the server (the action could
  * validate here too) and in the client chat component that renders the
@@ -26,12 +35,16 @@ export interface TaskProposal {
 }
 
 export interface ParsedChatReply {
-  /** The model's reply with the ```guidon-tasks block (if any) stripped out. */
+  /** The model's reply with the trailing ```json block (if any) stripped out. */
   prose: string;
   proposals: TaskProposal[];
 }
 
-const TASK_BLOCK_PATTERN = /```guidon-tasks\s*([\s\S]*?)```/i;
+// Global, so multiple ```json blocks can appear - only the LAST one is
+// treated as the task proposal (matching "end your reply with..." in the
+// system prompt); an earlier one could just be the model quoting JSON back
+// as part of the conversation.
+const TASK_BLOCK_PATTERN = /```json\s*([\s\S]*?)```/gi;
 
 /** A proposal list this large is almost certainly a model mistake, not real work. */
 const MAX_PROPOSALS = 30;
@@ -53,12 +66,13 @@ function sanitizeProposal(raw: unknown): TaskProposal | null {
 }
 
 export function parseTaskProposals(text: string): ParsedChatReply {
-  const match = text.match(TASK_BLOCK_PATTERN);
-  if (!match) {
+  const matches = [...text.matchAll(TASK_BLOCK_PATTERN)];
+  const match = matches[matches.length - 1];
+  if (!match || match.index === undefined) {
     return { prose: text.trim(), proposals: [] };
   }
 
-  const prose = (text.slice(0, match.index) + text.slice(match.index! + match[0].length)).trim();
+  const prose = (text.slice(0, match.index) + text.slice(match.index + match[0].length)).trim();
 
   let parsed: unknown;
   try {

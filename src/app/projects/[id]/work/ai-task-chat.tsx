@@ -27,7 +27,7 @@ interface ProposalRow extends TaskProposal {
 
 interface DisplayMessage {
   role: "user" | "assistant";
-  /** Full text, including any ```guidon-tasks block - what gets sent back as chat history. */
+  /** Full text, including any trailing ```json block - what gets sent back as chat history. */
   rawContent: string;
   /** What renders in the transcript - the model's prose with the block stripped out. */
   content: string;
