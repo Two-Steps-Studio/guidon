@@ -21,9 +21,15 @@ export class AnthropicProvider implements AIProvider {
   readonly model: string;
   private readonly apiKey: string;
 
-  constructor() {
-    this.apiKey = requireEnv("ANTHROPIC_API_KEY", "anthropic");
-    this.model = requireModel("anthropic");
+  /**
+   * `override` bypasses the env reads entirely - used when an organization
+   * has configured its own model/key (organization_ai_settings, resolved by
+   * src/lib/ai/resolve-provider.ts) instead of the instance-wide
+   * ANTHROPIC_API_KEY/AI_MODEL. Omitted, this behaves exactly as before.
+   */
+  constructor(override?: { model: string; apiKey: string }) {
+    this.apiKey = override?.apiKey ?? requireEnv("ANTHROPIC_API_KEY", "anthropic");
+    this.model = override?.model ?? requireModel("anthropic");
   }
 
   /** Pure request construction - no I/O, so it's unit-testable without a network stub. */

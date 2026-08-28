@@ -7,7 +7,7 @@ import { requireProjectAccess, canWriteProject } from "@/lib/data/project-access
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import { activeAIProviderName } from "@/lib/ai/provider";
+import { isAIAvailableForOrg } from "@/lib/ai/resolve-provider";
 import { CreateMemoryDialog } from "./create-memory-dialog";
 import { GenerateInsightButton } from "./generate-insight-button";
 import { InsightReviewCard } from "./insight-review-card";
@@ -98,7 +98,8 @@ export default async function ProjectMemoryPage({
   }
 
   const profilesById = new Map(profilesData.map((p) => [p.id, p]));
-  const canGenerateInsight = canWrite && activeAIProviderName() !== null;
+  const canGenerateInsight =
+    canWrite && (await isAIAvailableForOrg(access.project.organization_id, access.userId));
 
   return (
     <div className="container mx-auto max-w-7xl px-6 py-8">

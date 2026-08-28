@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, CreditCard, FolderKanban, Plus, Users } from "lucide-react";
+import { ArrowLeft, CreditCard, FolderKanban, Plus, Settings, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -74,6 +74,14 @@ export default async function OrganizationDetailPage({
               Billing
             </Link>
           </Button>
+          {canManageOrg(access.role) && (
+            <Button variant="outline" asChild>
+              <Link href={`/organizations/${orgId}/settings`}>
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Link>
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center justify-between mb-6">

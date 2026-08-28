@@ -50,6 +50,7 @@ const VALID_PROVIDER_NAMES = [
   "anthropic",
   "openai",
   "openrouter",
+  "groq",
   "ollama",
   "azure-openai",
   "custom",
@@ -176,6 +177,11 @@ check(
 );
 
 check(
+  "AI_PROVIDER=groq resolves",
+  resolveProviderName({ AI_PROVIDER: "groq" }) === "groq"
+);
+
+check(
   "AI_PROVIDER is trimmed and lowercased",
   resolveProviderName({ AI_PROVIDER: "  Ollama  " }) === "ollama"
 );
@@ -282,6 +288,20 @@ section("request shaping: openai-compatible");
     req.body.messages[0].role === "system" && req.body.messages[0].content === "Be terse."
   );
   check("openai preserves the user message after system", req.body.messages[1].content === "hi");
+}
+
+{
+  const req = buildOpenAICompatRequest(
+    "https://api.groq.com/openai/v1",
+    "gsk-test",
+    "llama-3.3-70b-versatile",
+    { messages: [{ role: "user", content: "hi" }] }
+  );
+  check(
+    "groq hits its OpenAI-compatible endpoint",
+    req.url === "https://api.groq.com/openai/v1/chat/completions"
+  );
+  check("groq uses Bearer auth", req.headers.authorization === "Bearer gsk-test");
 }
 
 {

@@ -9,12 +9,12 @@ import type {
 import { requireEnv, requireModel } from "../provider";
 
 /**
- * One class for the four providers that speak the OpenAI chat-completions
+ * One class for the five providers that speak the OpenAI chat-completions
  * REST shape (POST {baseUrl}/chat/completions with a {model, messages, ...}
- * body, choices[0].message.content back). OpenAI, OpenRouter, Ollama and a
- * generic "custom" endpoint differ only in base URL, whether an API key is
- * required, and where that URL comes from - everything else is identical,
- * so duplicating it four times would just be four copies of the same fetch
+ * body, choices[0].message.content back). OpenAI, OpenRouter, Groq, Ollama
+ * and a generic "custom" endpoint differ only in base URL, whether an API
+ * key is required, and where that URL comes from - everything else is
+ * identical, so duplicating it five times would just be five copies of the same fetch
  * call. Azure OpenAI reuses this body/response shape too, but its URL is
  * deployment-scoped with an api-version query param and an `api-key`
  * header instead of `Authorization: Bearer` - different enough to live in
@@ -52,6 +52,15 @@ export class OpenAICompatibleProvider implements AIProvider {
     );
   }
 
+  static forGroq(): OpenAICompatibleProvider {
+    return new OpenAICompatibleProvider(
+      "groq",
+      "https://api.groq.com/openai/v1",
+      requireModel("groq"),
+      requireEnv("GROQ_API_KEY", "groq")
+    );
+  }
+
   /**
    * No API key required - this is the provider TODO.md §6 calls out by
    * name ("a user should be able to run Guidon without sending project
@@ -81,6 +90,28 @@ export class OpenAICompatibleProvider implements AIProvider {
       requireModel("custom"),
       process.env.AI_API_KEY?.trim() || undefined
     );
+  }
+
+  /**
+   * Builds a provider from explicit values instead of env vars - used when
+   * an organization has configured its own provider/model/key
+   * (organization_ai_settings, resolved by src/lib/ai/resolve-provider.ts)
+   * rather than relying on the instance-wide AI_PROVIDER/AI_MODEL/*_API_KEY.
+   * Only the three OpenAI-compatible providers a plain key form can express
+   * end up here - ollama needs no key, azure-openai/custom need fields this
+   * shape doesn't have.
+   */
+  static fromConfig(
+    name: "openai" | "openrouter" | "groq",
+    model: string,
+    apiKey: string
+  ): OpenAICompatibleProvider {
+    const baseUrl: Record<typeof name, string> = {
+      openai: "https://api.openai.com/v1",
+      openrouter: "https://openrouter.ai/api/v1",
+      groq: "https://api.groq.com/openai/v1",
+    };
+    return new OpenAICompatibleProvider(name, baseUrl[name], model, apiKey);
   }
 
   /** Pure request construction - no I/O, so it's unit-testable without a network stub. */

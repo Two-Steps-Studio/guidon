@@ -6,7 +6,7 @@ import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
-import { activeAIProviderName, getAIProvider } from "@/lib/ai/provider";
+import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import type { MemoryType } from "@/types/context";
 
 export type MemoryFormState = {
@@ -493,8 +493,9 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
     return { error: "You do not have permission to generate insights." };
   }
 
-  if (!activeAIProviderName()) {
-    return { error: "No AI provider is configured for this instance." };
+  const provider = await resolveAIProvider(access.project.organization_id, access.userId);
+  if (!provider) {
+    return { error: "No AI provider is configured for this organization." };
   }
 
   const { facts, constraints, decisions } = await gatherInsightContext(projectId, access.userId);
@@ -523,7 +524,6 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
 
   let text: string;
   try {
-    const provider = await getAIProvider();
     const result = await provider.complete({
       system:
         "You are reviewing a software project's recorded facts, constraints, and decisions. " +

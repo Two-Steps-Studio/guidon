@@ -35,6 +35,7 @@ import {
   type BoardColumn,
 } from "@/lib/work/task-board";
 import { createTask, moveTask } from "./actions";
+import { AiTaskChat } from "./ai-task-chat";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
 
@@ -55,6 +56,7 @@ export function WorkBoard({
   initialCommentCounts,
   projectColor,
   columns = BOARD_COLUMNS,
+  aiAvailable = false,
 }: {
   projectId: string;
   projectName: string;
@@ -67,6 +69,7 @@ export function WorkBoard({
   initialCommentCounts: Record<string, number>;
   projectColor?: string;
   columns?: readonly BoardColumn[];
+  aiAvailable?: boolean;
 }) {
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
@@ -162,9 +165,18 @@ export function WorkBoard({
             </p>
           </div>
 
+          {canEdit && aiAvailable && (
+            <AiTaskChat
+              projectId={projectId}
+              projectName={projectName}
+              topLevelTasks={topLevelTasks}
+              onCreated={upsertTask}
+            />
+          )}
+
           {canEdit && (
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={() => setCreateFor(columns[0]?.status ?? "todo")}
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >

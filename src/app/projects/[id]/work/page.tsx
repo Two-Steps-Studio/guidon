@@ -2,6 +2,7 @@ import { canCommentOnProject, canWriteProject, requireProjectAccess } from "@/li
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { isAIAvailableForOrg } from "@/lib/ai/resolve-provider";
 import { compareTasks, resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
 import { WorkBoard } from "./work-board";
 import type { TaskCardMember } from "@/components/work/task-card";
@@ -168,6 +169,7 @@ export default async function ProjectWorkPage({
       initialCommentCounts={commentCounts}
       projectColor={access.project.color}
       columns={columns}
+      aiAvailable={await isAIAvailableForOrg(access.project.organization_id, access.userId)}
     />
   );
 }

@@ -10,9 +10,9 @@
  * state - TODO.md §18 frames MCP/agent context as an interface, not the
  * core data model, and that scope only starts once a real feature needs it.
  *
- * Five of the six providers (OpenAI, OpenRouter, Ollama, Azure OpenAI,
- * Custom) speak the same OpenAI-compatible chat-completions REST shape and
- * share one implementation (providers/openai-compatible.ts). Azure's URL
+ * Six of the seven providers (OpenAI, OpenRouter, Groq, Ollama, Azure
+ * OpenAI, Custom) speak the same OpenAI-compatible chat-completions REST
+ * shape and share one implementation (providers/openai-compatible.ts). Azure's URL
  * and auth convention differ enough (deployment-scoped path, api-version
  * query param, api-key header) that it gets its own thin file instead of a
  * config branch. Only Anthropic has a genuinely different wire format (the
@@ -31,6 +31,7 @@ export type AIProviderName =
   | "anthropic"
   | "openai"
   | "openrouter"
+  | "groq"
   | "ollama"
   | "azure-openai"
   | "custom";
@@ -101,6 +102,7 @@ const VALID_PROVIDER_NAMES: readonly AIProviderName[] = [
   "anthropic",
   "openai",
   "openrouter",
+  "groq",
   "ollama",
   "azure-openai",
   "custom",
@@ -172,6 +174,12 @@ export async function getAIProvider(): Promise<AIProvider> {
     case "openrouter": {
       const { OpenAICompatibleProvider } = await import("./providers/openai-compatible");
       cached = OpenAICompatibleProvider.forOpenRouter();
+      break;
+    }
+
+    case "groq": {
+      const { OpenAICompatibleProvider } = await import("./providers/openai-compatible");
+      cached = OpenAICompatibleProvider.forGroq();
       break;
     }
 

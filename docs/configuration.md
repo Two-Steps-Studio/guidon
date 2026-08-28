@@ -148,29 +148,31 @@ in most setups `STORAGE_SIGNING_SECRET` doesn't need to be set separately.
 
 ## AI (TODO.md §6/§7)
 
-Optional. Guidon runs fine with no AI provider configured — **nothing in the
-app calls one yet**. `src/lib/ai/provider.ts` is the abstraction the first
-concrete feature will build on; today it is only reachable through
-`/api/health`, which constructs the configured provider (proving the config
-is valid) but never calls `.complete()` against it. Leave `AI_PROVIDER`
-unset to disable AI entirely — `/api/health` reports `ai: not_configured`,
-a normal, expected state.
+Optional. Guidon runs fine with no AI provider configured. `src/lib/ai/provider.ts`
+is the abstraction two features build on today: the Memory page's "Generate
+Insight" button and the Work board's AI task assistant (chat that turns a
+description into proposed tasks) — both call `.complete()` and both simply
+render "no AI provider configured" when `AI_PROVIDER` is unset. `/api/health`
+also constructs the configured provider (proving the config is valid)
+without spending a completion. Leave `AI_PROVIDER` unset to disable AI
+entirely — `/api/health` reports `ai: not_configured`, a normal, expected
+state.
 
 | Variable | Meaning |
 |---|---|
-| `AI_PROVIDER` | `anthropic`, `openai`, `openrouter`, `ollama`, `azure-openai`, or `custom`. |
+| `AI_PROVIDER` | `anthropic`, `openai`, `openrouter`, `groq`, `ollama`, `azure-openai`, or `custom`. |
 | `AI_MODEL` | Required for every provider except `azure-openai` (which uses `AZURE_OPENAI_DEPLOYMENT` instead). No default — a wrong guessed model name fails more confusingly than an explicit error. |
 | `AI_BASE_URL` | Used by `ollama` and `custom` only. Ollama default is `http://localhost:11434` — its OpenAI-compatible surface is served under `/v1`, appended automatically, so set this to the plain host. |
-| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY` | Per-provider keys. |
+| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY` | Per-provider keys. |
 | `AI_API_KEY` | Only used when `AI_PROVIDER=custom` and the endpoint needs bearer-token auth. |
 | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`, `AZURE_OPENAI_API_KEY` | All four required together when `AI_PROVIDER=azure-openai`. Endpoint is the bare resource URL — the deployment path and `api-version` query param are added automatically. |
 
 Provider notes:
 
-- Five of the six backends (`openai`, `openrouter`, `ollama`,
+- Six of the seven backends (`openai`, `openrouter`, `groq`, `ollama`,
   `azure-openai`, `custom`) speak the same OpenAI-compatible
-  chat-completions shape; `openai`/`openrouter`/`ollama`/`custom` share one
-  implementation file (`src/lib/ai/providers/openai-compatible.ts`),
+  chat-completions shape; `openai`/`openrouter`/`groq`/`ollama`/`custom`
+  share one implementation file (`src/lib/ai/providers/openai-compatible.ts`),
   `azure-openai` gets its own file for its URL/auth conventions
   (`src/lib/ai/providers/azure-openai.ts`). `anthropic` has a genuinely
   different wire format and its own file (`src/lib/ai/providers/anthropic.ts`).
@@ -179,11 +181,10 @@ Provider notes:
 - **Docker Compose note:** `docker-compose.yml`'s `app` service passes
   through `AI_PROVIDER`, `AI_BASE_URL`, and `AI_MODEL` but not the
   per-provider secret keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
-  `OPENROUTER_API_KEY`, `AI_API_KEY`, `AZURE_OPENAI_*`). This means only
-  `ollama` (no key required) currently works out of the box under
-  `docker compose up`; a cloud AI provider would need the compose file's
-  `app.environment` block extended with the relevant key. Since no feature
-  calls `.complete()` yet, this has no user-visible effect today.
+  `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `AI_API_KEY`, `AZURE_OPENAI_*`).
+  This means only `ollama` (no key required) currently works out of the box
+  under `docker compose up`; a cloud AI provider would need the compose
+  file's `app.environment` block extended with the relevant key.
 
 ---
 
