@@ -26,8 +26,16 @@ export interface RecommendedModel {
  * instead of forcing a hand-typed model id - typing one correctly (and
  * knowing which one is actually good) is the friction this removes. A
  * "type it myself" escape hatch stays available for anything else (see
- * `CUSTOM_MODEL` in ai-settings-form.tsx) since providers add new models
- * far more often than this list can be updated.
+ * `CUSTOM_MODEL` in ai-settings-form.tsx) since providers deprecate and
+ * add models often enough that a hardcoded list WILL go stale - this
+ * happened for real (llama-3.3-70b-versatile, Groq's deprecation
+ * announced 2026-08-16) before this list had shipped a single day.
+ *
+ * Verified directly against each provider's own docs on 2026-08-28
+ * (console.groq.com/docs/deprecations, developers.openai.com/api/docs/models,
+ * openrouter.ai/anthropic, openrouter.ai/openai) rather than trained-in
+ * knowledge - re-verify the same way before trusting this list again after
+ * any "model not found" report.
  */
 export const RECOMMENDED_MODELS: Record<OrgAiProviderName, readonly RecommendedModel[]> = {
   anthropic: [
@@ -35,15 +43,15 @@ export const RECOMMENDED_MODELS: Record<OrgAiProviderName, readonly RecommendedM
     { value: "claude-sonnet-5", label: "Claude Sonnet 5 - fast, balanced" },
   ],
   openai: [
-    { value: "gpt-5.1", label: "GPT-5.1 - most capable" },
-    { value: "gpt-5.1-mini", label: "GPT-5.1 mini - fast, cheap" },
+    { value: "gpt-5.6-sol", label: "GPT-5.6 Sol - most capable" },
+    { value: "gpt-5.6-luna", label: "GPT-5.6 Luna - fast, cheap" },
   ],
   openrouter: [
-    { value: "anthropic/claude-sonnet-4.5", label: "Claude Sonnet 4.5 - most capable" },
-    { value: "openai/gpt-oss-120b", label: "GPT-OSS 120B - fast, cheap" },
+    { value: "anthropic/claude-sonnet-5", label: "Claude Sonnet 5 - most capable" },
+    { value: "openai/gpt-5.6-luna", label: "GPT-5.6 Luna - fast, cheap" },
   ],
   groq: [
-    { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B - most capable" },
-    { value: "openai/gpt-oss-120b", label: "GPT-OSS 120B - fast, cheap" },
+    { value: "openai/gpt-oss-120b", label: "GPT-OSS 120B - most capable" },
+    { value: "openai/gpt-oss-20b", label: "GPT-OSS 20B - fast, cheap" },
   ],
 };
