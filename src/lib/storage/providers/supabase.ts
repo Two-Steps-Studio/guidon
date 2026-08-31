@@ -97,9 +97,21 @@ export class SupabaseStorageProvider implements StorageProvider {
       return data.publicUrl;
     }
 
+    // `download: true` sets Content-Disposition: attachment on the response.
+    // getSignedUrl() (storage.ts) - this branch's only real caller - is used
+    // exclusively for "download an arbitrary uploaded project file"
+    // (getDownloadUrl, files/actions.ts), which accepts any type in
+    // ALLOWED_FILE_EXTENSIONS including .svg/.html. Serving those inline
+    // with their client-supplied Content-Type (upload()'s `contentType`
+    // comes straight from the browser's File.type, never verified against
+    // actual bytes) would let a script embedded in an uploaded SVG execute
+    // when a project member opens the link directly, in the storage
+    // domain's origin - forcing a download closes that off, matching what
+    // the local-storage provider already does unconditionally
+    // (src/app/api/storage/route.ts).
     const { data, error } = await client.storage
       .from(bucket)
-      .createSignedUrl(safePath, options?.expiresInSeconds ?? 600);
+      .createSignedUrl(safePath, options?.expiresInSeconds ?? 600, { download: true });
 
     if (error) throw error;
     if (!data?.signedUrl) throw new Error(`Could not sign URL for ${safePath}`);
