@@ -36,6 +36,15 @@ export type AIProviderName =
   | "azure-openai"
   | "custom";
 
+// Shared by every provider's fetch() call (anthropic.ts, openai-compatible.ts,
+// azure-openai.ts) - without it, a hung endpoint (a slow custom/Ollama
+// deployment, a stalled connection) leaves the caller (e.g. the AI task
+// chat's sendTaskChatMessage) waiting forever with no error and no way for
+// the UI to ever stop showing "Thinking...". Generous on purpose: a real
+// completion, especially from a local/self-hosted model on CPU, can
+// legitimately take a while.
+export const AI_REQUEST_TIMEOUT_MS = 120_000;
+
 export interface AIMessage {
   role: "user" | "assistant";
   content: string;

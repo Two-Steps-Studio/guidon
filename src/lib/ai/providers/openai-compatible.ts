@@ -6,7 +6,7 @@ import type {
   AIProvider,
   AIProviderName,
 } from "../provider";
-import { requireEnv, requireModel } from "../provider";
+import { AI_REQUEST_TIMEOUT_MS, requireEnv, requireModel } from "../provider";
 
 /**
  * One class for the five providers that speak the OpenAI chat-completions
@@ -148,6 +148,7 @@ export class OpenAICompatibleProvider implements AIProvider {
       method: "POST",
       headers,
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
     });
 
     if (!res.ok) {

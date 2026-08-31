@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { AICompletionInput, AICompletionResult, AIProvider } from "../provider";
-import { requireEnv } from "../provider";
+import { AI_REQUEST_TIMEOUT_MS, requireEnv } from "../provider";
 
 const DEFAULT_API_VERSION = "2024-10-21";
 
@@ -70,6 +70,7 @@ export class AzureOpenAIProvider implements AIProvider {
       method: "POST",
       headers,
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
     });
 
     if (!res.ok) {
