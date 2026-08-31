@@ -381,3 +381,50 @@ export function sortOrderForPosition(
   // Ran out of room between neighbours - caller should renumber the column.
   return Number.isFinite(midpoint) ? midpoint : before + 100;
 }
+
+const RENUMBER_SPACING = 1000;
+
+/**
+ * `sort_order` is `integer` (000_baseline_schema.sql), but sortOrderForPosition()
+ * above computes a float midpoint - fine as long as there's still room between
+ * two neighbouring integers, but once a column has been tightly reordered
+ * enough that two adjacent tasks are 1 apart (or the drop target's own
+ * midpoint rounds onto an existing value), rounding at persist time collides
+ * with whichever task was already sitting there. Every future insertion
+ * between them rounds to that same value, so the dropped card silently
+ * lands wherever compareTasks()'s tiebreak (priority, then created_at)
+ * decides instead of where it was actually dropped - the bug this function
+ * exists to close, per its own long-standing "caller should renumber the
+ * column" comment above.
+ *
+ * `siblings` is every OTHER task currently in the destination column
+ * (already sorted by sort_order, ascending), and `rawSortOrder` the float
+ * sortOrderForPosition() computed for the task being moved. Returns null
+ * when `Math.round(rawSortOrder)` doesn't collide with any sibling - the
+ * cheap, common-case single-row write callers should still do themselves.
+ * Otherwise returns a full renumbering plan (every sibling plus the moved
+ * task, each spaced RENUMBER_SPACING apart in their new relative order) for
+ * the caller to persist as one batch.
+ */
+export function resolveColumnRenumbering(
+  siblings: { id: string; sort_order: number }[],
+  movingTaskId: string,
+  rawSortOrder: number
+): { id: string; sort_order: number }[] | null {
+  const rounded = Math.round(rawSortOrder);
+  const collides = siblings.some((task) => task.sort_order === rounded);
+  if (!collides) return null;
+
+  // Where the moving task ranks among the current siblings - not by the
+  // rounded integer (that's exactly the value in collision), but by the
+  // original float, which is only ever equal to an existing sort_order at
+  // the boundaries (sortOrderForPosition never returns an existing
+  // neighbour's own value in the interior of a column).
+  const insertAt = siblings.findIndex((task) => task.sort_order > rawSortOrder);
+  const ordered =
+    insertAt === -1
+      ? [...siblings, { id: movingTaskId, sort_order: rawSortOrder }]
+      : [...siblings.slice(0, insertAt), { id: movingTaskId, sort_order: rawSortOrder }, ...siblings.slice(insertAt)];
+
+  return ordered.map((task, index) => ({ id: task.id, sort_order: (index + 1) * RENUMBER_SPACING }));
+}

@@ -12,6 +12,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
+import { resolveColumnRenumbering } from "@/lib/work/task-board";
 import type { AttemptOutcome, Task, TaskAttempt, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
 export type TaskActionResult = { task: Task | null; error: string | null };
@@ -265,13 +266,40 @@ export async function moveTask(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("UPDATE tasks SET status = $1, sort_order = $2 WHERE id = $3", [
-          status,
-          Math.round(sortOrder),
+      await withUser(access.userId, async ({ query }) => {
+        // sort_order is `integer` - sortOrderForPosition's float midpoint
+        // only has room to insert between two neighbours while they're
+        // still more than 1 apart. Once a column has been tightly enough
+        // reordered that Math.round(sortOrder) would land on an existing
+        // sibling's own value, every future drop into that gap rounds to
+        // the same colliding integer - the card then silently sorts by
+        // compareTasks()'s tiebreak instead of where it was dropped. See
+        // resolveColumnRenumbering's own comment for the full story.
+        const siblings = await query(
+          `SELECT id, sort_order FROM tasks
+           WHERE project_id = $1 AND status = $2 AND parent_task_id IS NULL AND id <> $3
+           ORDER BY sort_order ASC`,
+          [projectId, status, taskId]
+        );
+        const plan = resolveColumnRenumbering(
+          siblings.rows as { id: string; sort_order: number }[],
           taskId,
-        ])
-      );
+          sortOrder
+        );
+
+        if (plan) {
+          for (const { id, sort_order } of plan) {
+            await query("UPDATE tasks SET sort_order = $1 WHERE id = $2", [sort_order, id]);
+          }
+          await query("UPDATE tasks SET status = $1 WHERE id = $2", [status, taskId]);
+        } else {
+          await query("UPDATE tasks SET status = $1, sort_order = $2 WHERE id = $3", [
+            status,
+            Math.round(sortOrder),
+            taskId,
+          ]);
+        }
+      });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to move task." };
     }
@@ -290,12 +318,37 @@ export async function moveTask(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("tasks")
-    .update({ status, sort_order: Math.round(sortOrder) })
-    .eq("id", taskId);
 
-  if (error) return { error: error.message };
+  const { data: siblingsData, error: siblingsError } = await supabase
+    .from("tasks")
+    .select("id, sort_order")
+    .eq("project_id", projectId)
+    .eq("status", status)
+    .is("parent_task_id", null)
+    .neq("id", taskId)
+    .order("sort_order", { ascending: true });
+  if (siblingsError) return { error: siblingsError.message };
+
+  const plan = resolveColumnRenumbering(
+    (siblingsData ?? []) as { id: string; sort_order: number }[],
+    taskId,
+    sortOrder
+  );
+
+  if (plan) {
+    for (const { id, sort_order } of plan) {
+      const { error: renumberError } = await supabase.from("tasks").update({ sort_order }).eq("id", id);
+      if (renumberError) return { error: renumberError.message };
+    }
+    const { error: statusError } = await supabase.from("tasks").update({ status }).eq("id", taskId);
+    if (statusError) return { error: statusError.message };
+  } else {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status, sort_order: Math.round(sortOrder) })
+      .eq("id", taskId);
+    if (error) return { error: error.message };
+  }
 
   await logActivity({
     userId: access.userId,
