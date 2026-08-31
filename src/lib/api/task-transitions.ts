@@ -70,6 +70,21 @@ async function setStatusAndLog(
   if (hasDirectDatabase()) {
     return withUser(userId, async ({ query }) => {
       const result = await query("UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *", [newStatus, taskId]);
+      // tasks_select (any project member, including viewer) is broader than
+      // tasks_update (owner/admin/developer only) - loadProjectContext's own
+      // SELECT above already proved the task is visible to this API key's
+      // user, which says nothing about whether they're also allowed to
+      // update it. A caller below that role passes every check up to here
+      // and then RLS silently filters the UPDATE to zero matched rows - no
+      // error, just an empty RETURNING - which used to come back as
+      // `{ ok: true, task: undefined }`, a 200 that did nothing.
+      if (result.rows.length === 0) {
+        return {
+          ok: false,
+          error: "This API key's user does not have permission to update this task.",
+          status: 403,
+        };
+      }
       await query(
         `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id)
          VALUES ($1, $2, $3, 'task', $4)`,
@@ -87,7 +102,22 @@ async function setStatusAndLog(
     .select()
     .single();
 
-  if (error) return { ok: false, error: error.message, status: 400 };
+  if (error) {
+    // .single() errors whenever the UPDATE...RETURNING matched zero rows -
+    // since `id` is a primary key, that can only mean RLS filtered it out
+    // (this API key's user lacks the owner/admin/developer role tasks_update
+    // requires), not "no such task" (loadProjectContext's SELECT already
+    // proved this row is visible). Same reasoning as the direct-Postgres
+    // branch above.
+    if (error.code === "PGRST116") {
+      return {
+        ok: false,
+        error: "This API key's user does not have permission to update this task.",
+        status: 403,
+      };
+    }
+    return { ok: false, error: error.message, status: 400 };
+  }
 
   await supabase
     .from("activity_logs")
