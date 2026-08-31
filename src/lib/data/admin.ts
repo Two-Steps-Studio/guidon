@@ -247,9 +247,9 @@ export interface AdminActivityRow {
  * Instance-wide activity, most recent first - the same activity_logs table
  * src/lib/data/activity.ts reads per-project, without the project_id filter.
  *
- * Nothing in this codebase currently inserts into activity_logs (see the
- * comment in src/lib/data/activity.ts), so this reads whatever exists
- * without assuming any particular action vocabulary is enforced.
+ * logActivity() (src/lib/data/log-activity.ts) is called from 14+ Server
+ * Action files across the app, so this reads real, ongoing data - not
+ * assuming any particular action vocabulary is enforced beyond that.
  */
 export async function listRecentActivityForAdmin(limit = 100): Promise<AdminActivityRow[]> {
   if (hasDirectDatabase()) {

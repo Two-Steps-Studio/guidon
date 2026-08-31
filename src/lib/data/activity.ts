@@ -22,12 +22,11 @@ export interface ActivityLogRow {
  * Recent activity for a project, most recent first.
  *
  * `activity_logs.action` is plain `text` (000_baseline_schema.sql) - there is
- * no CHECK constraint pinning it to `ActivityAction` (src/types/api.ts), and
- * nothing in this codebase currently inserts a row (no `.from("activity_logs")`
- * write anywhere under src/). That type was written for the `/api/v1` routes
- * mentioned as dead code in docs/self-hosting-audit.md §1 and has no live
- * producer. The query below reads whatever exists without assuming that
- * vocabulary is enforced.
+ * no CHECK constraint pinning it to `ActivityAction` (src/types/api.ts).
+ * logActivity() (log-activity.ts, in this same directory) is the one writer,
+ * called from 14+ Server Action files across the app - the query below reads
+ * whatever exists without assuming that vocabulary is enforced at the DB
+ * level, since only the TypeScript type (not a CHECK constraint) does.
  *
  * Capped at 50 with no pagination, matching this codebase's other list pages
  * (roadmap/memory order by created_at and render the full set; there is no

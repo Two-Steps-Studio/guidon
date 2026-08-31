@@ -22,10 +22,9 @@ function nameFor(profile: ActorProfile | undefined): string {
  * src/app/projects/[id]/activity/page.tsx reads, without the project filter,
  * via createServiceClient() since this deliberately spans every tenant.
  *
- * Confirmed by the agent that built the per-project version: nothing in this
- * codebase currently writes to activity_logs (see src/lib/data/activity.ts),
- * so this renders correctly empty until a future feature starts logging
- * here. That's expected, not a bug - the empty state below matches the
+ * logActivity() (src/lib/data/log-activity.ts) is called from 14+ Server
+ * Action files across the app, so this is populated in normal use - the
+ * empty state below is only for a genuinely quiet instance, matching the
  * per-project page's own empty-state pattern.
  */
 export default async function AdminLogsPage() {
