@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, createServiceClient } from "@/lib/supabase-server";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { withUser, withServiceRole } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import type { OrganizationRole } from "@/types/project";
 
@@ -168,6 +168,45 @@ export async function updateMemberRole(
   return { error: null };
 }
 
+/**
+ * project_members has no dependency on organization_members - no FK, no
+ * cascade trigger - and RLS scopes its DELETE policy to that specific
+ * project's own owner/admin (private.project_role(project_id)), not org
+ * admins in general. Without this, removing someone from the organization
+ * left them with full, indefinite access to any project they'd been added
+ * to directly (the only way project_members ever gets a row - see
+ * projects/[id]/members/page.tsx's candidate list, which is drawn from
+ * organization_members), silently, since the org admin doing the removal
+ * often isn't also an admin of every one of that person's projects and the
+ * app-identity delete above would just no-op there under RLS.
+ *
+ * Runs as service_role rather than the calling org admin's own identity:
+ * canManageOrg() above already establishes they're authorized to decide
+ * this person loses access to the organization, and revoking the project
+ * access that access implies is a direct, scoped consequence of that
+ * decision (only this exact user, only within this exact org's projects) -
+ * not a broader RLS bypass.
+ */
+async function removeUserFromOrgProjects(userId: string, orgId: string): Promise<void> {
+  if (hasDirectDatabase()) {
+    await withServiceRole(({ query }) =>
+      query(
+        `DELETE FROM project_members
+         WHERE user_id = $1 AND project_id IN (SELECT id FROM projects WHERE organization_id = $2)`,
+        [userId, orgId]
+      )
+    );
+    return;
+  }
+
+  const supabase = createServiceClient();
+  const { data: projects } = await supabase.from("projects").select("id").eq("organization_id", orgId);
+  const projectIds = (projects ?? []).map((p) => p.id);
+  if (projectIds.length === 0) return;
+
+  await supabase.from("project_members").delete().eq("user_id", userId).in("project_id", projectIds);
+}
+
 export async function removeMember(
   orgId: string,
   memberId: string
@@ -179,13 +218,21 @@ export async function removeMember(
   }
 
   if (hasDirectDatabase()) {
+    let userId: string | null = null;
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM organization_members WHERE id = $1", [memberId])
-      );
+      await withUser(access.userId, async ({ query }) => {
+        const row = await query(
+          "SELECT user_id FROM organization_members WHERE id = $1 AND organization_id = $2",
+          [memberId, orgId]
+        );
+        userId = row.rows[0]?.user_id ?? null;
+        await query("DELETE FROM organization_members WHERE id = $1", [memberId]);
+      });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
     }
+
+    if (userId) await removeUserFromOrgProjects(userId, orgId);
 
     await logActivity({
       userId: access.userId,
@@ -200,11 +247,21 @@ export async function removeMember(
   }
 
   const supabase = await createClient();
+
+  const { data: memberRow } = await supabase
+    .from("organization_members")
+    .select("user_id")
+    .eq("id", memberId)
+    .eq("organization_id", orgId)
+    .maybeSingle();
+
   const { error } = await supabase.from("organization_members").delete().eq("id", memberId);
 
   if (error) {
     return { error: error.message };
   }
+
+  if (memberRow?.user_id) await removeUserFromOrgProjects(memberRow.user_id, orgId);
 
   await logActivity({
     userId: access.userId,
