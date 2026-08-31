@@ -228,9 +228,28 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
       return;
     }
 
+    // Unlike the direct-Postgres branch above, Supabase has no client-side
+    // transaction across these statements - each commits the instant it
+    // runs. Deleting first (as this used to do) meant a failure partway
+    // through the inserts left the project with the old board gone AND the
+    // new one incomplete. Inserting first and only deleting the old rows
+    // once every new one has landed means the worst case on failure is
+    // "old board still intact, orphaned partial new rows" instead of total
+    // loss - not a real transaction, but it never destroys data it hasn't
+    // successfully replaced yet.
     const supabase = await createClient();
-    await supabase.from("tasks").delete().eq("project_id", projectId);
-    await supabase.from("project_board_columns").delete().eq("project_id", projectId);
+
+    const { data: oldTasks, error: oldTasksError } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("project_id", projectId);
+    if (oldTasksError) throw new Error(`Failed to read existing tasks: ${oldTasksError.message}`);
+
+    const { data: oldColumns, error: oldColumnsError } = await supabase
+      .from("project_board_columns")
+      .select("status")
+      .eq("project_id", projectId);
+    if (oldColumnsError) throw new Error(`Failed to read existing board columns: ${oldColumnsError.message}`);
 
     await insertTasksInDependencyOrder(
       data.tasks,
@@ -261,7 +280,7 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
     );
 
     if (data.columns.length > 0) {
-      await supabase.from("project_board_columns").upsert(
+      const { error } = await supabase.from("project_board_columns").upsert(
         data.columns.map((column) => ({
           project_id: projectId,
           status: column.status,
@@ -272,6 +291,29 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
         })),
         { onConflict: "project_id,status" }
       );
+      if (error) throw new Error(`Failed to import board columns: ${error.message}`);
+    }
+
+    // Only now remove what the new data didn't replace - old tasks (fresh
+    // ids mean no collision with what was just inserted) and any column
+    // override for a status this import doesn't mention.
+    if (oldTasks && oldTasks.length > 0) {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .in("id", oldTasks.map((t) => t.id));
+      if (error) throw new Error(`Failed to remove replaced tasks: ${error.message}`);
+    }
+
+    const newStatuses = new Set(data.columns.map((c) => c.status));
+    const staleStatuses = (oldColumns ?? []).map((c) => c.status).filter((s) => !newStatuses.has(s));
+    if (staleStatuses.length > 0) {
+      const { error } = await supabase
+        .from("project_board_columns")
+        .delete()
+        .eq("project_id", projectId)
+        .in("status", staleStatuses);
+      if (error) throw new Error(`Failed to remove stale board columns: ${error.message}`);
     }
   },
 };

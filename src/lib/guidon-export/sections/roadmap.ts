@@ -148,8 +148,16 @@ export const roadmapSection: GuidonSection<RoadmapData> = {
       return;
     }
 
+    // See the matching comment in task-board.ts's importData: Supabase has
+    // no client-side transaction here, so old phases are only removed once
+    // every new one has landed successfully - never delete-then-maybe-fail.
     const supabase = await createClient();
-    await supabase.from("roadmap_phases").delete().eq("project_id", projectId);
+
+    const { data: oldPhases, error: oldPhasesError } = await supabase
+      .from("roadmap_phases")
+      .select("id")
+      .eq("project_id", projectId);
+    if (oldPhasesError) throw new Error(`Failed to read existing roadmap phases: ${oldPhasesError.message}`);
 
     for (const phase of data.phases) {
       const { data: created, error } = await supabase
@@ -186,8 +194,20 @@ export const roadmapSection: GuidonSection<RoadmapData> = {
         }));
 
       if (relationRows.length > 0) {
-        await supabase.from("context_relations").insert(relationRows);
+        const { error: relError } = await supabase.from("context_relations").insert(relationRows);
+        if (relError) throw new Error(`Failed to link tasks to phase "${phase.name}": ${relError.message}`);
       }
+    }
+
+    // Cascades cleanup of the old phases' context_relations rows via the
+    // AFTER DELETE trigger (migration 012) - no manual step needed, same
+    // as the direct-Postgres branch above.
+    if (oldPhases && oldPhases.length > 0) {
+      const { error } = await supabase
+        .from("roadmap_phases")
+        .delete()
+        .in("id", oldPhases.map((p) => p.id));
+      if (error) throw new Error(`Failed to remove replaced roadmap phases: ${error.message}`);
     }
   },
 };
