@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { setTaskStatus } from "@/lib/api/task-transitions";
+import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import type { TaskStatus } from "@/types/task";
 
 const VALID_STATUSES: TaskStatus[] = ["backlog", "todo", "in_progress", "ai_working", "review", "done"];
@@ -20,6 +21,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   const { taskId } = await params;
+  if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
   const result = await setTaskStatus(guard.userId, taskId, status as TaskStatus);
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });

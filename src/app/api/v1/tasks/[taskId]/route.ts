@@ -3,12 +3,14 @@ import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { getApiUserClient } from "@/lib/api/api-key-auth";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;
+  if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
 
   if (hasDirectDatabase()) {
     const result = await withUser(guard.userId, ({ query }) =>

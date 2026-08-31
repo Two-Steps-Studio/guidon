@@ -3,6 +3,7 @@ import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { getApiUserClient } from "@/lib/api/api-key-auth";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "comments:write");
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const { taskId } = await params;
+  if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
 
   if (hasDirectDatabase()) {
     const result = await withUser(guard.userId, async ({ query }) => {
