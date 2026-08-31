@@ -22,7 +22,15 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // signature itself and 403s without it.
   '/api/storage',
 ])
-const PUBLIC_ROUTE_PREFIXES = ['/auth/']
+// "Public" here means "authenticates itself, doesn't need a session cookie" -
+// /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every
+// external caller (an AI agent, not a browser) authenticates with
+// `Authorization: Bearer guidon_...`, never a session cookie. Without this
+// prefix, every /api/v1 request with no session cookie - which is the ONLY
+// way this API is meant to be called - was redirected to /auth/login before
+// the route handler's own API-key check ever ran, making the whole AI Task
+// API unreachable by its actual callers.
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])
