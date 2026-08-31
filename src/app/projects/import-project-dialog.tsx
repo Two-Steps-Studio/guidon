@@ -35,9 +35,13 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
   const [mode, setMode] = useState<ImportMode>("new");
   const [orgId, setOrgId] = useState(organizations[0]?.id ?? "");
   const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+  const [confirmName, setConfirmName] = useState("");
 
   const [importing, startImport] = useTransition();
   const [importError, setImportError] = useState<string | null>(null);
+
+  const overwriteTarget = mode === "overwrite" ? (projects.find((p) => p.id === projectId) ?? null) : null;
+  const overwriteConfirmed = mode !== "overwrite" || (!!overwriteTarget && confirmName === overwriteTarget.name);
 
   const reset = () => {
     setFileContent(null);
@@ -45,6 +49,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
     setPreview(null);
     setPreviewError(null);
     setImportError(null);
+    setConfirmName("");
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,7 +162,10 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                 <div className="flex items-center gap-2 text-xs">
                   <button
                     type="button"
-                    onClick={() => setMode("new")}
+                    onClick={() => {
+                      setMode("new");
+                      setConfirmName("");
+                    }}
                     className={`rounded-md border px-2 py-1 ${
                       mode === "new" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
                     }`}
@@ -166,7 +174,10 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMode("overwrite")}
+                    onClick={() => {
+                      setMode("overwrite");
+                      setConfirmName("");
+                    }}
                     className={`rounded-md border px-2 py-1 ${
                       mode === "overwrite"
                         ? "border-primary bg-primary/10 text-primary"
@@ -196,27 +207,46 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                     </select>
                   </div>
                 ) : (
-                  <div className="space-y-1">
-                    <Label htmlFor="import-project" className="text-xs">
-                      Project to overwrite
-                    </Label>
-                    <select
-                      id="import-project"
-                      value={projectId}
-                      onChange={(e) => setProjectId(e.target.value)}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    >
-                      {projects.map((project) => (
-                        <option key={project.id} value={project.id}>
-                          {project.name}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="flex items-start gap-2 text-xs text-destructive">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      This permanently replaces the target project&apos;s tasks and roadmap phases with what&apos;s
-                      in this file.
-                    </p>
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="import-project" className="text-xs">
+                        Project to overwrite
+                      </Label>
+                      <select
+                        id="import-project"
+                        value={projectId}
+                        onChange={(e) => {
+                          setProjectId(e.target.value);
+                          setConfirmName("");
+                        }}
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      >
+                        {projects.map((project) => (
+                          <option key={project.id} value={project.id}>
+                            {project.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="flex items-start gap-2 text-xs text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        This permanently replaces the target project&apos;s tasks and roadmap phases with what&apos;s
+                        in this file. This cannot be undone.
+                      </p>
+                    </div>
+                    {overwriteTarget && (
+                      <div className="space-y-1">
+                        <Label htmlFor="import-confirm-name" className="text-xs">
+                          Type <span className="font-mono">{overwriteTarget.name}</span> to confirm
+                        </Label>
+                        <input
+                          id="import-confirm-name"
+                          value={confirmName}
+                          onChange={(e) => setConfirmName(e.target.value)}
+                          autoComplete="off"
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -235,7 +265,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={importing}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleImport} disabled={!preview || importing}>
+          <Button type="button" onClick={handleImport} disabled={!preview || importing || !overwriteConfirmed}>
             {importing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
             Import
           </Button>
