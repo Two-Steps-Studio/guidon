@@ -1,8 +1,8 @@
 import "server-only";
 
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
-import { createClient } from "@/lib/supabase-server";
+import { withUser, withServiceRole } from "@/lib/db/session";
+import { createClient, createServiceClient } from "@/lib/supabase-server";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
 import { refreshUserToken } from "@/lib/github/client";
 
@@ -76,16 +76,34 @@ interface FullConnectionRow {
 const TOKEN_COLUMNS =
   "access_token_encrypted, refresh_token_encrypted, access_token_expires_at, refresh_token_expires_at";
 
+/**
+ * Persists a freshly refreshed token pair. Runs as service_role rather than
+ * the calling user, on purpose: the github_connections UPDATE policy (021)
+ * only allows project owner/admin to write, but ANY project member can
+ * trigger a refresh just by browsing files near the access token's expiry
+ * (getProjectGithubToken is called from listRepoDirectory/getRepoFile behind
+ * a plain getProjectAccess() check, not an owner/admin one). GitHub's
+ * refresh tokens are single-use and are already rotated server-side by the
+ * time refreshUserToken() above returns - if a non-admin member's write got
+ * silently dropped by RLS here (which it did, before this fix: Supabase's
+ * .update() error was never even checked), the old refresh_token_encrypted
+ * left in the DB is already dead, permanently breaking the connection for
+ * every member until someone reconnects it. The identity check that matters
+ * (does this user have access to this project at all) already happened in
+ * the caller before getProjectGithubToken() was reached; this write is
+ * system-internal bookkeeping for a credential GitHub already rotated, not
+ * a user-directed change to connection settings, so bypassing RLS for it
+ * doesn't widen what any user can actually cause to happen.
+ */
 async function persistRefreshedTokens(
   projectId: string,
-  userId: string,
   refreshed: { accessToken: string; refreshToken: string; accessTokenExpiresAt: Date; refreshTokenExpiresAt: Date }
 ): Promise<void> {
   const encryptedAccess = encryptSecret(refreshed.accessToken, GITHUB_TOKEN_KEY_INFO);
   const encryptedRefresh = encryptSecret(refreshed.refreshToken, GITHUB_TOKEN_KEY_INFO);
 
   if (hasDirectDatabase()) {
-    await withUser(userId, ({ query }) =>
+    const result = await withServiceRole(({ query }) =>
       query(
         `UPDATE github_connections
            SET access_token_encrypted = $1, refresh_token_encrypted = $2,
@@ -100,11 +118,14 @@ async function persistRefreshedTokens(
         ]
       )
     );
+    if (result.rowCount === 0) {
+      throw new Error(`Failed to persist refreshed GitHub token: no github_connections row for project ${projectId}`);
+    }
     return;
   }
 
-  const supabase = await createClient();
-  await supabase
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
     .from("github_connections")
     .update({
       access_token_encrypted: encryptedAccess,
@@ -113,7 +134,13 @@ async function persistRefreshedTokens(
       refresh_token_expires_at: refreshed.refreshTokenExpiresAt.toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("project_id", projectId);
+    .eq("project_id", projectId)
+    .select("project_id");
+
+  if (error) throw new Error(`Failed to persist refreshed GitHub token: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new Error(`Failed to persist refreshed GitHub token: no github_connections row for project ${projectId}`);
+  }
 }
 
 /**
@@ -159,7 +186,7 @@ export async function getProjectGithubToken(
 
   const refreshToken = decryptSecret(row.refresh_token_encrypted, GITHUB_TOKEN_KEY_INFO);
   const refreshed = await refreshUserToken(refreshToken);
-  await persistRefreshedTokens(projectId, userId, refreshed);
+  await persistRefreshedTokens(projectId, refreshed);
 
   return { ...toRepoInfo(row), token: refreshed.accessToken };
 }
