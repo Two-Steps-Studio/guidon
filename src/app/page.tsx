@@ -99,6 +99,24 @@ const FEATURE_SECTIONS: FeatureSection[] = [
 // rarely, without making the whole marketing page dynamic-per-request.
 export const revalidate = 3600;
 
+// Structured data so search engines can understand what Guidon is beyond the
+// visible copy - a SoftwareApplication listing is the schema Google expects
+// for a SaaS product page and is what backs eligibility for rich results.
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Guidon",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "Context-first project management for development teams. Track tasks, decisions, sources, and project memory together.",
+  url: "https://useguidon.com",
+  offers: {
+    "@type": "Offer",
+    category: "Freemium",
+  },
+};
+
 export default async function Home() {
   // Self-hosted installs have no billing concept at all (mirrors
   // organizations/[id]/billing/page.tsx) - Guidon Cloud pricing has no
@@ -116,6 +134,10 @@ export default async function Home() {
 
   return (
     <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+    />
     <div className="relative flex min-h-screen items-center overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
       <WavesBackground className="opacity-60" />
       <div className="container relative z-10 mx-auto px-4 py-20">

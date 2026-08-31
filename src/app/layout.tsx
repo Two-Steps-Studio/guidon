@@ -16,9 +16,63 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
+const SITE_URL = process.env.APP_URL || "https://useguidon.com";
+const SITE_NAME = "Guidon";
+const SITE_TITLE = "Guidon - Context-First Project Management";
+const SITE_DESCRIPTION =
+  "Guidon is context-first project management for development teams: track tasks, decisions, sources, and project memory together, so the \"why\" behind your work never gets lost.";
+
 export const metadata: Metadata = {
-  title: "Guidon - Context-First Project Management",
-  description: "Understand why your project exists. Context-first project management for development teams.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "project management",
+    "context-first project management",
+    "task board",
+    "decision log",
+    "knowledge base",
+    "AI task management",
+    "developer project management",
+    "roadmap planning",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: "/assets/guidon-wordmark.png",
+        width: 769,
+        height: 285,
+        alt: SITE_NAME,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/assets/guidon-wordmark.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
