@@ -8,7 +8,7 @@ import { getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
-import { uniqueSlug } from "@/lib/slug";
+import { getUniqueProjectSlug } from "@/lib/data/project-slug";
 import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import {
   runGuidonImport,
@@ -52,15 +52,8 @@ async function createProjectForImport(
 ): Promise<{ projectId: string | null; error: string | null }> {
   if (hasDirectDatabase()) {
     try {
+      const { slug } = await getUniqueProjectSlug(orgId, userId, name);
       const projectId = await withUser(userId, async ({ query }) => {
-        const siblings = await query("SELECT slug FROM projects WHERE organization_id = $1", [orgId]);
-        const slug = uniqueSlug(
-          name,
-          siblings.rows
-            .map((row: { slug: string | null }) => row.slug)
-            .filter((value: string | null): value is string => Boolean(value))
-        );
-
         const result = await query(
           `INSERT INTO projects (organization_id, name, slug, description, project_type, created_by)
            VALUES ($1, $2, $3, $4, $5, $6)
@@ -79,18 +72,11 @@ async function createProjectForImport(
   const orgAccess = await getOrgAccess(orgId);
   if (!orgAccess) return { projectId: null, error: "You do not have access to this organization." };
 
-  const { data: siblingSlugs } = await supabase.from("projects").select("slug").eq("organization_id", orgId);
+  const { slug, siblingCount } = await getUniqueProjectSlug(orgId, userId, name);
 
-  if (isHostedProjectLimitReached(siblingSlugs?.length ?? 0, orgAccess.organization.project_limit)) {
+  if (isHostedProjectLimitReached(siblingCount, orgAccess.organization.project_limit)) {
     return { projectId: null, error: hostedProjectLimitMessage(orgAccess.organization.project_limit) };
   }
-
-  const slug = uniqueSlug(
-    name,
-    (siblingSlugs ?? [])
-      .map((row: { slug: string | null }) => row.slug)
-      .filter((value): value is string => Boolean(value))
-  );
 
   const { data: created, error } = await supabase
     .from("projects")
