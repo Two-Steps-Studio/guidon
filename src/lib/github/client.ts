@@ -419,6 +419,18 @@ export async function createBranch(
   });
 }
 
+/**
+ * Deletes `branch` outright - used only to clean up a branch this app just
+ * created moments ago when a later step in the same "commit to a new
+ * branch" flow (commitRepoFile) fails before anything of value landed on
+ * it, so a retry doesn't immediately hit "Reference already exists".
+ */
+export async function deleteBranch(token: string, owner: string, repo: string, branch: string): Promise<void> {
+  await githubFetch(token, `/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branch)}`, {
+    method: "DELETE",
+  });
+}
+
 export interface PullRequestResult {
   number: number;
   url: string;

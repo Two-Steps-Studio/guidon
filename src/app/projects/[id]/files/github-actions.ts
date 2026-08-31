@@ -12,6 +12,7 @@ import {
   GithubApiError,
   createBranch,
   createPullRequest,
+  deleteBranch,
   getFile,
   getRepo,
   listBranches,
@@ -287,24 +288,34 @@ export async function commitRepoFile(
     }
 
     await createBranch(token, repoOwner, repoName, newBranchName, base.commitSha);
-    const result = await putFile(
-      token,
-      repoOwner,
-      repoName,
-      path,
-      content,
-      currentSha,
-      newBranchName,
-      message
-    );
-    const pr = await createPullRequest(
-      token,
-      repoOwner,
-      repoName,
-      newBranchName,
-      options.branch,
-      message
-    );
+
+    let result;
+    try {
+      result = await putFile(token, repoOwner, repoName, path, content, currentSha, newBranchName, message);
+    } catch (error) {
+      // Nothing of value exists on the branch yet - safe to remove it so a
+      // retry doesn't immediately fail on "Reference already exists"
+      // instead of the real problem. Best-effort: a failed cleanup here
+      // must not hide the actual error from putFile.
+      await deleteBranch(token, repoOwner, repoName, newBranchName).catch(() => {});
+      throw error;
+    }
+
+    let pr;
+    try {
+      pr = await createPullRequest(token, repoOwner, repoName, newBranchName, options.branch, message);
+    } catch (error) {
+      // Unlike the putFile failure above, the commit itself DID succeed -
+      // deleting the branch here would destroy real work. Leave it and
+      // report what actually happened instead of a generic failure, so the
+      // user knows their change is safe and just needs a PR opened by hand.
+      return {
+        error: `Committed to "${newBranchName}", but opening the pull request failed: ${apiErrorMessage(error)}. You can open one manually on GitHub.`,
+        sha: result.sha,
+        commitUrl: result.commitUrl,
+        pullRequestUrl: null,
+      };
+    }
 
     await logActivity({
       userId: access.userId,
