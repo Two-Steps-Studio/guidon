@@ -43,8 +43,12 @@ export async function getOrgAiSettingsSafe(
     .eq("organization_id", organizationId)
     .maybeSingle();
 
-  if (error || !data) return null;
-  return data as OrgAiSettingsSafe;
+  // error and "no row" both used to collapse to null here, which let a
+  // transient query failure look identical to "org has no AI settings" -
+  // resolveAIProvider() would then silently fall through to the
+  // instance-wide env provider instead of surfacing the real problem.
+  if (error) throw new Error(`Failed to load AI settings: ${error.message}`);
+  return (data as OrgAiSettingsSafe | null) ?? null;
 }
 
 export interface OrgAiSettingsWithKey extends OrgAiSettingsSafe {
@@ -78,7 +82,11 @@ export async function getOrgAiSettingsWithKey(
       .select(columns)
       .eq("organization_id", organizationId)
       .maybeSingle();
-    row = error ? null : data;
+    // Same reasoning as getOrgAiSettingsSafe above: a real error must not
+    // be treated as "not configured," or resolveAIProvider() silently
+    // reroutes the request to a different provider/key than the org chose.
+    if (error) throw new Error(`Failed to load AI settings: ${error.message}`);
+    row = data;
   }
 
   if (!row) return null;
