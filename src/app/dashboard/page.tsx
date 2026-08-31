@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, ArrowRight, FolderKanban, GitBranch, Network, BrainCircuit } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -10,6 +11,7 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isDone } from "@/lib/work/task-board";
+import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 
 interface ProjectRow {
   id: string;
@@ -17,6 +19,7 @@ interface ProjectRow {
   description: string | null;
   status: string;
   avatar_url: string | null;
+  project_type: string | null;
   organizations: { id: string; name: string } | null;
 }
 
@@ -37,7 +40,7 @@ async function loadDashboardDataLocal(userId: string) {
   // pg@9). Each withUser() below owns its own pooled connection instead.
   const projectsResult = await withUser(userId, ({ query }) =>
     query(
-      `SELECT p.id, p.name, p.description, p.status, p.avatar_url, o.id AS org_id, o.name AS org_name
+      `SELECT p.id, p.name, p.description, p.status, p.avatar_url, p.project_type, o.id AS org_id, o.name AS org_name
        FROM projects p
        JOIN organizations o ON o.id = p.organization_id
        ORDER BY p.created_at DESC`
@@ -50,6 +53,7 @@ async function loadDashboardDataLocal(userId: string) {
     description: row.description,
     status: row.status,
     avatar_url: row.avatar_url,
+    project_type: row.project_type,
     organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
   }));
 
@@ -93,7 +97,7 @@ export default async function DashboardPage() {
 
     const { data: projectsData, error: projectsError } = await supabase
       .from("projects")
-      .select("id, name, description, status, avatar_url, organizations (id, name)")
+      .select("id, name, description, status, avatar_url, project_type, organizations (id, name)")
       .order("created_at", { ascending: false });
     if (projectsError) throw new Error(`Failed to load projects: ${projectsError.message}`);
 
@@ -258,6 +262,11 @@ export default async function DashboardPage() {
                     <CardDescription>{project.organizations?.name}</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {project.project_type && (
+                      <Badge variant="outline" className="mb-2">
+                        {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}
+                      </Badge>
+                    )}
                     {project.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                         {project.description}
