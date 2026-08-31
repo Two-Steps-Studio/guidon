@@ -19,7 +19,6 @@ import {
   listInstallationRepos,
   listUserInstallations,
   putFile,
-  type GithubBranch,
   type GithubInstallationSummary,
   type GithubRepoSummary,
   type GithubTreeEntry,
@@ -212,23 +211,6 @@ export async function getRepoFile(
     return { content: file.content, sha: file.sha, error: null };
   } catch (error) {
     return { content: null, sha: null, error: apiErrorMessage(error) };
-  }
-}
-
-export async function listRepoBranches(
-  projectId: string
-): Promise<{ branches: GithubBranch[]; defaultBranch: string | null; error: string | null }> {
-  const access = await getProjectAccess(projectId);
-  if (!access) return { branches: [], defaultBranch: null, error: "You do not have access to this project." };
-
-  const connection = await getProjectGithubToken(projectId, access.userId);
-  if (!connection) return { branches: [], defaultBranch: null, error: "No repository connected." };
-
-  try {
-    const branches = await listBranches(connection.token, connection.repoOwner, connection.repoName);
-    return { branches, defaultBranch: connection.defaultBranch, error: null };
-  } catch (error) {
-    return { branches: [], defaultBranch: null, error: apiErrorMessage(error) };
   }
 }
 
