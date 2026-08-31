@@ -280,7 +280,7 @@ export async function getFile(
     .map(encodeURIComponent)
     .join("/");
 
-  const data = await githubFetch<{ content: string; sha: string; encoding: string; type: string }>(
+  const data = await githubFetch<{ content: string; sha: string; encoding: string; type: string; size: number }>(
     token,
     `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(ref)}`
   );
@@ -289,14 +289,34 @@ export async function getFile(
     throw new GithubApiError(400, "That path is a directory, not a file.");
   }
 
+  // The Contents API only inlines `content` for files up to 1MB - above
+  // that it comes back with an empty string and no error, which used to
+  // render as a silently blank file. The Git Blobs API has no such limit
+  // (up to 100MB) and returns the same base64 shape, keyed by the blob sha
+  // this same response already gave us.
+  const rawContent =
+    data.content === "" && data.size > 0 ? await getBlob(token, owner, repo, data.sha) : data.content;
+
   // Images must stay base64 (fed straight into a data: URL) - decoding as
   // utf8 would corrupt binary bytes. Text files still get decoded as before.
   const content =
     !options.raw && data.encoding === "base64"
-      ? Buffer.from(data.content, "base64").toString("utf8")
-      : data.content;
+      ? Buffer.from(rawContent, "base64").toString("utf8")
+      : rawContent;
 
   return { content, sha: data.sha, encoding: data.encoding };
+}
+
+/** Git Blobs API - the >1MB fallback getFile() uses above. `content` may
+ * contain embedded newlines (GitHub wraps its base64 output); callers that
+ * feed this into Buffer.from(..., "base64") or a data: URL both tolerate
+ * that, but strip them to be safe for anything stricter. */
+async function getBlob(token: string, owner: string, repo: string, sha: string): Promise<string> {
+  const data = await githubFetch<{ content: string; encoding: string }>(
+    token,
+    `/repos/${owner}/${repo}/git/blobs/${sha}`
+  );
+  return data.content.replace(/\n/g, "");
 }
 
 export interface PutFileResult {
