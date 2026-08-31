@@ -136,8 +136,13 @@ for (const name of migrations) {
 }
 
 for (const [label, sql, expected] of [
-  ["22 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 22],
-  ["84 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 84],
+  // 22->24 tabel, 84->92 polityk: github_connections + organization_ai_settings
+  // (021, 024), po 4 polityki kazda - stara wartosc nigdy nie zostala
+  // zaktualizowana gdy te migracje wladowaly. 025 (funkcje SECURITY DEFINER +
+  // zawezenie GRANT SELECT) nie dodaje ani tabel, ani polityk, wiec liczby
+  // zostaja takie same.
+  ["24 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 24],
+  ["92 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 92],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1110,6 +1115,76 @@ await expectRejected(
     ),
   /permission denied|row-level security/i
 );
+
+// ------------------------------------------------------------------
+section("21. sekrety github_connections / organization_ai_settings tylko przez funkcje (migracja 025)");
+
+await withUser(A, async () => {
+  await db.query(
+    `INSERT INTO public.github_connections
+       (project_id, connected_by, github_login, installation_id, repo_owner, repo_name, default_branch,
+        access_token_encrypted, refresh_token_encrypted, access_token_expires_at, refresh_token_expires_at)
+     VALUES ($1, $2, 'octocat', 1, 'octocat', 'hello-world', 'main', 'enc-access', 'enc-refresh', now() + interval '1 hour', now() + interval '6 months')`,
+    [projectId, A]
+  );
+  await db.query(
+    `INSERT INTO public.organization_ai_settings (organization_id, provider, model, api_key_encrypted, created_by)
+     VALUES ($1, 'anthropic', 'claude-sonnet-5', 'enc-key', $2)`,
+    [orgId, A]
+  );
+});
+
+await expectRejected(
+  "bezposredni SELECT access_token_encrypted odrzucony nawet dla wlasciciela",
+  () => withUser(A, () => db.query("SELECT access_token_encrypted FROM public.github_connections WHERE project_id = $1", [projectId])),
+  /permission denied/i
+);
+
+await expectRejected(
+  "bezposredni SELECT api_key_encrypted odrzucony nawet dla wlasciciela",
+  () => withUser(A, () => db.query("SELECT api_key_encrypted FROM public.organization_ai_settings WHERE organization_id = $1", [orgId])),
+  /permission denied/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT * FROM private.get_github_connection_secrets($1)", [projectId]);
+  check(
+    "czlonek projektu dostaje token GitHuba przez funkcje SECURITY DEFINER",
+    rows[0]?.access_token_encrypted === "enc-access",
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT * FROM private.get_org_ai_settings_with_key($1)", [orgId]);
+  check(
+    "czlonek organizacji dostaje klucz AI przez funkcje SECURITY DEFINER",
+    rows[0]?.api_key_encrypted === "enc-key",
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT * FROM private.get_github_connection_secrets($1)", [projectId]);
+  check("B (spoza projektu) nie dostaje nic z funkcji sekretow GitHuba", rows.length === 0, rows.length);
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT * FROM private.get_org_ai_settings_with_key($1)", [orgId]);
+  check("B (spoza organizacji) nie dostaje nic z funkcji sekretow AI", rows.length === 0, rows.length);
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "SELECT repo_owner, repo_name, default_branch, github_login FROM public.github_connections WHERE project_id = $1",
+    [projectId]
+  );
+  check(
+    "bezpieczne kolumny github_connections nadal czytelne wprost",
+    rows[0]?.repo_owner === "octocat",
+    JSON.stringify(rows)
+  );
+});
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

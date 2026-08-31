@@ -64,29 +64,29 @@ export async function getOrgAiSettingsWithKey(
   organizationId: string,
   userId: string
 ): Promise<OrgAiSettingsWithKey | null> {
-  const columns = `${SAFE_COLUMNS}, api_key_encrypted`;
-
+  // api_key_encrypted is no longer directly SELECT-able by `authenticated`
+  // (025) - private.get_org_ai_settings_with_key() is a SECURITY DEFINER
+  // function that re-checks org membership itself and returns it, closing
+  // the direct-PostgREST-query path a plain column GRANT can't distinguish
+  // "the app needs this server-side" from "any member can fetch this
+  // ciphertext directly."
   let row: { provider: OrgAiProviderName; model: string; api_key_encrypted: string } | null = null;
 
   if (hasDirectDatabase()) {
     const result = await withUser(userId, ({ query }) =>
-      query(`SELECT ${columns} FROM organization_ai_settings WHERE organization_id = $1`, [
-        organizationId,
-      ])
+      query("SELECT * FROM private.get_org_ai_settings_with_key($1)", [organizationId])
     );
     row = result.rows[0] ?? null;
   } else {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("organization_ai_settings")
-      .select(columns)
-      .eq("organization_id", organizationId)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("get_org_ai_settings_with_key", {
+      p_organization_id: organizationId,
+    });
     // Same reasoning as getOrgAiSettingsSafe above: a real error must not
     // be treated as "not configured," or resolveAIProvider() silently
     // reroutes the request to a different provider/key than the org chose.
     if (error) throw new Error(`Failed to load AI settings: ${error.message}`);
-    row = data;
+    row = data?.[0] ?? null;
   }
 
   if (!row) return null;

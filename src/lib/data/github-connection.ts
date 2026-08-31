@@ -73,9 +73,6 @@ interface FullConnectionRow {
   refresh_token_expires_at: string;
 }
 
-const TOKEN_COLUMNS =
-  "access_token_encrypted, refresh_token_encrypted, access_token_expires_at, refresh_token_expires_at";
-
 /**
  * Persists a freshly refreshed token pair. Runs as service_role rather than
  * the calling user, on purpose: the github_connections UPDATE policy (021)
@@ -158,26 +155,45 @@ export async function getProjectGithubToken(
   projectId: string,
   userId: string
 ): Promise<(ProjectGithubRepoInfo & { token: string }) | null> {
-  const columns = `${SAFE_COLUMNS}, ${TOKEN_COLUMNS}`;
-
-  let row: FullConnectionRow | null = null;
+  // The token/refresh-token columns are no longer directly SELECT-able by
+  // `authenticated` (025) - private.get_github_connection_secrets() is a
+  // SECURITY DEFINER function that re-checks project access itself and
+  // returns just those columns, closing the direct-PostgREST-query path a
+  // plain column GRANT can't distinguish "the app needs this server-side"
+  // from "any member can fetch this ciphertext directly."
+  let safeRow: { repo_owner: string; repo_name: string; default_branch: string; github_login: string } | null = null;
+  let secrets: {
+    access_token_encrypted: string;
+    refresh_token_encrypted: string;
+    access_token_expires_at: string;
+    refresh_token_expires_at: string;
+  } | null = null;
 
   if (hasDirectDatabase()) {
-    const result = await withUser(userId, ({ query }) =>
-      query(`SELECT ${columns} FROM github_connections WHERE project_id = $1`, [projectId])
-    );
-    row = result.rows[0] ?? null;
+    const [safeResult, secretsResult] = await Promise.all([
+      withUser(userId, ({ query }) =>
+        query(`SELECT ${SAFE_COLUMNS} FROM github_connections WHERE project_id = $1`, [projectId])
+      ),
+      withUser(userId, ({ query }) =>
+        query("SELECT * FROM private.get_github_connection_secrets($1)", [projectId])
+      ),
+    ]);
+    safeRow = safeResult.rows[0] ?? null;
+    secrets = secretsResult.rows[0] ?? null;
   } else {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("github_connections")
-      .select(columns)
-      .eq("project_id", projectId)
-      .maybeSingle();
-    row = error ? null : data;
+    const [safeResult, secretsResult] = await Promise.all([
+      supabase.from("github_connections").select(SAFE_COLUMNS).eq("project_id", projectId).maybeSingle(),
+      supabase.rpc("get_github_connection_secrets", { p_project_id: projectId }),
+    ]);
+    if (safeResult.error) throw new Error(`Failed to read GitHub connection: ${safeResult.error.message}`);
+    safeRow = safeResult.data;
+    if (secretsResult.error) throw new Error(`Failed to read GitHub connection secrets: ${secretsResult.error.message}`);
+    secrets = secretsResult.data?.[0] ?? null;
   }
 
-  if (!row) return null;
+  if (!safeRow || !secrets) return null;
+  const row: FullConnectionRow = { ...safeRow, ...secrets };
 
   const expiresAt = new Date(row.access_token_expires_at);
   if (Date.now() < expiresAt.getTime() - REFRESH_SKEW_MS) {
