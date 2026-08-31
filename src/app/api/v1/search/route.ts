@@ -13,6 +13,27 @@ interface SearchResult {
 }
 
 /**
+ * Merges rows from a two-column ILIKE search (searchSupabase below runs one
+ * query per column instead of a single `.or()` across both - see that
+ * function's comment for why), dropping duplicates a row matching both
+ * columns would otherwise produce, and caps the result the same way a
+ * single `.limit()` would have.
+ */
+function dedupeAndCap<T extends { id: string }>(rowSets: (T[] | null)[], limit: number): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const rows of rowSets) {
+    for (const row of rows ?? []) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      out.push(row);
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
+}
+
+/**
  * Both branches below run the identical set of queries - same tables, same
  * ILIKE pattern, same 10-row cap - the only difference is which client
  * issues them. RLS is what actually scopes results to projects this caller
@@ -154,15 +175,35 @@ async function searchSupabase(
 ): Promise<SearchResult[]> {
   const supabase = await createClient();
   const results: SearchResult[] = [];
+  const pattern = `%${query}%`;
 
   // Search tasks
+  //
+  // Each two-column search below runs as two separate .ilike() calls merged
+  // in JS, rather than one `.or('title.ilike.%x%,description.ilike.%x%')`.
+  // .ilike()'s pattern argument is a real bind parameter, but .or() takes a
+  // raw PostgREST filter-syntax string that supabase-js does not escape - a
+  // search query containing a comma or parenthesis would be parsed as
+  // additional filter syntax instead of a literal character, reshaping (or
+  // just breaking) the query. RLS still scopes every result regardless, so
+  // this was a functional/robustness bug more than a data-exposure one, but
+  // it's still string-splicing user input into a filter language.
   if (types.includes('task') && projectId) {
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('id, title, description, status, priority, project_id')
-      .eq('project_id', projectId)
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
-      .limit(10);
+    const [byTitle, byDescription] = await Promise.all([
+      supabase
+        .from('tasks')
+        .select('id, title, description, status, priority, project_id')
+        .eq('project_id', projectId)
+        .ilike('title', pattern)
+        .limit(10),
+      supabase
+        .from('tasks')
+        .select('id, title, description, status, priority, project_id')
+        .eq('project_id', projectId)
+        .ilike('description', pattern)
+        .limit(10),
+    ]);
+    const tasks = dedupeAndCap([byTitle.data, byDescription.data], 10);
 
     if (tasks) {
       results.push(...tasks.map((task: any) => ({
@@ -177,12 +218,21 @@ async function searchSupabase(
 
   // Search decisions
   if (types.includes('decision') && projectId) {
-    const { data: decisions } = await supabase
-      .from('context_decisions')
-      .select('id, title, description, decision_type, status, project_id')
-      .eq('project_id', projectId)
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
-      .limit(10);
+    const [byTitle, byDescription] = await Promise.all([
+      supabase
+        .from('context_decisions')
+        .select('id, title, description, decision_type, status, project_id')
+        .eq('project_id', projectId)
+        .ilike('title', pattern)
+        .limit(10),
+      supabase
+        .from('context_decisions')
+        .select('id, title, description, decision_type, status, project_id')
+        .eq('project_id', projectId)
+        .ilike('description', pattern)
+        .limit(10),
+    ]);
+    const decisions = dedupeAndCap([byTitle.data, byDescription.data], 10);
 
     if (decisions) {
       results.push(...decisions.map((decision: any) => ({
@@ -195,13 +245,13 @@ async function searchSupabase(
     }
   }
 
-  // Search memory
+  // Search memory - a single column, so no .or() was ever needed here.
   if (types.includes('memory') && projectId) {
     const { data: memories } = await supabase
       .from('project_memory')
       .select('id, content, memory_type, project_id')
       .eq('project_id', projectId)
-      .or(`content.ilike.%${query}%`)
+      .ilike('content', pattern)
       .limit(10);
 
     if (memories) {
@@ -221,7 +271,7 @@ async function searchSupabase(
       .from('project_files')
       .select('id, name, mime_type, category, project_id')
       .eq('project_id', projectId)
-      .ilike('name', `%${query}%`)
+      .ilike('name', pattern)
       .limit(10);
 
     if (files) {
@@ -237,12 +287,21 @@ async function searchSupabase(
 
   // Search sources
   if (types.includes('source') && projectId) {
-    const { data: sources } = await supabase
-      .from('context_sources')
-      .select('id, title, content, source_type, project_id')
-      .eq('project_id', projectId)
-      .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
-      .limit(10);
+    const [byTitle, byContent] = await Promise.all([
+      supabase
+        .from('context_sources')
+        .select('id, title, content, source_type, project_id')
+        .eq('project_id', projectId)
+        .ilike('title', pattern)
+        .limit(10),
+      supabase
+        .from('context_sources')
+        .select('id, title, content, source_type, project_id')
+        .eq('project_id', projectId)
+        .ilike('content', pattern)
+        .limit(10),
+    ]);
+    const sources = dedupeAndCap([byTitle.data, byContent.data], 10);
 
     if (sources) {
       results.push(...sources.map((source: any) => ({
@@ -257,11 +316,11 @@ async function searchSupabase(
 
   // Search projects (if no project_id specified)
   if (!projectId && types.includes('project')) {
-    const { data: projects } = await supabase
-      .from('projects')
-      .select('id, name, description, status')
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-      .limit(10);
+    const [byName, byDescription] = await Promise.all([
+      supabase.from('projects').select('id, name, description, status').ilike('name', pattern).limit(10),
+      supabase.from('projects').select('id, name, description, status').ilike('description', pattern).limit(10),
+    ]);
+    const projects = dedupeAndCap([byName.data, byDescription.data], 10);
 
     if (projects) {
       results.push(...projects.map((project: any) => ({
