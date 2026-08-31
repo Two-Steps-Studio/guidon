@@ -196,31 +196,34 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
             {tabs.map((tab) => {
               const { icon: TabIcon, colorClass } = fileIconFor(tab.path);
               const isActive = tab.path === activePath;
+              const fileName = tab.path.split("/").pop() ?? tab.path;
               return (
-                <button
+                <div
                   key={tab.path}
-                  type="button"
-                  onClick={() => setActivePath(tab.path)}
-                  className={`flex shrink-0 items-center gap-1.5 border-r border-border px-3 py-2 text-xs ${
+                  className={`flex shrink-0 items-center gap-1 border-r border-border pr-1 text-xs ${
                     isActive
                       ? "bg-background text-foreground"
                       : "bg-background-secondary text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <TabIcon className={`h-3.5 w-3.5 shrink-0 ${colorClass}`} />
-                  <span className="max-w-40 truncate">{tab.path.split("/").pop()}</span>
-                  {tab.dirty ? (
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
-                  ) : (
-                    <X
-                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground hover:text-foreground"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        closeTab(tab.path);
-                      }}
-                    />
-                  )}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setActivePath(tab.path)}
+                    className="flex items-center gap-1.5 py-2 pl-3"
+                  >
+                    <TabIcon className={`h-3.5 w-3.5 shrink-0 ${colorClass}`} />
+                    <span className="max-w-40 truncate">{fileName}</span>
+                    {tab.dirty && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Close ${fileName}`}
+                    onClick={() => closeTab(tab.path)}
+                    className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-background-tertiary hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               );
             })}
           </div>

@@ -124,7 +124,14 @@ export function AiSettingsForm({
               <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>
                 Change
               </Button>
-              <Button type="button" size="sm" variant="outline" disabled={removing} onClick={handleRemove}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={removing}
+                onClick={handleRemove}
+                aria-label="Remove AI provider settings"
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
