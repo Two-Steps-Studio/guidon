@@ -20,6 +20,7 @@ export async function exportProject(projectId: string): Promise<ExportProjectRes
   const { filename, json } = await exportProjectToFile(projectId, access.userId, {
     name: access.project.name,
     description: access.project.description,
+    projectType: access.project.project_type,
   });
 
   await logActivity({

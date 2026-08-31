@@ -72,6 +72,13 @@ export async function saveOrgAiSettings(
       if (!current) {
         return { error: "API key is required.", saved: false };
       }
+      // A stored key only means anything under the provider it was issued
+      // for - reusing it after switching providers would silently save
+      // e.g. an OpenAI key under "groq", and every AI call would then fail
+      // auth with an error that gives no hint the key belongs elsewhere.
+      if (provider !== current.provider) {
+        return { error: "Enter an API key for the new provider.", saved: false };
+      }
       await upsertOrgAiSettings({
         organizationId,
         createdBy: access.userId,

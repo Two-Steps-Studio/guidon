@@ -47,7 +47,8 @@ async function createProjectForImport(
   orgId: string,
   userId: string,
   name: string,
-  description: string | null
+  description: string | null,
+  projectType: string | null
 ): Promise<{ projectId: string | null; error: string | null }> {
   if (hasDirectDatabase()) {
     try {
@@ -61,10 +62,10 @@ async function createProjectForImport(
         );
 
         const result = await query(
-          `INSERT INTO projects (organization_id, name, slug, description, created_by)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO projects (organization_id, name, slug, description, project_type, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [orgId, name, slug, description, userId]
+          [orgId, name, slug, description, projectType, userId]
         );
         return result.rows[0].id as string;
       });
@@ -93,7 +94,7 @@ async function createProjectForImport(
 
   const { data: created, error } = await supabase
     .from("projects")
-    .insert({ organization_id: orgId, name, slug, description, created_by: userId })
+    .insert({ organization_id: orgId, name, slug, description, project_type: projectType, created_by: userId })
     .select("id")
     .single();
 
@@ -126,7 +127,8 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
       input.targetId,
       userId,
       validated.result.projectName,
-      validated.result.projectDescription
+      validated.result.projectDescription,
+      validated.result.projectType
     );
     if (created.error || !created.projectId) {
       return { error: created.error ?? "Failed to create project." };

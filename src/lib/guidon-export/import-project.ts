@@ -7,10 +7,19 @@ import { SUPPORTED_GUIDON_VERSION } from "./types";
 import type { TaskBoardData } from "./sections/task-board";
 import type { RoadmapData } from "./sections/roadmap";
 
+// Mirrors the CHECK constraint on projects.project_type (023). `.optional()`
+// (in addition to `.nullable()`) so a .guidon file exported before this
+// field existed still validates - it just imports with no project type set.
+const ProjectTypeSchema = z.enum(["game", "website", "mobile_app", "api", "tool", "other"]).nullable().optional();
+
 const GuidonFileShapeSchema = z.object({
   guidonVersion: z.string(),
   exportedAt: z.string(),
-  project: z.object({ name: z.string().min(1), description: z.string().nullable() }),
+  project: z.object({
+    name: z.string().min(1),
+    description: z.string().nullable(),
+    projectType: ProjectTypeSchema,
+  }),
   sections: z.record(z.string(), z.unknown()),
 });
 
@@ -25,6 +34,7 @@ export interface GuidonImportPreview {
 export interface ValidatedGuidonImport {
   projectName: string;
   projectDescription: string | null;
+  projectType: string | null;
   /** Keyed by section key, each value already parsed against that section's own zod schema. */
   validatedSections: Map<string, unknown>;
   warnings: string[];
@@ -121,6 +131,7 @@ export function validateGuidonFile(raw: string): ValidateGuidonFileResult {
     result: {
       projectName: file.project.name,
       projectDescription: file.project.description,
+      projectType: file.project.projectType ?? null,
       validatedSections,
       warnings,
     },

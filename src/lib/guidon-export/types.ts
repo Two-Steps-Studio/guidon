@@ -32,6 +32,8 @@ export const SUPPORTED_GUIDON_VERSION = "1.0";
 export interface GuidonFileProject {
   name: string;
   description: string | null;
+  /** One of the CHECK-constrained values from 023_project_type.sql, or null. */
+  projectType: string | null;
 }
 
 export interface GuidonFile {

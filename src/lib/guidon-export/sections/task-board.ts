@@ -30,6 +30,9 @@ const TaskSchema = z.object({
   actualHours: z.number().nullable().optional(),
   sortOrder: z.number().int().nullable().optional(),
   parentTaskLocalId: z.string().nullable().optional(),
+  // .optional() as well as .nullable() so a .guidon file exported before
+  // this field existed still validates - it just imports unassigned.
+  assigneeId: z.string().uuid().nullable().optional(),
 });
 
 const TaskBoardSchema = z.object({
@@ -52,6 +55,7 @@ interface TaskRow {
   actual_hours: number | string | null;
   sort_order: number | null;
   parent_task_id: string | null;
+  assignee_id: string | null;
 }
 
 interface ColumnRow {
@@ -75,6 +79,7 @@ function toTaskExport(row: TaskRow): TaskBoardData["tasks"][number] {
     actualHours: row.actual_hours === null ? null : Number(row.actual_hours),
     sortOrder: row.sort_order,
     parentTaskLocalId: row.parent_task_id,
+    assigneeId: row.assignee_id,
   };
 }
 
@@ -131,7 +136,7 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
         withUser(userId, ({ query }) =>
           query(
             `SELECT id, title, description, status, priority, tags, due_date, progress_percent,
-                    estimated_hours, actual_hours, sort_order, parent_task_id
+                    estimated_hours, actual_hours, sort_order, parent_task_id, assignee_id
              FROM tasks WHERE project_id = $1`,
             [projectId]
           )
@@ -159,7 +164,7 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
       supabase
         .from("tasks")
         .select(
-          "id, title, description, status, priority, tags, due_date, progress_percent, estimated_hours, actual_hours, sort_order, parent_task_id"
+          "id, title, description, status, priority, tags, due_date, progress_percent, estimated_hours, actual_hours, sort_order, parent_task_id, assignee_id"
         )
         .eq("project_id", projectId),
       supabase
@@ -185,14 +190,27 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
         await query("DELETE FROM tasks WHERE project_id = $1", [projectId]);
         await query("DELETE FROM project_board_columns WHERE project_id = $1", [projectId]);
 
+        // A task's exported assignee only makes sense if that same person is
+        // a member of the TARGET project - "new" mode can land in a
+        // different organization entirely, and "overwrite" can land in a
+        // project with a different roster. The DB itself would reject the
+        // whole task (tasks_assignee_id_fkey's validation trigger, 001) if
+        // this were passed through unchecked, so this resolves it down to
+        // null instead of letting one stale assignee fail the whole import.
+        const membersResult = await query("SELECT user_id FROM project_members WHERE project_id = $1", [
+          projectId,
+        ]);
+        const memberIds = new Set(membersResult.rows.map((row: { user_id: string }) => row.user_id));
+
         await insertTasksInDependencyOrder(
           data.tasks,
           async (task, parentId) => {
+            const assigneeId = task.assigneeId && memberIds.has(task.assigneeId) ? task.assigneeId : null;
             const result = await query(
               `INSERT INTO tasks
                  (project_id, parent_task_id, title, description, status, priority, tags, due_date,
-                  progress_percent, estimated_hours, actual_hours, sort_order, created_by)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                  progress_percent, estimated_hours, actual_hours, sort_order, assignee_id, created_by)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                RETURNING id`,
               [
                 projectId,
@@ -207,6 +225,7 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
                 task.estimatedHours ?? null,
                 task.actualHours ?? null,
                 task.sortOrder ?? null,
+                assigneeId,
                 userId,
               ]
             );
@@ -251,9 +270,20 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
       .eq("project_id", projectId);
     if (oldColumnsError) throw new Error(`Failed to read existing board columns: ${oldColumnsError.message}`);
 
+    // See the matching comment in the direct-Postgres branch above: an
+    // exported assignee only carries over if that person is a member of
+    // the target project.
+    const { data: members, error: membersError } = await supabase
+      .from("project_members")
+      .select("user_id")
+      .eq("project_id", projectId);
+    if (membersError) throw new Error(`Failed to read project members: ${membersError.message}`);
+    const memberIds = new Set((members ?? []).map((m) => m.user_id));
+
     await insertTasksInDependencyOrder(
       data.tasks,
       async (task, parentId) => {
+        const assigneeId = task.assigneeId && memberIds.has(task.assigneeId) ? task.assigneeId : null;
         const { data: created, error } = await supabase
           .from("tasks")
           .insert({
@@ -269,6 +299,7 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
             estimated_hours: task.estimatedHours ?? null,
             actual_hours: task.actualHours ?? null,
             sort_order: task.sortOrder ?? null,
+            assignee_id: assigneeId,
             created_by: userId,
           })
           .select("id")
