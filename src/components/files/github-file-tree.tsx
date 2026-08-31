@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   AlertCircle,
+  AlertTriangle,
   Braces,
   ChevronRight,
   File,
@@ -48,10 +49,33 @@ interface GithubFileTreeProps {
   onOpenFile: (path: string) => void;
 }
 
+interface DirectoryListing {
+  entries: GithubTreeEntry[];
+  truncated: boolean;
+}
+
 export function GithubFileTree({ projectId, activePath, onOpenFile }: GithubFileTreeProps) {
+  // A folder's DirectoryLevel unmounts on collapse and remounts fresh on
+  // re-expand (see the conditional render below), so without a cache
+  // living above that lifecycle, toggling a folder closed and open again
+  // re-fetched it from the GitHub API every time. Keyed by projectId too,
+  // not just path, since this component instance can be reused across a
+  // client-side navigation between projects, and two different repos can
+  // both have e.g. a "src" folder. The lazy initializer runs once; the map
+  // itself is mutated in place rather than through setState, since it's a
+  // cache, not render-driving state.
+  const [cache] = useState<Map<string, DirectoryListing>>(() => new Map());
+
   return (
     <div className="h-full overflow-y-auto py-1">
-      <DirectoryLevel projectId={projectId} path="" depth={0} activePath={activePath} onOpenFile={onOpenFile} />
+      <DirectoryLevel
+        projectId={projectId}
+        path=""
+        depth={0}
+        activePath={activePath}
+        onOpenFile={onOpenFile}
+        cache={cache}
+      />
     </div>
   );
 }
@@ -62,18 +86,24 @@ function DirectoryLevel({
   depth,
   activePath,
   onOpenFile,
+  cache,
 }: {
   projectId: string;
   path: string;
   depth: number;
   activePath: string | null;
   onOpenFile: (path: string) => void;
+  cache: Map<string, DirectoryListing>;
 }) {
-  const [entries, setEntries] = useState<GithubTreeEntry[] | null>(null);
+  const cacheKey = `${projectId}:${path}`;
+  const [listing, setListing] = useState<DirectoryListing | null>(() => cache.get(cacheKey) ?? null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // Already resolved by the lazy initial state above - nothing to fetch.
+    if (cache.has(cacheKey)) return;
+
     let cancelled = false;
 
     (async () => {
@@ -84,13 +114,15 @@ function DirectoryLevel({
         setError(result.error);
         return;
       }
-      setEntries(result.entries);
+      const resolved = { entries: result.entries, truncated: result.truncated };
+      cache.set(cacheKey, resolved);
+      setListing(resolved);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [projectId, path]);
+  }, [projectId, path, cacheKey, cache]);
 
   if (error) {
     return (
@@ -101,7 +133,7 @@ function DirectoryLevel({
     );
   }
 
-  if (entries === null) {
+  if (listing === null) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -112,7 +144,17 @@ function DirectoryLevel({
 
   return (
     <ul>
-      {entries.map((entry) => {
+      {listing.truncated && (
+        <li
+          className="flex items-start gap-2 px-2 py-1.5 text-xs text-warning"
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+          title="GitHub only lists the first 1,000 entries of a directory - some files here aren't shown."
+        >
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span>1,000+ items - list may be incomplete</span>
+        </li>
+      )}
+      {listing.entries.map((entry) => {
         const isOpen = expanded.has(entry.path);
         const isActive = entry.type === "file" && entry.path === activePath;
         const { icon: FileIcon, colorClass } = entry.type === "file" ? fileIconFor(entry.name) : { icon: Folder, colorClass: "text-info" };
@@ -158,6 +200,7 @@ function DirectoryLevel({
                 depth={depth + 1}
                 activePath={activePath}
                 onOpenFile={onOpenFile}
+                cache={cache}
               />
             )}
           </li>

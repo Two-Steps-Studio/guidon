@@ -163,24 +163,24 @@ export async function disconnectRepo(projectId: string): Promise<{ error: string
 export async function listRepoDirectory(
   projectId: string,
   path: string
-): Promise<{ entries: GithubTreeEntry[]; error: string | null }> {
+): Promise<{ entries: GithubTreeEntry[]; truncated: boolean; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { entries: [], error: "You do not have access to this project." };
+  if (!access) return { entries: [], truncated: false, error: "You do not have access to this project." };
 
   const connection = await getProjectGithubToken(projectId, access.userId);
-  if (!connection) return { entries: [], error: "No repository connected." };
+  if (!connection) return { entries: [], truncated: false, error: "No repository connected." };
 
   try {
-    const entries = await listDirectory(
+    const { entries, truncated } = await listDirectory(
       connection.token,
       connection.repoOwner,
       connection.repoName,
       path,
       connection.defaultBranch
     );
-    return { entries, error: null };
+    return { entries, truncated, error: null };
   } catch (error) {
-    return { entries: [], error: apiErrorMessage(error) };
+    return { entries: [], truncated: false, error: apiErrorMessage(error) };
   }
 }
 

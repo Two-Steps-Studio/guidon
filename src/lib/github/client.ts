@@ -228,13 +228,27 @@ export interface GithubTreeEntry {
 }
 
 /** One directory level - lazy, so opening a repo never walks the whole tree. */
+// GitHub's Contents API silently caps a directory listing at 1,000 entries -
+// no error, no pagination, just a short array - which used to render as a
+// directory that looks complete but isn't. There's no page/per_page for
+// this endpoint the way branches.ts has; GitHub's own recommended path past
+// this limit is the separate Git Trees API, out of scope for this fix -
+// GithubDirectoryListing.truncated at least lets the UI say so instead of
+// silently pretending the listing is whole.
+const DIRECTORY_LISTING_CAP = 1000;
+
+export interface GithubDirectoryListing {
+  entries: GithubTreeEntry[];
+  truncated: boolean;
+}
+
 export async function listDirectory(
   token: string,
   owner: string,
   repo: string,
   path: string,
   ref: string
-): Promise<GithubTreeEntry[]> {
+): Promise<GithubDirectoryListing> {
   const encodedPath = path
     .split("/")
     .filter(Boolean)
@@ -245,7 +259,7 @@ export async function listDirectory(
     Array<{ name: string; path: string; type: string; sha: string; size?: number }>
   >(token, `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(ref)}`);
 
-  return data
+  const entries = data
     .filter((entry) => entry.type === "file" || entry.type === "dir")
     .map((entry) => ({
       name: entry.name,
@@ -258,6 +272,8 @@ export async function listDirectory(
       if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
+
+  return { entries, truncated: data.length >= DIRECTORY_LISTING_CAP };
 }
 
 export interface GithubFileContent {
