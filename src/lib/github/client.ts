@@ -372,16 +372,37 @@ export interface GithubBranch {
   commitSha: string;
 }
 
+// Bounds how many pages listBranches() will follow - 10 pages x 100 per
+// page covers any repo with a remotely reasonable branch count; a repo
+// beyond that is pathological enough that showing the first 1000 is a
+// better failure mode than an unbounded loop against GitHub's API.
+const MAX_BRANCH_PAGES = 10;
+
+/**
+ * A single page only returns the first 100 branches (GitHub's max
+ * per_page) - for a repo with more than that, `commitRepoFile`'s PR-mode
+ * path looks up the base branch by name in this list, and a branch outside
+ * the first page used to come back as a false "not found" even though it
+ * exists. Pages until a short page signals the end, rather than parsing
+ * the Link header.
+ */
 export async function listBranches(
   token: string,
   owner: string,
   repo: string
 ): Promise<GithubBranch[]> {
-  const data = await githubFetch<Array<{ name: string; commit: { sha: string } }>>(
-    token,
-    `/repos/${owner}/${repo}/branches?per_page=100`
-  );
-  return data.map((b) => ({ name: b.name, commitSha: b.commit.sha }));
+  const branches: GithubBranch[] = [];
+
+  for (let page = 1; page <= MAX_BRANCH_PAGES; page++) {
+    const data = await githubFetch<Array<{ name: string; commit: { sha: string } }>>(
+      token,
+      `/repos/${owner}/${repo}/branches?per_page=100&page=${page}`
+    );
+    branches.push(...data.map((b) => ({ name: b.name, commitSha: b.commit.sha })));
+    if (data.length < 100) break;
+  }
+
+  return branches;
 }
 
 /** Creates `newBranch` pointing at `fromSha` (a commit sha, e.g. a branch tip). */
