@@ -101,6 +101,15 @@ async function createProjectForImport(
   return { projectId: created.id as string, error: null };
 }
 
+async function deleteOrphanedProject(projectId: string, userId: string): Promise<void> {
+  if (hasDirectDatabase()) {
+    await withUser(userId, ({ query }) => query("DELETE FROM projects WHERE id = $1", [projectId]));
+    return;
+  }
+  const supabase = await createClient();
+  await supabase.from("projects").delete().eq("id", projectId);
+}
+
 export async function importGuidonFile(input: ImportGuidonFileInput): Promise<ImportGuidonFileResult> {
   const validated = validateGuidonFile(input.fileContent);
   if (!validated.ok) return { error: validated.error };
@@ -135,6 +144,15 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
   try {
     await runGuidonImport(projectId, userId, validated.result);
   } catch (error) {
+    // "new" mode already created the project before the import data itself
+    // failed to write - clean that up rather than leaving an orphaned,
+    // permanently empty project behind (which also counts against the
+    // org's project limit on hosted Cloud). Best-effort: if the cleanup
+    // delete itself fails, the user still gets the real import error, not
+    // a delete error masking it.
+    if (input.mode === "new") {
+      await deleteOrphanedProject(projectId, userId).catch(() => {});
+    }
     return { error: error instanceof Error ? error.message : "Failed to import the project data." };
   }
 
