@@ -10,7 +10,6 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import { isDone } from "@/lib/work/task-board";
 import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 
 interface ProjectRow {
@@ -59,38 +58,54 @@ async function loadDashboardDataLocal(userId: string) {
 
   const projectIds = projects.map((p) => p.id);
 
-  let tasks: { status: string; parent_task_id: string | null }[] = [];
+  let totalTasks = 0;
+  let completedTasks = 0;
   let totalDecisions = 0;
 
   if (projectIds.length > 0) {
+    // Aggregated in SQL rather than fetching every task row just to count
+    // and filter them in JS - this page has no cap on project count the
+    // way task/memory list pages do (see their own "safety cap, not
+    // pagination" comments), so a large org's dashboard load used to pull
+    // every task in every one of the user's projects over the wire on
+    // every visit just to show four numbers.
     const [tasksResult, decisionsResult] = await Promise.all([
       withUser(userId, ({ query }) =>
-        query("SELECT status, parent_task_id FROM tasks WHERE project_id = ANY($1::uuid[])", [
+        query(
+          `SELECT
+             COUNT(*) FILTER (WHERE parent_task_id IS NULL) AS total,
+             COUNT(*) FILTER (WHERE parent_task_id IS NULL AND status IN ('done', 'completed')) AS completed
+           FROM tasks WHERE project_id = ANY($1::uuid[])`,
+          [projectIds]
+        )
+      ),
+      withUser(userId, ({ query }) =>
+        query("SELECT COUNT(*) AS total FROM context_decisions WHERE project_id = ANY($1::uuid[])", [
           projectIds,
         ])
       ),
-      withUser(userId, ({ query }) =>
-        query("SELECT id FROM context_decisions WHERE project_id = ANY($1::uuid[])", [projectIds])
-      ),
     ]);
-    tasks = tasksResult.rows;
-    totalDecisions = decisionsResult.rows.length;
+    totalTasks = Number(tasksResult.rows[0]?.total ?? 0);
+    completedTasks = Number(tasksResult.rows[0]?.completed ?? 0);
+    totalDecisions = Number(decisionsResult.rows[0]?.total ?? 0);
   }
 
-  return { projects, tasks, totalDecisions };
+  return { projects, totalTasks, completedTasks, totalDecisions };
 }
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
   let projects: ProjectRow[];
-  let rawTasks: { status: string; parent_task_id: string | null }[];
+  let totalTasks: number;
+  let completedTasks: number;
   let totalDecisions: number;
 
   if (hasDirectDatabase()) {
     const data = await loadDashboardDataLocal(user.id);
     projects = data.projects;
-    rawTasks = data.tasks;
+    totalTasks = data.totalTasks;
+    completedTasks = data.completedTasks;
     totalDecisions = data.totalDecisions;
   } else {
     const supabase = await createClient();
@@ -104,31 +119,42 @@ export default async function DashboardPage() {
     projects = (projectsData ?? []) as unknown as ProjectRow[];
     const projectIds = projects.map((p) => p.id);
 
-    rawTasks = [];
+    totalTasks = 0;
+    completedTasks = 0;
     totalDecisions = 0;
 
     if (projectIds.length > 0) {
-      const [tasksRes, decisionsRes] = await Promise.all([
-        supabase.from("tasks").select("status, parent_task_id").in("project_id", projectIds),
-        supabase.from("context_decisions").select("id").in("project_id", projectIds),
+      // count-only (head: true) queries instead of fetching every task -
+      // see the matching comment in loadDashboardDataLocal above. isDone's
+      // status set ('done' plus the legacy 'completed', migration 002)
+      // is inlined here since PostgREST's .in() needs a literal list, not
+      // a call into src/lib/work/task-board.ts's normalizeTaskStatus().
+      const [totalRes, completedRes, decisionsRes] = await Promise.all([
+        supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .in("project_id", projectIds)
+          .is("parent_task_id", null),
+        supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .in("project_id", projectIds)
+          .is("parent_task_id", null)
+          .in("status", ["done", "completed"]),
+        supabase
+          .from("context_decisions")
+          .select("id", { count: "exact", head: true })
+          .in("project_id", projectIds),
       ]);
-      if (tasksRes.error) throw new Error(`Failed to load tasks: ${tasksRes.error.message}`);
+      if (totalRes.error) throw new Error(`Failed to load tasks: ${totalRes.error.message}`);
+      if (completedRes.error) throw new Error(`Failed to load tasks: ${completedRes.error.message}`);
       if (decisionsRes.error) throw new Error(`Failed to load decisions: ${decisionsRes.error.message}`);
 
-      rawTasks = tasksRes.data ?? [];
-      totalDecisions = decisionsRes.data?.length ?? 0;
+      totalTasks = totalRes.count ?? 0;
+      completedTasks = completedRes.count ?? 0;
+      totalDecisions = decisionsRes.count ?? 0;
     }
   }
-
-  // Subtasks (migration 010) are plain `tasks` rows - count top-level tasks
-  // only, matching src/lib/data/project-stats.ts and the work board, so a
-  // task with subtasks isn't counted twice in the dashboard totals.
-  const tasks = rawTasks.filter((t) => !t.parent_task_id);
-  const totalTasks = tasks.length;
-  // isDone folds the legacy 'completed' status onto 'done' (migration
-  // 002 renamed the vocabulary) - comparing to 'completed' directly
-  // silently shows 0 for every task created since.
-  const completedTasks = tasks.filter((t) => isDone(t.status)).length;
 
   const stats = {
     total_projects: projects.length,
