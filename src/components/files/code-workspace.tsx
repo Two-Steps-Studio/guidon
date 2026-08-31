@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Monaco } from "@monaco-editor/react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -111,6 +112,31 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
   const [activePath, setActivePath] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
   const { state: sidebarState, isMobile } = useSidebar();
+  // @monaco-editor/react caches one Monaco text model per distinct `path`
+  // passed to <Editor> (that's what gives each tab its own undo/redo
+  // history and cursor position - see the comment on CodeEditor's `path`
+  // prop). It never disposes a model on its own, so closeTab() below does
+  // it manually or every file ever opened in this session leaks.
+  const monacoRef = useRef<Monaco | null>(null);
+
+  // Runs after every tabs change (close, or the initial open that creates a
+  // model in the first place) and disposes any model that no longer has a
+  // matching open tab. Declarative on purpose, rather than disposing inline
+  // inside closeTab(): disposing synchronously there could race
+  // @monaco-editor/react's own effect that swaps the active editor onto a
+  // different tab's model when `path` changes, if that swap hasn't
+  // committed yet. Effects run child-before-parent within a commit, so by
+  // the time this runs, CodeEditor's own path-change effect already has.
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    if (!monaco) return;
+    const openUris = new Set(
+      tabs.filter((t) => t.kind !== "image").map((t) => monaco.Uri.parse(t.path).toString())
+    );
+    for (const model of monaco.editor.getModels()) {
+      if (!openUris.has(model.uri.toString())) model.dispose();
+    }
+  }, [tabs]);
 
   const activeTab = tabs.find((tab) => tab.path === activePath) ?? null;
 
@@ -292,10 +318,14 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
                 <MarkdownPreview content={activeTab.content} />
               ) : (
                 <CodeEditor
+                  path={activeTab.path}
                   value={activeTab.content}
                   language={monacoLanguage(activeTab.path)}
                   readOnly={!canWrite}
                   onChange={(next) => updateTab(activeTab.path, { content: next, dirty: true, success: null })}
+                  onMonacoReady={(monaco) => {
+                    monacoRef.current = monaco;
+                  }}
                 />
               )}
             </div>

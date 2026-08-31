@@ -2,6 +2,7 @@
 
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
+import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -60,6 +61,11 @@ export async function sendTaskChatMessage(
   if (!last || last.role !== "user" || !last.content.trim()) {
     return { text: "", error: "Nothing to send." };
   }
+
+  if (isChatRateLimited(access.userId, projectId)) {
+    return { text: "", error: "You're sending messages too quickly - wait a few minutes and try again." };
+  }
+  recordChatMessage(access.userId, projectId);
 
   const trimmedHistory = history
     .slice(-MAX_HISTORY_MESSAGES)

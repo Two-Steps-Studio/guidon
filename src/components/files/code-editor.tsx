@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Editor, { loader } from "@monaco-editor/react";
+import Editor, { loader, type Monaco } from "@monaco-editor/react";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -16,13 +16,26 @@ import { Loader2 } from "lucide-react";
 loader.config({ paths: { vs: "/monaco-editor/vs" } });
 
 interface CodeEditorProps {
+  /**
+   * Unique per open tab (its repo path). Without this, every tab shares one
+   * underlying Monaco model and switching tabs replaces its content via
+   * setValue() - which clears the undo/redo stack and resets scroll/cursor
+   * position for the file you're switching back to. Passing a distinct path
+   * per file is @monaco-editor/react's documented way to give each tab its
+   * own model (created lazily, cached internally, keyed by this string) so
+   * switching tabs restores exactly where you left off.
+   */
+  path: string;
   value: string;
   language: string;
   onChange: (value: string) => void;
   readOnly?: boolean;
+  /** Fires once, the first time any editor instance mounts - lets the
+   * parent (which owns tab lifecycle) dispose a closed tab's model. */
+  onMonacoReady?: (monaco: Monaco) => void;
 }
 
-export default function CodeEditor({ value, language, onChange, readOnly }: CodeEditorProps) {
+export default function CodeEditor({ path, value, language, onChange, readOnly, onMonacoReady }: CodeEditorProps) {
   const [dark, setDark] = useState(false);
 
   // Match the editor's theme to the page, including live changes - same
@@ -41,10 +54,12 @@ export default function CodeEditor({ value, language, onChange, readOnly }: Code
   return (
     <Editor
       height="100%"
+      path={path}
       language={language}
       value={value}
       theme={dark ? "vs-dark" : "vs"}
       onChange={(next) => onChange(next ?? "")}
+      onMount={(_editor, monaco) => onMonacoReady?.(monaco)}
       options={{
         readOnly,
         minimap: { enabled: false },
