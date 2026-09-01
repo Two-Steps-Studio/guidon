@@ -47,9 +47,24 @@ export async function saveTechnology(
       ? "The database does not accept 'Game engine' yet - run migration 008."
       : message;
 
+  // No UNIQUE(project_id, lower(name)) at the DB level - technologies is a
+  // free-text tag list, not identity-bearing the way a membership row is,
+  // so this is a plain app-layer check rather than a migration. syncTechnologies/
+  // syncTechnologiesLocal (settings/actions.ts) already dedupe case-
+  // insensitively when the whole stack is edited as a list from Settings;
+  // this is the other entry point (this project's own Technology page)
+  // that was missing the same check, letting the same name be added twice.
   if (hasDirectDatabase()) {
     try {
-      const technology = await withUser(access.userId, ({ query }) => {
+      const technology = await withUser(access.userId, async ({ query }) => {
+        const duplicate = await query(
+          "SELECT 1 FROM technologies WHERE project_id = $1 AND lower(name) = lower($2) AND id IS DISTINCT FROM $3",
+          [projectId, payload.name, input.id]
+        );
+        if (duplicate.rows.length > 0) {
+          throw new Error(`"${payload.name}" is already in this project's stack.`);
+        }
+
         if (input.id) {
           return query(
             `UPDATE technologies SET name = $1, category = $2, version = $3, description = $4, icon_slug = $5
@@ -84,6 +99,17 @@ export async function saveTechnology(
   }
 
   const supabase = await createClient();
+
+  const duplicateQuery = supabase
+    .from("technologies")
+    .select("id")
+    .eq("project_id", projectId)
+    .ilike("name", payload.name);
+  const { data: duplicates, error: duplicateError } = await duplicateQuery;
+  if (duplicateError) return { technology: null, error: duplicateError.message };
+  if ((duplicates ?? []).some((row) => row.id !== input.id)) {
+    return { technology: null, error: `"${payload.name}" is already in this project's stack.` };
+  }
 
   const query = input.id
     ? supabase.from("technologies").update(payload).eq("id", input.id)
