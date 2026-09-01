@@ -591,14 +591,25 @@ export async function createSubtask(
 
   if (hasDirectDatabase()) {
     try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
+      const result = await withUser(access.userId, async ({ query }) => {
+        // parent_task_id only FKs to tasks(id) - nothing at the DB level
+        // requires it to be a task in this same project. Without this
+        // check, a caller with write access to projectId could create a
+        // subtask whose stated parent is actually a task in a completely
+        // different project (any id they can name), an inconsistent
+        // cross-project reference nothing else in the UI expects.
+        const parent = await query("SELECT project_id FROM tasks WHERE id = $1", [parentTaskId]);
+        if (parent.rows[0]?.project_id !== projectId) {
+          throw new Error("Parent task not found in this project.");
+        }
+
+        return query(
           `INSERT INTO tasks (project_id, parent_task_id, title, status, priority, tags, created_by)
            VALUES ($1, $2, $3, 'todo', 'medium', $4, $5)
            RETURNING *`,
           [projectId, parentTaskId, title.trim(), [], access.userId]
-        )
-      );
+        );
+      });
       await logActivity({
         userId: access.userId,
         action: "task_created",
@@ -615,6 +626,13 @@ export async function createSubtask(
   }
 
   const supabase = await createClient();
+
+  // Same reasoning as the direct-Postgres branch above.
+  const { data: parentTask } = await supabase.from("tasks").select("project_id").eq("id", parentTaskId).maybeSingle();
+  if (parentTask?.project_id !== projectId) {
+    return { task: null, error: "Parent task not found in this project." };
+  }
+
   const { data, error } = await supabase
     .from("tasks")
     .insert({
