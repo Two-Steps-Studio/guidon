@@ -166,7 +166,7 @@ export async function updatePhase(
         query(
           `UPDATE roadmap_phases
            SET name = $1, description = $2, start_date = $3, planned_end_date = $4, status = $5, completion_percentage = $6
-           WHERE id = $7`,
+           WHERE id = $7 AND project_id = $8`,
           [
             parsed.name,
             parsed.description,
@@ -175,6 +175,7 @@ export async function updatePhase(
             parsed.status,
             parsed.completion_percentage,
             phaseId,
+            projectId,
           ]
         )
       );
@@ -205,7 +206,8 @@ export async function updatePhase(
       status: parsed.status,
       completion_percentage: parsed.completion_percentage,
     })
-    .eq("id", phaseId);
+    .eq("id", phaseId)
+    .eq("project_id", projectId);
 
   if (error) return { error: error.message };
 
@@ -233,7 +235,7 @@ export async function deletePhase(
   if (hasDirectDatabase()) {
     try {
       await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM roadmap_phases WHERE id = $1", [phaseId])
+        query("DELETE FROM roadmap_phases WHERE id = $1 AND project_id = $2", [phaseId, projectId])
       );
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete roadmap phase." };
@@ -252,7 +254,7 @@ export async function deletePhase(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("roadmap_phases").delete().eq("id", phaseId);
+  const { error } = await supabase.from("roadmap_phases").delete().eq("id", phaseId).eq("project_id", projectId);
 
   if (error) return { error: error.message };
 

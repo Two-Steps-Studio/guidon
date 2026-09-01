@@ -68,9 +68,9 @@ export async function saveTechnology(
         if (input.id) {
           return query(
             `UPDATE technologies SET name = $1, category = $2, version = $3, description = $4, icon_slug = $5
-             WHERE id = $6
+             WHERE id = $6 AND project_id = $7
              RETURNING *`,
-            [payload.name, payload.category, payload.version, payload.description, payload.icon_slug, input.id]
+            [payload.name, payload.category, payload.version, payload.description, payload.icon_slug, input.id, projectId]
           ).then((result) => result.rows[0]);
         }
 
@@ -112,7 +112,7 @@ export async function saveTechnology(
   }
 
   const query = input.id
-    ? supabase.from("technologies").update(payload).eq("id", input.id)
+    ? supabase.from("technologies").update(payload).eq("id", input.id).eq("project_id", projectId)
     : supabase.from("technologies").insert({
         ...payload,
         project_id: projectId,
@@ -141,7 +141,7 @@ export async function deleteTechnology(
   if (hasDirectDatabase()) {
     try {
       await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM technologies WHERE id = $1", [technologyId])
+        query("DELETE FROM technologies WHERE id = $1 AND project_id = $2", [technologyId, projectId])
       );
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to change the stack." };
@@ -152,7 +152,7 @@ export async function deleteTechnology(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("technologies").delete().eq("id", technologyId);
+  const { error } = await supabase.from("technologies").delete().eq("id", technologyId).eq("project_id", projectId);
 
   if (error) return { error: error.message };
 
