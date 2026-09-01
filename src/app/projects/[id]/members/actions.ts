@@ -30,6 +30,12 @@ function assertManager(role: ProjectRole | null): role is "owner" | "admin" {
   return role === "owner" || role === "admin";
 }
 
+/** True for a Postgres unique_violation (SQLSTATE 23505) - both node-postgres
+ * errors and PostgREST error objects carry it as `.code`. */
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
+}
+
 export async function addMember(
   projectId: string,
   userId: string,
@@ -67,6 +73,10 @@ export async function addMember(
       revalidatePath(`/projects/${projectId}/members`);
       return { member, error: null };
     } catch (error) {
+      // 23505 = unique_violation - project_members_project_user_unique (026).
+      if (isUniqueViolation(error)) {
+        return { member: null, error: "This person is already a member of this project." };
+      }
       return { member: null, error: error instanceof Error ? error.message : "Failed to add member." };
     }
   }
@@ -78,7 +88,12 @@ export async function addMember(
     .select("id, user_id, role, joined_at")
     .single();
 
-  if (error) return { member: null, error: error.message };
+  if (error) {
+    if (isUniqueViolation(error)) {
+      return { member: null, error: "This person is already a member of this project." };
+    }
+    return { member: null, error: error.message };
+  }
 
   await logActivity({
     userId: access.userId,
@@ -174,7 +189,20 @@ export async function removeMember(
         ]);
         const userId = row.rows[0]?.user_id as string | undefined;
 
-        await query("DELETE FROM project_members WHERE id = $1", [memberId]);
+        // By (project_id, user_id) when known, not just this row's own id:
+        // 026's UNIQUE constraint means there's normally only ever one row
+        // here, but this stays correct even for a pre-migration duplicate
+        // on an older self-hosted database that hasn't been cleaned up - a
+        // single "remove" then can't leave a second row silently granting
+        // access.
+        if (userId) {
+          await query("DELETE FROM project_members WHERE project_id = $1 AND user_id = $2", [
+            projectId,
+            userId,
+          ]);
+        } else {
+          await query("DELETE FROM project_members WHERE id = $1", [memberId]);
+        }
 
         // tasks.assignee_id only clears on ON DELETE SET NULL against a
         // deleted profiles row (001) - that's a whole account deletion, not
@@ -216,7 +244,11 @@ export async function removeMember(
     .eq("project_id", projectId)
     .maybeSingle();
 
-  const { error } = await supabase.from("project_members").delete().eq("id", memberId);
+  // Same reasoning as the direct-Postgres branch above: by (project_id,
+  // user_id) when known, so a pre-026 duplicate row can't survive a "remove".
+  const { error } = memberRow?.user_id
+    ? await supabase.from("project_members").delete().eq("project_id", projectId).eq("user_id", memberRow.user_id)
+    : await supabase.from("project_members").delete().eq("id", memberId);
 
   if (error) return { error: error.message };
 

@@ -12,6 +12,12 @@ export type MemberActionState = {
   error: string | null;
 };
 
+/** True for a Postgres unique_violation (SQLSTATE 23505) - both node-postgres
+ * errors and PostgREST error objects carry it as `.code`. */
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
+}
+
 export async function addMember(
   orgId: string,
   _prevState: MemberActionState,
@@ -58,6 +64,11 @@ export async function addMember(
         return profileResult.rows[0].id as string;
       });
     } catch (error) {
+      // 23505 = unique_violation - organization_members_org_user_unique
+      // (026). A friendlier message than the raw constraint-violation text.
+      if (isUniqueViolation(error)) {
+        return { error: "This person is already a member of this organization." };
+      }
       return { error: error instanceof Error ? error.message : "Failed to add member." };
     }
 
@@ -93,6 +104,9 @@ export async function addMember(
   });
 
   if (error) {
+    if (isUniqueViolation(error)) {
+      return { error: "This person is already a member of this organization." };
+    }
     return { error: error.message };
   }
 
@@ -243,7 +257,20 @@ export async function removeMember(
           [memberId, orgId]
         );
         userId = row.rows[0]?.user_id ?? null;
-        await query("DELETE FROM organization_members WHERE id = $1", [memberId]);
+        // By (organization_id, user_id), not just this row's own id: 026's
+        // UNIQUE constraint means there's normally only ever one row here,
+        // but this stays correct even for a pre-migration duplicate that
+        // hasn't been cleaned up on an older self-hosted database - a
+        // single "remove" then can't leave a second row silently granting
+        // access.
+        if (userId) {
+          await query("DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2", [
+            orgId,
+            userId,
+          ]);
+        } else {
+          await query("DELETE FROM organization_members WHERE id = $1", [memberId]);
+        }
       });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
@@ -272,7 +299,12 @@ export async function removeMember(
     .eq("organization_id", orgId)
     .maybeSingle();
 
-  const { error } = await supabase.from("organization_members").delete().eq("id", memberId);
+  // Same reasoning as the direct-Postgres branch above: by
+  // (organization_id, user_id) when known, so a pre-026 duplicate row can't
+  // survive a "remove".
+  const { error } = memberRow?.user_id
+    ? await supabase.from("organization_members").delete().eq("organization_id", orgId).eq("user_id", memberRow.user_id)
+    : await supabase.from("organization_members").delete().eq("id", memberId);
 
   if (error) {
     return { error: error.message };

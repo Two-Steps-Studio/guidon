@@ -1186,5 +1186,32 @@ await withUser(A, async () => {
   );
 });
 
+// ------------------------------------------------------------------
+section("22. unikalnosc czlonkostwa: organization_members / project_members (migracja 026)");
+
+await expectRejected(
+  "duplikat (organization_id, user_id) w organization_members odrzucony",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.organization_members (organization_id, user_id, role) VALUES ($1, $2, 'member')", [
+        orgId,
+        A,
+      ])
+    ),
+  /duplicate key|unique constraint/i
+);
+
+await expectRejected(
+  "duplikat (project_id, user_id) w project_members odrzucony",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'viewer')", [
+        projectId,
+        A,
+      ])
+    ),
+  /duplicate key|unique constraint/i
+);
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
