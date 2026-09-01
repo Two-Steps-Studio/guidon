@@ -5,6 +5,7 @@ import {
   assertSafeBucket,
   assertSafeStoragePath,
 } from "@/lib/storage/provider";
+import { SAFE_INLINE_EXTENSION_TO_MIME } from "@/lib/storage/storage-constants";
 
 /**
  * Serves objects for the local storage provider (TODO.md §5).
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
   const objectPath = searchParams.get("path");
   const expires = Number(searchParams.get("expires"));
   const signature = searchParams.get("signature");
+  const isPublic = searchParams.get("public") === "1";
 
   if (!bucket || !objectPath || !signature || !Number.isFinite(expires)) {
     return NextResponse.json({ error: "Malformed URL" }, { status: 400 });
@@ -50,26 +52,48 @@ export async function GET(request: NextRequest) {
     "@/lib/storage/providers/local"
   );
 
-  if (!verifyStorageSignature(safeBucket, safePath, expires, signature)) {
-    // One response for bad signature and expired link - no oracle.
+  if (!verifyStorageSignature(safeBucket, safePath, expires, signature, isPublic)) {
+    // One response for bad signature and expired link - no oracle. Note
+    // `isPublic` is itself part of the signed payload (local.ts), so a
+    // private file's real signed URL can't be replayed with `&public=1`
+    // appended to make it serve inline - the signature just won't match.
     return NextResponse.json({ error: "Link is invalid or has expired" }, {
       status: 403,
     });
   }
+
+  // Safe to serve inline with its real Content-Type only for a `public`
+  // link whose extension is in the known-safe raster set - upload-time
+  // validation (SAFE_INLINE_IMAGE_TYPES) is what actually keeps anything
+  // else from ever reaching this bucket with `public: true`. Everything
+  // else (every non-public object, and a public link with an unexpected
+  // extension) keeps the safe default: octet-stream + nosniff + forced
+  // download, so nothing can execute as a document even if opened directly.
+  const extension = path.extname(safePath).slice(1).toLowerCase();
+  const inlineMime = isPublic ? SAFE_INLINE_EXTENSION_TO_MIME[extension] : undefined;
 
   try {
     const provider = new LocalStorageProvider();
     const blob = await provider.download(safeBucket, safePath);
 
     return new NextResponse(blob, {
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Length": String(blob.size),
-        // Signed and time-limited, so it must not be shared by a proxy.
-        "Cache-Control": "private, max-age=60",
-        "X-Content-Type-Options": "nosniff",
-        "Content-Disposition": `attachment; filename="${path.basename(safePath)}"`,
-      },
+      headers: inlineMime
+        ? {
+            "Content-Type": inlineMime,
+            "Content-Length": String(blob.size),
+            // Public avatars/project images are effectively permanent
+            // (PUBLIC_URL_TTL_SECONDS) and meant to be reused across
+            // requests, unlike the short-lived private download links.
+            "Cache-Control": "public, max-age=31536000, immutable",
+          }
+        : {
+            "Content-Type": "application/octet-stream",
+            "Content-Length": String(blob.size),
+            // Signed and time-limited, so it must not be shared by a proxy.
+            "Cache-Control": "private, max-age=60",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": `attachment; filename="${path.basename(safePath)}"`,
+          },
     });
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

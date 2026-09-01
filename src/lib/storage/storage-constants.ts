@@ -88,6 +88,22 @@ export const ALLOWED_IMAGE_TYPES = [
  */
 export const SAFE_INLINE_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"] as const;
 
+/**
+ * Used only by /api/storage (the local-storage provider's serving route) to
+ * pick a real Content-Type for a `public: true` object - the local provider
+ * has nowhere to persist the Content-Type given at upload, so this derives
+ * it from the file extension instead, safe only because SAFE_INLINE_IMAGE_TYPES
+ * already restricts what extension an avatar/project/org image upload can
+ * have gotten here with in the first place.
+ */
+export const SAFE_INLINE_EXTENSION_TO_MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+};
+
 export const ALLOWED_DOCUMENT_TYPES = [
   "application/pdf",
   "application/msword",

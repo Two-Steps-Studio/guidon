@@ -99,14 +99,18 @@ export class LocalStorageProvider implements StorageProvider {
 
   /**
    * Signed URL pointing at the application's own storage route. The signature
-   * covers bucket, path and expiry, so a URL cannot be edited to reach another
-   * object or to extend its own lifetime.
+   * covers bucket, path, expiry AND the public flag, so a URL cannot be
+   * edited to reach another object, extend its own lifetime, or flip a
+   * private file to serve as if it were public.
    *
-   * `public: true` doesn't add a separate unsigned serving path - it just
-   * signs for PUBLIC_URL_TTL_SECONDS (50 years) instead of the normal
-   * 10-minute default, so /api/storage's verification is unchanged either
-   * way. That's the whole fix for the avatars bucket: a permanent-in-practice
-   * URL using the same signing/verification code as every other object.
+   * `public: true` does two things, both handled by /api/storage: signs for
+   * PUBLIC_URL_TTL_SECONDS (50 years) instead of the normal 10-minute
+   * default, and marks the object servable inline (real Content-Type, no
+   * forced download) instead of the safe-by-default octet-stream/attachment
+   * every other object gets. Safe to do only because avatar/project/org
+   * image uploads are now restricted to SAFE_INLINE_IMAGE_TYPES
+   * (storage-constants.ts) at the point they're written - none of those
+   * raster formats can carry an executable payload the way SVG can.
    */
   async getUrl(
     bucket: string,
@@ -116,17 +120,17 @@ export class LocalStorageProvider implements StorageProvider {
     assertSafeBucket(bucket);
     const safePath = assertSafeStoragePath(objectPath);
 
-    const ttl = options?.public
-      ? PUBLIC_URL_TTL_SECONDS
-      : options?.expiresInSeconds ?? 600;
+    const isPublic = Boolean(options?.public);
+    const ttl = isPublic ? PUBLIC_URL_TTL_SECONDS : options?.expiresInSeconds ?? 600;
     const expires = Math.floor(Date.now() / 1000) + ttl;
-    const signature = signStoragePath(bucket, safePath, expires);
+    const signature = signStoragePath(bucket, safePath, expires, isPublic);
 
     const params = new URLSearchParams({
       bucket,
       path: safePath,
       expires: String(expires),
       signature,
+      ...(isPublic ? { public: "1" } : {}),
     });
 
     const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -185,10 +189,11 @@ function signingSecret(): string {
 export function signStoragePath(
   bucket: string,
   objectPath: string,
-  expires: number
+  expires: number,
+  isPublic = false
 ): string {
   return createHmac("sha256", signingSecret())
-    .update(`${bucket}:${objectPath}:${expires}`)
+    .update(`${bucket}:${objectPath}:${expires}:${isPublic ? "public" : "private"}`)
     .digest("hex");
 }
 
@@ -196,13 +201,14 @@ export function verifyStorageSignature(
   bucket: string,
   objectPath: string,
   expires: number,
-  signature: string
+  signature: string,
+  isPublic = false
 ): boolean {
   if (!Number.isFinite(expires) || expires < Math.floor(Date.now() / 1000)) {
     return false;
   }
 
-  const expected = signStoragePath(bucket, objectPath, expires);
+  const expected = signStoragePath(bucket, objectPath, expires, isPublic);
   const a = Buffer.from(expected, "hex");
   const b = Buffer.from(signature, "hex");
 
