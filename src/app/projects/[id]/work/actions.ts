@@ -363,6 +363,35 @@ export async function moveTask(
   return { error: null };
 }
 
+/**
+ * Guidon Cloud's tasks-per-project plan cap - self-hosted has no plan
+ * concept at all (hasDirectDatabase() guards every call site). Counts every
+ * row in `tasks` for the project, subtasks included: a subtask is a plain
+ * row in the same table with the same storage/RLS cost as a top-level task,
+ * so counting only top-level tasks (as this used to) meant nesting
+ * unlimited subtasks under one top-level task fully bypassed the cap -
+ * createSubtask() never checked it at all.
+ */
+async function checkTaskLimit(
+  projectId: string,
+  organizationId: string
+): Promise<{ error: string | null }> {
+  const { planName, taskLimitPerProject } = await getOrgPlanLimits(organizationId);
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", projectId);
+
+  if (isTaskLimitReached(count ?? 0, taskLimitPerProject)) {
+    return {
+      error: `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`,
+    };
+  }
+  return { error: null };
+}
+
 export async function createTask(
   projectId: string,
   input: {
@@ -382,21 +411,8 @@ export async function createTask(
   }
 
   if (!hasDirectDatabase()) {
-    const { planName, taskLimitPerProject } = await getOrgPlanLimits(access.project.organization_id);
-
-    const supabase = await createClient();
-    const { count } = await supabase
-      .from("tasks")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId)
-      .is("parent_task_id", null);
-
-    if (isTaskLimitReached(count ?? 0, taskLimitPerProject)) {
-      return {
-        task: null,
-        error: `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`,
-      };
-    }
+    const limit = await checkTaskLimit(projectId, access.project.organization_id);
+    if (limit.error) return { task: null, error: limit.error };
   }
 
   if (!input.title.trim()) {
@@ -585,6 +601,12 @@ export async function createSubtask(
   if (!access || !canWriteProject(access.role)) {
     return { task: null, error: "You do not have permission to create subtasks." };
   }
+
+  if (!hasDirectDatabase()) {
+    const limit = await checkTaskLimit(projectId, access.project.organization_id);
+    if (limit.error) return { task: null, error: limit.error };
+  }
+
   if (!title.trim()) {
     return { task: null, error: "Title is required." };
   }
