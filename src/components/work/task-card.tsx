@@ -30,6 +30,14 @@ interface TaskCardProps {
   onOpen: (task: Task) => void;
   onDragStart: (task: Task) => void;
   onDragEnd: () => void;
+  /** Alt+Up/Alt+Down calls this - the keyboard equivalent of a within-
+   * column drag, which native HTML5 drag-and-drop has no keyboard path
+   * for at all. Undefined (not just a no-op) when the board is read-only,
+   * so the shortcut isn't advertised via aria-keyshortcuts when it
+   * wouldn't do anything. */
+  onReorder?: (task: Task, direction: "up" | "down") => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   projectColor?: string;
 }
 
@@ -53,6 +61,9 @@ export function TaskCard({
   onOpen,
   onDragStart,
   onDragEnd,
+  onReorder,
+  canMoveUp = false,
+  canMoveDown = false,
   projectColor,
 }: TaskCardProps) {
   const priority = normalizeTaskPriority(task.priority);
@@ -74,11 +85,22 @@ export function TaskCard({
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onOpen(task);
+          return;
+        }
+        if (onReorder && event.altKey && event.key === "ArrowUp" && canMoveUp) {
+          event.preventDefault();
+          onReorder(task, "up");
+          return;
+        }
+        if (onReorder && event.altKey && event.key === "ArrowDown" && canMoveDown) {
+          event.preventDefault();
+          onReorder(task, "down");
         }
       }}
       role="button"
       tabIndex={0}
       aria-label={`Open task ${task.title}`}
+      aria-keyshortcuts={onReorder ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
       className={cn(
         "group rounded-lg border border-border bg-card p-3 text-left",
         "shadow-sm transition-colors",

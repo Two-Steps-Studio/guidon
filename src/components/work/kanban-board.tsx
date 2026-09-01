@@ -66,6 +66,26 @@ export function KanbanBoard({
     setDropTarget(null);
   };
 
+  // Native HTML5 drag-and-drop (handleDrop below) has no keyboard
+  // equivalent at all - a keyboard-only user could change a task's status
+  // via the detail dialog's select, but could never reorder within a
+  // column. TaskCard's Alt+Up/Alt+Down handler calls this with the same
+  // sortOrderForPosition() math handleDrop already uses, just computing the
+  // target index from "one above/below current" instead of a drop zone.
+  const handleReorder = async (task: Task, direction: "up" | "down") => {
+    if (!canEdit) return;
+    const status = normalizeTaskStatus(task.status);
+    const column = groups[status];
+    const currentIndex = column.findIndex((item) => item.id === task.id);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= column.length) return; // already at an edge
+
+    const sortOrder = sortOrderForPosition(column, targetIndex, task.id);
+    await onMoveTask(task, status, sortOrder);
+  };
+
   const handleDrop = async (status: TaskStatus, index: number) => {
     const task = draggingTask;
     resetDrag();
@@ -186,6 +206,9 @@ export function KanbanBoard({
                     onOpen={onOpenTask}
                     onDragStart={setDraggingTask}
                     onDragEnd={resetDrag}
+                    onReorder={canEdit ? handleReorder : undefined}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < columnTasks.length - 1}
                     projectColor={projectColor}
                   />
                 </div>
