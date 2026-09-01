@@ -224,20 +224,32 @@ export async function getTaskWhyContext(projectId: string, taskId: string): Prom
   } else {
     const supabase = await createClient();
 
-    const [taskRes, relationsRes] = await Promise.all([
+    // Two separate, fully-parameterized queries merged in JS instead of one
+    // .or(`and(...taskId...),and(...taskId...)`) - unlike .eq()'s own
+    // parameterized value, .or() takes a raw PostgREST filter-syntax string
+    // that supabase-js does not escape, so splicing taskId straight into it
+    // let a crafted value reshape the filter instead of just failing to
+    // match (RLS still bounds what any query can return regardless). Same
+    // fix already applied to api/v1/search/route.ts's .or() calls.
+    const [taskRes, asSourceRes, asTargetRes] = await Promise.all([
       supabase.from("tasks").select("decision_id").eq("id", taskId).maybeSingle(),
       supabase
         .from("context_relations")
         .select("*")
         .eq("project_id", projectId)
-        .or(
-          `and(source_type.eq.task,source_id.eq.${taskId}),and(target_type.eq.task,target_id.eq.${taskId})`
-        )
-        .order("created_at", { ascending: false }),
+        .eq("source_type", "task")
+        .eq("source_id", taskId),
+      supabase
+        .from("context_relations")
+        .select("*")
+        .eq("project_id", projectId)
+        .eq("target_type", "task")
+        .eq("target_id", taskId),
     ]);
 
     if (taskRes.error) return EMPTY_ERROR(taskRes.error.message);
-    if (relationsRes.error) return EMPTY_ERROR(relationsRes.error.message);
+    if (asSourceRes.error) return EMPTY_ERROR(asSourceRes.error.message);
+    if (asTargetRes.error) return EMPTY_ERROR(asTargetRes.error.message);
 
     decisionId = (taskRes.data as { decision_id: string | null } | null)?.decision_id ?? null;
     if (decisionId) {
@@ -249,7 +261,15 @@ export async function getTaskWhyContext(projectId: string, taskId: string): Prom
       if (data) decision = data as TaskWhyDecision;
     }
 
-    relations = (relationsRes.data ?? []) as ContextRelation[];
+    // Merge the two halves, deduped by id (only matters for a relation
+    // that self-references the same task as both source and target, if
+    // that's ever possible), and restore the single-query ordering the old
+    // .or() call had.
+    const merged = [...((asSourceRes.data ?? []) as ContextRelation[]), ...((asTargetRes.data ?? []) as ContextRelation[])];
+    const seen = new Set<string>();
+    relations = merged
+      .filter((relation) => (seen.has(relation.id) ? false : (seen.add(relation.id), true)))
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
   }
 
   const otherSide = (
