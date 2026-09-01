@@ -266,18 +266,6 @@ export async function deleteProject(projectId: string): Promise<{ error: string 
     return { error: "You do not have permission to delete this project." };
   }
 
-  // Logged before the delete, with organization_id instead of project_id:
-  // activity_logs.project_id has ON DELETE CASCADE from projects (001), so a
-  // row scoped by the very project it records would be deleted along with it.
-  await logActivity({
-    userId: access.userId,
-    action: "project_deleted",
-    organizationId: access.project.organization_id,
-    entityType: "project",
-    entityId: projectId,
-    details: { name: access.project.name },
-  });
-
   if (hasDirectDatabase()) {
     try {
       await withUser(access.userId, ({ query }) =>
@@ -294,6 +282,22 @@ export async function deleteProject(projectId: string): Promise<{ error: string 
       return { error: error.message };
     }
   }
+
+  // Logged after the delete (which above this point has definitely
+  // succeeded - an earlier failure already returned), with organization_id
+  // instead of project_id: activity_logs.project_id has ON DELETE CASCADE
+  // from projects (001), so a row scoped by the very project it records
+  // would be deleted along with it. access.project.organization_id is a
+  // plain value already read before the delete, not a fresh query, so it's
+  // still valid to use here.
+  await logActivity({
+    userId: access.userId,
+    action: "project_deleted",
+    organizationId: access.project.organization_id,
+    entityType: "project",
+    entityId: projectId,
+    details: { name: access.project.name },
+  });
 
   redirect("/organizations");
 }
