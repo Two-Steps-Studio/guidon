@@ -13,10 +13,16 @@ export function RelationRow({
   projectId,
   relation,
   canDelete,
+  sourceLabel,
+  targetLabel,
 }: {
   projectId: string;
   relation: ContextRelation;
   canDelete: boolean;
+  /** Resolved display name for each side - undefined if the entity was
+   * deleted, or is otherwise no longer resolvable (see entity-label.ts). */
+  sourceLabel?: string;
+  targetLabel?: string;
 }) {
   const [deleting, startDelete] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +39,14 @@ export function RelationRow({
       <CardContent className="flex items-center justify-between py-4">
         <div className="flex flex-wrap items-center gap-4">
           <Badge variant="outline">{ENTITY_TYPE_LABELS[relation.source_type]}</Badge>
-          <span className="text-sm text-muted-foreground">{relation.source_id.slice(0, 8)}...</span>
+          <span className="text-sm text-muted-foreground" title={relation.source_id}>
+            {sourceLabel ?? `${relation.source_id.slice(0, 8)}...`}
+          </span>
           <span className="text-sm font-medium">{RELATION_TYPE_LABELS[relation.relation_type]}</span>
           <Badge variant="outline">{ENTITY_TYPE_LABELS[relation.target_type]}</Badge>
-          <span className="text-sm text-muted-foreground">{relation.target_id.slice(0, 8)}...</span>
+          <span className="text-sm text-muted-foreground" title={relation.target_id}>
+            {targetLabel ?? `${relation.target_id.slice(0, 8)}...`}
+          </span>
           {error && (
             <span className="text-xs text-destructive flex items-center gap-1">
               <AlertCircle className="h-3 w-3" />

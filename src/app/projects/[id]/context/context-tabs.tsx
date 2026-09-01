@@ -25,6 +25,7 @@ export function ContextTabs({
   decisions,
   relations,
   sources,
+  entityLabels,
 }: {
   projectId: string;
   canWrite: boolean;
@@ -32,6 +33,8 @@ export function ContextTabs({
   decisions: Decision[];
   relations: ContextRelation[];
   sources: ContextSource[];
+  /** `type:id` -> display label, for both ends of every relation - see entity-label.ts. */
+  entityLabels: Record<string, string>;
 }) {
   const [activeTab, setActiveTab] = useState<TabType>("decisions");
 
@@ -160,7 +163,14 @@ export function ContextTabs({
           ) : (
             <div className="space-y-3">
               {relations.map((relation) => (
-                <RelationRow key={relation.id} projectId={projectId} relation={relation} canDelete={canManage} />
+                <RelationRow
+                  key={relation.id}
+                  projectId={projectId}
+                  relation={relation}
+                  canDelete={canManage}
+                  sourceLabel={entityLabels[`${relation.source_type}:${relation.source_id}`]}
+                  targetLabel={entityLabels[`${relation.target_type}:${relation.target_id}`]}
+                />
               ))}
             </div>
           )}

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { fetchProjectRelations } from "@/lib/context/project-relations";
+import { resolveEntityLabels, type EntityRef } from "@/lib/context/entity-label";
 import { ContextTabs } from "./context-tabs";
 import type { Decision, ContextSource, ContextRelation } from "@/types/context";
 
@@ -79,6 +80,18 @@ export default async function ProjectContextPage({
     relations = relationsRes;
   }
 
+  // A relation only stores type+id for each side (context_relations has no
+  // FK to any of the 7 tables it can point at - it can't, since which table
+  // depends on the type column). Resolving both ends' display names here,
+  // once, for every relation on the page, rather than each RelationRow
+  // fetching its own - relations.tsx already renders every row from one
+  // list, so a shared lookup avoids N+1 fetches.
+  const entityRefs: EntityRef[] = relations.flatMap((r) => [
+    { type: r.source_type, id: r.source_id },
+    { type: r.target_type, id: r.target_id },
+  ]);
+  const entityLabels = await resolveEntityLabels(access.userId, entityRefs);
+
   return (
     <ContextTabs
       projectId={projectId}
@@ -87,6 +100,7 @@ export default async function ProjectContextPage({
       decisions={decisions}
       relations={relations}
       sources={sources}
+      entityLabels={Object.fromEntries(entityLabels)}
     />
   );
 }
