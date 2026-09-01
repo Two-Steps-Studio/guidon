@@ -186,16 +186,28 @@ export async function updateMemberRole(
  * access that access implies is a direct, scoped consequence of that
  * decision (only this exact user, only within this exact org's projects) -
  * not a broader RLS bypass.
+ *
+ * Also clears tasks.assignee_id for the same user across those same
+ * projects - same reasoning as the project_members cleanup above: nothing
+ * else ever does this (ON DELETE SET NULL on tasks.assignee_id only fires
+ * for a deleted profiles row, not a removed membership), so without it a
+ * removed member stays the assignee of their tasks indefinitely, and the
+ * assignment silently reappears if they're ever re-added.
  */
 async function removeUserFromOrgProjects(userId: string, orgId: string): Promise<void> {
   if (hasDirectDatabase()) {
-    await withServiceRole(({ query }) =>
-      query(
+    await withServiceRole(async ({ query }) => {
+      await query(
         `DELETE FROM project_members
          WHERE user_id = $1 AND project_id IN (SELECT id FROM projects WHERE organization_id = $2)`,
         [userId, orgId]
-      )
-    );
+      );
+      await query(
+        `UPDATE tasks SET assignee_id = NULL
+         WHERE assignee_id = $1 AND project_id IN (SELECT id FROM projects WHERE organization_id = $2)`,
+        [userId, orgId]
+      );
+    });
     return;
   }
 
@@ -205,6 +217,11 @@ async function removeUserFromOrgProjects(userId: string, orgId: string): Promise
   if (projectIds.length === 0) return;
 
   await supabase.from("project_members").delete().eq("user_id", userId).in("project_id", projectIds);
+  await supabase
+    .from("tasks")
+    .update({ assignee_id: null })
+    .eq("assignee_id", userId)
+    .in("project_id", projectIds);
 }
 
 export async function removeMember(

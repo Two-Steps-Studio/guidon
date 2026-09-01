@@ -167,9 +167,29 @@ export async function removeMember(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM project_members WHERE id = $1", [memberId])
-      );
+      await withUser(access.userId, async ({ query }) => {
+        const row = await query("SELECT user_id FROM project_members WHERE id = $1 AND project_id = $2", [
+          memberId,
+          projectId,
+        ]);
+        const userId = row.rows[0]?.user_id as string | undefined;
+
+        await query("DELETE FROM project_members WHERE id = $1", [memberId]);
+
+        // tasks.assignee_id only clears on ON DELETE SET NULL against a
+        // deleted profiles row (001) - that's a whole account deletion, not
+        // a project membership removal. Without this, a removed member
+        // stays the DB-level assignee of any tasks they had (the board
+        // shows them as "Unassigned" only because the UI's member lookup
+        // misses); if the same person is ever re-added, those stale
+        // assignments silently reappear on their plate.
+        if (userId) {
+          await query("UPDATE tasks SET assignee_id = NULL WHERE project_id = $1 AND assignee_id = $2", [
+            projectId,
+            userId,
+          ]);
+        }
+      });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
     }
@@ -188,9 +208,25 @@ export async function removeMember(
   }
 
   const supabase = await createClient();
+
+  const { data: memberRow } = await supabase
+    .from("project_members")
+    .select("user_id")
+    .eq("id", memberId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+
   const { error } = await supabase.from("project_members").delete().eq("id", memberId);
 
   if (error) return { error: error.message };
+
+  if (memberRow?.user_id) {
+    await supabase
+      .from("tasks")
+      .update({ assignee_id: null })
+      .eq("project_id", projectId)
+      .eq("assignee_id", memberRow.user_id);
+  }
 
   await logActivity({
     userId: access.userId,
