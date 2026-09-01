@@ -9,6 +9,7 @@ import { withUser, type DbSession } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
+import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import { guessTechnologyCategory, technologySlug } from "@/types/technology";
 import type { ProjectStatus, ProjectType } from "@/types/project";
 import type { Technology } from "@/types/technology";
@@ -138,8 +139,12 @@ export async function updateProjectSettings(
 
   let avatarUrl: string | null | undefined;
   if (avatarFile && avatarFile.size > 0) {
-    if (!avatarFile.type.startsWith("image/")) {
-      return { error: "Project image must be an image file." };
+    // Real allowlist, not "starts with image/" (would admit image/svg+xml) -
+    // this upload is always public and served inline, never a forced
+    // download, so an SVG's embedded <script> would execute on open. See
+    // SAFE_INLINE_IMAGE_TYPES's own comment.
+    if (!(SAFE_INLINE_IMAGE_TYPES as readonly string[]).includes(avatarFile.type)) {
+      return { error: "Project image must be a JPEG, PNG, GIF, or WebP image." };
     }
     if (avatarFile.size > 2 * 1024 * 1024) {
       return { error: "Project image is too large. Maximum size: 2MB" };

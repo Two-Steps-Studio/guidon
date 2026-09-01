@@ -7,6 +7,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { uploadFile, ensureBucketExists } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
+import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 
 export type ProfileFormState = {
   error: string | null;
@@ -46,9 +47,13 @@ export async function updateProfile(
         return { error: `Storage bucket could not be created: ${bucketResult.error}` };
       }
 
-      // Validate file type
-      if (!avatarFile.type.startsWith("image/")) {
-        return { error: "Avatar must be an image file." };
+      // Validate file type - a real allowlist, not just "starts with
+      // image/", which would also admit image/svg+xml. This upload is
+      // always public and served inline (never a forced download, unlike
+      // project files - see SAFE_INLINE_IMAGE_TYPES's own comment), so an
+      // SVG's embedded <script> would execute when the URL is opened.
+      if (!(SAFE_INLINE_IMAGE_TYPES as readonly string[]).includes(avatarFile.type)) {
+        return { error: "Avatar must be a JPEG, PNG, GIF, or WebP image." };
       }
 
       // Validate file size (max 2MB)

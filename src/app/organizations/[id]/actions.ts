@@ -11,6 +11,7 @@ import { getUniqueProjectSlug } from "@/lib/data/project-slug";
 import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
+import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import type { ProjectType } from "@/types/project";
 
 export type CreateProjectState = {
@@ -137,8 +138,12 @@ export async function updateOrganizationAvatar(
   if (!avatarFile || avatarFile.size === 0) {
     return { error: "No image selected." };
   }
-  if (!avatarFile.type.startsWith("image/")) {
-    return { error: "Organization image must be an image file." };
+  // Real allowlist, not "starts with image/" (would admit image/svg+xml) -
+  // this upload is always public and served inline, never a forced
+  // download, so an SVG's embedded <script> would execute on open. See
+  // SAFE_INLINE_IMAGE_TYPES's own comment.
+  if (!(SAFE_INLINE_IMAGE_TYPES as readonly string[]).includes(avatarFile.type)) {
+    return { error: "Organization image must be a JPEG, PNG, GIF, or WebP image." };
   }
   if (avatarFile.size > 2 * 1024 * 1024) {
     return { error: "Organization image is too large. Maximum size: 2MB" };

@@ -76,6 +76,18 @@ export const ALLOWED_IMAGE_TYPES = [
   "image/x-icon",
 ] as const;
 
+/**
+ * For avatar/project-image uploads specifically, which are always public
+ * (uploadFile(..., { public: true })) and served inline, unlike the signed,
+ * forced-download URLs project files use (see the `download: true` fix in
+ * providers/supabase.ts). SVG can embed a <script> that executes when its
+ * URL is opened directly - forcing a download isn't an option for something
+ * meant to render as an <img>, so it's excluded here instead of allowed
+ * with a download flag. Deliberately a subset of ALLOWED_IMAGE_TYPES, not a
+ * separate list - every entry here must also be safe as an inline document.
+ */
+export const SAFE_INLINE_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"] as const;
+
 export const ALLOWED_DOCUMENT_TYPES = [
   "application/pdf",
   "application/msword",
