@@ -9,13 +9,15 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { getUniqueProjectSlug } from "@/lib/data/project-slug";
-import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { getOrgPlanLimits, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import {
   runGuidonImport,
   summarizeGuidonImport,
   validateGuidonFile,
   type GuidonImportPreview,
+  type ValidatedGuidonImport,
 } from "@/lib/guidon-export/import-project";
+import type { TaskBoardData } from "@/lib/guidon-export/sections/task-board";
 
 export type { GuidonImportPreview };
 
@@ -97,9 +99,40 @@ async function deleteOrphanedProject(projectId: string, userId: string): Promise
   await supabase.from("projects").delete().eq("id", projectId);
 }
 
+function importedTaskCount(result: ValidatedGuidonImport): number {
+  const taskBoard = result.validatedSections.get("taskBoard") as TaskBoardData | undefined;
+  return taskBoard?.tasks.length ?? 0;
+}
+
+/**
+ * A .guidon import fully replaces the target project's task set - see
+ * taskBoardSection.importData, which deletes every existing task and
+ * inserts the file's tasks in its place - so the count that matters is the
+ * file's own task count, not "existing count + N more" the way
+ * createTask/createSubtask's checkTaskLimit (work/actions.ts) checks it.
+ * Without this, importing a .guidon file was the one write path into
+ * `tasks` that never checked Guidon Cloud's per-project task cap at all.
+ */
+async function checkImportTaskLimit(
+  organizationId: string,
+  taskCount: number
+): Promise<{ error: string | null }> {
+  if (hasDirectDatabase()) return { error: null };
+
+  const { planName, taskLimitPerProject } = await getOrgPlanLimits(organizationId);
+  if (taskLimitPerProject !== null && taskCount > taskLimitPerProject) {
+    return {
+      error: `This file has ${taskCount} tasks, which is over your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan, or trim the file before importing.`,
+    };
+  }
+  return { error: null };
+}
+
 export async function importGuidonFile(input: ImportGuidonFileInput): Promise<ImportGuidonFileResult> {
   const validated = validateGuidonFile(input.fileContent);
   if (!validated.ok) return { error: validated.error };
+
+  const taskCount = importedTaskCount(validated.result);
 
   let projectId: string;
   let userId: string;
@@ -107,8 +140,13 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
   if (input.mode === "new") {
     const orgAccess = await getOrgAccess(input.targetId);
     if (!orgAccess) return { error: "You do not have access to this organization." };
-
     userId = orgAccess.userId;
+
+    // Checked before creating the project so a file that's over the cap
+    // never leaves behind a permanently-empty orphaned project.
+    const limitCheck = await checkImportTaskLimit(input.targetId, taskCount);
+    if (limitCheck.error) return { error: limitCheck.error };
+
     const created = await createProjectForImport(
       input.targetId,
       userId,
@@ -127,6 +165,9 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
     }
     userId = projectAccess.userId;
     projectId = input.targetId;
+
+    const limitCheck = await checkImportTaskLimit(projectAccess.project.organization_id, taskCount);
+    if (limitCheck.error) return { error: limitCheck.error };
   }
 
   try {

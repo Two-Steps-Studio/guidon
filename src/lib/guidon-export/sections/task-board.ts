@@ -37,7 +37,12 @@ const TaskSchema = z.object({
 
 const TaskBoardSchema = z.object({
   columns: z.array(ColumnOverrideSchema).default([]),
-  tasks: z.array(TaskSchema).default([]),
+  // Cap independent of any plan's task limit - insertTasksInDependencyOrder
+  // inserts one row at a time inside a single withUser() connection (or one
+  // request per row on the Supabase path), so an unbounded array is a
+  // resource-exhaustion vector on its own before the plan-limit check in
+  // import-actions.ts even runs.
+  tasks: z.array(TaskSchema).max(5000, "A .guidon file can contain at most 5000 tasks.").default([]),
 });
 
 export type TaskBoardData = z.infer<typeof TaskBoardSchema>;
