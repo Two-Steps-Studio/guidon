@@ -7,6 +7,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { AUTHORABLE_TYPES } from "./source-config";
+import { isSafeHttpUrl } from "@/lib/validation/url";
 import type { SourceType } from "@/types/context";
 
 export type SourceFormState = { error: string | null };
@@ -27,12 +28,20 @@ function parseSourceForm(formData: FormData) {
     return { error: "Title is required." } as const;
   }
 
+  const trimmedUrl = typeof url === "string" ? url.trim() : "";
+  // knowledge-list.tsx / context-tabs.tsx (Context tab renders the same
+  // context_sources rows) both render this straight into an <a href> for
+  // every project member - see lib/validation/url.ts's own comment.
+  if (trimmedUrl && !isSafeHttpUrl(trimmedUrl)) {
+    return { error: "Link must be a valid http(s) URL." } as const;
+  }
+
   return {
     error: null,
     type: type as SourceType,
     title: title.trim(),
     content: typeof content === "string" && content.trim() ? content.trim() : null,
-    url: typeof url === "string" && url.trim() ? url.trim() : null,
+    url: trimmedUrl || null,
   } as const;
 }
 
@@ -128,12 +137,21 @@ export async function updateSource(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
+      // project_id scoping plus a RETURNING/row-count check - same pattern
+      // applied to decisions/memory in a previous audit round: without it, a
+      // sourceId from a different project silently "succeeds" with zero
+      // rows affected instead of returning an error.
+      const result = await withUser(access.userId, ({ query }) =>
         query(
-          "UPDATE context_sources SET source_type = $1, title = $2, content = $3, url = $4 WHERE id = $5",
-          [parsed.type, parsed.title, parsed.content, parsed.url, sourceId]
+          `UPDATE context_sources SET source_type = $1, title = $2, content = $3, url = $4
+           WHERE id = $5 AND project_id = $6
+           RETURNING id`,
+          [parsed.type, parsed.title, parsed.content, parsed.url, sourceId, projectId]
         )
       );
+      if (result.rows.length === 0) {
+        return { error: "This knowledge entry does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update knowledge entry." };
     }
@@ -153,7 +171,7 @@ export async function updateSource(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("context_sources")
     .update({
       source_type: parsed.type,
@@ -161,9 +179,14 @@ export async function updateSource(
       content: parsed.content,
       url: parsed.url,
     })
-    .eq("id", sourceId);
+    .eq("id", sourceId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This knowledge entry does not belong to this project." };
+  }
 
   await logActivity({
     userId: access.userId,
@@ -190,9 +213,15 @@ export async function deleteSource(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM context_sources WHERE id = $1", [sourceId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM context_sources WHERE id = $1 AND project_id = $2 RETURNING id", [
+          sourceId,
+          projectId,
+        ])
       );
+      if (result.rows.length === 0) {
+        return { error: "This knowledge entry does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete knowledge entry." };
     }
@@ -203,9 +232,17 @@ export async function deleteSource(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("context_sources").delete().eq("id", sourceId);
+  const { data, error } = await supabase
+    .from("context_sources")
+    .delete()
+    .eq("id", sourceId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This knowledge entry does not belong to this project." };
+  }
 
   revalidatePath(`/projects/${projectId}/knowledge`);
   revalidatePath(`/projects/${projectId}/context`);

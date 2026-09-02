@@ -13,6 +13,7 @@ import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
 import { resolveColumnRenumbering } from "@/lib/work/task-board";
+import { isSafeHttpUrl } from "@/lib/validation/url";
 import type { AttemptOutcome, Task, TaskAttempt, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
 export type TaskActionResult = { task: Task | null; error: string | null };
@@ -162,6 +163,15 @@ export async function createAttempt(
     return { attempt: null, error: "Problem and approach are required." };
   }
 
+  const trimmedPrUrl = input.related_pr_url.trim();
+  // task-attempts-section.tsx renders this straight into an <a href> for
+  // every project member - a javascript:/data: URI would otherwise store
+  // and later execute in a teammate's session on click. See url.ts's
+  // own comment for the full reasoning.
+  if (trimmedPrUrl && !isSafeHttpUrl(trimmedPrUrl)) {
+    return { attempt: null, error: "PR link must be a valid http(s) URL." };
+  }
+
   const filesChanged = input.files_changed
     .split("\n")
     .map((line) => line.trim())
@@ -175,7 +185,7 @@ export async function createAttempt(
     result: input.result.trim() || null,
     failure_reason: input.failure_reason.trim() || null,
     files_changed: filesChanged,
-    related_pr_url: input.related_pr_url.trim() || null,
+    related_pr_url: trimmedPrUrl || null,
     agent: input.agent.trim() || null,
   };
 
