@@ -64,6 +64,11 @@ export type LocalAuthResult = { userId: string } | { error: string };
 /** Generic on purpose - never reveals whether an email is registered. */
 const INVALID_CREDENTIALS = "Invalid email or password.";
 
+// Any syntactically valid scrypt-format value works here - verifyPassword's
+// cost comes from the scrypt call itself (password + salt + keylen), not
+// from whether the hash actually matches anything real.
+const DUMMY_STORED_PASSWORD = `scrypt:${"00".repeat(16)}:${"00".repeat(SCRYPT_KEYLEN)}`;
+
 export async function signUpLocal(
   email: string,
   password: string,
@@ -75,14 +80,22 @@ export async function signUpLocal(
   if (password.length < 6) return { error: "Password must be at least 6 characters." };
 
   return withServiceRole(async ({ query }) => {
-    const existing = await query("SELECT id FROM auth.users WHERE email = $1", [normalizedEmail]);
+    // Hashing runs concurrently with (not after) the existence check, and
+    // unconditionally regardless of the outcome - scrypt is the expensive
+    // part of this function by a wide margin, so doing it only on the
+    // "email is new" branch made that branch measurably slower than the
+    // "email already exists" branch, a timing side-channel that leaked
+    // exactly what the identical INVALID_CREDENTIALS message was written to
+    // hide. Running it unconditionally in parallel equalizes both branches
+    // structurally instead of approximately.
+    const [existing, encryptedPassword] = await Promise.all([
+      query("SELECT id FROM auth.users WHERE email = $1", [normalizedEmail]),
+      hashPassword(password),
+    ]);
     if (existing.rows.length > 0) {
-      // Same generic message as a failed login - confirming an email exists
-      // via signup is the same enumeration leak as confirming it via login.
       return { error: INVALID_CREDENTIALS };
     }
 
-    const encryptedPassword = await hashPassword(password);
     const metadata = fullName ? { full_name: fullName } : {};
 
     const result = await query(
@@ -112,12 +125,17 @@ export async function signInLocal(email: string, password: string): Promise<Loca
     );
 
     if (result.rows.length === 0) {
+      // Same reasoning as signUpLocal: run a same-cost dummy verify so a
+      // nonexistent email doesn't return measurably faster than a wrong
+      // password for a real one.
+      await verifyPassword(password, DUMMY_STORED_PASSWORD);
       recordFailedAttempt(normalizedEmail);
       return { error: INVALID_CREDENTIALS };
     }
 
     const row = result.rows[0] as { id: string; encrypted_password: string | null };
     if (!row.encrypted_password) {
+      await verifyPassword(password, DUMMY_STORED_PASSWORD);
       recordFailedAttempt(normalizedEmail);
       return { error: INVALID_CREDENTIALS };
     }
