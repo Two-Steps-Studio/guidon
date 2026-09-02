@@ -109,7 +109,8 @@ export function WorkBoard({
   const progress = useMemo(() => boardProgress(topLevelTasks), [topLevelTasks]);
 
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
-    const previous = state.tasks;
+    const previousStatus = task.status;
+    const previousSortOrder = task.sort_order;
 
     // Optimistic: the board should feel instant on drop.
     setState((current) => ({
@@ -121,7 +122,20 @@ export function WorkBoard({
 
     const result = await moveTask(projectId, task.id, status, sortOrder);
     if (result.error) {
-      setState((current) => ({ ...current, tasks: previous }));
+      // Roll back only this task's fields, not the whole tasks array as a
+      // snapshot taken at the start of this call - restoring the full
+      // snapshot would also discard any *other* move that was optimistically
+      // applied and already succeeded in between (two drags/reorders fired
+      // in quick succession, or a slow request resolving after a faster
+      // later one), leaving a card showing the wrong column until reload.
+      setState((current) => ({
+        ...current,
+        tasks: current.tasks.map((item) =>
+          item.id === task.id
+            ? { ...item, status: previousStatus, sort_order: previousSortOrder }
+            : item
+        ),
+      }));
       setError(result.error);
     }
   };
