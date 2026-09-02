@@ -33,6 +33,13 @@ export function getPool(): Pool {
     );
   }
 
+  // A non-numeric DATABASE_POOL_MAX (typo, empty string) would otherwise
+  // pass NaN straight to pg.Pool's max option - falling back to the same
+  // default a missing value gets, rather than letting a malformed one
+  // silently produce whatever pg does with NaN.
+  const configuredPoolMax = Number(process.env.DATABASE_POOL_MAX);
+  const poolMax = Number.isFinite(configuredPoolMax) && configuredPoolMax > 0 ? configuredPoolMax : 10;
+
   pool = new Pool({
     connectionString,
     // Supabase requires TLS; a local container in the compose network does not
@@ -41,7 +48,7 @@ export function getPool(): Pool {
     ssl: /supabase\.(co|com|net)/.test(connectionString)
       ? { rejectUnauthorized: true }
       : undefined,
-    max: Number(process.env.DATABASE_POOL_MAX ?? 10),
+    max: poolMax,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
   });
