@@ -251,11 +251,21 @@ export async function updateDecision(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
+      // project_id scoping plus a RETURNING/row-count check: without it, a
+      // decisionId that doesn't belong to projectId (stale client state, or
+      // a crafted request against a decision from a different project this
+      // caller happens to also have a role on) would previously either
+      // update the wrong project's decision (no WHERE project_id at all) or,
+      // once RLS's own project-scoped policy caught it, silently affect zero
+      // rows while this still returned `{ error: null }` "success" and logged
+      // a misleading activity entry. Same bug class as setStatusAndLog
+      // (lib/api/task-transitions.ts).
+      const result = await withUser(access.userId, ({ query }) =>
         query(
           `UPDATE context_decisions
            SET title = $1, description = $2, impact = $3, alternatives = $4, status = $5, decision_type = $6
-           WHERE id = $7`,
+           WHERE id = $7 AND project_id = $8
+           RETURNING id`,
           [
             parsed.title,
             parsed.description,
@@ -264,9 +274,13 @@ export async function updateDecision(
             parsed.status,
             parsed.decision_type,
             decisionId,
+            projectId,
           ]
         )
       );
+      if (result.rows.length === 0) {
+        return { error: "This decision does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update decision." };
     }
@@ -286,7 +300,7 @@ export async function updateDecision(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("context_decisions")
     .update({
       title: parsed.title,
@@ -296,9 +310,14 @@ export async function updateDecision(
       status: parsed.status,
       decision_type: parsed.decision_type,
     })
-    .eq("id", decisionId);
+    .eq("id", decisionId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This decision does not belong to this project." };
+  }
 
   await logActivity({
     userId: access.userId,
@@ -325,9 +344,15 @@ export async function deleteDecision(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM context_decisions WHERE id = $1", [decisionId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM context_decisions WHERE id = $1 AND project_id = $2 RETURNING id", [
+          decisionId,
+          projectId,
+        ])
       );
+      if (result.rows.length === 0) {
+        return { error: "This decision does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete decision." };
     }
@@ -338,9 +363,17 @@ export async function deleteDecision(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("context_decisions").delete().eq("id", decisionId);
+  const { data, error } = await supabase
+    .from("context_decisions")
+    .delete()
+    .eq("id", decisionId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This decision does not belong to this project." };
+  }
 
   revalidatePath(`/projects/${projectId}/decisions`);
   revalidatePath(`/projects/${projectId}/context`);
