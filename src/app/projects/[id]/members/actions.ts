@@ -128,9 +128,23 @@ export async function changeMemberRole(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("UPDATE project_members SET role = $1 WHERE id = $2", [role, memberId])
+      // project_id scoping plus a RETURNING/row-count check - mirrors
+      // removeMember just below. Without it, a memberId that doesn't belong
+      // to projectId - or one RLS itself rejected (project_members_update_admin
+      // blocking an admin from touching an owner row) - silently affected
+      // zero rows while this still returned success and logged a
+      // "member_role_changed" activity entry for a change that never
+      // happened.
+      const result = await withUser(access.userId, ({ query }) =>
+        query("UPDATE project_members SET role = $1 WHERE id = $2 AND project_id = $3 RETURNING id", [
+          role,
+          memberId,
+          projectId,
+        ])
       );
+      if (result.rows.length === 0) {
+        return { error: "This member does not belong to this project, or that role change isn't allowed." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to change role." };
     }
@@ -149,9 +163,17 @@ export async function changeMemberRole(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("project_members").update({ role }).eq("id", memberId);
+  const { data, error } = await supabase
+    .from("project_members")
+    .update({ role })
+    .eq("id", memberId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This member does not belong to this project, or that role change isn't allowed." };
+  }
 
   await logActivity({
     userId: access.userId,

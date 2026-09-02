@@ -139,9 +139,24 @@ export async function updateMemberRole(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("UPDATE organization_members SET role = $1 WHERE id = $2", [role, memberId])
+      // organization_id scoping plus a RETURNING/row-count check - mirrors
+      // removeMember just below (and the same pattern already applied to
+      // decisions/memory/knowledge actions). Without it, a memberId that
+      // doesn't belong to orgId - or one RLS itself rejected (an admin
+      // attempting to change an owner's role, blocked by
+      // organization_members_update_admin's own USING clause) - silently
+      // affected zero rows while this still returned success and logged a
+      // "member_role_changed" activity entry for a change that never
+      // happened.
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          "UPDATE organization_members SET role = $1 WHERE id = $2 AND organization_id = $3 RETURNING id",
+          [role, memberId, orgId]
+        )
       );
+      if (result.rows.length === 0) {
+        return { error: "This member does not belong to this organization, or that role change isn't allowed." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to change role." };
     }
@@ -160,13 +175,18 @@ export async function updateMemberRole(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("organization_members")
     .update({ role })
-    .eq("id", memberId);
+    .eq("id", memberId)
+    .eq("organization_id", orgId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!data || data.length === 0) {
+    return { error: "This member does not belong to this organization, or that role change isn't allowed." };
   }
 
   await logActivity({
