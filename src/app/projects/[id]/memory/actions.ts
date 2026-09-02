@@ -7,6 +7,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
+import { isInsightRateLimited, recordInsightGeneration } from "@/lib/ai/insight-rate-limit";
 import type { MemoryType } from "@/types/context";
 
 export type MemoryFormState = {
@@ -128,13 +129,19 @@ export async function updateMemory(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("UPDATE project_memory SET content = $1, memory_type = $2 WHERE id = $3", [
-          parsed.content,
-          parsed.memoryType,
-          memoryId,
-        ])
+      // project_id scoping plus a RETURNING/row-count check - see the
+      // matching comment on updateDecision (decisions/actions.ts) for why:
+      // without it, a memoryId from a different project silently "succeeds"
+      // with zero rows affected instead of returning an error.
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          "UPDATE project_memory SET content = $1, memory_type = $2 WHERE id = $3 AND project_id = $4 RETURNING id",
+          [parsed.content, parsed.memoryType, memoryId, projectId]
+        )
       );
+      if (result.rows.length === 0) {
+        return { error: "This memory entry does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update memory entry." };
     }
@@ -152,12 +159,17 @@ export async function updateMemory(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("project_memory")
     .update({ content: parsed.content, memory_type: parsed.memoryType })
-    .eq("id", memoryId);
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This memory entry does not belong to this project." };
+  }
 
   await logActivity({
     userId: access.userId,
@@ -184,9 +196,15 @@ export async function deleteMemory(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM project_memory WHERE id = $1", [memoryId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM project_memory WHERE id = $1 AND project_id = $2 RETURNING id", [
+          memoryId,
+          projectId,
+        ])
       );
+      if (result.rows.length === 0) {
+        return { error: "This memory entry does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete memory entry." };
     }
@@ -196,9 +214,17 @@ export async function deleteMemory(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("project_memory").delete().eq("id", memoryId);
+  const { data, error } = await supabase
+    .from("project_memory")
+    .delete()
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This memory entry does not belong to this project." };
+  }
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
@@ -230,14 +256,18 @@ export async function acceptInsight(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
+      const result = await withUser(access.userId, ({ query }) =>
         query(
           `UPDATE project_memory
            SET memory_type = 'fact', verified = true, verified_by = $1, verified_at = now()
-           WHERE id = $2`,
-          [access.userId, memoryId]
+           WHERE id = $2 AND project_id = $3
+           RETURNING id`,
+          [access.userId, memoryId, projectId]
         )
       );
+      if (result.rows.length === 0) {
+        return { error: "This insight does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to accept insight." };
     }
@@ -255,7 +285,7 @@ export async function acceptInsight(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("project_memory")
     .update({
       memory_type: "fact",
@@ -263,9 +293,14 @@ export async function acceptInsight(
       verified_by: access.userId,
       verified_at: new Date().toISOString(),
     })
-    .eq("id", memoryId);
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This insight does not belong to this project." };
+  }
 
   await logActivity({
     userId: access.userId,
@@ -303,14 +338,18 @@ export async function correctAndAcceptInsight(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
+      const result = await withUser(access.userId, ({ query }) =>
         query(
           `UPDATE project_memory
            SET content = $1, memory_type = 'fact', verified = true, verified_by = $2, verified_at = now()
-           WHERE id = $3`,
-          [content.trim(), access.userId, memoryId]
+           WHERE id = $3 AND project_id = $4
+           RETURNING id`,
+          [content.trim(), access.userId, memoryId, projectId]
         )
       );
+      if (result.rows.length === 0) {
+        return { error: "This insight does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to accept insight." };
     }
@@ -328,7 +367,7 @@ export async function correctAndAcceptInsight(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("project_memory")
     .update({
       content: content.trim(),
@@ -337,9 +376,14 @@ export async function correctAndAcceptInsight(
       verified_by: access.userId,
       verified_at: new Date().toISOString(),
     })
-    .eq("id", memoryId);
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This insight does not belong to this project." };
+  }
 
   await logActivity({
     userId: access.userId,
@@ -370,9 +414,15 @@ export async function rejectInsight(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM project_memory WHERE id = $1", [memoryId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM project_memory WHERE id = $1 AND project_id = $2 RETURNING id", [
+          memoryId,
+          projectId,
+        ])
       );
+      if (result.rows.length === 0) {
+        return { error: "This insight does not belong to this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to reject insight." };
     }
@@ -382,9 +432,17 @@ export async function rejectInsight(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("project_memory").delete().eq("id", memoryId);
+  const { data, error } = await supabase
+    .from("project_memory")
+    .delete()
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This insight does not belong to this project." };
+  }
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
@@ -498,6 +556,10 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
     return { error: "No AI provider is configured for this organization." };
   }
 
+  if (isInsightRateLimited(access.userId, projectId)) {
+    return { error: "You're generating insights too quickly - wait a few minutes and try again." };
+  }
+
   const { facts, constraints, decisions } = await gatherInsightContext(projectId, access.userId);
 
   if (facts.length === 0 && constraints.length === 0 && decisions.length === 0) {
@@ -521,6 +583,8 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
   ]
     .filter((block): block is string => block !== null)
     .join("\n\n");
+
+  recordInsightGeneration(access.userId, projectId);
 
   let text: string;
   try {
