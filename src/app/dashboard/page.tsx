@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
 import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 
 interface ProjectRow {
@@ -37,14 +38,26 @@ async function loadDashboardDataLocal(userId: string) {
   // they can't join the same withUser() call as a Promise.all - that would
   // fire multiple queries on one pg client, which is deprecated (removed in
   // pg@9). Each withUser() below owns its own pooled connection instead.
-  const projectsResult = await withUser(userId, ({ query }) =>
-    query(
-      `SELECT p.id, p.name, p.description, p.status, p.avatar_url, p.project_type, o.id AS org_id, o.name AS org_name
-       FROM projects p
-       JOIN organizations o ON o.id = p.organization_id
-       ORDER BY p.created_at DESC`
-    )
-  );
+  //
+  // LIMITed the same as /projects (PROJECT_LIST_SAFETY_CAP) - self-hosted
+  // has no cap on how many projects a user can belong to, so this used to
+  // pull and render every one of them on every dashboard visit. The actual
+  // "Total Projects" stat is a separate COUNT(*) below rather than
+  // projects.length, so it stays accurate past the cap even though the
+  // rendered card list doesn't.
+  const [projectsResult, projectCountResult] = await Promise.all([
+    withUser(userId, ({ query }) =>
+      query(
+        `SELECT p.id, p.name, p.description, p.status, p.avatar_url, p.project_type, o.id AS org_id, o.name AS org_name
+         FROM projects p
+         JOIN organizations o ON o.id = p.organization_id
+         ORDER BY p.created_at DESC
+         LIMIT $1`,
+        [PROJECT_LIST_SAFETY_CAP]
+      )
+    ),
+    withUser(userId, ({ query }) => query("SELECT COUNT(*) AS total FROM projects")),
+  ]);
 
   const projects: ProjectRow[] = projectsResult.rows.map((row) => ({
     id: row.id,
@@ -55,6 +68,7 @@ async function loadDashboardDataLocal(userId: string) {
     project_type: row.project_type,
     organizations: row.org_id ? { id: row.org_id, name: row.org_name } : null,
   }));
+  const totalProjects = Number(projectCountResult.rows[0]?.total ?? 0);
 
   const projectIds = projects.map((p) => p.id);
 
@@ -90,13 +104,14 @@ async function loadDashboardDataLocal(userId: string) {
     totalDecisions = Number(decisionsResult.rows[0]?.total ?? 0);
   }
 
-  return { projects, totalTasks, completedTasks, totalDecisions };
+  return { projects, totalProjects, totalTasks, completedTasks, totalDecisions };
 }
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
   let projects: ProjectRow[];
+  let totalProjects: number;
   let totalTasks: number;
   let completedTasks: number;
   let totalDecisions: number;
@@ -104,19 +119,30 @@ export default async function DashboardPage() {
   if (hasDirectDatabase()) {
     const data = await loadDashboardDataLocal(user.id);
     projects = data.projects;
+    totalProjects = data.totalProjects;
     totalTasks = data.totalTasks;
     completedTasks = data.completedTasks;
     totalDecisions = data.totalDecisions;
   } else {
     const supabase = await createClient();
 
-    const { data: projectsData, error: projectsError } = await supabase
-      .from("projects")
-      .select("id, name, description, status, avatar_url, project_type, organizations (id, name)")
-      .order("created_at", { ascending: false });
-    if (projectsError) throw new Error(`Failed to load projects: ${projectsError.message}`);
+    // LIMITed the same as /projects - see the matching comment in
+    // loadDashboardDataLocal above. total_projects is a separate exact
+    // count() so the stat card stays accurate past the cap even though the
+    // rendered card list below doesn't.
+    const [projectsRes, projectCountRes] = await Promise.all([
+      supabase
+        .from("projects")
+        .select("id, name, description, status, avatar_url, project_type, organizations (id, name)")
+        .order("created_at", { ascending: false })
+        .limit(PROJECT_LIST_SAFETY_CAP),
+      supabase.from("projects").select("id", { count: "exact", head: true }),
+    ]);
+    if (projectsRes.error) throw new Error(`Failed to load projects: ${projectsRes.error.message}`);
+    if (projectCountRes.error) throw new Error(`Failed to load projects: ${projectCountRes.error.message}`);
 
-    projects = (projectsData ?? []) as unknown as ProjectRow[];
+    projects = (projectsRes.data ?? []) as unknown as ProjectRow[];
+    totalProjects = projectCountRes.count ?? 0;
     const projectIds = projects.map((p) => p.id);
 
     totalTasks = 0;
@@ -157,7 +183,7 @@ export default async function DashboardPage() {
   }
 
   const stats = {
-    total_projects: projects.length,
+    total_projects: totalProjects,
     totalTasks,
     completedTasks,
     totalDecisions,
@@ -216,12 +242,19 @@ export default async function DashboardPage() {
 
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Your Projects</h2>
-          <Button asChild>
-            <Link href="/organizations">
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {totalProjects > projects.length && (
+              <Button variant="outline" asChild>
+                <Link href="/projects">View all {totalProjects}</Link>
+              </Button>
+            )}
+            <Button asChild>
+              <Link href="/organizations">
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {projects.length === 0 ? (

@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
 import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 import { ImportProjectDialog } from "./import-project-dialog";
 
@@ -31,12 +32,6 @@ interface OrganizationRow {
   avatar_url: string | null;
   user_role: string;
 }
-
-// Safety cap, not pagination - high enough that no real user or self-hosted
-// instance would ever hit it in practice (Guidon Cloud additionally caps
-// projects per org, see limits.ts), matching the same pattern already
-// applied to work/page.tsx's task list.
-const PROJECT_LIST_LIMIT = 1000;
 
 export default async function ProjectsPage() {
   const user = await getCurrentUser();
@@ -66,7 +61,7 @@ export default async function ProjectsPage() {
            JOIN organizations o ON o.id = p.organization_id
            ORDER BY p.created_at DESC
            LIMIT $1`,
-          [PROJECT_LIST_LIMIT]
+          [PROJECT_LIST_SAFETY_CAP]
         )
       ),
     ]);
@@ -100,7 +95,7 @@ export default async function ProjectsPage() {
         .from("projects")
         .select("id, name, description, status, avatar_url, project_type, organizations (id, name)")
         .order("created_at", { ascending: false })
-        .limit(PROJECT_LIST_LIMIT),
+        .limit(PROJECT_LIST_SAFETY_CAP),
     ]);
 
     organizations = (orgResult.data ?? []).map((member: any) => ({

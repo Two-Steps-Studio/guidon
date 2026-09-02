@@ -16,6 +16,15 @@ import { hasDirectDatabase } from "@/lib/db/pool";
  */
 export const HOSTED_PROJECT_LIMIT_PER_ORG = 1;
 
+/**
+ * Safety cap (not real pagination) for any query that lists every project a
+ * user can see across all their organizations - self-hosted has no plan
+ * concept, so nothing else bounds how many rows that can return. Shared by
+ * /projects and the dashboard so both pages use the same ceiling instead of
+ * two independently-chosen literals.
+ */
+export const PROJECT_LIST_SAFETY_CAP = 1000;
+
 export function isHostedProjectLimitReached(
   currentProjectCount: number,
   limit: number = HOSTED_PROJECT_LIMIT_PER_ORG
