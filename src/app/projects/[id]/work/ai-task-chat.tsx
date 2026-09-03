@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AlertCircle, Loader2, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,9 +59,21 @@ export function AiTaskChat({
   const [addingIndex, setAddingIndex] = useState<number | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
 
+  // Bumped by resetChat (and so by every close/reopen) so an in-flight
+  // handleSend from a previous conversation can tell it's no longer current.
+  // sendTaskChatMessage has no AbortController - it's a Server Action, not a
+  // fetch this component owns - so closing the sheet mid-request can't
+  // actually cancel the call, only stop applying its result: without this
+  // guard, a reply that resolves after the sheet was closed and reopened
+  // (or just reset) would setMessages() onto the new, empty conversation,
+  // appearing as an assistant message with no matching user message.
+  const generationRef = useRef(0);
+
   const resetChat = () => {
+    generationRef.current += 1;
     setMessages([]);
     setInput("");
+    setSending(false);
     setSendError(null);
     setAddError(null);
   };
@@ -75,6 +87,7 @@ export function AiTaskChat({
     const trimmed = input.trim();
     if (!trimmed || sending) return;
 
+    const generation = generationRef.current;
     setSendError(null);
     const nextMessages: DisplayMessage[] = [
       ...messages,
@@ -90,6 +103,7 @@ export function AiTaskChat({
     }));
 
     const result = await sendTaskChatMessage(projectId, history);
+    if (generation !== generationRef.current) return; // chat was reset while this was in flight
     setSending(false);
 
     if (result.error) {
