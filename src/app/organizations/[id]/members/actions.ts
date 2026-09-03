@@ -69,8 +69,10 @@ export async function addMember(
         return profileResult.rows[0].id as string;
       });
     } catch (error) {
-      // 23505 = unique_violation - organization_members_org_user_unique
-      // (026). A friendlier message than the raw constraint-violation text.
+      // 23505 = unique_violation - uq_organization_members_org_user (001;
+      // 026 also added its own copy of this constraint, later dropped as
+      // redundant by 027). A friendlier message than the raw
+      // constraint-violation text.
       if (isUniqueViolation(error)) {
         return { error: "This person is already a member of this organization." };
       }

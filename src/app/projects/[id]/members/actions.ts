@@ -73,7 +73,9 @@ export async function addMember(
       revalidatePath(`/projects/${projectId}/members`);
       return { member, error: null };
     } catch (error) {
-      // 23505 = unique_violation - project_members_project_user_unique (026).
+      // 23505 = unique_violation - uq_project_members_project_user (001;
+      // 026 also added its own copy of this constraint, later dropped as
+      // redundant by 027).
       if (isUniqueViolation(error)) {
         return { member: null, error: "This person is already a member of this project." };
       }
