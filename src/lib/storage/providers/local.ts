@@ -10,6 +10,7 @@ import {
   type StorageProvider,
   type UploadOptions,
 } from "../provider";
+import { SITE_URL } from "@/lib/site-url";
 
 /**
  * Local filesystem storage - the self-hosted default (TODO.md §5).
@@ -133,8 +134,16 @@ export class LocalStorageProvider implements StorageProvider {
       ...(isPublic ? { public: "1" } : {}),
     });
 
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
-    return `${base}/api/storage?${params.toString()}`;
+    // SITE_URL (lib/site-url.ts), not a direct NEXT_PUBLIC_APP_URL read - this
+    // method runs server-side only (this whole provider does real filesystem
+    // I/O), so it doesn't need the client-exposed var, and reading it
+    // directly here was a second, unnormalized "site origin" source that the
+    // APP_URL fix didn't cover: a bare-domain NEXT_PUBLIC_APP_URL wouldn't
+    // crash (this is plain string concatenation, not new URL()), but would
+    // silently produce a broken signed URL like "useguidon.com/api/storage?..."
+    // that browsers resolve as a relative path against the current page
+    // instead of the intended origin.
+    return `${SITE_URL}/api/storage?${params.toString()}`;
   }
 
   async usage(bucket: string, prefix: string): Promise<number> {

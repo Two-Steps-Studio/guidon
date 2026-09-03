@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/auth/session-cookie'
+import { assertValidSupabaseUrl } from '@/lib/supabase-env'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
@@ -81,9 +82,23 @@ export async function proxy(request: NextRequest) {
   // onto it; returning a different response would drop the rotated session.
   let response = NextResponse.next({ request })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+    )
+  }
+  // This middleware matches nearly every route (see config.matcher below), so
+  // an unvalidated malformed value here doesn't fail one page the way a bad
+  // APP_URL did - createServerClient's SDK throws ERR_INVALID_URL deep inside
+  // its own fetch layer on the first request, taking down every request.
+  // Validating up front turns that into one clear, diagnosable error instead.
+  assertValidSupabaseUrl(supabaseUrl)
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {

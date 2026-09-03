@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { assertValidSupabaseUrl } from './supabase-env'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -12,6 +13,7 @@ export async function createClient() {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Missing Supabase environment variables')
   }
+  assertValidSupabaseUrl(supabaseUrl)
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -37,6 +39,7 @@ export function createServiceClient() {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     throw new Error('Missing Supabase service role environment variables')
   }
+  assertValidSupabaseUrl(supabaseUrl)
 
   return createSupabaseClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {

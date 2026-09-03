@@ -83,6 +83,13 @@ services:
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
       STORAGE_PATH: /app/storage
 
+      # Server-only counterpart of the NEXT_PUBLIC_APP_URL build arg above -
+      # read at runtime by lib/site-url.ts for metadataBase, robots.ts, and
+      # sitemap.ts. Without this, a self-hosted instance silently fell back
+      # to site-url.ts's own useguidon.com default and advertised the wrong
+      # origin in its own meta tags/robots.txt/sitemap.xml.
+      APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-3000}}
+
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
 
       AI_PROVIDER: ${AI_PROVIDER:-}
