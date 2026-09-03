@@ -35,6 +35,11 @@ export async function addMember(
   if (typeof email !== "string" || !email.trim()) {
     return { error: "Email is required." };
   }
+  // Every signup path (local-auth.ts, GoTrue) lowercases before storing, so
+  // profiles.email is always lowercase - comparing against the raw,
+  // as-typed input here made "John@Example.com" fail to find an account
+  // actually stored as "john@example.com", the normal case.
+  const normalizedEmail = email.trim().toLowerCase();
   if (role !== "member" && role !== "admin" && role !== "owner") {
     return { error: "Invalid role." };
   }
@@ -51,7 +56,7 @@ export async function addMember(
     try {
       addedUserId = await withUser(access.userId, async ({ query }) => {
         const profileResult = await query("SELECT id FROM profiles WHERE email = $1", [
-          email.trim(),
+          normalizedEmail,
         ]);
         if (profileResult.rows.length === 0) {
           throw new Error("User with this email not found.");
@@ -90,7 +95,7 @@ export async function addMember(
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id")
-    .eq("email", email.trim())
+    .eq("email", normalizedEmail)
     .maybeSingle();
 
   if (profileError || !profile) {
