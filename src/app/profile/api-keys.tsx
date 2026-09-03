@@ -10,12 +10,28 @@ import { AlertCircle, Copy, KeyRound, Trash2 } from "lucide-react";
 import { API_KEY_SCOPES } from "@/lib/api/scopes";
 import { createApiKey, revokeApiKey, type ApiKeyRow, type CreateApiKeyState } from "./api-keys-actions";
 
-const initialState: CreateApiKeyState = { error: null, fullKey: null };
+const initialState: CreateApiKeyState = { error: null, fullKey: null, row: null };
 
 export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   const [keys, setKeys] = useState(initialKeys);
   const [state, formAction, creating] = useActionState(createApiKey, initialState);
   const [revoking, startRevoke] = useTransition();
+
+  // useState(initialKeys) only re-seeds on remount, so revalidatePath("/profile")
+  // alone doesn't get the freshly created key into this list - without this,
+  // the "copy it now" banner appeared but the key was invisible below it
+  // until a manual reload, looking like creation had silently failed.
+  // Adjusted during render rather than in an effect (React's own recommended
+  // pattern - see the matching comment in ai-settings-form.tsx) - `state.row`
+  // is null on first render, so this never fires on mount.
+  const [reactedTo, setReactedTo] = useState(state);
+  if (state !== reactedTo) {
+    setReactedTo(state);
+    if (state.row) {
+      const newRow = state.row;
+      setKeys((prev) => (prev.some((k) => k.id === newRow.id) ? prev : [newRow, ...prev]));
+    }
+  }
 
   const handleRevoke = (keyId: string) => {
     startRevoke(async () => {

@@ -40,7 +40,7 @@ export async function listApiKeys(): Promise<ApiKeyRow[]> {
   return (data ?? []) as ApiKeyRow[];
 }
 
-export type CreateApiKeyState = { error: string | null; fullKey: string | null };
+export type CreateApiKeyState = { error: string | null; fullKey: string | null; row: ApiKeyRow | null };
 
 export async function createApiKey(
   _prevState: CreateApiKeyState,
@@ -50,36 +50,48 @@ export async function createApiKey(
 
   const name = formData.get("name");
   if (typeof name !== "string" || !name.trim()) {
-    return { error: "Name is required.", fullKey: null };
+    return { error: "Name is required.", fullKey: null, row: null };
   }
 
   const selectedScopes = API_KEY_SCOPES.filter((scope) => formData.get(`scope:${scope}`) === "on");
   if (selectedScopes.length === 0) {
-    return { error: "Select at least one scope.", fullKey: null };
+    return { error: "Select at least one scope.", fullKey: null, row: null };
   }
 
   const fullKey = generateApiKey();
   const hash = hashApiKey(fullKey);
   const prefix = keyPrefix(fullKey);
 
+  // Returned to the caller (not just revalidatePath'd) so the client
+  // component can append the new key to its list immediately - it holds
+  // `keys` in useState seeded from the initial server render, which
+  // revalidatePath() alone doesn't update without a remount.
+  let row: ApiKeyRow;
+
   if (hasDirectDatabase()) {
-    await withUser(user.id, ({ query }) =>
+    const result = await withUser(user.id, ({ query }) =>
       query(
-        "INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, $2, $3, $4, $5)",
+        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, name, key_prefix, scopes, created_at, last_used_at, revoked_at`,
         [user.id, name.trim(), prefix, hash, selectedScopes]
       )
     );
+    row = result.rows[0] as ApiKeyRow;
   } else {
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("api_keys")
-      .insert({ user_id: user.id, name: name.trim(), key_prefix: prefix, key_hash: hash, scopes: selectedScopes });
+      .insert({ user_id: user.id, name: name.trim(), key_prefix: prefix, key_hash: hash, scopes: selectedScopes })
+      .select("id, name, key_prefix, scopes, created_at, last_used_at, revoked_at")
+      .single();
 
-    if (error) return { error: error.message, fullKey: null };
+    if (error) return { error: error.message, fullKey: null, row: null };
+    row = data as ApiKeyRow;
   }
 
   revalidatePath("/profile");
-  return { error: null, fullKey };
+  return { error: null, fullKey, row };
 }
 
 export async function revokeApiKey(keyId: string): Promise<{ error: string | null }> {
