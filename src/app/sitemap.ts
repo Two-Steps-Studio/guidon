@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site-url'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.APP_URL || 'https://useguidon.com'
-  
+  const baseUrl = SITE_URL
+
   // Only include public pages that should be indexed by search engines
   const routes: MetadataRoute.Sitemap = [
     {

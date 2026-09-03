@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 const GA_MEASUREMENT_ID = "G-7PBQ5Y339N";
@@ -16,7 +17,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
-const SITE_URL = process.env.APP_URL || "https://useguidon.com";
 const SITE_NAME = "Guidon";
 const SITE_TITLE = "Guidon - Context-First Project Management";
 const SITE_DESCRIPTION =
