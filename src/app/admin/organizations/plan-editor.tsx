@@ -22,10 +22,16 @@ export function PlanEditor({
   const [error, setError] = useState<string | null>(null);
 
   const save = (planId: string) => {
+    const previous = value;
     setValue(planId);
     startTransition(async () => {
       const result = await updateOrganizationPlan(orgId, planId);
       setError(result.error);
+      // Optimistic - the <select> already shows planId. Without reverting on
+      // failure, a rejected change (permission/validation error) left the
+      // dropdown showing a plan that was never actually saved, with only an
+      // easy-to-miss inline error as the only sign anything went wrong.
+      if (result.error) setValue(previous);
     });
   };
 

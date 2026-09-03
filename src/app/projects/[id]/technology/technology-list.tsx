@@ -103,12 +103,18 @@ export function TechnologyList({
   }, [technologies]);
 
   const handleDelete = async (tech: Technology) => {
-    const previous = technologies;
     setTechnologies((current) => current.filter((t) => t.id !== tech.id));
 
     const result = await deleteTechnology(projectId, tech.id);
     if (result.error) {
-      setTechnologies(previous);
+      // Re-insert only this item, not a snapshot taken at the start of this
+      // call - restoring a full "previous" snapshot would also resurrect
+      // any OTHER technology whose own delete had already succeeded in the
+      // meantime (two deletes fired in quick succession), since both
+      // closures would have captured the same pre-delete array.
+      setTechnologies((current) =>
+        current.some((t) => t.id === tech.id) ? current : [...current, tech]
+      );
       setError(result.error);
     }
   };
