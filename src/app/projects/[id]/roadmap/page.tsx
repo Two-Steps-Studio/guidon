@@ -7,6 +7,7 @@ import { canManageProject, requireProjectAccess } from "@/lib/data/project-acces
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { formatCalendarDate } from "@/lib/date";
 import { CreatePhaseDialog } from "./create-phase-dialog";
 import { PhaseCardMenu } from "./phase-card-menu";
 import { STATUS_CONFIG } from "./phase-status-config";
@@ -112,7 +113,7 @@ export default async function ProjectRoadmapPage({
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="text-muted-foreground">Start:</span>
                       <span>
-                        {phase.start_date ? new Date(phase.start_date).toLocaleDateString() : "Not set"}
+                        {phase.start_date ? formatCalendarDate(phase.start_date) : "Not set"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
@@ -120,7 +121,7 @@ export default async function ProjectRoadmapPage({
                       <span className="text-muted-foreground">End:</span>
                       <span>
                         {phase.planned_end_date
-                          ? new Date(phase.planned_end_date).toLocaleDateString()
+                          ? formatCalendarDate(phase.planned_end_date)
                           : "Not set"}
                       </span>
                     </div>

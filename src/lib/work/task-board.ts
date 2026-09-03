@@ -7,6 +7,7 @@
  * never drift apart.
  */
 
+import { formatCalendarDate, utcDaysBetween } from "@/lib/date";
 import type {
   LegacyTaskStatus,
   Task,
@@ -327,11 +328,14 @@ export function dueState(
   const due = new Date(dueDate).getTime();
   if (Number.isNaN(due)) return "none";
 
-  const dayMs = 24 * 60 * 60 * 1000;
-  const delta = due - Date.now();
+  // Calendar-day comparison, not an instant delta - due_date is written as
+  // UTC midnight of the picked day (see lib/date.ts), so comparing exact
+  // instants against Date.now() flips "overdue" up to a full day early for
+  // any viewer west of UTC, and up to a day late for anyone east of it.
+  const daysUntilDue = utcDaysBetween(Date.now(), due);
 
-  if (delta < 0) return "overdue";
-  if (delta < 2 * dayMs) return "soon";
+  if (daysUntilDue < 0) return "overdue";
+  if (daysUntilDue <= 1) return "soon"; // due today or tomorrow
   return "upcoming";
 }
 
@@ -342,17 +346,7 @@ export const DUE_STATE_CLASSES: Record<DueState, string> = {
   overdue: "text-danger",
 };
 
-export function formatDueDate(dueDate: string): string {
-  const date = new Date(dueDate);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year:
-      date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
-  });
-}
+export const formatDueDate = formatCalendarDate;
 
 // ============================================
 // SORT ORDER
