@@ -5,6 +5,7 @@ import { requireAdminAccess } from "@/lib/data/admin-access";
 import { createServiceClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withServiceRole } from "@/lib/db/session";
+import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "./constants";
 
 export type UpdateProjectLimitState = {
   error: string | null;
@@ -69,7 +70,7 @@ export async function updateOrganizationPlan(
     return { error: "Unknown plan." };
   }
 
-  const UNLIMITED_SENTINEL = 2147483647;
+  const UNLIMITED_SENTINEL = ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL;
 
   if (hasDirectDatabase()) {
     await withServiceRole(({ query }) =>
