@@ -37,7 +37,16 @@ export function OrgAvatarUpload({
         <button
           type="button"
           disabled={!canEdit || pending}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => {
+            // Clear the value before opening the picker so re-selecting the
+            // exact same file (e.g. retrying after a failed upload without
+            // changing anything) still changes the input's value and fires
+            // onChange - otherwise the browser sees no change and nothing
+            // resubmits, leaving the user stuck on the error with no way to
+            // retry short of picking a different file.
+            if (inputRef.current) inputRef.current.value = "";
+            inputRef.current?.click();
+          }}
           className="relative disabled:cursor-default"
           aria-label={canEdit ? `Change image for ${name}` : name}
           title={canEdit ? "Change organization image" : undefined}
