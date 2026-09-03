@@ -40,6 +40,15 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
   const [importing, startImport] = useTransition();
   const [importError, setImportError] = useState<string | null>(null);
 
+  // Bumped on every new file selection so an in-flight handleFileChange from
+  // a previously-picked file can tell it's stale. Without this, picking file
+  // A then quickly re-picking file B before A's file.text()/previewGuidonImport
+  // resolves could let A's chain finish last and overwrite fileContent/preview
+  // with A's data while the button still shows B's filename - and since
+  // handleImport sends fileContent for a destructive, unconfirmable-until-
+  // overwrite action, that means importing/overwriting with the wrong file.
+  const selectionRef = useRef(0);
+
   const overwriteTarget = mode === "overwrite" ? (projects.find((p) => p.id === projectId) ?? null) : null;
   const overwriteConfirmed = mode !== "overwrite" || (!!overwriteTarget && confirmName === overwriteTarget.name);
 
@@ -56,14 +65,19 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const selection = ++selectionRef.current;
+
     reset();
     setFileName(file.name);
     setLoadingPreview(true);
 
     const text = await file.text();
-    setFileContent(text);
+    if (selection !== selectionRef.current) return; // a newer file was picked while this was reading
 
     const result = await previewGuidonImport(text);
+    if (selection !== selectionRef.current) return; // a newer file was picked while this was validating
+
+    setFileContent(text);
     setLoadingPreview(false);
 
     if (result.error) {
