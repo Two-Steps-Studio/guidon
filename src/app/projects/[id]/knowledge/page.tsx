@@ -33,21 +33,21 @@ export default async function ProjectKnowledgePage({
         )
       ),
       withUser(access.userId, ({ query }) =>
-        query("SELECT id FROM context_decisions WHERE project_id = $1", [projectId])
+        query("SELECT count(*) AS total FROM context_decisions WHERE project_id = $1", [projectId])
       ),
       withUser(access.userId, ({ query }) =>
-        query("SELECT id FROM project_files WHERE project_id = $1", [projectId])
+        query("SELECT count(*) AS total FROM project_files WHERE project_id = $1", [projectId])
       ),
       withUser(access.userId, ({ query }) =>
-        query("SELECT id FROM project_memory WHERE project_id = $1", [projectId])
+        query("SELECT count(*) AS total FROM project_memory WHERE project_id = $1", [projectId])
       ),
     ]);
 
     sources = sourcesRes.rows;
     counts = {
-      decisions: decisionsRes.rows.length,
-      files: filesRes.rows.length,
-      memory: memoryRes.rows.length,
+      decisions: Number(decisionsRes.rows[0]?.total ?? 0),
+      files: Number(filesRes.rows[0]?.total ?? 0),
+      memory: Number(memoryRes.rows[0]?.total ?? 0),
     };
   } else {
     const supabase = await createClient();
@@ -59,9 +59,9 @@ export default async function ProjectKnowledgePage({
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(LIST_LIMIT),
-      supabase.from("context_decisions").select("id").eq("project_id", projectId),
-      supabase.from("project_files").select("id").eq("project_id", projectId),
-      supabase.from("project_memory").select("id").eq("project_id", projectId),
+      supabase.from("context_decisions").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+      supabase.from("project_files").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+      supabase.from("project_memory").select("id", { count: "exact", head: true }).eq("project_id", projectId),
     ]);
     if (sourcesRes.error) throw new Error(`Failed to load sources: ${sourcesRes.error.message}`);
     if (decisionsRes.error) throw new Error(`Failed to load decisions: ${decisionsRes.error.message}`);
@@ -70,9 +70,9 @@ export default async function ProjectKnowledgePage({
 
     sources = (sourcesRes.data ?? []) as ContextSource[];
     counts = {
-      decisions: decisionsRes.data?.length ?? 0,
-      files: filesRes.data?.length ?? 0,
-      memory: memoryRes.data?.length ?? 0,
+      decisions: decisionsRes.count ?? 0,
+      files: filesRes.count ?? 0,
+      memory: memoryRes.count ?? 0,
     };
   }
 

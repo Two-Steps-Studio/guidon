@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getLocalSessionUserId } from "@/lib/auth/local-auth";
-import { isDone } from "@/lib/work/task-board";
 import type { ProjectStats } from "@/types/project";
 
 const EMPTY_STATS: ProjectStats = {
@@ -20,14 +19,15 @@ const EMPTY_STATS: ProjectStats = {
 };
 
 /**
- * Overview counters for the project dashboard.
- *
- * Five independent counts, so they run as one Promise.all round trip rather
- * than five sequential ones - the client-side version this replaced awaited
- * them one at a time inside a single fetch function, but that was an artifact
- * of them all being destructured from one Promise.all already; the only real
- * change here is running under RLS as the signed-in user via the server
- * client instead of the browser one.
+ * Overview counters for the project dashboard - aggregated in SQL, not by
+ * fetching every task/phase/file/decision/memory row just to .length/.filter()
+ * count them in JS. This runs on every visit to a project's own page (the
+ * highest-traffic route per project), and unlike a plan's task-per-project
+ * cap (NULL/unlimited on Business, and never enforced at all for self-hosted
+ * installs - see checkTaskLimit's `if (!hasDirectDatabase())` guard in
+ * work/actions.ts), nothing bounds how many rows a project can actually
+ * have, so the old row-fetching version pulled an unbounded result set on
+ * every load just to produce eight integers.
  *
  * Self-hosted branch resolves identity itself (getLocalSessionUserId())
  * rather than taking a userId parameter - same choice as
@@ -47,88 +47,130 @@ export async function getProjectStats(projectId: string): Promise<ProjectStats> 
     // shape, removed in pg@9).
     const [tasksRes, phasesRes, filesRes, decisionsRes, memoryRes] = await Promise.all([
       withUser(userId, ({ query }) =>
-        query("SELECT id, status, parent_task_id FROM tasks WHERE project_id = $1", [projectId])
+        // Subtasks (migration 010) are plain rows in `tasks`, so counting
+        // every row would silently double-count work once a task gets
+        // subtasks - match the work board's convention
+        // (work-board.tsx) and count top-level tasks only. 'done'/'completed'
+        // both count as done (isDone's vocabulary, task-board.ts) - reading
+        // status = 'completed' alone would silently show 0 completed for
+        // every task created after migration 002 renamed the vocabulary.
+        query(
+          `SELECT
+             count(*) FILTER (WHERE parent_task_id IS NULL) AS total,
+             count(*) FILTER (WHERE parent_task_id IS NULL AND status IN ('done', 'completed')) AS completed,
+             count(*) FILTER (WHERE parent_task_id IS NULL AND status = 'in_progress') AS in_progress
+           FROM tasks WHERE project_id = $1`,
+          [projectId]
+        )
       ),
       withUser(userId, ({ query }) =>
-        query("SELECT id, status FROM roadmap_phases WHERE project_id = $1", [projectId])
+        // roadmap_phases has its own status vocabulary (planned/in_progress/
+        // completed/blocked) - 'completed' is correct here, unlike for tasks.
+        query(
+          `SELECT count(*) AS total, count(*) FILTER (WHERE status = 'completed') AS completed
+           FROM roadmap_phases WHERE project_id = $1`,
+          [projectId]
+        )
       ),
       withUser(userId, ({ query }) =>
-        query("SELECT id FROM project_files WHERE project_id = $1", [projectId])
+        query("SELECT count(*) AS total FROM project_files WHERE project_id = $1", [projectId])
       ),
       withUser(userId, ({ query }) =>
-        query("SELECT id FROM context_decisions WHERE project_id = $1", [projectId])
+        query("SELECT count(*) AS total FROM context_decisions WHERE project_id = $1", [projectId])
       ),
       withUser(userId, ({ query }) =>
-        query("SELECT id FROM project_memory WHERE project_id = $1", [projectId])
+        query("SELECT count(*) AS total FROM project_memory WHERE project_id = $1", [projectId])
       ),
     ]);
 
-    return computeStats(
-      tasksRes.rows,
-      phasesRes.rows,
-      filesRes.rows.length,
-      decisionsRes.rows.length,
-      memoryRes.rows.length
-    );
+    return computeStats({
+      totalTasks: Number(tasksRes.rows[0]?.total ?? 0),
+      completedTasks: Number(tasksRes.rows[0]?.completed ?? 0),
+      inProgressTasks: Number(tasksRes.rows[0]?.in_progress ?? 0),
+      totalPhases: Number(phasesRes.rows[0]?.total ?? 0),
+      completedPhases: Number(phasesRes.rows[0]?.completed ?? 0),
+      totalFiles: Number(filesRes.rows[0]?.total ?? 0),
+      totalDecisions: Number(decisionsRes.rows[0]?.total ?? 0),
+      totalMemory: Number(memoryRes.rows[0]?.total ?? 0),
+    });
   }
 
   const supabase = await createClient();
 
-  const [tasksRes, phasesRes, filesRes, decisionsRes, memoryRes] = await Promise.all([
-    supabase.from("tasks").select("id, status, parent_task_id").eq("project_id", projectId),
-    supabase.from("roadmap_phases").select("id, status").eq("project_id", projectId),
-    supabase.from("project_files").select("id").eq("project_id", projectId),
-    supabase.from("context_decisions").select("id").eq("project_id", projectId),
-    supabase.from("project_memory").select("id").eq("project_id", projectId),
+  // PostgREST's count: "exact", head: true gives one filtered count per
+  // call, not a FILTER-clause equivalent - so tasks/phases need one call per
+  // bucket (matching the pattern dashboard/page.tsx already uses) rather
+  // than the single grouped query the direct-Postgres branch can run.
+  const [
+    totalTasksRes,
+    completedTasksRes,
+    inProgressTasksRes,
+    totalPhasesRes,
+    completedPhasesRes,
+    filesRes,
+    decisionsRes,
+    memoryRes,
+  ] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("parent_task_id", null),
+    supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("parent_task_id", null)
+      .in("status", ["done", "completed"]),
+    supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .is("parent_task_id", null)
+      .eq("status", "in_progress"),
+    supabase.from("roadmap_phases").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+    supabase
+      .from("roadmap_phases")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .eq("status", "completed"),
+    supabase.from("project_files").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+    supabase.from("context_decisions").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+    supabase.from("project_memory").select("id", { count: "exact", head: true }).eq("project_id", projectId),
   ]);
 
-  return computeStats(
-    tasksRes.data ?? [],
-    phasesRes.data ?? [],
-    filesRes.data?.length ?? 0,
-    decisionsRes.data?.length ?? 0,
-    memoryRes.data?.length ?? 0
-  );
+  return computeStats({
+    totalTasks: totalTasksRes.count ?? 0,
+    completedTasks: completedTasksRes.count ?? 0,
+    inProgressTasks: inProgressTasksRes.count ?? 0,
+    totalPhases: totalPhasesRes.count ?? 0,
+    completedPhases: completedPhasesRes.count ?? 0,
+    totalFiles: filesRes.count ?? 0,
+    totalDecisions: decisionsRes.count ?? 0,
+    totalMemory: memoryRes.count ?? 0,
+  });
 }
 
-function computeStats(
-  tasksRaw: { status: string; parent_task_id: string | null }[],
-  phasesRaw: { status: string }[],
-  totalFiles: number,
-  totalDecisions: number,
-  totalMemory: number
-): ProjectStats {
-  // Subtasks (migration 010) are plain rows in `tasks`, so counting every row
-  // would silently double-count work once a task gets subtasks: the parent
-  // and its children are the same unit of work on the board. Match the work
-  // board's convention (src/app/projects/[id]/work/work-board.tsx) and count
-  // top-level tasks only.
-  const tasks = tasksRaw.filter((t) => !t.parent_task_id);
-  const phases = phasesRaw;
-
-  const totalTasks = tasks.length;
-  // isDone folds the legacy 'completed' status onto 'done' (see
-  // src/lib/work/task-board.ts) - reading task.status === 'completed'
-  // directly here would silently show 0 for every task created after
-  // migration 002 renamed the vocabulary.
-  const completedTasks = tasks.filter((t) => isDone(t.status)).length;
-  const inProgressTasks = tasks.filter((t) => t.status === "in_progress").length;
-
-  const totalPhases = phases.length;
-  // roadmap_phases has its own status vocabulary (planned/in_progress/
-  // completed/blocked) - 'completed' is correct here, unlike for tasks.
-  const completedPhases = phases.filter((p) => p.status === "completed").length;
-
+function computeStats(counts: {
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  totalPhases: number;
+  completedPhases: number;
+  totalFiles: number;
+  totalDecisions: number;
+  totalMemory: number;
+}): ProjectStats {
   return {
-    total_tasks: totalTasks,
-    completed_tasks: completedTasks,
-    in_progress_tasks: inProgressTasks,
-    total_phases: totalPhases,
-    completed_phases: completedPhases,
-    total_files: totalFiles,
-    total_decisions: totalDecisions,
-    total_memory: totalMemory,
+    total_tasks: counts.totalTasks,
+    completed_tasks: counts.completedTasks,
+    in_progress_tasks: counts.inProgressTasks,
+    total_phases: counts.totalPhases,
+    completed_phases: counts.completedPhases,
+    total_files: counts.totalFiles,
+    total_decisions: counts.totalDecisions,
+    total_memory: counts.totalMemory,
     completion_percentage:
-      totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      counts.totalTasks > 0 ? Math.round((counts.completedTasks / counts.totalTasks) * 100) : 0,
   };
 }
