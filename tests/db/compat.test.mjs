@@ -1213,5 +1213,42 @@ await expectRejected(
   /duplicate key|unique constraint/i
 );
 
+// ------------------------------------------------------------------
+section("23. gorna granica tasks.estimated_hours / actual_hours (migracja 028)");
+
+await expectRejected(
+  "estimated_hours ponad 100000 odrzucone",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.tasks (project_id, title, estimated_hours) VALUES ($1,'Za duzo',$2)", [
+        projectId,
+        100001,
+      ])
+    ),
+  /check constraint|tasks_estimated_hours_upper_bound/i
+);
+
+await expectRejected(
+  "actual_hours ponad 100000 odrzucone",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.tasks (project_id, title, actual_hours) VALUES ($1,'Za duzo',$2)", [
+        projectId,
+        100001,
+      ])
+    ),
+  /check constraint|tasks_actual_hours_upper_bound/i
+);
+
+{
+  const { rows } = await withUser(A, () =>
+    db.query(
+      "INSERT INTO public.tasks (project_id, title, estimated_hours) VALUES ($1,'Na granicy',$2) RETURNING id",
+      [projectId, 100000]
+    )
+  );
+  check("estimated_hours = 100000 dozwolone (granica wlacznie)", rows.length === 1);
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
