@@ -158,7 +158,7 @@ export function TaskAttemptsSection({
                       aria-label="Delete attempt"
                       disabled={deletingId === attempt.id}
                       onClick={() => void handleDelete(attempt.id)}
-                      className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 disabled:opacity-60"
+                      className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100 disabled:opacity-60"
                     >
                       {deletingId === attempt.id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />

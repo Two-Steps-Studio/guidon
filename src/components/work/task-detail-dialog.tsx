@@ -604,7 +604,7 @@ export function TaskDetailDialog({
                         aria-label={`Delete subtask "${subtask.title}"`}
                         disabled={deletingSubtaskId === subtask.id}
                         onClick={() => void handleDeleteSubtask(subtask.id)}
-                        className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 disabled:opacity-60"
+                        className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100 disabled:opacity-60"
                       >
                         {deletingSubtaskId === subtask.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -722,7 +722,7 @@ export function TaskDetailDialog({
                                 type="button"
                                 title="Mark as decision"
                                 aria-label="Mark this comment as a decision"
-                                className="ml-auto text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                                className="ml-auto text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
                               >
                                 <Gavel className="h-3 w-3" />
                               </button>

@@ -127,7 +127,7 @@ export function KnowledgeList({
               </div>
 
               {canWrite && (
-                <div className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                <div className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
                   <SourceCardMenu projectId={projectId} source={source} canDelete={canDelete} />
                 </div>
               )}

@@ -213,7 +213,7 @@ export function TechnologyList({
                         </div>
 
                         {canManage && (
-                          <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                          <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
                             <Button
                               variant="ghost"
                               size="icon"
