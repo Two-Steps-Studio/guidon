@@ -47,6 +47,14 @@ export function SourceFormFields({
           id={`${idPrefix}-url`}
           name="url"
           type="url"
+          // type="url" alone accepts anything with a parseable scheme
+          // (javascript:, data:, mailto:, ...) with no invalid state - the
+          // server's isSafeHttpUrl (actions.ts) only accepts http(s), so
+          // without this pattern a non-http(s) link passed native
+          // validation silently and only failed with a generic-feeling
+          // server error after submit.
+          pattern="https?://.+"
+          title="Must be an http:// or https:// URL"
           defaultValue={defaults?.url ?? ""}
           placeholder="https://..."
         />

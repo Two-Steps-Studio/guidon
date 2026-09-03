@@ -300,6 +300,10 @@ export function TaskAttemptsSection({
               <Input
                 id="attempt-pr"
                 type="url"
+                // See the matching comment on knowledge/source-form-fields.tsx -
+                // createAttempt's isSafeHttpUrl check only accepts http(s).
+                pattern="https?://.+"
+                title="Must be an http:// or https:// URL"
                 value={form.related_pr_url}
                 onChange={(event) => setForm({ ...form, related_pr_url: event.target.value })}
                 placeholder="https://..."
