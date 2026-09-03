@@ -22,13 +22,17 @@ export default async function ProjectRoadmapPage({
   const access = await requireProjectAccess(projectId);
   const canManage = canManageProject(access.role);
 
+  // Safety cap, not pagination - same pattern as decisions/memory/knowledge/
+  // context (LIST_LIMIT = 500). No plan-level cap bounds phase count.
+  const LIST_LIMIT = 500;
+
   let phases: RoadmapPhase[];
 
   if (hasDirectDatabase()) {
     const result = await withUser(access.userId, ({ query }) =>
       query(
-        "SELECT * FROM roadmap_phases WHERE project_id = $1 ORDER BY sort_order ASC NULLS LAST",
-        [projectId]
+        "SELECT * FROM roadmap_phases WHERE project_id = $1 ORDER BY sort_order ASC NULLS LAST LIMIT $2",
+        [projectId, LIST_LIMIT]
       )
     );
     phases = result.rows;
@@ -38,7 +42,8 @@ export default async function ProjectRoadmapPage({
       .from("roadmap_phases")
       .select("*")
       .eq("project_id", projectId)
-      .order("sort_order", { ascending: true, nullsFirst: false });
+      .order("sort_order", { ascending: true, nullsFirst: false })
+      .limit(LIST_LIMIT);
     if (error) throw new Error(`Failed to load roadmap phases: ${error.message}`);
 
     phases = (data ?? []) as RoadmapPhase[];
