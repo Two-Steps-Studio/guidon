@@ -14,6 +14,15 @@ export type PhaseFormState = {
 
 const VALID_STATUSES: PhaseStatus[] = ["planned", "in_progress", "completed", "blocked"];
 
+// completion_percentage and status below are entirely operator-entered and
+// deliberately never derived from or reconciled against a phase's linked
+// tasks (context_relations, relation_type 'part_of' - itself only ever
+// populated by importing a previously-exported .guidon file, not by any
+// live UI action). Completing every linked task, or deleting them all, has
+// no effect on a phase's displayed completion - this is intentional manual
+// tracking, not a sync gap: a phase's real-world completion is a judgment
+// call the person managing the roadmap makes, not something to compute
+// from task checkboxes.
 function parsePhaseForm(formData: FormData) {
   const name = formData.get("name");
   const description = formData.get("description");

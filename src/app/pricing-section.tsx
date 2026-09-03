@@ -42,12 +42,22 @@ function formatCount(value: number | null, unit: string): string {
   return value === null ? `Unlimited ${unit}` : `${value.toLocaleString()} ${unit}`;
 }
 
-function priceFor(plan: PlanRow, currency: Currency): number {
-  if (currency === "PLN") return plan.price_pln_cents ?? plan.price_cents;
-  return plan.price_cents;
+/**
+ * Falls back to the EUR amount (and reports that as the actual currency
+ * used, not the requested one) when a plan has no price_pln_cents set -
+ * a future plan inserted without a PLN price would otherwise display its
+ * EUR-cents number with a "zł" suffix under the PLN toggle, silently
+ * showing the wrong price. migration 019_plan_pln_pricing.sql backfills
+ * all 4 current plans, so this only matters for a plan added later.
+ */
+function priceFor(plan: PlanRow, currency: Currency): { cents: number; currency: Currency } {
+  if (currency === "PLN" && plan.price_pln_cents !== null) {
+    return { cents: plan.price_pln_cents, currency: "PLN" };
+  }
+  return { cents: plan.price_cents, currency: "EUR" };
 }
 
-function formatPrice(cents: number, currency: Currency): string {
+function formatPrice({ cents, currency }: { cents: number; currency: Currency }): string {
   if (cents === 0) return "Free";
   const amount = (cents / 100).toFixed(2);
   return currency === "EUR" ? `€${amount}` : `${amount} zł`;
@@ -107,7 +117,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => {
             const isPopular = plan.id === "pro";
-            const cents = priceFor(plan, currency);
+            const price = priceFor(plan, currency);
             return (
               <Card
                 key={plan.id}
@@ -119,8 +129,8 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                 <CardHeader>
                   <CardTitle>{plan.name}</CardTitle>
                   <div className="text-3xl font-bold">
-                    {formatPrice(cents, currency)}
-                    {cents > 0 && <span className="text-sm font-normal text-text-muted">/mo</span>}
+                    {formatPrice(price)}
+                    {price.cents > 0 && <span className="text-sm font-normal text-text-muted">/mo</span>}
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col">
