@@ -30,11 +30,21 @@ export function CreateProjectDialog({
   trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const createProjectWithOrg = createProject.bind(null, orgId);
-  const [state, formAction, pending] = useActionState(createProjectWithOrg, initialState);
+  // Bumped on every open so <ProjectForm key={session}> below fully remounts
+  // - useActionState's state otherwise survives close/reopen indefinitely
+  // (this component itself never unmounts, only DialogContent's children
+  // do), so a previous failed submission's error text would still be
+  // showing above a freshly emptied form the next time the dialog opened.
+  const [session, setSession] = useState(0);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) setSession((s) => s + 1);
+      }}
+    >
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
@@ -48,58 +58,67 @@ export function CreateProjectDialog({
           <DialogTitle>Create Project</DialogTitle>
           <DialogDescription>Create a new project in {orgName}</DialogDescription>
         </DialogHeader>
-        <form action={formAction} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="projectName">Project Name</Label>
-            <Input id="projectName" name="name" placeholder="Website Redesign" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="projectDescription">Description (optional)</Label>
-            <Input
-              id="projectDescription"
-              name="description"
-              placeholder="Redesign the company website"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="projectType">Project Type (optional)</Label>
-            <select
-              id="projectType"
-              name="projectType"
-              defaultValue=""
-              className="w-full px-3 py-2 border rounded-md bg-background"
-            >
-              <option value="">Not set</option>
-              {PROJECT_TYPE_OPTIONS.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          {state.error && (
-            <div className="text-sm text-destructive flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              {state.error}
-            </div>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create"
-              )}
-            </Button>
-          </div>
-        </form>
+        <ProjectForm key={session} orgId={orgId} onCancel={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void }) {
+  const createProjectWithOrg = createProject.bind(null, orgId);
+  const [state, formAction, pending] = useActionState(createProjectWithOrg, initialState);
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="projectName">Project Name</Label>
+        <Input id="projectName" name="name" placeholder="Website Redesign" required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="projectDescription">Description (optional)</Label>
+        <Input
+          id="projectDescription"
+          name="description"
+          placeholder="Redesign the company website"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="projectType">Project Type (optional)</Label>
+        <select
+          id="projectType"
+          name="projectType"
+          defaultValue=""
+          className="w-full px-3 py-2 border rounded-md bg-background"
+        >
+          <option value="">Not set</option>
+          {PROJECT_TYPE_OPTIONS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+      {state.error && (
+        <div className="text-sm text-destructive flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          {state.error}
+        </div>
+      )}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            "Create"
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }

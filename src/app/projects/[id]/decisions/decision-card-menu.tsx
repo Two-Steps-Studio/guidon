@@ -32,19 +32,14 @@ export function DecisionCardMenu({
   canDelete: boolean;
 }) {
   const [showEdit, setShowEdit] = useState(false);
-  const updateWithIds = updateDecision.bind(null, projectId, decision.id);
-  const [state, formAction, pending] = useActionState(updateWithIds, initialState);
-  const submittedRef = useRef(false);
+  // Bumped on every open so <EditDecisionForm key={session}> below fully
+  // remounts - useActionState's error otherwise survives close/reopen (this
+  // component instance persists for the card's whole lifetime in the list),
+  // showing a previous failed attempt's error above a freshly reset form.
+  const [session, setSession] = useState(0);
 
   const [deleting, startDelete] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (submittedRef.current && !pending && state.error === null) {
-      setShowEdit(false);
-      submittedRef.current = false;
-    }
-  }, [pending, state]);
 
   const handleDelete = () => {
     startDelete(async () => {
@@ -63,7 +58,12 @@ export function DecisionCardMenu({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setShowEdit(true)}>
+            <DropdownMenuItem
+              onClick={() => {
+                setShowEdit(true);
+                setSession((s) => s + 1);
+              }}
+            >
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </DropdownMenuItem>
@@ -89,38 +89,68 @@ export function DecisionCardMenu({
             <DialogTitle>Edit Decision</DialogTitle>
             <DialogDescription>Update decision information</DialogDescription>
           </DialogHeader>
-          <form
-            action={(formData) => {
-              submittedRef.current = true;
-              formAction(formData);
-            }}
-            className="space-y-4"
-          >
-            <DecisionFormFields idPrefix={`edit-decision-${decision.id}`} defaults={decision} />
-            {state.error && (
-              <div className="text-sm text-destructive flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                {state.error}
-              </div>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowEdit(false)} disabled={pending}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={pending}>
-                {pending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </div>
-          </form>
+          <EditDecisionForm
+            key={session}
+            projectId={projectId}
+            decision={decision}
+            onClose={() => setShowEdit(false)}
+          />
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function EditDecisionForm({
+  projectId,
+  decision,
+  onClose,
+}: {
+  projectId: string;
+  decision: Decision;
+  onClose: () => void;
+}) {
+  const updateWithIds = updateDecision.bind(null, projectId, decision.id);
+  const [state, formAction, pending] = useActionState(updateWithIds, initialState);
+  const submittedRef = useRef(false);
+
+  useEffect(() => {
+    if (submittedRef.current && !pending && state.error === null) {
+      onClose();
+      submittedRef.current = false;
+    }
+  }, [pending, state, onClose]);
+
+  return (
+    <form
+      action={(formData) => {
+        submittedRef.current = true;
+        formAction(formData);
+      }}
+      className="space-y-4"
+    >
+      <DecisionFormFields idPrefix={`edit-decision-${decision.id}`} defaults={decision} />
+      {state.error && (
+        <div className="text-sm text-destructive flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          {state.error}
+        </div>
+      )}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }

@@ -37,19 +37,14 @@ export function MemoryCardMenu({
   memoryType: MemoryType;
 }) {
   const [showEdit, setShowEdit] = useState(false);
-  const updateWithIds = updateMemory.bind(null, projectId, memoryId);
-  const [state, formAction, pending] = useActionState(updateWithIds, initialState);
-  const submittedRef = useRef(false);
+  // Bumped on every open so <EditMemoryForm key={session}> below fully
+  // remounts - useActionState's error otherwise survives close/reopen (this
+  // component instance persists for the card's whole lifetime in the list),
+  // showing a previous failed attempt's error above a freshly reset form.
+  const [session, setSession] = useState(0);
 
   const [deleting, startDelete] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (submittedRef.current && !pending && state.error === null) {
-      setShowEdit(false);
-      submittedRef.current = false;
-    }
-  }, [pending, state]);
 
   const handleDelete = () => {
     startDelete(async () => {
@@ -67,7 +62,12 @@ export function MemoryCardMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setShowEdit(true)}>
+          <DropdownMenuItem
+            onClick={() => {
+              setShowEdit(true);
+              setSession((s) => s + 1);
+            }}
+          >
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </DropdownMenuItem>
@@ -91,56 +91,92 @@ export function MemoryCardMenu({
             <DialogTitle>Edit Memory</DialogTitle>
             <DialogDescription>Update memory entry</DialogDescription>
           </DialogHeader>
-          <form
-            action={(formData) => {
-              submittedRef.current = true;
-              formAction(formData);
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor={`editContent-${memoryId}`}>Content</Label>
-              <Textarea id={`editContent-${memoryId}`} name="content" defaultValue={content} rows={4} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`editType-${memoryId}`}>Type</Label>
-              <select
-                id={`editType-${memoryId}`}
-                name="memory_type"
-                defaultValue={memoryType}
-                className="w-full px-3 py-2 border rounded-md bg-background"
-              >
-                {Object.entries(MEMORY_TYPE_CONFIG).map(([type, config]) => (
-                  <option key={type} value={type}>
-                    {config.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {state.error && (
-              <div className="text-sm text-destructive flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                {state.error}
-              </div>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowEdit(false)} disabled={pending}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={pending}>
-                {pending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </div>
-          </form>
+          <EditMemoryForm
+            key={session}
+            projectId={projectId}
+            memoryId={memoryId}
+            content={content}
+            memoryType={memoryType}
+            onClose={() => setShowEdit(false)}
+          />
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function EditMemoryForm({
+  projectId,
+  memoryId,
+  content,
+  memoryType,
+  onClose,
+}: {
+  projectId: string;
+  memoryId: string;
+  content: string;
+  memoryType: MemoryType;
+  onClose: () => void;
+}) {
+  const updateWithIds = updateMemory.bind(null, projectId, memoryId);
+  const [state, formAction, pending] = useActionState(updateWithIds, initialState);
+  const submittedRef = useRef(false);
+
+  useEffect(() => {
+    if (submittedRef.current && !pending && state.error === null) {
+      onClose();
+      submittedRef.current = false;
+    }
+  }, [pending, state, onClose]);
+
+  return (
+    <form
+      action={(formData) => {
+        submittedRef.current = true;
+        formAction(formData);
+      }}
+      className="space-y-4"
+    >
+      <div className="space-y-2">
+        <Label htmlFor={`editContent-${memoryId}`}>Content</Label>
+        <Textarea id={`editContent-${memoryId}`} name="content" defaultValue={content} rows={4} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`editType-${memoryId}`}>Type</Label>
+        <select
+          id={`editType-${memoryId}`}
+          name="memory_type"
+          defaultValue={memoryType}
+          className="w-full px-3 py-2 border rounded-md bg-background"
+        >
+          {Object.entries(MEMORY_TYPE_CONFIG).map(([type, config]) => (
+            <option key={type} value={type}>
+              {config.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      {state.error && (
+        <div className="text-sm text-destructive flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          {state.error}
+        </div>
+      )}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }

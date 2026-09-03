@@ -44,20 +44,14 @@ export function InsightReviewCard({
   const TypeIcon = typeConfig.icon;
 
   const [correcting, setCorrecting] = useState(false);
+  // Bumped on every open so <CorrectInsightForm key={session}> below fully
+  // remounts - useActionState's error otherwise survives close/reopen (this
+  // component instance persists for the card's whole lifetime in the list),
+  // showing a previous failed attempt's error above a freshly reset form.
+  const [session, setSession] = useState(0);
   const [accepting, startAccept] = useTransition();
   const [rejecting, startReject] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-
-  const correctWithIds = correctAndAcceptInsight.bind(null, projectId, memory.id);
-  const [correctState, correctAction, correctPending] = useActionState(correctWithIds, initialState);
-  const submittedRef = useRef(false);
-
-  useEffect(() => {
-    if (submittedRef.current && !correctPending && correctState.error === null) {
-      setCorrecting(false);
-      submittedRef.current = false;
-    }
-  }, [correctPending, correctState]);
 
   const handleAccept = () => {
     setActionError(null);
@@ -110,7 +104,15 @@ export function InsightReviewCard({
               {accepting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Accept
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setCorrecting(true)} disabled={busy}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setCorrecting(true);
+                setSession((s) => s + 1);
+              }}
+              disabled={busy}
+            >
               <Pencil className="h-4 w-4" />
               Correct
             </Button>
@@ -136,47 +138,77 @@ export function InsightReviewCard({
               Rewrite the content before it becomes a trusted, verified fact.
             </DialogDescription>
           </DialogHeader>
-          <form
-            action={(formData) => {
-              submittedRef.current = true;
-              correctAction(formData);
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor={`correct-content-${memory.id}`}>Content</Label>
-              <Textarea
-                id={`correct-content-${memory.id}`}
-                name="content"
-                defaultValue={memory.content}
-                rows={4}
-                required
-              />
-            </div>
-            {correctState.error && (
-              <div className="text-sm text-destructive flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                {correctState.error}
-              </div>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setCorrecting(false)} disabled={correctPending}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={correctPending}>
-                {correctPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Accept as Fact"
-                )}
-              </Button>
-            </div>
-          </form>
+          <CorrectInsightForm
+            key={session}
+            projectId={projectId}
+            memory={memory}
+            onClose={() => setCorrecting(false)}
+          />
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function CorrectInsightForm({
+  projectId,
+  memory,
+  onClose,
+}: {
+  projectId: string;
+  memory: ProjectMemory;
+  onClose: () => void;
+}) {
+  const correctWithIds = correctAndAcceptInsight.bind(null, projectId, memory.id);
+  const [correctState, correctAction, correctPending] = useActionState(correctWithIds, initialState);
+  const submittedRef = useRef(false);
+
+  useEffect(() => {
+    if (submittedRef.current && !correctPending && correctState.error === null) {
+      onClose();
+      submittedRef.current = false;
+    }
+  }, [correctPending, correctState, onClose]);
+
+  return (
+    <form
+      action={(formData) => {
+        submittedRef.current = true;
+        correctAction(formData);
+      }}
+      className="space-y-4"
+    >
+      <div className="space-y-2">
+        <Label htmlFor={`correct-content-${memory.id}`}>Content</Label>
+        <Textarea
+          id={`correct-content-${memory.id}`}
+          name="content"
+          defaultValue={memory.content}
+          rows={4}
+          required
+        />
+      </div>
+      {correctState.error && (
+        <div className="text-sm text-destructive flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          {correctState.error}
+        </div>
+      )}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose} disabled={correctPending}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={correctPending}>
+          {correctPending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Accept as Fact"
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }
