@@ -55,7 +55,14 @@ export function RelationRow({
           )}
         </div>
         {canDelete && (
-          <Button variant="ghost" size="icon" className="text-destructive" onClick={handleDelete} disabled={deleting}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive"
+            onClick={handleDelete}
+            disabled={deleting}
+            aria-label="Delete relation"
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

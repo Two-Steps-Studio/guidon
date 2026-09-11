@@ -53,7 +53,7 @@ export function MemberActionsMenu({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={pending}>
+          <Button variant="ghost" size="icon" disabled={pending} aria-label="Member options">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

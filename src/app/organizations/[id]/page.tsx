@@ -48,7 +48,7 @@ export default async function OrganizationDetailPage({
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/organizations">
+            <Link href="/organizations" aria-label="Back to organizations">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
