@@ -77,6 +77,21 @@ export async function initializeStorageBuckets(): Promise<void> {
 /**
  * Upload a file to Supabase storage
  */
+// Overloaded so `public: true` callers (avatars) keep a non-optional
+// `publicUrl: string` without every other caller (project files, task
+// attachments - which never read it) paying to generate one.
+export async function uploadFile(
+  bucket: string,
+  filePath: string,
+  file: File,
+  options: { upsert?: boolean; contentType?: string; public: true }
+): Promise<{ path: string; publicUrl: string }>;
+export async function uploadFile(
+  bucket: string,
+  filePath: string,
+  file: File,
+  options?: { upsert?: boolean; contentType?: string; public?: boolean }
+): Promise<{ path: string; publicUrl: string | undefined }>;
 export async function uploadFile(
   bucket: string,
   filePath: string,
@@ -106,10 +121,16 @@ export async function uploadFile(
     throw new Error(`Upload failed: ${message}`);
   }
 
-  return {
-    path: filePath,
-    publicUrl: await provider.getUrl(bucket, filePath, { public: options?.public }),
-  };
+  // Only computed for public uploads (avatars - the only callers that read
+  // `.publicUrl`). uploadProjectFile/uploadTaskAttachment never pass
+  // `public: true` and never read it either, so this used to cost every
+  // project-file/attachment upload an extra createSignedUrl round-trip to
+  // the storage provider for a value that was immediately discarded.
+  const publicUrl = options?.public
+    ? await provider.getUrl(bucket, filePath, { public: true })
+    : undefined;
+
+  return { path: filePath, publicUrl };
 }
 
 /**
