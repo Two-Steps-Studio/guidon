@@ -104,14 +104,13 @@ export class LocalStorageProvider implements StorageProvider {
    * edited to reach another object, extend its own lifetime, or flip a
    * private file to serve as if it were public.
    *
-   * `public: true` does two things, both handled by /api/storage: signs for
-   * PUBLIC_URL_TTL_SECONDS (50 years) instead of the normal 10-minute
-   * default, and marks the object servable inline (real Content-Type, no
-   * forced download) instead of the safe-by-default octet-stream/attachment
-   * every other object gets. Safe to do only because avatar/project/org
-   * image uploads are now restricted to SAFE_INLINE_IMAGE_TYPES
-   * (storage-constants.ts) at the point they're written - none of those
-   * raster formats can carry an executable payload the way SVG can.
+   * `public: true` only changes the signed lifetime here: PUBLIC_URL_TTL_SECONDS
+   * (50 years) instead of the normal 10-minute default. Whether the object
+   * is served inline with its real Content-Type or forced to download is a
+   * separate decision /api/storage makes purely from the extension
+   * (SAFE_INLINE_EXTENSION_TO_MIME, storage-constants.ts) - independent of
+   * `public`, since a private signed link is just as safe to render inline
+   * as a public one for the same narrow, non-executable set of formats.
    */
   async getUrl(
     bucket: string,

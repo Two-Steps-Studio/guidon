@@ -7,6 +7,7 @@ import {
   type StorageProvider,
   type UploadOptions,
 } from "../provider";
+import { SAFE_INLINE_EXTENSION_TO_MIME } from "../storage-constants";
 
 /**
  * Supabase Storage - the cloud default, and the behaviour Guidon shipped with.
@@ -99,19 +100,25 @@ export class SupabaseStorageProvider implements StorageProvider {
 
     // `download: true` sets Content-Disposition: attachment on the response.
     // getSignedUrl() (storage.ts) - this branch's only real caller - is used
-    // exclusively for "download an arbitrary uploaded project file"
+    // for "download/preview an arbitrary uploaded project file"
     // (getDownloadUrl, files/actions.ts), which accepts any type in
     // ALLOWED_FILE_EXTENSIONS including .svg/.html. Serving those inline
     // with their client-supplied Content-Type (upload()'s `contentType`
     // comes straight from the browser's File.type, never verified against
     // actual bytes) would let a script embedded in an uploaded SVG execute
     // when a project member opens the link directly, in the storage
-    // domain's origin - forcing a download closes that off, matching what
-    // the local-storage provider already does unconditionally
-    // (src/app/api/storage/route.ts).
+    // domain's origin - forcing a download closes that off. Only lifted for
+    // the same narrow, non-executable extension set /api/storage trusts for
+    // the local provider (SAFE_INLINE_EXTENSION_TO_MIME) - a raster image or
+    // PDF can't carry that risk even with a spoofed extension, so
+    // FileViewer's inline image/PDF preview (src/components/files/file-viewer.tsx)
+    // actually works instead of always forcing a download.
+    const extension = safePath.split(".").pop()?.toLowerCase() ?? "";
+    const isSafeInline = extension in SAFE_INLINE_EXTENSION_TO_MIME;
+
     const { data, error } = await client.storage
       .from(bucket)
-      .createSignedUrl(safePath, options?.expiresInSeconds ?? 600, { download: true });
+      .createSignedUrl(safePath, options?.expiresInSeconds ?? 600, isSafeInline ? {} : { download: true });
 
     if (error) throw error;
     if (!data?.signedUrl) throw new Error(`Could not sign URL for ${safePath}`);

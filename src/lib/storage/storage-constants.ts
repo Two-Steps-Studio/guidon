@@ -89,12 +89,21 @@ export const ALLOWED_IMAGE_TYPES = [
 export const SAFE_INLINE_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"] as const;
 
 /**
- * Used only by /api/storage (the local-storage provider's serving route) to
- * pick a real Content-Type for a `public: true` object - the local provider
- * has nowhere to persist the Content-Type given at upload, so this derives
- * it from the file extension instead, safe only because SAFE_INLINE_IMAGE_TYPES
- * already restricts what extension an avatar/project/org image upload can
- * have gotten here with in the first place.
+ * Extensions safe to serve inline (real Content-Type, no forced download)
+ * regardless of whether the object is a `public: true` avatar/project image
+ * or a private, signed knowledge-base file link - both /api/storage (which
+ * derives Content-Type from the extension, having nowhere else to persist
+ * it) and the Supabase provider's `getUrl` (which decides whether to pass
+ * `download: true`) key off this same set.
+ *
+ * Every entry here is a binary format a browser only ever *decodes*
+ * (raster image codec, PDF renderer) rather than *interprets as markup* -
+ * unlike SVG or HTML, neither can execute embedded script even if the
+ * uploaded bytes don't actually match the extension (upload-time
+ * validation is extension-based, not a content sniff). That's what makes
+ * this set safe to trust independent of who's allowed to see the file;
+ * *authorization* is the signature/RLS's job, this only governs whether an
+ * already-authorized response is safe to render directly.
  */
 export const SAFE_INLINE_EXTENSION_TO_MIME: Record<string, string> = {
   jpg: "image/jpeg",
@@ -102,6 +111,7 @@ export const SAFE_INLINE_EXTENSION_TO_MIME: Record<string, string> = {
   png: "image/png",
   gif: "image/gif",
   webp: "image/webp",
+  pdf: "application/pdf",
 };
 
 export const ALLOWED_DOCUMENT_TYPES = [

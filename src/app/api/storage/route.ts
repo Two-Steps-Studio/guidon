@@ -62,15 +62,15 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Safe to serve inline with its real Content-Type only for a `public`
-  // link whose extension is in the known-safe raster set - upload-time
-  // validation (SAFE_INLINE_IMAGE_TYPES) is what actually keeps anything
-  // else from ever reaching this bucket with `public: true`. Everything
-  // else (every non-public object, and a public link with an unexpected
-  // extension) keeps the safe default: octet-stream + nosniff + forced
-  // download, so nothing can execute as a document even if opened directly.
+  // Safe to serve inline with its real Content-Type whenever the extension
+  // is in the known-safe set (SAFE_INLINE_EXTENSION_TO_MIME), whether this
+  // is a public avatar/project-image link or a private, signed
+  // knowledge-base file link - see that constant's own comment for why
+  // that's independent of `isPublic`. Everything else keeps the safe
+  // default: octet-stream + nosniff + forced download, so nothing can
+  // execute as a document even if opened directly.
   const extension = path.extname(safePath).slice(1).toLowerCase();
-  const inlineMime = isPublic ? SAFE_INLINE_EXTENSION_TO_MIME[extension] : undefined;
+  const inlineMime = SAFE_INLINE_EXTENSION_TO_MIME[extension];
 
   try {
     const provider = new LocalStorageProvider();
@@ -83,8 +83,15 @@ export async function GET(request: NextRequest) {
             "Content-Length": String(blob.size),
             // Public avatars/project images are effectively permanent
             // (PUBLIC_URL_TTL_SECONDS) and meant to be reused across
-            // requests, unlike the short-lived private download links.
-            "Cache-Control": "public, max-age=31536000, immutable",
+            // requests; a private preview link is signed and time-limited,
+            // so it must not be shared by a proxy the same way.
+            "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, max-age=60",
+            // Still set even though the type is trusted: without it, a
+            // top-level navigation to a maliciously-renamed upload (upload
+            // validation is extension-based, not a content sniff) could get
+            // MIME-sniffed into something other than the declared type.
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": `inline; filename="${path.basename(safePath)}"`,
           }
         : {
             "Content-Type": "application/octet-stream",
