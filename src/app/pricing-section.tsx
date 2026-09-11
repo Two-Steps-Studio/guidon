@@ -39,7 +39,13 @@ function formatBytes(bytes: number | null): string {
 }
 
 function formatCount(value: number | null, unit: string): string {
-  return value === null ? `Unlimited ${unit}` : `${value.toLocaleString()} ${unit}`;
+  // Locale pinned to "en-US" - without it, toLocaleString() falls back to
+  // the runtime's default locale, which differs between the server (Node's
+  // ICU default) and the visitor's browser. That produces different
+  // formatted digits (e.g. "1,000" vs "1 000") for the same number between
+  // the SSR HTML and the client hydration pass, which React reports as a
+  // hydration mismatch (minified error #418) rather than silently fixing.
+  return value === null ? `Unlimited ${unit}` : `${value.toLocaleString("en-US")} ${unit}`;
 }
 
 /**
