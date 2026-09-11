@@ -35,6 +35,36 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "30mb",
     },
   },
+
+  // Baseline security headers - applied here rather than in src/proxy.ts so
+  // they're attached to every response (including ones the middleware
+  // matcher skips, e.g. static assets) without an extra header-copy step in
+  // the proxy. Deliberately does NOT include Content-Security-Policy: this
+  // app loads Monaco's editor worker, next/font files, inline JSON-LD
+  // structured data (src/app/page.tsx), and (self-hosted) an
+  // admin-configurable storage/API origin, and a wrong CSP silently breaks
+  // features instead of failing a build - that needs deliberate, tested
+  // rollout rather than a blind default here.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          },
+          // Browsers ignore this over a plain-HTTP connection, so it's safe
+          // to send unconditionally for the self-hosted (possibly TLS-less,
+          // behind the user's own reverse proxy) deployment too.
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
