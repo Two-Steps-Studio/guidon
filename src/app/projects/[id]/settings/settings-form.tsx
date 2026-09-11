@@ -34,9 +34,14 @@ const initialState: SettingsFormState = { error: null };
 export function SettingsForm({
   project,
   initialTechnologies,
+  isOwner,
 }: {
   project: Project;
   initialTechnologies: string[];
+  /** deleteProject (RLS's projects_delete) is owner-only, unlike every
+   *  other action on this page - the Danger Zone only makes sense to show
+   *  to someone who could actually use it. */
+  isOwner: boolean;
 }) {
   const updateWithId = updateProjectSettings.bind(null, project.id);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
@@ -188,68 +193,70 @@ export function SettingsForm({
         </CardContent>
       </Card>
 
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
-            Danger Zone
-          </CardTitle>
-          <CardDescription>Irreversible and destructive actions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium">Delete this project</h4>
-              <p className="text-sm text-muted-foreground">
-                Once deleted, all project data will be permanently removed.
-              </p>
-            </div>
-            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-              <DialogTrigger asChild>
-                <Button variant="destructive" type="button">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Project
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete Project</DialogTitle>
-                  <DialogDescription>
-                    This action cannot be undone. This will permanently delete the project and
-                    all associated data including tasks, files, decisions, and memory.
-                  </DialogDescription>
-                </DialogHeader>
-                {deleteError && (
-                  <div className="text-sm text-destructive flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    {deleteError}
+      {isOwner && (
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Danger Zone
+            </CardTitle>
+            <CardDescription>Irreversible and destructive actions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Delete this project</h4>
+                <p className="text-sm text-muted-foreground">
+                  Once deleted, all project data will be permanently removed.
+                </p>
+              </div>
+              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" type="button">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Project
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Project</DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone. This will permanently delete the project and
+                      all associated data including tasks, files, decisions, and memory.
+                    </DialogDescription>
+                  </DialogHeader>
+                  {deleteError && (
+                    <div className="text-sm text-destructive flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      {deleteError}
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowDeleteDialog(false)}
+                      disabled={deleting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
+                      {deleting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        "Delete Project"
+                      )}
+                    </Button>
                   </div>
-                )}
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowDeleteDialog(false)}
-                    disabled={deleting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
-                    {deleting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      "Delete Project"
-                    )}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardContent>
-      </Card>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {state.error && (
         <div className="p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-2 text-destructive">

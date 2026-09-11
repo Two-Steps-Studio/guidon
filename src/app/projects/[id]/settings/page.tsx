@@ -106,7 +106,11 @@ export default async function ProjectSettingsPage({
         <p className="text-muted-foreground">Manage project configuration and preferences</p>
       </div>
 
-      <SettingsForm project={project} initialTechnologies={technologies.map((t) => t.name)} />
+      <SettingsForm
+        project={project}
+        initialTechnologies={technologies.map((t) => t.name)}
+        isOwner={access.role === "owner"}
+      />
       <BoardColumnsForm projectId={projectId} overrides={boardColumns} />
       <AiPermissionsForm
         projectId={projectId}

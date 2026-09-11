@@ -266,20 +266,32 @@ export async function deleteProject(projectId: string): Promise<{ error: string 
     return { error: "You do not have permission to delete this project." };
   }
 
+  // canManageProject allows owner AND admin, but projects_delete (001) is
+  // owner-only - an admin passes the check above but RLS blocks the actual
+  // DELETE, filtering it to 0 rows. Neither branch checked that until now,
+  // so an admin got a silent "success": the project was untouched, but the
+  // code still logged a "project_deleted" activity entry and redirected
+  // away as if it were gone.
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM projects WHERE id = $1", [projectId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM projects WHERE id = $1 RETURNING id", [projectId])
       );
+      if (result.rows.length === 0) {
+        return { error: "Only the project owner can delete this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete project." };
     }
   } else {
     const supabase = await createClient();
-    const { error } = await supabase.from("projects").delete().eq("id", projectId);
+    const { data, error } = await supabase.from("projects").delete().eq("id", projectId).select("id");
 
     if (error) {
       return { error: error.message };
+    }
+    if (!data || data.length === 0) {
+      return { error: "Only the project owner can delete this project." };
     }
   }
 
