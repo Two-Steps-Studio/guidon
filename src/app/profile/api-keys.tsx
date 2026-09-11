@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Copy, KeyRound, Trash2 } from "lucide-react";
+import { AlertCircle, Check, Copy, KeyRound, Trash2 } from "lucide-react";
 import { API_KEY_SCOPES } from "@/lib/api/scopes";
 import { createApiKey, revokeApiKey, type ApiKeyRow, type CreateApiKeyState } from "./api-keys-actions";
 
@@ -16,6 +16,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   const [keys, setKeys] = useState(initialKeys);
   const [state, formAction, creating] = useActionState(createApiKey, initialState);
   const [revoking, startRevoke] = useTransition();
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
 
   // useState(initialKeys) only re-seeds on remount, so revalidatePath("/profile")
   // alone doesn't get the freshly created key into this list - without this,
@@ -32,6 +33,21 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
       setKeys((prev) => (prev.some((k) => k.id === newRow.id) ? prev : [newRow, ...prev]));
     }
   }
+
+  const handleCopyFullKey = async () => {
+    if (!state.fullKey) return;
+    try {
+      await navigator.clipboard.writeText(state.fullKey);
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 2000);
+    } catch {
+      // A rejected clipboard write (permission denied, document not
+      // focused) previously failed silently - this key is shown exactly
+      // once, so a silent failure here means the user believes they copied
+      // it and loses it for good.
+      setCopyState("error");
+    }
+  };
 
   const handleRevoke = (keyId: string) => {
     startRevoke(async () => {
@@ -54,15 +70,15 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
               <code className="flex-1 overflow-x-auto rounded bg-background px-2 py-1 font-mono text-xs">
                 {state.fullKey}
               </code>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => navigator.clipboard.writeText(state.fullKey!)}
-              >
-                <Copy className="h-3 w-3" />
+              <Button type="button" size="sm" variant="outline" onClick={handleCopyFullKey}>
+                {copyState === "copied" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               </Button>
             </div>
+            {copyState === "error" && (
+              <p className="mt-2 text-xs text-destructive">
+                Couldn&apos;t copy automatically - select the key above and copy it manually.
+              </p>
+            )}
           </div>
         )}
 

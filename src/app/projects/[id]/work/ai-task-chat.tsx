@@ -161,39 +161,47 @@ export function AiTaskChat({
     );
     let maxOrder = backlogTasks.reduce((max, task) => Math.max(max, task.sort_order ?? 0), 0);
 
-    for (const proposal of toCreate) {
-      maxOrder += 100;
-      const result = await createTask(projectId, {
-        title: proposal.title,
-        description: proposal.description,
-        status: "backlog",
-        priority: proposal.priority,
-        assigneeId: "",
-        dueDate: "",
-        sortOrder: maxOrder,
-      });
+    try {
+      for (const proposal of toCreate) {
+        maxOrder += 100;
+        const result = await createTask(projectId, {
+          title: proposal.title,
+          description: proposal.description,
+          status: "backlog",
+          priority: proposal.priority,
+          assigneeId: "",
+          dueDate: "",
+          sortOrder: maxOrder,
+        });
 
-      if (result.error || !result.task) {
-        setAddError(result.error ?? "Failed to create task.");
-        break;
+        if (result.error || !result.task) {
+          setAddError(result.error ?? "Failed to create task.");
+          break;
+        }
+
+        const createdTask = result.task;
+        setMessages((current) =>
+          current.map((current_, i) => {
+            if (i !== messageIndex || !current_.proposals) return current_;
+            return {
+              ...current_,
+              proposals: current_.proposals.map((p, j) =>
+                j === proposal.index ? { ...p, taskId: createdTask.id } : p
+              ),
+            };
+          })
+        );
+        onCreated(createdTask);
       }
-
-      const createdTask = result.task;
-      setMessages((current) =>
-        current.map((current_, i) => {
-          if (i !== messageIndex || !current_.proposals) return current_;
-          return {
-            ...current_,
-            proposals: current_.proposals.map((p, j) =>
-              j === proposal.index ? { ...p, taskId: createdTask.id } : p
-            ),
-          };
-        })
-      );
-      onCreated(createdTask);
+    } catch {
+      // createTask can reject rather than resolve with {error} - a DB
+      // hiccup before its own try/catch. Without catching it here, the
+      // button is stuck on "Adding..." forever instead of surfacing an
+      // error and re-enabling itself.
+      setAddError("Failed to create task.");
+    } finally {
+      setAddingIndex(null);
     }
-
-    setAddingIndex(null);
   };
 
   return (
@@ -215,7 +223,7 @@ export function AiTaskChat({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4" role="log" aria-live="polite">
           {messages.length === 0 && (
             <p className="text-sm text-muted-foreground">
               Paste a spec, describe a feature, or ask a question - the assistant proposes

@@ -107,16 +107,25 @@ function DirectoryLevel({
     let cancelled = false;
 
     (async () => {
-      const result = await listRepoDirectory(projectId, path);
-      if (cancelled) return;
+      try {
+        const result = await listRepoDirectory(projectId, path);
+        if (cancelled) return;
 
-      if (result.error) {
-        setError(result.error);
-        return;
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        const resolved = { entries: result.entries, truncated: result.truncated };
+        cache.set(cacheKey, resolved);
+        setListing(resolved);
+      } catch {
+        // listRepoDirectory can reject (not just return {error}) if the
+        // request never reaches its own try/catch - a DB hiccup inside
+        // getProjectAccess, or the network call to the server action
+        // itself failing. Without this, the folder is stuck on "Loading..."
+        // forever instead of showing something retryable.
+        if (!cancelled) setError("Something went wrong loading this folder.");
       }
-      const resolved = { entries: result.entries, truncated: result.truncated };
-      cache.set(cacheKey, resolved);
-      setListing(resolved);
     })();
 
     return () => {

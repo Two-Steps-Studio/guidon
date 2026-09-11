@@ -150,13 +150,21 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
 
     setTabs((prev) => [...prev, createTab(path, defaultBranch)]);
 
-    getRepoFile(projectId, path).then((result) => {
-      if (result.error || result.content === null) {
-        updateTab(path, { loadError: result.error ?? "Could not load this file." });
-        return;
-      }
-      updateTab(path, { content: result.content, sha: result.sha });
-    });
+    getRepoFile(projectId, path)
+      .then((result) => {
+        if (result.error || result.content === null) {
+          updateTab(path, { loadError: result.error ?? "Could not load this file." });
+          return;
+        }
+        updateTab(path, { content: result.content, sha: result.sha });
+      })
+      .catch(() => {
+        // getRepoFile can reject rather than resolve with {error} - a DB
+        // hiccup before its own try/catch, or the server action's own
+        // network call failing. Without this, the tab is stuck on
+        // "Loading file..." forever instead of showing a retryable error.
+        updateTab(path, { loadError: "Could not load this file." });
+      });
   };
 
   const closeTab = (path: string) => {
@@ -176,25 +184,33 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
 
     updateTab(path, { saving: true, saveError: null });
 
-    const result = await commitRepoFile(projectId, path, content, sha, {
-      branch,
-      message,
-      mode,
-      newBranchName: mode === "pr" ? newBranchName : undefined,
-    });
+    try {
+      const result = await commitRepoFile(projectId, path, content, sha, {
+        branch,
+        message,
+        mode,
+        newBranchName: mode === "pr" ? newBranchName : undefined,
+      });
 
-    if (result.error) {
-      updateTab(path, { saving: false, saveError: result.error });
-      return;
+      if (result.error) {
+        updateTab(path, { saving: false, saveError: result.error });
+        return;
+      }
+
+      updateTab(path, {
+        saving: false,
+        saveError: null,
+        sha: result.sha ?? sha,
+        dirty: false,
+        success: { commitUrl: result.commitUrl, pullRequestUrl: result.pullRequestUrl },
+      });
+    } catch {
+      // commitRepoFile can reject rather than resolve with {error} - a DB
+      // hiccup before its own try/catch, or the server action's own network
+      // call failing. Without this, the Commit button is stuck spinning
+      // forever instead of surfacing a retryable error.
+      updateTab(path, { saving: false, saveError: "Something went wrong committing this file." });
     }
-
-    updateTab(path, {
-      saving: false,
-      saveError: null,
-      sha: result.sha ?? sha,
-      dirty: false,
-      success: { commitUrl: result.commitUrl, pullRequestUrl: result.pullRequestUrl },
-    });
   };
 
   // Maximize keeps the app's own nav sidebar visible (and the 48px header,
