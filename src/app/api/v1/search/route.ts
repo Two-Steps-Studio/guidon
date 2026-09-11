@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { requireAuth, isAuthError } from '@/lib/auth/auth-helpers';
 import { hasDirectDatabase } from '@/lib/db/pool';
 import { withUser } from '@/lib/db/session';
+import { isValidUuid, invalidIdResponse } from '@/lib/api/validate-id';
 
 interface SearchResult {
   type: string;
@@ -352,6 +353,14 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Unlike every other /api/v1 route, project_id here is optional (omit
+    // it to search across every project the caller can see) - but when
+    // present it still ends up as a bind parameter in a uuid-typed WHERE
+    // clause on both DB paths, same as taskId/projectId elsewhere, so a
+    // malformed value needs the same validation rather than falling
+    // through to a raw Postgres "invalid input syntax" error below.
+    if (projectId && !isValidUuid(projectId)) return invalidIdResponse('project_id');
 
     const types = entityTypes ? entityTypes.split(',') : ['task', 'decision', 'memory', 'file', 'source'];
 

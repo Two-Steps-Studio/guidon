@@ -20,27 +20,44 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
 
   if (hasDirectDatabase()) {
-    const result = await withUser(guard.userId, async ({ query }) => {
-      const task = await query("SELECT project_id FROM tasks WHERE id = $1", [taskId]);
-      if (task.rows.length === 0) return null;
+    // project_ai_permissions.can_create_comments is the app-level check
+    // above, but the real gate is task_comments_insert's RLS policy (001),
+    // which additionally requires the caller's *project role* to be one of
+    // owner/admin/developer/tester - an API key issued to a project viewer
+    // passes the app-level check (no row, or can_create_comments true) but
+    // still gets rejected by RLS's WITH CHECK. Unlike UPDATE (which just
+    // filters to 0 rows), a WITH CHECK violation on INSERT throws
+    // (Postgres error 42501), so it needs its own catch here rather than a
+    // rows-returned check.
+    let result: unknown;
+    try {
+      result = await withUser(guard.userId, async ({ query }) => {
+        const task = await query("SELECT project_id FROM tasks WHERE id = $1", [taskId]);
+        if (task.rows.length === 0) return null;
 
-      const perms = await query(
-        "SELECT can_create_comments FROM project_ai_permissions WHERE project_id = $1",
-        [task.rows[0].project_id]
-      );
-      if (perms.rows[0] && !perms.rows[0].can_create_comments) return "forbidden";
+        const perms = await query(
+          "SELECT can_create_comments FROM project_ai_permissions WHERE project_id = $1",
+          [task.rows[0].project_id]
+        );
+        if (perms.rows[0] && !perms.rows[0].can_create_comments) return "forbidden";
 
-      const comment = await query(
-        `INSERT INTO task_comments (task_id, author_id, content) VALUES ($1, $2, $3) RETURNING *`,
-        [taskId, guard.userId, content]
-      );
-      await query(
-        `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id)
-         VALUES ($1, $2, 'task_ai_commented', 'task', $3)`,
-        [task.rows[0].project_id, guard.userId, taskId]
-      );
-      return comment.rows[0];
-    });
+        const comment = await query(
+          `INSERT INTO task_comments (task_id, author_id, content) VALUES ($1, $2, $3) RETURNING *`,
+          [taskId, guard.userId, content]
+        );
+        await query(
+          `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id)
+           VALUES ($1, $2, 'task_ai_commented', 'task', $3)`,
+          [task.rows[0].project_id, guard.userId, taskId]
+        );
+        return comment.rows[0];
+      });
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "42501") {
+        return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
+      }
+      throw error;
+    }
 
     if (result === null) return NextResponse.json({ error: "Task not found." }, { status: 404 });
     if (result === "forbidden") {
@@ -70,7 +87,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    // Same RLS gate as the self-hosted branch above (task_comments_insert
+    // requires project role owner/admin/developer/tester) - PostgREST
+    // surfaces a WITH CHECK violation as a normal `error` object rather
+    // than throwing, but it still needs mapping to 403 with a stable
+    // message instead of leaking the raw Postgres error text at a
+    // misleading 400.
+    if (error.code === "42501") {
+      return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 
   await supabase
     .from("activity_logs")
