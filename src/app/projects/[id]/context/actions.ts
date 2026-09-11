@@ -118,9 +118,20 @@ export async function deleteRelation(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM context_relations WHERE id = $1", [relationId])
+      // Scoped to project_id and checks the row count, same reasoning as
+      // toggleSubtask/deleteTask in work/actions.ts: without it, a
+      // relationId that doesn't belong to this project (stale client
+      // state, or simply the wrong id) came back as a silent
+      // `{ error: null }` "success" with nothing actually removed.
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM context_relations WHERE id = $1 AND project_id = $2 RETURNING id", [
+          relationId,
+          projectId,
+        ])
       );
+      if (result.rows.length === 0) {
+        return { error: "This relation could not be found in this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete relation." };
     }
@@ -130,9 +141,17 @@ export async function deleteRelation(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("context_relations").delete().eq("id", relationId);
+  const { data, error } = await supabase
+    .from("context_relations")
+    .delete()
+    .eq("id", relationId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This relation could not be found in this project." };
+  }
 
   revalidatePath(`/projects/${projectId}/context`);
   return { error: null };

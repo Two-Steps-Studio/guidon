@@ -90,6 +90,15 @@ export async function saveTechnology(
         ).then((result) => result.rows[0]);
       });
 
+      // The UPDATE branch above filters by `id AND project_id` but has no
+      // RETURNING-based rowcount check of its own - an `input.id` that
+      // doesn't belong to this project resolved `technology` to undefined
+      // with no error, unlike the Supabase branch below, whose
+      // .select().single() throws when zero rows match. Aligns the two.
+      if (!technology) {
+        return { technology: null, error: "This technology could not be found in this project." };
+      }
+
       revalidatePath(`/projects/${projectId}/technology`);
       return { technology: technology as Technology, error: null };
     } catch (error) {

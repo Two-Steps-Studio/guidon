@@ -782,7 +782,19 @@ export async function deleteTask(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) => query("DELETE FROM tasks WHERE id = $1", [taskId]));
+      // Scoped to project_id, same reasoning as toggleSubtask above: without
+      // it this deletes ANY task id passed in (a task from a different
+      // project this caller might manage under a different role), and
+      // without RETURNING, a mismatched id came back as a silent
+      // `{ error: null }` "success" with zero rows actually removed - the
+      // activity log then recorded a "task_deleted" entry for a task that
+      // still exists, under the wrong project.
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM tasks WHERE id = $1 AND project_id = $2 RETURNING id", [taskId, projectId])
+      );
+      if (result.rows.length === 0) {
+        return { error: "This task could not be found in this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete this task." };
     }
@@ -800,9 +812,17 @@ export async function deleteTask(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+  const { data, error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", taskId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This task could not be found in this project." };
+  }
 
   await logActivity({
     userId: access.userId,
