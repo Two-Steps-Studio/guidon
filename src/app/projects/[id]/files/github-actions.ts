@@ -167,10 +167,10 @@ export async function listRepoDirectory(
   const access = await getProjectAccess(projectId);
   if (!access) return { entries: [], truncated: false, error: "You do not have access to this project." };
 
-  const connection = await getProjectGithubToken(projectId, access.userId);
-  if (!connection) return { entries: [], truncated: false, error: "No repository connected." };
-
   try {
+    const connection = await getProjectGithubToken(projectId, access.userId);
+    if (!connection) return { entries: [], truncated: false, error: "No repository connected." };
+
     const { entries, truncated } = await listDirectory(
       connection.token,
       connection.repoOwner,
@@ -197,10 +197,10 @@ export async function getRepoFile(
   const access = await getProjectAccess(projectId);
   if (!access) return { content: null, sha: null, error: "You do not have access to this project." };
 
-  const connection = await getProjectGithubToken(projectId, access.userId);
-  if (!connection) return { content: null, sha: null, error: "No repository connected." };
-
   try {
+    const connection = await getProjectGithubToken(projectId, access.userId);
+    if (!connection) return { content: null, sha: null, error: "No repository connected." };
+
     const file = await getFile(
       connection.token,
       connection.repoOwner,
@@ -247,15 +247,15 @@ export async function commitRepoFile(
     };
   }
 
-  const connection = await getProjectGithubToken(projectId, access.userId);
-  if (!connection) {
-    return { error: "No repository connected.", sha: null, commitUrl: null, pullRequestUrl: null };
-  }
-
-  const { repoOwner, repoName, token } = connection;
   const message = options.message.trim() || `Update ${path}`;
 
   try {
+    const connection = await getProjectGithubToken(projectId, access.userId);
+    if (!connection) {
+      return { error: "No repository connected.", sha: null, commitUrl: null, pullRequestUrl: null };
+    }
+    const { repoOwner, repoName, token } = connection;
+
     if (options.mode === "direct") {
       const result = await putFile(token, repoOwner, repoName, path, content, currentSha, options.branch, message);
 

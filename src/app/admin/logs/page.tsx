@@ -57,7 +57,7 @@ export default async function AdminLogsPage() {
         <EmptyState
           icon={ActivityIcon}
           title="No activity yet"
-          description="Nothing in Guidon currently writes to activity_logs, so this stays empty until a future feature starts logging here."
+          description="No activity has been recorded on this instance yet."
         />
       ) : (
         <Card>

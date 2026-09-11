@@ -22,8 +22,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
   }
 
+  // Checked together, not just clientId - the secret is only needed later,
+  // at the token exchange in /api/github/callback, so checking clientId
+  // alone would send the user all the way through GitHub's consent screen
+  // before failing with the same "not configured" message they could have
+  // gotten immediately here.
   const clientId = process.env.GITHUB_APP_CLIENT_ID;
-  if (!clientId) {
+  const clientSecret = process.env.GITHUB_APP_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
     return NextResponse.redirect(
       `${origin}/projects/${projectId}/files?githubError=${encodeURIComponent(
         "GitHub integration is not configured on this server (GITHUB_APP_CLIENT_ID/GITHUB_APP_CLIENT_SECRET)."
