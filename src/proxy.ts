@@ -22,6 +22,12 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // the login page made every signed URL unusable. The route verifies the
   // signature itself and 403s without it.
   '/api/storage',
+  // Search engine crawlers (and this app's own robots.ts/sitemap.ts routes
+  // advertising themselves) never carry a session cookie - without these,
+  // every crawler request was bounced to /auth/login instead of getting the
+  // actual file, so the site was effectively unindexable.
+  '/robots.txt',
+  '/sitemap.xml',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every
