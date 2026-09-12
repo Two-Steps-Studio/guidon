@@ -243,9 +243,18 @@ export async function deleteAttempt(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM task_attempts WHERE id = $1", [attemptId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query(
+          `DELETE FROM task_attempts
+           WHERE id = $1
+             AND task_id IN (SELECT id FROM tasks WHERE project_id = $2)
+           RETURNING id`,
+          [attemptId, projectId]
+        )
       );
+      if (result.rows.length === 0) {
+        return { error: "This attempt could not be found in this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete attempt." };
     }
@@ -255,6 +264,22 @@ export async function deleteAttempt(
   }
 
   const supabase = await createClient();
+
+  // task_attempts has no project_id column - ownership is only derivable by
+  // joining through tasks, and Supabase's delete builder can't filter by a
+  // joined table's column, so this verifies the attempt's task belongs to
+  // projectId before deleting rather than deleting by id alone and trusting
+  // RLS to have silently no-op'd on a cross-project id.
+  const { data: owning, error: lookupError } = await supabase
+    .from("task_attempts")
+    .select("id, tasks!inner(project_id)")
+    .eq("id", attemptId)
+    .eq("tasks.project_id", projectId)
+    .maybeSingle();
+
+  if (lookupError) return { error: lookupError.message };
+  if (!owning) return { error: "This attempt could not be found in this project." };
+
   const { error } = await supabase.from("task_attempts").delete().eq("id", attemptId);
 
   if (error) return { error: error.message };
@@ -299,15 +324,27 @@ export async function moveTask(
 
         if (plan) {
           for (const { id, sort_order } of plan) {
-            await query("UPDATE tasks SET sort_order = $1 WHERE id = $2", [sort_order, id]);
+            await query("UPDATE tasks SET sort_order = $1 WHERE id = $2 AND project_id = $3", [
+              sort_order,
+              id,
+              projectId,
+            ]);
           }
-          await query("UPDATE tasks SET status = $1 WHERE id = $2", [status, taskId]);
+          const result = await query(
+            "UPDATE tasks SET status = $1 WHERE id = $2 AND project_id = $3 RETURNING id",
+            [status, taskId, projectId]
+          );
+          if (result.rows.length === 0) {
+            throw new Error("This task could not be found in this project.");
+          }
         } else {
-          await query("UPDATE tasks SET status = $1, sort_order = $2 WHERE id = $3", [
-            status,
-            Math.round(sortOrder),
-            taskId,
-          ]);
+          const result = await query(
+            "UPDATE tasks SET status = $1, sort_order = $2 WHERE id = $3 AND project_id = $4 RETURNING id",
+            [status, Math.round(sortOrder), taskId, projectId]
+          );
+          if (result.rows.length === 0) {
+            throw new Error("This task could not be found in this project.");
+          }
         }
       });
     } catch (error) {
@@ -347,17 +384,30 @@ export async function moveTask(
 
   if (plan) {
     for (const { id, sort_order } of plan) {
-      const { error: renumberError } = await supabase.from("tasks").update({ sort_order }).eq("id", id);
+      const { error: renumberError } = await supabase
+        .from("tasks")
+        .update({ sort_order })
+        .eq("id", id)
+        .eq("project_id", projectId);
       if (renumberError) return { error: renumberError.message };
     }
-    const { error: statusError } = await supabase.from("tasks").update({ status }).eq("id", taskId);
+    const { data, error: statusError } = await supabase
+      .from("tasks")
+      .update({ status })
+      .eq("id", taskId)
+      .eq("project_id", projectId)
+      .select("id");
     if (statusError) return { error: statusError.message };
+    if (!data || data.length === 0) return { error: "This task could not be found in this project." };
   } else {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("tasks")
       .update({ status, sort_order: Math.round(sortOrder) })
-      .eq("id", taskId);
+      .eq("id", taskId)
+      .eq("project_id", projectId)
+      .select("id");
     if (error) return { error: error.message };
+    if (!data || data.length === 0) return { error: "This task could not be found in this project." };
   }
 
   await logActivity({
@@ -559,11 +609,14 @@ export async function updateTask(
 
     try {
       const result = await withUser(access.userId, ({ query }) =>
-        query(`UPDATE tasks SET ${setClause} WHERE id = $${values.length + 1} RETURNING *`, [
-          ...values,
-          taskId,
-        ])
+        query(
+          `UPDATE tasks SET ${setClause} WHERE id = $${values.length + 1} AND project_id = $${values.length + 2} RETURNING *`,
+          [...values, taskId, projectId]
+        )
       );
+      if (result.rows.length === 0) {
+        return { task: null, error: "This task could not be found in this project." };
+      }
       await logActivity({
         userId: access.userId,
         action: "task_updated",
@@ -583,10 +636,12 @@ export async function updateTask(
     .from("tasks")
     .update(patch)
     .eq("id", taskId)
+    .eq("project_id", projectId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) return { task: null, error: error.message };
+  if (!data) return { task: null, error: "This task could not be found in this project." };
 
   await logActivity({
     userId: access.userId,
