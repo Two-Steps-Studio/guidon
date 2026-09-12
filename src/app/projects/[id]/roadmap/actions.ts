@@ -37,6 +37,15 @@ function parsePhaseForm(formData: FormData) {
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as PhaseStatus)) {
     return { error: "Invalid status." } as const;
   }
+  if (
+    typeof startDate === "string" &&
+    startDate &&
+    typeof plannedEndDate === "string" &&
+    plannedEndDate &&
+    plannedEndDate < startDate
+  ) {
+    return { error: "Planned end date can't be before the start date." } as const;
+  }
 
   const completionValue = Number(completion);
 
@@ -171,11 +180,12 @@ export async function updatePhase(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
+      const result = await withUser(access.userId, ({ query }) =>
         query(
           `UPDATE roadmap_phases
            SET name = $1, description = $2, start_date = $3, planned_end_date = $4, status = $5, completion_percentage = $6
-           WHERE id = $7 AND project_id = $8`,
+           WHERE id = $7 AND project_id = $8
+           RETURNING id`,
           [
             parsed.name,
             parsed.description,
@@ -188,6 +198,9 @@ export async function updatePhase(
           ]
         )
       );
+      if (result.rows.length === 0) {
+        return { error: "This phase could not be found in this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update roadmap phase." };
     }
@@ -205,7 +218,7 @@ export async function updatePhase(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("roadmap_phases")
     .update({
       name: parsed.name,
@@ -216,9 +229,13 @@ export async function updatePhase(
       completion_percentage: parsed.completion_percentage,
     })
     .eq("id", phaseId)
-    .eq("project_id", projectId);
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This phase could not be found in this project." };
+  }
 
   await logActivity({
     userId: access.userId,
@@ -243,9 +260,15 @@ export async function deletePhase(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM roadmap_phases WHERE id = $1 AND project_id = $2", [phaseId, projectId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM roadmap_phases WHERE id = $1 AND project_id = $2 RETURNING id", [
+          phaseId,
+          projectId,
+        ])
       );
+      if (result.rows.length === 0) {
+        return { error: "This phase could not be found in this project." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete roadmap phase." };
     }
@@ -263,9 +286,17 @@ export async function deletePhase(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("roadmap_phases").delete().eq("id", phaseId).eq("project_id", projectId);
+  const { data, error } = await supabase
+    .from("roadmap_phases")
+    .delete()
+    .eq("id", phaseId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This phase could not be found in this project." };
+  }
 
   await logActivity({
     userId: access.userId,
