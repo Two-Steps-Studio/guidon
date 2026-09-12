@@ -7,7 +7,6 @@ import {
   deleteTask,
   loadComments as loadCommentsAction,
   postComment,
-  toggleSubtask,
   updateTask,
   type TaskComment,
 } from "@/app/projects/[id]/work/actions";
@@ -78,6 +77,20 @@ function formToTask(task: Task): TaskForm {
     due_date: task.due_date ? task.due_date.slice(0, 10) : "",
     tags: (task.tags ?? []).join(", "),
   };
+}
+
+/**
+ * A subtask can be sitting on a status the project has since hidden from
+ * the board (same reasoning as the parent task's own `statusOptions` below)
+ * - keep it selectable rather than silently omitting it from the dropdown.
+ */
+function subtaskStatusOptions(
+  status: TaskStatus,
+  columns: readonly BoardColumn[]
+): readonly BoardColumn[] {
+  return columns.some((c) => c.status === status)
+    ? columns
+    : [...columns, BOARD_COLUMNS.find((c) => c.status === status)!];
 }
 
 export function TaskDetailDialog({
@@ -286,8 +299,23 @@ export function TaskDetailDialog({
   const [subtaskDraft, setSubtaskDraft] = useState("");
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [subtaskError, setSubtaskError] = useState<string | null>(null);
-  const [togglingSubtaskId, setTogglingSubtaskId] = useState<string | null>(null);
+  const [savingSubtaskId, setSavingSubtaskId] = useState<string | null>(null);
   const [deletingSubtaskId, setDeletingSubtaskId] = useState<string | null>(null);
+  // Keyed by subtask id. Only holds an entry while that row has an
+  // in-flight or not-yet-committed edit - absence means "show the row's
+  // own field", so a successful or failed save both fall back to the
+  // latest server value once the entry is removed in `finally`.
+  const [subtaskTitleDrafts, setSubtaskTitleDrafts] = useState<Record<string, string>>({});
+  const [subtaskStatusDrafts, setSubtaskStatusDrafts] = useState<Record<string, TaskStatus>>({});
+
+  function clearDraft<T>(setter: React.Dispatch<React.SetStateAction<Record<string, T>>>, id: string) {
+    setter((current) => {
+      if (!(id in current)) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  }
 
   const handleAddSubtask = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -311,19 +339,48 @@ export function TaskDetailDialog({
     }
   };
 
-  const handleToggleSubtask = async (subtask: Task) => {
-    setTogglingSubtaskId(subtask.id);
+  const handleSubtaskStatusChange = async (subtask: Task, status: TaskStatus) => {
+    // Set immediately so the (now-disabled) <select> shows the chosen value
+    // for the duration of the request instead of snapping back to the old
+    // one until `onSaved` updates `subtask` from the parent.
+    setSubtaskStatusDrafts((current) => ({ ...current, [subtask.id]: status }));
+    setSavingSubtaskId(subtask.id);
     setSubtaskError(null);
 
     try {
-      const result = await toggleSubtask(projectId, subtask.id, !isDone(subtask.status));
+      const result = await updateTask(projectId, subtask.id, { status });
       if (result.error || !result.task) throw new Error(result.error ?? "Failed to update subtask");
 
       onSaved(result.task);
     } catch (err) {
       setSubtaskError(err instanceof Error ? err.message : "Failed to update subtask");
     } finally {
-      setTogglingSubtaskId(null);
+      setSavingSubtaskId(null);
+      clearDraft(setSubtaskStatusDrafts, subtask.id);
+    }
+  };
+
+  const handleSubtaskTitleCommit = async (subtask: Task) => {
+    const draft = (subtaskTitleDrafts[subtask.id] ?? subtask.title).trim();
+
+    if (!draft || draft === subtask.title) {
+      clearDraft(setSubtaskTitleDrafts, subtask.id);
+      return;
+    }
+
+    setSavingSubtaskId(subtask.id);
+    setSubtaskError(null);
+
+    try {
+      const result = await updateTask(projectId, subtask.id, { title: draft });
+      if (result.error || !result.task) throw new Error(result.error ?? "Failed to rename subtask");
+
+      onSaved(result.task);
+    } catch (err) {
+      setSubtaskError(err instanceof Error ? err.message : "Failed to rename subtask");
+    } finally {
+      setSavingSubtaskId(null);
+      clearDraft(setSubtaskTitleDrafts, subtask.id);
     }
   };
 
@@ -562,61 +619,79 @@ export function TaskDetailDialog({
           {subtasks.length === 0 ? (
             <p className="text-sm text-muted-foreground">No subtasks yet.</p>
           ) : (
-            <ul className="space-y-1.5">
-              {subtasks.map((subtask) => {
-                const done = isDone(subtask.status);
-                return (
-                  <li key={subtask.id} className="group flex items-center gap-2">
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked={done}
-                      aria-label={
-                        done
-                          ? `Mark "${subtask.title}" as not done`
-                          : `Mark "${subtask.title}" as done`
-                      }
-                      disabled={!canEdit || togglingSubtaskId === subtask.id}
-                      onClick={() => void handleToggleSubtask(subtask)}
-                      className={cn(
-                        "flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border text-primary-foreground",
-                        "disabled:cursor-not-allowed disabled:opacity-60",
-                        done && "border-primary bg-primary"
-                      )}
-                    >
-                      {togglingSubtaskId === subtask.id ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : done ? (
-                        <Check className="h-3 w-3" />
-                      ) : null}
-                    </button>
-                    <span
-                      className={cn(
-                        "flex-1 truncate text-sm text-foreground",
-                        done && "text-muted-foreground line-through"
-                      )}
-                    >
-                      {subtask.title}
-                    </span>
-                    {canDelete && (
-                      <button
-                        type="button"
-                        aria-label={`Delete subtask "${subtask.title}"`}
-                        disabled={deletingSubtaskId === subtask.id}
-                        onClick={() => void handleDeleteSubtask(subtask.id)}
-                        className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100 disabled:opacity-60"
-                      >
-                        {deletingSubtaskId === subtask.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <X className="h-3.5 w-3.5" />
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                {subtasks.map((subtask) => {
+                  const normalizedStatus = normalizeTaskStatus(subtask.status);
+                  const statusValue = subtaskStatusDrafts[subtask.id] ?? normalizedStatus;
+                  const titleValue = subtaskTitleDrafts[subtask.id] ?? subtask.title;
+                  const saving = savingSubtaskId === subtask.id;
+
+                  return (
+                    <tr key={subtask.id} className="group">
+                      <td className="w-full py-1 pr-2">
+                        <Input
+                          value={titleValue}
+                          aria-label={`Subtask title: ${subtask.title}`}
+                          disabled={!canEdit || saving}
+                          className="h-8"
+                          onChange={(event) =>
+                            setSubtaskTitleDrafts((current) => ({
+                              ...current,
+                              [subtask.id]: event.target.value,
+                            }))
+                          }
+                          onBlur={() => void handleSubtaskTitleCommit(subtask)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              event.currentTarget.blur();
+                            } else if (event.key === "Escape") {
+                              clearDraft(setSubtaskTitleDrafts, subtask.id);
+                              event.currentTarget.blur();
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="py-1 pr-2">
+                        <Select
+                          aria-label={`Status for "${subtask.title}"`}
+                          className="h-8 w-36"
+                          value={statusValue}
+                          disabled={!canEdit || saving}
+                          onChange={(event) =>
+                            void handleSubtaskStatusChange(subtask, event.target.value as TaskStatus)
+                          }
+                        >
+                          {subtaskStatusOptions(statusValue, columns).map((column) => (
+                            <option key={column.status} value={column.status}>
+                              {column.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </td>
+                      <td className="py-1">
+                        {canDelete && (
+                          <button
+                            type="button"
+                            aria-label={`Delete subtask "${subtask.title}"`}
+                            disabled={deletingSubtaskId === subtask.id}
+                            onClick={() => void handleDeleteSubtask(subtask.id)}
+                            className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100 disabled:opacity-60"
+                          >
+                            {deletingSubtaskId === subtask.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <X className="h-3.5 w-3.5" />
+                            )}
+                          </button>
                         )}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
 
           {subtaskError && (
