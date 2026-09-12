@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Gavel, Loader2, Plus, Send, Trash2, X } from "lucide-react";
 import {
   createSubtask,
@@ -307,6 +307,11 @@ export function TaskDetailDialog({
   // latest server value once the entry is removed in `finally`.
   const [subtaskTitleDrafts, setSubtaskTitleDrafts] = useState<Record<string, string>>({});
   const [subtaskStatusDrafts, setSubtaskStatusDrafts] = useState<Record<string, TaskStatus>>({});
+  // Escape needs to suppress the blur-triggered commit that follows it
+  // synchronously, before the draft-clearing setState above has landed - a
+  // ref (not state) is what lets handleSubtaskTitleCommit see the
+  // cancellation on the very same tick the blur handler runs.
+  const escapedSubtaskIds = useRef<Set<string>>(new Set());
 
   function clearDraft<T>(setter: React.Dispatch<React.SetStateAction<Record<string, T>>>, id: string) {
     setter((current) => {
@@ -361,6 +366,8 @@ export function TaskDetailDialog({
   };
 
   const handleSubtaskTitleCommit = async (subtask: Task) => {
+    if (escapedSubtaskIds.current.delete(subtask.id)) return;
+
     const draft = (subtaskTitleDrafts[subtask.id] ?? subtask.title).trim();
 
     if (!draft || draft === subtask.title) {
@@ -647,6 +654,7 @@ export function TaskDetailDialog({
                               event.preventDefault();
                               event.currentTarget.blur();
                             } else if (event.key === "Escape") {
+                              escapedSubtaskIds.current.add(subtask.id);
                               clearDraft(setSubtaskTitleDrafts, subtask.id);
                               event.currentTarget.blur();
                             }

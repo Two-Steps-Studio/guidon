@@ -119,10 +119,10 @@ export async function deleteRelation(
   if (hasDirectDatabase()) {
     try {
       // Scoped to project_id and checks the row count, same reasoning as
-      // toggleSubtask/deleteTask in work/actions.ts: without it, a
-      // relationId that doesn't belong to this project (stale client
-      // state, or simply the wrong id) came back as a silent
-      // `{ error: null }` "success" with nothing actually removed.
+      // deleteTask in work/actions.ts: without it, a relationId that
+      // doesn't belong to this project (stale client state, or simply the
+      // wrong id) came back as a silent `{ error: null }` "success" with
+      // nothing actually removed.
       const result = await withUser(access.userId, ({ query }) =>
         query("DELETE FROM context_relations WHERE id = $1 AND project_id = $2 RETURNING id", [
           relationId,

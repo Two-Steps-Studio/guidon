@@ -761,10 +761,10 @@ export async function deleteTask(
 
   if (hasDirectDatabase()) {
     try {
-      // Scoped to project_id, same reasoning as toggleSubtask above: without
-      // it this deletes ANY task id passed in (a task from a different
-      // project this caller might manage under a different role), and
-      // without RETURNING, a mismatched id came back as a silent
+      // Scoped to project_id, same reasoning as updateTask's own rowcount
+      // check above: without it this deletes ANY task id passed in (a task
+      // from a different project this caller might manage under a different
+      // role), and without RETURNING, a mismatched id came back as a silent
       // `{ error: null }` "success" with zero rows actually removed - the
       // activity log then recorded a "task_deleted" entry for a task that
       // still exists, under the wrong project.
