@@ -421,7 +421,15 @@ export function TaskDetailDialog({
   return (
     <>
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+        onEscapeKeyDown={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.dataset.subtaskTitleField === "true") {
+            event.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="pr-6 text-base">
             {canEdit ? "Task details" : task.title}
@@ -638,6 +646,7 @@ export function TaskDetailDialog({
                     <tr key={subtask.id} className="group">
                       <td className="w-full py-1 pr-2">
                         <Input
+                          data-subtask-title-field="true"
                           value={titleValue}
                           aria-label={`Subtask title: ${subtask.title}`}
                           disabled={!canEdit || saving}
