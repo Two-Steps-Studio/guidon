@@ -15,6 +15,10 @@ const eslintConfig = defineConfig([
     // Vendored monaco-editor assets (scripts/copy-monaco-assets.mjs) - minified
     // third-party code, not something this repo authors or should lint.
     "public/monaco-editor/**",
+    // git worktrees (superpowers:using-git-worktrees) - each has its own
+    // node_modules and build output; the patterns above are anchored to the
+    // repo root and don't reach nested copies under here.
+    ".worktrees/**",
   ]),
 ]);
 

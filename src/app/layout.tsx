@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <body className="min-h-screen bg-background text-foreground">
-        {children}
+        <main>{children}</main>
       </body>
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA
           property - only load it when this is actually Guidon Cloud, same
