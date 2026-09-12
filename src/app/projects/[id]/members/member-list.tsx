@@ -82,29 +82,39 @@ export function MemberList({
     setBusyId(member.id);
     setError(null);
 
-    const result = await changeMemberRole(projectId, member.id, member.role, role);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMembers((current) => current.map((m) => (m.id === member.id ? { ...m, role } : m)));
+    try {
+      const result = await changeMemberRole(projectId, member.id, member.role, role);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setMembers((current) => current.map((m) => (m.id === member.id ? { ...m, role } : m)));
+      }
+    } catch {
+      setError("Could not change that role. Please try again.");
+    } finally {
+      setBusyId(null);
     }
-    setBusyId(null);
   };
 
   const handleRemove = async (member: ProjectMemberRow) => {
     setBusyId(member.id);
     setError(null);
 
-    const result = await removeMember(projectId, member.id, member.role);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMembers((current) => current.filter((m) => m.id !== member.id));
-      if (member.profile) {
-        setCandidates((current) => [...current, member.profile!]);
+    try {
+      const result = await removeMember(projectId, member.id, member.role);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setMembers((current) => current.filter((m) => m.id !== member.id));
+        if (member.profile) {
+          setCandidates((current) => [...current, member.profile!]);
+        }
       }
+    } catch {
+      setError("Could not remove that member. Please try again.");
+    } finally {
+      setBusyId(null);
     }
-    setBusyId(null);
   };
 
   return (
@@ -281,15 +291,20 @@ function AddMemberDialog({
     setSubmitting(true);
     setError(null);
 
-    const result = await addMember(projectId, userId, role);
+    try {
+      const result = await addMember(projectId, userId, role);
 
-    if (result.error || !result.member) {
-      setError(result.error ?? "Could not add that member");
+      if (result.error || !result.member) {
+        setError(result.error ?? "Could not add that member");
+        setSubmitting(false);
+        return;
+      }
+
+      onAdded(result.member, candidates.find((c) => c.id === userId) ?? null);
+    } catch {
+      setError("Could not add that member. Please try again.");
       setSubmitting(false);
-      return;
     }
-
-    onAdded(result.member, candidates.find((c) => c.id === userId) ?? null);
   };
 
   return (

@@ -49,6 +49,34 @@ export async function addMember(
     return { member: null, error: "You cannot assign that role." };
   }
 
+  // The candidate dropdown (members/page.tsx) only ever lists people who
+  // already belong to the project's organization, but nothing previously
+  // re-checked that server-side - this action would insert ANY existing
+  // profile id an owner/admin passed it, including someone who never joined
+  // the organization at all. Neither project_members_insert_owner nor
+  // _insert_admin's WITH CHECK references organization_members either, so
+  // RLS doesn't catch this on its own.
+  const inOrg = hasDirectDatabase()
+    ? await withUser(access.userId, ({ query }) =>
+        query(
+          "SELECT 1 FROM organization_members WHERE organization_id = $1 AND user_id = $2",
+          [access.project.organization_id, userId]
+        )
+      ).then((result) => result.rows.length > 0)
+    : await createClient().then(async (supabase) => {
+        const { data } = await supabase
+          .from("organization_members")
+          .select("id")
+          .eq("organization_id", access.project.organization_id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        return Boolean(data);
+      });
+
+  if (!inOrg) {
+    return { member: null, error: "This person is not a member of this project's organization." };
+  }
+
   if (hasDirectDatabase()) {
     try {
       const member = await withUser(access.userId, async ({ query }) => {
@@ -206,26 +234,32 @@ export async function removeMember(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, async ({ query }) => {
+      const removed = await withUser(access.userId, async ({ query }) => {
         const row = await query("SELECT user_id FROM project_members WHERE id = $1 AND project_id = $2", [
           memberId,
           projectId,
         ]);
         const userId = row.rows[0]?.user_id as string | undefined;
 
-        // By (project_id, user_id) when known, not just this row's own id:
-        // 026's UNIQUE constraint means there's normally only ever one row
-        // here, but this stays correct even for a pre-migration duplicate
-        // on an older self-hosted database that hasn't been cleaned up - a
-        // single "remove" then can't leave a second row silently granting
-        // access.
+        // Neither branch previously checked rowcount/RETURNING, nor did the
+        // fallback scope by project_id at all - a memberId belonging to a
+        // different project (or one RLS silently blocked, e.g. an admin
+        // targeting an owner row) would "succeed" with zero rows affected,
+        // and the fallback could delete a row in a project the caller was
+        // never authorized against for this call. See changeMemberRole's
+        // matching fix just above.
         if (userId) {
-          await query("DELETE FROM project_members WHERE project_id = $1 AND user_id = $2", [
-            projectId,
-            userId,
-          ]);
+          const result = await query(
+            "DELETE FROM project_members WHERE project_id = $1 AND user_id = $2 RETURNING id",
+            [projectId, userId]
+          );
+          if (result.rows.length === 0) return false;
         } else {
-          await query("DELETE FROM project_members WHERE id = $1", [memberId]);
+          const result = await query(
+            "DELETE FROM project_members WHERE id = $1 AND project_id = $2 RETURNING id",
+            [memberId, projectId]
+          );
+          if (result.rows.length === 0) return false;
         }
 
         // tasks.assignee_id only clears on ON DELETE SET NULL against a
@@ -241,7 +275,13 @@ export async function removeMember(
             userId,
           ]);
         }
+
+        return true;
       });
+
+      if (!removed) {
+        return { error: "This member does not belong to this project, or the removal wasn't allowed." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
     }
@@ -270,11 +310,21 @@ export async function removeMember(
 
   // Same reasoning as the direct-Postgres branch above: by (project_id,
   // user_id) when known, so a pre-026 duplicate row can't survive a "remove".
-  const { error } = memberRow?.user_id
-    ? await supabase.from("project_members").delete().eq("project_id", projectId).eq("user_id", memberRow.user_id)
-    : await supabase.from("project_members").delete().eq("id", memberId);
+  // Both branches now also verify a row was actually deleted, and the
+  // fallback stays scoped to project_id instead of trusting RLS alone.
+  const { data: deletedRows, error } = memberRow?.user_id
+    ? await supabase
+        .from("project_members")
+        .delete()
+        .eq("project_id", projectId)
+        .eq("user_id", memberRow.user_id)
+        .select("id")
+    : await supabase.from("project_members").delete().eq("id", memberId).eq("project_id", projectId).select("id");
 
   if (error) return { error: error.message };
+  if (!deletedRows || deletedRows.length === 0) {
+    return { error: "This member does not belong to this project, or the removal wasn't allowed." };
+  }
 
   if (memberRow?.user_id) {
     await supabase
