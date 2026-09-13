@@ -46,6 +46,16 @@ export function SignupForm({ local }: { local: boolean }) {
           data: {
             full_name: fullName,
           },
+          // Without this, Supabase falls back to the project's dashboard
+          // "Site URL" setting for the confirmation link - if that's still
+          // pointed at a local dev URL, every confirmation email sends a
+          // link the recipient's browser can never reach. window.location.origin
+          // is always wherever this signup is actually happening (dev,
+          // preview, or production), the same fix oauth-buttons.tsx already
+          // uses for its own redirectTo. The dashboard's Redirect URLs
+          // allow-list still needs this origin added, or Supabase won't
+          // honor it.
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
