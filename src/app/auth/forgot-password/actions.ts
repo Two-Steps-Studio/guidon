@@ -8,11 +8,14 @@ import { SITE_URL } from "@/lib/site-url";
 export type RequestPasswordResetResult = { error: string | null };
 
 /**
- * Never lets the caller learn whether `email` has an account: every branch
- * below - nonexistent email, rate-limited, or a real send - returns the
- * same { error: null } shape except for a genuine infrastructure failure
- * (Resend itself erroring), which is safe to surface because it happens
- * identically regardless of whether the account exists.
+ * Never lets the caller learn whether `email` has an account: the only
+ * response that ever differs from the generic { error: null } "success" is
+ * the rate-limit message below, which fires identically whether or not the
+ * email exists. A nonexistent email, a real email that got a working
+ * reset link sent, and a real email where the Resend send itself failed
+ * (bad API key, unverified sending domain, Resend outage) all return the
+ * exact same { error: null } - distinguishing the last case would leak
+ * account existence for as long as the underlying send problem persists.
  */
 export async function requestPasswordReset(
   email: string
@@ -50,8 +53,14 @@ export async function requestPasswordReset(
   try {
     await sendPasswordResetEmail(normalizedEmail, data.properties.action_link);
   } catch (sendError) {
+    // Swallowed the same way a nonexistent email is above: surfacing this
+    // distinctly from success would turn any systemic Resend outage or
+    // misconfiguration (bad RESEND_API_KEY, unverified sending domain)
+    // into a perfect enumeration oracle for as long as it lasted - every
+    // real account would hit this branch, every fake one the generic
+    // success below. Ops visibility comes from this log line alone, not
+    // the response.
     console.error("[auth] Failed to send password reset email:", sendError);
-    return { error: "Couldn't send the reset email right now. Please try again shortly." };
   }
 
   return { error: null };
