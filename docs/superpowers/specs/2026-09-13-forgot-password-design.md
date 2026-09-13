@@ -81,11 +81,20 @@ or rate-limit behavior:
   `{ error: null }`-shaped success in all three cases: real email
   (link generated and sent), nonexistent email (`generateLink` errors
   with something like "user not found" — caught and swallowed, logged
-  server-side only), and an unrelated send failure (Resend API error —
-  logged server-side, and *this* case alone returns a generic
-  "Couldn't send the reset email right now, try again shortly" error,
-  which is safe to show because it happens identically regardless of
-  whether the email exists).
+  server-side only), **and an unrelated send failure** (Resend API
+  error — logged server-side, but *also* swallowed into the same
+  generic success, not surfaced distinctly). An earlier version of
+  this spec called the send-failure case "safe to show distinctly
+  because it happens identically regardless of whether the email
+  exists" — that reasoning was wrong: the send-failure branch is only
+  reachable *after* `generateLink` has already confirmed the email
+  exists, so surfacing it differently from the nonexistent-email case
+  would make any systemic Resend problem (a bad `RESEND_API_KEY`, an
+  unverified `RESEND_FROM_EMAIL` sending domain, a Resend outage) a
+  perfect enumeration oracle for as long as it lasted — every real
+  account would hit the distinguishing branch, every fake one the
+  generic success. Caught during code-quality review before this
+  shipped; the corrected behavior is what's described above.
 - The UI's success state ("If that email has an account, we've sent a
   password reset link") is worded to never confirm or deny existence
   either.
