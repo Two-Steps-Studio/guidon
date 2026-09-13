@@ -60,7 +60,7 @@ export async function requestPasswordReset(
   // hashed_token, which that page verifies directly via verifyOtp()
   // (no PKCE involved at all, the pattern Supabase documents for
   // admin-generated links).
-  const resetLink = `${SITE_URL}/auth/reset-password?token_hash=${encodeURIComponent(
+  const resetLink = `${SITE_URL}/auth/reset-password/verify?token_hash=${encodeURIComponent(
     data.properties.hashed_token
   )}&type=recovery`;
 
