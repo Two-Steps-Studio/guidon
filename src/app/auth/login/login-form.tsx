@@ -25,10 +25,14 @@ export function LoginForm({ local }: { local: boolean }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const message = searchParams.get("message")
+  // auth/callback/route.ts redirects OAuth failures here as ?error=... -
+  // seeded into the same state a failed submit sets, so it renders through
+  // the existing destructive-styled error box below instead of being
+  // silently dropped (nothing previously read this param at all).
+  const [error, setError] = useState<string | null>(() => searchParams.get("error"))
   const redirectTarget = safeRedirect(searchParams.get("redirect"))
 
   const handleLogin = async (e: React.FormEvent) => {
