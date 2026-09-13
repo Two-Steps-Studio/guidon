@@ -749,82 +749,6 @@ export async function createSubtask(
   return { task: data as Task, error: null };
 }
 
-export async function toggleSubtask(
-  projectId: string,
-  subtaskId: string,
-  done: boolean
-): Promise<TaskActionResult> {
-  const access = await getProjectAccess(projectId);
-  // Mirrors tasks_update (001): owner/admin/developer.
-  if (!access || !canWriteProject(access.role)) {
-    return { task: null, error: "You do not have permission to update this subtask." };
-  }
-
-  const newStatus = done ? "done" : "todo";
-
-  if (hasDirectDatabase()) {
-    try {
-      // Scoped to project_id and parent_task_id IS NOT NULL: without them,
-      // this would update ANY task id passed in (a top-level task, or one
-      // from a different project this caller might have write access to
-      // under a different role) - RLS's tasks_update still gates the write
-      // itself either way, but a mismatch used to come back as a silent
-      // `{ task: undefined, error: null }` "success" instead of the clear
-      // rejection this now gives, the same class of bug fixed in
-      // task-transitions.ts for the AI Task API's status endpoints.
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `UPDATE tasks SET status = $1
-           WHERE id = $2 AND project_id = $3 AND parent_task_id IS NOT NULL
-           RETURNING *`,
-          [newStatus, subtaskId, projectId]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { task: null, error: "This subtask could not be found in this project." };
-      }
-
-      await logActivity({
-        userId: access.userId,
-        action: "task_status_changed",
-        projectId,
-        entityType: "task",
-        entityId: subtaskId,
-        details: { status: newStatus },
-      });
-
-      revalidatePath(`/projects/${projectId}/work`);
-      return { task: result.rows[0] as Task, error: null };
-    } catch (error) {
-      return { task: null, error: error instanceof Error ? error.message : "Failed to update this subtask." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tasks")
-    .update({ status: newStatus })
-    .eq("id", subtaskId)
-    .eq("project_id", projectId)
-    .not("parent_task_id", "is", null)
-    .select()
-    .single();
-
-  if (error) return { task: null, error: error.message };
-
-  await logActivity({
-    userId: access.userId,
-    action: "task_status_changed",
-    projectId,
-    entityType: "task",
-    entityId: subtaskId,
-    details: { status: newStatus },
-  });
-
-  revalidatePath(`/projects/${projectId}/work`);
-  return { task: data as Task, error: null };
-}
-
 export async function deleteTask(
   projectId: string,
   taskId: string
@@ -837,10 +761,10 @@ export async function deleteTask(
 
   if (hasDirectDatabase()) {
     try {
-      // Scoped to project_id, same reasoning as toggleSubtask above: without
-      // it this deletes ANY task id passed in (a task from a different
-      // project this caller might manage under a different role), and
-      // without RETURNING, a mismatched id came back as a silent
+      // Scoped to project_id, same reasoning as updateTask's own rowcount
+      // check above: without it this deletes ANY task id passed in (a task
+      // from a different project this caller might manage under a different
+      // role), and without RETURNING, a mismatched id came back as a silent
       // `{ error: null }` "success" with zero rows actually removed - the
       // activity log then recorded a "task_deleted" entry for a task that
       // still exists, under the wrong project.
