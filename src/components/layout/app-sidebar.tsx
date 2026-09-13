@@ -35,6 +35,7 @@ import {
   Plug,
   ScrollText,
   User,
+  LogOut,
 } from "lucide-react";
 
 const GLOBAL_NAV = [
@@ -240,6 +241,18 @@ export function AppSidebar({
                     <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                   </div>
                   <User className="ml-auto h-4 w-4 text-muted-foreground" />
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              {/* /auth/logout (auth/logout/logout-client.tsx) already signs
+                  the user out on visit - nothing anywhere in the UI linked
+                  to it, so there was no way to log out short of typing the
+                  URL by hand. */}
+              <SidebarMenuButton asChild tooltip="Log out">
+                <Link href="/auth/logout">
+                  <LogOut />
+                  <span>Log out</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
