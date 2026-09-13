@@ -224,7 +224,10 @@ function emptyGroups(): TasksByStatus {
  * creation time. Tasks with an unknown status land in Backlog rather than
  * disappearing from the board.
  */
-export function groupTasksByStatus(tasks: Task[]): TasksByStatus {
+export function groupTasksByStatus(
+  tasks: Task[],
+  compare: (a: Task, b: Task) => number = compareTasks
+): TasksByStatus {
   const groups = emptyGroups();
 
   for (const task of tasks) {
@@ -232,7 +235,7 @@ export function groupTasksByStatus(tasks: Task[]): TasksByStatus {
   }
 
   for (const status of TASK_STATUSES) {
-    groups[status].sort(compareTasks);
+    groups[status].sort(compare);
   }
 
   return groups;
@@ -249,6 +252,24 @@ export function compareTasks(a: Task, b: Task): number {
   if (byPriority !== 0) return byPriority;
 
   return (a.created_at ?? "").localeCompare(b.created_at ?? "");
+}
+
+/**
+ * Orders tasks by nearest due date first; a task with no due date always
+ * sorts after every dated task. Ties (two undated tasks, or the same date)
+ * fall back to compareTasks so their relative order still matches today's
+ * manual/priority ordering instead of becoming arbitrary.
+ */
+export function compareTasksByDueDate(a: Task, b: Task): number {
+  const aDue = a.due_date ? new Date(a.due_date).getTime() : null;
+  const bDue = b.due_date ? new Date(b.due_date).getTime() : null;
+
+  if (aDue === null && bDue === null) return compareTasks(a, b);
+  if (aDue === null) return 1;
+  if (bDue === null) return -1;
+  if (aDue !== bDue) return aDue - bDue;
+
+  return compareTasks(a, b);
 }
 
 // ============================================

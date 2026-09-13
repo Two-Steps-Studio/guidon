@@ -81,6 +81,10 @@ export function WorkBoard({
   const [error, setError] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
+  // View-only preference, not persisted - resets to "manual" on reload/
+  // navigation. See KanbanBoard's sortMode prop doc comment for why
+  // dragging is disabled while sorted by due date.
+  const [sortMode, setSortMode] = useState<"manual" | "due_date">("manual");
 
   // Subtasks (migration 010) are plain rows in `tasks` with a parent_task_id.
   // They are not shown as their own board cards - only nested under their
@@ -179,6 +183,18 @@ export function WorkBoard({
             </p>
           </div>
 
+          <Select
+            aria-label="Sort board by"
+            className="h-8 w-40"
+            value={sortMode}
+            onChange={(event) =>
+              setSortMode(event.target.value as "manual" | "due_date")
+            }
+          >
+            <option value="manual">Manual order</option>
+            <option value="due_date">Due date</option>
+          </Select>
+
           {canEdit && aiAvailable && (
             <AiTaskChat
               projectId={projectId}
@@ -242,6 +258,7 @@ export function WorkBoard({
             subtaskCounts={subtaskCounts}
             columns={columns}
             canEdit={canEdit}
+            sortMode={sortMode}
             onOpenTask={setOpenTask}
             onCreateTask={setCreateFor}
             onMoveTask={handleMove}

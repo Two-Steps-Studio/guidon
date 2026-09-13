@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   BOARD_COLUMNS,
+  compareTasksByDueDate,
   groupTasksByStatus,
   normalizeTaskStatus,
   sortOrderForPosition,
@@ -24,6 +25,14 @@ interface KanbanBoardProps {
   columns?: readonly BoardColumn[];
   /** When false the board is read-only (viewer/tester roles). */
   canEdit: boolean;
+  /**
+   * "due_date" re-sorts every column by nearest deadline and disables
+   * drag-and-drop (a dragged position would be overwritten by the sort on
+   * the very next render) - changing a task's status while sorted this way
+   * still works through the task detail dialog, just not by dragging it to
+   * another column.
+   */
+  sortMode?: "manual" | "due_date";
   onOpenTask: (task: Task) => void;
   onCreateTask: (status: TaskStatus) => void;
   /**
@@ -50,6 +59,7 @@ export function KanbanBoard({
   subtaskCounts = {},
   columns = BOARD_COLUMNS,
   canEdit,
+  sortMode = "manual",
   onOpenTask,
   onCreateTask,
   onMoveTask,
@@ -58,7 +68,14 @@ export function KanbanBoard({
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
-  const groups = groupTasksByStatus(tasks);
+  // Dragging is disabled while sorted by due date - see sortMode's doc
+  // comment above.
+  const canDrag = canEdit && sortMode === "manual";
+
+  const groups = groupTasksByStatus(
+    tasks,
+    sortMode === "due_date" ? compareTasksByDueDate : undefined
+  );
   const membersById = new Map(members.map((member) => [member.id, member]));
 
   const resetDrag = () => {
@@ -73,7 +90,7 @@ export function KanbanBoard({
   // sortOrderForPosition() math handleDrop already uses, just computing the
   // target index from "one above/below current" instead of a drop zone.
   const handleReorder = async (task: Task, direction: "up" | "down") => {
-    if (!canEdit) return;
+    if (!canDrag) return;
     const status = normalizeTaskStatus(task.status);
     const column = groups[status];
     const currentIndex = column.findIndex((item) => item.id === task.id);
@@ -90,7 +107,7 @@ export function KanbanBoard({
     const task = draggingTask;
     resetDrag();
 
-    if (!task || !canEdit) return;
+    if (!task || !canDrag) return;
 
     const currentStatus = normalizeTaskStatus(task.status);
     const column = groups[status];
@@ -129,7 +146,7 @@ export function KanbanBoard({
             )}
             style={isTargetColumn && projectColor ? { borderColor: projectColor } : undefined}
             onDragOver={(event) => {
-              if (!draggingTask || !canEdit) return;
+              if (!draggingTask || !canDrag) return;
               event.preventDefault();
               event.dataTransfer.dropEffect = "move";
               // Dropping on column padding appends to the end.
@@ -141,7 +158,7 @@ export function KanbanBoard({
               }
             }}
             onDrop={(event) => {
-              if (!draggingTask || !canEdit) return;
+              if (!draggingTask || !canDrag) return;
               event.preventDefault();
               void handleDrop(
                 column.status,
@@ -185,7 +202,7 @@ export function KanbanBoard({
                       dropTarget?.index === index &&
                       draggingTask?.id !== task.id
                     }
-                    enabled={Boolean(draggingTask) && canEdit}
+                    enabled={Boolean(draggingTask) && canDrag}
                     onEnter={() =>
                       setDropTarget({ status: column.status, index })
                     }
@@ -201,12 +218,12 @@ export function KanbanBoard({
                     }
                     commentCount={commentCounts[task.id]}
                     subtaskProgress={subtaskCounts[task.id]}
-                    draggable={canEdit}
+                    draggable={canDrag}
                     isDragging={draggingTask?.id === task.id}
                     onOpen={onOpenTask}
                     onDragStart={setDraggingTask}
                     onDragEnd={resetDrag}
-                    onReorder={canEdit ? handleReorder : undefined}
+                    onReorder={canDrag ? handleReorder : undefined}
                     canMoveUp={index > 0}
                     canMoveDown={index < columnTasks.length - 1}
                     projectColor={projectColor}
@@ -218,7 +235,7 @@ export function KanbanBoard({
                 active={
                   isTargetColumn && dropTarget?.index === columnTasks.length
                 }
-                enabled={Boolean(draggingTask) && canEdit}
+                enabled={Boolean(draggingTask) && canDrag}
                 onEnter={() =>
                   setDropTarget({
                     status: column.status,
