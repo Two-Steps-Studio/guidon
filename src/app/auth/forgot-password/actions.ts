@@ -35,12 +35,10 @@ export async function requestPasswordReset(
   recordFailedAttempt(rateLimitKey);
 
   const supabase = createServiceClient();
-  const redirectTo = `${SITE_URL}/auth/callback?redirect=${encodeURIComponent("/auth/reset-password")}`;
 
   const { data, error } = await supabase.auth.admin.generateLink({
     type: "recovery",
     email: normalizedEmail,
-    options: { redirectTo },
   });
 
   if (error || !data.properties) {
@@ -50,8 +48,24 @@ export async function requestPasswordReset(
     return { error: null };
   }
 
+  // Deliberately NOT emailing data.properties.action_link (GoTrue's own
+  // hosted /verify-then-redirect endpoint) - this app's Supabase clients
+  // are hard-configured for the PKCE flow (@supabase/ssr sets
+  // flowType: "pkce" unconditionally), but admin.generateLink() never
+  // involves a browser, so no PKCE code_verifier ever exists for this
+  // link. Visiting action_link would leave GoTrue with no PKCE state to
+  // exchange, so /auth/callback's exchangeCodeForSession(code) - which
+  // only reads a ?code= param - would never see a usable one. Instead,
+  // this points straight at our own reset-password page with the raw
+  // hashed_token, which that page verifies directly via verifyOtp()
+  // (no PKCE involved at all, the pattern Supabase documents for
+  // admin-generated links).
+  const resetLink = `${SITE_URL}/auth/reset-password?token_hash=${encodeURIComponent(
+    data.properties.hashed_token
+  )}&type=recovery`;
+
   try {
-    await sendPasswordResetEmail(normalizedEmail, data.properties.action_link);
+    await sendPasswordResetEmail(normalizedEmail, resetLink);
   } catch (sendError) {
     // Swallowed the same way a nonexistent email is above: surfacing this
     // distinctly from success would turn any systemic Resend outage or
