@@ -33,6 +33,13 @@ interface KanbanBoardProps {
    * another column.
    */
   sortMode?: "manual" | "due_date";
+  /**
+   * True when at least one board filter (assignee/priority/tag) is
+   * currently narrowing `tasks` - lets an empty column say "no tasks match
+   * the current filters" instead of its normal empty-state hint, so a
+   * filtered-to-zero column doesn't read as "nothing planned here".
+   */
+  filtersActive?: boolean;
   onOpenTask: (task: Task) => void;
   onCreateTask: (status: TaskStatus) => void;
   /**
@@ -60,6 +67,7 @@ export function KanbanBoard({
   columns = BOARD_COLUMNS,
   canEdit,
   sortMode = "manual",
+  filtersActive = false,
   onOpenTask,
   onCreateTask,
   onMoveTask,
@@ -249,7 +257,7 @@ export function KanbanBoard({
 
               {columnTasks.length === 0 && !draggingTask && (
                 <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                  {column.hint}
+                  {filtersActive ? "No tasks match the current filters." : column.hint}
                 </p>
               )}
             </div>

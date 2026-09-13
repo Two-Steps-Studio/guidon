@@ -30,6 +30,7 @@ import {
   TASK_PRIORITIES,
   boardProgress,
   groupSubtasksByParent,
+  normalizeTaskPriority,
   normalizeTaskStatus,
   subtaskProgress,
   type BoardColumn,
@@ -85,6 +86,11 @@ export function WorkBoard({
   // navigation. See KanbanBoard's sortMode prop doc comment for why
   // dragging is disabled while sorted by due date.
   const [sortMode, setSortMode] = useState<"manual" | "due_date">("manual");
+  // Quick filters, also view-only and not persisted. "all" means the
+  // filter isn't restricting anything - AND-combined with the other two.
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [tagFilter, setTagFilter] = useState("all");
 
   // Subtasks (migration 010) are plain rows in `tasks` with a parent_task_id.
   // They are not shown as their own board cards - only nested under their
@@ -111,6 +117,38 @@ export function WorkBoard({
   );
 
   const progress = useMemo(() => boardProgress(topLevelTasks), [topLevelTasks]);
+
+  // Tag options come from the full unfiltered set, so the dropdown's
+  // choices stay stable while assignee/priority filters are active rather
+  // than shrinking as other filters narrow things down.
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const task of topLevelTasks) {
+      for (const tag of task.tags ?? []) tags.add(tag);
+    }
+    return Array.from(tags).sort();
+  }, [topLevelTasks]);
+
+  const filtersActive =
+    assigneeFilter !== "all" || priorityFilter !== "all" || tagFilter !== "all";
+
+  const filteredTasks = useMemo(() => {
+    return topLevelTasks.filter((task) => {
+      if (assigneeFilter !== "all" && task.assignee_id !== assigneeFilter) {
+        return false;
+      }
+      if (
+        priorityFilter !== "all" &&
+        normalizeTaskPriority(task.priority) !== priorityFilter
+      ) {
+        return false;
+      }
+      if (tagFilter !== "all" && !(task.tags ?? []).includes(tagFilter)) {
+        return false;
+      }
+      return true;
+    });
+  }, [topLevelTasks, assigneeFilter, priorityFilter, tagFilter]);
 
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
     const previousStatus = task.status;
@@ -216,6 +254,64 @@ export function WorkBoard({
           )}
         </header>
 
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Select
+            aria-label="Filter by assignee"
+            className="h-8 w-40"
+            value={assigneeFilter}
+            onChange={(event) => setAssigneeFilter(event.target.value)}
+          >
+            <option value="all">All assignees</option>
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.full_name || member.email}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            aria-label="Filter by priority"
+            className="h-8 w-40"
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value)}
+          >
+            <option value="all">All priorities</option>
+            {TASK_PRIORITIES.map((value) => (
+              <option key={value} value={value}>
+                {PRIORITY_LABELS[value]}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            aria-label="Filter by tag"
+            className="h-8 w-40"
+            value={tagFilter}
+            onChange={(event) => setTagFilter(event.target.value)}
+          >
+            <option value="all">All tags</option>
+            {availableTags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </Select>
+
+          {filtersActive && (
+            <button
+              type="button"
+              onClick={() => {
+                setAssigneeFilter("all");
+                setPriorityFilter("all");
+                setTagFilter("all");
+              }}
+              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
         {error && (
           <div
             role="alert"
@@ -252,13 +348,14 @@ export function WorkBoard({
           </div>
         ) : (
           <KanbanBoard
-            tasks={topLevelTasks}
+            tasks={filteredTasks}
             members={members}
             commentCounts={state.commentCounts}
             subtaskCounts={subtaskCounts}
             columns={columns}
             canEdit={canEdit}
             sortMode={sortMode}
+            filtersActive={filtersActive}
             onOpenTask={setOpenTask}
             onCreateTask={setCreateFor}
             onMoveTask={handleMove}
