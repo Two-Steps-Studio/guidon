@@ -12,6 +12,11 @@ import type { RoadmapData } from "./sections/roadmap";
 // field existed still validates - it just imports with no project type set.
 const ProjectTypeSchema = z.enum(["game", "website", "mobile_app", "api", "tool", "other"]).nullable().optional();
 
+// Mirrors the CHECK constraint on projects.methodology (029). Same
+// `.optional()` reasoning as ProjectTypeSchema above - a .guidon file
+// exported before this field existed still validates.
+const MethodologySchema = z.enum(["standard", "scrum"]).nullable().optional();
+
 const GuidonFileShapeSchema = z.object({
   guidonVersion: z.string(),
   exportedAt: z.string(),
@@ -19,6 +24,7 @@ const GuidonFileShapeSchema = z.object({
     name: z.string().min(1),
     description: z.string().nullable(),
     projectType: ProjectTypeSchema,
+    methodology: MethodologySchema,
   }),
   sections: z.record(z.string(), z.unknown()),
 });
@@ -35,6 +41,7 @@ export interface ValidatedGuidonImport {
   projectName: string;
   projectDescription: string | null;
   projectType: string | null;
+  methodology: string | null;
   /** Keyed by section key, each value already parsed against that section's own zod schema. */
   validatedSections: Map<string, unknown>;
   warnings: string[];
@@ -132,6 +139,7 @@ export function validateGuidonFile(raw: string): ValidateGuidonFileResult {
       projectName: file.project.name,
       projectDescription: file.project.description,
       projectType: file.project.projectType ?? null,
+      methodology: file.project.methodology ?? null,
       validatedSections,
       warnings,
     },

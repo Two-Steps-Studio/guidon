@@ -21,6 +21,7 @@ export async function exportProject(projectId: string): Promise<ExportProjectRes
     name: access.project.name,
     description: access.project.description,
     projectType: access.project.project_type,
+    methodology: access.project.methodology,
   });
 
   await logActivity({

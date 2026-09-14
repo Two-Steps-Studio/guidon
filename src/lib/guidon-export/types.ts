@@ -34,6 +34,13 @@ export interface GuidonFileProject {
   description: string | null;
   /** One of the CHECK-constrained values from 023_project_type.sql, or null. */
   projectType: string | null;
+  /**
+   * One of the CHECK-constrained values from 029_project_methodology.sql.
+   * Optional/nullable for backward compatibility with files exported before
+   * this field existed - see ProjectTypeSchema's own comment in
+   * import-project.ts for why the same treatment applies here.
+   */
+  methodology: string | null;
 }
 
 export interface GuidonFile {

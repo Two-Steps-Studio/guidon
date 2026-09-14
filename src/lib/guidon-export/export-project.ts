@@ -20,7 +20,7 @@ export interface ExportedGuidonFile {
 export async function exportProjectToFile(
   projectId: string,
   userId: string,
-  project: { name: string; description: string | null; projectType: string | null }
+  project: { name: string; description: string | null; projectType: string | null; methodology: string }
 ): Promise<ExportedGuidonFile> {
   const sections: Record<string, unknown> = {};
 
@@ -31,7 +31,12 @@ export async function exportProjectToFile(
   const json: GuidonFile = {
     guidonVersion: SUPPORTED_GUIDON_VERSION,
     exportedAt: new Date().toISOString(),
-    project: { name: project.name, description: project.description, projectType: project.projectType },
+    project: {
+      name: project.name,
+      description: project.description,
+      projectType: project.projectType,
+      methodology: project.methodology,
+    },
     sections,
   };
 

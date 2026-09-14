@@ -50,17 +50,24 @@ async function createProjectForImport(
   userId: string,
   name: string,
   description: string | null,
-  projectType: string | null
+  projectType: string | null,
+  methodology: string | null
 ): Promise<{ projectId: string | null; error: string | null }> {
+  // projects.methodology is NOT NULL DEFAULT 'standard' (029) - an explicit
+  // NULL in the INSERT would fail the constraint rather than fall back to
+  // the default (defaults only apply when a column is omitted entirely), so
+  // a file with no methodology (pre-029 export) coalesces here instead.
+  const resolvedMethodology = methodology ?? "standard";
+
   if (hasDirectDatabase()) {
     try {
       const { slug } = await getUniqueProjectSlug(orgId, userId, name);
       const projectId = await withUser(userId, async ({ query }) => {
         const result = await query(
-          `INSERT INTO projects (organization_id, name, slug, description, project_type, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6)
+          `INSERT INTO projects (organization_id, name, slug, description, project_type, methodology, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING id`,
-          [orgId, name, slug, description, projectType, userId]
+          [orgId, name, slug, description, projectType, resolvedMethodology, userId]
         );
         return result.rows[0].id as string;
       });
@@ -82,7 +89,15 @@ async function createProjectForImport(
 
   const { data: created, error } = await supabase
     .from("projects")
-    .insert({ organization_id: orgId, name, slug, description, project_type: projectType, created_by: userId })
+    .insert({
+      organization_id: orgId,
+      name,
+      slug,
+      description,
+      project_type: projectType,
+      methodology: resolvedMethodology,
+      created_by: userId,
+    })
     .select("id")
     .single();
 
@@ -152,7 +167,8 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
       userId,
       validated.result.projectName,
       validated.result.projectDescription,
-      validated.result.projectType
+      validated.result.projectType,
+      validated.result.methodology
     );
     if (created.error || !created.projectId) {
       return { error: created.error ?? "Failed to create project." };
