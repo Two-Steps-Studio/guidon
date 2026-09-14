@@ -13,7 +13,7 @@ import {
   Calendar,
   Users,
 } from "lucide-react";
-import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
+import { PROJECT_TYPE_LABELS, type ProjectType, PROJECT_METHODOLOGY_LABELS } from "@/types/project";
 import { canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { getProjectStats } from "@/lib/data/project-stats";
 import { EditProjectDialog } from "./edit-project-dialog";
@@ -99,7 +99,9 @@ export default async function ProjectPage({
                 {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}
               </Badge>
             )}
-            {project.methodology === "scrum" && <Badge variant="outline">Scrum</Badge>}
+            {project.methodology === "scrum" && (
+              <Badge variant="outline">{PROJECT_METHODOLOGY_LABELS.scrum}</Badge>
+            )}
           </div>
           <p className="text-muted-foreground mt-1">{project.description || "No description"}</p>
         </div>
