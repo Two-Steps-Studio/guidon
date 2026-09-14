@@ -34,34 +34,57 @@ service-role key (which this codebase already uses elsewhere).
      reveal whether the address exists (see "Anti-enumeration" below).
    - Uses `createServiceClient()` (already used elsewhere in this
      codebase for service-role operations) to call
-     `supabase.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo } })`,
-     where `redirectTo` is
-     `${SITE_URL}/auth/callback?redirect=${encodeURIComponent("/auth/reset-password")}`
-     (`SITE_URL` from `src/lib/site-url.ts`, already the single source
-     of truth for the app's own origin). This returns an
-     `action_link` **without** Supabase sending its own email.
-   - Sends the actual email itself via a new `sendPasswordResetEmail`
-     helper (Resend's REST API, plain `fetch`, no SDK dependency —
-     same philosophy as this codebase's AI providers: "avoids adding a
+     `supabase.auth.admin.generateLink({ type: "recovery", email })`.
+     This returns a `hashed_token` **without** Supabase sending its own
+     email.
+   - **Does not email `data.properties.action_link`** (GoTrue's own
+     hosted `/verify`-then-redirect endpoint) — this codebase's
+     Supabase clients are hard-configured for the PKCE flow
+     (`@supabase/ssr` sets `flowType: "pkce"` unconditionally), but
+     `admin.generateLink()` never involves a browser, so no PKCE
+     challenge is ever registered for this link; visiting `action_link`
+     would leave GoTrue with no PKCE state to complete a code exchange
+     with. Instead, builds its own link:
+     `${SITE_URL}/auth/reset-password/verify?token_hash=${hashed_token}&type=recovery`
+     (`SITE_URL` from `src/lib/site-url.ts`).
+   - Sends that link via a new `sendPasswordResetEmail` helper
+     (Resend's REST API, plain `fetch`, no SDK dependency — same
+     philosophy as this codebase's AI providers: "avoids adding a
      vendor SDK dependency where a small fetch call suffices").
    - Always returns the same generic result to the caller, regardless
      of whether the email existed, was rate-limited, or the email send
      itself failed for an unrelated reason (see "Anti-enumeration").
-4. The user clicks the link in the email. It's a Supabase-hosted
-   verify URL; Supabase verifies the recovery token and redirects to
-   the `redirectTo` above — i.e. back into **this app's existing**
-   `/auth/callback` route, completely unchanged, exactly the same way
-   the OAuth flow already works (`exchangeCodeForSession`, then
-   redirect to whatever `?redirect=` says — here, `/auth/reset-password`).
-   No changes to `callback/route.ts` or `safe-redirect.ts` are needed.
-5. `/auth/reset-password` — by the time this page renders, the
-   callback has already established a real Supabase session (the
-   recovery token, exchanged). The page checks for that session
-   server-side; no session means the link was invalid/expired/already
-   used, and it redirects to `/auth/login`. With a session, it shows a
-   new-password form that calls `supabase.auth.updateUser({ password })`
-   (client-side, same pattern login/signup already use), then redirects
-   to `/auth/login?message=...`.
+4. The user clicks the link in the email, landing on a **new,
+   dedicated Route Handler**, `/auth/reset-password/verify/route.ts`,
+   which calls `supabase.auth.verifyOtp({ token_hash, type: "recovery" })`
+   — this verifies the token directly with no PKCE involved at all —
+   and redirects to the plain `/auth/reset-password` page. This must be
+   a Route Handler and not the page itself: Next.js only permits
+   `cookies().set()` (which session persistence depends on) from a
+   Server Action or Route Handler, never a page's render — calling
+   `verifyOtp` directly in a page verifies the token but silently never
+   persists the resulting session cookie. Deliberately kept as its own
+   small route rather than folded into the existing `/auth/callback`
+   route, which handles a different, already-working flow (OAuth's PKCE
+   code exchange) — isolating this means a bug here can't regress that.
+   `callback/route.ts` and `safe-redirect.ts` are unchanged; this
+   feature never routes through either.
+5. `/auth/reset-password` — by the time this page renders, the new
+   Route Handler has already established a real Supabase session (via
+   `verifyOtp`, cookie-persisted). The page checks for that session
+   server-side (`getUser()`); no session means the link was
+   invalid/expired/already used, and it redirects to `/auth/login`.
+   With a session, it shows a new-password form that calls
+   `supabase.auth.updateUser({ password })` (client-side, same pattern
+   login/signup already use), then redirects to `/auth/login?message=...`.
+
+**Revision note:** an earlier version of this spec routed the
+recovery link through the existing `/auth/callback` (PKCE code
+exchange) and had `/auth/reset-password`'s own page component call
+`verifyOtp` directly. Both were found to be genuinely broken during
+code-quality review (the PKCE mismatch above, and the cookie-persistence
+problem above) rather than merely risky — the flow described here is
+what actually ships.
 
 ### Self-hosted gating
 
