@@ -14,11 +14,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createProject, type CreateProjectState } from "./actions";
-import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
+import {
+  PROJECT_TYPE_LABELS,
+  type ProjectType,
+  PROJECT_METHODOLOGY_LABELS,
+  type ProjectMethodology,
+} from "@/types/project";
 
 const initialState: CreateProjectState = { error: null };
 
 const PROJECT_TYPE_OPTIONS = Object.entries(PROJECT_TYPE_LABELS) as [ProjectType, string][];
+
+const PROJECT_METHODOLOGY_OPTIONS = Object.entries(PROJECT_METHODOLOGY_LABELS) as [
+  ProjectMethodology,
+  string,
+][];
 
 export function CreateProjectDialog({
   orgId,
@@ -97,6 +107,26 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
             </option>
           ))}
         </select>
+      </div>
+      <div className="space-y-2">
+        <Label>Workflow</Label>
+        <div className="flex gap-4">
+          {PROJECT_METHODOLOGY_OPTIONS.map(([value, label]) => (
+            <label key={value} className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="methodology"
+                value={value}
+                defaultChecked={value === "standard"}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Scrum adds sprints, backlog, and story points — coming soon. For now this
+          just labels the project.
+        </p>
       </div>
       {state.error && (
         <div className="text-sm text-destructive flex items-center gap-2">

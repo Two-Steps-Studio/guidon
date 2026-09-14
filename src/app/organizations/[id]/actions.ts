@@ -12,13 +12,14 @@ import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/li
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
-import type { ProjectType } from "@/types/project";
+import type { ProjectMethodology, ProjectType } from "@/types/project";
 
 export type CreateProjectState = {
   error: string | null;
 };
 
 const VALID_PROJECT_TYPES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
+const VALID_METHODOLOGIES: ProjectMethodology[] = ["standard", "scrum"];
 
 export async function createProject(
   orgId: string,
@@ -47,6 +48,15 @@ export async function createProject(
     projectType = projectTypeRaw as ProjectType;
   }
 
+  const methodologyRaw = formData.get("methodology");
+  let methodology: ProjectMethodology = "standard";
+  if (typeof methodologyRaw === "string" && methodologyRaw.trim()) {
+    if (!VALID_METHODOLOGIES.includes(methodologyRaw as ProjectMethodology)) {
+      return { error: "Invalid workflow." };
+    }
+    methodology = methodologyRaw as ProjectMethodology;
+  }
+
   const trimmedDescription =
     typeof description === "string" && description.trim() ? description.trim() : null;
 
@@ -64,10 +74,10 @@ export async function createProject(
     try {
       projectId = await withUser(access.userId, async ({ query }) => {
         const result = await query(
-          `INSERT INTO projects (organization_id, name, slug, description, project_type, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6)
+          `INSERT INTO projects (organization_id, name, slug, description, project_type, methodology, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING id`,
-          [orgId, name.trim(), slug, trimmedDescription, projectType, access.userId]
+          [orgId, name.trim(), slug, trimmedDescription, projectType, methodology, access.userId]
         );
         return result.rows[0].id as string;
       });
@@ -94,6 +104,7 @@ export async function createProject(
         slug,
         description: trimmedDescription,
         project_type: projectType,
+        methodology,
         created_by: access.userId,
       })
       .select("id")
