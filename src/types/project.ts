@@ -15,6 +15,13 @@ export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
   other: "Other",
 };
 
+export type ProjectMethodology = "standard" | "scrum";
+
+export const PROJECT_METHODOLOGY_LABELS: Record<ProjectMethodology, string> = {
+  standard: "Standard",
+  scrum: "Scrum",
+};
+
 export interface Project {
   id: string;
   organization_id: string;
@@ -28,6 +35,7 @@ export interface Project {
   color: string | null;
   avatar_url: string | null;
   project_type: ProjectType | null;
+  methodology: ProjectMethodology;
   allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;
@@ -45,6 +53,7 @@ export interface CreateProjectData {
   visibility?: ProjectVisibility;
   color?: string;
   project_type?: ProjectType;
+  methodology?: ProjectMethodology;
   planned_end_date?: string;
 }
 
@@ -58,6 +67,7 @@ export interface UpdateProjectData {
   visibility?: ProjectVisibility;
   color?: string;
   project_type?: ProjectType;
+  methodology?: ProjectMethodology;
   planned_end_date?: string;
 }
 
