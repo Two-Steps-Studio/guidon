@@ -11,7 +11,7 @@ import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import { guessTechnologyCategory, technologySlug } from "@/types/technology";
-import type { ProjectStatus, ProjectType } from "@/types/project";
+import type { ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
 import type { Technology } from "@/types/technology";
 
 export type SettingsFormState = {
@@ -20,6 +20,7 @@ export type SettingsFormState = {
 
 const VALID_STATUSES: ProjectStatus[] = ["active", "archived", "deleted"];
 const VALID_PROJECT_TYPES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
+const VALID_METHODOLOGIES: ProjectMethodology[] = ["standard", "scrum"];
 
 /**
  * Reconciles the edited technology names against the technologies table:
@@ -137,6 +138,15 @@ export async function updateProjectSettings(
     projectType = projectTypeRaw as ProjectType;
   }
 
+  const methodologyRaw = formData.get("methodology");
+  let methodology: ProjectMethodology = "standard";
+  if (typeof methodologyRaw === "string" && methodologyRaw.trim()) {
+    if (!VALID_METHODOLOGIES.includes(methodologyRaw as ProjectMethodology)) {
+      return { error: "Invalid workflow." };
+    }
+    methodology = methodologyRaw as ProjectMethodology;
+  }
+
   let avatarUrl: string | null | undefined;
   if (avatarFile && avatarFile.size > 0) {
     // Real allowlist, not "starts with image/" (would admit image/svg+xml) -
@@ -200,9 +210,9 @@ export async function updateProjectSettings(
         await query(
           `UPDATE projects
            SET name = $1, description = $2, status = $3, color = $4,
-               avatar_url = COALESCE($5, avatar_url), project_type = $6
-           WHERE id = $7`,
-          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, projectId]
+               avatar_url = COALESCE($5, avatar_url), project_type = $6, methodology = $7
+           WHERE id = $8`,
+          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, projectId]
         );
 
         const existingTech = await query("SELECT * FROM technologies WHERE project_id = $1", [
@@ -226,6 +236,7 @@ export async function updateProjectSettings(
         status: status as ProjectStatus,
         color: trimmedColor,
         project_type: projectType,
+        methodology,
         ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", projectId);

@@ -18,8 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, AlertTriangle, FolderKanban, Loader2, Settings, Trash2, X } from "lucide-react";
 import { deleteProject, updateProjectSettings, type SettingsFormState } from "./actions";
-import type { Project, ProjectStatus, ProjectType } from "@/types/project";
-import { PROJECT_TYPE_LABELS } from "@/types/project";
+import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
+import { PROJECT_TYPE_LABELS, PROJECT_METHODOLOGY_LABELS } from "@/types/project";
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
   { value: "active", label: "Active" },
@@ -28,6 +28,11 @@ const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
 ];
 
 const PROJECT_TYPE_OPTIONS = Object.entries(PROJECT_TYPE_LABELS) as [ProjectType, string][];
+
+const PROJECT_METHODOLOGY_OPTIONS = Object.entries(PROJECT_METHODOLOGY_LABELS) as [
+  ProjectMethodology,
+  string,
+][];
 
 const initialState: SettingsFormState = { error: null };
 
@@ -142,6 +147,26 @@ export function SettingsForm({
                 </option>
               ))}
             </select>
+          </div>
+          <div className="space-y-2">
+            <Label>Workflow</Label>
+            <div className="flex gap-4">
+              {PROJECT_METHODOLOGY_OPTIONS.map(([value, label]) => (
+                <label key={value} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="methodology"
+                    value={value}
+                    defaultChecked={project.methodology === value}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Scrum adds sprints, backlog, and story points — coming soon. For now this
+              just labels the project.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="color">Project Color</Label>

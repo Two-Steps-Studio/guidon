@@ -99,6 +99,7 @@ export default async function ProjectPage({
                 {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}
               </Badge>
             )}
+            {project.methodology === "scrum" && <Badge variant="outline">Scrum</Badge>}
           </div>
           <p className="text-muted-foreground mt-1">{project.description || "No description"}</p>
         </div>

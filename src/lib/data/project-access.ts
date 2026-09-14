@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getLocalSessionUserId } from "@/lib/auth/local-auth";
-import type { ProjectRole } from "@/types/project";
+import type { ProjectRole, ProjectMethodology } from "@/types/project";
 
 /**
  * Server-side project authorisation - one gate for every project page.
@@ -34,6 +34,7 @@ export interface ProjectAccess {
     color: string | undefined;
     avatar_url: string | null;
     project_type: string | null;
+    methodology: ProjectMethodology;
   };
   /** Null when the user can see the project but is not a member of it -
    *  possible for `organization` and `public` visibility. */
@@ -85,7 +86,7 @@ export const getProjectAccess = cache(async function getProjectAccess(
     const [projectResult, membershipResult] = await Promise.all([
       withUser(userId, ({ query }) =>
         query(
-          `SELECT id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type
+          `SELECT id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology
            FROM projects WHERE id = $1`,
           [projectId]
         )
@@ -123,7 +124,7 @@ export const getProjectAccess = cache(async function getProjectAccess(
     supabase
       .from("projects")
       .select(
-        "id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type"
+        "id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology"
       )
       .eq("id", projectId)
       .maybeSingle(),
