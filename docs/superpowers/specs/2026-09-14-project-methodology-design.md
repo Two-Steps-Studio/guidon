@@ -27,12 +27,24 @@ New migration, `src/db/migrations/029_project_methodology.sql`:
 ```sql
 ALTER TABLE projects ADD COLUMN methodology text NOT NULL DEFAULT 'standard'
   CHECK (methodology IN ('standard', 'scrum'));
+
+REVOKE UPDATE ON public.projects FROM authenticated;
+GRANT UPDATE (name, description, status, color, allow_ai_auto_complete, avatar_url, project_type, methodology)
+    ON public.projects
+    TO authenticated;
 ```
 
-No new RLS policy is needed — `methodology` is a plain column on
+No new RLS *policy* is needed — `methodology` is a plain column on
 `projects`, already covered by that table's existing SELECT/UPDATE
 policies, the same way the `avatar_url` column added in migration 018
-needed no policy of its own.
+needed no policy of its own. **But** migrations 014/017/018/023
+narrowed `GRANT UPDATE` on `projects` to an explicit column allowlist
+(a self-elevation guard — see 023's own comment), so the new column
+must be added to that list in this same migration, or every settings
+save will fail with "permission denied" despite passing RLS, exactly
+as 023's own warning comment says. The list above is the current one
+as of migration 023 (confirmed no later migration touches it) plus
+`methodology`.
 
 ### Naming
 
