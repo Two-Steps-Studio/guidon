@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { ArrowRight, ExternalLink, FileText, FolderOpen, StickyNote } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { CreateSourceDialog } from "./create-source-dialog";
 import { SourceCardMenu } from "./source-card-menu";
-import { TYPE_LABELS } from "./source-config";
 import type { ContextSource } from "@/types/context";
 
 interface KnowledgeCounts {
@@ -29,15 +29,17 @@ export function KnowledgeList({
   canDelete: boolean;
   projectColor?: string;
 }) {
+  const t = useTranslations("knowledge");
+  const tCommon = useTranslations("common");
   const sources = initialSources;
 
   return (
     <div className="mx-auto max-w-5xl p-6">
       <header className="mb-6 flex flex-wrap items-end gap-4">
         <div className="flex-1">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">Knowledge</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Documentation, notes and references that explain this project.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -48,28 +50,28 @@ export function KnowledgeList({
         <KnowledgeLink
           href={`/projects/${projectId}/decisions`}
           icon={FileText}
-          label="Decisions"
+          label={t("decisionsLink")}
           count={counts.decisions}
-          description="Why the project is the way it is"
+          description={t("decisionsLinkDescription")}
         />
         <KnowledgeLink
           href={`/projects/${projectId}/files`}
           icon={FolderOpen}
-          label="Files"
+          label={t("filesLink")}
           count={counts.files}
-          description="Documents, art and source assets"
+          description={t("filesLinkDescription")}
         />
         <KnowledgeLink
           href={`/projects/${projectId}/memory`}
           icon={StickyNote}
-          label="Memory"
+          label={t("memoryLink")}
           count={counts.memory}
-          description="Rules, constraints and observations"
+          description={t("memoryLinkDescription")}
         />
       </div>
 
       <h2 className="mb-3 text-sm font-medium text-foreground">
-        Entries
+        {t("entries")}
         {sources.length > 0 && (
           <span className="ml-1.5 text-xs font-normal tabular-nums text-muted-foreground">
             {sources.length}
@@ -79,11 +81,11 @@ export function KnowledgeList({
 
       {sources.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border py-16 text-center">
-          <h3 className="text-sm font-medium text-foreground">No knowledge entries yet</h3>
+          <h3 className="text-sm font-medium text-foreground">{t("emptyTitle")}</h3>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
             {canWrite
-              ? "Capture a spec, a meeting note or a reference link so the context outlives the conversation."
-              : "Nothing has been documented for this project yet."}
+              ? t("emptyDescriptionCanWrite")
+              : t("emptyDescriptionReadOnly")}
           </p>
           {canWrite && (
             <div className="mt-4 flex justify-center">
@@ -97,9 +99,9 @@ export function KnowledgeList({
             <li key={source.id} className="group flex gap-3 bg-card p-4 transition-colors hover:bg-surface-hover">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-medium text-foreground">{source.title || "Untitled"}</h3>
+                  <h3 className="text-sm font-medium text-foreground">{source.title || t("untitled")}</h3>
                   <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground">
-                    {TYPE_LABELS[source.source_type] ?? source.source_type}
+                    {tCommon("sourceType", { type: source.source_type })}
                   </span>
                 </div>
 
@@ -120,7 +122,7 @@ export function KnowledgeList({
                       onClick={(event) => event.stopPropagation()}
                     >
                       <ExternalLink className="h-3 w-3" />
-                      Open link
+                      {t("openLink")}
                     </a>
                   )}
                 </div>

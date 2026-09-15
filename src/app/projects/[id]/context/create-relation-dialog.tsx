@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,11 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createRelation, type RelationFormState } from "./actions";
-import { ENTITY_TYPE_LABELS, ENTITY_TYPE_OPTIONS, RELATION_TYPE_LABELS, RELATION_TYPE_OPTIONS } from "./relation-config";
+import { ENTITY_TYPE_OPTIONS, RELATION_TYPE_OPTIONS } from "./relation-config";
 
 const initialState: RelationFormState = { error: null };
 
 export function CreateRelationDialog({ projectId }: { projectId: string }) {
+  const t = useTranslations("context");
   const [open, setOpen] = useState(false);
   // Bumped on every open so <RelationForm key={session}> below fully
   // remounts - useActionState's error otherwise survives close/reopen (this
@@ -37,13 +39,13 @@ export function CreateRelationDialog({ projectId }: { projectId: string }) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          New Relation
+          {t("newRelation")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Relation</DialogTitle>
-          <DialogDescription>Link two project entities together</DialogDescription>
+          <DialogTitle>{t("createRelationDialogTitle")}</DialogTitle>
+          <DialogDescription>{t("createRelationDialogDescription")}</DialogDescription>
         </DialogHeader>
         <RelationForm key={session} projectId={projectId} onClose={() => setOpen(false)} />
       </DialogContent>
@@ -52,6 +54,8 @@ export function CreateRelationDialog({ projectId }: { projectId: string }) {
 }
 
 function RelationForm({ projectId, onClose }: { projectId: string; onClose: () => void }) {
+  const t = useTranslations("context");
+  const tCommon = useTranslations("common");
   const createWithProject = createRelation.bind(null, projectId);
   const [state, formAction, pending] = useActionState(createWithProject, initialState);
   const submittedRef = useRef(false);
@@ -72,7 +76,7 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
       className="space-y-4"
     >
       <div className="space-y-2">
-        <Label htmlFor="sourceType">Source Type</Label>
+        <Label htmlFor="sourceType">{t("sourceTypeLabel")}</Label>
         <select
           id="sourceType"
           name="source_type"
@@ -81,17 +85,17 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
         >
           {ENTITY_TYPE_OPTIONS.map((type) => (
             <option key={type} value={type}>
-              {ENTITY_TYPE_LABELS[type]}
+              {tCommon("entityType", { type })}
             </option>
           ))}
         </select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="sourceId">Source ID</Label>
+        <Label htmlFor="sourceId">{t("sourceIdLabel")}</Label>
         <Input id="sourceId" name="source_id" required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="targetType">Target Type</Label>
+        <Label htmlFor="targetType">{t("targetTypeLabel")}</Label>
         <select
           id="targetType"
           name="target_type"
@@ -100,17 +104,17 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
         >
           {ENTITY_TYPE_OPTIONS.map((type) => (
             <option key={type} value={type}>
-              {ENTITY_TYPE_LABELS[type]}
+              {tCommon("entityType", { type })}
             </option>
           ))}
         </select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="targetId">Target ID</Label>
+        <Label htmlFor="targetId">{t("targetIdLabel")}</Label>
         <Input id="targetId" name="target_id" required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="relationType">Relation Type</Label>
+        <Label htmlFor="relationType">{t("relationTypeLabel")}</Label>
         <select
           id="relationType"
           name="relation_type"
@@ -119,7 +123,7 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
         >
           {RELATION_TYPE_OPTIONS.map((type) => (
             <option key={type} value={type}>
-              {RELATION_TYPE_LABELS[type]}
+              {tCommon("relationType", { type })}
             </option>
           ))}
         </select>
@@ -132,16 +136,16 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Creating...
+              {t("creating")}
             </>
           ) : (
-            "Create Relation"
+            t("createRelation")
           )}
         </Button>
       </div>

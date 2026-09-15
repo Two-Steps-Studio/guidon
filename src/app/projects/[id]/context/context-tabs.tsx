@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,6 @@ import { DecisionCardMenu } from "../decisions/decision-card-menu";
 import { STATUS_CONFIG as DECISION_STATUS_CONFIG, TYPE_COLORS as DECISION_TYPE_COLORS } from "../decisions/decision-config";
 import { CreateSourceDialog } from "../knowledge/create-source-dialog";
 import { SourceCardMenu } from "../knowledge/source-card-menu";
-import { TYPE_LABELS as SOURCE_TYPE_LABELS } from "../knowledge/source-config";
 import { CreateRelationDialog } from "./create-relation-dialog";
 import { RelationRow } from "./relation-row";
 import type { Decision, ContextRelation, ContextSource } from "@/types/context";
@@ -36,19 +36,21 @@ export function ContextTabs({
   /** `type:id` -> display label, for both ends of every relation - see entity-label.ts. */
   entityLabels: Record<string, string>;
 }) {
+  const t = useTranslations("context");
+  const tCommon = useTranslations("common");
   const [activeTab, setActiveTab] = useState<TabType>("decisions");
 
   const tabs: { key: TabType; label: string; count: number }[] = [
-    { key: "decisions", label: "Decisions", count: decisions.length },
-    { key: "relations", label: "Relations", count: relations.length },
-    { key: "sources", label: "Sources", count: sources.length },
+    { key: "decisions", label: t("tabDecisions"), count: decisions.length },
+    { key: "relations", label: t("tabRelations"), count: relations.length },
+    { key: "sources", label: t("tabSources"), count: sources.length },
   ];
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Context Layer</h1>
-        <p className="text-muted-foreground">Project knowledge, decisions, and relationships</p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <div className="flex gap-2 mb-6 border-b">
@@ -73,15 +75,15 @@ export function ContextTabs({
       {activeTab === "decisions" && (
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Decisions</h2>
+            <h2 className="text-xl font-semibold">{t("decisionsHeading")}</h2>
             {canWrite && <CreateDecisionDialog projectId={projectId} />}
           </div>
 
           {decisions.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="No decisions yet"
-              description="Record important project decisions to preserve context"
+              title={t("emptyDecisionsTitle")}
+              description={t("emptyDecisionsDescription")}
               action={
                 canWrite ? (
                   <CreateDecisionDialog
@@ -89,7 +91,7 @@ export function ContextTabs({
                     trigger={
                       <Button>
                         <Plus className="h-4 w-4 mr-2" />
-                        Create Decision
+                        {t("createDecision")}
                       </Button>
                     }
                   />
@@ -110,11 +112,11 @@ export function ContextTabs({
                           <div className="flex items-center gap-3 mb-2">
                             <CardTitle className="text-lg">{decision.title}</CardTitle>
                             <Badge className={DECISION_TYPE_COLORS[decision.decision_type]}>
-                              {decision.decision_type}
+                              {tCommon("decisionType", { type: decision.decision_type })}
                             </Badge>
                             <Badge className={statusConfig.color}>
                               <StatusIcon className="h-3 w-3 mr-1" />
-                              {statusConfig.label}
+                              {tCommon("decisionStatus", { status: decision.status })}
                             </Badge>
                           </div>
                           {decision.description && <CardDescription>{decision.description}</CardDescription>}
@@ -127,13 +129,13 @@ export function ContextTabs({
                     <CardContent>
                       {decision.impact && (
                         <div className="mb-3">
-                          <h4 className="text-sm font-semibold mb-1">Impact</h4>
+                          <h4 className="text-sm font-semibold mb-1">{t("impact")}</h4>
                           <p className="text-sm text-muted-foreground">{decision.impact}</p>
                         </div>
                       )}
                       {decision.alternatives && decision.alternatives.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-semibold mb-1">Alternatives Considered</h4>
+                          <h4 className="text-sm font-semibold mb-1">{t("alternativesConsidered")}</h4>
                           <p className="text-sm text-muted-foreground">{decision.alternatives.join(", ")}</p>
                         </div>
                       )}
@@ -149,15 +151,15 @@ export function ContextTabs({
       {activeTab === "relations" && (
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Relations</h2>
+            <h2 className="text-xl font-semibold">{t("relationsHeading")}</h2>
             {canWrite && <CreateRelationDialog projectId={projectId} />}
           </div>
 
           {relations.length === 0 ? (
             <EmptyState
               icon={Link2}
-              title="No relations yet"
-              description="Create relations to link project entities together"
+              title={t("emptyRelationsTitle")}
+              description={t("emptyRelationsDescription")}
               action={canWrite ? <CreateRelationDialog projectId={projectId} /> : undefined}
             />
           ) : (
@@ -180,15 +182,15 @@ export function ContextTabs({
       {activeTab === "sources" && (
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Sources</h2>
+            <h2 className="text-xl font-semibold">{t("sourcesHeading")}</h2>
             {canWrite && <CreateSourceDialog projectId={projectId} />}
           </div>
 
           {sources.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="No sources yet"
-              description="Add knowledge sources to build project context"
+              title={t("emptySourcesTitle")}
+              description={t("emptySourcesDescription")}
               action={
                 canWrite ? (
                   <CreateSourceDialog
@@ -196,7 +198,7 @@ export function ContextTabs({
                     trigger={
                       <Button>
                         <Plus className="h-4 w-4 mr-2" />
-                        Create Source
+                        {t("createSource")}
                       </Button>
                     }
                   />
@@ -212,7 +214,7 @@ export function ContextTabs({
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <CardTitle className="text-lg">{source.title}</CardTitle>
-                          <Badge variant="outline">{SOURCE_TYPE_LABELS[source.source_type] ?? source.source_type}</Badge>
+                          <Badge variant="outline">{tCommon("sourceType", { type: source.source_type })}</Badge>
                         </div>
                         {source.url && (
                           <a

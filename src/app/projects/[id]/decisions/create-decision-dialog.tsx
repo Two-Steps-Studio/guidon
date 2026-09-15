@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,6 +40,7 @@ export function CreateDecisionDialog({
   onCreated?: () => void;
   projectColor?: string;
 }) {
+  const t = useTranslations("decisions");
   const [open, setOpen] = useState(false);
   const createWithProject = createDecision.bind(null, projectId);
   const [state, formAction, pending] = useActionState(createWithProject, initialState);
@@ -58,14 +60,14 @@ export function CreateDecisionDialog({
         {trigger ?? (
           <Button style={projectColor ? { backgroundColor: projectColor } : undefined}>
             <Plus className="h-4 w-4 mr-2" />
-            New Decision
+            {t("newDecision")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Decision</DialogTitle>
-          <DialogDescription>Record a new project decision</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
           action={(formData) => {
@@ -89,16 +91,16 @@ export function CreateDecisionDialog({
           )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  {t("creating")}
                 </>
               ) : (
-                "Create Decision"
+                t("createDecision")
               )}
             </Button>
           </div>

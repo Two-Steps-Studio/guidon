@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +32,7 @@ export function DecisionCardMenu({
   decision: Decision;
   canDelete: boolean;
 }) {
+  const t = useTranslations("decisions");
   const [showEdit, setShowEdit] = useState(false);
   // Bumped on every open so <EditDecisionForm key={session}> below fully
   // remounts - useActionState's error otherwise survives close/reopen (this
@@ -53,7 +55,7 @@ export function DecisionCardMenu({
       <div className="flex flex-col items-end gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for ${decision.title}`}>
+            <Button variant="ghost" size="icon" disabled={deleting} aria-label={t("optionsForAria", { title: decision.title })}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -65,12 +67,12 @@ export function DecisionCardMenu({
               }}
             >
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              {t("edit")}
             </DropdownMenuItem>
             {canDelete && (
               <DropdownMenuItem onClick={handleDelete} className="text-destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                {t("delete")}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -86,8 +88,8 @@ export function DecisionCardMenu({
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Decision</DialogTitle>
-            <DialogDescription>Update decision information</DialogDescription>
+            <DialogTitle>{t("editDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("editDialogDescription")}</DialogDescription>
           </DialogHeader>
           <EditDecisionForm
             key={session}
@@ -110,6 +112,7 @@ function EditDecisionForm({
   decision: Decision;
   onClose: () => void;
 }) {
+  const t = useTranslations("decisions");
   const updateWithIds = updateDecision.bind(null, projectId, decision.id);
   const [state, formAction, pending] = useActionState(updateWithIds, initialState);
   const submittedRef = useRef(false);
@@ -138,16 +141,16 @@ function EditDecisionForm({
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "Save Changes"
+            t("saveChanges")
           )}
         </Button>
       </div>
