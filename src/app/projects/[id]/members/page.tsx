@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -25,6 +26,7 @@ export default async function ProjectMembersPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const t = await getTranslations("members");
   const access = await requireProjectAccess(projectId);
 
   type Member = {
@@ -82,7 +84,7 @@ export default async function ProjectMembersPage({
       .map((row) => ({
         id: row.profile_id ?? row.user_id,
         full_name: row.full_name ?? null,
-        email: row.email ?? "Unknown member",
+        email: row.email ?? t("unknownMember"),
         avatar_url: row.avatar_url ?? null,
       }))
       .filter((candidate) => !onProjectLocal.has(candidate.id));
@@ -127,7 +129,7 @@ export default async function ProjectMembersPage({
         return {
           id: profile?.id ?? row.user_id,
           full_name: profile?.full_name ?? null,
-          email: profile?.email ?? "Unknown member",
+          email: profile?.email ?? t("unknownMember"),
           avatar_url: profile?.avatar_url ?? null,
         };
       })

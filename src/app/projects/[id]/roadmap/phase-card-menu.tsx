@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +24,7 @@ import type { RoadmapPhase } from "@/types/task";
 const initialState: PhaseFormState = { error: null };
 
 export function PhaseCardMenu({ projectId, phase }: { projectId: string; phase: RoadmapPhase }) {
+  const t = useTranslations("roadmap");
   const [showEdit, setShowEdit] = useState(false);
   // Bumped on every open so <EditPhaseForm key={session}> below fully
   // remounts - useActionState's error otherwise survives close/reopen (this
@@ -45,7 +47,7 @@ export function PhaseCardMenu({ projectId, phase }: { projectId: string; phase: 
       <div className="flex flex-col items-end gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for ${phase.name}`}>
+            <Button variant="ghost" size="icon" disabled={deleting} aria-label={t("optionsForAria", { name: phase.name })}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -57,11 +59,11 @@ export function PhaseCardMenu({ projectId, phase }: { projectId: string; phase: 
               }}
             >
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              {t("edit")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleDelete} className="text-destructive">
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              {t("delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -76,8 +78,8 @@ export function PhaseCardMenu({ projectId, phase }: { projectId: string; phase: 
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Phase</DialogTitle>
-            <DialogDescription>Update phase information</DialogDescription>
+            <DialogTitle>{t("editDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("editDialogDescription")}</DialogDescription>
           </DialogHeader>
           <EditPhaseForm key={session} projectId={projectId} phase={phase} onClose={() => setShowEdit(false)} />
         </DialogContent>
@@ -95,6 +97,7 @@ function EditPhaseForm({
   phase: RoadmapPhase;
   onClose: () => void;
 }) {
+  const t = useTranslations("roadmap");
   const updateWithIds = updatePhase.bind(null, projectId, phase.id);
   const [state, formAction, pending] = useActionState(updateWithIds, initialState);
   const submittedRef = useRef(false);
@@ -123,16 +126,16 @@ function EditPhaseForm({
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "Save Changes"
+            t("saveChanges")
           )}
         </Button>
       </div>
