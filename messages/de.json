@@ -917,5 +917,33 @@
     "planPro": "Pro",
     "planTeam": "Team",
     "planBusiness": "Business"
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Verwalte deine Kontodaten",
+    "unnamed": "Unbenannt",
+    "nameLabel": "Name",
+    "namePlaceholder": "Dein Name",
+    "avatarLabel": "Avatar",
+    "avatarHelp": "Lade ein Bild für deinen Avatar hoch. Leer lassen, um das aktuelle Bild oder deine Initialen zu behalten.",
+    "emailLabel": "E-Mail",
+    "emailHelp": "Die E-Mail-Adresse kann hier nicht geändert werden.",
+    "languageLabel": "Sprache",
+    "saving": "Wird gespeichert...",
+    "saveChanges": "Änderungen speichern",
+    "apiKeysTitle": "API-Schlüssel",
+    "apiKeysDescription": "Damit KI-Agenten und Skripte über die API auf deine Projekte zugreifen können.",
+    "copyKeyNowWarning": "Kopiere diesen Schlüssel jetzt - er wird nicht erneut angezeigt.",
+    "copyFailed": "Automatisches Kopieren fehlgeschlagen - wähle den Schlüssel oben aus und kopiere ihn manuell.",
+    "keyNameLabel": "Name",
+    "keyNamePlaceholder": "z. B. Claude Code Agent",
+    "scopesLabel": "Berechtigungen",
+    "creatingKey": "Wird erstellt...",
+    "createApiKey": "API-Schlüssel erstellen",
+    "noApiKeysYet": "Noch keine API-Schlüssel.",
+    "revoked": "Widerrufen",
+    "createdOn": "Erstellt am {date}",
+    "lastUsedOn": " · Zuletzt verwendet am {date}",
+    "neverUsed": " · Nie verwendet"
   }
 }

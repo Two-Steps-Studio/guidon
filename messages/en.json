@@ -917,5 +917,33 @@
     "planPro": "Pro",
     "planTeam": "Team",
     "planBusiness": "Business"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account details",
+    "unnamed": "Unnamed",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "avatarLabel": "Avatar",
+    "avatarHelp": "Upload an image for your avatar. Leave blank to keep current or use your initials.",
+    "emailLabel": "Email",
+    "emailHelp": "Email can't be changed here.",
+    "languageLabel": "Language",
+    "saving": "Saving...",
+    "saveChanges": "Save changes",
+    "apiKeysTitle": "API Keys",
+    "apiKeysDescription": "For AI agents and scripts to access your projects via the API.",
+    "copyKeyNowWarning": "Copy this key now - it won't be shown again.",
+    "copyFailed": "Couldn't copy automatically - select the key above and copy it manually.",
+    "keyNameLabel": "Name",
+    "keyNamePlaceholder": "e.g. Claude Code agent",
+    "scopesLabel": "Scopes",
+    "creatingKey": "Creating...",
+    "createApiKey": "Create API Key",
+    "noApiKeysYet": "No API keys yet.",
+    "revoked": "Revoked",
+    "createdOn": "Created {date}",
+    "lastUsedOn": " · Last used {date}",
+    "neverUsed": " · Never used"
   }
 }

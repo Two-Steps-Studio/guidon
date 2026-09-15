@@ -917,5 +917,33 @@
     "planPro": "Pro",
     "planTeam": "Zespołowy",
     "planBusiness": "Biznesowy"
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Zarządzaj danymi swojego konta",
+    "unnamed": "Bez nazwy",
+    "nameLabel": "Imię",
+    "namePlaceholder": "Twoje imię",
+    "avatarLabel": "Awatar",
+    "avatarHelp": "Prześlij obraz dla swojego awatara. Zostaw puste, aby zachować bieżący lub użyć inicjałów.",
+    "emailLabel": "E-mail",
+    "emailHelp": "E-maila nie można tu zmienić.",
+    "languageLabel": "Język",
+    "saving": "Zapisywanie...",
+    "saveChanges": "Zapisz zmiany",
+    "apiKeysTitle": "Klucze API",
+    "apiKeysDescription": "Dla agentów AI i skryptów, aby uzyskać dostęp do Twoich projektów przez API.",
+    "copyKeyNowWarning": "Skopiuj ten klucz teraz - nie zostanie ponownie wyświetlony.",
+    "copyFailed": "Nie udało się skopiować automatycznie - zaznacz klucz powyżej i skopiuj go ręcznie.",
+    "keyNameLabel": "Nazwa",
+    "keyNamePlaceholder": "np. Agent Claude Code",
+    "scopesLabel": "Zakresy",
+    "creatingKey": "Tworzenie...",
+    "createApiKey": "Utwórz klucz API",
+    "noApiKeysYet": "Brak kluczy API.",
+    "revoked": "Unieważniony",
+    "createdOn": "Utworzono {date}",
+    "lastUsedOn": " · Ostatnio użyto {date}",
+    "neverUsed": " · Nigdy nie użyto"
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { createApiKey, revokeApiKey, type ApiKeyRow, type CreateApiKeyState } fr
 const initialState: CreateApiKeyState = { error: null, fullKey: null, row: null };
 
 export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
+  const t = useTranslations("profile");
   const [keys, setKeys] = useState(initialKeys);
   const [state, formAction, creating] = useActionState(createApiKey, initialState);
   const [revoking, startRevoke] = useTransition();
@@ -59,13 +61,13 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>API Keys</CardTitle>
-        <CardDescription>For AI agents and scripts to access your projects via the API.</CardDescription>
+        <CardTitle>{t("apiKeysTitle")}</CardTitle>
+        <CardDescription>{t("apiKeysDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {state.fullKey && (
           <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
-            <p className="mb-2 font-medium">Copy this key now - it won&apos;t be shown again.</p>
+            <p className="mb-2 font-medium">{t("copyKeyNowWarning")}</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 overflow-x-auto rounded bg-background px-2 py-1 font-mono text-xs">
                 {state.fullKey}
@@ -76,7 +78,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
             </div>
             {copyState === "error" && (
               <p className="mt-2 text-xs text-destructive">
-                Couldn&apos;t copy automatically - select the key above and copy it manually.
+                {t("copyFailed")}
               </p>
             )}
           </div>
@@ -84,11 +86,11 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
 
         <form action={formAction} className="space-y-3">
           <div className="space-y-1">
-            <Label htmlFor="key-name">Name</Label>
-            <Input id="key-name" name="name" placeholder="e.g. Claude Code agent" required />
+            <Label htmlFor="key-name">{t("keyNameLabel")}</Label>
+            <Input id="key-name" name="name" placeholder={t("keyNamePlaceholder")} required />
           </div>
           <div className="space-y-1">
-            <Label>Scopes</Label>
+            <Label>{t("scopesLabel")}</Label>
             <div className="grid grid-cols-2 gap-2">
               {API_KEY_SCOPES.map((scope) => (
                 <label key={scope} className="flex items-center gap-2 text-sm">
@@ -106,23 +108,25 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
           )}
           <Button type="submit" disabled={creating}>
             <KeyRound className="h-4 w-4 mr-2" />
-            {creating ? "Creating..." : "Create API Key"}
+            {creating ? t("creatingKey") : t("createApiKey")}
           </Button>
         </form>
 
         <div className="space-y-2">
-          {keys.length === 0 && <p className="text-sm text-muted-foreground">No API keys yet.</p>}
+          {keys.length === 0 && <p className="text-sm text-muted-foreground">{t("noApiKeysYet")}</p>}
           {keys.map((key) => (
             <div key={key.id} className="flex items-center justify-between rounded-md border border-border p-3">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{key.name}</span>
-                  {key.revoked_at && <Badge variant="secondary">Revoked</Badge>}
+                  {key.revoked_at && <Badge variant="secondary">{t("revoked")}</Badge>}
                 </div>
                 <p className="font-mono text-xs text-muted-foreground">{key.key_prefix}...</p>
                 <p className="text-xs text-muted-foreground">
-                  Created {new Date(key.created_at).toLocaleDateString()}
-                  {key.last_used_at ? ` · Last used ${new Date(key.last_used_at).toLocaleDateString()}` : " · Never used"}
+                  {t("createdOn", { date: new Date(key.created_at).toLocaleDateString() })}
+                  {key.last_used_at
+                    ? t("lastUsedOn", { date: new Date(key.last_used_at).toLocaleDateString() })
+                    : t("neverUsed")}
                 </p>
               </div>
               {!key.revoked_at && (
