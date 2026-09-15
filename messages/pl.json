@@ -914,5 +914,33 @@
     "setLimit": "Ustaw limit",
     "save": "Zapisz",
     "saved": "Zapisano"
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Zarządzaj danymi swojego konta",
+    "unnamedUser": "Bez nazwy",
+    "nameLabel": "Imię i nazwisko",
+    "namePlaceholder": "Twoje imię i nazwisko",
+    "avatarLabel": "Awatar",
+    "avatarHelp": "Prześlij obraz jako swój awatar. Pozostaw puste, aby zachować obecny lub używać inicjałów.",
+    "emailLabel": "E-mail",
+    "emailHelp": "E-maila nie można zmienić w tym miejscu.",
+    "languageLabel": "Język",
+    "saving": "Zapisywanie...",
+    "saveChanges": "Zapisz zmiany",
+    "apiKeysTitle": "Klucze API",
+    "apiKeysDescription": "Dla agentów AI i skryptów korzystających z Twoich projektów przez API.",
+    "copyKeyWarning": "Skopiuj ten klucz teraz - nie zostanie on ponownie wyświetlony.",
+    "copyKeyError": "Nie udało się skopiować automatycznie - zaznacz klucz powyżej i skopiuj go ręcznie.",
+    "keyNameLabel": "Nazwa",
+    "keyNamePlaceholder": "np. Agent Claude Code",
+    "scopesLabel": "Uprawnienia",
+    "creating": "Tworzenie...",
+    "createApiKeyButton": "Utwórz klucz API",
+    "revokedBadge": "Odwołany",
+    "noApiKeysYet": "Brak kluczy API.",
+    "createdOn": "Utworzono {date}",
+    "lastUsedOn": "Ostatnio użyto {date}",
+    "neverUsed": "Nigdy nie użyto"
   }
 }

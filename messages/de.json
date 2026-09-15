@@ -914,5 +914,33 @@
     "setLimit": "Limit festlegen",
     "save": "Speichern",
     "saved": "Gespeichert"
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Verwalte deine Kontodaten",
+    "unnamedUser": "Unbenannt",
+    "nameLabel": "Name",
+    "namePlaceholder": "Dein Name",
+    "avatarLabel": "Avatar",
+    "avatarHelp": "Lade ein Bild für deinen Avatar hoch. Leer lassen, um das aktuelle Bild zu behalten oder deine Initialen zu verwenden.",
+    "emailLabel": "E-Mail",
+    "emailHelp": "Die E-Mail-Adresse kann hier nicht geändert werden.",
+    "languageLabel": "Sprache",
+    "saving": "Speichern...",
+    "saveChanges": "Änderungen speichern",
+    "apiKeysTitle": "API-Schlüssel",
+    "apiKeysDescription": "Für KI-Agenten und Skripte, um über die API auf deine Projekte zuzugreifen.",
+    "copyKeyWarning": "Kopiere diesen Schlüssel jetzt - er wird nicht erneut angezeigt.",
+    "copyKeyError": "Automatisches Kopieren fehlgeschlagen - markiere den Schlüssel oben und kopiere ihn manuell.",
+    "keyNameLabel": "Name",
+    "keyNamePlaceholder": "z. B. Claude Code Agent",
+    "scopesLabel": "Berechtigungen",
+    "creating": "Wird erstellt...",
+    "createApiKeyButton": "API-Schlüssel erstellen",
+    "revokedBadge": "Widerrufen",
+    "noApiKeysYet": "Noch keine API-Schlüssel.",
+    "createdOn": "Erstellt am {date}",
+    "lastUsedOn": "Zuletzt verwendet am {date}",
+    "neverUsed": "Nie verwendet"
   }
 }

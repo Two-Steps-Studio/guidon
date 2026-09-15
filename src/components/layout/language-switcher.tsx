@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { setLocale } from "@/app/actions/set-locale";
 import { Select } from "@/components/ui/select";
 import { SUPPORTED_LOCALES } from "@/i18n/locales";
@@ -16,10 +16,11 @@ const LOCALE_LABELS: Record<string, string> = {
 export function LanguageSwitcher() {
   const currentLocale = useLocale();
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations("profile");
 
   return (
     <Select
-      aria-label="Language"
+      aria-label={t("languageLabel")}
       value={currentLocale}
       disabled={isPending}
       onChange={(event) => {

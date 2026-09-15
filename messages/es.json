@@ -914,5 +914,33 @@
     "setLimit": "Establecer límite",
     "save": "Guardar",
     "saved": "Guardado"
+  },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Gestiona los datos de tu cuenta",
+    "unnamedUser": "Sin nombre",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Tu nombre",
+    "avatarLabel": "Avatar",
+    "avatarHelp": "Sube una imagen para tu avatar. Déjalo en blanco para conservar el actual o usar tus iniciales.",
+    "emailLabel": "Correo electrónico",
+    "emailHelp": "El correo electrónico no se puede cambiar aquí.",
+    "languageLabel": "Idioma",
+    "saving": "Guardando...",
+    "saveChanges": "Guardar cambios",
+    "apiKeysTitle": "Claves de API",
+    "apiKeysDescription": "Para que agentes de IA y scripts accedan a tus proyectos a través de la API.",
+    "copyKeyWarning": "Copia esta clave ahora - no volverá a mostrarse.",
+    "copyKeyError": "No se pudo copiar automáticamente - selecciona la clave de arriba y cópiala manualmente.",
+    "keyNameLabel": "Nombre",
+    "keyNamePlaceholder": "p. ej. Agente Claude Code",
+    "scopesLabel": "Permisos",
+    "creating": "Creando...",
+    "createApiKeyButton": "Crear clave de API",
+    "revokedBadge": "Revocada",
+    "noApiKeysYet": "Aún no hay claves de API.",
+    "createdOn": "Creada el {date}",
+    "lastUsedOn": "Usada por última vez el {date}",
+    "neverUsed": "Nunca usada"
   }
 }

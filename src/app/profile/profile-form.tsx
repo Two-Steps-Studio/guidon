@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ const initialState: ProfileFormState = { error: null };
 
 export function ProfileForm({ user }: { user: CurrentUser }) {
   const [state, formAction, pending] = useActionState(updateProfile, initialState);
+  const t = useTranslations("profile");
 
   return (
     <Card>
@@ -27,7 +29,7 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
             </AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle>{user.full_name || "Unnamed"}</CardTitle>
+            <CardTitle>{user.full_name || t("unnamedUser")}</CardTitle>
             <CardDescription>{user.email}</CardDescription>
           </div>
         </div>
@@ -35,18 +37,18 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
       <CardContent>
         <form action={formAction} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="full_name">Name</Label>
+            <Label htmlFor="full_name">{t("nameLabel")}</Label>
             <Input
               id="full_name"
               name="full_name"
               defaultValue={user.full_name ?? ""}
-              placeholder="Your name"
+              placeholder={t("namePlaceholder")}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="avatar">Avatar</Label>
+            <Label htmlFor="avatar">{t("avatarLabel")}</Label>
             <Input
               id="avatar"
               name="avatar"
@@ -54,20 +56,20 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
               accept="image/*"
             />
             <p className="text-xs text-muted-foreground">
-              Upload an image for your avatar. Leave blank to keep current or use your initials.
+              {t("avatarHelp")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("emailLabel")}</Label>
             <Input id="email" value={user.email ?? ""} disabled />
             <p className="text-xs text-muted-foreground">
-              Email can&apos;t be changed here.
+              {t("emailHelp")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="language">Language</Label>
+            <Label htmlFor="language">{t("languageLabel")}</Label>
             <LanguageSwitcher />
           </div>
 
@@ -83,12 +85,12 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
+                  {t("saving")}
                 </>
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  Save changes
+                  {t("saveChanges")}
                 </>
               )}
             </Button>
