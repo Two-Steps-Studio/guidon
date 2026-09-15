@@ -19,11 +19,11 @@ import type { AttemptOutcome, TaskAttempt } from "@/types/task";
  * else in TaskDetailDialog needs to react to an attempt being logged.
  */
 
-const OUTCOME_CONFIG: Record<AttemptOutcome, { labelKey: string; icon: typeof CheckCircle2; color: string }> = {
+const OUTCOME_CONFIG = {
   failed: { labelKey: "outcomeFailed", icon: X, color: "text-destructive" },
   partial: { labelKey: "outcomePartial", icon: AlertTriangle, color: "text-amber-500" },
   succeeded: { labelKey: "outcomeSucceeded", icon: CheckCircle2, color: "text-emerald-500" },
-};
+} as const satisfies Record<AttemptOutcome, { labelKey: string; icon: typeof CheckCircle2; color: string }>;
 
 const EMPTY_FORM = {
   problem: "",

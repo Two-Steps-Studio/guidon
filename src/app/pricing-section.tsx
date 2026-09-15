@@ -145,6 +145,11 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                     ))}
                   </ul>
                   <Button className="mt-6 w-full" variant={isPopular ? "default" : "outline"} asChild>
+                    {/* landing.pricing.getStarted is a separate key from the
+                        hero CTA (landing.getStarted in page.tsx) - they read
+                        identically in English today, but are independently
+                        translatable so a locale can word the pricing-card
+                        CTA differently from the hero without touching both. */}
                     <Link href="/auth/signup">{t("getStarted")}</Link>
                   </Button>
                 </CardContent>

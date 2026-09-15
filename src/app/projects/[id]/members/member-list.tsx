@@ -22,21 +22,21 @@ const ASSIGNABLE_BY: Record<"owner" | "admin", ProjectRole[]> = {
   admin: ["admin", "developer", "tester", "viewer"],
 };
 
-const ROLE_LABEL_KEYS: Record<ProjectRole, string> = {
+const ROLE_LABEL_KEYS = {
   owner: "roleOwner",
   admin: "roleAdmin",
   developer: "roleDeveloper",
   tester: "roleTester",
   viewer: "roleViewer",
-};
+} as const satisfies Record<ProjectRole, string>;
 
-const ROLE_HINT_KEYS: Record<ProjectRole, string> = {
+const ROLE_HINT_KEYS = {
   owner: "roleHintOwner",
   admin: "roleHintAdmin",
   developer: "roleHintDeveloper",
   tester: "roleHintTester",
   viewer: "roleHintViewer",
-};
+} as const satisfies Record<ProjectRole, string>;
 
 interface ProjectMemberRow {
   id: string;

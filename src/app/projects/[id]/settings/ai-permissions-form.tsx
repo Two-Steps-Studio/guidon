@@ -16,14 +16,14 @@ interface AiPermissions {
   can_delete_tasks: boolean;
 }
 
-const PERMISSION_KEYS: { field: keyof AiPermissions; labelKey: string }[] = [
+const PERMISSION_KEYS = [
   { field: "can_read_context", labelKey: "permReadContext" },
   { field: "can_create_comments", labelKey: "permCreateComments" },
   { field: "can_change_status", labelKey: "permChangeStatus" },
   { field: "can_complete_tasks", labelKey: "permCompleteTasks" },
   { field: "can_modify_settings", labelKey: "permModifySettings" },
   { field: "can_delete_tasks", labelKey: "permDeleteTasks" },
-];
+] as const satisfies { field: keyof AiPermissions; labelKey: string }[];
 
 const initialState: AiPermissionsState = { error: null };
 

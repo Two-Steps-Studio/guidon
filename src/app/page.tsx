@@ -134,6 +134,9 @@ export default async function Home() {
           {FEATURE_SECTIONS.map((feature, index) => {
             const Icon = feature.icon;
             const reversed = index % 2 === 1;
+            // t.raw() instead of t(): each `bullets` value is a JSON array
+            // of strings, not an ICU message, so t()'s string-interpolation
+            // formatting doesn't apply - .raw() returns the array as-is.
             const bullets = t.raw(`features.${feature.key}.bullets`) as string[];
             return (
               <div

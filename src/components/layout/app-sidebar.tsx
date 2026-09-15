@@ -65,8 +65,16 @@ interface ProjectNavGroup {
  * the "nav" namespace, resolved with `t()` at render time rather than
  * stored as literal English text, since this array lives at module scope
  * outside the component's translation context.
+ *
+ * `satisfies ProjectNavGroup[]` (rather than a `: ProjectNavGroup[]`
+ * annotation) is combined with `as const` deliberately: an annotation
+ * would widen every `labelKey` back to `string` on this binding, silently
+ * undoing the narrowing `as const` is here for. `satisfies` still checks
+ * shape against `ProjectNavGroup[]` but keeps the literal types, so a
+ * typo'd `labelKey` is a compile error against the `next-intl` message
+ * augmentation in global.d.ts.
  */
-const PROJECT_NAV: ProjectNavGroup[] = [
+const PROJECT_NAV = [
   { labelKey: null, items: [{ href: "", labelKey: "overview", icon: LayoutDashboard }] },
   {
     labelKey: "workGroup",
@@ -99,7 +107,7 @@ const PROJECT_NAV: ProjectNavGroup[] = [
       { href: "settings", labelKey: "settings", icon: Settings },
     ],
   },
-];
+] as const satisfies ProjectNavGroup[];
 
 const ADMIN_NAV = [
   { href: "/admin", labelKey: "overview", icon: ShieldCheck },
