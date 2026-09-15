@@ -945,5 +945,15 @@
     "createdOn": "Created {date}",
     "lastUsedOn": " · Last used {date}",
     "neverUsed": " · Never used"
+  },
+  "emails": {
+    "passwordReset": {
+      "subject": "Reset your Guidon password",
+      "heading": "Reset your password",
+      "body": "Click the button below to set a new password for your Guidon account. This link expires shortly and can only be used once.",
+      "cta": "Set new password",
+      "buttonNotWorking": "Button not working? Paste this link into your browser:",
+      "ignoreNotice": "If you didn't request a password reset, you can safely ignore this email - your password won't change."
+    }
   }
 }

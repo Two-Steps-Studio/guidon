@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { isLockedOut, recordFailedAttempt } from "@/lib/auth/rate-limit";
 import { sendPasswordResetEmail } from "@/lib/email/resend";
 import { SITE_URL } from "@/lib/site-url";
+import { isSupportedLocale, type Locale } from "@/i18n/locales";
 
 export type RequestPasswordResetResult = { error: string | null };
 
@@ -64,8 +65,24 @@ export async function requestPasswordReset(
     data.properties.hashed_token
   )}&type=recovery`;
 
+  // Best-effort: a missing/unreadable profile (e.g. mid-signup) just falls
+  // back to sendPasswordResetEmail's own DEFAULT_LOCALE, same as any other
+  // "profile not found yet" case elsewhere in this codebase.
+  let locale: Locale | undefined;
+  const recipientId = data.user?.id;
+  if (recipientId) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("locale")
+      .eq("id", recipientId)
+      .maybeSingle();
+    if (profile?.locale && isSupportedLocale(profile.locale)) {
+      locale = profile.locale;
+    }
+  }
+
   try {
-    await sendPasswordResetEmail(normalizedEmail, resetLink);
+    await sendPasswordResetEmail(normalizedEmail, resetLink, locale);
   } catch (sendError) {
     // Swallowed the same way a nonexistent email is above: surfacing this
     // distinctly from success would turn any systemic Resend outage or

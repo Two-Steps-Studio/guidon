@@ -945,5 +945,15 @@
     "createdOn": "Creada el {date}",
     "lastUsedOn": " · Usada por última vez el {date}",
     "neverUsed": " · Nunca utilizada"
+  },
+  "emails": {
+    "passwordReset": {
+      "subject": "Restablece tu contraseña de Guidon",
+      "heading": "Restablece tu contraseña",
+      "body": "Haz clic en el botón de abajo para establecer una nueva contraseña para tu cuenta de Guidon. Este enlace caduca pronto y solo se puede usar una vez.",
+      "cta": "Establecer nueva contraseña",
+      "buttonNotWorking": "¿El botón no funciona? Pega este enlace en tu navegador:",
+      "ignoreNotice": "Si no solicitaste restablecer tu contraseña, puedes ignorar este correo con tranquilidad - tu contraseña no cambiará."
+    }
   }
 }

@@ -945,5 +945,15 @@
     "createdOn": "Utworzono {date}",
     "lastUsedOn": " · Ostatnio użyto {date}",
     "neverUsed": " · Nigdy nie użyto"
+  },
+  "emails": {
+    "passwordReset": {
+      "subject": "Zresetuj swoje hasło Guidon",
+      "heading": "Zresetuj swoje hasło",
+      "body": "Kliknij poniższy przycisk, aby ustawić nowe hasło do swojego konta Guidon. Ten link wkrótce wygaśnie i może zostać użyty tylko raz.",
+      "cta": "Ustaw nowe hasło",
+      "buttonNotWorking": "Przycisk nie działa? Wklej ten link do przeglądarki:",
+      "ignoreNotice": "Jeśli nie prosiłeś o zresetowanie hasła, możesz bezpiecznie zignorować tę wiadomość - Twoje hasło się nie zmieni."
+    }
   }
 }

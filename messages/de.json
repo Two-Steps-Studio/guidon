@@ -945,5 +945,15 @@
     "createdOn": "Erstellt am {date}",
     "lastUsedOn": " · Zuletzt verwendet am {date}",
     "neverUsed": " · Nie verwendet"
+  },
+  "emails": {
+    "passwordReset": {
+      "subject": "Setze dein Guidon-Passwort zurück",
+      "heading": "Passwort zurücksetzen",
+      "body": "Klicke auf die Schaltfläche unten, um ein neues Passwort für dein Guidon-Konto festzulegen. Dieser Link läuft bald ab und kann nur einmal verwendet werden.",
+      "cta": "Neues Passwort festlegen",
+      "buttonNotWorking": "Schaltfläche funktioniert nicht? Füge diesen Link in deinen Browser ein:",
+      "ignoreNotice": "Wenn du kein Zurücksetzen des Passworts angefordert hast, kannst du diese E-Mail einfach ignorieren - dein Passwort ändert sich nicht."
+    }
   }
 }
