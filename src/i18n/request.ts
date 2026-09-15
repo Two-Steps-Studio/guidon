@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 import { createClient } from "@/lib/supabase-server";
 import { DEFAULT_LOCALE, isSupportedLocale, type Locale } from "./locales";
+import { loadMessages } from "./load-messages";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
 
@@ -45,7 +46,7 @@ export default getRequestConfig(async () => {
         .maybeSingle();
       if (profile?.locale && isSupportedLocale(profile.locale)) {
         locale = profile.locale;
-        return { locale, messages: (await import(`../../messages/${locale}.json`)).default };
+        return { locale, messages: await loadMessages(locale) };
       }
     }
   } catch {
@@ -57,11 +58,11 @@ export default getRequestConfig(async () => {
   const cookieLocale = (await cookies()).get(LOCALE_COOKIE)?.value;
   if (cookieLocale && isSupportedLocale(cookieLocale)) {
     locale = cookieLocale;
-    return { locale, messages: (await import(`../../messages/${locale}.json`)).default };
+    return { locale, messages: await loadMessages(locale) };
   }
 
   // 3. Accept-Language header detection, no cookie written.
   locale = detectLocaleFromHeader((await headers()).get("accept-language"));
 
-  return { locale, messages: (await import(`../../messages/${locale}.json`)).default };
+  return { locale, messages: await loadMessages(locale) };
 });

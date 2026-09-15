@@ -1,31 +1,7 @@
 import "server-only";
 import { createTranslator } from "next-intl";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locales";
-
-/**
- * Same shape next-intl's `AppConfig.Messages` module augmentation in
- * global.d.ts uses (`typeof import("./messages/en.json")`) - redeclared
- * here (rather than imported, since that alias isn't exported from
- * global.d.ts) so createTranslator's generic infers a real message shape
- * from the `messages` argument below instead of `any`, which is what keeps
- * `t("wrong.key")` a compile error in this file specifically.
- */
-type EmailMessages = typeof import("../../../messages/en.json");
-
-/**
- * Loads a locale's message catalog directly, bypassing next-intl's
- * request-scoped getTranslations() - this module runs from a Server Action
- * with no guarantee of being inside the request that will eventually read
- * cookies/headers (and in Task 2's case, entirely outside a browser
- * request's locale detection), so there's no request context to read from.
- * src/i18n/request.ts has the same `import(\`../../messages/${locale}.json\`)`
- * pattern for the same reason (a different relative depth from
- * src/i18n/request.ts) - not reused directly to avoid pulling in that
- * module's cookies()/headers()/createClient() dependencies here.
- */
-async function loadMessages(locale: Locale): Promise<EmailMessages> {
-  return (await import(`../../../messages/${locale}.json`)).default;
-}
+import { loadMessages, type Messages } from "@/i18n/load-messages";
 
 /** Read a required env var, or throw an error naming both it and what needs it. */
 function requireEmailEnv(name: string): string {
@@ -51,7 +27,7 @@ function requireEmailEnv(name: string): string {
 function passwordResetEmailHtml(
   resetLink: string,
   locale: Locale,
-  t: ReturnType<typeof createTranslator<EmailMessages>>
+  t: ReturnType<typeof createTranslator<Messages>>
 ): string {
   return `<!DOCTYPE html>
 <html lang="${locale}">

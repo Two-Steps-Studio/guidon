@@ -35,6 +35,12 @@ export async function requestPasswordReset(
   }
   recordFailedAttempt(rateLimitKey);
 
+  // This Server Action runs unauthenticated (a visitor who forgot their
+  // password has no session to scope a normal RLS-enforced createClient()
+  // to), so a service-role client is required here - both the
+  // generateLink() admin call below and the profiles.locale lookup further
+  // down (there is no signed-in user whose RLS-visible row that select
+  // could otherwise rely on) depend on this bypass for the same reason.
   const supabase = createServiceClient();
 
   const { data, error } = await supabase.auth.admin.generateLink({
