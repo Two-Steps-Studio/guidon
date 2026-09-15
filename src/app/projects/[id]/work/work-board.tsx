@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,7 +27,6 @@ const TaskDetailDialog = dynamic(() =>
 import type { TaskCardMember } from "@/components/work/task-card";
 import {
   BOARD_COLUMNS,
-  PRIORITY_LABELS,
   TASK_PRIORITIES,
   boardProgress,
   groupSubtasksByParent,
@@ -72,6 +72,7 @@ export function WorkBoard({
   columns?: readonly BoardColumn[];
   aiAvailable?: boolean;
 }) {
+  const t = useTranslations("work");
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
 
@@ -201,19 +202,19 @@ export function WorkBoard({
       <div className="mx-auto max-w-[1600px] p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Work</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {projectName}
               {progress.total > 0 && (
                 <>
                   {" · "}
                   <span className="tabular-nums">
-                    {progress.done}/{progress.total} done ({progress.percent}%)
+                    {t("progressDone", { done: progress.done, total: progress.total, percent: progress.percent })}
                   </span>
                   {progress.inFlight > 0 && (
                     <>
                       {" · "}
-                      <span className="tabular-nums">{progress.inFlight} in progress</span>
+                      <span className="tabular-nums">{t("progressInFlight", { count: progress.inFlight })}</span>
                     </>
                   )}
                 </>
@@ -222,15 +223,15 @@ export function WorkBoard({
           </div>
 
           <Select
-            aria-label="Sort board by"
+            aria-label={t("sortBy")}
             className="h-8 w-40"
             value={sortMode}
             onChange={(event) =>
               setSortMode(event.target.value as "manual" | "due_date")
             }
           >
-            <option value="manual">Manual order</option>
-            <option value="due_date">Due date</option>
+            <option value="manual">{t("sortManual")}</option>
+            <option value="due_date">{t("sortDueDate")}</option>
           </Select>
 
           {canEdit && aiAvailable && (
@@ -249,19 +250,19 @@ export function WorkBoard({
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <Plus className="h-4 w-4" />
-              New task
+              {t("newTask")}
             </Button>
           )}
         </header>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Select
-            aria-label="Filter by assignee"
+            aria-label={t("filterByAssignee")}
             className="h-8 w-40"
             value={assigneeFilter}
             onChange={(event) => setAssigneeFilter(event.target.value)}
           >
-            <option value="all">All assignees</option>
+            <option value="all">{t("allAssignees")}</option>
             {members.map((member) => (
               <option key={member.id} value={member.id}>
                 {member.full_name || member.email}
@@ -270,26 +271,26 @@ export function WorkBoard({
           </Select>
 
           <Select
-            aria-label="Filter by priority"
+            aria-label={t("filterByPriority")}
             className="h-8 w-40"
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value)}
           >
-            <option value="all">All priorities</option>
+            <option value="all">{t("allPriorities")}</option>
             {TASK_PRIORITIES.map((value) => (
               <option key={value} value={value}>
-                {PRIORITY_LABELS[value]}
+                {t("priority", { priority: value })}
               </option>
             ))}
           </Select>
 
           <Select
-            aria-label="Filter by tag"
+            aria-label={t("filterByTag")}
             className="h-8 w-40"
             value={tagFilter}
             onChange={(event) => setTagFilter(event.target.value)}
           >
-            <option value="all">All tags</option>
+            <option value="all">{t("allTags")}</option>
             {availableTags.map((tag) => (
               <option key={tag} value={tag}>
                 {tag}
@@ -307,7 +308,7 @@ export function WorkBoard({
               }}
               className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
-              Clear filters
+              {t("clearFilters")}
             </button>
           )}
         </div>
@@ -320,29 +321,27 @@ export function WorkBoard({
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="flex-1">{error}</span>
             <button type="button" onClick={() => setError(null)} className="underline underline-offset-2">
-              Dismiss
+              {t("dismiss")}
             </button>
           </div>
         )}
 
         {!canEdit && role && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            You have <strong className="font-medium">{role}</strong> access - the board is read-only.
+            {t.rich("readOnlyAccess", { role, b: (chunks) => <strong className="font-medium">{chunks}</strong> })}
           </p>
         )}
 
         {topLevelTasks.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-16 text-center">
-            <h2 className="text-sm font-medium text-foreground">No tasks yet</h2>
+            <h2 className="text-sm font-medium text-foreground">{t("noTasksTitle")}</h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              {canEdit
-                ? "Create the first task to start tracking work on this project."
-                : "Nothing has been planned for this project yet."}
+              {canEdit ? t("noTasksDescCanEdit") : t("noTasksDescReadOnly")}
             </p>
             {canEdit && (
               <Button size="sm" className="mt-4" onClick={() => setCreateFor(columns[0]?.status ?? "todo")}>
                 <Plus className="h-4 w-4" />
-                New task
+                {t("newTask")}
               </Button>
             )}
           </div>
@@ -420,6 +419,7 @@ function CreateTaskDialog({
   onClose: () => void;
   onCreated: (task: Task) => void;
 }) {
+  const t = useTranslations("work");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
@@ -455,12 +455,12 @@ function CreateTaskDialog({
         sortOrder: maxOrder + 100,
       });
 
-      if (result.error || !result.task) throw new Error(result.error ?? "Failed to create task");
+      if (result.error || !result.task) throw new Error(result.error ?? t("failedToCreateTask"));
 
       onCreated(result.task);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create task");
+      setError(err instanceof Error ? err.message : t("failedToCreateTask"));
     } finally {
       setSubmitting(false);
     }
@@ -472,39 +472,39 @@ function CreateTaskDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-base">New task</DialogTitle>
+          <DialogTitle className="text-base">{t("newTaskDialogTitle")}</DialogTitle>
           <DialogDescription>
-            It will be added to <strong>{columnLabel}</strong>.
+            {t.rich("addedToColumn", { column: columnLabel, b: (chunks) => <strong>{chunks}</strong> })}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="new-task-title">Title</Label>
+            <Label htmlFor="new-task-title">{t("titleLabel")}</Label>
             <Input
               id="new-task-title"
               value={title}
               required
               autoFocus
-              placeholder="Implement save-game serialisation"
+              placeholder={t("titlePlaceholder")}
               onChange={(event) => setTitle(event.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="new-task-description">Description</Label>
+            <Label htmlFor="new-task-description">{t("descriptionLabel")}</Label>
             <Textarea
               id="new-task-description"
               rows={3}
               value={description}
-              placeholder="Optional context, acceptance criteria, links..."
+              placeholder={t("descriptionPlaceholderTask")}
               onChange={(event) => setDescription(event.target.value)}
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="new-task-priority">Priority</Label>
+              <Label htmlFor="new-task-priority">{t("priorityLabel")}</Label>
               <Select
                 id="new-task-priority"
                 value={priority}
@@ -512,20 +512,20 @@ function CreateTaskDialog({
               >
                 {TASK_PRIORITIES.map((value) => (
                   <option key={value} value={value}>
-                    {PRIORITY_LABELS[value]}
+                    {t("priority", { priority: value })}
                   </option>
                 ))}
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="new-task-assignee">Assignee</Label>
+              <Label htmlFor="new-task-assignee">{t("assigneeLabel")}</Label>
               <Select
                 id="new-task-assignee"
                 value={assigneeId}
                 onChange={(event) => setAssigneeId(event.target.value)}
               >
-                <option value="">Unassigned</option>
+                <option value="">{t("unassigned")}</option>
                 {members.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.full_name || member.email}
@@ -535,7 +535,7 @@ function CreateTaskDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="new-task-due">Due date</Label>
+              <Label htmlFor="new-task-due">{t("dueDateLabel")}</Label>
               <Input
                 id="new-task-due"
                 type="date"
@@ -556,11 +556,11 @@ function CreateTaskDialog({
 
           <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={submitting || !title.trim()}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Create task
+              {t("createTask")}
             </Button>
           </div>
         </form>

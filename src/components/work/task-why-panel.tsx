@@ -13,6 +13,7 @@
  */
 
 import { HelpCircle, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_CONFIG as DECISION_STATUS_CONFIG } from "@/app/projects/[id]/decisions/decision-config";
 import { RELATION_TYPE_LABELS, ENTITY_TYPE_LABELS } from "@/app/projects/[id]/context/relation-config";
@@ -27,11 +28,12 @@ function AttributionLine({
   item: TaskWhyRelatedItem;
   membersById: Map<string, TaskCardMember>;
 }) {
+  const t = useTranslations("work");
   const who = item.createdByText
     ? item.createdByText
     : item.createdBy
-      ? membersById.get(item.createdBy)?.full_name || membersById.get(item.createdBy)?.email || "Unknown"
-      : "Unknown";
+      ? membersById.get(item.createdBy)?.full_name || membersById.get(item.createdBy)?.email || t("unknownAuthor")
+      : t("unknownAuthor");
 
   return (
     <p className="text-xs text-muted-foreground">
@@ -88,6 +90,7 @@ export function TaskWhyPanel({
   error: string | null;
   members: TaskCardMember[];
 }) {
+  const t = useTranslations("work");
   const membersById = new Map(members.map((member) => [member.id, member]));
 
   const decision = why?.decision ?? null;
@@ -105,26 +108,26 @@ export function TaskWhyPanel({
     <section aria-label="Why" className="space-y-3 border-t border-border pt-4">
       <h3 className="flex items-center gap-1.5 text-sm font-medium text-foreground">
         <HelpCircle className="h-4 w-4 text-muted-foreground" />
-        Why
+        {t("whyHeading")}
       </h3>
 
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Loading context...
+          {t("loadingContext")}
         </p>
       ) : error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       ) : !hasAnyContext ? (
-        <p className="text-sm text-muted-foreground">No context linked yet.</p>
+        <p className="text-sm text-muted-foreground">{t("noContextLinked")}</p>
       ) : (
         <div className="space-y-3">
           {decision && (
             <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5">
               <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="text-[10px]">Decision</Badge>
+                <Badge variant="outline" className="text-[10px]">{t("decisionBadge")}</Badge>
                 <Badge className={DECISION_STATUS_CONFIG[decision.status as DecisionStatus]?.color}>
                   {DECISION_STATUS_CONFIG[decision.status as DecisionStatus]?.label ?? decision.status}
                 </Badge>

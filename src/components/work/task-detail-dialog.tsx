@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Gavel, Loader2, Plus, Send, Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   createSubtask,
   deleteTask,
@@ -30,7 +31,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
   BOARD_COLUMNS,
-  PRIORITY_LABELS,
   TASK_PRIORITIES,
   isDone,
   normalizeTaskPriority,
@@ -110,6 +110,7 @@ export function TaskDetailDialog({
   // Derived from `task` at mount rather than synced via an effect; the parent
   // keys this component by task id, so opening a different task remounts it
   // and re-runs these initialisers.
+  const t = useTranslations("work");
   const [form, setForm] = useState<TaskForm | null>(() =>
     task ? formToTask(task) : null
   );
@@ -145,13 +146,13 @@ export function TaskDetailDialog({
         setComments(result.comments);
       } catch (err) {
         setCommentsError(
-          err instanceof Error ? err.message : "Failed to load comments"
+          err instanceof Error ? err.message : t("failedToLoadComments")
         );
       } finally {
         setCommentsLoading(false);
       }
     },
-    [projectId]
+    [projectId, t]
   );
 
   // Fetched lazily when the dialog opens rather than prefetched for every
@@ -165,12 +166,12 @@ export function TaskDetailDialog({
         if (result.error) throw new Error(result.error);
         setWhyContext(result);
       } catch (err) {
-        setWhyError(err instanceof Error ? err.message : "Failed to load context");
+        setWhyError(err instanceof Error ? err.message : t("failedToLoadContext"));
       } finally {
         setWhyLoading(false);
       }
     },
-    [projectId]
+    [projectId, t]
   );
 
   const handleExportAgentContext = async () => {
@@ -186,7 +187,7 @@ export function TaskDetailDialog({
       if (result.error) throw new Error(result.error);
       setAgentContextMarkdown(result.markdown);
     } catch (err) {
-      setAgentContextError(err instanceof Error ? err.message : "Failed to generate agent context");
+      setAgentContextError(err instanceof Error ? err.message : t("failedToGenerateAgentContext"));
     } finally {
       setAgentContextLoading(false);
     }
@@ -198,7 +199,7 @@ export function TaskDetailDialog({
       setAgentContextCopied(true);
       setTimeout(() => setAgentContextCopied(false), 2000);
     } catch {
-      setAgentContextError("Failed to copy to clipboard");
+      setAgentContextError(t("failedToCopyToClipboard"));
     }
   };
 
@@ -244,12 +245,12 @@ export function TaskDetailDialog({
         due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
       });
 
-      if (result.error || !result.task) throw new Error(result.error ?? "Failed to save task");
+      if (result.error || !result.task) throw new Error(result.error ?? t("failedToSaveTask"));
 
       onSaved(result.task);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save task");
+      setError(err instanceof Error ? err.message : t("failedToSaveTask"));
     } finally {
       setSaving(false);
     }
@@ -268,7 +269,7 @@ export function TaskDetailDialog({
       onDeleted(task.id);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete task");
+      setError(err instanceof Error ? err.message : t("failedToDeleteTask"));
     } finally {
       setDeleting(false);
     }
@@ -283,13 +284,13 @@ export function TaskDetailDialog({
 
     try {
       const result = await postComment(projectId, task.id, draft.trim());
-      if (result.error || !result.comment) throw new Error(result.error ?? "Failed to post comment");
+      if (result.error || !result.comment) throw new Error(result.error ?? t("failedToPostComment"));
 
       setComments((current) => [...current, result.comment as TaskComment]);
       setDraft("");
     } catch (err) {
       setCommentsError(
-        err instanceof Error ? err.message : "Failed to post comment"
+        err instanceof Error ? err.message : t("failedToPostComment")
       );
     } finally {
       setPosting(false);
@@ -331,14 +332,14 @@ export function TaskDetailDialog({
 
     try {
       const result = await createSubtask(projectId, task.id, subtaskDraft.trim());
-      if (result.error || !result.task) throw new Error(result.error ?? "Failed to create subtask");
+      if (result.error || !result.task) throw new Error(result.error ?? t("failedToCreateSubtask"));
 
       // Subtasks are plain tasks, so the same onSaved callback that updates
       // the board's task list handles them - no separate state to sync.
       onSaved(result.task);
       setSubtaskDraft("");
     } catch (err) {
-      setSubtaskError(err instanceof Error ? err.message : "Failed to create subtask");
+      setSubtaskError(err instanceof Error ? err.message : t("failedToCreateSubtask"));
     } finally {
       setAddingSubtask(false);
     }
@@ -354,11 +355,11 @@ export function TaskDetailDialog({
 
     try {
       const result = await updateTask(projectId, subtask.id, { status });
-      if (result.error || !result.task) throw new Error(result.error ?? "Failed to update subtask");
+      if (result.error || !result.task) throw new Error(result.error ?? t("failedToUpdateSubtask"));
 
       onSaved(result.task);
     } catch (err) {
-      setSubtaskError(err instanceof Error ? err.message : "Failed to update subtask");
+      setSubtaskError(err instanceof Error ? err.message : t("failedToUpdateSubtask"));
     } finally {
       setSavingSubtaskId(null);
       clearDraft(setSubtaskStatusDrafts, subtask.id);
@@ -380,11 +381,11 @@ export function TaskDetailDialog({
 
     try {
       const result = await updateTask(projectId, subtask.id, { title: draft });
-      if (result.error || !result.task) throw new Error(result.error ?? "Failed to rename subtask");
+      if (result.error || !result.task) throw new Error(result.error ?? t("failedToRenameSubtask"));
 
       onSaved(result.task);
     } catch (err) {
-      setSubtaskError(err instanceof Error ? err.message : "Failed to rename subtask");
+      setSubtaskError(err instanceof Error ? err.message : t("failedToRenameSubtask"));
     } finally {
       setSavingSubtaskId(null);
       clearDraft(setSubtaskTitleDrafts, subtask.id);
@@ -401,7 +402,7 @@ export function TaskDetailDialog({
 
       onDeleted(subtaskId);
     } catch (err) {
-      setSubtaskError(err instanceof Error ? err.message : "Failed to delete subtask");
+      setSubtaskError(err instanceof Error ? err.message : t("failedToDeleteSubtask"));
     } finally {
       setDeletingSubtaskId(null);
     }
@@ -432,18 +433,18 @@ export function TaskDetailDialog({
       >
         <DialogHeader>
           <DialogTitle className="pr-6 text-base">
-            {canEdit ? "Task details" : task.title}
+            {canEdit ? t("detailTitle") : task.title}
           </DialogTitle>
           <DialogDescription>
             {canEdit
-              ? "Edit the task, then save your changes."
-              : "You have read-only access to this project."}
+              ? t("editDescription")
+              : t("readOnlyDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="task-title">Title</Label>
+            <Label htmlFor="task-title">{t("titleLabel")}</Label>
             <Input
               id="task-title"
               value={form.title}
@@ -456,13 +457,13 @@ export function TaskDetailDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-description">Description</Label>
+            <Label htmlFor="task-description">{t("descriptionLabel")}</Label>
             <Textarea
               id="task-description"
               rows={4}
               value={form.description}
               disabled={!canEdit}
-              placeholder="What needs to happen, and why?"
+              placeholder={t("descriptionPlaceholder2")}
               onChange={(event) =>
                 setForm({ ...form, description: event.target.value })
               }
@@ -471,7 +472,7 @@ export function TaskDetailDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="task-status">Status</Label>
+              <Label htmlFor="task-status">{t("statusLabel")}</Label>
               <Select
                 id="task-status"
                 value={form.status}
@@ -492,7 +493,7 @@ export function TaskDetailDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="task-priority">Priority</Label>
+              <Label htmlFor="task-priority">{t("priorityLabel")}</Label>
               <Select
                 id="task-priority"
                 value={form.priority}
@@ -506,14 +507,14 @@ export function TaskDetailDialog({
               >
                 {TASK_PRIORITIES.map((priority) => (
                   <option key={priority} value={priority}>
-                    {PRIORITY_LABELS[priority]}
+                    {t("priority", { priority })}
                   </option>
                 ))}
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="task-assignee">Assignee</Label>
+              <Label htmlFor="task-assignee">{t("assigneeLabel")}</Label>
               <Select
                 id="task-assignee"
                 value={form.assignee_id}
@@ -522,7 +523,7 @@ export function TaskDetailDialog({
                   setForm({ ...form, assignee_id: event.target.value })
                 }
               >
-                <option value="">Unassigned</option>
+                <option value="">{t("unassigned")}</option>
                 {members.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.full_name || member.email}
@@ -532,7 +533,7 @@ export function TaskDetailDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="task-due">Due date</Label>
+              <Label htmlFor="task-due">{t("dueDateLabel")}</Label>
               <Input
                 id="task-due"
                 type="date"
@@ -546,18 +547,18 @@ export function TaskDetailDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-tags">Labels</Label>
+            <Label htmlFor="task-tags">{t("labelsLabel")}</Label>
             <Input
               id="task-tags"
               value={form.tags}
               disabled={!canEdit}
-              placeholder="gameplay, rendering, tech-debt"
+              placeholder={t("labelsPlaceholder")}
               onChange={(event) =>
                 setForm({ ...form, tags: event.target.value })
               }
             />
             <p className="text-xs text-muted-foreground">
-              Comma separated.
+              {t("commaSeparated")}
             </p>
           </div>
 
@@ -586,7 +587,7 @@ export function TaskDetailDialog({
                   ) : (
                     <Trash2 className="h-4 w-4" />
                   )}
-                  Delete
+                  {t("delete")}
                 </Button>
               )}
 
@@ -598,11 +599,11 @@ export function TaskDetailDialog({
                   onClick={onClose}
                   disabled={saving || deleting}
                 >
-                  Cancel
+                  {t("cancel")}
                 </Button>
                 <Button type="submit" size="sm" disabled={saving || deleting}>
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Save changes
+                  {t("saveChanges")}
                 </Button>
               </div>
             </div>
@@ -611,19 +612,19 @@ export function TaskDetailDialog({
 
         <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />
 
-        <section aria-label="Agent context" className="border-t border-border pt-4">
+        <section aria-label={t("agentContextAria")} className="border-t border-border pt-4">
           <Button type="button" variant="outline" size="sm" onClick={() => void handleExportAgentContext()}>
             <Bot className="h-4 w-4" />
-            Export agent context
+            {t("exportAgentContext")}
           </Button>
         </section>
 
         <section
-          aria-label="Subtasks"
+          aria-label={t("subtasksAria")}
           className="space-y-3 border-t border-border pt-4"
         >
           <h3 className="text-sm font-medium text-foreground">
-            Subtasks
+            {t("subtasksHeading")}
             {subtasks.length > 0 && (
               <span className="ml-1.5 text-xs font-normal tabular-nums text-muted-foreground">
                 {subtasks.filter((subtask) => isDone(subtask.status)).length}/{subtasks.length}
@@ -632,7 +633,7 @@ export function TaskDetailDialog({
           </h3>
 
           {subtasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No subtasks yet.</p>
+            <p className="text-sm text-muted-foreground">{t("noSubtasksYet")}</p>
           ) : (
             <table className="w-full border-collapse text-sm">
               <tbody>
@@ -648,7 +649,7 @@ export function TaskDetailDialog({
                         <Input
                           data-subtask-title-field="true"
                           value={titleValue}
-                          aria-label={`Subtask title: ${subtask.title}`}
+                          aria-label={t("subtaskTitleAria", { title: subtask.title })}
                           disabled={!canEdit || saving}
                           className="h-8"
                           onChange={(event) =>
@@ -672,7 +673,7 @@ export function TaskDetailDialog({
                       </td>
                       <td className="py-1 pr-2">
                         <Select
-                          aria-label={`Status for "${subtask.title}"`}
+                          aria-label={t("statusForAria", { title: subtask.title })}
                           className="h-8 w-36"
                           value={statusValue}
                           disabled={!canEdit || saving}
@@ -691,7 +692,7 @@ export function TaskDetailDialog({
                         {canDelete && (
                           <button
                             type="button"
-                            aria-label={`Delete subtask "${subtask.title}"`}
+                            aria-label={t("deleteSubtaskAria", { title: subtask.title })}
                             disabled={deletingSubtaskId === subtask.id}
                             onClick={() => void handleDeleteSubtask(subtask.id)}
                             className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100 disabled:opacity-60"
@@ -721,15 +722,15 @@ export function TaskDetailDialog({
             <form onSubmit={handleAddSubtask} className="flex gap-2">
               <Input
                 value={subtaskDraft}
-                placeholder="Add a subtask..."
-                aria-label="Add a subtask"
+                placeholder={t("addSubtaskPlaceholder")}
+                aria-label={t("addSubtaskAria")}
                 disabled={addingSubtask}
                 onChange={(event) => setSubtaskDraft(event.target.value)}
               />
               <Button
                 type="submit"
                 size="icon"
-                aria-label="Add subtask"
+                aria-label={t("addSubtaskButtonAria")}
                 disabled={addingSubtask || !subtaskDraft.trim()}
                 className="shrink-0"
               >
@@ -751,11 +752,11 @@ export function TaskDetailDialog({
         />
 
         <section
-          aria-label="Comments"
+          aria-label={t("commentsAria")}
           className="space-y-3 border-t border-border pt-4"
         >
           <h3 className="text-sm font-medium text-foreground">
-            Comments
+            {t("commentsHeading")}
             {comments.length > 0 && (
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
                 {comments.length}
@@ -766,7 +767,7 @@ export function TaskDetailDialog({
           {commentsLoading ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Loading comments...
+              {t("loadingComments")}
             </p>
           ) : commentsError ? (
             <p
@@ -777,7 +778,7 @@ export function TaskDetailDialog({
             </p>
           ) : comments.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No comments yet.
+              {t("noCommentsYet")}
             </p>
           ) : (
             <ul className="space-y-3">
@@ -795,7 +796,7 @@ export function TaskDetailDialog({
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span className="font-medium text-foreground">
-                          {author?.full_name || author?.email || "Unknown"}
+                          {author?.full_name || author?.email || t("unknownAuthor")}
                         </span>
                         {" · "}
                         {new Date(comment.created_at).toLocaleString()}
@@ -812,8 +813,8 @@ export function TaskDetailDialog({
                             trigger={
                               <button
                                 type="button"
-                                title="Mark as decision"
-                                aria-label="Mark this comment as a decision"
+                                title={t("markAsDecision")}
+                                aria-label={t("markCommentAsDecisionAria")}
                                 className="ml-auto text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
                               >
                                 <Gavel className="h-3 w-3" />
@@ -836,15 +837,15 @@ export function TaskDetailDialog({
             <form onSubmit={handleComment} className="flex gap-2">
               <Input
                 value={draft}
-                placeholder="Add a comment..."
-                aria-label="Add a comment"
+                placeholder={t("addCommentPlaceholder")}
+                aria-label={t("addCommentAria")}
                 disabled={posting}
                 onChange={(event) => setDraft(event.target.value)}
               />
               <Button
                 type="submit"
                 size="icon"
-                aria-label="Post comment"
+                aria-label={t("postCommentAria")}
                 disabled={posting || !draft.trim()}
                 className={cn("shrink-0")}
               >
@@ -863,17 +864,16 @@ export function TaskDetailDialog({
     <Dialog open={agentContextOpen} onOpenChange={setAgentContextOpen}>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Agent context</DialogTitle>
+          <DialogTitle>{t("agentContextDialogTitle")}</DialogTitle>
           <DialogDescription>
-            Provider-neutral Markdown for this task - paste it into Claude Code, Cursor, Codex, Windsurf,
-            or any other AI coding agent.
+            {t("agentContextDialogDescription")}
           </DialogDescription>
         </DialogHeader>
 
         {agentContextLoading ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Generating context...
+            {t("generatingContext")}
           </p>
         ) : agentContextError ? (
           <p role="alert" className="text-sm text-destructive">
@@ -891,7 +891,7 @@ export function TaskDetailDialog({
             <div className="flex justify-end">
               <Button type="button" size="sm" onClick={() => void handleCopyAgentContext()}>
                 {agentContextCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {agentContextCopied ? "Copied" : "Copy to clipboard"}
+                {agentContextCopied ? t("copied") : t("copyToClipboard")}
               </Button>
             </div>
           </div>
