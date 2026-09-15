@@ -51,5 +51,147 @@
     "common": {
       "somethingWentWrong": "Algo salió mal"
     }
+  },
+  "errors": {
+    "generic": {
+      "title": "Algo salió mal",
+      "defaultMessage": "Se produjo un error inesperado al cargar esta página.",
+      "retry": "Intentar de nuevo"
+    }
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "projects": "Proyectos",
+    "organizations": "Organizaciones",
+    "overview": "Resumen",
+    "workGroup": "Trabajo",
+    "taskBoard": "Tablero de tareas",
+    "roadmap": "Hoja de ruta",
+    "files": "Archivos",
+    "knowledgeGroup": "Conocimiento",
+    "knowledge": "Conocimiento",
+    "decisions": "Decisiones",
+    "technologies": "Tecnologías",
+    "contextGroup": "Contexto",
+    "memory": "Memoria",
+    "graph": "Grafo",
+    "projectGroup": "Proyecto",
+    "members": "Miembros",
+    "activity": "Actividad",
+    "settings": "Ajustes",
+    "adminGroup": "Administración",
+    "integrations": "Integraciones",
+    "logs": "Registros",
+    "users": "Usuarios",
+    "logOut": "Cerrar sesión",
+    "user": "Usuario",
+    "switchProject": "Cambiar de proyecto"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcomeBack": "Bienvenido de nuevo, {name}",
+    "totalProjects": "Proyectos totales",
+    "totalTasks": "Tareas totales",
+    "completedTasks": "Tareas completadas",
+    "decisions": "Decisiones",
+    "yourProjects": "Tus proyectos",
+    "viewAll": "Ver los {count}",
+    "newProject": "Nuevo proyecto",
+    "emptyDecisionsTitle": "Decisiones",
+    "emptyDecisionsDesc": "Registra decisiones arquitectónicas y técnicas",
+    "emptyContextTitle": "Contexto",
+    "emptyContextDesc": "Conecta entidades mediante relaciones",
+    "emptyMemoryTitle": "Memoria",
+    "emptyMemoryDesc": "Conserva el conocimiento del proyecto",
+    "createFirstProjectTitle": "Crea tu primer proyecto",
+    "createFirstProjectDesc": "Los proyectos viven dentro de una organización. Si aún no tienes una, la crearás en el siguiente paso.",
+    "createFirstProjectButton": "Crea tu primer proyecto",
+    "openProject": "Abrir proyecto"
+  },
+  "landing": {
+    "heroTitle": "Gestión de proyectos centrada en el contexto",
+    "heroSubtitle": "Comprende por qué existe tu proyecto. Registra decisiones, fuentes y contexto junto con tus tareas.",
+    "getStarted": "Empezar",
+    "signIn": "Iniciar sesión",
+    "featuresTitle": "Todo lo que un proyecto necesita para explicarse a sí mismo",
+    "featuresSubtitle": "Las tareas por sí solas no explican por qué un proyecto es como es. Guidon registra el contexto alrededor del trabajo, no solo el trabajo.",
+    "features": {
+      "taskBoard": {
+        "title": "Tablero de tareas",
+        "description": "Un tablero Kanban para cada proyecto, con columnas que tú controlas. Renombra, reordena u oculta estados para adaptarlos a cómo trabaja realmente tu equipo.",
+        "bullets": [
+          "Tablero de arrastrar y soltar por proyecto",
+          "Personalización de columnas por proyecto",
+          "Filtra y busca entre las tareas"
+        ]
+      },
+      "aiTaskApi": {
+        "title": "API de tareas con IA",
+        "description": "Deja que los agentes de IA tomen tareas y las muevan por el mismo tablero que usa tu equipo, de en curso a hecho, sin que una persona tenga que transmitir las actualizaciones a mano.",
+        "bullets": [
+          "Los agentes reclaman y completan tareas mediante la API",
+          "Registro de auditoría completo de los cambios hechos por IA",
+          "Revisión humana integrada en el flujo de trabajo"
+        ]
+      },
+      "decisions": {
+        "title": "Decisiones",
+        "description": "Un registro continuo de las decisiones arquitectónicas y técnicas de tu equipo, con el razonamiento incluido, para que el \"por qué\" sobreviva a la reunión en la que se tomó.",
+        "bullets": [
+          "Registros de decisiones estructurados",
+          "Vinculados a las tareas y al contexto que afectan",
+          "Historial de decisiones anteriores con búsqueda"
+        ]
+      },
+      "knowledgeBase": {
+        "title": "Base de conocimiento",
+        "description": "Centraliza las fuentes, documentos y tecnologías de las que depende cada proyecto, en lugar de dispersarlas por chats y wikis que nadie revisa.",
+        "bullets": [
+          "Fuentes y referencias registradas",
+          "Inventario de tecnologías por proyecto",
+          "Un solo lugar donde los nuevos compañeros pueden empezar"
+        ]
+      },
+      "memoryContext": {
+        "title": "Memoria y grafo de contexto",
+        "description": "Guidon recuerda el conocimiento del proyecto con el tiempo y conecta decisiones, fuentes y tareas entre sí, para que el contexto no se pierda a medida que el proyecto crece.",
+        "bullets": [
+          "Memoria de proyecto persistente y con búsqueda",
+          "Información generada por IA que verificas antes de darla por hecho",
+          "Un grafo de relaciones entre entidades"
+        ]
+      },
+      "roadmap": {
+        "title": "Hoja de ruta",
+        "description": "Planifica por fases y ve de un vistazo en qué punto está un proyecto, sin perder el detalle del día a día que ya registra el tablero de tareas.",
+        "bullets": [
+          "Planificación a largo plazo por fases",
+          "Estado de un vistazo durante toda la vida del proyecto",
+          "Permanece conectado con las tareas que lo sustentan"
+        ]
+      }
+    },
+    "pricing": {
+      "title": "Precios simples y transparentes",
+      "subtitle": "Empieza gratis. Mejora tu plan cuando necesites más.",
+      "currencyLabel": "Moneda",
+      "mostPopular": "Más popular",
+      "perMonth": "/mes",
+      "free": "Gratis",
+      "getStarted": "Empezar",
+      "unlimitedStorage": "Almacenamiento ilimitado",
+      "gbStorage": "{count} GB de almacenamiento",
+      "mbStorage": "{count} MB de almacenamiento",
+      "unlimitedProjects": "Proyectos ilimitados",
+      "projectsCount": "{count, plural, one {# proyecto} other {# proyectos}}",
+      "unlimitedTasksPerProject": "Tareas ilimitadas por proyecto",
+      "tasksPerProjectCount": "{count, plural, one {# tarea por proyecto} other {# tareas por proyecto}}",
+      "aiTaskApi": "API de tareas con IA",
+      "githubIntegration": "Integración con GitHub",
+      "advancedAnalytics": "Analítica avanzada",
+      "teamRoles": "Roles de equipo",
+      "auditLogs": "Registros de auditoría",
+      "prioritySupport": "Soporte prioritario"
+    }
   }
 }

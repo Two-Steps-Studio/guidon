@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Select } from '@/components/ui/select';
 import type { SwitchableProject } from '@/lib/data/project-access';
 
@@ -21,6 +22,7 @@ interface ProjectSwitcherProps {
  * same way the projects page is, so it's guaranteed to include itself.
  */
 export function ProjectSwitcher({ projectId, currentProjectName, projects }: ProjectSwitcherProps) {
+  const t = useTranslations('nav');
   const router = useRouter();
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -43,7 +45,7 @@ export function ProjectSwitcher({ projectId, currentProjectName, projects }: Pro
   return (
     <div className="px-3 py-2">
       <Select
-        aria-label="Switch project"
+        aria-label={t('switchProject')}
         value={projectId}
         onChange={handleChange}
         className="text-sm font-medium"

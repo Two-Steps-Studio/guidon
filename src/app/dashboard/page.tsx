@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -108,6 +109,8 @@ async function loadDashboardDataLocal(userId: string) {
 }
 
 export default async function DashboardPage() {
+  const t = await getTranslations("dashboard");
+  const tNav = await getTranslations("nav");
   const user = await getCurrentUser();
 
   let projects: ProjectRow[];
@@ -193,15 +196,15 @@ export default async function DashboardPage() {
     <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user.full_name || "User"}</p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("welcomeBack", { name: user.full_name || tNav("user") })}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Projects
+                {t("totalProjects")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -211,7 +214,7 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Tasks
+                {t("totalTasks")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -221,7 +224,7 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Completed Tasks
+                {t("completedTasks")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -231,7 +234,7 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Decisions
+                {t("decisions")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -241,17 +244,17 @@ export default async function DashboardPage() {
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Your Projects</h2>
+          <h2 className="text-2xl font-bold">{t("yourProjects")}</h2>
           <div className="flex items-center gap-2">
             {totalProjects > projects.length && (
               <Button variant="outline" asChild>
-                <Link href="/projects">View all {totalProjects}</Link>
+                <Link href="/projects">{t("viewAll", { count: totalProjects })}</Link>
               </Button>
             )}
             <Button asChild>
               <Link href="/organizations">
                 <Plus className="h-4 w-4 mr-2" />
-                New Project
+                {t("newProject")}
               </Link>
             </Button>
           </div>
@@ -265,8 +268,8 @@ export default async function DashboardPage() {
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                     <GitBranch className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle>Decisions</CardTitle>
-                  <CardDescription>Track architectural and technical decisions</CardDescription>
+                  <CardTitle>{t("emptyDecisionsTitle")}</CardTitle>
+                  <CardDescription>{t("emptyDecisionsDesc")}</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="border-border/50">
@@ -274,8 +277,8 @@ export default async function DashboardPage() {
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                     <Network className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle>Context</CardTitle>
-                  <CardDescription>Connect entities through relations</CardDescription>
+                  <CardTitle>{t("emptyContextTitle")}</CardTitle>
+                  <CardDescription>{t("emptyContextDesc")}</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="border-border/50">
@@ -283,21 +286,21 @@ export default async function DashboardPage() {
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                     <BrainCircuit className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle>Memory</CardTitle>
-                  <CardDescription>Preserve project knowledge</CardDescription>
+                  <CardTitle>{t("emptyMemoryTitle")}</CardTitle>
+                  <CardDescription>{t("emptyMemoryDesc")}</CardDescription>
                 </CardHeader>
               </Card>
             </div>
 
             <EmptyState
               icon={FolderKanban}
-              title="Create your first project"
-              description="Projects live inside an organization. If you don't have one yet, you'll create it on the next step."
+              title={t("createFirstProjectTitle")}
+              description={t("createFirstProjectDesc")}
               action={
                 <Button asChild>
                   <Link href="/organizations?create=1">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create your first project
+                    {t("createFirstProjectButton")}
                   </Link>
                 </Button>
               }
@@ -333,7 +336,7 @@ export default async function DashboardPage() {
                     )}
                     <div className="flex items-center text-sm text-muted-foreground">
                       <ArrowRight className="h-4 w-4 mr-1" />
-                      Open project
+                      {t("openProject")}
                     </div>
                   </CardContent>
                 </Card>

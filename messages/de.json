@@ -51,5 +51,147 @@
     "common": {
       "somethingWentWrong": "Etwas ist schiefgelaufen"
     }
+  },
+  "errors": {
+    "generic": {
+      "title": "Etwas ist schiefgelaufen",
+      "defaultMessage": "Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten.",
+      "retry": "Erneut versuchen"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projekte",
+    "organizations": "Organisationen",
+    "overview": "Übersicht",
+    "workGroup": "Arbeit",
+    "taskBoard": "Aufgabenboard",
+    "roadmap": "Roadmap",
+    "files": "Dateien",
+    "knowledgeGroup": "Wissen",
+    "knowledge": "Wissen",
+    "decisions": "Entscheidungen",
+    "technologies": "Technologien",
+    "contextGroup": "Kontext",
+    "memory": "Gedächtnis",
+    "graph": "Graph",
+    "projectGroup": "Projekt",
+    "members": "Mitglieder",
+    "activity": "Aktivität",
+    "settings": "Einstellungen",
+    "adminGroup": "Admin",
+    "integrations": "Integrationen",
+    "logs": "Protokolle",
+    "users": "Benutzer",
+    "logOut": "Abmelden",
+    "user": "Benutzer",
+    "switchProject": "Projekt wechseln"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcomeBack": "Willkommen zurück, {name}",
+    "totalProjects": "Projekte gesamt",
+    "totalTasks": "Aufgaben gesamt",
+    "completedTasks": "Erledigte Aufgaben",
+    "decisions": "Entscheidungen",
+    "yourProjects": "Deine Projekte",
+    "viewAll": "Alle {count} anzeigen",
+    "newProject": "Neues Projekt",
+    "emptyDecisionsTitle": "Entscheidungen",
+    "emptyDecisionsDesc": "Verfolge architektonische und technische Entscheidungen",
+    "emptyContextTitle": "Kontext",
+    "emptyContextDesc": "Verbinde Entitäten über Beziehungen",
+    "emptyMemoryTitle": "Gedächtnis",
+    "emptyMemoryDesc": "Bewahre Projektwissen",
+    "createFirstProjectTitle": "Erstelle dein erstes Projekt",
+    "createFirstProjectDesc": "Projekte gehören zu einer Organisation. Falls du noch keine hast, erstellst du sie im nächsten Schritt.",
+    "createFirstProjectButton": "Erstes Projekt erstellen",
+    "openProject": "Projekt öffnen"
+  },
+  "landing": {
+    "heroTitle": "Kontextorientiertes Projektmanagement",
+    "heroSubtitle": "Verstehe, warum dein Projekt existiert. Verfolge Entscheidungen, Quellen und Kontext zusammen mit deinen Aufgaben.",
+    "getStarted": "Loslegen",
+    "signIn": "Anmelden",
+    "featuresTitle": "Alles, was ein Projekt braucht, um sich selbst zu erklären",
+    "featuresSubtitle": "Aufgaben allein erklären nicht, warum ein Projekt so aussieht, wie es aussieht. Guidon verfolgt den Kontext rund um die Arbeit, nicht nur die Arbeit selbst.",
+    "features": {
+      "taskBoard": {
+        "title": "Aufgabenboard",
+        "description": "Ein Kanban-Board für jedes Projekt, mit Spalten, die du kontrollierst. Benenne Status um, ordne sie neu oder blende sie aus, passend zur Arbeitsweise deines Teams.",
+        "bullets": [
+          "Drag-and-Drop-Board pro Projekt",
+          "Spaltenanpassung pro Projekt",
+          "Aufgaben filtern und durchsuchen"
+        ]
+      },
+      "aiTaskApi": {
+        "title": "KI-Aufgaben-API",
+        "description": "Lass KI-Agenten Aufgaben übernehmen und über dasselbe Board bewegen, das dein Team nutzt, von in Bearbeitung bis erledigt, ohne dass ein Mensch Updates manuell weiterleitet.",
+        "bullets": [
+          "Agenten übernehmen und erledigen Aufgaben per API",
+          "Vollständiges Änderungsprotokoll für KI-Aktionen",
+          "Menschliche Prüfung fest im Workflow verankert"
+        ]
+      },
+      "decisions": {
+        "title": "Entscheidungen",
+        "description": "Ein laufendes Protokoll der architektonischen und technischen Entscheidungen deines Teams, samt Begründung, damit das „Warum“ das Meeting überdauert, in dem es entstand.",
+        "bullets": [
+          "Strukturierte Entscheidungsdatensätze",
+          "Verknüpft mit den betroffenen Aufgaben und dem Kontext",
+          "Durchsuchbare Historie früherer Abwägungen"
+        ]
+      },
+      "knowledgeBase": {
+        "title": "Wissensdatenbank",
+        "description": "Bündle die Quellen, Dokumente und Technologien, von denen jedes Projekt abhängt, statt sie über Chats und Wikis zu verstreuen, die niemand liest.",
+        "bullets": [
+          "Erfasste Quellen und Referenzen",
+          "Technologiebestand pro Projekt",
+          "Ein Ort, an dem neue Teammitglieder starten können"
+        ]
+      },
+      "memoryContext": {
+        "title": "Gedächtnis & Kontextgraph",
+        "description": "Guidon merkt sich Projektwissen über die Zeit und verknüpft Entscheidungen, Quellen und Aufgaben miteinander, damit der Kontext nicht verloren geht, während ein Projekt wächst.",
+        "bullets": [
+          "Dauerhaftes, durchsuchbares Projektgedächtnis",
+          "KI-generierte Erkenntnisse, die du prüfst, bevor sie als gesichert gelten",
+          "Ein Graph der Beziehungen zwischen Entitäten"
+        ]
+      },
+      "roadmap": {
+        "title": "Roadmap",
+        "description": "Plane in Phasen und sieh auf einen Blick, wo ein Projekt steht, ohne die Alltagsdetails zu verlieren, die das Aufgabenboard bereits erfasst.",
+        "bullets": [
+          "Phasenbasierte Langfristplanung",
+          "Status auf einen Blick über den gesamten Projektverlauf",
+          "Bleibt mit den zugrunde liegenden Aufgaben verbunden"
+        ]
+      }
+    },
+    "pricing": {
+      "title": "Einfache, transparente Preise",
+      "subtitle": "Kostenlos starten. Upgrade, wenn du mehr brauchst.",
+      "currencyLabel": "Währung",
+      "mostPopular": "Am beliebtesten",
+      "perMonth": "/Monat",
+      "free": "Kostenlos",
+      "getStarted": "Loslegen",
+      "unlimitedStorage": "Unbegrenzter Speicher",
+      "gbStorage": "{count} GB Speicher",
+      "mbStorage": "{count} MB Speicher",
+      "unlimitedProjects": "Unbegrenzte Projekte",
+      "projectsCount": "{count, plural, one {# Projekt} other {# Projekte}}",
+      "unlimitedTasksPerProject": "Unbegrenzte Aufgaben pro Projekt",
+      "tasksPerProjectCount": "{count, plural, one {# Aufgabe pro Projekt} other {# Aufgaben pro Projekt}}",
+      "aiTaskApi": "KI-Aufgaben-API",
+      "githubIntegration": "GitHub-Integration",
+      "advancedAnalytics": "Erweiterte Analysen",
+      "teamRoles": "Teamrollen",
+      "auditLogs": "Audit-Protokolle",
+      "prioritySupport": "Prioritäts-Support"
+    }
   }
 }

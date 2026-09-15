@@ -51,5 +51,147 @@
     "common": {
       "somethingWentWrong": "Something went wrong"
     }
+  },
+  "errors": {
+    "generic": {
+      "title": "Something went wrong",
+      "defaultMessage": "An unexpected error occurred while loading this page.",
+      "retry": "Try again"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "organizations": "Organizations",
+    "overview": "Overview",
+    "workGroup": "Work",
+    "taskBoard": "Task Board",
+    "roadmap": "Roadmap",
+    "files": "Files",
+    "knowledgeGroup": "Knowledge",
+    "knowledge": "Knowledge",
+    "decisions": "Decisions",
+    "technologies": "Technologies",
+    "contextGroup": "Context",
+    "memory": "Memory",
+    "graph": "Graph",
+    "projectGroup": "Project",
+    "members": "Members",
+    "activity": "Activity",
+    "settings": "Settings",
+    "adminGroup": "Admin",
+    "integrations": "Integrations",
+    "logs": "Logs",
+    "users": "Users",
+    "logOut": "Log out",
+    "user": "User",
+    "switchProject": "Switch project"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcomeBack": "Welcome back, {name}",
+    "totalProjects": "Total Projects",
+    "totalTasks": "Total Tasks",
+    "completedTasks": "Completed Tasks",
+    "decisions": "Decisions",
+    "yourProjects": "Your Projects",
+    "viewAll": "View all {count}",
+    "newProject": "New Project",
+    "emptyDecisionsTitle": "Decisions",
+    "emptyDecisionsDesc": "Track architectural and technical decisions",
+    "emptyContextTitle": "Context",
+    "emptyContextDesc": "Connect entities through relations",
+    "emptyMemoryTitle": "Memory",
+    "emptyMemoryDesc": "Preserve project knowledge",
+    "createFirstProjectTitle": "Create your first project",
+    "createFirstProjectDesc": "Projects live inside an organization. If you don't have one yet, you'll create it on the next step.",
+    "createFirstProjectButton": "Create your first project",
+    "openProject": "Open project"
+  },
+  "landing": {
+    "heroTitle": "Context-First Project Management",
+    "heroSubtitle": "Understand why your project exists. Track decisions, sources, and context alongside your tasks.",
+    "getStarted": "Get Started",
+    "signIn": "Sign In",
+    "featuresTitle": "Everything a project needs to explain itself",
+    "featuresSubtitle": "Tasks alone don't tell you why a project looks the way it does. Guidon tracks the context around the work, not just the work.",
+    "features": {
+      "taskBoard": {
+        "title": "Task Board",
+        "description": "A Kanban board for every project, with columns you control. Rename, reorder, or hide statuses to match how your team actually works.",
+        "bullets": [
+          "Drag-and-drop board per project",
+          "Per-project column customization",
+          "Filter and search across tasks"
+        ]
+      },
+      "aiTaskApi": {
+        "title": "AI Task API",
+        "description": "Let AI agents pick up tasks and move them through the same board your team uses, from in-progress to done, without a human relaying updates by hand.",
+        "bullets": [
+          "Agents claim and complete tasks via API",
+          "Full audit trail of AI-driven changes",
+          "Human review built into the workflow"
+        ]
+      },
+      "decisions": {
+        "title": "Decisions",
+        "description": "A running log of the architectural and technical decisions your team makes, with the reasoning attached, so the \"why\" survives past the meeting it was made in.",
+        "bullets": [
+          "Structured decision records",
+          "Linked to the tasks and context they affect",
+          "Searchable history of past tradeoffs"
+        ]
+      },
+      "knowledgeBase": {
+        "title": "Knowledge Base",
+        "description": "Centralize the sources, docs, and technologies each project depends on, instead of scattering them across chats and wikis nobody checks.",
+        "bullets": [
+          "Tracked sources and references",
+          "Per-project technology inventory",
+          "One place new teammates can start"
+        ]
+      },
+      "memoryContext": {
+        "title": "Memory & Context Graph",
+        "description": "Guidon remembers project knowledge over time and connects decisions, sources, and tasks to each other, so context isn't lost as a project grows.",
+        "bullets": [
+          "Persistent, searchable project memory",
+          "AI-generated insights you verify before they count as fact",
+          "A graph of relations between entities"
+        ]
+      },
+      "roadmap": {
+        "title": "Roadmap",
+        "description": "Plan in phases and see where a project stands at a glance, without losing the day-to-day detail the task board already tracks.",
+        "bullets": [
+          "Phase-based long-range planning",
+          "Status at a glance across a project's lifetime",
+          "Stays connected to the tasks underneath it"
+        ]
+      }
+    },
+    "pricing": {
+      "title": "Simple, transparent pricing",
+      "subtitle": "Start free. Upgrade when you need more.",
+      "currencyLabel": "Currency",
+      "mostPopular": "Most popular",
+      "perMonth": "/mo",
+      "free": "Free",
+      "getStarted": "Get Started",
+      "unlimitedStorage": "Unlimited storage",
+      "gbStorage": "{count} GB storage",
+      "mbStorage": "{count} MB storage",
+      "unlimitedProjects": "Unlimited projects",
+      "projectsCount": "{count, plural, one {# project} other {# projects}}",
+      "unlimitedTasksPerProject": "Unlimited tasks per project",
+      "tasksPerProjectCount": "{count, plural, one {# task per project} other {# tasks per project}}",
+      "aiTaskApi": "AI Task API",
+      "githubIntegration": "GitHub integration",
+      "advancedAnalytics": "Advanced analytics",
+      "teamRoles": "Team roles",
+      "auditLogs": "Audit logs",
+      "prioritySupport": "Priority support"
+    }
   }
 }
