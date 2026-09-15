@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { requestPasswordReset } from "./actions";
 
 export function ForgotPasswordForm() {
+  const t = useTranslations("auth.forgotPassword");
+  const tCommon = useTranslations("auth.common");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export function ForgotPasswordForm() {
       if (result.error) throw new Error(result.error);
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : tCommon("somethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -49,20 +52,20 @@ export function ForgotPasswordForm() {
       />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
           <CardDescription>
-            Enter your email and we&apos;ll send you a link to reset your password.
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {sent ? (
             <div className="p-3 bg-success/10 dark:bg-success/20 text-success dark:text-success text-sm rounded-md">
-              If that email has an account, we&apos;ve sent a password reset link.
+              {t("sentMessage")}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("emailLabel")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -78,14 +81,14 @@ export function ForgotPasswordForm() {
                 </div>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending..." : "Send reset link"}
+                {loading ? t("sending") : t("sendResetLink")}
               </Button>
             </form>
           )}
 
           <div className="mt-4 text-center text-sm">
             <Link href="/auth/login" className="text-primary hover:underline">
-              Back to sign in
+              {t("backToSignIn")}
             </Link>
           </div>
         </CardContent>

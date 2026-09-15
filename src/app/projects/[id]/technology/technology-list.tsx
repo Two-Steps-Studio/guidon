@@ -15,6 +15,7 @@ import {
   Settings2,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,7 +34,6 @@ import type { Technology, TechnologyCategory } from "@/types/technology";
 import {
   DEFAULT_TECHNOLOGY_CATEGORY,
   TECHNOLOGY_CATEGORIES,
-  TECHNOLOGY_CATEGORY_LABELS,
   TECHNOLOGY_CATEGORY_ORDER,
   guessTechnologyCategory,
 } from "@/types/technology";
@@ -89,6 +89,8 @@ export function TechnologyList({
   canManage: boolean;
   initialTechnologies: Technology[];
 }) {
+  const t = useTranslations("technology");
+  const tCommon = useTranslations("common");
   const [technologies, setTechnologies] = useState(initialTechnologies);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Technology | null>(null);
@@ -124,7 +126,7 @@ export function TechnologyList({
       <div className="mx-auto max-w-4xl p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Technologies</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {projectName}
               {technologies.length > 0 && (
@@ -139,7 +141,7 @@ export function TechnologyList({
           {canManage && (
             <Button size="sm" onClick={() => setCreating(true)}>
               <Plus className="h-4 w-4" />
-              Add technology
+              {t("addTechnology")}
             </Button>
           )}
         </header>
@@ -152,30 +154,29 @@ export function TechnologyList({
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="flex-1">{error}</span>
             <button type="button" onClick={() => setError(null)} className="underline underline-offset-2">
-              Dismiss
+              {t("dismiss")}
             </button>
           </div>
         )}
 
         {!canManage && role && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            You have <strong className="font-medium">{role}</strong> access - only owners and admins can
-            change the stack.
+            {t.rich("readOnlyAccess", { role, b: (chunks) => <strong className="font-medium">{chunks}</strong> })}
           </p>
         )}
 
         {technologies.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-16 text-center">
-            <h2 className="text-sm font-medium text-foreground">No technologies yet</h2>
+            <h2 className="text-sm font-medium text-foreground">{t("emptyTitle")}</h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
               {canManage
-                ? "Record the stack so new people - and agents - know what this project is built with."
-                : "Nobody has recorded this project's stack yet."}
+                ? t("emptyDescriptionCanManage")
+                : t("emptyDescriptionReadOnly")}
             </p>
             {canManage && (
               <Button size="sm" className="mt-4" onClick={() => setCreating(true)}>
                 <Plus className="h-4 w-4" />
-                Add technology
+                {t("addTechnology")}
               </Button>
             )}
           </div>
@@ -188,7 +189,7 @@ export function TechnologyList({
                 <section key={category}>
                   <h2 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     <Icon className={cn("h-3.5 w-3.5", CATEGORY_ACCENT[category])} aria-hidden />
-                    {TECHNOLOGY_CATEGORY_LABELS[category]}
+                    {tCommon("technologyCategory", { category })}
                     <span className="tabular-nums">{items.length}</span>
                   </h2>
 
@@ -218,7 +219,7 @@ export function TechnologyList({
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 text-muted-foreground"
-                              aria-label={`Edit ${tech.name}`}
+                              aria-label={t("editAria", { name: tech.name })}
                               onClick={() => setEditing(tech)}
                             >
                               <Pencil className="h-3.5 w-3.5" />
@@ -227,7 +228,7 @@ export function TechnologyList({
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                              aria-label={`Remove ${tech.name}`}
+                              aria-label={t("removeAria", { name: tech.name })}
                               onClick={() => void handleDelete(tech)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -282,6 +283,8 @@ function TechnologyDialog({
   onClose: () => void;
   onSaved: (tech: Technology) => void;
 }) {
+  const t = useTranslations("technology");
+  const tCommon = useTranslations("common");
   const [form, setForm] = useState<TechForm>(() =>
     technology
       ? {
@@ -312,7 +315,7 @@ function TechnologyDialog({
     });
 
     if (result.error || !result.technology) {
-      setError(result.error ?? "Failed to save technology");
+      setError(result.error ?? t("failedToSave"));
       setSubmitting(false);
       return;
     }
@@ -325,22 +328,22 @@ function TechnologyDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base">
-            {technology ? "Edit technology" : "Add technology"}
+            {technology ? t("editDialogTitle") : t("addDialogTitle")}
           </DialogTitle>
           <DialogDescription>
-            Name and category are enough; version and notes are optional.
+            {t("dialogDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="tech-name">Name</Label>
+            <Label htmlFor="tech-name">{t("nameLabel")}</Label>
             <Input
               id="tech-name"
               value={form.name}
               required
               autoFocus
-              placeholder="Unreal Engine"
+              placeholder={t("namePlaceholder")}
               onChange={(event) => {
                 const name = event.target.value;
                 setForm((current) => ({
@@ -354,7 +357,7 @@ function TechnologyDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="tech-category">Category</Label>
+              <Label htmlFor="tech-category">{t("categoryLabel")}</Label>
               <Select
                 id="tech-category"
                 value={form.category}
@@ -368,30 +371,30 @@ function TechnologyDialog({
               >
                 {TECHNOLOGY_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
-                    {TECHNOLOGY_CATEGORY_LABELS[category]}
+                    {tCommon("technologyCategory", { category })}
                   </option>
                 ))}
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tech-version">Version</Label>
+              <Label htmlFor="tech-version">{t("versionLabel")}</Label>
               <Input
                 id="tech-version"
                 value={form.version}
-                placeholder="5.4"
+                placeholder={t("versionPlaceholder")}
                 onChange={(event) => setForm({ ...form, version: event.target.value })}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tech-description">Notes</Label>
+            <Label htmlFor="tech-description">{t("notesLabel")}</Label>
             <Textarea
               id="tech-description"
               rows={3}
               value={form.description}
-              placeholder="Why this, and anything the team should know."
+              placeholder={t("notesPlaceholder")}
               onChange={(event) => setForm({ ...form, description: event.target.value })}
             />
           </div>
@@ -407,11 +410,11 @@ function TechnologyDialog({
 
           <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={submitting || !form.name.trim()}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {technology ? "Save changes" : "Add technology"}
+              {technology ? t("saveChanges") : t("addTechnology")}
             </Button>
           </div>
         </form>

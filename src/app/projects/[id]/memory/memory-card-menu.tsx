@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, Edit, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { deleteMemory, updateMemory, type MemoryFormState } from "./actions";
-import { MEMORY_TYPE_CONFIG } from "./memory-type-config";
+import { MEMORY_TYPES } from "./memory-type-config";
 import type { MemoryType } from "@/types/context";
 
 const initialState: MemoryFormState = { error: null };
@@ -36,6 +37,7 @@ export function MemoryCardMenu({
   content: string;
   memoryType: MemoryType;
 }) {
+  const t = useTranslations("memory");
   const [showEdit, setShowEdit] = useState(false);
   // Bumped on every open so <EditMemoryForm key={session}> below fully
   // remounts - useActionState's error otherwise survives close/reopen (this
@@ -57,7 +59,7 @@ export function MemoryCardMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for this ${memoryType} entry`}>
+          <Button variant="ghost" size="icon" disabled={deleting} aria-label={t("optionsForEntryAria", { type: memoryType })}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -69,11 +71,11 @@ export function MemoryCardMenu({
             }}
           >
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            {t("edit")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleDelete} className="text-destructive">
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            {t("delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -88,8 +90,8 @@ export function MemoryCardMenu({
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Memory</DialogTitle>
-            <DialogDescription>Update memory entry</DialogDescription>
+            <DialogTitle>{t("editDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("editDialogDescription")}</DialogDescription>
           </DialogHeader>
           <EditMemoryForm
             key={session}
@@ -118,6 +120,8 @@ function EditMemoryForm({
   memoryType: MemoryType;
   onClose: () => void;
 }) {
+  const t = useTranslations("memory");
+  const tCommon = useTranslations("common");
   const updateWithIds = updateMemory.bind(null, projectId, memoryId);
   const [state, formAction, pending] = useActionState(updateWithIds, initialState);
   const submittedRef = useRef(false);
@@ -138,20 +142,20 @@ function EditMemoryForm({
       className="space-y-4"
     >
       <div className="space-y-2">
-        <Label htmlFor={`editContent-${memoryId}`}>Content</Label>
+        <Label htmlFor={`editContent-${memoryId}`}>{t("contentLabel")}</Label>
         <Textarea id={`editContent-${memoryId}`} name="content" defaultValue={content} rows={4} required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor={`editType-${memoryId}`}>Type</Label>
+        <Label htmlFor={`editType-${memoryId}`}>{t("typeLabel")}</Label>
         <select
           id={`editType-${memoryId}`}
           name="memory_type"
           defaultValue={memoryType}
           className="w-full px-3 py-2 border rounded-md bg-background"
         >
-          {Object.entries(MEMORY_TYPE_CONFIG).map(([type, config]) => (
+          {MEMORY_TYPES.map((type) => (
             <option key={type} value={type}>
-              {config.label}
+              {tCommon("memoryType", { type })}
             </option>
           ))}
         </select>
@@ -164,16 +168,16 @@ function EditMemoryForm({
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "Save Changes"
+            t("saveChanges")
           )}
         </Button>
       </div>

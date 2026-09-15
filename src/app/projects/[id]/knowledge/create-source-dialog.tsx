@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +18,7 @@ import { SourceFormFields } from "./source-form-fields";
 const initialState: SourceFormState = { error: null };
 
 export function CreateSourceDialog({ projectId, trigger, projectColor }: { projectId: string; trigger?: React.ReactNode; projectColor?: string }) {
+  const t = useTranslations("knowledge");
   const [open, setOpen] = useState(false);
   const createWithProject = createSource.bind(null, projectId);
   const [state, formAction, pending] = useActionState(createWithProject, initialState);
@@ -35,14 +37,14 @@ export function CreateSourceDialog({ projectId, trigger, projectColor }: { proje
         {trigger ?? (
           <Button size="sm" style={projectColor ? { backgroundColor: projectColor } : undefined}>
             <Plus className="h-4 w-4" />
-            New entry
+            {t("newEntry")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-base">New knowledge entry</DialogTitle>
-          <DialogDescription>Capture something worth remembering.</DialogDescription>
+          <DialogTitle className="text-base">{t("newEntryDialogTitle")}</DialogTitle>
+          <DialogDescription>{t("newEntryDialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
           action={(formData) => {
@@ -63,11 +65,11 @@ export function CreateSourceDialog({ projectId, trigger, projectColor }: { proje
           )}
           <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={pending}>
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Create entry
+              {t("createEntry")}
             </Button>
           </div>
         </form>

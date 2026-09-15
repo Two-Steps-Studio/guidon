@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { AlertCircle, Loader2, Send, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,7 @@ import {
   SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { normalizeTaskStatus, PRIORITY_CLASSES, PRIORITY_LABELS } from "@/lib/work/task-board";
+import { normalizeTaskStatus, PRIORITY_CLASSES } from "@/lib/work/task-board";
 import { parseTaskProposals, type TaskProposal } from "@/lib/ai/task-proposal-parser";
 import { sendTaskChatMessage, type ChatMessage } from "./ai-chat-actions";
 import { createTask } from "./actions";
@@ -51,6 +52,7 @@ export function AiTaskChat({
   topLevelTasks: Task[];
   onCreated: (task: Task) => void;
 }) {
+  const t = useTranslations("work");
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState("");
@@ -117,7 +119,7 @@ export function AiTaskChat({
       {
         role: "assistant",
         rawContent: result.text,
-        content: prose || "(empty response)",
+        content: prose || t("emptyResponse"),
         proposals:
           proposals.length > 0
             ? proposals.map((proposal) => ({ ...proposal, selected: true, taskId: null }))
@@ -175,7 +177,7 @@ export function AiTaskChat({
         });
 
         if (result.error || !result.task) {
-          setAddError(result.error ?? "Failed to create task.");
+          setAddError(result.error ?? t("failedToCreateTask"));
           break;
         }
 
@@ -198,7 +200,7 @@ export function AiTaskChat({
       // hiccup before its own try/catch. Without catching it here, the
       // button is stuck on "Adding..." forever instead of surfacing an
       // error and re-enabling itself.
-      setAddError("Failed to create task.");
+      setAddError(t("failedToCreateTask"));
     } finally {
       setAddingIndex(null);
     }
@@ -209,25 +211,24 @@ export function AiTaskChat({
       <SheetTrigger asChild>
         <Button variant="outline" size="sm">
           <Sparkles className="h-4 w-4" />
-          AI Task Assistant
+          {t("aiTaskAssistant")}
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-lg">
         <SheetHeader className="border-b border-border px-6 py-4">
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
-            AI Task Assistant
+            {t("aiTaskAssistant")}
           </SheetTitle>
           <SheetDescription>
-            Describe work for {projectName} and review proposed tasks before adding them.
+            {t("aiTaskAssistantDescription", { projectName })}
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4" role="log" aria-live="polite">
           {messages.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Paste a spec, describe a feature, or ask a question - the assistant proposes
-              tasks you can review and add to the board.
+              {t("emptyChatHint")}
             </p>
           )}
 
@@ -258,10 +259,10 @@ export function AiTaskChat({
                         <span className="flex items-center gap-2">
                           <span className="font-medium">{proposal.title}</span>
                           <Badge variant="outline" className={PRIORITY_CLASSES[proposal.priority]}>
-                            {PRIORITY_LABELS[proposal.priority]}
+                            {t("priority", { priority: proposal.priority })}
                           </Badge>
                           {proposal.taskId && (
-                            <span className="text-xs text-success">Added</span>
+                            <span className="text-xs text-success">{t("added")}</span>
                           )}
                         </span>
                         {proposal.description && (
@@ -285,10 +286,10 @@ export function AiTaskChat({
                     {addingIndex === messageIndex ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Adding...
+                        {t("adding")}
                       </>
                     ) : (
-                      `Add ${message.proposals.filter((p) => p.selected && !p.taskId).length} to board`
+                      t("addNToBoard", { count: message.proposals.filter((p) => p.selected && !p.taskId).length })
                     )}
                   </Button>
 
@@ -303,7 +304,7 @@ export function AiTaskChat({
           {sending && (
             <div className="mr-6 flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Thinking...
+              {t("thinking")}
             </div>
           )}
         </div>
@@ -328,7 +329,7 @@ export function AiTaskChat({
                 handleSend();
               }
             }}
-            placeholder="Describe the work..."
+            placeholder={t("chatInputPlaceholder")}
             className="min-h-[2.5rem] flex-1 resize-none"
             rows={2}
           />

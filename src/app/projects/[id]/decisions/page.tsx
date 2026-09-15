@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,8 @@ export default async function ProjectDecisionsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const t = await getTranslations("decisions");
+  const tCommon = await getTranslations("common");
   const access = await requireProjectAccess(projectId);
   const canWrite = canWriteProject(access.role);
   const canDelete = canManageProject(access.role);
@@ -53,12 +56,12 @@ export default async function ProjectDecisionsPage({
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Decisions</h1>
-          <p className="text-muted-foreground">Track important project decisions and their rationale</p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         {canWrite && (
-          <CreateDecisionDialog 
-            projectId={projectId} 
+          <CreateDecisionDialog
+            projectId={projectId}
             projectColor={access.project.color}
           />
         )}
@@ -67,8 +70,8 @@ export default async function ProjectDecisionsPage({
       {decisions.length === 0 ? (
         <EmptyState
           icon={CheckCircle2}
-          title="No decisions yet"
-          description="Record important project decisions to preserve context and rationale"
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
           action={
             canWrite ? (
               <CreateDecisionDialog
@@ -76,7 +79,7 @@ export default async function ProjectDecisionsPage({
                 trigger={
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Decision
+                    {t("createDecision")}
                   </Button>
                 }
               />
@@ -98,10 +101,10 @@ export default async function ProjectDecisionsPage({
                         <CardTitle className="text-xl">{decision.title}</CardTitle>
                         <Badge className={statusConfig.color}>
                           <StatusIcon className="h-3 w-3 mr-1" />
-                          {statusConfig.label}
+                          {tCommon("decisionStatus", { status: decision.status })}
                         </Badge>
                         <Badge className={TYPE_COLORS[decision.decision_type]}>
-                          {decision.decision_type}
+                          {tCommon("decisionType", { type: decision.decision_type })}
                         </Badge>
                       </div>
                       {decision.description && <CardDescription>{decision.description}</CardDescription>}
@@ -115,13 +118,13 @@ export default async function ProjectDecisionsPage({
                   <div className="grid gap-4 md:grid-cols-2">
                     {decision.impact && (
                       <div>
-                        <h4 className="text-sm font-semibold mb-1">Impact</h4>
+                        <h4 className="text-sm font-semibold mb-1">{t("impact")}</h4>
                         <p className="text-sm text-muted-foreground">{decision.impact}</p>
                       </div>
                     )}
                     {decision.alternatives && decision.alternatives.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-semibold mb-1">Alternatives Considered</h4>
+                        <h4 className="text-sm font-semibold mb-1">{t("alternativesConsidered")}</h4>
                         {/* .join(', ') - the array previously rendered as raw
                             React children with no separator between entries. */}
                         <p className="text-sm text-muted-foreground">

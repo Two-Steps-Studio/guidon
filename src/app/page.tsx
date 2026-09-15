@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, type LucideIcon } from "lucide-react";
 import { WavesBackground } from "@/components/layout/waves-background";
@@ -15,80 +16,20 @@ const displayFont = Fraunces({ subsets: ["latin"], weight: ["600"] });
 
 interface FeatureSection {
   icon: LucideIcon;
-  title: string;
-  description: string;
-  bullets: string[];
+  key: "taskBoard" | "aiTaskApi" | "decisions" | "knowledgeBase" | "memoryContext" | "roadmap";
 }
 
 // Mirrors the in-app nav (src/components/layout/app-sidebar.tsx) so a visitor
-// who signs up finds the same icons and names they just read here.
+// who signs up finds the same icons and names they just read here. Copy
+// (title/description/bullets) lives in messages/*.json under
+// landing.features.<key>, resolved via getTranslations below.
 const FEATURE_SECTIONS: FeatureSection[] = [
-  {
-    icon: CheckSquare,
-    title: "Task Board",
-    description:
-      "A Kanban board for every project, with columns you control. Rename, reorder, or hide statuses to match how your team actually works.",
-    bullets: [
-      "Drag-and-drop board per project",
-      "Per-project column customization",
-      "Filter and search across tasks",
-    ],
-  },
-  {
-    icon: Cpu,
-    title: "AI Task API",
-    description:
-      "Let AI agents pick up tasks and move them through the same board your team uses, from in-progress to done, without a human relaying updates by hand.",
-    bullets: [
-      "Agents claim and complete tasks via API",
-      "Full audit trail of AI-driven changes",
-      "Human review built into the workflow",
-    ],
-  },
-  {
-    icon: FileText,
-    title: "Decisions",
-    description:
-      "A running log of the architectural and technical decisions your team makes, with the reasoning attached, so the \"why\" survives past the meeting it was made in.",
-    bullets: [
-      "Structured decision records",
-      "Linked to the tasks and context they affect",
-      "Searchable history of past tradeoffs",
-    ],
-  },
-  {
-    icon: BookOpen,
-    title: "Knowledge Base",
-    description:
-      "Centralize the sources, docs, and technologies each project depends on, instead of scattering them across chats and wikis nobody checks.",
-    bullets: [
-      "Tracked sources and references",
-      "Per-project technology inventory",
-      "One place new teammates can start",
-    ],
-  },
-  {
-    icon: Brain,
-    title: "Memory & Context Graph",
-    description:
-      "Guidon remembers project knowledge over time and connects decisions, sources, and tasks to each other, so context isn't lost as a project grows.",
-    bullets: [
-      "Persistent, searchable project memory",
-      "AI-generated insights you verify before they count as fact",
-      "A graph of relations between entities",
-    ],
-  },
-  {
-    icon: GitBranch,
-    title: "Roadmap",
-    description:
-      "Plan in phases and see where a project stands at a glance, without losing the day-to-day detail the task board already tracks.",
-    bullets: [
-      "Phase-based long-range planning",
-      "Status at a glance across a project's lifetime",
-      "Stays connected to the tasks underneath it",
-    ],
-  },
+  { icon: CheckSquare, key: "taskBoard" },
+  { icon: Cpu, key: "aiTaskApi" },
+  { icon: FileText, key: "decisions" },
+  { icon: BookOpen, key: "knowledgeBase" },
+  { icon: Brain, key: "memoryContext" },
+  { icon: GitBranch, key: "roadmap" },
 ];
 
 // This page has no cookies()/headers() calls, so Next statically prerenders
@@ -118,6 +59,7 @@ const STRUCTURED_DATA = {
 };
 
 export default async function Home() {
+  const t = await getTranslations("landing");
   // Self-hosted installs have no billing concept at all (mirrors
   // organizations/[id]/billing/page.tsx) - Guidon Cloud pricing has no
   // meaning on someone's own deployment, so the section is skipped rather
@@ -155,10 +97,10 @@ export default async function Home() {
               <h1
                 className={`${displayFont.className} text-5xl md:text-6xl tracking-tight text-text dark:text-text`}
               >
-                Context-First Project Management
+                {t("heroTitle")}
               </h1>
               <p className="text-xl text-text-muted dark:text-text-muted max-w-3xl mx-auto leading-relaxed">
-                Understand why your project exists. Track decisions, sources, and context alongside your tasks.
+                {t("heroSubtitle")}
               </p>
             </div>
           </div>
@@ -166,10 +108,10 @@ export default async function Home() {
           <div className="pt-4">
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-base px-8 py-6 h-auto" asChild>
-                <Link href="/auth/signup">Get Started</Link>
+                <Link href="/auth/signup">{t("getStarted")}</Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto" asChild>
-                <Link href="/auth/login">Sign In</Link>
+                <Link href="/auth/login">{t("signIn")}</Link>
               </Button>
             </div>
           </div>
@@ -181,11 +123,10 @@ export default async function Home() {
       <div className="container mx-auto max-w-5xl px-4">
         <div className="mb-16 text-center space-y-3">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>
-            Everything a project needs to explain itself
+            {t("featuresTitle")}
           </h2>
           <p className="text-text-muted max-w-2xl mx-auto">
-            Tasks alone don&apos;t tell you why a project looks the way it does. Guidon tracks the
-            context around the work, not just the work.
+            {t("featuresSubtitle")}
           </p>
         </div>
 
@@ -193,9 +134,10 @@ export default async function Home() {
           {FEATURE_SECTIONS.map((feature, index) => {
             const Icon = feature.icon;
             const reversed = index % 2 === 1;
+            const bullets = t.raw(`features.${feature.key}.bullets`) as string[];
             return (
               <div
-                key={feature.title}
+                key={feature.key}
                 className={`flex flex-col md:flex-row items-center gap-8 md:gap-12 ${
                   reversed ? "md:flex-row-reverse" : ""
                 }`}
@@ -206,10 +148,10 @@ export default async function Home() {
                   </div>
                 </div>
                 <div className="flex-1 text-center md:text-left space-y-3">
-                  <h3 className="text-2xl font-semibold">{feature.title}</h3>
-                  <p className="text-text-secondary leading-relaxed">{feature.description}</p>
+                  <h3 className="text-2xl font-semibold">{t(`features.${feature.key}.title`)}</h3>
+                  <p className="text-text-secondary leading-relaxed">{t(`features.${feature.key}.description`)}</p>
                   <ul className="inline-block text-left text-sm text-text-muted space-y-1.5 pt-1">
-                    {feature.bullets.map((bullet) => (
+                    {bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2">
                         <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
                         {bullet}

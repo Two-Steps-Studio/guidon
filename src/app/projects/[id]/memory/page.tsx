@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +22,8 @@ interface MemoryProfile {
   email: string;
 }
 
-function nameFor(profile: MemoryProfile | undefined): string {
-  if (!profile) return "Unknown";
+function nameFor(profile: MemoryProfile | undefined, unknownLabel: string): string {
+  if (!profile) return unknownLabel;
   return profile.full_name || profile.email;
 }
 
@@ -32,6 +33,8 @@ export default async function ProjectMemoryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const t = await getTranslations("memory");
+  const tCommon = await getTranslations("common");
   const access = await requireProjectAccess(projectId);
   const canWrite = canWriteProject(access.role);
 
@@ -105,8 +108,8 @@ export default async function ProjectMemoryPage({
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Memory</h1>
-          <p className="text-muted-foreground">Persistent project knowledge and insights</p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-start gap-2">
           {canGenerateInsight && <GenerateInsightButton projectId={projectId} />}
@@ -116,7 +119,7 @@ export default async function ProjectMemoryPage({
 
       {pending.length > 0 && (
         <div className="mb-8 space-y-4">
-          <h2 className="text-xl font-semibold">Pending Review ({pending.length})</h2>
+          <h2 className="text-xl font-semibold">{t("pendingReview", { count: pending.length })}</h2>
           {pending.map((memory) => (
             <InsightReviewCard key={memory.id} projectId={projectId} memory={memory} />
           ))}
@@ -126,8 +129,8 @@ export default async function ProjectMemoryPage({
       {memories.length === 0 ? (
         <EmptyState
           icon={Brain}
-          title="No memories yet"
-          description="Start capturing project knowledge and insights"
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
           action={
             canWrite ? (
               <CreateMemoryDialog
@@ -135,7 +138,7 @@ export default async function ProjectMemoryPage({
                 trigger={
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Memory
+                    {t("createMemory")}
                   </Button>
                 }
               />
@@ -156,8 +159,8 @@ export default async function ProjectMemoryPage({
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <TypeIcon className="h-5 w-5 text-muted-foreground" />
-                          <Badge className={typeConfig.color}>{typeConfig.label}</Badge>
-                          {memory.verified && <Badge variant="outline">Verified</Badge>}
+                          <Badge className={typeConfig.color}>{tCommon("memoryType", { type: memory.memory_type })}</Badge>
+                          {memory.verified && <Badge variant="outline">{t("verified")}</Badge>}
                         </div>
                         <CardDescription className="text-base whitespace-pre-wrap">
                           {memory.content}
@@ -175,12 +178,14 @@ export default async function ProjectMemoryPage({
                   </CardHeader>
                   <CardContent>
                     <p className="text-xs text-muted-foreground">
-                      Created {new Date(memory.created_at).toLocaleDateString()}
+                      {t("createdOn", { date: new Date(memory.created_at).toLocaleDateString() })}
                     </p>
                     {memory.verified && memory.verified_by && memory.verified_at && (
                       <p className="text-xs text-muted-foreground">
-                        Verified by {nameFor(profilesById.get(memory.verified_by))},{" "}
-                        {new Date(memory.verified_at).toLocaleDateString()}
+                        {t("verifiedBy", {
+                          name: nameFor(profilesById.get(memory.verified_by), t("unknown")),
+                          date: new Date(memory.verified_at).toLocaleDateString(),
+                        })}
                       </p>
                     )}
                   </CardContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { generateInsight } from "./actions";
@@ -13,6 +14,7 @@ import { generateInsight } from "./actions";
  * changed between page load and click).
  */
 export function GenerateInsightButton({ projectId }: { projectId: string }) {
+  const t = useTranslations("memory");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -30,12 +32,12 @@ export function GenerateInsightButton({ projectId }: { projectId: string }) {
         {pending ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generating...
+            {t("generating")}
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4 mr-2" />
-            Generate Insight
+            {t("generateInsight")}
           </>
         )}
       </Button>

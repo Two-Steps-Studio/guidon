@@ -94,15 +94,25 @@ export interface BoardColumnOverride {
  * that still has tasks in it - by the time a column can be hidden here,
  * nothing on the board needs to reference it.
  */
+/**
+ * `translate`, when passed, supplies the localized default label/hint for a
+ * status (e.g. `(status) => ({ label: t("status", { status }), hint: t("statusHint", { status }) })`)
+ * - a project's saved override `label` is free text a person typed into
+ * board-columns-form.tsx, so it's never translated, only the untouched
+ * default is. Callers with no translator (e.g. the settings-form validation
+ * path) get the English BOARD_COLUMNS default back, unchanged.
+ */
 export function resolveBoardColumns(
-  overrides: readonly BoardColumnOverride[]
+  overrides: readonly BoardColumnOverride[],
+  translate?: (status: TaskStatus) => { label: string; hint: string }
 ): BoardColumn[] {
   const overrideByStatus = new Map(overrides.map((o) => [o.status, o]));
 
   return BOARD_COLUMNS.map((column, index) => {
     const override = overrideByStatus.get(column.status);
+    const defaults = translate ? translate(column.status) : column;
     return {
-      column: { ...column, label: override?.label ?? column.label },
+      column: { ...column, label: override?.label ?? defaults.label, hint: defaults.hint },
       sortOrder: override?.sort_order ?? index,
       hidden: override?.hidden ?? false,
     };

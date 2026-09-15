@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { AlertCircle, AlertTriangle, Loader2, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +24,7 @@ interface ImportProjectDialogProps {
 type ImportMode = "new" | "overwrite";
 
 export function ImportProjectDialog({ organizations, projects }: ImportProjectDialogProps) {
+  const t = useTranslations("projects.import");
   const [open, setOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +93,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
     if (!fileContent) return;
     const targetId = mode === "new" ? orgId : projectId;
     if (!targetId) {
-      setImportError(mode === "new" ? "Choose an organization." : "Choose a project to overwrite.");
+      setImportError(mode === "new" ? t("chooseOrganization") : t("chooseProjectToOverwrite"));
       return;
     }
 
@@ -116,13 +118,13 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
       <DialogTrigger asChild>
         <Button variant="outline">
           <Upload className="h-4 w-4 mr-2" />
-          Import Project
+          {t("trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Import project</DialogTitle>
-          <DialogDescription>Import a .guidon file as a new project, or to overwrite an existing one.</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -135,14 +137,14 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
               className="hidden"
             />
             <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-              {fileName ?? "Choose .guidon file..."}
+              {fileName ?? t("chooseFile")}
             </Button>
           </div>
 
           {loadingPreview && (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Reading file...
+              {t("readingFile")}
             </p>
           )}
 
@@ -162,8 +164,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                 )}
               </p>
               <p className="text-muted-foreground">
-                {preview.taskCount} task{preview.taskCount === 1 ? "" : "s"}, {preview.phaseCount} roadmap phase
-                {preview.phaseCount === 1 ? "" : "s"}
+                {t("taskCount", { count: preview.taskCount })}, {t("phaseCount", { count: preview.phaseCount })}
               </p>
               {preview.warnings.map((warning) => (
                 <p key={warning} className="flex items-start gap-2 text-xs text-warning">
@@ -184,7 +185,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                       mode === "new" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
                     }`}
                   >
-                    Create new project
+                    {t("createNewProject")}
                   </button>
                   <button
                     type="button"
@@ -198,14 +199,14 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                         : "border-border text-muted-foreground"
                     }`}
                   >
-                    Overwrite existing project
+                    {t("overwriteExistingProject")}
                   </button>
                 </div>
 
                 {mode === "new" ? (
                   <div className="space-y-1">
                     <Label htmlFor="import-org" className="text-xs">
-                      Organization
+                      {t("organizationLabel")}
                     </Label>
                     <select
                       id="import-org"
@@ -224,7 +225,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                   <div className="space-y-2">
                     <div className="space-y-1">
                       <Label htmlFor="import-project" className="text-xs">
-                        Project to overwrite
+                        {t("projectToOverwriteLabel")}
                       </Label>
                       <select
                         id="import-project"
@@ -243,14 +244,16 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                       </select>
                       <p className="flex items-start gap-2 text-xs text-destructive">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                        This permanently replaces the target project&apos;s tasks and roadmap phases with what&apos;s
-                        in this file. This cannot be undone.
+                        {t("overwriteWarning")}
                       </p>
                     </div>
                     {overwriteTarget && (
                       <div className="space-y-1">
                         <Label htmlFor="import-confirm-name" className="text-xs">
-                          Type <span className="font-mono">{overwriteTarget.name}</span> to confirm
+                          {t.rich("typeToConfirm", {
+                            name: overwriteTarget.name,
+                            b: (chunks) => <span className="font-mono">{chunks}</span>,
+                          })}
                         </Label>
                         <input
                           id="import-confirm-name"
@@ -277,11 +280,11 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={importing}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button type="button" onClick={handleImport} disabled={!preview || importing || !overwriteConfirmed}>
             {importing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-            Import
+            {t("import")}
           </Button>
         </DialogFooter>
       </DialogContent>

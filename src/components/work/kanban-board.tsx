@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,6 +74,7 @@ export function KanbanBoard({
   onMoveTask,
   projectColor,
 }: KanbanBoardProps) {
+  const t = useTranslations("work");
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
@@ -137,7 +139,7 @@ export function KanbanBoard({
     <div
       className="flex gap-4 overflow-x-auto pb-4"
       role="list"
-      aria-label="Task board"
+      aria-label={t("taskBoardAria")}
     >
       {columns.map((column) => {
         const columnTasks = groups[column.status];
@@ -147,7 +149,7 @@ export function KanbanBoard({
           <section
             key={column.status}
             role="listitem"
-            aria-label={`${column.label}, ${columnTasks.length} tasks`}
+            aria-label={t("columnAria", { label: column.label, count: columnTasks.length })}
             className={cn(
               "flex w-72 shrink-0 flex-col rounded-xl border border-border bg-background-secondary",
               isTargetColumn && "border-primary/40"
@@ -193,7 +195,7 @@ export function KanbanBoard({
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  aria-label={`Add task to ${column.label}`}
+                  aria-label={t("addTaskToColumn", { column: column.label })}
                   onClick={() => onCreateTask(column.status)}
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -257,7 +259,7 @@ export function KanbanBoard({
 
               {columnTasks.length === 0 && !draggingTask && (
                 <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                  {filtersActive ? "No tasks match the current filters." : column.hint}
+                  {filtersActive ? t("noTasksMatchFilters") : column.hint}
                 </p>
               )}
             </div>

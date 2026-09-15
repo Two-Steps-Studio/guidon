@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { LoginForm } from "./login-form";
 
@@ -9,9 +10,10 @@ import { LoginForm } from "./login-form";
 // DATABASE_URL is unset, and bakes `local=false` into the HTML forever.
 export const dynamic = "force-dynamic";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const t = await getTranslations("common");
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <LoginForm local={hasDirectDatabase()} />
     </Suspense>
   );

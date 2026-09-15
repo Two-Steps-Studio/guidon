@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +18,7 @@ import { PhaseFormFields } from "./phase-form-fields";
 const initialState: PhaseFormState = { error: null };
 
 export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projectId: string; trigger?: React.ReactNode; projectColor?: string }) {
+  const t = useTranslations("roadmap");
   const [open, setOpen] = useState(false);
   const createWithProject = createPhase.bind(null, projectId);
   const [state, formAction, pending] = useActionState(createWithProject, initialState);
@@ -35,14 +37,14 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
         {trigger ?? (
           <Button style={projectColor ? { backgroundColor: projectColor } : undefined}>
             <Plus className="h-4 w-4 mr-2" />
-            New Phase
+            {t("newPhase")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Phase</DialogTitle>
-          <DialogDescription>Add a new phase to the roadmap</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
           action={(formData) => {
@@ -60,16 +62,16 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
           )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  {t("creating")}
                 </>
               ) : (
-                "Create Phase"
+                t("createPhase")
               )}
             </Button>
           </div>

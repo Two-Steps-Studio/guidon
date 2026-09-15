@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,10 +19,10 @@ import type { AttemptOutcome, TaskAttempt } from "@/types/task";
  * else in TaskDetailDialog needs to react to an attempt being logged.
  */
 
-const OUTCOME_CONFIG: Record<AttemptOutcome, { label: string; icon: typeof CheckCircle2; color: string }> = {
-  failed: { label: "Failed", icon: X, color: "text-destructive" },
-  partial: { label: "Partial", icon: AlertTriangle, color: "text-amber-500" },
-  succeeded: { label: "Succeeded", icon: CheckCircle2, color: "text-emerald-500" },
+const OUTCOME_CONFIG: Record<AttemptOutcome, { labelKey: string; icon: typeof CheckCircle2; color: string }> = {
+  failed: { labelKey: "outcomeFailed", icon: X, color: "text-destructive" },
+  partial: { labelKey: "outcomePartial", icon: AlertTriangle, color: "text-amber-500" },
+  succeeded: { labelKey: "outcomeSucceeded", icon: CheckCircle2, color: "text-emerald-500" },
 };
 
 const EMPTY_FORM = {
@@ -46,6 +47,7 @@ export function TaskAttemptsSection({
   canEdit: boolean;
   canDelete: boolean;
 }) {
+  const t = useTranslations("work");
   const [attempts, setAttempts] = useState<TaskAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,13 +84,13 @@ export function TaskAttemptsSection({
 
     try {
       const result = await createAttempt(projectId, { task_id: taskId, ...form });
-      if (result.error || !result.attempt) throw new Error(result.error ?? "Failed to record attempt");
+      if (result.error || !result.attempt) throw new Error(result.error ?? t("failedToRecordAttempt"));
 
       setAttempts((current) => [result.attempt as TaskAttempt, ...current]);
       setForm(EMPTY_FORM);
       setFormOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to record attempt");
+      setError(err instanceof Error ? err.message : t("failedToRecordAttempt"));
     } finally {
       setSaving(false);
     }
@@ -104,17 +106,17 @@ export function TaskAttemptsSection({
 
       setAttempts((current) => current.filter((a) => a.id !== attemptId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete attempt");
+      setError(err instanceof Error ? err.message : t("failedToDeleteAttempt"));
     } finally {
       setDeletingId(null);
     }
   };
 
   return (
-    <section aria-label="Previous attempts" className="space-y-3 border-t border-border pt-4">
+    <section aria-label={t("previousAttempts")} className="space-y-3 border-t border-border pt-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground">
-          Previous Attempts
+          {t("previousAttempts")}
           {attempts.length > 0 && (
             <span className="ml-1.5 text-xs font-normal text-muted-foreground">{attempts.length}</span>
           )}
@@ -122,7 +124,7 @@ export function TaskAttemptsSection({
         {canEdit && !formOpen && (
           <Button type="button" variant="ghost" size="sm" onClick={() => setFormOpen(true)}>
             <Plus className="h-3.5 w-3.5" />
-            Log attempt
+            {t("logAttempt")}
           </Button>
         )}
       </div>
@@ -130,11 +132,11 @@ export function TaskAttemptsSection({
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Loading attempts...
+          {t("loadingAttempts")}
         </p>
       ) : attempts.length === 0 && !formOpen ? (
         <p className="text-sm text-muted-foreground">
-          No attempts logged yet. Recording a failed approach here keeps it from being tried again.
+          {t("noAttemptsYet")}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -147,7 +149,7 @@ export function TaskAttemptsSection({
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <OutcomeIcon className={`h-3.5 w-3.5 ${config.color}`} />
-                    <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
+                    <span className={`text-xs font-medium ${config.color}`}>{t(config.labelKey)}</span>
                     {attempt.agent && (
                       <span className="text-xs text-muted-foreground">· {attempt.agent}</span>
                     )}
@@ -155,7 +157,7 @@ export function TaskAttemptsSection({
                   {canDelete && (
                     <button
                       type="button"
-                      aria-label="Delete attempt"
+                      aria-label={t("deleteAttemptAria")}
                       disabled={deletingId === attempt.id}
                       onClick={() => void handleDelete(attempt.id)}
                       className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100 disabled:opacity-60"
@@ -169,24 +171,24 @@ export function TaskAttemptsSection({
                   )}
                 </div>
                 <p className="mt-1 text-sm text-foreground">
-                  <span className="font-medium">Problem:</span> {attempt.problem}
+                  <span className="font-medium">{t("problemLabel")}</span> {attempt.problem}
                 </p>
                 <p className="mt-0.5 text-sm text-foreground">
-                  <span className="font-medium">Approach:</span> {attempt.approach}
+                  <span className="font-medium">{t("approachLabel")}</span> {attempt.approach}
                 </p>
                 {attempt.failure_reason && (
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    <span className="font-medium">Why it failed:</span> {attempt.failure_reason}
+                    <span className="font-medium">{t("whyItFailedLabel")}</span> {attempt.failure_reason}
                   </p>
                 )}
                 {attempt.result && (
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    <span className="font-medium">Result:</span> {attempt.result}
+                    <span className="font-medium">{t("resultLabel")}</span> {attempt.result}
                   </p>
                 )}
                 {attempt.files_changed.length > 0 && (
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Files: {attempt.files_changed.join(", ")}
+                    {t("filesLabel", { files: attempt.files_changed.join(", ") })}
                   </p>
                 )}
                 {attempt.related_pr_url && (
@@ -217,30 +219,30 @@ export function TaskAttemptsSection({
       {formOpen && (
         <form onSubmit={handleSubmit} className="space-y-3 rounded-md border border-border p-3">
           <div className="space-y-1.5">
-            <Label htmlFor="attempt-problem">Problem</Label>
+            <Label htmlFor="attempt-problem">{t("problemFieldLabel")}</Label>
             <Textarea
               id="attempt-problem"
               rows={2}
               required
               value={form.problem}
               onChange={(event) => setForm({ ...form, problem: event.target.value })}
-              placeholder="What were you trying to solve?"
+              placeholder={t("problemPlaceholder")}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="attempt-approach">Approach</Label>
+            <Label htmlFor="attempt-approach">{t("approachFieldLabel")}</Label>
             <Textarea
               id="attempt-approach"
               rows={2}
               required
               value={form.approach}
               onChange={(event) => setForm({ ...form, approach: event.target.value })}
-              placeholder="What did you try?"
+              placeholder={t("approachPlaceholder")}
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="attempt-outcome">Outcome</Label>
+              <Label htmlFor="attempt-outcome">{t("outcomeLabel")}</Label>
               <Select
                 id="attempt-outcome"
                 value={form.outcome}
@@ -248,24 +250,24 @@ export function TaskAttemptsSection({
                   setForm({ ...form, outcome: event.target.value as AttemptOutcome })
                 }
               >
-                <option value="failed">Failed</option>
-                <option value="partial">Partial</option>
-                <option value="succeeded">Succeeded</option>
+                <option value="failed">{t("outcomeFailed")}</option>
+                <option value="partial">{t("outcomePartial")}</option>
+                <option value="succeeded">{t("outcomeSucceeded")}</option>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="attempt-agent">Agent</Label>
+              <Label htmlFor="attempt-agent">{t("agentLabel")}</Label>
               <Input
                 id="attempt-agent"
                 value={form.agent}
                 onChange={(event) => setForm({ ...form, agent: event.target.value })}
-                placeholder="Claude Code, human, Cursor..."
+                placeholder={t("agentPlaceholder")}
               />
             </div>
           </div>
           {form.outcome !== "succeeded" && (
             <div className="space-y-1.5">
-              <Label htmlFor="attempt-failure-reason">Why it failed</Label>
+              <Label htmlFor="attempt-failure-reason">{t("whyItFailedFieldLabel")}</Label>
               <Textarea
                 id="attempt-failure-reason"
                 rows={2}
@@ -275,35 +277,35 @@ export function TaskAttemptsSection({
             </div>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="attempt-result">Result</Label>
+            <Label htmlFor="attempt-result">{t("resultFieldLabel")}</Label>
             <Textarea
               id="attempt-result"
               rows={2}
               value={form.result}
               onChange={(event) => setForm({ ...form, result: event.target.value })}
-              placeholder="What actually happened?"
+              placeholder={t("resultPlaceholder")}
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="attempt-files">Files changed</Label>
+              <Label htmlFor="attempt-files">{t("filesChangedLabel")}</Label>
               <Textarea
                 id="attempt-files"
                 rows={2}
                 value={form.files_changed}
                 onChange={(event) => setForm({ ...form, files_changed: event.target.value })}
-                placeholder={"One path per line"}
+                placeholder={t("filesChangedPlaceholder")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="attempt-pr">Related PR</Label>
+              <Label htmlFor="attempt-pr">{t("relatedPrLabel")}</Label>
               <Input
                 id="attempt-pr"
                 type="url"
                 // See the matching comment on knowledge/source-form-fields.tsx -
                 // createAttempt's isSafeHttpUrl check only accepts http(s).
                 pattern="https?://.+"
-                title="Must be an http:// or https:// URL"
+                title={t("relatedPrUrlTitle")}
                 value={form.related_pr_url}
                 onChange={(event) => setForm({ ...form, related_pr_url: event.target.value })}
                 placeholder="https://..."
@@ -321,11 +323,11 @@ export function TaskAttemptsSection({
                 setForm(EMPTY_FORM);
               }}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={saving || !form.problem.trim() || !form.approach.trim()}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save attempt
+              {t("saveAttempt")}
             </Button>
           </div>
         </form>

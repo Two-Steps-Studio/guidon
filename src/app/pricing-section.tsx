@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,20 +33,12 @@ export interface PlanRow {
 
 type Currency = "EUR" | "PLN";
 
-function formatBytes(bytes: number | null): string {
-  if (bytes === null) return "Unlimited storage";
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(0)} GB storage`;
-  return `${(bytes / (1024 * 1024)).toFixed(0)} MB storage`;
-}
+type PricingTranslator = ReturnType<typeof useTranslations>;
 
-function formatCount(value: number | null, unit: string): string {
-  // Locale pinned to "en-US" - without it, toLocaleString() falls back to
-  // the runtime's default locale, which differs between the server (Node's
-  // ICU default) and the visitor's browser. That produces different
-  // formatted digits (e.g. "1,000" vs "1 000") for the same number between
-  // the SSR HTML and the client hydration pass, which React reports as a
-  // hydration mismatch (minified error #418) rather than silently fixing.
-  return value === null ? `Unlimited ${unit}` : `${value.toLocaleString("en-US")} ${unit}`;
+function formatBytes(bytes: number | null, t: PricingTranslator): string {
+  if (bytes === null) return t("unlimitedStorage");
+  if (bytes >= 1024 * 1024 * 1024) return t("gbStorage", { count: Math.round(bytes / (1024 * 1024 * 1024)) });
+  return t("mbStorage", { count: Math.round(bytes / (1024 * 1024)) });
 }
 
 /**
@@ -63,30 +56,33 @@ function priceFor(plan: PlanRow, currency: Currency): { cents: number; currency:
   return { cents: plan.price_cents, currency: "EUR" };
 }
 
-function formatPrice({ cents, currency }: { cents: number; currency: Currency }): string {
-  if (cents === 0) return "Free";
+function formatPrice({ cents, currency }: { cents: number; currency: Currency }, t: PricingTranslator): string {
+  if (cents === 0) return t("free");
   const amount = (cents / 100).toFixed(2);
   return currency === "EUR" ? `€${amount}` : `${amount} zł`;
 }
 
-function planFeatures(plan: PlanRow): string[] {
+function planFeatures(plan: PlanRow, t: PricingTranslator): string[] {
   const features = [
-    formatCount(plan.project_limit, "projects"),
-    formatCount(plan.task_limit_per_project, "tasks per project"),
-    formatBytes(plan.storage_limit_bytes),
+    plan.project_limit === null ? t("unlimitedProjects") : t("projectsCount", { count: plan.project_limit }),
+    plan.task_limit_per_project === null
+      ? t("unlimitedTasksPerProject")
+      : t("tasksPerProjectCount", { count: plan.task_limit_per_project }),
+    formatBytes(plan.storage_limit_bytes, t),
   ];
-  if (plan.has_ai_features) features.push("AI Task API");
-  if (plan.has_github_integration) features.push("GitHub integration");
-  if (plan.has_advanced_analytics) features.push("Advanced analytics");
-  if (plan.has_team_roles) features.push("Team roles");
-  if (plan.has_audit_logs) features.push("Audit logs");
-  if (plan.has_priority_support) features.push("Priority support");
+  if (plan.has_ai_features) features.push(t("aiTaskApi"));
+  if (plan.has_github_integration) features.push(t("githubIntegration"));
+  if (plan.has_advanced_analytics) features.push(t("advancedAnalytics"));
+  if (plan.has_team_roles) features.push(t("teamRoles"));
+  if (plan.has_audit_logs) features.push(t("auditLogs"));
+  if (plan.has_priority_support) features.push(t("prioritySupport"));
   return features;
 }
 
 const CURRENCIES: Currency[] = ["EUR", "PLN"];
 
 export function PricingSection({ plans }: { plans: PlanRow[] }) {
+  const t = useTranslations("landing.pricing");
   const [currency, setCurrency] = useState<Currency>("EUR");
 
   return (
@@ -94,12 +90,12 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
       <WavesBackground className="opacity-20" />
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <div className="mb-12 space-y-4 text-center">
-          <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>Simple, transparent pricing</h2>
-          <p className="text-text-muted">Start free. Upgrade when you need more.</p>
+          <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>{t("title")}</h2>
+          <p className="text-text-muted">{t("subtitle")}</p>
 
           <div
             role="group"
-            aria-label="Currency"
+            aria-label={t("currencyLabel")}
             className="inline-flex rounded-lg border border-border p-1"
           >
             {CURRENCIES.map((option) => (
@@ -130,18 +126,18 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                 className={`relative flex flex-col ${isPopular ? "border-primary shadow-lg shadow-primary/10" : "border-border/50"}`}
               >
                 {isPopular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Most popular</Badge>
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">{t("mostPopular")}</Badge>
                 )}
                 <CardHeader>
                   <CardTitle>{plan.name}</CardTitle>
                   <div className="text-3xl font-bold">
-                    {formatPrice(price)}
-                    {price.cents > 0 && <span className="text-sm font-normal text-text-muted">/mo</span>}
+                    {formatPrice(price, t)}
+                    {price.cents > 0 && <span className="text-sm font-normal text-text-muted">{t("perMonth")}</span>}
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col">
                   <ul className="flex-1 space-y-2 text-sm text-text-secondary">
-                    {planFeatures(plan).map((feature) => (
+                    {planFeatures(plan, t).map((feature) => (
                       <li key={feature} className="flex items-center gap-2">
                         <Check className="h-4 w-4 shrink-0 text-primary" />
                         {feature}
@@ -149,7 +145,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                     ))}
                   </ul>
                   <Button className="mt-6 w-full" variant={isPopular ? "default" : "outline"} asChild>
-                    <Link href="/auth/signup">Get Started</Link>
+                    <Link href="/auth/signup">{t("getStarted")}</Link>
                   </Button>
                 </CardContent>
               </Card>

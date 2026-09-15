@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,11 +15,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createMemory, type MemoryFormState } from "./actions";
-import { MEMORY_TYPE_CONFIG } from "./memory-type-config";
+import { MEMORY_TYPES } from "./memory-type-config";
 
 const initialState: MemoryFormState = { error: null };
 
 export function CreateMemoryDialog({ projectId, trigger }: { projectId: string; trigger?: React.ReactNode }) {
+  const t = useTranslations("memory");
+  const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const createWithProject = createMemory.bind(null, projectId);
   const [state, formAction, pending] = useActionState(createWithProject, initialState);
@@ -37,14 +40,14 @@ export function CreateMemoryDialog({ projectId, trigger }: { projectId: string; 
         {trigger ?? (
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            New Memory
+            {t("newMemory")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Memory</DialogTitle>
-          <DialogDescription>Add a new memory entry to the project</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
           action={(formData) => {
@@ -54,20 +57,20 @@ export function CreateMemoryDialog({ projectId, trigger }: { projectId: string; 
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="memoryContent">Content</Label>
+            <Label htmlFor="memoryContent">{t("contentLabel")}</Label>
             <Textarea id="memoryContent" name="content" rows={4} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="memoryType">Type</Label>
+            <Label htmlFor="memoryType">{t("typeLabel")}</Label>
             <select
               id="memoryType"
               name="memory_type"
               defaultValue="fact"
               className="w-full px-3 py-2 border rounded-md bg-background"
             >
-              {Object.entries(MEMORY_TYPE_CONFIG).map(([type, config]) => (
+              {MEMORY_TYPES.map((type) => (
                 <option key={type} value={type}>
-                  {config.label}
+                  {tCommon("memoryType", { type })}
                 </option>
               ))}
             </select>
@@ -80,16 +83,16 @@ export function CreateMemoryDialog({ projectId, trigger }: { projectId: string; 
           )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
+                  {t("creating")}
                 </>
               ) : (
-                "Create Memory"
+                t("createMemory")
               )}
             </Button>
           </div>

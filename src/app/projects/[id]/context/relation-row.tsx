@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Trash2 } from "lucide-react";
 import { deleteRelation } from "./actions";
-import { ENTITY_TYPE_LABELS, RELATION_TYPE_LABELS } from "./relation-config";
 import type { ContextRelation } from "@/types/context";
 
 export function RelationRow({
@@ -24,6 +24,8 @@ export function RelationRow({
   sourceLabel?: string;
   targetLabel?: string;
 }) {
+  const t = useTranslations("context");
+  const tCommon = useTranslations("common");
   const [deleting, startDelete] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -38,12 +40,12 @@ export function RelationRow({
     <Card>
       <CardContent className="flex items-center justify-between py-4">
         <div className="flex flex-wrap items-center gap-4">
-          <Badge variant="outline">{ENTITY_TYPE_LABELS[relation.source_type]}</Badge>
+          <Badge variant="outline">{tCommon("entityType", { type: relation.source_type })}</Badge>
           <span className="text-sm text-muted-foreground" title={relation.source_id}>
             {sourceLabel ?? `${relation.source_id.slice(0, 8)}...`}
           </span>
-          <span className="text-sm font-medium">{RELATION_TYPE_LABELS[relation.relation_type]}</span>
-          <Badge variant="outline">{ENTITY_TYPE_LABELS[relation.target_type]}</Badge>
+          <span className="text-sm font-medium">{tCommon("relationType", { type: relation.relation_type })}</span>
+          <Badge variant="outline">{tCommon("entityType", { type: relation.target_type })}</Badge>
           <span className="text-sm text-muted-foreground" title={relation.target_id}>
             {targetLabel ?? `${relation.target_id.slice(0, 8)}...`}
           </span>
@@ -61,7 +63,7 @@ export function RelationRow({
             className="text-destructive"
             onClick={handleDelete}
             disabled={deleting}
-            aria-label="Delete relation"
+            aria-label={t("deleteRelationAria")}
           >
             <Trash2 className="h-4 w-4" />
           </Button>

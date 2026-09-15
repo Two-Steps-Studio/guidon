@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import type { SwitchableProject } from "@/lib/data/project-access";
 import {
   LayoutDashboard,
@@ -39,19 +41,19 @@ import {
 } from "lucide-react";
 
 const GLOBAL_NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FileText },
-  { href: "/organizations", label: "Organizations", icon: Building2 },
-];
+  { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/projects", labelKey: "projects", icon: FileText },
+  { href: "/organizations", labelKey: "organizations", icon: Building2 },
+] as const;
 
 interface ProjectNavItem {
   href: string;
-  label: string;
+  labelKey: string;
   icon: typeof LayoutDashboard;
 }
 
 interface ProjectNavGroup {
-  label: string | null;
+  labelKey: string | null;
   items: ProjectNavItem[];
 }
 
@@ -59,50 +61,53 @@ interface ProjectNavGroup {
  * Carries forward the nav grouping/labels from the pre-existing, uncommitted
  * local edit to the old project-sidebar.tsx (Task Board instead of Board,
  * Files moved into Work, "Project" group label) rather than reverting it -
- * see the spec addendum's note on this.
+ * see the spec addendum's note on this. Labels are translation keys under
+ * the "nav" namespace, resolved with `t()` at render time rather than
+ * stored as literal English text, since this array lives at module scope
+ * outside the component's translation context.
  */
 const PROJECT_NAV: ProjectNavGroup[] = [
-  { label: null, items: [{ href: "", label: "Overview", icon: LayoutDashboard }] },
+  { labelKey: null, items: [{ href: "", labelKey: "overview", icon: LayoutDashboard }] },
   {
-    label: "Work",
+    labelKey: "workGroup",
     items: [
-      { href: "work", label: "Task Board", icon: CheckSquare },
-      { href: "roadmap", label: "Roadmap", icon: GitBranch },
-      { href: "files", label: "Files", icon: FolderOpen },
+      { href: "work", labelKey: "taskBoard", icon: CheckSquare },
+      { href: "roadmap", labelKey: "roadmap", icon: GitBranch },
+      { href: "files", labelKey: "files", icon: FolderOpen },
     ],
   },
   {
-    label: "Knowledge",
+    labelKey: "knowledgeGroup",
     items: [
-      { href: "knowledge", label: "Knowledge", icon: BookOpen },
-      { href: "decisions", label: "Decisions", icon: FileText },
-      { href: "technology", label: "Technologies", icon: Cpu },
+      { href: "knowledge", labelKey: "knowledge", icon: BookOpen },
+      { href: "decisions", labelKey: "decisions", icon: FileText },
+      { href: "technology", labelKey: "technologies", icon: Cpu },
     ],
   },
   {
-    label: "Context",
+    labelKey: "contextGroup",
     items: [
-      { href: "memory", label: "Memory", icon: Brain },
-      { href: "context", label: "Graph", icon: Network },
+      { href: "memory", labelKey: "memory", icon: Brain },
+      { href: "context", labelKey: "graph", icon: Network },
     ],
   },
   {
-    label: "Project",
+    labelKey: "projectGroup",
     items: [
-      { href: "members", label: "Members", icon: Users },
-      { href: "activity", label: "Activity", icon: Activity },
-      { href: "settings", label: "Settings", icon: Settings },
+      { href: "members", labelKey: "members", icon: Users },
+      { href: "activity", labelKey: "activity", icon: Activity },
+      { href: "settings", labelKey: "settings", icon: Settings },
     ],
   },
 ];
 
 const ADMIN_NAV = [
-  { href: "/admin", label: "Overview", icon: ShieldCheck },
-  { href: "/admin/organizations", label: "Organizations", icon: Building2 },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/integrations", label: "Integrations", icon: Plug },
-  { href: "/admin/logs", label: "Logs", icon: ScrollText },
-];
+  { href: "/admin", labelKey: "overview", icon: ShieldCheck },
+  { href: "/admin/organizations", labelKey: "organizations", icon: Building2 },
+  { href: "/admin/users", labelKey: "users", icon: Users },
+  { href: "/admin/integrations", labelKey: "integrations", icon: Plug },
+  { href: "/admin/logs", labelKey: "logs", icon: ScrollText },
+] as const;
 
 export interface AppSidebarProps {
   user?: {
@@ -123,6 +128,7 @@ export function AppSidebar({
   projects,
   projectColor,
 }: AppSidebarProps) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
@@ -167,10 +173,10 @@ export function AppSidebar({
           <SidebarMenu>
             {GLOBAL_NAV.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton asChild isActive={isGlobalActive(item.href)} tooltip={item.label}>
+                <SidebarMenuButton asChild isActive={isGlobalActive(item.href)} tooltip={t(item.labelKey)}>
                   <Link href={item.href}>
                     <item.icon />
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -180,8 +186,8 @@ export function AppSidebar({
 
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => (
-            <SidebarGroup key={group.label ?? `project-group-${groupIndex}`}>
-              {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+            <SidebarGroup key={group.labelKey ?? `project-group-${groupIndex}`}>
+              {group.labelKey && <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>}
               <SidebarMenu>
                 {group.items.map((item) => {
                   const active = isProjectActive(item.href);
@@ -191,13 +197,13 @@ export function AppSidebar({
                       <SidebarMenuButton
                         asChild
                         isActive={active}
-                        tooltip={item.label}
+                        tooltip={t(item.labelKey)}
                         className={active ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color)" : undefined}
                         style={active ? activeStyle : undefined}
                       >
                         <Link href={href}>
                           <item.icon />
-                          <span>{item.label}</span>
+                          <span>{t(item.labelKey)}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -209,14 +215,14 @@ export function AppSidebar({
 
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupLabel>{t("adminGroup")}</SidebarGroupLabel>
             <SidebarMenu>
               {ADMIN_NAV.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={t(item.labelKey)}>
                     <Link href={item.href}>
                       <item.icon />
-                      <span>{item.label}</span>
+                      <span>{t(item.labelKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -237,7 +243,7 @@ export function AppSidebar({
                     <AvatarFallback>{user.full_name?.[0] || user.email?.[0] || "U"}</AvatarFallback>
                   </Avatar>
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium">{user.full_name || "User"}</span>
+                    <span className="truncate text-sm font-medium">{user.full_name || t("user")}</span>
                     <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                   </div>
                   <User className="ml-auto h-4 w-4 text-muted-foreground" />
@@ -249,12 +255,15 @@ export function AppSidebar({
                   the user out on visit - nothing anywhere in the UI linked
                   to it, so there was no way to log out short of typing the
                   URL by hand. */}
-              <SidebarMenuButton asChild tooltip="Log out">
+              <SidebarMenuButton asChild tooltip={t("logOut")}>
                 <Link href="/auth/logout">
                   <LogOut />
-                  <span>Log out</span>
+                  <span>{t("logOut")}</span>
                 </Link>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem className="px-2">
+              <LanguageSwitcher />
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

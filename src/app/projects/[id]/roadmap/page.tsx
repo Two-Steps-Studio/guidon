@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ export default async function ProjectRoadmapPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const t = await getTranslations("roadmap");
   const access = await requireProjectAccess(projectId);
   const canManage = canManageProject(access.role);
 
@@ -53,12 +55,12 @@ export default async function ProjectRoadmapPage({
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Roadmap</h1>
-          <p className="text-muted-foreground">Project phases and timeline</p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         {canManage && (
-          <CreatePhaseDialog 
-            projectId={projectId} 
+          <CreatePhaseDialog
+            projectId={projectId}
             projectColor={access.project.color}
           />
         )}
@@ -67,8 +69,8 @@ export default async function ProjectRoadmapPage({
       {phases.length === 0 ? (
         <EmptyState
           icon={TrendingUp}
-          title="No roadmap phases yet"
-          description="Create your first phase to start planning your project timeline"
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
           action={
             canManage ? (
               <CreatePhaseDialog
@@ -76,7 +78,7 @@ export default async function ProjectRoadmapPage({
                 trigger={
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Phase
+                    {t("createPhase")}
                   </Button>
                 }
               />
@@ -88,6 +90,7 @@ export default async function ProjectRoadmapPage({
           {phases.map((phase) => {
             const config = STATUS_CONFIG[phase.status];
             const Icon = config.icon;
+            const statusLabel = t("phaseStatus", { status: phase.status });
 
             return (
               <Card key={phase.id} className="relative">
@@ -104,7 +107,7 @@ export default async function ProjectRoadmapPage({
                         <CardTitle className="text-xl">{phase.name}</CardTitle>
                         <Badge className={config.color}>
                           <Icon className="h-3 w-3 mr-1" />
-                          {config.label}
+                          {statusLabel}
                         </Badge>
                       </div>
                       {phase.description && <CardDescription>{phase.description}</CardDescription>}
@@ -116,23 +119,23 @@ export default async function ProjectRoadmapPage({
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Start:</span>
+                      <span className="text-muted-foreground">{t("start")}</span>
                       <span>
-                        {phase.start_date ? formatCalendarDate(phase.start_date) : "Not set"}
+                        {phase.start_date ? formatCalendarDate(phase.start_date) : t("notSet")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">End:</span>
+                      <span className="text-muted-foreground">{t("end")}</span>
                       <span>
                         {phase.planned_end_date
                           ? formatCalendarDate(phase.planned_end_date)
-                          : "Not set"}
+                          : t("notSet")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Progress:</span>
+                      <span className="text-muted-foreground">{t("progress")}</span>
                       <span>{phase.completion_percentage}%</span>
                     </div>
                   </div>

@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   DUE_STATE_CLASSES,
   PRIORITY_DOT_CLASSES,
-  PRIORITY_LABELS,
   dueState,
   formatDueDate,
   normalizeTaskPriority,
@@ -66,6 +66,7 @@ export function TaskCard({
   canMoveDown = false,
   projectColor,
 }: TaskCardProps) {
+  const t = useTranslations("work");
   const priority = normalizeTaskPriority(task.priority);
   const due = dueState(task.due_date, task.status);
   const tags = task.tags ?? [];
@@ -99,7 +100,7 @@ export function TaskCard({
       }}
       role="button"
       tabIndex={0}
-      aria-label={`Open task ${task.title}`}
+      aria-label={t("openTaskAria", { title: task.title })}
       aria-keyshortcuts={onReorder ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
       className={cn(
         "group rounded-lg border border-border bg-card p-3 text-left",
@@ -143,8 +144,8 @@ export function TaskCard({
       )}
 
       <div className="mt-3 flex items-center gap-3 pl-3.5 text-[11px] text-muted-foreground">
-        <span className="sr-only">Priority: </span>
-        <span className="tabular-nums">{PRIORITY_LABELS[priority]}</span>
+        <span className="sr-only">{t("priorityScreenReader")}</span>
+        <span className="tabular-nums">{t("priority", { priority })}</span>
 
         {task.due_date && due !== "none" && (
           <span className={cn("flex items-center gap-1", DUE_STATE_CLASSES[due])}>
@@ -164,7 +165,7 @@ export function TaskCard({
         {subtaskProgress && subtaskProgress.total > 0 && (
           <span className="flex items-center gap-1">
             <ListChecks className="h-3 w-3" aria-hidden />
-            <span className="sr-only">Subtasks: </span>
+            <span className="sr-only">{t("subtasksScreenReader")}</span>
             {subtaskProgress.done}/{subtaskProgress.total}
           </span>
         )}
@@ -179,8 +180,8 @@ export function TaskCard({
             </span>
           ) : (
             <span
-              title="Unassigned"
-              aria-label="Unassigned"
+              title={t("unassignedTitle")}
+              aria-label={t("unassignedTitle")}
               className="block h-5 w-5 rounded-full border border-dashed border-border"
             />
           )}

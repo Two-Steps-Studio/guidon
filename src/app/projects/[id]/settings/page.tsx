@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -34,6 +35,7 @@ export default async function ProjectSettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const t = await getTranslations("settings");
   const access = await requireProjectAccess(projectId);
 
   let project: Project;
@@ -102,8 +104,8 @@ export default async function ProjectSettingsPage({
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Project Settings</h1>
-        <p className="text-muted-foreground">Manage project configuration and preferences</p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <SettingsForm

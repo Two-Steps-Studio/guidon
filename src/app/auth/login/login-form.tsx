@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +23,8 @@ import { loginLocalAction } from "./actions"
  * self-hosted has no provider to redirect to.
  */
 export function LoginForm({ local }: { local: boolean }) {
+  const t = useTranslations("auth.login")
+  const tCommon = useTranslations("auth.common")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -59,7 +62,7 @@ export function LoginForm({ local }: { local: boolean }) {
 
       router.push(redirectTarget)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      setError(err instanceof Error ? err.message : tCommon("somethingWentWrong"))
     } finally {
       setLoading(false)
     }
@@ -77,9 +80,9 @@ export function LoginForm({ local }: { local: boolean }) {
       />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
           <CardDescription>
-            Enter your email and password to access your account
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,7 +93,7 @@ export function LoginForm({ local }: { local: boolean }) {
           )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -102,10 +105,10 @@ export function LoginForm({ local }: { local: boolean }) {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("passwordLabel")}</Label>
                 {!local && (
                   <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot password?
+                    {t("forgotPassword")}
                   </Link>
                 )}
               </div>
@@ -124,7 +127,7 @@ export function LoginForm({ local }: { local: boolean }) {
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? t("signingIn") : t("signIn")}
             </Button>
           </form>
 
@@ -135,9 +138,9 @@ export function LoginForm({ local }: { local: boolean }) {
           )}
 
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            {t("noAccount")}{" "}
             <Link href="/auth/signup" className="text-primary hover:underline">
-              Sign up
+              {t("signUp")}
             </Link>
           </div>
         </CardContent>

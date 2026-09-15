@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +16,8 @@ import { signupLocalAction } from "./actions"
 
 /** `local` - see login-form.tsx's comment; same reasoning applies here. */
 export function SignupForm({ local }: { local: boolean }) {
+  const t = useTranslations("auth.signup")
+  const tCommon = useTranslations("auth.common")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
@@ -70,9 +73,9 @@ export function SignupForm({ local }: { local: boolean }) {
       // class of bug as the duplicate organization/project membership
       // inserts fixed earlier: the trigger already does this.
 
-      router.push('/auth/login?message=Check your email to confirm your account')
+      router.push(`/auth/login?message=${encodeURIComponent(t("confirmEmailMessage"))}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      setError(err instanceof Error ? err.message : tCommon("somethingWentWrong"))
     } finally {
       setLoading(false)
     }
@@ -90,15 +93,15 @@ export function SignupForm({ local }: { local: boolean }) {
       />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
           <CardDescription>
-            Enter your information to create your Guidon account
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">{t("fullNameLabel")}</Label>
               <Input
                 id="fullName"
                 type="text"
@@ -109,7 +112,7 @@ export function SignupForm({ local }: { local: boolean }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -120,7 +123,7 @@ export function SignupForm({ local }: { local: boolean }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("passwordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -137,7 +140,7 @@ export function SignupForm({ local }: { local: boolean }) {
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Sign Up"}
+              {loading ? t("creatingAccount") : t("signUp")}
             </Button>
           </form>
 
@@ -148,9 +151,9 @@ export function SignupForm({ local }: { local: boolean }) {
           )}
 
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            {t("haveAccount")}{" "}
             <Link href="/auth/login" className="text-primary hover:underline">
-              Sign in
+              {t("signIn")}
             </Link>
           </div>
         </CardContent>

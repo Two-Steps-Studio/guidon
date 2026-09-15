@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,6 +27,7 @@ export function MemberActionsMenu({
   memberId: string;
   isOwner: boolean;
 }) {
+  const t = useTranslations("organizations.members");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -53,19 +55,19 @@ export function MemberActionsMenu({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" disabled={pending} aria-label="Member options">
+          <Button variant="ghost" size="icon" disabled={pending} aria-label={t("memberOptions")}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => runRoleChange("admin")}>Make Admin</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => runRoleChange("member")}>Make Member</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => runRoleChange("admin")}>{t("makeAdmin")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => runRoleChange("member")}>{t("makeMember")}</DropdownMenuItem>
           {isOwner && (
-            <DropdownMenuItem onClick={() => runRoleChange("owner")}>Make Owner</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => runRoleChange("owner")}>{t("makeOwner")}</DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={runRemove} className="text-destructive">
             <Trash2 className="h-4 w-4 mr-2" />
-            Remove
+            {t("remove")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { updateProfile, type ProfileFormState } from "./actions";
 import type { CurrentUser } from "@/lib/data/current-user";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 const initialState: ProfileFormState = { error: null };
 
@@ -63,6 +64,11 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
             <p className="text-xs text-muted-foreground">
               Email can&apos;t be changed here.
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="language">Language</Label>
+            <LanguageSwitcher />
           </div>
 
           {state.error && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +32,7 @@ export function SourceCardMenu({
   source: ContextSource;
   canDelete: boolean;
 }) {
+  const t = useTranslations("knowledge");
   const [showEdit, setShowEdit] = useState(false);
   // Bumped on every open so <EditSourceForm key={session}> below fully
   // remounts - useActionState's error otherwise survives close/reopen (this
@@ -53,7 +55,7 @@ export function SourceCardMenu({
       <div className="flex flex-col items-end gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={deleting} aria-label={`Options for ${source.title ?? "this source"}`}>
+            <Button variant="ghost" size="icon" disabled={deleting} aria-label={t("optionsForAria", { title: source.title ?? t("optionsForFallback") })}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -65,12 +67,12 @@ export function SourceCardMenu({
               }}
             >
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              {t("edit")}
             </DropdownMenuItem>
             {canDelete && (
               <DropdownMenuItem onClick={handleDelete} className="text-destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                {t("delete")}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -86,8 +88,8 @@ export function SourceCardMenu({
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-base">Edit knowledge entry</DialogTitle>
-            <DialogDescription>Update this entry.</DialogDescription>
+            <DialogTitle className="text-base">{t("editDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("editDialogDescription")}</DialogDescription>
           </DialogHeader>
           <EditSourceForm
             key={session}
@@ -110,6 +112,7 @@ function EditSourceForm({
   source: ContextSource;
   onClose: () => void;
 }) {
+  const t = useTranslations("knowledge");
   const updateWithIds = updateSource.bind(null, projectId, source.id);
   const [state, formAction, pending] = useActionState(updateWithIds, initialState);
   const submittedRef = useRef(false);
@@ -141,11 +144,11 @@ function EditSourceForm({
       )}
       <div className="flex justify-end gap-2 border-t border-border pt-4">
         <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={pending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" size="sm" disabled={pending}>
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save changes
+          {t("saveChanges")}
         </Button>
       </div>
     </form>

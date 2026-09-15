@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,8 @@ export default async function OrganizationMembersPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: orgId } = await params;
+  const t = await getTranslations("organizations.members");
+  const tCommon = await getTranslations("organizations.common");
   const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
   const canManage = canManageOrg(access.role);
 
@@ -73,13 +76,13 @@ export default async function OrganizationMembersPage({
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/organizations/${orgId}`} aria-label="Back to organization">
+            <Link href={`/organizations/${orgId}`} aria-label={t("backToOrganization")}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold">Organization Members</h1>
-            <p className="text-muted-foreground">Manage team members and permissions</p>
+            <h1 className="text-3xl font-bold">{t("title")}</h1>
+            <p className="text-muted-foreground">{t("subtitle")}</p>
           </div>
           {canManage && <AddMemberDialog orgId={orgId} isOwner={access.role === "owner"} />}
         </div>
@@ -87,8 +90,8 @@ export default async function OrganizationMembersPage({
         {members.length === 0 ? (
           <EmptyState
             icon={Users}
-            title="No members yet"
-            description="Add team members to collaborate on projects"
+            title={t("emptyTitle")}
+            description={t("emptyDescription")}
             action={
               canManage ? (
                 <AddMemberDialog
@@ -97,7 +100,7 @@ export default async function OrganizationMembersPage({
                   trigger={
                     <Button>
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Member
+                      {t("addMember")}
                     </Button>
                   }
                 />
@@ -123,7 +126,7 @@ export default async function OrganizationMembersPage({
                   <div className="flex items-center gap-4">
                     <Badge variant={member.role === "owner" ? "default" : member.role === "admin" ? "secondary" : "outline"}>
                       <Shield className="h-3 w-3 mr-1" />
-                      {member.role}
+                      {tCommon("role", { role: member.role })}
                     </Badge>
                     {canManage && (
                       <MemberActionsMenu

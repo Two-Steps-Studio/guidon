@@ -1,6 +1,16 @@
 import { AlertTriangle, BookOpen, CheckCircle2, Clock, FileText, Lightbulb, type LucideIcon } from "lucide-react";
 import type { MemoryType } from "@/types/context";
 
+export const MEMORY_TYPES: MemoryType[] = [
+  "fact",
+  "project_rule",
+  "constraint",
+  "preference",
+  "decision_summary",
+  "observation",
+  "ai_insight",
+];
+
 export const MEMORY_TYPE_CONFIG: Record<MemoryType, { label: string; color: string; icon: LucideIcon }> = {
   fact: { label: "Fact", color: "bg-primary/10 text-primary", icon: FileText },
   project_rule: { label: "Rule", color: "bg-warning/10 text-warning", icon: CheckCircle2 },

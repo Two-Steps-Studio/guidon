@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Bot, Check } from "lucide-react";
@@ -15,13 +16,13 @@ interface AiPermissions {
   can_delete_tasks: boolean;
 }
 
-const PERMISSION_LABELS: { field: keyof AiPermissions; label: string }[] = [
-  { field: "can_read_context", label: "Read project context" },
-  { field: "can_create_comments", label: "Create comments" },
-  { field: "can_change_status", label: "Change task status" },
-  { field: "can_complete_tasks", label: "Complete tasks" },
-  { field: "can_modify_settings", label: "Modify project settings" },
-  { field: "can_delete_tasks", label: "Delete tasks" },
+const PERMISSION_KEYS: { field: keyof AiPermissions; labelKey: string }[] = [
+  { field: "can_read_context", labelKey: "permReadContext" },
+  { field: "can_create_comments", labelKey: "permCreateComments" },
+  { field: "can_change_status", labelKey: "permChangeStatus" },
+  { field: "can_complete_tasks", labelKey: "permCompleteTasks" },
+  { field: "can_modify_settings", labelKey: "permModifySettings" },
+  { field: "can_delete_tasks", labelKey: "permDeleteTasks" },
 ];
 
 const initialState: AiPermissionsState = { error: null };
@@ -35,6 +36,7 @@ export function AiPermissionsForm({
   permissions: AiPermissions;
   allowAutoComplete: boolean;
 }) {
+  const t = useTranslations("settings");
   const updateWithId = updateAiPermissions.bind(null, projectId);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
 
@@ -43,14 +45,14 @@ export function AiPermissionsForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
-          AI Permissions
+          {t("aiPermissionsTitle")}
         </CardTitle>
-        <CardDescription>What an AI agent using this project&apos;s API keys is allowed to do.</CardDescription>
+        <CardDescription>{t("aiPermissionsDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            {PERMISSION_LABELS.map(({ field, label }) => (
+            {PERMISSION_KEYS.map(({ field, labelKey }) => (
               <label key={field} className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -58,7 +60,7 @@ export function AiPermissionsForm({
                   defaultChecked={permissions[field]}
                   className="h-4 w-4"
                 />
-                {label}
+                {t(labelKey)}
               </label>
             ))}
           </div>
@@ -71,10 +73,10 @@ export function AiPermissionsForm({
                 defaultChecked={allowAutoComplete}
                 className="h-4 w-4"
               />
-              Allow AI to auto-complete tasks
+              {t("allowAutoComplete")}
             </label>
             <p className="mt-1 text-xs text-muted-foreground">
-              Without this, AI can move tasks to Review but a human always makes the final call to Done.
+              {t("allowAutoCompleteHelp")}
             </p>
           </div>
 
@@ -87,7 +89,7 @@ export function AiPermissionsForm({
 
           <Button type="submit" disabled={saving}>
             <Check className="h-4 w-4 mr-2" />
-            {saving ? "Saving..." : "Save AI Settings"}
+            {saving ? t("saving") : t("saveAiSettings")}
           </Button>
         </form>
       </CardContent>

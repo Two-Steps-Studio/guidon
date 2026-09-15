@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, RotateCcw } from "lucide-react";
@@ -20,6 +21,8 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("errors.generic");
+
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -31,13 +34,13 @@ export default function GlobalError({
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-destructive/10">
             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold">Something went wrong</h3>
+          <h3 className="mb-2 text-lg font-semibold">{t("title")}</h3>
           <p className="mb-4 max-w-md text-muted-foreground">
-            {error.message || "An unexpected error occurred while loading this page."}
+            {error.message || t("defaultMessage")}
           </p>
           <Button onClick={reset}>
             <RotateCcw className="h-4 w-4 mr-2" />
-            Try again
+            {t("retry")}
           </Button>
         </CardContent>
       </Card>

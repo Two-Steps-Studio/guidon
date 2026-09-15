@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { canCommentOnProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -72,6 +73,7 @@ export default async function ProjectWorkPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const tWork = await getTranslations("work");
   const access = await requireProjectAccess(projectId);
 
   let tasks: Task[];
@@ -114,7 +116,7 @@ export default async function ProjectWorkPage({
     members = membersRes.rows.map((row) => ({
       id: row.profile_id ?? row.user_id,
       full_name: row.full_name ?? null,
-      email: row.email ?? "Unknown member",
+      email: row.email ?? tWork("unknownMember"),
       avatar_url: row.avatar_url ?? null,
     }));
 
@@ -144,7 +146,7 @@ export default async function ProjectWorkPage({
       return {
         id: profile?.id ?? row.user_id,
         full_name: profile?.full_name ?? null,
-        email: profile?.email ?? "Unknown member",
+        email: profile?.email ?? tWork("unknownMember"),
         avatar_url: profile?.avatar_url ?? null,
       };
     });
@@ -154,7 +156,10 @@ export default async function ProjectWorkPage({
     columnOverrides = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
-  const columns = resolveBoardColumns(columnOverrides);
+  const columns = resolveBoardColumns(columnOverrides, (status) => ({
+    label: tWork("status", { status }),
+    hint: tWork("statusHint", { status }),
+  }));
 
   return (
     <WorkBoard

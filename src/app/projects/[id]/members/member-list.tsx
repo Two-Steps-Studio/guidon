@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AlertCircle, Loader2, UserMinus, UserPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,20 +22,20 @@ const ASSIGNABLE_BY: Record<"owner" | "admin", ProjectRole[]> = {
   admin: ["admin", "developer", "tester", "viewer"],
 };
 
-const ROLE_LABELS: Record<ProjectRole, string> = {
-  owner: "Owner",
-  admin: "Admin",
-  developer: "Developer",
-  tester: "Tester",
-  viewer: "Viewer",
+const ROLE_LABEL_KEYS: Record<ProjectRole, string> = {
+  owner: "roleOwner",
+  admin: "roleAdmin",
+  developer: "roleDeveloper",
+  tester: "roleTester",
+  viewer: "roleViewer",
 };
 
-const ROLE_HINTS: Record<ProjectRole, string> = {
-  owner: "Full control, including deleting the project",
-  admin: "Manage members, settings, roadmap and files",
-  developer: "Create and edit tasks, decisions and knowledge",
-  tester: "Comment on tasks; read everything else",
-  viewer: "Read-only access",
+const ROLE_HINT_KEYS: Record<ProjectRole, string> = {
+  owner: "roleHintOwner",
+  admin: "roleHintAdmin",
+  developer: "roleHintDeveloper",
+  tester: "roleHintTester",
+  viewer: "roleHintViewer",
 };
 
 interface ProjectMemberRow {
@@ -60,6 +61,7 @@ export function MemberList({
   initialCandidates: TaskCardMember[];
   projectColor?: string;
 }) {
+  const t = useTranslations("members");
   const [members, setMembers] = useState(initialMembers);
   const [candidates, setCandidates] = useState(initialCandidates);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,7 @@ export function MemberList({
         setMembers((current) => current.map((m) => (m.id === member.id ? { ...m, role } : m)));
       }
     } catch {
-      setError("Could not change that role. Please try again.");
+      setError(t("couldNotChangeRole"));
     } finally {
       setBusyId(null);
     }
@@ -111,7 +113,7 @@ export function MemberList({
         }
       }
     } catch {
-      setError("Could not remove that member. Please try again.");
+      setError(t("couldNotRemoveMember"));
     } finally {
       setBusyId(null);
     }
@@ -122,9 +124,9 @@ export function MemberList({
       <div className="mx-auto max-w-3xl p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Members</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Who can see and change this project.
+              {t("subtitle")}
               {" · "}
               <span className="tabular-nums">{members.length}</span>
             </p>
@@ -137,13 +139,13 @@ export function MemberList({
               disabled={candidates.length === 0}
               title={
                 candidates.length === 0
-                  ? "Everyone in the organization is already on this project"
+                  ? t("everyoneAlready")
                   : undefined
               }
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <UserPlus className="h-4 w-4" />
-              Add member
+              {t("addMember")}
             </Button>
           )}
         </header>
@@ -156,21 +158,20 @@ export function MemberList({
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="flex-1">{error}</span>
             <button type="button" onClick={() => setError(null)} className="underline underline-offset-2">
-              Dismiss
+              {t("dismiss")}
             </button>
           </div>
         )}
 
         {!canManage && myRole && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-            You have <strong className="font-medium">{myRole}</strong> access - only owners and admins
-            can change membership.
+            {t.rich("readOnlyAccess", { role: myRole, b: (chunks) => <strong className="font-medium">{chunks}</strong> })}
           </p>
         )}
 
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
           {members.map((member) => {
-            const name = member.profile?.full_name || member.profile?.email || "Unknown member";
+            const name = member.profile?.full_name || member.profile?.email || t("unknownMember");
             const editable = canEdit(member);
             const lastOwner = isLastOwner(member);
 
@@ -187,7 +188,7 @@ export function MemberList({
                   <p className="truncate text-sm font-medium text-foreground">
                     {name}
                     {member.user_id === currentUserId && (
-                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">you</span>
+                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">{t("you")}</span>
                     )}
                   </p>
                   {member.profile?.full_name && (
@@ -197,7 +198,7 @@ export function MemberList({
 
                 {editable && !lastOwner ? (
                   <Select
-                    aria-label={`Role for ${name}`}
+                    aria-label={t("roleForAria", { name })}
                     className="h-8 w-36"
                     value={member.role}
                     disabled={busyId === member.id}
@@ -206,16 +207,16 @@ export function MemberList({
                     {/* Keep the current role selectable even if this actor could not assign it. */}
                     {Array.from(new Set([member.role, ...assignable])).map((role) => (
                       <option key={role} value={role}>
-                        {ROLE_LABELS[role]}
+                        {t(ROLE_LABEL_KEYS[role])}
                       </option>
                     ))}
                   </Select>
                 ) : (
                   <span
                     className="rounded border border-border bg-muted px-2 py-1 text-xs text-muted-foreground"
-                    title={lastOwner ? "A project must keep one owner" : undefined}
+                    title={lastOwner ? t("lastOwnerTitle") : undefined}
                   >
-                    {ROLE_LABELS[member.role]}
+                    {t(ROLE_LABEL_KEYS[member.role])}
                   </span>
                 )}
 
@@ -223,7 +224,7 @@ export function MemberList({
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={`Remove ${name}`}
+                    aria-label={t("removeAria", { name })}
                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     disabled={busyId === member.id}
                     onClick={() => void handleRemove(member)}
@@ -242,7 +243,7 @@ export function MemberList({
 
         {members.length > 0 && (
           <p className="mt-3 text-xs text-muted-foreground">
-            A project always keeps at least one owner - the last one cannot be removed or demoted.
+            {t("lastOwnerNote")}
           </p>
         )}
       </div>
@@ -277,6 +278,7 @@ function AddMemberDialog({
   onClose: () => void;
   onAdded: (row: MemberRow, profile: TaskCardMember | null) => void;
 }) {
+  const t = useTranslations("members");
   const [userId, setUserId] = useState(candidates[0]?.id ?? "");
   const [role, setRole] = useState<ProjectRole>(
     assignable.includes("developer") ? "developer" : assignable[0]
@@ -295,14 +297,14 @@ function AddMemberDialog({
       const result = await addMember(projectId, userId, role);
 
       if (result.error || !result.member) {
-        setError(result.error ?? "Could not add that member");
+        setError(result.error ?? t("couldNotAddMember"));
         setSubmitting(false);
         return;
       }
 
       onAdded(result.member, candidates.find((c) => c.id === userId) ?? null);
     } catch {
-      setError("Could not add that member. Please try again.");
+      setError(t("couldNotAddMemberRetry"));
       setSubmitting(false);
     }
   };
@@ -311,15 +313,15 @@ function AddMemberDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-base">Add member</DialogTitle>
+          <DialogTitle className="text-base">{t("dialogTitle")}</DialogTitle>
           <DialogDescription>
-            People must already belong to the organization that owns this project.
+            {t("dialogDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="member-user">Person</Label>
+            <Label htmlFor="member-user">{t("personLabel")}</Label>
             <Select id="member-user" value={userId} onChange={(event) => setUserId(event.target.value)}>
               {candidates.map((candidate) => (
                 <option key={candidate.id} value={candidate.id}>
@@ -330,15 +332,15 @@ function AddMemberDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="member-role">Role</Label>
+            <Label htmlFor="member-role">{t("roleLabel")}</Label>
             <Select id="member-role" value={role} onChange={(event) => setRole(event.target.value as ProjectRole)}>
               {assignable.map((value) => (
                 <option key={value} value={value}>
-                  {ROLE_LABELS[value]}
+                  {t(ROLE_LABEL_KEYS[value])}
                 </option>
               ))}
             </Select>
-            <p className="text-xs text-muted-foreground">{ROLE_HINTS[role]}</p>
+            <p className="text-xs text-muted-foreground">{t(ROLE_HINT_KEYS[role])}</p>
           </div>
 
           {error && (
@@ -352,11 +354,11 @@ function AddMemberDialog({
 
           <div className="flex justify-end gap-2 border-t border-border pt-4">
             <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={submitting || !userId}>
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Add member
+              {t("addMember")}
             </Button>
           </div>
         </form>

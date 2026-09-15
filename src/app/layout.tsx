@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
@@ -75,11 +77,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <body className="min-h-screen bg-background text-foreground">
-        <main>{children}</main>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <main>{children}</main>
+        </NextIntlClientProvider>
       </body>
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA
           property - only load it when this is actually Guidon Cloud, same
