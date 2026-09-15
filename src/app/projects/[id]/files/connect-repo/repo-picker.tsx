@@ -3,12 +3,14 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Building2, Lock, Loader2, Plus, Search, User } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { reposForPicker, installationsForPicker, connectRepo } from "../github-actions";
 import type { GithubInstallationSummary, GithubRepoSummary } from "@/lib/github/client";
 
 export function RepoPicker({ projectId, installUrl }: { projectId: string; installUrl: string | null }) {
+  const t = useTranslations("files");
   const router = useRouter();
   const [installations, setInstallations] = useState<GithubInstallationSummary[]>([]);
   const [installationsLoading, setInstallationsLoading] = useState(true);
@@ -94,12 +96,12 @@ export function RepoPicker({ projectId, installUrl }: { projectId: string; insta
         {installationsLoading && (
           <span className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
-            Checking accounts...
+            {t("checkingAccounts")}
           </span>
         )}
         {!installationsLoading && !installationsError && installations.length === 0 && (
           <span className="px-2 text-xs text-muted-foreground">
-            The GitHub app isn&apos;t installed on any account yet.
+            {t("noAppInstalled")}
           </span>
         )}
         {installUrl && (
@@ -108,7 +110,7 @@ export function RepoPicker({ projectId, installUrl }: { projectId: string; insta
             className="flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
             <Plus className="h-3.5 w-3.5" />
-            Install on another account
+            {t("installOnAnotherAccount")}
           </a>
         )}
       </div>
@@ -116,7 +118,7 @@ export function RepoPicker({ projectId, installUrl }: { projectId: string; insta
       {installationsError && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          Couldn&apos;t load accounts: {installationsError}
+          {t("couldNotLoadAccounts", { error: installationsError })}
         </div>
       )}
 
@@ -126,7 +128,7 @@ export function RepoPicker({ projectId, installUrl }: { projectId: string; insta
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${selectedInstallation.accountLogin}'s repositories...`}
+            placeholder={t("searchRepos", { account: selectedInstallation.accountLogin })}
             className="pl-9"
           />
         </div>
@@ -142,10 +144,10 @@ export function RepoPicker({ projectId, installUrl }: { projectId: string; insta
       {loading ? (
         <p className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading repositories...
+          {t("loadingRepos")}
         </p>
       ) : repos.length === 0 && !error ? (
-        <p className="p-8 text-center text-sm text-muted-foreground">No repositories found.</p>
+        <p className="p-8 text-center text-sm text-muted-foreground">{t("noReposFound")}</p>
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border">
           {repos.map((repo) => (
@@ -163,7 +165,7 @@ export function RepoPicker({ projectId, installUrl }: { projectId: string; insta
                 {connectingRepo === repo.fullName ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  "Connect"
+                  t("connect")
                 )}
               </Button>
             </li>

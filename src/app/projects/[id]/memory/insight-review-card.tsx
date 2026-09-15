@@ -10,6 +10,7 @@
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { AlertCircle, Check, Loader2, Pencil, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
@@ -40,6 +41,8 @@ export function InsightReviewCard({
   projectId: string;
   memory: ProjectMemory;
 }) {
+  const t = useTranslations("memory");
+  const tCommon = useTranslations("common");
   const typeConfig = MEMORY_TYPE_CONFIG[memory.memory_type];
   const TypeIcon = typeConfig.icon;
 
@@ -77,11 +80,11 @@ export function InsightReviewCard({
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
             <TypeIcon className="h-5 w-5 text-muted-foreground" />
-            <Badge className={typeConfig.color}>{typeConfig.label}</Badge>
-            <Badge variant="outline">Pending review</Badge>
+            <Badge className={typeConfig.color}>{tCommon("memoryType", { type: memory.memory_type })}</Badge>
+            <Badge variant="outline">{t("pendingReviewBadge")}</Badge>
             {memory.confidence != null && (
               <span className="text-xs text-muted-foreground">
-                Confidence {Math.round(memory.confidence * 100)}%
+                {t("confidence", { percent: Math.round(memory.confidence * 100) })}
               </span>
             )}
           </div>
@@ -89,7 +92,7 @@ export function InsightReviewCard({
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Generated {new Date(memory.created_at).toLocaleDateString()}
+            {t("generatedOn", { date: new Date(memory.created_at).toLocaleDateString() })}
           </p>
 
           {actionError && (
@@ -102,7 +105,7 @@ export function InsightReviewCard({
           <div className="flex gap-2">
             <Button size="sm" onClick={handleAccept} disabled={busy}>
               {accepting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-              Accept
+              {t("accept")}
             </Button>
             <Button
               size="sm"
@@ -114,7 +117,7 @@ export function InsightReviewCard({
               disabled={busy}
             >
               <Pencil className="h-4 w-4" />
-              Correct
+              {t("correct")}
             </Button>
             <Button
               size="sm"
@@ -124,7 +127,7 @@ export function InsightReviewCard({
               className="text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               {rejecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-              Reject
+              {t("reject")}
             </Button>
           </div>
         </CardContent>
@@ -133,9 +136,9 @@ export function InsightReviewCard({
       <Dialog open={correcting} onOpenChange={setCorrecting}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Correct &amp; Accept Insight</DialogTitle>
+            <DialogTitle>{t("correctDialogTitle")}</DialogTitle>
             <DialogDescription>
-              Rewrite the content before it becomes a trusted, verified fact.
+              {t("correctDialogDescription")}
             </DialogDescription>
           </DialogHeader>
           <CorrectInsightForm
@@ -159,6 +162,7 @@ function CorrectInsightForm({
   memory: ProjectMemory;
   onClose: () => void;
 }) {
+  const t = useTranslations("memory");
   const correctWithIds = correctAndAcceptInsight.bind(null, projectId, memory.id);
   const [correctState, correctAction, correctPending] = useActionState(correctWithIds, initialState);
   const submittedRef = useRef(false);
@@ -179,7 +183,7 @@ function CorrectInsightForm({
       className="space-y-4"
     >
       <div className="space-y-2">
-        <Label htmlFor={`correct-content-${memory.id}`}>Content</Label>
+        <Label htmlFor={`correct-content-${memory.id}`}>{t("contentLabel")}</Label>
         <Textarea
           id={`correct-content-${memory.id}`}
           name="content"
@@ -196,16 +200,16 @@ function CorrectInsightForm({
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={correctPending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={correctPending}>
           {correctPending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "Accept as Fact"
+            t("acceptAsFact")
           )}
         </Button>
       </div>

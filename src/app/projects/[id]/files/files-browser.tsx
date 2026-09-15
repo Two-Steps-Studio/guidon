@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -81,6 +82,7 @@ export function FilesBrowser({
   projectColor?: string;
   githubRepoInfo: ProjectGithubRepoInfo | null;
 }) {
+  const t = useTranslations("files");
   const uploadWithProject = uploadFile.bind(null, projectId);
   const [uploadState, uploadAction, uploading] = useActionState(uploadWithProject, initialUploadState);
   const [dragOver, setDragOver] = useState(false);
@@ -115,8 +117,8 @@ export function FilesBrowser({
     <>
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Files</h1>
-          <p className="text-muted-foreground">Project documents and assets</p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         {canWrite && (
           <>
@@ -131,12 +133,12 @@ export function FilesBrowser({
               {uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading...
+                  {t("uploading")}
                 </>
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload File
+                  {t("uploadFile")}
                 </>
               )}
             </Button>
@@ -170,10 +172,10 @@ export function FilesBrowser({
         >
           <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            Drag and drop files here, or click the upload button
+            {t("dragDropHint")}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Supported: .txt, .md, .pdf, images, audio, video
+            {t("supportedFormats")}
           </p>
         </div>
       )}
@@ -181,13 +183,13 @@ export function FilesBrowser({
       {files.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="No files yet"
-          description="Upload project documents and assets"
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
           action={
             canWrite ? (
               <Button onClick={() => fileInputRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-2" />
-                Upload File
+                {t("uploadFile")}
               </Button>
             ) : undefined
           }
@@ -226,6 +228,7 @@ function FileCard({
      stable reference from a module-level lookup table (FILE_TYPE_ICONS), not
      a freshly constructed component, so this is safe despite the lint rule's
      static analysis being unable to prove it. */
+  const t = useTranslations("files");
   const Icon = getFileIcon(file.mime_type || "");
   const colorClass = getFileColor(file.mime_type || "");
   const [pending, startTransition] = useTransition();
@@ -257,7 +260,7 @@ function FileCard({
           <div
             role="button"
             tabIndex={0}
-            aria-label={`Preview ${file.name}`}
+            aria-label={t("previewAria", { name: file.name })}
             onClick={onPreview}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -283,7 +286,7 @@ function FileCard({
                 size="icon"
                 className="h-8 w-8"
                 disabled={pending}
-                aria-label={`Options for ${file.name}`}
+                aria-label={t("optionsForAria", { name: file.name })}
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
@@ -291,12 +294,12 @@ function FileCard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-2" />
-                Download
+                {t("download")}
               </DropdownMenuItem>
               {canManage && (
                 <DropdownMenuItem onClick={handleDelete} className="text-destructive">
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
+                  {t("delete")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Activity as ActivityIcon } from "lucide-react";
@@ -14,8 +15,8 @@ interface ActorProfile {
   email: string;
 }
 
-function nameFor(profile: ActorProfile | undefined): string {
-  if (!profile) return "Someone";
+function nameFor(profile: ActorProfile | undefined, fallback: string): string {
+  if (!profile) return fallback;
   return profile.full_name || profile.email;
 }
 
@@ -34,6 +35,7 @@ export default async function ProjectActivityPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const t = await getTranslations("activity");
   const access = await requireProjectAccess(projectId);
 
   const entries = await getRecentActivity(projectId);
@@ -64,15 +66,15 @@ export default async function ProjectActivityPage({
   return (
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Activity</h1>
-        <p className="text-muted-foreground">Recent changes on this project</p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {entries.length === 0 ? (
         <EmptyState
           icon={ActivityIcon}
-          title="No activity yet"
-          description="Changes on this project will show up here once they happen."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
         />
       ) : (
         <Card>
@@ -82,17 +84,18 @@ export default async function ProjectActivityPage({
                 const config = configFor(entry.action);
                 const Icon = config.icon;
                 const actor = entry.user_id ? profilesById.get(entry.user_id) : undefined;
+                const actionLabel = t("action", { action: entry.action });
 
                 return (
                   <li key={entry.id} className="flex items-start gap-3 px-4 py-3">
-                    <Icon 
+                    <Icon
                       className={`h-4 w-4 mt-0.5 shrink-0 ${config.color}`}
                       style={access.project.color ? { color: access.project.color } : undefined}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">
-                        <span className="font-medium">{nameFor(actor)}</span>{" "}
-                        <span className="text-muted-foreground">{config.label.toLowerCase()}</span>
+                        <span className="font-medium">{nameFor(actor, t("someone"))}</span>{" "}
+                        <span className="text-muted-foreground">{actionLabel.toLowerCase()}</span>
                         {entry.entity_type && (
                           <span className="text-muted-foreground"> · {entry.entity_type}</span>
                         )}

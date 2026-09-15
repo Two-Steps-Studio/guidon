@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { canManageProject, requireProjectAccess } from "@/lib/data/project-access";
 import { createGithubOAuthState } from "@/lib/github/oauth-state";
 import { RepoPicker } from "./repo-picker";
@@ -14,6 +15,7 @@ export default async function ConnectRepoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: projectId } = await params;
+  const t = await getTranslations("files");
   const access = await requireProjectAccess(projectId);
 
   if (!canManageProject(access.role)) {
@@ -27,9 +29,9 @@ export default async function ConnectRepoPage({
 
   return (
     <div className="container mx-auto max-w-2xl px-6 py-8">
-      <h1 className="text-2xl font-bold">Choose a repository</h1>
+      <h1 className="text-2xl font-bold">{t("chooseRepoTitle")}</h1>
       <p className="mb-6 text-muted-foreground">
-        Pick which GitHub repository to link to this project.
+        {t("chooseRepoDescription")}
       </p>
       <RepoPicker projectId={projectId} installUrl={installUrl} />
     </div>
