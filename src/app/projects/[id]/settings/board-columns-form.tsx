@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,23 +10,6 @@ import { BOARD_COLUMNS } from "@/lib/work/task-board";
 import { updateBoardColumns, type BoardColumnInput } from "./board-columns-actions";
 import type { BoardColumnOverride } from "@/lib/work/task-board";
 
-function initialRows(overrides: BoardColumnOverride[]): BoardColumnInput[] {
-  const byStatus = new Map(overrides.map((o) => [o.status, o]));
-  return BOARD_COLUMNS.map((column, index) => {
-    const override = byStatus.get(column.status);
-    return {
-      status: column.status,
-      label: override?.label ?? column.label,
-      sort_order: override?.sort_order ?? index,
-      hidden: override?.hidden ?? false,
-    };
-  }).sort((a, b) => a.sort_order - b.sort_order);
-}
-
-function defaultLabelFor(status: BoardColumnInput["status"]): string {
-  return BOARD_COLUMNS.find((c) => c.status === status)?.label ?? status;
-}
-
 export function BoardColumnsForm({
   projectId,
   overrides,
@@ -33,7 +17,22 @@ export function BoardColumnsForm({
   projectId: string;
   overrides: BoardColumnOverride[];
 }) {
-  const [rows, setRows] = useState<BoardColumnInput[]>(() => initialRows(overrides));
+  const t = useTranslations("settings");
+  const tWork = useTranslations("work");
+  const defaultLabelFor = (status: BoardColumnInput["status"]) => tWork("status", { status });
+
+  const [rows, setRows] = useState<BoardColumnInput[]>(() => {
+    const byStatus = new Map(overrides.map((o) => [o.status, o]));
+    return BOARD_COLUMNS.map((column, index) => {
+      const override = byStatus.get(column.status);
+      return {
+        status: column.status,
+        label: override?.label ?? tWork("status", { status: column.status }),
+        sort_order: override?.sort_order ?? index,
+        hidden: override?.hidden ?? false,
+      };
+    }).sort((a, b) => a.sort_order - b.sort_order);
+  });
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -79,11 +78,10 @@ export function BoardColumnsForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Columns3 className="h-5 w-5" />
-          Board Columns
+          {t("boardColumnsTitle")}
         </CardTitle>
         <CardDescription>
-          Rename, reorder, or hide columns on this project&apos;s task board. The underlying task
-          statuses don&apos;t change - this only affects labels and what&apos;s shown.
+          {t("boardColumnsDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -99,7 +97,7 @@ export function BoardColumnsForm({
                 disabled={index === 0}
                 onClick={() => move(index, -1)}
                 className="text-xs leading-none text-muted-foreground hover:text-foreground disabled:opacity-30"
-                aria-label={`Move ${row.label} up`}
+                aria-label={t("moveUpAria", { label: row.label })}
               >
                 ▲
               </button>
@@ -108,7 +106,7 @@ export function BoardColumnsForm({
                 disabled={index === rows.length - 1}
                 onClick={() => move(index, 1)}
                 className="text-xs leading-none text-muted-foreground hover:text-foreground disabled:opacity-30"
-                aria-label={`Move ${row.label} down`}
+                aria-label={t("moveDownAria", { label: row.label })}
               >
                 ▼
               </button>
@@ -124,7 +122,7 @@ export function BoardColumnsForm({
               variant="ghost"
               size="sm"
               onClick={() => toggleHidden(index)}
-              title={row.hidden ? "Hidden - click to show" : "Visible - click to hide"}
+              title={row.hidden ? t("hiddenClickToShow") : t("visibleClickToHide")}
             >
               {row.hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
@@ -141,9 +139,9 @@ export function BoardColumnsForm({
         <div className="flex items-center gap-3">
           <Button type="button" onClick={handleSave} disabled={saving}>
             <Check className="h-4 w-4 mr-2" />
-            {saving ? "Saving..." : "Save Board Layout"}
+            {saving ? t("saving") : t("saveBoardLayout")}
           </Button>
-          {saved && !saving && <span className="text-sm text-success">Saved.</span>}
+          {saved && !saving && <span className="text-sm text-success">{t("saved")}</span>}
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,20 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, AlertTriangle, FolderKanban, Loader2, Settings, Trash2, X } from "lucide-react";
 import { deleteProject, updateProjectSettings, type SettingsFormState } from "./actions";
 import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
-import { PROJECT_TYPE_LABELS, PROJECT_METHODOLOGY_LABELS } from "@/types/project";
 
-const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
-  { value: "active", label: "Active" },
-  { value: "archived", label: "Archived" },
-  { value: "deleted", label: "Deleted" },
-];
-
-const PROJECT_TYPE_OPTIONS = Object.entries(PROJECT_TYPE_LABELS) as [ProjectType, string][];
-
-const PROJECT_METHODOLOGY_OPTIONS = Object.entries(PROJECT_METHODOLOGY_LABELS) as [
-  ProjectMethodology,
-  string,
-][];
+const STATUS_VALUES: ProjectStatus[] = ["active", "archived", "deleted"];
+const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
+const PROJECT_METHODOLOGY_VALUES: ProjectMethodology[] = ["standard", "scrum"];
 
 const initialState: SettingsFormState = { error: null };
 
@@ -48,6 +39,8 @@ export function SettingsForm({
    *  to someone who could actually use it. */
   isOwner: boolean;
 }) {
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
   const updateWithId = updateProjectSettings.bind(null, project.id);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
   const [technologies, setTechnologies] = useState<string[]>(initialTechnologies);
@@ -87,13 +80,13 @@ export function SettingsForm({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            General
+            {t("general")}
           </CardTitle>
-          <CardDescription>Basic project information</CardDescription>
+          <CardDescription>{t("generalDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Project Image</Label>
+            <Label>{t("projectImage")}</Label>
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 rounded-md">
                 <AvatarImage src={project.avatar_url || undefined} className="object-cover" />
@@ -104,54 +97,54 @@ export function SettingsForm({
               <div className="flex-1 space-y-1">
                 <Input id="avatar" name="avatar" type="file" accept="image/*" />
                 <p className="text-xs text-muted-foreground">
-                  Upload an image for this project. Leave blank to keep the current one.
+                  {t("projectImageHelp")}
                 </p>
               </div>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="name">Project Name</Label>
+            <Label htmlFor="name">{t("nameLabel")}</Label>
             <Input id="name" name="name" defaultValue={project.name} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t("descriptionLabel")}</Label>
             <Textarea id="description" name="description" defaultValue={project.description ?? ""} rows={4} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t("statusLabel")}</Label>
             <select
               id="status"
               name="status"
               defaultValue={project.status}
               className="w-full px-3 py-2 border rounded-md bg-background"
             >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+              {STATUS_VALUES.map((value) => (
+                <option key={value} value={value}>
+                  {tCommon("projectStatus", { status: value })}
                 </option>
               ))}
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="projectType">Project Type</Label>
+            <Label htmlFor="projectType">{t("projectTypeLabel")}</Label>
             <select
               id="projectType"
               name="projectType"
               defaultValue={project.project_type ?? ""}
               className="w-full px-3 py-2 border rounded-md bg-background"
             >
-              <option value="">Not set</option>
-              {PROJECT_TYPE_OPTIONS.map(([value, label]) => (
+              <option value="">{t("notSet")}</option>
+              {PROJECT_TYPE_VALUES.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {tCommon("projectType", { type: value })}
                 </option>
               ))}
             </select>
           </div>
           <div className="space-y-2">
-            <Label>Workflow</Label>
+            <Label>{t("workflowLabel")}</Label>
             <div className="flex gap-4">
-              {PROJECT_METHODOLOGY_OPTIONS.map(([value, label]) => (
+              {PROJECT_METHODOLOGY_VALUES.map((value) => (
                 <label key={value} className="flex items-center gap-2 text-sm">
                   <input
                     type="radio"
@@ -159,17 +152,16 @@ export function SettingsForm({
                     value={value}
                     defaultChecked={project.methodology === value}
                   />
-                  {label}
+                  {tCommon("projectMethodology", { methodology: value })}
                 </label>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Scrum adds sprints, backlog, and story points — coming soon. For now this
-              just labels the project.
+              {t("workflowHelp")}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="color">Project Color</Label>
+            <Label htmlFor="color">{t("colorLabel")}</Label>
             <div className="flex items-center gap-3">
               <input
                 id="color"
@@ -192,12 +184,12 @@ export function SettingsForm({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Choose a color to personalize your project. It will be used throughout the interface.
+              {t("colorHelp")}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="technologiesInput">Technologies (press Enter to add)</Label>
-            <Input id="technologiesInput" onKeyDown={handleTechnologyAdd} placeholder="Add technology..." />
+            <Label htmlFor="technologiesInput">{t("technologiesLabel")}</Label>
+            <Input id="technologiesInput" onKeyDown={handleTechnologyAdd} placeholder={t("technologiesPlaceholder")} />
             {technologies.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {technologies.map((tech) => (
@@ -223,31 +215,30 @@ export function SettingsForm({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Danger Zone
+              {t("dangerZone")}
             </CardTitle>
-            <CardDescription>Irreversible and destructive actions</CardDescription>
+            <CardDescription>{t("dangerZoneDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium">Delete this project</h4>
+                <h4 className="font-medium">{t("deleteProjectTitle")}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Once deleted, all project data will be permanently removed.
+                  {t("deleteProjectDescription")}
                 </p>
               </div>
               <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <DialogTrigger asChild>
                   <Button variant="destructive" type="button">
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Project
+                    {t("deleteProjectButton")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Delete Project</DialogTitle>
+                    <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
                     <DialogDescription>
-                      This action cannot be undone. This will permanently delete the project and
-                      all associated data including tasks, files, decisions, and memory.
+                      {t("deleteDialogDescription")}
                     </DialogDescription>
                   </DialogHeader>
                   {deleteError && (
@@ -263,16 +254,16 @@ export function SettingsForm({
                       onClick={() => setShowDeleteDialog(false)}
                       disabled={deleting}
                     >
-                      Cancel
+                      {t("cancel")}
                     </Button>
                     <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
                       {deleting ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Deleting...
+                          {t("deleting")}
                         </>
                       ) : (
-                        "Delete Project"
+                        t("deleteProjectButton")
                       )}
                     </Button>
                   </div>
@@ -295,10 +286,10 @@ export function SettingsForm({
           {saving ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "Save Changes"
+            t("saveChanges")
           )}
         </Button>
       </div>

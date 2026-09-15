@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { AlertCircle, Download, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { exportProject } from "./export-actions";
 
 export function ExportProjectCard({ projectId }: { projectId: string }) {
+  const t = useTranslations("settings");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +20,7 @@ export function ExportProjectCard({ projectId }: { projectId: string }) {
     setPending(false);
 
     if (result.error || !result.contents || !result.filename) {
-      setError(result.error ?? "Export failed.");
+      setError(result.error ?? t("exportFailed"));
       return;
     }
 
@@ -39,11 +41,10 @@ export function ExportProjectCard({ projectId }: { projectId: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Download className="h-5 w-5" />
-          Export project
+          {t("exportProjectTitle")}
         </CardTitle>
         <CardDescription>
-          Download this project&apos;s theme, task board, and roadmap as a <code>.guidon</code> file. Re-import
-          it later as a new project or to overwrite an existing one, from the Projects page.
+          {t("exportProjectDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -59,7 +60,7 @@ export function ExportProjectCard({ projectId }: { projectId: string }) {
           ) : (
             <Download className="h-4 w-4 mr-2" />
           )}
-          Export to .guidon file
+          {t("exportButton")}
         </Button>
       </CardContent>
     </Card>
