@@ -4,6 +4,13 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  // This fork's Turbopack DEV server silently fails to resolve next-intl's
+  // dynamic message import (src/i18n/load-messages.ts's
+  // `import(`../../messages/${locale}.json`)`) - "Module not found: Can't
+  // resolve '../../messages'" at dev time only. `next build`/`next start`
+  // (production, also Turbopack via this same `turbopack` block) and
+  // `next dev --webpack` both resolve it correctly, so package.json's `dev`
+  // script runs webpack for local dev only; production is unaffected.
   turbopack: {
     root: __dirname,
   },

@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm install
 cp .env.example .env.local   # fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, AUTH_SECRET
-npm run dev                  # dev server on :2137 (Turbopack)
+npm run dev                  # dev server on :2137 (webpack, not Turbopack - see next.config.ts for why)
 npm run build                # production build
 npm run start                # start the production server (after build)
 npm run lint                 # ESLint (flat config, eslint.config.mjs)
