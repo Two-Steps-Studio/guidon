@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import type { SwitchableProject } from "@/lib/data/project-access";
 import {
   LayoutDashboard,
@@ -255,6 +256,9 @@ export function AppSidebar({
                   <span>Log out</span>
                 </Link>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem className="px-2">
+              <LanguageSwitcher />
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
