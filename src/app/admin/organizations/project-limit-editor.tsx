@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateOrganizationProjectLimit } from "./actions";
@@ -13,6 +14,7 @@ export function ProjectLimitEditor({
   orgId: string;
   initialLimit: number;
 }) {
+  const t = useTranslations("admin");
   const [value, setValue] = useState(String(initialLimit));
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function ProjectLimitEditor({
         // numeric input if the admin actually wants to override it with a
         // real limit.
         <div className="flex items-center gap-1.5">
-          <span className="text-sm text-muted-foreground">Unlimited</span>
+          <span className="text-sm text-muted-foreground">{t("unlimited")}</span>
           <Button
             size="sm"
             variant="ghost"
@@ -60,7 +62,7 @@ export function ProjectLimitEditor({
             onClick={() => setValue("1")}
             disabled={pending}
           >
-            Set limit
+            {t("setLimit")}
           </Button>
         </div>
       ) : (
@@ -77,10 +79,10 @@ export function ProjectLimitEditor({
         />
       )}
       <Button size="sm" variant="outline" onClick={save} disabled={pending}>
-        Save
+        {t("save")}
       </Button>
       {error && <span className="text-xs text-destructive">{error}</span>}
-      {saved && !error && <span className="text-xs text-success">Saved</span>}
+      {saved && !error && <span className="text-xs text-success">{t("saved")}</span>}
     </div>
   );
 }
