@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { isLockedOut, recordFailedAttempt } from "@/lib/auth/rate-limit";
 import { sendPasswordResetEmail } from "@/lib/email/resend";
 import { SITE_URL } from "@/lib/site-url";
+import { DEFAULT_LOCALE, isSupportedLocale } from "@/i18n/locales";
 
 export type RequestPasswordResetResult = { error: string | null };
 
@@ -64,8 +65,22 @@ export async function requestPasswordReset(
     data.properties.hashed_token
   )}&type=recovery`;
 
+  // Best-effort: a missing profile row (not yet created, or created before
+  // migration 031 added the column) falls back to DEFAULT_LOCALE rather
+  // than failing the whole reset flow - the email still needs to go out
+  // either way.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("locale")
+    .eq("id", data.user.id)
+    .maybeSingle();
+  const locale =
+    profile?.locale && isSupportedLocale(profile.locale)
+      ? profile.locale
+      : DEFAULT_LOCALE;
+
   try {
-    await sendPasswordResetEmail(normalizedEmail, resetLink);
+    await sendPasswordResetEmail(normalizedEmail, resetLink, locale);
   } catch (sendError) {
     // Swallowed the same way a nonexistent email is above: surfacing this
     // distinctly from success would turn any systemic Resend outage or

@@ -1,4 +1,31 @@
 import "server-only";
+import { createTranslator } from "next-intl";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locales";
+
+/**
+ * Same shape next-intl's `AppConfig.Messages` module augmentation in
+ * global.d.ts uses (`typeof import("./messages/en.json")`) - redeclared
+ * here (rather than imported, since that alias isn't exported from
+ * global.d.ts) so createTranslator's generic infers a real message shape
+ * from the `messages` argument below instead of `any`, which is what keeps
+ * `t("wrong.key")` a compile error in this file specifically.
+ */
+type EmailMessages = typeof import("../../../messages/en.json");
+
+/**
+ * Loads a locale's message catalog directly, bypassing next-intl's
+ * request-scoped getTranslations() - this module runs from a Server Action
+ * with no guarantee of being inside the request that will eventually read
+ * cookies/headers (and in Task 2's case, entirely outside a browser
+ * request's locale detection), so there's no request context to read from.
+ * src/i18n/request.ts has the same `import(\`../../messages/${locale}.json\`)`
+ * pattern for the same reason (a different relative depth from
+ * src/i18n/request.ts) - not reused directly to avoid pulling in that
+ * module's cookies()/headers()/createClient() dependencies here.
+ */
+async function loadMessages(locale: Locale): Promise<EmailMessages> {
+  return (await import(`../../../messages/${locale}.json`)).default;
+}
 
 /** Read a required env var, or throw an error naming both it and what needs it. */
 function requireEmailEnv(name: string): string {
@@ -21,13 +48,17 @@ function requireEmailEnv(name: string): string {
  * this is sent by our own code rather than through Supabase's template
  * engine.
  */
-function passwordResetEmailHtml(resetLink: string): string {
+function passwordResetEmailHtml(
+  resetLink: string,
+  locale: Locale,
+  t: ReturnType<typeof createTranslator<EmailMessages>>
+): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reset your Guidon password</title>
+<title>${t("emails.passwordResetSubject")}</title>
 </head>
 <body style="margin:0; padding:0; background-color:#0b0d10; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0d10; padding:40px 16px;">
@@ -45,14 +76,14 @@ function passwordResetEmailHtml(resetLink: string): string {
                 <tr>
                   <td align="center" style="padding-bottom:8px;">
                     <span style="font-size:20px; font-weight:600; color:#f8fafc; line-height:1.3;">
-                      Reset your password
+                      ${t("emails.passwordResetHeading")}
                     </span>
                   </td>
                 </tr>
                 <tr>
                   <td align="center" style="padding-bottom:28px;">
                     <span style="font-size:14px; color:#9aa4b2; line-height:1.6;">
-                      Click the button below to set a new password for your Guidon account. This link expires shortly and can only be used once.
+                      ${t("emails.passwordResetBody")}
                     </span>
                   </td>
                 </tr>
@@ -60,14 +91,14 @@ function passwordResetEmailHtml(resetLink: string): string {
                   <td align="center" style="padding-bottom:28px;">
                     <a href="${resetLink}"
                        style="display:inline-block; background-color:#1d4fd8; color:#ffffff; font-size:14px; font-weight:600; text-decoration:none; padding:12px 28px; border-radius:8px;">
-                      Set new password
+                      ${t("emails.passwordResetCta")}
                     </a>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
                     <span style="font-size:12px; color:#64748b; line-height:1.6;">
-                      Button not working? Paste this link into your browser:<br>
+                      ${t("emails.passwordResetLinkHint")}<br>
                       <a href="${resetLink}" style="color:#4d8dff; word-break:break-all;">${resetLink}</a>
                     </span>
                   </td>
@@ -78,7 +109,7 @@ function passwordResetEmailHtml(resetLink: string): string {
           <tr>
             <td align="center" style="padding-top:28px;">
               <span style="font-size:12px; color:#4b5563; line-height:1.6;">
-                If you didn't request a password reset, you can safely ignore this email - your password won't change.
+                ${t("emails.passwordResetIgnoreNotice")}
               </span>
             </td>
           </tr>
@@ -99,10 +130,14 @@ function passwordResetEmailHtml(resetLink: string): string {
  */
 export async function sendPasswordResetEmail(
   to: string,
-  resetLink: string
+  resetLink: string,
+  locale: Locale = DEFAULT_LOCALE
 ): Promise<void> {
   const apiKey = requireEmailEnv("RESEND_API_KEY");
   const from = requireEmailEnv("RESEND_FROM_EMAIL");
+
+  const messages = await loadMessages(locale);
+  const t = createTranslator({ locale, messages });
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -113,8 +148,8 @@ export async function sendPasswordResetEmail(
     body: JSON.stringify({
       from,
       to: [to],
-      subject: "Reset your Guidon password",
-      html: passwordResetEmailHtml(resetLink),
+      subject: t("emails.passwordResetSubject"),
+      html: passwordResetEmailHtml(resetLink, locale, t),
     }),
   });
 
