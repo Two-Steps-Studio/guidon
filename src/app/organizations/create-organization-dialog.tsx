@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,7 @@ export function CreateOrganizationDialog({
   trigger?: React.ReactNode;
   openOnMount?: boolean;
 }) {
+  const t = useTranslations("organizations.create");
   const [open, setOpen] = useState(openOnMount);
   // Bumped on every open so <OrgForm key={session}> below fully remounts -
   // see the matching comment in create-project-dialog.tsx for why: without
@@ -48,14 +50,14 @@ export function CreateOrganizationDialog({
         {trigger ?? (
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            New Organization
+            {t("trigger")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Organization</DialogTitle>
-          <DialogDescription>Create a new organization to manage your projects</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <OrgForm key={session} onCancel={() => setOpen(false)} />
       </DialogContent>
@@ -64,21 +66,23 @@ export function CreateOrganizationDialog({
 }
 
 function OrgForm({ onCancel }: { onCancel: () => void }) {
+  const t = useTranslations("organizations.create");
+  const tCommon = useTranslations("organizations.common");
   const [state, formAction, pending] = useActionState(createOrganization, initialState);
 
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Organization Name</Label>
-        <Input id="name" name="name" placeholder="Acme Inc" required />
+        <Label htmlFor="name">{t("nameLabel")}</Label>
+        <Input id="name" name="name" placeholder={t("namePlaceholder")} required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="slug">Slug (optional)</Label>
-        <Input id="slug" name="slug" placeholder="acme-inc" />
+        <Label htmlFor="slug">{t("slugLabel")}</Label>
+        <Input id="slug" name="slug" placeholder={t("slugPlaceholder")} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="description">Description (optional)</Label>
-        <Input id="description" name="description" placeholder="Software development team" />
+        <Label htmlFor="description">{t("descriptionLabel")}</Label>
+        <Input id="description" name="description" placeholder={t("descriptionPlaceholder")} />
       </div>
       {state.error && (
         <div className="text-sm text-destructive flex items-center gap-2">
@@ -88,16 +92,16 @@ function OrgForm({ onCancel }: { onCancel: () => void }) {
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Creating...
+              {t("creating")}
             </>
           ) : (
-            "Create"
+            t("createButton")
           )}
         </Button>
       </div>

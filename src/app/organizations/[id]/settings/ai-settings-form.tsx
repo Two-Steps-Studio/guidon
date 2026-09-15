@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,8 @@ export function AiSettingsForm({
   configured: { provider: OrgAiProviderName; model: string } | null;
   canManage: boolean;
 }) {
+  const t = useTranslations("organizations.settings");
+  const tCommon = useTranslations("organizations.common");
   const [editing, setEditing] = useState(!configured);
   const [provider, setProvider] = useState<OrgAiProviderName | "">(configured?.provider ?? "");
   const [modelChoice, setModelChoice] = useState<string>(() => {
@@ -94,20 +97,18 @@ export function AiSettingsForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
-          AI Provider
+          {t("aiProviderTitle")}
         </CardTitle>
         <CardDescription>
-          Powers the Memory page&apos;s Generate Insight button and the Work board&apos;s AI
-          task assistant for every project in this organization. Without one configured here, the
-          instance&apos;s own AI provider (if any) is used instead.
+          {t("aiProviderDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!canManage && (
           <p className="text-sm text-muted-foreground">
             {configured
-              ? `Configured via ${PROVIDER_LABELS[configured.provider]} (${configured.model}).`
-              : "Not configured for this organization."}
+              ? t("configuredVia", { provider: PROVIDER_LABELS[configured.provider], model: configured.model })
+              : t("notConfigured")}
           </p>
         )}
 
@@ -118,11 +119,11 @@ export function AiSettingsForm({
                 <Badge variant="outline">{PROVIDER_LABELS[configured.provider]}</Badge>
                 <span className="text-sm text-muted-foreground">{configured.model}</span>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">API key is set and hidden.</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("apiKeySetHidden")}</p>
             </div>
             <div className="flex gap-2">
               <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>
-                Change
+                {t("change")}
               </Button>
               <Button
                 type="button"
@@ -130,7 +131,7 @@ export function AiSettingsForm({
                 variant="outline"
                 disabled={removing}
                 onClick={handleRemove}
-                aria-label="Remove AI provider settings"
+                aria-label={t("removeAiSettings")}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -150,7 +151,7 @@ export function AiSettingsForm({
             <input type="hidden" name="had_existing_key" value={configured ? "true" : "false"} />
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="ai-provider">Provider</Label>
+                <Label htmlFor="ai-provider">{t("providerLabel")}</Label>
                 <Select
                   id="ai-provider"
                   name="provider"
@@ -165,7 +166,7 @@ export function AiSettingsForm({
                   required
                 >
                   <option value="" disabled>
-                    Choose a provider
+                    {t("chooseProvider")}
                   </option>
                   {ORG_AI_PROVIDER_NAMES.map((name) => (
                     <option key={name} value={name}>
@@ -175,7 +176,7 @@ export function AiSettingsForm({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="ai-model">Model</Label>
+                <Label htmlFor="ai-model">{t("modelLabel")}</Label>
                 <Select
                   id="ai-model"
                   name={modelChoice === CUSTOM_MODEL ? undefined : "model"}
@@ -184,20 +185,20 @@ export function AiSettingsForm({
                   disabled={!provider}
                   required
                 >
-                  {!provider && <option value="">Choose a provider first</option>}
+                  {!provider && <option value="">{t("chooseProviderFirst")}</option>}
                   {provider &&
                     RECOMMENDED_MODELS[provider].map((model) => (
                       <option key={model.value} value={model.value}>
                         {model.label}
                       </option>
                     ))}
-                  <option value={CUSTOM_MODEL}>Other (type it myself)</option>
+                  <option value={CUSTOM_MODEL}>{t("customModelOption")}</option>
                 </Select>
               </div>
             </div>
             {modelChoice === CUSTOM_MODEL && (
               <div className="space-y-1">
-                <Label htmlFor="ai-model-custom">Model id</Label>
+                <Label htmlFor="ai-model-custom">{t("modelIdLabel")}</Label>
                 <Input
                   id="ai-model-custom"
                   name="model"
@@ -209,13 +210,13 @@ export function AiSettingsForm({
               </div>
             )}
             <div className="space-y-1">
-              <Label htmlFor="ai-api-key">API key</Label>
+              <Label htmlFor="ai-api-key">{t("apiKeyLabel")}</Label>
               <Input
                 id="ai-api-key"
                 name="api_key"
                 type="password"
                 autoComplete="off"
-                placeholder={configured ? "Leave blank to keep the current key" : "Paste your API key"}
+                placeholder={configured ? t("apiKeyPlaceholderKeep") : t("apiKeyPlaceholderNew")}
               />
             </div>
             {state.error && (
@@ -226,11 +227,11 @@ export function AiSettingsForm({
             )}
             <div className="flex gap-2">
               <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : "Save"}
+                {saving ? t("saving") : t("save")}
               </Button>
               {configured && (
                 <Button type="button" variant="outline" onClick={() => setEditing(false)}>
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
               )}
             </div>

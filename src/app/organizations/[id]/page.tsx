@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, CreditCard, FolderKanban, Plus, Settings, Users } from "lucide-react";
@@ -20,6 +21,8 @@ export default async function OrganizationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: orgId } = await params;
+  const t = await getTranslations("organizations.detail");
+  const tCommon = await getTranslations("organizations.common");
   const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
   const { organization } = access;
 
@@ -48,7 +51,7 @@ export default async function OrganizationDetailPage({
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/organizations" aria-label="Back to organizations">
+            <Link href="/organizations" aria-label={t("backToOrganizations")}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -60,32 +63,32 @@ export default async function OrganizationDetailPage({
           />
           <div className="flex-1">
             <h1 className="text-3xl font-bold">{organization.name}</h1>
-            <p className="text-muted-foreground">{organization.description || "No description"}</p>
+            <p className="text-muted-foreground">{organization.description || tCommon("noDescription")}</p>
           </div>
           <Button variant="outline" asChild>
             <Link href={`/organizations/${orgId}/members`}>
               <Users className="h-4 w-4 mr-2" />
-              Members
+              {t("members")}
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link href={`/organizations/${orgId}/billing`}>
               <CreditCard className="h-4 w-4 mr-2" />
-              Billing
+              {t("billing")}
             </Link>
           </Button>
           {canManageOrg(access.role) && (
             <Button variant="outline" asChild>
               <Link href={`/organizations/${orgId}/settings`}>
                 <Settings className="h-4 w-4 mr-2" />
-                Settings
+                {t("settings")}
               </Link>
             </Button>
           )}
         </div>
 
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Projects</h2>
+          <h2 className="text-xl font-semibold">{t("projects")}</h2>
           {!limitReached && <CreateProjectDialog orgId={orgId} orgName={organization.name} />}
         </div>
 
@@ -101,9 +104,9 @@ export default async function OrganizationDetailPage({
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FolderKanban className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("noProjectsTitle")}</h3>
               <p className="text-muted-foreground text-center mb-4">
-                Create your first project to start managing work
+                {t("noProjectsDescription")}
               </p>
               {!limitReached && (
                 <CreateProjectDialog
@@ -112,7 +115,7 @@ export default async function OrganizationDetailPage({
                   trigger={
                     <Button>
                       <Plus className="h-4 w-4 mr-2" />
-                      Create Project
+                      {t("createProject")}
                     </Button>
                   }
                 />
@@ -134,7 +137,7 @@ export default async function OrganizationDetailPage({
                       </Avatar>
                       {project.name}
                     </CardTitle>
-                    <CardDescription>{project.description || "No description"}</CardDescription>
+                    <CardDescription>{project.description || tCommon("noDescription")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-end text-sm">

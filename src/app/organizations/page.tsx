@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -26,6 +27,7 @@ export default async function OrganizationsPage({
   searchParams: Promise<{ create?: string }>;
 }) {
   const { create } = await searchParams;
+  const t = await getTranslations("organizations");
   const user = await getCurrentUser();
 
   let organizations: OrganizationRow[];
@@ -60,8 +62,8 @@ export default async function OrganizationsPage({
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Organizations</h1>
-            <p className="text-muted-foreground">Manage your organizations and projects</p>
+            <h1 className="text-3xl font-bold">{t("list.title")}</h1>
+            <p className="text-muted-foreground">{t("list.subtitle")}</p>
           </div>
           <CreateOrganizationDialog openOnMount={create === "1"} />
         </div>
@@ -69,14 +71,14 @@ export default async function OrganizationsPage({
         {organizations.length === 0 ? (
           <EmptyState
             icon={Building2}
-            title="No organizations yet"
-            description="Create your first organization to start managing projects"
+            title={t("list.emptyTitle")}
+            description={t("list.emptyDescription")}
             action={
               <CreateOrganizationDialog
                 trigger={
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Organization
+                    {t("list.createOrganizationButton")}
                   </Button>
                 }
               />
@@ -97,12 +99,12 @@ export default async function OrganizationsPage({
                       </Avatar>
                       {org.name}
                     </CardTitle>
-                    <CardDescription>{org.description || "No description"}</CardDescription>
+                    <CardDescription>{org.description || t("common.noDescription")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Users className="h-4 w-4 mr-1" />
-                      <span>{org.role || "member"}</span>
+                      <span>{t("common.role", { role: org.role || "member" })}</span>
                     </div>
                   </CardContent>
                 </Card>

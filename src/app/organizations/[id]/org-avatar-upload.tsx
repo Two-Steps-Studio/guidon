@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building2, Loader2 } from "lucide-react";
 import { updateOrganizationAvatar, type OrgAvatarState } from "./actions";
@@ -18,6 +19,7 @@ export function OrgAvatarUpload({
   avatarUrl: string | null;
   canEdit: boolean;
 }) {
+  const t = useTranslations("organizations.detail");
   const updateWithId = updateOrganizationAvatar.bind(null, orgId);
   const [state, formAction, pending] = useActionState(updateWithId, initialState);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,8 +50,8 @@ export function OrgAvatarUpload({
             inputRef.current?.click();
           }}
           className="relative disabled:cursor-default"
-          aria-label={canEdit ? `Change image for ${name}` : name}
-          title={canEdit ? "Change organization image" : undefined}
+          aria-label={canEdit ? t("changeImageAria", { name }) : name}
+          title={canEdit ? t("changeImage") : undefined}
         >
           <Avatar className="h-14 w-14 rounded-md">
             <AvatarImage src={avatarUrl || undefined} alt={name} className="object-cover" />

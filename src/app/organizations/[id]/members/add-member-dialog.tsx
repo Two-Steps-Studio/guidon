@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +27,8 @@ export function AddMemberDialog({
   isOwner: boolean;
   trigger?: React.ReactNode;
 }) {
+  const t = useTranslations("organizations.members");
+  const tCommon = useTranslations("organizations.common");
   const [open, setOpen] = useState(false);
   const addMemberWithOrg = addMember.bind(null, orgId);
   const [state, formAction, pending] = useActionState(addMemberWithOrg, initialState);
@@ -44,14 +47,14 @@ export function AddMemberDialog({
         {trigger ?? (
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Member
+            {t("addMember")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Member</DialogTitle>
-          <DialogDescription>Invite a user to join this organization</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
           action={(formData) => {
@@ -61,20 +64,20 @@ export function AddMemberDialog({
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("emailLabel")}</Label>
             <Input id="email" name="email" type="email" placeholder="user@example.com" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role">{t("roleLabel")}</Label>
             <select
               id="role"
               name="role"
               defaultValue="member"
               className="w-full px-3 py-2 border rounded-md bg-background"
             >
-              <option value="member">Member</option>
-              <option value="admin">Admin</option>
-              {isOwner && <option value="owner">Owner</option>}
+              <option value="member">{t("roleMemberOption")}</option>
+              <option value="admin">{t("roleAdminOption")}</option>
+              {isOwner && <option value="owner">{t("roleOwnerOption")}</option>}
             </select>
           </div>
           {state.error && (
@@ -85,16 +88,16 @@ export function AddMemberDialog({
           )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Adding...
+                  {t("adding")}
                 </>
               ) : (
-                "Add Member"
+                t("addMember")
               )}
             </Button>
           </div>
