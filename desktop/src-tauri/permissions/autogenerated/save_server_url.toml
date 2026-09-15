@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-server-url"
+description = "Enables the save_server_url command without any pre-configured scope."
+commands.allow = ["save_server_url"]
+
+[[permission]]
+identifier = "deny-save-server-url"
+description = "Denies the save_server_url command without any pre-configured scope."
+commands.deny = ["save_server_url"]

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "settings",
+  "description": "The Settings window is local, bundled content (served via tauri://, never remote) and is the only window trusted with Tauri API access. It gets exactly the two app-defined commands (get_server_url/save_server_url, see src/lib.rs and build.rs) it needs to read and persist the server URL - both backed by the Store plugin on the Rust side. Do not widen this to the `main` window (see capabilities/default.json) or make it apply globally.",
+  "windows": ["settings"],
+  "permissions": ["allow-get-server-url", "allow-save-server-url"]
+}

@@ -2,38 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
-    <script type="module" src="/main.js" defer></script>
+    <title>Guidon Desktop Settings</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
 
   <body>
     <main class="container">
-      <h1>Welcome to Tauri</h1>
+      <h1>Guidon Desktop</h1>
+      <p class="subtitle">
+        Choose which Guidon server this app connects to.
+      </p>
 
-      <div class="row">
-        <a href="https://tauri.app" target="_blank">
-          <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"
-          target="_blank"
-        >
-          <img
-            src="/assets/javascript.svg"
-            class="logo vanilla"
-            alt="JavaScript logo"
-          />
-        </a>
-      </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
-
-      <form class="row" id="greet-form">
-        <input id="greet-input" placeholder="Enter a name..." />
-        <button type="submit">Greet</button>
+      <form id="settings-form">
+        <label for="server-url">Server URL</label>
+        <input
+          id="server-url"
+          name="server-url"
+          type="text"
+          inputmode="url"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="https://useguidon.com"
+        />
+        <p id="hint" class="hint">
+          Use Guidon Cloud, or point this at your own self-hosted Guidon
+          server.
+        </p>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+        <button type="submit" id="save-button">Save &amp; Reload</button>
       </form>
-      <p id="greet-msg"></p>
     </main>
+
+    <script type="module" src="settings.js"></script>
   </body>
 </html>

@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The main window loads remote Guidon content and is treated as untrusted per the desktop app's design spec (docs/superpowers/specs/2026-09-15-desktop-app-design.md): it is granted ZERO Tauri API access. Do not add permissions here for the main window; native features are implemented in local, bundled windows only (e.g. the future Settings window).",
+  "description": "The main window loads remote Guidon content and is treated as untrusted per the desktop app's design spec (docs/superpowers/specs/2026-09-15-desktop-app-design.md): it is granted ZERO Tauri API access. Do not add permissions here for the main window; native features are implemented in local, bundled windows only (e.g. the Settings window, see capabilities/settings.json).",
   "windows": ["main"],
   "permissions": []
 }

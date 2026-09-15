@@ -8,16 +8,9 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [
-      {
-        "title": "Guidon Desktop",
-        "width": 800,
-        "height": 600,
-        "url": "https://useguidon.com"
-      }
-    ],
+    "windows": [],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' ipc: http://ipc.localhost"
     }
   },
   "bundle": {
