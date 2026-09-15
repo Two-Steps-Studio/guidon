@@ -1,4 +1,5 @@
 import { Building2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
@@ -8,24 +9,26 @@ import { PlanEditor } from "./plan-editor";
 
 export default async function AdminOrganizationsPage() {
   await requireAdminAccess();
+  const t = await getTranslations("admin");
 
   const { rows, truncated } = await listOrganizationsForAdmin();
 
   return (
     <div className="container mx-auto max-w-7xl space-y-4 px-6 py-8">
       <div>
-        <h2 className="text-2xl font-bold">Organizations</h2>
+        <h2 className="text-2xl font-bold">{t("organizations")}</h2>
         <p className="text-muted-foreground">
-          {rows.length} organization{rows.length === 1 ? "" : "s"} across this instance
-          {truncated ? ` (capped at ${rows.length} for this v1 view - no pagination yet)` : ""}.
+          {truncated
+            ? t("orgsCountSubtitleTruncated", { count: rows.length })
+            : t("orgsCountSubtitle", { count: rows.length })}
         </p>
       </div>
 
       {rows.length === 0 ? (
         <EmptyState
           icon={Building2}
-          title="No organizations yet"
-          description="Organizations created on this instance will show up here."
+          title={t("orgsEmptyTitle")}
+          description={t("orgsEmptyDescription")}
         />
       ) : (
         <Card>
@@ -33,13 +36,13 @@ export default async function AdminOrganizationsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground [&>th]:px-4 [&>th]:py-2 [&>th]:font-medium">
-                  <th>Name</th>
-                  <th>Slug</th>
-                  <th>Owner</th>
-                  <th>Members</th>
-                  <th>Created</th>
-                  <th>Project limit</th>
-                  <th>Plan</th>
+                  <th>{t("colName")}</th>
+                  <th>{t("colSlug")}</th>
+                  <th>{t("colOwner")}</th>
+                  <th>{t("colMembers")}</th>
+                  <th>{t("colCreated")}</th>
+                  <th>{t("colProjectLimit")}</th>
+                  <th>{t("colPlan")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

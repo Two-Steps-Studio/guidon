@@ -1,4 +1,5 @@
 import { Activity as ActivityIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
@@ -12,8 +13,8 @@ interface ActorProfile {
   email: string;
 }
 
-function nameFor(profile: ActorProfile | undefined): string {
-  if (!profile) return "Someone";
+function nameFor(profile: ActorProfile | undefined, someone: string): string {
+  if (!profile) return someone;
   return profile.full_name || profile.email;
 }
 
@@ -29,6 +30,7 @@ function nameFor(profile: ActorProfile | undefined): string {
  */
 export default async function AdminLogsPage() {
   await requireAdminAccess();
+  const t = await getTranslations("admin");
 
   const entries = await listRecentActivityForAdmin(100);
 
@@ -47,17 +49,17 @@ export default async function AdminLogsPage() {
   return (
     <div className="container mx-auto max-w-7xl space-y-4 px-6 py-8">
       <div>
-        <h2 className="text-2xl font-bold">Logs</h2>
+        <h2 className="text-2xl font-bold">{t("logsTitle")}</h2>
         <p className="text-muted-foreground">
-          Instance-wide activity, most recent first, across every organization and project.
+          {t("logsDescription")}
         </p>
       </div>
 
       {entries.length === 0 ? (
         <EmptyState
           icon={ActivityIcon}
-          title="No activity yet"
-          description="No activity has been recorded on this instance yet."
+          title={t("logsEmptyTitle")}
+          description={t("logsEmptyDescription")}
         />
       ) : (
         <Card>
@@ -68,17 +70,17 @@ export default async function AdminLogsPage() {
                 const Icon = config.icon;
                 const actor = entry.user_id ? profilesById.get(entry.user_id) : undefined;
                 const scope = entry.project_id
-                  ? `project ${entry.project_id.slice(0, 8)}`
+                  ? t("projectScope", { id: entry.project_id.slice(0, 8) })
                   : entry.organization_id
-                    ? `organization ${entry.organization_id.slice(0, 8)}`
-                    : "instance";
+                    ? t("organizationScope", { id: entry.organization_id.slice(0, 8) })
+                    : t("instanceScope");
 
                 return (
                   <li key={entry.id} className="flex items-start gap-3 px-4 py-3 hover:bg-surface-hover">
                     <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${config.color}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm">
-                        <span className="font-medium">{nameFor(actor)}</span>{" "}
+                        <span className="font-medium">{nameFor(actor, t("someone"))}</span>{" "}
                         <span className="text-muted-foreground">{config.label.toLowerCase()}</span>
                         {entry.entity_type && <span className="text-muted-foreground"> · {entry.entity_type}</span>}
                         <span className="text-muted-foreground"> · {scope}</span>

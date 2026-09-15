@@ -1,14 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { updateOrganizationPlan } from "./actions";
-
-const PLAN_OPTIONS = [
-  { value: "free", label: "Free" },
-  { value: "pro", label: "Pro" },
-  { value: "team", label: "Team" },
-  { value: "business", label: "Business" },
-];
 
 export function PlanEditor({
   orgId,
@@ -17,6 +11,13 @@ export function PlanEditor({
   orgId: string;
   initialPlanId: string;
 }) {
+  const t = useTranslations("admin");
+  const PLAN_OPTIONS = [
+    { value: "free", label: t("planFree") },
+    { value: "pro", label: t("planPro") },
+    { value: "team", label: t("planTeam") },
+    { value: "business", label: t("planBusiness") },
+  ];
   const [value, setValue] = useState(initialPlanId);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
