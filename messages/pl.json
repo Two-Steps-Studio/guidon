@@ -1,6 +1,9 @@
 {
   "common": {
-    "loading": "Ładowanie..."
+    "loading": "Ładowanie...",
+    "projectType": "{type, select, game {Gra} website {Strona internetowa} mobile_app {Aplikacja mobilna} api {API} tool {Narzędzie} other {Inne}}",
+    "projectMethodology": "{methodology, select, standard {Standardowy} scrum {Scrum} other {Standardowy}}",
+    "role": "{role, select, owner {Właściciel} admin {Administrator} member {Członek} other {Członek}}"
   },
   "auth": {
     "login": {
@@ -298,6 +301,96 @@
       "colAuditLogs": "Dzienniki audytu",
       "free": "Za darmo",
       "perMonth": "/mies."
+    }
+  },
+  "projects": {
+    "list": {
+      "title": "Projekty",
+      "subtitle": "Zarządzaj swoimi projektami i organizacjami",
+      "yourOrganizations": "Twoje organizacje",
+      "allProjects": "Wszystkie projekty",
+      "emptyTitle": "Brak projektów",
+      "emptyDescriptionNoOrg": "Najpierw utwórz organizację, aby zacząć zarządzać projektami",
+      "emptyDescriptionHasOrg": "Utwórz swój pierwszy projekt, aby zacząć",
+      "createOrganization": "Utwórz organizację",
+      "createProject": "Utwórz projekt",
+      "newProject": "Nowy projekt",
+      "openProject": "Otwórz projekt"
+    },
+    "detail": {
+      "noDescription": "Brak opisu",
+      "totalTasks": "Wszystkie zadania",
+      "completedSuffix": "{count} ukończonych",
+      "inProgress": "W toku",
+      "activeTasks": "Aktywne zadania",
+      "completion": "Ukończenie",
+      "projectProgress": "Postęp projektu",
+      "roadmap": "Plan działań",
+      "phasesCompleted": "Ukończone fazy",
+      "quickAccess": "Szybki dostęp",
+      "tasksTitle": "Zadania",
+      "tasksDescription": "Zarządzaj zadaniami projektu i śledź ich postęp",
+      "tasksMetric": "{count} zadań",
+      "roadmapTitle": "Plan działań",
+      "roadmapDescription": "Fazy i oś czasu projektu",
+      "roadmapMetric": "{count} faz",
+      "contextTitle": "Kontekst",
+      "contextDescription": "Decyzje, relacje i źródła",
+      "contextMetric": "{count} decyzji",
+      "memoryTitle": "Pamięć",
+      "memoryDescription": "Wiedza o projekcie i wnioski",
+      "memoryMetric": "{count} elementów",
+      "filesTitle": "Pliki",
+      "filesDescription": "Dokumenty i zasoby projektu",
+      "filesMetric": "{count} plików",
+      "settingsTitle": "Ustawienia",
+      "settingsDescription": "Konfiguracja projektu",
+      "settingsMetric": "Zarządzaj zespołem"
+    },
+    "edit": {
+      "trigger": "Edytuj projekt",
+      "dialogTitle": "Edytuj projekt",
+      "dialogDescription": "Zaktualizuj informacje o projekcie",
+      "nameLabel": "Nazwa projektu",
+      "descriptionLabel": "Opis",
+      "cancel": "Anuluj",
+      "saving": "Zapisywanie...",
+      "saveChanges": "Zapisz zmiany"
+    },
+    "import": {
+      "trigger": "Importuj projekt",
+      "dialogTitle": "Importuj projekt",
+      "dialogDescription": "Zaimportuj plik .guidon jako nowy projekt lub nadpisz istniejący.",
+      "chooseFile": "Wybierz plik .guidon...",
+      "readingFile": "Wczytywanie pliku...",
+      "taskCount": "{count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
+      "phaseCount": "{count, plural, one {# faza planu} few {# fazy planu} many {# faz planu} other {# fazy planu}}",
+      "createNewProject": "Utwórz nowy projekt",
+      "overwriteExistingProject": "Nadpisz istniejący projekt",
+      "organizationLabel": "Organizacja",
+      "projectToOverwriteLabel": "Projekt do nadpisania",
+      "overwriteWarning": "To trwale zastąpi zadania i fazy planu docelowego projektu zawartością tego pliku. Tej operacji nie można cofnąć.",
+      "typeToConfirm": "Wpisz <b>{name}</b>, aby potwierdzić",
+      "chooseOrganization": "Wybierz organizację.",
+      "chooseProjectToOverwrite": "Wybierz projekt do nadpisania.",
+      "cancel": "Anuluj",
+      "import": "Importuj"
+    },
+    "create": {
+      "trigger": "Nowy projekt",
+      "dialogTitle": "Utwórz projekt",
+      "dialogDescription": "Utwórz nowy projekt w {orgName}",
+      "nameLabel": "Nazwa projektu",
+      "namePlaceholder": "Przeprojektowanie strony",
+      "descriptionLabel": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Przeprojektuj stronę firmową",
+      "projectTypeLabel": "Typ projektu (opcjonalnie)",
+      "notSet": "Nie ustawiono",
+      "workflowLabel": "Tryb pracy",
+      "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story — wkrótce. Na razie to tylko etykieta projektu.",
+      "cancel": "Anuluj",
+      "creating": "Tworzenie...",
+      "createButton": "Utwórz"
     }
   }
 }

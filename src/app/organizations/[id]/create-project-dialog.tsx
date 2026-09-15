@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,21 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createProject, type CreateProjectState } from "./actions";
-import {
-  PROJECT_TYPE_LABELS,
-  type ProjectType,
-  PROJECT_METHODOLOGY_LABELS,
-  type ProjectMethodology,
-} from "@/types/project";
+import { type ProjectType, type ProjectMethodology } from "@/types/project";
 
 const initialState: CreateProjectState = { error: null };
 
-const PROJECT_TYPE_OPTIONS = Object.entries(PROJECT_TYPE_LABELS) as [ProjectType, string][];
-
-const PROJECT_METHODOLOGY_OPTIONS = Object.entries(PROJECT_METHODOLOGY_LABELS) as [
-  ProjectMethodology,
-  string,
-][];
+const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
+const PROJECT_METHODOLOGY_VALUES: ProjectMethodology[] = ["standard", "scrum"];
 
 export function CreateProjectDialog({
   orgId,
@@ -39,6 +31,7 @@ export function CreateProjectDialog({
   orgName: string;
   trigger?: React.ReactNode;
 }) {
+  const t = useTranslations("projects.create");
   const [open, setOpen] = useState(false);
   // Bumped on every open so <ProjectForm key={session}> below fully remounts
   // - useActionState's state otherwise survives close/reopen indefinitely
@@ -59,14 +52,14 @@ export function CreateProjectDialog({
         {trigger ?? (
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            New Project
+            {t("trigger")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Project</DialogTitle>
-          <DialogDescription>Create a new project in {orgName}</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription", { orgName })}</DialogDescription>
         </DialogHeader>
         <ProjectForm key={session} orgId={orgId} onCancel={() => setOpen(false)} />
       </DialogContent>
@@ -75,43 +68,45 @@ export function CreateProjectDialog({
 }
 
 function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void }) {
+  const t = useTranslations("projects.create");
+  const tCommon = useTranslations("common");
   const createProjectWithOrg = createProject.bind(null, orgId);
   const [state, formAction, pending] = useActionState(createProjectWithOrg, initialState);
 
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="projectName">Project Name</Label>
-        <Input id="projectName" name="name" placeholder="Website Redesign" required />
+        <Label htmlFor="projectName">{t("nameLabel")}</Label>
+        <Input id="projectName" name="name" placeholder={t("namePlaceholder")} required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="projectDescription">Description (optional)</Label>
+        <Label htmlFor="projectDescription">{t("descriptionLabel")}</Label>
         <Input
           id="projectDescription"
           name="description"
-          placeholder="Redesign the company website"
+          placeholder={t("descriptionPlaceholder")}
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="projectType">Project Type (optional)</Label>
+        <Label htmlFor="projectType">{t("projectTypeLabel")}</Label>
         <select
           id="projectType"
           name="projectType"
           defaultValue=""
           className="w-full px-3 py-2 border rounded-md bg-background"
         >
-          <option value="">Not set</option>
-          {PROJECT_TYPE_OPTIONS.map(([value, label]) => (
+          <option value="">{t("notSet")}</option>
+          {PROJECT_TYPE_VALUES.map((value) => (
             <option key={value} value={value}>
-              {label}
+              {tCommon("projectType", { type: value })}
             </option>
           ))}
         </select>
       </div>
       <div className="space-y-2">
-        <Label>Workflow</Label>
+        <Label>{t("workflowLabel")}</Label>
         <div className="flex gap-4">
-          {PROJECT_METHODOLOGY_OPTIONS.map(([value, label]) => (
+          {PROJECT_METHODOLOGY_VALUES.map((value) => (
             <label key={value} className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
@@ -119,13 +114,12 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
                 value={value}
                 defaultChecked={value === "standard"}
               />
-              {label}
+              {tCommon("projectMethodology", { methodology: value })}
             </label>
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Scrum adds sprints, backlog, and story points — coming soon. For now this
-          just labels the project.
+          {t("workflowHelp")}
         </p>
       </div>
       {state.error && (
@@ -136,16 +130,16 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Creating...
+              {t("creating")}
             </>
           ) : (
-            "Create"
+            t("createButton")
           )}
         </Button>
       </div>

@@ -12,7 +12,6 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
-import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 
 interface ProjectRow {
   id: string;
@@ -111,6 +110,7 @@ async function loadDashboardDataLocal(userId: string) {
 export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
   const tNav = await getTranslations("nav");
+  const tCommon = await getTranslations("common");
   const user = await getCurrentUser();
 
   let projects: ProjectRow[];
@@ -326,7 +326,7 @@ export default async function DashboardPage() {
                   <CardContent>
                     {project.project_type && (
                       <Badge variant="outline" className="mb-2">
-                        {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}
+                        {tCommon("projectType", { type: project.project_type })}
                       </Badge>
                     )}
                     {project.description && (

@@ -1,6 +1,9 @@
 {
   "common": {
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "projectType": "{type, select, game {Game} website {Website} mobile_app {Mobile App} api {API} tool {Tool} other {Other}}",
+    "projectMethodology": "{methodology, select, standard {Standard} scrum {Scrum} other {Standard}}",
+    "role": "{role, select, owner {Owner} admin {Admin} member {Member} other {Member}}"
   },
   "auth": {
     "login": {
@@ -298,6 +301,96 @@
       "colAuditLogs": "Audit logs",
       "free": "Free",
       "perMonth": "/mo"
+    }
+  },
+  "projects": {
+    "list": {
+      "title": "Projects",
+      "subtitle": "Manage your projects and organizations",
+      "yourOrganizations": "Your Organizations",
+      "allProjects": "All Projects",
+      "emptyTitle": "No projects yet",
+      "emptyDescriptionNoOrg": "Create an organization first to start managing projects",
+      "emptyDescriptionHasOrg": "Create your first project to get started",
+      "createOrganization": "Create Organization",
+      "createProject": "Create Project",
+      "newProject": "New Project",
+      "openProject": "Open project"
+    },
+    "detail": {
+      "noDescription": "No description",
+      "totalTasks": "Total Tasks",
+      "completedSuffix": "{count} completed",
+      "inProgress": "In Progress",
+      "activeTasks": "Active tasks",
+      "completion": "Completion",
+      "projectProgress": "Project progress",
+      "roadmap": "Roadmap",
+      "phasesCompleted": "Phases completed",
+      "quickAccess": "Quick Access",
+      "tasksTitle": "Tasks",
+      "tasksDescription": "Manage and track project tasks",
+      "tasksMetric": "{count} tasks",
+      "roadmapTitle": "Roadmap",
+      "roadmapDescription": "Project phases and timeline",
+      "roadmapMetric": "{count} phases",
+      "contextTitle": "Context",
+      "contextDescription": "Decisions, relations, and sources",
+      "contextMetric": "{count} decisions",
+      "memoryTitle": "Memory",
+      "memoryDescription": "Project knowledge and insights",
+      "memoryMetric": "{count} items",
+      "filesTitle": "Files",
+      "filesDescription": "Project documents and assets",
+      "filesMetric": "{count} files",
+      "settingsTitle": "Settings",
+      "settingsDescription": "Project configuration",
+      "settingsMetric": "Manage team"
+    },
+    "edit": {
+      "trigger": "Edit Project",
+      "dialogTitle": "Edit Project",
+      "dialogDescription": "Update project information",
+      "nameLabel": "Project Name",
+      "descriptionLabel": "Description",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "import": {
+      "trigger": "Import Project",
+      "dialogTitle": "Import project",
+      "dialogDescription": "Import a .guidon file as a new project, or to overwrite an existing one.",
+      "chooseFile": "Choose .guidon file...",
+      "readingFile": "Reading file...",
+      "taskCount": "{count, plural, one {# task} other {# tasks}}",
+      "phaseCount": "{count, plural, one {# roadmap phase} other {# roadmap phases}}",
+      "createNewProject": "Create new project",
+      "overwriteExistingProject": "Overwrite existing project",
+      "organizationLabel": "Organization",
+      "projectToOverwriteLabel": "Project to overwrite",
+      "overwriteWarning": "This permanently replaces the target project's tasks and roadmap phases with what's in this file. This cannot be undone.",
+      "typeToConfirm": "Type <b>{name}</b> to confirm",
+      "chooseOrganization": "Choose an organization.",
+      "chooseProjectToOverwrite": "Choose a project to overwrite.",
+      "cancel": "Cancel",
+      "import": "Import"
+    },
+    "create": {
+      "trigger": "New Project",
+      "dialogTitle": "Create Project",
+      "dialogDescription": "Create a new project in {orgName}",
+      "nameLabel": "Project Name",
+      "namePlaceholder": "Website Redesign",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Redesign the company website",
+      "projectTypeLabel": "Project Type (optional)",
+      "notSet": "Not set",
+      "workflowLabel": "Workflow",
+      "workflowHelp": "Scrum adds sprints, backlog, and story points — coming soon. For now this just labels the project.",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createButton": "Create"
     }
   }
 }

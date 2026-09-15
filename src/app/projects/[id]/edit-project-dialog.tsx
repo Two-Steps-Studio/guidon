@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,6 +31,7 @@ type EditableProject = {
  * Action, so this component holds no Supabase client of its own.
  */
 export function EditProjectDialog({ project }: { project: EditableProject }) {
+  const t = useTranslations("projects.edit");
   const [open, setOpen] = useState(false);
   // Bumped on every open so <EditProjectForm key={session}> below fully
   // remounts - useActionState's error otherwise survives close/reopen (this
@@ -48,13 +50,13 @@ export function EditProjectDialog({ project }: { project: EditableProject }) {
       <DialogTrigger asChild>
         <Button variant="outline">
           <Settings className="h-4 w-4 mr-2" />
-          Edit Project
+          {t("trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Project</DialogTitle>
-          <DialogDescription>Update project information</DialogDescription>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <EditProjectForm key={session} project={project} onClose={() => setOpen(false)} />
       </DialogContent>
@@ -63,6 +65,7 @@ export function EditProjectDialog({ project }: { project: EditableProject }) {
 }
 
 function EditProjectForm({ project, onClose }: { project: EditableProject; onClose: () => void }) {
+  const t = useTranslations("projects.edit");
   const formRef = useRef<HTMLFormElement>(null);
   const updateProjectWithId = updateProject.bind(null, project.id);
   const [state, formAction, pending] = useActionState(updateProjectWithId, initialState);
@@ -86,11 +89,11 @@ function EditProjectForm({ project, onClose }: { project: EditableProject; onClo
       className="space-y-4"
     >
       <div className="space-y-2">
-        <Label htmlFor="editName">Project Name</Label>
+        <Label htmlFor="editName">{t("nameLabel")}</Label>
         <Input id="editName" name="name" defaultValue={project.name} required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="editDescription">Description</Label>
+        <Label htmlFor="editDescription">{t("descriptionLabel")}</Label>
         <Input
           id="editDescription"
           name="description"
@@ -105,16 +108,16 @@ function EditProjectForm({ project, onClose }: { project: EditableProject; onClo
       )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "Save Changes"
+            t("saveChanges")
           )}
         </Button>
       </div>

@@ -1,6 +1,9 @@
 {
   "common": {
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "projectType": "{type, select, game {Juego} website {Sitio web} mobile_app {Aplicación móvil} api {API} tool {Herramienta} other {Otro}}",
+    "projectMethodology": "{methodology, select, standard {Estándar} scrum {Scrum} other {Estándar}}",
+    "role": "{role, select, owner {Propietario} admin {Administrador} member {Miembro} other {Miembro}}"
   },
   "auth": {
     "login": {
@@ -298,6 +301,96 @@
       "colAuditLogs": "Registros de auditoría",
       "free": "Gratis",
       "perMonth": "/mes"
+    }
+  },
+  "projects": {
+    "list": {
+      "title": "Proyectos",
+      "subtitle": "Gestiona tus proyectos y organizaciones",
+      "yourOrganizations": "Tus organizaciones",
+      "allProjects": "Todos los proyectos",
+      "emptyTitle": "Aún no hay proyectos",
+      "emptyDescriptionNoOrg": "Crea primero una organización para empezar a gestionar proyectos",
+      "emptyDescriptionHasOrg": "Crea tu primer proyecto para empezar",
+      "createOrganization": "Crear organización",
+      "createProject": "Crear proyecto",
+      "newProject": "Nuevo proyecto",
+      "openProject": "Abrir proyecto"
+    },
+    "detail": {
+      "noDescription": "Sin descripción",
+      "totalTasks": "Tareas totales",
+      "completedSuffix": "{count} completadas",
+      "inProgress": "En curso",
+      "activeTasks": "Tareas activas",
+      "completion": "Finalización",
+      "projectProgress": "Progreso del proyecto",
+      "roadmap": "Hoja de ruta",
+      "phasesCompleted": "Fases completadas",
+      "quickAccess": "Acceso rápido",
+      "tasksTitle": "Tareas",
+      "tasksDescription": "Gestiona y sigue las tareas del proyecto",
+      "tasksMetric": "{count} tareas",
+      "roadmapTitle": "Hoja de ruta",
+      "roadmapDescription": "Fases y cronología del proyecto",
+      "roadmapMetric": "{count} fases",
+      "contextTitle": "Contexto",
+      "contextDescription": "Decisiones, relaciones y fuentes",
+      "contextMetric": "{count} decisiones",
+      "memoryTitle": "Memoria",
+      "memoryDescription": "Conocimiento e información del proyecto",
+      "memoryMetric": "{count} elementos",
+      "filesTitle": "Archivos",
+      "filesDescription": "Documentos y recursos del proyecto",
+      "filesMetric": "{count} archivos",
+      "settingsTitle": "Ajustes",
+      "settingsDescription": "Configuración del proyecto",
+      "settingsMetric": "Gestionar equipo"
+    },
+    "edit": {
+      "trigger": "Editar proyecto",
+      "dialogTitle": "Editar proyecto",
+      "dialogDescription": "Actualiza la información del proyecto",
+      "nameLabel": "Nombre del proyecto",
+      "descriptionLabel": "Descripción",
+      "cancel": "Cancelar",
+      "saving": "Guardando...",
+      "saveChanges": "Guardar cambios"
+    },
+    "import": {
+      "trigger": "Importar proyecto",
+      "dialogTitle": "Importar proyecto",
+      "dialogDescription": "Importa un archivo .guidon como proyecto nuevo, o para sobrescribir uno existente.",
+      "chooseFile": "Elegir archivo .guidon...",
+      "readingFile": "Leyendo archivo...",
+      "taskCount": "{count, plural, one {# tarea} other {# tareas}}",
+      "phaseCount": "{count, plural, one {# fase de la hoja de ruta} other {# fases de la hoja de ruta}}",
+      "createNewProject": "Crear proyecto nuevo",
+      "overwriteExistingProject": "Sobrescribir proyecto existente",
+      "organizationLabel": "Organización",
+      "projectToOverwriteLabel": "Proyecto a sobrescribir",
+      "overwriteWarning": "Esto reemplaza permanentemente las tareas y fases de la hoja de ruta del proyecto de destino con lo que hay en este archivo. Esto no se puede deshacer.",
+      "typeToConfirm": "Escribe <b>{name}</b> para confirmar",
+      "chooseOrganization": "Elige una organización.",
+      "chooseProjectToOverwrite": "Elige un proyecto para sobrescribir.",
+      "cancel": "Cancelar",
+      "import": "Importar"
+    },
+    "create": {
+      "trigger": "Nuevo proyecto",
+      "dialogTitle": "Crear proyecto",
+      "dialogDescription": "Crea un nuevo proyecto en {orgName}",
+      "nameLabel": "Nombre del proyecto",
+      "namePlaceholder": "Rediseño del sitio web",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "Rediseñar el sitio web de la empresa",
+      "projectTypeLabel": "Tipo de proyecto (opcional)",
+      "notSet": "Sin definir",
+      "workflowLabel": "Flujo de trabajo",
+      "workflowHelp": "Scrum añade sprints, backlog y puntos de historia — próximamente. Por ahora, esto solo etiqueta el proyecto.",
+      "cancel": "Cancelar",
+      "creating": "Creando...",
+      "createButton": "Crear"
     }
   }
 }

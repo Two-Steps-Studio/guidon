@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,6 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
-import { PROJECT_TYPE_LABELS, type ProjectType } from "@/types/project";
 import { ImportProjectDialog } from "./import-project-dialog";
 
 interface ProjectRow {
@@ -34,6 +34,8 @@ interface OrganizationRow {
 }
 
 export default async function ProjectsPage() {
+  const t = await getTranslations("projects.list");
+  const tCommon = await getTranslations("common");
   const user = await getCurrentUser();
 
   let organizations: OrganizationRow[];
@@ -110,8 +112,8 @@ export default async function ProjectsPage() {
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Projects</h1>
-            <p className="text-muted-foreground">Manage your projects and organizations</p>
+            <h1 className="text-3xl font-bold">{t("title")}</h1>
+            <p className="text-muted-foreground">{t("subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             <ImportProjectDialog
@@ -122,7 +124,7 @@ export default async function ProjectsPage() {
               <Button asChild>
                 <Link href="/organizations">
                   <Plus className="h-4 w-4 mr-2" />
-                  New Project
+                  {t("newProject")}
                 </Link>
               </Button>
             )}
@@ -131,7 +133,7 @@ export default async function ProjectsPage() {
 
         {organizations.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Your Organizations</h2>
+            <h2 className="text-xl font-semibold mb-4">{t("yourOrganizations")}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {organizations.map((org) => (
                 <Link key={org.id} href={`/organizations/${org.id}`}>
@@ -147,7 +149,7 @@ export default async function ProjectsPage() {
                           </Avatar>
                           {org.name}
                         </CardTitle>
-                        <Badge variant="outline">{org.user_role}</Badge>
+                        <Badge variant="outline">{tCommon("role", { role: org.user_role })}</Badge>
                       </div>
                       <CardDescription>{org.slug}</CardDescription>
                     </CardHeader>
@@ -166,31 +168,31 @@ export default async function ProjectsPage() {
         )}
 
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">All Projects</h2>
+          <h2 className="text-xl font-semibold">{t("allProjects")}</h2>
         </div>
 
         {projects.length === 0 ? (
           <EmptyState
             icon={FolderKanban}
-            title="No projects yet"
+            title={t("emptyTitle")}
             description={
               organizations.length === 0
-                ? "Create an organization first to start managing projects"
-                : "Create your first project to get started"
+                ? t("emptyDescriptionNoOrg")
+                : t("emptyDescriptionHasOrg")
             }
             action={
               organizations.length === 0 ? (
                 <Button asChild>
                   <Link href="/organizations">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Organization
+                    {t("createOrganization")}
                   </Link>
                 </Button>
               ) : (
                 <Button asChild>
                   <Link href="/organizations">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Project
+                    {t("createProject")}
                   </Link>
                 </Button>
               )
@@ -216,7 +218,7 @@ export default async function ProjectsPage() {
                   <CardContent>
                     {project.project_type && (
                       <Badge variant="outline" className="mb-2">
-                        {PROJECT_TYPE_LABELS[project.project_type as ProjectType] ?? project.project_type}
+                        {tCommon("projectType", { type: project.project_type })}
                       </Badge>
                     )}
                     {project.description && (
@@ -226,7 +228,7 @@ export default async function ProjectsPage() {
                     )}
                     <div className="flex items-center text-sm text-muted-foreground">
                       <ArrowRight className="h-4 w-4 mr-1" />
-                      Open project
+                      {t("openProject")}
                     </div>
                   </CardContent>
                 </Card>
