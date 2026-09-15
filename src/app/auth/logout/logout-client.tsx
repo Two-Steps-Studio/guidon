@@ -2,11 +2,13 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 import { logoutLocalAction } from './actions';
 
 export function LogoutClient({ local }: { local: boolean }) {
+  const t = useTranslations('auth.logout');
   const router = useRouter();
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function LogoutClient({ local }: { local: boolean }) {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Signing out...</p>
+        <p className="text-muted-foreground">{t('signingOut')}</p>
       </div>
     </div>
   );

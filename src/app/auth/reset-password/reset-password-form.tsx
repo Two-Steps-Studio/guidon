@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function ResetPasswordForm() {
+  const t = useTranslations("auth.resetPassword");
+  const tCommon = useTranslations("auth.common");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +30,7 @@ export function ResetPasswordForm() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords don't match.");
+      setError(t("passwordsDontMatch"));
       return;
     }
 
@@ -41,10 +44,10 @@ export function ResetPasswordForm() {
 
       router.push(
         "/auth/login?message=" +
-          encodeURIComponent("Your password has been reset. Sign in with your new password.")
+          encodeURIComponent(t("successMessage"))
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : tCommon("somethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -62,15 +65,15 @@ export function ResetPasswordForm() {
       />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Set a new password</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
           <CardDescription>
-            Choose a new password for your Guidon account.
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
+              <Label htmlFor="password">{t("newPasswordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -82,7 +85,7 @@ export function ResetPasswordForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm new password</Label>
+              <Label htmlFor="confirmPassword">{t("confirmPasswordLabel")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -99,7 +102,7 @@ export function ResetPasswordForm() {
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Updating..." : "Update password"}
+              {loading ? t("updating") : t("updatePassword")}
             </Button>
           </form>
         </CardContent>

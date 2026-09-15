@@ -1,5 +1,55 @@
 {
   "common": {
     "loading": "Lädt..."
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "description": "Gib deine E-Mail-Adresse und dein Passwort ein, um auf dein Konto zuzugreifen",
+      "emailLabel": "E-Mail",
+      "passwordLabel": "Passwort",
+      "forgotPassword": "Passwort vergessen?",
+      "signingIn": "Anmeldung läuft...",
+      "signIn": "Anmelden",
+      "noAccount": "Noch kein Konto?",
+      "signUp": "Registrieren"
+    },
+    "signup": {
+      "title": "Konto erstellen",
+      "description": "Gib deine Daten ein, um dein Guidon-Konto zu erstellen",
+      "fullNameLabel": "Vollständiger Name",
+      "emailLabel": "E-Mail",
+      "passwordLabel": "Passwort",
+      "creatingAccount": "Konto wird erstellt...",
+      "signUp": "Registrieren",
+      "haveAccount": "Bereits ein Konto?",
+      "signIn": "Anmelden",
+      "confirmEmailMessage": "Bestätige dein Konto über den Link in deiner E-Mail"
+    },
+    "forgotPassword": {
+      "title": "Passwort zurücksetzen",
+      "description": "Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen deines Passworts.",
+      "sentMessage": "Falls zu dieser E-Mail-Adresse ein Konto existiert, haben wir einen Link zum Zurücksetzen des Passworts gesendet.",
+      "emailLabel": "E-Mail",
+      "sending": "Senden...",
+      "sendResetLink": "Link zum Zurücksetzen senden",
+      "backToSignIn": "Zurück zur Anmeldung"
+    },
+    "resetPassword": {
+      "title": "Neues Passwort festlegen",
+      "description": "Wähle ein neues Passwort für dein Guidon-Konto.",
+      "newPasswordLabel": "Neues Passwort",
+      "confirmPasswordLabel": "Neues Passwort bestätigen",
+      "passwordsDontMatch": "Die Passwörter stimmen nicht überein.",
+      "updating": "Wird aktualisiert...",
+      "updatePassword": "Passwort aktualisieren",
+      "successMessage": "Dein Passwort wurde zurückgesetzt. Melde dich mit deinem neuen Passwort an."
+    },
+    "logout": {
+      "signingOut": "Abmelden..."
+    },
+    "common": {
+      "somethingWentWrong": "Etwas ist schiefgelaufen"
+    }
   }
 }

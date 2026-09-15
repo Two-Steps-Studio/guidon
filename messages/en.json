@@ -1,5 +1,55 @@
 {
   "common": {
     "loading": "Loading..."
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "description": "Enter your email and password to access your account",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "forgotPassword": "Forgot password?",
+      "signingIn": "Signing in...",
+      "signIn": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "signup": {
+      "title": "Create an account",
+      "description": "Enter your information to create your Guidon account",
+      "fullNameLabel": "Full Name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "creatingAccount": "Creating account...",
+      "signUp": "Sign Up",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "confirmEmailMessage": "Check your email to confirm your account"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "description": "Enter your email and we'll send you a link to reset your password.",
+      "sentMessage": "If that email has an account, we've sent a password reset link.",
+      "emailLabel": "Email",
+      "sending": "Sending...",
+      "sendResetLink": "Send reset link",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "description": "Choose a new password for your Guidon account.",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm new password",
+      "passwordsDontMatch": "Passwords don't match.",
+      "updating": "Updating...",
+      "updatePassword": "Update password",
+      "successMessage": "Your password has been reset. Sign in with your new password."
+    },
+    "logout": {
+      "signingOut": "Signing out..."
+    },
+    "common": {
+      "somethingWentWrong": "Something went wrong"
+    }
   }
 }

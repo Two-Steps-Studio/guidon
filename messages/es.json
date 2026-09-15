@@ -1,5 +1,55 @@
 {
   "common": {
     "loading": "Cargando..."
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "description": "Introduce tu correo electrónico y contraseña para acceder a tu cuenta",
+      "emailLabel": "Correo electrónico",
+      "passwordLabel": "Contraseña",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "signingIn": "Iniciando sesión...",
+      "signIn": "Iniciar sesión",
+      "noAccount": "¿No tienes una cuenta?",
+      "signUp": "Regístrate"
+    },
+    "signup": {
+      "title": "Crear una cuenta",
+      "description": "Introduce tus datos para crear tu cuenta de Guidon",
+      "fullNameLabel": "Nombre completo",
+      "emailLabel": "Correo electrónico",
+      "passwordLabel": "Contraseña",
+      "creatingAccount": "Creando cuenta...",
+      "signUp": "Registrarse",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Inicia sesión",
+      "confirmEmailMessage": "Revisa tu correo para confirmar tu cuenta"
+    },
+    "forgotPassword": {
+      "title": "Restablece tu contraseña",
+      "description": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+      "sentMessage": "Si esa cuenta existe, te hemos enviado un enlace para restablecer la contraseña.",
+      "emailLabel": "Correo electrónico",
+      "sending": "Enviando...",
+      "sendResetLink": "Enviar enlace de restablecimiento",
+      "backToSignIn": "Volver a iniciar sesión"
+    },
+    "resetPassword": {
+      "title": "Establece una nueva contraseña",
+      "description": "Elige una nueva contraseña para tu cuenta de Guidon.",
+      "newPasswordLabel": "Nueva contraseña",
+      "confirmPasswordLabel": "Confirma la nueva contraseña",
+      "passwordsDontMatch": "Las contraseñas no coinciden.",
+      "updating": "Actualizando...",
+      "updatePassword": "Actualizar contraseña",
+      "successMessage": "Tu contraseña ha sido restablecida. Inicia sesión con tu nueva contraseña."
+    },
+    "logout": {
+      "signingOut": "Cerrando sesión..."
+    },
+    "common": {
+      "somethingWentWrong": "Algo salió mal"
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SignupForm } from "./signup-form";
 
@@ -6,9 +7,10 @@ import { SignupForm } from "./signup-form";
 // prerendered - DATABASE_URL is a runtime-only env var under Docker Compose.
 export const dynamic = "force-dynamic";
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const t = await getTranslations("common");
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       <SignupForm local={hasDirectDatabase()} />
     </Suspense>
   );

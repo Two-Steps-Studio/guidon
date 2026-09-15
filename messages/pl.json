@@ -1,5 +1,55 @@
 {
   "common": {
     "loading": "Ładowanie..."
+  },
+  "auth": {
+    "login": {
+      "title": "Zaloguj się",
+      "description": "Podaj e-mail i hasło, aby uzyskać dostęp do konta",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Hasło",
+      "forgotPassword": "Nie pamiętasz hasła?",
+      "signingIn": "Logowanie...",
+      "signIn": "Zaloguj się",
+      "noAccount": "Nie masz konta?",
+      "signUp": "Zarejestruj się"
+    },
+    "signup": {
+      "title": "Utwórz konto",
+      "description": "Podaj swoje dane, aby utworzyć konto Guidon",
+      "fullNameLabel": "Imię i nazwisko",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Hasło",
+      "creatingAccount": "Tworzenie konta...",
+      "signUp": "Zarejestruj się",
+      "haveAccount": "Masz już konto?",
+      "signIn": "Zaloguj się",
+      "confirmEmailMessage": "Sprawdź e-mail, aby potwierdzić konto"
+    },
+    "forgotPassword": {
+      "title": "Zresetuj hasło",
+      "description": "Podaj swój e-mail, a wyślemy Ci link do zresetowania hasła.",
+      "sentMessage": "Jeśli to konto istnieje, wysłaliśmy link do resetowania hasła.",
+      "emailLabel": "E-mail",
+      "sending": "Wysyłanie...",
+      "sendResetLink": "Wyślij link resetujący",
+      "backToSignIn": "Powrót do logowania"
+    },
+    "resetPassword": {
+      "title": "Ustaw nowe hasło",
+      "description": "Wybierz nowe hasło do swojego konta Guidon.",
+      "newPasswordLabel": "Nowe hasło",
+      "confirmPasswordLabel": "Potwierdź nowe hasło",
+      "passwordsDontMatch": "Hasła nie są takie same.",
+      "updating": "Aktualizowanie...",
+      "updatePassword": "Zaktualizuj hasło",
+      "successMessage": "Twoje hasło zostało zresetowane. Zaloguj się nowym hasłem."
+    },
+    "logout": {
+      "signingOut": "Wylogowywanie..."
+    },
+    "common": {
+      "somethingWentWrong": "Coś poszło nie tak"
+    }
   }
 }
