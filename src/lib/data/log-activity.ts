@@ -1,5 +1,6 @@
 import "server-only";
 
+import { after } from "next/server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
@@ -22,39 +23,51 @@ interface LogActivityInput {
  * server console) rather than rolling back or failing the caller's actual
  * mutation, which has already committed by the time this runs - an audit
  * trail gap is far cheaper than losing a user's edit over a logging bug.
+ *
+ * The insert itself runs inside next/server's `after()` - every one of this
+ * function's ~57 call sites across the app's Server Actions used to `await`
+ * a full extra round trip before returning to the client, on top of the
+ * mutation it was logging. after() defers it until the response has already
+ * been sent, so the caller's own await resolves as soon as the callback is
+ * scheduled. Safe here specifically because every call site is a Server
+ * Action ("use server"), which after()'s docs call out as one of the
+ * contexts where request APIs (createClient()'s cookies() call, in the
+ * hosted branch) still work correctly inside the deferred callback.
  */
 export async function logActivity(input: LogActivityInput): Promise<void> {
-  try {
-    if (hasDirectDatabase()) {
-      await withUser(input.userId, ({ query }) =>
-        query(
-          `INSERT INTO activity_logs (project_id, organization_id, user_id, action, entity_type, entity_id, details)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            input.projectId ?? null,
-            input.organizationId ?? null,
-            input.userId,
-            input.action,
-            input.entityType ?? null,
-            input.entityId ?? null,
-            input.details ? JSON.stringify(input.details) : null,
-          ]
-        )
-      );
-      return;
-    }
+  after(async () => {
+    try {
+      if (hasDirectDatabase()) {
+        await withUser(input.userId, ({ query }) =>
+          query(
+            `INSERT INTO activity_logs (project_id, organization_id, user_id, action, entity_type, entity_id, details)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              input.projectId ?? null,
+              input.organizationId ?? null,
+              input.userId,
+              input.action,
+              input.entityType ?? null,
+              input.entityId ?? null,
+              input.details ? JSON.stringify(input.details) : null,
+            ]
+          )
+        );
+        return;
+      }
 
-    const supabase = await createClient();
-    await supabase.from("activity_logs").insert({
-      project_id: input.projectId ?? null,
-      organization_id: input.organizationId ?? null,
-      user_id: input.userId,
-      action: input.action,
-      entity_type: input.entityType ?? null,
-      entity_id: input.entityId ?? null,
-      details: input.details ?? null,
-    });
-  } catch (error) {
-    console.error(`logActivity(${input.action}) failed:`, error);
-  }
+      const supabase = await createClient();
+      await supabase.from("activity_logs").insert({
+        project_id: input.projectId ?? null,
+        organization_id: input.organizationId ?? null,
+        user_id: input.userId,
+        action: input.action,
+        entity_type: input.entityType ?? null,
+        entity_id: input.entityId ?? null,
+        details: input.details ?? null,
+      });
+    } catch (error) {
+      console.error(`logActivity(${input.action}) failed:`, error);
+    }
+  });
 }
