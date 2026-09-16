@@ -80,11 +80,18 @@ async function handleSubmit(event) {
 // Read whether Guidon Desktop is currently registered to launch at Windows
 // startup (src-tauri/src/autostart.rs's get_autostart_enabled, backed by
 // the autostart plugin) so the checkbox reflects real state on load instead
-// of defaulting to unchecked.
+// of defaulting to unchecked. Stays disabled (an explicit "unknown" state,
+// not a plausible-but-possibly-wrong unchecked box) until this resolves -
+// on failure it stays disabled rather than presenting an interactive
+// control next to an error the user might not notice. This also means the
+// "change" listener (attached only after this resolves, see the
+// DOMContentLoaded handler below) can't fire before the real state is
+// loaded, so a fast click can't race with and get overwritten by this load.
 async function loadAutostartState() {
   try {
     const invoke = window.__TAURI__.core.invoke;
     autostartCheckbox.checked = await invoke("get_autostart_enabled");
+    autostartCheckbox.disabled = false;
   } catch (err) {
     console.error("failed to read the autostart state", err);
     setAutostartStatus(
@@ -123,6 +130,10 @@ window.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", handleSubmit);
   loadCurrentUrl();
 
-  autostartCheckbox.addEventListener("change", handleAutostartToggle);
-  loadAutostartState();
+  // Listener attached only after the real state has loaded (see
+  // loadAutostartState's own comment) - the checkbox starts disabled in
+  // index.html, so there's no window where a click could fire before then.
+  loadAutostartState().then(() => {
+    autostartCheckbox.addEventListener("change", handleAutostartToggle);
+  });
 });

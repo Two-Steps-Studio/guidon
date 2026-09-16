@@ -23,6 +23,13 @@
 // scaffolded a capabilities/desktop.json granting the plugin to the `main`
 // window by default - that file was deleted and the grant moved into
 // capabilities/settings.json instead; see that file's description.
+//
+// A new #[tauri::command] must be registered in TWO places, not just the
+// invoke_handler! list below: also in build.rs's AppManifest::commands, or
+// its ACL permission identifier (the allow-<name> capability entries this
+// file's commands rely on) never gets generated and the command silently
+// isn't callable from a capability file that lists it. build.rs's own
+// comment explains the same linkage from its side.
 mod autostart;
 mod menu;
 mod store;
