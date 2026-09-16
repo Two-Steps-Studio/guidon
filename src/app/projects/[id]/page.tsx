@@ -35,8 +35,10 @@ export default async function ProjectPage({
   const { id: projectId } = await params;
   const t = await getTranslations("projects.detail");
   const tCommon = await getTranslations("common");
-  const access = await requireProjectAccess(projectId);
-  const stats = await getProjectStats(projectId);
+  // getProjectStats doesn't depend on requireProjectAccess's result (both
+  // only need projectId), so they run concurrently instead of stats paying
+  // for a second full round-trip after access resolves.
+  const [access, stats] = await Promise.all([requireProjectAccess(projectId), getProjectStats(projectId)]);
   const { project } = access;
 
   const quickAccess = [

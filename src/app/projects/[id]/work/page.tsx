@@ -76,6 +76,12 @@ export default async function ProjectWorkPage({
   const tWork = await getTranslations("work");
   const access = await requireProjectAccess(projectId);
 
+  // Only depends on `access` (already resolved), not on tasks/members/etc
+  // below - started here rather than awaited inline in the JSX below so it
+  // runs alongside that Promise.all instead of as a second sequential
+  // round-trip tacked onto the end of the page.
+  const aiAvailablePromise = isAIAvailableForOrg(access.project.organization_id, access.userId);
+
   let tasks: Task[];
   let members: TaskCardMember[];
   let commentCounts: Record<string, number>;
@@ -174,7 +180,7 @@ export default async function ProjectWorkPage({
       initialCommentCounts={commentCounts}
       projectColor={access.project.color}
       columns={columns}
-      aiAvailable={await isAIAvailableForOrg(access.project.organization_id, access.userId)}
+      aiAvailable={await aiAvailablePromise}
     />
   );
 }

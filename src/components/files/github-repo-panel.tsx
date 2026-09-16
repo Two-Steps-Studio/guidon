@@ -1,12 +1,26 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { AlertCircle, Github, Loader2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CodeWorkspace } from "./code-workspace";
 import { disconnectRepo } from "@/app/projects/[id]/files/github-actions";
 import type { ProjectGithubRepoInfo } from "@/lib/data/github-connection";
+
+// Dynamic rather than a plain import: CodeWorkspace pulls in react-markdown +
+// remark-gfm (for its Markdown preview tab) which would otherwise ship in
+// every project's Files-page bundle even when no repo is connected and this
+// never renders - repoInfo is null for most projects.
+const CodeWorkspace = dynamic(() => import("./code-workspace").then((m) => m.CodeWorkspace), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[70vh] min-h-[420px] items-center justify-center gap-2 rounded-lg border border-border text-sm text-muted-foreground">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      Loading workspace...
+    </div>
+  ),
+});
 
 interface GithubRepoPanelProps {
   projectId: string;

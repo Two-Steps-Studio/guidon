@@ -38,6 +38,15 @@ export default async function ProjectMemoryPage({
   const access = await requireProjectAccess(projectId);
   const canWrite = canWriteProject(access.role);
 
+  // Only depends on `access` (already resolved), not on the memories/profiles
+  // queries below - started here so it runs alongside them instead of as a
+  // third sequential round-trip tacked onto the end of the page. Skipped
+  // entirely when !canWrite, same short-circuit the original inline
+  // `canWrite && await isAIAvailableForOrg(...)` had.
+  const aiAvailablePromise = canWrite
+    ? isAIAvailableForOrg(access.project.organization_id, access.userId)
+    : null;
+
   let memories: ProjectMemory[];
 
   // Safety cap, not pagination - see src/app/projects/[id]/work/page.tsx
@@ -101,8 +110,7 @@ export default async function ProjectMemoryPage({
   }
 
   const profilesById = new Map(profilesData.map((p) => [p.id, p]));
-  const canGenerateInsight =
-    canWrite && (await isAIAvailableForOrg(access.project.organization_id, access.userId));
+  const canGenerateInsight = aiAvailablePromise !== null && (await aiAvailablePromise);
 
   return (
     <div className="container mx-auto max-w-7xl px-6 py-8">

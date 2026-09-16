@@ -26,9 +26,11 @@ export default async function ProjectLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const access = await requireProjectAccess(id);
+  // getCurrentUser() doesn't depend on the project access check, so it runs
+  // alongside it instead of after - getSwitchableProjects still has to wait,
+  // since it needs access.project.organization_id.
+  const [access, user] = await Promise.all([requireProjectAccess(id), getCurrentUser()]);
   const switchableProjects = await getSwitchableProjects(access.project.organization_id);
-  const user = await getCurrentUser();
 
   return (
     <AppShell

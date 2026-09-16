@@ -156,8 +156,15 @@ export const getProjectAccess = cache(async function getProjectAccess(
  *
  * Use this in layouts and pages; use getProjectAccess when the caller wants to
  * render its own empty state.
+ *
+ * Wrapped in React's `cache()` for the same reason as getProjectAccess above:
+ * every project layout calls this once from generateMetadata and once more
+ * from the render itself. Without this, only the getProjectAccess() call
+ * inside was deduplicated - the auth.getUser()/getLocalSessionUserId() gate
+ * above it still ran twice per request, each a real network round trip to
+ * Supabase Auth in hosted mode.
  */
-export async function requireProjectAccess(
+export const requireProjectAccess = cache(async function requireProjectAccess(
   projectId: string
 ): Promise<ProjectAccess> {
   if (hasDirectDatabase()) {
@@ -190,7 +197,7 @@ export async function requireProjectAccess(
   }
 
   return access;
-}
+});
 
 export interface SwitchableProject {
   id: string;

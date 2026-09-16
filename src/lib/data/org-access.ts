@@ -106,7 +106,16 @@ export const getOrgAccess = cache(async function getOrgAccess(
   };
 });
 
-export async function requireOrgAccess(orgId: string): Promise<OrgAccess> {
+/**
+ * Wrapped in React's `cache()` for the same reason as requireProjectAccess
+ * (src/lib/data/project-access.ts): if a future generateMetadata or a
+ * sibling layout ever calls this for the same org in the same request, the
+ * auth.getUser() gate below should only make one network round trip, not
+ * one per caller. No current call site double-calls this, but every other
+ * require*Access in this codebase already follows this pattern - this one
+ * was the odd one out.
+ */
+export const requireOrgAccess = cache(async function requireOrgAccess(orgId: string): Promise<OrgAccess> {
   if (hasDirectDatabase()) {
     const userId = await getLocalSessionUserId();
     if (!userId) {
@@ -137,4 +146,4 @@ export async function requireOrgAccess(orgId: string): Promise<OrgAccess> {
   }
 
   return access;
-}
+});

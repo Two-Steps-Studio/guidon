@@ -154,7 +154,15 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - static image assets
+     * - monaco-editor (scripts/copy-monaco-assets.mjs's ~150 static .js/.css
+     *   files served from public/monaco-editor/vs - none of the extensions
+     *   excluded above cover them, so every one of them used to pay for a
+     *   full auth check same as a real page: a Supabase auth.getUser()
+     *   network round trip per file in hosted mode, or a session-cookie
+     *   verify in self-hosted. Opening the code editor fires dozens of these
+     *   requests at once, none of which need or benefit from that check -
+     *   they're public, static, unauthenticated by design.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|monaco-editor/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

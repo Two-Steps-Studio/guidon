@@ -323,13 +323,18 @@ export async function moveTask(
         );
 
         if (plan) {
-          for (const { id, sort_order } of plan) {
-            await query("UPDATE tasks SET sort_order = $1 WHERE id = $2 AND project_id = $3", [
-              sort_order,
-              id,
-              projectId,
-            ]);
-          }
+          // One batched UPDATE instead of one round-trip per sibling - a
+          // renumbering plan spans the whole column (see
+          // resolveColumnRenumbering's own comment), so a column with 50
+          // tasks used to mean 50 sequential awaits for a single drag-and-drop
+          // move. unnest() zips the two parallel arrays back into rows.
+          await query(
+            `UPDATE tasks AS t
+             SET sort_order = v.sort_order
+             FROM (SELECT unnest($1::uuid[]) AS id, unnest($2::int[]) AS sort_order) AS v
+             WHERE t.id = v.id AND t.project_id = $3`,
+            [plan.map((p) => p.id), plan.map((p) => p.sort_order), projectId]
+          );
           const result = await query(
             "UPDATE tasks SET status = $1 WHERE id = $2 AND project_id = $3 RETURNING id",
             [status, taskId, projectId]
@@ -383,14 +388,16 @@ export async function moveTask(
   );
 
   if (plan) {
-    for (const { id, sort_order } of plan) {
-      const { error: renumberError } = await supabase
-        .from("tasks")
-        .update({ sort_order })
-        .eq("id", id)
-        .eq("project_id", projectId);
-      if (renumberError) return { error: renumberError.message };
-    }
+    // One RPC round-trip instead of one UPDATE per sibling - see the pg
+    // branch above and migration 033 for why. renumber_task_sort_orders
+    // runs as the calling role (not SECURITY DEFINER), so tasks_update's
+    // RLS policy still gates every row exactly as a direct .update() would.
+    const { error: renumberError } = await supabase.rpc("renumber_task_sort_orders", {
+      p_ids: plan.map((p) => p.id),
+      p_sort_orders: plan.map((p) => p.sort_order),
+      p_project_id: projectId,
+    });
+    if (renumberError) return { error: renumberError.message };
     const { data, error: statusError } = await supabase
       .from("tasks")
       .update({ status })
