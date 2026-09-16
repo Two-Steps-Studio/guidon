@@ -19,6 +19,13 @@ const eslintConfig = defineConfig([
     // node_modules and build output; the patterns above are anchored to the
     // repo root and don't reach nested copies under here.
     ".worktrees/**",
+    // desktop/ is a self-contained sibling project (Tauri + plain JS, not
+    // part of the Next.js app) with its own tooling - its src-tauri/target/
+    // Rust build output alone previously ballooned this config's lint run by
+    // thousands of generated .js files (the same class of bug .worktrees/**
+    // above was added to fix), so the whole directory is excluded here
+    // rather than just its build output.
+    "desktop/**",
   ]),
 ]);
 
