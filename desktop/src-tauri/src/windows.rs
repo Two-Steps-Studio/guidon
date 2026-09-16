@@ -52,9 +52,15 @@ pub(crate) fn toggle_main_window(app: &AppHandle) {
     let Some(window) = app.get_webview_window("main") else {
         return;
     };
-    if window.is_visible().unwrap_or(false) {
+    // is_visible() stays true even while minimized on Windows, so a plain
+    // visibility check alone would "hide" a minimized-but-visible window on
+    // the next click instead of restoring it to the foreground - checking
+    // is_minimized() first routes that case to the restore branch instead.
+    let minimized = window.is_minimized().unwrap_or(false);
+    if window.is_visible().unwrap_or(false) && !minimized {
         let _ = window.hide();
     } else {
+        let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -79,17 +85,20 @@ pub(crate) fn open_or_focus_settings(app: &AppHandle) {
             .maximizable(false)
             .build()
     {
-        log_settings_window_error(app, &err);
+        log_app_error(app, &format!("failed to open settings window: {err}"));
     }
 }
 
-/// Record a settings-window-open failure to a log file under the app's data
-/// directory. A packaged Windows GUI-subsystem exe (see main.rs's
-/// `windows_subsystem = "windows"`) has no attached console, so the
-/// previous `eprintln!` was invisible to a real user - the menu item would
-/// just silently do nothing. This leaves a trail without pulling in a full
-/// logging framework or a dialog-plugin dependency for one error path.
-fn log_settings_window_error(app: &AppHandle, err: &tauri::Error) {
+/// Record a non-fatal failure to a log file under the app's data directory,
+/// rather than crashing or (the previous behavior) `eprintln!`-ing into a
+/// console a packaged Windows GUI-subsystem exe doesn't have (see main.rs's
+/// `windows_subsystem = "windows"`) - that made failures invisible to a
+/// real user, with no trail to debug from. Shared by any module that hits a
+/// recoverable setup failure (settings window creation here; the tray
+/// icon's missing-default-icon case in tray.rs) rather than duplicating
+/// this per call site or pulling in a full logging framework/dialog-plugin
+/// dependency for what's meant to be a rare fallback path.
+pub(crate) fn log_app_error(app: &AppHandle, message: &str) {
     let Ok(dir) = app.path().app_data_dir() else {
         return;
     };
@@ -107,5 +116,5 @@ fn log_settings_window_error(app: &AppHandle, err: &tauri::Error) {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or(0);
-    let _ = writeln!(file, "[{timestamp}] failed to open settings window: {err}");
+    let _ = writeln!(file, "[{timestamp}] {message}");
 }
