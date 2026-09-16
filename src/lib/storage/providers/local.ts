@@ -171,6 +171,18 @@ export class LocalStorageProvider implements StorageProvider {
     return info.isDirectory() ? walk(start) : info.size;
   }
 
+  /**
+   * Size only, without reading the file - the storage route needs this for
+   * Content-Length before it starts streaming the body with createStream()
+   * below. Returns null for a missing object so the route can 404 instead
+   * of throwing.
+   */
+  async statObject(bucket: string, objectPath: string): Promise<{ size: number } | null> {
+    const full = this.resolve(bucket, objectPath);
+    const info = await stat(full).catch(() => null);
+    return info ? { size: info.size } : null;
+  }
+
   /** Used by the storage route to stream a verified object. */
   createStream(bucket: string, objectPath: string) {
     return createReadStream(this.resolve(bucket, objectPath));

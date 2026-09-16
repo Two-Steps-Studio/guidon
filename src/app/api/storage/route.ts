@@ -1,4 +1,5 @@
 import path from "node:path";
+import { Readable } from "node:stream";
 import { NextRequest, NextResponse } from "next/server";
 import {
   activeStorageProviderName,
@@ -74,13 +75,24 @@ export async function GET(request: NextRequest) {
 
   try {
     const provider = new LocalStorageProvider();
-    const blob = await provider.download(safeBucket, safePath);
+    // Streamed rather than provider.download() (reads the whole file into
+    // one in-process Buffer before responding) - every preview/download
+    // request used to hold an entire file in memory at once, up to this
+    // app's per-file upload limit (25MB, FILE_SIZE_LIMITS.DOCUMENT), for a
+    // route that can see real concurrent traffic on a self-hosted install.
+    // statObject() first, rather than letting createStream()'s ENOENT
+    // surface only after headers would already be sent.
+    const info = await provider.statObject(safeBucket, safePath);
+    if (!info) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const body = Readable.toWeb(provider.createStream(safeBucket, safePath)) as ReadableStream;
 
-    return new NextResponse(blob, {
+    return new NextResponse(body, {
       headers: inlineMime
         ? {
             "Content-Type": inlineMime,
-            "Content-Length": String(blob.size),
+            "Content-Length": String(info.size),
             // Public avatars/project images are effectively permanent
             // (PUBLIC_URL_TTL_SECONDS) and meant to be reused across
             // requests; a private preview link is signed and time-limited,
@@ -95,7 +107,7 @@ export async function GET(request: NextRequest) {
           }
         : {
             "Content-Type": "application/octet-stream",
-            "Content-Length": String(blob.size),
+            "Content-Length": String(info.size),
             // Signed and time-limited, so it must not be shared by a proxy.
             "Cache-Control": "private, max-age=60",
             "X-Content-Type-Options": "nosniff",

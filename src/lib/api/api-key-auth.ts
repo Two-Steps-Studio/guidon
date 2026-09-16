@@ -1,5 +1,6 @@
 import "server-only";
 
+import { after } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { hashApiKey, isValidApiKeyFormat } from "./api-keys";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -17,6 +18,12 @@ export interface ApiKeyIdentity {
  * malformed, unknown, or revoked. Updates last_used_at as a side effect -
  * every caller of this function is about to actually use the key, there is
  * no separate "check without using" call site in this codebase.
+ *
+ * The last_used_at write is deferred via after() rather than awaited: it is
+ * bookkeeping the caller (an AI agent, on every /api/v1 call this guards)
+ * never needs to wait on, and every route calling this was previously
+ * paying for two sequential round trips - the key lookup, then this write -
+ * before the actual request handler even started.
  */
 export async function authenticateApiKey(authHeader: string | null): Promise<ApiKeyIdentity | null> {
   if (!authHeader?.startsWith("Bearer ")) return null;
@@ -36,8 +43,10 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
     const key = result.rows[0] as { id: string; user_id: string; scopes: string[] } | undefined;
     if (!key) return null;
 
-    await withServiceRole(({ query }) =>
-      query("UPDATE api_keys SET last_used_at = now() WHERE id = $1", [key.id])
+    after(() =>
+      withServiceRole(({ query }) =>
+        query("UPDATE api_keys SET last_used_at = now() WHERE id = $1", [key.id])
+      )
     );
     return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes };
   }
@@ -54,7 +63,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
 
   if (!key) return null;
 
-  await supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id);
+  after(() => supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id));
   return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes };
 }
 
