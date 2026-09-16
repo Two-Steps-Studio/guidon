@@ -584,6 +584,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-store",
+ "url",
 ]
 
 [[package]]
