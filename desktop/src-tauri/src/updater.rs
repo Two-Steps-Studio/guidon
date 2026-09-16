@@ -24,9 +24,20 @@
 // is found) additionally requires an explicit "Yes" on the confirmation
 // dialog below, so nothing downloads or installs without the user asking
 // for it twice (menu item, then dialog).
-use tauri::AppHandle;
+use tauri::menu::MenuItem;
+use tauri::{AppHandle, Wry};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 use tauri_plugin_updater::UpdaterExt;
+
+const IDLE_LABEL: &str = "Check for Updates...";
+
+/// Reset the menu item back to its normal, clickable state. Called on every
+/// terminal path except a successful install (which exits the process, per
+/// check_for_updates's own comment on that branch - nothing left to reset).
+fn reset_menu_item(item: &MenuItem<Wry>) {
+    let _ = item.set_text(IDLE_LABEL);
+    let _ = item.set_enabled(true);
+}
 
 /// Check the configured GitHub Releases manifest (tauri.conf.json's
 /// `plugins.updater.endpoints`) for a newer version, and report the result
@@ -40,8 +51,19 @@ use tauri_plugin_updater::UpdaterExt;
 /// plugin is matched, not unwrapped, which is the behavior Task 5 step 4
 /// asks to verify: without a published GitHub Release yet, the "no update
 /// available" and "fetch error" cases are the expected, exercised outcomes.
-pub(crate) fn check_for_updates(app: &AppHandle) {
+///
+/// `menu_item` (the "Check for Updates..." item itself) is disabled and
+/// relabeled while a check/download is in flight - this is both the user
+/// feedback for an operation that has no progress bar (a download can
+/// legitimately take a while with literally no other visible sign anything
+/// is happening otherwise) and a re-entrancy guard against firing a second
+/// check while one is already running.
+pub(crate) fn check_for_updates(app: &AppHandle, menu_item: &MenuItem<Wry>) {
+    let _ = menu_item.set_enabled(false);
+    let _ = menu_item.set_text("Checking for updates...");
+
     let app = app.clone();
+    let menu_item = menu_item.clone();
     tauri::async_runtime::spawn(async move {
         let check_result = match app.updater() {
             Ok(updater) => updater.check().await,
@@ -53,6 +75,8 @@ pub(crate) fn check_for_updates(app: &AppHandle) {
                 let version = update.version.clone();
                 let current_version = update.current_version.clone();
                 let install_app = app.clone();
+                let menu_item_for_dialog = menu_item.clone();
+                reset_menu_item(&menu_item); // re-enable while the confirm dialog is up
                 app.dialog()
                     .message(format!(
                         "A new version of Guidon Desktop is available: {version} (you have {current_version}).\n\nDownload and install it now?"
@@ -64,6 +88,8 @@ pub(crate) fn check_for_updates(app: &AppHandle) {
                         if !confirmed {
                             return;
                         }
+                        let _ = menu_item_for_dialog.set_enabled(false);
+                        let _ = menu_item_for_dialog.set_text("Downloading update...");
                         tauri::async_runtime::spawn(async move {
                             // On Windows, a successful install exits the process to
                             // launch the installer (see the plugin's own doc comment
@@ -72,6 +98,7 @@ pub(crate) fn check_for_updates(app: &AppHandle) {
                             // which this manual-check-only round doesn't wire up; see
                             // desktop/README.md's Auto-update section.
                             if let Err(err) = update.download_and_install(|_, _| {}, || {}).await {
+                                reset_menu_item(&menu_item_for_dialog);
                                 install_app
                                     .dialog()
                                     .message(format!(
@@ -86,6 +113,7 @@ pub(crate) fn check_for_updates(app: &AppHandle) {
                     });
             }
             Ok(None) => {
+                reset_menu_item(&menu_item);
                 app.dialog()
                     .message("Guidon Desktop is up to date.")
                     .title("No update available")
@@ -94,6 +122,7 @@ pub(crate) fn check_for_updates(app: &AppHandle) {
                     .show(|_| {});
             }
             Err(err) => {
+                reset_menu_item(&menu_item);
                 app.dialog()
                     .message(format!("Could not check for updates: {err}"))
                     .title("Update check failed")

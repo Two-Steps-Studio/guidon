@@ -31,11 +31,12 @@ pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
     app.set_menu(menu)?;
 
     let handle = app.handle().clone();
+    let check_for_updates_item_for_event = check_for_updates_item.clone();
     app.on_menu_event(move |_app, event| {
         if event.id() == OPEN_SETTINGS_MENU_ID {
             open_or_focus_settings(&handle);
         } else if event.id() == CHECK_FOR_UPDATES_MENU_ID {
-            check_for_updates(&handle);
+            check_for_updates(&handle, &check_for_updates_item_for_event);
         }
     });
 
