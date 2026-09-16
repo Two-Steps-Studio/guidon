@@ -2,13 +2,85 @@
 
 import { useEffect, useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
+import c from "react-syntax-highlighter/dist/esm/languages/prism/c";
+import cpp from "react-syntax-highlighter/dist/esm/languages/prism/cpp";
+import csharp from "react-syntax-highlighter/dist/esm/languages/prism/csharp";
+import css from "react-syntax-highlighter/dist/esm/languages/prism/css";
+import docker from "react-syntax-highlighter/dist/esm/languages/prism/docker";
+import glsl from "react-syntax-highlighter/dist/esm/languages/prism/glsl";
+import go from "react-syntax-highlighter/dist/esm/languages/prism/go";
+import hlsl from "react-syntax-highlighter/dist/esm/languages/prism/hlsl";
+import java from "react-syntax-highlighter/dist/esm/languages/prism/java";
+import javascript from "react-syntax-highlighter/dist/esm/languages/prism/javascript";
+import json from "react-syntax-highlighter/dist/esm/languages/prism/json";
+import jsx from "react-syntax-highlighter/dist/esm/languages/prism/jsx";
+import kotlin from "react-syntax-highlighter/dist/esm/languages/prism/kotlin";
+import lua from "react-syntax-highlighter/dist/esm/languages/prism/lua";
+import markup from "react-syntax-highlighter/dist/esm/languages/prism/markup";
+import php from "react-syntax-highlighter/dist/esm/languages/prism/php";
+import python from "react-syntax-highlighter/dist/esm/languages/prism/python";
+import ruby from "react-syntax-highlighter/dist/esm/languages/prism/ruby";
+import rust from "react-syntax-highlighter/dist/esm/languages/prism/rust";
+import scss from "react-syntax-highlighter/dist/esm/languages/prism/scss";
+import sql from "react-syntax-highlighter/dist/esm/languages/prism/sql";
+import swift from "react-syntax-highlighter/dist/esm/languages/prism/swift";
+import toml from "react-syntax-highlighter/dist/esm/languages/prism/toml";
+import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
+import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript";
+import yaml from "react-syntax-highlighter/dist/esm/languages/prism/yaml";
 
 /**
- * Loaded only via next/dynamic from file-viewer.tsx, so the Prism bundle never
+ * Loaded only via next/dynamic from file-viewer.tsx, so this bundle never
  * reaches pages that do not open a code file.
+ *
+ * PrismLight (not the plain `Prism` import), registered with exactly the
+ * languages src/types/file.ts's prismLanguage() can ever produce - the full
+ * `Prism` build bundles every language Prism ships (~290), which measured
+ * ~640KB minified in this app's own build output for a feature that only
+ * ever needs the ~30 extensions EXTENSIONS.code lists. html/xml aren't their
+ * own Prism grammar - both are aliases for `markup`, so registered
+ * separately under those two names pointing at the same import.
+ *
+ * "gradle" is deliberately not registered: the installed
+ * react-syntax-highlighter@15's gradle module imports "refractor/lang/
+ * gradle.js", which doesn't exist in the installed refractor@3.6.0 (only
+ * hlsl.js/toml.js of that trio are present) - a broken dependency pairing,
+ * not something introduced here. A .gradle file falls back to CodeBlock's
+ * unhighlighted-but-functional rendering (react-syntax-highlighter warns
+ * and renders plain text for an unregistered language) rather than this
+ * whole feature failing to build.
  */
+SyntaxHighlighter.registerLanguage("bash", bash);
+SyntaxHighlighter.registerLanguage("c", c);
+SyntaxHighlighter.registerLanguage("cpp", cpp);
+SyntaxHighlighter.registerLanguage("csharp", csharp);
+SyntaxHighlighter.registerLanguage("css", css);
+SyntaxHighlighter.registerLanguage("docker", docker);
+SyntaxHighlighter.registerLanguage("glsl", glsl);
+SyntaxHighlighter.registerLanguage("go", go);
+SyntaxHighlighter.registerLanguage("hlsl", hlsl);
+SyntaxHighlighter.registerLanguage("java", java);
+SyntaxHighlighter.registerLanguage("javascript", javascript);
+SyntaxHighlighter.registerLanguage("json", json);
+SyntaxHighlighter.registerLanguage("jsx", jsx);
+SyntaxHighlighter.registerLanguage("kotlin", kotlin);
+SyntaxHighlighter.registerLanguage("lua", lua);
+SyntaxHighlighter.registerLanguage("html", markup);
+SyntaxHighlighter.registerLanguage("xml", markup);
+SyntaxHighlighter.registerLanguage("php", php);
+SyntaxHighlighter.registerLanguage("python", python);
+SyntaxHighlighter.registerLanguage("ruby", ruby);
+SyntaxHighlighter.registerLanguage("rust", rust);
+SyntaxHighlighter.registerLanguage("scss", scss);
+SyntaxHighlighter.registerLanguage("sql", sql);
+SyntaxHighlighter.registerLanguage("swift", swift);
+SyntaxHighlighter.registerLanguage("toml", toml);
+SyntaxHighlighter.registerLanguage("tsx", tsx);
+SyntaxHighlighter.registerLanguage("typescript", typescript);
+SyntaxHighlighter.registerLanguage("yaml", yaml);
 interface CodeBlockProps {
   /** Signed URL to fetch the file contents from. */
   url: string;
