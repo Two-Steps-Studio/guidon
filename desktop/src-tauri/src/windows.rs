@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
 use crate::store::stored_server_url;
 
@@ -17,11 +17,47 @@ use crate::store::stored_server_url;
 /// Tauri API access - see capabilities/default.json's own comment.
 pub(crate) fn create_main_window(app: &AppHandle) -> tauri::Result<()> {
     let main_url = stored_server_url(app);
-    WebviewWindowBuilder::new(app, "main", WebviewUrl::External(main_url))
+    let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(main_url))
         .title("Guidon Desktop")
         .inner_size(800.0, 600.0)
         .build()?;
+
+    // Close-to-tray (Task 3): clicking the window's X button would
+    // otherwise quit the whole app (Tauri's default), which defeats the
+    // point of having a tray icon (tray.rs) at all. Intercept the close
+    // request, prevent it, and hide the window instead - the process keeps
+    // running in the tray. Only the tray menu's "Quit" item should call
+    // `app.exit()` for a real exit; see tray.rs.
+    //
+    // `window` is cloned rather than borrowed because `on_window_event`
+    // takes `&self` on the same value the closure needs to move `hide()`
+    // into - the clone is cheap (it wraps a shared handle, not the OS
+    // window itself).
+    let window_for_event = window.clone();
+    window.on_window_event(move |event| {
+        if let WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            let _ = window_for_event.hide();
+        }
+    });
+
     Ok(())
+}
+
+/// Toggle the main window's visibility - used by both the tray icon's own
+/// click and its "Show/Hide Guidon" menu item (tray.rs). Hidden rather than
+/// destroyed by close-to-tray above, so this is a plain show/hide flip, not
+/// a re-create.
+pub(crate) fn toggle_main_window(app: &AppHandle) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    if window.is_visible().unwrap_or(false) {
+        let _ = window.hide();
+    } else {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
 }
 
 /// Show the Settings window, creating it on first use. This is genuinely
