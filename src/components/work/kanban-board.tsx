@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -82,16 +82,21 @@ export function KanbanBoard({
   // comment above.
   const canDrag = canEdit && sortMode === "manual";
 
-  const groups = groupTasksByStatus(
-    tasks,
-    sortMode === "due_date" ? compareTasksByDueDate : undefined
+  // Memoized so a dropTarget-only re-render (dragover fires many times per
+  // second while dragging) doesn't recompute these - and, just as
+  // importantly, so TaskCard's memo() below actually holds: without this,
+  // `groups[status]` and `membersById.get(...)` would hand out fresh
+  // objects/Maps every render even when nothing the card displays changed.
+  const groups = useMemo(
+    () => groupTasksByStatus(tasks, sortMode === "due_date" ? compareTasksByDueDate : undefined),
+    [tasks, sortMode]
   );
-  const membersById = new Map(members.map((member) => [member.id, member]));
+  const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
 
-  const resetDrag = () => {
+  const resetDrag = useCallback(() => {
     setDraggingTask(null);
     setDropTarget(null);
-  };
+  }, []);
 
   // Native HTML5 drag-and-drop (handleDrop below) has no keyboard
   // equivalent at all - a keyboard-only user could change a task's status
@@ -99,19 +104,28 @@ export function KanbanBoard({
   // column. TaskCard's Alt+Up/Alt+Down handler calls this with the same
   // sortOrderForPosition() math handleDrop already uses, just computing the
   // target index from "one above/below current" instead of a drop zone.
-  const handleReorder = async (task: Task, direction: "up" | "down") => {
-    if (!canDrag) return;
-    const status = normalizeTaskStatus(task.status);
-    const column = groups[status];
-    const currentIndex = column.findIndex((item) => item.id === task.id);
-    if (currentIndex === -1) return;
+  //
+  // useCallback (not just for its own sake): this is passed to every
+  // TaskCard as onReorder, so it has to stay referentially stable across
+  // the dropTarget-driven re-renders above for TaskCard's memo() to hold -
+  // an inline function here would make every card look "changed" on every
+  // dragover tick regardless of memo.
+  const handleReorder = useCallback(
+    async (task: Task, direction: "up" | "down") => {
+      if (!canDrag) return;
+      const status = normalizeTaskStatus(task.status);
+      const column = groups[status];
+      const currentIndex = column.findIndex((item) => item.id === task.id);
+      if (currentIndex === -1) return;
 
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex < 0 || targetIndex >= column.length) return; // already at an edge
+      const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+      if (targetIndex < 0 || targetIndex >= column.length) return; // already at an edge
 
-    const sortOrder = sortOrderForPosition(column, targetIndex, task.id);
-    await onMoveTask(task, status, sortOrder);
-  };
+      const sortOrder = sortOrderForPosition(column, targetIndex, task.id);
+      await onMoveTask(task, status, sortOrder);
+    },
+    [canDrag, groups, onMoveTask]
+  );
 
   const handleDrop = async (status: TaskStatus, index: number) => {
     const task = draggingTask;

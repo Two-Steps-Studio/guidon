@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
@@ -51,7 +52,18 @@ export function initialsFor(member: TaskCardMember): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-export function TaskCard({
+/**
+ * Wrapped in memo() below: KanbanBoard re-renders on every dragover tick
+ * (dropTarget state tracks the hovered insertion point, which changes many
+ * times per second while dragging) - without memo, every card in every
+ * column re-rendered on each of those ticks, not just the one being
+ * dragged. KanbanBoard's onDragStart/onDragEnd/onReorder props are stable
+ * (useState setters / useCallback), and isDragging/canMoveUp/canMoveDown
+ * are plain booleans, so for any card other than the one actually being
+ * dragged or reordered, every prop is reference-equal across a re-render
+ * and memo correctly skips it.
+ */
+function TaskCardComponent({
   task,
   assignee,
   commentCount = 0,
@@ -190,3 +202,5 @@ export function TaskCard({
     </article>
   );
 }
+
+export const TaskCard = memo(TaskCardComponent);
