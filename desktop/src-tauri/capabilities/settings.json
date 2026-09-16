@@ -1,7 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "settings",
-  "description": "The Settings window is local, bundled content (served via tauri://, never remote) and is the only window trusted with Tauri API access. It gets exactly the two app-defined commands (get_server_url/save_server_url, see src/lib.rs and build.rs) it needs to read and persist the server URL - both backed by the Store plugin on the Rust side. Do not widen this to the `main` window (see capabilities/default.json) or make it apply globally.",
+  "description": "The Settings window is local, bundled content (served via tauri://, never remote) and is the only window trusted with Tauri API access. It gets exactly the app-defined commands it needs: get_server_url/save_server_url (src/store.rs) to read and persist the server URL via the Store plugin, and get_autostart_enabled/set_autostart_enabled (src/autostart.rs, Task 4) to read and toggle whether Guidon Desktop launches at Windows startup via the autostart plugin. `cargo tauri add autostart` scaffolded a separate capabilities/desktop.json granting the raw `autostart:default` permission set to the `main` window - that file was deleted; the grant here is scoped to this window only and to the two app commands above; the plugin's own raw `plugin:autostart|*` commands are not granted anywhere. Do not widen this to the `main` window (see capabilities/default.json) or make it apply globally.",
   "windows": ["settings"],
-  "permissions": ["allow-get-server-url", "allow-save-server-url"]
+  "permissions": [
+    "allow-get-server-url",
+    "allow-save-server-url",
+    "allow-get-autostart-enabled",
+    "allow-set-autostart-enabled"
+  ]
 }

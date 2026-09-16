@@ -18,10 +18,17 @@ const form = document.querySelector("#settings-form");
 const input = document.querySelector("#server-url");
 const status = document.querySelector("#status");
 const saveButton = document.querySelector("#save-button");
+const autostartCheckbox = document.querySelector("#autostart-checkbox");
+const autostartStatus = document.querySelector("#autostart-status");
 
 function setStatus(message, isError) {
   status.textContent = message;
   status.classList.toggle("status-error", Boolean(isError));
+}
+
+function setAutostartStatus(message, isError) {
+  autostartStatus.textContent = message;
+  autostartStatus.classList.toggle("status-error", Boolean(isError));
 }
 
 function isPlausibleUrl(value) {
@@ -70,7 +77,52 @@ async function handleSubmit(event) {
   }
 }
 
+// Read whether Guidon Desktop is currently registered to launch at Windows
+// startup (src-tauri/src/autostart.rs's get_autostart_enabled, backed by
+// the autostart plugin) so the checkbox reflects real state on load instead
+// of defaulting to unchecked.
+async function loadAutostartState() {
+  try {
+    const invoke = window.__TAURI__.core.invoke;
+    autostartCheckbox.checked = await invoke("get_autostart_enabled");
+  } catch (err) {
+    console.error("failed to read the autostart state", err);
+    setAutostartStatus(
+      typeof err === "string" ? err : "Failed to read the current setting.",
+      true,
+    );
+  }
+}
+
+async function handleAutostartToggle() {
+  const enabled = autostartCheckbox.checked;
+  autostartCheckbox.disabled = true;
+  setAutostartStatus("Saving…", false);
+  try {
+    const invoke = window.__TAURI__.core.invoke;
+    await invoke("set_autostart_enabled", { enabled });
+    setAutostartStatus(
+      enabled
+        ? "Guidon Desktop will start when Windows starts."
+        : "Guidon Desktop will not start automatically.",
+      false,
+    );
+  } catch (err) {
+    // Revert the checkbox - the toggle didn't actually take effect.
+    autostartCheckbox.checked = !enabled;
+    setAutostartStatus(
+      typeof err === "string" ? err : "Failed to update the setting.",
+      true,
+    );
+  } finally {
+    autostartCheckbox.disabled = false;
+  }
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", handleSubmit);
   loadCurrentUrl();
+
+  autostartCheckbox.addEventListener("change", handleAutostartToggle);
+  loadAutostartState();
 });
