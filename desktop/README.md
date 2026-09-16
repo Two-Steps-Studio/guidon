@@ -1,6 +1,27 @@
 # Guidon Desktop
 
-A thin Tauri shell around Guidon's existing web app. Two windows:
+A thin Tauri shell around Guidon's existing web app — see
+`docs/superpowers/specs/2026-09-15-desktop-app-design.md` (repo root) for
+the full design and why a thin shell rather than a bundled server.
+
+## Building
+
+Prerequisites: [Rust](https://rustup.rs) (stable), the MSVC C++ Build
+Tools workload (Visual Studio Installer → "Desktop development with
+C++"), and Node.js — the same Node already used by the rest of this repo.
+WebView2 ships with Windows 10/11 by default and needs no separate install.
+
+```bash
+cd desktop
+npm install
+npm run tauri dev     # dev build, opens a window immediately
+npm run tauri build   # release build; installers land under
+                       # src-tauri/target/release/bundle/{msi,nsis}/
+```
+
+See `RELEASING.md` for how to cut and publish a signed release.
+
+## Two windows
 
 - **`main`** — loads a Guidon server URL directly (Guidon Cloud by
   default, or a self-hosted instance chosen in Settings). No bundled
@@ -152,9 +173,6 @@ it, via `tauri-plugin-updater` (`src-tauri/src/updater.rs`):
   treats as no-update) or a fetch/parse error dialog; both are expected
   until `RELEASING.md`'s process has been run at least once, not bugs in
   this wiring.
-
-See `RELEASING.md` for how to cut and publish a release once there's a
-version worth shipping.
 
 ## Recommended IDE Setup
 
