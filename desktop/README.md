@@ -108,6 +108,54 @@ Windows login, via `tauri-plugin-autostart`
   `build.rs` for how those two app commands get their own ACL
   permission identifiers generated in the first place.
 
+## Auto-update
+
+The app can check GitHub Releases for a newer version and offer to install
+it, via `tauri-plugin-updater` (`src-tauri/src/updater.rs`):
+
+- **Trigger** — a "Check for Updates..." item in the native "Guidon
+  Desktop" application menu (`src-tauri/src/menu.rs`, next to
+  "Settings..."). This is a manual, user-triggered check only - there is
+  no automatic/periodic background check, and no silent install. If an
+  update is found, a second native confirmation dialog (Yes/No) is shown
+  before anything downloads or installs.
+- **Rust side** — `updater.rs`'s `check_for_updates` calls
+  `tauri_plugin_updater::UpdaterExt::updater()` and
+  `.check().await` directly, then reports the result with a native message
+  dialog (`tauri-plugin-dialog`): update available (asks to confirm),
+  up to date, or the check itself failed (e.g. no release published yet,
+  or a network error) - all three are handled without panicking. Like
+  `tray.rs`'s tray icon and `windows.rs`'s window lifecycle, this is called
+  straight from Rust rather than exposed as a `#[tauri::command]`, because
+  it's only ever reached from the native menu, never from a window's JS.
+- **Capability** — none. `cargo tauri add updater` scaffolded a
+  `capabilities/desktop.json` granting the plugin's raw `updater:default`
+  permission set to the `main` window by default - the same trap
+  `cargo tauri add autostart` hit in Task 4 (see "Autostart at login"
+  above). That file was deleted. Unlike autostart's `get_autostart_enabled`
+  /`set_autostart_enabled` commands, the grant wasn't moved anywhere else
+  either: nothing here calls the updater or dialog plugins through
+  `invoke()`, and capabilities/ACL only gate that JS -> Rust IPC boundary,
+  not a direct Rust-side method call - so no capability entry is needed
+  for either plugin, on any window.
+- **Endpoint and signing key** — configured in
+  `src-tauri/tauri.conf.json`'s `plugins.updater`: `endpoints` points at
+  `https://github.com/Two-Steps-Studio/guidon/releases/latest/download/latest.json`
+  (the conventional static-manifest URL for a Tauri app that publishes
+  through GitHub Releases), and `pubkey` is the public half of a signing
+  keypair generated with `tauri signer generate` (see `RELEASING.md`). The
+  matching private key is **not** in this repository - see `RELEASING.md`
+  for where it lives and how it's used to sign release artifacts.
+- **Nothing to verify against yet** — no GitHub Release has been published
+  for this project, so a real "Check for Updates" click will currently
+  report either "up to date" (if the manifest 404s in a way the plugin
+  treats as no-update) or a fetch/parse error dialog; both are expected
+  until `RELEASING.md`'s process has been run at least once, not bugs in
+  this wiring.
+
+See `RELEASING.md` for how to cut and publish a release once there's a
+version worth shipping.
+
 ## Recommended IDE Setup
 
 - [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
