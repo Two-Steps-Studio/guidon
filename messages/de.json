@@ -657,7 +657,15 @@
     "exportProjectTitle": "Projekt exportieren",
     "exportProjectDescription": "Lade das Design, das Aufgabenboard und die Roadmap dieses Projekts als .guidon-Datei herunter. Importiere sie später als neues Projekt oder um ein bestehendes zu überschreiben, von der Projekte-Seite aus.",
     "exportFailed": "Export fehlgeschlagen.",
-    "exportButton": "Als .guidon-Datei exportieren"
+    "exportButton": "Als .guidon-Datei exportieren",
+    "discordTitle": "Discord",
+    "discordDescription": "Erhalte Benachrichtigungen in einem Discord-Kanal, wenn Aufgaben erstellt, verschoben oder abgeschlossen werden – und verknüpfe den Guidon-Bot, um /task-Befehle von Discord aus auszuführen.",
+    "discordLinkedGuild": "Verbunden mit Discord-Server: {guild}",
+    "discordWebhookConfigured": "Benachrichtigungen sind konfiguriert",
+    "discordRemoveWebhook": "Entfernen",
+    "discordWebhookLabel": "Discord-Kanal-Webhook-URL",
+    "discordSaveWebhook": "Speichern",
+    "discordWebhookHint": "In Discord: Kanaleinstellungen → Integrationen → Webhooks → Neuer Webhook, dann die URL hier einfügen."
   },
   "context": {
     "title": "Kontextebene",

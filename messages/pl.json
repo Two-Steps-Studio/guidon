@@ -657,7 +657,15 @@
     "exportProjectTitle": "Eksportuj projekt",
     "exportProjectDescription": "Pobierz motyw, tablicę zadań i plan działań tego projektu jako plik .guidon. Zaimportuj go później jako nowy projekt lub aby nadpisać istniejący, ze strony Projekty.",
     "exportFailed": "Eksport nie powiódł się.",
-    "exportButton": "Eksportuj do pliku .guidon"
+    "exportButton": "Eksportuj do pliku .guidon",
+    "discordTitle": "Discord",
+    "discordDescription": "Otrzymuj powiadomienia na kanale Discord, gdy zadania są tworzone, przenoszone lub kończone — i podłącz bota Guidon, żeby uruchamiać komendy /task z Discorda.",
+    "discordLinkedGuild": "Podłączono do serwera Discord: {guild}",
+    "discordWebhookConfigured": "Powiadomienia są skonfigurowane",
+    "discordRemoveWebhook": "Usuń",
+    "discordWebhookLabel": "URL webhooka kanału Discord",
+    "discordSaveWebhook": "Zapisz",
+    "discordWebhookHint": "W Discordzie: ustawienia kanału → Integracje → Webhooki → Nowy webhook, a następnie wklej tutaj jego URL."
   },
   "context": {
     "title": "Warstwa kontekstu",

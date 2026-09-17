@@ -3,6 +3,7 @@ import "server-only";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getApiUserClient } from "./api-key-auth";
+import { notifyDiscordTaskEvent } from "@/lib/discord/notify";
 import type { TaskStatus } from "@/types/task";
 import type { ActivityAction } from "@/types/api";
 
@@ -90,6 +91,12 @@ async function setStatusAndLog(
          VALUES ($1, $2, $3, 'task', $4)`,
         [projectId, userId, action, taskId]
       );
+      const title = (result.rows[0].title as string) ?? "";
+      notifyDiscordTaskEvent(
+        projectId,
+        userId,
+        newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus }
+      );
       return { ok: true, task: result.rows[0] };
     });
   }
@@ -122,6 +129,13 @@ async function setStatusAndLog(
   await supabase
     .from("activity_logs")
     .insert({ project_id: projectId, user_id: userId, action, entity_type: "task", entity_id: taskId });
+
+  const title = (data as { title?: string }).title ?? "";
+  notifyDiscordTaskEvent(
+    projectId,
+    userId,
+    newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus }
+  );
 
   return { ok: true, task: data };
 }

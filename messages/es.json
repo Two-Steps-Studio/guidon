@@ -657,7 +657,15 @@
     "exportProjectTitle": "Exportar proyecto",
     "exportProjectDescription": "Descarga el tema, el tablero de tareas y la hoja de ruta de este proyecto como un archivo .guidon. Vuelve a importarlo más tarde como un proyecto nuevo o para sobrescribir uno existente, desde la página de Proyectos.",
     "exportFailed": "Error al exportar.",
-    "exportButton": "Exportar a archivo .guidon"
+    "exportButton": "Exportar a archivo .guidon",
+    "discordTitle": "Discord",
+    "discordDescription": "Recibe notificaciones en un canal de Discord cuando se crean, mueven o completan tareas, y vincula el bot de Guidon para ejecutar comandos /task desde Discord.",
+    "discordLinkedGuild": "Vinculado al servidor de Discord: {guild}",
+    "discordWebhookConfigured": "Las notificaciones están configuradas",
+    "discordRemoveWebhook": "Eliminar",
+    "discordWebhookLabel": "URL del webhook del canal de Discord",
+    "discordSaveWebhook": "Guardar",
+    "discordWebhookHint": "En Discord: configuración del canal → Integraciones → Webhooks → Nuevo webhook, luego pega aquí su URL."
   },
   "context": {
     "title": "Capa de contexto",

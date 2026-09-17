@@ -11,6 +11,7 @@ import {
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
+import { notifyDiscordTaskEvent } from "@/lib/discord/notify";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
 import { resolveColumnRenumbering } from "@/lib/work/task-board";
 import { isSafeHttpUrl } from "@/lib/validation/url";
@@ -299,9 +300,11 @@ export async function moveTask(
     return { error: "You do not have permission to move tasks." };
   }
 
+  let movedTaskTitle: string | null = null;
+
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, async ({ query }) => {
+      movedTaskTitle = await withUser(access.userId, async ({ query }) => {
         // sort_order is `integer` - sortOrderForPosition's float midpoint
         // only has room to insert between two neighbours while they're
         // still more than 1 apart. Once a column has been tightly enough
@@ -336,20 +339,22 @@ export async function moveTask(
             [plan.map((p) => p.id), plan.map((p) => p.sort_order), projectId]
           );
           const result = await query(
-            "UPDATE tasks SET status = $1 WHERE id = $2 AND project_id = $3 RETURNING id",
+            "UPDATE tasks SET status = $1 WHERE id = $2 AND project_id = $3 RETURNING id, title",
             [status, taskId, projectId]
           );
           if (result.rows.length === 0) {
             throw new Error("This task could not be found in this project.");
           }
+          return result.rows[0].title as string;
         } else {
           const result = await query(
-            "UPDATE tasks SET status = $1, sort_order = $2 WHERE id = $3 AND project_id = $4 RETURNING id",
+            "UPDATE tasks SET status = $1, sort_order = $2 WHERE id = $3 AND project_id = $4 RETURNING id, title",
             [status, Math.round(sortOrder), taskId, projectId]
           );
           if (result.rows.length === 0) {
             throw new Error("This task could not be found in this project.");
           }
+          return result.rows[0].title as string;
         }
       });
     } catch (error) {
@@ -364,6 +369,13 @@ export async function moveTask(
       entityId: taskId,
       details: { status },
     });
+    notifyDiscordTaskEvent(
+      projectId,
+      access.userId,
+      status === "done"
+        ? { kind: "completed", taskId, title: movedTaskTitle ?? "" }
+        : { kind: "status_changed", taskId, title: movedTaskTitle ?? "", status }
+    );
 
     revalidatePath(`/projects/${projectId}/work`);
     return { error: null };
@@ -387,6 +399,8 @@ export async function moveTask(
     sortOrder
   );
 
+  let movedTaskTitleHosted: string | null = null;
+
   if (plan) {
     // One RPC round-trip instead of one UPDATE per sibling - see the pg
     // branch above and migration 033 for why. renumber_task_sort_orders
@@ -403,18 +417,20 @@ export async function moveTask(
       .update({ status })
       .eq("id", taskId)
       .eq("project_id", projectId)
-      .select("id");
+      .select("id, title");
     if (statusError) return { error: statusError.message };
     if (!data || data.length === 0) return { error: "This task could not be found in this project." };
+    movedTaskTitleHosted = data[0].title;
   } else {
     const { data, error } = await supabase
       .from("tasks")
       .update({ status, sort_order: Math.round(sortOrder) })
       .eq("id", taskId)
       .eq("project_id", projectId)
-      .select("id");
+      .select("id, title");
     if (error) return { error: error.message };
     if (!data || data.length === 0) return { error: "This task could not be found in this project." };
+    movedTaskTitleHosted = data[0].title;
   }
 
   await logActivity({
@@ -425,6 +441,13 @@ export async function moveTask(
     entityId: taskId,
     details: { status },
   });
+  notifyDiscordTaskEvent(
+    projectId,
+    access.userId,
+    status === "done"
+      ? { kind: "completed", taskId, title: movedTaskTitleHosted ?? "" }
+      : { kind: "status_changed", taskId, title: movedTaskTitleHosted ?? "", status }
+  );
 
   revalidatePath(`/projects/${projectId}/work`);
   return { error: null };
@@ -519,6 +542,11 @@ export async function createTask(
         entityId: result.rows[0].id,
         details: { title: input.title.trim() },
       });
+      notifyDiscordTaskEvent(projectId, access.userId, {
+        kind: "created",
+        taskId: result.rows[0].id,
+        title: input.title.trim(),
+      });
       revalidatePath(`/projects/${projectId}/work`);
       return { task: result.rows[0] as Task, error: null };
     } catch (error) {
@@ -554,6 +582,7 @@ export async function createTask(
     entityId: data.id,
     details: { title: input.title.trim() },
   });
+  notifyDiscordTaskEvent(projectId, access.userId, { kind: "created", taskId: data.id, title: input.title.trim() });
 
   revalidatePath(`/projects/${projectId}/work`);
   return { task: data as Task, error: null };

@@ -140,9 +140,11 @@ for (const [label, sql, expected] of [
   // (021, 024), po 4 polityki kazda - stara wartosc nigdy nie zostala
   // zaktualizowana gdy te migracje wladowaly. 025 (funkcje SECURITY DEFINER +
   // zawezenie GRANT SELECT) nie dodaje ani tabel, ani polityk, wiec liczby
-  // zostaja takie same.
-  ["24 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 24],
-  ["92 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 92],
+  // zostaja takie same. 24->25 tabel, 92->96 polityk: discord_integrations
+  // (035), 4 polityki (select/insert/update/delete), ten sam wzorzec co
+  // github_connections.
+  ["25 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 25],
+  ["96 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 96],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1251,6 +1253,75 @@ await expectRejected(
   );
   check("estimated_hours = 100000 dozwolone (granica wlacznie)", rows.length === 1);
 }
+
+// ------------------------------------------------------------------
+section("24. discord_integrations: RLS + sekrety tylko przez funkcje (migracja 035)");
+
+await withUser(A, async () => {
+  await db.query(
+    `INSERT INTO public.discord_integrations
+       (project_id, guild_id, guild_name, webhook_url_encrypted, linked_by)
+     VALUES ($1, 'guild-1', 'Test Guild', 'enc-webhook', $2)`,
+    [projectId, A]
+  );
+});
+
+await expectRejected(
+  "bezposredni SELECT webhook_url_encrypted odrzucony nawet dla wlasciciela",
+  () =>
+    withUser(A, () =>
+      db.query("SELECT webhook_url_encrypted FROM public.discord_integrations WHERE project_id = $1", [projectId])
+    ),
+  /permission denied/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT * FROM public.get_discord_webhook_url($1)", [projectId]);
+  check(
+    "czlonek projektu dostaje webhook przez funkcje SECURITY DEFINER",
+    rows[0]?.webhook_url_encrypted === "enc-webhook",
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT * FROM public.get_discord_webhook_url($1)", [projectId]);
+  check("B (spoza projektu) nie dostaje nic z funkcji webhooka", rows.length === 0, rows.length);
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "SELECT guild_id, guild_name FROM public.discord_integrations WHERE project_id = $1",
+    [projectId]
+  );
+  check(
+    "bezpieczne kolumny discord_integrations nadal czytelne wprost",
+    rows[0]?.guild_id === "guild-1",
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(B, async () => {
+  // B isn't a project member, so private.project_role() is NULL for B here -
+  // the UPDATE policy's USING clause matches zero rows rather than throwing
+  // (RLS silently filters, it doesn't error on a non-matching UPDATE) - same
+  // "no rowcount check" trap CLAUDE.md documents for this codebase's own
+  // actions.ts files, verified here at the RLS layer itself.
+  const result = await db.query(
+    "UPDATE public.discord_integrations SET webhook_url_encrypted = 'enc-hostile' WHERE project_id = $1",
+    [projectId]
+  );
+  check("B (spoza projektu) NIE moze nadpisac cudzego webhooka (0 wierszy)", result.rows.length === 0);
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT * FROM public.get_discord_webhook_url($1)", [projectId]);
+  check(
+    "webhook nietkniety po probie B",
+    rows[0]?.webhook_url_encrypted === "enc-webhook",
+    JSON.stringify(rows)
+  );
+});
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

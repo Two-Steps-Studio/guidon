@@ -7,6 +7,8 @@ import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
 import { BoardColumnsForm } from "./board-columns-form";
 import { ExportProjectCard } from "./export-project-card";
+import { DiscordIntegrationForm } from "./discord-integration-form";
+import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
 import type { Project } from "@/types/project";
 import type { Technology } from "@/types/technology";
 import type { BoardColumnOverride } from "@/lib/work/task-board";
@@ -42,6 +44,11 @@ export default async function ProjectSettingsPage({
   let technologies: Technology[];
   let aiPermissions: AiPermissionsRow;
   let boardColumns: BoardColumnOverride[];
+
+  // getDiscordIntegrationInfo() already branches on hasDirectDatabase()
+  // internally and runs its own concurrent queries - started here so it
+  // runs alongside the rest of this page's data instead of after it.
+  const discordInfoPromise = getDiscordIntegrationInfo(projectId, access.userId);
 
   if (hasDirectDatabase()) {
     // Four withUser() calls, not one wrapping Promise.all([...]) - each
@@ -101,6 +108,8 @@ export default async function ProjectSettingsPage({
     boardColumns = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
+  const discordInfo = await discordInfoPromise;
+
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       <div className="mb-8">
@@ -119,6 +128,7 @@ export default async function ProjectSettingsPage({
         permissions={aiPermissions}
         allowAutoComplete={project.allow_ai_auto_complete}
       />
+      <DiscordIntegrationForm projectId={projectId} initialInfo={discordInfo} />
       <ExportProjectCard projectId={projectId} />
     </div>
   );

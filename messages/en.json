@@ -657,7 +657,15 @@
     "exportProjectTitle": "Export project",
     "exportProjectDescription": "Download this project's theme, task board, and roadmap as a .guidon file. Re-import it later as a new project or to overwrite an existing one, from the Projects page.",
     "exportFailed": "Export failed.",
-    "exportButton": "Export to .guidon file"
+    "exportButton": "Export to .guidon file",
+    "discordTitle": "Discord",
+    "discordDescription": "Get notified in a Discord channel when tasks are created, moved, or completed - and link the Guidon bot to run /task commands from Discord.",
+    "discordLinkedGuild": "Linked to Discord server: {guild}",
+    "discordWebhookConfigured": "Notifications are configured",
+    "discordRemoveWebhook": "Remove",
+    "discordWebhookLabel": "Discord channel webhook URL",
+    "discordSaveWebhook": "Save",
+    "discordWebhookHint": "In Discord: channel settings → Integrations → Webhooks → New Webhook, then copy its URL here."
   },
   "context": {
     "title": "Context Layer",
