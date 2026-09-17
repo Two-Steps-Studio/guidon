@@ -1,0 +1,20 @@
+# =====================================================
+# GUIDON DISCORD BOT — self-hosted
+# =====================================================
+#
+#   cp .env.example .env
+#   # fill in .env - see README.md
+#   docker compose up -d --build
+#
+# Update:
+#   git pull && docker compose up -d --build
+#
+# Long-running process (discord.js Gateway connection) - no ports exposed,
+# nothing to reverse-proxy. `docker compose logs -f` is how you watch it.
+
+services:
+  discord-bot:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
