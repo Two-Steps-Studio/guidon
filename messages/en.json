@@ -665,7 +665,12 @@
     "discordRemoveWebhook": "Remove",
     "discordWebhookLabel": "Discord channel webhook URL",
     "discordSaveWebhook": "Save",
-    "discordWebhookHint": "In Discord: channel settings → Integrations → Webhooks → New Webhook, then copy its URL here."
+    "discordWebhookHint": "In Discord: channel settings → Integrations → Webhooks → New Webhook, then copy its URL here.",
+    "discordNotLinked": "Not connected to any Discord server",
+    "discordLinkedGuildUnnamed": "Linked to a Discord server",
+    "discordConnectButton": "Connect to Discord",
+    "discordReconnect": "Reconnect / switch server",
+    "discordJustConnected": "Connected! Try /task list in your Discord server."
   },
   "context": {
     "title": "Context Layer",

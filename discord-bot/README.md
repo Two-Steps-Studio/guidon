@@ -58,7 +58,16 @@ Or via Docker: `docker build -t guidon-discord-bot . && docker run --env-file .e
 
 ## 4. Link a server to a project
 
-In the Discord server, an admin (Manage Server permission) runs:
+**Recommended: the "Connect to Discord" button** on the project's Settings
+page in the web app (requires `DISCORD_CLIENT_ID` set on the *main* Guidon
+deployment too - see the main repo's `.env.example`). Click it, pick the
+server on Discord's own consent screen, done - Guidon creates a
+correctly-scoped API key for you automatically and links the guild, no
+copy-pasting a key or a project id anywhere.
+
+**Manual fallback**, if the web app isn't configured for it (or you want a
+key with different scopes than the auto-created one): in the Discord
+server, an admin (Manage Server permission) runs:
 
 ```
 /guidon-link api-key:<a Guidon API key> project-id:<the project's id>
@@ -70,15 +79,15 @@ In the Discord server, an admin (Manage Server permission) runs:
 - The project id is the UUID in that project's Settings page URL
   (`/projects/<this-id>/settings`).
 
-Then, optionally, `/guidon-webhook url:<a Discord channel webhook URL>` to
-also receive task-event notifications in that channel (same effect as
-setting it from the web app's Settings page).
+Either way, optionally follow up with `/guidon-webhook url:<a Discord
+channel webhook URL>` to also receive task-event notifications in that
+channel (same effect as setting it from the web app's Settings page).
 
 ## Commands
 
 | Command | Does |
 |---|---|
-| `/guidon-link` | Link this server to a Guidon project (admin only) |
+| `/guidon-link` | Manual fallback for linking this server to a project (admin only) - prefer the web app's "Connect to Discord" button |
 | `/guidon-webhook` | Set the notification webhook for the linked project (admin only) |
 | `/task list` | List the linked project's tasks |
 | `/task start <task-id>` | Mark a task in progress |

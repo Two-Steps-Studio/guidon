@@ -4,6 +4,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
+import { generateApiKey, hashApiKey, keyPrefix, type ApiKeyScope } from "@/lib/api/api-keys";
 
 /**
  * Same key-derivation "info" string discord-bot/ uses in its own copy of
@@ -14,6 +15,10 @@ import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
  * share a key even though they share AUTH_SECRET as the root").
  */
 const DISCORD_WEBHOOK_KEY_INFO = "discord-webhook-v1";
+/** Must match discord-bot/src/db.ts's own API_KEY_INFO constant exactly. */
+const DISCORD_BOT_KEY_INFO = "discord-bot-key-v1";
+/** Exactly what every /task subcommand needs - see discord-bot/src/commands/task.ts. */
+const DISCORD_BOT_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:status", "comments:write"];
 
 export interface DiscordIntegrationInfo {
   guildId: string | null;
@@ -152,4 +157,68 @@ export async function clearDiscordWebhookUrl(projectId: string, userId: string):
     .update({ webhook_url_encrypted: null, updated_at: new Date().toISOString() })
     .eq("project_id", projectId);
   if (error) throw new Error(`Failed to clear Discord webhook: ${error.message}`);
+}
+
+/**
+ * Completes the "Connect to Discord" OAuth flow (src/app/api/discord/callback):
+ * mints a fresh API key scoped exactly for what discord-bot/'s /task
+ * commands need, encrypts it under the SAME info string discord-bot/'s own
+ * direct-DB writes use (DISCORD_BOT_KEY_INFO), and links the guild - all in
+ * one step, so nobody has to manually create an API key or type a project
+ * id into a Discord command. The key is owned by `userId` (the person who
+ * clicked Connect, not some system account), same as any key they'd have
+ * created themselves from Profile - it shows up there, and revoking it from
+ * that page breaks the bot's access to this project, same as it would for
+ * any other integration built on a self-service key.
+ */
+export async function linkDiscordGuildViaOAuth(projectId: string, userId: string, guildId: string): Promise<void> {
+  const rawKey = generateApiKey();
+  const hash = hashApiKey(rawKey);
+  const prefix = keyPrefix(rawKey);
+  const encryptedKey = encryptSecret(rawKey, DISCORD_BOT_KEY_INFO);
+  const keyName = `Discord bot (auto-created ${new Date().toISOString().slice(0, 10)})`;
+
+  if (hasDirectDatabase()) {
+    await withUser(userId, async ({ query }) => {
+      await query(
+        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [userId, keyName, prefix, hash, DISCORD_BOT_KEY_SCOPES]
+      );
+      await query(
+        `INSERT INTO discord_integrations (project_id, guild_id, linked_api_key_encrypted, linked_by, updated_at)
+         VALUES ($1, $2, $3, $4, now())
+         ON CONFLICT (project_id) DO UPDATE SET
+           guild_id = EXCLUDED.guild_id,
+           linked_api_key_encrypted = EXCLUDED.linked_api_key_encrypted,
+           linked_by = EXCLUDED.linked_by,
+           updated_at = now()`,
+        [projectId, guildId, encryptedKey, userId]
+      );
+    });
+    return;
+  }
+
+  const supabase = await createClient();
+
+  const { error: keyError } = await supabase.from("api_keys").insert({
+    user_id: userId,
+    name: keyName,
+    key_prefix: prefix,
+    key_hash: hash,
+    scopes: DISCORD_BOT_KEY_SCOPES,
+  });
+  if (keyError) throw new Error(`Failed to create the Discord bot's API key: ${keyError.message}`);
+
+  const { error } = await supabase.from("discord_integrations").upsert(
+    {
+      project_id: projectId,
+      guild_id: guildId,
+      linked_api_key_encrypted: encryptedKey,
+      linked_by: userId,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "project_id" }
+  );
+  if (error) throw new Error(`Failed to link Discord server: ${error.message}`);
 }

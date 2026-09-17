@@ -665,7 +665,12 @@
     "discordRemoveWebhook": "Eliminar",
     "discordWebhookLabel": "URL del webhook del canal de Discord",
     "discordSaveWebhook": "Guardar",
-    "discordWebhookHint": "En Discord: configuración del canal → Integraciones → Webhooks → Nuevo webhook, luego pega aquí su URL."
+    "discordWebhookHint": "En Discord: configuración del canal → Integraciones → Webhooks → Nuevo webhook, luego pega aquí su URL.",
+    "discordNotLinked": "No conectado a ningún servidor de Discord",
+    "discordLinkedGuildUnnamed": "Conectado a un servidor de Discord",
+    "discordConnectButton": "Conectar con Discord",
+    "discordReconnect": "Reconectar / cambiar de servidor",
+    "discordJustConnected": "¡Conectado! Prueba /task list en tu servidor de Discord."
   },
   "context": {
     "title": "Capa de contexto",

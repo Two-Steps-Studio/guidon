@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle2, Loader2, MessageSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle2, ExternalLink, Loader2, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,30 @@ export function DiscordIntegrationForm({
   const [info, setInfo] = useState(initialInfo);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // discordError/discordConnected come back as query params after the full
+  // redirect through /api/discord/connect -> Discord -> /api/discord/callback
+  // - same pattern as githubError in github-repo-panel.tsx. Read once via
+  // the state initializer (guarded for SSR, where this still renders once
+  // with no `window`) rather than setting state from inside an effect.
+  const [error, setError] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("discordError")
+  );
+  const [justConnected] = useState<boolean>(() =>
+    typeof window === "undefined" ? false : new URLSearchParams(window.location.search).has("discordConnected")
+  );
+
+  // Strips the query params from the URL bar - doesn't touch React state,
+  // so this doesn't re-trigger anything; it just tidies up after the values
+  // were already captured above.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("discordError") && !params.has("discordConnected")) return;
+    params.delete("discordError");
+    params.delete("discordConnected");
+    const next = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (next ? `?${next}` : ""));
+  }, []);
 
   const handleSave = async () => {
     setPending(true);
@@ -65,10 +88,10 @@ export function DiscordIntegrationForm({
         <CardDescription>{t("discordDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {info?.guildName && (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            {t("discordLinkedGuild", { guild: info.guildName })}
+        {justConnected && (
+          <p className="flex items-center gap-2 text-sm text-success">
+            <CheckCircle2 className="h-4 w-4" />
+            {t("discordJustConnected")}
           </p>
         )}
 
@@ -78,6 +101,25 @@ export function DiscordIntegrationForm({
             {error}
           </p>
         )}
+
+        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-background-secondary px-3 py-2">
+          {info?.guildId ? (
+            <p className="flex items-center gap-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              {info.guildName
+                ? t("discordLinkedGuild", { guild: info.guildName })
+                : t("discordLinkedGuildUnnamed")}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("discordNotLinked")}</p>
+          )}
+          <Button asChild size="sm" variant={info?.guildId ? "outline" : "default"}>
+            <a href={`/api/discord/connect?projectId=${projectId}`}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {info?.guildId ? t("discordReconnect") : t("discordConnectButton")}
+            </a>
+          </Button>
+        </div>
 
         {info?.hasWebhook ? (
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-background-secondary px-3 py-2">
