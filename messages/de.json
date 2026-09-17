@@ -190,6 +190,7 @@
       "mostPopular": "Am beliebtesten",
       "perMonth": "/Monat",
       "free": "Kostenlos",
+      "contactUs": "Kontaktieren Sie uns",
       "getStarted": "Loslegen",
       "unlimitedStorage": "Unbegrenzter Speicher",
       "gbStorage": "{count} GB Speicher",
@@ -309,6 +310,7 @@
       "colTeamRoles": "Teamrollen",
       "colAuditLogs": "Audit-Protokolle",
       "free": "Kostenlos",
+      "contactUs": "Kontaktieren Sie uns",
       "perMonth": "/Monat"
     }
   },
@@ -910,6 +912,7 @@
     "planPro": "Pro",
     "planTeam": "Team",
     "planBusiness": "Business",
+    "planEnterprise": "Enterprise",
     "unlimited": "Unbegrenzt",
     "setLimit": "Limit festlegen",
     "save": "Speichern",

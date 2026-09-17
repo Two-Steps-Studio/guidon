@@ -65,7 +65,7 @@ export async function updateOrganizationPlan(
 ): Promise<UpdatePlanState> {
   await requireAdminAccess();
 
-  const validPlanIds = ["free", "pro", "team", "business"];
+  const validPlanIds = ["free", "pro", "team", "business", "enterprise"];
   if (!validPlanIds.includes(planId)) {
     return { error: "Unknown plan." };
   }

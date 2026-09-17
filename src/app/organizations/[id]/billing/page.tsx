@@ -15,7 +15,8 @@ import { createServiceClient } from "@/lib/supabase-server";
 interface PlanRow {
   id: string;
   name: string;
-  price_cents: number;
+  /** null means custom/"contact us" pricing (034_enterprise_plan.sql). */
+  price_cents: number | null;
   project_limit: number | null;
   task_limit_per_project: number | null;
   storage_limit_bytes: number | null;
@@ -39,7 +40,8 @@ function formatCount(value: number | null, t: BillingTranslator): string {
   return value === null ? t("unlimited") : value.toLocaleString();
 }
 
-function formatPrice(cents: number, t: BillingTranslator): string {
+function formatPrice(cents: number | null, t: BillingTranslator): string {
+  if (cents === null) return t("contactUs");
   return cents === 0 ? t("free") : `€${(cents / 100).toFixed(2)}${t("perMonth")}`;
 }
 

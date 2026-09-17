@@ -824,8 +824,8 @@ section("15. plans + subscriptions (migracja 015)");
 await withServiceRole(async () => {
   const { rows } = await db.query("SELECT id, project_limit FROM public.plans ORDER BY sort_order");
   check(
-    "4 plany zaseedowane w kolejnosci",
-    rows.length === 4 && rows.map((r) => r.id).join(",") === "free,pro,team,business",
+    "5 planow zaseedowanych w kolejnosci",
+    rows.length === 5 && rows.map((r) => r.id).join(",") === "free,pro,team,business,enterprise",
     JSON.stringify(rows)
   );
 });
@@ -1051,8 +1051,10 @@ await withServiceRole(async () => {
     "SELECT id, price_cents, price_pln_cents FROM public.plans ORDER BY sort_order"
   );
   check(
-    "kazdy plan ma ustawiona cene PLN",
-    rows.every((r) => r.price_pln_cents !== null),
+    "kazdy plan z cena stala ma tez ustawiona cene PLN",
+    // enterprise (034) ma price_cents/price_pln_cents oba NULL - "contact us",
+    // nie brakujaca cene PLN - patrz priceFor() w pricing-section.tsx.
+    rows.every((r) => (r.price_cents === null) === (r.price_pln_cents === null)),
     JSON.stringify(rows)
   );
   check(

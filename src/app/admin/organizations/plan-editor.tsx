@@ -17,6 +17,7 @@ export function PlanEditor({
     { value: "pro", label: t("planPro") },
     { value: "team", label: t("planTeam") },
     { value: "business", label: t("planBusiness") },
+    { value: "enterprise", label: t("planEnterprise") },
   ];
   const [value, setValue] = useState(initialPlanId);
   const [pending, startTransition] = useTransition();

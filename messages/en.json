@@ -190,6 +190,7 @@
       "mostPopular": "Most popular",
       "perMonth": "/mo",
       "free": "Free",
+      "contactUs": "Contact us",
       "getStarted": "Get Started",
       "unlimitedStorage": "Unlimited storage",
       "gbStorage": "{count} GB storage",
@@ -309,6 +310,7 @@
       "colTeamRoles": "Team roles",
       "colAuditLogs": "Audit logs",
       "free": "Free",
+      "contactUs": "Contact us",
       "perMonth": "/mo"
     }
   },
@@ -910,6 +912,7 @@
     "planPro": "Pro",
     "planTeam": "Team",
     "planBusiness": "Business",
+    "planEnterprise": "Enterprise",
     "unlimited": "Unlimited",
     "setLimit": "Set limit",
     "save": "Save",

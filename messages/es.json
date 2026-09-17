@@ -190,6 +190,7 @@
       "mostPopular": "Más popular",
       "perMonth": "/mes",
       "free": "Gratis",
+      "contactUs": "Contáctanos",
       "getStarted": "Empezar",
       "unlimitedStorage": "Almacenamiento ilimitado",
       "gbStorage": "{count} GB de almacenamiento",
@@ -309,6 +310,7 @@
       "colTeamRoles": "Roles de equipo",
       "colAuditLogs": "Registros de auditoría",
       "free": "Gratis",
+      "contactUs": "Contáctanos",
       "perMonth": "/mes"
     }
   },
@@ -910,6 +912,7 @@
     "planPro": "Pro",
     "planTeam": "Team",
     "planBusiness": "Business",
+    "planEnterprise": "Enterprise",
     "unlimited": "Ilimitado",
     "setLimit": "Establecer límite",
     "save": "Guardar",

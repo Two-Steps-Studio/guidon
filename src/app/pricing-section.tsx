@@ -18,7 +18,8 @@ const displayFont = Fraunces({ subsets: ["latin"], weight: ["600"] });
 export interface PlanRow {
   id: string;
   name: string;
-  price_cents: number;
+  /** null means custom/"contact us" pricing (034_enterprise_plan.sql) - never a stand-in for 0 (Free). */
+  price_cents: number | null;
   price_pln_cents: number | null;
   project_limit: number | null;
   task_limit_per_project: number | null;
@@ -47,16 +48,21 @@ function formatBytes(bytes: number | null, t: PricingTranslator): string {
  * a future plan inserted without a PLN price would otherwise display its
  * EUR-cents number with a "zł" suffix under the PLN toggle, silently
  * showing the wrong price. migration 019_plan_pln_pricing.sql backfills
- * all 4 current plans, so this only matters for a plan added later.
+ * all 4 plans that had a fixed price at the time, so this only matters for
+ * a plan added later. `cents: null` (034_enterprise_plan.sql's "contact us"
+ * pricing) short-circuits before either branch - there's no currency to
+ * fall back to when there's no price at all.
  */
-function priceFor(plan: PlanRow, currency: Currency): { cents: number; currency: Currency } {
+function priceFor(plan: PlanRow, currency: Currency): { cents: number | null; currency: Currency } {
+  if (plan.price_cents === null) return { cents: null, currency };
   if (currency === "PLN" && plan.price_pln_cents !== null) {
     return { cents: plan.price_pln_cents, currency: "PLN" };
   }
   return { cents: plan.price_cents, currency: "EUR" };
 }
 
-function formatPrice({ cents, currency }: { cents: number; currency: Currency }, t: PricingTranslator): string {
+function formatPrice({ cents, currency }: { cents: number | null; currency: Currency }, t: PricingTranslator): string {
+  if (cents === null) return t("contactUs");
   if (cents === 0) return t("free");
   const amount = (cents / 100).toFixed(2);
   return currency === "EUR" ? `€${amount}` : `${amount} zł`;
@@ -116,7 +122,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           {plans.map((plan) => {
             const isPopular = plan.id === "pro";
             const price = priceFor(plan, currency);
@@ -132,7 +138,9 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                   <CardTitle>{plan.name}</CardTitle>
                   <div className="text-3xl font-bold">
                     {formatPrice(price, t)}
-                    {price.cents > 0 && <span className="text-sm font-normal text-text-muted">{t("perMonth")}</span>}
+                    {price.cents !== null && price.cents > 0 && (
+                      <span className="text-sm font-normal text-text-muted">{t("perMonth")}</span>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col">
