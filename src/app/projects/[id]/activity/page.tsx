@@ -36,9 +36,14 @@ export default async function ProjectActivityPage({
 }) {
   const { id: projectId } = await params;
   const t = await getTranslations("activity");
-  const access = await requireProjectAccess(projectId);
 
-  const entries = await getRecentActivity(projectId);
+  // getRecentActivity() doesn't depend on the access check's result, and
+  // each call opens its own connection (getRecentActivity's own withUser()
+  // call), so these run concurrently rather than one after another.
+  const [access, entries] = await Promise.all([
+    requireProjectAccess(projectId),
+    getRecentActivity(projectId),
+  ]);
 
   // user_id references profiles(id) ON DELETE SET NULL (000_baseline_schema.sql)
   // - resolved separately, same pattern as memory/page.tsx's verified_by lookup.

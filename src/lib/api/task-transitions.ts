@@ -21,23 +21,33 @@ async function loadProjectContext(
   taskId: string
 ): Promise<{ projectId: string; allowAutoComplete: boolean; permissions: ProjectAiPermissions } | null> {
   if (hasDirectDatabase()) {
-    return withUser(userId, async ({ query }) => {
-      const task = await query("SELECT project_id FROM tasks WHERE id = $1", [taskId]);
-      if (task.rows.length === 0) return null;
-      const projectId = task.rows[0].project_id as string;
+    const task = await withUser(userId, ({ query }) =>
+      query("SELECT project_id FROM tasks WHERE id = $1", [taskId])
+    );
+    if (task.rows.length === 0) return null;
+    const projectId = task.rows[0].project_id as string;
 
-      const project = await query("SELECT allow_ai_auto_complete FROM projects WHERE id = $1", [projectId]);
-      const perms = await query(
-        "SELECT can_change_status, can_complete_tasks FROM project_ai_permissions WHERE project_id = $1",
-        [projectId]
-      );
+    // Two withUser() calls, not one wrapping Promise.all([query, query]) -
+    // each checks out its own pooled connection, so this is genuinely
+    // concurrent instead of firing multiple queries on one pg client (the
+    // deprecated shape, removed in pg@9).
+    const [project, perms] = await Promise.all([
+      withUser(userId, ({ query }) =>
+        query("SELECT allow_ai_auto_complete FROM projects WHERE id = $1", [projectId])
+      ),
+      withUser(userId, ({ query }) =>
+        query(
+          "SELECT can_change_status, can_complete_tasks FROM project_ai_permissions WHERE project_id = $1",
+          [projectId]
+        )
+      ),
+    ]);
 
-      return {
-        projectId,
-        allowAutoComplete: project.rows[0]?.allow_ai_auto_complete ?? false,
-        permissions: perms.rows[0] ?? { can_change_status: true, can_complete_tasks: false },
-      };
-    });
+    return {
+      projectId,
+      allowAutoComplete: project.rows[0]?.allow_ai_auto_complete ?? false,
+      permissions: perms.rows[0] ?? { can_change_status: true, can_complete_tasks: false },
+    };
   }
 
   const supabase = await getApiUserClient(userId);

@@ -164,21 +164,30 @@ export function AiTaskChat({
     let maxOrder = backlogTasks.reduce((max, task) => Math.max(max, task.sort_order ?? 0), 0);
 
     try {
-      for (const proposal of toCreate) {
-        maxOrder += 100;
-        const result = await createTask(projectId, {
-          title: proposal.title,
-          description: proposal.description,
-          status: "backlog",
-          priority: proposal.priority,
-          assigneeId: "",
-          dueDate: "",
-          sortOrder: maxOrder,
-        });
+      // Each createTask() call is an independent Server Action round-trip -
+      // no task's sortOrder depends on another's result (all computed
+      // synchronously up front via the map below), so they fire concurrently
+      // instead of one network round-trip at a time.
+      const results = await Promise.all(
+        toCreate.map((proposal) => {
+          maxOrder += 100;
+          return createTask(projectId, {
+            title: proposal.title,
+            description: proposal.description,
+            status: "backlog",
+            priority: proposal.priority,
+            assigneeId: "",
+            dueDate: "",
+            sortOrder: maxOrder,
+          }).then((result) => ({ proposal, result }));
+        })
+      );
 
+      let firstError: string | null = null;
+      for (const { proposal, result } of results) {
         if (result.error || !result.task) {
-          setAddError(result.error ?? t("failedToCreateTask"));
-          break;
+          firstError ??= result.error ?? t("failedToCreateTask");
+          continue;
         }
 
         const createdTask = result.task;
@@ -195,6 +204,7 @@ export function AiTaskChat({
         );
         onCreated(createdTask);
       }
+      if (firstError) setAddError(firstError);
     } catch {
       // createTask can reject rather than resolve with {error} - a DB
       // hiccup before its own try/catch. Without catching it here, the
