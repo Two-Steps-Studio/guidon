@@ -26,6 +26,10 @@ const eslintConfig = defineConfig([
     // above was added to fix), so the whole directory is excluded here
     // rather than just its build output.
     "desktop/**",
+    // discord-bot/ is the same situation as desktop/ above: a self-contained
+    // sibling package (own package.json, own tsconfig, own node_modules)
+    // that isn't part of the Next.js app this config lints.
+    "discord-bot/**",
   ]),
 ]);
 
