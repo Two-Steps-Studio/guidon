@@ -30,5 +30,18 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // Self-contained sibling packages (own package.json/tsconfig/node_modules,
+    // not part of the Next.js app) - discord-bot/ has real .ts files with
+    // dependencies (discord.js) never installed at the repo root, so the
+    // broad **/*.ts include above was picking them up and failing to
+    // resolve those imports. Passed silently in local `tsc --noEmit` only
+    // because discord-bot/node_modules happened to exist locally from its
+    // own `npm install` - Vercel's build never runs that, so it failed
+    // there. desktop/ has no offending .ts files today, excluded anyway for
+    // the same reason eslint.config.mjs already excludes both.
+    "desktop",
+    "discord-bot"
+  ]
 }
