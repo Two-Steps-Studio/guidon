@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
@@ -86,8 +87,21 @@ function toInfo(
  * Server-only: the decrypted URL, only ever used inside
  * src/lib/discord/notify.ts to actually POST a notification - never
  * returned to a client component.
+ *
+ * `client`, when passed, is used instead of building one from cookies -
+ * required for callers that run outside a browser session (the /api/v1
+ * status-transition path, task-transitions.ts) since createClient() has no
+ * cookies to read there and silently resolves as the `anon` role, which
+ * get_discord_webhook_url's SECURITY DEFINER grant (authenticated only)
+ * then rejects with "permission denied" rather than an auth error - that
+ * was exactly the bug this parameter fixes. A browser-triggered caller
+ * (work/actions.ts) omits it and keeps using the cookie-based client.
  */
-export async function getDiscordWebhookUrl(projectId: string, userId: string): Promise<string | null> {
+export async function getDiscordWebhookUrl(
+  projectId: string,
+  userId: string,
+  client?: SupabaseClient
+): Promise<string | null> {
   if (hasDirectDatabase()) {
     const result = await withUser(userId, ({ query }) =>
       query("SELECT webhook_url_encrypted FROM public.get_discord_webhook_url($1)", [projectId])
@@ -96,7 +110,7 @@ export async function getDiscordWebhookUrl(projectId: string, userId: string): P
     return encrypted ? decryptSecret(encrypted, DISCORD_WEBHOOK_KEY_INFO) : null;
   }
 
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
   const { data, error } = await supabase.rpc("get_discord_webhook_url", { p_project_id: projectId });
   if (error) throw new Error(`Failed to read Discord webhook: ${error.message}`);
   const encrypted = data?.[0]?.webhook_url_encrypted as string | null | undefined;

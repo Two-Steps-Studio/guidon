@@ -145,7 +145,8 @@ async function setStatusAndLog(
   notifyDiscordTaskEvent(
     projectId,
     userId,
-    newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus }
+    newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus },
+    supabase
   );
 
   return { ok: true, task: data };

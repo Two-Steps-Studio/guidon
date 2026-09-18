@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { after } from "next/server";
 import { getDiscordWebhookUrl } from "@/lib/data/discord-integration";
 import { SITE_URL } from "@/lib/site-url";
@@ -36,11 +37,21 @@ function describe(event: DiscordTaskEvent): string {
  * the task action that triggered it. Best-effort: failures are logged, not
  * thrown - a Discord outage must never break the underlying task mutation,
  * which has already committed by the time this runs.
+ *
+ * `client`, when passed, is forwarded to getDiscordWebhookUrl - see that
+ * function's own doc comment for why an API-key-triggered caller (no
+ * browser session/cookies) must pass its own already-authenticated client
+ * rather than let this fall back to the cookie-based one.
  */
-export function notifyDiscordTaskEvent(projectId: string, userId: string, event: DiscordTaskEvent): void {
+export function notifyDiscordTaskEvent(
+  projectId: string,
+  userId: string,
+  event: DiscordTaskEvent,
+  client?: SupabaseClient
+): void {
   after(async () => {
     try {
-      const webhookUrl = await getDiscordWebhookUrl(projectId, userId);
+      const webhookUrl = await getDiscordWebhookUrl(projectId, userId, client);
       if (!webhookUrl) return;
 
       const taskUrl = `${SITE_URL}/projects/${projectId}/work`;
