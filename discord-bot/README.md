@@ -79,6 +79,12 @@ server, an admin (Manage Server permission) runs:
   `/task` subcommand to work.
 - The project id is the UUID in that project's Settings page URL
   (`/projects/<this-id>/settings`).
+- **Known limitation:** unlike a key minted by "Connect to Discord" (which
+  is stamped `bot_label = 'Discord bot'` so its actions display as the bot's,
+  not a person's - see migration 036), a manually pasted personal API key has
+  no such label. Comments and status changes made through a manually-linked
+  server will show the key owner's name in Guidon's UI, not "Discord bot."
+  Prefer "Connect to Discord" when that attribution matters.
 
 Either way, optionally follow up with `/guidon-webhook url:<a Discord
 channel webhook URL>` to also receive task-event notifications in that
