@@ -241,6 +241,7 @@ export interface AdminActivityRow {
   entity_type: string | null;
   entity_id: string | null;
   created_at: string;
+  actor_label: string | null;
 }
 
 /**
@@ -255,7 +256,7 @@ export async function listRecentActivityForAdmin(limit = 100): Promise<AdminActi
   if (hasDirectDatabase()) {
     return withServiceRole(({ query }) =>
       query(
-        `SELECT id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at
+        `SELECT id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at, actor_label
          FROM activity_logs
          ORDER BY created_at DESC
          LIMIT $1`,
@@ -268,7 +269,7 @@ export async function listRecentActivityForAdmin(limit = 100): Promise<AdminActi
 
   const { data } = await supabase
     .from("activity_logs")
-    .select("id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at")
+    .select("id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at, actor_label")
     .order("created_at", { ascending: false })
     .limit(limit);
 

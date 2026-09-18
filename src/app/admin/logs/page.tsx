@@ -80,7 +80,7 @@ export default async function AdminLogsPage() {
                     <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${config.color}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm">
-                        <span className="font-medium">{nameFor(actor, t("someone"))}</span>{" "}
+                        <span className="font-medium">{entry.actor_label || nameFor(actor, t("someone"))}</span>{" "}
                         <span className="text-muted-foreground">{config.label.toLowerCase()}</span>
                         {entry.entity_type && <span className="text-muted-foreground"> · {entry.entity_type}</span>}
                         <span className="text-muted-foreground"> · {scope}</span>
