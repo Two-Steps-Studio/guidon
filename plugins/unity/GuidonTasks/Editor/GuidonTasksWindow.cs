@@ -407,7 +407,10 @@ namespace Guidon.Tasks.Editor
                 GuidonStyles.StyleCard(card, true);
             }
 
-            VisualElement hit = panel.Pick(evt.position);
+            // `panel` belongs to a VisualElement, not the EditorWindow -
+            // `card` (the element that captured this pointer) is the one
+            // with a `.panel` to pick against.
+            VisualElement hit = card.panel.Pick(evt.position);
             VisualElement column = FindColumnAncestor(hit);
             if (column == _hoveredColumn) return;
 
