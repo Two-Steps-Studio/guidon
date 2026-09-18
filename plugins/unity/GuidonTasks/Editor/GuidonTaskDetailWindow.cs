@@ -98,6 +98,7 @@ namespace Guidon.Tasks.Editor
         {
             VisualElement root = rootVisualElement;
             root.style.flexGrow = 1;
+            GuidonStyles.StyleRoot(root);
             GuidonStyles.SetPadding(root, 8f);
 
             var scroll = new ScrollView { style = { flexGrow = 1 } };

@@ -115,6 +115,7 @@ namespace Guidon.Tasks.Editor
         {
             VisualElement root = rootVisualElement;
             root.style.flexGrow = 1;
+            GuidonStyles.StyleRoot(root);
             GuidonStyles.SetPadding(root, 8f);
 
             BuildSettingsSection(root);
@@ -300,6 +301,7 @@ namespace Guidon.Tasks.Editor
             _statusByColumnElement[column] = status;
 
             var header = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
+            GuidonStyles.StyleColumnHeader(header);
 
             var titleLabel = new Label(GuidonVocabulary.StatusLabel(status)) { style = { flexGrow = 1 } };
             GuidonStyles.StyleSectionHeader(titleLabel);

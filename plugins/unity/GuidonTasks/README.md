@@ -14,11 +14,14 @@ Built on Unity's **UI Toolkit** (`CreateGUI`/`VisualElement`), not the
 older `OnGUI`/IMGUI - the first version used IMGUI and looked like flat
 grey boxes with no way to fix that (IMGUI has no real per-element styling
 API); UI Toolkit actually supports background colors, rounded corners, and
-spacing, which gets meaningfully closer to a "real app" look. It's still
-not going to be pixel-identical to the website - this plugin has no access
-to the web app's actual CSS values, and Editor windows render with Unity's
-own fonts and window chrome regardless - but it should no longer look like
-a debug tool.
+spacing. Colors and corner radii (`GuidonStyles.cs`) are copied verbatim
+from the web app's own design tokens (`src/app/globals.css`) and its
+Kanban board's Tailwind classes, not eyeballed - both a dark and a light
+palette, matched to whichever Unity Editor skin you're using. It's still
+not going to be pixel-identical to the website - Editor windows render
+with Unity's own fonts and window chrome regardless, and native controls
+(text fields, dropdowns) keep their normal Editor look rather than being
+reskinned - but the board's colors and shapes are the real ones.
 
 It talks to your existing Guidon instance's public API
 (`/api/v1` - see [the API's own README](../../../src/app/api/v1/README.md)).
