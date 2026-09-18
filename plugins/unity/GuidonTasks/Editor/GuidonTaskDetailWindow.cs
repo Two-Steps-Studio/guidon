@@ -3,15 +3,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Guidon.Tasks.Editor
 {
     /// <summary>
     /// Floating detail/edit window for one task - opened by clicking a
-    /// card on the board, or via a column's "+" button (new-task mode). A
-    /// separate EditorWindow rather than a panel embedded in the main
-    /// board window, mirroring the web app's own board-plus-modal-dialog
-    /// split and keeping the main window free to just be the board.
+    /// card on the board, or via a column's "+" button (new-task mode).
+    /// Built on UI Toolkit (CreateGUI/VisualElement), matching
+    /// GuidonTasksWindow's own switch away from IMGUI - see that class's
+    /// doc comment for why (real colors/spacing vs. IMGUI's flat boxes,
+    /// and no external .uss file since this plugin's folder can be copied
+    /// anywhere under Assets/).
     ///
     /// Talks back to GuidonTasksWindow through these two static events
     /// rather than a direct reference - simpler than plumbing a callback
@@ -27,40 +30,29 @@ namespace Guidon.Tasks.Editor
         private TaskDto _task; // null while creating a brand-new top-level task
         private string _newTaskStatus; // target column, "new task" mode only
 
-        private string _titleField;
-        private string _descriptionField;
-        private int _priorityIndex;
-        private string _dueDateField; // yyyy-MM-dd, or empty for "no due date"
-        private bool _previewingDescription;
-
         private TaskDto[] _subtasks = Array.Empty<TaskDto>();
-        private string _newSubtaskTitle = string.Empty;
-        private bool _addingSubtask;
-        private string _subtaskBusyId; // the one subtask currently being toggled/deleted, if any
-
         private CommentDto[] _comments = Array.Empty<CommentDto>();
         private bool _loadingComments = true;
-        private string _newCommentDraft = string.Empty;
-        private bool _postingComment;
 
-        private bool _saving;
-        private bool _deleting;
-        private string _statusMessage;
+        private bool _previewingDescription;
 
-        private Vector2 _scroll;
-        private static GUIStyle _richTextStyle;
-
-        private static GUIStyle RichTextStyle
-        {
-            get
-            {
-                if (_richTextStyle == null)
-                {
-                    _richTextStyle = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true };
-                }
-                return _richTextStyle;
-            }
-        }
+        // --- element references ---
+        private TextField _titleField;
+        private TextField _descriptionField;
+        private Label _descriptionPreviewLabel;
+        private Button _descriptionToggleButton;
+        private DropdownField _priorityDropdown;
+        private TextField _dueDateField;
+        private DropdownField _statusDropdown;
+        private Label _statusMessageLabel;
+        private Button _submitButton;
+        private Button _deleteButton;
+        private VisualElement _subtasksContainer;
+        private TextField _newSubtaskField;
+        private Button _addSubtaskButton;
+        private VisualElement _commentsContainer;
+        private TextField _newCommentField;
+        private Button _postCommentButton;
 
         public static void OpenForTask(string projectId, TaskDto task, TaskDto[] allProjectTasks)
         {
@@ -68,14 +60,9 @@ namespace Guidon.Tasks.Editor
             window._projectId = projectId;
             window._task = task;
             window._subtasks = allProjectTasks.Where(t => t.parent_task_id == task.id).ToArray();
-            window._titleField = task.title;
-            window._descriptionField = task.description ?? string.Empty;
-            window._priorityIndex = Math.Max(0, Array.IndexOf(GuidonVocabulary.Priorities, task.priority));
-            window._dueDateField = FormatDueDateForField(task.due_date);
             window.titleContent = new GUIContent(task.title);
-            window.minSize = new Vector2(420, 480);
+            window.minSize = new Vector2(380, 440);
             window.ShowUtility();
-            _ = window.RefreshComments();
         }
 
         public static void OpenForNewTask(string projectId, string status)
@@ -83,13 +70,9 @@ namespace Guidon.Tasks.Editor
             var window = CreateInstance<GuidonTaskDetailWindow>();
             window._projectId = projectId;
             window._newTaskStatus = status;
-            window._titleField = string.Empty;
-            window._descriptionField = string.Empty;
-            window._priorityIndex = Math.Max(0, Array.IndexOf(GuidonVocabulary.Priorities, "medium"));
-            window._dueDateField = string.Empty;
             window._loadingComments = false; // no comments section in new-task mode
             window.titleContent = new GUIContent("New Task");
-            window.minSize = new Vector2(420, 260);
+            window.minSize = new Vector2(380, 260);
             window.ShowUtility();
         }
 
@@ -111,169 +94,197 @@ namespace Guidon.Tasks.Editor
             return null;
         }
 
-        private void OnGUI()
+        public void CreateGUI()
         {
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            VisualElement root = rootVisualElement;
+            root.style.flexGrow = 1;
+            GuidonStyles.SetPadding(root, 8f);
 
-            _titleField = EditorGUILayout.TextField("Title", _titleField);
-            DrawDescriptionField();
+            var scroll = new ScrollView { style = { flexGrow = 1 } };
+            root.Add(scroll);
 
-            _priorityIndex = EditorGUILayout.Popup("Priority", _priorityIndex, GuidonVocabulary.Priorities);
-            _dueDateField = EditorGUILayout.TextField("Due date (yyyy-MM-dd)", _dueDateField);
+            _titleField = new TextField("Title") { value = _task?.title ?? string.Empty };
+            scroll.Add(_titleField);
 
-            if (_task != null) DrawStatusRow();
+            BuildDescriptionField(scroll);
 
-            EditorGUILayout.Space();
-            DrawActionButtons();
+            _priorityDropdown = new DropdownField { label = "Priority", choices = GuidonVocabulary.Priorities.ToList() };
+            _priorityDropdown.SetValueWithoutNotify(_task?.priority ?? "medium");
+            scroll.Add(_priorityDropdown);
 
-            if (!string.IsNullOrEmpty(_statusMessage))
+            _dueDateField = new TextField("Due date (yyyy-MM-dd)") { value = FormatDueDateForField(_task?.due_date) };
+            scroll.Add(_dueDateField);
+
+            if (_task != null) BuildStatusDropdown(scroll);
+
+            BuildActionButtons(scroll);
+
+            _statusMessageLabel = new Label
             {
-                EditorGUILayout.HelpBox(_statusMessage, MessageType.Error);
-            }
+                style = { color = new Color(0.9f, 0.4f, 0.4f), whiteSpace = WhiteSpace.Normal, marginBottom = 6f },
+            };
+            _statusMessageLabel.style.display = DisplayStyle.None;
+            scroll.Add(_statusMessageLabel);
 
             if (_task != null)
             {
-                EditorGUILayout.Space();
-                DrawSubtasksSection();
-                EditorGUILayout.Space();
-                DrawCommentsSection();
-            }
+                BuildSubtasksSection(scroll);
+                RebuildSubtasks();
 
-            EditorGUILayout.EndScrollView();
+                BuildCommentsSection(scroll);
+                _ = RefreshComments();
+            }
         }
 
-        private void DrawDescriptionField()
+        private void BuildDescriptionField(VisualElement parent)
         {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Description");
-            if (GUILayout.Button(_previewingDescription ? "Edit" : "Preview", GUILayout.Width(70)))
-            {
-                _previewingDescription = !_previewingDescription;
-            }
-            EditorGUILayout.EndHorizontal();
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
+            var label = new Label("Description") { style = { flexGrow = 1 } };
+            row.Add(label);
+
+            _descriptionToggleButton = new Button(ToggleDescriptionPreview) { text = "Preview" };
+            row.Add(_descriptionToggleButton);
+            parent.Add(row);
+
+            _descriptionField = new TextField { multiline = true, value = _task?.description ?? string.Empty };
+            _descriptionField.style.minHeight = 60f;
+            parent.Add(_descriptionField);
+
+            _descriptionPreviewLabel = new Label { style = { whiteSpace = WhiteSpace.Normal, minHeight = 60f } };
+            _descriptionPreviewLabel.style.display = DisplayStyle.None;
+            parent.Add(_descriptionPreviewLabel);
+        }
+
+        private void ToggleDescriptionPreview()
+        {
+            _previewingDescription = !_previewingDescription;
+            _descriptionField.style.display = _previewingDescription ? DisplayStyle.None : DisplayStyle.Flex;
+            _descriptionPreviewLabel.style.display = _previewingDescription ? DisplayStyle.Flex : DisplayStyle.None;
+            _descriptionToggleButton.text = _previewingDescription ? "Edit" : "Preview";
 
             if (_previewingDescription)
             {
-                string content = string.IsNullOrEmpty(_descriptionField) ? "(no description)" : _descriptionField;
-                EditorGUILayout.LabelField(GuidonMarkdown.ToRichText(content), RichTextStyle, GUILayout.MinHeight(60));
-            }
-            else
-            {
-                _descriptionField = EditorGUILayout.TextArea(_descriptionField, GUILayout.MinHeight(60));
+                string content = string.IsNullOrEmpty(_descriptionField.value) ? "(no description)" : _descriptionField.value;
+                _descriptionPreviewLabel.text = GuidonMarkdown.ToRichText(content);
             }
         }
 
-        private void DrawStatusRow()
+        private void BuildStatusDropdown(VisualElement parent)
         {
-            int statusIndex = Array.IndexOf(GuidonVocabulary.Statuses, _task.status);
-            int newIndex = EditorGUILayout.Popup("Status", Math.Max(statusIndex, 0), GuidonVocabulary.StatusLabels);
+            _statusDropdown = new DropdownField { label = "Status", choices = GuidonVocabulary.StatusLabels.ToList() };
+            int index = Math.Max(0, Array.IndexOf(GuidonVocabulary.Statuses, _task.status));
+            _statusDropdown.SetValueWithoutNotify(GuidonVocabulary.StatusLabels[index]);
 
-            // Guarded by statusIndex >= 0 for the same reason the main
-            // board's old status dropdown was - see GuidonTasksWindow's
-            // history for the loop this prevents.
-            if (statusIndex >= 0 && newIndex != statusIndex)
+            _statusDropdown.RegisterValueChangedCallback(evt =>
             {
-                _ = ChangeStatus(GuidonVocabulary.Statuses[newIndex]);
-            }
+                int newIndex = Array.IndexOf(GuidonVocabulary.StatusLabels, evt.newValue);
+                int oldIndex = Array.IndexOf(GuidonVocabulary.StatusLabels, evt.previousValue);
+                if (newIndex >= 0 && newIndex != oldIndex)
+                {
+                    _ = ChangeStatus(GuidonVocabulary.Statuses[newIndex]);
+                }
+            });
+
+            parent.Add(_statusDropdown);
         }
 
         private async Task ChangeStatus(string newStatus)
         {
-            _statusMessage = null;
+            ShowStatusMessage(null);
             var result = await GuidonApiClient.SetTaskStatus(_task.id, newStatus);
 
             if (!result.Ok)
             {
-                _statusMessage = result.Error;
+                ShowStatusMessage(result.Error);
             }
             else if (result.Value != null)
             {
                 _task = result.Value;
                 TaskUpserted?.Invoke(_task);
             }
-
-            Repaint();
         }
 
-        private void DrawActionButtons()
+        private void BuildActionButtons(VisualElement parent)
         {
-            EditorGUILayout.BeginHorizontal();
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginTop = 6f, marginBottom = 6f } };
 
-            bool canSubmit = !_saving && !string.IsNullOrWhiteSpace(_titleField);
-            EditorGUI.BeginDisabledGroup(!canSubmit);
-            string submitLabel = _task == null ? (_saving ? "Creating..." : "Create") : (_saving ? "Saving..." : "Save");
-            if (GUILayout.Button(submitLabel))
-            {
-                _ = Submit();
-            }
-            EditorGUI.EndDisabledGroup();
+            _submitButton = new Button(() => { _ = Submit(); }) { text = _task == null ? "Create" : "Save" };
+            row.Add(_submitButton);
 
             if (_task != null)
             {
-                EditorGUI.BeginDisabledGroup(_deleting);
-                if (GUILayout.Button(_deleting ? "Deleting..." : "Delete"))
-                {
-                    _ = SubmitDelete();
-                }
-                EditorGUI.EndDisabledGroup();
+                _deleteButton = new Button(() => { _ = SubmitDelete(); }) { text = "Delete", style = { marginLeft = 4f } };
+                row.Add(_deleteButton);
             }
 
-            if (GUILayout.Button("Close")) Close();
+            var closeButton = new Button(Close) { text = "Close", style = { marginLeft = 4f } };
+            row.Add(closeButton);
 
-            EditorGUILayout.EndHorizontal();
+            parent.Add(row);
         }
 
         private async Task Submit()
         {
-            string priority = GuidonVocabulary.Priorities[_priorityIndex];
-            string dueDateIso = ParseDueDateToIso(_dueDateField, out string dueDateError);
-            if (dueDateError != null)
+            if (string.IsNullOrWhiteSpace(_titleField.value))
             {
-                _statusMessage = dueDateError;
-                Repaint();
+                ShowStatusMessage("Title is required.");
                 return;
             }
 
-            _saving = true;
-            _statusMessage = null;
-            Repaint();
+            string priority = _priorityDropdown.value;
+            string dueDateIso = ParseDueDateToIso(_dueDateField.value, out string dueDateError);
+            if (dueDateError != null)
+            {
+                ShowStatusMessage(dueDateError);
+                return;
+            }
 
-            GuidonResult<TaskDto> result = _task == null
+            bool creating = _task == null;
+            _submitButton.SetEnabled(false);
+            _submitButton.text = creating ? "Creating..." : "Saving...";
+            ShowStatusMessage(null);
+
+            GuidonResult<TaskDto> result = creating
                 ? await GuidonApiClient.CreateTask(
-                    _projectId, _titleField.Trim(), _descriptionField, priority, dueDateIso, status: _newTaskStatus)
-                : await GuidonApiClient.UpdateTaskFields(_task.id, _titleField.Trim(), _descriptionField, priority, dueDateIso);
-
-            _saving = false;
+                    _projectId, _titleField.value.Trim(), _descriptionField.value, priority, dueDateIso, status: _newTaskStatus)
+                : await GuidonApiClient.UpdateTaskFields(_task.id, _titleField.value.Trim(), _descriptionField.value, priority, dueDateIso);
 
             if (!result.Ok || result.Value == null)
             {
-                _statusMessage = result.Error;
-                Repaint();
+                _submitButton.SetEnabled(true);
+                _submitButton.text = creating ? "Create" : "Save";
+                ShowStatusMessage(result.Error);
                 return;
             }
 
-            bool wasNew = _task == null;
             _task = result.Value;
             titleContent = new GUIContent(_task.title);
             TaskUpserted?.Invoke(_task);
 
-            if (wasNew) Close();
-            else Repaint();
+            if (creating)
+            {
+                Close();
+            }
+            else
+            {
+                _submitButton.SetEnabled(true);
+                _submitButton.text = "Save";
+            }
         }
 
         private async Task SubmitDelete()
         {
-            _deleting = true;
-            _statusMessage = null;
-            Repaint();
+            _deleteButton.SetEnabled(false);
+            _deleteButton.text = "Deleting...";
+            ShowStatusMessage(null);
 
             var result = await GuidonApiClient.DeleteTask(_task.id);
-            _deleting = false;
 
             if (!result.Ok)
             {
-                _statusMessage = result.Error;
-                Repaint();
+                _deleteButton.SetEnabled(true);
+                _deleteButton.text = "Delete";
+                ShowStatusMessage(result.Error);
                 return;
             }
 
@@ -281,190 +292,209 @@ namespace Guidon.Tasks.Editor
             Close();
         }
 
-        private void DrawSubtasksSection()
+        private void BuildSubtasksSection(VisualElement parent)
         {
-            EditorGUILayout.LabelField("Subtasks", EditorStyles.boldLabel);
+            var header = new Label("Subtasks");
+            GuidonStyles.StyleSectionHeader(header);
+            parent.Add(header);
+
+            _subtasksContainer = new VisualElement();
+            parent.Add(_subtasksContainer);
+
+            var addRow = new VisualElement { style = { flexDirection = FlexDirection.Row, marginTop = 4f, marginBottom = 8f } };
+            _newSubtaskField = new TextField { style = { flexGrow = 1 } };
+            addRow.Add(_newSubtaskField);
+            _addSubtaskButton = new Button(() => { _ = AddSubtask(); }) { text = "Add", style = { marginLeft = 4f } };
+            addRow.Add(_addSubtaskButton);
+            parent.Add(addRow);
+        }
+
+        private void RebuildSubtasks()
+        {
+            if (_subtasksContainer == null) return;
+            _subtasksContainer.Clear();
 
             if (_subtasks.Length == 0)
             {
-                EditorGUILayout.LabelField("No subtasks yet.", EditorStyles.miniLabel);
+                var empty = new Label("No subtasks yet.");
+                GuidonStyles.StyleMutedLabel(empty);
+                _subtasksContainer.Add(empty);
+                return;
             }
 
             foreach (var subtask in _subtasks)
             {
-                bool busy = _subtaskBusyId == subtask.id;
-                bool done = subtask.status == "done";
-
-                EditorGUILayout.BeginHorizontal();
-
-                EditorGUI.BeginDisabledGroup(busy);
-                bool newDone = EditorGUILayout.ToggleLeft(subtask.title, done, GUILayout.ExpandWidth(true));
-                EditorGUI.EndDisabledGroup();
-                if (newDone != done)
-                {
-                    _ = ToggleSubtask(subtask, newDone);
-                }
-
-                EditorGUI.BeginDisabledGroup(busy);
-                if (GUILayout.Button("x", GUILayout.Width(20)))
-                {
-                    _ = DeleteSubtask(subtask);
-                }
-                EditorGUI.EndDisabledGroup();
-
-                EditorGUILayout.EndHorizontal();
+                _subtasksContainer.Add(BuildSubtaskRow(subtask));
             }
-
-            EditorGUILayout.BeginHorizontal();
-            _newSubtaskTitle = EditorGUILayout.TextField(_newSubtaskTitle);
-            EditorGUI.BeginDisabledGroup(_addingSubtask || string.IsNullOrWhiteSpace(_newSubtaskTitle));
-            if (GUILayout.Button(_addingSubtask ? "Adding..." : "Add subtask", GUILayout.Width(100)))
-            {
-                _ = AddSubtask();
-            }
-            EditorGUI.EndDisabledGroup();
-            EditorGUILayout.EndHorizontal();
         }
 
-        private async Task ToggleSubtask(TaskDto subtask, bool done)
+        private VisualElement BuildSubtaskRow(TaskDto subtask)
         {
-            _subtaskBusyId = subtask.id;
-            _statusMessage = null;
-            Repaint();
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
+
+            var toggle = new Toggle { value = subtask.status == "done", text = subtask.title, style = { flexGrow = 1 } };
+            toggle.RegisterValueChangedCallback(evt => { _ = ToggleSubtask(subtask, evt.newValue, toggle); });
+            row.Add(toggle);
+
+            var deleteButton = new Button(() => { _ = DeleteSubtask(subtask); }) { text = "x", style = { width = 20f } };
+            row.Add(deleteButton);
+
+            return row;
+        }
+
+        private async Task ToggleSubtask(TaskDto subtask, bool done, VisualElement rowControl)
+        {
+            rowControl.SetEnabled(false);
+            ShowStatusMessage(null);
 
             var result = await GuidonApiClient.SetTaskStatus(subtask.id, done ? "done" : "todo");
-            _subtaskBusyId = null;
 
             if (!result.Ok)
             {
-                _statusMessage = result.Error;
+                ShowStatusMessage(result.Error);
+                RebuildSubtasks(); // reverts the toggle's visual state back to the unchanged data
+                return;
             }
-            else if (result.Value != null)
+
+            if (result.Value != null)
             {
-                ReplaceSubtask(result.Value);
+                _subtasks = _subtasks.Select(t => t.id == result.Value.id ? result.Value : t).ToArray();
                 TaskUpserted?.Invoke(result.Value);
             }
 
-            Repaint();
+            rowControl.SetEnabled(true);
         }
 
         private async Task DeleteSubtask(TaskDto subtask)
         {
-            _subtaskBusyId = subtask.id;
-            _statusMessage = null;
-            Repaint();
-
+            ShowStatusMessage(null);
             var result = await GuidonApiClient.DeleteTask(subtask.id);
-            _subtaskBusyId = null;
 
             if (!result.Ok)
             {
-                _statusMessage = result.Error;
-            }
-            else
-            {
-                _subtasks = _subtasks.Where(t => t.id != subtask.id).ToArray();
-                TaskRemoved?.Invoke(subtask.id);
+                ShowStatusMessage(result.Error);
+                return;
             }
 
-            Repaint();
+            _subtasks = _subtasks.Where(t => t.id != subtask.id).ToArray();
+            TaskRemoved?.Invoke(subtask.id);
+            RebuildSubtasks();
         }
 
         private async Task AddSubtask()
         {
-            _addingSubtask = true;
-            _statusMessage = null;
-            Repaint();
+            if (string.IsNullOrWhiteSpace(_newSubtaskField.value)) return;
+
+            _addSubtaskButton.SetEnabled(false);
+            ShowStatusMessage(null);
 
             var result = await GuidonApiClient.CreateTask(
-                _projectId, _newSubtaskTitle.Trim(), string.Empty, "medium", string.Empty, parentTaskId: _task.id);
+                _projectId, _newSubtaskField.value.Trim(), string.Empty, "medium", string.Empty, parentTaskId: _task.id);
 
-            _addingSubtask = false;
+            _addSubtaskButton.SetEnabled(true);
 
             if (!result.Ok || result.Value == null)
             {
-                _statusMessage = result.Error;
-                Repaint();
+                ShowStatusMessage(result.Error);
                 return;
             }
 
             _subtasks = _subtasks.Append(result.Value).ToArray();
-            _newSubtaskTitle = string.Empty;
+            _newSubtaskField.value = string.Empty;
             TaskUpserted?.Invoke(result.Value);
-            Repaint();
+            RebuildSubtasks();
         }
 
-        private void ReplaceSubtask(TaskDto updated)
+        private void BuildCommentsSection(VisualElement parent)
         {
-            _subtasks = _subtasks.Select(t => t.id == updated.id ? updated : t).ToArray();
+            var header = new Label("Comments") { style = { marginTop = 4f } };
+            GuidonStyles.StyleSectionHeader(header);
+            parent.Add(header);
+
+            _commentsContainer = new VisualElement();
+            parent.Add(_commentsContainer);
+
+            var addRow = new VisualElement { style = { flexDirection = FlexDirection.Row, marginTop = 4f } };
+            _newCommentField = new TextField { style = { flexGrow = 1 } };
+            addRow.Add(_newCommentField);
+            _postCommentButton = new Button(() => { _ = PostComment(); }) { text = "Post", style = { marginLeft = 4f } };
+            addRow.Add(_postCommentButton);
+            parent.Add(addRow);
         }
 
-        private void DrawCommentsSection()
+        private void RebuildComments()
         {
-            EditorGUILayout.LabelField("Comments", EditorStyles.boldLabel);
+            if (_commentsContainer == null) return;
+            _commentsContainer.Clear();
 
             if (_loadingComments)
             {
-                EditorGUILayout.LabelField("Loading...", EditorStyles.miniLabel);
-            }
-            else if (_comments.Length == 0)
-            {
-                EditorGUILayout.LabelField("No comments yet.", EditorStyles.miniLabel);
-            }
-            else
-            {
-                foreach (var comment in _comments)
-                {
-                    string author = string.IsNullOrEmpty(comment.actor_label) ? "Someone" : comment.actor_label;
-                    EditorGUILayout.LabelField($"{author} - {comment.created_at}", EditorStyles.miniLabel);
-                    EditorGUILayout.LabelField(comment.content, EditorStyles.wordWrappedLabel);
-                    EditorGUILayout.Space(2);
-                }
+                var loading = new Label("Loading...");
+                GuidonStyles.StyleMutedLabel(loading);
+                _commentsContainer.Add(loading);
+                return;
             }
 
-            EditorGUILayout.BeginHorizontal();
-            _newCommentDraft = EditorGUILayout.TextField(_newCommentDraft);
-            EditorGUI.BeginDisabledGroup(_postingComment || string.IsNullOrWhiteSpace(_newCommentDraft));
-            if (GUILayout.Button(_postingComment ? "Posting..." : "Post", GUILayout.Width(70)))
+            if (_comments.Length == 0)
             {
-                _ = PostComment();
+                var empty = new Label("No comments yet.");
+                GuidonStyles.StyleMutedLabel(empty);
+                _commentsContainer.Add(empty);
+                return;
             }
-            EditorGUI.EndDisabledGroup();
-            EditorGUILayout.EndHorizontal();
+
+            foreach (var comment in _comments)
+            {
+                string author = string.IsNullOrEmpty(comment.actor_label) ? "Someone" : comment.actor_label;
+
+                var meta = new Label($"{author} - {comment.created_at}");
+                GuidonStyles.StyleMutedLabel(meta);
+                _commentsContainer.Add(meta);
+
+                var content = new Label(comment.content) { style = { whiteSpace = WhiteSpace.Normal, marginBottom = 6f } };
+                _commentsContainer.Add(content);
+            }
         }
 
         private async Task RefreshComments()
         {
             _loadingComments = true;
-            Repaint();
+            RebuildComments();
 
             var result = await GuidonApiClient.ListComments(_task.id);
             _loadingComments = false;
 
             if (result.Ok) _comments = result.Value;
-            else _statusMessage = result.Error;
+            else ShowStatusMessage(result.Error);
 
-            Repaint();
+            RebuildComments();
         }
 
         private async Task PostComment()
         {
-            _postingComment = true;
-            _statusMessage = null;
-            Repaint();
+            if (string.IsNullOrWhiteSpace(_newCommentField.value)) return;
 
-            var result = await GuidonApiClient.AddComment(_task.id, _newCommentDraft.Trim());
-            _postingComment = false;
+            _postCommentButton.SetEnabled(false);
+            ShowStatusMessage(null);
+
+            var result = await GuidonApiClient.AddComment(_task.id, _newCommentField.value.Trim());
+            _postCommentButton.SetEnabled(true);
 
             if (!result.Ok)
             {
-                _statusMessage = result.Error;
-                Repaint();
+                ShowStatusMessage(result.Error);
                 return;
             }
 
-            _newCommentDraft = string.Empty;
+            _newCommentField.value = string.Empty;
             await RefreshComments();
+        }
+
+        private void ShowStatusMessage(string message)
+        {
+            if (_statusMessageLabel == null) return;
+            _statusMessageLabel.text = message ?? string.Empty;
+            _statusMessageLabel.style.display = string.IsNullOrEmpty(message) ? DisplayStyle.None : DisplayStyle.Flex;
         }
     }
 }

@@ -10,6 +10,16 @@ This is an Editor-only tool (`Editor/` folder + an asmdef restricted to
 `"includePlatforms": ["Editor"]`), so it never ships inside a player
 build - no API key or task data can end up in a game your players run.
 
+Built on Unity's **UI Toolkit** (`CreateGUI`/`VisualElement`), not the
+older `OnGUI`/IMGUI - the first version used IMGUI and looked like flat
+grey boxes with no way to fix that (IMGUI has no real per-element styling
+API); UI Toolkit actually supports background colors, rounded corners, and
+spacing, which gets meaningfully closer to a "real app" look. It's still
+not going to be pixel-identical to the website - this plugin has no access
+to the web app's actual CSS values, and Editor windows render with Unity's
+own fonts and window chrome regardless - but it should no longer look like
+a debug tool.
+
 It talks to your existing Guidon instance's public API
 (`/api/v1` - see [the API's own README](../../../src/app/api/v1/README.md)).
 Logging in opens the real Guidon website in your browser - the same login
@@ -80,7 +90,7 @@ verbatim - it'll tell you exactly which setting to flip in Project Settings.
 A task's description supports the common Markdown subset - **bold**,
 *italic*, `` `inline code` ``, `#`/`##` headers, `-`/`*` bullet lists, and
 `[text](url)` links (rendered as coloured text with the URL shown after it
-in parentheses - Unity's IMGUI has no per-substring click handling, so
+in parentheses - Unity's rich text has no per-substring click handling, so
 links aren't clickable here the way they are on the web). Click **Preview**
 next to the Description field to render it, **Edit** to go back to the raw
 Markdown source. This is a small hand-written converter to Unity's
@@ -103,12 +113,13 @@ realistically useful in a task description viewed at Editor-window width.
 
 ## A note on drag-and-drop
 
-Unity's Editor GUI (`OnGUI`/IMGUI) has no built-in HTML5-style drag events,
-so the board's drag-and-drop is hand-rolled mouse-event tracking
-(`GuidonTasksWindow.cs`) - the same category of technique Unity's own
-reorderable-list tooling uses, but without the benefit of Unity's own
-QA behind it. If a drag ever behaves oddly (a card not picking up, a drop
-landing in the wrong column, a status not actually changing after a
-successful-looking drop), that's the single most likely place for a bug -
-please report exactly which column, which card, and what happened instead
-of the expected move.
+Drag-and-drop (`GuidonTasksWindow.cs`) is built on UI Toolkit's pointer
+events (`PointerDownEvent`/`PointerMoveEvent`/`PointerUpEvent`) with
+pointer capture and `panel.Pick()` to resolve the column under the cursor -
+the API this problem actually calls for, and more robust than the first
+IMGUI version's manual Rect-containment checks. Still hand-rolled
+application logic rather than a built-in "drag this card" control, so if a
+drag ever behaves oddly (a card not picking up, a drop landing in the
+wrong column, a status not actually changing after a successful-looking
+drop), that's the most likely place for a bug - please report exactly
+which column, which card, and what happened instead of the expected move.
