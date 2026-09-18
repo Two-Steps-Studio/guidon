@@ -1323,5 +1323,69 @@ await withUser(A, async () => {
   );
 });
 
+// ------------------------------------------------------------------
+section("25. etykieta pochodzenia akcji bota: api_keys.bot_label / task_comments.actor_label / activity_logs.actor_label (migracja 036)");
+
+let botTestTaskId;
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Task dla testu bot_label') RETURNING id",
+    [projectId]
+  );
+  botTestTaskId = rows[0].id;
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label)
+     VALUES ($1, 'Discord bot (test)', 'gdn_test', 'hash-bot-label-test', '{tasks:read}', 'Discord bot')
+     RETURNING bot_label`,
+    [A]
+  );
+  check("api_keys.bot_label zapisuje sie i odczytuje", rows[0]?.bot_label === "Discord bot", JSON.stringify(rows));
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.task_comments (task_id, author_id, content, actor_label)
+     VALUES ($1, $2, 'Skomentowane przez bota', 'Discord bot')
+     RETURNING actor_label`,
+    [botTestTaskId, A]
+  );
+  check(
+    "task_comments.actor_label zapisuje sie i odczytuje",
+    rows[0]?.actor_label === "Discord bot",
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.activity_logs (project_id, user_id, action, entity_type, entity_id, actor_label)
+     VALUES ($1, $2, 'task_ai_commented', 'task', $3, 'Discord bot')
+     RETURNING actor_label`,
+    [projectId, A, botTestTaskId]
+  );
+  check(
+    "activity_logs.actor_label zapisuje sie i odczytuje",
+    rows[0]?.actor_label === "Discord bot",
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.task_comments (task_id, author_id, content)
+     VALUES ($1, $2, 'Zwykly komentarz czlowieka')
+     RETURNING actor_label`,
+    [botTestTaskId, A]
+  );
+  check(
+    "actor_label domyslnie NULL - zwykle ludzkie akcje nietkniete",
+    rows[0]?.actor_label === null,
+    JSON.stringify(rows)
+  );
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
