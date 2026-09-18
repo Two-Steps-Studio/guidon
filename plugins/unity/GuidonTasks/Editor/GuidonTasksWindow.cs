@@ -37,14 +37,11 @@ namespace Guidon.Tasks.Editor
 
         private bool _showSettings;
         private string _baseUrlField;
-        private string _emailField;
-        private string _passwordField;
         private bool _loggingIn;
 
         private void OnEnable()
         {
             _baseUrlField = GuidonSettings.BaseUrl;
-            _emailField = GuidonSettings.Email;
             _showSettings = !GuidonSettings.IsConfigured;
 
             if (GuidonSettings.IsConfigured)
@@ -106,18 +103,15 @@ namespace Guidon.Tasks.Editor
             else
             {
                 EditorGUILayout.HelpBox(
-                    "Log in with your Guidon account - the same email and password you use on the website.",
+                    "Log in opens useguidon.com in your browser - the same login you already use " +
+                    "(including password reset and OAuth). Approve the request there and this window " +
+                    "picks it up automatically.",
                     MessageType.None);
-                _emailField = EditorGUILayout.TextField("Email", _emailField);
-                // Never persisted anywhere (not even during this session past
-                // the login call) - only the resulting API key is stored.
-                _passwordField = EditorGUILayout.PasswordField("Password", _passwordField);
 
-                bool canSubmit = !_loggingIn && !string.IsNullOrEmpty(_emailField) && !string.IsNullOrEmpty(_passwordField);
-                EditorGUI.BeginDisabledGroup(!canSubmit);
-                if (GUILayout.Button(_loggingIn ? "Logging in..." : "Log In", GUILayout.Width(100)))
+                EditorGUI.BeginDisabledGroup(_loggingIn || string.IsNullOrEmpty(_baseUrlField));
+                if (GUILayout.Button(_loggingIn ? "Waiting for browser..." : "Log In", GUILayout.Width(150)))
                 {
-                    _ = LogIn(_emailField, _passwordField);
+                    _ = LogInViaBrowser();
                 }
                 EditorGUI.EndDisabledGroup();
             }
@@ -125,16 +119,15 @@ namespace Guidon.Tasks.Editor
             EditorGUILayout.EndVertical();
         }
 
-        private async Task LogIn(string email, string password)
+        private async Task LogInViaBrowser()
         {
             GuidonSettings.BaseUrl = _baseUrlField?.TrimEnd('/') ?? string.Empty;
             _loggingIn = true;
             _statusMessage = null;
             Repaint();
 
-            var result = await GuidonApiClient.Login(email, password);
+            var result = await GuidonBrowserAuth.LoginAsync(GuidonSettings.BaseUrl);
             _loggingIn = false;
-            _passwordField = string.Empty;
 
             if (!result.Ok)
             {

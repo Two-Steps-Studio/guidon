@@ -11,14 +11,18 @@ build - no API key or task data can end up in a game your players run.
 
 It talks to your existing Guidon instance's public API
 (`/api/v1` - see [the API's own README](../../../src/app/api/v1/README.md)).
-You log in with your normal Guidon email and password - the same as the
-website - not by creating or pasting an API key. Behind the scenes,
-logging in exchanges your credentials for a scoped API key the same way
-the Discord bot integration or an AI agent authenticates, via a dedicated
-`POST /api/v1/auth/login` (see that route's own doc comment); this plugin
-never stores your password, only the resulting key. That key also shows
-up under **Profile → API Keys** on the website as "Unity Plugin", so you
-can revoke it there if a machine is ever lost.
+Logging in opens the real Guidon website in your browser - the same login
+page, password reset, and OAuth you already use - rather than a
+reimplemented login form inside the Editor. Behind the scenes this is a
+loopback flow (the same pattern tools like `gh auth login` or `gcloud auth
+login` use): the plugin starts a tiny local HTTP server, sends your
+browser to `/auth/plugin-login` on your Guidon instance, and once you
+click **Authorize** there (already logged in, or after logging in if you
+weren't), the site redirects your browser back to that local server with a
+freshly issued API key. The plugin never sees or stores your password -
+only the resulting key. That key shows up under **Profile → API Keys** on
+the website as "Unity Plugin", so you can revoke it there if a machine is
+ever lost.
 
 ## Setup
 
@@ -26,20 +30,30 @@ can revoke it there if a machine is ever lost.
    project, anywhere under `Assets/` (e.g. `Assets/Editor/GuidonTasks` or
    just `Assets/GuidonTasks` - only the `Editor/` subfolder has code, so
    the location outside it doesn't matter).
-2. In Unity, open **Window → Guidon → Tasks**. Expand **Settings**, set:
-   - **Base URL**: your Guidon instance, e.g. `https://useguidon.com` or
-     `http://localhost:2137` for a local dev server.
-   - **Email** / **Password**: your normal Guidon login.
+2. In Unity, open **Window → Guidon → Tasks**. Expand **Settings**, set
+   **Base URL** to your Guidon instance (e.g. `https://useguidon.com` or
+   `http://localhost:2137` for a local dev server), then click **Log In**.
+   Your browser opens to a Guidon page asking you to approve the plugin -
+   approve it, and the Unity window picks up the result automatically
+   (usually within a second or two of clicking Authorize).
 
-   Click **Log In**. The resulting API key is stored in `EditorPrefs`
-   (machine-wide, not inside your Unity project) so it never risks being
-   committed to your project's own git repo - the trade-off is that it's
-   shared across every Unity project you open on this machine, not scoped
-   to just this one. **Log Out** just clears it locally; it does not revoke
-   the key server-side (logging back in reissues a fresh one either way).
+   The resulting API key is stored in `EditorPrefs` (machine-wide, not
+   inside your Unity project) so it never risks being committed to your
+   project's own git repo - the trade-off is that it's shared across every
+   Unity project you open on this machine, not scoped to just this one.
+   **Log Out** just clears it locally; it does not revoke the key
+   server-side (logging back in reissues a fresh one either way).
 3. Pick a project from the dropdown in the toolbar. Its tasks load on the
    left; click one to see its description, status, and comments on the
    right.
+
+### If the browser can't reach Unity
+
+The local listener tries ports 51820-51829 and gives up with a clear error
+if none are free - close any other in-progress Guidon login (Unity or
+otherwise) and try again. A corporate firewall or antivirus that blocks
+local loopback listeners would also prevent this from completing; there is
+no fallback path in v1 if that's the case for your machine.
 
 ## Known limitation: status changes can 403
 

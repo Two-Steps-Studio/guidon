@@ -82,13 +82,7 @@ namespace Guidon.Tasks.Editor
         public string error;
     }
 
-    [Serializable]
-    internal class LoginRequestBody
-    {
-        public string email;
-        public string password;
-    }
-
+    /// <summary>Shape of the query params GuidonBrowserAuth's local listener receives back from /auth/plugin-login.</summary>
     [Serializable]
     internal class LoginResponse
     {
