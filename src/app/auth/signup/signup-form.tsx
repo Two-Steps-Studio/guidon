@@ -3,10 +3,12 @@
 import { useState } from "react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
+import { AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -121,6 +123,8 @@ export function SignupForm({ local }: { local: boolean }) {
                 placeholder="John Doe"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                autoFocus
                 required
               />
             </div>
@@ -132,23 +136,27 @@ export function SignupForm({ local }: { local: boolean }) {
                 placeholder="john@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("passwordLabel")}</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                showLabel={tCommon("showPassword")}
+                hideLabel={tCommon("hidePassword")}
                 required
                 minLength={6}
               />
             </div>
             {error && (
-              <div className="text-sm text-destructive">
+              <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
                 {error}
               </div>
             )}

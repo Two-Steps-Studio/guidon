@@ -62,7 +62,9 @@
       "signingOut": "Signing out..."
     },
     "common": {
-      "somethingWentWrong": "Something went wrong"
+      "somethingWentWrong": "Something went wrong",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     }
   },
   "errors": {

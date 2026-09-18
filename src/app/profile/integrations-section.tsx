@@ -18,9 +18,9 @@ export async function IntegrationsSection() {
         <CardDescription>{t("integrationsDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-start justify-between gap-3 rounded-md border border-border p-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start justify-between gap-3 rounded-md border border-border bg-background-secondary px-3 py-3 sm:flex-row sm:items-center">
           <div className="flex gap-3">
-            <Gamepad2 className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+            <Gamepad2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <div>
               <p className="text-sm font-medium">{t("unityPluginTitle")}</p>
               <p className="text-sm text-muted-foreground">{t("unityPluginDescription")}</p>

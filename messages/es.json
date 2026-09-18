@@ -62,7 +62,9 @@
       "signingOut": "Cerrando sesión..."
     },
     "common": {
-      "somethingWentWrong": "Algo salió mal"
+      "somethingWentWrong": "Algo salió mal",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     }
   },
   "errors": {
