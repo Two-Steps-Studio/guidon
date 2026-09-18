@@ -5,6 +5,52 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 
+const COMMENT_COLUMNS = "id, task_id, author_id, content, created_at, actor_label";
+
+/**
+ * Lists a task's comments - `tasks:read`-gated (a read), separate from
+ * `comments:write` below which only covers posting a new one. Added for
+ * the Unity/UE5 editor plugins, which otherwise had no way to show the
+ * existing comment thread, only add to it blindly. Column set matches
+ * loadComments in src/app/projects/[id]/work/actions.ts.
+ */
+export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+  const guard = await guardApiRequest(request, "tasks:read");
+  if (isGuardError(guard)) return guard;
+
+  const { taskId } = await params;
+  if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
+
+  if (hasDirectDatabase()) {
+    const task = await withUser(guard.userId, ({ query }) =>
+      query("SELECT 1 FROM tasks WHERE id = $1", [taskId])
+    );
+    if (task.rows.length === 0) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+
+    const result = await withUser(guard.userId, ({ query }) =>
+      query(
+        `SELECT ${COMMENT_COLUMNS} FROM task_comments WHERE task_id = $1 ORDER BY created_at ASC`,
+        [taskId]
+      )
+    );
+    return NextResponse.json({ comments: result.rows });
+  }
+
+  const supabase = await getApiUserClient(guard.userId);
+
+  const { data: task } = await supabase.from("tasks").select("id").eq("id", taskId).maybeSingle();
+  if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+
+  const { data, error } = await supabase
+    .from("task_comments")
+    .select(COMMENT_COLUMNS)
+    .eq("task_id", taskId)
+    .order("created_at", { ascending: true });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json({ comments: data ?? [] });
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "comments:write");
   if (isGuardError(guard)) return guard;
