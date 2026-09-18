@@ -36,6 +36,14 @@ namespace Guidon.Tasks.Editor
         public string[] tags;
         public string due_date;
         public int progress_percent;
+        // float, not int: the web app's own sortOrderForPosition
+        // (task-board.ts) does midpoint insertion ((before+after)/2), so
+        // real rows routinely have fractional values - an int field here
+        // would risk a hard parse failure on real data. Also not nullable
+        // (JsonUtility can't deserialize Nullable<T>) - a JSON `null`
+        // leaves this at its default (0f), which only affects relative
+        // ordering among cards, never which column a task is in.
+        public float sort_order;
         public string parent_task_id;
         public string created_at;
         public string updated_at;
@@ -100,6 +108,52 @@ namespace Guidon.Tasks.Editor
     internal class CommentPostBody
     {
         public string content;
+    }
+
+    /// <summary>
+    /// Body for POST /api/v1/projects/{id}/tasks. Every field below is
+    /// always serialized by JsonUtility (it has no concept of "omit this
+    /// field") - the server treats an empty string the same as "not
+    /// provided" for all of these except title, which it requires
+    /// non-empty (see that route's own validation).
+    /// </summary>
+    [Serializable]
+    internal class CreateTaskBody
+    {
+        public string title;
+        public string description;
+        public string priority;
+        public string due_date;
+        public string parent_task_id;
+        /// <summary>Ignored server-side for a subtask (always forced to "todo") - only meaningful for a top-level task.</summary>
+        public string status;
+    }
+
+    /// <summary>
+    /// Body for PATCH /api/v1/tasks/{id} from the "Save" button in
+    /// GuidonTaskDetailWindow - always sends all four fields together
+    /// (matching how the web task dialog itself always patches its whole
+    /// form, not just the fields the user actually touched). Kept as a
+    /// separate type from UpdateSortOrderBody below specifically so each
+    /// only serializes the fields relevant to its own call site -
+    /// JsonUtility has no way to selectively omit fields from one shared
+    /// class, so "which fields did the server receive" is controlled by
+    /// which DTO type gets used, not by leaving fields blank.
+    /// </summary>
+    [Serializable]
+    internal class UpdateTaskFieldsBody
+    {
+        public string title;
+        public string description;
+        public string priority;
+        public string due_date;
+    }
+
+    /// <summary>Body for the drag-and-drop reorder commit - see UpdateTaskFieldsBody's doc comment for why this is a separate type.</summary>
+    [Serializable]
+    internal class UpdateSortOrderBody
+    {
+        public float sort_order;
     }
 
     /// <summary>

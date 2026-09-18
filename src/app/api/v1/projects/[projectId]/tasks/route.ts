@@ -4,7 +4,7 @@ import { getApiUserClient } from "@/lib/api/api-key-auth";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
-import { TASK_PRIORITIES } from "@/lib/work/task-board";
+import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
 import type { TaskPriority, TaskStatus } from "@/types/task";
 
@@ -95,14 +95,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       : "medium";
   const dueDate =
     typeof body?.due_date === "string" && body.due_date ? new Date(body.due_date).toISOString() : null;
-  const parentTaskId = typeof body?.parent_task_id === "string" ? body.parent_task_id : null;
+  // An empty string is treated the same as "not provided" - some clients
+  // (Unity's JsonUtility, notably) can't serialize an actual JSON `null`
+  // for an unset string field and send "" instead, which must not be
+  // mistaken for "this is a subtask".
+  const parentTaskId =
+    typeof body?.parent_task_id === "string" && body.parent_task_id.trim() ? body.parent_task_id.trim() : null;
   if (parentTaskId && !isValidUuid(parentTaskId)) return invalidIdResponse("parent_task_id");
 
   // A subtask always starts todo/medium and is never counted against the
   // plan's task limit - matches createSubtask exactly, which never took a
-  // status/priority input at all.
+  // status/priority input at all. A top-level task defaults to backlog but
+  // may specify any column directly (matches createTask, which the web
+  // board's per-column "+" button already relies on to create straight
+  // into the clicked column rather than always landing in Backlog).
+  const requestedStatus =
+    typeof body?.status === "string" && (TASK_STATUSES as readonly string[]).includes(body.status)
+      ? (body.status as TaskStatus)
+      : "backlog";
   const isSubtask = parentTaskId !== null;
-  const status: TaskStatus = isSubtask ? "todo" : "backlog";
+  const status: TaskStatus = isSubtask ? "todo" : requestedStatus;
   const priority: TaskPriority = isSubtask ? "medium" : requestedPriority;
 
   if (hasDirectDatabase()) {

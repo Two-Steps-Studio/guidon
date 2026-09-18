@@ -188,5 +188,69 @@ namespace Guidon.Tasks.Editor
                 ? GuidonResult<CommentDto>.Success(parsed.Value.comment)
                 : GuidonResult<CommentDto>.Failure(parsed.Error);
         }
+
+        /// <param name="parentTaskId">Null/empty creates a top-level task; a real task id creates a subtask of it.</param>
+        /// <param name="status">Only meaningful for a top-level task - which column it's created into (defaults server-side to "backlog"). Ignored for a subtask.</param>
+        public static async Task<GuidonResult<TaskDto>> CreateTask(
+            string projectId, string title, string description, string priority, string dueDateIso,
+            string parentTaskId = null, string status = null)
+        {
+            string body = JsonUtility.ToJson(new CreateTaskBody
+            {
+                title = title,
+                description = description ?? string.Empty,
+                priority = priority ?? string.Empty,
+                due_date = dueDateIso ?? string.Empty,
+                parent_task_id = parentTaskId ?? string.Empty,
+                status = status ?? string.Empty,
+            });
+
+            var raw = await SendAsync("POST", $"/api/v1/projects/{projectId}/tasks", body);
+            if (!raw.Ok) return GuidonResult<TaskDto>.Failure(raw.Error);
+
+            var parsed = ParseResponse<TaskResponse>(raw.Value, "task");
+            return parsed.Ok
+                ? GuidonResult<TaskDto>.Success(parsed.Value.task)
+                : GuidonResult<TaskDto>.Failure(parsed.Error);
+        }
+
+        public static async Task<GuidonResult<TaskDto>> UpdateTaskFields(
+            string taskId, string title, string description, string priority, string dueDateIso)
+        {
+            string body = JsonUtility.ToJson(new UpdateTaskFieldsBody
+            {
+                title = title,
+                description = description ?? string.Empty,
+                priority = priority,
+                due_date = dueDateIso ?? string.Empty,
+            });
+
+            var raw = await SendAsync("PATCH", $"/api/v1/tasks/{taskId}", body);
+            if (!raw.Ok) return GuidonResult<TaskDto>.Failure(raw.Error);
+
+            var parsed = ParseResponse<TaskResponse>(raw.Value, "task");
+            return parsed.Ok
+                ? GuidonResult<TaskDto>.Success(parsed.Value.task)
+                : GuidonResult<TaskDto>.Failure(parsed.Error);
+        }
+
+        /// <summary>Commits a drag-and-drop reorder - only sort_order, nothing else on the task changes.</summary>
+        public static async Task<GuidonResult<TaskDto>> UpdateSortOrder(string taskId, float sortOrder)
+        {
+            string body = JsonUtility.ToJson(new UpdateSortOrderBody { sort_order = sortOrder });
+            var raw = await SendAsync("PATCH", $"/api/v1/tasks/{taskId}", body);
+            if (!raw.Ok) return GuidonResult<TaskDto>.Failure(raw.Error);
+
+            var parsed = ParseResponse<TaskResponse>(raw.Value, "task");
+            return parsed.Ok
+                ? GuidonResult<TaskDto>.Success(parsed.Value.task)
+                : GuidonResult<TaskDto>.Failure(parsed.Error);
+        }
+
+        public static async Task<GuidonResult<bool>> DeleteTask(string taskId)
+        {
+            var raw = await SendAsync("DELETE", $"/api/v1/tasks/{taskId}");
+            return raw.Ok ? GuidonResult<bool>.Success(true) : GuidonResult<bool>.Failure(raw.Error);
+        }
     }
 }

@@ -1,7 +1,8 @@
 # Guidon Tasks for Unity
 
-View a Guidon project's tasks, change a task's status, and read/post
-comments - without leaving the Unity Editor.
+A Kanban board for a Guidon project right inside the Unity Editor - view,
+create, edit, drag-and-drop between columns, delete, add subtasks to, and
+comment on tasks without leaving Unity.
 
 ## What this is (and isn't)
 
@@ -43,9 +44,11 @@ ever lost.
    Unity project you open on this machine, not scoped to just this one.
    **Log Out** just clears it locally; it does not revoke the key
    server-side (logging back in reissues a fresh one either way).
-3. Pick a project from the dropdown in the toolbar. Its tasks load on the
-   left; click one to see its description, status, and comments on the
-   right.
+3. Pick a project from the dropdown in the toolbar. Its board loads -
+   click a card to open it (title, description, priority, due date,
+   status, subtasks, comments - all editable), drag a card to another
+   column to change its status, or click a column's **+** to create a task
+   straight into it.
 
 ### If the browser can't reach Unity
 
@@ -72,11 +75,40 @@ hood:
 If a status change 403s, the plugin shows the server's own error message
 verbatim - it'll tell you exactly which setting to flip in Project Settings.
 
+## Description formatting
+
+A task's description supports the common Markdown subset - **bold**,
+*italic*, `` `inline code` ``, `#`/`##` headers, `-`/`*` bullet lists, and
+`[text](url)` links (rendered as coloured text with the URL shown after it
+in parentheses - Unity's IMGUI has no per-substring click handling, so
+links aren't clickable here the way they are on the web). Click **Preview**
+next to the Description field to render it, **Edit** to go back to the raw
+Markdown source. This is a small hand-written converter to Unity's
+built-in rich-text tags, not a full Markdown parser (no tables, code
+blocks, or nested lists) - the web app's own description preview
+(react-markdown) is the complete implementation; this one covers what's
+realistically useful in a task description viewed at Editor-window width.
+
 ## Not implemented (v1)
 
 - No background auto-refresh - use the **Refresh** button. An always-on
   poll while the window sits unfocused isn't worth the editor overhead for
   a "glance at it" tool.
-- No task creation, editing, or deletion - viewing, status changes, and
-  comments only.
+- No within-column reordering by drag position - dropping a card into a
+  column always places it at the end of that column, even if you dropped
+  it visually near the top.
+- No assignee or tags editing (viewing/editing covers title, description,
+  priority, status, and due date).
 - Unreal Engine 5 support is a separate, not-yet-built plugin.
+
+## A note on drag-and-drop
+
+Unity's Editor GUI (`OnGUI`/IMGUI) has no built-in HTML5-style drag events,
+so the board's drag-and-drop is hand-rolled mouse-event tracking
+(`GuidonTasksWindow.cs`) - the same category of technique Unity's own
+reorderable-list tooling uses, but without the benefit of Unity's own
+QA behind it. If a drag ever behaves oddly (a card not picking up, a drop
+landing in the wrong column, a status not actually changing after a
+successful-looking drop), that's the single most likely place for a bug -
+please report exactly which column, which card, and what happened instead
+of the expected move.
