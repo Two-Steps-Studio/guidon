@@ -1335,13 +1335,15 @@ await withUser(A, async () => {
   botTestTaskId = rows[0].id;
 });
 
+let botTestKeyId;
 await withUser(A, async () => {
   const { rows } = await db.query(
     `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label)
      VALUES ($1, 'Discord bot (test)', 'gdn_test', 'hash-bot-label-test', '{tasks:read}', 'Discord bot')
-     RETURNING bot_label`,
+     RETURNING id, bot_label`,
     [A]
   );
+  botTestKeyId = rows[0]?.id;
   check("api_keys.bot_label zapisuje sie i odczytuje", rows[0]?.bot_label === "Discord bot", JSON.stringify(rows));
 });
 
@@ -1384,6 +1386,14 @@ await withUser(A, async () => {
     "actor_label domyslnie NULL - zwykle ludzkie akcje nietkniete",
     rows[0]?.actor_label === null,
     JSON.stringify(rows)
+  );
+});
+
+await withUser(A, async () => {
+  await expectRejected(
+    "wlasciciel NIE moze zmienic bot_label wlasnego klucza (tylko INSERT, np. przez OAuth link)",
+    () => db.query("UPDATE public.api_keys SET bot_label = 'Hacked label' WHERE id = $1", [botTestKeyId]),
+    /permission denied/i
   );
 });
 
