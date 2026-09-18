@@ -122,6 +122,7 @@ namespace Guidon.Tasks.Editor
             BuildSettingsSection(root);
 
             _infoBox = new Label("Log in above to get started.");
+            GuidonStyles.StyleMutedLabel(_infoBox);
             root.Add(_infoBox);
 
             _mainContent = new VisualElement { style = { flexGrow = 1 } };
@@ -129,7 +130,8 @@ namespace Guidon.Tasks.Editor
 
             BuildToolbar(_mainContent);
 
-            _statusMessageLabel = new Label { style = { color = new Color(0.9f, 0.4f, 0.4f), whiteSpace = WhiteSpace.Normal, marginBottom = 4f } };
+            _statusMessageLabel = new Label();
+            GuidonStyles.StyleErrorBox(_statusMessageLabel);
             _statusMessageLabel.style.display = DisplayStyle.None;
             _mainContent.Add(_statusMessageLabel);
 
@@ -163,7 +165,7 @@ namespace Guidon.Tasks.Editor
                 header.Add(logoImage);
             }
 
-            var linkButton = new Button(() => Application.OpenURL("https://useguidon.com")) { text = "Guidon" };
+            var linkButton = new Button(() => Application.OpenURL("https://useguidon.com")) { text = "Guidon ↗" };
             GuidonStyles.StyleLinkButton(linkButton);
             header.Add(linkButton);
 
@@ -280,7 +282,7 @@ namespace Guidon.Tasks.Editor
             _projectDropdown.style.marginBottom = 0f;
             row.Add(_projectDropdown);
 
-            var refreshButton = new Button(() => { _ = RefreshProjects(); }) { text = "Refresh", style = { marginLeft = 4f } };
+            var refreshButton = new Button(() => { _ = RefreshProjects(); }) { text = "↻ Refresh", style = { marginLeft = 4f } };
             GuidonStyles.StyleSecondaryButton(refreshButton);
             row.Add(refreshButton);
 
@@ -332,6 +334,10 @@ namespace Guidon.Tasks.Editor
 
             var header = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
             GuidonStyles.StyleColumnHeader(header);
+
+            var accentDot = new VisualElement();
+            GuidonStyles.StyleColumnAccentDot(accentDot, status);
+            header.Add(accentDot);
 
             var titleLabel = new Label(GuidonVocabulary.StatusLabel(status)) { style = { flexGrow = 1 } };
             GuidonStyles.StyleSectionHeader(titleLabel);
@@ -401,16 +407,68 @@ namespace Guidon.Tasks.Editor
 
             card.Add(titleRow);
 
-            string dueSuffix = string.IsNullOrEmpty(task.due_date) ? string.Empty : $" · {task.due_date.Substring(0, 10)}";
-            var metaLabel = new Label($"{task.priority}{dueSuffix}");
-            GuidonStyles.StyleMutedLabel(metaLabel);
-            card.Add(metaLabel);
+            if (task.tags != null && task.tags.Length > 0)
+            {
+                card.Add(BuildTagsRow(task.tags));
+            }
+
+            card.Add(BuildMetaRow(task));
 
             card.RegisterCallback<PointerDownEvent>(evt => OnCardPointerDown(evt, task, card));
             card.RegisterCallback<PointerMoveEvent>(evt => OnCardPointerMove(evt, task, card));
             card.RegisterCallback<PointerUpEvent>(evt => OnCardPointerUp(evt, task, card));
 
             return card;
+        }
+
+        /// <summary>Task tags as small pills - mt-2 flex flex-wrap gap-1 pl-3.5 on the site, capped at 3 + "+N" the same way.</summary>
+        private static VisualElement BuildTagsRow(string[] tags)
+        {
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, flexWrap = Wrap.Wrap, marginLeft = 14f, marginTop = 2f } };
+
+            foreach (string tag in tags.Take(3))
+            {
+                var pill = new Label(tag);
+                GuidonStyles.StyleTagPill(pill);
+                row.Add(pill);
+            }
+
+            if (tags.Length > 3)
+            {
+                var overflow = new Label($"+{tags.Length - 3}");
+                GuidonStyles.StyleMutedLabel(overflow);
+                row.Add(overflow);
+            }
+
+            return row;
+        }
+
+        /// <summary>Priority + due date + subtask progress in one row - mirrors the site's card footer. Subtask counts are computed client-side from the already-loaded `_tasks` (the list-tasks API returns no aggregate count), so this only reflects what's currently loaded on the board.</summary>
+        private VisualElement BuildMetaRow(TaskDto task)
+        {
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginLeft = 14f, marginTop = 4f } };
+
+            var priorityLabel = new Label(task.priority) { style = { marginRight = 10f } };
+            GuidonStyles.StyleMutedLabel(priorityLabel);
+            row.Add(priorityLabel);
+
+            if (!string.IsNullOrEmpty(task.due_date))
+            {
+                var dueLabel = new Label(task.due_date.Substring(0, 10)) { style = { marginRight = 10f } };
+                GuidonStyles.StyleMutedLabel(dueLabel);
+                row.Add(dueLabel);
+            }
+
+            int subtaskTotal = _tasks.Count(t => t.parent_task_id == task.id);
+            if (subtaskTotal > 0)
+            {
+                int subtaskDone = _tasks.Count(t => t.parent_task_id == task.id && t.status == "done");
+                var subtaskLabel = new Label($"✓ {subtaskDone}/{subtaskTotal}");
+                GuidonStyles.StyleMutedLabel(subtaskLabel);
+                row.Add(subtaskLabel);
+            }
+
+            return row;
         }
 
         private void OnCardPointerDown(PointerDownEvent evt, TaskDto task, VisualElement card)

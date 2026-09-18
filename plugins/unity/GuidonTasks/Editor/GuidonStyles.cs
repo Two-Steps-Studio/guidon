@@ -64,6 +64,32 @@ namespace Guidon.Tasks.Editor
             }
         }
 
+        // --color-info / --color-warning / --color-success - the same
+        // three tokens BOARD_COLUMNS (task-board.ts) uses for each
+        // column's accentClass.
+        private static Color InfoColor => EditorGUIUtility.isProSkin ? HexColor("#60a5fa") : HexColor("#2563eb");
+        private static Color WarningColor => EditorGUIUtility.isProSkin ? HexColor("#fbbf24") : HexColor("#d97706");
+        private static Color SuccessColor => EditorGUIUtility.isProSkin ? HexColor("#34d399") : HexColor("#059669");
+
+        /// <summary>Mirrors BOARD_COLUMNS' accentClass per status exactly (backlog: muted-foreground, todo/ai_working: info, in_progress: warning, review: primary, done: success) - not invented, read straight from task-board.ts.</summary>
+        public static Color ColumnAccentColor(string status)
+        {
+            switch (status)
+            {
+                case "todo":
+                case "ai_working":
+                    return InfoColor;
+                case "in_progress":
+                    return WarningColor;
+                case "review":
+                    return AccentColor;
+                case "done":
+                    return SuccessColor;
+                default: // backlog
+                    return MutedTextColor;
+            }
+        }
+
         private static void SetBorderRadius(VisualElement element, float radius)
         {
             element.style.borderTopLeftRadius = radius;
@@ -134,6 +160,17 @@ namespace Guidon.Tasks.Editor
             SetBorderWidth(column, highlighted ? 2f : 1f);
         }
 
+        /// <summary>The small colored dot next to a column's title - h-2 w-2 rounded-full on the site, coloured per column.accentClass.</summary>
+        public static void StyleColumnAccentDot(VisualElement dot, string status)
+        {
+            const float size = 8f;
+            dot.style.width = size;
+            dot.style.height = size;
+            SetBorderRadius(dot, size / 2f);
+            dot.style.backgroundColor = ColumnAccentColor(status);
+            dot.style.marginRight = 6f;
+        }
+
         public static void StyleCard(VisualElement card, bool dragging)
         {
             card.style.backgroundColor = CardBackground;
@@ -179,6 +216,61 @@ namespace Guidon.Tasks.Editor
             label.style.color = TextColor;
             label.style.fontSize = 13f;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
+        }
+
+        /// <summary>Plain readable body text (comment content, a subtask's title) - text-foreground on the site, just not bold/sized like a heading.</summary>
+        public static void StyleBodyLabel(Label label)
+        {
+            label.style.color = TextColor;
+            label.style.fontSize = 12f;
+            label.style.whiteSpace = WhiteSpace.Normal;
+        }
+
+        /// <summary>Recolors a Toggle's own text (a subtask's title) to match the theme instead of Unity's default label color - the checkbox glyph itself is left as Unity's native control, only the text next to it is restyled.</summary>
+        public static void StyleToggleLabel(Toggle toggle)
+        {
+            VisualElement label = toggle.Q(className: "unity-toggle__text") ?? toggle.Q(className: "unity-base-field__label");
+            if (label != null)
+            {
+                label.style.color = TextColor;
+                label.style.fontSize = 12f;
+            }
+        }
+
+        // --color-muted (a tag pill's background on the site - distinct from --color-muted-foreground, its text color)
+        private static Color MutedBackground => EditorGUIUtility.isProSkin ? HexColor("#16191f") : HexColor("#f1f5f9");
+
+        /// <summary>One task tag - rounded border bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground on the site's card.</summary>
+        public static void StyleTagPill(Label pill)
+        {
+            pill.style.backgroundColor = MutedBackground;
+            SetBorderColor(pill, BorderColor);
+            SetBorderWidth(pill, 1f);
+            SetBorderRadius(pill, 4f);
+            pill.style.color = MutedTextColor;
+            pill.style.fontSize = 11f;
+            pill.style.paddingLeft = 5f;
+            pill.style.paddingRight = 5f;
+            pill.style.paddingTop = 1f;
+            pill.style.paddingBottom = 1f;
+            pill.style.marginRight = 4f;
+            pill.style.marginBottom = 4f;
+        }
+
+        /// <summary>Turns a plain status/error Label into a small bordered, tinted alert banner instead of bare colored text - a generic readability improvement, not something copied from the site.</summary>
+        public static void StyleErrorBox(Label label)
+        {
+            Color tint = DestructiveColor;
+            tint.a = 0.12f;
+            label.style.backgroundColor = tint;
+            SetBorderColor(label, DestructiveColor);
+            SetBorderWidth(label, 1f);
+            SetBorderRadius(label, 6f);
+            label.style.color = DestructiveColor;
+            label.style.fontSize = 11f;
+            SetPadding(label, 6f);
+            label.style.marginBottom = 6f;
+            label.style.whiteSpace = WhiteSpace.Normal;
         }
 
         // --color-input (the site's Input/Select border - its own token,

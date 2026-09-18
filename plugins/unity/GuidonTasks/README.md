@@ -24,10 +24,18 @@ the field instead of Unity's default inline "Label: [box]"), and buttons
 follow the site's variants - solid accent for the primary action
 (Log In/Save/Create), a neutral outline for secondary actions
 (Refresh/Log Out/Cancel/Close), red for Delete. The main board window also
-carries the Guidon icon and a link back to the website in its header. It's
-still not going to be pixel-identical to the website - Editor windows
-render with Unity's own fonts and window chrome regardless - but the
-board's colors, shapes, and now its controls are the real ones.
+carries the Guidon icon and a link back to the website in its header. Each
+column has the same colored status dot the site shows next to its
+name (Backlog grey, Todo/AI Working blue, In Progress amber, Review
+accent, Done green - copied from `BOARD_COLUMNS`' own `accentClass`, not
+invented), and a card now shows its tags as small pills and its subtask
+progress (e.g. "✓ 2/5") the same way the site's card does - the one thing
+the card still can't show is a comment count, since the task-list API
+doesn't return one and fetching it per card would mean one extra request
+per visible task. It's still not going to be pixel-identical to the
+website - Editor windows render with Unity's own fonts and window chrome
+regardless - but the board's colors, shapes, icons, and now its controls
+are the real ones.
 
 It talks to your existing Guidon instance's public API
 (`/api/v1` - see [the API's own README](../../../src/app/api/v1/README.md)).

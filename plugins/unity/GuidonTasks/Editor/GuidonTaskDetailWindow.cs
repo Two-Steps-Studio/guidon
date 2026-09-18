@@ -120,10 +120,8 @@ namespace Guidon.Tasks.Editor
 
             BuildActionButtons(scroll);
 
-            _statusMessageLabel = new Label
-            {
-                style = { color = new Color(0.9f, 0.4f, 0.4f), whiteSpace = WhiteSpace.Normal, marginBottom = 6f },
-            };
+            _statusMessageLabel = new Label();
+            GuidonStyles.StyleErrorBox(_statusMessageLabel);
             _statusMessageLabel.style.display = DisplayStyle.None;
             scroll.Add(_statusMessageLabel);
 
@@ -212,13 +210,13 @@ namespace Guidon.Tasks.Editor
         {
             var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginTop = 6f, marginBottom = 6f } };
 
-            _submitButton = new Button(() => { _ = Submit(); }) { text = _task == null ? "Create" : "Save" };
+            _submitButton = new Button(() => { _ = Submit(); }) { text = _task == null ? "✓ Create" : "✓ Save" };
             GuidonStyles.StylePrimaryButton(_submitButton);
             row.Add(_submitButton);
 
             if (_task != null)
             {
-                _deleteButton = new Button(() => { _ = SubmitDelete(); }) { text = "Delete", style = { marginLeft = 4f } };
+                _deleteButton = new Button(() => { _ = SubmitDelete(); }) { text = "✕ Delete", style = { marginLeft = 4f } };
                 GuidonStyles.StyleDestructiveButton(_deleteButton);
                 row.Add(_deleteButton);
             }
@@ -259,7 +257,7 @@ namespace Guidon.Tasks.Editor
             if (!result.Ok || result.Value == null)
             {
                 _submitButton.SetEnabled(true);
-                _submitButton.text = creating ? "Create" : "Save";
+                _submitButton.text = creating ? "✓ Create" : "✓ Save";
                 ShowStatusMessage(result.Error);
                 return;
             }
@@ -275,7 +273,7 @@ namespace Guidon.Tasks.Editor
             else
             {
                 _submitButton.SetEnabled(true);
-                _submitButton.text = "Save";
+                _submitButton.text = "✓ Save";
             }
         }
 
@@ -290,7 +288,7 @@ namespace Guidon.Tasks.Editor
             if (!result.Ok)
             {
                 _deleteButton.SetEnabled(true);
-                _deleteButton.text = "Delete";
+                _deleteButton.text = "✕ Delete";
                 ShowStatusMessage(result.Error);
                 return;
             }
@@ -344,9 +342,10 @@ namespace Guidon.Tasks.Editor
 
             var toggle = new Toggle { value = subtask.status == "done", text = subtask.title, style = { flexGrow = 1 } };
             toggle.RegisterValueChangedCallback(evt => { _ = ToggleSubtask(subtask, evt.newValue, toggle); });
+            GuidonStyles.StyleToggleLabel(toggle);
             row.Add(toggle);
 
-            var deleteButton = new Button(() => { _ = DeleteSubtask(subtask); }) { text = "x" };
+            var deleteButton = new Button(() => { _ = DeleteSubtask(subtask); }) { text = "✕" };
             GuidonStyles.StyleIconButton(deleteButton);
             row.Add(deleteButton);
 
@@ -465,7 +464,8 @@ namespace Guidon.Tasks.Editor
                 GuidonStyles.StyleMutedLabel(meta);
                 _commentsContainer.Add(meta);
 
-                var content = new Label(comment.content) { style = { whiteSpace = WhiteSpace.Normal, marginBottom = 6f } };
+                var content = new Label(comment.content) { style = { marginBottom = 6f } };
+                GuidonStyles.StyleBodyLabel(content);
                 _commentsContainer.Add(content);
             }
         }
