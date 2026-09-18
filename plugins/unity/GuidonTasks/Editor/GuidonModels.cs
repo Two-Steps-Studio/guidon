@@ -83,6 +83,20 @@ namespace Guidon.Tasks.Editor
     }
 
     [Serializable]
+    internal class LoginRequestBody
+    {
+        public string email;
+        public string password;
+    }
+
+    [Serializable]
+    internal class LoginResponse
+    {
+        public string apiKey;
+        public string email;
+    }
+
+    [Serializable]
     internal class StatusPatchBody
     {
         public string status;

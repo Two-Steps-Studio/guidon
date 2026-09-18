@@ -65,10 +65,18 @@ namespace Guidon.Tasks.Editor
         /// error, non-2xx response, malformed JSON) comes back as
         /// GuidonResult.Failure instead.
         /// </summary>
-        private static async Task<GuidonResult<string>> SendAsync(string method, string path, string jsonBody = null)
+        /// <param name="requireAuth">
+        /// False only for Login - every other call needs the API key
+        /// obtained by logging in first, but there is obviously no key yet
+        /// at the moment of logging in.
+        /// </param>
+        private static async Task<GuidonResult<string>> SendAsync(
+            string method, string path, string jsonBody = null, bool requireAuth = true)
         {
-            if (!GuidonSettings.IsConfigured)
-                return GuidonResult<string>.Failure("Set a base URL and API key in the Settings foldout first.");
+            if (string.IsNullOrEmpty(GuidonSettings.BaseUrl))
+                return GuidonResult<string>.Failure("Set a base URL in the Settings foldout first.");
+            if (requireAuth && !GuidonSettings.IsConfigured)
+                return GuidonResult<string>.Failure("Log in from the Settings foldout first.");
 
             string url = GuidonSettings.BaseUrl.TrimEnd('/') + path;
 
@@ -81,7 +89,10 @@ namespace Guidon.Tasks.Editor
                 }
 
                 request.downloadHandler = new DownloadHandlerBuffer();
-                request.SetRequestHeader("Authorization", "Bearer " + GuidonSettings.ApiKey);
+                if (requireAuth)
+                {
+                    request.SetRequestHeader("Authorization", "Bearer " + GuidonSettings.ApiKey);
+                }
 
                 try
                 {
@@ -130,6 +141,23 @@ namespace Guidon.Tasks.Editor
             {
                 return GuidonResult<TResponse>.Failure($"Failed to parse {context}: {e.Message}");
             }
+        }
+
+        /// <summary>
+        /// Exchanges a Guidon email/password (the same credentials as the
+        /// website) for a fresh, scoped API key via POST /api/v1/auth/login
+        /// - this plugin never stores the password, only the returned key.
+        /// </summary>
+        public static async Task<GuidonResult<LoginResponse>> Login(string email, string password)
+        {
+            string body = JsonUtility.ToJson(new LoginRequestBody { email = email, password = password });
+            var raw = await SendAsync("POST", "/api/v1/auth/login", body, requireAuth: false);
+            if (!raw.Ok) return GuidonResult<LoginResponse>.Failure(raw.Error);
+
+            var parsed = ParseResponse<LoginResponse>(raw.Value, "login");
+            return parsed.Ok
+                ? GuidonResult<LoginResponse>.Success(parsed.Value)
+                : GuidonResult<LoginResponse>.Failure(parsed.Error);
         }
 
         public static async Task<GuidonResult<ProjectDto[]>> ListProjects()

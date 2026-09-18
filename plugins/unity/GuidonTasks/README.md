@@ -10,11 +10,15 @@ This is an Editor-only tool (`Editor/` folder + an asmdef restricted to
 build - no API key or task data can end up in a game your players run.
 
 It talks to your existing Guidon instance's public API
-(`/api/v1` - see [the API's own README](../../../src/app/api/v1/README.md))
-using a personal API key, exactly the same way the Discord bot integration
-or an AI agent would. There is no new backend just for this plugin beyond
-two small read-only additions (listing your projects, listing a task's
-comments) - everything else already existed.
+(`/api/v1` - see [the API's own README](../../../src/app/api/v1/README.md)).
+You log in with your normal Guidon email and password - the same as the
+website - not by creating or pasting an API key. Behind the scenes,
+logging in exchanges your credentials for a scoped API key the same way
+the Discord bot integration or an AI agent authenticates, via a dedicated
+`POST /api/v1/auth/login` (see that route's own doc comment); this plugin
+never stores your password, only the resulting key. That key also shows
+up under **Profile → API Keys** on the website as "Unity Plugin", so you
+can revoke it there if a machine is ever lost.
 
 ## Setup
 
@@ -22,23 +26,18 @@ comments) - everything else already existed.
    project, anywhere under `Assets/` (e.g. `Assets/Editor/GuidonTasks` or
    just `Assets/GuidonTasks` - only the `Editor/` subfolder has code, so
    the location outside it doesn't matter).
-2. **Create an API key** in Guidon: go to **Profile → API Keys**, create a
-   new key with these scopes:
-   - `tasks:read` (view projects, tasks, and comments)
-   - `tasks:status` (change a task's status)
-   - `comments:write` (post a comment)
-
-   Copy the key immediately - Guidon only shows it once.
-3. In Unity, open **Window → Guidon → Tasks**. Expand **Settings**, set:
+2. In Unity, open **Window → Guidon → Tasks**. Expand **Settings**, set:
    - **Base URL**: your Guidon instance, e.g. `https://useguidon.com` or
      `http://localhost:2137` for a local dev server.
-   - **API Key**: the key from step 2.
+   - **Email** / **Password**: your normal Guidon login.
 
-   Click **Save**. The key is stored in `EditorPrefs` (machine-wide, not
-   inside your Unity project) so it never risks being committed to your
-   project's own git repo - the trade-off is that it's shared across every
-   Unity project you open on this machine, not scoped to just this one.
-4. Pick a project from the dropdown in the toolbar. Its tasks load on the
+   Click **Log In**. The resulting API key is stored in `EditorPrefs`
+   (machine-wide, not inside your Unity project) so it never risks being
+   committed to your project's own git repo - the trade-off is that it's
+   shared across every Unity project you open on this machine, not scoped
+   to just this one. **Log Out** just clears it locally; it does not revoke
+   the key server-side (logging back in reissues a fresh one either way).
+3. Pick a project from the dropdown in the toolbar. Its tasks load on the
    left; click one to see its description, status, and comments on the
    right.
 
@@ -47,7 +46,8 @@ comments) - everything else already existed.
 Guidon gates status changes and "done" specifically through a project's
 **AI Permissions** (Project → Settings → AI Permissions) - the same gate
 an AI agent hitting this API goes through, which this plugin also goes
-through since it's just another API-key caller:
+through since logging in just gets you a regular scoped API key under the
+hood:
 
 - Changing status to anything except "Done" needs `can_change_status`
   (**on** by default).

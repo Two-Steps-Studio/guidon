@@ -37,12 +37,14 @@ namespace Guidon.Tasks.Editor
 
         private bool _showSettings;
         private string _baseUrlField;
-        private string _apiKeyField;
+        private string _emailField;
+        private string _passwordField;
+        private bool _loggingIn;
 
         private void OnEnable()
         {
             _baseUrlField = GuidonSettings.BaseUrl;
-            _apiKeyField = GuidonSettings.ApiKey;
+            _emailField = GuidonSettings.Email;
             _showSettings = !GuidonSettings.IsConfigured;
 
             if (GuidonSettings.IsConfigured)
@@ -60,7 +62,7 @@ namespace Guidon.Tasks.Editor
 
             if (!GuidonSettings.IsConfigured)
             {
-                EditorGUILayout.HelpBox("Set a base URL and API key above to get started.", MessageType.Info);
+                EditorGUILayout.HelpBox("Log in above to get started.", MessageType.Info);
                 return;
             }
 
@@ -83,22 +85,69 @@ namespace Guidon.Tasks.Editor
             if (!_showSettings) return;
 
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.HelpBox(
-                "Create an API key in Guidon under Profile > API Keys with scopes " +
-                "tasks:read, tasks:status and comments:write, then paste it here.",
-                MessageType.None);
             _baseUrlField = EditorGUILayout.TextField("Base URL", _baseUrlField);
-            _apiKeyField = EditorGUILayout.PasswordField("API Key", _apiKeyField);
 
-            if (GUILayout.Button("Save", GUILayout.Width(80)))
+            if (GuidonSettings.IsConfigured)
             {
-                GuidonSettings.BaseUrl = _baseUrlField?.TrimEnd('/') ?? string.Empty;
-                GuidonSettings.ApiKey = _apiKeyField;
-                _showSettings = false;
-                _statusMessage = null;
-                _ = RefreshProjects();
+                string email = string.IsNullOrEmpty(GuidonSettings.Email) ? "(unknown)" : GuidonSettings.Email;
+                EditorGUILayout.LabelField("Logged in as", email);
+
+                if (GUILayout.Button("Log Out", GUILayout.Width(90)))
+                {
+                    GuidonSettings.LogOut();
+                    _projects = Array.Empty<ProjectDto>();
+                    _selectedProjectIndex = -1;
+                    _tasks = Array.Empty<TaskDto>();
+                    _selectedTask = null;
+                    _comments = Array.Empty<CommentDto>();
+                    _statusMessage = null;
+                }
             }
+            else
+            {
+                EditorGUILayout.HelpBox(
+                    "Log in with your Guidon account - the same email and password you use on the website.",
+                    MessageType.None);
+                _emailField = EditorGUILayout.TextField("Email", _emailField);
+                // Never persisted anywhere (not even during this session past
+                // the login call) - only the resulting API key is stored.
+                _passwordField = EditorGUILayout.PasswordField("Password", _passwordField);
+
+                bool canSubmit = !_loggingIn && !string.IsNullOrEmpty(_emailField) && !string.IsNullOrEmpty(_passwordField);
+                EditorGUI.BeginDisabledGroup(!canSubmit);
+                if (GUILayout.Button(_loggingIn ? "Logging in..." : "Log In", GUILayout.Width(100)))
+                {
+                    _ = LogIn(_emailField, _passwordField);
+                }
+                EditorGUI.EndDisabledGroup();
+            }
+
             EditorGUILayout.EndVertical();
+        }
+
+        private async Task LogIn(string email, string password)
+        {
+            GuidonSettings.BaseUrl = _baseUrlField?.TrimEnd('/') ?? string.Empty;
+            _loggingIn = true;
+            _statusMessage = null;
+            Repaint();
+
+            var result = await GuidonApiClient.Login(email, password);
+            _loggingIn = false;
+            _passwordField = string.Empty;
+
+            if (!result.Ok)
+            {
+                _statusMessage = result.Error;
+                Repaint();
+                return;
+            }
+
+            GuidonSettings.ApiKey = result.Value.apiKey;
+            GuidonSettings.Email = result.Value.email;
+            _showSettings = false;
+
+            await RefreshProjects();
         }
 
         private void DrawTopBar()
@@ -107,7 +156,7 @@ namespace Guidon.Tasks.Editor
 
             if (_projects.Length == 0)
             {
-                GUILayout.Label("No projects found for this API key.", EditorStyles.toolbarButton);
+                GUILayout.Label("No projects found for this account.", EditorStyles.toolbarButton);
             }
             else
             {
