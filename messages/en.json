@@ -451,6 +451,8 @@
     "editDescription": "Edit the task, then save your changes.",
     "readOnlyDescription": "You have read-only access to this project.",
     "descriptionPlaceholder2": "What needs to happen, and why?",
+    "previewDescription": "Preview",
+    "editDescriptionButton": "Edit",
     "statusLabel": "Status",
     "labelsLabel": "Labels",
     "labelsPlaceholder": "gameplay, rendering, tech-debt",

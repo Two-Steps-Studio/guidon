@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Check, Copy, Gavel, Loader2, Plus, Send, Trash2, X } from "lucide-react";
+import { Bot, Check, Copy, Eye, Gavel, Loader2, Pencil, Plus, Send, Trash2, X } from "lucide-react";
+import { MarkdownPreview } from "@/components/files/markdown-preview";
 import { useTranslations } from "next-intl";
 import {
   createSubtask,
@@ -117,6 +118,9 @@ export function TaskDetailDialog({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Defaults to editing (today's behavior unchanged) - Markdown preview is
+  // opt-in per open dialog, not remembered across tasks.
+  const [previewingDescription, setPreviewingDescription] = useState(false);
 
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
@@ -457,17 +461,44 @@ export function TaskDetailDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-description">{t("descriptionLabel")}</Label>
-            <Textarea
-              id="task-description"
-              rows={4}
-              value={form.description}
-              disabled={!canEdit}
-              placeholder={t("descriptionPlaceholder2")}
-              onChange={(event) =>
-                setForm({ ...form, description: event.target.value })
-              }
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="task-description">{t("descriptionLabel")}</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setPreviewingDescription((current) => !current)}
+              >
+                {previewingDescription ? (
+                  <>
+                    <Pencil className="h-3.5 w-3.5" />
+                    {t("editDescriptionButton")}
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5" />
+                    {t("previewDescription")}
+                  </>
+                )}
+              </Button>
+            </div>
+            {previewingDescription ? (
+              <div className="max-h-64 overflow-y-auto rounded-md border border-input">
+                <MarkdownPreview content={form.description || t("descriptionPlaceholder2")} />
+              </div>
+            ) : (
+              <Textarea
+                id="task-description"
+                rows={4}
+                value={form.description}
+                disabled={!canEdit}
+                placeholder={t("descriptionPlaceholder2")}
+                onChange={(event) =>
+                  setForm({ ...form, description: event.target.value })
+                }
+              />
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

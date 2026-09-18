@@ -10,13 +10,11 @@
  */
 
 // Every scope actually checked by a route (grep guardApiRequest(request, "
-// across src/app/api/v1) - and nothing else. This list used to also offer
-// tasks:write, projects:read, and context:read, none of which any route has
-// ever required (leftover from CRUD routes deleted before this API's
-// current shape, per src/app/api/v1/README.md's History section) - a key
-// scoped to only those was unusable on every existing endpoint, which the
-// scope-picker UI (profile/api-keys.tsx) gave no hint of. Add a scope here
-// only once a route actually requires it.
-export const API_KEY_SCOPES = ["tasks:read", "tasks:status", "comments:write"] as const;
+// across src/app/api/v1) - and nothing else. Add a scope here only once a
+// route actually requires it - tasks:write was previously removed for
+// exactly that reason (unused, leftover from CRUD routes deleted before
+// this API's current shape) and only comes back now that
+// POST/PATCH/DELETE task routes exist to require it.
+export const API_KEY_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write"] as const;
 
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];

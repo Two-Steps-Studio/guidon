@@ -451,6 +451,8 @@
     "editDescription": "Bearbeite die Aufgabe und speichere dann deine Änderungen.",
     "readOnlyDescription": "Du hast nur Lesezugriff auf dieses Projekt.",
     "descriptionPlaceholder2": "Was muss passieren, und warum?",
+    "previewDescription": "Vorschau",
+    "editDescriptionButton": "Bearbeiten",
     "statusLabel": "Status",
     "labelsLabel": "Labels",
     "labelsPlaceholder": "Gameplay, Rendering, technische Schulden",

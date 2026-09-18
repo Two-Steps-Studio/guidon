@@ -9,7 +9,7 @@ import { generateApiKey, hashApiKey, keyPrefix } from "@/lib/api/api-keys";
 import type { ApiKeyScope } from "@/lib/api/scopes";
 import { isSafeLoopbackRedirect } from "./loopback";
 
-const PLUGIN_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:status", "comments:write"];
+const PLUGIN_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:write", "tasks:status", "comments:write"];
 const PLUGIN_KEY_NAME = "Unity Plugin";
 
 /**

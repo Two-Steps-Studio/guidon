@@ -451,6 +451,8 @@
     "editDescription": "Edita la tarea y luego guarda los cambios.",
     "readOnlyDescription": "Tienes acceso de solo lectura a este proyecto.",
     "descriptionPlaceholder2": "¿Qué hay que hacer y por qué?",
+    "previewDescription": "Vista previa",
+    "editDescriptionButton": "Editar",
     "statusLabel": "Estado",
     "labelsLabel": "Etiquetas",
     "labelsPlaceholder": "jugabilidad, renderizado, deuda técnica",

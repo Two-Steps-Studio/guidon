@@ -451,6 +451,8 @@
     "editDescription": "Edytuj zadanie, a następnie zapisz zmiany.",
     "readOnlyDescription": "Masz dostęp tylko do odczytu w tym projekcie.",
     "descriptionPlaceholder2": "Co należy zrobić i dlaczego?",
+    "previewDescription": "Podgląd",
+    "editDescriptionButton": "Edytuj",
     "statusLabel": "Status",
     "labelsLabel": "Etykiety",
     "labelsPlaceholder": "rozgrywka, renderowanie, dług techniczny",
