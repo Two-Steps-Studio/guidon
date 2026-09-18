@@ -13,6 +13,53 @@ interface SearchResult {
   metadata: Record<string, unknown>;
 }
 
+// Row shapes for searchSupabase's untyped client (@/lib/supabase-server's
+// createClient() has no generated Database generic wired up) - just enough
+// of each table's columns to annotate the .map() calls below without an
+// explicit `any`, matching exactly what each .select(...) call actually asks for.
+interface TaskSearchRow {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  project_id: string;
+}
+interface DecisionSearchRow {
+  id: string;
+  title: string;
+  description: string | null;
+  decision_type: string;
+  status: string;
+  project_id: string;
+}
+interface MemorySearchRow {
+  id: string;
+  content: string;
+  memory_type: string;
+  project_id: string;
+}
+interface FileSearchRow {
+  id: string;
+  name: string;
+  mime_type: string;
+  category: string;
+  project_id: string;
+}
+interface SourceSearchRow {
+  id: string;
+  title: string;
+  content: string;
+  source_type: string;
+  project_id: string;
+}
+interface ProjectSearchRow {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+}
+
 /**
  * Merges rows from a two-column ILIKE search (searchSupabase below runs one
  * query per column instead of a single `.or()` across both - see that
@@ -207,7 +254,7 @@ async function searchSupabase(
     const tasks = dedupeAndCap([byTitle.data, byDescription.data], 10);
 
     if (tasks) {
-      results.push(...tasks.map((task: any) => ({
+      results.push(...tasks.map((task: TaskSearchRow) => ({
         type: 'task',
         id: task.id,
         title: task.title,
@@ -236,7 +283,7 @@ async function searchSupabase(
     const decisions = dedupeAndCap([byTitle.data, byDescription.data], 10);
 
     if (decisions) {
-      results.push(...decisions.map((decision: any) => ({
+      results.push(...decisions.map((decision: DecisionSearchRow) => ({
         type: 'decision',
         id: decision.id,
         title: decision.title,
@@ -256,7 +303,7 @@ async function searchSupabase(
       .limit(10);
 
     if (memories) {
-      results.push(...memories.map((memory: any) => ({
+      results.push(...memories.map((memory: MemorySearchRow) => ({
         type: 'memory',
         id: memory.id,
         title: memory.content.substring(0, 100),
@@ -276,7 +323,7 @@ async function searchSupabase(
       .limit(10);
 
     if (files) {
-      results.push(...files.map((file: any) => ({
+      results.push(...files.map((file: FileSearchRow) => ({
         type: 'file',
         id: file.id,
         title: file.name,
@@ -305,7 +352,7 @@ async function searchSupabase(
     const sources = dedupeAndCap([byTitle.data, byContent.data], 10);
 
     if (sources) {
-      results.push(...sources.map((source: any) => ({
+      results.push(...sources.map((source: SourceSearchRow) => ({
         type: 'source',
         id: source.id,
         title: source.title,
@@ -324,7 +371,7 @@ async function searchSupabase(
     const projects = dedupeAndCap([byName.data, byDescription.data], 10);
 
     if (projects) {
-      results.push(...projects.map((project: any) => ({
+      results.push(...projects.map((project: ProjectSearchRow) => ({
         type: 'project',
         id: project.id,
         title: project.name,
@@ -369,7 +416,8 @@ export async function GET(request: NextRequest) {
       : await searchSupabase(query, projectId, types);
 
     return NextResponse.json({ results });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

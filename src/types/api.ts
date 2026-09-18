@@ -33,7 +33,7 @@ export interface PaginationParams {
 
 export interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
 }
 
@@ -147,7 +147,7 @@ export interface ActivityLog {
   action: ActivityAction;
   entity_type: string | null;
   entity_id: string | null;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;

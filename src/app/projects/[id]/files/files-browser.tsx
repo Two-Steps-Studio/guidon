@@ -129,7 +129,11 @@ export function FilesBrowser({
               className="hidden"
               accept=".txt,.md,.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp,.mp3,.wav,.ogg,.mp4,.webm"
             />
-            <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={projectColor ? { backgroundColor: projectColor } : undefined}
+            >
               {uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -187,7 +191,10 @@ export function FilesBrowser({
           description={t("emptyDescription")}
           action={
             canWrite ? (
-              <Button onClick={() => fileInputRef.current?.click()}>
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                style={projectColor ? { backgroundColor: projectColor } : undefined}
+              >
                 <Upload className="h-4 w-4 mr-2" />
                 {t("uploadFile")}
               </Button>

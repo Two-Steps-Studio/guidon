@@ -105,7 +105,7 @@ export interface ContextRelation {
   target_type: ContextEntityType;
   target_id: string;
   relation_type: RelationType;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   created_by: string | null;
 }
@@ -116,13 +116,13 @@ export interface CreateRelationData {
   target_type: ContextEntityType;
   target_id: string;
   relation_type: RelationType;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateRelationData {
   id: string;
   relation_type?: RelationType;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================
@@ -229,14 +229,14 @@ export interface ContextGraphNode {
   entityType: ContextEntityType;
   entityId: string;
   label: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface ContextGraphEdge {
   source: ContextReference;
   target: ContextReference;
   relationType: RelationType;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface ContextGraph {

@@ -33,6 +33,12 @@ interface OrganizationRow {
   user_role: string;
 }
 
+/** Raw shape of the Supabase-hosted branch's organization_members row - matches exactly the columns selected below (role plus the joined organizations row), typed as a single object to match how the spread just below already treats it. */
+interface SupabaseMembershipRow {
+  role: string;
+  organizations: Omit<OrganizationRow, "user_role">;
+}
+
 export default async function ProjectsPage() {
   const t = await getTranslations("projects.list");
   const tCommon = await getTranslations("common");
@@ -100,7 +106,7 @@ export default async function ProjectsPage() {
         .limit(PROJECT_LIST_SAFETY_CAP),
     ]);
 
-    organizations = (orgResult.data ?? []).map((member: any) => ({
+    organizations = ((orgResult.data ?? []) as unknown as SupabaseMembershipRow[]).map((member) => ({
       ...member.organizations,
       user_role: member.role,
     }));

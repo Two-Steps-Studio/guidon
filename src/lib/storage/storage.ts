@@ -169,8 +169,9 @@ export async function uploadProjectFile(
 
   try {
     return await uploadFile(STORAGE_BUCKETS.FILES, filePath, file);
-  } catch (error: any) {
-    if (error.message?.includes('Bucket not found') || error.message?.includes('NoSuchBucket')) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('Bucket not found') || message.includes('NoSuchBucket')) {
       throw new Error(`Storage bucket '${STORAGE_BUCKETS.FILES}' does not exist or is not accessible.`);
     }
     throw error;
@@ -212,8 +213,9 @@ export async function uploadTaskAttachment(
 
   try {
     return await uploadFile(STORAGE_BUCKETS.ATTACHMENTS, filePath, file);
-  } catch (error: any) {
-    if (error.message?.includes('Bucket not found') || error.message?.includes('NoSuchBucket')) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('Bucket not found') || message.includes('NoSuchBucket')) {
       throw new Error(`Storage bucket '${STORAGE_BUCKETS.ATTACHMENTS}' does not exist or is not accessible.`);
     }
     throw error;
@@ -295,7 +297,7 @@ export async function getSignedUrl(
  */
 export function validateFileExtension(fileName: string): boolean {
   const extension = '.' + fileName.split('.').pop()?.toLowerCase();
-  return ALLOWED_FILE_EXTENSIONS.includes(extension as any);
+  return (ALLOWED_FILE_EXTENSIONS as readonly string[]).includes(extension);
 }
 
 /**
@@ -337,13 +339,13 @@ export function getFileSizeLimit(category: FileCategory): number {
  * Get file category from MIME type
  */
 export function getFileCategoryFromMimeType(mimeType: string): FileCategory {
-  if (ALLOWED_IMAGE_TYPES.includes(mimeType as any)) {
+  if ((ALLOWED_IMAGE_TYPES as readonly string[]).includes(mimeType)) {
     return "graphics";
   }
-  if (ALLOWED_DOCUMENT_TYPES.includes(mimeType as any)) {
+  if ((ALLOWED_DOCUMENT_TYPES as readonly string[]).includes(mimeType)) {
     return "documentation";
   }
-  if (ALLOWED_ARCHIVE_TYPES.includes(mimeType as any)) {
+  if ((ALLOWED_ARCHIVE_TYPES as readonly string[]).includes(mimeType)) {
     return "source_code";
   }
   return "other";

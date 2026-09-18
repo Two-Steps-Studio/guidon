@@ -22,6 +22,15 @@ interface MemberRow {
   profiles: { id: string; email: string; full_name: string | null; avatar_url: string | null };
 }
 
+/** Raw shape of the Supabase-hosted branch's row - `profiles` comes back as an array or a single object depending on how supabase-js infers the join's cardinality, resolved into MemberRow's single-object shape right below. */
+interface SupabaseMemberRow {
+  id: string;
+  user_id: string;
+  role: string;
+  joined_at: string;
+  profiles: MemberRow["profiles"] | MemberRow["profiles"][] | null;
+}
+
 export default async function OrganizationMembersPage({
   params,
 }: {
@@ -62,13 +71,21 @@ export default async function OrganizationMembersPage({
       .eq("organization_id", orgId)
       .order("joined_at", { ascending: true });
 
-    members = (data ?? []).map((member: any) => ({
-      id: member.id,
-      user_id: member.user_id,
-      role: member.role,
-      joined_at: member.joined_at,
-      profiles: Array.isArray(member.profiles) ? member.profiles[0] : member.profiles,
-    }));
+    members = ((data ?? []) as unknown as SupabaseMemberRow[]).map((member) => {
+      const profile = Array.isArray(member.profiles) ? member.profiles[0] : member.profiles;
+      return {
+        id: member.id,
+        user_id: member.user_id,
+        role: member.role,
+        joined_at: member.joined_at,
+        // Falls back to an all-empty profile rather than null - a member row
+        // with no matching profiles row is the same edge case the direct-DB
+        // branch above already handles via its LEFT JOIN (columns come back
+        // null, not the whole `profiles` object), so this keeps MemberRow's
+        // `profiles` field non-nullable on both branches.
+        profiles: profile ?? { id: member.user_id, email: "", full_name: null, avatar_url: null },
+      };
+    });
   }
 
   return (

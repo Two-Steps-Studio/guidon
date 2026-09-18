@@ -21,6 +21,12 @@ interface OrganizationRow {
   role: string;
 }
 
+/** Raw shape of the Supabase-hosted branch's row - matches exactly the columns selected below (role plus the joined organizations row), typed as a single object to match how the spread just below already treats it. */
+interface SupabaseMembershipRow {
+  role: string;
+  organizations: Omit<OrganizationRow, "role">;
+}
+
 export default async function OrganizationsPage({
   searchParams,
 }: {
@@ -51,7 +57,7 @@ export default async function OrganizationsPage({
       .select("role, organizations (id, name, slug, description, avatar_url, created_at, updated_at)")
       .eq("user_id", user.id);
 
-    organizations = (data ?? []).map((member: any) => ({
+    organizations = ((data ?? []) as unknown as SupabaseMembershipRow[]).map((member) => ({
       ...member.organizations,
       role: member.role,
     }));
