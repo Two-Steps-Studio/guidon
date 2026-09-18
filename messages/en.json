@@ -36,7 +36,8 @@
       "signUp": "Sign Up",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
-      "confirmEmailMessage": "Check your email to confirm your account"
+      "confirmEmailMessage": "Check your email to confirm your account",
+      "emailAlreadyRegistered": "An account with this email already exists. Log in instead."
     },
     "forgotPassword": {
       "title": "Reset your password",

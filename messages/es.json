@@ -36,7 +36,8 @@
       "signUp": "Registrarse",
       "haveAccount": "¿Ya tienes una cuenta?",
       "signIn": "Inicia sesión",
-      "confirmEmailMessage": "Revisa tu correo para confirmar tu cuenta"
+      "confirmEmailMessage": "Revisa tu correo para confirmar tu cuenta",
+      "emailAlreadyRegistered": "Ya existe una cuenta con este correo electrónico. Inicia sesión."
     },
     "forgotPassword": {
       "title": "Restablece tu contraseña",

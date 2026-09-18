@@ -36,7 +36,8 @@
       "signUp": "Registrieren",
       "haveAccount": "Bereits ein Konto?",
       "signIn": "Anmelden",
-      "confirmEmailMessage": "Bestätige dein Konto über den Link in deiner E-Mail"
+      "confirmEmailMessage": "Bestätige dein Konto über den Link in deiner E-Mail",
+      "emailAlreadyRegistered": "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melde dich an."
     },
     "forgotPassword": {
       "title": "Passwort zurücksetzen",

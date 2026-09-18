@@ -42,7 +42,7 @@ export function SignupForm({ local }: { local: boolean }) {
 
       const supabase = createClient()
 
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -63,6 +63,19 @@ export function SignupForm({ local }: { local: boolean }) {
       })
 
       if (signUpError) throw signUpError
+
+      // Deliberate choice, not Supabase's default: signUp() against an
+      // already-registered, confirmed email returns success with no error
+      // (anti-enumeration - it never sends a second email or reveals
+      // anything from the error alone). Supabase's own documented way to
+      // tell the two cases apart client-side is this exact check - a
+      // genuinely new signup's user has a non-empty `identities` array, an
+      // existing account's has none. Chosen over staying silent (which is
+      // more private but was confusing real users retrying a signup) to
+      // match how most mainstream signup forms behave.
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        throw new Error(t("emailAlreadyRegistered"))
+      }
 
       // The profile row is created by private.handle_new_user(), an AFTER
       // INSERT trigger on auth.users (SECURITY DEFINER, runs regardless of
