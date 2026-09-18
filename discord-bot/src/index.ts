@@ -2,12 +2,18 @@ import { Client, Events, GatewayIntentBits, type ChatInputCommandInteraction } f
 import { config } from "./config.js";
 import * as link from "./commands/link.js";
 import * as webhook from "./commands/webhook.js";
-import * as task from "./commands/task.js";
+import * as taskList from "./commands/task-list.js";
+import * as taskStart from "./commands/task-start.js";
+import * as taskComplete from "./commands/task-complete.js";
+import * as taskComment from "./commands/task-comment.js";
 
 const commands = new Map<string, { execute: (interaction: ChatInputCommandInteraction) => Promise<void> }>([
   [link.data.name, link],
   [webhook.data.name, webhook],
-  [task.data.name, task],
+  [taskList.data.name, taskList],
+  [taskStart.data.name, taskStart],
+  [taskComplete.data.name, taskComplete],
+  [taskComment.data.name, taskComment],
 ]);
 
 // Guilds: needed to read interaction.guildId/guild.name. No message-content

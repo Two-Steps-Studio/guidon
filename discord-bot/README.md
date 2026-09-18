@@ -1,8 +1,9 @@
 # Guidon Discord Bot
 
-Slash commands (`/task list|start|complete|comment`, `/guidon-link`,
-`/guidon-webhook`) against Guidon's existing `/api/v1` (the AI Task API) - a
-plain client of that API, same as an AI agent, no new Guidon-side auth.
+Slash commands (`/task-list`, `/task-start`, `/task-complete`, `/task-comment`,
+`/guidon-link`, `/guidon-webhook`) against Guidon's existing `/api/v1` (the AI
+Task API) - a plain client of that API, same as an AI agent, no new
+Guidon-side auth.
 
 Separate from Guidon's own outbound task-event notifications (a plain
 Discord channel webhook, configured from the project's Settings page in the
@@ -49,7 +50,7 @@ in the main repo).
 
 ```bash
 npm install
-npm run deploy-commands   # registers /task, /guidon-link, /guidon-webhook with Discord - run once, and again after changing a command
+npm run deploy-commands   # registers /task-list, /task-start, /task-complete, /task-comment, /guidon-link, /guidon-webhook with Discord - run once, and again after changing a command
 npm run dev                # local development (auto-restarts on change)
 npm run build && npm start # production
 ```
@@ -89,10 +90,19 @@ channel (same effect as setting it from the web app's Settings page).
 |---|---|
 | `/guidon-link` | Manual fallback for linking this server to a project (admin only) - prefer the web app's "Connect to Discord" button |
 | `/guidon-webhook` | Set the notification webhook for the linked project (admin only) |
-| `/task list` | List the linked project's tasks |
-| `/task start <task-id>` | Mark a task in progress |
-| `/task complete <task-id>` | Mark a task done |
-| `/task comment <task-id> <text>` | Add a comment to a task |
+| `/task-list` | List the linked project's tasks - open to everyone by default |
+| `/task-start <task-id>` | Mark a task in progress - defaults to Manage Server |
+| `/task-complete <task-id>` | Mark a task done - defaults to Manage Server |
+| `/task-comment <task-id> <text>` | Add a comment to a task - defaults to Manage Server |
+
+`/task-start`, `/task-complete`, and `/task-comment` are separate top-level
+commands (not subcommands of one `/task`) specifically so a server admin can
+grant or restrict each one to different roles from Discord's own **Server
+Settings → Integrations → Guidon** permission screen - Discord only supports
+per-role overrides at the whole-command level, not per-subcommand. `/task-list`
+has no default restriction; the other three default to requiring **Manage
+Server** (same default `/guidon-webhook` already uses) until an admin
+reassigns them to specific roles there.
 
 **Not included:** task creation. Guidon's `/api/v1` has no task-creation
 endpoint by design (`src/lib/api/scopes.ts`'s own comment documents why) -
