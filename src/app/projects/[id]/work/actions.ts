@@ -26,6 +26,7 @@ export type TaskComment = {
   author_id: string;
   content: string;
   created_at: string;
+  actor_label: string | null;
 };
 
 export async function loadComments(
@@ -39,7 +40,7 @@ export async function loadComments(
     try {
       const result = await withUser(access.userId, ({ query }) =>
         query(
-          "SELECT id, task_id, author_id, content, created_at FROM task_comments WHERE task_id = $1 ORDER BY created_at ASC",
+          "SELECT id, task_id, author_id, content, created_at, actor_label FROM task_comments WHERE task_id = $1 ORDER BY created_at ASC",
           [taskId]
         )
       );
@@ -52,7 +53,7 @@ export async function loadComments(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("task_comments")
-    .select("id, task_id, author_id, content, created_at")
+    .select("id, task_id, author_id, content, created_at, actor_label")
     .eq("task_id", taskId)
     .order("created_at", { ascending: true });
 
@@ -80,7 +81,7 @@ export async function postComment(
         query(
           `INSERT INTO task_comments (task_id, author_id, content)
            VALUES ($1, $2, $3)
-           RETURNING id, task_id, author_id, content, created_at`,
+           RETURNING id, task_id, author_id, content, created_at, actor_label`,
           [taskId, access.userId, content.trim()]
         )
       );
@@ -94,7 +95,7 @@ export async function postComment(
   const { data, error } = await supabase
     .from("task_comments")
     .insert({ task_id: taskId, author_id: access.userId, content: content.trim() })
-    .select("id, task_id, author_id, content, created_at")
+    .select("id, task_id, author_id, content, created_at, actor_label")
     .single();
 
   if (error) return { comment: null, error: error.message };

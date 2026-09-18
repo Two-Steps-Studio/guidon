@@ -16,6 +16,7 @@ export interface ActivityLogRow {
   entity_id: string | null;
   details: Record<string, unknown> | null;
   created_at: string;
+  actor_label: string | null;
 }
 
 /**
@@ -42,7 +43,7 @@ export async function getRecentActivity(
 
     const result = await withUser(userId, ({ query }) =>
       query(
-        `SELECT id, project_id, organization_id, user_id, action, entity_type, entity_id, details, created_at
+        `SELECT id, project_id, organization_id, user_id, action, entity_type, entity_id, details, created_at, actor_label
          FROM activity_logs
          WHERE project_id = $1
          ORDER BY created_at DESC
@@ -57,7 +58,7 @@ export async function getRecentActivity(
 
   const { data } = await supabase
     .from("activity_logs")
-    .select("id, project_id, organization_id, user_id, action, entity_type, entity_id, details, created_at")
+    .select("id, project_id, organization_id, user_id, action, entity_type, entity_id, details, created_at, actor_label")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false })
     .limit(limit);
