@@ -181,9 +181,9 @@ export async function linkDiscordGuildViaOAuth(projectId: string, userId: string
   if (hasDirectDatabase()) {
     await withUser(userId, async ({ query }) => {
       await query(
-        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [userId, keyName, prefix, hash, DISCORD_BOT_KEY_SCOPES]
+        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [userId, keyName, prefix, hash, DISCORD_BOT_KEY_SCOPES, "Discord bot"]
       );
       await query(
         `INSERT INTO discord_integrations (project_id, guild_id, linked_api_key_encrypted, linked_by, updated_at)
@@ -207,6 +207,7 @@ export async function linkDiscordGuildViaOAuth(projectId: string, userId: string
     key_prefix: prefix,
     key_hash: hash,
     scopes: DISCORD_BOT_KEY_SCOPES,
+    bot_label: "Discord bot",
   });
   if (keyError) throw new Error(`Failed to create the Discord bot's API key: ${keyError.message}`);
 

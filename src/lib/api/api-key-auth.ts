@@ -11,6 +11,7 @@ export interface ApiKeyIdentity {
   userId: string;
   apiKeyId: string;
   scopes: string[];
+  botLabel: string | null;
 }
 
 /**
@@ -36,11 +37,13 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
   if (hasDirectDatabase()) {
     const result = await withServiceRole(({ query }) =>
       query(
-        "SELECT id, user_id, scopes FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
+        "SELECT id, user_id, scopes, bot_label FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
         [keyHash]
       )
     );
-    const key = result.rows[0] as { id: string; user_id: string; scopes: string[] } | undefined;
+    const key = result.rows[0] as
+      | { id: string; user_id: string; scopes: string[]; bot_label: string | null }
+      | undefined;
     if (!key) return null;
 
     after(() =>
@@ -48,7 +51,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
         query("UPDATE api_keys SET last_used_at = now() WHERE id = $1", [key.id])
       )
     );
-    return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes };
+    return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes, botLabel: key.bot_label };
   }
 
   const { createServiceClient } = await import("@/lib/supabase-server");
@@ -56,7 +59,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
 
   const { data: key } = await supabase
     .from("api_keys")
-    .select("id, user_id, scopes")
+    .select("id, user_id, scopes, bot_label")
     .eq("key_hash", keyHash)
     .is("revoked_at", null)
     .single();
@@ -64,7 +67,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
   if (!key) return null;
 
   after(() => supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id));
-  return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes };
+  return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes, botLabel: key.bot_label };
 }
 
 /**
