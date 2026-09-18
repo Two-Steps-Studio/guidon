@@ -42,13 +42,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         if (perms.rows[0] && !perms.rows[0].can_create_comments) return "forbidden";
 
         const comment = await query(
-          `INSERT INTO task_comments (task_id, author_id, content) VALUES ($1, $2, $3) RETURNING *`,
-          [taskId, guard.userId, content]
+          `INSERT INTO task_comments (task_id, author_id, content, actor_label) VALUES ($1, $2, $3, $4) RETURNING *`,
+          [taskId, guard.userId, content, guard.botLabel]
         );
         await query(
-          `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id)
-           VALUES ($1, $2, 'task_ai_commented', 'task', $3)`,
-          [task.rows[0].project_id, guard.userId, taskId]
+          `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id, actor_label)
+           VALUES ($1, $2, 'task_ai_commented', 'task', $3, $4)`,
+          [task.rows[0].project_id, guard.userId, taskId, guard.botLabel]
         );
         return comment.rows[0];
       });
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { data: comment, error } = await supabase
     .from("task_comments")
-    .insert({ task_id: taskId, author_id: guard.userId, content })
+    .insert({ task_id: taskId, author_id: guard.userId, content, actor_label: guard.botLabel })
     .select()
     .single();
 
@@ -100,9 +100,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  await supabase
-    .from("activity_logs")
-    .insert({ project_id: task.project_id, user_id: guard.userId, action: "task_ai_commented", entity_type: "task", entity_id: taskId });
+  await supabase.from("activity_logs").insert({
+    project_id: task.project_id,
+    user_id: guard.userId,
+    action: "task_ai_commented",
+    entity_type: "task",
+    entity_id: taskId,
+    actor_label: guard.botLabel,
+  });
 
   return NextResponse.json({ comment });
 }
