@@ -76,7 +76,8 @@ async function setStatusAndLog(
   taskId: string,
   projectId: string,
   newStatus: TaskStatus,
-  action: ActivityAction
+  action: ActivityAction,
+  botLabel: string | null
 ): Promise<TransitionResult> {
   if (hasDirectDatabase()) {
     return withUser(userId, async ({ query }) => {
@@ -97,9 +98,9 @@ async function setStatusAndLog(
         };
       }
       await query(
-        `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id)
-         VALUES ($1, $2, $3, 'task', $4)`,
-        [projectId, userId, action, taskId]
+        `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id, actor_label)
+         VALUES ($1, $2, $3, 'task', $4, $5)`,
+        [projectId, userId, action, taskId, botLabel]
       );
       const title = (result.rows[0].title as string) ?? "";
       notifyDiscordTaskEvent(
@@ -138,7 +139,7 @@ async function setStatusAndLog(
 
   await supabase
     .from("activity_logs")
-    .insert({ project_id: projectId, user_id: userId, action, entity_type: "task", entity_id: taskId });
+    .insert({ project_id: projectId, user_id: userId, action, entity_type: "task", entity_id: taskId, actor_label: botLabel });
 
   const title = (data as { title?: string }).title ?? "";
   notifyDiscordTaskEvent(
@@ -150,16 +151,16 @@ async function setStatusAndLog(
   return { ok: true, task: data };
 }
 
-export async function startTask(userId: string, taskId: string): Promise<TransitionResult> {
+export async function startTask(userId: string, taskId: string, botLabel: string | null = null): Promise<TransitionResult> {
   const ctx = await loadProjectContext(userId, taskId);
   if (!ctx) return { ok: false, error: "Task not found.", status: 404 };
   if (!ctx.permissions.can_change_status) {
     return { ok: false, error: "AI is not permitted to change task status on this project.", status: 403 };
   }
-  return setStatusAndLog(userId, taskId, ctx.projectId, "ai_working", "task_ai_started");
+  return setStatusAndLog(userId, taskId, ctx.projectId, "ai_working", "task_ai_started", botLabel);
 }
 
-export async function completeTask(userId: string, taskId: string): Promise<TransitionResult> {
+export async function completeTask(userId: string, taskId: string, botLabel: string | null = null): Promise<TransitionResult> {
   const ctx = await loadProjectContext(userId, taskId);
   if (!ctx) return { ok: false, error: "Task not found.", status: 404 };
   if (!ctx.allowAutoComplete) {
@@ -172,10 +173,15 @@ export async function completeTask(userId: string, taskId: string): Promise<Tran
   if (!ctx.permissions.can_complete_tasks) {
     return { ok: false, error: "This API key's AI permissions do not include completing tasks.", status: 403 };
   }
-  return setStatusAndLog(userId, taskId, ctx.projectId, "done", "task_ai_completed");
+  return setStatusAndLog(userId, taskId, ctx.projectId, "done", "task_ai_completed", botLabel);
 }
 
-export async function setTaskStatus(userId: string, taskId: string, newStatus: TaskStatus): Promise<TransitionResult> {
+export async function setTaskStatus(
+  userId: string,
+  taskId: string,
+  newStatus: TaskStatus,
+  botLabel: string | null = null
+): Promise<TransitionResult> {
   const ctx = await loadProjectContext(userId, taskId);
   if (!ctx) return { ok: false, error: "Task not found.", status: 404 };
   if (!ctx.permissions.can_change_status) {
@@ -188,5 +194,5 @@ export async function setTaskStatus(userId: string, taskId: string, newStatus: T
       status: 403,
     };
   }
-  return setStatusAndLog(userId, taskId, ctx.projectId, newStatus, "task_ai_status_changed");
+  return setStatusAndLog(userId, taskId, ctx.projectId, newStatus, "task_ai_status_changed", botLabel);
 }

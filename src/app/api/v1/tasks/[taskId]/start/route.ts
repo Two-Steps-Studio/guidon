@@ -9,7 +9,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
-  const result = await startTask(guard.userId, taskId);
+  const result = await startTask(guard.userId, taskId, guard.botLabel);
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json({ task: result.task });
