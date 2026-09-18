@@ -118,6 +118,7 @@ namespace Guidon.Tasks.Editor
             GuidonStyles.StyleRoot(root);
             GuidonStyles.SetPadding(root, 8f);
 
+            BuildHeader(root);
             BuildSettingsSection(root);
 
             _infoBox = new Label("Log in above to get started.");
@@ -145,18 +146,43 @@ namespace Guidon.Tasks.Editor
             }
         }
 
+        /// <summary>The plugin's small branded header - the Guidon icon plus a link back to the website, so the board reads as a Guidon surface rather than an anonymous Editor tool.</summary>
+        private void BuildHeader(VisualElement root)
+        {
+            var header = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginBottom = 6f } };
+
+            Texture2D logo = GuidonLogo.GetTexture();
+            if (logo != null)
+            {
+                var logoImage = new Image
+                {
+                    image = logo,
+                    scaleMode = ScaleMode.ScaleToFit,
+                    style = { width = 20f, height = 20f, marginRight = 6f },
+                };
+                header.Add(logoImage);
+            }
+
+            var linkButton = new Button(() => Application.OpenURL("https://useguidon.com")) { text = "Guidon" };
+            GuidonStyles.StyleLinkButton(linkButton);
+            header.Add(linkButton);
+
+            root.Add(header);
+        }
+
         private void BuildSettingsSection(VisualElement root)
         {
             _settingsFoldout = new Foldout { text = "Settings", value = !GuidonSettings.IsConfigured };
             GuidonStyles.SetPadding(_settingsFoldout, 4f);
 
-            _baseUrlField = new TextField("Base URL") { value = GuidonSettings.BaseUrl };
-            _settingsFoldout.Add(_baseUrlField);
+            _baseUrlField = new TextField { value = GuidonSettings.BaseUrl };
+            GuidonStyles.AddLabeledField(_settingsFoldout, "Base URL", _baseUrlField);
 
             _loggedInRow = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginTop = 4f } };
             _loggedInLabel = new Label { style = { flexGrow = 1 } };
             _loggedInRow.Add(_loggedInLabel);
             var logOutButton = new Button(OnLogOutClicked) { text = "Log Out" };
+            GuidonStyles.StyleSecondaryButton(logOutButton);
             _loggedInRow.Add(logOutButton);
             _settingsFoldout.Add(_loggedInRow);
 
@@ -171,6 +197,7 @@ namespace Guidon.Tasks.Editor
             _loginRow.Add(infoLabel);
 
             _loginButton = new Button(() => { _ = LogInViaBrowser(); }) { text = "Log In" };
+            GuidonStyles.StylePrimaryButton(_loginButton);
             _loginButton.SetEnabled(!string.IsNullOrEmpty(_baseUrlField.value));
             _baseUrlField.RegisterValueChangedCallback(evt => _loginButton.SetEnabled(!_loggingIn && !string.IsNullOrEmpty(evt.newValue)));
             _loginRow.Add(_loginButton);
@@ -249,9 +276,12 @@ namespace Guidon.Tasks.Editor
 
             _projectDropdown = new DropdownField { style = { width = 220f } };
             _projectDropdown.RegisterValueChangedCallback(OnProjectDropdownChanged);
+            GuidonStyles.StyleInputBox(_projectDropdown);
+            _projectDropdown.style.marginBottom = 0f;
             row.Add(_projectDropdown);
 
             var refreshButton = new Button(() => { _ = RefreshProjects(); }) { text = "Refresh", style = { marginLeft = 4f } };
+            GuidonStyles.StyleSecondaryButton(refreshButton);
             row.Add(refreshButton);
 
             _busyLabel = new Label("Loading...") { style = { marginLeft = 8f } };
@@ -313,11 +343,8 @@ namespace Guidon.Tasks.Editor
             header.Add(countLabel);
             _columnCountLabels[status] = countLabel;
 
-            var addButton = new Button(() => GuidonTaskDetailWindow.OpenForNewTask(CurrentProjectId, status))
-            {
-                text = "+",
-                style = { width = 22f },
-            };
+            var addButton = new Button(() => GuidonTaskDetailWindow.OpenForNewTask(CurrentProjectId, status)) { text = "+" };
+            GuidonStyles.StyleIconButton(addButton);
             header.Add(addButton);
 
             column.Add(header);

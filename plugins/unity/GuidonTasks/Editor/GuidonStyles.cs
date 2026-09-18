@@ -180,5 +180,172 @@ namespace Guidon.Tasks.Editor
             label.style.fontSize = 13f;
             label.style.unityFontStyleAndWeight = FontStyle.Bold;
         }
+
+        // --color-input (the site's Input/Select border - its own token,
+        // equal to --color-border in both palettes today but kept
+        // separate since the two are allowed to diverge)
+        private static Color InputBorderColor => EditorGUIUtility.isProSkin ? HexColor("#23272f") : HexColor("#e2e8f0");
+
+        // Unity's actual paintable input box is an internal child of the
+        // control (TextField/DropdownField), not the control's own outer
+        // element - these are the class names it's carried across the
+        // Editor versions this plugin targets. Tried in order; if none
+        // match on some future Unity version, StyleInputBox falls back to
+        // styling the outer element itself rather than throwing, so a
+        // version mismatch just degrades to "looks like default Unity."
+        private static readonly string[] InputChildClassNames =
+        {
+            "unity-text-field__input",
+            "unity-base-popup-field__input",
+            "unity-base-field__input",
+        };
+
+        /// <summary>
+        /// Restyles a built-in field (TextField, DropdownField, ...) to
+        /// look like the site's Input/Select - transparent background,
+        /// a --color-input border, rounded-md corners.
+        /// </summary>
+        public static void StyleInputBox(VisualElement field)
+        {
+            VisualElement input = field;
+            foreach (string className in InputChildClassNames)
+            {
+                VisualElement found = field.Q(className: className);
+                if (found != null)
+                {
+                    input = found;
+                    break;
+                }
+            }
+
+            input.style.backgroundColor = Color.clear;
+            SetBorderColor(input, InputBorderColor);
+            SetBorderWidth(input, 1f);
+            SetBorderRadius(input, 6f); // rounded-md
+            input.style.paddingLeft = 8f;
+            input.style.paddingRight = 8f;
+            input.style.color = TextColor;
+
+            field.style.marginBottom = 8f;
+        }
+
+        /// <summary>
+        /// Hides a field's own built-in inline label (Unity's default
+        /// "Label: [box]" row) so a separate Label can sit above it
+        /// instead, matching the site's stacked Label-then-Input layout.
+        /// Best-effort in the same spirit as StyleInputBox - a class-name
+        /// miss just leaves the inline label visible instead of throwing.
+        /// </summary>
+        private static void HideInlineLabel(VisualElement field)
+        {
+            VisualElement label = field.Q(className: "unity-base-field__label");
+            if (label != null)
+            {
+                label.style.display = DisplayStyle.None;
+            }
+
+            field.style.flexDirection = FlexDirection.Column;
+            field.style.marginLeft = 0f;
+        }
+
+        /// <summary>A field's own label, stacked above it - text-sm font-medium text-foreground on the site's Label. Public so a field with a custom header row (e.g. Description's Preview toggle) can match it exactly.</summary>
+        public static void StyleFieldLabel(Label label)
+        {
+            label.style.color = TextColor;
+            label.style.fontSize = 12f;
+            label.style.marginBottom = 4f;
+            label.style.marginTop = 4f;
+        }
+
+        /// <summary>
+        /// Builds the site's Label-above-Input layout for a field
+        /// constructed with no label of its own: adds a separate Label,
+        /// hides the field's built-in inline one, restyles the input box,
+        /// and appends both to `parent`.
+        /// </summary>
+        public static void AddLabeledField(VisualElement parent, string labelText, VisualElement field)
+        {
+            var label = new Label(labelText);
+            StyleFieldLabel(label);
+            parent.Add(label);
+
+            HideInlineLabel(field);
+            StyleInputBox(field);
+            parent.Add(field);
+        }
+
+        // --color-primary / --color-primary-foreground
+        private static Color PrimaryColor => EditorGUIUtility.isProSkin ? HexColor("#4d8dff") : HexColor("#1d4fd8");
+        private static Color PrimaryForeground => HexColor("#ffffff");
+        // --color-secondary / --color-secondary-foreground (the site's
+        // outline/secondary Button variant)
+        private static Color SecondaryColor => EditorGUIUtility.isProSkin ? HexColor("#1c1f26") : HexColor("#f1f5f9");
+        private static Color SecondaryForeground => TextColor;
+        // --color-destructive / --color-destructive-foreground
+        private static Color DestructiveColor => EditorGUIUtility.isProSkin ? HexColor("#f87171") : HexColor("#dc2626");
+        private static Color DestructiveForeground => HexColor("#ffffff");
+
+        private static void StyleButtonBase(Button button)
+        {
+            SetBorderWidth(button, 0f);
+            SetBorderRadius(button, 6f); // rounded-md
+            button.style.paddingLeft = 12f;
+            button.style.paddingRight = 12f;
+            button.style.paddingTop = 4f;
+            button.style.paddingBottom = 4f;
+            button.style.unityFontStyleAndWeight = FontStyle.Bold;
+            button.style.fontSize = 12f;
+        }
+
+        /// <summary>The site's default Button variant (solid --color-primary) - Log In, Save, Create.</summary>
+        public static void StylePrimaryButton(Button button)
+        {
+            StyleButtonBase(button);
+            button.style.backgroundColor = PrimaryColor;
+            button.style.color = PrimaryForeground;
+        }
+
+        /// <summary>The site's outline/secondary Button variant - Refresh, Log Out, Cancel, Close.</summary>
+        public static void StyleSecondaryButton(Button button)
+        {
+            StyleButtonBase(button);
+            button.style.backgroundColor = SecondaryColor;
+            button.style.color = SecondaryForeground;
+        }
+
+        /// <summary>The site's destructive Button variant - Delete.</summary>
+        public static void StyleDestructiveButton(Button button)
+        {
+            StyleButtonBase(button);
+            button.style.backgroundColor = DestructiveColor;
+            button.style.color = DestructiveForeground;
+        }
+
+        /// <summary>A compact icon-only button (a column's "+", a subtask row's "x") - same secondary coloring, tighter roughly-square padding instead of a wide text button's.</summary>
+        public static void StyleIconButton(Button button)
+        {
+            SetBorderWidth(button, 0f);
+            SetBorderRadius(button, 6f);
+            button.style.backgroundColor = SecondaryColor;
+            button.style.color = SecondaryForeground;
+            button.style.paddingLeft = 6f;
+            button.style.paddingRight = 6f;
+            button.style.paddingTop = 2f;
+            button.style.paddingBottom = 2f;
+            button.style.unityFontStyleAndWeight = FontStyle.Bold;
+        }
+
+        /// <summary>A plain-text "link" - transparent, borderless, accent-colored - used for the header's link to the website.</summary>
+        public static void StyleLinkButton(Button button)
+        {
+            button.style.backgroundColor = Color.clear;
+            SetBorderWidth(button, 0f);
+            button.style.color = AccentColor;
+            button.style.unityFontStyleAndWeight = FontStyle.Bold;
+            button.style.fontSize = 13f;
+            button.style.paddingLeft = 0f;
+            button.style.paddingRight = 0f;
+            button.style.marginLeft = 0f;
+        }
     }
 }

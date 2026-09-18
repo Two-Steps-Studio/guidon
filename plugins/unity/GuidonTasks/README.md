@@ -17,11 +17,17 @@ API); UI Toolkit actually supports background colors, rounded corners, and
 spacing. Colors and corner radii (`GuidonStyles.cs`) are copied verbatim
 from the web app's own design tokens (`src/app/globals.css`) and its
 Kanban board's Tailwind classes, not eyeballed - both a dark and a light
-palette, matched to whichever Unity Editor skin you're using. It's still
-not going to be pixel-identical to the website - Editor windows render
-with Unity's own fonts and window chrome regardless, and native controls
-(text fields, dropdowns) keep their normal Editor look rather than being
-reskinned - but the board's colors and shapes are the real ones.
+palette, matched to whichever Unity Editor skin you're using. Text fields
+and dropdowns are reskinned to match the site's own Input/Select look too
+(transparent background, a bordered rounded-md box, a label stacked above
+the field instead of Unity's default inline "Label: [box]"), and buttons
+follow the site's variants - solid accent for the primary action
+(Log In/Save/Create), a neutral outline for secondary actions
+(Refresh/Log Out/Cancel/Close), red for Delete. The main board window also
+carries the Guidon icon and a link back to the website in its header. It's
+still not going to be pixel-identical to the website - Editor windows
+render with Unity's own fonts and window chrome regardless - but the
+board's colors, shapes, and now its controls are the real ones.
 
 It talks to your existing Guidon instance's public API
 (`/api/v1` - see [the API's own README](../../../src/app/api/v1/README.md)).

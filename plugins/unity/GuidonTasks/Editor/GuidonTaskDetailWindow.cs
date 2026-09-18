@@ -104,17 +104,17 @@ namespace Guidon.Tasks.Editor
             var scroll = new ScrollView { style = { flexGrow = 1 } };
             root.Add(scroll);
 
-            _titleField = new TextField("Title") { value = _task?.title ?? string.Empty };
-            scroll.Add(_titleField);
+            _titleField = new TextField { value = _task?.title ?? string.Empty };
+            GuidonStyles.AddLabeledField(scroll, "Title", _titleField);
 
             BuildDescriptionField(scroll);
 
-            _priorityDropdown = new DropdownField { label = "Priority", choices = GuidonVocabulary.Priorities.ToList() };
+            _priorityDropdown = new DropdownField { choices = GuidonVocabulary.Priorities.ToList() };
             _priorityDropdown.SetValueWithoutNotify(_task?.priority ?? "medium");
-            scroll.Add(_priorityDropdown);
+            GuidonStyles.AddLabeledField(scroll, "Priority", _priorityDropdown);
 
-            _dueDateField = new TextField("Due date (yyyy-MM-dd)") { value = FormatDueDateForField(_task?.due_date) };
-            scroll.Add(_dueDateField);
+            _dueDateField = new TextField { value = FormatDueDateForField(_task?.due_date) };
+            GuidonStyles.AddLabeledField(scroll, "Due date (yyyy-MM-dd)", _dueDateField);
 
             if (_task != null) BuildStatusDropdown(scroll);
 
@@ -139,16 +139,19 @@ namespace Guidon.Tasks.Editor
 
         private void BuildDescriptionField(VisualElement parent)
         {
-            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginTop = 4f } };
             var label = new Label("Description") { style = { flexGrow = 1 } };
+            GuidonStyles.StyleFieldLabel(label);
             row.Add(label);
 
             _descriptionToggleButton = new Button(ToggleDescriptionPreview) { text = "Preview" };
+            GuidonStyles.StyleSecondaryButton(_descriptionToggleButton);
             row.Add(_descriptionToggleButton);
             parent.Add(row);
 
             _descriptionField = new TextField { multiline = true, value = _task?.description ?? string.Empty };
             _descriptionField.style.minHeight = 60f;
+            GuidonStyles.StyleInputBox(_descriptionField);
             parent.Add(_descriptionField);
 
             _descriptionPreviewLabel = new Label { style = { whiteSpace = WhiteSpace.Normal, minHeight = 60f } };
@@ -172,7 +175,7 @@ namespace Guidon.Tasks.Editor
 
         private void BuildStatusDropdown(VisualElement parent)
         {
-            _statusDropdown = new DropdownField { label = "Status", choices = GuidonVocabulary.StatusLabels.ToList() };
+            _statusDropdown = new DropdownField { choices = GuidonVocabulary.StatusLabels.ToList() };
             int index = Math.Max(0, Array.IndexOf(GuidonVocabulary.Statuses, _task.status));
             _statusDropdown.SetValueWithoutNotify(GuidonVocabulary.StatusLabels[index]);
 
@@ -186,7 +189,7 @@ namespace Guidon.Tasks.Editor
                 }
             });
 
-            parent.Add(_statusDropdown);
+            GuidonStyles.AddLabeledField(parent, "Status", _statusDropdown);
         }
 
         private async Task ChangeStatus(string newStatus)
@@ -210,15 +213,18 @@ namespace Guidon.Tasks.Editor
             var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginTop = 6f, marginBottom = 6f } };
 
             _submitButton = new Button(() => { _ = Submit(); }) { text = _task == null ? "Create" : "Save" };
+            GuidonStyles.StylePrimaryButton(_submitButton);
             row.Add(_submitButton);
 
             if (_task != null)
             {
                 _deleteButton = new Button(() => { _ = SubmitDelete(); }) { text = "Delete", style = { marginLeft = 4f } };
+                GuidonStyles.StyleDestructiveButton(_deleteButton);
                 row.Add(_deleteButton);
             }
 
             var closeButton = new Button(Close) { text = "Close", style = { marginLeft = 4f } };
+            GuidonStyles.StyleSecondaryButton(closeButton);
             row.Add(closeButton);
 
             parent.Add(row);
@@ -302,10 +308,13 @@ namespace Guidon.Tasks.Editor
             _subtasksContainer = new VisualElement();
             parent.Add(_subtasksContainer);
 
-            var addRow = new VisualElement { style = { flexDirection = FlexDirection.Row, marginTop = 4f, marginBottom = 8f } };
-            _newSubtaskField = new TextField { style = { flexGrow = 1 } };
+            var addRow = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginTop = 4f, marginBottom = 8f } };
+            _newSubtaskField = new TextField { style = { flexGrow = 1, marginBottom = 0f } };
+            GuidonStyles.StyleInputBox(_newSubtaskField);
+            _newSubtaskField.style.marginBottom = 0f;
             addRow.Add(_newSubtaskField);
             _addSubtaskButton = new Button(() => { _ = AddSubtask(); }) { text = "Add", style = { marginLeft = 4f } };
+            GuidonStyles.StyleSecondaryButton(_addSubtaskButton);
             addRow.Add(_addSubtaskButton);
             parent.Add(addRow);
         }
@@ -337,7 +346,8 @@ namespace Guidon.Tasks.Editor
             toggle.RegisterValueChangedCallback(evt => { _ = ToggleSubtask(subtask, evt.newValue, toggle); });
             row.Add(toggle);
 
-            var deleteButton = new Button(() => { _ = DeleteSubtask(subtask); }) { text = "x", style = { width = 20f } };
+            var deleteButton = new Button(() => { _ = DeleteSubtask(subtask); }) { text = "x" };
+            GuidonStyles.StyleIconButton(deleteButton);
             row.Add(deleteButton);
 
             return row;
@@ -415,10 +425,13 @@ namespace Guidon.Tasks.Editor
             _commentsContainer = new VisualElement();
             parent.Add(_commentsContainer);
 
-            var addRow = new VisualElement { style = { flexDirection = FlexDirection.Row, marginTop = 4f } };
+            var addRow = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginTop = 4f } };
             _newCommentField = new TextField { style = { flexGrow = 1 } };
+            GuidonStyles.StyleInputBox(_newCommentField);
+            _newCommentField.style.marginBottom = 0f;
             addRow.Add(_newCommentField);
             _postCommentButton = new Button(() => { _ = PostComment(); }) { text = "Post", style = { marginLeft = 4f } };
+            GuidonStyles.StyleSecondaryButton(_postCommentButton);
             addRow.Add(_postCommentButton);
             parent.Add(addRow);
         }
