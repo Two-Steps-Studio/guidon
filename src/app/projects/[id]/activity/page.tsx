@@ -99,7 +99,7 @@ export default async function ProjectActivityPage({
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">
-                        <span className="font-medium">{nameFor(actor, t("someone"))}</span>{" "}
+                        <span className="font-medium">{entry.actor_label || nameFor(actor, t("someone"))}</span>{" "}
                         <span className="text-muted-foreground">{actionLabel.toLowerCase()}</span>
                         {entry.entity_type && (
                           <span className="text-muted-foreground"> · {entry.entity_type}</span>

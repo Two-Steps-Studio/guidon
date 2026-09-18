@@ -784,6 +784,7 @@ export function TaskDetailDialog({
             <ul className="space-y-3">
               {comments.map((comment) => {
                 const author = membersById.get(comment.author_id);
+                const isBot = Boolean(comment.actor_label);
 
                 return (
                   <li key={comment.id} className="group flex gap-2.5">
@@ -791,12 +792,12 @@ export function TaskDetailDialog({
                       aria-hidden
                       className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
                     >
-                      {author ? initialsFor(author) : "?"}
+                      {isBot ? <Bot className="h-3.5 w-3.5" /> : author ? initialsFor(author) : "?"}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span className="font-medium text-foreground">
-                          {author?.full_name || author?.email || t("unknownAuthor")}
+                          {comment.actor_label || author?.full_name || author?.email || t("unknownAuthor")}
                         </span>
                         {" · "}
                         {new Date(comment.created_at).toLocaleString()}
