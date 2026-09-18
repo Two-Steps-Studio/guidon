@@ -960,7 +960,12 @@
     "noApiKeysYet": "Noch keine API-Schlüssel.",
     "createdOn": "Erstellt am {date}",
     "lastUsedOn": "Zuletzt verwendet am {date}",
-    "neverUsed": "Nie verwendet"
+    "neverUsed": "Nie verwendet",
+    "integrationsTitle": "Integrationen",
+    "integrationsDescription": "Tools, die sich außerhalb des Browsers mit Guidon verbinden.",
+    "unityPluginTitle": "Unity-Editor-Plugin",
+    "unityPluginDescription": "Aufgaben direkt im Unity-Editor ansehen, erstellen und bearbeiten - mit Drag-and-Drop, Unteraufgaben und Kommentaren. Kopiere den Plugin-Ordner in dein Projekt und melde dich mit deinem Guidon-Konto an.",
+    "viewOnGithubButton": "Auf GitHub ansehen"
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",

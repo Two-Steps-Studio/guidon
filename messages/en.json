@@ -960,7 +960,12 @@
     "noApiKeysYet": "No API keys yet.",
     "createdOn": "Created {date}",
     "lastUsedOn": "Last used {date}",
-    "neverUsed": "Never used"
+    "neverUsed": "Never used",
+    "integrationsTitle": "Integrations",
+    "integrationsDescription": "Tools that connect to Guidon from outside the browser.",
+    "unityPluginTitle": "Unity Editor Plugin",
+    "unityPluginDescription": "View, create, and edit tasks - with drag-and-drop, subtasks, and comments - right inside the Unity Editor. Copy the plugin folder into your project and log in with your Guidon account.",
+    "viewOnGithubButton": "View on GitHub"
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",

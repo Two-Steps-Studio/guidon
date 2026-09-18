@@ -960,7 +960,12 @@
     "noApiKeysYet": "Aún no hay claves de API.",
     "createdOn": "Creada el {date}",
     "lastUsedOn": "Usada por última vez el {date}",
-    "neverUsed": "Nunca usada"
+    "neverUsed": "Nunca usada",
+    "integrationsTitle": "Integraciones",
+    "integrationsDescription": "Herramientas que se conectan a Guidon desde fuera del navegador.",
+    "unityPluginTitle": "Plugin para Unity Editor",
+    "unityPluginDescription": "Visualiza, crea y edita tareas - con arrastrar y soltar, subtareas y comentarios - sin salir del Editor de Unity. Copia la carpeta del plugin en tu proyecto e inicia sesión con tu cuenta de Guidon.",
+    "viewOnGithubButton": "Ver en GitHub"
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",

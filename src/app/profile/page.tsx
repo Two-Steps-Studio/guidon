@@ -3,6 +3,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { ProfileForm } from "./profile-form";
 import { ApiKeysSection } from "./api-keys";
+import { IntegrationsSection } from "./integrations-section";
 import { listApiKeys } from "./api-keys-actions";
 
 export default async function ProfilePage() {
@@ -19,6 +20,7 @@ export default async function ProfilePage() {
 
         <ProfileForm user={user} />
         <ApiKeysSection initialKeys={apiKeys} />
+        <IntegrationsSection />
       </div>
     </AppShell>
   );

@@ -960,7 +960,12 @@
     "noApiKeysYet": "Brak kluczy API.",
     "createdOn": "Utworzono {date}",
     "lastUsedOn": "Ostatnio użyto {date}",
-    "neverUsed": "Nigdy nie użyto"
+    "neverUsed": "Nigdy nie użyto",
+    "integrationsTitle": "Integracje",
+    "integrationsDescription": "Narzędzia, które łączą się z Guidonem spoza przeglądarki.",
+    "unityPluginTitle": "Wtyczka do Unity Editor",
+    "unityPluginDescription": "Przeglądaj, twórz i edytuj zadania - z przeciąganiem, podzadaniami i komentarzami - bez wychodzenia z Unity Editora. Skopiuj folder wtyczki do swojego projektu i zaloguj się kontem Guidon.",
+    "viewOnGithubButton": "Zobacz na GitHubie"
   },
   "emails": {
     "passwordResetSubject": "Zresetuj hasło do Guidon",
