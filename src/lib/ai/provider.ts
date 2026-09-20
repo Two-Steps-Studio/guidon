@@ -68,6 +68,8 @@ export interface AICompletionInput {
   }>;
   maxTokens?: number;
   temperature?: number;
+  projectId?: string;
+}
 }
 
 export interface AICompletionResult {
