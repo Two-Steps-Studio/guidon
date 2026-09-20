@@ -46,13 +46,26 @@ export type AIProviderName =
 export const AI_REQUEST_TIMEOUT_MS = 120_000;
 
 export interface AIMessage {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system" | "tool";
   content: string;
+  tool_call_id?: string;
+  tool_name?: string;
+  tool_args?: Record<string, unknown>;
+  tool_calls?: Array<{
+    id: string;
+    name: string;
+    args: Record<string, unknown>;
+  }>;
 }
 
 export interface AICompletionInput {
   system?: string;
   messages: AIMessage[];
+  tools?: Array<{
+    name: string;
+    description: string;
+    input_schema: object;
+  }>;
   maxTokens?: number;
   temperature?: number;
 }
@@ -61,6 +74,12 @@ export interface AICompletionResult {
   text: string;
   model: string;
   provider: AIProviderName;
+  tool_calls?: Array<{
+    id: string;
+    name: string;
+    args: Record<string, unknown>;
+  }>;
+  stop_reason?: "stop" | "tool_use" | "max_tokens";
 }
 
 export interface AIProvider {

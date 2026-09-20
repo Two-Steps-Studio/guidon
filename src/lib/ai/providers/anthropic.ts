@@ -70,14 +70,24 @@ export class AnthropicProvider implements AIProvider {
     }
 
     const data = (await res.json()) as {
-      content?: { type: string; text?: string }[];
+      content?: { type: string; text?: string; tool_use?: any }[];
       model?: string;
+      stop_reason?: string;
     };
 
+    const textBlocks = data.content?.filter((block) => block.type === "text");
+    const toolBlocks = data.content?.filter((block) => block.type === "tool_use");
+
     return {
-      text: data.content?.find((block) => block.type === "text")?.text ?? "",
+      text: textBlocks?.map((b) => b.text).join("\n") ?? "",
       model: data.model ?? this.model,
       provider: "anthropic",
+      stop_reason: data.stop_reason as any,
+      tool_calls: toolBlocks?.map((b) => ({
+        id: b.tool_use.id,
+        name: b.tool_use.name,
+        args: b.tool_use.input,
+      })),
     };
   }
 }
