@@ -10,7 +10,7 @@ export class AIOrchestrator {
   /**
    * Runs a completion request to completion, executing any tool calls requested by the LLM.
    */
-  async run(input: AICompletionInput): Promise<string> {
+  async run(input: AICompletionInput, userId?: string): Promise<string> {
     // Automatyczne połączenie z serwerem MCP, jeśli nie jest połączony
     if (!mcpClient.isConnected()) {
       await mcpClient.connect("node", ["src/lib/mcp/server.ts"]);
@@ -39,7 +39,11 @@ export class AIOrchestrator {
       const toolResponses: AIMessage[] = [];
       for (const toolCall of result.tool_calls) {
         try {
-          const toolResult = await mcpClient.callTool(toolCall.name, toolCall.args);
+          // Przekazujemy userId do mcpClient, aby serwer mógł zastosować RLS
+          const toolResult = await mcpClient.callTool(toolCall.name, {
+            ...toolCall.args,
+            userId,
+          });
           toolResponses.push({
             role: "tool",
             content: JSON.stringify(toolResult),
@@ -58,7 +62,7 @@ export class AIOrchestrator {
       currentMessages.push({
         role: "assistant",
         content: result.text,
-        tool_calls: result.tool_calls, // Note: Need to add this to AIMessage interface
+        tool_calls: result.tool_calls,
       });
       currentMessages.push(...toolResponses);
 

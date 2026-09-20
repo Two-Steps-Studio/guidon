@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireProjectAccess, getSwitchableProjects } from "@/lib/data/project-access";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { AppShell } from "@/components/layout/app-shell";
+import { AIChat } from "@/components/ai/AIChat";
 
 export async function generateMetadata({
   params,
@@ -41,6 +42,7 @@ export default async function ProjectLayout({
       projectColor={access.project.color}
     >
       {children}
+      <AIChat projectId={id} />
     </AppShell>
   );
 }
