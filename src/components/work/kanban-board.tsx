@@ -175,9 +175,14 @@ export function KanbanBoard({
               event.dataTransfer.dropEffect = "move";
               // Dropping on column padding appends to the end.
               if (!isTargetColumn) {
-                setDropTarget({
-                  status: column.status,
-                  index: columnTasks.length,
+                setDropTarget((prev) => {
+                  if (prev?.status === column.status && prev.index === columnTasks.length) {
+                    return prev;
+                  }
+                  return {
+                    status: column.status,
+                    index: columnTasks.length,
+                  };
                 });
               }
             }}
@@ -228,7 +233,12 @@ export function KanbanBoard({
                     }
                     enabled={Boolean(draggingTask) && canDrag}
                     onEnter={() =>
-                      setDropTarget({ status: column.status, index })
+                      setDropTarget((prev) => {
+                        if (prev?.status === column.status && prev.index === index) {
+                          return prev;
+                        }
+                        return { status: column.status, index };
+                      })
                     }
                     onDrop={() => void handleDrop(column.status, index)}
                     projectColor={projectColor}
@@ -261,9 +271,14 @@ export function KanbanBoard({
                 }
                 enabled={Boolean(draggingTask) && canDrag}
                 onEnter={() =>
-                  setDropTarget({
-                    status: column.status,
-                    index: columnTasks.length,
+                  setDropTarget((prev) => {
+                    if (prev?.status === column.status && prev.index === columnTasks.length) {
+                      return prev;
+                    }
+                    return {
+                      status: column.status,
+                      index: columnTasks.length,
+                    };
                   })
                 }
                 onDrop={() => void handleDrop(column.status, columnTasks.length)}
