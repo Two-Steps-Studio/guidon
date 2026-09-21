@@ -46,10 +46,12 @@ their encryption key from it.
 
 `DATABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL`+`SUPABASE_SERVICE_ROLE_KEY`: same
 credentials the main Guidon deployment itself uses for direct database
-access (self-hosted Postgres vs. Guidon Cloud/Supabase) - this bot reads and
-writes `discord_integrations` directly, bypassing RLS, as a trusted
-first-party service (the same trust level `scripts/migrate.mjs` already has
-in the main repo).
+access (self-hosted Postgres vs. Guidon Cloud/Supabase). The bot only
+*reads* the server-to-project link from `discord_integrations` (linking
+itself is done by the Guidon web app, see below) and *writes* the notification
+webhook for `/guidon-webhook`, bypassing RLS, as a trusted first-party
+service (the same trust level `scripts/migrate.mjs` already has in the main
+repo).
 
 ## 3. Run
 
@@ -74,7 +76,10 @@ Or via Docker: `docker build -t guidon-discord-bot . && docker run --env-file .e
 
 Guidon creates a correctly-scoped API key automatically (no copy-pasting a
 key or a project id anywhere). The key belongs to the person who confirms,
-and its actions are attributed to "Discord bot" in Guidon.
+and its actions are attributed to "Discord bot" in Guidon. The key is
+user-wide (not bound to one project) and belongs to whoever confirmed the
+link; **Settings → Discord → Disconnect** on the project removes the link
+(the key itself can be revoked from your Profile page).
 
 - The person choosing the project needs the **owner** or **admin** role on
   the target project.
@@ -106,6 +111,8 @@ has no default restriction; the other three default to requiring **Manage
 Server** (same default `/guidon-webhook` already uses) until an admin
 reassigns them to specific roles there.
 
-**Not included:** task creation. Guidon's `/api/v1` has no task-creation
-endpoint by design (`src/lib/api/scopes.ts`'s own comment documents why) -
-adding one is a separate, deliberate decision, not bundled into this bot.
+**Not included:** task creation. `/api/v1` does have a task-creation
+endpoint (`POST /api/v1/projects/[projectId]/tasks`, guarded by the
+`tasks:write` scope), but the key this bot gets deliberately has no
+`tasks:write` scope - letting a Discord server create tasks is a separate,
+deliberate decision, not bundled into this bot.
