@@ -133,17 +133,41 @@ into the response.
 ## `/api/v1`
 
 A narrow, versioned surface for callers that are **not** the Guidon browser
-client — currently just `GET /api/v1/search`
-(`src/app/api/v1/search/route.ts`), used by the navigation search box
-(`src/components/layout/navigation.tsx`). It used to hold 14 route handlers
-mirroring CRUD the UI did client-side against PostgREST before the
-Server-Components migration; 13 were deleted as dead code once every page
-moved off them, per `src/app/api/v1/README.md`. The one remaining route
-predates and survives that cleanup because it's genuinely used. Any new
+client. `GET /api/v1/search` (`src/app/api/v1/search/route.ts`) serves the
+navigation search box (session-authenticated). The rest is the **AI Task
+API**, authenticated with a per-user API key (`guardApiRequest`, scopes in
+`src/lib/api/scopes.ts`): projects, tasks (CRUD, start/complete/status),
+comments, task context (markdown) and attempts. The Discord bot
+(`discord-bot/`) and the MCP endpoint below are plain clients of it. It used
+to hold 14 route handlers mirroring CRUD the UI did client-side against
+PostgREST before the Server-Components migration; those were deleted as dead
+code once every page moved off them, per `src/app/api/v1/README.md`. Any new
 route added here should be for a genuinely external caller — a webhook, a
-bot, a future agent integration (TODO.md §16) — not a UI data path; UI reads
-and writes belong in Server Components and `actions.ts` files, per the same
-README.
+bot, an agent — not a UI data path; UI reads and writes belong in Server
+Components and `actions.ts` files, per the same README.
+
+## `/api/mcp`
+
+An MCP server (Streamable HTTP, stateless) for agents such as Claude Code:
+`src/app/api/mcp/route.ts` and `src/lib/mcp/http/`. It authenticates with the
+same API key as `/api/v1` and dispatches each tool in-process to the
+existing `/api/v1` route handler, so scopes, rate limits, per-project AI
+permissions and RLS apply exactly as for a direct API call — there is no
+second permission system. Connect with:
+
+```bash
+claude mcp add --transport http guidon https://<your-guidon-host>/api/mcp \
+  --header "Authorization: Bearer guidon_..."
+```
+
+Create the key under Profile → API Keys with scopes `tasks:read tasks:write
+tasks:status comments:write attempts:write`. Suggested workflow for the
+agent: `get_task_context` → `start_task` → work → `record_attempt` →
+`comment_on_task` → `set_task_status` to `review`; `complete_task` only works
+when the project enabled AI auto-complete. `GET /api/v1/search` has no MCP
+tool because it authenticates with the browser session, not an API key. The
+older stdio code in `src/lib/mcp/server.ts`/`client.ts` is a separate, internal
+mechanism for the in-app AI chat and is not what `/api/mcp` uses.
 
 ## Related
 

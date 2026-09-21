@@ -6,7 +6,7 @@
 
 Let Claude Code connect to Guidon as an MCP client and run the full task workflow: list projects and tasks, read a task's full context, create/edit tasks, start work, record attempts, comment, move to review.
 
-    claude mcp add --transport http guidon https://<guidon-host>/api/mcp --header "Authorization: Bearer gdn_..."
+    claude mcp add --transport http guidon https://<guidon-host>/api/mcp --header "Authorization: Bearer guidon_..."
 
 ## Architecture
 
@@ -21,7 +21,7 @@ Let Claude Code connect to Guidon as an MCP client and run the full task workflo
 | Tool | Dispatches to | Notes |
 |---|---|---|
 | `list_projects` | `GET /api/v1/projects` | |
-| `search` | `GET /api/v1/search?q=` | |
+| ~~`search`~~ | `GET /api/v1/search` | dropped: this route authenticates with the browser session, not an API key |
 | `list_tasks` | `GET /api/v1/projects/[projectId]/tasks` | |
 | `get_task` | `GET /api/v1/tasks/[taskId]` | |
 | `create_task` | `POST /api/v1/projects/[projectId]/tasks` | body fields as that route accepts |

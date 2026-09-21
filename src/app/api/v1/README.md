@@ -11,6 +11,13 @@ the Guidon browser client: GitHub webhooks and future agent integrations
 (TODO.md §16). Nothing here should duplicate what a Server Action already
 does for the UI.
 
+## Callers today
+
+- `discord-bot/` (slash commands) and the MCP endpoint `src/app/api/mcp`
+  (agents such as Claude Code; tools dispatch in-process to these handlers).
+- Authenticated by API key + scope via `guardApiRequest` (`search` is the
+  exception: it uses the browser session).
+
 ## History
 
 Until this cleanup the directory held 14 route handlers (`context/*`,
