@@ -75,7 +75,10 @@ interface ProjectNavGroup {
  * augmentation in global.d.ts.
  */
 const PROJECT_NAV = [
-  { labelKey: null, items: [{ href: "", labelKey: "overview", icon: LayoutDashboard }] },
+  {
+    labelKey: null,
+    items: [{ href: "", labelKey: "overview", icon: LayoutDashboard }],
+  },
   {
     labelKey: "workGroup",
     items: [
@@ -140,7 +143,8 @@ export function AppSidebar({
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
-  const isGlobalActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isGlobalActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
   const isProjectActive = (href: string) => {
     if (!projectId) return false;
     if (href === "") return pathname === `/projects/${projectId}`;
@@ -164,7 +168,7 @@ export function AppSidebar({
             alt="Guidon"
             width={769}
             height={285}
-            className="h-7 w-auto dark:invert group-data-[collapsible=icon]:hidden"
+            className="h-15 w-auto dark:invert group-data-[collapsible=icon]:hidden"
           />
         </Link>
         {projectId && (
@@ -181,7 +185,11 @@ export function AppSidebar({
           <SidebarMenu>
             {GLOBAL_NAV.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton asChild isActive={isGlobalActive(item.href)} tooltip={t(item.labelKey)}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isGlobalActive(item.href)}
+                  tooltip={t(item.labelKey)}
+                >
                   <Link href={item.href}>
                     <item.icon />
                     <span>{t(item.labelKey)}</span>
@@ -195,7 +203,9 @@ export function AppSidebar({
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => (
             <SidebarGroup key={group.labelKey ?? `project-group-${groupIndex}`}>
-              {group.labelKey && <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>}
+              {group.labelKey && (
+                <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+              )}
               <SidebarMenu>
                 {group.items.map((item) => {
                   const active = isProjectActive(item.href);
@@ -206,7 +216,11 @@ export function AppSidebar({
                         asChild
                         isActive={active}
                         tooltip={t(item.labelKey)}
-                        className={active ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color)" : undefined}
+                        className={
+                          active
+                            ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color)"
+                            : undefined
+                        }
                         style={active ? activeStyle : undefined}
                       >
                         <Link href={href}>
@@ -227,7 +241,11 @@ export function AppSidebar({
             <SidebarMenu>
               {ADMIN_NAV.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={t(item.labelKey)}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.href}
+                    tooltip={t(item.labelKey)}
+                  >
                     <Link href={item.href}>
                       <item.icon />
                       <span>{t(item.labelKey)}</span>
@@ -244,15 +262,25 @@ export function AppSidebar({
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild size="lg" tooltip={user.full_name || user.email}>
+              <SidebarMenuButton
+                asChild
+                size="lg"
+                tooltip={user.full_name || user.email}
+              >
                 <Link href="/profile">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={user.avatar_url || undefined} />
-                    <AvatarFallback>{user.full_name?.[0] || user.email?.[0] || "U"}</AvatarFallback>
+                    <AvatarFallback>
+                      {user.full_name?.[0] || user.email?.[0] || "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium">{user.full_name || t("user")}</span>
-                    <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                    <span className="truncate text-sm font-medium">
+                      {user.full_name || t("user")}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </span>
                   </div>
                   <User className="ml-auto h-4 w-4 text-muted-foreground" />
                 </Link>
