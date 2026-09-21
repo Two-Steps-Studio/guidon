@@ -168,7 +168,7 @@ export function AppSidebar({
             alt="Guidon"
             width={769}
             height={285}
-            className="h-15 w-auto dark:invert group-data-[collapsible=icon]:hidden"
+            className="h-12 w-auto dark:invert group-data-[collapsible=icon]:hidden"
           />
         </Link>
         {projectId && (
