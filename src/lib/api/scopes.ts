@@ -14,7 +14,9 @@
 // route actually requires it - tasks:write was previously removed for
 // exactly that reason (unused, leftover from CRUD routes deleted before
 // this API's current shape) and only comes back now that
-// POST/PATCH/DELETE task routes exist to require it.
-export const API_KEY_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write"] as const;
+// POST/PATCH/DELETE task routes exist to require it. attempts:write is
+// required by POST /api/v1/tasks/[taskId]/attempts (recording a Previous
+// Attempt); reading attempts is covered by tasks:read.
+export const API_KEY_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"] as const;
 
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
