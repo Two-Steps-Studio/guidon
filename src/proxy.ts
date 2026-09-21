@@ -55,7 +55,10 @@ function isPublicRoute(pathname: string): boolean {
 
 function redirectToLogin(request: NextRequest, pathname: string) {
   const redirectUrl = new URL('/auth/login', request.url)
-  redirectUrl.searchParams.set('redirect', pathname)
+  // Keep the query string: pages like /discord/link carry a signed token in
+  // it, and dropping it would send the user back to the page without it.
+  // safeRedirect() still only accepts same-site paths.
+  redirectUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
   return NextResponse.redirect(redirectUrl)
 }
 
@@ -141,7 +144,7 @@ export async function proxy(request: NextRequest) {
 
   if (!user && !isPublicRoute(pathname)) {
     const redirectUrl = new URL('/auth/login', request.url)
-    redirectUrl.searchParams.set('redirect', pathname)
+    redirectUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
     return NextResponse.redirect(redirectUrl)
   }
 
