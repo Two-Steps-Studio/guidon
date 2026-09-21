@@ -14,6 +14,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  */
 
 interface GuildLinkPayload {
+  typ: string;
   guildId: string;
   guildName?: string | null;
   exp: number;
@@ -60,6 +61,9 @@ export function verifyGuildLinkToken(
   }
 
   if (!payload || typeof payload !== "object") return null;
+  // Purpose claim (see discord-bot/src/link-token.ts): reject anything else
+  // that happens to be signed with the same AUTH_SECRET.
+  if (payload.typ !== "guild-link") return null;
   if (typeof payload.guildId !== "string" || payload.guildId.length === 0 || typeof payload.exp !== "number") {
     return null;
   }

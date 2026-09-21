@@ -15,6 +15,9 @@ const TOKEN_TTL_SECONDS = 10 * 60;
 
 export function createGuildLinkToken(guildId: string, guildName: string): string {
   const payload = {
+    // Purpose claim: the web app only accepts tokens that say they are guild
+    // links, so no other value signed with AUTH_SECRET can be replayed here.
+    typ: "guild-link",
     guildId,
     guildName,
     exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
