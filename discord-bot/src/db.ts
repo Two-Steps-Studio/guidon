@@ -71,60 +71,6 @@ function toLink(projectId: string, guildId: string, guildName: string | null, ap
 export type LinkGuildResult = { ok: true } | { ok: false; error: string };
 
 /**
- * Links a guild to a project, or updates the link if this guild (or this
- * project) was already linked to something else. `guild_id` and
- * `project_id` are each UNIQUE/PRIMARY KEY (035_discord_integration.sql) -
- * relinking the same guild to a different project, or the same project to a
- * different guild, is a legitimate "someone re-ran /guidon link" case, not
- * an error; the one case that IS an error is trying to link a guild that's
- * already linked to a *different* project someone else set up, which would
- * otherwise silently steal that project's command access.
- */
-export async function linkGuildToProject(
-  guildId: string,
-  guildName: string | null,
-  projectId: string,
-  apiKey: string
-): Promise<LinkGuildResult> {
-  const encryptedKey = encryptSecret(apiKey, config.authSecret, API_KEY_INFO);
-
-  const existingForGuild = await getLinkByGuild(guildId);
-  if (existingForGuild && existingForGuild.projectId !== projectId) {
-    return {
-      ok: false,
-      error: "This Discord server is already linked to a different Guidon project. Ask an admin to unlink it first from that project's Settings page.",
-    };
-  }
-
-  if (hasDirectDatabase()) {
-    // linked_by isn't a real profiles.id here (the bot has no session for
-    // the Discord user) - NULL rather than a fabricated value; the web
-    // settings page's own linked_by (set when *it* writes the webhook
-    // field) is unaffected, this only ever updates the bot's own columns.
-    await pool().query(
-      `INSERT INTO discord_integrations (project_id, guild_id, guild_name, linked_api_key_encrypted, updated_at)
-       VALUES ($1, $2, $3, $4, now())
-       ON CONFLICT (project_id) DO UPDATE SET
-         guild_id = EXCLUDED.guild_id,
-         guild_name = EXCLUDED.guild_name,
-         linked_api_key_encrypted = EXCLUDED.linked_api_key_encrypted,
-         updated_at = now()`,
-      [projectId, guildId, guildName, encryptedKey]
-    );
-    return { ok: true };
-  }
-
-  const { error } = await serviceClient()
-    .from("discord_integrations")
-    .upsert(
-      { project_id: projectId, guild_id: guildId, guild_name: guildName, linked_api_key_encrypted: encryptedKey, updated_at: new Date().toISOString() },
-      { onConflict: "project_id" }
-    );
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
-}
-
-/**
  * Sets the notification webhook for the guild's linked project - an
  * alternative to the web app's own Settings-page form (discord-actions.ts)
  * for an admin who manages everything from Discord and never opens the web

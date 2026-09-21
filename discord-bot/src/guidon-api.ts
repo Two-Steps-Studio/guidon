@@ -27,13 +27,7 @@ async function call<T>(path: string, apiKey: string, init?: RequestInit): Promis
   return { ok: true, data: body as T };
 }
 
-/**
- * Also doubles as "is this key valid for this project" - api_keys aren't
- * project-scoped themselves (they authenticate a user, who may or may not
- * be a member of the project /guidon link names), so this is the actual
- * check: a 200 here means both the key is real and its owning user can see
- * this project. Used by the link command before it stores anything.
- */
+/** Lists a project's tasks (used by /task-list) with the linked server's API key. */
 export function listTasks(apiKey: string, projectId: string) {
   return call<{ tasks: GuidonTask[] }>(`/api/v1/projects/${projectId}/tasks`, apiKey);
 }

@@ -34,6 +34,11 @@ cp .env.example .env
 # and either DATABASE_URL or NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
 ```
 
+`GUIDON_API_URL` must be the **publicly reachable URL of the Guidon web
+app** - the one admins open in a browser. `/guidon-link` builds its link
+from it (`<GUIDON_API_URL>/discord/link?token=...`), and the bot also calls
+its `/api/v1` there.
+
 `AUTH_SECRET` must be the **exact same value** as the main Guidon
 deployment's own `AUTH_SECRET` - this bot reads/writes the same encrypted
 `discord_integrations` columns the web app does, and both sides derive
@@ -59,42 +64,33 @@ Or via Docker: `docker build -t guidon-discord-bot . && docker run --env-file .e
 
 ## 4. Link a server to a project
 
-**Recommended: the "Connect to Discord" button** on the project's Settings
-page in the web app (requires `DISCORD_CLIENT_ID` set on the *main* Guidon
-deployment too - see the main repo's `.env.example`). Click it, pick the
-server on Discord's own consent screen, done - Guidon creates a
-correctly-scoped API key for you automatically and links the guild, no
-copy-pasting a key or a project id anywhere.
+1. Make sure the bot is in your server (the invite URL from step 1).
+2. In the Discord server, an admin (Manage Server permission) runs
+   `/guidon-link`. The bot replies with a private (ephemeral) message
+   containing a link, and says whether the server is already linked.
+3. Click the link. It opens Guidon; sign in if needed. The link is valid for
+   10 minutes - run `/guidon-link` again if it expires.
+4. Choose the project from the list of projects you manage and confirm.
 
-**Manual fallback**, if the web app isn't configured for it (or you want a
-key with different scopes than the auto-created one): in the Discord
-server, an admin (Manage Server permission) runs:
+Guidon creates a correctly-scoped API key automatically (no copy-pasting a
+key or a project id anywhere). The key belongs to the person who confirms,
+and its actions are attributed to "Discord bot" in Guidon.
 
-```
-/guidon-link api-key:<a Guidon API key> project-id:<the project's id>
-```
+- The person choosing the project needs the **owner** or **admin** role on
+  the target project.
+- To move a server to another project, run `/guidon-link` again and choose
+  the other project. If the server is currently linked to a project you don't
+  manage, an admin of that project has to disconnect it first.
 
-- The API key comes from Guidon's Profile → API Keys page. It needs the
-  `tasks:read`, `tasks:status`, and `comments:write` scopes for every
-  `/task` subcommand to work.
-- The project id is the UUID in that project's Settings page URL
-  (`/projects/<this-id>/settings`).
-- **Known limitation:** unlike a key minted by "Connect to Discord" (which
-  is stamped `bot_label = 'Discord bot'` so its actions display as the bot's,
-  not a person's - see migration 036), a manually pasted personal API key has
-  no such label. Comments and status changes made through a manually-linked
-  server will show the key owner's name in Guidon's UI, not "Discord bot."
-  Prefer "Connect to Discord" when that attribution matters.
-
-Either way, optionally follow up with `/guidon-webhook url:<a Discord
-channel webhook URL>` to also receive task-event notifications in that
-channel (same effect as setting it from the web app's Settings page).
+Optionally follow up with `/guidon-webhook url:<a Discord channel webhook
+URL>` to also receive task-event notifications in that channel (same effect
+as setting it from the web app's Settings page).
 
 ## Commands
 
 | Command | Does |
 |---|---|
-| `/guidon-link` | Manual fallback for linking this server to a project (admin only) - prefer the web app's "Connect to Discord" button |
+| `/guidon-link` | Get a private link to link this server to a Guidon project, or move it to another one (admin only) |
 | `/guidon-webhook` | Set the notification webhook for the linked project (admin only) |
 | `/task-list` | List the linked project's tasks - open to everyone by default |
 | `/task-start <task-id>` | Mark a task in progress - defaults to Manage Server |
