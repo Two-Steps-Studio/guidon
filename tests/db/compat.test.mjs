@@ -1397,5 +1397,178 @@ await withUser(A, async () => {
   );
 });
 
+// ------------------------------------------------------------------
+section("26. przenoszenie serwera Discord miedzy projektami: linkDiscordGuildToProject / listManageableProjectsForUser (src/lib/data/discord-integration.ts)");
+
+// Te same instrukcje SQL co w linkDiscordGuildToProject (sciezka self-hosted);
+// jesli zmienisz jedne, zmien drugie.
+const CLEAR_GUILD_SQL = `UPDATE public.discord_integrations
+    SET guild_id = NULL, guild_name = NULL, linked_api_key_encrypted = NULL, linked_by = NULL, updated_at = now()
+  WHERE guild_id = $1 AND project_id <> $2
+  RETURNING project_id`;
+const LINK_GUILD_SQL = `INSERT INTO public.discord_integrations (project_id, guild_id, guild_name, linked_api_key_encrypted, linked_by, updated_at)
+  VALUES ($1, $2, $3, $4, $5, now())
+  ON CONFLICT (project_id) DO UPDATE SET
+    guild_id = $2,
+    guild_name = $3,
+    linked_api_key_encrypted = $4,
+    linked_by = $5,
+    updated_at = now()
+  RETURNING project_id`;
+
+const C = "33333333-3333-3333-3333-333333333333";
+await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, $2, $3)", [
+  C,
+  "c@example.test",
+  JSON.stringify({ full_name: "Czesiek" }),
+]);
+
+let moveP1;
+let moveP2;
+await withUser(A, async () => {
+  moveP1 = (
+    await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1,'Move P1') RETURNING id", [orgId])
+  ).rows[0].id;
+  moveP2 = (
+    await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1,'Move P2') RETURNING id", [orgId])
+  ).rows[0].id;
+  // C: zwykly czlonek (bez praw zarzadzania) w P1, admin w P2.
+  await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [moveP1, C]);
+  await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'admin')", [moveP2, C]);
+});
+
+// (a) A laczy serwer z P1 (z webhookiem), potem przenosi go do P2.
+await withUser(A, async () => {
+  await db.query(
+    "INSERT INTO public.discord_integrations (project_id, webhook_url_encrypted, linked_by) VALUES ($1, 'enc-webhook-p1', $2)",
+    [moveP1, A]
+  );
+  const link = await db.query(LINK_GUILD_SQL, [moveP1, "guild-move", "Move Guild", "enc-key-1", A]);
+  check("pierwsze polaczenie serwera z P1 zwraca 1 wiersz", link.rows.length === 1, link.rows.length);
+});
+
+await withUser(A, async () => {
+  const cleared = await db.query(CLEAR_GUILD_SQL, ["guild-move", moveP2]);
+  check("przenosiny: wlasciciel czysci stary wiersz (1 wiersz)", cleared.rows.length === 1, cleared.rows.length);
+  const link = await db.query(LINK_GUILD_SQL, [moveP2, "guild-move", "Move Guild", "enc-key-2", A]);
+  check("przenosiny: upsert do P2 zwraca 1 wiersz", link.rows.length === 1, link.rows.length);
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "SELECT project_id, guild_id, guild_name FROM public.discord_integrations WHERE guild_id = 'guild-move'"
+  );
+  check(
+    "po przeniesieniu dokladnie jeden wiersz ma ten serwer, i to P2",
+    rows.length === 1 && rows[0].project_id === moveP2 && rows[0].guild_name === "Move Guild",
+    JSON.stringify(rows)
+  );
+  const old = await db.query(
+    "SELECT guild_id, guild_name, linked_by FROM public.discord_integrations WHERE project_id = $1",
+    [moveP1]
+  );
+  check(
+    "stary wiersz P1 wyczyszczony z pol serwera",
+    old.rows.length === 1 && old.rows[0].guild_id === null && old.rows[0].guild_name === null && old.rows[0].linked_by === null,
+    JSON.stringify(old.rows)
+  );
+  const hook = await db.query("SELECT * FROM public.get_discord_webhook_url($1)", [moveP1]);
+  check(
+    "webhook starego projektu nietkniety po przeniesieniu",
+    hook.rows[0]?.webhook_url_encrypted === "enc-webhook-p1",
+    JSON.stringify(hook.rows)
+  );
+});
+
+// Dlaczego LINK_GUILD_SQL nie uzywa EXCLUDED.<kol>: odczyt EXCLUDED to SELECT
+// na kolumnie, a linked_api_key_encrypted nie ma GRANT SELECT dla authenticated.
+await expectRejected(
+  "upsert z EXCLUDED.linked_api_key_encrypted odrzucony (brak SELECT na kolumnie sekretu)",
+  () =>
+    withUser(A, () =>
+      db.query(
+        `INSERT INTO public.discord_integrations (project_id, linked_api_key_encrypted) VALUES ($1, 'x')
+         ON CONFLICT (project_id) DO UPDATE SET linked_api_key_encrypted = EXCLUDED.linked_api_key_encrypted`,
+        [moveP1]
+      )
+    ),
+  /permission denied/i
+);
+
+// (b) serwer polaczony z P1; C (zwykly czlonek P1, admin P2) nie moze wyczyscic P1.
+await withUser(A, async () => {
+  await db.query(LINK_GUILD_SQL, [moveP1, "guild-locked", "Locked Guild", "enc-key-3", A]);
+});
+
+await withUser(C, async () => {
+  const cleared = await db.query(CLEAR_GUILD_SQL, ["guild-locked", moveP2]);
+  check("C (czlonek bez praw w P1) nie wyczysci wiersza P1 (0 wierszy)", cleared.rows.length === 0, cleared.rows.length);
+});
+
+let lockedError;
+try {
+  await withUser(C, async () => {
+    await db.query(CLEAR_GUILD_SQL, ["guild-locked", moveP2]);
+    await db.query(LINK_GUILD_SQL, [moveP2, "guild-locked", "Locked Guild", "enc-key-c", C]);
+  });
+} catch (error) {
+  lockedError = error;
+}
+check(
+  "po nieudanym czyszczeniu upsert w P2 wpada w UNIQUE(guild_id) (kod 23505, mapowany na blad domenowy)",
+  lockedError?.code === "23505" && (!lockedError.constraint || /guild_id/.test(lockedError.constraint)),
+  lockedError ? `${lockedError.code} ${lockedError.constraint ?? ""} ${lockedError.message}` : "statement was accepted"
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT project_id FROM public.discord_integrations WHERE guild_id = 'guild-locked'");
+  check(
+    "P1 nadal polaczony z serwerem po nieudanej probie C (transakcja wycofana)",
+    rows.length === 1 && rows[0].project_id === moveP1,
+    JSON.stringify(rows)
+  );
+});
+
+// Admin starego projektu moze wyczyscic jego wiersz.
+await withUser(A, () =>
+  db.query("UPDATE public.project_members SET role = 'admin' WHERE project_id = $1 AND user_id = $2", [moveP1, C])
+);
+await withUser(C, async () => {
+  const cleared = await db.query(CLEAR_GUILD_SQL, ["guild-locked", moveP2]);
+  check("C jako admin P1 moze wyczyscic wiersz P1 (1 wiersz)", cleared.rows.length === 1, cleared.rows.length);
+});
+
+// listManageableProjectsForUser: to samo zapytanie co w module.
+const LIST_MANAGEABLE_SQL = `SELECT p.id, p.name, COALESCE(o.name, '') AS organization_name,
+        CASE WHEN di.guild_id IS NULL THEN NULL ELSE COALESCE(di.guild_name, di.guild_id) END AS linked_guild_name
+   FROM project_members pm
+   JOIN projects p ON p.id = pm.project_id
+   LEFT JOIN organizations o ON o.id = p.organization_id
+   LEFT JOIN discord_integrations di ON di.project_id = p.id
+  WHERE pm.user_id = $1 AND pm.role IN ('owner', 'admin')
+  ORDER BY o.name, p.name
+  LIMIT $2`;
+
+await withUser(A, () =>
+  db.query("UPDATE public.project_members SET role = 'developer' WHERE project_id = $1 AND user_id = $2", [moveP1, C])
+);
+await withUser(C, async () => {
+  const { rows } = await db.query(LIST_MANAGEABLE_SQL, [C, 1000]);
+  check(
+    "lista projektow do zarzadzania: tylko P2 (owner/admin), mimo braku czlonkostwa w organizacji (pusta nazwa org), z nazwa serwera",
+    rows.length === 1 && rows[0].id === moveP2 && rows[0].linked_guild_name === "Move Guild" && rows[0].organization_name === "",
+    JSON.stringify(rows)
+  );
+});
+await withUser(A, async () => {
+  const { rows } = await db.query(LIST_MANAGEABLE_SQL, [A, 1000]);
+  const p1 = rows.find((r) => r.id === moveP1);
+  check(
+    "lista projektow do zarzadzania: wlasciciel widzi P1 jako niepolaczony (NULL)",
+    p1 !== undefined && p1.linked_guild_name === null && rows.length >= 3,
+    JSON.stringify(rows)
+  );
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

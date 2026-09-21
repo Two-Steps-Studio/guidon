@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyDiscordOAuthState } from "@/lib/discord/oauth-state";
-import { linkDiscordGuildViaOAuth } from "@/lib/data/discord-integration";
+import { linkDiscordGuildToProject } from "@/lib/data/discord-integration";
 
 /**
  * Callback for the "Connect to Discord" flow (src/app/api/discord/connect).
@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
   if (!guildId || !verified) return failure("Discord sign-in did not complete.");
 
   try {
-    await linkDiscordGuildViaOAuth(verified.projectId, verified.userId, guildId);
+    const result = await linkDiscordGuildToProject(verified.projectId, verified.userId, guildId, null);
+    if (!result.ok) return failure(result.error);
   } catch (error) {
     return failure(error instanceof Error ? error.message : "Could not connect to Discord.");
   }
