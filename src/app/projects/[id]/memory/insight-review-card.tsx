@@ -76,7 +76,7 @@ export function InsightReviewCard({
 
   return (
     <>
-      <Card className="border-indigo-300 dark:border-indigo-800">
+      <Card className="border-info/40">
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
             <TypeIcon className="h-5 w-5 text-muted-foreground" />

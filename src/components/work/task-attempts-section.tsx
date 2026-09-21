@@ -21,8 +21,8 @@ import type { AttemptOutcome, TaskAttempt } from "@/types/task";
 
 const OUTCOME_CONFIG = {
   failed: { labelKey: "outcomeFailed", icon: X, color: "text-destructive" },
-  partial: { labelKey: "outcomePartial", icon: AlertTriangle, color: "text-amber-500" },
-  succeeded: { labelKey: "outcomeSucceeded", icon: CheckCircle2, color: "text-emerald-500" },
+  partial: { labelKey: "outcomePartial", icon: AlertTriangle, color: "text-warning" },
+  succeeded: { labelKey: "outcomeSucceeded", icon: CheckCircle2, color: "text-success" },
 } as const satisfies Record<AttemptOutcome, { labelKey: string; icon: typeof CheckCircle2; color: string }>;
 
 const EMPTY_FORM = {
