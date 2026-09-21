@@ -167,7 +167,7 @@ export class GuidonMCPServer {
         formData.append("content", content);
         formData.append("memory_type", memoryType);
 
-        const result = await createMemory(projectId, {}, formData);
+        const result = await createMemory(projectId, { error: null }, formData);
         if (result.error) throw new Error(result.error);
         return {
           content: [{ type: "text", text: `Successfully added ${memoryType} to project memory.` }],

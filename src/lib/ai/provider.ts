@@ -70,7 +70,6 @@ export interface AICompletionInput {
   temperature?: number;
   projectId?: string;
 }
-}
 
 export interface AICompletionResult {
   text: string;

@@ -6,7 +6,7 @@ import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
-import { aiOrchestrator } from "@/lib/ai/orchestrator";
+import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isInsightRateLimited, recordInsightGeneration } from "@/lib/ai/insight-rate-limit";
 import type { MemoryType } from "@/types/context";
 
@@ -588,7 +588,7 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
 
   let text: string;
   try {
-    text = await aiOrchestrator.run({
+    const result = await provider.complete({
       system:
         "You are reviewing a software project's recorded facts, constraints, and decisions. " +
         "Point out ONE specific, non-obvious risk, gap, tension, or connection worth the team's " +
@@ -597,6 +597,7 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
       messages: [{ role: "user", content: contextBlock }],
       maxTokens: 300,
     });
+    text = result.text.trim();
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Failed to generate insight." };
   }

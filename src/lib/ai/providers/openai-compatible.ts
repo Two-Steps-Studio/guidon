@@ -172,13 +172,14 @@ export class OpenAICompatibleProvider implements AIProvider {
       model?: string;
     };
 
-    const message = data.choices?.[0]?.message;
+    const choice = data.choices?.[0];
+    const message = choice?.message;
 
     return {
       text: message?.content ?? "",
       model: data.model ?? this.model,
       provider: this.name,
-      stop_reason: message?.finish_reason as any,
+      stop_reason: choice?.finish_reason as AICompletionResult["stop_reason"],
       tool_calls: message?.tool_calls?.map((tc) => ({
         id: tc.id,
         name: tc.function.name,
