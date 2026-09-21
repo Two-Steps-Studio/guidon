@@ -8,11 +8,12 @@ import {
   PRIORITY_DOT_CLASSES,
   dueState,
   formatDueDate,
+  isDone,
   normalizeTaskPriority,
 } from "@/lib/work/task-board";
 import type { Task } from "@/types/task";
 import type { SubtaskProgress } from "@/lib/work/task-board";
-import { CalendarDays, ListChecks, MessageSquare } from "lucide-react";
+import { CalendarDays, CheckCircle2, ListChecks, MessageSquare } from "lucide-react";
 
 export interface TaskCardMember {
   id: string;
@@ -46,6 +47,9 @@ function descriptionPreview(description: string | null | undefined): string {
   if (!description) return "";
   return description
     .replace(/```[\s\S]*?```/g, " ")
+    .replace(/^\s*[-*+]\s+\[[xX]\]\s+/gm, "☑ ")
+    .replace(/^\s*[-*+]\s+\[ \]\s+/gm, "☐ ")
+    .replace(/^\s*[-*+]\s+/gm, "• ")
     .replace(/[#>*_~`|]/g, "")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
@@ -90,6 +94,7 @@ function TaskCardComponent({
   const t = useTranslations("work");
   const priority = normalizeTaskPriority(task.priority);
   const preview = descriptionPreview(task.description);
+  const done = isDone(task.status);
   const due = dueState(task.due_date, task.status);
   const tags = task.tags ?? [];
 
@@ -130,15 +135,25 @@ function TaskCardComponent({
         "hover:border-border-hover hover:bg-surface-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         draggable && "cursor-grab active:cursor-grabbing",
+        done && "opacity-70 hover:opacity-100",
         isDragging && "opacity-40"
       )}
     >
       <div className="flex items-start gap-2">
-        <span
-          aria-hidden
-          className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", PRIORITY_DOT_CLASSES[priority])}
-        />
-        <h4 className="flex-1 text-sm font-medium leading-snug text-foreground line-clamp-3">
+        {done ? (
+          <CheckCircle2 aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+        ) : (
+          <span
+            aria-hidden
+            className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", PRIORITY_DOT_CLASSES[priority])}
+          />
+        )}
+        <h4
+          className={cn(
+            "flex-1 text-sm font-medium leading-snug line-clamp-3",
+            done ? "text-muted-foreground line-through decoration-muted-foreground/50" : "text-foreground"
+          )}
+        >
           {task.title}
         </h4>
       </div>
