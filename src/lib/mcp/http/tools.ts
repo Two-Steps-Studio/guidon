@@ -10,6 +10,12 @@ import { POST as completeTask } from "@/app/api/v1/tasks/[taskId]/complete/route
 import { POST as commentOnTask } from "@/app/api/v1/tasks/[taskId]/comment/route";
 import { GET as getTaskContext } from "@/app/api/v1/tasks/[taskId]/context/route";
 import { GET as listAttempts, POST as recordAttempt } from "@/app/api/v1/tasks/[taskId]/attempts/route";
+import {
+  ATTEMPT_FILES_MAX,
+  ATTEMPT_FILE_PATH_MAX,
+  ATTEMPT_PR_URL_MAX,
+  ATTEMPT_TEXT_MAX,
+} from "@/lib/api/attempt-limits";
 import type { Dispatch } from "./dispatch";
 
 /**
@@ -216,14 +222,18 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
         "comment_on_task and set_task_status `review`. Requires the `attempts:write` scope.",
       inputSchema: {
         task_id: taskId,
-        problem: z.string().describe("What you were trying to solve (required)."),
-        approach: z.string().describe("What you did or tried (required)."),
+        problem: z.string().max(ATTEMPT_TEXT_MAX).describe("What you were trying to solve (required)."),
+        approach: z.string().max(ATTEMPT_TEXT_MAX).describe("What you did or tried (required)."),
         outcome: z.enum(["failed", "partial", "succeeded"]).describe("How it turned out."),
-        result: z.string().optional().describe("What the result was."),
-        failure_reason: z.string().optional().describe("Why it failed or only partly worked."),
-        agent: z.string().optional().describe("Name of the agent/tool recording this attempt."),
-        related_pr_url: z.string().optional().describe("http(s) URL of the related pull request."),
-        files_changed: z.array(z.string()).optional().describe("Paths of the files the attempt changed."),
+        result: z.string().max(ATTEMPT_TEXT_MAX).optional().describe("What the result was."),
+        failure_reason: z.string().max(ATTEMPT_TEXT_MAX).optional().describe("Why it failed or only partly worked."),
+        agent: z.string().max(ATTEMPT_TEXT_MAX).optional().describe("Name of the agent/tool recording this attempt."),
+        related_pr_url: z.string().max(ATTEMPT_PR_URL_MAX).optional().describe("http(s) URL of the related pull request."),
+        files_changed: z
+          .array(z.string().max(ATTEMPT_FILE_PATH_MAX))
+          .max(ATTEMPT_FILES_MAX)
+          .optional()
+          .describe(`Paths of the files the attempt changed (at most ${ATTEMPT_FILES_MAX}).`),
       },
       annotations: { title: "Record attempt", ...WRITE },
     },

@@ -63,10 +63,21 @@ export function createDispatch(origin: string, authorization: string): Dispatch 
       body = JSON.stringify(options.body);
     }
 
-    const response = await handler(new NextRequest(url, { method: options.method, headers, body }), {
-      params: Promise.resolve(params),
-    });
-    const text = await response.text();
+    let response: Response;
+    let text: string;
+    try {
+      response = await handler(new NextRequest(url, { method: options.method, headers, body }), {
+        params: Promise.resolve(params),
+      });
+      text = await response.text();
+    } catch (error) {
+      // A direct /api/v1 caller gets a generic 500 when a handler throws; the
+      // MCP SDK would instead hand the raw error.message (Postgres text, etc.)
+      // to the caller. Log server-side (never the request headers) and return
+      // the same generic message.
+      console.error(`[mcp] ${options.method} ${options.path} threw:`, error);
+      return { content: [{ type: "text", text: "Internal error (HTTP 500)" }], isError: true };
+    }
 
     if (!response.ok) {
       return { content: [{ type: "text", text: describeError(response.status, text) }], isError: true };
