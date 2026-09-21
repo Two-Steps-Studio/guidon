@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -407,6 +408,17 @@ namespace Guidon.Tasks.Editor
 
             card.Add(titleRow);
 
+            string preview = DescriptionPreview(task.description);
+            if (preview.Length > 0)
+            {
+                var descriptionLabel = new Label(preview);
+                GuidonStyles.StyleMutedLabel(descriptionLabel);
+                descriptionLabel.style.whiteSpace = WhiteSpace.Normal;
+                descriptionLabel.style.marginLeft = 14f;
+                descriptionLabel.style.marginBottom = 2f;
+                card.Add(descriptionLabel);
+            }
+
             if (task.tags != null && task.tags.Length > 0)
             {
                 card.Add(BuildTagsRow(task.tags));
@@ -419,6 +431,19 @@ namespace Guidon.Tasks.Editor
             card.RegisterCallback<PointerUpEvent>(evt => OnCardPointerUp(evt, task, card));
 
             return card;
+        }
+
+        /// <summary>One plain-text line of a markdown description for a card ("" when there is none) - the same preview the site's card shows under the title.</summary>
+        private static string DescriptionPreview(string description)
+        {
+            if (string.IsNullOrWhiteSpace(description)) return string.Empty;
+
+            string text = Regex.Replace(description, @"```[\s\S]*?```", " ");
+            text = Regex.Replace(text, @"\[([^\]]*)\]\([^)]*\)", "$1");
+            text = Regex.Replace(text, @"[#>*_~`|]", string.Empty);
+            text = Regex.Replace(text, @"\s+", " ").Trim();
+
+            return text.Length > 140 ? text.Substring(0, 140).TrimEnd() + "…" : text;
         }
 
         /// <summary>Task tags as small pills - mt-2 flex flex-wrap gap-1 pl-3.5 on the site, capped at 3 + "+N" the same way.</summary>
