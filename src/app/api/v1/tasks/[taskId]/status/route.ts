@@ -22,7 +22,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
-  const result = await setTaskStatus(guard.userId, taskId, status as TaskStatus, guard.botLabel);
+  const result = await setTaskStatus(guard.userId, taskId, status as TaskStatus, {
+    botLabel: guard.botLabel,
+    humanClient: guard.humanClient,
+  });
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json({ task: result.task });

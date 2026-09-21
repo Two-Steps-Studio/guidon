@@ -1619,5 +1619,66 @@ await withUser(C, async () => {
   check("po rozlaczeniu serwer mozna polaczyc z innym projektem", link.rows.length === 1, link.rows.length);
 });
 
+// ------------------------------------------------------------------
+section("27. api_keys.human_client ustawia tylko serwer + tasks_status_check przyjmuje ai_working (migracje 038, 039)");
+
+await expectRejected(
+  "zwykly uzytkownik NIE moze wstawic klucza z human_client = true",
+  () =>
+    withUser(A, () =>
+      db.query(
+        `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, human_client)
+         VALUES ($1, 'sam sobie', 'guidon_hc01', 'hash-human-client-user', '{tasks:read}', true)`,
+        [A]
+      )
+    ),
+  /permission denied/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes)
+     VALUES ($1, 'zwykly klucz', 'guidon_hc02', 'hash-human-client-default', '{tasks:read}')
+     RETURNING human_client`,
+    [A]
+  );
+  check("klucz utworzony przez uzytkownika ma human_client = false", rows[0]?.human_client === false, JSON.stringify(rows));
+});
+
+let humanKeyId;
+await withServiceRole(async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, human_client)
+     VALUES ($1, 'Unity Plugin', 'guidon_hc03', 'hash-human-client-server', '{tasks:read}', true)
+     RETURNING id, human_client`,
+    [A]
+  );
+  humanKeyId = rows[0]?.id;
+  check("serwer (service_role) moze wystawic klucz human_client = true", rows[0]?.human_client === true, JSON.stringify(rows));
+});
+
+await expectRejected(
+  "wlasciciel NIE moze zmienic human_client istniejacego klucza (UPDATE tylko revoked_at)",
+  () => withUser(A, () => db.query("UPDATE public.api_keys SET human_client = true WHERE id = $1", [humanKeyId])),
+  /permission denied/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'ai_working przechodzi', 'ai_working') RETURNING status",
+    [projectId]
+  );
+  check("tasks_status_check przyjmuje status ai_working", rows[0]?.status === "ai_working", JSON.stringify(rows));
+});
+
+await expectRejected(
+  "tasks_status_check nadal odrzuca nieznany status",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'zly status', 'nie_ma_takiego')", [projectId])
+    ),
+  /check constraint|tasks_status_check/i
+);
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

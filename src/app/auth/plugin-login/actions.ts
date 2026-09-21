@@ -3,8 +3,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
-import { createClient } from "@/lib/supabase-server";
+import { withServiceRole } from "@/lib/db/session";
+import { createServiceClient } from "@/lib/supabase-server";
 import { generateApiKey, hashApiKey, keyPrefix } from "@/lib/api/api-keys";
 import type { ApiKeyScope } from "@/lib/api/scopes";
 import { isSafeLoopbackRedirect } from "./loopback";
@@ -24,6 +24,12 @@ const PLUGIN_KEY_NAME = "Unity Plugin";
  * keeps Profile > API Keys from accumulating dead entries), then insert a
  * fresh one and hand it to the waiting local listener via a redirect.
  *
+ * The key is marked human_client (migration 039): the plugin is operated by
+ * the signed-in person, so the API's AI-agent gates do not apply to it. Only
+ * the server may set that column (INSERT is column-restricted for
+ * `authenticated`), hence the service role below - scoped strictly to the
+ * user id resolved from the verified session above, never from input.
+ *
  * redirectUri is re-validated here (not just on the page) since this is the
  * actual point where a key would leak if it weren't loopback-only - a page
  * render alone enforces nothing.
@@ -40,19 +46,19 @@ export async function authorizePluginLogin(redirectUri: string, state: string): 
   const prefix = keyPrefix(fullKey);
 
   if (hasDirectDatabase()) {
-    await withUser(user.id, async ({ query }) => {
+    await withServiceRole(async ({ query }) => {
       await query(
         "UPDATE api_keys SET revoked_at = now() WHERE user_id = $1 AND name = $2 AND revoked_at IS NULL",
         [user.id, PLUGIN_KEY_NAME]
       );
       await query(
-        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes)
-         VALUES ($1, $2, $3, $4, $5)`,
+        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, human_client)
+         VALUES ($1, $2, $3, $4, $5, true)`,
         [user.id, PLUGIN_KEY_NAME, prefix, hash, PLUGIN_KEY_SCOPES]
       );
     });
   } else {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     await supabase
       .from("api_keys")
       .update({ revoked_at: new Date().toISOString() })
@@ -66,6 +72,7 @@ export async function authorizePluginLogin(redirectUri: string, state: string): 
       key_prefix: prefix,
       key_hash: hash,
       scopes: PLUGIN_KEY_SCOPES,
+      human_client: true,
     });
     if (error) throw new Error(error.message);
   }

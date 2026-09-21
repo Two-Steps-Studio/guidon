@@ -12,6 +12,8 @@ export interface ApiKeyIdentity {
   apiKeyId: string;
   scopes: string[];
   botLabel: string | null;
+  /** Key issued to a human-operated client (Unity plugin, migration 039) - skips the AI-agent gates. */
+  humanClient: boolean;
 }
 
 /**
@@ -37,12 +39,12 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
   if (hasDirectDatabase()) {
     const result = await withServiceRole(({ query }) =>
       query(
-        "SELECT id, user_id, scopes, bot_label FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
+        "SELECT id, user_id, scopes, bot_label, human_client FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
         [keyHash]
       )
     );
     const key = result.rows[0] as
-      | { id: string; user_id: string; scopes: string[]; bot_label: string | null }
+      | { id: string; user_id: string; scopes: string[]; bot_label: string | null; human_client: boolean }
       | undefined;
     if (!key) return null;
 
@@ -51,7 +53,13 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
         query("UPDATE api_keys SET last_used_at = now() WHERE id = $1", [key.id])
       )
     );
-    return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes, botLabel: key.bot_label };
+    return {
+      userId: key.user_id,
+      apiKeyId: key.id,
+      scopes: key.scopes,
+      botLabel: key.bot_label,
+      humanClient: key.human_client === true,
+    };
   }
 
   const { createServiceClient } = await import("@/lib/supabase-server");
@@ -59,7 +67,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
 
   const { data: key } = await supabase
     .from("api_keys")
-    .select("id, user_id, scopes, bot_label")
+    .select("id, user_id, scopes, bot_label, human_client")
     .eq("key_hash", keyHash)
     .is("revoked_at", null)
     .single();
@@ -67,7 +75,13 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
   if (!key) return null;
 
   after(() => supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id));
-  return { userId: key.user_id, apiKeyId: key.id, scopes: key.scopes, botLabel: key.bot_label };
+  return {
+    userId: key.user_id,
+    apiKeyId: key.id,
+    scopes: key.scopes,
+    botLabel: key.bot_label,
+    humanClient: key.human_client === true,
+  };
 }
 
 /**

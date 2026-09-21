@@ -85,7 +85,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           "SELECT can_create_comments FROM project_ai_permissions WHERE project_id = $1",
           [task.rows[0].project_id]
         );
-        if (perms.rows[0] && !perms.rows[0].can_create_comments) return "forbidden";
+        if (!guard.humanClient && perms.rows[0] && !perms.rows[0].can_create_comments) return "forbidden";
 
         const comment = await query(
           `INSERT INTO task_comments (task_id, author_id, content, actor_label) VALUES ($1, $2, $3, $4) RETURNING *`,
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq("project_id", task.project_id)
     .maybeSingle();
 
-  if (perms && !perms.can_create_comments) {
+  if (!guard.humanClient && perms && !perms.can_create_comments) {
     return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
   }
 
