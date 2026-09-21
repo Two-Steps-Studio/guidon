@@ -673,9 +673,23 @@
     "discordWebhookHint": "En Discord: configuración del canal → Integraciones → Webhooks → Nuevo webhook, luego pega aquí su URL.",
     "discordNotLinked": "No conectado a ningún servidor de Discord",
     "discordLinkedGuildUnnamed": "Conectado a un servidor de Discord",
-    "discordConnectButton": "Conectar con Discord",
-    "discordReconnect": "Reconectar / cambiar de servidor",
+    "discordLinkInstructions": "Para vincular un servidor de Discord, añade el bot de Guidon, ejecuta /guidon-link en ese servidor y elige este proyecto en la página que se abre.",
     "discordJustConnected": "¡Conectado! Prueba /task list en tu servidor de Discord."
+  },
+  "discordLink": {
+    "title": "Vincular {guild} a un proyecto",
+    "description": "Elige el proyecto al que se conectará {guild}. Los miembros del servidor podrán usar los comandos /task de ese proyecto.",
+    "unnamedServer": "este servidor de Discord",
+    "unknownOrganization": "Otros proyectos",
+    "linkedBadge": "Vinculado a {guild}",
+    "linkedElsewhereWarning": "Este proyecto ya está vinculado al servidor de Discord «{guild}». Al elegirlo se reemplaza su vínculo actual con Discord.",
+    "confirm": "Vincular este proyecto",
+    "genericError": "No se pudo vincular el servidor de Discord. Inténtalo de nuevo.",
+    "emptyTitle": "No administras ningún proyecto",
+    "emptyDescription": "Solo los propietarios y administradores de un proyecto pueden vincularle un servidor de Discord. Pide a un administrador que lo vincule o crea primero un proyecto.",
+    "invalidTitle": "Este enlace ha caducado",
+    "invalidDescription": "El enlace no es válido o tiene más de 10 minutos. Ejecuta /guidon-link de nuevo en tu servidor de Discord para obtener uno nuevo.",
+    "toProjects": "Ir a proyectos"
   },
   "context": {
     "title": "Capa de contexto",

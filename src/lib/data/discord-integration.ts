@@ -119,11 +119,10 @@ export async function getDiscordWebhookUrl(
 }
 
 /**
- * Sets (or replaces) the project's notification webhook - the only field
- * the web app itself ever writes to this table. `guild_id`/`guild_name`/
- * `linked_api_key_encrypted` are set exclusively by discord-bot/'s own
- * direct DB connection when someone runs `/guidon link` - see
- * 035_discord_integration.sql's comment block for the full split.
+ * Sets (or replaces) the project's notification webhook - the only
+ * column this function touches. The guild fields are written by
+ * linkDiscordGuildToProject below (the /discord/link confirmation page) -
+ * see 035_discord_integration.sql's comment block for the column split.
  */
 export async function saveDiscordWebhookUrl(projectId: string, userId: string, webhookUrl: string): Promise<void> {
   const encrypted = encryptSecret(webhookUrl, DISCORD_WEBHOOK_KEY_INFO);

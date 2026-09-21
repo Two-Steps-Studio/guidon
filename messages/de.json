@@ -673,9 +673,23 @@
     "discordWebhookHint": "In Discord: Kanaleinstellungen → Integrationen → Webhooks → Neuer Webhook, dann die URL hier einfügen.",
     "discordNotLinked": "Mit keinem Discord-Server verbunden",
     "discordLinkedGuildUnnamed": "Mit einem Discord-Server verbunden",
-    "discordConnectButton": "Mit Discord verbinden",
-    "discordReconnect": "Erneut verbinden / Server wechseln",
+    "discordLinkInstructions": "Um einen Discord-Server zu verknüpfen, füge den Guidon-Bot hinzu, führe auf diesem Server /guidon-link aus und wähle auf der geöffneten Seite dieses Projekt aus.",
     "discordJustConnected": "Verbunden! Probiere /task list auf deinem Discord-Server aus."
+  },
+  "discordLink": {
+    "title": "{guild} mit einem Projekt verknüpfen",
+    "description": "Wähle das Projekt, mit dem {guild} verbunden werden soll. Mitglieder des Servers können dann die /task-Befehle für dieses Projekt nutzen.",
+    "unnamedServer": "diesen Discord-Server",
+    "unknownOrganization": "Weitere Projekte",
+    "linkedBadge": "Verknüpft mit {guild}",
+    "linkedElsewhereWarning": "Dieses Projekt ist bereits mit dem Discord-Server „{guild}“ verknüpft. Wenn du es auswählst, wird seine bestehende Discord-Verknüpfung ersetzt.",
+    "confirm": "Mit diesem Projekt verknüpfen",
+    "genericError": "Der Discord-Server konnte nicht verknüpft werden. Bitte versuche es erneut.",
+    "emptyTitle": "Du verwaltest kein Projekt",
+    "emptyDescription": "Nur Inhaber und Admins eines Projekts können einen Discord-Server damit verknüpfen. Bitte einen Admin darum oder erstelle zuerst ein Projekt.",
+    "invalidTitle": "Dieser Link ist abgelaufen",
+    "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-link auf deinem Discord-Server erneut aus, um einen neuen zu erhalten.",
+    "toProjects": "Zu den Projekten"
   },
   "context": {
     "title": "Kontextebene",

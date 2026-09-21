@@ -673,9 +673,23 @@
     "discordWebhookHint": "In Discord: channel settings → Integrations → Webhooks → New Webhook, then copy its URL here.",
     "discordNotLinked": "Not connected to any Discord server",
     "discordLinkedGuildUnnamed": "Linked to a Discord server",
-    "discordConnectButton": "Connect to Discord",
-    "discordReconnect": "Reconnect / switch server",
+    "discordLinkInstructions": "To link a Discord server, add the Guidon bot to it, then run /guidon-link in that server and choose this project on the page it opens.",
     "discordJustConnected": "Connected! Try /task list in your Discord server."
+  },
+  "discordLink": {
+    "title": "Link {guild} to a project",
+    "description": "Choose the project that {guild} should be connected to. Members of the server will be able to use the /task commands for that project.",
+    "unnamedServer": "this Discord server",
+    "unknownOrganization": "Other projects",
+    "linkedBadge": "Linked to {guild}",
+    "linkedElsewhereWarning": "This project is already linked to the Discord server \"{guild}\". Choosing it replaces its current Discord link.",
+    "confirm": "Link this project",
+    "genericError": "Could not link the Discord server. Please try again.",
+    "emptyTitle": "You don't manage any project",
+    "emptyDescription": "Only owners and admins of a project can link a Discord server to it. Ask an admin to link it, or create a project first.",
+    "invalidTitle": "This link has expired",
+    "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-link in your Discord server again to get a new one.",
+    "toProjects": "Go to projects"
   },
   "context": {
     "title": "Context Layer",
