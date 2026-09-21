@@ -985,7 +985,18 @@
     "integrationsDescription": "Tools, die sich außerhalb des Browsers mit Guidon verbinden.",
     "unityPluginTitle": "Unity-Editor-Plugin",
     "unityPluginDescription": "Aufgaben direkt im Unity-Editor ansehen, erstellen und bearbeiten - mit Drag-and-Drop, Unteraufgaben und Kommentaren. Kopiere den Plugin-Ordner in dein Projekt und melde dich mit deinem Guidon-Konto an.",
-    "viewOnGithubButton": "Auf GitHub ansehen"
+    "viewOnGithubButton": "Auf GitHub ansehen",
+    "claudeCodeTitle": "Claude Code (MCP)",
+    "claudeCodeDescription": "Lass Claude Code deine Aufgaben lesen, erledigen und in Guidon aktualisieren. Ein Klick erstellt einen Schlüssel mit den passenden Rechten und gibt dir den Befehl für dein Terminal.",
+    "claudeCodeCreateButton": "Claude Code verbinden",
+    "claudeCodeCreating": "Schlüssel wird erstellt...",
+    "claudeCodeError": "Der Verbindungsschlüssel konnte nicht erstellt werden. Versuche es erneut.",
+    "claudeCodeStep1": "1. Führe dies im Terminal aus (Claude Code muss installiert sein)",
+    "claudeCodeKeyOnce": "Der Befehl enthält deinen neuen Schlüssel und wird nur einmal angezeigt. Kopiere ihn jetzt. Du kannst den Schlüssel jederzeit oben unter API-Schlüssel widerrufen.",
+    "claudeCodeStep2": "2. Prüfe die Verbindung - Guidon sollte als verbunden aufgelistet sein",
+    "claudeCodeStep3": "3. Starte Claude Code und probiere diesen Prompt",
+    "claudeCodeTryPrompt": "Liste meine Guidon-Projekte auf, zeige die Aufgaben unter To do und beginne mit der wichtigsten.",
+    "claudeCodeCopy": "Kopieren"
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",

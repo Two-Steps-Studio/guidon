@@ -985,7 +985,18 @@
     "integrationsDescription": "Tools that connect to Guidon from outside the browser.",
     "unityPluginTitle": "Unity Editor Plugin",
     "unityPluginDescription": "View, create, and edit tasks - with drag-and-drop, subtasks, and comments - right inside the Unity Editor. Copy the plugin folder into your project and log in with your Guidon account.",
-    "viewOnGithubButton": "View on GitHub"
+    "viewOnGithubButton": "View on GitHub",
+    "claudeCodeTitle": "Claude Code (MCP)",
+    "claudeCodeDescription": "Let Claude Code read your tasks, do the work and update them in Guidon. One click creates a key with the right permissions and gives you the command to paste into your terminal.",
+    "claudeCodeCreateButton": "Connect Claude Code",
+    "claudeCodeCreating": "Creating key...",
+    "claudeCodeError": "Could not create the connection key. Try again.",
+    "claudeCodeStep1": "1. Run this in your terminal (Claude Code must be installed)",
+    "claudeCodeKeyOnce": "The command contains your new key and is shown only once. Copy it now. You can revoke the key any time in API keys above.",
+    "claudeCodeStep2": "2. Check that it connected - Guidon should be listed as connected",
+    "claudeCodeStep3": "3. Start Claude Code and try this prompt",
+    "claudeCodeTryPrompt": "List my Guidon projects, show the tasks in To do, and start on the highest priority one.",
+    "claudeCodeCopy": "Copy"
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",

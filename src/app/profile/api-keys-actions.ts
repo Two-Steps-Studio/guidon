@@ -42,6 +42,43 @@ export async function listApiKeys(): Promise<ApiKeyRow[]> {
 
 export type CreateApiKeyState = { error: string | null; fullKey: string | null; row: ApiKeyRow | null };
 
+async function mintApiKey(userId: string, name: string, scopes: string[]): Promise<CreateApiKeyState> {
+  const fullKey = generateApiKey();
+  const hash = hashApiKey(fullKey);
+  const prefix = keyPrefix(fullKey);
+
+  // Returned to the caller (not just revalidatePath'd) so the client
+  // component can append the new key to its list immediately - it holds
+  // `keys` in useState seeded from the initial server render, which
+  // revalidatePath() alone doesn't update without a remount.
+  let row: ApiKeyRow;
+
+  if (hasDirectDatabase()) {
+    const result = await withUser(userId, ({ query }) =>
+      query(
+        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, name, key_prefix, scopes, created_at, last_used_at, revoked_at`,
+        [userId, name, prefix, hash, scopes]
+      )
+    );
+    row = result.rows[0] as ApiKeyRow;
+  } else {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("api_keys")
+      .insert({ user_id: userId, name, key_prefix: prefix, key_hash: hash, scopes })
+      .select("id, name, key_prefix, scopes, created_at, last_used_at, revoked_at")
+      .single();
+
+    if (error) return { error: error.message, fullKey: null, row: null };
+    row = data as ApiKeyRow;
+  }
+
+  revalidatePath("/profile");
+  return { error: null, fullKey, row };
+}
+
 export async function createApiKey(
   _prevState: CreateApiKeyState,
   formData: FormData
@@ -58,40 +95,25 @@ export async function createApiKey(
     return { error: "Select at least one scope.", fullKey: null, row: null };
   }
 
-  const fullKey = generateApiKey();
-  const hash = hashApiKey(fullKey);
-  const prefix = keyPrefix(fullKey);
+  return mintApiKey(user.id, name.trim(), selectedScopes);
+}
 
-  // Returned to the caller (not just revalidatePath'd) so the client
-  // component can append the new key to its list immediately - it holds
-  // `keys` in useState seeded from the initial server render, which
-  // revalidatePath() alone doesn't update without a remount.
-  let row: ApiKeyRow;
+// Everything the MCP endpoint's tools can call (src/lib/mcp/http/tools.ts) -
+// the Profile "Connect Claude Code" card creates a key with exactly this set
+// so nobody has to know which scopes the tools need.
+const CLAUDE_CODE_MCP_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"];
 
-  if (hasDirectDatabase()) {
-    const result = await withUser(user.id, ({ query }) =>
-      query(
-        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING id, name, key_prefix, scopes, created_at, last_used_at, revoked_at`,
-        [user.id, name.trim(), prefix, hash, selectedScopes]
-      )
-    );
-    row = result.rows[0] as ApiKeyRow;
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("api_keys")
-      .insert({ user_id: user.id, name: name.trim(), key_prefix: prefix, key_hash: hash, scopes: selectedScopes })
-      .select("id, name, key_prefix, scopes, created_at, last_used_at, revoked_at")
-      .single();
+export async function createClaudeCodeConnectionKey(): Promise<{ error: string | null; fullKey: string | null }> {
+  const user = await getCurrentUser();
+  const date = new Date().toISOString().slice(0, 10);
 
-    if (error) return { error: error.message, fullKey: null, row: null };
-    row = data as ApiKeyRow;
+  try {
+    const result = await mintApiKey(user.id, `Claude Code (MCP) ${date}`, CLAUDE_CODE_MCP_SCOPES);
+    return { error: result.error, fullKey: result.fullKey };
+  } catch (error) {
+    console.error("Failed to create the Claude Code connection key:", error);
+    return { error: "Could not create the key. Try again.", fullKey: null };
   }
-
-  revalidatePath("/profile");
-  return { error: null, fullKey, row };
 }
 
 export async function revokeApiKey(keyId: string): Promise<{ error: string | null }> {
