@@ -39,6 +39,8 @@ import {
   type BoardColumn,
 } from "@/lib/work/task-board";
 import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
+import { DescriptionToolbar, descriptionKeyDown } from "@/components/work/description-toolbar";
+import { toggleTaskAtLine, type EditResult } from "@/lib/work/markdown-edit";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
 interface TaskDetailDialogProps {
@@ -121,6 +123,17 @@ export function TaskDetailDialog({
   // Defaults to editing (today's behavior unchanged) - Markdown preview is
   // opt-in per open dialog, not remembered across tasks.
   const [previewingDescription, setPreviewingDescription] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const applyDescriptionEdit = (result: EditResult) => {
+    setForm((current) => (current ? { ...current, description: result.value } : current));
+    // The controlled value lands on the next render; put the caret back after it.
+    requestAnimationFrame(() => {
+      const el = descriptionRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(result.selectionStart, result.selectionEnd);
+    });
+  };
 
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
@@ -485,19 +498,41 @@ export function TaskDetailDialog({
             </div>
             {previewingDescription ? (
               <div className="max-h-64 overflow-y-auto rounded-md border border-input">
-                <MarkdownPreview content={form.description || t("descriptionPlaceholder2")} />
+                <MarkdownPreview
+                  content={form.description || t("descriptionPlaceholder2")}
+                  onToggleTask={
+                    canEdit && form.description
+                      ? (line, checked) =>
+                          setForm((current) =>
+                            current
+                              ? { ...current, description: toggleTaskAtLine(current.description, line, checked) }
+                              : current
+                          )
+                      : undefined
+                  }
+                />
               </div>
             ) : (
-              <Textarea
-                id="task-description"
-                rows={4}
-                value={form.description}
-                disabled={!canEdit}
-                placeholder={t("descriptionPlaceholder2")}
-                onChange={(event) =>
-                  setForm({ ...form, description: event.target.value })
-                }
-              />
+              <>
+                {canEdit && (
+                  <DescriptionToolbar
+                    textareaRef={descriptionRef}
+                    apply={applyDescriptionEdit}
+                  />
+                )}
+                <Textarea
+                  id="task-description"
+                  ref={descriptionRef}
+                  rows={6}
+                  value={form.description}
+                  disabled={!canEdit}
+                  placeholder={t("descriptionPlaceholder2")}
+                  onChange={(event) =>
+                    setForm({ ...form, description: event.target.value })
+                  }
+                  onKeyDown={(event) => descriptionKeyDown(event, applyDescriptionEdit)}
+                />
+              </>
             )}
           </div>
 

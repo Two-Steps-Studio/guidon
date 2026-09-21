@@ -543,7 +543,16 @@
     "failedToGenerateAgentContext": "Nie udało się wygenerować kontekstu agenta",
     "failedToRecordAttempt": "Nie udało się zapisać próby",
     "failedToDeleteAttempt": "Nie udało się usunąć próby",
-    "unknownMember": "Nieznany członek"
+    "unknownMember": "Nieznany członek",
+    "formatToolbar": "Formatowanie tekstu",
+    "formatBold": "Pogrubienie (Ctrl+B)",
+    "formatItalic": "Kursywa (Ctrl+I)",
+    "formatHeading": "Nagłówek",
+    "formatBulletList": "Lista punktowana",
+    "formatNumberedList": "Lista numerowana",
+    "formatTaskList": "Lista zadań",
+    "formatCode": "Kod",
+    "formatLink": "Link"
   },
   "roadmap": {
     "title": "Plan działań",

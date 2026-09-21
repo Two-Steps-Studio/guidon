@@ -543,7 +543,16 @@
     "failedToGenerateAgentContext": "Agentenkontext konnte nicht erstellt werden",
     "failedToRecordAttempt": "Versuch konnte nicht gespeichert werden",
     "failedToDeleteAttempt": "Versuch konnte nicht gelöscht werden",
-    "unknownMember": "Unbekanntes Mitglied"
+    "unknownMember": "Unbekanntes Mitglied",
+    "formatToolbar": "Textformatierung",
+    "formatBold": "Fett (Strg+B)",
+    "formatItalic": "Kursiv (Strg+I)",
+    "formatHeading": "Überschrift",
+    "formatBulletList": "Aufzählung",
+    "formatNumberedList": "Nummerierte Liste",
+    "formatTaskList": "Aufgabenliste",
+    "formatCode": "Code",
+    "formatLink": "Link"
   },
   "roadmap": {
     "title": "Roadmap",

@@ -543,7 +543,16 @@
     "failedToGenerateAgentContext": "No se pudo generar el contexto del agente",
     "failedToRecordAttempt": "No se pudo registrar el intento",
     "failedToDeleteAttempt": "No se pudo eliminar el intento",
-    "unknownMember": "Miembro desconocido"
+    "unknownMember": "Miembro desconocido",
+    "formatToolbar": "Formato de texto",
+    "formatBold": "Negrita (Ctrl+B)",
+    "formatItalic": "Cursiva (Ctrl+I)",
+    "formatHeading": "Encabezado",
+    "formatBulletList": "Lista con viñetas",
+    "formatNumberedList": "Lista numerada",
+    "formatTaskList": "Lista de tareas",
+    "formatCode": "Código",
+    "formatLink": "Enlace"
   },
   "roadmap": {
     "title": "Hoja de ruta",

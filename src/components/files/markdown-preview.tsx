@@ -1,14 +1,49 @@
 "use client";
 
+import { createContext, useContext } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+/** Source line (0-based) of the task-list item currently being rendered, for its checkbox. */
+const TaskLineContext = createContext<number | null>(null);
+
+function TaskCheckbox({
+  checked,
+  onToggle,
+}: {
+  checked: boolean;
+  onToggle?: (line: number, checked: boolean) => void;
+}) {
+  const line = useContext(TaskLineContext);
+  const interactive = Boolean(onToggle) && line !== null;
+
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      disabled={!interactive}
+      readOnly={!interactive}
+      onChange={(event) => {
+        if (onToggle && line !== null) onToggle(line, event.target.checked);
+      }}
+      className={interactive ? "mr-2 cursor-pointer align-middle" : "mr-2 align-middle"}
+    />
+  );
+}
 
 /**
  * Rendered .md preview for the code workspace - manual `components` styling
  * rather than @tailwindcss/typography (not a dependency here) so headings,
  * links, etc. pick up Guidon's own color tokens instead of prose defaults.
  */
-export function MarkdownPreview({ content }: { content: string }) {
+export function MarkdownPreview({
+  content,
+  onToggleTask,
+}: {
+  content: string;
+  /** When set, task-list checkboxes are clickable; called with the checkbox's source line (0-based). */
+  onToggleTask?: (line: number, checked: boolean) => void;
+}) {
   return (
     <div className="h-full overflow-auto px-6 py-4 text-sm leading-relaxed text-foreground">
       <ReactMarkdown
@@ -20,7 +55,31 @@ export function MarkdownPreview({ content }: { content: string }) {
           h4: (props) => <h4 className="mb-2 mt-4 text-base font-semibold first:mt-0" {...props} />,
           p: (props) => <p className="mb-4 last:mb-0" {...props} />,
           a: (props) => <a className="text-primary underline hover:no-underline" target="_blank" rel="noreferrer" {...props} />,
-          ul: (props) => <ul className="mb-4 list-disc space-y-1 pl-6" {...props} />,
+          ul: ({ className, ...props }) => (
+            <ul
+              className={
+                className?.includes("contains-task-list")
+                  ? "mb-4 space-y-1 pl-1"
+                  : "mb-4 list-disc space-y-1 pl-6"
+              }
+              {...props}
+            />
+          ),
+          li: ({ node, className, children, ...props }) => {
+            const isTask = className?.includes("task-list-item") ?? false;
+            const line = node?.position?.start.line;
+            return (
+              <li className={isTask ? "list-none" : className} {...props}>
+                {isTask && line ? (
+                  <TaskLineContext.Provider value={line - 1}>{children}</TaskLineContext.Provider>
+                ) : (
+                  children
+                )}
+              </li>
+            );
+          },
+          input: ({ type, checked }) =>
+            type === "checkbox" ? <TaskCheckbox checked={Boolean(checked)} onToggle={onToggleTask} /> : null,
           ol: (props) => <ol className="mb-4 list-decimal space-y-1 pl-6" {...props} />,
           blockquote: (props) => (
             <blockquote className="mb-4 border-l-2 border-border pl-4 text-muted-foreground" {...props} />

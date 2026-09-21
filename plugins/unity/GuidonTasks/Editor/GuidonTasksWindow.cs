@@ -439,6 +439,9 @@ namespace Guidon.Tasks.Editor
             if (string.IsNullOrWhiteSpace(description)) return string.Empty;
 
             string text = Regex.Replace(description, @"```[\s\S]*?```", " ");
+            text = Regex.Replace(text, @"(?m)^\s*[-*+]\s+\[[xX]\]\s+", "☑ ");
+            text = Regex.Replace(text, @"(?m)^\s*[-*+]\s+\[ \]\s+", "☐ ");
+            text = Regex.Replace(text, @"(?m)^\s*[-*+]\s+", "• ");
             text = Regex.Replace(text, @"\[([^\]]*)\]\([^)]*\)", "$1");
             text = Regex.Replace(text, @"[#>*_~`|]", string.Empty);
             text = Regex.Replace(text, @"\s+", " ").Trim();

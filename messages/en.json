@@ -543,7 +543,16 @@
     "failedToGenerateAgentContext": "Failed to generate agent context",
     "failedToRecordAttempt": "Failed to record attempt",
     "failedToDeleteAttempt": "Failed to delete attempt",
-    "unknownMember": "Unknown member"
+    "unknownMember": "Unknown member",
+    "formatToolbar": "Text formatting",
+    "formatBold": "Bold (Ctrl+B)",
+    "formatItalic": "Italic (Ctrl+I)",
+    "formatHeading": "Heading",
+    "formatBulletList": "Bulleted list",
+    "formatNumberedList": "Numbered list",
+    "formatTaskList": "Task list",
+    "formatCode": "Code",
+    "formatLink": "Link"
   },
   "roadmap": {
     "title": "Roadmap",
