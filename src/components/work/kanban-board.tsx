@@ -260,7 +260,6 @@ export function KanbanBoard({
                     onReorder={canDrag ? handleReorder : undefined}
                     canMoveUp={index > 0}
                     canMoveDown={index < columnTasks.length - 1}
-                    projectColor={projectColor}
                   />
                 </div>
               ))}

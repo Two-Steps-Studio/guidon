@@ -39,7 +39,17 @@ interface TaskCardProps {
   onReorder?: (task: Task, direction: "up" | "down") => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
-  projectColor?: string;
+}
+
+/** One plain-text line of a (markdown) description for the card, or "" when there is none. */
+function descriptionPreview(description: string | null | undefined): string {
+  if (!description) return "";
+  return description
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[#>*_~`|]/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function initialsFor(member: TaskCardMember): string {
@@ -76,10 +86,10 @@ function TaskCardComponent({
   onReorder,
   canMoveUp = false,
   canMoveDown = false,
-  projectColor,
 }: TaskCardProps) {
   const t = useTranslations("work");
   const priority = normalizeTaskPriority(task.priority);
+  const preview = descriptionPreview(task.description);
   const due = dueState(task.due_date, task.status);
   const tags = task.tags ?? [];
 
@@ -126,16 +136,16 @@ function TaskCardComponent({
       <div className="flex items-start gap-2">
         <span
           aria-hidden
-          className={cn(
-            "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-            projectColor ? "" : PRIORITY_DOT_CLASSES[priority]
-          )}
-          style={projectColor ? { backgroundColor: projectColor } : undefined}
+          className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", PRIORITY_DOT_CLASSES[priority])}
         />
         <h4 className="flex-1 text-sm font-medium leading-snug text-foreground line-clamp-3">
           {task.title}
         </h4>
       </div>
+
+      {preview && (
+        <p className="mt-1 pl-3.5 text-xs leading-snug text-muted-foreground line-clamp-2">{preview}</p>
+      )}
 
       {tags.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-1 pl-3.5">
