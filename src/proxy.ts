@@ -28,6 +28,12 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // actual file, so the site was effectively unindexable.
   '/robots.txt',
   '/sitemap.xml',
+  // The MCP endpoint (Claude Code and other MCP clients) authenticates with
+  // the same `Authorization: Bearer` API key as /api/v1 - it checks the key
+  // itself and 401s without one - and never carries a session cookie, so the
+  // login redirect below would make it unreachable. Exact match: it is a
+  // single POST-only route with no sub-paths.
+  '/api/mcp',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every
