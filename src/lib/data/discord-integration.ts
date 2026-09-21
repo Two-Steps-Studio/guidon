@@ -178,6 +178,8 @@ export type LinkDiscordGuildResult = { ok: true } | { ok: false; error: string }
 export const DISCORD_GUILD_LINKED_ELSEWHERE_ERROR =
   "This server is linked to a project you don't manage; ask an admin of that project to disconnect it first";
 
+type LinkWriteError = { code?: string; message: string; details?: string };
+
 /** Thrown inside a link transaction so it rolls back; never escapes this module. */
 class LinkFailure extends Error {}
 
@@ -188,9 +190,17 @@ class LinkFailure extends Error {}
  */
 function isGuildUniqueViolation(error: unknown): boolean {
   if (typeof error !== "object" || error === null) return false;
-  const { code, constraint } = error as { code?: unknown; constraint?: unknown };
+  const { code, constraint, details, message } = error as {
+    code?: unknown;
+    constraint?: unknown;
+    details?: unknown;
+    message?: unknown;
+  };
   if (code !== "23505") return false;
-  return typeof constraint !== "string" || constraint.includes("guild_id");
+  // pg exposes `constraint`; PostgREST puts the constraint name in `message`
+  // and the offending column in `details` ("Key (guild_id)=(...) already
+  // exists."). A primary-key conflict (project_id) must NOT match.
+  return [constraint, details, message].some((part) => typeof part === "string" && part.includes("guild_id"));
 }
 
 /**
@@ -224,6 +234,8 @@ export async function linkDiscordGuildToProject(
   const prefix = keyPrefix(rawKey);
   const encryptedKey = encryptSecret(rawKey, DISCORD_BOT_KEY_INFO);
   const keyName = `Discord bot (auto-created ${new Date().toISOString().slice(0, 10)})`;
+  // An empty name means "no name" - never store guild_name = ''.
+  const normalizedName = guildName?.trim() || null;
 
   if (hasDirectDatabase()) {
     try {
@@ -250,7 +262,7 @@ export async function linkDiscordGuildToProject(
              linked_by = $5,
              updated_at = now()
            RETURNING project_id`,
-          [projectId, guildId, guildName, encryptedKey, userId]
+          [projectId, guildId, normalizedName, encryptedKey, userId]
         );
         if (link.rows.length !== 1) throw new LinkFailure("Could not link the Discord server to this project.");
 
@@ -271,8 +283,11 @@ export async function linkDiscordGuildToProject(
   }
 
   // Supabase: no multi-statement transaction through PostgREST, so calls are
-  // sequential and the key is created first and revoked again if the link
-  // itself fails (never leave an active key that nothing uses).
+  // sequential. The key is created first (its encrypted value is what the
+  // link stores) and revoked again if the link fails, so no active key is
+  // left behind. The clear of the previous project's link comes as late as
+  // possible - right before the new link is written - to keep the non-atomic
+  // window small.
   const supabase = await createClient();
 
   const { data: keyRow, error: keyError } = await supabase
@@ -288,14 +303,30 @@ export async function linkDiscordGuildToProject(
     .select("id")
     .single();
   if (keyError || !keyRow) {
-    throw new Error(`Failed to create the Discord bot's API key: ${keyError?.message ?? "no row returned"}`);
+    console.error("linkDiscordGuildToProject: creating the bot's API key failed:", keyError);
+    throw new Error("Failed to create the Discord bot's API key");
   }
 
   const revokeKey = async () => {
-    await supabase.from("api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", keyRow.id);
+    const { error } = await supabase
+      .from("api_keys")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("id", keyRow.id);
+    if (error) {
+      console.error(`linkDiscordGuildToProject: could not revoke the unused API key ${keyRow.id}:`, error);
+    }
   };
 
-  const { error: clearError } = await supabase
+  const failure = async (error: LinkWriteError | null, context: string): Promise<LinkDiscordGuildResult> => {
+    await revokeKey();
+    if (error && isGuildUniqueViolation(error)) {
+      return { ok: false, error: DISCORD_GUILD_LINKED_ELSEWHERE_ERROR };
+    }
+    console.error(`linkDiscordGuildToProject: ${context}:`, error);
+    return { ok: false, error: "Failed to link Discord server" };
+  };
+
+  const { data: clearedRows, error: clearError } = await supabase
     .from("discord_integrations")
     .update({
       guild_id: null,
@@ -307,22 +338,20 @@ export async function linkDiscordGuildToProject(
     .eq("guild_id", guildId)
     .neq("project_id", projectId)
     .select("project_id");
-  if (clearError) {
-    await revokeKey();
-    throw new Error(`Failed to unlink the Discord server from its previous project: ${clearError.message}`);
-  }
+  if (clearError) return failure(clearError, "unlinking the server from its previous project failed");
+  const clearedProjectIds = (clearedRows ?? []).map((row) => row.project_id as string);
 
   // Update-then-insert rather than .upsert(): PostgREST's upsert emits
   // `DO UPDATE SET col = EXCLUDED.col`, and reading EXCLUDED.linked_api_key_encrypted
   // needs a SELECT grant that `authenticated` doesn't have on that column (035).
   const linkFields = {
     guild_id: guildId,
-    guild_name: guildName,
+    guild_name: normalizedName,
     linked_api_key_encrypted: encryptedKey,
     linked_by: userId,
     updated_at: new Date().toISOString(),
   };
-  let linkError: { code?: string; message: string } | null = null;
+  let linkError: LinkWriteError | null = null;
   let linkedRows = 0;
   {
     const updated = await supabase
@@ -342,15 +371,66 @@ export async function linkDiscordGuildToProject(
     }
   }
   if (linkError || linkedRows !== 1) {
-    await revokeKey();
-    if (linkError && isGuildUniqueViolation(linkError)) {
-      return { ok: false, error: DISCORD_GUILD_LINKED_ELSEWHERE_ERROR };
+    // The previous project's link was already cleared above and cannot be put
+    // back: its encrypted API key has no SELECT grant for `authenticated`, so
+    // it was never readable here. Restoring only guild_id/guild_name without
+    // the key would show "linked" while the bot cannot work, which is worse
+    // than a clean unlinked state - say so in the log instead.
+    if (clearedProjectIds.length > 0) {
+      console.error(
+        `linkDiscordGuildToProject: the link of project(s) ${clearedProjectIds.join(", ")} was cleared but the new link failed; that project must be relinked with /guidon-link`
+      );
     }
-    if (linkError) throw new Error(`Failed to link Discord server: ${linkError.message}`);
-    return { ok: false, error: "Could not link the Discord server to this project." };
+    return failure(linkError, "writing the new link failed");
   }
 
   return { ok: true };
+}
+
+/**
+ * Removes a project's Discord server link (guild id/name, the bot's key and
+ * `linked_by`) and keeps its notification webhook - the inverse of
+ * linkDiscordGuildToProject and the "ask an admin of that project to
+ * disconnect it first" the linked-elsewhere error points to. RLS
+ * (discord_integrations_update) only lets owner/admin of the project do it, so
+ * for anyone else the UPDATE matches 0 rows, which is reported as a failure
+ * rather than success. The API key the link used is not revoked (it is a
+ * user-owned key; revoking it is done from Profile), same as when a link is
+ * moved.
+ */
+export async function disconnectDiscordGuild(projectId: string, userId: string): Promise<LinkDiscordGuildResult> {
+  const notDisconnected =
+    "Nothing was disconnected: this project is not linked to a Discord server, or you don't have permission.";
+
+  if (hasDirectDatabase()) {
+    const result = await withUser(userId, ({ query }) =>
+      query(
+        `UPDATE discord_integrations
+            SET guild_id = NULL, guild_name = NULL, linked_api_key_encrypted = NULL, linked_by = NULL,
+                updated_at = now()
+          WHERE project_id = $1 AND guild_id IS NOT NULL
+          RETURNING project_id`,
+        [projectId]
+      )
+    );
+    return result.rows.length === 1 ? { ok: true } : { ok: false, error: notDisconnected };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("discord_integrations")
+    .update({
+      guild_id: null,
+      guild_name: null,
+      linked_api_key_encrypted: null,
+      linked_by: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("project_id", projectId)
+    .not("guild_id", "is", null)
+    .select("project_id");
+  if (error) throw new Error(`Failed to disconnect Discord server: ${error.message}`);
+  return data && data.length === 1 ? { ok: true } : { ok: false, error: notDisconnected };
 }
 
 export interface ManageableProject {
@@ -425,9 +505,10 @@ export async function listManageableProjectsForUser(userId: string): Promise<Man
   const projects: ManageableProject[] = [];
   for (const row of (data ?? []) as unknown as MemberRow[]) {
     const project = one(row.projects);
-    const organization = project ? one(project.organizations) : null;
     if (!project) continue;
-    if (!project || !organization) continue;
+    // organizations is only visible to org members: keep the project with an
+    // empty name (same as the self-hosted LEFT JOIN) instead of dropping it.
+    const organization = one(project.organizations);
     const integration = one(project.discord_integrations);
     projects.push({
       id: project.id,

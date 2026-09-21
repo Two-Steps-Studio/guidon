@@ -1570,5 +1570,54 @@ await withUser(A, async () => {
   );
 });
 
+// disconnectDiscordGuild: to samo SQL co w module (sciezka self-hosted).
+const DISCONNECT_GUILD_SQL = `UPDATE public.discord_integrations
+    SET guild_id = NULL, guild_name = NULL, linked_api_key_encrypted = NULL, linked_by = NULL, updated_at = now()
+  WHERE project_id = $1 AND guild_id IS NOT NULL
+  RETURNING project_id`;
+
+await withUser(A, async () => {
+  await db.query(LINK_GUILD_SQL, [moveP1, "guild-disc", "Disc Guild", "enc-key-d", A]);
+});
+
+await withUser(C, async () => {
+  const result = await db.query(DISCONNECT_GUILD_SQL, [moveP1]);
+  check("rozlaczenie: C (czlonek bez praw w P1) nie rozlaczy (0 wierszy)", result.rows.length === 0, result.rows.length);
+});
+
+await withUser(B, async () => {
+  const result = await db.query(DISCONNECT_GUILD_SQL, [moveP1]);
+  check("rozlaczenie: B (spoza projektu) nie rozlaczy (0 wierszy)", result.rows.length === 0, result.rows.length);
+});
+
+await withUser(A, async () => {
+  const result = await db.query(DISCONNECT_GUILD_SQL, [moveP1]);
+  check("rozlaczenie: wlasciciel rozlacza (1 wiersz)", result.rows.length === 1, result.rows.length);
+  const { rows } = await db.query(
+    "SELECT guild_id, guild_name, linked_by FROM public.discord_integrations WHERE project_id = $1",
+    [moveP1]
+  );
+  check(
+    "rozlaczenie czysci pola serwera",
+    rows.length === 1 && rows[0].guild_id === null && rows[0].guild_name === null && rows[0].linked_by === null,
+    JSON.stringify(rows)
+  );
+  const hook = await db.query("SELECT * FROM public.get_discord_webhook_url($1)", [moveP1]);
+  check(
+    "rozlaczenie zostawia webhook",
+    hook.rows[0]?.webhook_url_encrypted === "enc-webhook-p1",
+    JSON.stringify(hook.rows)
+  );
+  const again = await db.query(DISCONNECT_GUILD_SQL, [moveP1]);
+  check("rozlaczenie juz rozlaczonego projektu = 0 wierszy (blad, nie sukces)", again.rows.length === 0, again.rows.length);
+});
+
+// Serwer da sie po rozlaczeniu podpiac gdzie indziej bez pomocy admina P1.
+await withUser(C, async () => {
+  await db.query(CLEAR_GUILD_SQL, ["guild-disc", moveP2]);
+  const link = await db.query(LINK_GUILD_SQL, [moveP2, "guild-disc", "Disc Guild", "enc-key-e", C]);
+  check("po rozlaczeniu serwer mozna polaczyc z innym projektem", link.rows.length === 1, link.rows.length);
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
