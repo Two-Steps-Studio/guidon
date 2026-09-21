@@ -674,12 +674,16 @@
     "discordNotLinked": "Nie połączono z żadnym serwerem Discord",
     "discordLinkedGuildUnnamed": "Połączono z serwerem Discord",
     "discordLinkInstructions": "Aby połączyć serwer Discord, dodaj do niego bota Guidon, a następnie uruchom na tym serwerze komendę /guidon-link i wybierz ten projekt na otwartej stronie.",
-    "discordJustConnected": "Połączono! Wypróbuj /task list na swoim serwerze Discord."
+    "discordJustConnected": "Połączono! Wypróbuj /task list na swoim serwerze Discord.",
+    "discordDisconnect": "Rozłącz",
+    "discordDisconnectConfirm": "Rozłączyć {guild} od tego projektu? Komendy /task przestaną tam działać, dopóki ponownie nie uruchomisz /guidon-link. Powiadomienia przez webhook zostają."
   },
   "discordLink": {
     "title": "Połącz {guild} z projektem",
     "description": "Wybierz projekt, z którym ma być połączony serwer {guild}. Członkowie serwera będą mogli używać komend /task dla tego projektu.",
     "unnamedServer": "ten serwer Discord",
+    "serverLabel": "Serwer Discord",
+    "phishingWarning": "Kontynuuj tylko wtedy, gdy /guidon-link uruchomiono przez Ciebie na serwerze Discord, którym zarządzasz. Potwierdzenie pozwala temu serwerowi zarządzać zadaniami w wybranym projekcie.",
     "unknownOrganization": "Pozostałe projekty",
     "linkedBadge": "Połączony z {guild}",
     "linkedElsewhereWarning": "Ten projekt jest już połączony z serwerem Discord „{guild}”. Wybranie go zastąpi jego obecne połączenie z Discordem.",

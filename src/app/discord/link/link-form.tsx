@@ -16,7 +16,15 @@ export interface LinkableProject {
   linkedGuildName: string | null;
 }
 
-export function DiscordLinkForm({ token, projects }: { token: string; projects: LinkableProject[] }) {
+export function DiscordLinkForm({
+  token,
+  guildLabel,
+  projects,
+}: {
+  token: string;
+  guildLabel: string;
+  projects: LinkableProject[];
+}) {
   const t = useTranslations("discordLink");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -113,10 +121,19 @@ export function DiscordLinkForm({ token, projects }: { token: string; projects: 
         </p>
       )}
 
-      <Button onClick={handleConfirm} disabled={pending || !selected}>
-        {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {t("confirm")}
-      </Button>
+      <div className="space-y-3 rounded-md border border-border bg-background-secondary px-3 py-3">
+        <p className="text-sm text-muted-foreground">
+          {t("serverLabel")}: <strong className="text-base font-semibold text-foreground">{guildLabel}</strong>
+        </p>
+        <p role="note" className="flex items-start gap-2 text-sm">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          {t("phishingWarning")}
+        </p>
+        <Button onClick={handleConfirm} disabled={pending || !selected}>
+          {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {t("confirm")}
+        </Button>
+      </div>
     </div>
   );
 }

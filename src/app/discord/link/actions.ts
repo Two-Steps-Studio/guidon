@@ -33,7 +33,7 @@ export async function attachGuildToProject(token: string, projectId: string): Pr
     const access = await getProjectAccess(projectId);
     if (!access || !canManageProject(access.role)) return { error: NO_PERMISSION_ERROR };
 
-    result = await linkDiscordGuildToProject(projectId, access.userId, guild.guildId, guild.guildName);
+    result = await linkDiscordGuildToProject(projectId, access.userId, guild.guildId, guild.guildName?.trim() || null);
   } catch (error) {
     console.error("attachGuildToProject failed:", error);
     return { error: GENERIC_ERROR };

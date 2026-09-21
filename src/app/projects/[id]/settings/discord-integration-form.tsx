@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { saveDiscordWebhook, removeDiscordWebhook } from "./discord-actions";
+import { saveDiscordWebhook, removeDiscordWebhook, disconnectDiscordServer } from "./discord-actions";
 import type { DiscordIntegrationInfo } from "@/lib/data/discord-integration";
 
 export function DiscordIntegrationForm({
@@ -78,6 +78,20 @@ export function DiscordIntegrationForm({
     setInfo((prev) => (prev ? { ...prev, hasWebhook: false } : prev));
   };
 
+  const handleDisconnect = async () => {
+    const guild = info?.guildName ?? t("discordLinkedGuildUnnamed");
+    if (!window.confirm(t("discordDisconnectConfirm", { guild }))) return;
+    setPending(true);
+    setError(null);
+    const result = await disconnectDiscordServer(projectId);
+    setPending(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setInfo((prev) => (prev ? { ...prev, guildId: null, guildName: null, linkedBy: null } : prev));
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -104,12 +118,17 @@ export function DiscordIntegrationForm({
 
         <div className="space-y-2 rounded-md border border-border bg-background-secondary px-3 py-2">
           {info?.guildId ? (
-            <p className="flex items-center gap-2 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-success" />
-              {info.guildName
-                ? t("discordLinkedGuild", { guild: info.guildName })
-                : t("discordLinkedGuildUnnamed")}
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                {info.guildName
+                  ? t("discordLinkedGuild", { guild: info.guildName })
+                  : t("discordLinkedGuildUnnamed")}
+              </p>
+              <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={pending}>
+                {t("discordDisconnect")}
+              </Button>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">{t("discordNotLinked")}</p>
           )}

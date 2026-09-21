@@ -48,7 +48,9 @@ export default async function DiscordLinkPage({
   }
 
   const projects = await listManageableProjectsForUser(user.id);
-  const guildLabel = guild.guildName ?? t("unnamedServer");
+  // "" is "no name", same as null (the bot only ever signs the real name, but
+  // an empty Discord server name must not render as an empty title).
+  const guildLabel = guild.guildName?.trim() || t("unnamedServer");
 
   return (
     <AppShell user={user}>
@@ -74,7 +76,7 @@ export default async function DiscordLinkPage({
                 }
               />
             ) : (
-              <DiscordLinkForm token={token} projects={projects} />
+              <DiscordLinkForm token={token} guildLabel={guildLabel} projects={projects} />
             )}
           </CardContent>
         </Card>

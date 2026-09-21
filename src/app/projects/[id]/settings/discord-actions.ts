@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
-import { getDiscordIntegrationInfo, saveDiscordWebhookUrl, clearDiscordWebhookUrl } from "@/lib/data/discord-integration";
+import { getDiscordIntegrationInfo, saveDiscordWebhookUrl, clearDiscordWebhookUrl, disconnectDiscordGuild } from "@/lib/data/discord-integration";
 import { isSafeHttpUrl } from "@/lib/validation/url";
 import type { DiscordIntegrationInfo } from "@/lib/data/discord-integration";
 
@@ -61,6 +61,31 @@ export async function removeDiscordWebhook(projectId: string): Promise<DiscordIn
   }
 
   await clearDiscordWebhookUrl(projectId, access.userId);
+  revalidatePath(`/projects/${projectId}/settings`);
+  return { error: null };
+}
+
+/**
+ * Removes the project's Discord server link (the `/guidon-link` one) and
+ * keeps its notification webhook. Fails - rather than reporting success -
+ * when nothing was disconnected (not linked, or RLS filtered the write for a
+ * non-manager), see disconnectDiscordGuild.
+ */
+export async function disconnectDiscordServer(projectId: string): Promise<DiscordIntegrationState> {
+  const access = await getProjectAccess(projectId);
+  if (!access || !canManageProject(access.role)) {
+    return { error: "You do not have permission to change this project's Discord integration." };
+  }
+
+  let result: Awaited<ReturnType<typeof disconnectDiscordGuild>>;
+  try {
+    result = await disconnectDiscordGuild(projectId, access.userId);
+  } catch (error) {
+    console.error("disconnectDiscordServer failed:", error);
+    return { error: "Could not disconnect the Discord server. Please try again." };
+  }
+  if (!result.ok) return { error: result.error };
+
   revalidatePath(`/projects/${projectId}/settings`);
   return { error: null };
 }
