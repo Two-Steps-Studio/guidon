@@ -1680,5 +1680,24 @@ await expectRejected(
   /check constraint|tasks_status_check/i
 );
 
+// ------------------------------------------------------------------
+section("28. tasks.sort_order przyjmuje ulamki (migracja 040)");
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.tasks (project_id, title, sort_order) VALUES ($1, 'ulamkowy sort_order', 1062.5) RETURNING sort_order",
+    [projectId]
+  );
+  check("sort_order = 1062.5 zapisuje sie bez bledu", Number(rows[0]?.sort_order) === 1062.5, JSON.stringify(rows));
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.tasks (project_id, title, sort_order) VALUES ($1, 'calkowity sort_order', 2000) RETURNING sort_order",
+    [projectId]
+  );
+  check("calkowity sort_order nadal dziala i wraca jako liczba", rows[0]?.sort_order === 2000, JSON.stringify(rows));
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
