@@ -127,6 +127,24 @@ export function KanbanBoard({
     [canDrag, groups, onMoveTask]
   );
 
+  // Touch-friendly alternative to dragging (native HTML5 drag-and-drop does
+  // not fire on touch devices at all, so this is the only way to move a
+  // card between columns on mobile short of opening the task dialog and
+  // changing its Status field). Appends to the end of the target column,
+  // same as dropping past the last card - available whenever canEdit is,
+  // including in due_date sort mode where dragging itself is disabled (see
+  // this component's own sortMode doc comment: status changes still work
+  // there, just not by dragging).
+  const handleMoveTo = useCallback(
+    async (task: Task, status: TaskStatus) => {
+      if (!canEdit || normalizeTaskStatus(task.status) === status) return;
+      const column = groups[status];
+      const sortOrder = sortOrderForPosition(column, column.length, task.id);
+      await onMoveTask(task, status, sortOrder);
+    },
+    [canEdit, groups, onMoveTask]
+  );
+
   const handleDrop = async (status: TaskStatus, index: number) => {
     const task = draggingTask;
     resetDrag();
@@ -222,7 +240,7 @@ export function KanbanBoard({
               )}
             </header>
 
-            <div className="flex min-h-32 flex-1 flex-col gap-2 p-2">
+            <div className="flex min-h-32 max-h-[calc(100vh-16rem)] flex-1 flex-col gap-2 overflow-y-auto p-2">
               {columnTasks.map((task, index) => (
                 <div key={task.id}>
                   <DropZone
@@ -260,6 +278,8 @@ export function KanbanBoard({
                     onReorder={canDrag ? handleReorder : undefined}
                     canMoveUp={index > 0}
                     canMoveDown={index < columnTasks.length - 1}
+                    moveTargets={canEdit ? columns.filter((c) => c.status !== column.status) : undefined}
+                    onMoveTo={canEdit ? handleMoveTo : undefined}
                   />
                 </div>
               ))}
