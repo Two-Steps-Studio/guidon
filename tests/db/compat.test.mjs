@@ -1748,8 +1748,31 @@ await withUser(A, async () => {
   check("czlonek projektu widzi zalacznik", rows.length === 1 && rows[0].name === "plan.txt", JSON.stringify(rows));
 });
 
+// C (zdefiniowany wczesniej w sekcji 26) jako developer w tym projekcie -
+// czlonek z prawem wstawiania, ale NIE wlasciciel - zeby test usuniecia
+// faktycznie sprawdzal cudzy zalacznik, a nie samo-usuniecie przez A.
 await withUser(A, async () => {
-  const result = await db.query("DELETE FROM public.task_attachments WHERE id = $1 RETURNING id", [attachmentId]);
+  await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [
+    projectId,
+    C,
+  ]);
+});
+
+let othersAttachmentId;
+await withUser(C, async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by)
+     VALUES ($1, 'cudzy.txt', 'projects/p/tasks/t/a/2.txt', $2)
+     RETURNING id`,
+    [attachmentTaskId, C]
+  );
+  othersAttachmentId = rows[0]?.id;
+});
+
+await withUser(A, async () => {
+  const result = await db.query("DELETE FROM public.task_attachments WHERE id = $1 RETURNING id", [
+    othersAttachmentId,
+  ]);
   check(
     "owner projektu moze usunac cudzy zalacznik (szersze niz task_comments)",
     result.rows.length === 1,
