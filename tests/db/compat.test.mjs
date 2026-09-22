@@ -142,9 +142,10 @@ for (const [label, sql, expected] of [
   // zawezenie GRANT SELECT) nie dodaje ani tabel, ani polityk, wiec liczby
   // zostaja takie same. 24->25 tabel, 92->96 polityk: discord_integrations
   // (035), 4 polityki (select/insert/update/delete), ten sam wzorzec co
-  // github_connections.
-  ["25 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 25],
-  ["96 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 96],
+  // github_connections. 25->26 tabel, 96->99 polityk: task_attachments (041),
+  // 3 polityki (select/insert/delete - brak update, zalacznik sie nie edytuje).
+  ["26 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 26],
+  ["99 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 99],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1697,6 +1698,74 @@ await withUser(A, async () => {
     [projectId]
   );
   check("calkowity sort_order nadal dziala i wraca jako liczba", rows[0]?.sort_order === 2000, JSON.stringify(rows));
+});
+
+// ------------------------------------------------------------------
+section("29. task_attachments: RLS mirrors task_comments + szersze DELETE (migracja 041)");
+
+let attachmentTaskId;
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Task dla zalacznikow') RETURNING id",
+    [projectId]
+  );
+  attachmentTaskId = rows[0].id;
+});
+
+await expectRejected(
+  "B (spoza projektu) nie moze wstawic zalacznika",
+  () =>
+    withUser(B, () =>
+      db.query(
+        "INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'x.txt', 'path/x.txt', $2)",
+        [attachmentTaskId, B]
+      )
+    ),
+  /permission denied|new row violates/i
+);
+
+let attachmentId;
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.task_attachments (task_id, name, storage_path, size_bytes, mime_type, uploaded_by)
+     VALUES ($1, 'plan.txt', 'projects/p/tasks/t/a/1.txt', 42, 'text/plain', $2)
+     RETURNING id, name`,
+    [attachmentTaskId, A]
+  );
+  attachmentId = rows[0]?.id;
+  check("wlasciciel projektu moze wstawic zalacznik", rows[0]?.name === "plan.txt", JSON.stringify(rows));
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT id FROM public.task_attachments WHERE id = $1", [attachmentId]);
+  check("B (spoza projektu) nie widzi zalacznika", rows.length === 0, rows.length);
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id, name FROM public.task_attachments WHERE task_id = $1", [
+    attachmentTaskId,
+  ]);
+  check("czlonek projektu widzi zalacznik", rows.length === 1 && rows[0].name === "plan.txt", JSON.stringify(rows));
+});
+
+await withUser(A, async () => {
+  const result = await db.query("DELETE FROM public.task_attachments WHERE id = $1 RETURNING id", [attachmentId]);
+  check(
+    "owner projektu moze usunac cudzy zalacznik (szersze niz task_comments)",
+    result.rows.length === 1,
+    JSON.stringify(result.rows)
+  );
+});
+
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'cascade.txt', 'path/cascade.txt', $2) RETURNING id",
+    [attachmentTaskId, A]
+  );
+  const attId = rows[0].id;
+  await db.query("DELETE FROM public.tasks WHERE id = $1", [attachmentTaskId]);
+  const { rows: remaining } = await db.query("SELECT id FROM public.task_attachments WHERE id = $1", [attId]);
+  check("usuniecie taska kasuje jego zalaczniki (ON DELETE CASCADE)", remaining.length === 0, remaining.length);
 });
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
