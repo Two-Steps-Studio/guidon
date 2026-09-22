@@ -1023,5 +1023,18 @@
     "nextMonth": "Następny miesiąc",
     "today": "Dziś",
     "moreTasks": "+{count} więcej"
+  },
+  "aiChat": {
+    "title": "Asystent AI Guidona",
+    "emptyTitle": "Jak mogę pomóc w tym projekcie?",
+    "emptyHint": "Mogę tworzyć i edytować zadania, komentować i odpowiadać na pytania.",
+    "placeholder": "Poproś AI o coś...",
+    "thinking": "Myślę...",
+    "confirmDelete": "Potwierdź usunięcie",
+    "cancel": "Anuluj",
+    "deletePrompt": "Usunąć zadanie \"{title}\"?",
+    "deletedConfirmation": "Usunięto zadanie: {title}",
+    "deleteFailed": "Nie udało się usunąć zadania.",
+    "errorGeneric": "Przepraszam, wystąpił błąd. Spróbuj ponownie."
   }
 }

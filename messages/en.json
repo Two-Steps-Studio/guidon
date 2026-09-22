@@ -1023,5 +1023,18 @@
     "nextMonth": "Next month",
     "today": "Today",
     "moreTasks": "+{count} more"
+  },
+  "aiChat": {
+    "title": "Guidon AI Assistant",
+    "emptyTitle": "How can I help you with this project?",
+    "emptyHint": "I can create and update tasks, comment, and answer questions.",
+    "placeholder": "Ask AI to do something...",
+    "thinking": "Thinking...",
+    "confirmDelete": "Confirm delete",
+    "cancel": "Cancel",
+    "deletePrompt": "Delete task \"{title}\"?",
+    "deletedConfirmation": "Deleted task: {title}",
+    "deleteFailed": "Could not delete the task.",
+    "errorGeneric": "Sorry, I encountered an error. Please try again."
   }
 }

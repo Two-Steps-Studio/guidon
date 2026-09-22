@@ -1023,5 +1023,18 @@
     "nextMonth": "Mes siguiente",
     "today": "Hoy",
     "moreTasks": "+{count} más"
+  },
+  "aiChat": {
+    "title": "Asistente de IA de Guidon",
+    "emptyTitle": "¿Cómo puedo ayudarte con este proyecto?",
+    "emptyHint": "Puedo crear y editar tareas, comentar y responder preguntas.",
+    "placeholder": "Pide algo a la IA...",
+    "thinking": "Pensando...",
+    "confirmDelete": "Confirmar eliminación",
+    "cancel": "Cancelar",
+    "deletePrompt": "¿Eliminar la tarea \"{title}\"?",
+    "deletedConfirmation": "Tarea eliminada: {title}",
+    "deleteFailed": "No se pudo eliminar la tarea.",
+    "errorGeneric": "Lo siento, ocurrió un error. Inténtalo de nuevo."
   }
 }

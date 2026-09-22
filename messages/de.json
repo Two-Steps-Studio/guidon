@@ -1023,5 +1023,18 @@
     "nextMonth": "Nächster Monat",
     "today": "Heute",
     "moreTasks": "+{count} weitere"
+  },
+  "aiChat": {
+    "title": "Guidon-KI-Assistent",
+    "emptyTitle": "Wie kann ich bei diesem Projekt helfen?",
+    "emptyHint": "Ich kann Aufgaben erstellen und bearbeiten, kommentieren und Fragen beantworten.",
+    "placeholder": "Bitte die KI um etwas...",
+    "thinking": "Denke nach...",
+    "confirmDelete": "Löschen bestätigen",
+    "cancel": "Abbrechen",
+    "deletePrompt": "Aufgabe \"{title}\" löschen?",
+    "deletedConfirmation": "Aufgabe gelöscht: {title}",
+    "deleteFailed": "Die Aufgabe konnte nicht gelöscht werden.",
+    "errorGeneric": "Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuche es erneut."
   }
 }
