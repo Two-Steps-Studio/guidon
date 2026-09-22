@@ -380,7 +380,11 @@ export async function getProjectStorageUsage(projectId: string): Promise<number>
 
 /**
  * Total bytes stored across every project in an organization. Sums
- * project_files.size_bytes joined through projects, the same source
+ * project_files.size_bytes joined through projects, plus
+ * task_attachments.size_bytes joined through tasks -> projects (041:
+ * task_attachments has no project_id of its own, mirroring task_comments -
+ * see work/page.tsx's `tasks!inner(project_id)` for the same one-hop
+ * pattern; this is the same idea one level deeper), the same source
  * getProjectStorageUsage reads - not StorageProvider.usage(), which would
  * require listing every project's storage prefix separately for one
  * number the database already has indexed.
@@ -388,15 +392,29 @@ export async function getProjectStorageUsage(projectId: string): Promise<number>
 export async function getOrganizationStorageUsage(organizationId: string): Promise<number> {
   const supabase = createServiceClient();
 
-  const { data, error } = await supabase
-    .from('project_files')
-    .select('size_bytes, projects!inner(organization_id)')
-    .eq('projects.organization_id', organizationId);
+  const [projectFilesResult, taskAttachmentsResult] = await Promise.all([
+    supabase
+      .from('project_files')
+      .select('size_bytes, projects!inner(organization_id)')
+      .eq('projects.organization_id', organizationId),
+    supabase
+      .from('task_attachments')
+      .select('size_bytes, tasks!inner(projects!inner(organization_id))')
+      .eq('tasks.projects.organization_id', organizationId),
+  ]);
 
-  if (error) {
-    console.error('[Storage] Error fetching organization storage:', error);
+  if (projectFilesResult.error || taskAttachmentsResult.error) {
+    console.error(
+      '[Storage] Error fetching organization storage:',
+      projectFilesResult.error ?? taskAttachmentsResult.error
+    );
     return 0;
   }
 
-  return data?.reduce((sum, file) => sum + (file.size_bytes || 0), 0) || 0;
+  const projectFilesTotal =
+    projectFilesResult.data?.reduce((sum, file) => sum + (file.size_bytes || 0), 0) || 0;
+  const taskAttachmentsTotal =
+    taskAttachmentsResult.data?.reduce((sum, attachment) => sum + (attachment.size_bytes || 0), 0) || 0;
+
+  return projectFilesTotal + taskAttachmentsTotal;
 }
