@@ -20,9 +20,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "projectId and taskId are required" }, { status: 400 });
   }
 
-  const result = await deleteTask(projectId, taskId);
-  if (result.error) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
+  try {
+    const result = await deleteTask(projectId, taskId);
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[AI Chat Confirm Delete Error]:", error);
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-  return NextResponse.json({ ok: true });
 }
