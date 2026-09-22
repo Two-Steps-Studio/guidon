@@ -126,7 +126,7 @@ realistically useful in a task description viewed at Editor-window width.
   it visually near the top.
 - No assignee or tags editing (viewing/editing covers title, description,
   priority, status, and due date).
-- Unreal Engine 5 and Blender have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md) and [`plugins/blender`](../../blender/README.md). Each gets its own API key name, so logging into one never logs another out.
+- Unreal Engine 5, Blender and JetBrains IDEs have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md), [`plugins/blender`](../../blender/README.md) and [`plugins/jetbrains`](../../jetbrains/README.md). Each gets its own API key name, so logging into one never logs another out.
 
 ## A note on drag-and-drop
 

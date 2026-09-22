@@ -30,6 +30,7 @@ const PLUGIN_CLIENTS = {
   unity: { keyName: "Unity Plugin", label: "Unity" },
   unreal: { keyName: "Unreal Plugin", label: "Unreal Engine" },
   blender: { keyName: "Blender Plugin", label: "Blender" },
+  jetbrains: { keyName: "JetBrains Plugin", label: "JetBrains IDE" },
 } as const;
 
 export type PluginClient = keyof typeof PLUGIN_CLIENTS;

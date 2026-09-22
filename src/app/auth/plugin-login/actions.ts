@@ -19,7 +19,7 @@ const PLUGIN_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:write", "tasks:st
  *
  * Same key-issuance shape as createApiKey (src/app/profile/api-keys-actions.ts):
  * revoke any previous key of this plugin's name ("Unity Plugin",
- * "Unreal Plugin", "Blender Plugin" - see pluginKeyName) for this user first (api_keys only
+ * "Unreal Plugin", "Blender Plugin", "JetBrains Plugin" - see pluginKeyName) for this user first (api_keys only
  * stores a hash, so an old raw key could never be reused anyway - this just
  * keeps Profile > API Keys from accumulating dead entries), then insert a
  * fresh one and hand it to the waiting local listener via a redirect.
