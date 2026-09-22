@@ -11,9 +11,16 @@ import {
   isDone,
   normalizeTaskPriority,
 } from "@/lib/work/task-board";
-import type { Task } from "@/types/task";
-import type { SubtaskProgress } from "@/lib/work/task-board";
-import { CalendarDays, CheckCircle2, ListChecks, MessageSquare } from "lucide-react";
+import type { Task, TaskStatus } from "@/types/task";
+import type { BoardColumn, SubtaskProgress } from "@/lib/work/task-board";
+import { CalendarDays, CheckCircle2, ListChecks, MessageSquare, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export interface TaskCardMember {
   id: string;
@@ -40,6 +47,10 @@ interface TaskCardProps {
   onReorder?: (task: Task, direction: "up" | "down") => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  /** Other columns this card can move to - omitted (not just empty) when the board is read-only, same reasoning as onReorder above. */
+  moveTargets?: readonly BoardColumn[];
+  /** Touch-friendly alternative to dragging - see kanban-board.tsx's handleMoveTo doc comment for why this exists. */
+  onMoveTo?: (task: Task, status: TaskStatus) => void;
 }
 
 /** One plain-text line of a (markdown) description for the card, or "" when there is none. */
@@ -90,6 +101,8 @@ function TaskCardComponent({
   onReorder,
   canMoveUp = false,
   canMoveDown = false,
+  moveTargets,
+  onMoveTo,
 }: TaskCardProps) {
   const t = useTranslations("work");
   const priority = normalizeTaskPriority(task.priority);
@@ -156,6 +169,28 @@ function TaskCardComponent({
         >
           {task.title}
         </h4>
+        {onMoveTo && moveTargets && moveTargets.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
+                aria-label={t("moveTaskAria", { title: task.title })}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <MoreVertical className="h-3.5 w-3.5" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+              {moveTargets.map((target) => (
+                <DropdownMenuItem key={target.status} onSelect={() => onMoveTo(task, target.status)}>
+                  {t("moveToColumn", { column: target.label })}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {preview && (

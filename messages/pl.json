@@ -553,7 +553,9 @@
     "formatNumberedList": "Lista numerowana",
     "formatTaskList": "Lista zadań",
     "formatCode": "Kod",
-    "formatLink": "Link"
+    "formatLink": "Link",
+    "moveTaskAria": "Przenieś zadanie „{title}”",
+    "moveToColumn": "Przenieś do: {column}"
   },
   "roadmap": {
     "title": "Plan działań",

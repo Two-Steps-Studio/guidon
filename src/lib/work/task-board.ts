@@ -261,7 +261,23 @@ export function compareTasks(a: Task, b: Task): number {
     PRIORITY_RANK[normalizeTaskPriority(b.priority)];
   if (byPriority !== 0) return byPriority;
 
-  return (a.created_at ?? "").localeCompare(b.created_at ?? "");
+  return timestampValue(a.created_at) - timestampValue(b.created_at);
+}
+
+/**
+ * Same underlying issue as dueDateKey above, for any other timestamptz
+ * column (created_at here) used only for ordering: self-hosted mode hands
+ * back a `Date` instance despite the `string` type, and `.localeCompare`
+ * doesn't exist on `Date` - this crashed the whole board (React error #441,
+ * an uncaught render error) as soon as two tasks tied on sort_order and
+ * priority, self-hosted only. Comparing numeric timestamps also sidesteps
+ * relying on ISO-string lexicographic ordering, which `.localeCompare`
+ * happened to get right but wasn't actually guaranteed to.
+ */
+function timestampValue(value: string | Date | null | undefined): number {
+  if (!value) return 0;
+  const ms = value instanceof Date ? value.getTime() : new Date(value).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
 }
 
 /**

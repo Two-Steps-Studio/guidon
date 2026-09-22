@@ -553,7 +553,9 @@
     "formatNumberedList": "Numbered list",
     "formatTaskList": "Task list",
     "formatCode": "Code",
-    "formatLink": "Link"
+    "formatLink": "Link",
+    "moveTaskAria": "Move task \"{title}\"",
+    "moveToColumn": "Move to {column}"
   },
   "roadmap": {
     "title": "Roadmap",
