@@ -1032,7 +1032,7 @@
     "thinking": "Pensando...",
     "confirmDelete": "Confirmar eliminación",
     "cancel": "Cancelar",
-    "deletePrompt": "¿Eliminar la tarea \"{title}\"?",
+    "deletePrompt": "¿Eliminar la tarea «{title}»?",
     "deletedConfirmation": "Tarea eliminada: {title}",
     "deleteFailed": "No se pudo eliminar la tarea.",
     "errorGeneric": "Lo siento, ocurrió un error. Inténtalo de nuevo."

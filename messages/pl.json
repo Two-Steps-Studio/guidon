@@ -1032,7 +1032,7 @@
     "thinking": "Myślę...",
     "confirmDelete": "Potwierdź usunięcie",
     "cancel": "Anuluj",
-    "deletePrompt": "Usunąć zadanie \"{title}\"?",
+    "deletePrompt": "Usunąć zadanie „{title}”?",
     "deletedConfirmation": "Usunięto zadanie: {title}",
     "deleteFailed": "Nie udało się usunąć zadania.",
     "errorGeneric": "Przepraszam, wystąpił błąd. Spróbuj ponownie."
