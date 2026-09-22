@@ -25,8 +25,9 @@ import { registerGuidonTools } from "@/lib/mcp/http/tools";
  * counted here against the same per-key window - otherwise it would cost a
  * key lookup and a last_used_at write with no cap.
  *
- * Unrelated to the stdio MCP server in src/lib/mcp/server.ts, which serves
- * the in-app AI chat.
+ * Unrelated to the in-app project AI chat (src/components/ai/AIChat.tsx),
+ * which dispatches its own tool calls in-process via src/lib/ai/chat-tools.ts
+ * against session-based Server Actions, not this API-key-gated endpoint.
  */
 
 /** One POST may carry a JSON-RPC batch; cap it so it cannot fan out unbounded tool calls. */
