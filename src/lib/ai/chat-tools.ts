@@ -183,7 +183,13 @@ export async function runChatTool(
   projectId: string,
   userId: string
 ): Promise<ChatToolResult> {
-  const str = (key: string): string => (typeof args[key] === "string" ? (args[key] as string) : "");
+  // A tool call's args come from the AI provider's parsed response (e.g.
+  // src/lib/ai/providers/openai-compatible.ts does a bare JSON.parse with no
+  // validation), so a malformed or missing payload - null, an array, a
+  // primitive - must not reach the handlers below as-is; normalize to a
+  // plain object first so every `str()`/`typeof args[key]` read is safe.
+  const safeArgs: Record<string, unknown> = args && typeof args === "object" ? args : {};
+  const str = (key: string): string => (typeof safeArgs[key] === "string" ? (safeArgs[key] as string) : "");
 
   switch (name) {
     case "create_task": {
@@ -208,10 +214,10 @@ export async function runChatTool(
       const taskId = str("task_id");
       if (!taskId) return { ok: false, summary: "update_task needs a task_id." };
       const patch: Record<string, unknown> = {};
-      if (typeof args.title === "string") patch.title = args.title;
-      if (typeof args.description === "string") patch.description = args.description;
-      if (typeof args.priority === "string") patch.priority = args.priority;
-      if (typeof args.due_date === "string") patch.due_date = args.due_date || null;
+      if (typeof safeArgs.title === "string") patch.title = safeArgs.title;
+      if (typeof safeArgs.description === "string") patch.description = safeArgs.description;
+      if (typeof safeArgs.priority === "string") patch.priority = safeArgs.priority;
+      if (typeof safeArgs.due_date === "string") patch.due_date = safeArgs.due_date || null;
       const result = await updateTask(projectId, taskId, patch as Parameters<typeof updateTask>[2]);
       if (result.error || !result.task) return { ok: false, summary: `Could not update task: ${result.error}` };
       return { ok: true, summary: `Updated task: ${result.task.title}` };
