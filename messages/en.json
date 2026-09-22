@@ -555,7 +555,18 @@
     "formatCode": "Code",
     "formatLink": "Link",
     "moveTaskAria": "Move task \"{title}\"",
-    "moveToColumn": "Move to {column}"
+    "moveToColumn": "Move to {column}",
+    "attachments": "Attachments",
+    "attachTaskFile": "Attach a file",
+    "uploadingAttachment": "Uploading...",
+    "noAttachmentsYet": "No files attached yet.",
+    "loadingAttachments": "Loading attachments...",
+    "downloadAttachmentAria": "Download {name}",
+    "deleteAttachmentAria": "Delete {name}",
+    "failedToLoadAttachments": "Failed to load attachments.",
+    "failedToUploadAttachment": "Failed to upload the file.",
+    "failedToDeleteAttachment": "Failed to delete the attachment.",
+    "failedToGetDownloadLink": "Could not create a download link."
   },
   "roadmap": {
     "title": "Roadmap",

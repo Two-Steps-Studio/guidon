@@ -555,7 +555,18 @@
     "formatCode": "Código",
     "formatLink": "Enlace",
     "moveTaskAria": "Mover la tarea «{title}»",
-    "moveToColumn": "Mover a {column}"
+    "moveToColumn": "Mover a {column}",
+    "attachments": "Archivos adjuntos",
+    "attachTaskFile": "Adjuntar archivo",
+    "uploadingAttachment": "Subiendo...",
+    "noAttachmentsYet": "Aún no hay archivos adjuntos.",
+    "loadingAttachments": "Cargando archivos adjuntos...",
+    "downloadAttachmentAria": "Descargar {name}",
+    "deleteAttachmentAria": "Eliminar {name}",
+    "failedToLoadAttachments": "No se pudieron cargar los archivos adjuntos.",
+    "failedToUploadAttachment": "No se pudo subir el archivo.",
+    "failedToDeleteAttachment": "No se pudo eliminar el archivo adjunto.",
+    "failedToGetDownloadLink": "No se pudo crear el enlace de descarga."
   },
   "roadmap": {
     "title": "Hoja de ruta",

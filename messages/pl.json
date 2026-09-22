@@ -555,7 +555,18 @@
     "formatCode": "Kod",
     "formatLink": "Link",
     "moveTaskAria": "Przenieś zadanie „{title}”",
-    "moveToColumn": "Przenieś do: {column}"
+    "moveToColumn": "Przenieś do: {column}",
+    "attachments": "Załączniki",
+    "attachTaskFile": "Załącz plik",
+    "uploadingAttachment": "Przesyłanie...",
+    "noAttachmentsYet": "Jeszcze nie ma załączonych plików.",
+    "loadingAttachments": "Wczytywanie załączników...",
+    "downloadAttachmentAria": "Pobierz {name}",
+    "deleteAttachmentAria": "Usuń {name}",
+    "failedToLoadAttachments": "Nie udało się wczytać załączników.",
+    "failedToUploadAttachment": "Nie udało się przesłać pliku.",
+    "failedToDeleteAttachment": "Nie udało się usunąć załącznika.",
+    "failedToGetDownloadLink": "Nie udało się utworzyć linku do pobrania."
   },
   "roadmap": {
     "title": "Plan działań",

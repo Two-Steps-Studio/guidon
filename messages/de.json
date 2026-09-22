@@ -555,7 +555,18 @@
     "formatCode": "Code",
     "formatLink": "Link",
     "moveTaskAria": "Aufgabe „{title}“ verschieben",
-    "moveToColumn": "Verschieben nach {column}"
+    "moveToColumn": "Verschieben nach {column}",
+    "attachments": "Anhänge",
+    "attachTaskFile": "Datei anhängen",
+    "uploadingAttachment": "Wird hochgeladen...",
+    "noAttachmentsYet": "Noch keine Dateien angehängt.",
+    "loadingAttachments": "Anhänge werden geladen...",
+    "downloadAttachmentAria": "{name} herunterladen",
+    "deleteAttachmentAria": "{name} löschen",
+    "failedToLoadAttachments": "Anhänge konnten nicht geladen werden.",
+    "failedToUploadAttachment": "Die Datei konnte nicht hochgeladen werden.",
+    "failedToDeleteAttachment": "Der Anhang konnte nicht gelöscht werden.",
+    "failedToGetDownloadLink": "Der Download-Link konnte nicht erstellt werden."
   },
   "roadmap": {
     "title": "Roadmap",
