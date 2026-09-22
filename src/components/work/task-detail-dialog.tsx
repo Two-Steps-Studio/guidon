@@ -17,6 +17,7 @@ import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
 import { getTaskAgentContext } from "@/lib/context/agent-context";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { TaskAttemptsSection } from "@/components/work/task-attempts-section";
+import { TaskAttachmentsSection } from "@/components/work/task-attachments-section";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -816,6 +817,14 @@ export function TaskDetailDialog({
           taskId={task.id}
           canEdit={canEdit}
           canDelete={canDelete}
+        />
+
+        <TaskAttachmentsSection
+          projectId={projectId}
+          taskId={task.id}
+          canUpload={canEdit}
+          currentUserId={currentUserId}
+          canManageProject={canDelete}
         />
 
         <section
