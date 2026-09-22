@@ -100,7 +100,8 @@
     "users": "Usuarios",
     "logOut": "Cerrar sesión",
     "user": "Usuario",
-    "switchProject": "Cambiar de proyecto"
+    "switchProject": "Cambiar de proyecto",
+    "calendar": "Calendario"
   },
   "dashboard": {
     "title": "Panel",
@@ -1014,5 +1015,13 @@
     "passwordResetCta": "Establecer nueva contraseña",
     "passwordResetLinkHint": "¿El botón no funciona? Pega este enlace en tu navegador:",
     "passwordResetIgnoreNotice": "Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo con tranquilidad - tu contraseña no cambiará."
+  },
+  "calendar": {
+    "title": "Calendario",
+    "subtitle": "Tareas por fecha límite",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "today": "Hoy",
+    "moreTasks": "+{count} más"
   }
 }

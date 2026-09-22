@@ -100,7 +100,8 @@
     "users": "Users",
     "logOut": "Log out",
     "user": "User",
-    "switchProject": "Switch project"
+    "switchProject": "Switch project",
+    "calendar": "Calendar"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1014,5 +1015,13 @@
     "passwordResetCta": "Set new password",
     "passwordResetLinkHint": "Button not working? Paste this link into your browser:",
     "passwordResetIgnoreNotice": "If you didn't request a password reset, you can safely ignore this email - your password won't change."
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "Tasks by due date",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "today": "Today",
+    "moreTasks": "+{count} more"
   }
 }

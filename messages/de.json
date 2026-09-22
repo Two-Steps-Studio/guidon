@@ -100,7 +100,8 @@
     "users": "Benutzer",
     "logOut": "Abmelden",
     "user": "Benutzer",
-    "switchProject": "Projekt wechseln"
+    "switchProject": "Projekt wechseln",
+    "calendar": "Kalender"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1014,5 +1015,13 @@
     "passwordResetCta": "Neues Passwort festlegen",
     "passwordResetLinkHint": "Schaltfläche funktioniert nicht? Füge diesen Link in deinen Browser ein:",
     "passwordResetIgnoreNotice": "Wenn du kein Zurücksetzen des Passworts angefordert hast, kannst du diese E-Mail gefahrlos ignorieren - dein Passwort wird nicht geändert."
+  },
+  "calendar": {
+    "title": "Kalender",
+    "subtitle": "Aufgaben nach Fälligkeitsdatum",
+    "previousMonth": "Vorheriger Monat",
+    "nextMonth": "Nächster Monat",
+    "today": "Heute",
+    "moreTasks": "+{count} weitere"
   }
 }

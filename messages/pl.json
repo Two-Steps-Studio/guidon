@@ -100,7 +100,8 @@
     "users": "Użytkownicy",
     "logOut": "Wyloguj się",
     "user": "Użytkownik",
-    "switchProject": "Przełącz projekt"
+    "switchProject": "Przełącz projekt",
+    "calendar": "Kalendarz"
   },
   "dashboard": {
     "title": "Pulpit",
@@ -1014,5 +1015,13 @@
     "passwordResetCta": "Ustaw nowe hasło",
     "passwordResetLinkHint": "Przycisk nie działa? Wklej ten link do przeglądarki:",
     "passwordResetIgnoreNotice": "Jeśli nie prosiłeś/aś o reset hasła, możesz bezpiecznie zignorować tę wiadomość - Twoje hasło nie zostanie zmienione."
+  },
+  "calendar": {
+    "title": "Kalendarz",
+    "subtitle": "Zadania według terminu",
+    "previousMonth": "Poprzedni miesiąc",
+    "nextMonth": "Następny miesiąc",
+    "today": "Dziś",
+    "moreTasks": "+{count} więcej"
   }
 }

@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import {
   BOARD_COLUMNS,
   TASK_PRIORITIES,
+  dueDateKey,
   isDone,
   normalizeTaskPriority,
   normalizeTaskStatus,
@@ -77,7 +78,7 @@ function formToTask(task: Task): TaskForm {
     status: normalizeTaskStatus(task.status),
     priority: normalizeTaskPriority(task.priority),
     assignee_id: task.assignee_id ?? "",
-    due_date: task.due_date ? task.due_date.slice(0, 10) : "",
+    due_date: dueDateKey(task.due_date) ?? "",
     tags: (task.tags ?? []).join(", "),
   };
 }

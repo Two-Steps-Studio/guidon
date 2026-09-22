@@ -24,6 +24,7 @@ import {
   FileText,
   Building2,
   CheckSquare,
+  CalendarDays,
   GitBranch,
   FolderOpen,
   BookOpen,
@@ -83,6 +84,7 @@ const PROJECT_NAV = [
     labelKey: "workGroup",
     items: [
       { href: "work", labelKey: "taskBoard", icon: CheckSquare },
+      { href: "calendar", labelKey: "calendar", icon: CalendarDays },
       { href: "roadmap", labelKey: "roadmap", icon: GitBranch },
       { href: "files", labelKey: "files", icon: FolderOpen },
     ],

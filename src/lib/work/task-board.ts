@@ -350,6 +350,23 @@ export function subtaskProgress(subtasks: Task[]): SubtaskProgress {
 
 export type DueState = "none" | "upcoming" | "soon" | "overdue";
 
+/**
+ * `Task.due_date` is typed `string`, and that's exactly what it is when it
+ * arrives from Supabase/PostgREST (a JSON API) - but `tasks.due_date` is
+ * `timestamptz`, and a direct `pg` query (self-hosted mode) hands back a
+ * native `Date` object for that column, which the compiler's `string`
+ * annotation doesn't stop at runtime. Every call site that needs just the
+ * calendar day (an HTML date input's value, a calendar's day key) goes
+ * through this instead of assuming `.slice()` works on whatever shape
+ * actually showed up - it silently crashed both the task dialog and the
+ * calendar page in self-hosted mode before this existed.
+ */
+export function dueDateKey(value: string | Date | null | undefined): string | null {
+  if (!value) return null;
+  const iso = value instanceof Date ? value.toISOString() : value;
+  return iso.slice(0, 10);
+}
+
 export function dueState(
   dueDate: string | null,
   status: TaskStatus | LegacyTaskStatus | string
