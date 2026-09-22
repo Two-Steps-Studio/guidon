@@ -21,7 +21,7 @@ export function AIChat({ projectId }: { projectId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingIndex, setConfirmingIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,8 +68,9 @@ export function AIChat({ projectId }: { projectId: string }) {
     }
   }
 
-  async function handleConfirmDelete(taskId: string, title: string) {
-    setConfirmingDelete(true);
+  async function handleConfirmDelete(index: number, taskId: string, title: string) {
+    setConfirmingIndex(index);
+    const clearPending = (m: Message, idx: number) => (idx === index ? { ...m, pendingDelete: undefined } : m);
     try {
       const res = await fetch("/api/ai/chat/confirm-delete", {
         method: "POST",
@@ -78,21 +79,21 @@ export function AIChat({ projectId }: { projectId: string }) {
       });
       const data = await res.json();
       setMessages((prev) => [
-        ...prev,
+        ...prev.map(clearPending),
         {
           role: "assistant",
           content: res.ok ? t("deletedConfirmation", { title }) : data.error || t("deleteFailed"),
         },
       ]);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: t("deleteFailed") }]);
+      setMessages((prev) => [...prev.map(clearPending), { role: "assistant", content: t("deleteFailed") }]);
     } finally {
-      setConfirmingDelete(false);
+      setConfirmingIndex(null);
     }
   }
 
-  function handleCancelDelete() {
-    setMessages((prev) => prev.map((m) => (m.pendingDelete ? { ...m, pendingDelete: undefined } : m)));
+  function handleCancelDelete(index: number) {
+    setMessages((prev) => prev.map((m, idx) => (idx === index ? { ...m, pendingDelete: undefined } : m)));
   }
 
   return (
@@ -154,12 +155,12 @@ export function AIChat({ projectId }: { projectId: string }) {
                         size="sm"
                         variant="destructive"
                         className="h-7 px-2"
-                        disabled={confirmingDelete}
-                        onClick={() => m.pendingDelete && handleConfirmDelete(m.pendingDelete.taskId, m.pendingDelete.title)}
+                        disabled={confirmingIndex === i}
+                        onClick={() => m.pendingDelete && handleConfirmDelete(i, m.pendingDelete.taskId, m.pendingDelete.title)}
                       >
-                        {confirmingDelete ? <Loader2 className="h-3 w-3 animate-spin" /> : t("confirmDelete")}
+                        {confirmingIndex === i ? <Loader2 className="h-3 w-3 animate-spin" /> : t("confirmDelete")}
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleCancelDelete}>
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleCancelDelete(i)}>
                         <X className="h-3 w-3" />
                         {t("cancel")}
                       </Button>
