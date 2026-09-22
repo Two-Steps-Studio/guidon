@@ -129,6 +129,8 @@ export type ActivityAction =
   | "memory_verified"
   | "file_uploaded"
   | "file_deleted"
+  | "task_attachment_uploaded"
+  | "task_attachment_deleted"
   | "github_repo_connected"
   | "github_repo_disconnected"
   | "github_file_committed"
