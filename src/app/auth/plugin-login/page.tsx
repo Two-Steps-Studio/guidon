@@ -6,11 +6,12 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import { createClient } from "@/lib/supabase-server";
 import { authorizePluginLogin } from "./actions";
-import { isSafeLoopbackRedirect } from "./loopback";
+import { isSafeLoopbackRedirect, pluginClientLabel, resolvePluginClient } from "./loopback";
 
 /**
  * Opened by an editor plugin's browser-based login (currently Unity's
- * GuidonBrowserAuth.cs; UE5 later) - the plugin starts a local HTTP
+ * GuidonBrowserAuth.cs, the UE5 plugin's GuidonAuth.cpp, the Blender add-on's
+ * auth.py; each passes `client` so it gets its own key name) - the plugin starts a local HTTP
  * listener, opens this page with `redirect_uri` pointing back at it plus a
  * `state` nonce, and this page issues a fresh API key once the user
  * approves. Replaces an earlier design where the plugin took a raw
@@ -39,9 +40,10 @@ async function isSignedIn(): Promise<boolean> {
 export default async function PluginLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect_uri?: string; state?: string }>;
+  searchParams: Promise<{ redirect_uri?: string; state?: string; client?: string }>;
 }) {
-  const { redirect_uri: redirectUri, state } = await searchParams;
+  const { redirect_uri: redirectUri, state, client: rawClient } = await searchParams;
+  const client = resolvePluginClient(rawClient);
 
   if (!redirectUri || !state || !isSafeLoopbackRedirect(redirectUri)) {
     return (
@@ -50,7 +52,7 @@ export default async function PluginLoginPage({
           <CardHeader>
             <CardTitle>Invalid request</CardTitle>
             <CardDescription>
-              This page is meant to be opened by a Guidon editor plugin (Unity, UE5) - not visited
+              This page is meant to be opened by a Guidon editor plugin (Unity, Unreal Engine, Blender) - not visited
               directly. If a plugin sent you here, try logging in again from the plugin window.
             </CardDescription>
           </CardHeader>
@@ -59,14 +61,14 @@ export default async function PluginLoginPage({
     );
   }
 
-  const returnTo = `/auth/plugin-login?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
+  const returnTo = `/auth/plugin-login?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}&client=${client}`;
 
   if (!(await isSignedIn())) {
     redirect(`/auth/login?redirect=${encodeURIComponent(returnTo)}`);
   }
 
   const user = await getCurrentUser();
-  const authorize = authorizePluginLogin.bind(null, redirectUri, state);
+  const authorize = authorizePluginLogin.bind(null, redirectUri, state, client);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -74,7 +76,7 @@ export default async function PluginLoginPage({
         <CardHeader>
           <CardTitle>Connect the Guidon plugin</CardTitle>
           <CardDescription>
-            A game-engine plugin running on this computer wants to view and update tasks as{" "}
+            The Guidon {pluginClientLabel(client)} plugin running on this computer wants to view and update tasks as{" "}
             <strong>{user.email}</strong>. It will be able to read your projects and tasks, change
             task status, and post comments.
           </CardDescription>

@@ -7,10 +7,9 @@ import { withServiceRole } from "@/lib/db/session";
 import { createServiceClient } from "@/lib/supabase-server";
 import { generateApiKey, hashApiKey, keyPrefix } from "@/lib/api/api-keys";
 import type { ApiKeyScope } from "@/lib/api/scopes";
-import { isSafeLoopbackRedirect } from "./loopback";
+import { isSafeLoopbackRedirect, pluginKeyName, resolvePluginClient } from "./loopback";
 
 const PLUGIN_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:write", "tasks:status", "comments:write"];
-const PLUGIN_KEY_NAME = "Unity Plugin";
 
 /**
  * The "Authorize" button on /auth/plugin-login. Runs as the already
@@ -19,7 +18,8 @@ const PLUGIN_KEY_NAME = "Unity Plugin";
  * that's already logged into this browser.
  *
  * Same key-issuance shape as createApiKey (src/app/profile/api-keys-actions.ts):
- * revoke any previous "Unity Plugin" key for this user first (api_keys only
+ * revoke any previous key of this plugin's name ("Unity Plugin",
+ * "Unreal Plugin", "Blender Plugin" - see pluginKeyName) for this user first (api_keys only
  * stores a hash, so an old raw key could never be reused anyway - this just
  * keeps Profile > API Keys from accumulating dead entries), then insert a
  * fresh one and hand it to the waiting local listener via a redirect.
@@ -34,7 +34,9 @@ const PLUGIN_KEY_NAME = "Unity Plugin";
  * actual point where a key would leak if it weren't loopback-only - a page
  * render alone enforces nothing.
  */
-export async function authorizePluginLogin(redirectUri: string, state: string): Promise<void> {
+export async function authorizePluginLogin(redirectUri: string, state: string, client: string): Promise<void> {
+  const keyName = pluginKeyName(resolvePluginClient(client));
+
   if (!isSafeLoopbackRedirect(redirectUri)) {
     throw new Error("Refusing to authorize a non-loopback redirect URI.");
   }
@@ -49,12 +51,12 @@ export async function authorizePluginLogin(redirectUri: string, state: string): 
     await withServiceRole(async ({ query }) => {
       await query(
         "UPDATE api_keys SET revoked_at = now() WHERE user_id = $1 AND name = $2 AND revoked_at IS NULL",
-        [user.id, PLUGIN_KEY_NAME]
+        [user.id, keyName]
       );
       await query(
         `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, human_client)
          VALUES ($1, $2, $3, $4, $5, true)`,
-        [user.id, PLUGIN_KEY_NAME, prefix, hash, PLUGIN_KEY_SCOPES]
+        [user.id, keyName, prefix, hash, PLUGIN_KEY_SCOPES]
       );
     });
   } else {
@@ -63,12 +65,12 @@ export async function authorizePluginLogin(redirectUri: string, state: string): 
       .from("api_keys")
       .update({ revoked_at: new Date().toISOString() })
       .eq("user_id", user.id)
-      .eq("name", PLUGIN_KEY_NAME)
+      .eq("name", keyName)
       .is("revoked_at", null);
 
     const { error } = await supabase.from("api_keys").insert({
       user_id: user.id,
-      name: PLUGIN_KEY_NAME,
+      name: keyName,
       key_prefix: prefix,
       key_hash: hash,
       scopes: PLUGIN_KEY_SCOPES,
