@@ -173,6 +173,10 @@ export function CalendarView({
           onClose={() => setOpenTask(null)}
           onSaved={upsertTask}
           onDeleted={removeTask}
+          onNavigateToTask={(taskId) => {
+            const target = tasks.find((t) => t.id === taskId);
+            if (target) setOpenTask(target);
+          }}
         />
       )}
     </div>

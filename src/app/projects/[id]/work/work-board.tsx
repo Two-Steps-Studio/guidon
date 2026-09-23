@@ -378,6 +378,10 @@ export function WorkBoard({
           onClose={() => setOpenTask(null)}
           onSaved={upsertTask}
           onDeleted={removeTask}
+          onNavigateToTask={(taskId) => {
+            const target = state.tasks.find((t) => t.id === taskId);
+            if (target) setOpenTask(target);
+          }}
         />
       )}
 
