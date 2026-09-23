@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AICompletionInput, AICompletionResult, AIProvider } from "../provider";
 import { AI_REQUEST_TIMEOUT_MS, requireEnv } from "../provider";
+import { fromOpenAIChoice, toOpenAIMessages, toOpenAITools, type OpenAIChoice } from "./wire-format";
 
 const DEFAULT_API_VERSION = "2024-10-21";
 
@@ -16,8 +17,8 @@ const DEFAULT_API_VERSION = "2024-10-21";
  *   - api-version as a required query parameter
  *   - `api-key` header instead of `Authorization: Bearer`
  *
- * The response parsing is identical to OpenAICompatibleProvider's, but with
- * exactly one caller it's duplicated here rather than factored out.
+ * Message/tool translation and response parsing are shared with
+ * OpenAICompatibleProvider through ./wire-format.ts.
  */
 export class AzureOpenAIProvider implements AIProvider {
   readonly name = "azure-openai" as const;
@@ -44,10 +45,6 @@ export class AzureOpenAIProvider implements AIProvider {
     headers: Record<string, string>;
     body: Record<string, unknown>;
   } {
-    const messages = input.system
-      ? [{ role: "system", content: input.system }, ...input.messages]
-      : input.messages;
-
     return {
       url: `${this.endpoint}/openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`,
       headers: {
@@ -56,7 +53,8 @@ export class AzureOpenAIProvider implements AIProvider {
       },
       // No "model" field - the deployment in the URL already selects it.
       body: {
-        messages,
+        messages: toOpenAIMessages(input.system, input.messages),
+        ...toOpenAITools(input.tools),
         ...(input.maxTokens !== undefined ? { max_tokens: input.maxTokens } : {}),
         ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
       },
@@ -77,13 +75,10 @@ export class AzureOpenAIProvider implements AIProvider {
       throw new Error(`azure-openai request failed: ${res.status} ${(await res.text()).slice(0, 500)}`);
     }
 
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-      model?: string;
-    };
+    const data = (await res.json()) as { choices?: OpenAIChoice[]; model?: string };
 
     return {
-      text: data.choices?.[0]?.message?.content ?? "",
+      ...fromOpenAIChoice(data.choices?.[0]),
       model: data.model ?? this.model,
       provider: "azure-openai",
     };

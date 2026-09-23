@@ -17,9 +17,11 @@ const MAX_BODY_BYTES = 25 * 1024 * 1024;
  * from github_connections (the repository connected on the Files page), and
  * every write happens as the person who connected it, under RLS.
  *
- * Always answers 2xx for a verified delivery once it's been processed, even
- * when nothing matched: GitHub retries non-2xx responses, and a retry can't
- * make an unknown task appear.
+ * Answers 2xx for a verified delivery once it's been processed, even when
+ * nothing matched. A 500 means a write failed for at least one connected
+ * project: GitHub doesn't redeliver on its own, but the delivery shows as
+ * failed in the App's settings, and a manual Redeliver is safe - events
+ * already applied are recorded per task (github_task_events) and skipped.
  */
 export async function POST(request: NextRequest) {
   const secret = process.env.GITHUB_APP_WEBHOOK_SECRET;
@@ -27,7 +29,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "GitHub webhook is not configured on this server." }, { status: 503 });
   }
 
-  if (Number(request.headers.get("content-length") ?? "0") > MAX_BODY_BYTES) {
+  // GitHub always sends Content-Length; requiring it keeps an unsigned,
+  // chunked body from being buffered without limit before the signature check.
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (!request.headers.get("content-length") || !Number.isFinite(declaredLength)) {
+    return NextResponse.json({ error: "Content-Length is required." }, { status: 411 });
+  }
+  if (declaredLength > MAX_BODY_BYTES) {
     return NextResponse.json({ error: "Payload too large." }, { status: 413 });
   }
   const rawBody = await request.text();
@@ -58,12 +66,21 @@ export async function POST(request: NextRequest) {
   if (targets.length === 0) return NextResponse.json({ ok: true, projects: 0 });
 
   let applied = 0;
+  let failed = 0;
   const skipped: string[] = [];
   for (const target of targets) {
     const actions: TaskAction[] = event === "push" ? planPush(payload) : planPullRequest(payload, target.defaultBranch);
-    const outcome = await applyActions(target, actions);
-    applied += outcome.applied;
-    skipped.push(...outcome.skipped);
+    // One broken connection (e.g. the person who connected it lost access to
+    // the project) must not stop the others from being processed.
+    try {
+      const outcome = await applyActions(target, actions);
+      applied += outcome.applied;
+      skipped.push(...outcome.skipped);
+    } catch (error) {
+      console.error("[GitHub webhook] project", target.projectId, error);
+      skipped.push(`project ${target.projectId}: ${error instanceof Error ? error.message : "failed"}`);
+      failed++;
+    }
   }
-  return NextResponse.json({ ok: true, projects: targets.length, applied, skipped });
+  return NextResponse.json({ ok: failed === 0, projects: targets.length, applied, skipped }, { status: failed === 0 ? 200 : 500 });
 }

@@ -81,6 +81,7 @@ interface PullRequestPayload {
     head?: { ref?: string };
     base?: { ref?: string };
     user?: { login?: string };
+    updated_at?: string;
   };
 }
 
@@ -132,7 +133,9 @@ export function planPullRequest(payload: PullRequestPayload, defaultBranch: stri
     case "opened":
     case "reopened":
     case "ready_for_review":
-      key = `pr:${number}:${payload.action === "ready_for_review" ? "ready" : "open"}`;
+      // Opening happens once; reopening and ready-for-review can repeat, so
+      // those keys carry updated_at (identical on a redelivery of the same event).
+      key = payload.action === "opened" ? `pr:${number}:open` : `pr:${number}:${payload.action === "ready_for_review" ? "ready" : "reopened"}:${pr.updated_at ?? ""}`;
       if (pr.draft) {
         comment = `Draft ${label} opened by ${who}: ${title}`;
         targetStatus = "in_progress";
@@ -144,7 +147,8 @@ export function planPullRequest(payload: PullRequestPayload, defaultBranch: stri
       }
       break;
     case "closed":
-      key = `pr:${number}:closed`;
+      // A merge is final; a plain close can happen again after a reopen.
+      key = pr.merged ? `pr:${number}:merged` : `pr:${number}:closed:${pr.updated_at ?? ""}`;
       if (pr.merged && pr.base?.ref === defaultBranch) {
         comment = `${label} merged into ${inline(defaultBranch)}: ${title}`;
         targetStatus = "done";

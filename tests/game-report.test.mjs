@@ -11,6 +11,7 @@
  */
 
 import { buildReport, parseMetadata, validateReportFiles, REPORT_LIMITS } from "../src/lib/api/game-report.ts";
+import { reportsScopeMixedWithOthers } from "../src/lib/api/scopes.ts";
 
 let pass = 0;
 let fail = 0;
@@ -67,6 +68,11 @@ check("path separators neutralized", validateReportFiles([{ name: "../../etc/x.t
   const r = validateReportFiles([{ name: "a".repeat(300) + ".png", size: 1 }]);
   check("long name keeps extension", r.ok && r.value[0].endsWith(".png") && r.value[0].length <= REPORT_LIMITS.fileNameLength, r.value?.[0]?.length);
 }
+
+console.log("\n  report key scopes");
+check("reports:write alone is allowed", !reportsScopeMixedWithOthers(["reports:write"]));
+check("reports:write + tasks:read is refused", reportsScopeMixedWithOthers(["reports:write", "tasks:read"]));
+check("keys without reports:write are unaffected", !reportsScopeMixedWithOthers(["tasks:read", "tasks:write"]));
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail === 0 ? 0 : 1);

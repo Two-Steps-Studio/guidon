@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppShell } from "@/components/layout/app-shell";
 
 export default function ProjectLoading() {
   return (
