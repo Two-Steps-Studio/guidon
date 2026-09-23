@@ -142,7 +142,7 @@ realistically useful in a task description viewed at Editor-window width.
   it visually near the top.
 - No assignee or tags editing (viewing/editing covers title, description,
   priority, status, and due date).
-- Unreal Engine 5, Godot, Blender and JetBrains IDEs have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md), [`plugins/godot`](../../godot/README.md), [`plugins/blender`](../../blender/README.md) and [`plugins/jetbrains`](../../jetbrains/README.md). In-game bug reports are a separate runtime package: [`GuidonReports`](../GuidonReports/README.md). Each gets its own API key name, so logging into one never logs another out.
+- Unreal Engine 5, Godot, Blender, JetBrains IDEs and VS Code have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md), [`plugins/godot`](../../godot/README.md), [`plugins/blender`](../../blender/README.md), [`plugins/jetbrains`](../../jetbrains/README.md) and [`plugins/vscode`](../../vscode/README.md). In-game bug reports are a separate runtime package: [`GuidonReports`](../GuidonReports/README.md). Each gets its own API key name, so logging into one never logs another out.
 
 ## A note on drag-and-drop
 

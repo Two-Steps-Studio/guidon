@@ -16,8 +16,8 @@ does for the UI.
 - `discord-bot/` (slash commands) and the MCP endpoint `src/app/api/mcp`
   (agents such as Claude Code; tools dispatch in-process to these handlers).
 - The editor plugins under `plugins/` (Unity, Unreal Engine, Godot, Blender,
-  JetBrains IDEs). They get their key through the browser loopback flow on
-  `/auth/plugin-login?client=<unity|unreal|godot|blender|jetbrains>`: one key per
+  JetBrains IDEs, VS Code). They get their key through the browser loopback flow on
+  `/auth/plugin-login?client=<unity|unreal|godot|blender|jetbrains|vscode>`: one key per
   plugin (`human_client`), named after it, and a new login replaces only that
   plugin's key. `GET /projects/[projectId]/columns` exists for them: it returns the
   project's visible board columns (labels, order and hidden columns from
