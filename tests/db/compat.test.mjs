@@ -144,8 +144,10 @@ for (const [label, sql, expected] of [
   // (035), 4 polityki (select/insert/update/delete), ten sam wzorzec co
   // github_connections. 25->26 tabel, 96->99 polityk: task_attachments (041),
   // 3 polityki (select/insert/delete - brak update, zalacznik sie nie edytuje).
-  ["26 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 26],
-  ["99 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 99],
+  // 26->27 tabel, 99->101 polityk: github_task_events (042), 2 polityki
+  // (select/insert - wpis idempotencji sie nie edytuje ani nie usuwa).
+  ["27 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 27],
+  ["101 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 101],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1789,6 +1791,62 @@ await withUser(A, async () => {
   await db.query("DELETE FROM public.tasks WHERE id = $1", [attachmentTaskId]);
   const { rows: remaining } = await db.query("SELECT id FROM public.task_attachments WHERE id = $1", [attId]);
   check("usuniecie taska kasuje jego zalaczniki (ON DELETE CASCADE)", remaining.length === 0, remaining.length);
+});
+
+// ------------------------------------------------------------------
+section("30. github_task_events: idempotencja webhooka GitHub, RLS jak task_comments (migracja 042)");
+
+let githubTaskId;
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Task dla GitHub') RETURNING id",
+    [projectId]
+  );
+  githubTaskId = rows[0].id;
+});
+
+await withUser(A, async () => {
+  const first = await db.query(
+    "INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'commit:abc') ON CONFLICT DO NOTHING RETURNING event_key",
+    [githubTaskId]
+  );
+  const again = await db.query(
+    "INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'commit:abc') ON CONFLICT DO NOTHING RETURNING event_key",
+    [githubTaskId]
+  );
+  check(
+    "pierwsze zdarzenie zwraca wiersz, powtorka nie (ON CONFLICT DO NOTHING RETURNING)",
+    first.rows.length === 1 && again.rows.length === 0,
+    `${first.rows.length}/${again.rows.length}`
+  );
+});
+
+await expectRejected(
+  "B (spoza projektu) nie moze zapisac zdarzenia",
+  () =>
+    withUser(B, () =>
+      db.query("INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'pr:1:open')", [githubTaskId])
+    ),
+  /permission denied|new row violates/i
+);
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT event_key FROM public.github_task_events WHERE task_id = $1", [githubTaskId]);
+  check("B (spoza projektu) nie widzi zdarzen", rows.length === 0, rows.length);
+});
+
+await withUser(C, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'pr:2:open') RETURNING event_key",
+    [githubTaskId]
+  );
+  check("developer projektu moze zapisac zdarzenie", rows.length === 1, JSON.stringify(rows));
+});
+
+await withUser(A, async () => {
+  await db.query("DELETE FROM public.tasks WHERE id = $1", [githubTaskId]);
+  const { rows } = await db.query("SELECT 1 FROM public.github_task_events WHERE task_id = $1", [githubTaskId]);
+  check("usuniecie taska kasuje jego zdarzenia (ON DELETE CASCADE)", rows.length === 0, rows.length);
 });
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

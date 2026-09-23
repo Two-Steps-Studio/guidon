@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { generateApiKey, hashApiKey, keyPrefix, API_KEY_SCOPES } from "@/lib/api/api-keys";
+import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 
 export type ApiKeyRow = {
   id: string;
@@ -93,6 +94,13 @@ export async function createApiKey(
   const selectedScopes = API_KEY_SCOPES.filter((scope) => formData.get(`scope:${scope}`) === "on");
   if (selectedScopes.length === 0) {
     return { error: "Select at least one scope.", fullKey: null, row: null };
+  }
+  if (reportsScopeMixedWithOthers(selectedScopes)) {
+    return {
+      error: "reports:write can't be combined with other scopes - that key ships inside your game. Create a separate key for it.",
+      fullKey: null,
+      row: null,
+    };
   }
 
   return mintApiKey(user.id, name.trim(), selectedScopes);

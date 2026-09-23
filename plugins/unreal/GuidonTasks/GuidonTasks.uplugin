@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0.0",
+	"FriendlyName": "Guidon Tasks",
+	"Description": "Guidon project Kanban board inside the Unreal Editor - view, create, edit, drag between columns, subtasks and comments.",
+	"Category": "Editor",
+	"CreatedBy": "Two Steps Studio",
+	"CreatedByURL": "https://useguidon.com",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GuidonTasks",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}

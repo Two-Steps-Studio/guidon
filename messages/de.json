@@ -566,7 +566,9 @@
     "failedToLoadAttachments": "Anhänge konnten nicht geladen werden.",
     "failedToUploadAttachment": "Die Datei konnte nicht hochgeladen werden.",
     "failedToDeleteAttachment": "Der Anhang konnte nicht gelöscht werden.",
-    "failedToGetDownloadLink": "Der Download-Link konnte nicht erstellt werden."
+    "failedToGetDownloadLink": "Der Download-Link konnte nicht erstellt werden.",
+    "gitRefLabel": "In Commit oder PR erwähnen:",
+    "copyGitRef": "Aufgabenverweis kopieren"
   },
   "roadmap": {
     "title": "Roadmap",

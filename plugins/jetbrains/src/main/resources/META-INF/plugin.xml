@@ -1,0 +1,20 @@
+<idea-plugin>
+    <id>com.useguidon.tasks</id>
+    <name>Guidon Tasks</name>
+    <vendor url="https://useguidon.com">Two Steps Studio</vendor>
+
+    <description><![CDATA[
+        A Kanban board for your <a href="https://useguidon.com">Guidon</a> project inside any JetBrains IDE:
+        view, create, edit, drag tasks between columns, add subtasks and comment without leaving the editor.
+        Log in through the Guidon website in your browser; the API key is kept in the IDE's password safe.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Guidon"
+                    anchor="bottom"
+                    icon="/icons/guidon.svg"
+                    factoryClass="com.useguidon.tasks.ui.GuidonToolWindowFactory"/>
+    </extensions>
+</idea-plugin>

@@ -85,6 +85,14 @@ otherwise) and try again. A corporate firewall or antivirus that blocks
 local loopback listeners would also prevent this from completing; there is
 no fallback path in v1 if that's the case for your machine.
 
+## Board columns
+
+The board shows the project's own columns: the labels, order and hidden
+columns set in the web app's project settings, loaded from
+`GET /api/v1/projects/{id}/columns`. The status list offers only visible
+columns. Against an older Guidon without that endpoint, the plugin falls
+back to the six default columns.
+
 ## Known limitation: status changes can 403
 
 Guidon gates status changes and "done" specifically through a project's
@@ -101,6 +109,14 @@ hood:
 
 If a status change 403s, the plugin shows the server's own error message
 verbatim - it'll tell you exactly which setting to flip in Project Settings.
+
+## Git reference
+
+**Copy Git ref** in the task window copies `guidon#1a2b3c4d`. Put it in a
+commit message, PR title or branch name and, with the GitHub integration on
+(see `docs/configuration.md`, `GITHUB_APP_WEBHOOK_SECRET`), the task gets a
+link and moves by itself: a commit starts it, a PR sends it to Review, and a
+merge into the default branch marks it Done.
 
 ## Description formatting
 
@@ -126,7 +142,7 @@ realistically useful in a task description viewed at Editor-window width.
   it visually near the top.
 - No assignee or tags editing (viewing/editing covers title, description,
   priority, status, and due date).
-- Unreal Engine 5 support is a separate, not-yet-built plugin.
+- Unreal Engine 5, Godot, Blender, JetBrains IDEs and VS Code have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md), [`plugins/godot`](../../godot/README.md), [`plugins/blender`](../../blender/README.md), [`plugins/jetbrains`](../../jetbrains/README.md) and [`plugins/vscode`](../../vscode/README.md). In-game bug reports are a separate runtime package: [`GuidonReports`](../GuidonReports/README.md). Each gets its own API key name, so logging into one never logs another out.
 
 ## A note on drag-and-drop
 

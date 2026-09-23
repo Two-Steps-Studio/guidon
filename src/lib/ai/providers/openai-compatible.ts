@@ -7,6 +7,7 @@ import type {
   AIProviderName,
 } from "../provider";
 import { AI_REQUEST_TIMEOUT_MS, requireEnv, requireModel } from "../provider";
+import { fromOpenAIChoice, toOpenAIMessages, toOpenAITools, type OpenAIChoice } from "./wire-format";
 
 /**
  * One class for the five providers that speak the OpenAI chat-completions
@@ -125,16 +126,13 @@ export class OpenAICompatibleProvider implements AIProvider {
       headers.authorization = `Bearer ${this.apiKey}`;
     }
 
-    const messages = input.system
-      ? [{ role: "system", content: input.system }, ...input.messages]
-      : input.messages;
-
     return {
       url: `${this.baseUrl}/chat/completions`,
       headers,
       body: {
         model: this.model,
-        messages,
+        messages: toOpenAIMessages(input.system, input.messages),
+        ...toOpenAITools(input.tools),
         ...(input.maxTokens !== undefined ? { max_tokens: input.maxTokens } : {}),
         ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
       },
@@ -142,50 +140,38 @@ export class OpenAICompatibleProvider implements AIProvider {
   }
 
   async complete(input: AICompletionInput): Promise<AICompletionResult> {
-    const { url, headers, body } = this.buildRequest(input);
+    let res = await this.post(input);
 
-    const res = await fetch(url, {
+    // Plenty of local (Ollama) and gateway models reject a request that
+    // carries tools at all. The chat still works without them - it just
+    // can't act on the board - so retry once as plain chat.
+    let errorText = res.ok ? "" : await safeErrorText(res);
+    if (!res.ok && input.tools?.length && res.status === 400 && /tool/i.test(errorText)) {
+      res = await this.post({ ...input, tools: undefined });
+      errorText = res.ok ? "" : await safeErrorText(res);
+    }
+
+    if (!res.ok) {
+      throw new Error(`${this.name} request failed: ${res.status} ${errorText}`);
+    }
+
+    const data = (await res.json()) as { choices?: OpenAIChoice[]; model?: string };
+
+    return {
+      ...fromOpenAIChoice(data.choices?.[0]),
+      model: data.model ?? this.model,
+      provider: this.name,
+    };
+  }
+
+  private post(input: AICompletionInput): Promise<Response> {
+    const { url, headers, body } = this.buildRequest(input);
+    return fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
     });
-
-    if (!res.ok) {
-      throw new Error(`${this.name} request failed: ${res.status} ${await safeErrorText(res)}`);
-    }
-
-    const data = (await res.json()) as {
-      choices?: {
-        message?: {
-          content?: string;
-          tool_calls?: Array<{
-            id: string;
-            function: {
-              name: string;
-              arguments: string;
-            };
-          }>;
-        };
-        finish_reason?: string;
-      }[];
-      model?: string;
-    };
-
-    const choice = data.choices?.[0];
-    const message = choice?.message;
-
-    return {
-      text: message?.content ?? "",
-      model: data.model ?? this.model,
-      provider: this.name,
-      stop_reason: choice?.finish_reason as AICompletionResult["stop_reason"],
-      tool_calls: message?.tool_calls?.map((tc) => ({
-        id: tc.id,
-        name: tc.function.name,
-        args: JSON.parse(tc.function.arguments),
-      })),
-    };
   }
 }
 

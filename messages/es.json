@@ -566,7 +566,9 @@
     "failedToLoadAttachments": "No se pudieron cargar los archivos adjuntos.",
     "failedToUploadAttachment": "No se pudo subir el archivo.",
     "failedToDeleteAttachment": "No se pudo eliminar el archivo adjunto.",
-    "failedToGetDownloadLink": "No se pudo crear el enlace de descarga."
+    "failedToGetDownloadLink": "No se pudo crear el enlace de descarga.",
+    "gitRefLabel": "Menciónala en un commit o PR:",
+    "copyGitRef": "Copiar referencia de la tarea"
   },
   "roadmap": {
     "title": "Hoja de ruta",
