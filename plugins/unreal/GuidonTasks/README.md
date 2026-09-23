@@ -30,11 +30,21 @@ due date and subtask progress (`✓ 2/5`).
 
 ## Setup
 
-1. **Install:** copy the `GuidonTasks` folder into your project's `Plugins/`
-   folder (`<YourProject>/Plugins/GuidonTasks/GuidonTasks.uplugin`), then
-   reopen the project and let the editor build the module. A C++ project is
-   needed for that. A Blueprint-only project has to add one C++ class first,
-   or you build the plugin once from a C++ project and copy the result over.
+1. **Install:** run `install.ps1` from this folder against your project, e.g.:
+
+   ```powershell
+   ./install.ps1 -ProjectPath "C:\Users\you\Documents\Unreal Projects\MyGame"
+   ```
+
+   It copies the plugin into `<YourProject>/Plugins/GuidonTasks/` and prints
+   the exact next steps for your project (it detects whether you need to add
+   a C++ class first). Doing it by hand is the same: copy the `GuidonTasks`
+   folder into your project's `Plugins/` folder
+   (`<YourProject>/Plugins/GuidonTasks/GuidonTasks.uplugin`), then reopen the
+   project and let the editor build the module. A C++ project is needed for
+   that. A Blueprint-only project has to add one C++ class first (see
+   Troubleshooting below), or you build the plugin once from a C++ project
+   and copy the result over.
 2. Open **Window → Guidon Tasks**. Check the **Base URL**
    (`https://useguidon.com`, or `http://localhost:2137` for a local dev
    server) and click **Log In**. Your browser opens the Guidon website. Click
@@ -90,6 +100,34 @@ the server. Revoke it on the website if you lose a machine.
 Status changes follow the project's permission rules. When the server
 refuses a change, the card goes back to its old column and the server's
 error message appears in the red bar under the toolbar.
+
+## Troubleshooting
+
+- **"This project does not have any source code. You need to add C++ source
+  files to the project from the Editor before you can generate project
+  files."** Your project is Blueprint-only. In the editor: **Tools → New C++
+  Class...** → base class **None** → **Create Class**. Accept the default
+  name. The editor closes to add a `Source/` folder and regenerate project
+  files; this turns your project into a C++ project (required for any C++
+  plugin, not just this one). After that, generating project files and
+  building works as normal.
+- **"The following modules are missing or built with a different engine
+  version: ... GuidonTasks. Would you like to rebuild them now?"** This is
+  expected on first use — the plugin ships as source and has never been
+  compiled for your engine version. Click **Yes**. If your project lists
+  *other* modules alongside `GuidonTasks` in that prompt, those are
+  pre-existing plugins/modules in your project unrelated to Guidon; a
+  failure in one of them can block the whole rebuild. To isolate whether
+  `GuidonTasks` itself compiles, test it in a fresh, empty C++ project first
+  (File → New Project → Blank, with a starter C++ class) before adding it to
+  a project that already has other custom plugins.
+- **A module other than `GuidonTasks` fails to compile** ("`X` could not be
+  compiled. Try rebuilding from source manually."): that's a problem with
+  that other module, not this plugin. Fix or remove it, or test GuidonTasks
+  in a clean project as above.
+- **GuidonTasks itself fails to compile**: please report the build error
+  together with your exact engine version (`Help → About Unreal Editor`) -
+  see the note under "Status" above.
 
 ## Not implemented (v1)
 
