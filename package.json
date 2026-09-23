@@ -14,7 +14,8 @@
     "test:ai": "node tests/ai/provider.test.mjs",
     "test:auth": "node tests/auth/local-auth.test.mjs",
     "test:limits": "node tests/limits.test.mjs",
-    "test:reports": "node tests/game-report.test.mjs"
+    "test:reports": "node tests/game-report.test.mjs",
+    "test:github": "node tests/github-webhook.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
