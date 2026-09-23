@@ -42,6 +42,10 @@
     // there. desktop/ has no offending .ts files today, excluded anyway for
     // the same reason eslint.config.mjs already excludes both.
     "desktop",
-    "discord-bot"
+    "discord-bot",
+    // Editor plugins - same class of bug: plugins/vscode/ is its own package
+    // (@types/vscode installed only by its own `npm install`), so the root
+    // type-check passed locally and failed on Vercel.
+    "plugins"
   ]
 }

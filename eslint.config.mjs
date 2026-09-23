@@ -30,6 +30,10 @@ const eslintConfig = defineConfig([
     // sibling package (own package.json, own tsconfig, own node_modules)
     // that isn't part of the Next.js app this config lints.
     "discord-bot/**",
+    // plugins/ holds the editor plugins (Unity, Unreal, Godot, Blender,
+    // JetBrains, VS Code) - self-contained projects with their own tooling;
+    // plugins/vscode/ has its own package.json, tsconfig and build output.
+    "plugins/**",
   ]),
 ]);
 
