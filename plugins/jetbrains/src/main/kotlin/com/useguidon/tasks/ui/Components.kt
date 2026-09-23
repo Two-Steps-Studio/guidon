@@ -25,13 +25,18 @@ import javax.swing.JPanel
 object GuidonColors {
     private fun c(light: Int, dark: Int) = JBColor(Color(light), Color(dark))
 
-    val column = c(0xf8fafc, 0x101317)
-    val card = c(0xffffff, 0x16191f)
+    val background = c(0xffffff, 0x0b0d10)
+    val column = c(0xf8fafc, 0x101317) // background-secondary
+    val card = c(0xffffff, 0x101317)
+    val cardHover = c(0xf8fafc, 0x16191f) // surface-hover
     val border = c(0xe2e8f0, 0x23272f)
+    val borderHover = c(0xcbd5e1, 0x2f343e)
     val text = c(0x0f172a, 0xe8eaed)
-    val muted = c(0x64748b, 0x8b93a1)
-    val accent = c(0x1d4fd8, 0x4d8dff)
-    val pill = c(0xf1f5f9, 0x1c1f26)
+    val muted = c(0x64748b, 0x8b93a1) // muted-foreground
+    val accent = c(0x1d4fd8, 0x4d8dff) // primary
+    val primaryHover = c(0x1640b0, 0x6ea3ff)
+    val primaryForeground = c(0xffffff, 0x05142e)
+    val pill = c(0xf1f5f9, 0x16191f) // muted
     val destructive = c(0xdc2626, 0xf87171)
     val errorFill = c(0xfef2f2, 0x2a1215)
 
@@ -54,6 +59,64 @@ object GuidonColors {
         "critical" -> destructive
         else -> muted // low
     }
+}
+
+/**
+ * The site's primary Button (solid brand blue, rounded-md) - painted here
+ * rather than left to the IDE's look-and-feel so it matches the web app in
+ * every IDE theme. `destructive` is the red outline variant used for Delete.
+ */
+class GuidonButton(text: String, private val variant: Variant = Variant.PRIMARY) : javax.swing.JButton(text) {
+    enum class Variant { PRIMARY, DESTRUCTIVE }
+
+    private var hovered = false
+
+    init {
+        isContentAreaFilled = false
+        isBorderPainted = false
+        isFocusPainted = false
+        isOpaque = false
+        border = JBUI.Borders.empty(5, 12)
+        foreground = if (variant == Variant.PRIMARY) GuidonColors.primaryForeground else GuidonColors.destructive
+        font = font.deriveFont(java.awt.Font.BOLD)
+        cursor = java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR)
+        addMouseListener(object : java.awt.event.MouseAdapter() {
+            override fun mouseEntered(e: java.awt.event.MouseEvent) { hovered = true; repaint() }
+            override fun mouseExited(e: java.awt.event.MouseEvent) { hovered = false; repaint() }
+        })
+    }
+
+    override fun paintComponent(g: Graphics) {
+        val g2 = g.create() as Graphics2D
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            val arc = JBUI.scale(12)
+            when (variant) {
+                Variant.PRIMARY -> {
+                    g2.color = if (!isEnabled) GuidonColors.border else if (hovered) GuidonColors.primaryHover else GuidonColors.accent
+                    g2.fillRoundRect(0, 0, width, height, arc, arc)
+                }
+                Variant.DESTRUCTIVE -> {
+                    g2.color = if (hovered) GuidonColors.errorFill else GuidonColors.background
+                    g2.fillRoundRect(0, 0, width - 1, height - 1, arc, arc)
+                    g2.color = if (hovered) GuidonColors.destructive else GuidonColors.border
+                    g2.drawRoundRect(0, 0, width - 1, height - 1, arc, arc)
+                }
+            }
+        } finally {
+            g2.dispose()
+        }
+        super.paintComponent(g)
+    }
+}
+
+/** Rounded muted chip - the column count badge and tag pills. */
+fun pillLabel(text: String): JComponent = object : RoundedPanel(java.awt.BorderLayout(), GuidonColors.pill, GuidonColors.border, JBUI.scale(8)) {
+    // Never stretched by BoxLayout rows - a chip is exactly as wide as its text.
+    override fun getMaximumSize(): Dimension = preferredSize
+}.apply {
+    border = JBUI.Borders.empty(0, 6)
+    add(mutedLabel(text).apply { font = font.deriveFont(font.size2D - 1f) })
 }
 
 /** A panel with a rounded fill and 1px outline - columns, cards, pills. */
@@ -86,9 +149,9 @@ open class RoundedPanel(
 }
 
 /** The small colored circle next to a column's name. */
-class StatusDot(private val color: Color) : JComponent() {
+class StatusDot(private val color: Color, diameter: Int = 8) : JComponent() {
     init {
-        val size = JBUI.scale(8)
+        val size = JBUI.scale(diameter)
         preferredSize = Dimension(size, size)
         minimumSize = preferredSize
         maximumSize = preferredSize

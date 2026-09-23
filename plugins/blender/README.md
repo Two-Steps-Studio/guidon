@@ -47,6 +47,11 @@ In the Task panel:
 - **Subtasks:** the checkbox toggles done/todo and **+** adds one. Clicking a
   subtask opens it, and **Back to Parent** returns to its parent.
 - **Comments:** type a comment and click **Post**.
+- **Git Ref** copies `guidon#1a2b3c4d`. Put it in a commit, PR or branch name,
+  and the GitHub integration links and moves the task.
+
+Blender panels can't take custom colors, so the website's colored status and
+priority dots are shown with Blender's built-in color-tag icons.
 
 ## Board columns
 

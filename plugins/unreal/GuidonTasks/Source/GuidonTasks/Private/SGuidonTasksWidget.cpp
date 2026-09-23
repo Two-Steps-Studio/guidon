@@ -5,6 +5,7 @@
 #include "GuidonAuth.h"
 #include "GuidonSettings.h"
 #include "GuidonStyle.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/DateTime.h"
 #include "Misc/MessageDialog.h"
@@ -40,7 +41,7 @@ namespace
 		return SNew(SBox).Padding(FMargin(0.f, 8.f, 0.f, 2.f))[MakeText(Text, 8, true, GuidonStyle::MutedText())];
 	}
 
-	const FButtonStyle& PrimaryButton() { return FAppStyle::Get().GetWidgetStyle<FButtonStyle>("PrimaryButton"); }
+	const FButtonStyle& PrimaryButton() { return GuidonStyle::PrimaryButton(); }
 	const FButtonStyle& SimpleButton() { return FAppStyle::Get().GetWidgetStyle<FButtonStyle>("SimpleButton"); }
 
 	/** First non-empty line of a Markdown description, markers stripped - the card preview the site shows. */
@@ -549,7 +550,12 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FString& Status, const
 					]
 					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 6.f, 0.f)
 					[
-						MakeMuted(FText::AsNumber(ColumnItems.Num()))
+						SNew(SBorder)
+						.BorderImage(GuidonStyle::PillBrush())
+						.Padding(FMargin(6.f, 1.f))
+						[
+							MakeMuted(FText::AsNumber(ColumnItems.Num()))
+						]
 					]
 					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
 					[
@@ -564,6 +570,11 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FString& Status, const
 							return FReply::Handled();
 						})
 					]
+				]
+				// The web column's border-b under its header.
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 8.f)
+				[
+					SNew(SBox).HeightOverride(1.f)[SNew(SImage).Image(GuidonStyle::DividerBrush())]
 				]
 				+ SVerticalBox::Slot().FillHeight(1.f)
 				[
@@ -581,13 +592,22 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildCard(const FGuidonTask& Task)
 {
 	TSharedRef<SVerticalBox> Body = SNew(SVerticalBox);
 
+	// Priority dot before the title, like the web card.
 	Body->AddSlot().AutoHeight()
 	[
-		SNew(STextBlock)
-		.Text(FText::FromString(Task.Title))
-		.Font(GuidonStyle::Font(9, true))
-		.ColorAndOpacity(FSlateColor(GuidonStyle::Text()))
-		.AutoWrapText(true)
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Top).Padding(0.f, 5.f, 8.f, 0.f)
+		[
+			SNew(SBox).WidthOverride(6.f).HeightOverride(6.f)[SNew(SImage).Image(GuidonStyle::PriorityDotBrush(Task.Priority))]
+		]
+		+ SHorizontalBox::Slot().FillWidth(1.f)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(Task.Title))
+			.Font(GuidonStyle::Font(9, true))
+			.ColorAndOpacity(FSlateColor(GuidonStyle::Text()))
+			.AutoWrapText(true)
+		]
 	];
 
 	const FString Preview = DescriptionPreview(Task.Description);
@@ -619,7 +639,7 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildCard(const FGuidonTask& Task)
 	TSharedRef<SHorizontalBox> Footer = SNew(SHorizontalBox);
 	Footer->AddSlot().AutoWidth().Padding(0.f, 0.f, 10.f, 0.f)
 	[
-		MakeText(GuidonVocabulary::PriorityLabel(Task.Priority), 8, true, GuidonStyle::PriorityColor(Task.Priority))
+		MakeMuted(GuidonVocabulary::PriorityLabel(Task.Priority))
 	];
 	if (!Task.DueDate.IsEmpty())
 	{
@@ -641,7 +661,7 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildCard(const FGuidonTask& Task)
 		[
 			SNew(SBorder)
 			.BorderImage(GuidonStyle::CardBrush(Task.Id == SelectedTaskId))
-			.Padding(10.f)
+			.Padding(12.f)
 			[
 				Body
 			]
@@ -786,9 +806,21 @@ void SGuidonTasksWidget::DoRebuildDetails()
 		+ SHorizontalBox::Slot().AutoWidth()
 		[
 			SNew(SButton)
-			.ButtonColorAndOpacity(GuidonStyle::Destructive())
+			.ButtonStyle(&GuidonStyle::DestructiveButton())
 			.Text(LOCTEXT("Delete", "Delete"))
 			.OnClicked_Lambda([this]() { DeleteSelectedTask(); return FReply::Handled(); })
+		]
+		+ SHorizontalBox::Slot().AutoWidth().Padding(6.f, 0.f, 0.f, 0.f)
+		[
+			SNew(SButton)
+			.Text(LOCTEXT("CopyGitRef", "Copy Git ref"))
+			.ToolTipText(LOCTEXT("CopyGitRefTip", "Copy guidon#<id>: mention it in a commit, PR or branch name and the GitHub integration links and moves this task"))
+			.OnClicked_Lambda([TaskId]()
+			{
+				// guidon#1a2b3c4d - what the GitHub integration recognises in commits, PRs and branch names.
+				FPlatformApplicationMisc::ClipboardCopy(*(TEXT("guidon#") + TaskId.Left(8).ToLower()));
+				return FReply::Handled();
+			})
 		]
 	];
 
@@ -888,6 +920,7 @@ void SGuidonTasksWidget::DoRebuildDetails()
 	DetailsBox->AddSlot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f).HAlign(HAlign_Right)
 	[
 		SNew(SButton)
+		.ButtonStyle(&PrimaryButton())
 		.Text(LOCTEXT("Post", "Post"))
 		.OnClicked_Lambda([this]() { PostComment(); return FReply::Handled(); })
 	];

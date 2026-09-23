@@ -137,6 +137,11 @@ def parse_columns(raw):
     return tuple(columns) or DEFAULT_COLUMNS
 
 
+def git_ref(task_id):
+    """`guidon#1a2b3c4d` - what the GitHub integration recognises in commits, PRs and branch names."""
+    return "guidon#" + (task_id or "")[:8].lower()
+
+
 def sort_order_for_append(column_tasks):
     """Port of the append case of sortOrderForPosition (task-board.ts): a
     card dropped at the end of a column goes 100 past the current last one."""

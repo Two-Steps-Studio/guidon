@@ -25,6 +25,16 @@ const SETTINGS := [
 	{"name": "guidon_reports/screenshot_quality", "type": TYPE_FLOAT, "default": 0.85},
 ]
 const CATEGORIES := ["bug", "crash", "feedback"]
+# The Guidon website's dark tokens (src/app/globals.css).
+const CARD := Color("#101317")
+const BORDER := Color("#23272f")
+const TEXT := Color("#e8eaed")
+const TEXT_MUTED := Color("#8b93a1")
+const INPUT_BG := Color("#0b0d10")
+const PRIMARY := Color("#4d8dff")
+const PRIMARY_HOVER := Color("#6ea3ff")
+const PRIMARY_FG := Color("#05142e")
+const MUTED := Color("#16191f")
 
 var enabled := false
 var _form: PanelContainer
@@ -133,38 +143,40 @@ func _build_form() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_form.add_child(center)
 	var panel := PanelContainer.new()
-	var box := StyleBoxFlat.new()
-	box.bg_color = Color("#101317")
-	box.set_corner_radius_all(8)
-	box.set_content_margin_all(18)
-	panel.add_theme_stylebox_override("panel", box)
+	panel.add_theme_stylebox_override("panel", _box(CARD, BORDER, 12, 20))
 	center.add_child(panel)
 	var column := VBoxContainer.new()
 	column.custom_minimum_size = Vector2(480, 0)
 	panel.add_child(column)
 
+	column.add_theme_constant_override("separation", 8)
 	var heading := Label.new()
 	heading.text = "Report a problem"
 	heading.add_theme_font_size_override("font_size", 20)
+	heading.add_theme_color_override("font_color", TEXT)
 	column.add_child(heading)
 	_category = OptionButton.new()
 	for label in ["Bug", "Crash", "Feedback"]:
 		_category.add_item(label)
+	_style_button(_category, _box(INPUT_BG, BORDER, 6, 6), _box(MUTED, BORDER, 6, 6), TEXT)
 	column.add_child(_category)
 	column.add_child(_label("What happened? (short title)"))
 	_title = LineEdit.new()
 	_title.max_length = 200
 	_title.text_submitted.connect(func(_text): _on_send())
+	_style_input(_title)
 	column.add_child(_title)
 	column.add_child(_label("Details - what did you do, what did you expect?"))
 	_description = TextEdit.new()
 	_description.custom_minimum_size.y = 110
 	_description.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	_style_input(_description)
 	column.add_child(_description)
 	column.add_child(_label("Your name or email (optional)"))
 	_reporter = LineEdit.new()
 	_reporter.max_length = 200
 	_reporter.text = _load_reporter()
+	_style_input(_reporter)
 	column.add_child(_reporter)
 	var toggles := HBoxContainer.new()
 	column.add_child(toggles)
@@ -186,8 +198,10 @@ func _build_form() -> void:
 		if not _sending:
 			close())
 	buttons.add_child(cancel)
+	_style_button(cancel, _box(CARD, BORDER, 6, 6), _box(MUTED, BORDER, 6, 6), TEXT)
 	_send = Button.new()
 	_send.text = "Send"
+	_style_button(_send, _box(PRIMARY, PRIMARY, 6, 6), _box(PRIMARY_HOVER, PRIMARY_HOVER, 6, 6), PRIMARY_FG)
 	_send.pressed.connect(_on_send)
 	buttons.add_child(_send)
 
@@ -195,8 +209,36 @@ func _build_form() -> void:
 func _label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.modulate = Color(1, 1, 1, 0.65)
+	label.add_theme_color_override("font_color", TEXT_MUTED)
 	return label
+
+
+static func _box(fill: Color, border: Color, radius: int, padding: int) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = fill
+	box.border_color = border
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(radius)
+	box.set_content_margin_all(padding)
+	box.content_margin_left = padding + 6
+	box.content_margin_right = padding + 6
+	return box
+
+
+static func _style_button(button: Button, normal: StyleBox, hover: StyleBox, font: Color) -> void:
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", hover)
+	button.add_theme_stylebox_override("disabled", normal)
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color"]:
+		button.add_theme_color_override(state, font)
+
+
+static func _style_input(control: Control) -> void:
+	var normal := _box(INPUT_BG, BORDER, 6, 6)
+	control.add_theme_stylebox_override("normal", normal)
+	control.add_theme_stylebox_override("focus", _box(INPUT_BG, PRIMARY, 6, 6))
+	control.add_theme_color_override("font_color", TEXT)
 
 
 func _on_send() -> void:

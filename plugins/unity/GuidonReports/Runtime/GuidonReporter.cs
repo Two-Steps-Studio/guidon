@@ -154,27 +154,39 @@ namespace Guidon.Reports
             }
 
             GUI.depth = -1000;
+            GuidonReportStyles.Ensure();
             float width = Mathf.Min(560f, Screen.width - 40f);
-            float height = Mathf.Min(520f, Screen.height - 40f);
+            float height = Mathf.Min(560f, Screen.height - 40f);
             var rect = new Rect((Screen.width - width) / 2f, (Screen.height - height) / 2f, width, height);
-            GUI.Box(new Rect(0, 0, Screen.width, Screen.height), GUIContent.none);
-            GUILayout.BeginArea(rect, GUI.skin.window);
+            // Dim the game behind the form.
+            Color previousColor = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, 0.55f);
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+            GUI.color = previousColor;
+            GUILayout.BeginArea(rect, GuidonReportStyles.Window);
             _scroll = GUILayout.BeginScrollView(_scroll);
 
-            GUILayout.Label("Report a problem");
-            _category = GUILayout.Toolbar(_category, CategoryLabels);
+            GUILayout.Label("Report a problem", GuidonReportStyles.Heading);
             GUILayout.Space(6);
-            GUILayout.Label("What happened? (short title)");
-            GUI.SetNextControlName("GuidonTitle");
-            _title = GUILayout.TextField(_title, 200);
-            GUILayout.Label("Details - what did you do, what did you expect?");
-            _description = GUILayout.TextArea(_description, 5000, GUILayout.MinHeight(110));
-            GUILayout.Label("Your name or email (optional)");
-            _reporter = GUILayout.TextField(_reporter, 200);
-
             GUILayout.BeginHorizontal();
-            _includeScreenshot = GUILayout.Toggle(_includeScreenshot && _screenshot != null, " Attach screenshot") && _screenshot != null;
-            _includeLog = GUILayout.Toggle(_includeLog, " Attach log");
+            for (int i = 0; i < CategoryLabels.Length; i++)
+            {
+                if (GUILayout.Button(CategoryLabels[i], i == _category ? GuidonReportStyles.TabActive : GuidonReportStyles.Tab)) _category = i;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.Label("What happened? (short title)", GuidonReportStyles.Label);
+            GUI.SetNextControlName("GuidonTitle");
+            _title = GUILayout.TextField(_title, 200, GuidonReportStyles.TextField);
+            GUILayout.Label("Details - what did you do, what did you expect?", GuidonReportStyles.Label);
+            _description = GUILayout.TextArea(_description, 5000, GuidonReportStyles.TextArea, GUILayout.MinHeight(110));
+            GUILayout.Label("Your name or email (optional)", GuidonReportStyles.Label);
+            _reporter = GUILayout.TextField(_reporter, 200, GuidonReportStyles.TextField);
+
+            GUILayout.Space(6);
+            GUILayout.BeginHorizontal();
+            _includeScreenshot = GUILayout.Toggle(_includeScreenshot && _screenshot != null, " Attach screenshot", GuidonReportStyles.Toggle) && _screenshot != null;
+            _includeLog = GUILayout.Toggle(_includeLog, " Attach log", GuidonReportStyles.Toggle);
             GUILayout.EndHorizontal();
             if (_thumbnail != null && _includeScreenshot)
             {
@@ -184,18 +196,17 @@ namespace Guidon.Reports
 
             if (!string.IsNullOrEmpty(_status))
             {
-                Color previous = GUI.color;
-                GUI.color = _statusIsError ? new Color(1f, 0.5f, 0.5f) : new Color(0.5f, 1f, 0.6f);
-                GUILayout.Label(_status);
-                GUI.color = previous;
+                GuidonReportStyles.Status.normal.textColor = _statusIsError ? GuidonReportStyles.Danger : GuidonReportStyles.Success;
+                GUILayout.Label(_status, GuidonReportStyles.Status);
             }
 
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
-            GUI.enabled = !_sending && _title.Trim().Length > 0;
-            if (GUILayout.Button(_sending ? "Sending…" : "Send", GUILayout.Height(28))) StartCoroutine(SendFromForm());
+            GUILayout.FlexibleSpace();
             GUI.enabled = !_sending;
-            if (GUILayout.Button("Cancel", GUILayout.Height(28))) Close();
+            if (GUILayout.Button("Cancel", GuidonReportStyles.Secondary, GUILayout.Height(30))) Close();
+            GUI.enabled = !_sending && _title.Trim().Length > 0;
+            if (GUILayout.Button(_sending ? "Sending\u2026" : "Send", GuidonReportStyles.Primary_, GUILayout.Height(30))) StartCoroutine(SendFromForm());
             GUI.enabled = true;
             GUILayout.EndHorizontal();
             GUILayout.EndArea();

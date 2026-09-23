@@ -1,6 +1,7 @@
 #include "GuidonReportsInternal.h"
 
 #include "Brushes/SlateColorBrush.h"
+#include "Brushes/SlateRoundedBoxBrush.h"
 #include "Framework/Application/SlateApplication.h"
 #include "GuidonReportsSubsystem.h"
 #include "Misc/ConfigCacheIni.h"
@@ -25,6 +26,31 @@ namespace
 	const FLinearColor MutedColor = FLinearColor(FColor::FromHex(TEXT("#8b93a1")));
 	const FLinearColor ErrorColor = FLinearColor(FColor::FromHex(TEXT("#f87171")));
 	const FLinearColor SuccessColor = FLinearColor(FColor::FromHex(TEXT("#34d399")));
+	const FLinearColor BorderColor = FLinearColor(FColor::FromHex(TEXT("#23272f")));
+	const FLinearColor PrimaryColor = FLinearColor(FColor::FromHex(TEXT("#4d8dff")));
+
+	const FSlateBrush* PanelBrush()
+	{
+		static const FSlateRoundedBoxBrush Brush(PanelColor, 12.f, BorderColor, 1.f); // the site's card: rounded-xl + border
+		return &Brush;
+	}
+
+	/** The site's primary Button: solid brand blue, dark text. */
+	const FButtonStyle& PrimaryButton()
+	{
+		static const FButtonStyle Style = FButtonStyle()
+			.SetNormal(FSlateRoundedBoxBrush(PrimaryColor, 6.f))
+			.SetHovered(FSlateRoundedBoxBrush(FLinearColor(FColor::FromHex(TEXT("#6ea3ff"))), 6.f))
+			.SetPressed(FSlateRoundedBoxBrush(FLinearColor(FColor::FromHex(TEXT("#3a76e6"))), 6.f))
+			.SetDisabled(FSlateRoundedBoxBrush(BorderColor, 6.f))
+			.SetNormalForeground(FLinearColor(FColor::FromHex(TEXT("#05142e"))))
+			.SetHoveredForeground(FLinearColor(FColor::FromHex(TEXT("#05142e"))))
+			.SetPressedForeground(FLinearColor(FColor::FromHex(TEXT("#05142e"))))
+			.SetDisabledForeground(MutedColor)
+			.SetNormalPadding(FMargin(14.f, 5.f))
+			.SetPressedPadding(FMargin(14.f, 6.f, 14.f, 4.f));
+		return Style;
+	}
 
 	const FSlateBrush* ColorBrush(const FLinearColor& Color)
 	{
@@ -79,7 +105,7 @@ void SGuidonReportForm::Construct(const FArguments& InArgs)
 			.WidthOverride(540.f)
 			[
 				SNew(SBorder)
-				.BorderImage(ColorBrush(PanelColor))
+				.BorderImage(PanelBrush())
 				.Padding(20.f)
 				[
 					SNew(SVerticalBox)
@@ -156,6 +182,7 @@ void SGuidonReportForm::Construct(const FArguments& InArgs)
 						+ SHorizontalBox::Slot().AutoWidth()
 						[
 							SNew(SButton)
+							.ButtonStyle(&PrimaryButton())
 							.IsEnabled_Lambda([this]() { return !bSending && TitleBox.IsValid() && !TitleBox->GetText().ToString().TrimStartAndEnd().IsEmpty(); })
 							.Text_Lambda([this]() { return bSending ? LOCTEXT("Sending", "Sending\u2026") : LOCTEXT("Send", "Send"); })
 							.OnClicked(this, &SGuidonReportForm::OnSend)

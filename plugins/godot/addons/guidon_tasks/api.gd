@@ -167,6 +167,11 @@ static func append_sort_order(column: Array) -> float:
 	return highest + 100.0
 
 
+## `guidon#1a2b3c4d` - what the GitHub integration recognises in commits, PRs and branch names.
+static func git_ref(task_id: String) -> String:
+	return "guidon#" + task_id.substr(0, 8).to_lower()
+
+
 static func _str(value) -> String:
 	return "" if value == null else str(value)
 

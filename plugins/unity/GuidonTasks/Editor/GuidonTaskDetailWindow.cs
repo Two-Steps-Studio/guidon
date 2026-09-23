@@ -226,6 +226,17 @@ namespace Guidon.Tasks.Editor
                 _deleteButton = new Button(() => { _ = SubmitDelete(); }) { text = "✕ Delete", style = { marginLeft = 4f } };
                 GuidonStyles.StyleDestructiveButton(_deleteButton);
                 row.Add(_deleteButton);
+
+                // guidon#1a2b3c4d - what the GitHub integration recognises in commits, PRs and branch names.
+                string gitRef = "guidon#" + _task.id.Substring(0, Math.Min(8, _task.id.Length)).ToLowerInvariant();
+                var copyRefButton = new Button(() => EditorGUIUtility.systemCopyBuffer = gitRef)
+                {
+                    text = "Copy Git ref",
+                    tooltip = "Copy guidon#<id>: mention it in a commit, PR or branch name and the GitHub integration links and moves this task",
+                    style = { marginLeft = 4f },
+                };
+                GuidonStyles.StyleSecondaryButton(copyRefButton);
+                row.Add(copyRefButton);
             }
 
             var closeButton = new Button(Close) { text = "Close", style = { marginLeft = 4f } };

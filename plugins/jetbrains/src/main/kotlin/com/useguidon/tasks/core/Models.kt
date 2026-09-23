@@ -84,6 +84,9 @@ object Board {
         return ""
     }
 
+    /** `guidon#1a2b3c4d` - what the GitHub integration recognises in commits, PRs and branch names. */
+    fun gitRef(taskId: String): String = "guidon#" + taskId.take(8).lowercase()
+
     private val isoDate = Regex("""\d{4}-\d{2}-\d{2}""")
 
     /** "" or YYYY-MM-DD - anything else would make the server's `new Date(...)` throw. */

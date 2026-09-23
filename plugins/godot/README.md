@@ -25,7 +25,11 @@ using the same public API (`/api/v1`).
 - Click a card to edit it on the right, **drag it onto another column** to
   change its status, and use **+** on a column to create a task there (Enter
   creates, Esc cancels). The details panel also has subtasks (checkbox =
-  done), comments, delete and **Copy ID**.
+  done), comments, delete and **Copy Git ref** (`guidon#1a2b3c4d`). Put it in a
+  commit, PR or branch name, and the GitHub integration links and moves the
+  task.
+- The panel uses the website's colors (`src/app/globals.css`), with a light or
+  dark set that follows the editor theme.
 
 ## Guidon Reports (in-game)
 

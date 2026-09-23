@@ -11,16 +11,9 @@ extends VBoxContainer
 const Api := preload("res://addons/guidon_tasks/api.gd")
 const Login := preload("res://addons/guidon_tasks/login.gd")
 const Settings := preload("res://addons/guidon_tasks/settings.gd")
+const Palette := preload("res://addons/guidon_tasks/palette.gd")
 
-const COLUMN_WIDTH := 240
-const ACCENT := Color("#4d8dff")
-const STATUS_COLORS := {
-	"backlog": Color("#8b93a1"), "todo": Color("#60a5fa"), "in_progress": Color("#fbbf24"),
-	"ai_working": Color("#60a5fa"), "review": Color("#4d8dff"), "done": Color("#34d399"),
-}
-const PRIORITY_COLORS := {
-	"low": Color("#8b93a1"), "medium": Color("#60a5fa"), "high": Color("#fbbf24"), "critical": Color("#f87171"),
-}
+const COLUMN_WIDTH := 272  # the site's w-72 column
 
 # --- state
 var projects: Array = []
@@ -36,6 +29,7 @@ var _login: RefCounted
 # details edit buffers - survive rebuilds, reset when another task is opened
 var _edit := {"title": "", "description": "", "priority": "medium", "due": "", "subtask": "", "comment": ""}
 var _rebuild_queued := false
+var _p: RefCounted  # Palette - the website's colors
 
 # --- widgets
 var _project_picker: OptionButton
@@ -56,6 +50,9 @@ var _confirm: ConfirmationDialog
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, 280)
+	if _p == null:
+		_p = Palette.for_editor()
+	add_theme_constant_override("separation", 8)
 	_build()
 	current_project_id = Settings.get_value("project_id")
 	_update_chrome()
@@ -65,16 +62,25 @@ func _ready() -> void:
 
 # --- construction -------------------------------------------------------------
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		queue_redraw()
+
+
+func _draw() -> void:
+	if _p:
+		draw_rect(Rect2(Vector2.ZERO, size), _p.c("background"))
+
+
 func _build() -> void:
 	var toolbar := HBoxContainer.new()
 	add_child(toolbar)
-	var brand := Label.new()
-	brand.text = "Guidon"
-	brand.add_theme_color_override("font_color", ACCENT)
+	var brand: Label = _p.label("Guidon", "primary", 18)
 	toolbar.add_child(brand)
 
 	_project_picker = OptionButton.new()
 	_project_picker.custom_minimum_size.x = 200
+	_p.style_button(_project_picker)
 	_project_picker.item_selected.connect(func(index): _select_project(str(_project_picker.get_item_metadata(index))))
 	toolbar.add_child(_project_picker)
 	_logged_in_controls.append(_project_picker)
@@ -83,30 +89,27 @@ func _build() -> void:
 		if current_project_id != "":
 			OS.shell_open("%s/projects/%s/work" % [Settings.base_url().trim_suffix("/"), current_project_id])))
 
-	_busy_label = Label.new()
-	_busy_label.text = "Loading…"
-	_busy_label.modulate = Color(1, 1, 1, 0.6)
+	_busy_label = _p.label("Loading…", "text_muted")
 	toolbar.add_child(_busy_label)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(spacer)
-	_account_label = Label.new()
-	_account_label.modulate = Color(1, 1, 1, 0.6)
+	_account_label = _p.label("", "text_muted")
 	toolbar.add_child(_account_label)
 	_logged_in_controls.append(_toolbar_button(toolbar, "Log Out", log_out))
 
 	_error_bar = PanelContainer.new()
-	_error_bar.add_theme_stylebox_override("panel", _box(Color(0.6, 0.1, 0.1, 0.25), Color("#f87171"), 6))
+	_error_bar.add_theme_stylebox_override("panel", _p.box("danger_bg", "danger", 6, 8))
 	var error_row := HBoxContainer.new()
 	_error_bar.add_child(error_row)
 	_error_label = Label.new()
-	_error_label.add_theme_color_override("font_color", Color("#f87171"))
+	_error_label.add_theme_color_override("font_color", _p.c("danger"))
 	_error_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	error_row.add_child(_error_label)
 	var dismiss := Button.new()
 	dismiss.text = "✕"
-	dismiss.flat = true
+	_p.style_button(dismiss, "ghost")
 	dismiss.pressed.connect(func(): _show_error(""))
 	error_row.add_child(dismiss)
 	add_child(_error_bar)
@@ -119,9 +122,10 @@ func _build() -> void:
 	add_child(_confirm)
 
 
-func _toolbar_button(parent: Control, text: String, action: Callable) -> Button:
+func _toolbar_button(parent: Control, text: String, action: Callable, variant: String = "outline") -> Button:
 	var button := Button.new()
 	button.text = text
+	_p.style_button(button, variant)
 	button.pressed.connect(action)
 	parent.add_child(button)
 	return button
@@ -132,29 +136,29 @@ func _build_login_panel() -> void:
 	_login_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(_login_panel)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _box(Color(0, 0, 0, 0.2), Color(1, 1, 1, 0.1), 8, 16))
+	panel.add_theme_stylebox_override("panel", _p.box("card", "border", 12, 24))
 	_login_panel.add_child(panel)
 	var form := VBoxContainer.new()
 	form.custom_minimum_size.x = 340
 	panel.add_child(form)
-	var title := Label.new()
-	title.text = "Log in to Guidon"
-	form.add_child(title)
-	var help := Label.new()
-	help.text = "Logging in opens the Guidon website in your browser. Approve the plugin there and this panel picks up the result automatically."
+	form.add_theme_constant_override("separation", 10)
+	form.add_child(_p.label("Log in to Guidon", "text", 18))
+	var help: Label = _p.label("Logging in opens the Guidon website in your browser. Approve the plugin there and this panel picks up the result automatically.", "text_muted")
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	help.modulate = Color(1, 1, 1, 0.6)
 	form.add_child(help)
 	_base_url_edit = LineEdit.new()
+	_p.style_input(_base_url_edit)
 	_base_url_edit.text = Settings.base_url()
 	_base_url_edit.placeholder_text = "https://useguidon.com"
 	form.add_child(_base_url_edit)
 	_login_button = Button.new()
 	_login_button.text = "Log In"
+	_p.style_button(_login_button, "primary")
 	_login_button.pressed.connect(func(): log_in())
 	form.add_child(_login_button)
 	_cancel_login_button = Button.new()
 	_cancel_login_button.text = "Cancel"
+	_p.style_button(_cancel_login_button)
 	_cancel_login_button.pressed.connect(func():
 		if _login:
 			_login.cancelled = true)
@@ -172,26 +176,23 @@ func _build_board_area() -> void:
 	_board_area.add_child(board_scroll)
 	_columns_box = HBoxContainer.new()
 	_columns_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_columns_box.add_theme_constant_override("separation", 8)
+	_columns_box.add_theme_constant_override("separation", 16)
 	board_scroll.add_child(_columns_box)
 
 	var details_scroll := ScrollContainer.new()
 	details_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_board_area.add_child(details_scroll)
+	var details_panel := PanelContainer.new()
+	details_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_panel.add_theme_stylebox_override("panel", _p.box("card", "border", 12, 16))
+	details_scroll.add_child(details_panel)
 	_details = VBoxContainer.new()
 	_details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	details_scroll.add_child(_details)
+	_details.add_theme_constant_override("separation", 6)
+	details_panel.add_child(_details)
 
 
-static func _box(fill: Color, border: Color, radius: int, padding: int = 8) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = fill
-	box.border_color = border
-	box.set_border_width_all(1)
-	box.set_corner_radius_all(radius)
-	box.set_content_margin_all(padding)
-	return box
 
 
 # --- plumbing ------------------------------------------------------------------
@@ -270,9 +271,7 @@ func _rebuild_board() -> void:
 	for child in _columns_box.get_children():
 		child.queue_free()
 	if current_project_id == "":
-		var hint := Label.new()
-		hint.text = "No projects loaded yet." if projects.is_empty() else "Pick a project above."
-		_columns_box.add_child(hint)
+		_columns_box.add_child(_p.label("No projects loaded yet." if projects.is_empty() else "Pick a project above.", "text_muted"))
 		return
 	for column in columns:
 		_columns_box.add_child(_build_column(column.status, column.label))
@@ -285,40 +284,55 @@ func _build_column(status: String, label: String) -> Control:
 	column.status = status
 	column.custom_minimum_size.x = COLUMN_WIDTH
 	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.normal_style = _box(Color(0, 0, 0, 0.18), Color(1, 1, 1, 0.08), 8)
-	column.drop_style = _box(Color(0, 0, 0, 0.18), ACCENT, 8)
+	# The site's column: rounded-xl, background-secondary, header row over a divider.
+	column.normal_style = _p.box("column", "border", 12, 0)
+	column.drop_style = _p.box("column", "primary", 12, 0)
 	column.add_theme_stylebox_override("panel", column.normal_style)
 
-	var body := VBoxContainer.new()
-	column.add_child(body)
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 0)
+	column.add_child(outer)
+	var header_margin := MarginContainer.new()
+	for side in ["left", "right"]:
+		header_margin.add_theme_constant_override("margin_" + side, 12)
+	for side in ["top", "bottom"]:
+		header_margin.add_theme_constant_override("margin_" + side, 8)
+	outer.add_child(header_margin)
 	var header := HBoxContainer.new()
-	body.add_child(header)
-	var dot := ColorRect.new()
-	dot.color = STATUS_COLORS.get(status, Color.GRAY)
-	dot.custom_minimum_size = Vector2(8, 8)
-	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header.add_child(dot)
-	var title := Label.new()
-	title.text = label
+	header.add_theme_constant_override("separation", 8)
+	header_margin.add_child(header)
+	header.add_child(_p.dot(_p.status(status)))
+	var title: Label = _p.label(label, "text", 14)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
-	var count := Label.new()
-	count.text = str(column_tasks.size())
-	count.modulate = Color(1, 1, 1, 0.6)
-	header.add_child(count)
+	var count_pill: PanelContainer = _p.pill(str(column_tasks.size()))
+	count_pill.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header.add_child(count_pill)
 	var add := Button.new()
 	add.text = "+"
-	add.flat = true
+	_p.style_button(add, "ghost")
 	add.tooltip_text = "Create a task in this column"
 	add.pressed.connect(func():
 		adding_in_status = "" if adding_in_status == status else status
 		_schedule_rebuild())
 	header.add_child(add)
+	var divider := ColorRect.new()
+	divider.color = _p.c("border")
+	divider.custom_minimum_size.y = 1
+	outer.add_child(divider)
+	var body_margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		body_margin.add_theme_constant_override("margin_" + side, 8)
+	outer.add_child(body_margin)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 8)
+	body_margin.add_child(body)
 
 	for task in column_tasks:
 		body.add_child(_build_card(task))
 	if adding_in_status == status:
 		var field := LineEdit.new()
+		_p.style_input(field)
 		field.placeholder_text = "Task title, Enter to create"
 		field.text_submitted.connect(func(text):
 			if text.strip_edges() != "":
@@ -331,53 +345,88 @@ func _build_column(status: String, label: String) -> Control:
 		body.add_child(field)
 		field.grab_focus.call_deferred()
 	elif column_tasks.is_empty():
-		var empty := Label.new()
-		empty.text = "Drop tasks here"
-		empty.modulate = Color(1, 1, 1, 0.45)
+		var empty: Label = _p.label("Drop tasks here", "text_muted", 12)
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty.custom_minimum_size.y = 48
+		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		body.add_child(empty)
 	return column
 
 
 func _build_card(task: Dictionary) -> Control:
+	# The site's TaskCard: rounded-lg, bg-card, 1px border, p-3; priority dot
+	# before the title, description preview, tag chips, muted footer.
 	var card := CardPanel.new()
 	card.board = self
 	card.task_id = str(task.id)
 	card.task_title = str(task.get("title", ""))
 	var selected := card.task_id == selected_task_id
-	card.add_theme_stylebox_override("panel", _box(Color(1, 1, 1, 0.04), ACCENT if selected else Color(1, 1, 1, 0.1), 6))
+	card.normal_style = _p.box("card", "primary" if selected else "border", 8, 12)
+	card.hover_style = _p.box("card_hover", "primary" if selected else "border_hover", 8, 12)
+	card.add_theme_stylebox_override("panel", card.normal_style)
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	var body := VBoxContainer.new()
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_theme_constant_override("separation", 6)
 	card.add_child(body)
-	var title := Label.new()
-	title.text = card.task_title
+	var priority := str(task.get("priority", "medium"))
+	var title_row := HBoxContainer.new()
+	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_row.add_theme_constant_override("separation", 8)
+	body.add_child(title_row)
+	var priority_dot: Panel = _p.dot(_p.priority(priority), 6)
+	priority_dot.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	title_row.add_child(priority_dot)
+	var title: Label = _p.label(card.task_title, "text", 14)
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	title.custom_minimum_size.x = COLUMN_WIDTH - 40
-	body.add_child(title)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.custom_minimum_size.x = COLUMN_WIDTH - 60
+	title_row.add_child(title)
+
+	var preview := _preview(Api._str(task.get("description")))
+	if preview != "":
+		var preview_label: Label = _p.label(preview, "text_muted", 12)
+		preview_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		preview_label.max_lines_visible = 2
+		preview_label.custom_minimum_size.x = COLUMN_WIDTH - 60
+		body.add_child(preview_label)
+
+	var tags = task.get("tags")
+	if tags is Array and not tags.is_empty():
+		var tag_row := HFlowContainer.new()
+		tag_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for tag in tags.slice(0, 3):
+			tag_row.add_child(_p.pill(str(tag)))
+		if tags.size() > 3:
+			tag_row.add_child(_p.label("+%d" % (tags.size() - 3), "text_muted", 11))
+		body.add_child(tag_row)
 
 	var footer := HBoxContainer.new()
 	footer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	footer.add_theme_constant_override("separation", 12)
 	body.add_child(footer)
-	var priority := str(task.get("priority", "medium"))
-	var priority_label := Label.new()
-	priority_label.text = priority.capitalize()
-	priority_label.add_theme_color_override("font_color", PRIORITY_COLORS.get(priority, Color.GRAY))
-	footer.add_child(priority_label)
+	footer.add_child(_p.label(priority.capitalize(), "text_muted", 11))
 	var due := Api._str(task.get("due_date"))
 	if due != "":
-		var due_label := Label.new()
-		due_label.text = due.substr(0, 10)
-		due_label.modulate = Color(1, 1, 1, 0.6)
-		footer.add_child(due_label)
+		footer.add_child(_p.label(due.substr(0, 10), "text_muted", 11))
 	var subs := Api.subtasks(tasks, card.task_id)
 	if not subs.is_empty():
 		var done := subs.filter(func(sub): return sub.get("status") == "done").size()
-		var progress := Label.new()
-		progress.text = "✓ %d/%d" % [done, subs.size()]
-		progress.modulate = Color(1, 1, 1, 0.6)
-		footer.add_child(progress)
+		footer.add_child(_p.label("✓ %d/%d" % [done, subs.size()], "text_muted", 11))
+	for child in footer.get_children() + title_row.get_children() + body.get_children():
+		if child is Control:
+			child.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return card
+
+
+## First non-empty line of a Markdown description, markers stripped - the site's card preview.
+static func _preview(description: String) -> String:
+	for raw in description.split("\n"):
+		var line := raw.strip_edges().lstrip("#->* ").replace("**", "").replace("`", "")
+		if line != "":
+			return line
+	return ""
 
 
 ## A board card: click opens it, dragging hands its id to a column.
@@ -385,6 +434,14 @@ class CardPanel extends PanelContainer:
 	var board
 	var task_id := ""
 	var task_title := ""
+	var normal_style: StyleBox
+	var hover_style: StyleBox
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_MOUSE_ENTER and hover_style:
+			add_theme_stylebox_override("panel", hover_style)
+		elif what == NOTIFICATION_MOUSE_EXIT and normal_style:
+			add_theme_stylebox_override("panel", normal_style)
 
 	func _get_drag_data(_at_position: Vector2) -> Variant:
 		var preview := Label.new()
@@ -428,10 +485,8 @@ func _rebuild_details() -> void:
 		child.queue_free()
 	var task = _find(selected_task_id)
 	if task == null:
-		var hint := Label.new()
-		hint.text = "Click a card to open it here. Drag cards between columns to change their status."
+		var hint: Label = _p.label("Click a card to open it here. Drag cards between columns to change their status.", "text_muted")
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		hint.modulate = Color(1, 1, 1, 0.6)
 		_details.add_child(hint)
 		return
 
@@ -442,6 +497,7 @@ func _rebuild_details() -> void:
 
 	_details.add_child(_section("Title"))
 	var title := LineEdit.new()
+	_p.style_input(title)
 	title.text = _edit.title
 	title.text_changed.connect(func(text): _edit.title = text)
 	_details.add_child(title)
@@ -453,6 +509,7 @@ func _rebuild_details() -> void:
 	row.add_child(status_box)
 	status_box.add_child(_section("Status"))
 	var status_picker := OptionButton.new()
+	_p.style_button(status_picker)
 	# The project's visible columns only - a task can't be moved into one the board hides.
 	var options := columns.map(func(column): return column.status)
 	if not options.has(task.status):
@@ -469,6 +526,7 @@ func _rebuild_details() -> void:
 	row.add_child(priority_box)
 	priority_box.add_child(_section("Priority"))
 	var priority_picker := OptionButton.new()
+	_p.style_button(priority_picker)
 	for priority in Api.PRIORITIES:
 		priority_picker.add_item(priority.capitalize())
 	priority_picker.select(maxi(0, Api.PRIORITIES.find(_edit.priority)))
@@ -477,12 +535,14 @@ func _rebuild_details() -> void:
 
 	_details.add_child(_section("Due date (YYYY-MM-DD)"))
 	var due := LineEdit.new()
+	_p.style_input(due)
 	due.text = _edit.due
 	due.text_changed.connect(func(text): _edit.due = text.strip_edges())
 	_details.add_child(due)
 
 	_details.add_child(_section("Description (Markdown)"))
 	var description := TextEdit.new()
+	_p.style_input(description)
 	description.text = _edit.description
 	description.custom_minimum_size.y = 120
 	description.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -491,10 +551,9 @@ func _rebuild_details() -> void:
 
 	var buttons := HBoxContainer.new()
 	_details.add_child(buttons)
-	_toolbar_button(buttons, "Save", save_selected_task)
-	var delete := _toolbar_button(buttons, "Delete", func(): _confirm_delete(task_id, str(task.get("title", ""))))
-	delete.add_theme_color_override("font_color", Color("#f87171"))
-	_toolbar_button(buttons, "Copy ID", func(): DisplayServer.clipboard_set(task_id)).tooltip_text = "Copy the task id, e.g. for a commit message"
+	_toolbar_button(buttons, "Save", save_selected_task, "primary")
+	_toolbar_button(buttons, "Delete", func(): _confirm_delete(task_id, str(task.get("title", ""))), "destructive")
+	_toolbar_button(buttons, "Copy Git ref", func(): DisplayServer.clipboard_set(Api.git_ref(task_id))).tooltip_text = "Copy guidon#<id>: mention it in a commit, PR or branch name and the GitHub integration links and moves this task"
 
 	if parent_id == "":
 		_details.add_child(_section("Subtasks"))
@@ -508,6 +567,7 @@ func _rebuild_details() -> void:
 			sub_row.add_child(check)
 			sub_row.add_child(_link(str(sub.get("title", "")), func(): select_task(sub_id)))
 		var new_sub := LineEdit.new()
+		_p.style_input(new_sub)
 		new_sub.placeholder_text = "New subtask, Enter to add"
 		new_sub.text = _edit.subtask
 		new_sub.text_changed.connect(func(text): _edit.subtask = text)
@@ -526,17 +586,17 @@ func _rebuild_details() -> void:
 	else:
 		for comment in task_comments:
 			var bubble := PanelContainer.new()
-			bubble.add_theme_stylebox_override("panel", _box(Color(1, 1, 1, 0.04), Color(1, 1, 1, 0.1), 6, 6))
+			bubble.add_theme_stylebox_override("panel", _p.box("column", "border", 8, 10))
 			var body := VBoxContainer.new()
 			bubble.add_child(body)
 			var author := Api._str(comment.get("actor_label"))
 			body.add_child(_muted("%s - %s" % [author if author != "" else "Someone", Api._str(comment.get("created_at")).substr(0, 16).replace("T", " ")]))
-			var text := Label.new()
-			text.text = Api._str(comment.get("content"))
+			var text: Label = _p.label(Api._str(comment.get("content")))
 			text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			body.add_child(text)
 			_details.add_child(bubble)
 	var comment_edit := TextEdit.new()
+	_p.style_input(comment_edit)
 	comment_edit.text = _edit.comment
 	comment_edit.custom_minimum_size.y = 60
 	comment_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -545,18 +605,15 @@ func _rebuild_details() -> void:
 	var post_row := HBoxContainer.new()
 	post_row.alignment = BoxContainer.ALIGNMENT_END
 	_details.add_child(post_row)
-	_toolbar_button(post_row, "Post", post_comment)
+	_toolbar_button(post_row, "Post", post_comment, "primary")
 
 
 func _section(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.modulate = Color(1, 1, 1, 0.6)
-	return label
+	return _p.label(text, "text", 13)
 
 
 func _muted(text: String) -> Label:
-	var label := _section(text)
+	var label: Label = _p.label(text, "text_muted", 12)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
 
@@ -564,7 +621,8 @@ func _muted(text: String) -> Label:
 func _link(text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.flat = true
+	_p.style_button(button, "ghost")
+	button.add_theme_color_override("font_color", _p.c("text"))
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL

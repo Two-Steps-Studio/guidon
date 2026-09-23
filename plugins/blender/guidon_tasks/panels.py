@@ -9,7 +9,23 @@ import bpy
 from . import api, jobs, state
 from .ops import online_access_blocked, prefs
 
-_PRIORITY_ICONS = {"critical": "ERROR", "high": "TRIA_UP", "medium": "REMOVE", "low": "TRIA_DOWN"}
+# Blender panels can't take custom colors, but its color-tag icons can stand
+# in for the website's colored dots (src/app/globals.css): 01 red, 02 orange,
+# 03 yellow, 04 green, 05 blue, 09 gray.
+_STATUS_ICONS = {
+    "backlog": "SEQUENCE_COLOR_09",  # muted
+    "todo": "SEQUENCE_COLOR_05",  # info
+    "in_progress": "SEQUENCE_COLOR_03",  # warning
+    "ai_working": "SEQUENCE_COLOR_05",  # info
+    "review": "SEQUENCE_COLOR_05",  # primary
+    "done": "SEQUENCE_COLOR_04",  # success
+}
+_PRIORITY_ICONS = {
+    "low": "SEQUENCE_COLOR_09",
+    "medium": "SEQUENCE_COLOR_05",
+    "high": "SEQUENCE_COLOR_02",
+    "critical": "SEQUENCE_COLOR_01",
+}
 
 
 def _wrapped(layout, context, text, max_lines=None):
@@ -84,6 +100,7 @@ class _BoardPanel(_GuidonPanel):
             tasks = api.column_tasks(state.tasks, status)
             box = layout.box()
             header = box.row(align=True)
+            header.label(text="", icon=_STATUS_ICONS.get(status, "SEQUENCE_COLOR_09"))
             expanded = props.expanded[index]
             header.prop(
                 props,
@@ -101,7 +118,7 @@ class _BoardPanel(_GuidonPanel):
             col = box.column(align=True)
             for task in tasks:
                 row = col.row(align=True)
-                row.label(text="", icon=_PRIORITY_ICONS.get(task.get("priority"), "DOT"))
+                row.label(text="", icon=_PRIORITY_ICONS.get(task.get("priority"), "SEQUENCE_COLOR_09"))
                 op = row.operator(
                     "guidon.select_task",
                     text=task.get("title") or "(untitled)",
@@ -139,12 +156,13 @@ class _TaskPanel(_GuidonPanel):
         right.task_id, right.direction = task_id, 1
 
         info = layout.row()
-        info.label(text=(task.get("priority") or "-").capitalize(), icon=_PRIORITY_ICONS.get(task.get("priority"), "DOT"))
+        info.label(text=(task.get("priority") or "-").capitalize(), icon=_PRIORITY_ICONS.get(task.get("priority"), "SEQUENCE_COLOR_09"))
         info.label(text=(task.get("due_date") or "")[:10] or "No due date", icon="TIME")
 
         row = layout.row(align=True)
         row.operator("guidon.edit_task", text="Edit", icon="GREASEPENCIL").task_id = task_id
         row.operator("guidon.delete_task", text="Delete", icon="TRASH").task_id = task_id
+        row.operator("guidon.copy_git_ref", text="Git Ref", icon="COPYDOWN").task_id = task_id
 
         layout.separator()
         layout.label(text="Description", icon="TEXT")
