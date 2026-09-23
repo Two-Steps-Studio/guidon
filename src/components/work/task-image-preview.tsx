@@ -18,6 +18,12 @@ type ImageAttachment = TaskAttachment & { url: string };
  * loading and nothing on error/empty, since this is a supplementary visual
  * enhancement, not a primary action - TaskAttachmentsSection already owns
  * the upload/delete/error UI for the underlying data.
+ *
+ * Independently calls loadTaskAttachments rather than sharing
+ * TaskAttachmentsSection's own fetch of the same list - a deliberate,
+ * accepted duplicate call (one small metadata query per dialog open) rather
+ * than prop-drilling attachment state between two otherwise-independent
+ * components for a single-digit-row list.
  */
 export function TaskImagePreview({ projectId, taskId }: { projectId: string; taskId: string }) {
   const t = useTranslations("work");
