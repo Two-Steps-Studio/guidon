@@ -569,7 +569,15 @@
     "failedToDeleteAttachment": "No se pudo eliminar el archivo adjunto.",
     "failedToGetDownloadLink": "No se pudo crear el enlace de descarga.",
     "gitRefLabel": "Menciónala en un commit o PR:",
-    "copyGitRef": "Copiar referencia de la tarea"
+    "copyGitRef": "Copiar referencia de la tarea",
+    "relatedTasks": "Tareas relacionadas",
+    "searchTasksPlaceholder": "Buscar tareas para vincular...",
+    "noRelatedTasksYet": "Aún no hay tareas relacionadas.",
+    "noMatchingTasks": "No hay tareas coincidentes.",
+    "removeRelationAria": "Quitar vínculo con {title}",
+    "failedToLoadRelatedTasks": "No se pudieron cargar las tareas relacionadas.",
+    "failedToLinkTask": "No se pudo vincular la tarea.",
+    "failedToRemoveRelation": "No se pudo eliminar el vínculo."
   },
   "roadmap": {
     "title": "Hoja de ruta",

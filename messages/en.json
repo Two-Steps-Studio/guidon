@@ -569,7 +569,15 @@
     "failedToDeleteAttachment": "Failed to delete the attachment.",
     "failedToGetDownloadLink": "Could not create a download link.",
     "gitRefLabel": "Mention in a commit or PR:",
-    "copyGitRef": "Copy task reference"
+    "copyGitRef": "Copy task reference",
+    "relatedTasks": "Related tasks",
+    "searchTasksPlaceholder": "Search tasks to link...",
+    "noRelatedTasksYet": "No related tasks yet.",
+    "noMatchingTasks": "No matching tasks.",
+    "removeRelationAria": "Remove link to {title}",
+    "failedToLoadRelatedTasks": "Failed to load related tasks.",
+    "failedToLinkTask": "Failed to link the task.",
+    "failedToRemoveRelation": "Failed to remove the link."
   },
   "roadmap": {
     "title": "Roadmap",

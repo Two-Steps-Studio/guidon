@@ -569,7 +569,15 @@
     "failedToDeleteAttachment": "Der Anhang konnte nicht gelöscht werden.",
     "failedToGetDownloadLink": "Der Download-Link konnte nicht erstellt werden.",
     "gitRefLabel": "In Commit oder PR erwähnen:",
-    "copyGitRef": "Aufgabenverweis kopieren"
+    "copyGitRef": "Aufgabenverweis kopieren",
+    "relatedTasks": "Verknüpfte Aufgaben",
+    "searchTasksPlaceholder": "Aufgaben zum Verknüpfen suchen...",
+    "noRelatedTasksYet": "Noch keine verknüpften Aufgaben.",
+    "noMatchingTasks": "Keine passenden Aufgaben.",
+    "removeRelationAria": "Verknüpfung zu {title} entfernen",
+    "failedToLoadRelatedTasks": "Verknüpfte Aufgaben konnten nicht geladen werden.",
+    "failedToLinkTask": "Die Aufgabe konnte nicht verknüpft werden.",
+    "failedToRemoveRelation": "Die Verknüpfung konnte nicht entfernt werden."
   },
   "roadmap": {
     "title": "Roadmap",
