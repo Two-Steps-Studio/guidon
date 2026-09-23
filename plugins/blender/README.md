@@ -1,5 +1,7 @@
 # Guidon Tasks for Blender
 
+> See [`../CONVENTIONS.md`](../CONVENTIONS.md) for the terminology/login-flow standard every Guidon plugin follows.
+
 A Guidon project board in Blender's sidebar. You can view, create, edit,
 move between columns, delete, add subtasks to and comment on tasks without
 leaving Blender. It's the Blender counterpart of the

@@ -1,5 +1,7 @@
 # Guidon Tasks for JetBrains IDEs
 
+> See [`../CONVENTIONS.md`](../CONVENTIONS.md) for the terminology/login-flow standard every Guidon plugin follows.
+
 A Kanban board for a Guidon project in a tool window of **any IntelliJ-based
 IDE**: IntelliJ IDEA, Rider, WebStorm, PyCharm, CLion, GoLand, PhpStorm,
 RubyMine, RustRover and Android Studio. The plugin depends only on

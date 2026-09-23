@@ -1,5 +1,7 @@
 # Guidon for Godot
 
+> See [`../CONVENTIONS.md`](../CONVENTIONS.md) for the terminology/login-flow standard every Guidon plugin follows.
+
 Two independent add-ons for **Godot 4.2+**. Copy either folder, or both,
 into your project's `addons/` and enable it in **Project → Project Settings →
 Plugins**.

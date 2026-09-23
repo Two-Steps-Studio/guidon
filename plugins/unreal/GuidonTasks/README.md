@@ -1,5 +1,7 @@
 # Guidon Tasks for Unreal Engine 5
 
+> See [`../../CONVENTIONS.md`](../../CONVENTIONS.md) for the terminology/login-flow standard every Guidon plugin follows.
+
 A Kanban board for a Guidon project inside the Unreal Editor. You can view,
 create, edit, drag cards between columns, delete, add subtasks to and comment
 on tasks without leaving the editor. It's the UE5 counterpart of the

@@ -1,5 +1,7 @@
 # Guidon Tasks for Unity
 
+> See [`../../CONVENTIONS.md`](../../CONVENTIONS.md) for the terminology/login-flow standard every Guidon plugin follows.
+
 A Kanban board for a Guidon project right inside the Unity Editor - view,
 create, edit, drag-and-drop between columns, delete, add subtasks to, and
 comment on tasks without leaving Unity.

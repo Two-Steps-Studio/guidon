@@ -1,5 +1,7 @@
 # Guidon Tasks for VS Code
 
+> See [`../CONVENTIONS.md`](../CONVENTIONS.md) for the terminology/login-flow standard every Guidon plugin follows.
+
 Your Guidon project board inside VS Code, plus Git helpers that tie commits
 and branches to tasks. It's the VS Code counterpart of the other Guidon editor
 plugins and uses the same public API (`/api/v1`, see
