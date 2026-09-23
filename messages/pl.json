@@ -577,7 +577,8 @@
     "removeRelationAria": "Usuń powiązanie z {title}",
     "failedToLoadRelatedTasks": "Nie udało się wczytać powiązanych tasków.",
     "failedToLinkTask": "Nie udało się powiązać taska.",
-    "failedToRemoveRelation": "Nie udało się usunąć powiązania."
+    "failedToRemoveRelation": "Nie udało się usunąć powiązania.",
+    "loadingRelatedTasks": "Wczytywanie powiązanych tasków..."
   },
   "roadmap": {
     "title": "Plan działań",

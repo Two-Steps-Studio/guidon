@@ -69,18 +69,21 @@ export function TaskRelationsSection({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (query.trim().length === 0) {
-      setMatches([]);
-      return;
-    }
+    const trimmed = query.trim();
 
-    setSearching(true);
-    debounceRef.current = setTimeout(async () => {
-      const excludeIds = [taskId, ...relations.map((r) => r.id)];
-      const result = await searchProjectTasksByTitle(projectId, query, excludeIds);
-      setMatches(result.error ? [] : result.tasks);
-      setSearching(false);
-    }, 300);
+    if (trimmed.length === 0) {
+      // Queue the clear the same way the real search does (inside a timeout callback)
+      // rather than calling setState synchronously in the effect body.
+      debounceRef.current = setTimeout(() => setMatches([]), 0);
+    } else {
+      debounceRef.current = setTimeout(async () => {
+        setSearching(true);
+        const excludeIds = [taskId, ...relations.map((r) => r.id)];
+        const result = await searchProjectTasksByTitle(projectId, trimmed, excludeIds);
+        setMatches(result.error ? [] : result.tasks);
+        setSearching(false);
+      }, 300);
+    }
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -135,6 +138,7 @@ export function TaskRelationsSection({
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          {t("loadingRelatedTasks")}
         </p>
       ) : relations.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("noRelatedTasksYet")}</p>

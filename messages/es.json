@@ -577,7 +577,8 @@
     "removeRelationAria": "Quitar vínculo con {title}",
     "failedToLoadRelatedTasks": "No se pudieron cargar las tareas relacionadas.",
     "failedToLinkTask": "No se pudo vincular la tarea.",
-    "failedToRemoveRelation": "No se pudo eliminar el vínculo."
+    "failedToRemoveRelation": "No se pudo eliminar el vínculo.",
+    "loadingRelatedTasks": "Cargando tareas relacionadas..."
   },
   "roadmap": {
     "title": "Hoja de ruta",

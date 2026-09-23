@@ -577,7 +577,8 @@
     "removeRelationAria": "Remove link to {title}",
     "failedToLoadRelatedTasks": "Failed to load related tasks.",
     "failedToLinkTask": "Failed to link the task.",
-    "failedToRemoveRelation": "Failed to remove the link."
+    "failedToRemoveRelation": "Failed to remove the link.",
+    "loadingRelatedTasks": "Loading related tasks..."
   },
   "roadmap": {
     "title": "Roadmap",

@@ -577,7 +577,8 @@
     "removeRelationAria": "Verknüpfung zu {title} entfernen",
     "failedToLoadRelatedTasks": "Verknüpfte Aufgaben konnten nicht geladen werden.",
     "failedToLinkTask": "Die Aufgabe konnte nicht verknüpft werden.",
-    "failedToRemoveRelation": "Die Verknüpfung konnte nicht entfernt werden."
+    "failedToRemoveRelation": "Die Verknüpfung konnte nicht entfernt werden.",
+    "loadingRelatedTasks": "Verknüpfte Aufgaben werden geladen..."
   },
   "roadmap": {
     "title": "Roadmap",
