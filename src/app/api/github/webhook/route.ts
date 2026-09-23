@@ -27,7 +27,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "GitHub webhook is not configured on this server." }, { status: 503 });
   }
 
-  if (Number(request.headers.get("content-length") ?? "0") > MAX_BODY_BYTES) {
+  // GitHub always sends Content-Length; requiring it keeps an unsigned,
+  // chunked body from being buffered without limit before the signature check.
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (!request.headers.get("content-length") || !Number.isFinite(declaredLength)) {
+    return NextResponse.json({ error: "Content-Length is required." }, { status: 411 });
+  }
+  if (declaredLength > MAX_BODY_BYTES) {
     return NextResponse.json({ error: "Payload too large." }, { status: 413 });
   }
   const rawBody = await request.text();
@@ -61,9 +67,17 @@ export async function POST(request: NextRequest) {
   const skipped: string[] = [];
   for (const target of targets) {
     const actions: TaskAction[] = event === "push" ? planPush(payload) : planPullRequest(payload, target.defaultBranch);
-    const outcome = await applyActions(target, actions);
-    applied += outcome.applied;
-    skipped.push(...outcome.skipped);
+    // One broken connection (e.g. the person who connected it lost access to
+    // the project) must not fail the delivery for the others - a 5xx makes
+    // GitHub redeliver to all of them.
+    try {
+      const outcome = await applyActions(target, actions);
+      applied += outcome.applied;
+      skipped.push(...outcome.skipped);
+    } catch (error) {
+      console.error("[GitHub webhook] project", target.projectId, error);
+      skipped.push(`project ${target.projectId}: ${error instanceof Error ? error.message : "failed"}`);
+    }
   }
   return NextResponse.json({ ok: true, projects: targets.length, applied, skipped });
 }

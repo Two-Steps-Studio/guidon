@@ -43,7 +43,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { projectId } = await params;
   if (!isValidUuid(projectId)) return invalidIdResponse("projectId");
 
-  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  // Required, not just checked when present: without it (chunked upload)
+  // formData() would buffer an unbounded body, and this route's key ships
+  // inside game builds, so it has to be treated as public.
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (!request.headers.get("content-length") || !Number.isFinite(declaredLength)) {
+    return NextResponse.json({ error: "Content-Length is required." }, { status: 411 });
+  }
   if (declaredLength > MAX_REQUEST_BYTES) {
     return NextResponse.json({ error: "Report is too large." }, { status: 413 });
   }

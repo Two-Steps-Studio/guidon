@@ -56,8 +56,8 @@ export async function findConnections(owner: string, name: string, installationI
   const { data, error } = await createServiceClient()
     .from("github_connections")
     .select("project_id, connected_by, default_branch")
-    .ilike("repo_owner", owner)
-    .ilike("repo_name", name)
+    .ilike("repo_owner", escapeLike(owner))
+    .ilike("repo_name", escapeLike(name))
     .eq("installation_id", installationId);
   if (error) throw new Error(error.message);
   return (data ?? []).map((row) => ({ projectId: row.project_id, connectedBy: row.connected_by, defaultBranch: row.default_branch }));
@@ -68,9 +68,14 @@ interface ResolvedTask {
   status: TaskStatus;
 }
 
-/** `ilike` / LIKE metacharacters can't appear in a validated ref, but escape anyway. */
+/** Escapes LIKE metacharacters - `_` is legal in GitHub repository names and would otherwise match any character. */
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
+/** Metacharacters can't appear in a validated ref, but escape anyway. */
 function likePrefix(ref: string): string {
-  return ref.replace(/[\\%_]/g, (c) => `\\${c}`) + "%";
+  return escapeLike(ref) + "%";
 }
 
 export interface ApplyOutcome {
