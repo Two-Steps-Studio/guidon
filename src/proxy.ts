@@ -34,6 +34,9 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // login redirect below would make it unreachable. Exact match: it is a
   // single POST-only route with no sub-paths.
   '/api/mcp',
+  // GitHub App webhook - GitHub never carries a session cookie; the route
+  // verifies the X-Hub-Signature-256 HMAC itself and 401s without it.
+  '/api/github/webhook',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every

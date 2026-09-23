@@ -1,0 +1,58 @@
+{
+  "name": "guidon-tasks",
+  "displayName": "Guidon Tasks",
+  "description": "Your Guidon project board in VS Code: drag tasks between columns, edit, comment, and link commits and branches to tasks.",
+  "version": "1.0.0",
+  "publisher": "two-steps-studio",
+  "license": "UNLICENSED",
+  "icon": "media/icon.png",
+  "repository": { "type": "git", "url": "https://github.com/Two-Steps-Studio/guidon" },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other", "SCM Providers"],
+  "keywords": ["guidon", "kanban", "tasks", "gamedev"],
+  "main": "./out/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "extensionDependencies": [],
+  "contributes": {
+    "commands": [
+      { "command": "guidon.openBoard", "title": "Open Board", "category": "Guidon", "icon": "$(project)" },
+      { "command": "guidon.login", "title": "Log In", "category": "Guidon" },
+      { "command": "guidon.logout", "title": "Log Out", "category": "Guidon" },
+      { "command": "guidon.pickProject", "title": "Pick Project", "category": "Guidon" },
+      { "command": "guidon.insertRef", "title": "Insert Task Reference in Commit Message", "category": "Guidon", "icon": "$(tasklist)" },
+      { "command": "guidon.startTask", "title": "Start Task on a New Branch", "category": "Guidon", "icon": "$(git-branch)" },
+      { "command": "guidon.refresh", "title": "Refresh", "category": "Guidon", "icon": "$(refresh)" }
+    ],
+    "menus": {
+      "scm/title": [
+        { "command": "guidon.insertRef", "group": "navigation", "when": "scmProvider == git" }
+      ]
+    },
+    "configuration": {
+      "title": "Guidon",
+      "properties": {
+        "guidon.baseUrl": {
+          "type": "string",
+          "default": "https://useguidon.com",
+          "description": "Your Guidon instance, e.g. https://useguidon.com or http://localhost:2137."
+        },
+        "guidon.branchPrefix": {
+          "type": "string",
+          "default": "",
+          "description": "Prefix for branches created by \"Start Task on a New Branch\", e.g. feature/."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "~1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "typescript": "^5.6.0"
+  }
+}

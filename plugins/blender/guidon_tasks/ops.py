@@ -504,6 +504,20 @@ class GUIDON_OT_add_comment(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class GUIDON_OT_copy_git_ref(bpy.types.Operator):
+    bl_idname = "guidon.copy_git_ref"
+    bl_label = "Copy Git Ref"
+    bl_description = "Copy guidon#<id>: mention it in a commit, PR or branch name and the GitHub integration links and moves this task"
+
+    task_id: StringProperty()
+
+    def execute(self, context):
+        ref = api.git_ref(self.task_id)
+        context.window_manager.clipboard = ref
+        self.report({"INFO"}, "Copied " + ref)
+        return {"FINISHED"}
+
+
 classes = (
     GUIDON_OT_login,
     GUIDON_OT_cancel_login,
@@ -521,4 +535,5 @@ classes = (
     GUIDON_OT_save_description,
     GUIDON_OT_delete_task,
     GUIDON_OT_add_comment,
+    GUIDON_OT_copy_git_ref,
 )

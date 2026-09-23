@@ -110,6 +110,14 @@ hood:
 If a status change 403s, the plugin shows the server's own error message
 verbatim - it'll tell you exactly which setting to flip in Project Settings.
 
+## Git reference
+
+**Copy Git ref** in the task window copies `guidon#1a2b3c4d`. Put it in a
+commit message, PR title or branch name and, with the GitHub integration on
+(see `docs/configuration.md`, `GITHUB_APP_WEBHOOK_SECRET`), the task gets a
+link and moves by itself: a commit starts it, a PR sends it to Review, and a
+merge into the default branch marks it Done.
+
 ## Description formatting
 
 A task's description supports the common Markdown subset - **bold**,
@@ -134,7 +142,7 @@ realistically useful in a task description viewed at Editor-window width.
   it visually near the top.
 - No assignee or tags editing (viewing/editing covers title, description,
   priority, status, and due date).
-- Unreal Engine 5, Blender and JetBrains IDEs have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md), [`plugins/blender`](../../blender/README.md) and [`plugins/jetbrains`](../../jetbrains/README.md). Each gets its own API key name, so logging into one never logs another out.
+- Unreal Engine 5, Godot, Blender, JetBrains IDEs and VS Code have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md), [`plugins/godot`](../../godot/README.md), [`plugins/blender`](../../blender/README.md), [`plugins/jetbrains`](../../jetbrains/README.md) and [`plugins/vscode`](../../vscode/README.md). In-game bug reports are a separate runtime package: [`GuidonReports`](../GuidonReports/README.md). Each gets its own API key name, so logging into one never logs another out.
 
 ## A note on drag-and-drop
 

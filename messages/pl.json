@@ -566,7 +566,9 @@
     "failedToLoadAttachments": "Nie udało się wczytać załączników.",
     "failedToUploadAttachment": "Nie udało się przesłać pliku.",
     "failedToDeleteAttachment": "Nie udało się usunąć załącznika.",
-    "failedToGetDownloadLink": "Nie udało się utworzyć linku do pobrania."
+    "failedToGetDownloadLink": "Nie udało się utworzyć linku do pobrania.",
+    "gitRefLabel": "Wpisz w commicie lub PR:",
+    "copyGitRef": "Kopiuj odwołanie do zadania"
   },
   "roadmap": {
     "title": "Plan działań",

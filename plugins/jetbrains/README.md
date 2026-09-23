@@ -42,11 +42,13 @@ It targets 2024.3 (build 243) and newer, with no upper limit.
    - Subtasks: the checkbox toggles done/todo, the field below adds one with
      Enter, and a click opens it.
    - Comments: write a comment and click **Post**.
-   - **Copy ID** copies the task id, e.g. for a commit message or branch name.
+   - **Copy Git ref** copies `guidon#1a2b3c4d`. Put it in a commit message, PR title or branch name and, with the GitHub integration on, the task gets a link and moves by itself (see `docs/configuration.md`, `GITHUB_APP_WEBHOOK_SECRET`).
 
-The board's colors come from the web app's design tokens, as light/dark pairs
-(`JBColor`), so the board follows the IDE theme. Everything else, such as
-fields, buttons and dropdowns, uses the IDE's own look.
+The board uses the web app's design tokens (`src/app/globals.css`) as
+light/dark pairs (`JBColor`), so it follows the IDE theme. That covers the
+columns, cards with the priority dot, the count and tag pills, and the solid
+brand-blue Save/Post/Log In buttons. Fields and dropdowns keep the IDE's own
+look.
 
 ## Board columns
 

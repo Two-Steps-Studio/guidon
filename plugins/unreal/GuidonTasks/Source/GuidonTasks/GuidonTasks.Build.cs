@@ -13,6 +13,7 @@ public class GuidonTasks : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"InputCore",
+			"ApplicationCore",
 			"Slate",
 			"SlateCore",
 			"ToolMenus",

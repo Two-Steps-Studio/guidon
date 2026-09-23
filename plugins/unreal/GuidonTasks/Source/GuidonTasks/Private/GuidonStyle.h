@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Fonts/SlateFontInfo.h"
 #include "Styling/SlateBrush.h"
+#include "Styling/SlateTypes.h"
 
 /**
  * Colors copied from the web app's dark design tokens (src/app/globals.css) -
@@ -34,6 +35,12 @@ namespace GuidonStyle
 	const FSlateBrush* PillBrush();
 	const FSlateBrush* ErrorBrush();
 	const FSlateBrush* DotBrush(const FString& Status);
+	const FSlateBrush* PriorityDotBrush(const FString& Priority);
+	const FSlateBrush* DividerBrush();
+
+	/** The site's Button variants: solid brand blue, and the red-text outline used for Delete. */
+	const FButtonStyle& PrimaryButton();
+	const FButtonStyle& DestructiveButton();
 
 	FSlateFontInfo Font(int32 Size, bool bBold = false);
 }

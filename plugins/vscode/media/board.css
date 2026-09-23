@@ -1,0 +1,87 @@
+/* The Guidon website's design tokens (src/app/globals.css). VS Code sets
+   body.vscode-light / vscode-dark / vscode-high-contrast on webviews; the
+   board follows it. */
+body.vscode-light {
+  --bg: #ffffff; --column: #f8fafc; --card: #ffffff; --card-hover: #f8fafc;
+  --border: #e2e8f0; --border-hover: #cbd5e1; --muted: #f1f5f9;
+  --text: #0f172a; --text-muted: #64748b;
+  --primary: #1d4fd8; --primary-hover: #1640b0; --primary-fg: #ffffff;
+  --danger: #dc2626; --danger-bg: #fef2f2;
+  --info: #2563eb; --warning: #d97706; --success: #059669;
+  --p-low: #64748b; --p-medium: #2563eb; --p-high: #d97706; --p-critical: #dc2626;
+}
+body, body.vscode-dark, body.vscode-high-contrast {
+  --bg: #0b0d10; --column: #101317; --card: #101317; --card-hover: #16191f;
+  --border: #23272f; --border-hover: #2f343e; --muted: #16191f;
+  --text: #e8eaed; --text-muted: #8b93a1;
+  --primary: #4d8dff; --primary-hover: #6ea3ff; --primary-fg: #05142e;
+  --danger: #f87171; --danger-bg: #2a1215;
+  --info: #60a5fa; --warning: #fbbf24; --success: #34d399;
+  --p-low: #8b93a1; --p-medium: #60a5fa; --p-high: #fbbf24; --p-critical: #f87171;
+}
+body.vscode-light { --bg: #ffffff; }
+
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--vscode-font-family, system-ui, sans-serif); font-size: 13px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.muted { color: var(--text-muted); }
+.small { font-size: 11px; }
+
+.toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.brand { color: var(--primary); font-weight: 700; font-size: 16px; margin-right: 4px; }
+.spacer { flex: 1; }
+
+.btn { border: 1px solid var(--border); background: var(--bg); border-radius: 6px; padding: 4px 10px; cursor: pointer; line-height: 18px; }
+.btn:hover { background: var(--muted); border-color: var(--border-hover); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-fg); font-weight: 600; }
+.btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn.destructive { color: var(--danger); }
+.btn.destructive:hover { background: var(--danger-bg); border-color: var(--danger); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--text-muted); padding: 2px 6px; }
+.btn.ghost:hover { background: var(--muted); color: var(--text); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+select, input, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; outline: none; }
+select:focus, input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+textarea { resize: vertical; width: 100%; }
+
+.error { margin: 10px 14px 0; padding: 8px 12px; border: 1px solid var(--danger); background: var(--danger-bg); color: var(--danger); border-radius: 6px; display: flex; gap: 8px; align-items: center; }
+.error span { flex: 1; }
+
+.login { display: flex; justify-content: center; padding: 60px 16px; }
+.login .card { width: 360px; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); display: flex; flex-direction: column; gap: 10px; }
+.login h2 { margin: 0; font-size: 18px; }
+
+.layout { display: flex; gap: 16px; padding: 14px; align-items: flex-start; }
+.board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; flex: 1; min-width: 0; }
+.column { flex: 0 0 272px; background: var(--column); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; max-height: calc(100vh - 110px); }
+.column.drop { border-color: var(--primary); }
+.column header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.column h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.pill { margin-left: auto; background: var(--muted); border: 1px solid var(--border); color: var(--text-muted); border-radius: 4px; padding: 0 6px; font-size: 11px; }
+.cards { display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; min-height: 80px; }
+.empty { text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px 0; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: grab; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.card:hover { background: var(--card-hover); border-color: var(--border-hover); }
+.card.selected { border-color: var(--primary); }
+.card.done { opacity: .7; }
+.card .title { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; }
+.card .title .dot { width: 6px; height: 6px; margin-top: 6px; }
+.card .preview { margin: 4px 0 0 14px; color: var(--text-muted); font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 0 14px; }
+.tag { border: 1px solid var(--border); background: var(--muted); color: var(--text-muted); border-radius: 4px; padding: 1px 6px; font-size: 11px; }
+.footer { display: flex; gap: 12px; margin: 10px 0 0 14px; font-size: 11px; color: var(--text-muted); }
+
+.details { flex: 0 0 340px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; max-height: calc(100vh - 80px); overflow-y: auto; position: sticky; top: 14px; }
+.details label { font-size: 12px; font-weight: 600; margin-top: 6px; }
+.details .row { display: flex; gap: 8px; }
+.details .row > div { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.ref { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.ref code { border: 1px solid var(--border); background: var(--muted); color: var(--text); border-radius: 4px; padding: 1px 6px; }
+.sub { display: flex; align-items: center; gap: 6px; }
+.sub a { color: var(--text); cursor: pointer; text-decoration: none; flex: 1; }
+.sub a:hover { color: var(--primary); }
+.comment { border: 1px solid var(--border); background: var(--column); border-radius: 8px; padding: 8px 10px; }
+.comment p { margin: 4px 0 0; white-space: pre-wrap; word-break: break-word; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }

@@ -50,6 +50,8 @@ due date and subtask progress (`✓ 2/5`).
      Enter. Clicking a subtask opens it, and **← Back to parent task** returns
      to its parent.
    - Comments: write a comment and click **Post**.
+   - **Copy Git ref** copies `guidon#1a2b3c4d`. Put it in a commit, PR or
+     branch name, and the GitHub integration links and moves the task.
 
 ## Board columns
 

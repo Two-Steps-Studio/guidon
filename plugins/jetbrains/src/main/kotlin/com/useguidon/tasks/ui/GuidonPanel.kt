@@ -117,7 +117,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     private val boardPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.X_AXIS) }
     private val detailsPanel = JPanel(BorderLayout())
     private val baseUrlField = JTextField(GuidonSettings.baseUrl, 28)
-    private val loginButton = JButton("Log In")
+    private val loginButton = GuidonButton("Log In")
     private val cancelLoginButton = JButton("Cancel")
     private var newTaskField: JTextField? = null
 
@@ -353,8 +353,9 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
 
     private fun buildColumn(status: String, label: String): JComponent {
         val columnTasks = Board.column(tasks, status)
-        val column = RoundedPanel(BorderLayout(0, JBUI.scale(8)), GuidonColors.column, GuidonColors.border)
-        column.border = JBUI.Borders.empty(8)
+        // The site's column: rounded-xl, background-secondary, header row over a divider.
+        val column = RoundedPanel(BorderLayout(0, 0), GuidonColors.column, GuidonColors.border, JBUI.scale(24))
+        column.border = JBUI.Borders.empty(1)
         val width = JBUI.scale(COLUMN_WIDTH)
         column.preferredSize = Dimension(width, column.preferredSize.height)
         column.minimumSize = Dimension(width, 0)
@@ -363,6 +364,10 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         val header = JPanel().apply {
             isOpaque = false
             layout = BoxLayout(this, BoxLayout.X_AXIS)
+            border = javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, GuidonColors.border),
+                JBUI.Borders.empty(8, 12),
+            )
             add(StatusDot(GuidonColors.status(status)))
             add(Box.createHorizontalStrut(JBUI.scale(6)))
             add(JLabel(label).apply {
@@ -370,7 +375,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
                 font = font.deriveFont(java.awt.Font.BOLD)
             })
             add(Box.createHorizontalGlue())
-            add(mutedLabel(columnTasks.size.toString()))
+            add(pillLabel(columnTasks.size.toString()))
             add(Box.createHorizontalStrut(JBUI.scale(4)))
             add(linkButton("+") {
                 addingInStatus = if (addingInStatus == status) "" else status
@@ -397,6 +402,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             cards.row(mutedLabel("Drop tasks here"), 4)
         }
         cards.end()
+        cards.border = JBUI.Borders.empty(8)
         column.add(cards, BorderLayout.CENTER)
 
         installDropTarget(column, status)
@@ -428,30 +434,32 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
 
     private fun buildCard(task: GuidonTask): JComponent {
         val selected = task.id == selectedTaskId
-        val card = RoundedPanel(BorderLayout(), GuidonColors.card, if (selected) GuidonColors.accent else GuidonColors.border)
-        card.border = JBUI.Borders.empty(8, 10)
+        // The site's TaskCard: rounded-lg, bg-card, 1px border, p-3, hover bg-surface-hover.
+        val card = RoundedPanel(BorderLayout(), GuidonColors.card, if (selected) GuidonColors.accent else GuidonColors.border, JBUI.scale(16))
+        card.border = JBUI.Borders.empty(12)
         card.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
         val body = FormPanel()
-        body.row(wrappingLabel(task.title, CARD_TEXT_WIDTH, GuidonColors.text, bold = true), 0)
+        body.row(JPanel(BorderLayout(JBUI.scale(8), 0)).apply {
+            isOpaque = false
+            add(JPanel(BorderLayout()).apply {
+                isOpaque = false
+                border = JBUI.Borders.emptyTop(5)
+                add(StatusDot(GuidonColors.priority(task.priority), 6), BorderLayout.NORTH)
+            }, BorderLayout.WEST)
+            add(wrappingLabel(task.title, CARD_TEXT_WIDTH - 14, GuidonColors.text, bold = true), BorderLayout.CENTER)
+        }, 0)
         Board.descriptionPreview(task.description).takeIf { it.isNotEmpty() }?.let {
             body.row(wrappingLabel(it, CARD_TEXT_WIDTH, GuidonColors.muted, smaller = true), 3)
         }
         if (task.tags.isNotEmpty()) {
             val tags = JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(4), JBUI.scale(2))).apply { isOpaque = false }
-            task.tags.forEach { tag ->
-                tags.add(RoundedPanel(BorderLayout(), GuidonColors.pill, null, JBUI.scale(16)).apply {
-                    border = JBUI.Borders.empty(1, 7)
-                    add(mutedLabel(tag))
-                })
-            }
+            task.tags.take(3).forEach { tag -> tags.add(pillLabel(tag)) }
+            if (task.tags.size > 3) tags.add(mutedLabel("+${task.tags.size - 3}"))
             body.row(tags, 4)
         }
         val footer = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply { isOpaque = false }
-        footer.add(JLabel(Vocabulary.priorityLabel(task.priority)).apply {
-            foreground = GuidonColors.priority(task.priority)
-            font = font.deriveFont(java.awt.Font.BOLD, font.size2D - 1f)
-        })
+        footer.add(mutedLabel(Vocabulary.priorityLabel(task.priority)))
         if (task.dueDate.isNotEmpty()) {
             footer.add(Box.createHorizontalStrut(JBUI.scale(10)))
             footer.add(mutedLabel(task.dueDate.take(10)))
@@ -468,6 +476,18 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         card.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (SwingUtilities.isLeftMouseButton(e)) selectTask(task.id)
+            }
+
+            override fun mouseEntered(e: MouseEvent) {
+                card.fill = GuidonColors.cardHover
+                if (!selected) card.outline = GuidonColors.borderHover
+                card.repaint()
+            }
+
+            override fun mouseExited(e: MouseEvent) {
+                card.fill = GuidonColors.card
+                if (!selected) card.outline = GuidonColors.border
+                card.repaint()
             }
         })
         DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(card, DnDConstants.ACTION_MOVE) { gesture ->
@@ -531,13 +551,13 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
 
         form.row(JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
             isOpaque = false
-            add(button("Save") { saveSelectedTask() })
+            add(GuidonButton("Save").apply { addActionListener { saveSelectedTask() } })
             add(Box.createHorizontalStrut(JBUI.scale(6)))
-            add(button("Delete") { deleteSelectedTask() }.apply { foreground = GuidonColors.destructive })
+            add(GuidonButton("Delete", GuidonButton.Variant.DESTRUCTIVE).apply { addActionListener { deleteSelectedTask() } })
             add(Box.createHorizontalStrut(JBUI.scale(6)))
-            add(button("Copy ID") {
-                Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(task.id), null)
-            }.apply { toolTipText = "Copy the task id, e.g. for a commit message or branch name" })
+            add(button("Copy Git ref") {
+                Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(Board.gitRef(task.id)), null)
+            }.apply { toolTipText = "Copy guidon#<id>: mention it in a commit, PR or branch name and the GitHub integration links and moves this task" })
         }, 10)
 
         if (!task.isSubtask) {
@@ -570,7 +590,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             taskComments.isEmpty() -> form.row(mutedLabel("No comments yet."))
             else -> taskComments.forEach { comment ->
                 val author = comment.actorLabel.ifEmpty { "Someone" }
-                val bubble = RoundedPanel(BorderLayout(0, JBUI.scale(3)), GuidonColors.card, GuidonColors.border).apply {
+                val bubble = RoundedPanel(BorderLayout(0, JBUI.scale(3)), GuidonColors.column, GuidonColors.border, JBUI.scale(16)).apply {
                     border = JBUI.Borders.empty(6, 8)
                     add(mutedLabel("$author - ${comment.createdAt.take(16).replace('T', ' ')}"), BorderLayout.NORTH)
                     add(wrappingLabel(comment.content, 240, GuidonColors.text), BorderLayout.CENTER)
@@ -586,7 +606,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         form.row(JScrollPane(commentArea), 6)
         form.row(JPanel(FlowLayout(FlowLayout.RIGHT, 0, 0)).apply {
             isOpaque = false
-            add(button("Post") { postComment() })
+            add(GuidonButton("Post").apply { addActionListener { postComment() } })
         }, 4)
         form.end()
 

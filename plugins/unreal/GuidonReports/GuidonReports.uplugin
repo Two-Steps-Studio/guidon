@@ -1,0 +1,20 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0.0",
+	"FriendlyName": "Guidon Reports",
+	"Description": "In-game bug reports straight into Guidon: a hotkey opens a form, and the report arrives as a task with a screenshot, recent log and build/platform/level details.",
+	"Category": "Other",
+	"CreatedBy": "Two Steps Studio",
+	"CreatedByURL": "https://useguidon.com",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GuidonReports",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

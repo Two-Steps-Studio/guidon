@@ -15,14 +15,20 @@ does for the UI.
 
 - `discord-bot/` (slash commands) and the MCP endpoint `src/app/api/mcp`
   (agents such as Claude Code; tools dispatch in-process to these handlers).
-- The editor plugins under `plugins/` (Unity, Unreal Engine, Blender,
-  JetBrains IDEs). They get their key through the browser loopback flow on
-  `/auth/plugin-login?client=<unity|unreal|blender|jetbrains>`: one key per
+- The editor plugins under `plugins/` (Unity, Unreal Engine, Godot, Blender,
+  JetBrains IDEs, VS Code). They get their key through the browser loopback flow on
+  `/auth/plugin-login?client=<unity|unreal|godot|blender|jetbrains|vscode>`: one key per
   plugin (`human_client`), named after it, and a new login replaces only that
   plugin's key. `GET /projects/[projectId]/columns` exists for them: it returns the
   project's visible board columns (labels, order and hidden columns from
   migration 020, resolved by the same `resolveBoardColumns` the web board
   uses).
+- In-game bug reports from shipped games (`plugins/*/GuidonReports`,
+  `plugins/godot/addons/guidon_reports`): `POST /projects/[projectId]/reports`
+  (multipart; creates a Backlog task plus attachments). It is gated by its own
+  `reports:write` scope, which unlocks nothing else. The key lives inside
+  game builds and must be assumed public; validation lives in
+  `src/lib/api/game-report.ts` (`npm run test:reports`).
 - Authenticated by API key + scope via `guardApiRequest` (`search` is the
   exception: it uses the browser session).
 

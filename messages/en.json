@@ -566,7 +566,9 @@
     "failedToLoadAttachments": "Failed to load attachments.",
     "failedToUploadAttachment": "Failed to upload the file.",
     "failedToDeleteAttachment": "Failed to delete the attachment.",
-    "failedToGetDownloadLink": "Could not create a download link."
+    "failedToGetDownloadLink": "Could not create a download link.",
+    "gitRefLabel": "Mention in a commit or PR:",
+    "copyGitRef": "Copy task reference"
   },
   "roadmap": {
     "title": "Roadmap",

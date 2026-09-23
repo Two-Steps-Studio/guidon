@@ -11,8 +11,8 @@ import { isSafeLoopbackRedirect, pluginClientLabel, resolvePluginClient } from "
 /**
  * Opened by an editor plugin's browser-based login (currently Unity's
  * GuidonBrowserAuth.cs, the UE5 plugin's GuidonAuth.cpp, the Blender add-on's
- * auth.py, the JetBrains plugin's LoopbackLogin.kt; each passes `client` so it
- * gets its own key name) - the plugin starts a local HTTP
+ * auth.py, the JetBrains plugin's LoopbackLogin.kt, the Godot plugin's login.gd, the VS Code extension's login.ts;
+ * each passes `client` so it gets its own key name) - the plugin starts a local HTTP
  * listener, opens this page with `redirect_uri` pointing back at it plus a
  * `state` nonce, and this page issues a fresh API key once the user
  * approves. Replaces an earlier design where the plugin took a raw
@@ -53,7 +53,7 @@ export default async function PluginLoginPage({
           <CardHeader>
             <CardTitle>Invalid request</CardTitle>
             <CardDescription>
-              This page is meant to be opened by a Guidon editor plugin (Unity, Unreal Engine, Blender, JetBrains IDEs) - not visited
+              This page is meant to be opened by a Guidon editor plugin (Unity, Unreal Engine, Godot, Blender, JetBrains IDEs, VS Code) - not visited
               directly. If a plugin sent you here, try logging in again from the plugin window.
             </CardDescription>
           </CardHeader>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Eye, Gavel, Loader2, Pencil, Plus, Send, Trash2, X } from "lucide-react";
 import { MarkdownPreview } from "@/components/files/markdown-preview";
 import { useTranslations } from "next-intl";
+import { taskRef } from "@/lib/github/task-refs";
 import {
   createSubtask,
   deleteTask,
@@ -154,6 +155,7 @@ export function TaskDetailDialog({
   const [agentContextLoading, setAgentContextLoading] = useState(false);
   const [agentContextError, setAgentContextError] = useState<string | null>(null);
   const [agentContextCopied, setAgentContextCopied] = useState(false);
+  const [gitRefCopied, setGitRefCopied] = useState(false);
 
   const membersById = new Map(members.map((member) => [member.id, member]));
 
@@ -209,6 +211,17 @@ export function TaskDetailDialog({
       setAgentContextError(err instanceof Error ? err.message : t("failedToGenerateAgentContext"));
     } finally {
       setAgentContextLoading(false);
+    }
+  };
+
+  const handleCopyGitRef = async () => {
+    if (!task) return;
+    try {
+      await navigator.clipboard.writeText(taskRef(task.id));
+      setGitRefCopied(true);
+      setTimeout(() => setGitRefCopied(false), 2000);
+    } catch {
+      // Clipboard blocked (permissions/insecure context) - the ref is visible to copy by hand.
     }
   };
 
@@ -459,6 +472,24 @@ export function TaskDetailDialog({
               ? t("editDescription")
               : t("readOnlyDescription")}
           </DialogDescription>
+          {/* Mentioning this in a commit, PR or branch name links it via the GitHub integration (src/lib/github/task-refs.ts). */}
+          <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
+            <span>{t("gitRefLabel")}</span>
+            <code className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-foreground">
+              {taskRef(task.id)}
+            </code>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handleCopyGitRef}
+              aria-label={t("copyGitRef")}
+              title={t("copyGitRef")}
+            >
+              {gitRefCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-4">
