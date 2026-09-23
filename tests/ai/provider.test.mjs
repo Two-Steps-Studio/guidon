@@ -14,7 +14,19 @@
  * implementation's env-resolution and request-building logic for the same
  * reason: they are NOT imported from src/. If provider.ts or
  * providers/*.ts change shape, update this file too.
+ *
+ * The exception is providers/wire-format.ts (message/tool translation and
+ * response parsing), which has only type imports and is imported directly.
  */
+
+import {
+  fromAnthropicContent,
+  fromOpenAIChoice,
+  toAnthropicMessages,
+  toAnthropicTools,
+  toOpenAIMessages,
+  toOpenAITools,
+} from "../../src/lib/ai/providers/wire-format.ts";
 
 let pass = 0;
 let fail = 0;
@@ -357,6 +369,108 @@ section("request shaping: azure-openai");
     "azure respects a configured AZURE_OPENAI_API_VERSION",
     req.url.endsWith("api-version=2025-01-01-preview")
   );
+}
+
+// ============================================
+// Wire format (real code: src/lib/ai/providers/wire-format.ts)
+// ============================================
+
+const TOOLS = [{ name: "create_task", description: "Create a task", input_schema: { type: "object", properties: { title: { type: "string" } } } }];
+const CONVERSATION = [
+  { role: "user", content: "Add two tasks" },
+  {
+    role: "assistant",
+    content: "On it.",
+    tool_calls: [
+      { id: "call_1", name: "create_task", args: { title: "A" } },
+      { id: "call_2", name: "create_task", args: { title: "B" } },
+    ],
+  },
+  { role: "tool", content: "Created A", tool_call_id: "call_1" },
+  { role: "tool", content: "Created B", tool_call_id: "call_2" },
+];
+
+section("wire format: openai tools and messages");
+{
+  const { tools } = toOpenAITools(TOOLS);
+  check("openai tools use the function wrapper", tools[0].type === "function" && tools[0].function.name === "create_task");
+  check("openai tool schema goes in parameters", tools[0].function.parameters === TOOLS[0].input_schema);
+  check("no tools -> no tools field", !("tools" in toOpenAITools(undefined)) && !("tools" in toOpenAITools([])));
+
+  const msgs = toOpenAIMessages("Be terse.", CONVERSATION);
+  check("openai puts system first", msgs[0].role === "system" && msgs[0].content === "Be terse.");
+  const assistant = msgs[2];
+  check(
+    "openai assistant tool_calls use type/function/arguments",
+    assistant.tool_calls.length === 2 &&
+      assistant.tool_calls[0].type === "function" &&
+      assistant.tool_calls[0].function.arguments === JSON.stringify({ title: "A" })
+  );
+  check("openai tool results keep tool_call_id", msgs[3].role === "tool" && msgs[3].tool_call_id === "call_1");
+}
+
+section("wire format: openai response parsing");
+{
+  const parsed = fromOpenAIChoice({
+    message: { content: null, tool_calls: [{ id: "c", function: { name: "create_task", arguments: '{"title":"X"}' } }] },
+    finish_reason: "tool_calls",
+  });
+  check("openai tool call arguments are parsed", parsed.tool_calls?.[0].args.title === "X");
+  check("openai tool_calls finish maps to tool_use", parsed.stop_reason === "tool_use");
+  check("openai null content becomes empty text", parsed.text === "");
+
+  const broken = fromOpenAIChoice({ message: { tool_calls: [{ id: "c", function: { name: "t", arguments: "{not json" } }] } });
+  check("openai invalid arguments become {} instead of throwing", JSON.stringify(broken.tool_calls?.[0].args) === "{}");
+
+  const plain = fromOpenAIChoice({ message: { content: "hi" }, finish_reason: "length" });
+  check("openai plain reply has no tool_calls", plain.tool_calls === undefined && plain.text === "hi");
+  check("openai length maps to max_tokens", plain.stop_reason === "max_tokens");
+}
+
+section("wire format: anthropic tools and messages");
+{
+  const { tools } = toAnthropicTools(TOOLS);
+  check("anthropic tools keep input_schema", tools[0].input_schema === TOOLS[0].input_schema && !("type" in tools[0]));
+
+  const { system, messages } = toAnthropicMessages("Be terse.", [{ role: "system", content: "Extra." }, ...CONVERSATION]);
+  check("anthropic folds system-role messages into the system field", system === "Be terse.\n\nExtra.");
+  check("anthropic has no system or tool roles", messages.every((m) => m.role === "user" || m.role === "assistant"));
+  const assistant = messages[1];
+  check(
+    "anthropic assistant turn is text + tool_use blocks",
+    assistant.content[0].type === "text" &&
+      assistant.content[1].type === "tool_use" &&
+      assistant.content[1].id === "call_1" &&
+      assistant.content[1].input.title === "A"
+  );
+  check(
+    "anthropic merges consecutive tool results into one user message",
+    messages.length === 3 &&
+      messages[2].role === "user" &&
+      messages[2].content.length === 2 &&
+      messages[2].content.every((b) => b.type === "tool_result") &&
+      messages[2].content[1].tool_use_id === "call_2"
+  );
+  check("anthropic without system omits it", !("system" in toAnthropicMessages(undefined, [{ role: "user", content: "hi" }])));
+}
+
+section("wire format: anthropic response parsing");
+{
+  const parsed = fromAnthropicContent(
+    [
+      { type: "text", text: "Creating it." },
+      { type: "tool_use", id: "toolu_1", name: "create_task", input: { title: "X" } },
+    ],
+    "tool_use"
+  );
+  check(
+    "anthropic tool_use blocks carry id/name/input directly",
+    parsed.tool_calls?.[0].id === "toolu_1" && parsed.tool_calls[0].name === "create_task" && parsed.tool_calls[0].args.title === "X"
+  );
+  check("anthropic text survives alongside tool calls", parsed.text === "Creating it.");
+  check("anthropic stop_reason tool_use", parsed.stop_reason === "tool_use");
+  const done = fromAnthropicContent([{ type: "text", text: "Done." }], "end_turn");
+  check("anthropic end_turn maps to stop, no tool_calls", done.stop_reason === "stop" && done.tool_calls === undefined);
 }
 
 // ============================================

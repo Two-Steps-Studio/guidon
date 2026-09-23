@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AICompletionInput, AICompletionResult, AIProvider } from "../provider";
 import { AI_REQUEST_TIMEOUT_MS, requireEnv, requireModel } from "../provider";
+import { fromAnthropicContent, toAnthropicMessages, toAnthropicTools, type AnthropicResponseBlock } from "./wire-format";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -38,6 +39,7 @@ export class AnthropicProvider implements AIProvider {
     headers: Record<string, string>;
     body: Record<string, unknown>;
   } {
+    const { system, messages } = toAnthropicMessages(input.system, input.messages);
     return {
       url: ANTHROPIC_API_URL,
       headers: {
@@ -47,8 +49,9 @@ export class AnthropicProvider implements AIProvider {
       },
       body: {
         model: this.model,
-        ...(input.system ? { system: input.system } : {}),
-        messages: input.messages,
+        ...(system ? { system } : {}),
+        messages,
+        ...toAnthropicTools(input.tools),
         max_tokens: input.maxTokens ?? DEFAULT_MAX_TOKENS,
         ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
       },
@@ -70,24 +73,15 @@ export class AnthropicProvider implements AIProvider {
     }
 
     const data = (await res.json()) as {
-      content?: { type: string; text?: string; tool_use?: any }[];
+      content?: AnthropicResponseBlock[];
       model?: string;
       stop_reason?: string;
     };
 
-    const textBlocks = data.content?.filter((block) => block.type === "text");
-    const toolBlocks = data.content?.filter((block) => block.type === "tool_use");
-
     return {
-      text: textBlocks?.map((b) => b.text).join("\n") ?? "",
+      ...fromAnthropicContent(data.content, data.stop_reason),
       model: data.model ?? this.model,
       provider: "anthropic",
-      stop_reason: data.stop_reason as any,
-      tool_calls: toolBlocks?.map((b) => ({
-        id: b.tool_use.id,
-        name: b.tool_use.name,
-        args: b.tool_use.input,
-      })),
     };
   }
 }
