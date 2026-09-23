@@ -85,6 +85,14 @@ otherwise) and try again. A corporate firewall or antivirus that blocks
 local loopback listeners would also prevent this from completing; there is
 no fallback path in v1 if that's the case for your machine.
 
+## Board columns
+
+The board shows the project's own columns: the labels, order and hidden
+columns set in the web app's project settings, loaded from
+`GET /api/v1/projects/{id}/columns`. The status list offers only visible
+columns. Against an older Guidon without that endpoint, the plugin falls
+back to the six default columns.
+
 ## Known limitation: status changes can 403
 
 Guidon gates status changes and "done" specifically through a project's
@@ -126,7 +134,7 @@ realistically useful in a task description viewed at Editor-window width.
   it visually near the top.
 - No assignee or tags editing (viewing/editing covers title, description,
   priority, status, and due date).
-- Unreal Engine 5 support is a separate, not-yet-built plugin.
+- Unreal Engine 5, Blender and JetBrains IDEs have their own plugins: [`plugins/unreal`](../../unreal/GuidonTasks/README.md), [`plugins/blender`](../../blender/README.md) and [`plugins/jetbrains`](../../jetbrains/README.md). Each gets its own API key name, so logging into one never logs another out.
 
 ## A note on drag-and-drop
 

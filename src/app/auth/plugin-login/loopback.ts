@@ -18,3 +18,31 @@ export function isSafeLoopbackRedirect(url: string): boolean {
     return false;
   }
 }
+
+/**
+ * Which editor plugin is logging in, from the `client` query param. Each
+ * gets its own API key name so logging into one plugin doesn't revoke
+ * another's key (authorizePluginLogin revokes the previous key *by name*).
+ * Anything unknown or missing falls back to Unity - the Unity plugin
+ * predates this param and never sends it.
+ */
+const PLUGIN_CLIENTS = {
+  unity: { keyName: "Unity Plugin", label: "Unity" },
+  unreal: { keyName: "Unreal Plugin", label: "Unreal Engine" },
+  blender: { keyName: "Blender Plugin", label: "Blender" },
+  jetbrains: { keyName: "JetBrains Plugin", label: "JetBrains IDE" },
+} as const;
+
+export type PluginClient = keyof typeof PLUGIN_CLIENTS;
+
+export function resolvePluginClient(value: string | undefined): PluginClient {
+  return value && Object.hasOwn(PLUGIN_CLIENTS, value) ? (value as PluginClient) : "unity";
+}
+
+export function pluginKeyName(client: PluginClient): string {
+  return PLUGIN_CLIENTS[client].keyName;
+}
+
+export function pluginClientLabel(client: PluginClient): string {
+  return PLUGIN_CLIENTS[client].label;
+}

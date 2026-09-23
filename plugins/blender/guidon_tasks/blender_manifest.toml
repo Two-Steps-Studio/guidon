@@ -1,0 +1,16 @@
+schema_version = "1.0.0"
+
+id = "guidon_tasks"
+version = "1.0.0"
+name = "Guidon Tasks"
+tagline = "Guidon project board in the 3D Viewport sidebar"
+maintainer = "Two Steps Studio"
+type = "add-on"
+website = "https://useguidon.com"
+tags = ["User Interface", "Pipeline"]
+
+blender_version_min = "4.2.0"
+license = ["SPDX:GPL-3.0-or-later"]
+
+[permissions]
+network = "Talks to your Guidon instance's API and runs a short-lived loopback listener for browser login"
