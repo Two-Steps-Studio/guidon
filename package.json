@@ -13,7 +13,8 @@
     "test:db": "node tests/db/compat.test.mjs",
     "test:ai": "node tests/ai/provider.test.mjs",
     "test:auth": "node tests/auth/local-auth.test.mjs",
-    "test:limits": "node tests/limits.test.mjs"
+    "test:limits": "node tests/limits.test.mjs",
+    "test:reports": "node tests/game-report.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
