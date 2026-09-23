@@ -48,6 +48,14 @@ In the Task panel:
   subtask opens it, and **Back to Parent** returns to its parent.
 - **Comments:** type a comment and click **Post**.
 
+## Board columns
+
+The board shows the project's own columns: the labels, order and hidden
+columns set in the web app's project settings, loaded from
+`GET /api/v1/projects/{id}/columns`. The status list offers only visible
+columns. Against an older Guidon without that endpoint, the plugin falls
+back to the six default columns.
+
 ## Login and storage
 
 Login uses the same loopback flow as the Unity plugin. A listener on

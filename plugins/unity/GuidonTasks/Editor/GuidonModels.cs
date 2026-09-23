@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Guidon.Tasks.Editor
 {
@@ -82,6 +83,19 @@ namespace Guidon.Tasks.Editor
     internal class CommentResponse
     {
         public CommentDto comment;
+    }
+
+    [Serializable]
+    public class ColumnDto
+    {
+        public string status;
+        public string label;
+    }
+
+    [Serializable]
+    internal class ColumnsResponse
+    {
+        public ColumnDto[] columns;
     }
 
     [Serializable]
@@ -183,5 +197,20 @@ namespace Guidon.Tasks.Editor
             int index = Array.IndexOf(Statuses, status);
             return index >= 0 ? StatusLabels[index] : status;
         }
+
+        /// <summary>What the board shows when the server can't say (an older Guidon without the columns endpoint).</summary>
+        public static ColumnDto[] DefaultColumns() =>
+            Statuses.Select(s => new ColumnDto { status = s, label = StatusLabel(s) }).ToArray();
+
+        /// <summary>
+        /// The selected project's visible columns in board order (its
+        /// label/order/hidden overrides from the server). Set by
+        /// GuidonTasksWindow after each load; read by the detail window's
+        /// status dropdown so a task can't be moved into a hidden column.
+        /// </summary>
+        public static ColumnDto[] CurrentColumns = DefaultColumns();
+
+        public static string ColumnLabel(string status) =>
+            CurrentColumns.FirstOrDefault(c => c.status == status)?.label ?? StatusLabel(status);
     }
 }

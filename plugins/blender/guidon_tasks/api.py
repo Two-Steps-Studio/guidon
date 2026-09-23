@@ -27,6 +27,10 @@ STATUS_LABELS = {
 }
 PRIORITIES = ("low", "medium", "high", "critical")
 
+# What the board shows when the server can't say (an older Guidon without
+# the columns endpoint): every status, default labels, default order.
+DEFAULT_COLUMNS = tuple((s, STATUS_LABELS[s]) for s in STATUSES)
+
 
 class Client:
     def __init__(self, base_url, api_key):
@@ -79,6 +83,11 @@ class Client:
     def list_tasks(self, project_id):
         return self._get_field("GET", "/api/v1/projects/{}/tasks".format(project_id), "tasks", default=[])
 
+    def list_columns(self, project_id):
+        """The project's visible board columns in board order, as (status, label) pairs."""
+        ok, value = self._get_field("GET", "/api/v1/projects/{}/columns".format(project_id), "columns", default=[])
+        return (True, parse_columns(value)) if ok else (False, value)
+
     def create_task(self, project_id, title, description="", priority="", due_date="", parent_task_id="", status=""):
         body = {"title": title}
         # Omit empty optionals entirely - unlike Unity's JsonUtility, json.dumps can.
@@ -117,6 +126,15 @@ def _server_error(http_error):
     except Exception:
         return None
     return payload.get("error") if isinstance(payload, dict) else None
+
+
+def parse_columns(raw):
+    columns = []
+    for column in raw if isinstance(raw, list) else []:
+        status = column.get("status") if isinstance(column, dict) else None
+        if status in STATUSES and status not in (c[0] for c in columns):
+            columns.append((status, column.get("label") or STATUS_LABELS[status]))
+    return tuple(columns) or DEFAULT_COLUMNS
 
 
 def sort_order_for_append(column_tasks):

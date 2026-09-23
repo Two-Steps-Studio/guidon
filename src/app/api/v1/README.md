@@ -15,6 +15,14 @@ does for the UI.
 
 - `discord-bot/` (slash commands) and the MCP endpoint `src/app/api/mcp`
   (agents such as Claude Code; tools dispatch in-process to these handlers).
+- The editor plugins under `plugins/` (Unity, Unreal Engine, Blender,
+  JetBrains IDEs). They get their key through the browser loopback flow on
+  `/auth/plugin-login?client=<unity|unreal|blender|jetbrains>`: one key per
+  plugin (`human_client`), named after it, and a new login replaces only that
+  plugin's key. `GET /projects/[projectId]/columns` exists for them: it returns the
+  project's visible board columns (labels, order and hidden columns from
+  migration 020, resolved by the same `resolveBoardColumns` the web board
+  uses).
 - Authenticated by API key + scope via `guardApiRequest` (`search` is the
   exception: it uses the browser session).
 

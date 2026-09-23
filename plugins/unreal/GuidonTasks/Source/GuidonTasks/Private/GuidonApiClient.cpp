@@ -154,6 +154,42 @@ void GuidonApi::ListTasks(const FString& ProjectId, FOnTasks Done)
 		{ Done(bOk, bOk ? ParseArray<FGuidonTask>(Body, TEXT("tasks")) : TArray<FGuidonTask>(), Error); });
 }
 
+void GuidonApi::ListColumns(const FString& ProjectId, FOnColumns Done)
+{
+	Send(TEXT("GET"), FString::Printf(TEXT("/api/v1/projects/%s/columns"), *ProjectId), nullptr,
+		[Done = MoveTemp(Done)](bool bOk, TSharedPtr<FJsonObject> Body, const FString& Error)
+		{
+			TArray<FGuidonColumn> Columns;
+			const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
+			if (bOk && Body.IsValid() && Body->TryGetArrayField(TEXT("columns"), Values) && Values)
+			{
+				for (const TSharedPtr<FJsonValue>& Value : *Values)
+				{
+					const TSharedPtr<FJsonObject>* Object = nullptr;
+					FGuidonColumn Column;
+					if (!Value.IsValid() || !Value->TryGetObject(Object) || !Object
+						|| !(*Object)->TryGetStringField(TEXT("status"), Column.Status)
+						|| !GuidonVocabulary::Statuses().Contains(Column.Status)
+						|| Columns.ContainsByPredicate([&Column](const FGuidonColumn& C) { return C.Status == Column.Status; }))
+					{
+						continue;
+					}
+					(*Object)->TryGetStringField(TEXT("label"), Column.Label);
+					if (Column.Label.IsEmpty())
+					{
+						Column.Label = GuidonVocabulary::StatusLabel(Column.Status).ToString();
+					}
+					Columns.Add(Column);
+				}
+			}
+			if (bOk && Columns.Num() == 0)
+			{
+				Columns = GuidonVocabulary::DefaultColumns();
+			}
+			Done(bOk, Columns, Error);
+		});
+}
+
 void GuidonApi::CreateTask(const FString& ProjectId, const FString& Title, const FString& Description,
 	const FString& Priority, const FString& DueDate, const FString& ParentTaskId, const FString& Status, FOnTask Done)
 {

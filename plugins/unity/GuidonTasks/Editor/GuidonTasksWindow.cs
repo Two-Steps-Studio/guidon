@@ -321,13 +321,24 @@ namespace Guidon.Tasks.Editor
             scroll.Add(_columnsContainer);
             parent.Add(scroll);
 
-            foreach (string status in GuidonVocabulary.Statuses)
+            BuildColumns();
+        }
+
+        /// <summary>(Re)creates the column elements from GuidonVocabulary.CurrentColumns - the project's visible columns, in its order.</summary>
+        private void BuildColumns()
+        {
+            _columnsContainer.Clear();
+            _columnCardContainers.Clear();
+            _columnCountLabels.Clear();
+            _statusByColumnElement.Clear();
+
+            foreach (ColumnDto column in GuidonVocabulary.CurrentColumns)
             {
-                BuildColumn(status);
+                BuildColumn(column.status, column.label);
             }
         }
 
-        private void BuildColumn(string status)
+        private void BuildColumn(string status, string label)
         {
             var column = new VisualElement();
             GuidonStyles.StyleColumn(column);
@@ -340,7 +351,7 @@ namespace Guidon.Tasks.Editor
             GuidonStyles.StyleColumnAccentDot(accentDot, status);
             header.Add(accentDot);
 
-            var titleLabel = new Label(GuidonVocabulary.StatusLabel(status)) { style = { flexGrow = 1 } };
+            var titleLabel = new Label(label) { style = { flexGrow = 1 } };
             GuidonStyles.StyleSectionHeader(titleLabel);
             header.Add(titleLabel);
 
@@ -365,7 +376,7 @@ namespace Guidon.Tasks.Editor
 
         private void RebuildBoard()
         {
-            foreach (string status in GuidonVocabulary.Statuses)
+            foreach (string status in _columnCardContainers.Keys.ToList())
             {
                 VisualElement container = _columnCardContainers[status];
                 container.Clear();
@@ -672,7 +683,10 @@ namespace Guidon.Tasks.Editor
             SetBusy(true);
             ShowStatusMessage(null);
 
-            var result = await GuidonApiClient.ListTasks(_projects[_selectedProjectIndex].id);
+            string projectId = _projects[_selectedProjectIndex].id;
+            var result = await GuidonApiClient.ListTasks(projectId);
+            // A columns failure (e.g. an older server without the endpoint) just means the default columns.
+            var columnsResult = result.Ok ? await GuidonApiClient.ListColumns(projectId) : default;
             SetBusy(false);
 
             if (!result.Ok)
@@ -682,6 +696,8 @@ namespace Guidon.Tasks.Editor
             }
 
             _tasks = result.Value;
+            GuidonVocabulary.CurrentColumns = columnsResult.Ok ? columnsResult.Value : GuidonVocabulary.DefaultColumns();
+            BuildColumns();
             RebuildBoard();
         }
     }

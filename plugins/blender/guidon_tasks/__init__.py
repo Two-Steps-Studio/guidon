@@ -45,6 +45,7 @@ class GuidonPreferences(bpy.types.AddonPreferences):
 class GuidonWindowProps(bpy.types.PropertyGroup):
     expanded: BoolVectorProperty(size=len(api.STATUSES), default=(False, True, True, True, True, False))
     comment_text: StringProperty(name="Comment")
+    menu_task_id: StringProperty(options={"HIDDEN"})  # which task GUIDON_MT_status acts on
 
 
 _classes = (GuidonPreferences, GuidonWindowProps) + ops.classes + panels.classes

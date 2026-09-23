@@ -27,6 +27,9 @@ data class GuidonTask(
     val isSubtask get() = parentTaskId.isNotEmpty()
 }
 
+/** One visible board column: a fixed status with the project's (possibly renamed) label. */
+data class BoardColumn(val status: String, val label: String)
+
 data class GuidonComment(
     val id: String,
     val content: String,
@@ -54,6 +57,9 @@ object Vocabulary {
     }
 
     fun priorityLabel(priority: String) = priority.replaceFirstChar { it.uppercase() }
+
+    /** What the board shows when the server can't say (an older Guidon without the columns endpoint). */
+    val defaultColumns = statuses.map { BoardColumn(it, statusLabel(it)) }
 }
 
 /** Board ordering rules, shared by the UI and the tests. */

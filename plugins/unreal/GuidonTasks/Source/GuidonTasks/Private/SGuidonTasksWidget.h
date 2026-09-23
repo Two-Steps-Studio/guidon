@@ -102,7 +102,9 @@ private:
 	void RebuildDetails() { bDetailsDirty = true; }
 	void DoRebuildBoard();
 	void DoRebuildDetails();
-	TSharedRef<SWidget> BuildColumn(const FString& Status);
+	TSharedRef<SWidget> BuildColumn(const FString& Status, const FString& Label);
+	FText ColumnLabel(const FString& Status) const;
+	void SetColumns(const TArray<FGuidonColumn>& NewColumns);
 	TSharedRef<SWidget> BuildCard(const FGuidonTask& Task);
 
 	// --- data
@@ -131,6 +133,8 @@ private:
 
 	TArray<FProjectPtr> Projects;
 	TArray<FGuidonTask> Tasks;
+	/** The selected project's visible columns, board order. */
+	TArray<FGuidonColumn> Columns;
 	TMap<FString, TArray<FGuidonComment>> Comments;
 	FString CurrentProjectId;
 	FString SelectedTaskId;
@@ -151,6 +155,7 @@ private:
 	FString NewSubtaskTitle;
 	FString NewComment;
 
+	/** Status combo options - the visible columns only, so a task can't be moved into a hidden one. */
 	TArray<TSharedPtr<FString>> StatusOptions;
 	TArray<TSharedPtr<FString>> PriorityOptions;
 

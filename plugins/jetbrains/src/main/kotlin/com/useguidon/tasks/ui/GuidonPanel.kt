@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI
 import com.useguidon.tasks.GuidonSettings
 import com.useguidon.tasks.core.ApiResult
 import com.useguidon.tasks.core.Board
+import com.useguidon.tasks.core.BoardColumn
 import com.useguidon.tasks.core.GuidonApi
 import com.useguidon.tasks.core.GuidonComment
 import com.useguidon.tasks.core.GuidonProject
@@ -81,6 +82,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     // --- state (EDT only)
     private var projects: List<GuidonProject> = emptyList()
     private var tasks: MutableList<GuidonTask> = mutableListOf()
+    private var columns: List<BoardColumn> = Vocabulary.defaultColumns
     private val comments = mutableMapOf<String, List<GuidonComment>>()
     private var currentProjectId = GuidonSettings.projectId
     private var selectedTaskId = ""
@@ -339,8 +341,8 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         if (currentProjectId.isEmpty()) {
             boardPanel.add(mutedLabel(if (projects.isEmpty()) "No projects loaded yet." else "Pick a project above."))
         } else {
-            for (status in Vocabulary.statuses) {
-                boardPanel.add(buildColumn(status))
+            for (column in columns) {
+                boardPanel.add(buildColumn(column.status, column.label))
                 boardPanel.add(Box.createHorizontalStrut(JBUI.scale(10)))
             }
         }
@@ -349,7 +351,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         newTaskField?.requestFocusInWindow()
     }
 
-    private fun buildColumn(status: String): JComponent {
+    private fun buildColumn(status: String, label: String): JComponent {
         val columnTasks = Board.column(tasks, status)
         val column = RoundedPanel(BorderLayout(0, JBUI.scale(8)), GuidonColors.column, GuidonColors.border)
         column.border = JBUI.Borders.empty(8)
@@ -363,7 +365,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             layout = BoxLayout(this, BoxLayout.X_AXIS)
             add(StatusDot(GuidonColors.status(status)))
             add(Box.createHorizontalStrut(JBUI.scale(6)))
-            add(JLabel(Vocabulary.statusLabel(status)).apply {
+            add(JLabel(label).apply {
                 foreground = GuidonColors.text
                 font = font.deriveFont(java.awt.Font.BOLD)
             })
@@ -497,9 +499,11 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         form.row(sectionLabel("Title"), 8)
         form.row(JTextField(editTitle).also { f -> onTextChange(f) { editTitle = it } })
 
-        val statusCombo = JComboBox(Vocabulary.statuses.toTypedArray()).apply {
+        // Only the project's visible columns, so a task can't be moved into one the board hides.
+        val statusOptions = columns.map { it.status }.let { if (task.status in it) it else it + task.status }
+        val statusCombo = JComboBox(statusOptions.toTypedArray()).apply {
             selectedItem = task.status
-            renderer = labelRenderer { Vocabulary.statusLabel(it) }
+            renderer = labelRenderer { status -> columns.find { it.status == status }?.label ?: Vocabulary.statusLabel(status) }
             // Applied immediately, like dragging the card - Save is for the text fields.
             addActionListener { (selectedItem as? String)?.let { moveTask(task.id, it) } }
         }
@@ -628,6 +632,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         currentProjectId = projectId
         GuidonSettings.projectId = projectId
         tasks = mutableListOf()
+        columns = Vocabulary.defaultColumns
         comments.clear()
         selectedTaskId = ""
         addingInStatus = ""
@@ -643,12 +648,17 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             return
         }
         val api = api()
-        bg({ api.listTasks(projectId) }) { result ->
+        bg({
+            // A columns failure (e.g. an older server without the endpoint) just means the default columns.
+            val loadedColumns = (api.listColumns(projectId) as? ApiResult.Ok)?.value ?: Vocabulary.defaultColumns
+            api.listTasks(projectId) to loadedColumns
+        }) { (result, loadedColumns) ->
             if (projectId != currentProjectId) return@bg // switched project meanwhile
             when (result) {
                 is ApiResult.Err -> showError(result.message)
                 is ApiResult.Ok -> {
                     tasks = result.value.toMutableList()
+                    columns = loadedColumns
                     if (tasks.none { it.id == selectedTaskId }) selectedTaskId = ""
                     scheduleRebuild()
                     if (selectedTaskId.isNotEmpty()) loadComments(selectedTaskId)

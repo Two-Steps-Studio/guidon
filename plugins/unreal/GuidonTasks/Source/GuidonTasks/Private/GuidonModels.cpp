@@ -99,4 +99,14 @@ FText GuidonVocabulary::PriorityLabel(const FString& Priority)
 	return FText::FromString(Priority);
 }
 
+TArray<FGuidonColumn> GuidonVocabulary::DefaultColumns()
+{
+	TArray<FGuidonColumn> Columns;
+	for (const FString& Status : Statuses())
+	{
+		Columns.Add({Status, StatusLabel(Status).ToString()});
+	}
+	return Columns;
+}
+
 #undef LOCTEXT_NAMESPACE

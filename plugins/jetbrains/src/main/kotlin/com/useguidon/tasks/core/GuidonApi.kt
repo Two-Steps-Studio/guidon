@@ -28,6 +28,23 @@ class GuidonApi(baseUrl: String, private val apiKey: String, private val http: H
     fun listTasks(projectId: String): ApiResult<List<GuidonTask>> =
         send("GET", "/api/v1/projects/$projectId/tasks").map { body -> body.array("tasks").map { parseTask(it.asJsonObject) } }
 
+    /**
+     * The project's visible columns in board order (its label/order/hidden
+     * overrides applied server-side). Unknown statuses are dropped; an empty
+     * answer falls back to the defaults.
+     */
+    fun listColumns(projectId: String): ApiResult<List<BoardColumn>> =
+        send("GET", "/api/v1/projects/$projectId/columns").map { body ->
+            body.array("columns")
+                .mapNotNull { element ->
+                    val column = element.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
+                    val status = column.str("status").takeIf { it in Vocabulary.statuses } ?: return@mapNotNull null
+                    BoardColumn(status, column.str("label").ifEmpty { Vocabulary.statusLabel(status) })
+                }
+                .distinctBy { it.status }
+                .ifEmpty { Vocabulary.defaultColumns }
+        }
+
     /** Empty parentTaskId creates a top-level task in [status]; a real id creates a subtask (the API ignores status/priority for those). */
     fun createTask(
         projectId: String,
@@ -116,6 +133,11 @@ class GuidonApi(baseUrl: String, private val apiKey: String, private val http: H
 
     companion object {
         val defaultClient: HttpClient = HttpClient.newBuilder()
+            // HTTP/1.1 on purpose: over plain http:// (a self-hosted or local
+            // Guidon) java.net.http's default HTTP/2 sends an `Upgrade: h2c`
+            // request that Node's server - Next.js included - answers by
+            // dropping the connection ("header parser received no bytes").
+            .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build()

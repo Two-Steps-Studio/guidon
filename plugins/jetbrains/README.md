@@ -48,6 +48,14 @@ The board's colors come from the web app's design tokens, as light/dark pairs
 (`JBColor`), so the board follows the IDE theme. Everything else, such as
 fields, buttons and dropdowns, uses the IDE's own look.
 
+## Board columns
+
+The board shows the project's own columns: the labels, order and hidden
+columns set in the web app's project settings, loaded from
+`GET /api/v1/projects/{id}/columns`. The status list offers only visible
+columns. Against an older Guidon without that endpoint, the plugin falls
+back to the six default columns.
+
 ## Login and storage
 
 Login uses the same loopback flow as the Unity plugin. The JDK's built-in HTTP
@@ -67,7 +75,11 @@ the password safe but doesn't revoke it on the server; revoke it on the website
 if you lose a machine.
 
 HTTP goes through `java.net.http` and JSON through Gson, which ships with the
-IntelliJ Platform, so the plugin bundles no extra libraries.
+IntelliJ Platform, so the plugin bundles no extra libraries. The client
+requests HTTP/1.1 explicitly. Over plain `http://`, the JDK's default HTTP/2
+sends an `Upgrade: h2c` request, and Node's server (Next.js included) answers
+it by dropping the connection. That breaks every self-hosted or local Guidon
+without TLS; the end-to-end test against a real local instance caught it.
 
 ## How it was verified
 
@@ -86,6 +98,13 @@ The IntelliJ Platform SDK couldn't be downloaded where this was written, so
   theme: login, opening a card, **dragging cards between columns with the
   mouse**, a refused status change being reverted, subtasks, comments, editing
   and saving, inline creation, delete, switching projects and log out.
+
+- Against a **real local Guidon** (`next dev` on PostgreSQL 16 with every
+  migration applied), a scripted browser clicked **Authorize** on the real
+  consent page, and the plugin received a working **"JetBrains Plugin"** key.
+  A second login revoked the first key. The panel showed a project's
+  customized columns (renamed, reordered and hidden) and moved a task through
+  the real API.
 
 The remaining risk is a mismatch between the stubs and the real platform API
 signatures, which would show up as a compile error on the first

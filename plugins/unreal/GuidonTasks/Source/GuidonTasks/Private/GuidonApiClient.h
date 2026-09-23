@@ -20,9 +20,13 @@ namespace GuidonApi
 	using FOnTask = TFunction<void(bool bOk, const FGuidonTask& Task, const FString& Error)>;
 	using FOnComments = TFunction<void(bool bOk, const TArray<FGuidonComment>& Comments, const FString& Error)>;
 	using FOnComment = TFunction<void(bool bOk, const FGuidonComment& Comment, const FString& Error)>;
+	using FOnColumns = TFunction<void(bool bOk, const TArray<FGuidonColumn>& Columns, const FString& Error)>;
 
 	void ListProjects(FOnProjects Done);
 	void ListTasks(const FString& ProjectId, FOnTasks Done);
+
+	/** The project's visible columns in board order. Unknown statuses are dropped; an empty answer means the defaults. */
+	void ListColumns(const FString& ProjectId, FOnColumns Done);
 
 	/** Empty ParentTaskId creates a top-level task in column Status; a real id creates a subtask (the API ignores Status/Priority for those). */
 	void CreateTask(const FString& ProjectId, const FString& Title, const FString& Description, const FString& Priority,

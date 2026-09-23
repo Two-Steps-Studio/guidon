@@ -35,6 +35,13 @@ struct FGuidonTask
 	static FGuidonTask FromJson(const TSharedPtr<FJsonObject>& Json);
 };
 
+/** One visible board column: a fixed status with the project's (possibly renamed) label. */
+struct FGuidonColumn
+{
+	FString Status;
+	FString Label;
+};
+
 struct FGuidonComment
 {
 	FString Id;
@@ -56,4 +63,7 @@ namespace GuidonVocabulary
 	const TArray<FString>& Priorities();
 	FText StatusLabel(const FString& Status);
 	FText PriorityLabel(const FString& Priority);
+
+	/** What the board shows when the server can't say (an older Guidon without the columns endpoint). */
+	TArray<FGuidonColumn> DefaultColumns();
 }

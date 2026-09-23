@@ -79,7 +79,8 @@ class _BoardPanel(_GuidonPanel):
             return
 
         props = context.window_manager.guidon
-        for index, status in enumerate(api.STATUSES):
+        for status, label in state.columns:
+            index = api.STATUSES.index(status)
             tasks = api.column_tasks(state.tasks, status)
             box = layout.box()
             header = box.row(align=True)
@@ -88,7 +89,7 @@ class _BoardPanel(_GuidonPanel):
                 props,
                 "expanded",
                 index=index,
-                text="{} ({})".format(api.STATUS_LABELS[status], len(tasks)),
+                text="{} ({})".format(label, len(tasks)),
                 icon="TRIA_DOWN" if expanded else "TRIA_RIGHT",
                 emboss=False,
             )
@@ -132,10 +133,8 @@ class _TaskPanel(_GuidonPanel):
         row = layout.row(align=True)
         left = row.operator("guidon.move_task", text="", icon="TRIA_LEFT")
         left.task_id, left.direction = task_id, -1
-        status_menu = row.operator_menu_enum(
-            "guidon.set_status", "status", text=api.STATUS_LABELS.get(task.get("status"), task.get("status") or "?")
-        )
-        status_menu.task_id = task_id
+        context.window_manager.guidon.menu_task_id = task_id
+        row.menu("GUIDON_MT_status", text=state.status_label(task.get("status")))
         right = row.operator("guidon.move_task", text="", icon="TRIA_RIGHT")
         right.task_id, right.direction = task_id, 1
 
@@ -209,6 +208,21 @@ class _AccountPanel(_GuidonPanel):
         layout.operator("guidon.logout", icon="X")
 
 
+class GUIDON_MT_status(bpy.types.Menu):
+    """The project's visible columns - so a task can't be moved into one the board hides."""
+
+    bl_idname = "GUIDON_MT_status"
+    bl_label = "Status"
+
+    def draw(self, context):
+        task_id = context.window_manager.guidon.menu_task_id
+        current = (state.find_task(task_id) or {}).get("status")
+        for status, label in state.columns:
+            op = self.layout.operator("guidon.set_status", text=label, icon="LAYER_ACTIVE" if status == current else "BLANK1")
+            op.task_id = task_id
+            op.status = status
+
+
 def _make(base, space, suffix):
     return type(
         "GUIDON_PT_{}_{}".format(base.__name__.strip("_").lower(), suffix),
@@ -217,7 +231,7 @@ def _make(base, space, suffix):
     )
 
 
-classes = tuple(
+classes = (GUIDON_MT_status,) + tuple(
     _make(base, space, suffix)
     for space, suffix in (("VIEW_3D", "view3d"), ("TEXT_EDITOR", "text"))
     for base in (_BoardPanel, _TaskPanel, _AccountPanel)

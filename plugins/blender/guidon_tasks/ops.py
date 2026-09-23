@@ -45,6 +45,15 @@ def load_tasks(context=None):
         return
     c = client(context)
 
+    def work():
+        ok, value = c.list_tasks(project_id)
+        if not ok:
+            return ok, value
+        # Any failure here (e.g. an older server without the endpoint) just
+        # means the default columns - the tasks themselves loaded fine.
+        columns_ok, columns = c.list_columns(project_id)
+        return True, (value, columns if columns_ok else api.DEFAULT_COLUMNS)
+
     def done(result):
         ok, value = result
         if not ok:
@@ -52,11 +61,11 @@ def load_tasks(context=None):
         _ok()
         # Ignore a stale response if the user switched project meanwhile.
         if prefs().project_id == project_id:
-            state.tasks = value or []
+            state.tasks, state.columns = value[0] or [], value[1]
             if state.selected_task_id and not state.find_task(state.selected_task_id):
                 state.selected_task_id = ""
 
-    jobs.run(lambda: c.list_tasks(project_id), done)
+    jobs.run(work, done)
 
 
 def load_projects(context=None):
@@ -202,6 +211,7 @@ class GUIDON_OT_pick_project(bpy.types.Operator):
             context.preferences.is_dirty = True
             state.tasks = []
             state.selected_task_id = ""
+            state.columns = api.DEFAULT_COLUMNS
             load_tasks(context)
         return {"FINISHED"}
 
@@ -289,12 +299,13 @@ class GUIDON_OT_move_task(bpy.types.Operator):
 
     def execute(self, context):
         task = state.find_task(self.task_id)
-        if task is None or task.get("status") not in api.STATUSES:
+        order = [status for status, _ in state.columns]
+        if task is None or task.get("status") not in order:
             return {"CANCELLED"}
-        index = api.STATUSES.index(task["status"]) + self.direction
-        if not 0 <= index < len(api.STATUSES):
+        index = order.index(task["status"]) + self.direction
+        if not 0 <= index < len(order):
             return {"CANCELLED"}
-        return bpy.ops.guidon.set_status(task_id=self.task_id, status=api.STATUSES[index])
+        return bpy.ops.guidon.set_status(task_id=self.task_id, status=order[index])
 
 
 class GUIDON_OT_toggle_subtask(bpy.types.Operator):

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -152,6 +153,30 @@ namespace Guidon.Tasks.Editor
             return parsed.Ok
                 ? GuidonResult<TaskDto[]>.Success(parsed.Value.tasks ?? Array.Empty<TaskDto>())
                 : GuidonResult<TaskDto[]>.Failure(parsed.Error);
+        }
+
+        /// <summary>
+        /// The project's visible columns in board order. Unknown statuses and
+        /// duplicates are dropped; an empty answer means the defaults.
+        /// </summary>
+        public static async Task<GuidonResult<ColumnDto[]>> ListColumns(string projectId)
+        {
+            var raw = await SendAsync("GET", $"/api/v1/projects/{projectId}/columns");
+            if (!raw.Ok) return GuidonResult<ColumnDto[]>.Failure(raw.Error);
+
+            var parsed = ParseResponse<ColumnsResponse>(raw.Value, "columns");
+            if (!parsed.Ok) return GuidonResult<ColumnDto[]>.Failure(parsed.Error);
+
+            var columns = (parsed.Value.columns ?? Array.Empty<ColumnDto>())
+                .Where(c => c != null && Array.IndexOf(GuidonVocabulary.Statuses, c.status) >= 0)
+                .GroupBy(c => c.status)
+                .Select(g => new ColumnDto
+                {
+                    status = g.Key,
+                    label = string.IsNullOrEmpty(g.First().label) ? GuidonVocabulary.StatusLabel(g.Key) : g.First().label,
+                })
+                .ToArray();
+            return GuidonResult<ColumnDto[]>.Success(columns.Length > 0 ? columns : GuidonVocabulary.DefaultColumns());
         }
 
         public static async Task<GuidonResult<TaskDto>> SetTaskStatus(string taskId, string status)

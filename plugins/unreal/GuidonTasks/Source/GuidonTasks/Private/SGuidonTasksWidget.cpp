@@ -193,10 +193,7 @@ TWeakPtr<SGuidonTasksWidget> SGuidonTasksWidget::WeakSelf()
 
 void SGuidonTasksWidget::Construct(const FArguments& InArgs)
 {
-	for (const FString& Status : GuidonVocabulary::Statuses())
-	{
-		StatusOptions.Add(MakeShared<FString>(Status));
-	}
+	SetColumns(GuidonVocabulary::DefaultColumns());
 	for (const FString& Priority : GuidonVocabulary::Priorities())
 	{
 		PriorityOptions.Add(MakeShared<FString>(Priority));
@@ -466,11 +463,11 @@ void SGuidonTasksWidget::DoRebuildBoard()
 		return;
 	}
 
-	for (const FString& Status : GuidonVocabulary::Statuses())
+	for (const FGuidonColumn& Column : Columns)
 	{
 		BoardBox->AddSlot().AutoWidth().Padding(0.f, 0.f, 10.f, 0.f)
 		[
-			BuildColumn(Status)
+			BuildColumn(Column.Status, Column.Label)
 		];
 	}
 
@@ -480,7 +477,23 @@ void SGuidonTasksWidget::DoRebuildBoard()
 	}
 }
 
-TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FString& Status)
+FText SGuidonTasksWidget::ColumnLabel(const FString& Status) const
+{
+	const FGuidonColumn* Column = Columns.FindByPredicate([&Status](const FGuidonColumn& C) { return C.Status == Status; });
+	return Column ? FText::FromString(Column->Label) : GuidonVocabulary::StatusLabel(Status);
+}
+
+void SGuidonTasksWidget::SetColumns(const TArray<FGuidonColumn>& NewColumns)
+{
+	Columns = NewColumns;
+	StatusOptions.Reset();
+	for (const FGuidonColumn& Column : Columns)
+	{
+		StatusOptions.Add(MakeShared<FString>(Column.Status));
+	}
+}
+
+TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FString& Status, const FString& Label)
 {
 	const TArray<const FGuidonTask*> ColumnItems = ColumnTasks(Status);
 
@@ -532,7 +545,7 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FString& Status)
 					]
 					+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center)
 					[
-						MakeText(GuidonVocabulary::StatusLabel(Status), 10, true)
+						MakeText(FText::FromString(Label), 10, true)
 					]
 					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 6.f, 0.f)
 					[
@@ -704,7 +717,7 @@ void SGuidonTasksWidget::DoRebuildDetails()
 				SNew(SComboBox<TSharedPtr<FString>>)
 				.OptionsSource(&StatusOptions)
 				.InitiallySelectedItem(CurrentStatus)
-				.OnGenerateWidget_Lambda([](TSharedPtr<FString> Item) -> TSharedRef<SWidget> { return MakeText(GuidonVocabulary::StatusLabel(*Item)); })
+				.OnGenerateWidget_Lambda([this](TSharedPtr<FString> Item) -> TSharedRef<SWidget> { return MakeText(ColumnLabel(*Item)); })
 				.OnSelectionChanged_Lambda([this, TaskId](TSharedPtr<FString> Item, ESelectInfo::Type SelectInfo)
 				{
 					if (Item.IsValid() && SelectInfo != ESelectInfo::Direct)
@@ -713,7 +726,7 @@ void SGuidonTasksWidget::DoRebuildDetails()
 					}
 				})
 				[
-					MakeText(GuidonVocabulary::StatusLabel(Task.Status))
+					MakeText(ColumnLabel(Task.Status))
 				]
 			]
 		]
@@ -973,6 +986,7 @@ void SGuidonTasksWidget::OnProjectSelected(FProjectPtr Project, ESelectInfo::Typ
 	CurrentProjectId = Project->Id;
 	FGuidonSettings::SetProjectId(CurrentProjectId);
 	Tasks.Reset();
+	SetColumns(GuidonVocabulary::DefaultColumns());
 	Comments.Reset();
 	SelectedTaskId.Reset();
 	AddingInStatus.Reset();
@@ -1018,6 +1032,22 @@ void SGuidonTasksWidget::RefreshTasks()
 		{
 			Self->LoadComments(Self->SelectedTaskId);
 		}
+
+		Self->BeginRequest();
+		GuidonApi::ListColumns(ProjectId, [WeakInner = Self->WeakSelf(), ProjectId](bool bColumnsOk, const TArray<FGuidonColumn>& LoadedColumns, const FString&)
+		{
+			TSharedPtr<SGuidonTasksWidget> Inner = WeakInner.Pin();
+			if (!Inner) return;
+			Inner->EndRequest();
+			if (Inner->CurrentProjectId != ProjectId)
+			{
+				return;
+			}
+			// A failure here (e.g. an older server without the endpoint) just means the default columns.
+			Inner->SetColumns(bColumnsOk ? LoadedColumns : GuidonVocabulary::DefaultColumns());
+			Inner->RebuildBoard();
+			Inner->RebuildDetails();
+		});
 	});
 }
 

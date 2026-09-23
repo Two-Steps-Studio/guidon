@@ -173,17 +173,24 @@ namespace Guidon.Tasks.Editor
 
         private void BuildStatusDropdown(VisualElement parent)
         {
-            _statusDropdown = new DropdownField { choices = GuidonVocabulary.StatusLabels.ToList() };
-            int index = Math.Max(0, Array.IndexOf(GuidonVocabulary.Statuses, _task.status));
-            _statusDropdown.SetValueWithoutNotify(GuidonVocabulary.StatusLabels[index]);
+            // The project's visible columns only (with its labels), so a task can't be moved into a hidden one.
+            var columns = GuidonVocabulary.CurrentColumns.ToList();
+            if (columns.All(c => c.status != _task.status))
+            {
+                columns.Add(new ColumnDto { status = _task.status, label = GuidonVocabulary.StatusLabel(_task.status) });
+            }
+            var labels = columns.Select(c => c.label).ToList();
+
+            _statusDropdown = new DropdownField { choices = labels };
+            _statusDropdown.SetValueWithoutNotify(labels[columns.FindIndex(c => c.status == _task.status)]);
 
             _statusDropdown.RegisterValueChangedCallback(evt =>
             {
-                int newIndex = Array.IndexOf(GuidonVocabulary.StatusLabels, evt.newValue);
-                int oldIndex = Array.IndexOf(GuidonVocabulary.StatusLabels, evt.previousValue);
+                int newIndex = labels.IndexOf(evt.newValue);
+                int oldIndex = labels.IndexOf(evt.previousValue);
                 if (newIndex >= 0 && newIndex != oldIndex)
                 {
-                    _ = ChangeStatus(GuidonVocabulary.Statuses[newIndex]);
+                    _ = ChangeStatus(columns[newIndex].status);
                 }
             });
 
