@@ -27,7 +27,9 @@ does for the UI.
   `plugins/godot/addons/guidon_reports`): `POST /projects/[projectId]/reports`
   (multipart; creates a Backlog task plus attachments). It is gated by its own
   `reports:write` scope, which unlocks nothing else. The key lives inside
-  game builds and must be assumed public; validation lives in
+  game builds and must be assumed public, so `reports:write` can't be combined
+  with another scope: key creation refuses it, and the route answers 403 to
+  a key that has other scopes too. Validation lives in
   `src/lib/api/game-report.ts` (`npm run test:reports`).
 - Authenticated by API key + scope via `guardApiRequest` (`search` is the
   exception: it uses the browser session).

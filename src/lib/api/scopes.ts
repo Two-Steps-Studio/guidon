@@ -30,3 +30,12 @@ export const API_KEY_SCOPES = [
 ] as const;
 
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
+
+/**
+ * reports:write must stand alone - see the note above API_KEY_SCOPES. A key
+ * that also carried tasks:* would hand everyone who unpacks the game build
+ * read/write access to every project its creator can reach.
+ */
+export function reportsScopeMixedWithOthers(scopes: readonly string[]): boolean {
+  return scopes.includes("reports:write") && scopes.length > 1;
+}

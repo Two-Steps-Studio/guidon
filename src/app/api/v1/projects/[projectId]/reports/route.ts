@@ -7,6 +7,7 @@ import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { buildReport, REPORT_LIMITS, validateReportFiles } from "@/lib/api/game-report";
 import { getOrgPlanLimits, isStorageLimitReached, isTaskLimitReached } from "@/lib/limits";
 import { getOrganizationStorageUsage, uploadTaskAttachment } from "@/lib/storage/storage";
+import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 
 /** Whole request cap - checked from Content-Length before the body is read. */
 const MAX_REQUEST_BYTES = REPORT_LIMITS.files * REPORT_LIMITS.fileBytes + 1024 * 1024;
@@ -39,6 +40,15 @@ const FORBIDDEN = "This API key's user may not create tasks in this project (nee
 export async function POST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const guard = await guardApiRequest(request, "reports:write");
   if (isGuardError(guard)) return guard;
+  // Refused here too, not only at key creation: a key made before that
+  // check (or through another path) fails while the game is being tested,
+  // instead of shipping in a build with read/write access to the projects.
+  if (reportsScopeMixedWithOthers(guard.scopes)) {
+    return NextResponse.json(
+      { error: "Report keys must have only the reports:write scope - this key has others and must not ship in a game. Create a separate key." },
+      { status: 403 }
+    );
+  }
 
   const { projectId } = await params;
   if (!isValidUuid(projectId)) return invalidIdResponse("projectId");
