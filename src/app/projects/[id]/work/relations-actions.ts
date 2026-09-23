@@ -1,5 +1,6 @@
 "use server";
 
+import { isValidUuid } from "@/lib/api/validate-id";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
@@ -32,6 +33,8 @@ export async function loadTaskRelatedTasks(
 ): Promise<{ relations: RelatedTask[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access) return { relations: [], error: "You do not have access to this project." };
+
+  if (!isValidUuid(taskId)) return { relations: [], error: "Invalid task id." };
 
   let relationRows: RelationRow[];
 
@@ -107,6 +110,10 @@ export async function searchProjectTasksByTitle(
 ): Promise<{ tasks: { id: string; title: string }[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access) return { tasks: [], error: "You do not have access to this project." };
+
+  if (excludeIds.some((id) => !isValidUuid(id))) {
+    return { tasks: [], error: "Invalid task id in exclusion list." };
+  }
 
   const trimmed = query.trim();
   if (trimmed.length === 0) return { tasks: [], error: null };
