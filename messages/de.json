@@ -556,6 +556,7 @@
     "formatLink": "Link",
     "moveTaskAria": "Aufgabe „{title}“ verschieben",
     "moveToColumn": "Verschieben nach {column}",
+    "images": "Bilder",
     "attachments": "Anhänge",
     "attachTaskFile": "Datei anhängen",
     "uploadingAttachment": "Wird hochgeladen...",

@@ -19,6 +19,7 @@ import { getTaskAgentContext } from "@/lib/context/agent-context";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { TaskAttemptsSection } from "@/components/work/task-attempts-section";
 import { TaskAttachmentsSection } from "@/components/work/task-attachments-section";
+import { TaskImagePreview } from "@/components/work/task-image-preview";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -568,6 +569,8 @@ export function TaskDetailDialog({
               </>
             )}
           </div>
+
+          <TaskImagePreview projectId={projectId} taskId={task.id} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

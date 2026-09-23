@@ -556,6 +556,7 @@
     "formatLink": "Enlace",
     "moveTaskAria": "Mover la tarea «{title}»",
     "moveToColumn": "Mover a {column}",
+    "images": "Imágenes",
     "attachments": "Archivos adjuntos",
     "attachTaskFile": "Adjuntar archivo",
     "uploadingAttachment": "Subiendo...",
