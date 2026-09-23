@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskDetailDialog } from "@/components/work/task-detail-dialog";
+import { loadTaskById } from "@/app/projects/[id]/work/relations-actions";
 import type { TaskCardMember } from "@/components/work/task-card";
 import { PRIORITY_DOT_CLASSES, normalizeTaskPriority } from "@/lib/work/task-board";
 import { groupTasksByDay, monthKey, shiftMonth, type MonthGrid } from "@/lib/work/calendar";
@@ -175,7 +176,16 @@ export function CalendarView({
           onDeleted={removeTask}
           onNavigateToTask={(taskId) => {
             const target = tasks.find((t) => t.id === taskId);
-            if (target) setOpenTask(target);
+            if (target) {
+              setOpenTask(target);
+            } else {
+              // Not in this month's grid - e.g. no due date, or a due date
+              // outside the currently viewed month. Fetch it directly rather
+              // than silently no-opping on click.
+              void loadTaskById(projectId, taskId).then((result) => {
+                if (result.task) setOpenTask(result.task);
+              });
+            }
           }}
         />
       )}

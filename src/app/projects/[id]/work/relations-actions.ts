@@ -5,6 +5,7 @@ import { getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
+import type { Task } from "@/types/task";
 
 export type RelatedTask = {
   relationId: string;
@@ -149,4 +150,42 @@ export async function searchProjectTasksByTitle(
   const { data, error } = await builder;
   if (error) return { tasks: [], error: error.message };
   return { tasks: (data ?? []) as { id: string; title: string }[], error: null };
+}
+
+/**
+ * Fetches a single task by id, scoped to this project. Used as a fallback
+ * when a related-task navigation click targets a task that isn't already in
+ * the caller's local state - e.g. the calendar view only holds tasks whose
+ * due_date falls in the currently viewed month, so a related task with no
+ * due date (or one outside that month) needs to be fetched on demand rather
+ * than silently failing to open.
+ */
+export async function loadTaskById(
+  projectId: string,
+  taskId: string
+): Promise<{ task: Task | null; error: string | null }> {
+  const access = await getProjectAccess(projectId);
+  if (!access) return { task: null, error: "You do not have access to this project." };
+  if (!isValidUuid(taskId)) return { task: null, error: "Invalid task id." };
+
+  if (hasDirectDatabase()) {
+    try {
+      const result = await withUser(access.userId, ({ query }) =>
+        query(`SELECT * FROM tasks WHERE id = $1 AND project_id = $2`, [taskId, projectId])
+      );
+      return { task: (result.rows[0] as Task) ?? null, error: null };
+    } catch (error) {
+      return { task: null, error: error instanceof Error ? error.message : "Failed to load task." };
+    }
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("id", taskId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (error) return { task: null, error: error.message };
+  return { task: (data as Task) ?? null, error: null };
 }
