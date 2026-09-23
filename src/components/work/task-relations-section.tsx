@@ -4,12 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Search, X } from "lucide-react";
 import {
-  createRelation,
-  deleteRelation,
   loadTaskRelatedTasks,
   searchProjectTasksByTitle,
   type RelatedTask,
 } from "@/app/projects/[id]/work/relations-actions";
+// Imported directly from their defining "use server" module rather than via
+// relations-actions.ts's re-export - a "use server" file's action exports
+// must be async functions it defines itself; re-exporting them from another
+// "use server" module isn't recognized by Next's action transform and made
+// the whole relations-actions.ts module resolve with zero exports at build
+// time (see the export removed from relations-actions.ts).
+import { createRelation, deleteRelation } from "@/app/projects/[id]/context/actions";
 import type { BoardColumn } from "@/lib/work/task-board";
 
 export function TaskRelationsSection({

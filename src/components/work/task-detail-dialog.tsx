@@ -19,6 +19,7 @@ import { getTaskAgentContext } from "@/lib/context/agent-context";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { TaskAttemptsSection } from "@/components/work/task-attempts-section";
 import { TaskAttachmentsSection } from "@/components/work/task-attachments-section";
+import { TaskRelationsSection } from "@/components/work/task-relations-section";
 import { TaskImagePreview } from "@/components/work/task-image-preview";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +63,8 @@ interface TaskDetailDialogProps {
   onClose: () => void;
   onSaved: (task: Task) => void;
   onDeleted: (taskId: string) => void;
+  /** Lets a related-task link (TaskRelationsSection) switch the dialog to another task without closing it - optional, degrades to plain non-clickable text if the caller doesn't pass it. */
+  onNavigateToTask?: (taskId: string) => void;
 }
 
 interface TaskForm {
@@ -113,6 +116,7 @@ export function TaskDetailDialog({
   onClose,
   onSaved,
   onDeleted,
+  onNavigateToTask,
 }: TaskDetailDialogProps) {
   // Derived from `task` at mount rather than synced via an effect; the parent
   // keys this component by task id, so opening a different task remounts it
@@ -859,6 +863,16 @@ export function TaskDetailDialog({
           canUpload={canEdit}
           currentUserId={currentUserId}
           canManageProject={canDelete}
+        />
+
+        <TaskRelationsSection
+          projectId={projectId}
+          taskId={task.id}
+          columns={columns}
+          canView={true}
+          canLink={canEdit}
+          canRemove={canDelete}
+          onNavigateToTask={onNavigateToTask}
         />
 
         <section

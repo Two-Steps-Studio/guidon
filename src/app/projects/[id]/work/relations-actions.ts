@@ -6,8 +6,6 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
 
-export { createRelation, deleteRelation } from "../context/actions";
-
 export type RelatedTask = {
   relationId: string;
   id: string;
