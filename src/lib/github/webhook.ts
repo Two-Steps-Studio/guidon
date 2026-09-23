@@ -102,11 +102,10 @@ export async function applyActions(target: GithubConnectionTarget, actions: Task
       outcome.skipped.push(`${action.ref}: no single matching task`);
       continue;
     }
-    if (!(await claimEvent(target.connectedBy, task.id, action.eventKey))) {
+    if (!(await recordEvent(target.connectedBy, task.id, action.eventKey, action.comment))) {
       outcome.skipped.push(`${action.ref}: ${action.eventKey} already handled`);
       continue;
     }
-    await addComment(target.connectedBy, task.id, action.comment);
     if (
       action.targetStatus &&
       action.targetStatus !== task.status &&
@@ -165,40 +164,48 @@ async function resolveTask(target: GithubConnectionTarget, ref: string): Promise
   return data && data.length === 1 ? (data[0] as ResolvedTask) : null;
 }
 
-async function claimEvent(userId: string, taskId: string, eventKey: string): Promise<boolean> {
+/**
+ * Claims (task, event) and posts its comment as one unit, so a failed
+ * comment never leaves the event marked handled - a Redeliver from GitHub
+ * would otherwise be skipped as "already handled". Returns false when the
+ * event was already recorded.
+ */
+async function recordEvent(userId: string, taskId: string, eventKey: string, content: string): Promise<boolean> {
   if (hasDirectDatabase()) {
-    const result = await withUser(userId, ({ query }) =>
-      query(
+    // withUser runs in one transaction: a failed comment rolls the claim back.
+    return withUser(userId, async ({ query }) => {
+      const claimed = await query(
         "INSERT INTO github_task_events (task_id, event_key) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING event_key",
         [taskId, eventKey]
-      )
-    );
-    return result.rows.length === 1;
+      );
+      if (claimed.rows.length === 0) return false;
+      await query("INSERT INTO task_comments (task_id, author_id, content, actor_label) VALUES ($1, $2, $3, $4)", [
+        taskId,
+        userId,
+        content,
+        GITHUB_ACTOR_LABEL,
+      ]);
+      return true;
+    });
   }
+
   const supabase = await getApiUserClient(userId);
   const { data, error } = await supabase
     .from("github_task_events")
     .upsert({ task_id: taskId, event_key: eventKey }, { onConflict: "task_id,event_key", ignoreDuplicates: true })
     .select("event_key");
   if (error) throw new Error(error.message);
-  return (data ?? []).length === 1;
-}
+  if ((data ?? []).length !== 1) return false;
 
-async function addComment(userId: string, taskId: string, content: string): Promise<void> {
-  if (hasDirectDatabase()) {
-    await withUser(userId, ({ query }) =>
-      query("INSERT INTO task_comments (task_id, author_id, content, actor_label) VALUES ($1, $2, $3, $4)", [
-        taskId,
-        userId,
-        content,
-        GITHUB_ACTOR_LABEL,
-      ])
-    );
-    return;
-  }
-  const supabase = await getApiUserClient(userId);
-  const { error } = await supabase
+  const { error: commentError } = await supabase
     .from("task_comments")
     .insert({ task_id: taskId, author_id: userId, content, actor_label: GITHUB_ACTOR_LABEL });
-  if (error) throw new Error(error.message);
+  if (commentError) {
+    // PostgREST can't span both writes in a transaction, and 042 grants no
+    // DELETE to `authenticated` - release the claim with the service role,
+    // scoped to exactly the row inserted above.
+    await createServiceClient().from("github_task_events").delete().eq("task_id", taskId).eq("event_key", eventKey);
+    throw new Error(commentError.message);
+  }
+  return true;
 }

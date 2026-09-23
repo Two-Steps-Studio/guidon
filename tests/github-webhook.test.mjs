@@ -73,7 +73,14 @@ const pr = (action, extra = {}) => ({
   check("opened does not reopen done work", !opened[0].fromStatuses.includes("done") && !opened[0].fromStatuses.includes("review"));
   check("opened comment", opened[0].comment === "PR #12 opened by ala: Door fix guidon#aaaaaaaa - https://github.com/o/r/pull/12", opened[0].comment);
   check("draft -> in_progress only", eq(planPullRequest(pr("opened", { draft: true }), "main").map((a) => a.targetStatus), ["in_progress", "in_progress"]));
-  check("ready_for_review -> review, own key", planPullRequest(pr("ready_for_review"), "main").every((a) => a.targetStatus === "review" && a.eventKey === "pr:12:ready"));
+  check("ready_for_review -> review, own key", planPullRequest(pr("ready_for_review", { updated_at: "t1" }), "main").every((a) => a.targetStatus === "review" && a.eventKey === "pr:12:ready:t1"));
+  {
+    const key = (action, extra) => planPullRequest(pr(action, extra), "main")[0].eventKey;
+    check("close, reopen, merge each get their own key", new Set([key("closed", { updated_at: "t1" }), key("reopened", { updated_at: "t2" }), key("closed", { merged: true, updated_at: "t3" })]).size === 3);
+    check("redelivery of the same close keeps its key", key("closed", { updated_at: "t1" }) === key("closed", { updated_at: "t1" }));
+    check("second close after a reopen is a new event", key("closed", { updated_at: "t1" }) !== key("closed", { updated_at: "t4" }));
+    check("merge key is stable", key("closed", { merged: true, updated_at: "a" }) === key("closed", { merged: true, updated_at: "b" }));
+  }
   check("merged into default -> done", planPullRequest(pr("closed", { merged: true }), "main").every((a) => a.targetStatus === "done" && a.fromStatuses.includes("review")));
   check("merged elsewhere -> note only", planPullRequest(pr("closed", { merged: true, base: { ref: "develop" } }), "main").every((a) => a.targetStatus === null && a.comment.includes("not the default branch")));
   check("closed unmerged -> note only", planPullRequest(pr("closed"), "main").every((a) => a.targetStatus === null && a.comment.includes("closed without merging")));

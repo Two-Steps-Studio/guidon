@@ -17,9 +17,11 @@ const MAX_BODY_BYTES = 25 * 1024 * 1024;
  * from github_connections (the repository connected on the Files page), and
  * every write happens as the person who connected it, under RLS.
  *
- * Always answers 2xx for a verified delivery once it's been processed, even
- * when nothing matched: GitHub retries non-2xx responses, and a retry can't
- * make an unknown task appear.
+ * Answers 2xx for a verified delivery once it's been processed, even when
+ * nothing matched. A 500 means a write failed for at least one connected
+ * project: GitHub doesn't redeliver on its own, but the delivery shows as
+ * failed in the App's settings, and a manual Redeliver is safe - events
+ * already applied are recorded per task (github_task_events) and skipped.
  */
 export async function POST(request: NextRequest) {
   const secret = process.env.GITHUB_APP_WEBHOOK_SECRET;
@@ -64,12 +66,12 @@ export async function POST(request: NextRequest) {
   if (targets.length === 0) return NextResponse.json({ ok: true, projects: 0 });
 
   let applied = 0;
+  let failed = 0;
   const skipped: string[] = [];
   for (const target of targets) {
     const actions: TaskAction[] = event === "push" ? planPush(payload) : planPullRequest(payload, target.defaultBranch);
     // One broken connection (e.g. the person who connected it lost access to
-    // the project) must not fail the delivery for the others - a 5xx makes
-    // GitHub redeliver to all of them.
+    // the project) must not stop the others from being processed.
     try {
       const outcome = await applyActions(target, actions);
       applied += outcome.applied;
@@ -77,7 +79,8 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error("[GitHub webhook] project", target.projectId, error);
       skipped.push(`project ${target.projectId}: ${error instanceof Error ? error.message : "failed"}`);
+      failed++;
     }
   }
-  return NextResponse.json({ ok: true, projects: targets.length, applied, skipped });
+  return NextResponse.json({ ok: failed === 0, projects: targets.length, applied, skipped }, { status: failed === 0 ? 200 : 500 });
 }
