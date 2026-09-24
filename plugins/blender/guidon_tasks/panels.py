@@ -12,19 +12,37 @@ from .ops import online_access_blocked, prefs
 # Blender panels can't take custom colors, but its color-tag icons can stand
 # in for the website's colored dots (src/app/globals.css): 01 red, 02 orange,
 # 03 yellow, 04 green, 05 blue, 09 gray.
+#
+# Blender renamed these from SEQUENCE_COLOR_XX to STRIP_COLOR_XX somewhere in
+# the 4.x cycle (part of the sequencer/VSE "strip" terminology rewrite). This
+# add-on supports Blender 3.6+ (see README.md), so it can't hardcode either
+# name - it has to ask the running Blender which one its icon enum actually
+# has, once, at import time.
+def _color_icon_prefix():
+    try:
+        enum_items = bpy.types.UILayout.bl_rna.functions["label"].parameters["icon"].enum_items
+        valid = enum_items.keys()
+    except Exception:
+        valid = ()
+    return "STRIP_COLOR" if "STRIP_COLOR_01" in valid else "SEQUENCE_COLOR"
+
+
+_COLOR_ICON_PREFIX = _color_icon_prefix()
+_DEFAULT_COLOR_ICON = _COLOR_ICON_PREFIX + "_09"
+
 _STATUS_ICONS = {
-    "backlog": "SEQUENCE_COLOR_09",  # muted
-    "todo": "SEQUENCE_COLOR_05",  # info
-    "in_progress": "SEQUENCE_COLOR_03",  # warning
-    "ai_working": "SEQUENCE_COLOR_05",  # info
-    "review": "SEQUENCE_COLOR_05",  # primary
-    "done": "SEQUENCE_COLOR_04",  # success
+    "backlog": _COLOR_ICON_PREFIX + "_09",  # muted
+    "todo": _COLOR_ICON_PREFIX + "_05",  # info
+    "in_progress": _COLOR_ICON_PREFIX + "_03",  # warning
+    "ai_working": _COLOR_ICON_PREFIX + "_05",  # info
+    "review": _COLOR_ICON_PREFIX + "_05",  # primary
+    "done": _COLOR_ICON_PREFIX + "_04",  # success
 }
 _PRIORITY_ICONS = {
-    "low": "SEQUENCE_COLOR_09",
-    "medium": "SEQUENCE_COLOR_05",
-    "high": "SEQUENCE_COLOR_02",
-    "critical": "SEQUENCE_COLOR_01",
+    "low": _COLOR_ICON_PREFIX + "_09",
+    "medium": _COLOR_ICON_PREFIX + "_05",
+    "high": _COLOR_ICON_PREFIX + "_02",
+    "critical": _COLOR_ICON_PREFIX + "_01",
 }
 
 
@@ -100,7 +118,7 @@ class _BoardPanel(_GuidonPanel):
             tasks = api.column_tasks(state.tasks, status)
             box = layout.box()
             header = box.row(align=True)
-            header.label(text="", icon=_STATUS_ICONS.get(status, "SEQUENCE_COLOR_09"))
+            header.label(text="", icon=_STATUS_ICONS.get(status, _DEFAULT_COLOR_ICON))
             expanded = props.expanded[index]
             header.prop(
                 props,
@@ -118,7 +136,7 @@ class _BoardPanel(_GuidonPanel):
             col = box.column(align=True)
             for task in tasks:
                 row = col.row(align=True)
-                row.label(text="", icon=_PRIORITY_ICONS.get(task.get("priority"), "SEQUENCE_COLOR_09"))
+                row.label(text="", icon=_PRIORITY_ICONS.get(task.get("priority"), _DEFAULT_COLOR_ICON))
                 op = row.operator(
                     "guidon.select_task",
                     text=task.get("title") or "(untitled)",
@@ -156,7 +174,7 @@ class _TaskPanel(_GuidonPanel):
         right.task_id, right.direction = task_id, 1
 
         info = layout.row()
-        info.label(text=(task.get("priority") or "-").capitalize(), icon=_PRIORITY_ICONS.get(task.get("priority"), "SEQUENCE_COLOR_09"))
+        info.label(text=(task.get("priority") or "-").capitalize(), icon=_PRIORITY_ICONS.get(task.get("priority"), _DEFAULT_COLOR_ICON))
         info.label(text=(task.get("due_date") or "")[:10] or "No due date", icon="TIME")
 
         row = layout.row(align=True)
