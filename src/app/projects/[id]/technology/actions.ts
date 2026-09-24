@@ -149,9 +149,12 @@ export async function deleteTechnology(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM technologies WHERE id = $1 AND project_id = $2", [technologyId, projectId])
+      const result = await withUser(access.userId, ({ query }) =>
+        query("DELETE FROM technologies WHERE id = $1 AND project_id = $2 RETURNING id", [technologyId, projectId])
       );
+      if (result.rows.length === 0) {
+        return { error: "This technology no longer exists, or you're not allowed to remove it." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to change the stack." };
     }
@@ -161,9 +164,17 @@ export async function deleteTechnology(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("technologies").delete().eq("id", technologyId).eq("project_id", projectId);
+  const { data: deletedRows, error } = await supabase
+    .from("technologies")
+    .delete()
+    .eq("id", technologyId)
+    .eq("project_id", projectId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!deletedRows || deletedRows.length === 0) {
+    return { error: "This technology no longer exists, or you're not allowed to remove it." };
+  }
 
   revalidatePath(`/projects/${projectId}/technology`);
   return { error: null };

@@ -277,6 +277,7 @@ export async function removeMember(
 
   if (hasDirectDatabase()) {
     let userId: string | null = null;
+    let removed = false;
     try {
       await withUser(access.userId, async ({ query }) => {
         const row = await query(
@@ -290,17 +291,33 @@ export async function removeMember(
         // hasn't been cleaned up on an older self-hosted database - a
         // single "remove" then can't leave a second row silently granting
         // access.
+        //
+        // Neither branch previously checked rowcount/RETURNING, nor did the
+        // fallback scope by organization_id at all - a memberId belonging to
+        // a different organization (or one RLS silently blocked) would
+        // "succeed" with zero rows affected, and the log below still fired
+        // for a removal that never happened. Mirrors the project-level
+        // removeMember fix in projects/[id]/members/actions.ts.
         if (userId) {
-          await query("DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2", [
-            orgId,
-            userId,
-          ]);
+          const result = await query(
+            "DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2 RETURNING id",
+            [orgId, userId]
+          );
+          removed = result.rows.length > 0;
         } else {
-          await query("DELETE FROM organization_members WHERE id = $1", [memberId]);
+          const result = await query(
+            "DELETE FROM organization_members WHERE id = $1 AND organization_id = $2 RETURNING id",
+            [memberId, orgId]
+          );
+          removed = result.rows.length > 0;
         }
       });
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
+    }
+
+    if (!removed) {
+      return { error: "This member does not belong to this organization, or the removal wasn't allowed." };
     }
 
     if (userId) await removeUserFromOrgProjects(userId, orgId);
@@ -328,13 +345,23 @@ export async function removeMember(
 
   // Same reasoning as the direct-Postgres branch above: by
   // (organization_id, user_id) when known, so a pre-026 duplicate row can't
-  // survive a "remove".
-  const { error } = memberRow?.user_id
-    ? await supabase.from("organization_members").delete().eq("organization_id", orgId).eq("user_id", memberRow.user_id)
-    : await supabase.from("organization_members").delete().eq("id", memberId);
+  // survive a "remove". Both branches now also verify a row was actually
+  // deleted, and the fallback stays scoped to organization_id instead of
+  // trusting RLS alone.
+  const { data: deletedRows, error } = memberRow?.user_id
+    ? await supabase
+        .from("organization_members")
+        .delete()
+        .eq("organization_id", orgId)
+        .eq("user_id", memberRow.user_id)
+        .select("id")
+    : await supabase.from("organization_members").delete().eq("id", memberId).eq("organization_id", orgId).select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!deletedRows || deletedRows.length === 0) {
+    return { error: "This member does not belong to this organization, or the removal wasn't allowed." };
   }
 
   if (memberRow?.user_id) await removeUserFromOrgProjects(memberRow.user_id, orgId);

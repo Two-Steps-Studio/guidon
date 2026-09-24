@@ -41,13 +41,21 @@ export async function updateProject(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, ({ query }) =>
-        query("UPDATE projects SET name = $1, description = $2 WHERE id = $3", [
+      const result = await withUser(access.userId, ({ query }) =>
+        query("UPDATE projects SET name = $1, description = $2 WHERE id = $3 RETURNING id", [
           name.trim(),
           trimmedDescription,
           projectId,
         ])
       );
+      // canWriteProject above is the friendly check; RLS is the real one. If
+      // it ever disagrees (role checked differently, or the project was
+      // deleted concurrently), this affects zero rows - without checking
+      // that, the caller still got { error: null } and an activity_logs
+      // entry for an update that never happened.
+      if (result.rows.length === 0) {
+        return { error: "This project no longer exists, or you're not allowed to edit it." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update project." };
     }
@@ -65,16 +73,20 @@ export async function updateProject(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data: updatedRows, error } = await supabase
     .from("projects")
     .update({
       name: name.trim(),
       description: trimmedDescription,
     })
-    .eq("id", projectId);
+    .eq("id", projectId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updatedRows || updatedRows.length === 0) {
+    return { error: "This project no longer exists, or you're not allowed to edit it." };
   }
 
   await logActivity({

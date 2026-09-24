@@ -28,18 +28,25 @@ export async function updateOrganizationProjectLimit(
   }
 
   if (hasDirectDatabase()) {
-    await withServiceRole(({ query }) =>
-      query("UPDATE organizations SET project_limit = $1 WHERE id = $2", [newLimit, orgId])
+    const result = await withServiceRole(({ query }) =>
+      query("UPDATE organizations SET project_limit = $1 WHERE id = $2 RETURNING id", [newLimit, orgId])
     );
+    if (result.rows.length === 0) {
+      return { error: "This organization no longer exists." };
+    }
   } else {
     const supabase = createServiceClient();
-    const { error } = await supabase
+    const { data: updatedRows, error } = await supabase
       .from("organizations")
       .update({ project_limit: newLimit })
-      .eq("id", orgId);
+      .eq("id", orgId)
+      .select("id");
 
     if (error) {
       return { error: error.message };
+    }
+    if (!updatedRows || updatedRows.length === 0) {
+      return { error: "This organization no longer exists." };
     }
   }
 
@@ -52,12 +59,19 @@ export type UpdatePlanState = {
 };
 
 /**
- * Admin-only plan change (no self-service upgrade in this phase - see
- * docs/superpowers/specs/2026-08-22-subscriptions-design.md's "Context"
- * section for why). Updates both the subscription's plan_id and
- * organizations.project_limit together, so the two stay in sync at the
- * moment of an actual plan change; project_limit remains independently
- * editable afterward via updateOrganizationProjectLimit.
+ * Admin-only plan change - kept as an escape hatch (comping an account,
+ * handling a dispute) now that self-serve Checkout/the Customer Portal
+ * exist (src/app/organizations/[id]/billing/actions.ts). Updates both the
+ * subscription's plan_id and organizations.project_limit together, so the
+ * two stay in sync at the moment of an actual plan change; project_limit
+ * remains independently editable afterward via updateOrganizationProjectLimit.
+ *
+ * Does NOT touch Stripe. If the organization has a real, still-active
+ * Stripe subscription, the next customer.subscription.updated webhook
+ * (src/app/api/stripe/webhook/route.ts) overwrites plan_id/project_limit
+ * back to whatever Stripe actually has - this is only a clean override for
+ * an organization with no live Stripe subscription (Free, or one you've
+ * separately canceled/paused in the Stripe Dashboard).
  */
 export async function updateOrganizationPlan(
   orgId: string,
@@ -73,22 +87,28 @@ export async function updateOrganizationPlan(
   const UNLIMITED_SENTINEL = ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL;
 
   if (hasDirectDatabase()) {
-    await withServiceRole(({ query }) =>
+    const subResult = await withServiceRole(({ query }) =>
       query(
-        `UPDATE subscriptions SET plan_id = $1, current_period_start = now(), cancel_at_period_end = false, updated_at = now() WHERE organization_id = $2`,
+        `UPDATE subscriptions SET plan_id = $1, current_period_start = now(), cancel_at_period_end = false, updated_at = now() WHERE organization_id = $2 RETURNING id`,
         [planId, orgId]
       )
     );
+    if (subResult.rows.length === 0) {
+      return { error: "This organization has no subscription row to update." };
+    }
     const planRow = await withServiceRole(({ query }) =>
       query("SELECT project_limit FROM plans WHERE id = $1", [planId])
     );
     const newLimit = planRow.rows[0]?.project_limit ?? UNLIMITED_SENTINEL;
-    await withServiceRole(({ query }) =>
-      query("UPDATE organizations SET project_limit = $1 WHERE id = $2", [
+    const orgResult = await withServiceRole(({ query }) =>
+      query("UPDATE organizations SET project_limit = $1 WHERE id = $2 RETURNING id", [
         newLimit ?? UNLIMITED_SENTINEL,
         orgId,
       ])
     );
+    if (orgResult.rows.length === 0) {
+      return { error: "This organization no longer exists." };
+    }
   } else {
     const supabase = createServiceClient();
 
@@ -98,19 +118,27 @@ export async function updateOrganizationPlan(
       .eq("id", planId)
       .single();
 
-    const { error: subError } = await supabase
+    const { data: updatedSubs, error: subError } = await supabase
       .from("subscriptions")
       .update({ plan_id: planId, current_period_start: new Date().toISOString(), cancel_at_period_end: false })
-      .eq("organization_id", orgId);
+      .eq("organization_id", orgId)
+      .select("id");
 
     if (subError) return { error: subError.message };
+    if (!updatedSubs || updatedSubs.length === 0) {
+      return { error: "This organization has no subscription row to update." };
+    }
 
-    const { error: orgError } = await supabase
+    const { data: updatedOrgs, error: orgError } = await supabase
       .from("organizations")
       .update({ project_limit: plan?.project_limit ?? UNLIMITED_SENTINEL })
-      .eq("id", orgId);
+      .eq("id", orgId)
+      .select("id");
 
     if (orgError) return { error: orgError.message };
+    if (!updatedOrgs || updatedOrgs.length === 0) {
+      return { error: "This organization no longer exists." };
+    }
   }
 
   revalidatePath("/admin/organizations");

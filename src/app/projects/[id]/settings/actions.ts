@@ -55,9 +55,14 @@ async function syncTechnologies(
   }
 
   if (toRemove.length > 0) {
+    // toRemove's ids already came from an `existing` list fetched scoped by
+    // project_id (the caller's SELECT), so this can't cross into another
+    // project as-is - project_id here is defense-in-depth against a future
+    // change to that assumption, not a fix for a live bug.
     const { error } = await supabase
       .from("technologies")
       .delete()
+      .eq("project_id", projectId)
       .in("id", toRemove.map((tech) => tech.id));
     if (error) throw error;
   }
@@ -97,9 +102,11 @@ async function syncTechnologiesLocal(
   }
 
   if (toRemove.length > 0) {
+    // Same defense-in-depth note as syncTechnologies' Supabase branch above:
+    // toRemove's ids already came from a project_id-scoped SELECT.
     await query(
-      "DELETE FROM technologies WHERE id = ANY($1::uuid[])",
-      [toRemove.map((tech) => tech.id)]
+      "DELETE FROM technologies WHERE project_id = $2 AND id = ANY($1::uuid[])",
+      [toRemove.map((tech) => tech.id), projectId]
     );
   }
 }
@@ -206,20 +213,30 @@ export async function updateProjectSettings(
 
   if (hasDirectDatabase()) {
     try {
-      await withUser(access.userId, async ({ query }) => {
-        await query(
+      const updated = await withUser(access.userId, async ({ query }) => {
+        const result = await query(
           `UPDATE projects
            SET name = $1, description = $2, status = $3, color = $4,
                avatar_url = COALESCE($5, avatar_url), project_type = $6, methodology = $7
-           WHERE id = $8`,
+           WHERE id = $8
+           RETURNING id`,
           [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, projectId]
         );
+        if (result.rows.length === 0) return false;
 
         const existingTech = await query("SELECT * FROM technologies WHERE project_id = $1", [
           projectId,
         ]);
         await syncTechnologiesLocal(query, projectId, existingTech.rows, technologies);
+        return true;
       });
+      // access.role above is the friendly check; RLS is the real one. If it
+      // ever disagrees, or the project was deleted concurrently, the UPDATE
+      // affects zero rows - without checking that, this still returned
+      // { error: null } and logged an update that never happened.
+      if (!updated) {
+        return { error: "This project no longer exists, or you're not allowed to edit it." };
+      }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update project." };
     }
@@ -228,7 +245,7 @@ export async function updateProjectSettings(
 
     // `technologies` is a separate table, not a column on projects - sending
     // it in this update is what made every save fail with PGRST204.
-    const { error } = await supabase
+    const { data: updatedRows, error } = await supabase
       .from("projects")
       .update({
         name: name.trim(),
@@ -239,10 +256,14 @@ export async function updateProjectSettings(
         methodology,
         ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
       })
-      .eq("id", projectId);
+      .eq("id", projectId)
+      .select("id");
 
     if (error) {
       return { error: error.message };
+    }
+    if (!updatedRows || updatedRows.length === 0) {
+      return { error: "This project no longer exists, or you're not allowed to edit it." };
     }
 
     try {
