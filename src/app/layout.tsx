@@ -50,20 +50,16 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: "/assets/guidon-wordmark.png",
-        width: 769,
-        height: 285,
-        alt: SITE_NAME,
-      },
-    ],
+    // Image comes from src/app/opengraph-image.tsx (Next's file-convention
+    // OG image, generated at request time) - a properly sized 1200x630
+    // branded card instead of the raw wordmark logo asset previously listed
+    // here, which most link-preview surfaces rendered as a mostly-empty
+    // card (wrong aspect ratio, transparent background).
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/assets/guidon-wordmark.png"],
   },
   robots: {
     index: true,

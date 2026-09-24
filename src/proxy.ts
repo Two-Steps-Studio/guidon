@@ -180,7 +180,13 @@ export const config = {
      *   verify in self-hosted. Opening the code editor fires dozens of these
      *   requests at once, none of which need or benefit from that check -
      *   they're public, static, unauthenticated by design.
+     * - opengraph-image (src/app/opengraph-image.tsx, Next's file-convention
+     *   OG image route) - it serves image/png but the URL itself has no
+     *   file extension for the pattern above to match, so it was falling
+     *   through to the same auth check and redirecting a link-preview bot
+     *   (Slack/Discord/Twitter unfurling a shared link) to /auth/login
+     *   instead of the image - those bots never carry a session cookie.
      */
-    '/((?!_next/static|_next/image|favicon.ico|monaco-editor/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|monaco-editor/|opengraph-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
