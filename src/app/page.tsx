@@ -170,6 +170,20 @@ export default async function Home() {
     </section>
 
     {plans.length > 0 && <PricingSection plans={plans} />}
+
+    <footer className="border-t border-border py-8">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
+        <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
+        <div className="flex gap-6">
+          <Link href="/legal/terms" className="hover:text-foreground">
+            {t("footer.terms")}
+          </Link>
+          <Link href="/legal/privacy" className="hover:text-foreground">
+            {t("footer.privacy")}
+          </Link>
+        </div>
+      </div>
+    </footer>
     </>
   );
 }

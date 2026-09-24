@@ -209,6 +209,11 @@
       "teamRoles": "Role zespołowe",
       "auditLogs": "Dzienniki audytu",
       "prioritySupport": "Priorytetowe wsparcie"
+    },
+    "footer": {
+      "terms": "Regulamin",
+      "privacy": "Polityka prywatności",
+      "copyright": "© {year} Guidon"
     }
   },
   "organizations": {

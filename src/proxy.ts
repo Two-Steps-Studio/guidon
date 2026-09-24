@@ -49,7 +49,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
 // way this API is meant to be called - was redirected to /auth/login before
 // the route handler's own API-key check ever ran, making the whole AI Task
 // API unreachable by its actual callers.
-const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/']
+// /legal/ (Terms, Privacy Policy) must be readable by a visitor who hasn't
+// signed up yet - deciding whether to sign up is exactly when someone reads
+// them - and by search engines/link previews with no session at all.
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])

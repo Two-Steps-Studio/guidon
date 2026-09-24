@@ -209,6 +209,11 @@
       "teamRoles": "Team roles",
       "auditLogs": "Audit logs",
       "prioritySupport": "Priority support"
+    },
+    "footer": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "copyright": "© {year} Guidon"
     }
   },
   "organizations": {
