@@ -178,13 +178,61 @@ Provider notes:
   different wire format and its own file (`src/lib/ai/providers/anthropic.ts`).
 - `ollama` is the provider for a fully local install where no project data
   leaves the machine — no API key needed, just a reachable `AI_BASE_URL`.
-- **Docker Compose note:** `docker-compose.yml`'s `app` service passes
-  through `AI_PROVIDER`, `AI_BASE_URL`, and `AI_MODEL` but not the
-  per-provider secret keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
-  `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `AI_API_KEY`, `AZURE_OPENAI_*`).
-  This means only `ollama` (no key required) currently works out of the box
-  under `docker compose up`; a cloud AI provider would need the compose
-  file's `app.environment` block extended with the relevant key.
+- **Docker Compose:** `docker-compose.yml`'s `app` service passes through
+  every one of the variables above (`AI_PROVIDER`/`AI_BASE_URL`/`AI_MODEL`
+  plus all per-provider keys) — set them in `.env` and `docker compose up`
+  picks them up for any provider, not just `ollama`.
+
+---
+
+## ERROR TRACKING
+
+Optional, same "unset = fully inert" philosophy as AI above. `src/instrumentation.ts`
+(server/edge) and `src/instrumentation-client.ts` (browser) only call
+`Sentry.init()` when a DSN is present — an instance that never sets these
+sends nothing to Sentry, or anywhere else. Server errors are still visible
+in the container's own logs (`docker compose logs app`) either way; this is
+for aggregation/alerting across many errors, not a replacement for that.
+
+| Variable | Meaning |
+|---|---|
+| `SENTRY_DSN` | Server + edge runtime. Enables `src/instrumentation.ts`'s `register()`. |
+| `NEXT_PUBLIC_SENTRY_DSN` | Browser runtime. Build-time embedded like `NEXT_PUBLIC_SUPABASE_URL` — a Sentry DSN is meant to be public (it can only submit events, not read them). Usually the same value as `SENTRY_DSN`. |
+| `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` | Optional, build-time only (not needed at runtime, so not in `docker-compose.yml`'s `app.environment`). Lets Sentry's build plugin upload source maps so stack traces show your actual source instead of minified output. Without them the build silently skips source map upload — `next.config.ts` passes `silent: true` so this doesn't print a warning on every build for the common case of not using them. |
+
+---
+
+## BILLING (Guidon Cloud only)
+
+Optional, same philosophy again. `docs/superpowers/specs/2026-08-22-subscriptions-design.md`
+built the plan/subscription schema and enforcement without Stripe (no
+credentials were available at the time) — this is that later phase, once
+real credentials exist. Self-hosted installs (`hasDirectDatabase()`) have no
+plan limits at all (`src/lib/limits.ts` exempts them everywhere) and the
+billing page shows a fixed "self-hosted" notice regardless of these
+variables — billing is a Guidon Cloud concept, not something a self-hoster
+needs.
+
+| Variable | Meaning |
+|---|---|
+| `STRIPE_SECRET_KEY` | Enables `src/lib/billing/stripe.ts`'s `getStripe()`. Without it, `isBillingConfigured()` is false and the billing page's Upgrade/Manage billing buttons don't render — a read-only plan table, same as before this existed. |
+| `STRIPE_WEBHOOK_SECRET` | Verifies the `Stripe-Signature` header on `POST /api/stripe/webhook` (`stripe.webhooks.constructEvent`). Get it from the Dashboard webhook endpoint you create for `<origin>/api/stripe/webhook`, subscribed to `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. |
+
+**One-time setup after creating a Stripe account:** create a recurring Price
+for each paid plan (Pro/Team/Business) in the Dashboard, then set that
+Price's id on the matching row:
+
+```sql
+UPDATE plans SET stripe_price_id = 'price_...' WHERE id = 'pro';
+UPDATE plans SET stripe_price_id = 'price_...' WHERE id = 'team';
+UPDATE plans SET stripe_price_id = 'price_...' WHERE id = 'business';
+```
+
+No admin UI for this on purpose — a plan's Stripe Price is set once and
+essentially never changes, so a full editor would be unused complexity.
+`enterprise` (034) has no fixed price by design ("contact us") and is never
+sold through Checkout. A plan with `stripe_price_id IS NULL` simply shows no
+Upgrade button.
 
 ---
 

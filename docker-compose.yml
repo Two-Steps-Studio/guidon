@@ -9,15 +9,13 @@
 # Aktualizacja (§15):
 #   docker compose pull && docker compose up -d
 #
-# UWAGA O STANIE FAKTYCZNYM
-# -------------------------
-# Usługa `db` jest gotowa i migracje stosują się do niej, ale aplikacja
-# nadal uwierzytelnia się przez Supabase Auth i przez jego klienta czyta
-# większość danych. Pełne odcięcie od Supabase wymaga warstwy zgodności
-# dla auth.uid() i ról — patrz docs/self-hosting-audit.md, bloker 2.
-#
-# Ten plik jest więc uczciwie: działającą konteneryzacją z gotową bazą,
-# a nie jeszcze pełnym self-hostingiem z §1.
+# Pełny self-hosting bez Supabase: DATABASE_URL włącza hasDirectDatabase(),
+# a src/db/bootstrap/000_auth_compat.sql odtwarza auth.uid()/role na czystym
+# Postgresie, więc te same 70+ polityk RLS obowiązują identycznie jak na
+# Supabase (docs/self-hosting-audit.md, bloker 2 — rozwiązany, zweryfikowane
+# przez `npm run test:db`). Ta usługa `app` nie potrzebuje Supabase w ogóle
+# poza NEXT_PUBLIC_SUPABASE_* build argami, które zostają w bundlu tylko
+# jako martwy kod, gdy DATABASE_URL jest ustawione.
 
 services:
   db:
@@ -50,6 +48,13 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Guidon}
         NEXT_PUBLIC_AUTH_PROVIDERS: ${NEXT_PUBLIC_AUTH_PROVIDERS:-}
+        # Same build args as `app` below, kept identical so both services
+        # build from the same cached image layers instead of two separate
+        # builds.
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+        SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
     # Jednorazowa: stosuje migracje i kończy pracę. Aplikacja startuje
     # dopiero po jej pomyślnym zakończeniu, więc schemat nigdy nie jest
     # o krok w tyle za kodem (§13, §15).
@@ -70,6 +75,10 @@ services:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
         NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Guidon}
         NEXT_PUBLIC_AUTH_PROVIDERS: ${NEXT_PUBLIC_AUTH_PROVIDERS:-}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+        SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3000}:3000"
@@ -95,6 +104,33 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:-}
       AI_BASE_URL: ${AI_BASE_URL:-}
       AI_MODEL: ${AI_MODEL:-}
+      # Each provider factory (src/lib/ai/providers/*.ts) reads its own named
+      # key - none of them fall back to a shared variable - so every one has
+      # to be passed through here or that provider's AI_PROVIDER value is
+      # silently unusable in Compose even though it works with `npm run dev`
+      # reading .env.local directly. AI_API_KEY is "custom" only; ollama needs
+      # none of these.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+
+      # Read at runtime by src/instrumentation.ts. NEXT_PUBLIC_SENTRY_DSN
+      # (the browser's copy) is a build arg above instead, since it has to
+      # be embedded in the client bundle.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+
+      # Guidon Cloud billing only (src/lib/billing/stripe.ts) - unset means
+      # the billing page shows a read-only plan table, no purchase path.
+      # Runtime only, not a build arg: unlike NEXT_PUBLIC_SENTRY_DSN above,
+      # neither of these is embedded in the client bundle.
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
     volumes:
       # Uploady muszą przeżyć restart kontenera (§30).
       - guidon-storage:/app/storage
