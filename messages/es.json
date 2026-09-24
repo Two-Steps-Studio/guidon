@@ -940,6 +940,7 @@
     "storage": "Almacenamiento",
     "aiProviderLabel": "Proveedor de IA",
     "authentication": "Autenticación",
+    "billingLabel": "Facturación",
     "databaseSectionDescription": "Estado de conexión arriba, más recuentos agregados económicos (lecturas con service-role).",
     "organizations": "Organizaciones",
     "projects": "Proyectos",

@@ -940,6 +940,7 @@
     "storage": "Magazyn plików",
     "aiProviderLabel": "Dostawca AI",
     "authentication": "Uwierzytelnianie",
+    "billingLabel": "Płatności",
     "databaseSectionDescription": "Status połączenia powyżej oraz tanie zagregowane liczby (odczyty service-role).",
     "organizations": "Organizacje",
     "projects": "Projekty",

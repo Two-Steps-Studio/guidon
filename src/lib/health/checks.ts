@@ -5,6 +5,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withServiceRole } from "@/lib/db/session";
 import { activeStorageProviderName } from "@/lib/storage/provider";
 import { activeAIProviderName } from "@/lib/ai/provider";
+import { isBillingConfigured } from "@/lib/billing/stripe";
 
 /**
  * Health check logic (TODO.md §12), extracted from `/api/health` so the
@@ -194,6 +195,26 @@ export async function checkAI(): Promise<AICheck> {
   } catch (error) {
     return { status: "down", provider, detail: safeReason(error) };
   }
+}
+
+/**
+ * Guidon Cloud billing (src/lib/billing/stripe.ts) - same "optional,
+ * not_configured is a valid state" treatment as checkAI, and the same
+ * "construct/check config only, never call the vendor" conservatism: no
+ * live Stripe API call from an unauthenticated container probe, so this
+ * only proves STRIPE_SECRET_KEY is present, not that it's a real, working
+ * key. Self-hosted installs have no billing concept at all
+ * (src/lib/limits.ts exempts them everywhere), so this is never "down"
+ * there - just not_configured, same as an AI-less self-hosted instance.
+ */
+export function checkBilling(): Component {
+  if (hasDirectDatabase()) {
+    return { status: "not_configured", detail: "self-hosted installs have no billing" };
+  }
+  if (!isBillingConfigured()) {
+    return { status: "not_configured", detail: "no Stripe key configured" };
+  }
+  return { status: "ok" };
 }
 
 export function checkAuth(): AuthCheck {

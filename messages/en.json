@@ -940,6 +940,7 @@
     "storage": "Storage",
     "aiProviderLabel": "AI provider",
     "authentication": "Authentication",
+    "billingLabel": "Billing",
     "databaseSectionDescription": "Connection status above, plus cheap aggregate counts (service-role reads).",
     "organizations": "Organizations",
     "projects": "Projects",

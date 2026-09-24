@@ -940,6 +940,7 @@
     "storage": "Speicher",
     "aiProviderLabel": "KI-Anbieter",
     "authentication": "Authentifizierung",
+    "billingLabel": "Abrechnung",
     "databaseSectionDescription": "Verbindungsstatus oben, plus günstige aggregierte Zählungen (Service-Role-Abfragen).",
     "organizations": "Organisationen",
     "projects": "Projekte",

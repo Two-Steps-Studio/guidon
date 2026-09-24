@@ -1,10 +1,10 @@
-import { AlertTriangle, CheckCircle2, Database, HardDrive, KeyRound, MinusCircle, Sparkles, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CreditCard, Database, HardDrive, KeyRound, MinusCircle, Sparkles, XCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { getAdminCounts } from "@/lib/data/admin";
-import { checkAI, checkAuth, checkDatabase, checkStorage, type Status } from "@/lib/health/checks";
+import { checkAI, checkAuth, checkBilling, checkDatabase, checkStorage, type Status } from "@/lib/health/checks";
 
 const STATUS_ICONS: Record<Status, { className: string; Icon: typeof CheckCircle2 }> = {
   ok: { className: "border-success/30 bg-success/15 text-success", Icon: CheckCircle2 },
@@ -46,6 +46,7 @@ export default async function AdminOverviewPage() {
     getAdminCounts(),
   ]);
   const auth = checkAuth();
+  const billing = checkBilling();
 
   return (
     <div className="container mx-auto max-w-7xl space-y-10 px-6 py-8">
@@ -55,7 +56,7 @@ export default async function AdminOverviewPage() {
           <p className="text-muted-foreground">{t("systemStatusDescription")}</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -111,6 +112,18 @@ export default async function AdminOverviewPage() {
               <p className="text-sm text-muted-foreground">
                 {auth.providers ? auth.providers.join(", ") : (auth.detail ?? "-")}
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <CreditCard className="h-4 w-4" /> {t("billingLabel")}
+              </CardTitle>
+              <StatusBadge status={billing.status} label={STATUS_LABELS[billing.status]} />
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{billing.detail ?? "-"}</p>
             </CardContent>
           </Card>
         </div>

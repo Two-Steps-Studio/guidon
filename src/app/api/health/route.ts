@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkDatabase, checkStorage, checkAI, checkAuth, type Status } from "@/lib/health/checks";
+import { checkDatabase, checkStorage, checkAI, checkAuth, checkBilling, type Status } from "@/lib/health/checks";
 
 /**
  * Health endpoint (TODO.md §12).
@@ -31,6 +31,7 @@ export async function GET() {
     storage,
     auth: checkAuth(),
     ai,
+    billing: checkBilling(),
   };
 
   // `not_configured` is a valid state for optional subsystems, so only a
