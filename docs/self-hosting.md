@@ -17,9 +17,15 @@ Concretely, as of today:
 - **Storage** is genuinely pluggable — `STORAGE_PROVIDER=local` works,
   fully decoupled from Supabase.
 - **AI** is genuinely pluggable — `AI_PROVIDER=ollama` (or any of the other
-  five backends) works for the one thing AI currently does, which is get
-  constructed and health-checked. No feature calls it yet (see
-  [configuration.md](./configuration.md#ai-todomd-67)).
+  six backends) powers the Work board's AI task chat and the Memory page's
+  "Generate Insight" button (see
+  [configuration.md](./configuration.md#ai-todomd-67)). Leave it unset to
+  disable AI entirely, a normal, supported state.
+- **Error tracking** is optional and off by default — set `SENTRY_DSN` (and
+  `NEXT_PUBLIC_SENTRY_DSN` for the browser) to send errors to your own
+  Sentry project; unset, nothing is sent anywhere and server errors are
+  still visible in the container's own logs (see
+  [configuration.md](./configuration.md#error-tracking)).
 - **Authentication is genuinely pluggable.** When `DATABASE_URL` is set
   (self-hosted), `src/proxy.ts` (route protection), sign-up, sign-in,
   sign-out, and `src/lib/data/current-user.ts` (the signed-in user) all run
@@ -136,12 +142,12 @@ curl http://localhost:3000/api/health
 ```
 
 `GET /api/health` (`src/app/api/health/route.ts`) reports `database`,
-`storage`, `auth`, and `ai`, each `ok` / `degraded` / `down` /
-`not_configured`, and never includes secrets. Given the current-state
-callout above, expect `database: ok` only once Supabase is reachable (it
-checks via `SUPABASE_SERVICE_ROLE_KEY`, not `DATABASE_URL`) — `DATABASE_URL`
-having applied migrations successfully is not something this endpoint
-reports on directly today.
+`storage`, `auth`, `ai`, and `billing`, each `ok` / `degraded` / `down` /
+`not_configured`, and never includes secrets. `database` checks the
+self-hosted path first (`hasDirectDatabase()` — a plain `SELECT 1` through
+`withServiceRole()`), so `database: ok` reflects `DATABASE_URL` actually
+working, not Supabase reachability; it only falls back to a Supabase check
+when `DATABASE_URL` is unset.
 
 ### Choosing STORAGE_PROVIDER
 
@@ -161,13 +167,13 @@ point `AI_BASE_URL` at your Ollama daemon to keep AI fully local; leave
 `AI_PROVIDER` unset to disable AI entirely (a normal, supported state, not a
 degraded one).
 
-Sign-in and the dashboard now work with zero external network access —
-`DATABASE_URL` being set is what switches the app onto the local auth path,
-per the current-state callout. The rest of the application still depends on a
-reachable Supabase project until it's converted the same way, so a Guidon
-deployment is not yet fully air-gapped end to end even with
-`AI_PROVIDER=ollama` and `STORAGE_PROVIDER=local` set — but the sign-in wall
-that used to block that goal outright is gone.
+Sign-in, the dashboard, and every other page and API route now work with
+zero external network access — `DATABASE_URL` being set switches the whole
+app onto the local auth and data-access path (see "Data access is pluggable
+everywhere the UI and API reach" above), not just sign-in. With
+`AI_PROVIDER=ollama` and `STORAGE_PROVIDER=local` (or unset entirely, since
+both are optional), a Guidon deployment has no dependency on Supabase or any
+other external service at all — genuinely air-gapped end to end.
 
 ### Admin panel access
 
