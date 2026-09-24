@@ -84,7 +84,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     },
     async startBranch(taskId) {
       const task = store.findTask(taskId);
-      const git = gitApi();
+      const git = await gitApi();
       const repo = git && currentRepository(git);
       if (!task || !repo) return void vscode.window.showWarningMessage("Guidon: open a folder with a Git repository first.");
       const name = branchName(task, vscode.workspace.getConfiguration("guidon").get<string>("branchPrefix", ""));
@@ -132,7 +132,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (picked) await store.selectProject(picked.id);
     }),
     vscode.commands.registerCommand("guidon.insertRef", async () => {
-      const git = gitApi();
+      const git = await gitApi();
       const repo = git && currentRepository(git);
       if (!repo) return void vscode.window.showWarningMessage("Guidon: open a folder with a Git repository first.");
       const task = await pickTask("Which task is this commit for?");

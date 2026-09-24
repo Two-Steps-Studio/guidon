@@ -295,9 +295,18 @@ namespace Guidon.Tasks.Editor
             parent.Add(row);
         }
 
+        // Labels shown in _projectDropdown, index-aligned with _projects. Kept
+        // as a field (not recomputed from _projects.name in the change
+        // handler) so both sides agree even when two projects share a name -
+        // DropdownField matches by string value, and a plain p.name lookup
+        // would make the second same-named project unreachable (its display
+        // string never differs from the one already selected, so
+        // RegisterValueChangedCallback never fires for it).
+        private string[] _projectLabels = Array.Empty<string>();
+
         private void OnProjectDropdownChanged(ChangeEvent<string> evt)
         {
-            int newIndex = Array.FindIndex(_projects, p => p.name == evt.newValue);
+            int newIndex = Array.IndexOf(_projectLabels, evt.newValue);
             if (newIndex < 0 || newIndex == _selectedProjectIndex) return;
 
             _selectedProjectIndex = newIndex;
@@ -307,11 +316,30 @@ namespace Guidon.Tasks.Editor
 
         private void RebuildProjectDropdown()
         {
-            _projectDropdown.choices = _projects.Select(p => p.name).ToList();
+            _projectLabels = DisambiguateLabels(_projects.Select(p => p.name).ToArray(), _projects.Select(p => p.id).ToArray());
+            _projectDropdown.choices = _projectLabels.ToList();
             if (_selectedProjectIndex >= 0 && _selectedProjectIndex < _projects.Length)
             {
-                _projectDropdown.SetValueWithoutNotify(_projects[_selectedProjectIndex].name);
+                _projectDropdown.SetValueWithoutNotify(_projectLabels[_selectedProjectIndex]);
             }
+        }
+
+        /// <summary>Appends a short id suffix (same 8-hex-char convention as
+        /// the git ref) to any label that collides with another, so every
+        /// entry is a unique DropdownField value. Labels with no collision
+        /// are left untouched.</summary>
+        internal static string[] DisambiguateLabels(string[] names, string[] ids)
+        {
+            var counts = names.GroupBy(n => n).ToDictionary(g => g.Key, g => g.Count());
+            var labels = new string[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                var id = ids[i] ?? "";
+                labels[i] = counts[names[i]] > 1
+                    ? $"{names[i]} ({id.Substring(0, Math.Min(8, id.Length))})"
+                    : names[i];
+            }
+            return labels;
         }
 
         private void BuildBoard(VisualElement parent)

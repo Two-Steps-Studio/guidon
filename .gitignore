@@ -47,3 +47,9 @@ next-env.d.ts
 
 # git worktrees (superpowers:using-git-worktrees)
 .worktrees
+
+# plugin build artifacts (packaged for manual install, not source)
+plugins/**/__pycache__/
+plugins/**/*.zip
+plugins/**/build/
+plugins/**/*.vsix

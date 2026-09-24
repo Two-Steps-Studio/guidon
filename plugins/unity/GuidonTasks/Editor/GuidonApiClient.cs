@@ -59,6 +59,13 @@ namespace Guidon.Tasks.Editor
     /// </summary>
     internal static class GuidonApiClient
     {
+        // Matches the other Guidon plugins' HTTP client timeout (e.g. the
+        // Blender add-on's api.py TIMEOUT_SECONDS). Without this, a hung
+        // server leaves the calling button (Refresh/Save/Post/drag-drop)
+        // disabled with no error and no way to retry, since UnityWebRequest
+        // has no timeout by default.
+        private const int TimeoutSeconds = 20;
+
         /// <summary>
         /// Never throws - GuidonTasksWindow's OnGUI loop drives these calls
         /// fire-and-forget (`_ = SomeCall();`), so an unhandled exception
@@ -75,6 +82,8 @@ namespace Guidon.Tasks.Editor
 
             using (var request = new UnityWebRequest(url, method))
             {
+                request.timeout = TimeoutSeconds;
+
                 if (jsonBody != null)
                 {
                     request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));

@@ -12,7 +12,7 @@
   "keywords": ["guidon", "kanban", "tasks", "gamedev"],
   "main": "./out/extension.js",
   "activationEvents": ["onStartupFinished"],
-  "extensionDependencies": [],
+  "extensionDependencies": ["vscode.git"],
   "contributes": {
     "commands": [
       { "command": "guidon.openBoard", "title": "Open Board", "category": "Guidon", "icon": "$(project)" },

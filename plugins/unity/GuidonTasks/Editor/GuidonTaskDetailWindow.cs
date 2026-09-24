@@ -179,7 +179,12 @@ namespace Guidon.Tasks.Editor
             {
                 columns.Add(new ColumnDto { status = _task.status, label = GuidonVocabulary.StatusLabel(_task.status) });
             }
-            var labels = columns.Select(c => c.label).ToList();
+            // Column labels are free text set per-project (Project Settings), so two
+            // visible columns can share a label. DropdownField matches by string
+            // value, so a plain c.label list would make the second same-labeled
+            // column unreachable - disambiguate with the (always-unique) status key.
+            var labelCounts = columns.GroupBy(c => c.label).ToDictionary(g => g.Key, g => g.Count());
+            var labels = columns.Select(c => labelCounts[c.label] > 1 ? $"{c.label} ({c.status})" : c.label).ToList();
 
             _statusDropdown = new DropdownField { choices = labels };
             _statusDropdown.SetValueWithoutNotify(labels[columns.FindIndex(c => c.status == _task.status)]);

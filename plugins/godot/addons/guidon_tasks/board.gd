@@ -358,7 +358,7 @@ func _build_card(task: Dictionary) -> Control:
 	# before the title, description preview, tag chips, muted footer.
 	var card := CardPanel.new()
 	card.board = self
-	card.task_id = str(task.id)
+	card.task_id = Api._str(task.get("id"))
 	card.task_title = str(task.get("title", ""))
 	var selected := card.task_id == selected_task_id
 	card.normal_style = _p.box("card", "primary" if selected else "border", 8, 12)
@@ -490,7 +490,7 @@ func _rebuild_details() -> void:
 		_details.add_child(hint)
 		return
 
-	var task_id := str(task.id)
+	var task_id := Api._str(task.get("id"))
 	var parent_id := Api._str(task.get("parent_task_id"))
 	if parent_id != "":
 		_details.add_child(_link("← Back to parent task", func(): select_task(parent_id)))
@@ -558,7 +558,7 @@ func _rebuild_details() -> void:
 	if parent_id == "":
 		_details.add_child(_section("Subtasks"))
 		for sub in Api.subtasks(tasks, task_id):
-			var sub_id := str(sub.id)
+			var sub_id := Api._str(sub.get("id"))
 			var sub_row := HBoxContainer.new()
 			_details.add_child(sub_row)
 			var check := CheckBox.new()
@@ -649,14 +649,15 @@ func refresh_projects() -> void:
 		return
 	_show_error("")
 	projects = result.data
-	var ids := projects.map(func(project): return str(project.id))
+	var ids := projects.map(func(project): return Api._str(project.get("id")))
 	if not ids.has(current_project_id):
 		current_project_id = ids[0] if not ids.is_empty() else ""
 		Settings.set_value("project_id", current_project_id)
 	_project_picker.clear()
 	for project in projects:
-		_project_picker.add_item(str(project.get("name", project.id)))
-		_project_picker.set_item_metadata(_project_picker.item_count - 1, str(project.id))
+		var project_id := Api._str(project.get("id"))
+		_project_picker.add_item(str(project.get("name", project_id)))
+		_project_picker.set_item_metadata(_project_picker.item_count - 1, project_id)
 	_project_picker.select(ids.find(current_project_id))
 	await refresh_tasks()
 
@@ -815,7 +816,7 @@ func delete_task(task_id: String) -> void:
 		return
 	_show_error("")
 	# Subtasks go with their parent (ON DELETE CASCADE, migration 010).
-	tasks = tasks.filter(func(task): return str(task.id) != task_id and Api._str(task.get("parent_task_id")) != task_id)
+	tasks = tasks.filter(func(task): return Api._str(task.get("id")) != task_id and Api._str(task.get("parent_task_id")) != task_id)
 	comments.erase(task_id)
 	if selected_task_id == task_id:
 		selected_task_id = ""

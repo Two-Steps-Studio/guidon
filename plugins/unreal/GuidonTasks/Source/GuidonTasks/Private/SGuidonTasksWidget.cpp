@@ -956,7 +956,7 @@ TArray<const FGuidonTask*> SGuidonTasksWidget::ColumnTasks(const FString& Status
 		}
 	}
 	// Stable: equal sort_orders keep the API's newest-first order.
-	Result.StableSort([](const FGuidonTask& A, const FGuidonTask& B) { return A.SortOrder < B.SortOrder; });
+	Result.StableSort([](const FGuidonTask* A, const FGuidonTask* B) { return A->SortOrder < B->SortOrder; });
 	return Result;
 }
 
@@ -970,7 +970,7 @@ TArray<const FGuidonTask*> SGuidonTasksWidget::Subtasks(const FString& ParentId)
 			Result.Add(&Task);
 		}
 	}
-	Result.StableSort([](const FGuidonTask& A, const FGuidonTask& B) { return A.CreatedAt < B.CreatedAt; });
+	Result.StableSort([](const FGuidonTask* A, const FGuidonTask* B) { return A->CreatedAt < B->CreatedAt; });
 	return Result;
 }
 

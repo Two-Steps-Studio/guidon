@@ -97,20 +97,17 @@ back to the six default columns.
 
 ## Known limitation: status changes can 403
 
-Guidon gates status changes and "done" specifically through a project's
-**AI Permissions** (Project → Settings → AI Permissions) - the same gate
-an AI agent hitting this API goes through, which this plugin also goes
-through since logging in just gets you a regular scoped API key under the
-hood:
-
-- Changing status to anything except "Done" needs `can_change_status`
-  (**on** by default).
-- Marking a task "Done" additionally needs the project's
-  **Allow AI Auto-Complete** setting plus `can_complete_tasks` (**off** by
-  default).
+Logging in through the plugin issues a key marked `human_client` (the same
+flag a regular website session gets), so it does **not** go through a
+project's **AI Permissions** gate (`can_change_status`, Allow AI
+Auto-Complete, `can_complete_tasks`) - those only apply to keys issued to AI
+agents. A 403 on a status change instead means your account's role on this
+project isn't **Owner**, **Admin** or **Developer** (task status updates are
+restricted to those three roles at the database level). Check
+Project Settings → Members, or ask the project owner to change your role.
 
 If a status change 403s, the plugin shows the server's own error message
-verbatim - it'll tell you exactly which setting to flip in Project Settings.
+verbatim.
 
 ## Git reference
 
