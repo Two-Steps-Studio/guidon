@@ -303,7 +303,7 @@
       "storageLabel": "Storage",
       "unlimited": "Unlimited",
       "plansTitle": "Plans",
-      "plansDescription": "Contact your instance administrator to change your organization's plan.",
+      "plansDescription": "Upgrade instantly below, or contact your instance administrator for a custom plan.",
       "colPlan": "Plan",
       "colPrice": "Price",
       "colProjects": "Projects",
@@ -315,7 +315,13 @@
       "colAuditLogs": "Audit logs",
       "free": "Free",
       "contactUs": "Contact us",
-      "perMonth": "/mo"
+      "perMonth": "/mo",
+      "trialNotice": "{days}-day free trial",
+      "upgrade": "Upgrade",
+      "manageBilling": "Manage billing",
+      "currentPlanBadge": "Current plan",
+      "checkoutSuccess": "Subscription updated - it may take a moment to appear below.",
+      "checkoutCancelled": "Checkout cancelled - nothing was changed."
     }
   },
   "projects": {

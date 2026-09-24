@@ -303,7 +303,7 @@
       "storageLabel": "Przestrzeń",
       "unlimited": "Bez limitu",
       "plansTitle": "Plany",
-      "plansDescription": "Skontaktuj się z administratorem instancji, aby zmienić plan swojej organizacji.",
+      "plansDescription": "Ulepsz plan od razu poniżej albo skontaktuj się z administratorem instancji w sprawie planu niestandardowego.",
       "colPlan": "Plan",
       "colPrice": "Cena",
       "colProjects": "Projekty",
@@ -315,7 +315,13 @@
       "colAuditLogs": "Dzienniki audytu",
       "free": "Za darmo",
       "contactUs": "Skontaktuj się z nami",
-      "perMonth": "/mies."
+      "perMonth": "/mies.",
+      "trialNotice": "{days} dni za darmo",
+      "upgrade": "Ulepsz",
+      "manageBilling": "Zarządzaj płatnością",
+      "currentPlanBadge": "Bieżący plan",
+      "checkoutSuccess": "Subskrypcja zaktualizowana - może chwilę potrwać, zanim pojawi się poniżej.",
+      "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło."
     }
   },
   "projects": {

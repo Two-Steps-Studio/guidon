@@ -303,7 +303,7 @@
       "storageLabel": "Almacenamiento",
       "unlimited": "Ilimitado",
       "plansTitle": "Planes",
-      "plansDescription": "Contacta con el administrador de tu instancia para cambiar el plan de tu organización.",
+      "plansDescription": "Mejora tu plan al instante abajo, o contacta con el administrador de tu instancia para un plan personalizado.",
       "colPlan": "Plan",
       "colPrice": "Precio",
       "colProjects": "Proyectos",
@@ -315,7 +315,13 @@
       "colAuditLogs": "Registros de auditoría",
       "free": "Gratis",
       "contactUs": "Contáctanos",
-      "perMonth": "/mes"
+      "perMonth": "/mes",
+      "trialNotice": "{days} días de prueba gratis",
+      "upgrade": "Mejorar plan",
+      "manageBilling": "Gestionar facturación",
+      "currentPlanBadge": "Plan actual",
+      "checkoutSuccess": "Suscripción actualizada - puede tardar un momento en aparecer abajo.",
+      "checkoutCancelled": "Pago cancelado - no se realizó ningún cambio."
     }
   },
   "projects": {

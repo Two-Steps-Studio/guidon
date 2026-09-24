@@ -303,7 +303,7 @@
       "storageLabel": "Speicher",
       "unlimited": "Unbegrenzt",
       "plansTitle": "Pläne",
-      "plansDescription": "Kontaktiere deinen Instanz-Administrator, um den Plan deiner Organisation zu ändern.",
+      "plansDescription": "Unten sofort upgraden, oder deinen Instanz-Administrator für einen individuellen Plan kontaktieren.",
       "colPlan": "Plan",
       "colPrice": "Preis",
       "colProjects": "Projekte",
@@ -315,7 +315,13 @@
       "colAuditLogs": "Audit-Protokolle",
       "free": "Kostenlos",
       "contactUs": "Kontaktieren Sie uns",
-      "perMonth": "/Monat"
+      "perMonth": "/Monat",
+      "trialNotice": "{days} Tage kostenlos testen",
+      "upgrade": "Upgrade",
+      "manageBilling": "Abrechnung verwalten",
+      "currentPlanBadge": "Aktueller Plan",
+      "checkoutSuccess": "Abonnement aktualisiert - es kann einen Moment dauern, bis es unten erscheint.",
+      "checkoutCancelled": "Checkout abgebrochen - es wurde nichts geändert."
     }
   },
   "projects": {

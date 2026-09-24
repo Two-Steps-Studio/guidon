@@ -146,7 +146,10 @@ for (const [label, sql, expected] of [
   // 3 polityki (select/insert/delete - brak update, zalacznik sie nie edytuje).
   // 26->27 tabel, 99->101 polityk: github_task_events (042), 2 polityki
   // (select/insert - wpis idempotencji sie nie edytuje ani nie usuwa).
-  ["27 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 27],
+  // 27->28 tabel, polityk bez zmian: stripe_webhook_events (043) - zero
+  // polityk dla authenticated w ogole (jak subscriptions same nie maja
+  // insert/update/delete), tylko GRANT dla service_role.
+  ["28 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 28],
   ["101 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 101],
 ]) {
   const { rows } = await db.query(sql);
@@ -1848,6 +1851,39 @@ await withUser(A, async () => {
   const { rows } = await db.query("SELECT 1 FROM public.github_task_events WHERE task_id = $1", [githubTaskId]);
   check("usuniecie taska kasuje jego zdarzenia (ON DELETE CASCADE)", rows.length === 0, rows.length);
 });
+
+section("31. stripe_webhook_events: idempotencja webhooka Stripe, brak dostepu dla authenticated (migracja 043)");
+
+await withServiceRole(async () => {
+  const first = await db.query(
+    "INSERT INTO public.stripe_webhook_events (event_id, event_type) VALUES ('evt_test_1', 'customer.subscription.updated') ON CONFLICT DO NOTHING RETURNING event_id",
+    []
+  );
+  const again = await db.query(
+    "INSERT INTO public.stripe_webhook_events (event_id, event_type) VALUES ('evt_test_1', 'customer.subscription.updated') ON CONFLICT DO NOTHING RETURNING event_id",
+    []
+  );
+  check(
+    "pierwsze zdarzenie zwraca wiersz, powtorka nie (ON CONFLICT DO NOTHING RETURNING)",
+    first.rows.length === 1 && again.rows.length === 0,
+    `${first.rows.length}/${again.rows.length}`
+  );
+});
+
+await expectRejected(
+  "A (zwykly authenticated) nie moze wstawic zdarzenia - brak polityki",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.stripe_webhook_events (event_id, event_type) VALUES ('evt_test_2', 'x')")
+    ),
+  /permission denied|new row violates/i
+);
+
+await expectRejected(
+  "A (zwykly authenticated) nie moze odczytac zdarzen - brak GRANT SELECT",
+  () => withUser(A, () => db.query("SELECT event_id FROM public.stripe_webhook_events")),
+  /permission denied/i
+);
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
