@@ -8,6 +8,7 @@ import { WavesBackground } from "@/components/layout/waves-background";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
+import { DemoBoardPreview } from "./demo-board-preview";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -118,6 +119,25 @@ export default async function Home() {
         </div>
       </div>
     </div>
+
+    <section className="px-4 pb-20">
+      <div className="container mx-auto max-w-6xl">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+          <div className="flex items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-2.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-danger/60" />
+            <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+            <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
+            <span className="ml-3 text-xs text-muted-foreground">useguidon.com/projects/demo/work</span>
+          </div>
+          {/* Real KanbanBoard/TaskCard components with static sample data
+              (canEdit={false}) - not a screenshot, so it never drifts out of
+              sync with the actual board's look. See demo-board-data.ts. */}
+          <div className="max-h-[520px] overflow-y-auto p-4 sm:p-6">
+            <DemoBoardPreview />
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section className="border-t border-border py-20">
       <div className="container mx-auto max-w-5xl px-4">
