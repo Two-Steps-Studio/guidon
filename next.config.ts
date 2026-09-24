@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -142,4 +143,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withSentryConfig(withNextIntl(nextConfig), {
+  // Silences the "no auth token, skipping source map upload" notice on
+  // every build for the overwhelming majority of installs (self-hosted,
+  // or a hosted instance that hasn't opted into Sentry) that never set
+  // SENTRY_AUTH_TOKEN. org/project/authToken all fall back to the
+  // standard SENTRY_ORG/SENTRY_PROJECT/SENTRY_AUTH_TOKEN env vars on their
+  // own when set - nothing to wire through here.
+  silent: true,
+});
