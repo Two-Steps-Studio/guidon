@@ -11,8 +11,8 @@ for you.
   `guidon_migrations`, and hard-errors if a previously-applied migration file
   was edited afterward (the checksum won't match). It is safe to run
   repeatedly: with nothing pending, it's a no-op.
-- `GET /api/health` — reports whether database/storage/auth/ai are reachable
-  after you restart.
+- `GET /api/health` — reports whether database/storage/auth/ai/billing are
+  reachable after you restart.
 
 That's the complete list. **There is no automatic rollback tooling in this
 repo.** `scripts/migrate.mjs`'s own doc comment is explicit about this:
@@ -54,10 +54,10 @@ npm run start             # restart your process manager / service here
 ## After upgrading
 
 Check `GET /api/health`. A `200` with `status: "ok"` (or `not_configured`
-components for anything you haven't set up, like AI) means the instance came
-back healthy. A `503` with `status: "down"` means at least one required
-component failed — the response names which one (`database`, `storage`,
-`auth`, or `ai`) and a short, secret-free reason.
+components for anything you haven't set up, like AI or billing) means the
+instance came back healthy. A `503` with `status: "down"` means at least one
+required component failed — the response names which one (`database`,
+`storage`, `auth`, `ai`, or `billing`) and a short, secret-free reason.
 
 ## Notes
 

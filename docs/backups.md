@@ -4,24 +4,27 @@ There is no built-in scheduled-backup tooling in this repo. This page
 describes how an operator backs up a Guidon instance themselves, not a
 feature Guidon ships.
 
-## Supabase-hosted (Cloud, or self-hosted-with-Supabase-auth)
+## Supabase-hosted (Cloud, or self-hosted without DATABASE_URL)
 
-If your data lives in a Supabase project — which today it does even for
-self-hosted deployments, see [self-hosting.md](./self-hosting.md#read-this-first-current-state)
-— use Supabase's own backup and point-in-time-recovery tooling. That's
-their infrastructure, on their retention/scheduling model; don't reinvent it
-here. See Supabase's own documentation for how backups and PITR are
-configured for your plan.
+This applies to Guidon Cloud, and to a self-hosted install that hasn't set
+`DATABASE_URL` and is running against a Supabase project instead (see
+[self-hosting.md](./self-hosting.md#read-this-first-current-state) for when
+each path is actually live - `hasDirectDatabase()` decides per request, and
+only one of the two is ever the real data store for a given deployment). If
+this is your setup, use Supabase's own backup and point-in-time-recovery
+tooling. That's their infrastructure, on their retention/scheduling model;
+don't reinvent it here. See Supabase's own documentation for how backups and
+PITR are configured for your plan.
 
 If `STORAGE_PROVIDER=supabase`, uploaded files are covered by Supabase's own
 Storage, not by anything below.
 
 ## Self-hosted PostgreSQL (DATABASE_URL / docker-compose db service)
 
-Even though the running application doesn't read/write through
-`DATABASE_URL` yet (see the self-hosting current-state note), the schema
-applied there via `npm run migrate` is real and worth backing up if you're
-relying on it.
+When `DATABASE_URL` is set, this Postgres instance **is** the live data
+store - every page, Server Action, and API route reads and writes through it
+(see self-hosting.md's current-state note), not just a schema applied and
+left unused. Back it up like you would any production database.
 
 ### Docker Compose
 

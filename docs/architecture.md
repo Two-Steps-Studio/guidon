@@ -93,16 +93,19 @@ actually is used end-to-end: file uploads go through a Server Action
 needs to write to the server's disk, which the browser can't reach directly.
 
 **AI** (`src/lib/ai/provider.ts`) — `AIProvider` defines one method,
-`complete()`. Six backends: `anthropic` and `openai`/`openrouter`/`ollama`/
-`azure-openai`/`custom` (five of which share one OpenAI-compatible-shape
+`complete()`. Seven backends: `anthropic` and `openai`/`openrouter`/`groq`/
+`ollama`/`azure-openai`/`custom` (five of which share one OpenAI-compatible-shape
 implementation, `providers/openai-compatible.ts`; Azure gets its own file
 for its URL/auth conventions; Anthropic gets its own file for its distinct
-Messages API — no vendor SDKs are used, both are plain `fetch` calls). As of
-today, **no feature in the app calls `.complete()`**. The only caller is
-`checkAI()` in `src/lib/health/checks.ts`, which constructs the provider
-(proving config validity) and stops there deliberately — an unauthenticated
-container probe must never trigger a real, possibly-billed request to an
-external vendor.
+Messages API — no vendor SDKs are used, both are plain `fetch` calls). Two
+real features call `.complete()`: the Work board's AI task chat
+(`src/app/api/ai/chat/route.ts`, `src/app/projects/[id]/work/ai-chat-actions.ts`)
+and the Memory page's "Generate Insight" button
+(`src/app/projects/[id]/memory/actions.ts`). `checkAI()` in
+`src/lib/health/checks.ts` is a third, deliberately inert caller: it only
+constructs the provider (proving config validity) and stops there — an
+unauthenticated container probe must never trigger a real, possibly-billed
+request to an external vendor.
 
 ## Admin panel (TODO.md §25)
 
@@ -120,7 +123,7 @@ cross-tenant read RLS is designed to prevent for anyone else) and the
 ## Health checks
 
 `src/lib/health/checks.ts` holds the actual logic — `checkDatabase()`,
-`checkStorage()`, `checkAI()`, `checkAuth()` — shared between
+`checkStorage()`, `checkAI()`, `checkAuth()`, `checkBilling()` — shared between
 `GET /api/health` (the HTTP surface, unauthenticated so a container
 orchestrator can probe it) and the admin panel's System Status section, so
 the two never drift by reimplementing the same checks slightly differently.
