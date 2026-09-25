@@ -3,17 +3,10 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
-import { listRecentActivityForAdmin } from "@/lib/data/admin";
-import { createServiceClient } from "@/lib/supabase-server";
+import { listRecentActivityForAdmin, resolveProfilesForAdmin, type AdminActorProfile } from "@/lib/data/admin";
 import { configFor } from "@/app/projects/[id]/activity/action-config";
 
-interface ActorProfile {
-  id: string;
-  full_name: string | null;
-  email: string;
-}
-
-function nameFor(profile: ActorProfile | undefined, someone: string): string {
+function nameFor(profile: AdminActorProfile | undefined, someone: string): string {
   if (!profile) return someone;
   return profile.full_name || profile.email;
 }
@@ -36,15 +29,11 @@ export default async function AdminLogsPage() {
 
   // user_id references profiles(id) ON DELETE SET NULL - resolved
   // separately, same pattern as the per-project activity page.
-  const supabase = createServiceClient();
   const userIds = Array.from(
     new Set(entries.map((entry) => entry.user_id).filter((id): id is string => !!id))
   );
-  const { data: profilesData } =
-    userIds.length > 0
-      ? await supabase.from("profiles").select("id, full_name, email").in("id", userIds)
-      : { data: [] as ActorProfile[] };
-  const profilesById = new Map(((profilesData ?? []) as ActorProfile[]).map((p) => [p.id, p]));
+  const profilesData = await resolveProfilesForAdmin(userIds);
+  const profilesById = new Map(profilesData.map((p) => [p.id, p]));
 
   return (
     <div className="container mx-auto max-w-7xl space-y-4 px-6 py-8">

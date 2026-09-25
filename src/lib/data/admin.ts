@@ -275,3 +275,30 @@ export async function listRecentActivityForAdmin(limit = 100): Promise<AdminActi
 
   return (data ?? []) as AdminActivityRow[];
 }
+
+export interface AdminActorProfile {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+/**
+ * Resolves activity_logs.user_id (ON DELETE SET NULL) to a display name for
+ * the admin log, same pattern as src/app/projects/[id]/activity/page.tsx's
+ * per-project lookup - service-role here because this spans every tenant's
+ * users, not just the admin's own.
+ */
+export async function resolveProfilesForAdmin(userIds: string[]): Promise<AdminActorProfile[]> {
+  if (userIds.length === 0) return [];
+
+  if (hasDirectDatabase()) {
+    const result = await withServiceRole(({ query }) =>
+      query("SELECT id, full_name, email FROM profiles WHERE id = ANY($1::uuid[])", [userIds])
+    );
+    return result.rows as AdminActorProfile[];
+  }
+
+  const supabase = createServiceClient();
+  const { data } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds);
+  return (data ?? []) as AdminActorProfile[];
+}
