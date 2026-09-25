@@ -97,6 +97,7 @@
     "adminGroup": "Administración",
     "integrations": "Integraciones",
     "logs": "Registros",
+    "feedback": "Comentarios",
     "users": "Usuarios",
     "logOut": "Cerrar sesión",
     "user": "Usuario",
@@ -741,6 +742,16 @@
     "invalidDescription": "El enlace no es válido o tiene más de 10 minutos. Ejecuta /guidon-link de nuevo en tu servidor de Discord para obtener uno nuevo.",
     "toProjects": "Ir a proyectos"
   },
+  "feedback": {
+    "sendFeedback": "Enviar comentarios",
+    "dialogTitle": "Enviar comentarios",
+    "dialogDescription": "Cuéntanos qué funciona, qué está roto o qué te gustaría ver - leemos todos los mensajes.",
+    "placeholder": "¿Qué tienes en mente?",
+    "send": "Enviar",
+    "thanks": "¡Gracias! Tu comentario ha sido enviado.",
+    "close": "Cerrar",
+    "genericError": "No se pudo enviar tu comentario. Inténtalo de nuevo."
+  },
   "context": {
     "title": "Capa de contexto",
     "subtitle": "Conocimiento del proyecto, decisiones y relaciones",
@@ -959,6 +970,13 @@
     "logsDescription": "Actividad de toda la instancia, la más reciente primero, en todas las organizaciones y proyectos.",
     "logsEmptyTitle": "Aún no hay actividad",
     "logsEmptyDescription": "Todavía no se ha registrado ninguna actividad en esta instancia.",
+    "feedbackTitle": "Comentarios",
+    "feedbackDescription": "Comentarios de toda la instancia, más recientes primero, de todas las organizaciones y proyectos.",
+    "feedbackEmptyTitle": "Aún no hay comentarios",
+    "feedbackEmptyDescription": "Todavía no se han enviado comentarios en esta instancia.",
+    "feedbackFrom": "De {name}",
+    "feedbackAnonymous": "Usuario eliminado",
+    "feedbackPageContext": "en {page}",
     "projectScope": "proyecto {id}",
     "organizationScope": "organización {id}",
     "instanceScope": "instancia",

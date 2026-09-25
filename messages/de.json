@@ -97,6 +97,7 @@
     "adminGroup": "Admin",
     "integrations": "Integrationen",
     "logs": "Protokolle",
+    "feedback": "Feedback",
     "users": "Benutzer",
     "logOut": "Abmelden",
     "user": "Benutzer",
@@ -741,6 +742,16 @@
     "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-link auf deinem Discord-Server erneut aus, um einen neuen zu erhalten.",
     "toProjects": "Zu den Projekten"
   },
+  "feedback": {
+    "sendFeedback": "Feedback senden",
+    "dialogTitle": "Feedback senden",
+    "dialogDescription": "Sag uns, was funktioniert, was kaputt ist oder was du dir wünschst - wir lesen jede Nachricht.",
+    "placeholder": "Was möchtest du uns mitteilen?",
+    "send": "Senden",
+    "thanks": "Danke! Dein Feedback wurde gesendet.",
+    "close": "Schließen",
+    "genericError": "Feedback konnte nicht gesendet werden. Versuche es erneut."
+  },
   "context": {
     "title": "Kontextebene",
     "subtitle": "Projektwissen, Entscheidungen und Beziehungen",
@@ -959,6 +970,13 @@
     "logsDescription": "Instanzweite Aktivität, neueste zuerst, über alle Organisationen und Projekte hinweg.",
     "logsEmptyTitle": "Noch keine Aktivität",
     "logsEmptyDescription": "Auf dieser Instanz wurde noch keine Aktivität aufgezeichnet.",
+    "feedbackTitle": "Feedback",
+    "feedbackDescription": "Instanzweites Feedback, neueste zuerst, über alle Organisationen und Projekte hinweg.",
+    "feedbackEmptyTitle": "Noch kein Feedback",
+    "feedbackEmptyDescription": "Auf dieser Instanz wurde noch kein Feedback eingereicht.",
+    "feedbackFrom": "Von {name}",
+    "feedbackAnonymous": "Gelöschter Benutzer",
+    "feedbackPageContext": "auf {page}",
     "projectScope": "Projekt {id}",
     "organizationScope": "Organisation {id}",
     "instanceScope": "Instanz",

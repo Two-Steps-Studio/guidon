@@ -97,6 +97,7 @@
     "adminGroup": "Admin",
     "integrations": "Integrations",
     "logs": "Logs",
+    "feedback": "Feedback",
     "users": "Users",
     "logOut": "Log out",
     "user": "User",
@@ -741,6 +742,16 @@
     "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-link in your Discord server again to get a new one.",
     "toProjects": "Go to projects"
   },
+  "feedback": {
+    "sendFeedback": "Send feedback",
+    "dialogTitle": "Send feedback",
+    "dialogDescription": "Tell us what's working, what's broken, or what you'd like to see - we read every message.",
+    "placeholder": "What's on your mind?",
+    "send": "Send",
+    "thanks": "Thanks! Your feedback has been sent.",
+    "close": "Close",
+    "genericError": "Could not send your feedback. Try again."
+  },
   "context": {
     "title": "Context Layer",
     "subtitle": "Project knowledge, decisions, and relationships",
@@ -959,6 +970,13 @@
     "logsDescription": "Instance-wide activity, most recent first, across every organization and project.",
     "logsEmptyTitle": "No activity yet",
     "logsEmptyDescription": "No activity has been recorded on this instance yet.",
+    "feedbackTitle": "Feedback",
+    "feedbackDescription": "Instance-wide feedback, most recent first, across every organization and project.",
+    "feedbackEmptyTitle": "No feedback yet",
+    "feedbackEmptyDescription": "No feedback has been submitted on this instance yet.",
+    "feedbackFrom": "From {name}",
+    "feedbackAnonymous": "Deleted user",
+    "feedbackPageContext": "on {page}",
     "projectScope": "project {id}",
     "organizationScope": "organization {id}",
     "instanceScope": "instance",

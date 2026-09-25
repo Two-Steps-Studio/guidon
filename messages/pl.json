@@ -97,6 +97,7 @@
     "adminGroup": "Administracja",
     "integrations": "Integracje",
     "logs": "Dzienniki",
+    "feedback": "Opinie",
     "users": "Użytkownicy",
     "logOut": "Wyloguj się",
     "user": "Użytkownik",
@@ -741,6 +742,16 @@
     "invalidDescription": "Link jest nieprawidłowy lub starszy niż 10 minut. Uruchom /guidon-link na swoim serwerze Discord ponownie, aby otrzymać nowy.",
     "toProjects": "Przejdź do projektów"
   },
+  "feedback": {
+    "sendFeedback": "Wyślij opinię",
+    "dialogTitle": "Wyślij opinię",
+    "dialogDescription": "Napisz, co działa dobrze, co jest zepsute, albo czego brakuje - czytamy każdą wiadomość.",
+    "placeholder": "Co masz na myśli?",
+    "send": "Wyślij",
+    "thanks": "Dzięki! Twoja opinia została wysłana.",
+    "close": "Zamknij",
+    "genericError": "Nie udało się wysłać opinii. Spróbuj ponownie."
+  },
   "context": {
     "title": "Warstwa kontekstu",
     "subtitle": "Wiedza o projekcie, decyzje i relacje",
@@ -959,6 +970,13 @@
     "logsDescription": "Aktywność w całej instancji, od najnowszych, ze wszystkich organizacji i projektów.",
     "logsEmptyTitle": "Brak aktywności",
     "logsEmptyDescription": "Na tej instancji nie zarejestrowano jeszcze żadnej aktywności.",
+    "feedbackTitle": "Opinie",
+    "feedbackDescription": "Opinie z całej instancji, od najnowszych, ze wszystkich organizacji i projektów.",
+    "feedbackEmptyTitle": "Brak opinii",
+    "feedbackEmptyDescription": "Na tej instancji nie przesłano jeszcze żadnych opinii.",
+    "feedbackFrom": "Od {name}",
+    "feedbackAnonymous": "Usunięty użytkownik",
+    "feedbackPageContext": "na {page}",
     "projectScope": "projekt {id}",
     "organizationScope": "organizacja {id}",
     "instanceScope": "instancja",

@@ -302,3 +302,41 @@ export async function resolveProfilesForAdmin(userIds: string[]): Promise<AdminA
   const { data } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds);
   return (data ?? []) as AdminActorProfile[];
 }
+
+export interface AdminFeedbackRow {
+  id: string;
+  user_id: string | null;
+  message: string;
+  page_url: string | null;
+  created_at: string;
+}
+
+/**
+ * Instance-wide feedback, most recent first - the "Send feedback" entry in
+ * the profile menu (src/app/feedback/actions.ts) writes here. Same shape as
+ * listRecentActivityForAdmin above: reads every organization's submissions,
+ * which is definitionally a cross-tenant read RLS blocks for anyone else.
+ */
+export async function listFeedbackForAdmin(limit = 200): Promise<AdminFeedbackRow[]> {
+  if (hasDirectDatabase()) {
+    return withServiceRole(({ query }) =>
+      query(
+        `SELECT id, user_id, message, page_url, created_at
+         FROM feedback
+         ORDER BY created_at DESC
+         LIMIT $1`,
+        [limit]
+      ).then((result) => result.rows as AdminFeedbackRow[])
+    );
+  }
+
+  const supabase = createServiceClient();
+
+  const { data } = await supabase
+    .from("feedback")
+    .select("id, user_id, message, page_url, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []) as AdminFeedbackRow[];
+}
