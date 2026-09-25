@@ -725,15 +725,15 @@
     "discordDisconnectConfirm": "Disconnect {guild} from this project? The /task commands stop working there until you run /guidon-link again. Webhook notifications are kept."
   },
   "discordLink": {
-    "title": "Link {guild} to a project",
-    "description": "Choose the project that {guild} should be connected to. Members of the server will be able to use the /task commands for that project.",
+    "title": "Connect the Guidon Discord bot",
+    "description": "{guild} wants to connect to a Guidon project. Once you choose one below, members of that server will be able to use /task commands to view tasks, change their status, and post comments in it.",
     "unnamedServer": "this Discord server",
     "serverLabel": "Discord server",
     "phishingWarning": "Only continue if you ran /guidon-link yourself in a Discord server you administer. Confirming lets that server manage tasks in the chosen project.",
     "unknownOrganization": "Other projects",
     "linkedBadge": "Linked to {guild}",
     "linkedElsewhereWarning": "This project is already linked to the Discord server \"{guild}\". Choosing it replaces its current Discord link.",
-    "confirm": "Link this project",
+    "confirm": "Authorize",
     "genericError": "Could not link the Discord server. Please try again.",
     "emptyTitle": "You don't manage any project",
     "emptyDescription": "Only owners and admins of a project can link a Discord server to it. Ask an admin to link it, or create a project first.",

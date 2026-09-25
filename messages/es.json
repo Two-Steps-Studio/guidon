@@ -725,15 +725,15 @@
     "discordDisconnectConfirm": "¿Desconectar {guild} de este proyecto? Los comandos /task dejarán de funcionar allí hasta que vuelvas a ejecutar /guidon-link. Las notificaciones por webhook se mantienen."
   },
   "discordLink": {
-    "title": "Vincular {guild} a un proyecto",
-    "description": "Elige el proyecto al que se conectará {guild}. Los miembros del servidor podrán usar los comandos /task de ese proyecto.",
+    "title": "Conectar el bot de Discord de Guidon",
+    "description": "{guild} quiere conectarse a un proyecto de Guidon. Al elegir uno a continuación, los miembros de ese servidor podrán usar los comandos /task para ver tareas, cambiar su estado y añadir comentarios.",
     "unnamedServer": "este servidor de Discord",
     "serverLabel": "Servidor de Discord",
     "phishingWarning": "Continúa solo si ejecutaste /guidon-link tú mismo en un servidor de Discord que administras. Al confirmar, ese servidor podrá gestionar tareas en el proyecto elegido.",
     "unknownOrganization": "Otros proyectos",
     "linkedBadge": "Vinculado a {guild}",
     "linkedElsewhereWarning": "Este proyecto ya está vinculado al servidor de Discord «{guild}». Al elegirlo se reemplaza su vínculo actual con Discord.",
-    "confirm": "Vincular este proyecto",
+    "confirm": "Autorizar",
     "genericError": "No se pudo vincular el servidor de Discord. Inténtalo de nuevo.",
     "emptyTitle": "No administras ningún proyecto",
     "emptyDescription": "Solo los propietarios y administradores de un proyecto pueden vincularle un servidor de Discord. Pide a un administrador que lo vincule o crea primero un proyecto.",
