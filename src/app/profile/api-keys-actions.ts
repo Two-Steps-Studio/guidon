@@ -128,18 +128,28 @@ export async function revokeApiKey(keyId: string): Promise<{ error: string | nul
   const user = await getCurrentUser();
 
   if (hasDirectDatabase()) {
-    await withUser(user.id, ({ query }) =>
-      query("UPDATE api_keys SET revoked_at = now() WHERE id = $1 AND user_id = $2", [keyId, user.id])
+    const result = await withUser(user.id, ({ query }) =>
+      query("UPDATE api_keys SET revoked_at = now() WHERE id = $1 AND user_id = $2 RETURNING id", [
+        keyId,
+        user.id,
+      ])
     );
+    if (result.rows.length === 0) {
+      return { error: "This key no longer exists, or it isn't yours to revoke." };
+    }
   } else {
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data: updatedRows, error } = await supabase
       .from("api_keys")
       .update({ revoked_at: new Date().toISOString() })
       .eq("id", keyId)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id");
 
     if (error) return { error: error.message };
+    if (!updatedRows || updatedRows.length === 0) {
+      return { error: "This key no longer exists, or it isn't yours to revoke." };
+    }
   }
 
   revalidatePath("/profile");

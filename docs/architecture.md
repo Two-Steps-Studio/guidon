@@ -113,12 +113,16 @@ request to an external vendor.
 `users`, `logs`, `integrations`. Every route is gated by
 `requireAdminAccess()` (`src/lib/data/admin-access.ts`), which checks the
 signed-in user's email against the `ADMIN_EMAILS` allowlist — there is no
-admin role in the database. All five routes are **read-only**: none contains
-a Server Action, a form submission, or any other write path — they render
-cross-tenant queries from `src/lib/data/admin.ts` (via
+admin role in the database. Four of the five routes are read-only: they
+render cross-tenant queries from `src/lib/data/admin.ts` (via
 `createServiceClient()`, since "every organization" is definitionally a
 cross-tenant read RLS is designed to prevent for anyone else) and the
-`/api/health` checks for System Status.
+`/api/health` checks for System Status. `organizations` is the one
+exception: `src/app/admin/organizations/actions.ts` exposes
+`updateOrganizationProjectLimit` and `updateOrganizationPlan`, an
+intentional admin escape hatch for overriding a plan/limit by hand — both
+re-check `requireAdminAccess()` themselves (defense in depth, not just the
+page-level gate) before writing.
 
 ## Health checks
 

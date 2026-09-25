@@ -141,10 +141,22 @@ async function syncOrgProjectLimit(
   planId: string
 ): Promise<void> {
   const { data: plan } = await supabase.from("plans").select("project_limit").eq("id", planId).maybeSingle();
-  await supabase
+  const { data: updatedRows, error } = await supabase
     .from("organizations")
     .update({ project_limit: plan?.project_limit ?? ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL })
-    .eq("id", organizationId);
+    .eq("id", organizationId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  // This runs through the service-role client, so unlike a Server Action
+  // there's no RLS backstop - a zero-rows update here means organizationId
+  // doesn't exist (deleted org, stale/corrupted Stripe metadata) and would
+  // otherwise fail completely silently.
+  if (!updatedRows || updatedRows.length === 0) {
+    console.error(
+      "[Stripe webhook] organizations.project_limit update matched no row for organization_id",
+      organizationId
+    );
+  }
 }
 
 async function syncSubscription(subscription: Stripe.Subscription): Promise<void> {
@@ -166,7 +178,7 @@ async function syncSubscription(subscription: Stripe.Subscription): Promise<void
 
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
 
-  const { error } = await supabase
+  const { data: updatedRows, error } = await supabase
     .from("subscriptions")
     .update({
       plan_id: planId,
@@ -177,9 +189,17 @@ async function syncSubscription(subscription: Stripe.Subscription): Promise<void
       current_period_end: item ? new Date(item.current_period_end * 1000).toISOString() : undefined,
       cancel_at_period_end: subscription.cancel_at_period_end,
     })
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId)
+    .select("organization_id");
 
   if (error) throw new Error(error.message);
+  // Service-role write, no RLS backstop - a zero-rows match means
+  // organizationId has no subscriptions row (deleted org, stale metadata),
+  // which would otherwise report { ok: true } to Stripe with nothing synced.
+  if (!updatedRows || updatedRows.length === 0) {
+    console.error("[Stripe webhook] subscriptions update matched no row for organization_id", organizationId);
+    return;
+  }
 
   await syncOrgProjectLimit(supabase, organizationId, planId);
 }
@@ -193,15 +213,20 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
   }
 
   const supabase = createServiceClient();
-  const { error } = await supabase
+  const { data: updatedRows, error } = await supabase
     .from("subscriptions")
     .update({
       plan_id: "free",
       status: "canceled",
       cancel_at_period_end: false,
     })
-    .eq("organization_id", organizationId);
+    .eq("organization_id", organizationId)
+    .select("organization_id");
   if (error) throw new Error(error.message);
+  if (!updatedRows || updatedRows.length === 0) {
+    console.error("[Stripe webhook] subscriptions update matched no row for organization_id", organizationId);
+    return;
+  }
 
   await syncOrgProjectLimit(supabase, organizationId, "free");
 }

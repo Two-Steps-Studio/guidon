@@ -46,9 +46,20 @@ export async function updateAiPermissions(
         [projectId, ...values]
       )
     );
-    await withUser(access.userId, ({ query }) =>
-      query("UPDATE projects SET allow_ai_auto_complete = $1 WHERE id = $2", [allowAutoComplete, projectId])
+    const result = await withUser(access.userId, ({ query }) =>
+      query("UPDATE projects SET allow_ai_auto_complete = $1 WHERE id = $2 RETURNING id", [
+        allowAutoComplete,
+        projectId,
+      ])
     );
+    // canManageProject above is the friendly check; RLS is the real one. If
+    // it ever disagrees (stale role, concurrent demotion, project deleted
+    // concurrently), this affects zero rows - without checking that, the
+    // caller still got { error: null } and the Settings page shows the
+    // change as saved when nothing actually changed.
+    if (result.rows.length === 0) {
+      return { error: "This project no longer exists, or you're not allowed to change AI settings for it." };
+    }
   } else {
     const supabase = await createClient();
 
@@ -64,11 +75,15 @@ export async function updateAiPermissions(
     });
     if (permError) return { error: permError.message };
 
-    const { error: projError } = await supabase
+    const { data: updatedRows, error: projError } = await supabase
       .from("projects")
       .update({ allow_ai_auto_complete: allowAutoComplete })
-      .eq("id", projectId);
+      .eq("id", projectId)
+      .select("id");
     if (projError) return { error: projError.message };
+    if (!updatedRows || updatedRows.length === 0) {
+      return { error: "This project no longer exists, or you're not allowed to change AI settings for it." };
+    }
   }
 
   revalidatePath(`/projects/${projectId}/settings`);

@@ -23,7 +23,7 @@ working default or is optional.
 |---|---|
 | `NEXT_PUBLIC_APP_URL` | The URL the app is served from. Sent to the browser. |
 | `NEXT_PUBLIC_APP_NAME` | Display name, sent to the browser. |
-| `AUTH_SECRET` | Signs local-storage download URLs (`src/lib/storage/providers/local.ts`) and is reserved for signing sessions later. Generate with `openssl rand -hex 32`. |
+| `AUTH_SECRET` | Signs local-storage download URLs (`src/lib/storage/providers/local.ts`) and, on the self-hosted path, self-hosted auth's session cookies (`src/lib/auth/session-cookie.ts`). Generate with `openssl rand -hex 32`. |
 
 `NEXT_PUBLIC_*` variables are compiled into the client bundle at **build**
 time (see `next.config.ts` / `Dockerfile`), not read at container runtime —
@@ -43,12 +43,9 @@ Unset (the default) means `/admin` is unreachable by anyone, which is the
 safe default: nobody becomes an instance admin just by being first to sign
 in.
 
-**Docker Compose note:** `docker-compose.yml`'s `app` service does not
-currently list `ADMIN_EMAILS` in its `environment:` block. Setting it in
-`.env` has no effect on a `docker compose up` deployment as shipped today —
-the variable only reaches the app when it's exported directly to the
-container (see [self-hosting.md](./self-hosting.md#admin-panel-access) for a
-workaround). This is a real gap, not a documentation choice.
+**Docker Compose note:** `docker-compose.yml`'s `app` service forwards
+`ADMIN_EMAILS` through to the container, same as the bare-metal path — see
+[self-hosting.md](./self-hosting.md#admin-panel-access).
 
 ---
 
@@ -77,9 +74,8 @@ state.
 
 ## DATABASE
 
-Guidon can read/write through two different backends, and which one is
-actually exercised by the running application differs from what it looks
-like at a glance — see the callout at the end of this section.
+Guidon can read/write through two different backends, chosen per request by
+`hasDirectDatabase()` — see the callout at the end of this section.
 
 ### Cloud (Supabase)
 
@@ -97,35 +93,27 @@ like at a glance — see the callout at the end of this section.
 | `DATABASE_URL` | `postgresql://user:pass@host:5432/db`. Talks to PostgreSQL directly instead of through Supabase's REST layer. |
 | `DATABASE_POOL_MAX` | Max pooled connections. Default `10`. |
 
-**What `DATABASE_URL` is actually used for today:** the migration runner
-(`npm run migrate`, `npm run migrate:status`) and the standalone
-`npm run test:db` suite, which exercises the RLS-compatibility layer
-(`src/db/bootstrap/000_auth_compat.sql`, `src/lib/db/session.ts`,
-`src/lib/db/pool.ts`) against a real PostgreSQL. That layer recreates
+**What `DATABASE_URL` is used for:** every request path branches on
+`hasDirectDatabase()` (`src/lib/db/pool.ts`, true iff `DATABASE_URL` is
+set) and, when it's set, runs its query as plain SQL under
+`src/lib/db/session.ts`'s `withUser()` / `withServiceRole()` instead of
+going through the Supabase client. That covers authentication
+(`src/proxy.ts`, `src/lib/auth/local-auth.ts`), the signed-in user
+(`src/lib/data/current-user.ts`), organization/project access checks,
+every Server Action, `/api/v1/search`, `/api/health`'s database check, and
+the admin panel. `src/db/bootstrap/000_auth_compat.sql` recreates
 Supabase's `auth` schema, `auth.uid()`, and the `anon`/`authenticated`/
-`service_role` roles the schema's 70 RLS policies depend on, and it passes
-its own test suite. See `src/db/migrations/README.md` for the full
-per-migration reference.
-
-**What it does not yet do:** no page, Server Action, or admin-panel query in
-this codebase currently calls `src/lib/db/session.ts`'s `withUser` /
-`withServiceRole`, or reaches through `src/lib/db/pool.ts`'s connection
-pool. Every request path — authentication (`src/proxy.ts`), the signed-in
-user (`src/lib/data/current-user.ts`), organization/project access checks,
-every Server Action, and the admin panel — reads through the Supabase
-client (`src/lib/supabase.ts` / `src/lib/supabase-server.ts`), which
-requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to
-be set regardless of whether `DATABASE_URL` also points at a working,
-migrated, self-hosted Postgres. Concretely: `/api/health`'s database check
-calls `createServiceClient()` (Supabase), so it reports `database: down` on
-an install that configures only `DATABASE_URL`, even though the schema
-applied successfully.
-
-In short: the self-hosted-Postgres data path is built, migrated, and
-independently tested, but the application does not run on it yet. A Supabase
-project (cloud, or one you run yourself) is currently required for sign-in
-and data access on every deployment path, including Docker Compose. See
+`service_role` roles the schema's 70+ RLS policies depend on, so the same
+policies apply unchanged whether a request went through PostgREST or a
+direct `pg` connection. This is verified by `npm run test:db` against a
+real PostgreSQL (PGlite, no Docker, no Supabase) and live against a
+`docker compose up` stack with zero Supabase software running. See
+`src/db/migrations/README.md` for the full per-migration reference and
 [architecture.md](./architecture.md#database) for more detail.
+
+In short: setting only `DATABASE_URL` (no Supabase project) is a fully
+supported, independently-verified deployment path — this is what Docker
+Compose self-hosting uses by default.
 
 ---
 
