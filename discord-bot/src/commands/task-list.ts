@@ -11,9 +11,14 @@ function formatTaskList(tasks: GuidonTask[]): string {
   // Discord message bodies cap at 2000 chars - a large board would blow
   // past that fast, so this caps the list rather than truncating mid-line.
   const LIST_LIMIT = 25;
+  // Full id, not the 8-char prefix shown elsewhere in Guidon (task dialog,
+  // GitHub refs): /task-start, /task-complete and /task-comment pass their
+  // task-id straight through to /api/v1/tasks/{taskId}/*, which requires a
+  // full uuid (src/lib/api/validate-id.ts) and rejects a prefix outright -
+  // a truncated id here would be copy-pasteable but never actually work.
   const lines = tasks
     .slice(0, LIST_LIMIT)
-    .map((task) => `\`${task.id.slice(0, 8)}\` **${task.title}** — ${task.status} (${task.priority})`);
+    .map((task) => `\`${task.id}\` **${task.title}** — ${task.status} (${task.priority})`);
   const suffix = tasks.length > LIST_LIMIT ? `\n…and ${tasks.length - LIST_LIMIT} more.` : "";
   return lines.join("\n") + suffix;
 }
