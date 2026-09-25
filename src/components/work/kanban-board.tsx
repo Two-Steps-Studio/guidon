@@ -21,6 +21,8 @@ interface KanbanBoardProps {
   tasks: Task[];
   members: TaskCardMember[];
   commentCounts?: Record<string, number>;
+  /** Signed URL of each task's most recently uploaded image attachment, if any - see work/page.tsx's loadCoverImages. */
+  coverImages?: Record<string, string>;
   subtaskCounts?: Record<string, SubtaskProgress>;
   /** The project's resolved (default + overrides) column set - see resolveBoardColumns(). */
   columns?: readonly BoardColumn[];
@@ -64,6 +66,7 @@ export function KanbanBoard({
   tasks,
   members,
   commentCounts = {},
+  coverImages = {},
   subtaskCounts = {},
   columns = BOARD_COLUMNS,
   canEdit,
@@ -269,6 +272,7 @@ export function KanbanBoard({
                         : undefined
                     }
                     commentCount={commentCounts[task.id]}
+                    coverImageUrl={coverImages[task.id]}
                     subtaskProgress={subtaskCounts[task.id]}
                     draggable={canDrag}
                     isDragging={draggingTask?.id === task.id}

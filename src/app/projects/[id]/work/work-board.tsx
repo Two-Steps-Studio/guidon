@@ -43,6 +43,7 @@ import type { ProjectRole } from "@/types/project";
 interface WorkState {
   tasks: Task[];
   commentCounts: Record<string, number>;
+  coverImages: Record<string, string>;
 }
 
 export function WorkBoard({
@@ -55,6 +56,7 @@ export function WorkBoard({
   initialTasks,
   members,
   initialCommentCounts,
+  initialCoverImages,
   projectColor,
   columns = BOARD_COLUMNS,
   aiAvailable = false,
@@ -68,6 +70,7 @@ export function WorkBoard({
   initialTasks: Task[];
   members: TaskCardMember[];
   initialCommentCounts: Record<string, number>;
+  initialCoverImages?: Record<string, string>;
   projectColor?: string;
   columns?: readonly BoardColumn[];
   aiAvailable?: boolean;
@@ -79,6 +82,7 @@ export function WorkBoard({
   const [state, setState] = useState<WorkState>({
     tasks: initialTasks,
     commentCounts: initialCommentCounts,
+    coverImages: initialCoverImages ?? {},
   });
   const [error, setError] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<Task | null>(null);
@@ -350,6 +354,7 @@ export function WorkBoard({
             tasks={filteredTasks}
             members={members}
             commentCounts={state.commentCounts}
+            coverImages={state.coverImages}
             subtaskCounts={subtaskCounts}
             columns={columns}
             canEdit={canEdit}

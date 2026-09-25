@@ -33,6 +33,8 @@ interface TaskCardProps {
   task: Task;
   assignee?: TaskCardMember;
   commentCount?: number;
+  /** Signed URL of the task's most recently uploaded image attachment, if any. */
+  coverImageUrl?: string;
   subtaskProgress?: SubtaskProgress;
   draggable: boolean;
   isDragging: boolean;
@@ -92,6 +94,7 @@ function TaskCardComponent({
   task,
   assignee,
   commentCount = 0,
+  coverImageUrl,
   subtaskProgress,
   draggable,
   isDragging,
@@ -152,6 +155,16 @@ function TaskCardComponent({
         isDragging && "opacity-40"
       )}
     >
+      {coverImageUrl && (
+        <div className="-mx-3 -mt-3 mb-2 overflow-hidden rounded-t-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element -- signed, per-task URL from any storage provider (local or Supabase), not a static/optimizable asset - same reasoning as TaskImagePreview's own img */}
+          <img
+            src={coverImageUrl}
+            alt=""
+            className="h-28 w-full object-cover"
+          />
+        </div>
+      )}
       <div className="flex items-start gap-2">
         {done ? (
           <CheckCircle2 aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />

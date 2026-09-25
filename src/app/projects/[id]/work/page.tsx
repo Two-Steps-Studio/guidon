@@ -5,6 +5,8 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isAIAvailableForOrg } from "@/lib/ai/resolve-provider";
 import { compareTasks, resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
+import { getSignedUrl } from "@/lib/storage/storage";
+import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
 import { WorkBoard } from "./work-board";
 import type { TaskCardMember } from "@/components/work/task-card";
 import type { Task } from "@/types/task";
@@ -67,6 +69,67 @@ async function loadCommentCountsLocal(
   }, {});
 }
 
+/**
+ * Cover thumbnail for each task's card: the most recently uploaded
+ * image-type attachment, if any. Same "cheap at MVP volumes" tradeoff as
+ * loadCommentCounts above, plus one signed-URL call per task that has an
+ * image (a real Supabase Storage API round trip on the hosted path,
+ * essentially free HMAC signing on the local one) - acceptable alongside
+ * TASK_LIMIT's own soft cap on board size, and only paid by tasks that
+ * actually have an image, not every task on the board.
+ */
+async function signCoverImagePaths(pathsByTask: Map<string, string>): Promise<Record<string, string>> {
+  const entries = await Promise.all(
+    [...pathsByTask.entries()].map(async ([taskId, storagePath]) => {
+      try {
+        const url = await getSignedUrl(STORAGE_BUCKETS.ATTACHMENTS, storagePath);
+        return [taskId, url] as const;
+      } catch {
+        return null;
+      }
+    })
+  );
+  return Object.fromEntries(entries.filter((entry): entry is [string, string] => entry !== null));
+}
+
+async function loadCoverImages(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: string
+): Promise<Record<string, string>> {
+  const { data, error } = await supabase
+    .from("task_attachments")
+    .select("task_id, storage_path, created_at, tasks!inner(project_id)")
+    .eq("tasks.project_id", projectId)
+    .like("mime_type", "image/%")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return {};
+
+  const pathsByTask = new Map<string, string>();
+  for (const row of data as { task_id: string; storage_path: string }[]) {
+    // Rows arrive newest-first; the first one seen per task is its cover.
+    if (!pathsByTask.has(row.task_id)) pathsByTask.set(row.task_id, row.storage_path);
+  }
+  return signCoverImagePaths(pathsByTask);
+}
+
+async function loadCoverImagesLocal(userId: string, projectId: string): Promise<Record<string, string>> {
+  const result = await withUser(userId, ({ query }) =>
+    query(
+      `SELECT DISTINCT ON (ta.task_id) ta.task_id, ta.storage_path
+         FROM task_attachments ta
+         JOIN tasks t ON t.id = ta.task_id
+        WHERE t.project_id = $1 AND ta.mime_type LIKE 'image/%'
+        ORDER BY ta.task_id, ta.created_at DESC`,
+      [projectId]
+    )
+  );
+
+  const pathsByTask = new Map<string, string>();
+  for (const row of result.rows) pathsByTask.set(row.task_id, row.storage_path);
+  return signCoverImagePaths(pathsByTask);
+}
+
 export default async function ProjectWorkPage({
   params,
 }: {
@@ -85,6 +148,7 @@ export default async function ProjectWorkPage({
   let tasks: Task[];
   let members: TaskCardMember[];
   let commentCounts: Record<string, number>;
+  let coverImages: Record<string, string>;
   let columnOverrides: BoardColumnOverride[];
 
   // TASK_LIMIT is a safety cap, not pagination - high enough that no real
@@ -93,9 +157,9 @@ export default async function ProjectWorkPage({
   const TASK_LIMIT = 1000;
 
   if (hasDirectDatabase()) {
-    // Each withUser() call owns its own pooled connection, so these four
+    // Each withUser() call owns its own pooled connection, so these five
     // run as genuinely concurrent queries rather than one after another.
-    const [tasksRes, membersRes, commentCountRows, columnsRes] = await Promise.all([
+    const [tasksRes, membersRes, commentCountRows, coverImageRows, columnsRes] = await Promise.all([
       withUser(access.userId, ({ query }) =>
         query("SELECT * FROM tasks WHERE project_id = $1 LIMIT $2", [projectId, TASK_LIMIT])
       ),
@@ -109,6 +173,7 @@ export default async function ProjectWorkPage({
         )
       ),
       loadCommentCountsLocal(access.userId, projectId),
+      loadCoverImagesLocal(access.userId, projectId),
       withUser(access.userId, ({ query }) =>
         query(
           "SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1",
@@ -128,17 +193,19 @@ export default async function ProjectWorkPage({
 
     tasks = tasksRes.rows.slice().sort(compareTasks);
     commentCounts = commentCountRows;
+    coverImages = coverImageRows;
     columnOverrides = columnsRes.rows as BoardColumnOverride[];
   } else {
     const supabase = await createClient();
 
-    const [tasksRes, membersRes, commentCounts_, columnsRes] = await Promise.all([
+    const [tasksRes, membersRes, commentCounts_, coverImages_, columnsRes] = await Promise.all([
       supabase.from("tasks").select("*").eq("project_id", projectId).limit(TASK_LIMIT),
       supabase
         .from("project_members")
         .select("user_id, profiles ( id, full_name, email, avatar_url )")
         .eq("project_id", projectId),
       loadCommentCounts(supabase, projectId),
+      loadCoverImages(supabase, projectId),
       supabase
         .from("project_board_columns")
         .select("status, label, sort_order, hidden")
@@ -159,6 +226,7 @@ export default async function ProjectWorkPage({
 
     tasks = ((tasksRes.data ?? []) as Task[]).slice().sort(compareTasks);
     commentCounts = commentCounts_;
+    coverImages = coverImages_;
     columnOverrides = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
@@ -178,6 +246,7 @@ export default async function ProjectWorkPage({
       initialTasks={tasks}
       members={members}
       initialCommentCounts={commentCounts}
+      initialCoverImages={coverImages}
       projectColor={access.project.color}
       columns={columns}
       aiAvailable={await aiAvailablePromise}
