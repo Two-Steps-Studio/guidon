@@ -109,7 +109,7 @@ guidon/
 │   │   ├── dashboard/
 │   │   ├── organizations/    # Server Components + actions.ts (Server Actions)
 │   │   ├── projects/[id]/    # Server Components + actions.ts, files/actions.ts (uploads), context/, decisions/, knowledge/, memory/, roadmap/, settings/, technology/, work/
-│   │   ├── admin/            # Instance-admin panel, gated by ADMIN_EMAILS, read-only (dashboard, organizations, users, logs, integrations)
+│   │   ├── admin/            # Instance-admin panel, gated by ADMIN_EMAILS (dashboard, organizations, users, logs, integrations) — mostly read-only; organizations also exposes admin-only plan/limit overrides
 │   │   └── api/
 │   │       ├── health/       # GET /api/health — reports db/storage/auth/ai status
 │   │       ├── storage/      # Serves objects for STORAGE_PROVIDER=local
