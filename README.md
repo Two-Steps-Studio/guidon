@@ -71,6 +71,10 @@ Available scripts (`package.json`):
 | `npm run migrate:status` | Show applied/pending migrations, changes nothing |
 | `npm run test:db` | Verify the migration chain + RLS-compatibility layer against a real PostgreSQL (PGlite, no Docker/Supabase needed) |
 | `npm run test:ai` | Test the AI provider factory's env-resolution logic, no live API key needed |
+| `npm run test:auth` | Test local-auth (self-hosted) compatibility logic |
+| `npm run test:limits` | Test plan/limits logic |
+| `npm run test:reports` | Test in-game report validation |
+| `npm run test:github` | Test GitHub commit/PR -> task rules |
 
 ## Tech stack
 
@@ -81,15 +85,17 @@ Available scripts (`package.json`):
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS v4
 - **UI Components**: shadcn/ui (Radix UI primitives)
-- **Database**: PostgreSQL. Supabase today for every deployment path; a
-  self-hosted-Postgres compatibility layer exists and is tested but not yet
-  used by the running app — see
+- **Database**: PostgreSQL, either Supabase or a self-hosted instance —
+  `hasDirectDatabase()` picks the mode per request based on whether
+  `DATABASE_URL` is set, and both paths enforce the same RLS policies — see
   [docs/self-hosting.md](./docs/self-hosting.md).
 - **Auth**: Supabase Auth (email/password, plus optional Google/Discord OAuth)
+  on the hosted path; signed-cookie local auth on the self-hosted path
 - **Storage**: pluggable `StorageProvider` — Supabase Storage or local
   filesystem (`s3` interface-ready, not implemented)
-- **AI**: pluggable `AIProvider` abstraction, six backends — not yet called
-  by any feature (see [docs/configuration.md](./docs/configuration.md#ai-todomd-67))
+- **AI**: pluggable `AIProvider` abstraction, seven backends, wired into task
+  chat and project-memory insight generation (see
+  [docs/configuration.md](./docs/configuration.md#ai-todomd-67))
 - **Icons**: Lucide React
 
 ## Project structure
@@ -112,11 +118,11 @@ guidon/
 │   │   ├── auth/ context/ decisions/ files/ layout/ memory/ projects/ shared/ tasks/ work/
 │   │   └── ui/                # shadcn/ui components
 │   ├── lib/
-│   │   ├── ai/                 # AIProvider abstraction + 6 backend implementations
+│   │   ├── ai/                 # AIProvider abstraction + 7 backend implementations
 │   │   ├── auth/                # OAuth provider config, auth helpers
 │   │   ├── context/              # Context Layer: agent context, relations, task "why"
 │   │   ├── data/                  # Authorization + data-access modules (current-user, org-access, project-access, admin, admin-access)
-│   │   ├── db/                     # pool.ts (pg Pool) + session.ts (RLS-scoped transactions) — self-hosted-Postgres layer, not yet called by the app (see docs/architecture.md)
+│   │   ├── db/                     # pool.ts (pg Pool) + session.ts (RLS-scoped transactions) — self-hosted-Postgres layer, used whenever DATABASE_URL is set (see docs/architecture.md)
 │   │   ├── health/                  # Shared health-check logic (db/storage/auth/ai)
 │   │   ├── search/                   # Backing logic for /api/v1/search
 │   │   ├── storage/                   # StorageProvider abstraction (Supabase / local / S3-reserved)
