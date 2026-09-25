@@ -46,6 +46,15 @@ export function TaskAttachmentsSection({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Thumbnail for each image-type attachment, keyed by id - fetched
+  // separately from the list itself since a signed download URL isn't part
+  // of loadTaskAttachments' own row (same reasoning as TaskImagePreview's
+  // own fetch). fetchedImageIds tracks what's already been requested so a
+  // re-render (e.g. after a delete elsewhere) doesn't re-fetch every image
+  // again.
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const fetchedImageIds = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     let cancelled = false;
 
@@ -63,6 +72,37 @@ export function TaskAttachmentsSection({
       cancelled = true;
     };
   }, [projectId, taskId]);
+
+  useEffect(() => {
+    const toFetch = attachments.filter(
+      (attachment) => attachment.mime_type?.startsWith("image/") && !fetchedImageIds.current.has(attachment.id)
+    );
+    if (toFetch.length === 0) return;
+    for (const attachment of toFetch) fetchedImageIds.current.add(attachment.id);
+
+    let cancelled = false;
+
+    (async () => {
+      const entries = await Promise.all(
+        toFetch.map(async (attachment) => {
+          const result = await getTaskAttachmentDownloadUrl(projectId, taskId, attachment.id);
+          return result.url ? ([attachment.id, result.url] as const) : null;
+        })
+      );
+      if (cancelled) return;
+      setImageUrls((current) => {
+        const next = { ...current };
+        for (const entry of entries) {
+          if (entry) next[entry[0]] = entry[1];
+        }
+        return next;
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [attachments, projectId, taskId]);
 
   const handleFileChosen = async (file: File) => {
     setUploading(true);
@@ -159,7 +199,16 @@ export function TaskAttachmentsSection({
                 key={attachment.id}
                 className="group flex items-center gap-2 rounded-md border border-border p-2 text-sm"
               >
-                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                {attachment.mime_type?.startsWith("image/") && imageUrls[attachment.id] ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- signed, per-attachment URL from any storage provider (local or Supabase), not a static/optimizable asset
+                  <img
+                    src={imageUrls[attachment.id]}
+                    alt=""
+                    className="h-8 w-8 shrink-0 rounded object-cover"
+                  />
+                ) : (
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                )}
                 <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
                 <span className="shrink-0 text-xs text-muted-foreground">{formatSize(attachment.size_bytes)}</span>
                 <button
