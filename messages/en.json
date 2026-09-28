@@ -119,6 +119,13 @@
     "entityType_source": "Source",
     "entityType_project": "Project"
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "markAllRead": "Mark all read",
+    "bellAria": "Notifications",
+    "bellAriaUnread": "Notifications ({count} unread)"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcomeBack": "Welcome back, {name}",

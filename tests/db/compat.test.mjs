@@ -152,8 +152,11 @@ for (const [label, sql, expected] of [
   // 28->29 tabel, 101->103 polityk: feedback (044), 2 polityki
   // (select/insert - kazdy widzi i wstawia tylko swoj wiersz, panel admina
   // czyta wszystko przez service_role, z pominieciem RLS).
-  ["29 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 29],
-  ["103 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 103],
+  // 29->30 tabel, 103->106 polityk: notifications (045), 3 polityki
+  // (select/update/delete - kazdy widzi/oznacza/usuwa tylko swoje wiersze;
+  // zero polityk insert dla authenticated, wstawia wylacznie service_role).
+  ["30 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 30],
+  ["106 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 106],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1923,6 +1926,64 @@ await withUser(B, async () => {
 await withServiceRole(async () => {
   const { rows } = await db.query("SELECT id FROM public.feedback WHERE id = $1", [feedbackId]);
   check("panel admina (service_role) widzi kazdy feedback", rows.length === 1, rows.length);
+});
+
+// ------------------------------------------------------------------
+section("33. notifications: brak insert dla authenticated, kazdy widzi/oznacza/usuwa tylko swoje (migracja 045)");
+
+let notificationId;
+await withServiceRole(async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.notifications (user_id, project_id, type, title, link)
+     VALUES ($1, $2, 'task_assigned', 'Przypisano Ci zadanie', $3)
+     RETURNING id`,
+    [A, projectId, `/projects/${projectId}/work?openTask=x`]
+  );
+  notificationId = rows[0]?.id;
+  check("service_role moze wstawic powiadomienie dla dowolnego uzytkownika", rows.length === 1, JSON.stringify(rows));
+});
+
+await expectRejected(
+  "A (zwykly authenticated) nie moze wstawic powiadomienia - brak polityki insert",
+  () =>
+    withUser(A, () =>
+      db.query(
+        "INSERT INTO public.notifications (user_id, type, title, link) VALUES ($1, 'task_assigned', 'x', '/x')",
+        [A]
+      )
+    ),
+  /permission denied/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id, read_at FROM public.notifications WHERE id = $1", [notificationId]);
+  check("A widzi wlasne powiadomienie", rows.length === 1, rows.length);
+  check("nowe powiadomienie jest nieprzeczytane", rows[0]?.read_at === null, rows[0]?.read_at);
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT id FROM public.notifications WHERE id = $1", [notificationId]);
+  check("B nie widzi cudzego powiadomienia", rows.length === 0, rows.length);
+});
+
+await withUser(B, async () => {
+  const result = await db.query("UPDATE public.notifications SET read_at = now() WHERE id = $1", [notificationId]);
+  check("B nie moze oznaczyc cudzego powiadomienia jako przeczytane", result.rowCount === 0, result.rowCount);
+});
+
+await withUser(A, async () => {
+  const result = await db.query("UPDATE public.notifications SET read_at = now() WHERE id = $1", [notificationId]);
+  check("A moze oznaczyc wlasne powiadomienie jako przeczytane", result.rowCount === 1, result.rowCount);
+});
+
+await withUser(B, async () => {
+  const result = await db.query("DELETE FROM public.notifications WHERE id = $1", [notificationId]);
+  check("B nie moze usunac cudzego powiadomienia", result.rowCount === 0, result.rowCount);
+});
+
+await withUser(A, async () => {
+  const result = await db.query("DELETE FROM public.notifications WHERE id = $1", [notificationId]);
+  check("A moze usunac wlasne powiadomienie", result.rowCount === 1, result.rowCount);
 });
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

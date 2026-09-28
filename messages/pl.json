@@ -119,6 +119,13 @@
     "entityType_source": "Źródło",
     "entityType_project": "Projekt"
   },
+  "notifications": {
+    "title": "Powiadomienia",
+    "empty": "Brak powiadomień.",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "bellAria": "Powiadomienia",
+    "bellAriaUnread": "Powiadomienia ({count} nieprzeczytanych)"
+  },
   "dashboard": {
     "title": "Pulpit",
     "welcomeBack": "Witaj ponownie, {name}",
