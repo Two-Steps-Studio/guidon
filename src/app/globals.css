@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* ============================================
    GUIDON DESIGN TOKENS
@@ -395,6 +396,27 @@ body {
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-active) transparent;
+  }
+}
+
+/* Optical sizing: tracking tightens and leading contracts as text gets
+   bigger, per Apple's size-specific type discipline. Body text is left at
+   its browser/Tailwind default (near 0 tracking, 1.5 leading). Explicit
+   `tracking-*`/`leading-*` utilities still win - the base layer loses to
+   Tailwind's utilities layer by cascade-layer order. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  h4,
+  h5,
+  h6 {
+    letter-spacing: -0.01em;
+    line-height: 1.25;
   }
 }
 

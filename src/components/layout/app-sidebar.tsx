@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { FeedbackMenuItem } from "@/components/layout/feedback-dialog";
 import type { SwitchableProject } from "@/lib/data/project-access";
 import {
   LayoutDashboard,
@@ -39,6 +40,7 @@ import {
   ScrollText,
   User,
   LogOut,
+  MessageSquarePlus,
 } from "lucide-react";
 
 const GLOBAL_NAV = [
@@ -120,6 +122,7 @@ const ADMIN_NAV = [
   { href: "/admin/users", labelKey: "users", icon: Users },
   { href: "/admin/integrations", labelKey: "integrations", icon: Plug },
   { href: "/admin/logs", labelKey: "logs", icon: ScrollText },
+  { href: "/admin/feedback", labelKey: "feedback", icon: MessageSquarePlus },
 ] as const;
 
 export interface AppSidebarProps {
@@ -300,6 +303,7 @@ export function AppSidebar({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <FeedbackMenuItem />
             <SidebarMenuItem className="px-2">
               <LanguageSwitcher />
             </SidebarMenuItem>

@@ -149,8 +149,11 @@ for (const [label, sql, expected] of [
   // 27->28 tabel, polityk bez zmian: stripe_webhook_events (043) - zero
   // polityk dla authenticated w ogole (jak subscriptions same nie maja
   // insert/update/delete), tylko GRANT dla service_role.
-  ["28 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 28],
-  ["101 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 101],
+  // 28->29 tabel, 101->103 polityk: feedback (044), 2 polityki
+  // (select/insert - kazdy widzi i wstawia tylko swoj wiersz, panel admina
+  // czyta wszystko przez service_role, z pominieciem RLS).
+  ["29 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 29],
+  ["103 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 103],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1884,6 +1887,43 @@ await expectRejected(
   () => withUser(A, () => db.query("SELECT event_id FROM public.stripe_webhook_events")),
   /permission denied/i
 );
+
+// ------------------------------------------------------------------
+section("32. feedback: kazdy widzi/wstawia tylko swoj wiersz, admin czyta wszystko przez service_role (migracja 044)");
+
+let feedbackId;
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.feedback (user_id, message, page_url) VALUES ($1, 'Swietna appka!', '/dashboard') RETURNING id",
+    [A]
+  );
+  feedbackId = rows[0]?.id;
+  check("A moze wstawic wlasny feedback", rows.length === 1, JSON.stringify(rows));
+});
+
+await expectRejected(
+  "A nie moze wstawic feedbacku jako ktos inny",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.feedback (user_id, message) VALUES ($1, 'podszywam sie')", [B])
+    ),
+  /permission denied|new row violates/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id FROM public.feedback WHERE id = $1", [feedbackId]);
+  check("A widzi wlasny feedback", rows.length === 1, rows.length);
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT id FROM public.feedback WHERE id = $1", [feedbackId]);
+  check("B nie widzi cudzego feedbacku", rows.length === 0, rows.length);
+});
+
+await withServiceRole(async () => {
+  const { rows } = await db.query("SELECT id FROM public.feedback WHERE id = $1", [feedbackId]);
+  check("panel admina (service_role) widzi kazdy feedback", rows.length === 1, rows.length);
+});
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

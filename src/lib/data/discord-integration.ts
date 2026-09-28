@@ -2,8 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
-import { createClient } from "@/lib/supabase-server";
+import { withUser, withServiceRole } from "@/lib/db/session";
+import { createClient, createServiceClient } from "@/lib/supabase-server";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
 import { generateApiKey, hashApiKey, keyPrefix, type ApiKeyScope } from "@/lib/api/api-keys";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
@@ -19,8 +19,15 @@ import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
 const DISCORD_WEBHOOK_KEY_INFO = "discord-webhook-v1";
 /** Must match discord-bot/src/db.ts's own API_KEY_INFO constant exactly. */
 const DISCORD_BOT_KEY_INFO = "discord-bot-key-v1";
-/** Exactly what every /task subcommand needs - see discord-bot/src/commands/task.ts. */
+/** Exactly what every /task-* command needs - see discord-bot/src/guidon-api.ts. */
 const DISCORD_BOT_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:status", "comments:write"];
+/**
+ * Fixed, not date-stamped - same reasoning as src/app/auth/plugin-login's
+ * pluginKeyName: a stable name lets a re-link revoke the previous key by
+ * `user_id + name` instead of accumulating a new dead key every time (the
+ * date-stamped name this replaced couldn't be revoked-by-name at all).
+ */
+const DISCORD_BOT_KEY_NAME = "Discord bot";
 
 export interface DiscordIntegrationInfo {
   guildId: string | null;
@@ -233,11 +240,11 @@ export async function linkDiscordGuildToProject(
   const hash = hashApiKey(rawKey);
   const prefix = keyPrefix(rawKey);
   const encryptedKey = encryptSecret(rawKey, DISCORD_BOT_KEY_INFO);
-  const keyName = `Discord bot (auto-created ${new Date().toISOString().slice(0, 10)})`;
   // An empty name means "no name" - never store guild_name = ''.
   const normalizedName = guildName?.trim() || null;
 
   if (hasDirectDatabase()) {
+    let newKeyId: string | null = null;
     try {
       await withUser(userId, async ({ query }) => {
         // Sequential on purpose: one client, one query at a time.
@@ -266,19 +273,27 @@ export async function linkDiscordGuildToProject(
         );
         if (link.rows.length !== 1) throw new LinkFailure("Could not link the Discord server to this project.");
 
+        // Same revoke-then-insert hygiene as authorizePluginLogin, so
+        // reconnecting doesn't leave a dead key behind under Profile > API Keys.
+        await query(
+          "UPDATE api_keys SET revoked_at = now() WHERE user_id = $1 AND name = $2 AND revoked_at IS NULL",
+          [userId, DISCORD_BOT_KEY_NAME]
+        );
         const key = await query(
           `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label)
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [userId, keyName, prefix, hash, DISCORD_BOT_KEY_SCOPES, "Discord bot"]
+          [userId, DISCORD_BOT_KEY_NAME, prefix, hash, DISCORD_BOT_KEY_SCOPES, "Discord bot"]
         );
         if (key.rows.length !== 1) throw new LinkFailure("Could not create the Discord bot's API key.");
+        newKeyId = key.rows[0].id as string;
       });
     } catch (error) {
       if (isGuildUniqueViolation(error)) return { ok: false, error: DISCORD_GUILD_LINKED_ELSEWHERE_ERROR };
       if (error instanceof LinkFailure) return { ok: false, error: error.message };
       throw error;
     }
+    if (newKeyId) await markKeyAsHumanClient(newKeyId);
     return { ok: true };
   }
 
@@ -290,11 +305,20 @@ export async function linkDiscordGuildToProject(
   // window small.
   const supabase = await createClient();
 
+  // Same revoke-then-insert hygiene as authorizePluginLogin, so reconnecting
+  // doesn't leave a dead key behind under Profile > API Keys.
+  await supabase
+    .from("api_keys")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("name", DISCORD_BOT_KEY_NAME)
+    .is("revoked_at", null);
+
   const { data: keyRow, error: keyError } = await supabase
     .from("api_keys")
     .insert({
       user_id: userId,
-      name: keyName,
+      name: DISCORD_BOT_KEY_NAME,
       key_prefix: prefix,
       key_hash: hash,
       scopes: DISCORD_BOT_KEY_SCOPES,
@@ -384,7 +408,33 @@ export async function linkDiscordGuildToProject(
     return failure(linkError, "writing the new link failed");
   }
 
+  await markKeyAsHumanClient(keyRow.id as string);
   return { ok: true };
+}
+
+/**
+ * Marks the just-created Discord bot key human_client (039): the command
+ * that used it was typed by a real Discord member with Manage Server
+ * permission, the same reasoning src/app/auth/plugin-login/actions.ts
+ * documents for a plugin's key - so Guidon's AI-agent gates
+ * (can_change_status, allow_ai_auto_complete, can_complete_tasks) don't
+ * apply to it. That column has no INSERT grant for `authenticated` (039),
+ * hence the separate service-role call rather than setting it inline on
+ * insert above - kept best-effort (logged, not thrown) so a hiccup here
+ * degrades to "still AI-gated", never fails a link that otherwise
+ * succeeded.
+ */
+async function markKeyAsHumanClient(keyId: string): Promise<void> {
+  try {
+    if (hasDirectDatabase()) {
+      await withServiceRole(({ query }) => query("UPDATE api_keys SET human_client = true WHERE id = $1", [keyId]));
+      return;
+    }
+    const { error } = await createServiceClient().from("api_keys").update({ human_client: true }).eq("id", keyId);
+    if (error) throw new Error(error.message);
+  } catch (error) {
+    console.error(`linkDiscordGuildToProject: could not mark API key ${keyId} as human_client:`, error);
+  }
 }
 
 /**

@@ -41,6 +41,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local storage provider's default STORAGE_PATH (.env.example) - uploaded
+# files, not source
+/storage
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

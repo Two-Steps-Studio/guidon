@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { Toaster } from "sonner";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
@@ -82,6 +83,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen bg-background text-foreground">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <main>{children}</main>
+          {/* theme defaults to "light" and does NOT track the OS on its own
+              (ask-sonner) - "system" is required to follow prefers-color-
+              scheme, which is how the rest of the app (globals.css) picks
+              light/dark, since there's no manual theme toggle anywhere. */}
+          <Toaster theme="system" richColors closeButton />
         </NextIntlClientProvider>
       </body>
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA

@@ -27,12 +27,20 @@ export async function loadDiscordIntegrationInfo(projectId: string, userId: stri
  * server POST a task title to an arbitrary attacker-controlled endpoint
  * (SSRF via a "webhook" field is the same class of bug a redirect-URL
  * allowlist guards against elsewhere in this codebase).
+ *
+ * A bare `hostname.endsWith("discord.com")` would also accept
+ * `evildiscord.com` - a different, attacker-registerable domain that merely
+ * shares the suffix string, not a subdomain. Requiring an exact match or a
+ * `.`-prefixed subdomain closes that.
  */
 function isValidDiscordWebhookUrl(url: string): boolean {
   if (!isSafeHttpUrl(url)) return false;
   try {
     const parsed = new URL(url);
-    return parsed.protocol === "https:" && parsed.hostname.endsWith(DISCORD_WEBHOOK_HOST_SUFFIX);
+    return (
+      parsed.protocol === "https:" &&
+      (parsed.hostname === DISCORD_WEBHOOK_HOST_SUFFIX || parsed.hostname.endsWith(`.${DISCORD_WEBHOOK_HOST_SUFFIX}`))
+    );
   } catch {
     return false;
   }
