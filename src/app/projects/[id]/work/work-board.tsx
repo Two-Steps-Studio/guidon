@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { AlertCircle, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -84,7 +85,6 @@ export function WorkBoard({
     commentCounts: initialCommentCounts,
     coverImages: initialCoverImages ?? {},
   });
-  const [error, setError] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
   // View-only preference, not persisted - resets to "manual" on reload/
@@ -183,7 +183,7 @@ export function WorkBoard({
             : item
         ),
       }));
-      setError(result.error);
+      toast.error(result.error);
     }
   };
 
@@ -316,19 +316,6 @@ export function WorkBoard({
             </button>
           )}
         </div>
-
-        {error && (
-          <div
-            role="alert"
-            className="mb-4 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span className="flex-1">{error}</span>
-            <button type="button" onClick={() => setError(null)} className="underline underline-offset-2">
-              {t("dismiss")}
-            </button>
-          </div>
-        )}
 
         {!canEdit && role && (
           <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
@@ -468,6 +455,7 @@ function CreateTaskDialog({
 
       onCreated(result.task);
       onClose();
+      toast.success(t("taskCreatedToast", { title: result.task.title }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("failedToCreateTask"));
     } finally {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Check, Copy, Eye, Gavel, Loader2, Pencil, Plus, Send, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { MarkdownPreview } from "@/components/files/markdown-preview";
 import { useTranslations } from "next-intl";
 import { taskRef } from "@/lib/github/task-refs";
@@ -305,6 +306,7 @@ export function TaskDetailDialog({
 
       onDeleted(task.id);
       onClose();
+      toast.success(t("taskDeletedToast", { title: task.title }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("failedToDeleteTask"));
     } finally {

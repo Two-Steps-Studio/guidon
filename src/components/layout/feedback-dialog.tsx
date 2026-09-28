@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { AlertCircle, Loader2, MessageSquarePlus } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -30,12 +31,10 @@ export function FeedbackMenuItem() {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
 
   const reset = () => {
     setMessage("");
     setError(null);
-    setSent(false);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -49,7 +48,11 @@ export function FeedbackMenuItem() {
         setError(result.error);
         return;
       }
-      setSent(true);
+      // Closes the dialog and confirms via toast rather than an in-dialog
+      // "sent" screen - the message is already gone from view, so there's
+      // nothing left to look at inside the dialog once it worked.
+      setOpen(false);
+      toast.success(t("thanks"));
     } catch {
       setError(t("genericError"));
     } finally {
@@ -80,40 +83,29 @@ export function FeedbackMenuItem() {
             <DialogDescription>{t("dialogDescription")}</DialogDescription>
           </DialogHeader>
 
-          {sent ? (
-            <>
-              <p className="text-sm text-muted-foreground">{t("thanks")}</p>
-              <DialogFooter>
-                <Button type="button" onClick={() => setOpen(false)}>
-                  {t("close")}
-                </Button>
-              </DialogFooter>
-            </>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <Textarea
-                autoFocus
-                rows={5}
-                value={message}
-                maxLength={MAX_MESSAGE_LENGTH}
-                placeholder={t("placeholder")}
-                disabled={submitting}
-                onChange={(event) => setMessage(event.target.value)}
-              />
-              {error && (
-                <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
-                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-                  {error}
-                </p>
-              )}
-              <DialogFooter>
-                <Button type="submit" disabled={submitting || message.trim().length === 0}>
-                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("send")}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <Textarea
+              autoFocus
+              rows={5}
+              value={message}
+              maxLength={MAX_MESSAGE_LENGTH}
+              placeholder={t("placeholder")}
+              disabled={submitting}
+              onChange={(event) => setMessage(event.target.value)}
+            />
+            {error && (
+              <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+                {error}
+              </p>
+            )}
+            <DialogFooter>
+              <Button type="submit" disabled={submitting || message.trim().length === 0}>
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {t("send")}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>

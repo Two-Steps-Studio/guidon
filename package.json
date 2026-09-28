@@ -46,6 +46,7 @@
     "react-syntax-highlighter": "^15.6.6",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
+    "sonner": "^2.0.8",
     "stripe": "^22.6.2",
     "tailwind-merge": "^2.5.5",
     "zod": "^4.4.3"
