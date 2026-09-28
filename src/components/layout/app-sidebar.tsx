@@ -18,8 +18,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { FeedbackMenuItem } from "@/components/layout/feedback-dialog";
 import type { SwitchableProject } from "@/lib/data/project-access";
+import type { Theme } from "@/lib/theme";
 import {
   LayoutDashboard,
   FileText,
@@ -135,6 +137,8 @@ export interface AppSidebarProps {
   currentProjectName?: string;
   projects?: SwitchableProject[];
   projectColor?: string;
+  /** Resolved server-side from the theme cookie - see app-shell.tsx. */
+  currentTheme?: Theme;
 }
 
 export function AppSidebar({
@@ -143,6 +147,7 @@ export function AppSidebar({
   currentProjectName,
   projects,
   projectColor,
+  currentTheme = "system",
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -304,6 +309,9 @@ export function AppSidebar({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <FeedbackMenuItem />
+            <SidebarMenuItem className="px-2">
+              <ThemeSwitcher currentTheme={currentTheme} />
+            </SidebarMenuItem>
             <SidebarMenuItem className="px-2">
               <LanguageSwitcher />
             </SidebarMenuItem>
