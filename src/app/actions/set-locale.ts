@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import { isSupportedLocale } from "@/i18n/locales";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
@@ -24,13 +25,10 @@ export async function setLocale(locale: string): Promise<{ error: string | null 
   // in has no profile row to update yet - the cookie alone is enough for
   // them, and this silently no-ops rather than erroring.
   if (hasDirectDatabase()) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await withUser(user.id, ({ query }) =>
-        query("UPDATE profiles SET locale = $1 WHERE id = $2", [locale, user.id])
+    const userId = await getLocalSessionUserId();
+    if (userId) {
+      await withUser(userId, ({ query }) =>
+        query("UPDATE profiles SET locale = $1 WHERE id = $2", [locale, userId])
       );
     }
   } else {
