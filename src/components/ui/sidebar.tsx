@@ -332,7 +332,16 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        "relative flex w-full flex-1 flex-col bg-background",
+        // min-w-0: a flex item's default min-width is `auto`, not 0 - so
+        // without this, content deep inside (e.g. the kanban board's
+        // horizontally-scrolling column row) that's wider than the
+        // available space "leaks" its intrinsic width up through every
+        // ancestor missing this, growing this <main> past the sidebar's
+        // sibling width and the viewport instead of staying put and
+        // letting the deep content scroll internally. Standard fix for the
+        // flexbox min-width:auto trap; harmless on pages whose content
+        // already fits.
+        "relative flex w-full min-w-0 flex-1 flex-col bg-background",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
         className
       )}

@@ -203,7 +203,17 @@ export function WorkBoard({
 
   return (
     <>
-      <div className="mx-auto max-w-[1600px] p-6">
+      {/* w-full (not just mx-auto + max-w): this page is a flex item of
+          <main> (app-sidebar's layout, flex-col with the default
+          align-items:stretch) - but auto margins on a flex item's cross
+          axis override stretch, sizing it to fit-content instead. With a
+          kanban board wide enough to need its own internal horizontal
+          scroll (overflow-x-auto below), that fit-content width grew this
+          whole wrapper past the viewport, so the entire page scrolled
+          horizontally (sidebar included) instead of just the board.
+          min-w-0 additionally guards the same board's overflow-x-auto
+          against the flex-item min-width:auto default. */}
+      <div className="mx-auto min-w-0 w-full max-w-[1600px] p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
