@@ -20,14 +20,13 @@ what's genuinely self-hostable today and what isn't yet.
 | Setup | Sign up | `docker compose up -d` | `npm install && npm run dev` |
 | Details | — | [docs/self-hosting.md](./docs/self-hosting.md) | below |
 
-**Read before choosing self-hosted:** a Supabase project is currently
-required for sign-in and data access on *every* path, including self-hosted
-Docker Compose — the self-hosted PostgreSQL backend is built, migrated, and
-independently tested, but the running application doesn't read/write
-through it yet. This is explained in full, with exactly what is and isn't
-wired up, in [docs/self-hosting.md](./docs/self-hosting.md#read-this-first-current-state).
-Storage (`STORAGE_PROVIDER=local`) and AI (`AI_PROVIDER=ollama`) genuinely
-are self-hostable today.
+**Before choosing self-hosted:** sign-in, data access, storage
+(`STORAGE_PROVIDER=local`), and AI (`AI_PROVIDER=ollama`) are all genuinely
+self-hostable today — a plain PostgreSQL with zero Supabase software
+running is enough to sign up, create a project, and use the whole
+application, verified live against a real `docker compose up` stack, not
+just by reading the code. Full details, including exactly what runs where,
+in [docs/self-hosting.md](./docs/self-hosting.md#read-this-first-current-state).
 
 ## Quickstart — Cloud
 
