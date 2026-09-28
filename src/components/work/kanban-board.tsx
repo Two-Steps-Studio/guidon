@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -62,6 +64,26 @@ interface DropTarget {
   index: number;
 }
 
+/**
+ * A card being dragged, tracked by pointer position (viewport coordinates)
+ * rather than the browser's own native drag ghost - see task-card.tsx's
+ * onDragStart/onDragMove doc comment for why. `x`/`y` are the ghost's
+ * top-left, already adjusted for where within the card the user grabbed it
+ * (grabOffsetX/Y), so the ghost stays glued to the pointer instead of
+ * snapping to the card's corner or center on pickup.
+ */
+interface PointerDrag {
+  task: Task;
+  width: number;
+  height: number;
+  grabOffsetX: number;
+  grabOffsetY: number;
+  x: number;
+  y: number;
+}
+
+function noop() {}
+
 export function KanbanBoard({
   tasks,
   members,
@@ -78,14 +100,27 @@ export function KanbanBoard({
   projectColor,
 }: KanbanBoardProps) {
   const t = useTranslations("work");
-  const [draggingTask, setDraggingTask] = useState<Task | null>(null);
+  const [pointerDrag, setPointerDrag] = useState<PointerDrag | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const draggingTask = pointerDrag?.task ?? null;
+
+  // Mirrors of the two state values above, read from inside stable
+  // (empty/near-empty-deps) callbacks that fire on every pointermove tick -
+  // see handleDragMove/handleDragEnd. Using state directly there would
+  // either go stale (closure captured at callback-creation time) or force
+  // the callback to depend on the very state it updates, changing identity
+  // every tick and breaking every TaskCard's memo() (see task-card.tsx's
+  // doc comment on TaskCardComponent).
+  const pointerDragRef = useRef<PointerDrag | null>(null);
+  const dropTargetRef = useRef<DropTarget | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Dragging is disabled while sorted by due date - see sortMode's doc
   // comment above.
   const canDrag = canEdit && sortMode === "manual";
 
-  // Memoized so a dropTarget-only re-render (dragover fires many times per
+  // Memoized so a dropTarget-only re-render (drag-move fires many times per
   // second while dragging) doesn't recompute these - and, just as
   // importantly, so TaskCard's memo() below actually holds: without this,
   // `groups[status]` and `membersById.get(...)` would hand out fresh
@@ -96,23 +131,6 @@ export function KanbanBoard({
   );
   const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
 
-  const resetDrag = useCallback(() => {
-    setDraggingTask(null);
-    setDropTarget(null);
-  }, []);
-
-  // Native HTML5 drag-and-drop (handleDrop below) has no keyboard
-  // equivalent at all - a keyboard-only user could change a task's status
-  // via the detail dialog's select, but could never reorder within a
-  // column. TaskCard's Alt+Up/Alt+Down handler calls this with the same
-  // sortOrderForPosition() math handleDrop already uses, just computing the
-  // target index from "one above/below current" instead of a drop zone.
-  //
-  // useCallback (not just for its own sake): this is passed to every
-  // TaskCard as onReorder, so it has to stay referentially stable across
-  // the dropTarget-driven re-renders above for TaskCard's memo() to hold -
-  // an inline function here would make every card look "changed" on every
-  // dragover tick regardless of memo.
   const handleReorder = useCallback(
     async (task: Task, direction: "up" | "down") => {
       if (!canDrag) return;
@@ -130,14 +148,14 @@ export function KanbanBoard({
     [canDrag, groups, onMoveTask]
   );
 
-  // Touch-friendly alternative to dragging (native HTML5 drag-and-drop does
-  // not fire on touch devices at all, so this is the only way to move a
-  // card between columns on mobile short of opening the task dialog and
-  // changing its Status field). Appends to the end of the target column,
-  // same as dropping past the last card - available whenever canEdit is,
-  // including in due_date sort mode where dragging itself is disabled (see
-  // this component's own sortMode doc comment: status changes still work
-  // there, just not by dragging).
+  // Touch-friendly alternative to dragging (a very short/careless touch may
+  // never clear the long-press-to-arm delay in task-card.tsx, so this stays
+  // as the reliable, no-timing-required way to move a card between columns
+  // on mobile). Appends to the end of the target column, same as dropping
+  // past the last card - available whenever canEdit is, including in
+  // due_date sort mode where dragging itself is disabled (see this
+  // component's own sortMode doc comment: status changes still work there,
+  // just not by dragging).
   const handleMoveTo = useCallback(
     async (task: Task, status: TaskStatus) => {
       if (!canEdit || normalizeTaskStatus(task.status) === status) return;
@@ -148,27 +166,150 @@ export function KanbanBoard({
     [canEdit, groups, onMoveTask]
   );
 
-  const handleDrop = async (status: TaskStatus, index: number) => {
-    const task = draggingTask;
-    resetDrag();
+  const handleDrop = useCallback(
+    async (task: Task, status: TaskStatus, index: number) => {
+      if (!canDrag) return;
+      const currentStatus = normalizeTaskStatus(task.status);
+      const column = groups[status];
+      const currentIndex = column.findIndex((item) => item.id === task.id);
 
-    if (!task || !canDrag) return;
+      // No-op: dropped exactly where it already sits.
+      if (
+        currentStatus === status &&
+        (currentIndex === index || currentIndex === index - 1)
+      ) {
+        return;
+      }
 
-    const currentStatus = normalizeTaskStatus(task.status);
-    const column = groups[status];
-    const currentIndex = column.findIndex((item) => item.id === task.id);
+      const sortOrder = sortOrderForPosition(column, index, task.id);
+      await onMoveTask(task, status, sortOrder);
+    },
+    [canDrag, groups, onMoveTask]
+  );
 
-    // No-op: dropped exactly where it already sits.
-    if (
-      currentStatus === status &&
-      (currentIndex === index || currentIndex === index - 1)
-    ) {
-      return;
+  // handleDragEnd (passed to every TaskCard as a stable, empty-deps
+  // callback - see its own comment below) needs to call the *current*
+  // handleDrop, which itself depends on `groups`/onMoveTask and so gets a
+  // new identity on almost every render. A ref sidesteps the tradeoff
+  // between "stale closure" and "breaks memo for every card on every
+  // unrelated task update".
+  const handleDropRef = useRef(handleDrop);
+  useEffect(() => {
+    handleDropRef.current = handleDrop;
+  }, [handleDrop]);
+
+  const cancelDrag = useCallback(() => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
+    pointerDragRef.current = null;
+    dropTargetRef.current = null;
+    setPointerDrag(null);
+    setDropTarget(null);
+  }, []);
 
-    const sortOrder = sortOrderForPosition(column, index, task.id);
-    await onMoveTask(task, status, sortOrder);
-  };
+  // Every drag must be interruptible, including by backing out entirely -
+  // Escape cancels without committing a move, from anywhere on the page.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && pointerDragRef.current) {
+        cancelDrag();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [cancelDrag]);
+
+  // Stable (no deps that change across renders) so TaskCard's memo() holds
+  // for every card except the one actually being dragged.
+  const handleDragStart = useCallback(
+    (task: Task, element: HTMLElement, clientX: number, clientY: number) => {
+      const rect = element.getBoundingClientRect();
+      const next: PointerDrag = {
+        task,
+        width: rect.width,
+        height: rect.height,
+        grabOffsetX: clientX - rect.left,
+        grabOffsetY: clientY - rect.top,
+        x: rect.left,
+        y: rect.top,
+      };
+      pointerDragRef.current = next;
+      setPointerDrag(next);
+    },
+    []
+  );
+
+  // Also stable. Throttled to one state update per animation frame - a
+  // pointer can fire dozens of move events per second, far more than the
+  // display can show, and each one otherwise re-renders the whole board.
+  const handleDragMove = useCallback((clientX: number, clientY: number) => {
+    pendingPosRef.current = { x: clientX, y: clientY };
+    if (rafRef.current != null) return;
+
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const pos = pendingPosRef.current;
+      const drag = pointerDragRef.current;
+      if (!pos || !drag) return;
+
+      const nextGhost: PointerDrag = {
+        ...drag,
+        x: pos.x - drag.grabOffsetX,
+        y: pos.y - drag.grabOffsetY,
+      };
+      pointerDragRef.current = nextGhost;
+      setPointerDrag(nextGhost);
+
+      // Hit-test by geometry, not by which DOM node happens to be
+      // underneath - the ghost itself is pointer-events:none, so
+      // elementFromPoint always resolves to real board content.
+      const el = document.elementFromPoint(pos.x, pos.y);
+      const columnEl = el?.closest<HTMLElement>("[data-column-status]") ?? null;
+      if (!columnEl) return;
+
+      const status = columnEl.dataset.columnStatus as TaskStatus;
+      const cardEls = Array.from(
+        columnEl.querySelectorAll<HTMLElement>("[data-card-id]")
+      ).filter((card) => card.dataset.cardId !== drag.task.id);
+
+      let index = cardEls.length;
+      for (let i = 0; i < cardEls.length; i += 1) {
+        const cardRect = cardEls[i].getBoundingClientRect();
+        if (pos.y < cardRect.top + cardRect.height / 2) {
+          index = i;
+          break;
+        }
+      }
+
+      const next: DropTarget = { status, index };
+      if (dropTargetRef.current?.status !== next.status || dropTargetRef.current?.index !== next.index) {
+        dropTargetRef.current = next;
+        setDropTarget(next);
+      }
+    });
+  }, []);
+
+  // Also stable - reads the just-dropped task/target from refs rather than
+  // closing over the state values, for the same memo-preserving reason as
+  // handleDragStart/handleDragMove above.
+  const handleDragEnd = useCallback(() => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    const drag = pointerDragRef.current;
+    const target = dropTargetRef.current;
+    pointerDragRef.current = null;
+    dropTargetRef.current = null;
+    setPointerDrag(null);
+    setDropTarget(null);
+    if (!drag || !target) return;
+    void handleDropRef.current(drag.task, target.status, target.index);
+  }, []);
+
+  const ghostAssignee = draggingTask?.assignee_id ? membersById.get(draggingTask.assignee_id) : undefined;
 
   return (
     <div
@@ -183,6 +324,7 @@ export function KanbanBoard({
         return (
           <section
             key={column.status}
+            data-column-status={column.status}
             role="listitem"
             aria-label={t("columnAria", { label: column.label, count: columnTasks.length })}
             className={cn(
@@ -190,33 +332,6 @@ export function KanbanBoard({
               isTargetColumn && "border-primary/40"
             )}
             style={isTargetColumn && projectColor ? { borderColor: projectColor } : undefined}
-            onDragOver={(event) => {
-              if (!draggingTask || !canDrag) return;
-              event.preventDefault();
-              event.dataTransfer.dropEffect = "move";
-              // Dropping on column padding appends to the end.
-              if (!isTargetColumn) {
-                setDropTarget((prev) => {
-                  if (prev?.status === column.status && prev.index === columnTasks.length) {
-                    return prev;
-                  }
-                  return {
-                    status: column.status,
-                    index: columnTasks.length,
-                  };
-                });
-              }
-            }}
-            onDrop={(event) => {
-              if (!draggingTask || !canDrag) return;
-              event.preventDefault();
-              void handleDrop(
-                column.status,
-                dropTarget?.status === column.status
-                  ? dropTarget.index
-                  : columnTasks.length
-              );
-            }}
           >
             <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
               <span
@@ -253,15 +368,7 @@ export function KanbanBoard({
                       draggingTask?.id !== task.id
                     }
                     enabled={Boolean(draggingTask) && canDrag}
-                    onEnter={() =>
-                      setDropTarget((prev) => {
-                        if (prev?.status === column.status && prev.index === index) {
-                          return prev;
-                        }
-                        return { status: column.status, index };
-                      })
-                    }
-                    onDrop={() => void handleDrop(column.status, index)}
+                    grow={false}
                     projectColor={projectColor}
                   />
                   <TaskCard
@@ -277,8 +384,9 @@ export function KanbanBoard({
                     draggable={canDrag}
                     isDragging={draggingTask?.id === task.id}
                     onOpen={onOpenTask}
-                    onDragStart={setDraggingTask}
-                    onDragEnd={resetDrag}
+                    onDragStart={handleDragStart}
+                    onDragMove={handleDragMove}
+                    onDragEnd={handleDragEnd}
                     onReorder={canDrag ? handleReorder : undefined}
                     canMoveUp={index > 0}
                     canMoveDown={index < columnTasks.length - 1}
@@ -293,18 +401,6 @@ export function KanbanBoard({
                   isTargetColumn && dropTarget?.index === columnTasks.length
                 }
                 enabled={Boolean(draggingTask) && canDrag}
-                onEnter={() =>
-                  setDropTarget((prev) => {
-                    if (prev?.status === column.status && prev.index === columnTasks.length) {
-                      return prev;
-                    }
-                    return {
-                      status: column.status,
-                      index: columnTasks.length,
-                    };
-                  })
-                }
-                onDrop={() => void handleDrop(column.status, columnTasks.length)}
                 grow
                 projectColor={projectColor}
               />
@@ -318,26 +414,67 @@ export function KanbanBoard({
           </section>
         );
       })}
+
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {pointerDrag && draggingTask && (
+              <motion.div
+                key={draggingTask.id}
+                initial={{ scale: 1, opacity: 0.9, boxShadow: "0 1px 2px rgba(0,0,0,0.08)" }}
+                animate={{
+                  scale: 1.03,
+                  opacity: 1,
+                  boxShadow: "0 24px 40px -12px rgba(0,0,0,0.35)",
+                }}
+                exit={{ scale: 0.97, opacity: 0, transition: { duration: 0.15, ease: "easeOut" } }}
+                transition={{ type: "spring", damping: 30, stiffness: 420 }}
+                style={{
+                  position: "fixed",
+                  left: pointerDrag.x,
+                  top: pointerDrag.y,
+                  width: pointerDrag.width,
+                  zIndex: 100,
+                  pointerEvents: "none",
+                }}
+              >
+                <TaskCard
+                  task={draggingTask}
+                  assignee={ghostAssignee}
+                  commentCount={commentCounts[draggingTask.id]}
+                  coverImageUrl={coverImages[draggingTask.id]}
+                  subtaskProgress={subtaskCounts[draggingTask.id]}
+                  draggable={false}
+                  isDragging={false}
+                  onOpen={noop}
+                  onDragStart={noop}
+                  onDragMove={noop}
+                  onDragEnd={noop}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 }
 
 /**
  * Insertion point between cards. Kept a few pixels tall when idle so it is
- * easy to hit, and it expands into a visible rule while hovered.
+ * easy to hit, and it expands into a visible rule while hovered. Purely
+ * presentational - kanban-board.tsx computes `active` from the dragged
+ * pointer's position via geometric hit-testing (handleDragMove), not from
+ * events fired on this element.
  */
 function DropZone({
   active,
   enabled,
-  onEnter,
-  onDrop,
   grow = false,
   projectColor,
 }: {
   active: boolean;
   enabled: boolean;
-  onEnter: () => void;
-  onDrop: () => void;
   grow?: boolean;
   projectColor?: string;
 }) {
@@ -346,23 +483,7 @@ function DropZone({
   }
 
   return (
-    <div
-      onDragOver={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        onEnter();
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        onDrop();
-      }}
-      className={cn(
-        "transition-all",
-        grow ? "min-h-8 flex-1" : "h-2",
-        active && "h-2"
-      )}
-    >
+    <div className={cn("transition-all", grow ? "min-h-8 flex-1" : "h-2", active && "h-2")}>
       <div
         className={cn(
           "h-0.5 rounded-full transition-colors",
