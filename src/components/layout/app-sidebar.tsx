@@ -45,19 +45,19 @@ import {
   MessageSquarePlus,
 } from "lucide-react";
 
-const GLOBAL_NAV = [
+export const GLOBAL_NAV = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
 ] as const;
 
-interface ProjectNavItem {
+export interface ProjectNavItem {
   href: string;
   labelKey: string;
   icon: typeof LayoutDashboard;
 }
 
-interface ProjectNavGroup {
+export interface ProjectNavGroup {
   labelKey: string | null;
   items: ProjectNavItem[];
 }
@@ -79,7 +79,7 @@ interface ProjectNavGroup {
  * typo'd `labelKey` is a compile error against the `next-intl` message
  * augmentation in global.d.ts.
  */
-const PROJECT_NAV = [
+export const PROJECT_NAV = [
   {
     labelKey: null,
     items: [{ href: "", labelKey: "overview", icon: LayoutDashboard }],

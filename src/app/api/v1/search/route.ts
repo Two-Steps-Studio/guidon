@@ -409,7 +409,18 @@ export async function GET(request: NextRequest) {
     // through to a raw Postgres "invalid input syntax" error below.
     if (projectId && !isValidUuid(projectId)) return invalidIdResponse('project_id');
 
-    const types = entityTypes ? entityTypes.split(',') : ['task', 'decision', 'memory', 'file', 'source'];
+    // Every project-scoped type below requires `projectId` to run at all
+    // (see searchLocal/searchSupabase) - so a caller that omits both
+    // project_id and entity_types (the "search everything I can see" case)
+    // previously got the project-scoped default list back, none of which
+    // can ever match without a project_id, and 'project' - the one type
+    // that runs without one - was never in that default. The call
+    // silently returned zero results no matter the query.
+    const types = entityTypes
+      ? entityTypes.split(',')
+      : projectId
+        ? ['task', 'decision', 'memory', 'file', 'source']
+        : ['project'];
 
     const results = hasDirectDatabase()
       ? await searchLocal(auth.userId, query, projectId, types)

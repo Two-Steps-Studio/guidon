@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -87,6 +88,25 @@ export function WorkBoard({
   });
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
+
+  // Deep link from the command palette (command-palette.tsx's resultHref) -
+  // `?openTask=<id>` opens that task's detail dialog on arrival, same as
+  // clicking its card would. Stripped from the URL right after so a
+  // refresh doesn't reopen it and the address bar doesn't look stale.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const taskId = searchParams.get("openTask");
+    if (!taskId) return;
+    const task = state.tasks.find((item) => item.id === taskId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (task) setOpenTask(task);
+    router.replace(`/projects/${projectId}/work`, { scroll: false });
+    // Only ever meant to fire once, off the URL this page loaded with - not
+    // on every state.tasks update (which would refire a stale task lookup
+    // after the id has already been stripped from the URL).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // View-only preference, not persisted - resets to "manual" on reload/
   // navigation. See KanbanBoard's sortMode prop doc comment for why
   // dragging is disabled while sorted by due date.

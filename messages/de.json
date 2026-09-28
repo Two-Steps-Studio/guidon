@@ -104,6 +104,21 @@
     "switchProject": "Projekt wechseln",
     "calendar": "Kalender"
   },
+  "commandPalette": {
+    "triggerLabel": "Suchen...",
+    "title": "Befehlspalette",
+    "description": "Suchen und zu allem springen",
+    "placeholder": "Aufgaben, Entscheidungen, Dateien durchsuchen...",
+    "navigateGroup": "Navigieren",
+    "resultsGroup": "Ergebnisse",
+    "noResults": "Keine Ergebnisse gefunden.",
+    "entityType_task": "Aufgabe",
+    "entityType_decision": "Entscheidung",
+    "entityType_memory": "Erinnerung",
+    "entityType_file": "Datei",
+    "entityType_source": "Quelle",
+    "entityType_project": "Projekt"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcomeBack": "Willkommen zurück, {name}",

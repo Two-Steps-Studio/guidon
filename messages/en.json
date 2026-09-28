@@ -104,6 +104,21 @@
     "switchProject": "Switch project",
     "calendar": "Calendar"
   },
+  "commandPalette": {
+    "triggerLabel": "Search...",
+    "title": "Command palette",
+    "description": "Search and jump to anything",
+    "placeholder": "Search tasks, decisions, files...",
+    "navigateGroup": "Navigate",
+    "resultsGroup": "Results",
+    "noResults": "No results found.",
+    "entityType_task": "Task",
+    "entityType_decision": "Decision",
+    "entityType_memory": "Memory",
+    "entityType_file": "File",
+    "entityType_source": "Source",
+    "entityType_project": "Project"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcomeBack": "Welcome back, {name}",
