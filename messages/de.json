@@ -104,6 +104,28 @@
     "switchProject": "Projekt wechseln",
     "calendar": "Kalender"
   },
+  "commandPalette": {
+    "triggerLabel": "Suchen...",
+    "title": "Befehlspalette",
+    "description": "Suchen und zu allem springen",
+    "placeholder": "Aufgaben, Entscheidungen, Dateien durchsuchen...",
+    "navigateGroup": "Navigieren",
+    "resultsGroup": "Ergebnisse",
+    "noResults": "Keine Ergebnisse gefunden.",
+    "entityType_task": "Aufgabe",
+    "entityType_decision": "Entscheidung",
+    "entityType_memory": "Erinnerung",
+    "entityType_file": "Datei",
+    "entityType_source": "Quelle",
+    "entityType_project": "Projekt"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "empty": "Noch keine Benachrichtigungen.",
+    "markAllRead": "Alle als gelesen markieren",
+    "bellAria": "Benachrichtigungen",
+    "bellAriaUnread": "Benachrichtigungen ({count} ungelesen)"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcomeBack": "Willkommen zurück, {name}",
@@ -1033,6 +1055,10 @@
     "emailLabel": "E-Mail",
     "emailHelp": "Die E-Mail-Adresse kann hier nicht geändert werden.",
     "languageLabel": "Sprache",
+    "themeLabel": "Erscheinungsbild",
+    "theme_light": "Hell",
+    "theme_dark": "Dunkel",
+    "theme_system": "System",
     "saving": "Speichern...",
     "saveChanges": "Änderungen speichern",
     "apiKeysTitle": "API-Schlüssel",

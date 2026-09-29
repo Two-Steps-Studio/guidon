@@ -104,6 +104,28 @@
     "switchProject": "Przełącz projekt",
     "calendar": "Kalendarz"
   },
+  "commandPalette": {
+    "triggerLabel": "Szukaj...",
+    "title": "Paleta poleceń",
+    "description": "Szukaj i przechodź do dowolnego elementu",
+    "placeholder": "Szukaj zadań, decyzji, plików...",
+    "navigateGroup": "Nawigacja",
+    "resultsGroup": "Wyniki",
+    "noResults": "Nie znaleziono wyników.",
+    "entityType_task": "Zadanie",
+    "entityType_decision": "Decyzja",
+    "entityType_memory": "Pamięć",
+    "entityType_file": "Plik",
+    "entityType_source": "Źródło",
+    "entityType_project": "Projekt"
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "empty": "Brak powiadomień.",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "bellAria": "Powiadomienia",
+    "bellAriaUnread": "Powiadomienia ({count} nieprzeczytanych)"
+  },
   "dashboard": {
     "title": "Pulpit",
     "welcomeBack": "Witaj ponownie, {name}",
@@ -1033,6 +1055,10 @@
     "emailLabel": "E-mail",
     "emailHelp": "E-maila nie można zmienić w tym miejscu.",
     "languageLabel": "Język",
+    "themeLabel": "Motyw",
+    "theme_light": "Jasny",
+    "theme_dark": "Ciemny",
+    "theme_system": "Systemowy",
     "saving": "Zapisywanie...",
     "saveChanges": "Zapisz zmiany",
     "apiKeysTitle": "Klucze API",

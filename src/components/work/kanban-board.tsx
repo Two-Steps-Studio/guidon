@@ -84,6 +84,20 @@ interface PointerDrag {
 
 function noop() {}
 
+// Auto-scroll while a drag's pointer sits near a scroll container's edge -
+// the board horizontally, the hovered column vertically - so a card can be
+// dragged to a column or a position that's currently off-screen, the same
+// way Trello/Linear-style boards do. Speed ramps up the closer the pointer
+// is to the edge; outside the edge zone it's 0.
+const AUTO_SCROLL_EDGE_PX = 64;
+const AUTO_SCROLL_MAX_SPEED_PX = 14; // per animation frame, so ~840px/s at 60fps at the very edge
+
+function edgeScrollDelta(distanceFromEdge: number): number {
+  if (distanceFromEdge >= AUTO_SCROLL_EDGE_PX) return 0;
+  const proximity = 1 - Math.max(distanceFromEdge, 0) / AUTO_SCROLL_EDGE_PX;
+  return Math.round(proximity * AUTO_SCROLL_MAX_SPEED_PX);
+}
+
 export function KanbanBoard({
   tasks,
   members,
@@ -115,6 +129,8 @@ export function KanbanBoard({
   const dropTargetRef = useRef<DropTarget | null>(null);
   const rafRef = useRef<number | null>(null);
   const pendingPosRef = useRef<{ x: number; y: number } | null>(null);
+  const boardScrollRef = useRef<HTMLDivElement | null>(null);
+  const autoScrollRafRef = useRef<number | null>(null);
 
   // Dragging is disabled while sorted by due date - see sortMode's doc
   // comment above.
@@ -203,6 +219,10 @@ export function KanbanBoard({
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
+    if (autoScrollRafRef.current != null) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
+    }
     pointerDragRef.current = null;
     dropTargetRef.current = null;
     setPointerDrag(null);
@@ -221,6 +241,93 @@ export function KanbanBoard({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [cancelDrag]);
 
+  // Hit-test by geometry, not by which DOM node happens to be underneath -
+  // the ghost itself is pointer-events:none, so elementFromPoint always
+  // resolves to real board content. Shared by handleDragMove (runs on
+  // pointer movement) and runAutoScroll (runs on a timer while the pointer
+  // sits still near an edge but the column scrolls underneath it) - either
+  // one can change what's under the pointer.
+  const updateDropTarget = useCallback((pos: { x: number; y: number }, draggedTaskId: string) => {
+    const el = document.elementFromPoint(pos.x, pos.y);
+    const columnEl = el?.closest<HTMLElement>("[data-column-status]") ?? null;
+    if (!columnEl) return;
+
+    const status = columnEl.dataset.columnStatus as TaskStatus;
+    const cardEls = Array.from(
+      columnEl.querySelectorAll<HTMLElement>("[data-card-id]")
+    ).filter((card) => card.dataset.cardId !== draggedTaskId);
+
+    let index = cardEls.length;
+    for (let i = 0; i < cardEls.length; i += 1) {
+      const cardRect = cardEls[i].getBoundingClientRect();
+      if (pos.y < cardRect.top + cardRect.height / 2) {
+        index = i;
+        break;
+      }
+    }
+
+    const next: DropTarget = { status, index };
+    if (dropTargetRef.current?.status !== next.status || dropTargetRef.current?.index !== next.index) {
+      dropTargetRef.current = next;
+      setDropTarget(next);
+    }
+  }, []);
+
+  // Runs every frame for the duration of a drag (started in handleDragStart,
+  // stopped in handleDragEnd/cancelDrag) - not just in response to pointer
+  // movement, since the whole point is to keep scrolling while the pointer
+  // holds still near an edge. Scrolls the board horizontally and whichever
+  // column is currently under the pointer vertically.
+  //
+  // Recurses via `runAutoScrollRef` rather than closing over its own
+  // `useCallback` binding - referencing a useCallback-memoized function from
+  // inside its own body doesn't see later updates to that binding (and the
+  // lint rule for exactly that flags it), whereas a ref always reads the
+  // current function.
+  const runAutoScrollRef = useRef<() => void>(() => {});
+  const runAutoScroll = useCallback(() => {
+    const drag = pointerDragRef.current;
+    const pos = pendingPosRef.current;
+    if (!drag || !pos) {
+      autoScrollRafRef.current = null;
+      return;
+    }
+
+    let scrolled = false;
+
+    const board = boardScrollRef.current;
+    if (board) {
+      const rect = board.getBoundingClientRect();
+      const dx = edgeScrollDelta(rect.right - pos.x) - edgeScrollDelta(pos.x - rect.left);
+      if (dx !== 0) {
+        board.scrollLeft += dx;
+        scrolled = true;
+      }
+    }
+
+    const hoveredColumn = document.elementFromPoint(pos.x, pos.y)?.closest<HTMLElement>("[data-column-status]");
+    const columnScroll = hoveredColumn?.querySelector<HTMLElement>("[data-column-scroll]") ?? null;
+    if (columnScroll) {
+      const rect = columnScroll.getBoundingClientRect();
+      const dy = edgeScrollDelta(rect.bottom - pos.y) - edgeScrollDelta(pos.y - rect.top);
+      if (dy !== 0) {
+        columnScroll.scrollTop += dy;
+        scrolled = true;
+      }
+    }
+
+    // The pointer didn't necessarily move, but the content under it just
+    // did - recompute what it's now hovering.
+    if (scrolled) {
+      updateDropTarget(pos, drag.task.id);
+    }
+
+    autoScrollRafRef.current = requestAnimationFrame(() => runAutoScrollRef.current());
+  }, [updateDropTarget]);
+  useEffect(() => {
+    runAutoScrollRef.current = runAutoScroll;
+  }, [runAutoScroll]);
+
   // Stable (no deps that change across renders) so TaskCard's memo() holds
   // for every card except the one actually being dragged.
   const handleDragStart = useCallback(
@@ -236,60 +343,41 @@ export function KanbanBoard({
         y: rect.top,
       };
       pointerDragRef.current = next;
+      pendingPosRef.current = { x: clientX, y: clientY };
       setPointerDrag(next);
+      if (autoScrollRafRef.current == null) {
+        autoScrollRafRef.current = requestAnimationFrame(runAutoScroll);
+      }
     },
-    []
+    [runAutoScroll]
   );
 
   // Also stable. Throttled to one state update per animation frame - a
   // pointer can fire dozens of move events per second, far more than the
   // display can show, and each one otherwise re-renders the whole board.
-  const handleDragMove = useCallback((clientX: number, clientY: number) => {
-    pendingPosRef.current = { x: clientX, y: clientY };
-    if (rafRef.current != null) return;
+  const handleDragMove = useCallback(
+    (clientX: number, clientY: number) => {
+      pendingPosRef.current = { x: clientX, y: clientY };
+      if (rafRef.current != null) return;
 
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
-      const pos = pendingPosRef.current;
-      const drag = pointerDragRef.current;
-      if (!pos || !drag) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const pos = pendingPosRef.current;
+        const drag = pointerDragRef.current;
+        if (!pos || !drag) return;
 
-      const nextGhost: PointerDrag = {
-        ...drag,
-        x: pos.x - drag.grabOffsetX,
-        y: pos.y - drag.grabOffsetY,
-      };
-      pointerDragRef.current = nextGhost;
-      setPointerDrag(nextGhost);
-
-      // Hit-test by geometry, not by which DOM node happens to be
-      // underneath - the ghost itself is pointer-events:none, so
-      // elementFromPoint always resolves to real board content.
-      const el = document.elementFromPoint(pos.x, pos.y);
-      const columnEl = el?.closest<HTMLElement>("[data-column-status]") ?? null;
-      if (!columnEl) return;
-
-      const status = columnEl.dataset.columnStatus as TaskStatus;
-      const cardEls = Array.from(
-        columnEl.querySelectorAll<HTMLElement>("[data-card-id]")
-      ).filter((card) => card.dataset.cardId !== drag.task.id);
-
-      let index = cardEls.length;
-      for (let i = 0; i < cardEls.length; i += 1) {
-        const cardRect = cardEls[i].getBoundingClientRect();
-        if (pos.y < cardRect.top + cardRect.height / 2) {
-          index = i;
-          break;
-        }
-      }
-
-      const next: DropTarget = { status, index };
-      if (dropTargetRef.current?.status !== next.status || dropTargetRef.current?.index !== next.index) {
-        dropTargetRef.current = next;
-        setDropTarget(next);
-      }
-    });
-  }, []);
+        const nextGhost: PointerDrag = {
+          ...drag,
+          x: pos.x - drag.grabOffsetX,
+          y: pos.y - drag.grabOffsetY,
+        };
+        pointerDragRef.current = nextGhost;
+        setPointerDrag(nextGhost);
+        updateDropTarget(pos, drag.task.id);
+      });
+    },
+    [updateDropTarget]
+  );
 
   // Also stable - reads the just-dropped task/target from refs rather than
   // closing over the state values, for the same memo-preserving reason as
@@ -298,6 +386,10 @@ export function KanbanBoard({
     if (rafRef.current != null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
+    }
+    if (autoScrollRafRef.current != null) {
+      cancelAnimationFrame(autoScrollRafRef.current);
+      autoScrollRafRef.current = null;
     }
     const drag = pointerDragRef.current;
     const target = dropTargetRef.current;
@@ -309,10 +401,20 @@ export function KanbanBoard({
     void handleDropRef.current(drag.task, target.status, target.index);
   }, []);
 
+  // Stop the persistent auto-scroll loop if the board unmounts mid-drag
+  // (e.g. navigating away) rather than letting a stray rAF loop run on.
+  useEffect(() => {
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      if (autoScrollRafRef.current != null) cancelAnimationFrame(autoScrollRafRef.current);
+    };
+  }, []);
+
   const ghostAssignee = draggingTask?.assignee_id ? membersById.get(draggingTask.assignee_id) : undefined;
 
   return (
     <div
+      ref={boardScrollRef}
       className="flex gap-4 overflow-x-auto pb-4"
       role="list"
       aria-label={t("taskBoardAria")}
@@ -358,7 +460,10 @@ export function KanbanBoard({
               )}
             </header>
 
-            <div className="flex min-h-32 max-h-[calc(100vh-16rem)] flex-1 flex-col gap-2 overflow-y-auto p-2">
+            <div
+              data-column-scroll
+              className="flex min-h-32 max-h-[calc(100vh-16rem)] flex-1 flex-col gap-2 overflow-y-auto p-2"
+            >
               {columnTasks.map((task, index) => (
                 <div key={task.id}>
                   <DropZone

@@ -18,8 +18,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { FeedbackMenuItem } from "@/components/layout/feedback-dialog";
 import type { SwitchableProject } from "@/lib/data/project-access";
+import type { Theme } from "@/lib/theme";
 import {
   LayoutDashboard,
   FileText,
@@ -43,19 +45,19 @@ import {
   MessageSquarePlus,
 } from "lucide-react";
 
-const GLOBAL_NAV = [
+export const GLOBAL_NAV = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
 ] as const;
 
-interface ProjectNavItem {
+export interface ProjectNavItem {
   href: string;
   labelKey: string;
   icon: typeof LayoutDashboard;
 }
 
-interface ProjectNavGroup {
+export interface ProjectNavGroup {
   labelKey: string | null;
   items: ProjectNavItem[];
 }
@@ -77,7 +79,7 @@ interface ProjectNavGroup {
  * typo'd `labelKey` is a compile error against the `next-intl` message
  * augmentation in global.d.ts.
  */
-const PROJECT_NAV = [
+export const PROJECT_NAV = [
   {
     labelKey: null,
     items: [{ href: "", labelKey: "overview", icon: LayoutDashboard }],
@@ -135,6 +137,8 @@ export interface AppSidebarProps {
   currentProjectName?: string;
   projects?: SwitchableProject[];
   projectColor?: string;
+  /** Resolved server-side from the theme cookie - see app-shell.tsx. */
+  currentTheme?: Theme;
 }
 
 export function AppSidebar({
@@ -143,6 +147,7 @@ export function AppSidebar({
   currentProjectName,
   projects,
   projectColor,
+  currentTheme = "system",
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -304,6 +309,9 @@ export function AppSidebar({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <FeedbackMenuItem />
+            <SidebarMenuItem className="px-2">
+              <ThemeSwitcher currentTheme={currentTheme} />
+            </SidebarMenuItem>
             <SidebarMenuItem className="px-2">
               <LanguageSwitcher />
             </SidebarMenuItem>

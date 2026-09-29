@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -87,6 +88,25 @@ export function WorkBoard({
   });
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
+
+  // Deep link from the command palette (command-palette.tsx's resultHref) -
+  // `?openTask=<id>` opens that task's detail dialog on arrival, same as
+  // clicking its card would. Stripped from the URL right after so a
+  // refresh doesn't reopen it and the address bar doesn't look stale.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const taskId = searchParams.get("openTask");
+    if (!taskId) return;
+    const task = state.tasks.find((item) => item.id === taskId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (task) setOpenTask(task);
+    router.replace(`/projects/${projectId}/work`, { scroll: false });
+    // Only ever meant to fire once, off the URL this page loaded with - not
+    // on every state.tasks update (which would refire a stale task lookup
+    // after the id has already been stripped from the URL).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // View-only preference, not persisted - resets to "manual" on reload/
   // navigation. See KanbanBoard's sortMode prop doc comment for why
   // dragging is disabled while sorted by due date.
@@ -203,7 +223,17 @@ export function WorkBoard({
 
   return (
     <>
-      <div className="mx-auto max-w-[1600px] p-6">
+      {/* w-full (not just mx-auto + max-w): this page is a flex item of
+          <main> (app-sidebar's layout, flex-col with the default
+          align-items:stretch) - but auto margins on a flex item's cross
+          axis override stretch, sizing it to fit-content instead. With a
+          kanban board wide enough to need its own internal horizontal
+          scroll (overflow-x-auto below), that fit-content width grew this
+          whole wrapper past the viewport, so the entire page scrolled
+          horizontally (sidebar included) instead of just the board.
+          min-w-0 additionally guards the same board's overflow-x-auto
+          against the flex-item min-width:auto default. */}
+      <div className="mx-auto min-w-0 w-full max-w-[1600px] p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>

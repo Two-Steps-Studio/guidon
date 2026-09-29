@@ -104,6 +104,28 @@
     "switchProject": "Switch project",
     "calendar": "Calendar"
   },
+  "commandPalette": {
+    "triggerLabel": "Search...",
+    "title": "Command palette",
+    "description": "Search and jump to anything",
+    "placeholder": "Search tasks, decisions, files...",
+    "navigateGroup": "Navigate",
+    "resultsGroup": "Results",
+    "noResults": "No results found.",
+    "entityType_task": "Task",
+    "entityType_decision": "Decision",
+    "entityType_memory": "Memory",
+    "entityType_file": "File",
+    "entityType_source": "Source",
+    "entityType_project": "Project"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "markAllRead": "Mark all read",
+    "bellAria": "Notifications",
+    "bellAriaUnread": "Notifications ({count} unread)"
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcomeBack": "Welcome back, {name}",
@@ -1033,6 +1055,10 @@
     "emailLabel": "Email",
     "emailHelp": "Email can't be changed here.",
     "languageLabel": "Language",
+    "themeLabel": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
     "saving": "Saving...",
     "saveChanges": "Save changes",
     "apiKeysTitle": "API Keys",

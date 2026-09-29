@@ -11,6 +11,7 @@ import {
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
+import { createNotification } from "@/lib/data/notifications";
 import { notifyDiscordTaskEvent } from "@/lib/discord/notify";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
 import { resolveColumnRenumbering } from "@/lib/work/task-board";
@@ -548,6 +549,7 @@ export async function createTask(
         taskId: result.rows[0].id,
         title: input.title.trim(),
       });
+      notifyTaskAssignment(projectId, access.userId, result.rows[0] as Task, { assignee_id: assigneeId });
       revalidatePath(`/projects/${projectId}/work`);
       return { task: result.rows[0] as Task, error: null };
     } catch (error) {
@@ -584,6 +586,7 @@ export async function createTask(
     details: { title: input.title.trim() },
   });
   notifyDiscordTaskEvent(projectId, access.userId, { kind: "created", taskId: data.id, title: input.title.trim() });
+  notifyTaskAssignment(projectId, access.userId, data as Task, { assignee_id: assigneeId });
 
   revalidatePath(`/projects/${projectId}/work`);
   return { task: data as Task, error: null };
@@ -629,6 +632,21 @@ function buildTaskUpdateClause(patch: TaskPatch): { setClause: string; values: u
   return { setClause, values };
 }
 
+/**
+ * Fires only when this patch actually sets a new assignee, and never
+ * notifies someone for assigning a task to themselves.
+ */
+function notifyTaskAssignment(projectId: string, actorId: string, task: Task, patch: TaskPatch) {
+  if (!patch.assignee_id || patch.assignee_id === actorId) return;
+  createNotification({
+    userId: patch.assignee_id,
+    projectId,
+    type: "task_assigned",
+    title: `Assigned to you: ${task.title}`,
+    link: `/projects/${projectId}/work?openTask=${task.id}`,
+  });
+}
+
 export async function updateTask(
   projectId: string,
   taskId: string,
@@ -661,6 +679,7 @@ export async function updateTask(
         entityType: "task",
         entityId: taskId,
       });
+      notifyTaskAssignment(projectId, access.userId, result.rows[0] as Task, patch);
       revalidatePath(`/projects/${projectId}/work`);
       return { task: result.rows[0] as Task, error: null };
     } catch (error) {
@@ -687,6 +706,7 @@ export async function updateTask(
     entityType: "task",
     entityId: taskId,
   });
+  notifyTaskAssignment(projectId, access.userId, data as Task, patch);
 
   revalidatePath(`/projects/${projectId}/work`);
   return { task: data as Task, error: null };
