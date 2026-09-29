@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Bot, Gavel, Loader2, Send } from "lucide-react";
-import { loadComments as loadCommentsAction, postComment, type TaskComment } from "@/app/projects/[id]/work/actions";
+import { loadComments as loadCommentsAction, postComment, type TaskComment } from "@/app/projects/[id]/work/comments-actions";
 import { CreateDecisionDialog } from "@/app/projects/[id]/decisions/create-decision-dialog";
 import { AttachmentImage } from "@/components/files/markdown-preview";
 import { Button } from "@/components/ui/button";

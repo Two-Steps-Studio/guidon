@@ -3,13 +3,9 @@ import "server-only";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
-import {
-  createTask,
-  updateTask,
-  postComment,
-  loadAttempts,
-  createAttempt,
-} from "@/app/projects/[id]/work/actions";
+import { createTask, updateTask } from "@/app/projects/[id]/work/actions";
+import { postComment } from "@/app/projects/[id]/work/comments-actions";
+import { loadAttempts, createAttempt } from "@/app/projects/[id]/work/attempts-actions";
 import { getTaskAgentContext } from "@/lib/context/agent-context";
 import type { TaskPriority, TaskStatus } from "@/types/task";
 import type { AttemptOutcome } from "@/types/task";
