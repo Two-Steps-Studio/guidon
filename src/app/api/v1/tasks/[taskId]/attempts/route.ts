@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
-import { getApiUserClient } from "@/lib/api/api-key-auth";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { apiDataClient } from "@/lib/api/api-data-client";
+import { isPermissionDenied } from "@/lib/db/errors";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { isSafeHttpUrl } from "@/lib/validation/url";
 import {
@@ -13,7 +12,7 @@ import {
 } from "@/lib/api/attempt-limits";
 
 // Same column set as loadAttempts/createAttempt in
-// src/app/projects/[id]/work/actions.ts (Previous Attempts, migration 013).
+// src/app/projects/[id]/work/attempts-actions.ts (Previous Attempts, migration 013).
 const ATTEMPT_COLUMNS =
   "id, task_id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_by, created_at";
 
@@ -22,13 +21,9 @@ type AttemptOutcome = (typeof OUTCOMES)[number];
 
 const FORBIDDEN_MESSAGE = "You do not have permission to record an attempt on this task.";
 
-function isRlsViolation(error: unknown): boolean {
-  return !!error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "42501";
-}
-
 /**
  * Lists a task's recorded attempts, newest first (`tasks:read`). Mirrors
- * loadAttempts in src/app/projects/[id]/work/actions.ts.
+ * loadAttempts in src/app/projects/[id]/work/attempts-actions.ts.
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
@@ -37,34 +32,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
 
-  if (hasDirectDatabase()) {
-    const task = await withUser(guard.userId, ({ query }) => query("SELECT 1 FROM tasks WHERE id = $1", [taskId]));
-    if (task.rows.length === 0) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+  const db = apiDataClient(guard.userId);
 
-    const result = await withUser(guard.userId, ({ query }) =>
-      query(`SELECT ${ATTEMPT_COLUMNS} FROM task_attempts WHERE task_id = $1 ORDER BY created_at DESC`, [taskId])
-    );
-    return NextResponse.json({ attempts: result.rows });
-  }
-
-  const supabase = await getApiUserClient(guard.userId);
-
-  const { data: task } = await supabase.from("tasks").select("id").eq("id", taskId).maybeSingle();
+  const { data: task } = await db.from("tasks").select("id").eq("id", taskId).maybeSingle();
   if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("task_attempts")
     .select(ATTEMPT_COLUMNS)
     .eq("task_id", taskId)
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ attempts: data ?? [] });
+  return NextResponse.json({ attempts: data });
 }
 
 /**
  * Records a Previous Attempt on a task (`attempts:write`). Mirrors
- * createAttempt in src/app/projects/[id]/work/actions.ts: `problem` and
+ * createAttempt in src/app/projects/[id]/work/attempts-actions.ts: `problem` and
  * `approach` required, `outcome` one of failed/partial/succeeded,
  * `related_pr_url` must be http(s), `files_changed` an array of strings.
  * `agent` is taken from the request body (or null) - deliberately NOT
@@ -152,48 +137,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     filesChanged = (fields.files_changed as string[]).map((file) => file.trim()).filter(Boolean);
   }
 
-  if (hasDirectDatabase()) {
-    let inserted: unknown;
-    try {
-      inserted = await withUser(guard.userId, async ({ query }) => {
-        const task = await query("SELECT 1 FROM tasks WHERE id = $1", [taskId]);
-        if (task.rows.length === 0) return null;
+  const db = apiDataClient(guard.userId);
 
-        const attempt = await query(
-          `INSERT INTO task_attempts
-             (task_id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-           RETURNING ${ATTEMPT_COLUMNS}`,
-          [
-            taskId,
-            problem,
-            approach,
-            outcome,
-            values.result,
-            values.failure_reason,
-            filesChanged,
-            values.related_pr_url,
-            values.agent,
-            guard.userId,
-          ]
-        );
-        return attempt.rows[0];
-      });
-    } catch (error) {
-      if (isRlsViolation(error)) return NextResponse.json({ error: FORBIDDEN_MESSAGE }, { status: 403 });
-      throw error;
-    }
-
-    if (inserted === null) return NextResponse.json({ error: "Task not found." }, { status: 404 });
-    return NextResponse.json({ attempt: inserted });
-  }
-
-  const supabase = await getApiUserClient(guard.userId);
-
-  const { data: task } = await supabase.from("tasks").select("id").eq("id", taskId).maybeSingle();
+  const { data: task } = await db.from("tasks").select("id").eq("id", taskId).maybeSingle();
   if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
 
-  const { data: attempt, error } = await supabase
+  const { data: attempt, error } = await db
     .from("task_attempts")
     .insert({
       task_id: taskId,
@@ -211,9 +160,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .single();
 
   if (error) {
-    // Same task_attempts_insert gate as the self-hosted branch; PostgREST
-    // reports a WITH CHECK violation as a normal `error` object.
-    if (error.code === "42501") return NextResponse.json({ error: FORBIDDEN_MESSAGE }, { status: 403 });
+    if (isPermissionDenied(error)) return NextResponse.json({ error: FORBIDDEN_MESSAGE }, { status: 403 });
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
