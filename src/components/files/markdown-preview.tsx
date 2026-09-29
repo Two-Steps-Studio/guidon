@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 /** Source line (0-based) of the task-list item currently being rendered, for its checkbox. */
@@ -36,18 +36,34 @@ function TaskCheckbox({
  * rather than @tailwindcss/typography (not a dependency here) so headings,
  * links, etc. pick up Guidon's own color tokens instead of prose defaults.
  */
+/** Scheme for task-attachment images (`![x](attachment:<id>)`), resolved to a signed URL at render time. */
+const ATTACHMENT_SCHEME = "attachment:";
+
+function urlTransform(url: string): string {
+  // react-markdown strips unknown schemes by default; attachment: is ours
+  // and only ever resolved through resolveAttachment below.
+  return url.startsWith(ATTACHMENT_SCHEME) ? url : defaultUrlTransform(url);
+}
+
 export function MarkdownPreview({
   content,
   onToggleTask,
+  resolveAttachment,
+  onOpenAttachment,
 }: {
   content: string;
   /** When set, task-list checkboxes are clickable; called with the checkbox's source line (0-based). */
   onToggleTask?: (line: number, checked: boolean) => void;
+  /** Signed URL for an `attachment:<id>` image; undefined while it isn't available (yet). */
+  resolveAttachment?: (attachmentId: string) => string | undefined;
+  /** Click on an attachment image (e.g. open it in the gallery lightbox). */
+  onOpenAttachment?: (attachmentId: string) => void;
 }) {
   return (
     <div className="h-full overflow-auto px-6 py-4 text-sm leading-relaxed text-foreground">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        urlTransform={urlTransform}
         components={{
           h1: (props) => <h1 className="mb-4 mt-6 text-2xl font-bold first:mt-0" {...props} />,
           h2: (props) => <h2 className="mb-3 mt-6 text-xl font-bold first:mt-0" {...props} />,
@@ -111,14 +127,60 @@ export function MarkdownPreview({
           ),
           th: (props) => <th className="border border-border bg-muted px-3 py-1.5 text-left font-medium" {...props} />,
           td: (props) => <td className="border border-border px-3 py-1.5" {...props} />,
-          img: ({ alt, ...props }) => (
-            // eslint-disable-next-line @next/next/no-img-element -- arbitrary repo-relative/external URL from markdown, not a next/image candidate
-            <img alt={alt ?? ""} className="max-w-full rounded-md" {...props} />
-          ),
+          img: ({ alt, src, node: _node, ...props }) => {
+            void _node;
+            if (typeof src === "string" && src.startsWith(ATTACHMENT_SCHEME)) {
+              const id = src.slice(ATTACHMENT_SCHEME.length);
+              return (
+                <AttachmentImage
+                  alt={alt ?? ""}
+                  url={resolveAttachment?.(id)}
+                  onOpen={onOpenAttachment ? () => onOpenAttachment(id) : undefined}
+                />
+              );
+            }
+            // An in-flight paste placeholder (`![Uploading …]()`) has no src.
+            if (!src) return <AttachmentImage alt={alt ?? ""} url={undefined} />;
+            return (
+              // eslint-disable-next-line @next/next/no-img-element -- arbitrary repo-relative/external URL from markdown, not a next/image candidate
+              <img alt={alt ?? ""} src={src} className="max-w-full rounded-md" {...props} />
+            );
+          },
         }}
       >
         {content}
       </ReactMarkdown>
     </div>
+  );
+}
+
+/**
+ * A task-attachment image inside markdown. Stays a fixed-height box while
+ * the URL isn't known yet (still loading, still uploading, or the
+ * attachment was deleted) so the text around it doesn't jump.
+ */
+export function AttachmentImage({
+  alt,
+  url,
+  onOpen,
+}: {
+  alt: string;
+  url: string | undefined;
+  onOpen?: () => void;
+}) {
+  if (!url) {
+    return (
+      <span className="my-1 inline-flex h-24 w-40 items-center justify-center rounded-md border border-dashed border-border bg-muted px-2 text-center text-xs text-muted-foreground">
+        {alt || "…"}
+      </span>
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element -- signed, per-attachment URL from any storage provider (local or Supabase), not a static/optimizable asset
+  const img = <img src={url} alt={alt} className="my-1 max-h-80 max-w-full rounded-md border border-border" loading="lazy" />;
+  if (!onOpen) return img;
+  return (
+    <button type="button" onClick={onOpen} className="block cursor-zoom-in rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      {img}
+    </button>
   );
 }

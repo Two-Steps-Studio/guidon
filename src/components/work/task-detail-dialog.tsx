@@ -21,7 +21,10 @@ import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { TaskAttemptsSection } from "@/components/work/task-attempts-section";
 import { TaskAttachmentsSection } from "@/components/work/task-attachments-section";
 import { TaskRelationsSection } from "@/components/work/task-relations-section";
-import { TaskImagePreview } from "@/components/work/task-image-preview";
+import { TaskAttachmentsProvider, useTaskAttachments } from "@/components/work/task-attachments-context";
+import { ImageLightbox, TaskImageGallery, useGalleryImages } from "@/components/work/task-image-gallery";
+import { useImagePaste } from "@/components/work/use-image-paste";
+import { AttachmentImage } from "@/components/files/markdown-preview";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -106,7 +109,21 @@ function subtaskStatusOptions(
     : [...columns, BOARD_COLUMNS.find((c) => c.status === status)!];
 }
 
-export function TaskDetailDialog({
+/**
+ * Thin wrapper so everything inside the dialog - file list, image gallery,
+ * pasted images in the description and comments - shares one attachment
+ * list (see task-attachments-context.tsx).
+ */
+export function TaskDetailDialog(props: TaskDetailDialogProps) {
+  if (!props.task) return null;
+  return (
+    <TaskAttachmentsProvider projectId={props.projectId} taskId={props.task.id}>
+      <TaskDetailDialogInner {...props} />
+    </TaskAttachmentsProvider>
+  );
+}
+
+function TaskDetailDialogInner({
   projectId,
   task,
   subtasks,
@@ -450,6 +467,27 @@ export function TaskDetailDialog({
     }
   };
 
+  const { imageUrls } = useTaskAttachments();
+  const galleryImages = useGalleryImages();
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const openImage = (attachmentId: string) => {
+    const index = galleryImages.findIndex((image) => image.id === attachmentId);
+    if (index >= 0) setLightboxIndex(index);
+  };
+  const descriptionPaste = useImagePaste({
+    fieldRef: descriptionRef,
+    update: (fn) => setForm((current) => (current ? { ...current, description: fn(current.description) } : current)),
+    enabled: canEdit && canComment,
+    onError: (message) => setError(message),
+  });
+  const commentInputRef = useRef<HTMLInputElement>(null);
+  const commentPaste = useImagePaste({
+    fieldRef: commentInputRef,
+    update: setDraft,
+    enabled: canComment,
+    onError: (message) => setCommentsError(message),
+  });
+
   if (!task || !form) return null;
 
   // A task can end up on a status its project has since hidden from the
@@ -543,6 +581,8 @@ export function TaskDetailDialog({
               <div className="max-h-64 overflow-y-auto rounded-md border border-input">
                 <MarkdownPreview
                   content={form.description || t("descriptionPlaceholder2")}
+                  resolveAttachment={(id) => imageUrls[id]}
+                  onOpenAttachment={openImage}
                   onToggleTask={
                     canEdit && form.description
                       ? (line, checked) =>
@@ -574,12 +614,20 @@ export function TaskDetailDialog({
                     setForm({ ...form, description: event.target.value })
                   }
                   onKeyDown={(event) => descriptionKeyDown(event, applyDescriptionEdit)}
+                  onPaste={descriptionPaste.onPaste}
+                  onDragOver={descriptionPaste.onDragOver}
+                  onDrop={descriptionPaste.onDrop}
                 />
+                {canEdit && (
+                  <p className="text-xs text-muted-foreground">
+                    {descriptionPaste.uploading ? t("uploadingPastedImage") : t("pasteImageHint")}
+                  </p>
+                )}
               </>
             )}
           </div>
 
-          <TaskImagePreview projectId={projectId} taskId={task.id} />
+          <TaskImageGallery />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -865,9 +913,7 @@ export function TaskDetailDialog({
         />
 
         <TaskAttachmentsSection
-          projectId={projectId}
-          taskId={task.id}
-          canUpload={canEdit}
+          canUpload={canComment}
           currentUserId={currentUserId}
           canManageProject={canDelete}
         />
@@ -955,9 +1001,11 @@ export function TaskDetailDialog({
                           />
                         )}
                       </p>
-                      <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground">
-                        {comment.content}
-                      </p>
+                      <CommentContent
+                        content={comment.content}
+                        imageUrls={imageUrls}
+                        onOpenImage={openImage}
+                      />
                     </div>
                   </li>
                 );
@@ -968,17 +1016,21 @@ export function TaskDetailDialog({
           {canComment && (
             <form onSubmit={handleComment} className="flex gap-2">
               <Input
+                ref={commentInputRef}
                 value={draft}
                 placeholder={t("addCommentPlaceholder")}
                 aria-label={t("addCommentAria")}
                 disabled={posting}
                 onChange={(event) => setDraft(event.target.value)}
+                onPaste={commentPaste.onPaste}
+                onDragOver={commentPaste.onDragOver}
+                onDrop={commentPaste.onDrop}
               />
               <Button
                 type="submit"
                 size="icon"
                 aria-label={t("postCommentAria")}
-                disabled={posting || !draft.trim()}
+                disabled={posting || commentPaste.uploading || !draft.trim()}
                 className={cn("shrink-0")}
               >
                 {posting ? (
@@ -990,6 +1042,12 @@ export function TaskDetailDialog({
             </form>
           )}
         </section>
+        <ImageLightbox
+          images={galleryImages}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       </DialogContent>
     </Dialog>
 
@@ -1032,4 +1090,36 @@ export function TaskDetailDialog({
     </Dialog>
     </>
   );
+}
+
+const ATTACHMENT_IMAGE_RE = /!\[([^\]]*)\]\(attachment:([0-9a-f-]{36})\)/g;
+
+/**
+ * Comments stay plain text (no markdown - existing comments with `*` or `_`
+ * must keep reading exactly as before); only `![name](attachment:<id>)`
+ * references from pasted images are turned into inline images.
+ */
+function CommentContent({
+  content,
+  imageUrls,
+  onOpenImage,
+}: {
+  content: string;
+  imageUrls: Record<string, string>;
+  onOpenImage: (attachmentId: string) => void;
+}) {
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  for (const match of content.matchAll(ATTACHMENT_IMAGE_RE)) {
+    const index = match.index ?? 0;
+    if (index > last) parts.push(content.slice(last, index));
+    const id = match[2];
+    parts.push(
+      <AttachmentImage key={`${id}-${index}`} alt={match[1]} url={imageUrls[id]} onOpen={() => onOpenImage(id)} />
+    );
+    last = index + match[0].length;
+  }
+  if (last < content.length) parts.push(content.slice(last));
+
+  return <div className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground">{parts}</div>;
 }

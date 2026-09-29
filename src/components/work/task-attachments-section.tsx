@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Download, FileText, Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  deleteTaskAttachment,
-  getTaskAttachmentDownloadUrl,
-  loadTaskAttachments,
-  uploadTaskAttachment,
-  type TaskAttachment,
-} from "@/app/projects/[id]/work/attachments-actions";
+import { useTaskAttachments } from "@/components/work/task-attachments-context";
 
 function formatSize(bytes: number | null): string {
   if (!bytes) return "";
@@ -20,130 +14,50 @@ function formatSize(bytes: number | null): string {
 }
 
 /**
- * Self-contained, same shape as TaskAttemptsSection: loads its own data on
- * mount, owns its own upload/delete state, doesn't touch the parent
- * dialog's form state.
+ * The task's full file list. Data lives in TaskAttachmentsProvider (shared
+ * with the image gallery and inline images); this only owns its own
+ * upload/delete-in-progress and error state.
  */
 export function TaskAttachmentsSection({
-  projectId,
-  taskId,
   canUpload,
   currentUserId,
   canManageProject,
 }: {
-  projectId: string;
-  taskId: string;
   canUpload: boolean;
   currentUserId: string | null;
   /** Owner/admin can delete any attachment; anyone can delete their own (task_attachments_delete's actual RLS boundary - this only controls the button, RLS still re-checks server-side). */
   canManageProject: boolean;
 }) {
   const t = useTranslations("work");
-  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { attachments, loading, error: loadError, imageUrls, upload, remove, downloadUrl } = useTaskAttachments();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const error = actionError ?? loadError;
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Thumbnail for each image-type attachment, keyed by id - fetched
-  // separately from the list itself since a signed download URL isn't part
-  // of loadTaskAttachments' own row (same reasoning as TaskImagePreview's
-  // own fetch). fetchedImageIds tracks what's already been requested so a
-  // re-render (e.g. after a delete elsewhere) doesn't re-fetch every image
-  // again.
-  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
-  const fetchedImageIds = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setError(null);
-      const result = await loadTaskAttachments(projectId, taskId);
-      if (cancelled) return;
-      if (result.error) setError(result.error);
-      else setAttachments(result.attachments);
-      setLoading(false);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId, taskId]);
-
-  useEffect(() => {
-    const toFetch = attachments.filter(
-      (attachment) => attachment.mime_type?.startsWith("image/") && !fetchedImageIds.current.has(attachment.id)
-    );
-    if (toFetch.length === 0) return;
-    for (const attachment of toFetch) fetchedImageIds.current.add(attachment.id);
-
-    let cancelled = false;
-
-    (async () => {
-      const entries = await Promise.all(
-        toFetch.map(async (attachment) => {
-          const result = await getTaskAttachmentDownloadUrl(projectId, taskId, attachment.id);
-          return result.url ? ([attachment.id, result.url] as const) : null;
-        })
-      );
-      if (cancelled) return;
-      setImageUrls((current) => {
-        const next = { ...current };
-        for (const entry of entries) {
-          if (entry) next[entry[0]] = entry[1];
-        }
-        return next;
-      });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [attachments, projectId, taskId]);
-
   const handleFileChosen = async (file: File) => {
     setUploading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const result = await uploadTaskAttachment(projectId, taskId, formData);
-      if (result.error || !result.attachment) throw new Error(result.error ?? t("failedToUploadAttachment"));
-
-      setAttachments((current) => [result.attachment as TaskAttachment, ...current]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToUploadAttachment"));
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    setActionError(null);
+    const result = await upload(file);
+    if (result.error) setActionError(result.error || t("failedToUploadAttachment"));
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleDelete = async (attachmentId: string) => {
     setDeletingId(attachmentId);
-    setError(null);
-
-    try {
-      const result = await deleteTaskAttachment(projectId, taskId, attachmentId);
-      if (result.error) throw new Error(result.error);
-
-      setAttachments((current) => current.filter((a) => a.id !== attachmentId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToDeleteAttachment"));
-    } finally {
-      setDeletingId(null);
-    }
+    setActionError(null);
+    const result = await remove(attachmentId);
+    if (result.error) setActionError(result.error || t("failedToDeleteAttachment"));
+    setDeletingId(null);
   };
 
   const handleDownload = async (attachmentId: string) => {
-    setError(null);
-    const result = await getTaskAttachmentDownloadUrl(projectId, taskId, attachmentId);
+    setActionError(null);
+    const result = await downloadUrl(attachmentId);
     if (result.error || !result.url) {
-      setError(result.error ?? t("failedToGetDownloadLink"));
+      setActionError(result.error ?? t("failedToGetDownloadLink"));
       return;
     }
     window.open(result.url, "_blank", "noopener,noreferrer");
