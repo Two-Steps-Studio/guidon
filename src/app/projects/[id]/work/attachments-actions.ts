@@ -257,3 +257,53 @@ export async function getTaskAttachmentDownloadUrl(
 
 // canManageProject is re-exported for the UI's delete-button gating (owner/admin can delete any attachment; the uploader can delete their own regardless of role - see task_attachments_delete's RLS policy).
 export { canManageProject };
+
+/**
+ * Signed URLs for every image attachment on a task, in one round trip -
+ * the task dialog's gallery and inline `attachment:` images in the
+ * description/comments need all of them at once, and one Server Action per
+ * image (getTaskAttachmentDownloadUrl) meant N sequential-ish requests on
+ * every dialog open.
+ */
+export async function getTaskAttachmentImageUrls(
+  projectId: string,
+  taskId: string
+): Promise<{ urls: Record<string, string>; error: string | null }> {
+  const access = await getProjectAccess(projectId);
+  if (!access) return { urls: {}, error: "You do not have access to this project." };
+
+  let rows: { id: string; storage_path: string }[];
+
+  if (hasDirectDatabase()) {
+    const result = await withUser(access.userId, ({ query }) =>
+      query(
+        "SELECT id, storage_path FROM task_attachments WHERE task_id = $1 AND mime_type LIKE 'image/%'",
+        [taskId]
+      )
+    );
+    rows = result.rows;
+  } else {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("task_attachments")
+      .select("id, storage_path")
+      .eq("task_id", taskId)
+      .like("mime_type", "image/%");
+    if (error) return { urls: {}, error: error.message };
+    rows = data ?? [];
+  }
+
+  const entries = await Promise.all(
+    rows.map(async (row) => {
+      try {
+        return [row.id, await getSignedUrl(STORAGE_BUCKETS.ATTACHMENTS, row.storage_path)] as const;
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const urls: Record<string, string> = {};
+  for (const entry of entries) if (entry) urls[entry[0]] = entry[1];
+  return { urls, error: null };
+}

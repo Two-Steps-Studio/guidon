@@ -273,7 +273,7 @@ function TaskCardComponent({
     >
       {coverImageUrl && (
         <div className="-mx-3 -mt-3 mb-2 overflow-hidden rounded-t-lg">
-          {/* eslint-disable-next-line @next/next/no-img-element -- signed, per-task URL from any storage provider (local or Supabase), not a static/optimizable asset - same reasoning as TaskImagePreview's own img */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- signed, per-task URL from any storage provider (local or Supabase), not a static/optimizable asset - same reasoning as TaskImageGallery's own img */}
           <img
             src={coverImageUrl}
             alt=""

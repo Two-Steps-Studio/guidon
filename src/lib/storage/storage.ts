@@ -178,6 +178,37 @@ export async function uploadProjectFile(
   }
 }
 
+/** Raster formats only - the moodboard renders every reference inline (SVG is excluded on purpose, see SAFE_INLINE_EXTENSION_TO_MIME). */
+const REFERENCE_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"];
+
+/**
+ * Upload a moodboard reference image (project_references, migration 048).
+ * Same bucket as project files, under its own prefix. Capped at the files
+ * bucket's own per-object limit (FILE_SIZE_LIMITS.DOCUMENT) - a bigger
+ * reference would be rejected by the bucket anyway.
+ */
+export async function uploadProjectReference(projectId: string, file: File, userId: string) {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  if (!REFERENCE_IMAGE_EXTENSIONS.includes(extension) || !file.type.startsWith('image/')) {
+    throw new Error(`Only images can be added to the moodboard (${REFERENCE_IMAGE_EXTENSIONS.join(', ')}).`);
+  }
+  if (file.size > FILE_SIZE_LIMITS.DOCUMENT) {
+    const sizeMB = (FILE_SIZE_LIMITS.DOCUMENT / (1024 * 1024)).toFixed(0);
+    throw new Error(`Image is too large. Maximum size: ${sizeMB}MB`);
+  }
+
+  const bucketResult = await ensureBucketExists(STORAGE_BUCKETS.FILES, {
+    public: true,
+    fileSizeLimit: FILE_SIZE_LIMITS.DOCUMENT,
+  });
+  if (bucketResult.error) {
+    throw new Error(`Storage bucket '${STORAGE_BUCKETS.FILES}' could not be created: ${bucketResult.error}`);
+  }
+
+  const filePath = `projects/${projectId}/references/${userId}/${Date.now()}.${extension}`;
+  return uploadFile(STORAGE_BUCKETS.FILES, filePath, file);
+}
+
 /**
  * Upload a task attachment
  */
@@ -392,7 +423,7 @@ export async function getProjectStorageUsage(projectId: string): Promise<number>
 export async function getOrganizationStorageUsage(organizationId: string): Promise<number> {
   const supabase = createServiceClient();
 
-  const [projectFilesResult, taskAttachmentsResult] = await Promise.all([
+  const [projectFilesResult, taskAttachmentsResult, referencesResult] = await Promise.all([
     supabase
       .from('project_files')
       .select('size_bytes, projects!inner(organization_id)')
@@ -401,13 +432,16 @@ export async function getOrganizationStorageUsage(organizationId: string): Promi
       .from('task_attachments')
       .select('size_bytes, tasks!inner(projects!inner(organization_id))')
       .eq('tasks.projects.organization_id', organizationId),
+    // Moodboard images (048) count toward the same plan limit.
+    supabase
+      .from('project_references')
+      .select('size_bytes, projects!inner(organization_id)')
+      .eq('projects.organization_id', organizationId),
   ]);
 
-  if (projectFilesResult.error || taskAttachmentsResult.error) {
-    console.error(
-      '[Storage] Error fetching organization storage:',
-      projectFilesResult.error ?? taskAttachmentsResult.error
-    );
+  const usageError = projectFilesResult.error ?? taskAttachmentsResult.error ?? referencesResult.error;
+  if (usageError) {
+    console.error('[Storage] Error fetching organization storage:', usageError);
     return 0;
   }
 
@@ -416,5 +450,8 @@ export async function getOrganizationStorageUsage(organizationId: string): Promi
   const taskAttachmentsTotal =
     taskAttachmentsResult.data?.reduce((sum, attachment) => sum + (attachment.size_bytes || 0), 0) || 0;
 
-  return projectFilesTotal + taskAttachmentsTotal;
+  const referencesTotal =
+    referencesResult.data?.reduce((sum, reference) => sum + (reference.size_bytes || 0), 0) || 0;
+
+  return projectFilesTotal + taskAttachmentsTotal + referencesTotal;
 }

@@ -44,6 +44,7 @@ import {
   LogOut,
   MessageSquarePlus,
   Puzzle,
+  Images,
 } from "lucide-react";
 
 export const GLOBAL_NAV = [
@@ -100,6 +101,7 @@ export const PROJECT_NAV = [
     items: [
       { href: "knowledge", labelKey: "knowledge", icon: BookOpen },
       { href: "decisions", labelKey: "decisions", icon: FileText },
+      { href: "references", labelKey: "moodboard", icon: Images },
       { href: "technology", labelKey: "technologies", icon: Cpu },
     ],
   },

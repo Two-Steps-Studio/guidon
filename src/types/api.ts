@@ -131,6 +131,8 @@ export type ActivityAction =
   | "file_deleted"
   | "task_attachment_uploaded"
   | "task_attachment_deleted"
+  | "reference_added"
+  | "reference_deleted"
   | "github_repo_connected"
   | "github_repo_disconnected"
   | "github_file_committed"

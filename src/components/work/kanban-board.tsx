@@ -411,10 +411,15 @@ export function KanbanBoard({
 
   const ghostAssignee = draggingTask?.assignee_id ? membersById.get(draggingTask.assignee_id) : undefined;
 
+  // `relative` makes this scroll container the containing block for the
+  // columns' absolutely-positioned descendants (the `sr-only` labels):
+  // without it they're positioned against an ancestor outside the
+  // overflow clip, so off-screen columns' labels stretched the whole page
+  // sideways (the landing page's demo board scrolled 1200px on a phone).
   return (
     <div
       ref={boardScrollRef}
-      className="flex gap-4 overflow-x-auto pb-4"
+      className="relative flex gap-4 overflow-x-auto pb-4"
       role="list"
       aria-label={t("taskBoardAria")}
     >
