@@ -2238,6 +2238,19 @@ await withUser(A, async () => {
     filters: [{ column: "project_id", op: "eq", value: projectId }, { column: "name", op: "like", value: "m%.png" }],
   })));
   check("delete ... RETURNING storage_path z LIKE", del.rows.length === 2, del.rows.length);
+
+  // technology/actions.ts duplicate check: ILIKE with LIKE wildcards escaped
+  // must match case-insensitively but literally ("C_" must not match "CS").
+  await db.query("INSERT INTO public.technologies (project_id, name) VALUES ($1, 'CS'), ($1, 'C_')", [projectId]);
+  const esc = (name) => name.replace(/[\\%_]/g, "\\$&");
+  const like = async (name) =>
+    (await run(compile({ table: "technologies", op: "select", columns: ["name"], filters: [
+      { column: "project_id", op: "eq", value: projectId },
+      { column: "name", op: "ilike", value: esc(name) },
+    ], order: [], limit: null, values: null }))).rows.map((r) => r.name).join(",");
+  check("ilike z escapowaniem: 'c_' -> tylko 'C_'", (await like("c_")) === "C_", await like("c_"));
+  check("ilike z escapowaniem: 'cs' -> tylko 'CS'", (await like("cs")) === "CS", await like("cs"));
+  await db.query("DELETE FROM public.technologies WHERE project_id = $1 AND name IN ('CS', 'C_')", [projectId]);
   await run(compile(spec({ op: "delete", columns: null, filters: [{ column: "id", op: "eq", value: dcRef }] })));
 });
 

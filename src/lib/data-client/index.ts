@@ -49,6 +49,8 @@ export interface DataResult<T> {
 }
 
 type Row = Record<string, unknown>;
+/** Result row types - any object type, including interfaces (which lack an index signature). */
+type Shape = object;
 type Mode = "many" | "single" | "maybeSingle";
 
 type Backend =
@@ -66,7 +68,7 @@ function toDataError(error: unknown): DataError {
   return { message: String(error) };
 }
 
-class QueryBuilder<T extends Row = Row> implements PromiseLike<DataResult<T[]>> {
+class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>> {
   private spec: QuerySpec;
 
   constructor(
@@ -79,7 +81,7 @@ class QueryBuilder<T extends Row = Row> implements PromiseLike<DataResult<T[]>> 
   // --- statement kind ---------------------------------------------------
 
   /** On a read: the columns to fetch. After insert/update/delete: the columns to return (RETURNING). */
-  select<R extends Row = T>(columns = "*"): QueryBuilder<R> {
+  select<R extends Shape = T>(columns = "*"): QueryBuilder<R> {
     this.spec.columns = parseColumns(columns);
     return this as unknown as QueryBuilder<R>;
   }
@@ -219,7 +221,7 @@ class QueryBuilder<T extends Row = Row> implements PromiseLike<DataResult<T[]>> 
 }
 
 export interface DataClient {
-  from<T extends Row = Row>(table: string): QueryBuilder<T>;
+  from<T extends Shape = Row>(table: string): QueryBuilder<T>;
 }
 
 /**
@@ -237,7 +239,7 @@ export function dataClient(
     : { kind: "supabase", client: options.supabase ?? (createClient as () => Promise<SupabaseClient>) };
 
   return {
-    from<T extends Row = Row>(table: string) {
+    from<T extends Shape = Row>(table: string) {
       return new QueryBuilder<T>(backend, table);
     },
   };
