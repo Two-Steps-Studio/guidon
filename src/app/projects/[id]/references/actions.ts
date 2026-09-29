@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canCommentOnProject, getProjectAccess } from "@/lib/data/project-access";
+import { dataClient } from "@/lib/data-client";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import {
   deleteProjectFile as deleteStoredFile,
@@ -68,22 +67,12 @@ export async function loadReferences(
   const access = await getProjectAccess(projectId);
   if (!access) return { references: [], error: "You do not have access to this project." };
 
-  let rows: Row[];
-  if (hasDirectDatabase()) {
-    const result = await withUser(access.userId, ({ query }) =>
-      query(`SELECT ${COLUMNS} FROM project_references WHERE project_id = $1 ORDER BY created_at DESC`, [projectId])
-    );
-    rows = result.rows;
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("project_references")
-      .select(COLUMNS)
-      .eq("project_id", projectId)
-      .order("created_at", { ascending: false });
-    if (error) return { references: [], error: error.message };
-    rows = (data ?? []) as Row[];
-  }
+  const { data: rows, error } = await dataClient(access.userId)
+    .from<Row>("project_references")
+    .select(COLUMNS)
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false });
+  if (error) return { references: [], error: error.message };
 
   return { references: await Promise.all(rows.map(withUrl)), error: null };
 }
@@ -122,41 +111,25 @@ export async function uploadReference(
     return { reference: null, error: uploadError instanceof Error ? uploadError.message : "Upload failed." };
   }
 
-  let row: Row;
-  try {
-    if (hasDirectDatabase()) {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `INSERT INTO project_references (project_id, name, storage_path, size_bytes, mime_type, caption, tags, uploaded_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           RETURNING ${COLUMNS}`,
-          [projectId, file.name, uploaded.path, file.size, file.type, caption, tags, access.userId]
-        )
-      );
-      row = result.rows[0];
-    } else {
-      const supabase = await createClient();
-      const { data, error } = await supabase
-        .from("project_references")
-        .insert({
-          project_id: projectId,
-          name: file.name,
-          storage_path: uploaded.path,
-          size_bytes: file.size,
-          mime_type: file.type,
-          caption,
-          tags,
-          uploaded_by: access.userId,
-        })
-        .select(COLUMNS)
-        .single();
-      if (error) throw new Error(error.message);
-      row = data as Row;
-    }
-  } catch (error) {
+  const { data: row, error: insertError } = await dataClient(access.userId)
+    .from("project_references")
+    .insert({
+      project_id: projectId,
+      name: file.name,
+      storage_path: uploaded.path,
+      size_bytes: file.size,
+      mime_type: file.type,
+      caption,
+      tags,
+      uploaded_by: access.userId,
+    })
+    .select<Row>(COLUMNS)
+    .single();
+
+  if (insertError || !row) {
     // Don't leave an orphaned object in storage when the row couldn't be saved.
     await deleteStoredFile(uploaded.path).catch(() => {});
-    return { reference: null, error: error instanceof Error ? error.message : "Failed to save the image." };
+    return { reference: null, error: insertError?.message ?? "Failed to save the image." };
   }
 
   await logActivity({
@@ -193,30 +166,14 @@ export async function updateReference(
   const sourceUrl = normalizeUrl(input.sourceUrl);
   if (input.sourceUrl.trim() && !sourceUrl) return { reference: null, error: "The source link must be an http(s) URL." };
 
-  let row: Row | undefined;
-  if (hasDirectDatabase()) {
-    const result = await withUser(access.userId, ({ query }) =>
-      query(
-        `UPDATE project_references SET caption = $1, tags = $2, source_url = $3
-         WHERE id = $4 AND project_id = $5
-         RETURNING ${COLUMNS}`,
-        [caption, tags, sourceUrl, referenceId, projectId]
-      )
-    );
-    row = result.rows[0];
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("project_references")
-      .update({ caption, tags, source_url: sourceUrl })
-      .eq("id", referenceId)
-      .eq("project_id", projectId)
-      .select(COLUMNS)
-      .maybeSingle();
-    if (error) return { reference: null, error: error.message };
-    row = (data ?? undefined) as Row | undefined;
-  }
-
+  const { data: row, error } = await dataClient(access.userId)
+    .from("project_references")
+    .update({ caption, tags, source_url: sourceUrl })
+    .eq("id", referenceId)
+    .eq("project_id", projectId)
+    .select<Row>(COLUMNS)
+    .maybeSingle();
+  if (error) return { reference: null, error: error.message };
   if (!row) return { reference: null, error: "Image not found, or you can only edit images you added." };
 
   revalidatePath(`/projects/${projectId}/references`);
@@ -228,27 +185,15 @@ export async function deleteReference(projectId: string, referenceId: string): P
   const access = await getProjectAccess(projectId);
   if (!access) return { error: "You do not have permission to delete this image." };
 
-  let storagePath: string | null = null;
-  if (hasDirectDatabase()) {
-    const result = await withUser(access.userId, ({ query }) =>
-      query("DELETE FROM project_references WHERE id = $1 AND project_id = $2 RETURNING storage_path", [
-        referenceId,
-        projectId,
-      ])
-    );
-    storagePath = result.rows[0]?.storage_path ?? null;
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("project_references")
-      .delete()
-      .eq("id", referenceId)
-      .eq("project_id", projectId)
-      .select("storage_path")
-      .maybeSingle();
-    if (error) return { error: error.message };
-    storagePath = data?.storage_path ?? null;
-  }
+  const { data: deleted, error } = await dataClient(access.userId)
+    .from("project_references")
+    .delete()
+    .eq("id", referenceId)
+    .eq("project_id", projectId)
+    .select<{ storage_path: string }>("storage_path")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  const storagePath = deleted?.storage_path ?? null;
 
   if (!storagePath) return { error: "Image not found, or you can only delete images you added." };
 

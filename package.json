@@ -12,7 +12,7 @@
     "postinstall": "node scripts/copy-monaco-assets.mjs",
     "migrate": "node scripts/migrate.mjs",
     "migrate:status": "node scripts/migrate.mjs --status",
-    "test:db": "node tests/db/compat.test.mjs",
+    "test:db": "node --experimental-strip-types tests/db/compat.test.mjs",
     "test:ai": "node --experimental-strip-types tests/ai/provider.test.mjs",
     "test:auth": "node tests/auth/local-auth.test.mjs",
     "test:limits": "node tests/limits.test.mjs",

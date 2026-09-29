@@ -19,7 +19,7 @@ npm run migrate               # apply pending DB migrations (requires DATABASE_U
 npm run migrate:status        # list applied/pending migrations, changes nothing
 node scripts/migrate.mjs --dry-run   # show what would run, changes nothing
 
-npm run test:db               # migration chain + RLS-compatibility layer against PGlite (real Postgres, no Docker/Supabase)
+npm run test:db               # migration chain + RLS-compatibility layer + data-client SQL against PGlite (real Postgres, no Docker/Supabase)
 npm run test:ai                # AI provider factory's env-resolution logic, no live API key needed
 npm run test:auth              # local-auth compatibility tests
 npm run test:limits            # plan/limits logic tests
@@ -27,7 +27,7 @@ npm run test:reports           # in-game report validation (src/lib/api/game-rep
 npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/task-refs.ts)
 ```
 
-`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 242) to stay the same or grow, never shrink.
+`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 256) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) — UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 
@@ -40,7 +40,9 @@ Guidon runs against either a self-hosted Postgres or Supabase, decided once per 
 - **Self-hosted**: `withUser(userId, fn)` (`src/lib/db/session.ts`) runs `fn` inside a transaction with `SET LOCAL ROLE authenticated` + `set_config('request.jwt.claims', ...)` set to the caller's identity, so the same RLS policies that gate Supabase's PostgREST layer apply identically to a raw `pg` query here. Plain SQL, parameterized.
 - **Hosted**: `createClient()` (RLS-enforced, cookie-scoped) or, rarely and deliberately, `createServiceClient()` (bypasses RLS — used only where the code comment says why, e.g. secrets access via a `SECURITY DEFINER` RPC).
 
-Any new Server Action needs both branches, and both must enforce the same thing. When it's not obvious which mode is active in a given environment, `.env`/`.env.local` presence of `DATABASE_URL` is the tell (this repo's dev setup in some environments has neither DB URL and instead a Supabase project — check before assuming).
+**Prefer the data client for new code**: `dataClient(userId)` (`src/lib/data-client/`) exposes the supabase-js query-builder subset (`from/select/insert/update/delete/eq/in/is/like/order/limit/single/maybeSingle`) and runs it in either mode — compiled to one parameterized statement under `withUser` when self-hosted (`sql.ts`, tested against the real schema + RLS in `test:db` section 37), replayed onto the RLS-scoped supabase client otherwise (pass `{ supabase: () => getApiUserClient(userId) }` from API-key routes). One code path per action instead of two hand-synced ones. It deliberately doesn't cover PostgREST embeds (joins), RPCs, or multi-statement work that must be atomic (each awaited query is its own transaction when self-hosted) — write those per mode as before, with a comment saying why (see `removeMember` in `projects/[id]/members/actions.ts`). Migrated so far: `references/actions.ts`, `work/attachments-actions.ts`, `members/actions.ts` (add/change role).
+
+Anything still written per mode needs both branches, and both must enforce the same thing. When it's not obvious which mode is active in a given environment, `.env`/`.env.local` presence of `DATABASE_URL` is the tell (this repo's dev setup in some environments has neither DB URL and instead a Supabase project — check before assuming).
 
 ### RLS is the actual authorization boundary, not the app-level checks
 

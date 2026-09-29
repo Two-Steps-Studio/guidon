@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canCommentOnProject, canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import {
   deleteTaskAttachment as deleteStoredAttachment,
@@ -34,23 +33,8 @@ export async function loadTaskAttachments(
   const access = await getProjectAccess(projectId);
   if (!access) return { attachments: [], error: "You do not have access to this project." };
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `SELECT ${ATTACHMENT_COLUMNS} FROM task_attachments WHERE task_id = $1 ORDER BY created_at DESC`,
-          [taskId]
-        )
-      );
-      return { attachments: result.rows, error: null };
-    } catch (error) {
-      return { attachments: [], error: error instanceof Error ? error.message : "Failed to load attachments." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("task_attachments")
+  const { data, error } = await dataClient(access.userId)
+    .from<TaskAttachment>("task_attachments")
     .select(ATTACHMENT_COLUMNS)
     .eq("task_id", taskId)
     .order("created_at", { ascending: false });
@@ -101,39 +85,21 @@ export async function uploadTaskAttachment(
     return { attachment: null, error: uploadError instanceof Error ? uploadError.message : "Upload failed." };
   }
 
-  let attachment: TaskAttachment;
+  const { data: attachment, error: insertError } = await dataClient(access.userId)
+    .from("task_attachments")
+    .insert({
+      task_id: taskId,
+      name: file.name,
+      storage_path: uploaded.path,
+      size_bytes: file.size,
+      mime_type: file.type || "application/octet-stream",
+      uploaded_by: access.userId,
+    })
+    .select<TaskAttachment>(ATTACHMENT_COLUMNS)
+    .single();
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `INSERT INTO task_attachments (task_id, name, storage_path, size_bytes, mime_type, uploaded_by)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           RETURNING ${ATTACHMENT_COLUMNS}`,
-          [taskId, file.name, uploaded.path, file.size, file.type || "application/octet-stream", access.userId]
-        )
-      );
-      attachment = result.rows[0] as TaskAttachment;
-    } catch (error) {
-      return { attachment: null, error: error instanceof Error ? error.message : "Failed to save attachment." };
-    }
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("task_attachments")
-      .insert({
-        task_id: taskId,
-        name: file.name,
-        storage_path: uploaded.path,
-        size_bytes: file.size,
-        mime_type: file.type || "application/octet-stream",
-        uploaded_by: access.userId,
-      })
-      .select(ATTACHMENT_COLUMNS)
-      .single();
-
-    if (error) return { attachment: null, error: error.message };
-    attachment = data as TaskAttachment;
+  if (insertError || !attachment) {
+    return { attachment: null, error: insertError?.message ?? "Failed to save attachment." };
   }
 
   await logActivity({
@@ -164,33 +130,17 @@ export async function deleteTaskAttachment(
   const access = await getProjectAccess(projectId);
   if (!access) return { error: "You do not have permission to delete this attachment." };
 
-  let storagePath: string | null;
+  const { data: deleted, error: deleteError } = await dataClient(access.userId)
+    .from("task_attachments")
+    .delete()
+    .eq("id", attachmentId)
+    .eq("task_id", taskId)
+    .select<{ storage_path: string }>("storage_path")
+    .maybeSingle();
 
-  if (hasDirectDatabase()) {
-    const result = await withUser(access.userId, ({ query }) =>
-      query("DELETE FROM task_attachments WHERE id = $1 AND task_id = $2 RETURNING storage_path", [
-        attachmentId,
-        taskId,
-      ])
-    );
-    if (result.rows.length === 0) {
-      return { error: "Attachment not found, or you do not have permission to delete it." };
-    }
-    storagePath = result.rows[0].storage_path;
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("task_attachments")
-      .delete()
-      .eq("id", attachmentId)
-      .eq("task_id", taskId)
-      .select("storage_path")
-      .maybeSingle();
-
-    if (error) return { error: error.message };
-    if (!data) return { error: "Attachment not found, or you do not have permission to delete it." };
-    storagePath = data.storage_path;
-  }
+  if (deleteError) return { error: deleteError.message };
+  if (!deleted) return { error: "Attachment not found, or you do not have permission to delete it." };
+  const storagePath = deleted.storage_path;
 
   try {
     if (storagePath) await deleteStoredAttachment(storagePath);
@@ -225,25 +175,15 @@ export async function getTaskAttachmentDownloadUrl(
   const access = await getProjectAccess(projectId);
   if (!access) return { url: null, error: "You do not have access to this project." };
 
-  let storagePath: string | null;
+  const { data: found, error: lookupError } = await dataClient(access.userId)
+    .from("task_attachments")
+    .select<{ storage_path: string }>("storage_path")
+    .eq("id", attachmentId)
+    .eq("task_id", taskId)
+    .maybeSingle();
 
-  if (hasDirectDatabase()) {
-    const result = await withUser(access.userId, ({ query }) =>
-      query("SELECT storage_path FROM task_attachments WHERE id = $1 AND task_id = $2", [attachmentId, taskId])
-    );
-    storagePath = result.rows[0]?.storage_path ?? null;
-  } else {
-    const supabase = await createClient();
-    const { data, error: lookupError } = await supabase
-      .from("task_attachments")
-      .select("storage_path")
-      .eq("id", attachmentId)
-      .eq("task_id", taskId)
-      .maybeSingle();
-
-    if (lookupError) return { url: null, error: lookupError.message };
-    storagePath = data?.storage_path ?? null;
-  }
+  if (lookupError) return { url: null, error: lookupError.message };
+  const storagePath = found?.storage_path ?? null;
 
   if (!storagePath) return { url: null, error: "Attachment not found in this task." };
 
@@ -272,26 +212,12 @@ export async function getTaskAttachmentImageUrls(
   const access = await getProjectAccess(projectId);
   if (!access) return { urls: {}, error: "You do not have access to this project." };
 
-  let rows: { id: string; storage_path: string }[];
-
-  if (hasDirectDatabase()) {
-    const result = await withUser(access.userId, ({ query }) =>
-      query(
-        "SELECT id, storage_path FROM task_attachments WHERE task_id = $1 AND mime_type LIKE 'image/%'",
-        [taskId]
-      )
-    );
-    rows = result.rows;
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("task_attachments")
-      .select("id, storage_path")
-      .eq("task_id", taskId)
-      .like("mime_type", "image/%");
-    if (error) return { urls: {}, error: error.message };
-    rows = data ?? [];
-  }
+  const { data: rows, error } = await dataClient(access.userId)
+    .from("task_attachments")
+    .select<{ id: string; storage_path: string }>("id, storage_path")
+    .eq("task_id", taskId)
+    .like("mime_type", "image/%");
+  if (error) return { urls: {}, error: error.message };
 
   const entries = await Promise.all(
     rows.map(async (row) => {
