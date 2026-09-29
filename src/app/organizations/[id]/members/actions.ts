@@ -55,18 +55,23 @@ export async function addMember(
 
     try {
       addedUserId = await withUser(access.userId, async ({ query }) => {
-        const profileResult = await query("SELECT id FROM profiles WHERE email = $1", [
+        // Not a plain SELECT on profiles: its RLS (003) only shows people who
+        // already share an organization/project with the caller - never the
+        // person being added. See migration 047.
+        const profileResult = await query("SELECT public.find_user_id_by_email($1, $2) AS id", [
+          orgId,
           normalizedEmail,
         ]);
-        if (profileResult.rows.length === 0) {
+        const userId = profileResult.rows[0]?.id as string | null;
+        if (!userId) {
           throw new Error("User with this email not found.");
         }
 
         await query(
           "INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, $3)",
-          [orgId, profileResult.rows[0].id, role]
+          [orgId, userId, role]
         );
-        return profileResult.rows[0].id as string;
+        return userId;
       });
     } catch (error) {
       // 23505 = unique_violation - uq_organization_members_org_user (001;
@@ -94,15 +99,16 @@ export async function addMember(
 
   const supabase = await createClient();
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
+  // Same RPC as the self-hosted branch - see the comment there.
+  const { data: foundUserId, error: profileError } = await supabase.rpc("find_user_id_by_email", {
+    p_organization_id: orgId,
+    p_email: normalizedEmail,
+  });
 
-  if (profileError || !profile) {
+  if (profileError || !foundUserId) {
     return { error: "User with this email not found." };
   }
+  const profile = { id: foundUserId as string };
 
   const { error } = await supabase.from("organization_members").insert({
     organization_id: orgId,

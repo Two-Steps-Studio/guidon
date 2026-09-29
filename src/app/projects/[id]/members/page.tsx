@@ -144,6 +144,7 @@ export default async function ProjectMembersPage({
       initialMembers={members}
       initialCandidates={candidates}
       projectColor={access.project.color}
+      organizationId={access.project.organization_id}
     />
   );
 }
