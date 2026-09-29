@@ -78,6 +78,7 @@
     "dashboard": "Pulpit",
     "projects": "Projekty",
     "organizations": "Organizacje",
+    "plugins": "Wtyczki",
     "overview": "Przegląd",
     "workGroup": "Praca",
     "taskBoard": "Tablica zadań",
@@ -1083,9 +1084,9 @@
     "neverUsed": "Nigdy nie użyto",
     "integrationsTitle": "Integracje",
     "integrationsDescription": "Narzędzia, które łączą się z Guidonem spoza przeglądarki.",
-    "unityPluginTitle": "Wtyczka do Unity Editor",
-    "unityPluginDescription": "Przeglądaj, twórz i edytuj zadania - z przeciąganiem, podzadaniami i komentarzami - bez wychodzenia z Unity Editora. Skopiuj folder wtyczki do swojego projektu i zaloguj się kontem Guidon.",
-    "viewOnGithubButton": "Zobacz na GitHubie",
+    "pluginsTitle": "Wtyczki do Twoich narzędzi",
+    "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code i IDE JetBrains.",
+    "pluginsButton": "Zobacz wtyczki",
     "claudeCodeTitle": "Claude Code (MCP)",
     "claudeCodeDescription": "Pozwól Claude Code czytać Twoje zadania, wykonywać je i aktualizować w Guidonie. Jedno kliknięcie tworzy klucz z odpowiednimi uprawnieniami i daje komendę do wklejenia w terminalu.",
     "claudeCodeCreateButton": "Połącz Claude Code",
@@ -1126,5 +1127,67 @@
     "deletedConfirmation": "Usunięto zadanie: {title}",
     "deleteFailed": "Nie udało się usunąć zadania.",
     "errorGeneric": "Przepraszam, wystąpił błąd. Spróbuj ponownie."
+  },
+  "plugins": {
+    "title": "Wtyczki i aplikacje",
+    "subtitle": "Pracuj na tablicy Guidon bez wychodzenia z narzędzi, których już używasz. Wtyczki logują się przez przeglądarkę przyciskiem Log In - bez ręcznego kopiowania klucza API.",
+    "docs": "Dokumentacja",
+    "footer": "Log Out we wtyczce usuwa klucz tylko z tego komputera. Aby unieważnić klucz, przejdź do Profil → Klucze API.",
+    "categories": {
+      "engines": "Silniki gier",
+      "creative": "Narzędzia 3D i kreatywne",
+      "editors": "Edytory kodu",
+      "desktop": "Aplikacja desktopowa"
+    },
+    "kinds": {
+      "tasks": "Tablica zadań",
+      "reports": "Raporty z gry",
+      "source": "Kod źródłowy"
+    },
+    "descriptions": {
+      "unity": "Tablica projektu w edytorze Unity oraz formularz zgłaszania błędów w grze, który wysyła raporty prosto do Guidon.",
+      "unreal": "Tablica zadań jako zakładka edytora i zgłaszanie błędów w grze z Blueprintów lub C++.",
+      "godot": "Dwa dodatki: panel z tablicą zadań w edytorze i zgłaszanie błędów w grze.",
+      "blender": "Tablica zadań w bocznym panelu widoku 3D (panel N).",
+      "vscode": "Tablica zadań w pasku bocznym VS Code. Pobierz kod źródłowy i zbuduj plik .vsix.",
+      "jetbrains": "Okno narzędziowe z tablicą zadań dla IntelliJ IDEA, Rider, PyCharm, WebStorm i innych IDE JetBrains. Pobierz kod źródłowy i zbuduj go Gradle."
+    },
+    "install": {
+      "unity": {
+        "s1": "Rozpakuj i skopiuj folder GuidonTasks w dowolne miejsce w Assets/.",
+        "s2": "Otwórz Window → Guidon → Tasks, ustaw Base URL na {baseUrl} i kliknij Log In.",
+        "s3": "Zgłoszenia błędów: skopiuj GuidonReports do Assets/ i utwórz w Profil → Klucze API klucz tylko z uprawnieniem reports:write."
+      },
+      "unreal": {
+        "s1": "Rozpakuj do folderu Plugins/ swojego projektu (albo uruchom install.ps1 z folderu GuidonTasks).",
+        "s2": "Otwórz projekt ponownie i pozwól edytorowi zbudować moduł - wymagany jest projekt C++.",
+        "s3": "Otwórz zakładkę Guidon Tasks, ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "godot": {
+        "s1": "Rozpakuj do głównego folderu projektu - pliki trafią do addons/.",
+        "s2": "Włącz dodatek w Project → Project Settings → Plugins.",
+        "s3": "W panelu Guidon ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "blender": {
+        "s1": "Nie rozpakowuj - Blender instaluje plik zip bezpośrednio.",
+        "s2": "Blender 4.2+: Preferences → Get Extensions → ⌄ → Install from Disk. Blender 3.6-4.1: Preferences → Add-ons → Install.",
+        "s3": "Włącz Allow Online Access w Preferences → System → Network, potem w panelu N ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "vscode": {
+        "s1": "Rozpakuj, potem w folderze uruchom npm install, npm run build i npm run package.",
+        "s2": "W VS Code: Extensions → ⋯ → Install from VSIX… i wybierz wygenerowany plik.",
+        "s3": "Otwórz widok Guidon, ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "jetbrains": {
+        "s1": "Rozpakuj i uruchom ./gradlew buildPlugin (JDK 17+).",
+        "s2": "Settings → Plugins → ⚙ → Install Plugin from Disk… i wybierz zip z build/distributions/.",
+        "s3": "Otwórz okno Guidon, ustaw Base URL na {baseUrl} i kliknij Log In."
+      }
+    },
+    "desktop": {
+      "title": "Guidon Desktop",
+      "description": "Natywne okno dla Guidon Cloud lub Twojego własnego serwera, z automatycznymi aktualizacjami. Instalatory są publikowane w GitHub Releases.",
+      "releases": "GitHub Releases"
+    }
   }
 }
