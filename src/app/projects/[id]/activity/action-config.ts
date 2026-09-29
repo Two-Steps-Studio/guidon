@@ -68,6 +68,8 @@ export const ACTION_CONFIG: Record<ActivityAction, ActionConfig> = {
   file_deleted: { label: "File deleted", icon: Trash2, color: "text-destructive" },
   task_attachment_uploaded: { label: "Attachment uploaded", icon: FileText, color: "text-success" },
   task_attachment_deleted: { label: "Attachment deleted", icon: Trash2, color: "text-destructive" },
+  reference_added: { label: "Moodboard image added", icon: FileText, color: "text-success" },
+  reference_deleted: { label: "Moodboard image deleted", icon: Trash2, color: "text-destructive" },
   github_repo_connected: { label: "GitHub repository connected", icon: Github, color: "text-success" },
   github_repo_disconnected: { label: "GitHub repository disconnected", icon: Unlink, color: "text-destructive" },
   github_file_committed: { label: "File committed to GitHub", icon: Github, color: "text-primary" },

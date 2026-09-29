@@ -155,8 +155,10 @@ for (const [label, sql, expected] of [
   // 29->30 tabel, 103->106 polityk: notifications (045), 3 polityki
   // (select/update/delete - kazdy widzi/oznacza/usuwa tylko swoje wiersze;
   // zero polityk insert dla authenticated, wstawia wylacznie service_role).
-  ["30 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 30],
-  ["106 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 106],
+  // 30->31 tabel, 106->110 polityk: project_references (048), 4 polityki
+  // (select/insert/update/delete).
+  ["31 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 31],
+  ["110 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 110],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -2059,6 +2061,100 @@ await withUser(C, async () => {
     threw = true;
   }
   check("anon nie ma EXECUTE", threw);
+}
+
+
+section("36. project_references: moodboard - RLS jak task_attachments + UPDATE tylko caption/tags/source_url (migracja 048)");
+
+let refA;
+let refD;
+await withUser(A, async () => {
+  // D is an org member since section 35; make them a developer on the project.
+  await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [projectId, D]);
+  const r = await db.query(
+    `INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by, tags)
+     VALUES ($1, 'castle.png', 'projects/x/references/a.png', 'image/png', $2, '{env,castle}') RETURNING id, tags`,
+    [projectId, A]
+  );
+  refA = r.rows[0]?.id;
+  check("owner dodaje referencje", Boolean(refA) && r.rows[0].tags.length === 2, JSON.stringify(r.rows));
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query(
+      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'doc.pdf', 'p', 'application/pdf', $2)",
+      [projectId, A]
+    );
+  } catch {
+    threw = true;
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("tylko obrazy (CHECK mime_type image/%)", threw);
+});
+
+await withUser(D, async () => {
+  const r = await db.query(
+    "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'mood.jpg', 'p2', 'image/jpeg', $2) RETURNING id",
+    [projectId, D]
+  );
+  refD = r.rows[0]?.id;
+  check("developer dodaje wlasna referencje", Boolean(refD));
+
+  const seen = await db.query("SELECT id FROM public.project_references WHERE project_id = $1", [projectId]);
+  check("developer widzi wszystkie referencje projektu", seen.rows.length === 2, seen.rows.length);
+
+  const own = await db.query("UPDATE public.project_references SET caption = 'Mood' WHERE id = $1 AND project_id = $2", [refD, projectId]);
+  check("autor zmienia podpis swojej referencji", own.rowCount === 1, own.rowCount);
+
+  const other = await db.query("UPDATE public.project_references SET caption = 'x' WHERE id = $1 AND project_id = $2", [refA, projectId]);
+  check("developer nie zmienia cudzej referencji", other.rowCount === 0, other.rowCount);
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query("UPDATE public.project_references SET storage_path = 'someone-else.png' WHERE id = $1", [refD]);
+  } catch (error) {
+    threw = /permission denied/.test(error.message);
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("UPDATE storage_path/project_id zablokowany (GRANT kolumnowy)", threw);
+
+  const del = await db.query("DELETE FROM public.project_references WHERE id = $1 AND project_id = $2", [refA, projectId]);
+  check("developer nie usuwa cudzej referencji", del.rowCount === 0, del.rowCount);
+});
+
+await withUser(B, async () => {
+  const seen = await db.query("SELECT id FROM public.project_references WHERE project_id = $1", [projectId]);
+  check("osoba spoza projektu nie widzi referencji", seen.rows.length === 0, seen.rows.length);
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query(
+      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'x.png', 'p3', 'image/png', $2)",
+      [projectId, B]
+    );
+  } catch {
+    threw = true;
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("osoba spoza projektu nie dodaje referencji", threw);
+});
+
+await withUser(A, async () => {
+  const del = await db.query("DELETE FROM public.project_references WHERE id = $1 AND project_id = $2", [refD, projectId]);
+  check("owner usuwa cudza referencje", del.rowCount === 1, del.rowCount);
+});
+
+{
+  let threw = false;
+  try {
+    await withAnon(() => db.query("SELECT 1 FROM public.project_references LIMIT 1"));
+  } catch {
+    threw = true;
+  }
+  check("anon nie ma dostepu", threw);
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
