@@ -97,7 +97,13 @@ export const getOrgAccess = cache(async function getOrgAccess(
       .maybeSingle(),
   ]);
 
-  if (orgResult.error || !orgResult.data) return null;
+  // Same as getProjectAccess: a real query error is an error, not "no access".
+  const queryError = orgResult.error ?? membershipResult.error;
+  if (queryError) {
+    throw new Error(`getOrgAccess(${orgId}) failed: ${queryError.code ?? ""} ${queryError.message}`.trim());
+  }
+
+  if (!orgResult.data) return null;
 
   return {
     userId: user.id,
