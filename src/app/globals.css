@@ -1,6 +1,30 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Tailwind's built-in `dark:` variant only ever follows
+   prefers-color-scheme - it has no idea about the manual theme toggle
+   (theme-switcher.tsx), which works by setting data-theme on <html>
+   exactly like the hand-written --color-* overrides below. Without this,
+   every `dark:*` utility in the app (the invert filter on the wordmark
+   logo, badge/dropdown color variants) silently ignores an explicit
+   Light/Dark choice and keeps reacting to the OS instead, so picking
+   "Light" while the OS is set to dark left the logo inverted to white
+   on a now-white background - invisible.
+   Mirrors the exact same condition as the --color-* overrides further
+   down: explicit data-theme="dark" always wins; otherwise fall back to
+   the OS preference, unless the user explicitly chose "light". */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:not([data-theme="light"]):not([data-theme="light"] *)) {
+      @slot;
+    }
+  }
+}
+
 /* ============================================
    GUIDON DESIGN TOKENS
 

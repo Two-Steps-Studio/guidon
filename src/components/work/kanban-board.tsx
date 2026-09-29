@@ -164,14 +164,13 @@ export function KanbanBoard({
     [canDrag, groups, onMoveTask]
   );
 
-  // Touch-friendly alternative to dragging (a very short/careless touch may
-  // never clear the long-press-to-arm delay in task-card.tsx, so this stays
-  // as the reliable, no-timing-required way to move a card between columns
-  // on mobile). Appends to the end of the target column, same as dropping
-  // past the last card - available whenever canEdit is, including in
-  // due_date sort mode where dragging itself is disabled (see this
-  // component's own sortMode doc comment: status changes still work there,
-  // just not by dragging).
+  // Touch-friendly alternative to dragging - a precise drag on a small
+  // screen is still more fiddly than a menu tap, so this stays as the
+  // low-effort way to move a card between columns on mobile. Appends to
+  // the end of the target column, same as dropping past the last card -
+  // available whenever canEdit is, including in due_date sort mode where
+  // dragging itself is disabled (see this component's own sortMode doc
+  // comment: status changes still work there, just not by dragging).
   const handleMoveTo = useCallback(
     async (task: Task, status: TaskStatus) => {
       if (!canEdit || normalizeTaskStatus(task.status) === status) return;
