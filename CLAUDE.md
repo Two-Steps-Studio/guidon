@@ -27,7 +27,7 @@ npm run test:reports           # in-game report validation (src/lib/api/game-rep
 npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/task-refs.ts)
 ```
 
-`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 196) to stay the same or grow, never shrink.
+`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 221) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) — UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 

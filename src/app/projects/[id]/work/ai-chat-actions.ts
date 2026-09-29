@@ -52,6 +52,10 @@ export async function sendTaskChatMessage(
     return { text: "", error: "You do not have permission to use the AI task assistant." };
   }
 
+  if (!access.project.ai_enabled) {
+    return { text: "", error: "AI features are turned off for this project." };
+  }
+
   const provider = await resolveAIProvider(access.project.organization_id, access.userId);
   if (!provider) {
     return { text: "", error: "No AI provider is configured for this organization." };

@@ -42,8 +42,9 @@ export default async function ProjectMemoryPage({
   // queries below - started here so it runs alongside them instead of as a
   // third sequential round-trip tacked onto the end of the page. Skipped
   // entirely when !canWrite, same short-circuit the original inline
-  // `canWrite && await isAIAvailableForOrg(...)` had.
-  const aiAvailablePromise = canWrite
+  // `canWrite && await isAIAvailableForOrg(...)` had. Also skipped when the
+  // project has AI features switched off (migration 046).
+  const aiAvailablePromise = canWrite && access.project.ai_enabled
     ? isAIAvailableForOrg(access.project.organization_id, access.userId)
     : null;
 

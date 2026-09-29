@@ -437,6 +437,8 @@
       "notSet": "Sin definir",
       "workflowLabel": "Flujo de trabajo",
       "workflowHelp": "Scrum añade sprints, backlog y puntos de historia — próximamente. Por ahora, esto solo etiqueta el proyecto.",
+      "aiEnabledLabel": "Funciones de IA",
+      "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto, los permisos de agentes de IA y el acceso de agentes por API. Puedes cambiarlo más tarde en la configuración del proyecto.",
       "cancel": "Cancelar",
       "creating": "Creando...",
       "createButton": "Crear"
@@ -695,6 +697,8 @@
     "notSet": "Sin definir",
     "workflowLabel": "Flujo de trabajo",
     "workflowHelp": "Scrum añade sprints, backlog y puntos de historia — próximamente. Por ahora, esto solo etiqueta el proyecto.",
+    "aiEnabledLabel": "Funciones de IA",
+    "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto y el acceso para agentes de IA. Si está desactivado, la columna «IA trabajando» solo se muestra mientras contenga tareas y los permisos de IA guardados se conservan.",
     "colorLabel": "Color del proyecto",
     "colorHelp": "Elige un color para personalizar tu proyecto. Se usará en toda la interfaz.",
     "technologiesLabel": "Tecnologías (pulsa Intro para añadir)",

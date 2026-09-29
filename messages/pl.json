@@ -437,6 +437,8 @@
       "notSet": "Nie ustawiono",
       "workflowLabel": "Tryb pracy",
       "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story — wkrótce. Na razie to tylko etykieta projektu.",
+      "aiEnabledLabel": "Funkcje AI",
+      "aiEnabledHelp": "Włącza kolumnę „AI pracuje”, asystenta zadań AI, generowane wnioski w pamięci projektu, uprawnienia agentów AI i dostęp agentów przez API. Możesz to zmienić później w ustawieniach projektu.",
       "cancel": "Anuluj",
       "creating": "Tworzenie...",
       "createButton": "Utwórz"
@@ -695,6 +697,8 @@
     "notSet": "Nie ustawiono",
     "workflowLabel": "Tryb pracy",
     "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story — wkrótce. Na razie to tylko etykieta projektu.",
+    "aiEnabledLabel": "Funkcje AI",
+    "aiEnabledHelp": "Włącza kolumnę „AI pracuje”, asystenta zadań AI, generowane wnioski w pamięci projektu i dostęp dla agentów AI. Po wyłączeniu kolumna „AI pracuje” jest widoczna tylko, dopóki są w niej zadania, a zapisane uprawnienia AI zostają zachowane.",
     "colorLabel": "Kolor projektu",
     "colorHelp": "Wybierz kolor, aby spersonalizować swój projekt. Będzie używany w całym interfejsie.",
     "technologiesLabel": "Technologie (naciśnij Enter, aby dodać)",

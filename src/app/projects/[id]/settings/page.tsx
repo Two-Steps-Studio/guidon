@@ -123,11 +123,16 @@ export default async function ProjectSettingsPage({
         isOwner={access.role === "owner"}
       />
       <BoardColumnsForm projectId={projectId} overrides={boardColumns} />
-      <AiPermissionsForm
-        projectId={projectId}
-        permissions={aiPermissions}
-        allowAutoComplete={project.allow_ai_auto_complete}
-      />
+      {/* Hidden, not just disabled, when the project has AI switched off
+          (migration 046) - the saved permissions are kept as-is and come
+          back untouched if AI is turned on again. */}
+      {project.ai_enabled && (
+        <AiPermissionsForm
+          projectId={projectId}
+          permissions={aiPermissions}
+          allowAutoComplete={project.allow_ai_auto_complete}
+        />
+      )}
       <DiscordIntegrationForm projectId={projectId} initialInfo={discordInfo} />
       <ExportProjectCard projectId={projectId} />
     </div>

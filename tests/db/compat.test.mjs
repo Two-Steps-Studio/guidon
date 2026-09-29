@@ -1986,5 +1986,30 @@ await withUser(A, async () => {
   check("A moze usunac wlasne powiadomienie", result.rowCount === 1, result.rowCount);
 });
 
+// ------------------------------------------------------------------
+section("34. projects.ai_enabled: domyslnie wlaczone, owner moze przelaczyc (migracja 046)");
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT ai_enabled FROM public.projects WHERE id = $1", [projectId]);
+  check("istniejacy projekt ma ai_enabled = true (DEFAULT)", rows[0]?.ai_enabled === true, rows[0]?.ai_enabled);
+});
+
+await withUser(A, async () => {
+  // Would throw "permission denied for table projects" if 046 forgot to
+  // append ai_enabled to the column-scoped GRANT UPDATE.
+  const result = await db.query("UPDATE public.projects SET ai_enabled = false WHERE id = $1", [projectId]);
+  check("owner moze wylaczyc AI (kolumna w GRANT UPDATE)", result.rowCount === 1, result.rowCount);
+});
+
+await withUser(B, async () => {
+  const result = await db.query("UPDATE public.projects SET ai_enabled = true WHERE id = $1", [projectId]);
+  check("B (spoza projektu) nie moze przelaczyc AI", result.rowCount === 0, result.rowCount);
+});
+
+await withUser(A, async () => {
+  const result = await db.query("UPDATE public.projects SET ai_enabled = true WHERE id = $1 RETURNING ai_enabled", [projectId]);
+  check("owner moze ponownie wlaczyc AI", result.rows[0]?.ai_enabled === true, JSON.stringify(result.rows));
+});
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

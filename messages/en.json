@@ -437,6 +437,8 @@
       "notSet": "Not set",
       "workflowLabel": "Workflow",
       "workflowHelp": "Scrum adds sprints, backlog, and story points — coming soon. For now this just labels the project.",
+      "aiEnabledLabel": "AI features",
+      "aiEnabledHelp": "Enables the AI Working column, the AI task assistant, generated memory insights, AI agent permissions and agent API access. You can change this later in project settings.",
       "cancel": "Cancel",
       "creating": "Creating...",
       "createButton": "Create"
@@ -695,6 +697,8 @@
     "notSet": "Not set",
     "workflowLabel": "Workflow",
     "workflowHelp": "Scrum adds sprints, backlog, and story points — coming soon. For now this just labels the project.",
+    "aiEnabledLabel": "AI features",
+    "aiEnabledHelp": "Turns on the AI Working column, the AI task assistant, generated memory insights and access for AI agents. When off, the AI Working column stays visible only while it still holds tasks, and saved AI permissions are kept.",
     "colorLabel": "Project Color",
     "colorHelp": "Choose a color to personalize your project. It will be used throughout the interface.",
     "technologiesLabel": "Technologies (press Enter to add)",

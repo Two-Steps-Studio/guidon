@@ -437,6 +437,8 @@
       "notSet": "Nicht festgelegt",
       "workflowLabel": "Workflow",
       "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu — bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
+      "aiEnabledLabel": "KI-Funktionen",
+      "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis, KI-Agentenberechtigungen und den API-Zugriff für Agenten. Du kannst das später in den Projekteinstellungen ändern.",
       "cancel": "Abbrechen",
       "creating": "Wird erstellt...",
       "createButton": "Erstellen"
@@ -695,6 +697,8 @@
     "notSet": "Nicht festgelegt",
     "workflowLabel": "Workflow",
     "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu — bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
+    "aiEnabledLabel": "KI-Funktionen",
+    "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis und den Zugriff für KI-Agenten. Ausgeschaltet bleibt die Spalte „KI arbeitet“ nur sichtbar, solange sie noch Aufgaben enthält; gespeicherte KI-Berechtigungen bleiben erhalten.",
     "colorLabel": "Projektfarbe",
     "colorHelp": "Wähle eine Farbe, um dein Projekt zu personalisieren. Sie wird in der gesamten Oberfläche verwendet.",
     "technologiesLabel": "Technologien (Enter zum Hinzufügen drücken)",
