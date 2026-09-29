@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase-server";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { withUser, withServiceRole } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import type { OrganizationRole } from "@/types/project";
@@ -11,12 +12,6 @@ import type { OrganizationRole } from "@/types/project";
 export type MemberActionState = {
   error: string | null;
 };
-
-/** True for a Postgres unique_violation (SQLSTATE 23505) - both node-postgres
- * errors and PostgREST error objects carry it as `.code`. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
-}
 
 export async function addMember(
   orgId: string,

@@ -11,19 +11,8 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { imageFiles, withReadableName } from "@/lib/files/images";
 import { deleteReference, updateReference, uploadReference, type ProjectReference } from "./actions";
-
-function imageFiles(list: FileList | null | undefined): File[] {
-  return Array.from(list ?? []).filter((file) => file.type.startsWith("image/"));
-}
-
-/** Clipboard screenshots arrive as "image.png" - same renaming as task paste (use-image-paste.ts). */
-function friendlyName(file: File): File {
-  if (file.name && file.name !== "image.png") return file;
-  const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
-  const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") || "png";
-  return new File([file], `reference-${stamp}.${ext}`, { type: file.type });
-}
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -86,7 +75,7 @@ export function MoodboardBoard({
     await Promise.all(
       files.map(async (raw) => {
         const formData = new FormData();
-        formData.append("file", friendlyName(raw));
+        formData.append("file", withReadableName(raw, "reference"));
         // New images land in the tag being viewed, so they don't vanish from a filtered view.
         if (activeTag) formData.append("tags", activeTag);
         const result = await uploadReference(projectId, formData);

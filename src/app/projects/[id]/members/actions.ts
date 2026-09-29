@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import type { ProjectRole } from "@/types/project";
@@ -28,12 +29,6 @@ export type MemberMutationResult = { error: string | null };
 
 function assertManager(role: ProjectRole | null): role is "owner" | "admin" {
   return role === "owner" || role === "admin";
-}
-
-/** True for a Postgres unique_violation (SQLSTATE 23505) - both node-postgres
- * errors and PostgREST error objects carry it as `.code`. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
 }
 
 export async function addMember(

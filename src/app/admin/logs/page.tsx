@@ -1,15 +1,11 @@
 import { Activity as ActivityIcon } from "lucide-react";
+import { displayName } from "@/lib/people";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
-import { listRecentActivityForAdmin, resolveProfilesForAdmin, type AdminActorProfile } from "@/lib/data/admin";
+import { listRecentActivityForAdmin, resolveProfilesForAdmin } from "@/lib/data/admin";
 import { configFor } from "@/app/projects/[id]/activity/action-config";
-
-function nameFor(profile: AdminActorProfile | undefined, someone: string): string {
-  if (!profile) return someone;
-  return profile.full_name || profile.email;
-}
 
 /**
  * Instance-wide activity log (TODO.md §25) - the same activity_logs table
@@ -69,7 +65,7 @@ export default async function AdminLogsPage() {
                     <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${config.color}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm">
-                        <span className="font-medium">{entry.actor_label || nameFor(actor, t("someone"))}</span>{" "}
+                        <span className="font-medium">{entry.actor_label || displayName(actor, t("someone"))}</span>{" "}
                         <span className="text-muted-foreground">{config.label.toLowerCase()}</span>
                         {entry.entity_type && <span className="text-muted-foreground"> · {entry.entity_type}</span>}
                         <span className="text-muted-foreground"> · {scope}</span>

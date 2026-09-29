@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { displayName } from "@/lib/people";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Activity as ActivityIcon } from "lucide-react";
@@ -13,11 +14,6 @@ interface ActorProfile {
   id: string;
   full_name: string | null;
   email: string;
-}
-
-function nameFor(profile: ActorProfile | undefined, fallback: string): string {
-  if (!profile) return fallback;
-  return profile.full_name || profile.email;
 }
 
 /**
@@ -99,7 +95,7 @@ export default async function ProjectActivityPage({
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">
-                        <span className="font-medium">{entry.actor_label || nameFor(actor, t("someone"))}</span>{" "}
+                        <span className="font-medium">{entry.actor_label || displayName(actor, t("someone"))}</span>{" "}
                         <span className="text-muted-foreground">{actionLabel.toLowerCase()}</span>
                         {entry.entity_type && (
                           <span className="text-muted-foreground"> · {entry.entity_type}</span>

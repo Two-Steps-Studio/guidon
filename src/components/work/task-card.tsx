@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useRef } from "react";
+import { initialsFor } from "@/lib/people";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
@@ -89,16 +90,6 @@ function descriptionPreview(description: string | null | undefined): string {
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-export function initialsFor(member: TaskCardMember): string {
-  const source = member.full_name?.trim() || member.email;
-  const parts = source.split(/[\s@._-]+/).filter(Boolean);
-
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-
-  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 interface Gesture {

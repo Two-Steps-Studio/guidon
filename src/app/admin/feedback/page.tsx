@@ -1,14 +1,10 @@
 import { MessageSquare } from "lucide-react";
+import { displayName } from "@/lib/people";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
-import { listFeedbackForAdmin, resolveProfilesForAdmin, type AdminActorProfile } from "@/lib/data/admin";
-
-function nameFor(profile: AdminActorProfile | undefined, anonymous: string): string {
-  if (!profile) return anonymous;
-  return profile.full_name || profile.email;
-}
+import { listFeedbackForAdmin, resolveProfilesForAdmin } from "@/lib/data/admin";
 
 /**
  * Instance-wide feedback inbox - same shape as /admin/logs (read-only,
@@ -55,7 +51,7 @@ export default async function AdminFeedbackPage() {
                     <div className="min-w-0 flex-1 space-y-1">
                       <p className="whitespace-pre-wrap text-sm">{entry.message}</p>
                       <p className="text-xs text-muted-foreground">
-                        {t("feedbackFrom", { name: nameFor(author, t("feedbackAnonymous")) })}
+                        {t("feedbackFrom", { name: displayName(author, t("feedbackAnonymous")) })}
                         {" · "}
                         {new Date(entry.created_at).toLocaleString()}
                         {entry.page_url && <> · {t("feedbackPageContext", { page: entry.page_url })}</>}

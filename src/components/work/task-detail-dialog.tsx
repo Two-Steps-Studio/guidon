@@ -48,7 +48,8 @@ import {
   normalizeTaskStatus,
   type BoardColumn,
 } from "@/lib/work/task-board";
-import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
+import { type TaskCardMember } from "@/components/work/task-card";
+import { initialsFor } from "@/lib/people";
 import { DescriptionToolbar, descriptionKeyDown } from "@/components/work/description-toolbar";
 import { toggleTaskAtLine, type EditResult } from "@/lib/work/markdown-edit";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
