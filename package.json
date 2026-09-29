@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/build-plugin-zips.mjs",
     "dev": "next dev --webpack -p 2137",
+    "prebuild": "node scripts/build-plugin-zips.mjs",
     "build": "next build",
     "start": "next start -p 2137",
     "lint": "eslint",

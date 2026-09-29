@@ -78,6 +78,7 @@
     "dashboard": "Panel",
     "projects": "Proyectos",
     "organizations": "Organizaciones",
+    "plugins": "Plugins",
     "overview": "Resumen",
     "workGroup": "Trabajo",
     "taskBoard": "Tablero de tareas",
@@ -437,6 +438,8 @@
       "notSet": "Sin definir",
       "workflowLabel": "Flujo de trabajo",
       "workflowHelp": "Scrum añade sprints, backlog y puntos de historia — próximamente. Por ahora, esto solo etiqueta el proyecto.",
+      "aiEnabledLabel": "Funciones de IA",
+      "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto, los permisos de agentes de IA y el acceso de agentes por API. Puedes cambiarlo más tarde en la configuración del proyecto.",
       "cancel": "Cancelar",
       "creating": "Creando...",
       "createButton": "Crear"
@@ -649,7 +652,7 @@
     "title": "Miembros",
     "subtitle": "Quién puede ver y modificar este proyecto.",
     "addMember": "Añadir miembro",
-    "everyoneAlready": "Todos en la organización ya están en este proyecto",
+    "everyoneAlready": "Todos los miembros de la organización ya están en este proyecto. Para añadir a alguien nuevo, añádelo primero a la organización.",
     "dismiss": "Descartar",
     "readOnlyAccess": "Tienes acceso de <b>{role}</b> - solo los propietarios y administradores pueden cambiar la membresía.",
     "you": "tú",
@@ -664,6 +667,7 @@
     "unknownMember": "Miembro desconocido",
     "dialogTitle": "Añadir miembro",
     "dialogDescription": "Las personas deben pertenecer ya a la organización propietaria de este proyecto.",
+    "manageOrgMembers": "Gestionar miembros de la organización",
     "personLabel": "Persona",
     "roleLabel": "Rol",
     "cancel": "Cancelar",
@@ -695,6 +699,8 @@
     "notSet": "Sin definir",
     "workflowLabel": "Flujo de trabajo",
     "workflowHelp": "Scrum añade sprints, backlog y puntos de historia — próximamente. Por ahora, esto solo etiqueta el proyecto.",
+    "aiEnabledLabel": "Funciones de IA",
+    "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto y el acceso para agentes de IA. Si está desactivado, la columna «IA trabajando» solo se muestra mientras contenga tareas y los permisos de IA guardados se conservan.",
     "colorLabel": "Color del proyecto",
     "colorHelp": "Elige un color para personalizar tu proyecto. Se usará en toda la interfaz.",
     "technologiesLabel": "Tecnologías (pulsa Intro para añadir)",
@@ -1078,9 +1084,9 @@
     "neverUsed": "Nunca usada",
     "integrationsTitle": "Integraciones",
     "integrationsDescription": "Herramientas que se conectan a Guidon desde fuera del navegador.",
-    "unityPluginTitle": "Plugin para Unity Editor",
-    "unityPluginDescription": "Visualiza, crea y edita tareas - con arrastrar y soltar, subtareas y comentarios - sin salir del Editor de Unity. Copia la carpeta del plugin en tu proyecto e inicia sesión con tu cuenta de Guidon.",
-    "viewOnGithubButton": "Ver en GitHub",
+    "pluginsTitle": "Plugins para tus herramientas",
+    "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code e IDE de JetBrains.",
+    "pluginsButton": "Ver plugins",
     "claudeCodeTitle": "Claude Code (MCP)",
     "claudeCodeDescription": "Deja que Claude Code lea tus tareas, las haga y las actualice en Guidon. Un clic crea una clave con los permisos adecuados y te da el comando para pegar en tu terminal.",
     "claudeCodeCreateButton": "Conectar Claude Code",
@@ -1121,5 +1127,67 @@
     "deletedConfirmation": "Tarea eliminada: {title}",
     "deleteFailed": "No se pudo eliminar la tarea.",
     "errorGeneric": "Lo siento, ocurrió un error. Inténtalo de nuevo."
+  },
+  "plugins": {
+    "title": "Plugins y aplicaciones",
+    "subtitle": "Trabaja en tu tablero de Guidon sin salir de las herramientas que ya usas. Los plugins inician sesión desde el navegador con Log In, sin copiar ninguna clave de API a mano.",
+    "docs": "Documentación",
+    "footer": "Log Out en un plugin solo elimina la clave de ese ordenador. Para revocar una clave, ve a Perfil → Claves de API.",
+    "categories": {
+      "engines": "Motores de juego",
+      "creative": "Herramientas 3D y creativas",
+      "editors": "Editores de código",
+      "desktop": "Aplicación de escritorio"
+    },
+    "kinds": {
+      "tasks": "Tablero de tareas",
+      "reports": "Informes en el juego",
+      "source": "Código fuente"
+    },
+    "descriptions": {
+      "unity": "El tablero de tu proyecto dentro del editor de Unity, además de un formulario de errores en el juego que envía los informes directamente a Guidon.",
+      "unreal": "Tablero de tareas como pestaña del editor e informes de errores en el juego desde Blueprints o C++.",
+      "godot": "Dos complementos: un panel con el tablero de tareas para el editor e informes de errores en el juego.",
+      "blender": "Tablero de tareas en la barra lateral del visor 3D (panel N).",
+      "vscode": "Tablero de tareas en la barra lateral de VS Code. Descarga el código fuente y genera un .vsix.",
+      "jetbrains": "Ventana de herramientas con el tablero para IntelliJ IDEA, Rider, PyCharm, WebStorm y otros IDE de JetBrains. Descarga el código fuente y compílalo con Gradle."
+    },
+    "install": {
+      "unity": {
+        "s1": "Descomprime y copia la carpeta GuidonTasks en cualquier lugar dentro de Assets/.",
+        "s2": "Abre Window → Guidon → Tasks, pon {baseUrl} como Base URL y haz clic en Log In.",
+        "s3": "Informes de errores: copia GuidonReports dentro de Assets/ y crea en Perfil → Claves de API una clave solo con el permiso reports:write."
+      },
+      "unreal": {
+        "s1": "Descomprime en la carpeta Plugins/ de tu proyecto (o ejecuta install.ps1 desde la carpeta GuidonTasks).",
+        "s2": "Vuelve a abrir el proyecto y deja que el editor compile el módulo; hace falta un proyecto C++.",
+        "s3": "Abre la pestaña Guidon Tasks, pon {baseUrl} como Base URL y haz clic en Log In."
+      },
+      "godot": {
+        "s1": "Descomprime en la carpeta raíz del proyecto; los archivos quedan en addons/.",
+        "s2": "Activa el complemento en Project → Project Settings → Plugins.",
+        "s3": "En el panel de Guidon, pon {baseUrl} como Base URL y haz clic en Log In."
+      },
+      "blender": {
+        "s1": "No lo descomprimas: Blender instala el zip tal cual.",
+        "s2": "Blender 4.2+: Preferences → Get Extensions → ⌄ → Install from Disk. Blender 3.6-4.1: Preferences → Add-ons → Install.",
+        "s3": "Activa Allow Online Access en Preferences → System → Network y luego, en el panel N, pon {baseUrl} como Base URL y haz clic en Log In."
+      },
+      "vscode": {
+        "s1": "Descomprime y ejecuta npm install, npm run build y npm run package en la carpeta.",
+        "s2": "En VS Code: Extensions → ⋯ → Install from VSIX… y elige el archivo generado.",
+        "s3": "Abre la vista de Guidon, pon {baseUrl} como Base URL y haz clic en Log In."
+      },
+      "jetbrains": {
+        "s1": "Descomprime y ejecuta ./gradlew buildPlugin (JDK 17+).",
+        "s2": "Settings → Plugins → ⚙ → Install Plugin from Disk… y elige el zip de build/distributions/.",
+        "s3": "Abre la ventana de Guidon, pon {baseUrl} como Base URL y haz clic en Log In."
+      }
+    },
+    "desktop": {
+      "title": "Guidon Desktop",
+      "description": "Una ventana nativa para Guidon Cloud o tu propio servidor, con actualizaciones automáticas. Los instaladores se publican en GitHub Releases.",
+      "releases": "GitHub Releases"
+    }
   }
 }

@@ -43,12 +43,14 @@ import {
   User,
   LogOut,
   MessageSquarePlus,
+  Puzzle,
 } from "lucide-react";
 
 export const GLOBAL_NAV = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
+  { href: "/plugins", labelKey: "plugins", icon: Puzzle },
 ] as const;
 
 export interface ProjectNavItem {

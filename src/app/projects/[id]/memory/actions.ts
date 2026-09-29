@@ -551,6 +551,12 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
     return { error: "You do not have permission to generate insights." };
   }
 
+  // The button is hidden when AI is switched off for the project (migration
+  // 046), but a stale page or a direct action call could still get here.
+  if (!access.project.ai_enabled) {
+    return { error: "AI features are turned off for this project." };
+  }
+
   const provider = await resolveAIProvider(access.project.organization_id, access.userId);
   if (!provider) {
     return { error: "No AI provider is configured for this organization." };

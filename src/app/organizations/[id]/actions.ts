@@ -60,6 +60,10 @@ export async function createProject(
   const trimmedDescription =
     typeof description === "string" && description.trim() ? description.trim() : null;
 
+  // A plain checkbox: present ("on") when ticked, absent from FormData
+  // entirely when not - so anything but "on" means AI was switched off.
+  const aiEnabled = formData.get("aiEnabled") === "on";
+
   let projectId: string;
 
   // The owner membership is created by private.handle_new_project(); do not
@@ -74,10 +78,10 @@ export async function createProject(
     try {
       projectId = await withUser(access.userId, async ({ query }) => {
         const result = await query(
-          `INSERT INTO projects (organization_id, name, slug, description, project_type, methodology, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO projects (organization_id, name, slug, description, project_type, methodology, ai_enabled, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            RETURNING id`,
-          [orgId, name.trim(), slug, trimmedDescription, projectType, methodology, access.userId]
+          [orgId, name.trim(), slug, trimmedDescription, projectType, methodology, aiEnabled, access.userId]
         );
         return result.rows[0].id as string;
       });
@@ -105,6 +109,7 @@ export async function createProject(
         description: trimmedDescription,
         project_type: projectType,
         methodology,
+        ai_enabled: aiEnabled,
         created_by: access.userId,
       })
       .select("id")

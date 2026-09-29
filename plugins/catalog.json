@@ -1,0 +1,68 @@
+{
+  "$comment": "Single source for the /plugins download page (src/app/plugins) and scripts/build-plugin-zips.mjs, which packs every `downloads[]` entry into public/downloads/plugins/<file> before `next dev`/`next build`. `source` is relative to the repo root; `root` is the folder name the files sit under inside the zip (what the user extracts or copies into their project).",
+  "plugins": [
+    {
+      "id": "unity",
+      "name": "Unity",
+      "category": "engines",
+      "requires": null,
+      "readme": "plugins/unity/GuidonTasks/README.md",
+      "downloads": [
+        { "id": "unity-tasks", "kind": "tasks", "source": "plugins/unity/GuidonTasks", "root": "GuidonTasks", "file": "guidon-unity-tasks.zip" },
+        { "id": "unity-reports", "kind": "reports", "source": "plugins/unity/GuidonReports", "root": "GuidonReports", "file": "guidon-unity-reports.zip" }
+      ]
+    },
+    {
+      "id": "unreal",
+      "name": "Unreal Engine 5",
+      "category": "engines",
+      "requires": "UE 5, C++ project",
+      "readme": "plugins/unreal/GuidonTasks/README.md",
+      "downloads": [
+        { "id": "unreal-tasks", "kind": "tasks", "source": "plugins/unreal/GuidonTasks", "root": "GuidonTasks", "file": "guidon-unreal-tasks.zip" },
+        { "id": "unreal-reports", "kind": "reports", "source": "plugins/unreal/GuidonReports", "root": "GuidonReports", "file": "guidon-unreal-reports.zip" }
+      ]
+    },
+    {
+      "id": "godot",
+      "name": "Godot",
+      "category": "engines",
+      "requires": "Godot 4.2+",
+      "readme": "plugins/godot/README.md",
+      "downloads": [
+        { "id": "godot-tasks", "kind": "tasks", "source": "plugins/godot/addons/guidon_tasks", "root": "addons/guidon_tasks", "file": "guidon-godot-tasks.zip" },
+        { "id": "godot-reports", "kind": "reports", "source": "plugins/godot/addons/guidon_reports", "root": "addons/guidon_reports", "file": "guidon-godot-reports.zip" }
+      ]
+    },
+    {
+      "id": "blender",
+      "name": "Blender",
+      "category": "creative",
+      "requires": "Blender 3.6+",
+      "readme": "plugins/blender/README.md",
+      "downloads": [
+        { "id": "blender-tasks", "kind": "tasks", "source": "plugins/blender/guidon_tasks", "root": "guidon_tasks", "file": "guidon-blender-tasks.zip" }
+      ]
+    },
+    {
+      "id": "vscode",
+      "name": "VS Code",
+      "category": "editors",
+      "requires": "VS Code 1.85+",
+      "readme": "plugins/vscode/README.md",
+      "downloads": [
+        { "id": "vscode-source", "kind": "source", "source": "plugins/vscode", "root": "guidon-vscode", "file": "guidon-vscode-source.zip" }
+      ]
+    },
+    {
+      "id": "jetbrains",
+      "name": "JetBrains IDEs",
+      "category": "editors",
+      "requires": "2024.3+, JDK 17+",
+      "readme": "plugins/jetbrains/README.md",
+      "downloads": [
+        { "id": "jetbrains-source", "kind": "source", "source": "plugins/jetbrains", "root": "guidon-jetbrains", "file": "guidon-jetbrains-source.zip" }
+      ]
+    }
+  ]
+}

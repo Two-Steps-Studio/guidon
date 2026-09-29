@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { AlertCircle, Loader2, UserMinus, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -53,8 +54,12 @@ export function MemberList({
   initialMembers,
   initialCandidates,
   projectColor,
+  organizationId,
 }: {
   projectId: string;
+  /** For the "add people to the organization first" link - project members
+   *  can only be picked from the owning organization. */
+  organizationId: string;
   currentUserId: string;
   myRole: ProjectRole | null;
   initialMembers: ProjectMemberRow[];
@@ -136,12 +141,6 @@ export function MemberList({
             <Button
               size="sm"
               onClick={() => setAdding(true)}
-              disabled={candidates.length === 0}
-              title={
-                candidates.length === 0
-                  ? t("everyoneAlready")
-                  : undefined
-              }
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <UserPlus className="h-4 w-4" />
@@ -251,6 +250,7 @@ export function MemberList({
       {adding && (
         <AddMemberDialog
           projectId={projectId}
+          organizationId={organizationId}
           candidates={candidates}
           assignable={assignable}
           onClose={() => setAdding(false)}
@@ -267,12 +267,14 @@ export function MemberList({
 
 function AddMemberDialog({
   projectId,
+  organizationId,
   candidates,
   assignable,
   onClose,
   onAdded,
 }: {
   projectId: string;
+  organizationId: string;
   candidates: TaskCardMember[];
   assignable: ProjectRole[];
   onClose: () => void;
@@ -315,10 +317,34 @@ function AddMemberDialog({
         <DialogHeader>
           <DialogTitle className="text-base">{t("dialogTitle")}</DialogTitle>
           <DialogDescription>
-            {t("dialogDescription")}
+            {t("dialogDescription")}{" "}
+            <Link
+              href={`/organizations/${organizationId}/members`}
+              className="font-medium text-foreground underline underline-offset-2"
+            >
+              {t("manageOrgMembers")}
+            </Link>
           </DialogDescription>
         </DialogHeader>
 
+        {/* Used to be a disabled "Add member" button whose only explanation
+            was a hover tooltip - invisible on touch screens, so it just
+            looked broken. */}
+        {candidates.length === 0 ? (
+          <div className="space-y-4">
+            <p className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+              {t("everyoneAlready")}
+            </p>
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
+              <Button type="button" variant="outline" size="sm" onClick={onClose}>
+                {t("cancel")}
+              </Button>
+              <Button asChild size="sm">
+                <Link href={`/organizations/${organizationId}/members`}>{t("manageOrgMembers")}</Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="member-user">{t("personLabel")}</Label>
@@ -362,6 +388,7 @@ function AddMemberDialog({
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

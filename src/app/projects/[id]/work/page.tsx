@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isAIAvailableForOrg } from "@/lib/ai/resolve-provider";
-import { compareTasks, resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
+import { compareTasks, normalizeTaskStatus, resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
 import { getSignedUrl } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
 import { WorkBoard } from "./work-board";
@@ -143,7 +143,12 @@ export default async function ProjectWorkPage({
   // below - started here rather than awaited inline in the JSX below so it
   // runs alongside that Promise.all instead of as a second sequential
   // round-trip tacked onto the end of the page.
-  const aiAvailablePromise = isAIAvailableForOrg(access.project.organization_id, access.userId);
+  // Migration 046: a project can switch every AI feature off at once - no
+  // point asking the org whether a provider is configured then.
+  const aiEnabled = access.project.ai_enabled;
+  const aiAvailablePromise = aiEnabled
+    ? isAIAvailableForOrg(access.project.organization_id, access.userId)
+    : Promise.resolve(false);
 
   let tasks: Task[];
   let members: TaskCardMember[];
@@ -230,10 +235,22 @@ export default async function ProjectWorkPage({
     columnOverrides = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
-  const columns = resolveBoardColumns(columnOverrides, (status) => ({
+  const resolvedColumns = resolveBoardColumns(columnOverrides, (status) => ({
     label: tWork("status", { status }),
     hint: tWork("statusHint", { status }),
   }));
+  // With AI off the "AI Working" column goes away - unless a board task is
+  // still sitting in it (from before AI was switched off, or an agent
+  // mid-task), in which case hiding it would make that task vanish from the
+  // board entirely. It disappears on its own once emptied. Subtasks aren't
+  // board cards, so they don't keep it around.
+  const hasAiWorkingTasks = tasks.some(
+    (task) => !task.parent_task_id && normalizeTaskStatus(task.status) === "ai_working"
+  );
+  const columns =
+    aiEnabled || hasAiWorkingTasks
+      ? resolvedColumns
+      : resolvedColumns.filter((column) => column.status !== "ai_working");
 
   return (
     <WorkBoard
@@ -250,6 +267,7 @@ export default async function ProjectWorkPage({
       projectColor={access.project.color}
       columns={columns}
       aiAvailable={await aiAvailablePromise}
+      aiEnabled={aiEnabled}
     />
   );
 }

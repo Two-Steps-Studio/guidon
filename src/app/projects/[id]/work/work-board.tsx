@@ -62,6 +62,7 @@ export function WorkBoard({
   projectColor,
   columns = BOARD_COLUMNS,
   aiAvailable = false,
+  aiEnabled = true,
 }: {
   projectId: string;
   projectName: string;
@@ -76,6 +77,8 @@ export function WorkBoard({
   projectColor?: string;
   columns?: readonly BoardColumn[];
   aiAvailable?: boolean;
+  /** projects.ai_enabled (migration 046) - hides agent-only UI in the task dialog. */
+  aiEnabled?: boolean;
 }) {
   const t = useTranslations("work");
   const canDelete = role === "owner" || role === "admin";
@@ -397,6 +400,7 @@ export function WorkBoard({
           canComment={canComment}
           currentUserId={userId}
           columns={columns}
+          aiEnabled={aiEnabled}
           onClose={() => setOpenTask(null)}
           onSaved={upsertTask}
           onDeleted={removeTask}

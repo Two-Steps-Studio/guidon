@@ -6,6 +6,7 @@ import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 
 const COMMENT_COLUMNS = "id, task_id, author_id, content, created_at, actor_label";
+const AI_DISABLED_ERROR = "AI features are turned off for this project.";
 
 /**
  * Lists a task's comments - `tasks:read`-gated (a read), separate from
@@ -78,8 +79,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     let result: unknown;
     try {
       result = await withUser(guard.userId, async ({ query }) => {
-        const task = await query("SELECT project_id FROM tasks WHERE id = $1", [taskId]);
+        const task = await query(
+          "SELECT t.project_id, p.ai_enabled FROM tasks t JOIN projects p ON p.id = t.project_id WHERE t.id = $1",
+          [taskId]
+        );
         if (task.rows.length === 0) return null;
+        if (!guard.humanClient && !task.rows[0].ai_enabled) return "ai_disabled";
 
         const perms = await query(
           "SELECT can_create_comments FROM project_ai_permissions WHERE project_id = $1",
@@ -106,6 +111,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (result === null) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+    if (result === "ai_disabled") {
+      return NextResponse.json({ error: AI_DISABLED_ERROR }, { status: 403 });
+    }
     if (result === "forbidden") {
       return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
     }
@@ -117,11 +125,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { data: task } = await supabase.from("tasks").select("project_id").eq("id", taskId).maybeSingle();
   if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
 
-  const { data: perms } = await supabase
-    .from("project_ai_permissions")
-    .select("can_create_comments")
-    .eq("project_id", task.project_id)
-    .maybeSingle();
+  const [{ data: project }, { data: perms }] = await Promise.all([
+    supabase.from("projects").select("ai_enabled").eq("id", task.project_id).maybeSingle(),
+    supabase
+      .from("project_ai_permissions")
+      .select("can_create_comments")
+      .eq("project_id", task.project_id)
+      .maybeSingle(),
+  ]);
+
+  if (!guard.humanClient && project && !project.ai_enabled) {
+    return NextResponse.json({ error: AI_DISABLED_ERROR }, { status: 403 });
+  }
 
   if (!guard.humanClient && perms && !perms.can_create_comments) {
     return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });

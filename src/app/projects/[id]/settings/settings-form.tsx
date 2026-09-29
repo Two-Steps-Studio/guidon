@@ -172,6 +172,18 @@ export function SettingsForm({
               {t("workflowHelp")}
             </p>
           </div>
+          <div className="rounded-md border border-border p-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                name="aiEnabled"
+                defaultChecked={project.ai_enabled}
+                className="h-4 w-4"
+              />
+              {t("aiEnabledLabel")}
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">{t("aiEnabledHelp")}</p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="color">{t("colorLabel")}</Label>
             <div className="flex items-center gap-3">

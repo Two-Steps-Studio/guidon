@@ -1986,5 +1986,80 @@ await withUser(A, async () => {
   check("A moze usunac wlasne powiadomienie", result.rowCount === 1, result.rowCount);
 });
 
+// ------------------------------------------------------------------
+section("34. projects.ai_enabled: domyslnie wlaczone, owner moze przelaczyc (migracja 046)");
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT ai_enabled FROM public.projects WHERE id = $1", [projectId]);
+  check("istniejacy projekt ma ai_enabled = true (DEFAULT)", rows[0]?.ai_enabled === true, rows[0]?.ai_enabled);
+});
+
+await withUser(A, async () => {
+  // Would throw "permission denied for table projects" if 046 forgot to
+  // append ai_enabled to the column-scoped GRANT UPDATE.
+  const result = await db.query("UPDATE public.projects SET ai_enabled = false WHERE id = $1", [projectId]);
+  check("owner moze wylaczyc AI (kolumna w GRANT UPDATE)", result.rowCount === 1, result.rowCount);
+});
+
+await withUser(B, async () => {
+  const result = await db.query("UPDATE public.projects SET ai_enabled = true WHERE id = $1", [projectId]);
+  check("B (spoza projektu) nie moze przelaczyc AI", result.rowCount === 0, result.rowCount);
+});
+
+await withUser(A, async () => {
+  const result = await db.query("UPDATE public.projects SET ai_enabled = true WHERE id = $1 RETURNING ai_enabled", [projectId]);
+  check("owner moze ponownie wlaczyc AI", result.rows[0]?.ai_enabled === true, JSON.stringify(result.rows));
+});
+
+
+section("35. find_user_id_by_email: owner/admin organizacji znajduje osobe spoza niej (migracja 047)");
+
+const D = "44444444-4444-4444-4444-444444444444";
+await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, $2, $3)", [
+  D,
+  "d@example.test",
+  JSON.stringify({ full_name: "Dorota" }),
+]);
+
+await withUser(A, async () => {
+  // The original bug: profiles RLS (003) hides anyone the caller doesn't
+  // already share a workspace with - i.e. exactly the person being added.
+  const plain = await db.query("SELECT id FROM public.profiles WHERE email = 'd@example.test'");
+  check("zwykly SELECT na profiles nie widzi osoby spoza workspace'u (RLS 003)", plain.rows.length === 0, plain.rows.length);
+
+  const found = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "  D@Example.test "]);
+  check("owner organizacji znajduje id po e-mailu (wielkosc liter/spacje bez znaczenia)", found.rows[0]?.id === D, found.rows[0]?.id);
+
+  const missing = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "nobody@example.test"]);
+  check("nieistniejacy e-mail -> NULL", missing.rows[0]?.id === null, missing.rows[0]?.id);
+
+  const added = await db.query(
+    "INSERT INTO public.organization_members (organization_id, user_id, role) VALUES ($1, $2, 'member') RETURNING user_id",
+    [orgId, D]
+  );
+  check("owner dodaje znaleziona osobe do organizacji", added.rows[0]?.user_id === D, JSON.stringify(added.rows));
+});
+
+await withUser(D, async () => {
+  // D is now a plain member of orgId - not owner/admin, so no lookups.
+  const r = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "c@example.test"]);
+  check("zwykly member nie moze wyszukiwac po e-mailu", r.rows[0]?.id === null, r.rows[0]?.id);
+});
+
+await withUser(C, async () => {
+  const r = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "d@example.test"]);
+  check("osoba spoza organizacji nie moze wyszukiwac po e-mailu", r.rows[0]?.id === null, r.rows[0]?.id);
+});
+
+{
+  let threw = false;
+  try {
+    await withAnon(() => db.query("SELECT public.find_user_id_by_email($1, $2)", [orgId, "d@example.test"]));
+  } catch {
+    threw = true;
+  }
+  check("anon nie ma EXECUTE", threw);
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

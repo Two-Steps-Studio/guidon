@@ -36,6 +36,8 @@ export interface Project {
   avatar_url: string | null;
   project_type: ProjectType | null;
   methodology: ProjectMethodology;
+  /** Migration 046 - one switch for every AI feature on this project. */
+  ai_enabled: boolean;
   allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;
@@ -54,6 +56,7 @@ export interface CreateProjectData {
   color?: string;
   project_type?: ProjectType;
   methodology?: ProjectMethodology;
+  ai_enabled?: boolean;
   planned_end_date?: string;
 }
 

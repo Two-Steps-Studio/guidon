@@ -61,6 +61,8 @@ interface TaskDetailDialogProps {
   currentUserId: string | null;
   /** The project's resolved (default + overrides) column set - see resolveBoardColumns(). */
   columns?: readonly BoardColumn[];
+  /** projects.ai_enabled (migration 046) - false hides the agent-only "Export agent context" action. */
+  aiEnabled?: boolean;
   onClose: () => void;
   onSaved: (task: Task) => void;
   onDeleted: (taskId: string) => void;
@@ -114,6 +116,7 @@ export function TaskDetailDialog({
   canComment,
   currentUserId,
   columns = BOARD_COLUMNS,
+  aiEnabled = true,
   onClose,
   onSaved,
   onDeleted,
@@ -720,12 +723,14 @@ export function TaskDetailDialog({
 
         <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />
 
-        <section aria-label={t("agentContextAria")} className="border-t border-border pt-4">
-          <Button type="button" variant="outline" size="sm" onClick={() => void handleExportAgentContext()}>
-            <Bot className="h-4 w-4" />
-            {t("exportAgentContext")}
-          </Button>
-        </section>
+        {aiEnabled && (
+          <section aria-label={t("agentContextAria")} className="border-t border-border pt-4">
+            <Button type="button" variant="outline" size="sm" onClick={() => void handleExportAgentContext()}>
+              <Bot className="h-4 w-4" />
+              {t("exportAgentContext")}
+            </Button>
+          </section>
+        )}
 
         <section
           aria-label={t("subtasksAria")}
