@@ -1081,6 +1081,7 @@
     "creating": "Creando...",
     "createApiKeyButton": "Crear clave de API",
     "revokedBadge": "Revocada",
+    "revokeKeyAria": "Revocar {name}",
     "keyRevokedToast": "Se revocó \"{name}\".",
     "noApiKeysYet": "Aún no hay claves de API.",
     "createdOn": "Creada el {date}",

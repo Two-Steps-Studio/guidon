@@ -3,10 +3,8 @@
 // Previous attempts (TODO.md §22, migration 013) - split out of actions.ts.
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { isSafeHttpUrl } from "@/lib/validation/url";
 import type { AttemptOutcome, TaskAttempt } from "@/types/task";
 import type { TaskMutationResult } from "./actions";
@@ -25,29 +23,14 @@ export async function loadAttempts(
   const access = await getProjectAccess(projectId);
   if (!access) return { attempts: [], error: "You do not have access to this project." };
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `SELECT ${ATTEMPT_COLUMNS} FROM task_attempts WHERE task_id = $1 ORDER BY created_at DESC`,
-          [taskId]
-        )
-      );
-      return { attempts: result.rows, error: null };
-    } catch (error) {
-      return { attempts: [], error: error instanceof Error ? error.message : "Failed to load attempts." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("task_attempts")
+  const { data, error } = await dataClient(access.userId)
+    .from<TaskAttempt>("task_attempts")
     .select(ATTEMPT_COLUMNS)
     .eq("task_id", taskId)
     .order("created_at", { ascending: false });
 
   if (error) return { attempts: [], error: error.message };
-  return { attempts: (data ?? []) as unknown as TaskAttempt[], error: null };
+  return { attempts: data, error: null };
 }
 
 export async function createAttempt(
@@ -100,46 +83,16 @@ export async function createAttempt(
     agent: input.agent.trim() || null,
   };
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `INSERT INTO task_attempts
-             (task_id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-           RETURNING ${ATTEMPT_COLUMNS}`,
-          [
-            values.task_id,
-            values.problem,
-            values.approach,
-            values.outcome,
-            values.result,
-            values.failure_reason,
-            values.files_changed,
-            values.related_pr_url,
-            values.agent,
-            access.userId,
-          ]
-        )
-      );
-      revalidatePath(`/projects/${projectId}/work`);
-      return { attempt: result.rows[0] as TaskAttempt, error: null };
-    } catch (error) {
-      return { attempt: null, error: error instanceof Error ? error.message : "Failed to record attempt." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("task_attempts")
     .insert({ ...values, created_by: access.userId })
-    .select(ATTEMPT_COLUMNS)
+    .select<TaskAttempt>(ATTEMPT_COLUMNS)
     .single();
 
-  if (error) return { attempt: null, error: error.message };
+  if (error || !data) return { attempt: null, error: error?.message ?? "Failed to record attempt." };
 
   revalidatePath(`/projects/${projectId}/work`);
-  return { attempt: data as unknown as TaskAttempt, error: null };
+  return { attempt: data, error: null };
 }
 
 export async function deleteAttempt(
@@ -152,56 +105,34 @@ export async function deleteAttempt(
     return { error: "You do not have permission to delete this attempt." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `DELETE FROM task_attempts
-           WHERE id = $1
-             AND task_id IN (SELECT id FROM tasks WHERE project_id = $2)
-           RETURNING id`,
-          [attemptId, projectId]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This attempt could not be found in this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to delete attempt." };
-    }
-
-    revalidatePath(`/projects/${projectId}/work`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-
-  // task_attempts has no project_id column - ownership is only derivable by
-  // joining through tasks, and Supabase's delete builder can't filter by a
-  // joined table's column, so this verifies the attempt's task belongs to
-  // projectId before deleting rather than deleting by id alone and trusting
-  // RLS to have silently no-op'd on a cross-project id.
-  const { data: owning, error: lookupError } = await supabase
-    .from("task_attempts")
-    .select("id, task_id, tasks!inner(project_id)")
+  // task_attempts has no project_id column - ownership is derived through
+  // the attempt's task. Resolve that first and verify the task belongs to
+  // projectId, then delete scoped to both the attempt and that task, so a
+  // cross-project attemptId can't be deleted by id alone and trusting RLS.
+  const db = dataClient(access.userId);
+  const { data: attempt, error: lookupError } = await db
+    .from<{ task_id: string }>("task_attempts")
+    .select("task_id")
     .eq("id", attemptId)
-    .eq("tasks.project_id", projectId)
     .maybeSingle();
-
   if (lookupError) return { error: lookupError.message };
-  if (!owning) return { error: "This attempt could not be found in this project." };
 
-  // Row-count checked like every other mutation here: an RLS-filtered
-  // DELETE succeeds with zero rows, which must not come back as success.
-  const { data: deleted, error } = await supabase
+  const { data: task, error: taskError } = attempt
+    ? await db.from<{ id: string }>("tasks").select("id").eq("id", attempt.task_id).eq("project_id", projectId).maybeSingle()
+    : { data: null, error: null };
+  if (taskError) return { error: taskError.message };
+  if (!attempt || !task) return { error: "This attempt could not be found in this project." };
+
+  // Row-count checked: an RLS-filtered DELETE succeeds with zero rows.
+  const { data: deleted, error } = await db
     .from("task_attempts")
     .delete()
     .eq("id", attemptId)
-    .eq("task_id", owning.task_id)
+    .eq("task_id", attempt.task_id)
     .select("id");
 
   if (error) return { error: error.message };
-  if (!deleted || deleted.length === 0) return { error: "This attempt could not be found in this project." };
+  if (deleted.length === 0) return { error: "This attempt could not be found in this project." };
 
   revalidatePath(`/projects/${projectId}/work`);
   return { error: null };

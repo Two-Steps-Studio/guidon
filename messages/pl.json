@@ -1081,6 +1081,7 @@
     "creating": "Tworzenie...",
     "createApiKeyButton": "Utwórz klucz API",
     "revokedBadge": "Odwołany",
+    "revokeKeyAria": "Unieważnij {name}",
     "keyRevokedToast": "Odwołano \"{name}\".",
     "noApiKeysYet": "Brak kluczy API.",
     "createdOn": "Utworzono {date}",

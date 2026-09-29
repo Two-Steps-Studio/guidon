@@ -2,10 +2,8 @@
 
 // Task comments - split out of actions.ts (tasks themselves stay there).
 
-import { createClient } from "@/lib/supabase-server";
 import { canCommentOnProject, getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 
 export type TaskComment = {
   id: string;
@@ -16,6 +14,8 @@ export type TaskComment = {
   actor_label: string | null;
 };
 
+const COMMENT_COLUMNS = "id, task_id, author_id, content, created_at, actor_label";
+
 export async function loadComments(
   projectId: string,
   taskId: string
@@ -23,29 +23,14 @@ export async function loadComments(
   const access = await getProjectAccess(projectId);
   if (!access) return { comments: [], error: "You do not have access to this project." };
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          "SELECT id, task_id, author_id, content, created_at, actor_label FROM task_comments WHERE task_id = $1 ORDER BY created_at ASC",
-          [taskId]
-        )
-      );
-      return { comments: result.rows, error: null };
-    } catch (error) {
-      return { comments: [], error: error instanceof Error ? error.message : "Failed to load comments." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("task_comments")
-    .select("id, task_id, author_id, content, created_at, actor_label")
+  const { data, error } = await dataClient(access.userId)
+    .from<TaskComment>("task_comments")
+    .select(COMMENT_COLUMNS)
     .eq("task_id", taskId)
     .order("created_at", { ascending: true });
 
   if (error) return { comments: [], error: error.message };
-  return { comments: (data ?? []) as TaskComment[], error: null };
+  return { comments: data, error: null };
 }
 
 export async function postComment(
@@ -62,29 +47,12 @@ export async function postComment(
     return { comment: null, error: "Comment cannot be empty." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `INSERT INTO task_comments (task_id, author_id, content)
-           VALUES ($1, $2, $3)
-           RETURNING id, task_id, author_id, content, created_at, actor_label`,
-          [taskId, access.userId, content.trim()]
-        )
-      );
-      return { comment: result.rows[0] as TaskComment, error: null };
-    } catch (error) {
-      return { comment: null, error: error instanceof Error ? error.message : "Failed to post comment." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("task_comments")
     .insert({ task_id: taskId, author_id: access.userId, content: content.trim() })
-    .select("id, task_id, author_id, content, created_at, actor_label")
+    .select<TaskComment>(COMMENT_COLUMNS)
     .single();
 
-  if (error) return { comment: null, error: error.message };
-  return { comment: data as TaskComment, error: null };
+  if (error || !data) return { comment: null, error: error?.message ?? "Failed to post comment." };
+  return { comment: data, error: null };
 }

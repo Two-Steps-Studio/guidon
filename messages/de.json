@@ -1081,6 +1081,7 @@
     "creating": "Wird erstellt...",
     "createApiKeyButton": "API-Schlüssel erstellen",
     "revokedBadge": "Widerrufen",
+    "revokeKeyAria": "{name} widerrufen",
     "keyRevokedToast": "\"{name}\" widerrufen.",
     "noApiKeysYet": "Noch keine API-Schlüssel.",
     "createdOn": "Erstellt am {date}",

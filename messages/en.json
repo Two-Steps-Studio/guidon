@@ -1081,6 +1081,7 @@
     "creating": "Creating...",
     "createApiKeyButton": "Create API Key",
     "revokedBadge": "Revoked",
+    "revokeKeyAria": "Revoke {name}",
     "keyRevokedToast": "Revoked \"{name}\".",
     "noApiKeysYet": "No API keys yet.",
     "createdOn": "Created {date}",
