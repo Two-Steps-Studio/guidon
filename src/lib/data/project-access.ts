@@ -138,8 +138,18 @@ export const getProjectAccess = cache(async function getProjectAccess(
       .maybeSingle(),
   ]);
 
+  // A real query error (e.g. a column from a migration that hasn't been
+  // applied to this database yet) must not look like "no access": that
+  // silently bounced every project open back to /projects with nothing in
+  // the logs. Throw it, same as the self-hosted branch's pg error does.
+  // maybeSingle() reports zero rows as data: null with no error.
+  const queryError = projectResult.error ?? membershipResult.error;
+  if (queryError) {
+    throw new Error(`getProjectAccess(${projectId}) failed: ${queryError.code ?? ""} ${queryError.message}`.trim());
+  }
+
   // RLS already filtered this: no row means no access, whatever the reason.
-  if (projectResult.error || !projectResult.data) return null;
+  if (!projectResult.data) return null;
 
   return {
     userId: user.id,
