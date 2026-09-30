@@ -8,8 +8,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { getUniqueProjectSlug } from "@/lib/data/project-slug";
-import { isHostedProjectLimitReached, hostedProjectLimitMessage, memberProjectLimitMessage } from "@/lib/limits";
-import { isMemberProjectLimitReached } from "@/lib/db/errors";
+import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
@@ -87,9 +86,6 @@ export async function createProject(
         return result.rows[0].id as string;
       });
     } catch (error) {
-      // GU001 - the owner membership handle_new_project() inserts would put
-      // the creator over organizations.member_project_limit (migration 049).
-      if (isMemberProjectLimitReached(error)) return { error: memberProjectLimitMessage(error, "self") };
       return { error: error instanceof Error ? error.message : "Failed to create project." };
     }
   } else {
@@ -120,7 +116,6 @@ export async function createProject(
       .single();
 
     if (error) {
-      if (isMemberProjectLimitReached(error)) return { error: memberProjectLimitMessage(error, "self") };
       return { error: error.message };
     }
 

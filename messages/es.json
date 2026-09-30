@@ -320,16 +320,7 @@
       "apiKeyPlaceholderKeep": "Déjalo en blanco para conservar la clave actual",
       "apiKeyPlaceholderNew": "Pega tu clave de API",
       "saving": "Guardando...",
-      "save": "Guardar",
-      "memberLimitTitle": "Proyectos por miembro",
-      "memberLimitDescription": "Limita en cuántos proyectos de esta organización puede estar un miembro. No se aplica a propietarios ni administradores de la organización. Se aplica al añadir personas a proyectos y cuando los miembros crean sus propios proyectos.",
-      "memberLimitLabel": "Máximo de proyectos por miembro",
-      "memberLimitPlaceholder": "Sin límite",
-      "memberLimitHint": "Déjalo vacío para no limitar. Bajar el límite no saca a nadie de los proyectos; solo bloquea nuevas membresías por encima del límite.",
-      "memberLimitNone": "Sin límite de proyectos por miembro.",
-      "memberLimitCurrent": "Un miembro puede pertenecer como máximo a {limit, plural, one {# proyecto} other {# proyectos}}.",
-      "memberLimitUnavailable": "Este ajuste necesita la migración de base de datos 049. Pide a la administración de la instancia que la ejecute.",
-      "memberLimitSaved": "Guardado"
+      "save": "Guardar"
     },
     "billing": {
       "title": "Facturación",

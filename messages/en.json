@@ -320,16 +320,7 @@
       "apiKeyPlaceholderKeep": "Leave blank to keep the current key",
       "apiKeyPlaceholderNew": "Paste your API key",
       "saving": "Saving...",
-      "save": "Save",
-      "memberLimitTitle": "Projects per member",
-      "memberLimitDescription": "Caps how many of this organization's projects one member can belong to. Organization owners and admins are not limited. Applies to adding people to projects and to members creating their own projects.",
-      "memberLimitLabel": "Maximum projects per member",
-      "memberLimitPlaceholder": "No limit",
-      "memberLimitHint": "Leave empty for no limit. Lowering it doesn't remove anyone from projects - it only blocks new memberships above the limit.",
-      "memberLimitNone": "No limit on how many projects a member can belong to.",
-      "memberLimitCurrent": "A member can belong to at most {limit, plural, one {# project} other {# projects}}.",
-      "memberLimitUnavailable": "This setting needs database migration 049. Ask the instance administrator to run it.",
-      "memberLimitSaved": "Saved"
+      "save": "Save"
     },
     "billing": {
       "title": "Billing",

@@ -6,9 +6,7 @@ import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { getOrgAiSettingsSafe } from "@/lib/data/organization-ai-settings";
 import { AppShell } from "@/components/layout/app-shell";
-import { dataClient } from "@/lib/data-client";
 import { AiSettingsForm } from "./ai-settings-form";
-import { MemberLimitForm } from "./member-limit-form";
 
 export default async function OrganizationSettingsPage({
   params,
@@ -19,17 +17,7 @@ export default async function OrganizationSettingsPage({
   const t = await getTranslations("organizations.settings");
   const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
 
-  const [configured, memberLimit] = await Promise.all([
-    getOrgAiSettingsSafe(orgId, access.userId),
-    // Read on its own rather than via getOrgAccess: an instance running this
-    // code before migration 049 gets an error here (column missing) and a
-    // disabled card, not a broken organization page.
-    dataClient(access.userId)
-      .from<{ member_project_limit: number | null }>("organizations")
-      .select("member_project_limit")
-      .eq("id", orgId)
-      .maybeSingle(),
-  ]);
+  const configured = await getOrgAiSettingsSafe(orgId, access.userId);
 
   return (
     <AppShell user={user}>
@@ -49,13 +37,6 @@ export default async function OrganizationSettingsPage({
         <AiSettingsForm
           organizationId={orgId}
           configured={configured}
-          canManage={canManageOrg(access.role)}
-        />
-
-        <MemberLimitForm
-          organizationId={orgId}
-          limit={memberLimit.data?.member_project_limit ?? null}
-          available={!memberLimit.error}
           canManage={canManageOrg(access.role)}
         />
       </div>

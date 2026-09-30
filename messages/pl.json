@@ -320,16 +320,7 @@
       "apiKeyPlaceholderKeep": "Zostaw puste, aby zachować bieżący klucz",
       "apiKeyPlaceholderNew": "Wklej swój klucz API",
       "saving": "Zapisywanie...",
-      "save": "Zapisz",
-      "memberLimitTitle": "Projekty na członka",
-      "memberLimitDescription": "Ogranicza, w ilu projektach tej organizacji może być jeden członek. Nie dotyczy właścicieli i adminów organizacji. Działa przy dodawaniu osób do projektów i przy tworzeniu projektów przez członków.",
-      "memberLimitLabel": "Maksymalna liczba projektów na członka",
-      "memberLimitPlaceholder": "Bez limitu",
-      "memberLimitHint": "Zostaw puste, aby nie ograniczać. Obniżenie limitu nikogo nie usuwa z projektów - blokuje tylko nowe członkostwa ponad limit.",
-      "memberLimitNone": "Brak limitu projektów na członka.",
-      "memberLimitCurrent": "Członek może należeć najwyżej do {limit, plural, one {# projektu} other {# projektów}}.",
-      "memberLimitUnavailable": "To ustawienie wymaga migracji bazy 049. Poproś administratora instancji o jej uruchomienie.",
-      "memberLimitSaved": "Zapisano"
+      "save": "Zapisz"
     },
     "billing": {
       "title": "Rozliczenia",

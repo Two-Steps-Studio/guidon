@@ -5,8 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { dataClient } from "@/lib/data-client";
-import { isMemberProjectLimitReached, isUniqueViolation } from "@/lib/db/errors";
-import { memberProjectLimitMessage } from "@/lib/limits";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import type { ProjectRole } from "@/types/project";
@@ -78,10 +77,6 @@ export async function addMember(
     // redundant by 027).
     if (isUniqueViolation(error)) {
       return { member: null, error: "This person is already a member of this project." };
-    }
-    // GU001 - organizations.member_project_limit (migration 049's trigger).
-    if (isMemberProjectLimitReached(error)) {
-      return { member: null, error: memberProjectLimitMessage(error, "other") };
     }
     return { member: null, error: error?.message ?? "Failed to add member." };
   }
