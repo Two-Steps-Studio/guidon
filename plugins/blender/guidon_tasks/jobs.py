@@ -13,23 +13,30 @@ import bpy
 
 _results = queue.Queue()
 _busy = 0
+_quiet = 0  # background jobs (auto-refresh): not shown as busy, don't count as user actions
+actions = 0  # bumped by every non-quiet job, so a background result that raced one can be dropped
 
 
 def is_busy():
-    return _busy > 0
+    """True while a user-triggered request is running (drives the spinner)."""
+    return _busy - _quiet > 0
 
 
-def run(work, done):
+def run(work, done, quiet=False):
     """work() -> result, on a worker thread; done(result), later, on the main thread."""
-    global _busy
+    global _busy, _quiet, actions
     _busy += 1
+    if quiet:
+        _quiet += 1
+    else:
+        actions += 1
 
     def target():
         try:
             result = work()
         except Exception as e:  # never let a worker die silently
             result = (False, "Unexpected error: {}".format(e))
-        _results.put((done, result))
+        _results.put((done, result, quiet))
 
     threading.Thread(target=target, daemon=True).start()
     if not bpy.app.timers.is_registered(_drain):
@@ -38,13 +45,15 @@ def run(work, done):
 
 
 def _drain():
-    global _busy
+    global _busy, _quiet
     while True:
         try:
-            done, result = _results.get_nowait()
+            done, result, quiet = _results.get_nowait()
         except queue.Empty:
             break
         _busy -= 1
+        if quiet:
+            _quiet -= 1
         try:
             done(result)
         except Exception as e:
@@ -64,7 +73,8 @@ def redraw():
 
 
 def unregister():
-    global _busy
+    global _busy, _quiet
     if bpy.app.timers.is_registered(_drain):
         bpy.app.timers.unregister(_drain)
     _busy = 0
+    _quiet = 0

@@ -16,7 +16,7 @@ bl_info = {
 }
 
 import bpy
-from bpy.props import BoolVectorProperty, PointerProperty, StringProperty
+from bpy.props import BoolProperty, BoolVectorProperty, PointerProperty, StringProperty
 
 from . import api, jobs, moodboard, ops, panels, state
 
@@ -30,10 +30,16 @@ class GuidonPreferences(bpy.types.AddonPreferences):
     api_key: StringProperty(name="API Key", subtype="PASSWORD", options={"HIDDEN"})
     email: StringProperty(name="Email", options={"HIDDEN"})
     project_id: StringProperty(name="Project", options={"HIDDEN"})
+    auto_refresh: BoolProperty(
+        name="Auto-refresh",
+        description="Reload the board and comments every 30 seconds",
+        default=True,
+    )
 
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "base_url")
+        layout.prop(self, "auto_refresh")
         if self.api_key:
             row = layout.row()
             row.label(text="Logged in as " + (self.email or "?"), icon="USER")
@@ -67,11 +73,14 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.WindowManager.guidon = PointerProperty(type=GuidonWindowProps)
     bpy.app.timers.register(_initial_load, first_interval=1.0)
+    bpy.app.timers.register(ops.auto_refresh_tick, first_interval=ops.AUTO_REFRESH_SECONDS, persistent=True)
 
 
 def unregister():
     if bpy.app.timers.is_registered(_initial_load):
         bpy.app.timers.unregister(_initial_load)
+    if bpy.app.timers.is_registered(ops.auto_refresh_tick):
+        bpy.app.timers.unregister(ops.auto_refresh_tick)
     if state.login_cancel is not None:
         state.login_cancel.set()
     jobs.unregister()

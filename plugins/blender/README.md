@@ -52,6 +52,14 @@ In the Task panel:
 - **Git Ref** copies `guidon#1a2b3c4d`. Put it in a commit, PR or branch name,
   and the GitHub integration links and moves the task.
 
+## Auto-refresh
+
+Every 30 seconds the add-on quietly reloads the open project's tasks and
+columns and the selected task's comments, on a worker thread like every
+other request. It doesn't show the spinner, and a reload that overlaps one
+of your own actions is thrown away, so nothing you just did gets undone on
+screen. Turn it off with **Auto-refresh** in the add-on's preferences.
+
 ## Moodboard
 
 The **Moodboard** panel (closed by default, in the 3D Viewport's and Image
@@ -116,5 +124,4 @@ server. Revoke it on the website if you lose a machine.
 - No drag-and-drop: Blender panels don't support dragging custom items, so
   the arrows and the status dropdown replace it. For the same reason there's
   no reordering within a column.
-- No automatic refresh. Use the refresh button.
 - No editing of assignees or tags.
