@@ -21,6 +21,8 @@ namespace GuidonApi
 	using FOnComments = TFunction<void(bool bOk, const TArray<FGuidonComment>& Comments, const FString& Error)>;
 	using FOnComment = TFunction<void(bool bOk, const FGuidonComment& Comment, const FString& Error)>;
 	using FOnColumns = TFunction<void(bool bOk, const TArray<FGuidonColumn>& Columns, const FString& Error)>;
+	using FOnReferences = TFunction<void(bool bOk, const TArray<FGuidonReference>& References, const FString& Error)>;
+	using FOnBytes = TFunction<void(bool bOk, const TArray<uint8>& Bytes, const FString& Error)>;
 
 	void ListProjects(FOnProjects Done);
 	void ListTasks(const FString& ProjectId, FOnTasks Done);
@@ -42,5 +44,11 @@ namespace GuidonApi
 	void SetStatus(const FString& TaskId, const FString& Status, FOnTask Done);
 	void DeleteTask(const FString& TaskId, FOnDone Done);
 	void ListComments(const FString& TaskId, FOnComments Done);
+
+	/** The project's moodboard, newest first. */
+	void ListReferences(const FString& ProjectId, FOnReferences Done);
+
+	/** Downloads a signed moodboard image URL. No API key is sent - the URL carries its own signature. */
+	void DownloadImage(const FString& Url, FOnBytes Done);
 	void AddComment(const FString& TaskId, const FString& Content, FOnComment Done);
 }

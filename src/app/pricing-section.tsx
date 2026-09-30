@@ -23,6 +23,8 @@ export interface PlanRow {
   price_pln_cents: number | null;
   project_limit: number | null;
   task_limit_per_project: number | null;
+  /** Absent until migration 049 has run. */
+  member_limit_per_project?: number | null;
   storage_limit_bytes: number | null;
   /** Seats (049). Absent until that migration runs - the landing page selects `*`. */
   member_limit?: number | null;
@@ -79,8 +81,15 @@ function planFeatures(plan: PlanRow, t: PricingTranslator): string[] {
     plan.task_limit_per_project === null
       ? t("unlimitedTasksPerProject")
       : t("tasksPerProjectCount", { count: plan.task_limit_per_project }),
-    formatBytes(plan.storage_limit_bytes, t),
   ];
+  if (plan.member_limit_per_project !== undefined) {
+    features.push(
+      plan.member_limit_per_project === null
+        ? t("unlimitedMembersPerProject")
+        : t("membersPerProjectCount", { count: plan.member_limit_per_project })
+    );
+  }
+  features.push(formatBytes(plan.storage_limit_bytes, t));
   if (plan.has_ai_features) features.push(t("aiTaskApi"));
   if (plan.has_github_integration) features.push(t("githubIntegration"));
   if (plan.has_advanced_analytics) features.push(t("advancedAnalytics"));

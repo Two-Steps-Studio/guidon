@@ -42,12 +42,13 @@ export interface OrgPlanLimits {
   planName: string;
   projectLimit: number | null;
   taskLimitPerProject: number | null;
+  memberLimitPerProject: number | null;
   storageLimitBytes: number | null;
-  /** plans.member_limit (migration 049): seats - organization_members rows, owner included. */
+  /** plans.member_limit (migration 051): seats - organization_members rows, owner included. */
   memberLimit: number | null;
 }
 
-/** Free's seats, also the fail-closed fallback below - keep equal to 049's value for 'free'. */
+/** Free's seats, also the fail-closed fallback below - keep equal to 051's value for 'free'. */
 export const FREE_PLAN_MEMBER_LIMIT = 8;
 
 /**
@@ -59,17 +60,14 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
   const { createServiceClient } = await import("@/lib/supabase-server");
   const supabase = createServiceClient();
 
-  // member_limit is read on its own: it arrived later (049), and a failed
-  // select of a not-yet-migrated column would otherwise drop EVERY limit to
-  // Free's fallback below, not just this one.
-  const [{ data, error }, seats] = await Promise.all([
-    supabase
-      .from("subscriptions")
-      .select("plans (name, project_limit, task_limit_per_project, storage_limit_bytes)")
-      .eq("organization_id", organizationId)
-      .single(),
-    supabase.from("subscriptions").select("plans (member_limit)").eq("organization_id", organizationId).single(),
-  ]);
+  const { data, error } = await supabase
+    .from("subscriptions")
+    // "*" rather than a column list: naming member_limit_per_project (049)
+    // would make this query fail - and every organization fall back to Free
+    // below - on a database where that migration hasn't run yet.
+    .select("plans (*)")
+    .eq("organization_id", organizationId)
+    .single();
 
   if (error || !data?.plans) {
     // No subscription row (shouldn't happen post-014/015, but fail closed
@@ -78,6 +76,7 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
       planName: "Free",
       projectLimit: 2,
       taskLimitPerProject: 50,
+      memberLimitPerProject: 5,
       storageLimitBytes: 500 * 1024 * 1024,
       memberLimit: FREE_PLAN_MEMBER_LIMIT,
     };
@@ -87,17 +86,19 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     name: string;
     project_limit: number | null;
     task_limit_per_project: number | null;
+    member_limit_per_project?: number | null;
+    /** Absent before migration 051 - "*" just doesn't return it. */
+    member_limit?: number | null;
     storage_limit_bytes: number | null;
   };
-  // Pre-049 (column missing): no seat limit rather than a wrong one.
-  const seatPlan = seats.error ? null : (seats.data?.plans as unknown as { member_limit: number | null } | null);
 
   return {
     planName: plan.name,
     projectLimit: plan.project_limit,
     taskLimitPerProject: plan.task_limit_per_project,
+    memberLimitPerProject: plan.member_limit_per_project ?? null,
     storageLimitBytes: plan.storage_limit_bytes,
-    memberLimit: seatPlan?.member_limit ?? null,
+    memberLimit: plan.member_limit ?? null,
   };
 }
 
@@ -119,15 +120,15 @@ export function isTaskLimitReached(currentTaskCount: number, limit: number | nul
 }
 
 /** Same convention: `limit === null` means unlimited. */
-export function isStorageLimitReached(currentUsageBytes: number, limit: number | null): boolean {
-  if (limit === null) return false;
-  return currentUsageBytes >= limit;
-}
-
-/** Same convention: `limit === null` means unlimited. */
 export function isMemberLimitReached(currentMemberCount: number, limit: number | null): boolean {
   if (limit === null) return false;
   return currentMemberCount >= limit;
+}
+
+/** Same convention: `limit === null` means unlimited. */
+export function isStorageLimitReached(currentUsageBytes: number, limit: number | null): boolean {
+  if (limit === null) return false;
+  return currentUsageBytes >= limit;
 }
 
 export function memberLimitMessage(planName: string, limit: number): string {

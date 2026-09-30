@@ -126,7 +126,7 @@ private:
 	TArray<const FGuidonTask*> ColumnTasks(const FString& Status) const;
 	TArray<const FGuidonTask*> Subtasks(const FString& ParentId) const;
 
-	void BeginRequest() { ++PendingRequests; }
+	void BeginRequest() { ++PendingRequests; ++Actions; }
 	void EndRequest() { PendingRequests = FMath::Max(0, PendingRequests - 1); }
 	void SetError(const FString& Error) { Message = Error; }
 	TWeakPtr<SGuidonTasksWidget> WeakSelf();
@@ -141,6 +141,10 @@ private:
 	FString Message;
 	FString BaseUrlEdit;
 	int32 PendingRequests = 0;
+	/** Bumped by every user request, so a background refresh that raced one is dropped. */
+	int32 Actions = 0;
+	bool bAutoRefreshRunning = false;
+	EActiveTimerReturnType AutoRefreshTick(double InCurrentTime, float InDeltaTime);
 	bool bBoardDirty = false;
 	bool bDetailsDirty = false;
 

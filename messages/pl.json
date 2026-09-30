@@ -228,6 +228,8 @@
       "projectsCount": "{count, plural, one {# projekt} few {# projekty} many {# projektów} other {# projektu}}",
       "unlimitedTasksPerProject": "Nieograniczona liczba zadań na projekt",
       "tasksPerProjectCount": "{count, plural, one {# zadanie na projekt} few {# zadania na projekt} many {# zadań na projekt} other {# zadania na projekt}}",
+      "unlimitedMembersPerProject": "Nieograniczona liczba członków projektu",
+      "membersPerProjectCount": "{count, plural, one {# członek w projekcie} few {# członków w projekcie} many {# członków w projekcie} other {# członka w projekcie}}",
       "aiTaskApi": "API zadań AI",
       "githubIntegration": "Integracja z GitHub",
       "advancedAnalytics": "Zaawansowana analityka",
@@ -325,7 +327,37 @@
       "apiKeyPlaceholderKeep": "Zostaw puste, aby zachować bieżący klucz",
       "apiKeyPlaceholderNew": "Wklej swój klucz API",
       "saving": "Zapisywanie...",
-      "save": "Zapisz"
+      "save": "Zapisz",
+      "webhooks": {
+        "title": "Webhooki",
+        "description": "Guidon wysyła podpisane żądanie POST na te adresy, gdy zadania zmieniają się w dowolnym projekcie tej organizacji - podłącz CI, komunikatory albo własne automatyzacje.",
+        "empty": "Brak webhooków.",
+        "add": "Dodaj webhook",
+        "urlLabel": "Adres URL",
+        "urlHintCloud": "Musi to być publiczny adres https://.",
+        "urlHintSelfHosted": "Na instalacjach self-hosted dozwolone są http:// i adresy wewnętrzne.",
+        "descriptionLabel": "Opis (opcjonalnie)",
+        "descriptionPlaceholder": "np. wyzwalacz buildów Jenkinsa",
+        "eventsLabel": "Zdarzenia",
+        "eventCreated": "Utworzenie zadania",
+        "eventStatusChanged": "Przeniesienie zadania do innej kolumny",
+        "eventCompleted": "Ukończenie zadania",
+        "save": "Dodaj webhook",
+        "saving": "Zapisywanie…",
+        "cancel": "Anuluj",
+        "limit": "Organizacja może mieć maksymalnie {max} webhooków.",
+        "signatureHint": "Każde żądanie ma nagłówek X-Guidon-Signature: sha256=HMAC-SHA256(sekret, timestamp + \".\" + body), gdzie timestamp to nagłówek X-Guidon-Timestamp. Sprawdź go, zanim zaufasz treści.",
+        "secretTitle": "Sekret do podpisu",
+        "secretHint": "Skopiuj go teraz - nie zostanie pokazany ponownie. Zapisz go tam, gdzie odbiorca może go odczytać.",
+        "copySecret": "Kopiuj sekret",
+        "enabled": "Aktywny",
+        "test": "Test",
+        "testDelivered": "Test wysłany - odbiorca odpowiedział HTTP {status}.",
+        "delete": "Usuń webhook",
+        "deleteConfirm": "Usunąć ten webhook? Wysyłka zatrzyma się od razu.",
+        "lastDelivery": "Ostatnia wysyłka {when} · HTTP {status}",
+        "neverDelivered": "Jeszcze nic nie wysłano."
+      }
     },
     "billing": {
       "title": "Rozliczenia",
@@ -343,6 +375,7 @@
       "colPrice": "Cena",
       "colProjects": "Projekty",
       "colTasksPerProject": "Zadania/projekt",
+      "colMembersPerProject": "Członkowie/projekt",
       "colStorage": "Przestrzeń",
       "colAI": "AI",
       "colGitHub": "GitHub",
@@ -691,7 +724,8 @@
     "roleHintAdmin": "Zarządzanie członkami, ustawieniami, planem działań i plikami",
     "roleHintDeveloper": "Tworzenie i edytowanie zadań, decyzji i wiedzy",
     "roleHintTester": "Komentowanie zadań; odczyt reszty",
-    "roleHintViewer": "Dostęp tylko do odczytu"
+    "roleHintViewer": "Dostęp tylko do odczytu",
+    "memberLimitReached": "Plan {plan} pozwala na {limit} członków w projekcie. <link>Zmień plan</link>, żeby dodać kolejne osoby."
   },
   "settings": {
     "title": "Ustawienia projektu",
@@ -1121,11 +1155,13 @@
   },
   "calendar": {
     "title": "Kalendarz",
-    "subtitle": "Zadania według terminu",
+    "subtitle": "Zadania według terminu i fazy roadmapy",
     "previousMonth": "Poprzedni miesiąc",
     "nextMonth": "Następny miesiąc",
     "today": "Dziś",
-    "moreTasks": "+{count} więcej"
+    "moreTasks": "+{count} więcej",
+    "phaseAria": "Faza: {name}",
+    "morePhases": "{count, plural, one {+# faza więcej} few {+# fazy więcej} many {+# faz więcej} other {+# fazy więcej}}"
   },
   "aiChat": {
     "title": "Asystent AI Guidona",
@@ -1237,5 +1273,22 @@
     "save": "Zapisz",
     "cancel": "Anuluj",
     "saveFailed": "Nie udało się zapisać zmian."
+  },
+  "mini": {
+    "noProjects": "Nie należysz jeszcze do żadnego projektu.",
+    "openProjects": "Otwórz Guidona",
+    "noAccess": "Nie masz dostępu do tego projektu.",
+    "projectAria": "Projekt",
+    "filterAria": "Pokaż zadania",
+    "filterMine": "Moje",
+    "filterAll": "Wszystkie",
+    "refresh": "Odśwież",
+    "addPlaceholder": "Nowe zadanie…",
+    "addPlaceholderMine": "Nowe zadanie dla mnie…",
+    "add": "Dodaj zadanie",
+    "addFailed": "Nie udało się dodać zadania.",
+    "statusAria": "Status zadania {title}",
+    "empty": "Brak otwartych zadań w tym projekcie.",
+    "emptyMine": "Nie masz przypisanych otwartych zadań. Przełącz na Wszystkie, żeby zobaczyć resztę."
   }
 }

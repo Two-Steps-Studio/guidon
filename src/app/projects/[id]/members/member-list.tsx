@@ -56,6 +56,8 @@ export function MemberList({
   initialCandidates,
   projectColor,
   organizationId,
+  memberLimit,
+  planName,
 }: {
   projectId: string;
   /** For the "add people to the organization first" link - project members
@@ -66,6 +68,9 @@ export function MemberList({
   initialMembers: ProjectMemberRow[];
   initialCandidates: TaskCardMember[];
   projectColor?: string;
+  /** Plan's members-per-project cap; null = unlimited (or self-hosted, which has no plans). */
+  memberLimit: number | null;
+  planName: string | null;
 }) {
   const t = useTranslations("members");
   const [members, setMembers] = useState(initialMembers);
@@ -76,6 +81,8 @@ export function MemberList({
 
   const canManage = myRole === "owner" || myRole === "admin";
   const assignable = canManage ? ASSIGNABLE_BY[myRole as "owner" | "admin"] : [];
+
+  const limitReached = memberLimit !== null && members.length >= memberLimit;
 
   const ownerCount = useMemo(() => members.filter((m) => m.role === "owner").length, [members]);
 
@@ -134,7 +141,9 @@ export function MemberList({
             <p className="mt-0.5 text-sm text-muted-foreground">
               {t("subtitle")}
               {" · "}
-              <span className="tabular-nums">{members.length}</span>
+              <span className="tabular-nums">
+                {memberLimit === null ? members.length : `${members.length} / ${memberLimit}`}
+              </span>
             </p>
           </div>
 
@@ -142,6 +151,7 @@ export function MemberList({
             <Button
               size="sm"
               onClick={() => setAdding(true)}
+              disabled={limitReached}
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <UserPlus className="h-4 w-4" />
@@ -161,6 +171,23 @@ export function MemberList({
               {t("dismiss")}
             </button>
           </div>
+        )}
+
+        {canManage && limitReached && (
+          <p className="mb-4 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-foreground">
+            {t.rich("memberLimitReached", {
+              plan: planName ?? "",
+              limit: memberLimit,
+              link: (chunks) => (
+                <Link
+                  href={`/organizations/${organizationId}/billing`}
+                  className="font-medium text-primary underline underline-offset-2"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
         )}
 
         {!canManage && myRole && (

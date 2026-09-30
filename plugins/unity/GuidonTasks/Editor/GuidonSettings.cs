@@ -15,6 +15,7 @@ namespace Guidon.Tasks.Editor
         private const string ApiKeyKey = "Guidon.Tasks.ApiKey";
         private const string EmailKey = "Guidon.Tasks.Email";
         private const string ProjectIdKey = "Guidon.Tasks.ProjectId";
+        private const string AutoRefreshKey = "Guidon.Tasks.AutoRefresh";
 
         public static string BaseUrl
         {
@@ -45,6 +46,13 @@ namespace Guidon.Tasks.Editor
         {
             get => EditorPrefs.GetString(ProjectIdKey, string.Empty);
             set => EditorPrefs.SetString(ProjectIdKey, value);
+        }
+
+        /// <summary>Reload the board every 30 s while Unity is the active application.</summary>
+        public static bool AutoRefresh
+        {
+            get => EditorPrefs.GetBool(AutoRefreshKey, true);
+            set => EditorPrefs.SetBool(AutoRefreshKey, value);
         }
 
         public static bool IsConfigured => !string.IsNullOrEmpty(ApiKey) && !string.IsNullOrEmpty(BaseUrl);

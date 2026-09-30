@@ -17,7 +17,8 @@
     "test:auth": "node tests/auth/local-auth.test.mjs",
     "test:limits": "node tests/limits.test.mjs",
     "test:reports": "node --experimental-strip-types tests/game-report.test.mjs",
-    "test:github": "node --experimental-strip-types tests/github-webhook.test.mjs"
+    "test:github": "node --experimental-strip-types tests/github-webhook.test.mjs",
+    "test:webhooks": "node --experimental-strip-types tests/webhooks.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

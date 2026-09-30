@@ -228,6 +228,8 @@
       "projectsCount": "{count, plural, one {# proyecto} other {# proyectos}}",
       "unlimitedTasksPerProject": "Tareas ilimitadas por proyecto",
       "tasksPerProjectCount": "{count, plural, one {# tarea por proyecto} other {# tareas por proyecto}}",
+      "unlimitedMembersPerProject": "Miembros ilimitados por proyecto",
+      "membersPerProjectCount": "{count, plural, one {# miembro por proyecto} other {# miembros por proyecto}}",
       "aiTaskApi": "API de tareas con IA",
       "githubIntegration": "Integración con GitHub",
       "advancedAnalytics": "Analítica avanzada",
@@ -325,7 +327,37 @@
       "apiKeyPlaceholderKeep": "Déjalo en blanco para conservar la clave actual",
       "apiKeyPlaceholderNew": "Pega tu clave de API",
       "saving": "Guardando...",
-      "save": "Guardar"
+      "save": "Guardar",
+      "webhooks": {
+        "title": "Webhooks",
+        "description": "Guidon envía una petición POST firmada a estas URL cuando cambian tareas en cualquier proyecto de esta organización: conecta CI, herramientas de chat o tus propias automatizaciones.",
+        "empty": "Todavía no hay webhooks.",
+        "add": "Añadir webhook",
+        "urlLabel": "URL de destino",
+        "urlHintCloud": "Debe ser una dirección https:// pública.",
+        "urlHintSelfHosted": "En instalaciones self-hosted se permiten http:// y direcciones internas.",
+        "descriptionLabel": "Descripción (opcional)",
+        "descriptionPlaceholder": "p. ej. disparador de builds de Jenkins",
+        "eventsLabel": "Eventos",
+        "eventCreated": "Tarea creada",
+        "eventStatusChanged": "Tarea movida a otra columna",
+        "eventCompleted": "Tarea completada",
+        "save": "Añadir webhook",
+        "saving": "Guardando…",
+        "cancel": "Cancelar",
+        "limit": "Una organización puede tener como máximo {max} webhooks.",
+        "signatureHint": "Cada petición lleva la cabecera X-Guidon-Signature: sha256=HMAC-SHA256(secreto, timestamp + \".\" + body), donde timestamp es la cabecera X-Guidon-Timestamp. Verifícala antes de confiar en el contenido.",
+        "secretTitle": "Secreto de firma",
+        "secretHint": "Cópialo ahora: no se volverá a mostrar. Guárdalo donde tu receptor pueda leerlo.",
+        "copySecret": "Copiar secreto",
+        "enabled": "Activo",
+        "test": "Probar",
+        "testDelivered": "Prueba enviada: el receptor respondió HTTP {status}.",
+        "delete": "Eliminar webhook",
+        "deleteConfirm": "¿Eliminar este webhook? Los envíos se detienen de inmediato.",
+        "lastDelivery": "Último envío {when} · HTTP {status}",
+        "neverDelivered": "Aún no hay envíos."
+      }
     },
     "billing": {
       "title": "Facturación",
@@ -343,6 +375,7 @@
       "colPrice": "Precio",
       "colProjects": "Proyectos",
       "colTasksPerProject": "Tareas/proyecto",
+      "colMembersPerProject": "Miembros/proyecto",
       "colStorage": "Almacenamiento",
       "colAI": "IA",
       "colGitHub": "GitHub",
@@ -691,7 +724,8 @@
     "roleHintAdmin": "Gestionar miembros, ajustes, hoja de ruta y archivos",
     "roleHintDeveloper": "Crear y editar tareas, decisiones y conocimiento",
     "roleHintTester": "Comentar tareas; leer todo lo demás",
-    "roleHintViewer": "Acceso de solo lectura"
+    "roleHintViewer": "Acceso de solo lectura",
+    "memberLimitReached": "Tu plan {plan} permite {limit} miembros por proyecto. <link>Mejora el plan</link> para añadir más personas."
   },
   "settings": {
     "title": "Ajustes del proyecto",
@@ -1121,11 +1155,13 @@
   },
   "calendar": {
     "title": "Calendario",
-    "subtitle": "Tareas por fecha límite",
+    "subtitle": "Tareas por fecha límite y fases del roadmap",
     "previousMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "today": "Hoy",
-    "moreTasks": "+{count} más"
+    "moreTasks": "+{count} más",
+    "phaseAria": "Fase: {name}",
+    "morePhases": "{count, plural, one {+# fase más} other {+# fases más}}"
   },
   "aiChat": {
     "title": "Asistente de IA de Guidon",
@@ -1237,5 +1273,22 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "saveFailed": "No se pudieron guardar los cambios."
+  },
+  "mini": {
+    "noProjects": "Todavía no perteneces a ningún proyecto.",
+    "openProjects": "Abrir Guidon",
+    "noAccess": "No tienes acceso a este proyecto.",
+    "projectAria": "Proyecto",
+    "filterAria": "Mostrar tareas",
+    "filterMine": "Mías",
+    "filterAll": "Todas",
+    "refresh": "Actualizar",
+    "addPlaceholder": "Nueva tarea…",
+    "addPlaceholderMine": "Nueva tarea para mí…",
+    "add": "Añadir tarea",
+    "addFailed": "No se pudo añadir la tarea.",
+    "statusAria": "Estado de {title}",
+    "empty": "No hay tareas abiertas en este proyecto.",
+    "emptyMine": "No tienes tareas abiertas asignadas. Cambia a Todas para ver el resto."
   }
 }

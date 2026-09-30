@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { initialsFor } from "@/lib/people";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -30,18 +30,16 @@ export interface TaskCardMember {
   avatar_url: string | null;
 }
 
-// Distance past which a press commits to a drag instead of a click/tap.
-// Same threshold for mouse and touch - touch-action:none on the card
-// (className below) means the browser never starts its own native scroll
-// there, so there's no competing gesture to disambiguate against and no
-// need for touch's own hold delay. An earlier version used a 200ms
-// long-press to arm on touch instead: on real hardware, a real finger's
-// natural tremor while "holding still" plus the browser's own (more
-// trigger-happy) native scroll heuristic reliably won that race before the
-// timer ever fired, since nothing told the browser to back off - dragging
-// was broken on every actual phone despite passing synthetic Playwright
-// touch tests (perfectly still coordinates don't reproduce hand tremor).
+// Mouse/pen: distance past which a press commits to a drag instead of a click.
 const DRAG_MOVE_THRESHOLD_PX = 8;
+// Touch: a drag needs a short hold first, so a swipe across a card scrolls the
+// board instead of grabbing the card. Moving further than the tolerance before
+// the hold completes means the user is scrolling, and the gesture is dropped.
+// An earlier 200ms long-press lost to the browser's native scroll on real
+// phones because nothing ever cancelled it; the non-passive touchmove listener
+// in TaskCardComponent now does, but only once the hold has armed the drag.
+const TOUCH_HOLD_MS = 300;
+const TOUCH_HOLD_TOLERANCE_PX = 10;
 
 interface TaskCardProps {
   task: Task;
@@ -94,9 +92,18 @@ function descriptionPreview(description: string | null | undefined): string {
 
 interface Gesture {
   pointerId: number;
+  pointerType: string;
   startX: number;
   startY: number;
   armed: boolean;
+  holdTimer: ReturnType<typeof setTimeout> | null;
+}
+
+function clearHoldTimer(gesture: Gesture) {
+  if (gesture.holdTimer != null) {
+    clearTimeout(gesture.holdTimer);
+    gesture.holdTimer = null;
+  }
 }
 
 /**
@@ -137,12 +144,30 @@ function TaskCardComponent({
   const tags = task.tags ?? [];
 
   const gestureRef = useRef<Gesture | null>(null);
+  const cardRef = useRef<HTMLElement>(null);
   // A drag that ends on the card's own element also dispatches a browser
   // click right after pointerup - without this, dropping a card reopens it.
   const suppressClickRef = useRef(false);
 
+  // React's onTouchMove is passive and can't preventDefault. This listener is
+  // registered up front (iOS ignores preventDefault from listeners added
+  // mid-gesture) but only blocks scrolling once a hold has armed a drag.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const blockScrollWhileDragging = (event: TouchEvent) => {
+      if (gestureRef.current?.armed) event.preventDefault();
+    };
+    card.addEventListener("touchmove", blockScrollWhileDragging, { passive: false });
+    return () => {
+      card.removeEventListener("touchmove", blockScrollWhileDragging);
+      if (gestureRef.current) clearHoldTimer(gestureRef.current);
+    };
+  }, []);
+
   const arm = useCallback(
     (gesture: Gesture, element: HTMLElement) => {
+      clearHoldTimer(gesture);
       gesture.armed = true;
       suppressClickRef.current = true;
       try {
@@ -158,19 +183,36 @@ function TaskCardComponent({
 
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
+      // A long-press usually isn't followed by a click, so a flag left over
+      // from the previous drag would otherwise swallow the next real tap.
+      suppressClickRef.current = false;
       if (!draggable) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
       // Don't hijack the "..." move-to menu's own press/click.
       if ((event.target as HTMLElement).closest("button")) return;
 
-      gestureRef.current = {
+      if (gestureRef.current) clearHoldTimer(gestureRef.current);
+      const gesture: Gesture = {
         pointerId: event.pointerId,
+        pointerType: event.pointerType,
         startX: event.clientX,
         startY: event.clientY,
         armed: false,
+        holdTimer: null,
       };
+      gestureRef.current = gesture;
+
+      if (event.pointerType === "touch") {
+        const element = event.currentTarget;
+        gesture.holdTimer = setTimeout(() => {
+          gesture.holdTimer = null;
+          if (gestureRef.current !== gesture || gesture.armed) return;
+          arm(gesture, element);
+          navigator.vibrate?.(10);
+        }, TOUCH_HOLD_MS);
+      }
     },
-    [draggable]
+    [arm, draggable]
   );
 
   const handlePointerMove = useCallback(
@@ -179,9 +221,15 @@ function TaskCardComponent({
       if (!gesture || gesture.pointerId !== event.pointerId) return;
 
       if (!gesture.armed) {
-        const dx = event.clientX - gesture.startX;
-        const dy = event.clientY - gesture.startY;
-        if (Math.hypot(dx, dy) < DRAG_MOVE_THRESHOLD_PX) return;
+        const distance = Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY);
+        if (gesture.pointerType === "touch") {
+          if (distance > TOUCH_HOLD_TOLERANCE_PX) {
+            clearHoldTimer(gesture);
+            gestureRef.current = null;
+          }
+          return;
+        }
+        if (distance < DRAG_MOVE_THRESHOLD_PX) return;
         arm(gesture, event.currentTarget);
       }
 
@@ -196,6 +244,7 @@ function TaskCardComponent({
       const gesture = gestureRef.current;
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       gestureRef.current = null;
+      clearHoldTimer(gesture);
       if (gesture.armed) {
         try {
           event.currentTarget.releasePointerCapture(gesture.pointerId);
@@ -210,7 +259,12 @@ function TaskCardComponent({
 
   return (
     <article
+      ref={cardRef}
       data-card-id={task.id}
+      onContextMenu={(event) => {
+        // Android fires contextmenu on a long-press - that's our drag gesture.
+        if (gestureRef.current) event.preventDefault();
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endGesture}
@@ -247,17 +301,11 @@ function TaskCardComponent({
         "shadow-sm transition-colors",
         "hover:border-border-hover hover:bg-surface-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        // touch-none (touch-action:none): without this, a touch starting on
-        // a card lets the browser's own native scroll/pan gesture compete
-        // for it - and real touch hardware's natural tremor means the
-        // browser usually wins that race within a few pixels, so dragging
-        // silently never arms. [-webkit-touch-callout:none] suppresses
-        // iOS's long-press callout (copy/save/open) which would otherwise
-        // pop up over the cover image instead of/alongside a drag starting.
-        // Trade-off: a column can no longer be scrolled by touching a card
-        // directly, only via the gaps/padding around them - same limitation
-        // Trello's mobile app has.
-        draggable && "cursor-grab touch-none [-webkit-touch-callout:none] active:cursor-grabbing",
+        // touch-manipulation keeps native scrolling on cards (a drag needs a
+        // hold first - see TOUCH_HOLD_MS). [-webkit-touch-callout:none]
+        // suppresses iOS's long-press callout over the cover image, which
+        // would otherwise pop up alongside the drag.
+        draggable && "cursor-grab touch-manipulation [-webkit-touch-callout:none] active:cursor-grabbing",
         done && "opacity-70 hover:opacity-100",
         isDragging && "opacity-40"
       )}

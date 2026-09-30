@@ -160,8 +160,10 @@ for (const [label, sql, expected] of [
   // zero polityk insert dla authenticated, wstawia wylacznie service_role).
   // 30->31 tabel, 106->110 polityk: project_references (048), 4 polityki
   // (select/insert/update/delete).
-  ["31 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 31],
-  ["110 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 110],
+  // 31->32 tabel, 110->114 polityk: organization_webhooks (050), 4 polityki
+  // (owner/admin organizacji).
+  ["32 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 32],
+  ["114 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 114],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -2272,8 +2274,120 @@ await withUser(A, async () => {
   check("wartosci zawsze jako parametry", !q.text.includes("drop") && q.values[0].includes("drop"), q.text);
 }
 
+section("38. plans.member_limit_per_project: limit czlonkow projektu w planach (migracja 049)");
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id, member_limit_per_project AS n FROM public.plans ORDER BY sort_order");
+  const byId = Object.fromEntries(rows.map((row) => [row.id, row.n]));
+  check("free = 5, pro = 15, team = 50", byId.free === 5 && byId.pro === 15 && byId.team === 50, JSON.stringify(byId));
+  check("business/enterprise bez limitu (NULL)", byId.business === null && byId.enterprise === null, JSON.stringify(byId));
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query("UPDATE public.plans SET member_limit_per_project = 1000 WHERE id = 'free'");
+  } catch {
+    threw = true;
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("authenticated nie moze zmienic limitu planu", threw);
+});
+
+{
+  let threw = false;
+  try {
+    await db.query("UPDATE public.plans SET member_limit_per_project = 0 WHERE id = 'free'");
+  } catch {
+    threw = true;
+  }
+  check("CHECK odrzuca limit 0", threw);
+}
+
+section("39. organization_webhooks: tylko owner/admin organizacji, sekret niewidoczny dla authenticated (migracja 050)");
+
+async function throwsInSavepoint(sql, params) {
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query(sql, params);
+    await db.query("RELEASE SAVEPOINT s");
+    return false;
+  } catch {
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    return true;
+  }
+}
+
+const insertWebhookSql = `INSERT INTO public.organization_webhooks (organization_id, url, events, secret_encrypted, created_by)
+  VALUES ($1, 'https://example.com/hook', $2::text[], 'enc', $3) RETURNING id`;
+
+let webhookId;
+await withUser(A, async () => {
+  const inserted = await db.query(insertWebhookSql, [orgId, ["task.created"], A]);
+  webhookId = inserted.rows[0]?.id;
+  check("owner organizacji dodaje webhook", Boolean(webhookId), JSON.stringify(inserted.rows));
+
+  const listed = await db.query("SELECT id, url, events FROM public.organization_webhooks WHERE organization_id = $1", [orgId]);
+  check("owner widzi webhook", listed.rows.length === 1, listed.rows.length);
+
+  check(
+    "owner NIE czyta secret_encrypted (GRANT kolumnowy)",
+    await throwsInSavepoint("SELECT secret_encrypted FROM public.organization_webhooks WHERE id = $1", [webhookId])
+  );
+
+  const updated = await db.query("UPDATE public.organization_webhooks SET enabled = false WHERE id = $1 RETURNING enabled", [webhookId]);
+  check("owner wylacza webhook", updated.rows[0]?.enabled === false, JSON.stringify(updated.rows));
+
+  check(
+    "owner nie zapisuje last_* (tylko service_role)",
+    await throwsInSavepoint("UPDATE public.organization_webhooks SET last_status = 200 WHERE id = $1", [webhookId])
+  );
+  check("CHECK odrzuca nieznane zdarzenie", await throwsInSavepoint(insertWebhookSql, [orgId, ["task.exploded"], A]));
+  check("CHECK odrzuca pusta liste zdarzen", await throwsInSavepoint(insertWebhookSql, [orgId, [], A]));
+  check("created_by musi byc wywolujacym", await throwsInSavepoint(insertWebhookSql, [orgId, ["task.created"], B]));
+});
+
+await withUser(D, async () => {
+  const listed = await db.query("SELECT id FROM public.organization_webhooks WHERE organization_id = $1", [orgId]);
+  check("zwykly member organizacji nie widzi webhookow", listed.rows.length === 0, listed.rows.length);
+  check("zwykly member nie dodaje webhooka", await throwsInSavepoint(insertWebhookSql, [orgId, ["task.created"], D]));
+  const del = await db.query("DELETE FROM public.organization_webhooks WHERE id = $1", [webhookId]);
+  check("zwykly member nie usuwa webhooka", del.rowCount === 0, del.rowCount);
+});
+
+await withUser(C, async () => {
+  const listed = await db.query("SELECT id FROM public.organization_webhooks");
+  check("osoba spoza organizacji nie widzi webhookow", listed.rows.length === 0, listed.rows.length);
+});
+
+await withServiceRole(async () => {
+  const { rows } = await db.query(
+    "UPDATE public.organization_webhooks SET last_status = 204, last_delivery_at = now() WHERE id = $1 RETURNING secret_encrypted, last_status",
+    [webhookId]
+  );
+  check(
+    "service_role czyta sekret i zapisuje status dostawy",
+    rows[0]?.secret_encrypted === "enc" && rows[0]?.last_status === 204,
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(A, async () => {
+  const del = await db.query("DELETE FROM public.organization_webhooks WHERE id = $1", [webhookId]);
+  check("owner usuwa webhook", del.rowCount === 1, del.rowCount);
+});
+
+{
+  let threw = false;
+  try {
+    await withAnon(() => db.query("SELECT 1 FROM public.organization_webhooks LIMIT 1"));
+  } catch {
+    threw = true;
+  }
+  check("anon nie ma dostepu", threw);
+}
+
 // ------------------------------------------------------------------
-section("38. plans.member_limit: miejsca w organizacji wedlug planu (migracja 049)");
+section("40. plans.member_limit: miejsca w organizacji wedlug planu (migracja 051)");
 
 {
   const seats = await db.query("SELECT id, member_limit FROM public.plans ORDER BY sort_order");

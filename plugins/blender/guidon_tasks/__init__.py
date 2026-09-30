@@ -16,9 +16,9 @@ bl_info = {
 }
 
 import bpy
-from bpy.props import BoolVectorProperty, PointerProperty, StringProperty
+from bpy.props import BoolProperty, BoolVectorProperty, PointerProperty, StringProperty
 
-from . import api, jobs, ops, panels, state
+from . import api, jobs, moodboard, ops, panels, state
 
 
 class GuidonPreferences(bpy.types.AddonPreferences):
@@ -30,10 +30,16 @@ class GuidonPreferences(bpy.types.AddonPreferences):
     api_key: StringProperty(name="API Key", subtype="PASSWORD", options={"HIDDEN"})
     email: StringProperty(name="Email", options={"HIDDEN"})
     project_id: StringProperty(name="Project", options={"HIDDEN"})
+    auto_refresh: BoolProperty(
+        name="Auto-refresh",
+        description="Reload the board and comments every 30 seconds",
+        default=True,
+    )
 
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "base_url")
+        layout.prop(self, "auto_refresh")
         if self.api_key:
             row = layout.row()
             row.label(text="Logged in as " + (self.email or "?"), icon="USER")
@@ -46,9 +52,10 @@ class GuidonWindowProps(bpy.types.PropertyGroup):
     expanded: BoolVectorProperty(size=len(api.STATUSES), default=(False, True, True, True, True, False))
     comment_text: StringProperty(name="Comment")
     menu_task_id: StringProperty(options={"HIDDEN"})  # which task GUIDON_MT_status acts on
+    moodboard_filter: StringProperty(name="Filter", description="Search captions and tags")
 
 
-_classes = (GuidonPreferences, GuidonWindowProps) + ops.classes + panels.classes
+_classes = (GuidonPreferences, GuidonWindowProps) + ops.classes + panels.classes + moodboard.classes
 
 
 def _initial_load():
@@ -66,14 +73,18 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.WindowManager.guidon = PointerProperty(type=GuidonWindowProps)
     bpy.app.timers.register(_initial_load, first_interval=1.0)
+    bpy.app.timers.register(ops.auto_refresh_tick, first_interval=ops.AUTO_REFRESH_SECONDS, persistent=True)
 
 
 def unregister():
     if bpy.app.timers.is_registered(_initial_load):
         bpy.app.timers.unregister(_initial_load)
+    if bpy.app.timers.is_registered(ops.auto_refresh_tick):
+        bpy.app.timers.unregister(ops.auto_refresh_tick)
     if state.login_cancel is not None:
         state.login_cancel.set()
     jobs.unregister()
+    moodboard.unregister()
     del bpy.types.WindowManager.guidon
     for cls in reversed(_classes):
         bpy.utils.unregister_class(cls)

@@ -104,6 +104,14 @@ namespace Guidon.Tasks.Editor
             var scroll = new ScrollView { style = { flexGrow = 1 } };
             root.Add(scroll);
 
+            // New comments from teammates show up on their own, same cadence as the board.
+            root.schedule.Execute(() =>
+            {
+                if (_task == null || _loadingComments || !GuidonSettings.AutoRefresh || !GuidonSettings.IsConfigured) return;
+                if (!UnityEditorInternal.InternalEditorUtility.isApplicationActive) return;
+                _ = RefreshCommentsQuietly();
+            }).Every(30000);
+
             _titleField = new TextField { value = _task?.title ?? string.Empty };
             GuidonStyles.AddLabeledField(scroll, "Title", _titleField);
 
@@ -504,6 +512,18 @@ namespace Guidon.Tasks.Editor
             if (result.Ok) _comments = result.Value;
             else ShowStatusMessage(result.Error);
 
+            RebuildComments();
+        }
+
+        /// <summary>Background version of RefreshComments: no "Loading" flash, no error banner, rebuilt only on a change.</summary>
+        private async Task RefreshCommentsQuietly()
+        {
+            string taskId = _task.id;
+            var result = await GuidonApiClient.ListComments(taskId);
+            if (this == null || !result.Ok || _task == null || _task.id != taskId || _loadingComments) return;
+            string Fingerprint(CommentDto[] comments) => string.Join("|", (comments ?? Array.Empty<CommentDto>()).Select(c => JsonUtility.ToJson(c)));
+            if (Fingerprint(result.Value) == Fingerprint(_comments)) return;
+            _comments = result.Value;
             RebuildComments();
         }
 

@@ -1,49 +1,34 @@
 -- ============================================================
 -- GUIDON - MIGRACJA 049
--- Limit osób w organizacji według planu: plans.member_limit
+-- Limit czlonkow projektu w planach (plans.member_limit_per_project)
 -- ============================================================
 --
--- Uruchomić PO 048.
+-- Uruchomic PO 048.
 --
--- POWÓD
--- -----
--- Plan (015) ograniczał liczbę projektów, zadań i miejsce na pliki, ale
--- nie liczbę osób w organizacji. Ta migracja dodaje miejsca (seats):
+-- KONTEKST
+-- --------
+-- Plany (015/034) limitowaly projekty, zadania na projekt i storage, ale
+-- nie liczbe osob w projekcie - Free mial tyle miejsc co Business.
+-- Nowa kolumna, ta sama konwencja co task_limit_per_project: NULL = bez
+-- limitu. Egzekwowane tylko w Guidon Cloud (addMember w
+-- src/app/projects/[id]/members/actions.ts, przez getOrgPlanLimits) -
+-- self-hosted nie ma planow.
 --
---   plans.member_limit integer NULL
---     NULL = bez limitu (jak pozostałe limity w plans)
---     N    = organizacja na tym planie może mieć najwyżej N członków
---            (organization_members, łącznie z właścicielem)
---
--- Wartości startowe: Free 8, Pro 20, Team 50, Business 200,
--- Enterprise bez limitu.
---
--- Egzekwowane w aplikacji, tak jak pozostałe limity planu - tylko w
--- Guidon Cloud (bez DATABASE_URL). Self-hosted nie ma planów ani
--- limitów: addMember w src/app/organizations/[id]/members/actions.ts
--- sprawdza hasDirectDatabase() przed getOrgPlanLimits(), jak
--- isHostedProjectLimitReached.
---
--- Zejście na niższy plan nikogo nie usuwa - blokuje tylko dodawanie
--- kolejnych osób, dopóki organizacja nie zmieści się w limicie.
---
--- GRANT: plans ma już GRANT SELECT dla authenticated (015) na całą
--- tabelę, więc nowa kolumna jest czytelna bez dodatkowego grantu;
--- zapis tylko przez service_role, jak reszta plans.
+-- Istniejacy czlonkowie nie sa usuwani, jesli projekt jest juz ponad
+-- limitem - blokowane jest tylko dodawanie kolejnych.
 -- ============================================================
 
 BEGIN;
 
 
 ALTER TABLE public.plans
-    ADD COLUMN IF NOT EXISTS member_limit integer NULL
-        CHECK (member_limit IS NULL OR member_limit >= 1);
+    ADD COLUMN IF NOT EXISTS member_limit_per_project integer
+        CHECK (member_limit_per_project IS NULL OR member_limit_per_project > 0);
 
-UPDATE public.plans SET member_limit = 8   WHERE id = 'free';
-UPDATE public.plans SET member_limit = 20  WHERE id = 'pro';
-UPDATE public.plans SET member_limit = 50  WHERE id = 'team';
-UPDATE public.plans SET member_limit = 200 WHERE id = 'business';
-UPDATE public.plans SET member_limit = NULL WHERE id = 'enterprise';
+
+UPDATE public.plans SET member_limit_per_project = 5  WHERE id = 'free';
+UPDATE public.plans SET member_limit_per_project = 15 WHERE id = 'pro';
+UPDATE public.plans SET member_limit_per_project = 50 WHERE id = 'team';
 
 
 COMMIT;

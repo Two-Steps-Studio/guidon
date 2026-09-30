@@ -24,6 +24,8 @@ interface PlanRow {
   price_cents: number | null;
   project_limit: number | null;
   task_limit_per_project: number | null;
+  /** Absent until migration 049 has run. */
+  member_limit_per_project?: number | null;
   storage_limit_bytes: number | null;
   /** Seats (049). Absent until that migration runs - `select("*")` just won't have it. */
   member_limit?: number | null;
@@ -191,6 +193,7 @@ export default async function BillingPage({
                   <th>{t("colProjects")}</th>
                   {showSeats && <th>{t("colMembers")}</th>}
                   <th>{t("colTasksPerProject")}</th>
+                  <th>{t("colMembersPerProject")}</th>
                   <th>{t("colStorage")}</th>
                   <th>{t("colAI")}</th>
                   <th>{t("colGitHub")}</th>
@@ -214,6 +217,7 @@ export default async function BillingPage({
                       <td>{formatCount(plan.project_limit, t)}</td>
                       {showSeats && <td>{formatCount(plan.member_limit ?? null, t)}</td>}
                       <td>{formatCount(plan.task_limit_per_project, t)}</td>
+                      <td>{plan.member_limit_per_project === undefined ? "—" : formatCount(plan.member_limit_per_project, t)}</td>
                       <td>{formatBytes(plan.storage_limit_bytes, t)}</td>
                       <td>{plan.has_ai_features ? <Check className="h-4 w-4 text-success" /> : <Minus className="h-4 w-4 text-muted-foreground" />}</td>
                       <td>{plan.has_github_integration ? <Check className="h-4 w-4 text-success" /> : <Minus className="h-4 w-4 text-muted-foreground" />}</td>

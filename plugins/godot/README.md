@@ -30,6 +30,16 @@ using the same public API (`/api/v1`).
   done), comments, delete and **Copy Git ref** (`guidon#1a2b3c4d`). Put it in a
   commit, PR or branch name, and the GitHub integration links and moves the
   task.
+- **Auto-refresh** (toolbar checkbox, on by default) reloads the board and
+  the open task's comments every 30 seconds while the panel is visible. It
+  waits while you drag a card or type in one of the panel's fields, and a
+  reload that overlaps your own change is dropped.
+- **Moodboard** in the toolbar swaps the board for the project's reference
+  images and concept art (Knowledge → Moodboard on the website): a grid of
+  thumbnails with tag filters and search; click one to see it large, with
+  **Open source** for its link. **Board** switches back. Images are decoded
+  in memory (PNG, JPEG, WebP, BMP) - nothing is written into your project.
+  Adding images stays on the website (**Open in Browser**).
 - The panel uses the website's colors (`src/app/globals.css`), with a light or
   dark set that follows the editor theme.
 
@@ -85,6 +95,11 @@ Both add-ons were run in **Godot 4.3** against a real local Guidon instance
   real browser login (a scripted browser clicked Authorize), custom
   columns, click-to-open, drag-and-drop with real mouse events, create,
   subtasks, comments, edit and save, date validation, delete and log out.
+- **Moodboard** (added later): not run in Godot yet - no Godot binary was
+  available where it was written. It was reviewed against the Godot 4.2 API
+  and follows the same `HTTPRequest`/await pattern as the rest of `api.gd`;
+  the remaining risk is a GDScript parse or layout issue only the editor
+  would show.
 - **Reports:** F9 opened the form and paused the game. Tested: sending from
   the form and via `submit()`, the screenshot and log arriving as task
   attachments, and custom metadata showing up in the task.

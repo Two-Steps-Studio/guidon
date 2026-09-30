@@ -44,6 +44,15 @@ It targets 2024.3 (build 243) and newer, with no upper limit.
    - Subtasks: the checkbox toggles done/todo, the field below adds one with
      Enter, and a click opens it.
    - Comments: write a comment and click **Post**.
+   - **Auto-refresh** (toolbar checkbox, on by default) reloads the board and
+     the open task's comments every 30 seconds while the tool window is
+     showing and the IDE is active. It waits while you drag a card or type in
+     one of its fields, and drops a reload that overlaps your own change.
+   - **Moodboard** swaps the board for the project's reference images and
+     concept art (Knowledge → Moodboard on the website): a thumbnail grid
+     with a search field and a tag filter. Double-click an image to see it
+     large, with **Open source** for its link. **Board** switches back.
+     Images are decoded with ImageIO (PNG, JPEG, BMP, GIF) in memory only.
    - **Copy Git ref** copies `guidon#1a2b3c4d`. Put it in a commit message, PR title or branch name and, with the GitHub integration on, the task gets a link and moves by itself (see `docs/configuration.md`, `GITHUB_APP_WEBHOOK_SECRET`).
 
 The board uses the web app's design tokens (`src/app/globals.css`) as
@@ -114,9 +123,13 @@ The remaining risk is a mismatch between the stubs and the real platform API
 signatures, which would show up as a compile error on the first
 `./gradlew buildPlugin`.
 
+The moodboard view and auto-refresh were added later and haven't been built yet: this machine
+had no Gradle/IntelliJ SDK cache, and `./gradlew buildPlugin` downloads about
+1 GB. Run that before shipping it; the new code is `ui/MoodboardPanel.kt` plus
+`listReferences`/`downloadImage` in `core/GuidonApi.kt`.
+
 ## Not implemented (v1)
 
-- No automatic refresh. Use **Refresh**.
 - No reordering within a column; a dropped card always goes to the end.
 - No editing of assignees or tags (tags are shown but not editable).
 - The description is edited as raw Markdown, with no rendered preview.

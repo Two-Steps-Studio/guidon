@@ -228,6 +228,8 @@
       "projectsCount": "{count, plural, one {# project} other {# projects}}",
       "unlimitedTasksPerProject": "Unlimited tasks per project",
       "tasksPerProjectCount": "{count, plural, one {# task per project} other {# tasks per project}}",
+      "unlimitedMembersPerProject": "Unlimited members per project",
+      "membersPerProjectCount": "{count, plural, one {# member per project} other {# members per project}}",
       "aiTaskApi": "AI Task API",
       "githubIntegration": "GitHub integration",
       "advancedAnalytics": "Advanced analytics",
@@ -325,7 +327,37 @@
       "apiKeyPlaceholderKeep": "Leave blank to keep the current key",
       "apiKeyPlaceholderNew": "Paste your API key",
       "saving": "Saving...",
-      "save": "Save"
+      "save": "Save",
+      "webhooks": {
+        "title": "Webhooks",
+        "description": "Guidon sends a signed POST request to these URLs when tasks change in any project of this organization - connect CI, chat tools or your own automations.",
+        "empty": "No webhooks yet.",
+        "add": "Add webhook",
+        "urlLabel": "Payload URL",
+        "urlHintCloud": "Must be a public https:// address.",
+        "urlHintSelfHosted": "http:// and internal addresses are allowed on self-hosted installs.",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "e.g. Jenkins build trigger",
+        "eventsLabel": "Events",
+        "eventCreated": "Task created",
+        "eventStatusChanged": "Task moved to another column",
+        "eventCompleted": "Task completed",
+        "save": "Add webhook",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "limit": "An organization can have at most {max} webhooks.",
+        "signatureHint": "Each request carries an X-Guidon-Signature header: sha256=HMAC-SHA256(secret, timestamp + \".\" + body), where timestamp is the X-Guidon-Timestamp header. Verify it before trusting the payload.",
+        "secretTitle": "Signing secret",
+        "secretHint": "Copy it now - it won't be shown again. Store it where your receiver can read it.",
+        "copySecret": "Copy secret",
+        "enabled": "Active",
+        "test": "Test",
+        "testDelivered": "Test sent - receiver answered HTTP {status}.",
+        "delete": "Delete webhook",
+        "deleteConfirm": "Delete this webhook? Deliveries stop immediately.",
+        "lastDelivery": "Last delivery {when} · HTTP {status}",
+        "neverDelivered": "No deliveries yet."
+      }
     },
     "billing": {
       "title": "Billing",
@@ -343,6 +375,7 @@
       "colPrice": "Price",
       "colProjects": "Projects",
       "colTasksPerProject": "Tasks/project",
+      "colMembersPerProject": "Members/project",
       "colStorage": "Storage",
       "colAI": "AI",
       "colGitHub": "GitHub",
@@ -691,7 +724,8 @@
     "roleHintAdmin": "Manage members, settings, roadmap and files",
     "roleHintDeveloper": "Create and edit tasks, decisions and knowledge",
     "roleHintTester": "Comment on tasks; read everything else",
-    "roleHintViewer": "Read-only access"
+    "roleHintViewer": "Read-only access",
+    "memberLimitReached": "Your {plan} plan allows {limit} members per project. <link>Upgrade the plan</link> to add more people."
   },
   "settings": {
     "title": "Project Settings",
@@ -1121,11 +1155,13 @@
   },
   "calendar": {
     "title": "Calendar",
-    "subtitle": "Tasks by due date",
+    "subtitle": "Tasks by due date and roadmap phases",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "today": "Today",
-    "moreTasks": "+{count} more"
+    "moreTasks": "+{count} more",
+    "phaseAria": "Phase: {name}",
+    "morePhases": "{count, plural, one {+# more phase} other {+# more phases}}"
   },
   "aiChat": {
     "title": "Guidon AI Assistant",
@@ -1237,5 +1273,22 @@
     "save": "Save",
     "cancel": "Cancel",
     "saveFailed": "Could not save changes."
+  },
+  "mini": {
+    "noProjects": "You don't belong to any project yet.",
+    "openProjects": "Open Guidon",
+    "noAccess": "You don't have access to this project.",
+    "projectAria": "Project",
+    "filterAria": "Show tasks",
+    "filterMine": "Mine",
+    "filterAll": "All",
+    "refresh": "Refresh",
+    "addPlaceholder": "New task…",
+    "addPlaceholderMine": "New task for me…",
+    "add": "Add task",
+    "addFailed": "Couldn't add the task.",
+    "statusAria": "Status of {title}",
+    "empty": "No open tasks in this project.",
+    "emptyMine": "No open tasks assigned to you. Switch to All to see the rest."
   }
 }

@@ -68,6 +68,54 @@ def load_tasks(context=None):
     jobs.run(work, done)
 
 
+AUTO_REFRESH_SECONDS = 30.0
+
+
+def auto_refresh_tick():
+    """bpy.app.timers callback: quietly reload the open project's tasks,
+    columns and the selected task's comments. Skipped while any other request
+    is running; a result that raced a user action (jobs.actions changed) or a
+    project switch is dropped, and the UI only redraws on a real change."""
+    try:
+        p = prefs()
+    except KeyError:
+        return AUTO_REFRESH_SECONDS
+    if not p.auto_refresh or not p.api_key or not p.project_id or state.projects is None:
+        return AUTO_REFRESH_SECONDS
+    if jobs._busy > 0 or online_access_blocked():  # anything in flight, quiet refreshes included
+        return AUTO_REFRESH_SECONDS
+
+    project_id = p.project_id
+    selected = state.selected_task_id
+    actions_before = jobs.actions
+    c = client()
+
+    def work():
+        ok, tasks = c.list_tasks(project_id)
+        if not ok:
+            return False, tasks
+        columns_ok, columns = c.list_columns(project_id)
+        comments_ok, comments = c.list_comments(selected) if selected else (False, None)
+        return True, (tasks or [], columns if columns_ok else None, comments if comments_ok else None)
+
+    def done(result):
+        ok, value = result
+        if not ok or jobs.actions != actions_before or prefs().project_id != project_id:
+            return
+        tasks, columns, comments = value
+        if tasks != state.tasks:
+            state.tasks = tasks
+            if state.selected_task_id and not state.find_task(state.selected_task_id):
+                state.selected_task_id = ""
+        if columns is not None and columns != state.columns:
+            state.columns = columns
+        if comments is not None and selected == state.selected_task_id:
+            state.comments[selected] = comments
+
+    jobs.run(work, done, quiet=True)
+    return AUTO_REFRESH_SECONDS
+
+
 def load_projects(context=None):
     c = client(context)
 

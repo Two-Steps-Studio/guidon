@@ -99,15 +99,19 @@ export function NotificationsBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <div className="flex items-center justify-between px-2 py-1.5">
+      <DropdownMenuContent
+        align="end"
+        collisionPadding={8}
+        className="flex w-[calc(100vw-1rem)] max-w-96 flex-col overflow-y-hidden max-h-[min(32rem,var(--radix-dropdown-menu-content-available-height))]"
+      >
+        <div className="flex shrink-0 items-center justify-between gap-2 px-2 py-1.5">
           <span className="text-sm font-medium">{t("title")}</span>
           {unreadCount > 0 && (
             <button
               type="button"
               onClick={handleMarkAllRead}
               disabled={isPending}
-              className="text-xs text-primary hover:underline disabled:opacity-50"
+              className="shrink-0 py-1 text-xs text-primary hover:underline disabled:opacity-50"
             >
               {t("markAllRead")}
             </button>
@@ -116,7 +120,7 @@ export function NotificationsBell() {
         {notifications.length === 0 ? (
           <p className="px-2 py-6 text-center text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
-          <div className="max-h-96 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {notifications.map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
@@ -127,7 +131,11 @@ export function NotificationsBell() {
                   {!notification.read_at && (
                     <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   )}
-                  <span className={notification.read_at ? "text-muted-foreground" : "font-medium"}>
+                  <span
+                    className={
+                      notification.read_at ? "min-w-0 break-words text-muted-foreground" : "min-w-0 break-words font-medium"
+                    }
+                  >
                     {notification.title}
                   </span>
                 </span>

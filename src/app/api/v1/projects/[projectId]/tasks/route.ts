@@ -6,6 +6,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
+import { emitTaskEvent } from "@/lib/events/task-events";
 import type { TaskPriority, TaskStatus } from "@/types/task";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -167,6 +168,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     entity_type: "task",
     entity_id: created.id,
   });
+  // Subtasks don't notify, same as createSubtask in the web app. The API-key
+  // client is only needed by the hosted Discord lookup (see emitTaskEvent).
+  if (!parentTaskId) {
+    const client = hasDirectDatabase() ? undefined : await getApiUserClient(guard.userId);
+    emitTaskEvent(projectId, guard.userId, { kind: "created", taskId: created.id, title }, client);
+  }
 
   return NextResponse.json({ task: created });
 }

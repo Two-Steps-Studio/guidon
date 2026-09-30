@@ -228,6 +228,8 @@
       "projectsCount": "{count, plural, one {# Projekt} other {# Projekte}}",
       "unlimitedTasksPerProject": "Unbegrenzte Aufgaben pro Projekt",
       "tasksPerProjectCount": "{count, plural, one {# Aufgabe pro Projekt} other {# Aufgaben pro Projekt}}",
+      "unlimitedMembersPerProject": "Unbegrenzte Mitglieder pro Projekt",
+      "membersPerProjectCount": "{count, plural, one {# Mitglied pro Projekt} other {# Mitglieder pro Projekt}}",
       "aiTaskApi": "KI-Aufgaben-API",
       "githubIntegration": "GitHub-Integration",
       "advancedAnalytics": "Erweiterte Analysen",
@@ -325,7 +327,37 @@
       "apiKeyPlaceholderKeep": "Leer lassen, um den aktuellen Schlüssel zu behalten",
       "apiKeyPlaceholderNew": "Füge deinen API-Schlüssel ein",
       "saving": "Wird gespeichert...",
-      "save": "Speichern"
+      "save": "Speichern",
+      "webhooks": {
+        "title": "Webhooks",
+        "description": "Guidon sendet eine signierte POST-Anfrage an diese URLs, wenn sich Aufgaben in einem Projekt dieser Organisation ändern - verbinde CI, Chat-Tools oder eigene Automatisierungen.",
+        "empty": "Noch keine Webhooks.",
+        "add": "Webhook hinzufügen",
+        "urlLabel": "Payload-URL",
+        "urlHintCloud": "Muss eine öffentliche https://-Adresse sein.",
+        "urlHintSelfHosted": "Bei Self-Hosting sind http:// und interne Adressen erlaubt.",
+        "descriptionLabel": "Beschreibung (optional)",
+        "descriptionPlaceholder": "z. B. Jenkins-Build-Trigger",
+        "eventsLabel": "Ereignisse",
+        "eventCreated": "Aufgabe erstellt",
+        "eventStatusChanged": "Aufgabe in andere Spalte verschoben",
+        "eventCompleted": "Aufgabe abgeschlossen",
+        "save": "Webhook hinzufügen",
+        "saving": "Speichern…",
+        "cancel": "Abbrechen",
+        "limit": "Eine Organisation kann höchstens {max} Webhooks haben.",
+        "signatureHint": "Jede Anfrage enthält den Header X-Guidon-Signature: sha256=HMAC-SHA256(Secret, timestamp + \".\" + body), wobei timestamp der Header X-Guidon-Timestamp ist. Prüfe ihn, bevor du dem Inhalt vertraust.",
+        "secretTitle": "Signatur-Secret",
+        "secretHint": "Jetzt kopieren - es wird nicht erneut angezeigt. Speichere es dort, wo dein Empfänger es lesen kann.",
+        "copySecret": "Secret kopieren",
+        "enabled": "Aktiv",
+        "test": "Test",
+        "testDelivered": "Test gesendet - Empfänger antwortete mit HTTP {status}.",
+        "delete": "Webhook löschen",
+        "deleteConfirm": "Diesen Webhook löschen? Zustellungen stoppen sofort.",
+        "lastDelivery": "Letzte Zustellung {when} · HTTP {status}",
+        "neverDelivered": "Noch keine Zustellungen."
+      }
     },
     "billing": {
       "title": "Abrechnung",
@@ -343,6 +375,7 @@
       "colPrice": "Preis",
       "colProjects": "Projekte",
       "colTasksPerProject": "Aufgaben/Projekt",
+      "colMembersPerProject": "Mitglieder/Projekt",
       "colStorage": "Speicher",
       "colAI": "KI",
       "colGitHub": "GitHub",
@@ -691,7 +724,8 @@
     "roleHintAdmin": "Mitglieder, Einstellungen, Roadmap und Dateien verwalten",
     "roleHintDeveloper": "Aufgaben, Entscheidungen und Wissen erstellen und bearbeiten",
     "roleHintTester": "Aufgaben kommentieren; alles andere lesen",
-    "roleHintViewer": "Nur Lesezugriff"
+    "roleHintViewer": "Nur Lesezugriff",
+    "memberLimitReached": "Dein {plan}-Plan erlaubt {limit} Mitglieder pro Projekt. <link>Plan upgraden</link>, um weitere Personen hinzuzufügen."
   },
   "settings": {
     "title": "Projekteinstellungen",
@@ -1121,11 +1155,13 @@
   },
   "calendar": {
     "title": "Kalender",
-    "subtitle": "Aufgaben nach Fälligkeitsdatum",
+    "subtitle": "Aufgaben nach Fälligkeitsdatum und Roadmap-Phasen",
     "previousMonth": "Vorheriger Monat",
     "nextMonth": "Nächster Monat",
     "today": "Heute",
-    "moreTasks": "+{count} weitere"
+    "moreTasks": "+{count} weitere",
+    "phaseAria": "Phase: {name}",
+    "morePhases": "{count, plural, one {+# weitere Phase} other {+# weitere Phasen}}"
   },
   "aiChat": {
     "title": "Guidon-KI-Assistent",
@@ -1237,5 +1273,22 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "saveFailed": "Änderungen konnten nicht gespeichert werden."
+  },
+  "mini": {
+    "noProjects": "Du gehörst noch zu keinem Projekt.",
+    "openProjects": "Guidon öffnen",
+    "noAccess": "Du hast keinen Zugriff auf dieses Projekt.",
+    "projectAria": "Projekt",
+    "filterAria": "Aufgaben anzeigen",
+    "filterMine": "Meine",
+    "filterAll": "Alle",
+    "refresh": "Aktualisieren",
+    "addPlaceholder": "Neue Aufgabe…",
+    "addPlaceholderMine": "Neue Aufgabe für mich…",
+    "add": "Aufgabe hinzufügen",
+    "addFailed": "Aufgabe konnte nicht hinzugefügt werden.",
+    "statusAria": "Status von {title}",
+    "empty": "Keine offenen Aufgaben in diesem Projekt.",
+    "emptyMine": "Dir sind keine offenen Aufgaben zugewiesen. Wechsle zu Alle, um den Rest zu sehen."
   }
 }
