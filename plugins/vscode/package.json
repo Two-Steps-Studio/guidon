@@ -16,6 +16,7 @@
   "contributes": {
     "commands": [
       { "command": "guidon.openBoard", "title": "Open Board", "category": "Guidon", "icon": "$(project)" },
+      { "command": "guidon.openMoodboard", "title": "Open Moodboard", "category": "Guidon", "icon": "$(file-media)" },
       { "command": "guidon.login", "title": "Log In", "category": "Guidon" },
       { "command": "guidon.logout", "title": "Log Out", "category": "Guidon" },
       { "command": "guidon.pickProject", "title": "Pick Project", "category": "Guidon" },

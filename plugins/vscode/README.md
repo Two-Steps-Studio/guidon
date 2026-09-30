@@ -31,6 +31,11 @@ VS Code 1.85 or newer.
   - Click a card to open it on the right: edit the title, status, priority,
     due date and Markdown description, add subtasks (the checkbox marks them
     done), comment, or delete.
+- **Guidon: Open Moodboard** (or **Moodboard** in the board's toolbar): the
+  selected project's reference images and concept art (Knowledge → Moodboard
+  on the website) as a grid. Filter by tag, search captions, click an image
+  to see it large, **Open source** follows its source link. It follows the
+  project picked on the board. Adding images stays on the website.
 - **Log In** opens the Guidon website in your browser. Click **Authorize**
   there and VS Code picks up the key.
 
@@ -87,6 +92,12 @@ accepts loopback redirects today.)
   Content-Security-Policy allows nothing but the extension's own script and
   style.
 
+- `src/moodboard.ts` + `media/moodboard.js`/`moodboard.css` are the moodboard
+  panel. The extension downloads each image from its signed URL
+  (`GET /api/v1/projects/{id}/references`) and hands it to the webview as a
+  `data:` URI, so that webview has no network access either (raster images
+  only, up to 15 MB each).
+
 `store.ts`, `api.ts`, `login.ts` and `model.ts` don't import `vscode`.
 
 ## Verified
@@ -112,6 +123,12 @@ instead:
   - Insert Task Reference (no duplicates);
   - delete with a modal confirmation, and log out;
   - no JavaScript errors in the webview.
+
+The moodboard panel was added later and checked less: `tsc` compiles it, and
+`media/moodboard.js` ran in Chromium against scripted `state`/`image`
+messages (grid, placeholders for failed images, tag filter, search, lightbox,
+Esc/backdrop close, Open source/Refresh messages). It hasn't run against a
+live server inside VS Code.
 
 The remaining risk is behavior of the real VS Code API that the stand-in
 doesn't reproduce.

@@ -1,4 +1,7 @@
-import { Column, Comment, DEFAULT_COLUMNS, Project, STATUSES, STATUS_LABELS, Task } from "./model";
+import { Column, Comment, DEFAULT_COLUMNS, Project, Reference, STATUSES, STATUS_LABELS, Task } from "./model";
+
+/** Moodboard images above this are skipped rather than held in memory as data: URIs. */
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -35,6 +38,32 @@ export class GuidonApi {
       columns.push({ status, label: typeof column.label === "string" && column.label ? column.label : STATUS_LABELS[status] });
     }
     return { ok: true, value: columns.length ? columns : DEFAULT_COLUMNS };
+  }
+
+  listReferences(projectId: string): Promise<Result<Reference[]>> {
+    return this.field("GET", `/api/v1/projects/${projectId}/references`, "references", []);
+  }
+
+  /**
+   * Downloads a moodboard image as a data: URI for the webview, which has no
+   * network access of its own (see moodboard.ts's CSP). The URL is already
+   * signed, so no API key is sent with it.
+   */
+  async fetchImage(url: string): Promise<Result<string>> {
+    if (!/^https?:\/\//i.test(url)) return { ok: false, error: "Unsupported image URL." };
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(30_000), headers: { "User-Agent": "GuidonTasks-VSCode/1.0" } });
+      if (!response.ok) return { ok: false, error: `${response.status}` };
+      const type = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+      if (!type.startsWith("image/") || type === "image/svg+xml") return { ok: false, error: "Not a raster image." };
+      const declared = Number(response.headers.get("content-length") ?? "0");
+      if (declared > MAX_IMAGE_BYTES) return { ok: false, error: "Image too large." };
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (bytes.length > MAX_IMAGE_BYTES) return { ok: false, error: "Image too large." };
+      return { ok: true, value: `data:${type};base64,${bytes.toString("base64")}` };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   createTask(projectId: string, fields: { title: string; status?: string; parent_task_id?: string }): Promise<Result<Task>> {

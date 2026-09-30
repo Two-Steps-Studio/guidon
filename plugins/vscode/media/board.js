@@ -108,7 +108,7 @@
     } else {
       app.innerHTML = `<div class="toolbar"><span class="brand">Guidon</span>
           <select id="f-project">${state.projects.map((p) => `<option value="${esc(p.id)}" ${p.id === state.projectId ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
-          <button class="btn" data-action="refresh">Refresh</button><button class="btn" data-action="browser">Open in Browser</button>
+          <button class="btn" data-action="refresh">Refresh</button><button class="btn" data-action="moodboard">Moodboard</button><button class="btn" data-action="browser">Open in Browser</button>
           ${state.busy ? `<span class="muted">Loading…</span>` : ""}<span class="spacer"></span>
           <span class="muted">Logged in as ${esc(state.email || "?")}</span><button class="btn" data-action="logout">Log Out</button></div>${error}
         <div class="layout"><div class="board">${state.projectId ? state.columns.map(column).join("") : `<span class="muted">No projects loaded yet.</span>`}</div>${details()}</div>`;
@@ -137,6 +137,7 @@
       case "logout": return post("logout");
       case "refresh": return post("refresh");
       case "browser": return post("openBrowser");
+      case "moodboard": return post("openMoodboard");
       case "dismiss": return post("dismissError");
       case "add": addingIn = addingIn === actionEl.dataset.status ? "" : actionEl.dataset.status ?? ""; return render();
       case "open": return post("select", { id: actionEl.dataset.task });
