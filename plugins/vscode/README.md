@@ -26,6 +26,10 @@ VS Code 1.85 or newer.
   - The board looks like the website: its colors, light or dark following
     your VS Code theme.
   - It shows the project's own columns: their labels, order and hidden columns.
+  - It refreshes itself every 30 seconds while it's on screen and VS Code has
+    focus, and again when you come back to the window - teammates' changes
+    show up without clicking **Refresh**. What you're typing in the details
+    panel is kept. Turn it off with `guidon.autoRefresh`.
   - Drag a card onto another column to change its status. **+** on a column
     creates a task in it (Enter to create, Esc to cancel).
   - Click a card to open it on the right: edit the title, status, priority,
@@ -63,6 +67,7 @@ that reference easy to use:
 | Setting | Default | |
 |---|---|---|
 | `guidon.baseUrl` | `https://useguidon.com` | Your Guidon instance, e.g. `http://localhost:2137` |
+| `guidon.autoRefresh` | `true` | Reload the board every 30 s while it's visible and VS Code has focus |
 | `guidon.branchPrefix` | *(empty)* | Prefix for branches from "Start Task on a New Branch" |
 
 The API key is kept in VS Code's **SecretStorage** (the OS keychain), never

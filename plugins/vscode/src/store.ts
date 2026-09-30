@@ -38,6 +38,8 @@ export class BoardStore {
   error = "";
   loggingIn = false;
   private pending = 0;
+  /** Bumped by every user action, so a background refresh that overlapped one is thrown away. */
+  private actions = 0;
   private listeners = new Set<() => void>();
 
   constructor(private readonly host: StoreHost) {}
@@ -97,6 +99,7 @@ export class BoardStore {
       return null;
     }
     this.pending++;
+    this.actions++;
     this.emit();
     try {
       return await work(api);
@@ -150,6 +153,44 @@ export class BoardStore {
       if (!this.findTask(this.selectedTaskId)) this.selectedTaskId = "";
     });
     if (this.selectedTaskId) await this.loadComments(this.selectedTaskId);
+  }
+
+  /**
+   * Background refresh: reloads the current project's tasks, columns and the
+   * open task's comments without the busy indicator, and only emits when
+   * something actually changed. Skipped while a user action is in flight;
+   * a result that raced one is dropped. Errors are ignored - the next manual
+   * Refresh reports them. Returns whether anything changed.
+   */
+  async autoRefresh(): Promise<boolean> {
+    const api = this.host.api();
+    const projectId = this.projectId;
+    if (!api || !projectId || this.pending > 0) return false;
+    const actionsBefore = this.actions;
+    const selected = this.selectedTaskId;
+    const [tasks, columns, comments] = await Promise.all([
+      api.listTasks(projectId),
+      api.listColumns(projectId),
+      selected ? api.listComments(selected) : Promise.resolve(null),
+    ]);
+    if (this.actions !== actionsBefore || this.pending > 0 || projectId !== this.projectId || !tasks.ok) return false;
+
+    let changed = false;
+    if (JSON.stringify(tasks.value) !== JSON.stringify(this.tasks)) {
+      this.tasks = tasks.value;
+      if (!this.findTask(this.selectedTaskId)) this.selectedTaskId = "";
+      changed = true;
+    }
+    if (columns.ok && JSON.stringify(columns.value) !== JSON.stringify(this.columns)) {
+      this.columns = columns.value;
+      changed = true;
+    }
+    if (comments?.ok && selected === this.selectedTaskId && JSON.stringify(comments.value) !== JSON.stringify(this.comments[selected])) {
+      this.comments = { ...this.comments, [selected]: comments.value };
+      changed = true;
+    }
+    if (changed) this.emit();
+    return changed;
   }
 
   async select(taskId: string): Promise<void> {

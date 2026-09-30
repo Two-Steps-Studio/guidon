@@ -166,6 +166,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     })
   );
 
+  // Auto-refresh: every 30 s while the board is visible and VS Code has focus,
+  // plus right away when the window comes back into focus after a while.
+  const AUTO_REFRESH_MS = 30_000;
+  let lastAuto = Date.now();
+  const autoRefresh = () => {
+    if (!apiKey || !BoardPanel.isVisible() || !vscode.workspace.getConfiguration("guidon").get<boolean>("autoRefresh", true)) return;
+    lastAuto = Date.now();
+    void store.autoRefresh();
+  };
+  const timer = setInterval(() => {
+    if (vscode.window.state.focused) autoRefresh();
+  }, AUTO_REFRESH_MS);
+  context.subscriptions.push(
+    { dispose: () => clearInterval(timer) },
+    vscode.window.onDidChangeWindowState((state) => {
+      if (state.focused && Date.now() - lastAuto > AUTO_REFRESH_MS / 3) autoRefresh();
+    })
+  );
+
   if (apiKey) void store.refresh();
 }
 

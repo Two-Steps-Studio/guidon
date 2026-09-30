@@ -26,6 +26,11 @@ export class BoardPanel {
   private static current: BoardPanel | undefined;
   private readonly disposables: vscode.Disposable[] = [];
 
+  /** Whether the board is open and on screen - the only time a background refresh is worth doing. */
+  static isVisible(): boolean {
+    return BoardPanel.current?.panel.visible ?? false;
+  }
+
   static show(context: vscode.ExtensionContext, store: BoardStore, commands: BoardCommands): void {
     if (BoardPanel.current) {
       BoardPanel.current.panel.reveal();
