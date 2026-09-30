@@ -78,6 +78,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         const val MODE_LOGIN = "login"
         const val MODE_BOARD = "board"
         const val MODE_MOODBOARD = "moodboard"
+        const val AUTO_REFRESH_MS = 30_000
     }
 
     // --- state (EDT only)
@@ -124,6 +125,11 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     private val moodboard = MoodboardPanel(project) { disposed }
     private val moodboardButton = JButton("Moodboard")
     private var showingMoodboard = false
+    private var dragging = false
+    /** Bumped by every user request (see [bg]), so a background refresh that raced one is dropped. */
+    private var actions = 0
+    private var autoRefreshRunning = false
+    private val autoRefreshTimer = javax.swing.Timer(AUTO_REFRESH_MS) { autoRefresh() }
 
     init {
         add(buildHeader(), BorderLayout.NORTH)
@@ -141,10 +147,12 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             updateChrome()
             if (GuidonSettings.isLoggedIn) refreshProjects()
         }
+        autoRefreshTimer.start()
     }
 
     override fun dispose() {
         disposed = true
+        autoRefreshTimer.stop()
         loginCancel?.set(true)
     }
 
@@ -155,6 +163,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     /** Runs [work] on a pooled thread, then [done] on the EDT (skipped once the tool window is gone). */
     private fun <T> bg(work: () -> T, done: (T) -> Unit) {
         pending++
+        actions++
         updateChrome()
         ApplicationManager.getApplication().executeOnPooledThread(Runnable {
             val result = work()
@@ -279,12 +288,16 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         val logout = button("Log Out") { logOut() }
         logout.toolTipText = "Forget the key on this machine. It stays under Profile > API Keys until you revoke it there."
         moodboardButton.toolTipText = "Switch between the board and this project's reference images"
+        val autoRefreshBox = JCheckBox("Auto-refresh", GuidonSettings.autoRefresh).apply {
+            toolTipText = "Reload the board every 30 seconds while this tool window is showing"
+            addActionListener { GuidonSettings.autoRefresh = isSelected }
+        }
         moodboardButton.addActionListener {
             showingMoodboard = !showingMoodboard
             if (showingMoodboard) moodboard.load(currentProjectId, api())
             updateChrome()
         }
-        toolbarControls += listOf(projectCombo, refresh, moodboardButton, openBrowser, logout)
+        toolbarControls += listOf(projectCombo, refresh, moodboardButton, openBrowser, autoRefreshBox, logout)
 
         val left = JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(6), 0)).apply {
             add(JLabel("Guidon").apply {
@@ -295,6 +308,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             add(refresh)
             add(moodboardButton)
             add(openBrowser)
+            add(autoRefreshBox)
             add(busyLabel)
         }
         val right = JPanel(FlowLayout(FlowLayout.RIGHT, JBUI.scale(6), 0)).apply {
@@ -515,7 +529,12 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             }
         })
         DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(card, DnDConstants.ACTION_MOVE) { gesture ->
-            gesture.startDrag(DragSource.DefaultMoveDrop, StringSelection(DND_PREFIX + task.id))
+            dragging = true
+            gesture.startDrag(DragSource.DefaultMoveDrop, StringSelection(DND_PREFIX + task.id), object : java.awt.dnd.DragSourceAdapter() {
+                override fun dragDropEnd(e: java.awt.dnd.DragSourceDropEvent) {
+                    dragging = false
+                }
+            })
         }
         return card
     }
@@ -710,6 +729,50 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
                 }
             }
         }
+    }
+
+    /**
+     * Quiet reload of the open project's tasks, columns and the selected task's
+     * comments - no busy label, no error bar, and a rebuild only on a real
+     * change. Skipped while the tool window is hidden, the IDE isn't active,
+     * a request or drag is running, or you're typing in one of its fields
+     * (a rebuild would take the focus away).
+     */
+    private fun autoRefresh() {
+        if (disposed || autoRefreshRunning || !GuidonSettings.autoRefresh || !GuidonSettings.isLoggedIn) return
+        if (!isShowing || showingMoodboard || pending > 0 || dragging || currentProjectId.isEmpty()) return
+        if (!ApplicationManager.getApplication().isActive) return
+        val focus = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+        if (focus is JTextComponent && SwingUtilities.isDescendingFrom(focus, this)) return
+
+        val projectId = currentProjectId
+        val selected = selectedTaskId
+        val actionsBefore = actions
+        val api = api()
+        autoRefreshRunning = true
+        ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+            val loaded = api.listTasks(projectId)
+            val loadedColumns = (api.listColumns(projectId) as? ApiResult.Ok)?.value
+            val loadedComments = if (selected.isNotEmpty()) (api.listComments(selected) as? ApiResult.Ok)?.value else null
+            ApplicationManager.getApplication().invokeLater {
+                autoRefreshRunning = false
+                if (disposed || actions != actionsBefore || pending > 0 || projectId != currentProjectId) return@invokeLater
+                val fresh = (loaded as? ApiResult.Ok)?.value ?: return@invokeLater
+                var boardChanged = false
+                if (fresh != tasks || (loadedColumns != null && loadedColumns != columns)) {
+                    tasks = fresh.toMutableList()
+                    if (loadedColumns != null) columns = loadedColumns
+                    if (tasks.none { it.id == selectedTaskId }) selectedTaskId = ""
+                    boardChanged = true
+                }
+                var detailsChanged = boardChanged
+                if (loadedComments != null && selected == selectedTaskId && loadedComments != comments[selected]) {
+                    comments[selected] = loadedComments
+                    detailsChanged = true
+                }
+                if (boardChanged || detailsChanged) scheduleRebuild(board = boardChanged, details = detailsChanged)
+            }
+        })
     }
 
     private fun loadComments(taskId: String) {
