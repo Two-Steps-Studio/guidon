@@ -356,7 +356,8 @@
         "delete": "Usuń webhook",
         "deleteConfirm": "Usunąć ten webhook? Wysyłka zatrzyma się od razu.",
         "lastDelivery": "Ostatnia wysyłka {when} · HTTP {status}",
-        "neverDelivered": "Jeszcze nic nie wysłano."
+        "neverDelivered": "Jeszcze nic nie wysłano.",
+        "nativeFormatHint": "Wysyłane jako zwykła wiadomość w formacie tej usługi zamiast JSON-a Guidona."
       }
     },
     "billing": {

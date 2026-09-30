@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { TaskDetailDialog } from "@/components/work/task-detail-dialog";
-import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
+import { type TaskCardMember } from "@/components/work/task-card";
+import { initialsFor } from "@/lib/people";
 import { createTask, moveTask } from "@/app/projects/[id]/work/actions";
 import { loadTaskById } from "@/app/projects/[id]/work/relations-actions";
 import {

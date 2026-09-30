@@ -356,7 +356,8 @@
         "delete": "Webhook löschen",
         "deleteConfirm": "Diesen Webhook löschen? Zustellungen stoppen sofort.",
         "lastDelivery": "Letzte Zustellung {when} · HTTP {status}",
-        "neverDelivered": "Noch keine Zustellungen."
+        "neverDelivered": "Noch keine Zustellungen.",
+        "nativeFormatHint": "Wird als native Nachricht für diesen Dienst gesendet statt als Guidon-JSON."
       }
     },
     "billing": {

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { AlertCircle, Check, Copy, Send, Trash2, Webhook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { detectWebhookFormat } from "@/lib/webhooks/formats";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,6 +171,7 @@ function WebhookRow({ organizationId, webhook }: { organizationId: string; webho
     });
   };
 
+  const format = detectWebhookFormat(webhook.url);
   const lastOk = webhook.last_status !== null && webhook.last_status >= 200 && webhook.last_status < 300 && !webhook.last_error;
 
   return (
@@ -181,6 +183,11 @@ function WebhookRow({ organizationId, webhook }: { organizationId: string; webho
           </p>
           {webhook.description && <p className="text-xs text-muted-foreground">{webhook.description}</p>}
           <div className="mt-1 flex flex-wrap gap-1">
+            {format !== "guidon" && (
+              <Badge variant="secondary" className="text-[10px]" title={t("nativeFormatHint")}>
+                {format === "discord" ? "Discord" : "Slack"}
+              </Badge>
+            )}
             {webhook.events.map((event) => (
               <Badge key={event} variant="outline" className="font-mono text-[10px]">
                 {event}
