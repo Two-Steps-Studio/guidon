@@ -27,6 +27,19 @@ data class GuidonTask(
     val isSubtask get() = parentTaskId.isNotEmpty()
 }
 
+/** A moodboard image (GET /api/v1/projects/{id}/references). imageUrl is signed and short-lived - download it right away. */
+data class GuidonReference(
+    val id: String,
+    val name: String,
+    val caption: String,
+    val tags: List<String>,
+    val sourceUrl: String,
+    val mimeType: String,
+    val imageUrl: String,
+) {
+    val displayName get() = caption.ifEmpty { name }
+}
+
 /** One visible board column: a fixed status with the project's (possibly renamed) label. */
 data class BoardColumn(val status: String, val label: String)
 

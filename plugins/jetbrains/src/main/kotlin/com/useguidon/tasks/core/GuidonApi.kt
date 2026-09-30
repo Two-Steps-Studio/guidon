@@ -89,6 +89,47 @@ class GuidonApi(baseUrl: String, private val apiKey: String, private val http: H
 
     fun deleteTask(taskId: String): ApiResult<Unit> = send("DELETE", "/api/v1/tasks/$taskId").map { }
 
+    /** The project's moodboard, newest first. */
+    fun listReferences(projectId: String): ApiResult<List<GuidonReference>> =
+        send("GET", "/api/v1/projects/$projectId/references").map { body ->
+            body.array("references").mapNotNull { element ->
+                val o = element.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
+                GuidonReference(
+                    id = o.str("id"),
+                    name = o.str("name"),
+                    caption = o.str("caption"),
+                    tags = o.array("tags").mapNotNull { runCatching { it.asString }.getOrNull() },
+                    sourceUrl = o.str("source_url"),
+                    mimeType = o.str("mime_type"),
+                    imageUrl = o.str("image_url"),
+                ).takeIf { it.id.isNotEmpty() }
+            }
+        }
+
+    /** Downloads a signed moodboard image URL. No API key is sent - the URL carries its own signature. */
+    fun downloadImage(url: String): ApiResult<ByteArray> {
+        if (!url.startsWith("https://") && !url.startsWith("http://")) return ApiResult.Err("No image URL.")
+        return try {
+            val request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(Duration.ofSeconds(30))
+                .header("User-Agent", "GuidonTasks-JetBrains/1.0")
+                .GET()
+                .build()
+            val response = http.send(request, HttpResponse.BodyHandlers.ofByteArray())
+            val bytes = response.body()
+            when {
+                response.statusCode() !in 200..299 -> ApiResult.Err("Download failed (${response.statusCode()}).")
+                bytes.size > MAX_IMAGE_BYTES -> ApiResult.Err("Image too large.")
+                else -> ApiResult.Ok(bytes)
+            }
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            ApiResult.Err("Download interrupted.")
+        } catch (e: Exception) {
+            ApiResult.Err("Download failed: ${e.message ?: e.javaClass.simpleName}")
+        }
+    }
+
     fun listComments(taskId: String): ApiResult<List<GuidonComment>> =
         send("GET", "/api/v1/tasks/$taskId/comment").map { body -> body.array("comments").map { parseComment(it.asJsonObject) } }
 
@@ -132,6 +173,8 @@ class GuidonApi(baseUrl: String, private val apiKey: String, private val http: H
     }
 
     companion object {
+        const val MAX_IMAGE_BYTES = 20 * 1024 * 1024
+
         val defaultClient: HttpClient = HttpClient.newBuilder()
             // HTTP/1.1 on purpose: over plain http:// (a self-hosted or local
             // Guidon) java.net.http's default HTTP/2 sends an `Upgrade: h2c`

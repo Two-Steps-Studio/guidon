@@ -44,6 +44,11 @@ It targets 2024.3 (build 243) and newer, with no upper limit.
    - Subtasks: the checkbox toggles done/todo, the field below adds one with
      Enter, and a click opens it.
    - Comments: write a comment and click **Post**.
+   - **Moodboard** swaps the board for the project's reference images and
+     concept art (Knowledge → Moodboard on the website): a thumbnail grid
+     with a search field and a tag filter. Double-click an image to see it
+     large, with **Open source** for its link. **Board** switches back.
+     Images are decoded with ImageIO (PNG, JPEG, BMP, GIF) in memory only.
    - **Copy Git ref** copies `guidon#1a2b3c4d`. Put it in a commit message, PR title or branch name and, with the GitHub integration on, the task gets a link and moves by itself (see `docs/configuration.md`, `GITHUB_APP_WEBHOOK_SECRET`).
 
 The board uses the web app's design tokens (`src/app/globals.css`) as
@@ -113,6 +118,11 @@ The IntelliJ Platform SDK couldn't be downloaded where this was written, so
 The remaining risk is a mismatch between the stubs and the real platform API
 signatures, which would show up as a compile error on the first
 `./gradlew buildPlugin`.
+
+The moodboard view was added later and hasn't been built yet: this machine
+had no Gradle/IntelliJ SDK cache, and `./gradlew buildPlugin` downloads about
+1 GB. Run that before shipping it; the new code is `ui/MoodboardPanel.kt` plus
+`listReferences`/`downloadImage` in `core/GuidonApi.kt`.
 
 ## Not implemented (v1)
 

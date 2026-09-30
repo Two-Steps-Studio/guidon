@@ -77,6 +77,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         const val MODE_LOADING = "loading"
         const val MODE_LOGIN = "login"
         const val MODE_BOARD = "board"
+        const val MODE_MOODBOARD = "moodboard"
     }
 
     // --- state (EDT only)
@@ -120,12 +121,16 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     private val loginButton = GuidonButton("Log In")
     private val cancelLoginButton = JButton("Cancel")
     private var newTaskField: JTextField? = null
+    private val moodboard = MoodboardPanel(project) { disposed }
+    private val moodboardButton = JButton("Moodboard")
+    private var showingMoodboard = false
 
     init {
         add(buildHeader(), BorderLayout.NORTH)
         modePanel.add(centered(mutedLabel("Loading…")), MODE_LOADING)
         modePanel.add(buildLoginPanel(), MODE_LOGIN)
         modePanel.add(buildBoardArea(), MODE_BOARD)
+        modePanel.add(moodboard, MODE_MOODBOARD)
         add(modePanel, BorderLayout.CENTER)
         modes.show(modePanel, MODE_LOADING)
         updateChrome()
@@ -202,7 +207,16 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         loginButton.isEnabled = !loggingIn
         loginButton.text = if (loggingIn) "Waiting for the browser…" else "Log In"
         cancelLoginButton.isVisible = loggingIn
-        modes.show(modePanel, if (!keyLoaded) MODE_LOADING else if (loggedIn) MODE_BOARD else MODE_LOGIN)
+        moodboardButton.text = if (showingMoodboard) "Board" else "Moodboard"
+        modes.show(
+            modePanel,
+            when {
+                !keyLoaded -> MODE_LOADING
+                !loggedIn -> MODE_LOGIN
+                showingMoodboard -> MODE_MOODBOARD
+                else -> MODE_BOARD
+            },
+        )
         revalidate()
         repaint()
     }
@@ -254,14 +268,23 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         }
         projectCombo.preferredSize = Dimension(JBUI.scale(220), projectCombo.preferredSize.height)
 
-        val refresh = button("Refresh") { refreshProjects() }
+        val refresh = button("Refresh") {
+            refreshProjects()
+            if (showingMoodboard) moodboard.load(currentProjectId, api())
+        }
         val openBrowser = button("Open in Browser") {
             if (currentProjectId.isNotEmpty()) BrowserUtil.browse("${GuidonSettings.baseUrl.trimEnd('/')}/projects/$currentProjectId/work")
         }
         openBrowser.toolTipText = "Open this project's board on the Guidon website"
         val logout = button("Log Out") { logOut() }
         logout.toolTipText = "Forget the key on this machine. It stays under Profile > API Keys until you revoke it there."
-        toolbarControls += listOf(projectCombo, refresh, openBrowser, logout)
+        moodboardButton.toolTipText = "Switch between the board and this project's reference images"
+        moodboardButton.addActionListener {
+            showingMoodboard = !showingMoodboard
+            if (showingMoodboard) moodboard.load(currentProjectId, api())
+            updateChrome()
+        }
+        toolbarControls += listOf(projectCombo, refresh, moodboardButton, openBrowser, logout)
 
         val left = JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(6), 0)).apply {
             add(JLabel("Guidon").apply {
@@ -270,6 +293,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             })
             add(projectCombo)
             add(refresh)
+            add(moodboardButton)
             add(openBrowser)
             add(busyLabel)
         }
@@ -658,6 +682,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         addingInStatus = ""
         scheduleRebuild()
         refreshTasks()
+        if (showingMoodboard) moodboard.load(projectId, api())
     }
 
     private fun refreshTasks() {
@@ -864,6 +889,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
 
     private fun logOut() {
         loginCancel?.set(true)
+        showingMoodboard = false
         GuidonSettings.email = ""
         projects = emptyList()
         tasks = mutableListOf()
