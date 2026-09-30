@@ -30,6 +30,10 @@ using the same public API (`/api/v1`).
   done), comments, delete and **Copy Git ref** (`guidon#1a2b3c4d`). Put it in a
   commit, PR or branch name, and the GitHub integration links and moves the
   task.
+- **Auto-refresh** (toolbar checkbox, on by default) reloads the board and
+  the open task's comments every 30 seconds while the panel is visible. It
+  waits while you drag a card or type in one of the panel's fields, and a
+  reload that overlaps your own change is dropped.
 - **Moodboard** in the toolbar swaps the board for the project's reference
   images and concept art (Knowledge → Moodboard on the website): a grid of
   thumbnails with tag filters and search; click one to see it large, with

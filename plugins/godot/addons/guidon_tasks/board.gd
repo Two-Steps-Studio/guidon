@@ -15,6 +15,7 @@ const Palette := preload("res://addons/guidon_tasks/palette.gd")
 const Moodboard := preload("res://addons/guidon_tasks/moodboard.gd")
 
 const COLUMN_WIDTH := 272  # the site's w-72 column
+const AUTO_REFRESH_SECONDS := 30.0
 
 # --- state
 var projects: Array = []
@@ -50,6 +51,7 @@ var _confirm: ConfirmationDialog
 var _moodboard: VBoxContainer
 var _moodboard_button: Button
 var _showing_moodboard := false
+var _actions := 0  # bumped by every user request, so a background refresh that raced one is dropped
 
 
 func _ready() -> void:
@@ -60,6 +62,11 @@ func _ready() -> void:
 	_build()
 	current_project_id = Settings.get_value("project_id")
 	_update_chrome()
+	var timer := Timer.new()
+	timer.wait_time = AUTO_REFRESH_SECONDS
+	timer.autostart = true
+	timer.timeout.connect(_auto_refresh)
+	add_child(timer)
 	if Settings.is_logged_in():
 		refresh_projects()
 
@@ -92,6 +99,14 @@ func _build() -> void:
 		await refresh_projects()
 		if _showing_moodboard:
 			_moodboard.load_project(current_project_id, _api())))
+	var auto_refresh := CheckBox.new()
+	auto_refresh.text = "Auto-refresh"
+	auto_refresh.tooltip_text = "Reload the board every %d seconds while this panel is visible" % int(AUTO_REFRESH_SECONDS)
+	auto_refresh.button_pressed = Settings.get_value("auto_refresh", "true") == "true"
+	auto_refresh.add_theme_color_override("font_color", _p.c("text_muted"))
+	auto_refresh.toggled.connect(func(on): Settings.set_value("auto_refresh", "true" if on else "false"))
+	toolbar.add_child(auto_refresh)
+	_logged_in_controls.append(auto_refresh)
 	_moodboard_button = _toolbar_button(toolbar, "Moodboard", _toggle_moodboard)
 	_moodboard_button.tooltip_text = "Show this project's reference images instead of the board"
 	_logged_in_controls.append(_moodboard_button)
@@ -217,6 +232,7 @@ func _api() -> RefCounted:
 
 func _begin() -> void:
 	busy += 1
+	_actions += 1
 	_update_chrome()
 
 
@@ -692,6 +708,48 @@ func _select_project(project_id: String) -> void:
 	if _showing_moodboard:
 		_moodboard.load_project(project_id, _api())
 	await refresh_tasks()
+
+
+## Quiet reload of the open project's tasks, columns and the selected task's
+## comments: no busy label, no error bar, and a rebuild only on a real change.
+## Skipped while the panel is hidden, a drag or request is running, or you're
+## typing in one of its fields (a rebuild would take the focus away).
+func _auto_refresh() -> void:
+	if Settings.get_value("auto_refresh", "true") != "true" or not Settings.is_logged_in():
+		return
+	if current_project_id == "" or busy > 0 or _showing_moodboard or not is_visible_in_tree():
+		return
+	if get_viewport().gui_is_dragging():
+		return
+	var focus := get_viewport().gui_get_focus_owner()
+	if focus != null and is_ancestor_of(focus) and (focus is LineEdit or focus is TextEdit):
+		return
+
+	var project_id := current_project_id
+	var selected := selected_task_id
+	var actions_before := _actions
+	var api := _api()
+	var result: Dictionary = await api.list_tasks(project_id)
+	if not result.ok:
+		return
+	var column_result: Dictionary = await api.list_columns(project_id)
+	var comment_result: Dictionary = await api.list_comments(selected) if selected != "" else {"ok": false}
+	if _actions != actions_before or busy > 0 or project_id != current_project_id:
+		return
+
+	var changed := false
+	var new_columns: Array = column_result.data if column_result.ok else columns
+	if JSON.stringify(result.data) != JSON.stringify(tasks) or JSON.stringify(new_columns) != JSON.stringify(columns):
+		tasks = result.data
+		columns = new_columns
+		if _find(selected_task_id) == null:
+			selected_task_id = ""
+		changed = true
+	if comment_result.ok and selected == selected_task_id and JSON.stringify(comment_result.data) != JSON.stringify(comments.get(selected, [])):
+		comments[selected] = comment_result.data
+		changed = true
+	if changed:
+		_schedule_rebuild()
 
 
 func _toggle_moodboard() -> void:
