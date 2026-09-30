@@ -56,6 +56,31 @@ FGuidonTask FGuidonTask::FromJson(const TSharedPtr<FJsonObject>& Json)
 	return Task;
 }
 
+FGuidonReference FGuidonReference::FromJson(const TSharedPtr<FJsonObject>& Json)
+{
+	FGuidonReference Reference;
+	Reference.Id = GetString(Json, TEXT("id"));
+	Reference.Name = GetString(Json, TEXT("name"));
+	Reference.Caption = GetString(Json, TEXT("caption"));
+	Reference.SourceUrl = GetString(Json, TEXT("source_url"));
+	Reference.MimeType = GetString(Json, TEXT("mime_type"));
+	Reference.ImageUrl = GetString(Json, TEXT("image_url"));
+
+	const TArray<TSharedPtr<FJsonValue>>* Tags = nullptr;
+	if (Json.IsValid() && Json->TryGetArrayField(TEXT("tags"), Tags) && Tags)
+	{
+		for (const TSharedPtr<FJsonValue>& Tag : *Tags)
+		{
+			FString TagString;
+			if (Tag.IsValid() && Tag->TryGetString(TagString))
+			{
+				Reference.Tags.Add(TagString);
+			}
+		}
+	}
+	return Reference;
+}
+
 FGuidonComment FGuidonComment::FromJson(const TSharedPtr<FJsonObject>& Json)
 {
 	FGuidonComment Comment;

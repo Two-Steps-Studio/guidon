@@ -4,7 +4,7 @@
 #include "Modules/ModuleManager.h"
 #include "Widgets/Docking/SDockTab.h"
 
-/** Registers the "Guidon Tasks" nomad tab and its Window menu entry. Editor-only module - never ships in a packaged game. */
+/** Registers the "Guidon Tasks" and "Guidon Moodboard" nomad tabs and their Window menu entries. Editor-only module - never ships in a packaged game. */
 class FGuidonTasksModule : public IModuleInterface
 {
 public:
@@ -12,8 +12,10 @@ public:
 	virtual void ShutdownModule() override;
 
 	static const FName TabName;
+	static const FName MoodboardTabName;
 
 private:
 	void RegisterMenus();
 	TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnMoodboardTab(const FSpawnTabArgs& Args);
 };

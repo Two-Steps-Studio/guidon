@@ -246,6 +246,43 @@ void GuidonApi::ListComments(const FString& TaskId, FOnComments Done)
 		{ Done(bOk, bOk ? ParseArray<FGuidonComment>(Body, TEXT("comments")) : TArray<FGuidonComment>(), Error); });
 }
 
+void GuidonApi::ListReferences(const FString& ProjectId, FOnReferences Done)
+{
+	Send(TEXT("GET"), FString::Printf(TEXT("/api/v1/projects/%s/references"), *ProjectId), nullptr,
+		[Done = MoveTemp(Done)](bool bOk, TSharedPtr<FJsonObject> Body, const FString& Error)
+		{ Done(bOk, bOk ? ParseArray<FGuidonReference>(Body, TEXT("references")) : TArray<FGuidonReference>(), Error); });
+}
+
+void GuidonApi::DownloadImage(const FString& Url, FOnBytes Done)
+{
+	if (!Url.StartsWith(TEXT("https://")) && !Url.StartsWith(TEXT("http://")))
+	{
+		Done(false, TArray<uint8>(), TEXT("No image URL."));
+		return;
+	}
+
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+	Request->SetURL(Url);
+	Request->SetVerb(TEXT("GET"));
+	Request->OnProcessRequestComplete().BindLambda(
+		[Done = MoveTemp(Done)](FHttpRequestPtr, FHttpResponsePtr Response, bool bConnected)
+		{
+			if (!bConnected || !Response.IsValid())
+			{
+				Done(false, TArray<uint8>(), TEXT("Download failed."));
+				return;
+			}
+			const int32 Code = Response->GetResponseCode();
+			if (Code < 200 || Code >= 300)
+			{
+				Done(false, TArray<uint8>(), FString::Printf(TEXT("Download failed (%d)."), Code));
+				return;
+			}
+			Done(true, Response->GetContent(), FString());
+		});
+	Request->ProcessRequest();
+}
+
 void GuidonApi::AddComment(const FString& TaskId, const FString& Content, FOnComment Done)
 {
 	TSharedRef<FJsonObject> Body = MakeShared<FJsonObject>();

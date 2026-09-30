@@ -73,6 +73,22 @@ columns set in the web app's project settings, loaded from
 columns. Against an older Guidon without that endpoint, the plugin falls
 back to the six default columns.
 
+## Moodboard
+
+**Window → Guidon Moodboard** (or **Moodboard** in the board's toolbar) opens
+a second tab with the project's reference images and concept art -
+Knowledge → Moodboard on the website - for the project picked in the Guidon
+Tasks tab (**Refresh** picks up a change). Thumbnails can be filtered by tag
+or searched by caption; clicking one opens it in its own window, with **Open
+source** for its link. Images are decoded with `FImageUtils` into transient
+textures that live only while the tab is open - nothing is imported into
+the project's Content. Adding images stays on the website (**Open in
+Browser**).
+
+Like the rest of this plugin, the moodboard hasn't been compiled here: it
+uses only the modules already listed (`FImageUtils` is part of `Engine`) and
+the same HTTP/Slate patterns as the board.
+
 ## Login and storage
 
 Login uses the same loopback flow as the Unity plugin. The engine's

@@ -5,6 +5,7 @@
 #include "GuidonAuth.h"
 #include "GuidonSettings.h"
 #include "GuidonStyle.h"
+#include "GuidonTasksModule.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/DateTime.h"
@@ -339,6 +340,19 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildToolbar()
 			.Visibility_Lambda(LoggedInVisibility)
 			.Text(LOCTEXT("Refresh", "Refresh"))
 			.OnClicked_Lambda([this]() { RefreshProjects(); return FReply::Handled(); })
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(6.f, 0.f, 0.f, 0.f)
+		[
+			SNew(SButton)
+			.Visibility_Lambda(LoggedInVisibility)
+			.Text(LOCTEXT("Moodboard", "Moodboard"))
+			.ToolTipText(LOCTEXT("MoodboardTip", "Open this project's reference images in their own tab"))
+			.IsEnabled_Lambda([this]() { return !CurrentProjectId.IsEmpty(); })
+			.OnClicked_Lambda([]()
+			{
+				FGlobalTabmanager::Get()->TryInvokeTab(FTabId(FGuidonTasksModule::MoodboardTabName));
+				return FReply::Handled();
+			})
 		]
 		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(6.f, 0.f, 0.f, 0.f)
 		[
