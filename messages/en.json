@@ -1265,5 +1265,22 @@
     "save": "Save",
     "cancel": "Cancel",
     "saveFailed": "Could not save changes."
+  },
+  "mini": {
+    "noProjects": "You don't belong to any project yet.",
+    "openProjects": "Open Guidon",
+    "noAccess": "You don't have access to this project.",
+    "projectAria": "Project",
+    "filterAria": "Show tasks",
+    "filterMine": "Mine",
+    "filterAll": "All",
+    "refresh": "Refresh",
+    "addPlaceholder": "New task…",
+    "addPlaceholderMine": "New task for me…",
+    "add": "Add task",
+    "addFailed": "Couldn't add the task.",
+    "statusAria": "Status of {title}",
+    "empty": "No open tasks in this project.",
+    "emptyMine": "No open tasks assigned to you. Switch to All to see the rest."
   }
 }

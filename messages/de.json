@@ -1265,5 +1265,22 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "saveFailed": "Änderungen konnten nicht gespeichert werden."
+  },
+  "mini": {
+    "noProjects": "Du gehörst noch zu keinem Projekt.",
+    "openProjects": "Guidon öffnen",
+    "noAccess": "Du hast keinen Zugriff auf dieses Projekt.",
+    "projectAria": "Projekt",
+    "filterAria": "Aufgaben anzeigen",
+    "filterMine": "Meine",
+    "filterAll": "Alle",
+    "refresh": "Aktualisieren",
+    "addPlaceholder": "Neue Aufgabe…",
+    "addPlaceholderMine": "Neue Aufgabe für mich…",
+    "add": "Aufgabe hinzufügen",
+    "addFailed": "Aufgabe konnte nicht hinzugefügt werden.",
+    "statusAria": "Status von {title}",
+    "empty": "Keine offenen Aufgaben in diesem Projekt.",
+    "emptyMine": "Dir sind keine offenen Aufgaben zugewiesen. Wechsle zu Alle, um den Rest zu sehen."
   }
 }

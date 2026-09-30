@@ -21,7 +21,7 @@ npm run tauri build   # release build; installers land under
 
 See `RELEASING.md` for how to cut and publish a signed release.
 
-## Two windows
+## Windows
 
 - **`main`** — loads a Guidon server URL directly (Guidon Cloud by
   default, or a self-hosted instance chosen in Settings). No bundled
@@ -45,8 +45,19 @@ See `RELEASING.md` for how to cut and publish a signed release.
   narrowly to those four commands in
   `src-tauri/capabilities/settings.json` — see that file's description
   before widening it.
+- **`tasks`** — a small (380×600) window with the web app's compact task
+  list (`/mini` on the same server, `src/app/mini` in the web app): pick a
+  project, switch between "Mine"/"All", add a task, change a task's
+  column, open the full task dialog. Opened from "Guidon Desktop" →
+  "Tasks Window" (Ctrl+Shift+T while the app is focused) or the tray menu.
+  Stays on top of other windows by default; the tray's "Keep Tasks Window
+  on Top" check item toggles that and is remembered in the same config
+  store. Remote content like `main`, so it shares `main`'s zero-permission
+  capability (`default.json`) and its browser session - no separate
+  sign-in. Closing it hides it; changing the server URL in Settings
+  reloads it too.
 
-Both windows are created at runtime in `src-tauri/src/lib.rs`'s
+All windows are created at runtime in `src-tauri/src/lib.rs`'s
 `setup()` hook (not declared statically in `tauri.conf.json`'s
 `app.windows`, which is empty) so the `main` window's URL can be
 decided from the persisted config before it's built.

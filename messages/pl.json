@@ -1265,5 +1265,22 @@
     "save": "Zapisz",
     "cancel": "Anuluj",
     "saveFailed": "Nie udało się zapisać zmian."
+  },
+  "mini": {
+    "noProjects": "Nie należysz jeszcze do żadnego projektu.",
+    "openProjects": "Otwórz Guidona",
+    "noAccess": "Nie masz dostępu do tego projektu.",
+    "projectAria": "Projekt",
+    "filterAria": "Pokaż zadania",
+    "filterMine": "Moje",
+    "filterAll": "Wszystkie",
+    "refresh": "Odśwież",
+    "addPlaceholder": "Nowe zadanie…",
+    "addPlaceholderMine": "Nowe zadanie dla mnie…",
+    "add": "Dodaj zadanie",
+    "addFailed": "Nie udało się dodać zadania.",
+    "statusAria": "Status zadania {title}",
+    "empty": "Brak otwartych zadań w tym projekcie.",
+    "emptyMine": "Nie masz przypisanych otwartych zadań. Przełącz na Wszystkie, żeby zobaczyć resztę."
   }
 }

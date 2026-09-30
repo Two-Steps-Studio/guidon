@@ -9,9 +9,10 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::App;
 
 use crate::updater::check_for_updates;
-use crate::windows::open_or_focus_settings;
+use crate::windows::{open_or_focus_settings, open_or_focus_tasks};
 
 const OPEN_SETTINGS_MENU_ID: &str = "open_settings";
+const OPEN_TASKS_MENU_ID: &str = "open_tasks";
 const CHECK_FOR_UPDATES_MENU_ID: &str = "check_for_updates";
 
 /// Build and install the native application menu, and wire up its event
@@ -19,9 +20,13 @@ const CHECK_FOR_UPDATES_MENU_ID: &str = "check_for_updates";
 pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
     let open_settings =
         MenuItemBuilder::with_id(OPEN_SETTINGS_MENU_ID, "Settings...").build(app)?;
+    let open_tasks = MenuItemBuilder::with_id(OPEN_TASKS_MENU_ID, "Tasks Window")
+        .accelerator("CmdOrCtrl+Shift+T")
+        .build(app)?;
     let check_for_updates_item =
         MenuItemBuilder::with_id(CHECK_FOR_UPDATES_MENU_ID, "Check for Updates...").build(app)?;
     let app_menu = SubmenuBuilder::new(app, "Guidon Desktop")
+        .item(&open_tasks)
         .item(&open_settings)
         .item(&check_for_updates_item)
         .separator()
@@ -35,6 +40,8 @@ pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
     app.on_menu_event(move |_app, event| {
         if event.id() == OPEN_SETTINGS_MENU_ID {
             open_or_focus_settings(&handle);
+        } else if event.id() == OPEN_TASKS_MENU_ID {
+            open_or_focus_tasks(&handle);
         } else if event.id() == CHECK_FOR_UPDATES_MENU_ID {
             check_for_updates(&handle, &check_for_updates_item_for_event);
         }

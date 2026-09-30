@@ -12,6 +12,8 @@ const DEFAULT_SERVER_URL: &str = "https://useguidon.com";
 const STORE_FILE: &str = "config.json";
 /// Key the chosen server URL is persisted under inside that store.
 const SERVER_URL_KEY: &str = "server_url";
+/// Whether the small Tasks window (windows.rs) stays above other windows.
+const TASKS_ON_TOP_KEY: &str = "tasks_window_on_top";
 
 /// Validate that `raw` is a plausible http(s) server URL, returning the
 /// parsed, normalized `Url` on success.
@@ -47,6 +49,22 @@ pub(crate) fn stored_server_url(app: &AppHandle) -> Url {
         .unwrap_or_else(|| Url::parse(DEFAULT_SERVER_URL).expect("default URL is valid"))
 }
 
+/// Defaults to on: the Tasks window is meant to sit beside the editor/engine.
+pub(crate) fn stored_tasks_on_top(app: &AppHandle) -> bool {
+    app.store(STORE_FILE)
+        .ok()
+        .and_then(|store| store.get(TASKS_ON_TOP_KEY))
+        .and_then(|value| value.as_bool())
+        .unwrap_or(true)
+}
+
+pub(crate) fn save_tasks_on_top(app: &AppHandle, on_top: bool) {
+    if let Ok(store) = app.store(STORE_FILE) {
+        store.set(TASKS_ON_TOP_KEY, on_top);
+        let _ = store.save();
+    }
+}
+
 /// Return the currently persisted server URL (or the Guidon Cloud default)
 /// for the Settings page to pre-fill its input with. The Store plugin's own
 /// JS bindings need a bundler to resolve their `@tauri-apps/api/*` imports,
@@ -68,6 +86,10 @@ pub(crate) fn save_server_url(app: AppHandle, url: String) -> Result<(), String>
     let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
     store.set(SERVER_URL_KEY, parsed.as_str());
     store.save().map_err(|e| e.to_string())?;
+
+    if let Some(tasks) = app.get_webview_window(crate::windows::TASKS_WINDOW_LABEL) {
+        let _ = tasks.navigate(crate::windows::tasks_url(&parsed));
+    }
 
     match app.get_webview_window("main") {
         Some(main) => main.navigate(parsed).map_err(|e| e.to_string()),

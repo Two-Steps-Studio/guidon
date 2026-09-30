@@ -1265,5 +1265,22 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "saveFailed": "No se pudieron guardar los cambios."
+  },
+  "mini": {
+    "noProjects": "Todavía no perteneces a ningún proyecto.",
+    "openProjects": "Abrir Guidon",
+    "noAccess": "No tienes acceso a este proyecto.",
+    "projectAria": "Proyecto",
+    "filterAria": "Mostrar tareas",
+    "filterMine": "Mías",
+    "filterAll": "Todas",
+    "refresh": "Actualizar",
+    "addPlaceholder": "Nueva tarea…",
+    "addPlaceholderMine": "Nueva tarea para mí…",
+    "add": "Añadir tarea",
+    "addFailed": "No se pudo añadir la tarea.",
+    "statusAria": "Estado de {title}",
+    "empty": "No hay tareas abiertas en este proyecto.",
+    "emptyMine": "No tienes tareas abiertas asignadas. Cambia a Todas para ver el resto."
   }
 }
