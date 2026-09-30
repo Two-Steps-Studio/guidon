@@ -8,10 +8,21 @@ would surface nowhere useful.
 """
 
 import json
+import os
 import urllib.error
 import urllib.request
 
 TIMEOUT_SECONDS = 20
+MAX_IMAGE_BYTES = 20 * 1024 * 1024
+
+# Formats Blender can load as an image (no GIF/SVG) -> file extension.
+IMAGE_EXTENSIONS = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+    "image/bmp": ".bmp",
+    "image/tiff": ".tif",
+}
 
 # Mirrors src/lib/work/task-board.ts (BOARD_COLUMNS / TASK_PRIORITIES) by
 # hand - there is no shared-schema codegen, so this is a manual-sync point,
@@ -113,11 +124,38 @@ class Client:
         ok, value = self._send("DELETE", "/api/v1/tasks/{}".format(task_id))
         return (True, True) if ok else (False, value)
 
+    def list_references(self, project_id):
+        """The project's moodboard, newest first. Each ``image_url`` is signed and short-lived."""
+        return self._get_field("GET", "/api/v1/projects/{}/references".format(project_id), "references", default=[])
+
     def list_comments(self, task_id):
         return self._get_field("GET", "/api/v1/tasks/{}/comment".format(task_id), "comments", default=[])
 
     def add_comment(self, task_id, content):
         return self._get_field("POST", "/api/v1/tasks/{}/comment".format(task_id), "comment", {"content": content})
+
+
+def download_image(url, path):
+    """Saves a signed moodboard image URL to ``path``. No API key is sent -
+    the URL carries its own signature. Returns ``(ok, path_or_error)``."""
+    if not url or not url.lower().startswith(("http://", "https://")):
+        return False, "No image URL."
+    request = urllib.request.Request(url, headers={"User-Agent": "GuidonTasks-Blender/1.0"})
+    try:
+        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+            data = response.read(MAX_IMAGE_BYTES + 1)
+    except urllib.error.HTTPError as e:
+        return False, "{} {}".format(e.code, e.reason)
+    except (urllib.error.URLError, OSError) as e:
+        return False, "Download failed: {}".format(getattr(e, "reason", e))
+    if len(data) > MAX_IMAGE_BYTES:
+        return False, "Image too large."
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    partial = path + ".part"
+    with open(partial, "wb") as f:
+        f.write(data)
+    os.replace(partial, path)
+    return True, path
 
 
 def _server_error(http_error):

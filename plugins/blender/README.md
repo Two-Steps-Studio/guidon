@@ -52,6 +52,26 @@ In the Task panel:
 - **Git Ref** copies `guidon#1a2b3c4d`. Put it in a commit, PR or branch name,
   and the GitHub integration links and moves the task.
 
+## Moodboard
+
+The **Moodboard** panel (closed by default, in the 3D Viewport's and Image
+Editor's Guidon tab) shows the project's reference images and concept art -
+Knowledge → Moodboard on the website. **Load Moodboard** downloads them;
+after that each image has:
+
+- **Reference** (3D Viewport only): adds the image to the scene as a
+  reference image at the 3D cursor, named after its caption - the same as
+  Add → Image → Reference.
+- **View**: shows it in an open Image Editor, or in your system's image
+  viewer if none is open.
+- **Source**: opens the link it was saved from, if any.
+
+The search field filters by caption, file name and tag. Images are cached in
+`<system temp>/guidon-moodboard/<project id>/` (never next to the .blend) and
+aren't downloaded again. Formats Blender can't load (GIF, SVG) are listed
+without a thumbnail. Adding images stays on the website (**Open in
+Browser**).
+
 Blender panels can't take custom colors, so the website's colored status and
 priority dots are shown with Blender's built-in color-tag icons.
 
@@ -84,6 +104,10 @@ server. Revoke it on the website if you lose a machine.
   Blender, and bpy is never touched off the main thread.
 - `api.py` and `auth.py` use only the standard library (`urllib`,
   `http.server`) and don't import bpy, so no pip dependencies are needed.
+- The moodboard's loading logic (API call, download, cache, previews, a stale
+  response after a project switch) was checked in plain Python with a stub
+  `bpy` against a fake server; the panel itself hasn't been run inside
+  Blender yet.
 - Status changes follow the project's permission rules. When the server
   refuses a change, its error message is shown at the top of the panel.
 

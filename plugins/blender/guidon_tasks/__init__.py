@@ -18,7 +18,7 @@ bl_info = {
 import bpy
 from bpy.props import BoolVectorProperty, PointerProperty, StringProperty
 
-from . import api, jobs, ops, panels, state
+from . import api, jobs, moodboard, ops, panels, state
 
 
 class GuidonPreferences(bpy.types.AddonPreferences):
@@ -46,9 +46,10 @@ class GuidonWindowProps(bpy.types.PropertyGroup):
     expanded: BoolVectorProperty(size=len(api.STATUSES), default=(False, True, True, True, True, False))
     comment_text: StringProperty(name="Comment")
     menu_task_id: StringProperty(options={"HIDDEN"})  # which task GUIDON_MT_status acts on
+    moodboard_filter: StringProperty(name="Filter", description="Search captions and tags")
 
 
-_classes = (GuidonPreferences, GuidonWindowProps) + ops.classes + panels.classes
+_classes = (GuidonPreferences, GuidonWindowProps) + ops.classes + panels.classes + moodboard.classes
 
 
 def _initial_load():
@@ -74,6 +75,7 @@ def unregister():
     if state.login_cancel is not None:
         state.login_cancel.set()
     jobs.unregister()
+    moodboard.unregister()
     del bpy.types.WindowManager.guidon
     for cls in reversed(_classes):
         bpy.utils.unregister_class(cls)

@@ -59,7 +59,7 @@ def redraw():
         return
     for window in wm.windows:
         for area in window.screen.areas:
-            if area.type in {"VIEW_3D", "TEXT_EDITOR"}:
+            if area.type in {"VIEW_3D", "TEXT_EDITOR", "IMAGE_EDITOR"}:
                 area.tag_redraw()
 
 
