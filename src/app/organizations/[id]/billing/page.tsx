@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrgAccess, canManageOrg } from "@/lib/data/org-access";
 import { getCurrentUser } from "@/lib/data/current-user";
-import { getOrgPlanLimits } from "@/lib/limits";
+import { getOrgPlanLimits, getOrganizationMemberCount } from "@/lib/limits";
 import { getOrganizationStorageUsage } from "@/lib/storage/storage";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
@@ -25,6 +25,8 @@ interface PlanRow {
   project_limit: number | null;
   task_limit_per_project: number | null;
   storage_limit_bytes: number | null;
+  /** Seats (049). Absent until that migration runs - `select("*")` just won't have it. */
+  member_limit?: number | null;
   has_ai_features: boolean;
   has_github_integration: boolean;
   has_advanced_analytics: boolean;
@@ -89,7 +91,7 @@ export default async function BillingPage({
 
   const supabase = createServiceClient();
 
-  const [{ data: plansData }, { data: subscriptionData }, projectCount, planLimits, storageUsage] = await Promise.all([
+  const [{ data: plansData }, { data: subscriptionData }, projectCount, planLimits, storageUsage, memberCount] = await Promise.all([
     supabase.from("plans").select("*").order("sort_order"),
     supabase.from("subscriptions").select("plan_id, status").eq("organization_id", orgId).maybeSingle(),
     supabase
@@ -98,6 +100,7 @@ export default async function BillingPage({
       .eq("organization_id", orgId),
     getOrgPlanLimits(orgId),
     getOrganizationStorageUsage(orgId),
+    getOrganizationMemberCount(orgId).catch(() => null),
   ]);
 
   const plans = (plansData ?? []) as PlanRow[];
@@ -114,7 +117,11 @@ export default async function BillingPage({
   const usageRows = [
     { label: t("projectsLabel"), used: currentProjectCount, limit: planLimits.projectLimit, format: (v: number | null) => formatCount(v, t) },
     { label: t("storageLabel"), used: storageUsage, limit: planLimits.storageLimitBytes, format: (v: number | null) => formatBytes(v, t) },
+    ...(memberCount === null
+      ? []
+      : [{ label: t("membersLabel"), used: memberCount, limit: planLimits.memberLimit, format: (v: number | null) => formatCount(v, t) }]),
   ];
+  const showSeats = plans.some((plan) => plan.member_limit !== undefined);
 
   return (
     <AppShell user={user}>
@@ -182,6 +189,7 @@ export default async function BillingPage({
                   <th>{t("colPlan")}</th>
                   <th>{t("colPrice")}</th>
                   <th>{t("colProjects")}</th>
+                  {showSeats && <th>{t("colMembers")}</th>}
                   <th>{t("colTasksPerProject")}</th>
                   <th>{t("colStorage")}</th>
                   <th>{t("colAI")}</th>
@@ -204,6 +212,7 @@ export default async function BillingPage({
                         )}
                       </td>
                       <td>{formatCount(plan.project_limit, t)}</td>
+                      {showSeats && <td>{formatCount(plan.member_limit ?? null, t)}</td>}
                       <td>{formatCount(plan.task_limit_per_project, t)}</td>
                       <td>{formatBytes(plan.storage_limit_bytes, t)}</td>
                       <td>{plan.has_ai_features ? <Check className="h-4 w-4 text-success" /> : <Minus className="h-4 w-4 text-muted-foreground" />}</td>

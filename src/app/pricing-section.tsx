@@ -24,6 +24,8 @@ export interface PlanRow {
   project_limit: number | null;
   task_limit_per_project: number | null;
   storage_limit_bytes: number | null;
+  /** Seats (049). Absent until that migration runs - the landing page selects `*`. */
+  member_limit?: number | null;
   has_ai_features: boolean;
   has_github_integration: boolean;
   has_advanced_analytics: boolean;
@@ -71,6 +73,9 @@ function formatPrice({ cents, currency }: { cents: number | null; currency: Curr
 function planFeatures(plan: PlanRow, t: PricingTranslator): string[] {
   const features = [
     plan.project_limit === null ? t("unlimitedProjects") : t("projectsCount", { count: plan.project_limit }),
+    ...(plan.member_limit === undefined
+      ? []
+      : [plan.member_limit === null ? t("unlimitedMembers") : t("membersCount", { count: plan.member_limit })]),
     plan.task_limit_per_project === null
       ? t("unlimitedTasksPerProject")
       : t("tasksPerProjectCount", { count: plan.task_limit_per_project }),

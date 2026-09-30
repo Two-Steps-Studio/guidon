@@ -233,7 +233,9 @@
       "advancedAnalytics": "Advanced analytics",
       "teamRoles": "Team roles",
       "auditLogs": "Audit logs",
-      "prioritySupport": "Priority support"
+      "prioritySupport": "Priority support",
+      "unlimitedMembers": "Unlimited members",
+      "membersCount": "{count, plural, one {# member} other {# members}}"
     },
     "footer": {
       "terms": "Terms of Service",
@@ -298,7 +300,10 @@
       "roleMemberOption": "Member",
       "roleAdminOption": "Admin",
       "roleOwnerOption": "Owner",
-      "adding": "Adding..."
+      "adding": "Adding...",
+      "seatsUsed": "{used} of {limit} seats used on the {plan} plan",
+      "upgradeForSeats": "Upgrade for more seats",
+      "seatsFull": "This organization has used all {limit} seats on its {plan} plan. Upgrade the plan to add more people."
     },
     "settings": {
       "title": "Organization Settings",
@@ -351,7 +356,9 @@
       "manageBilling": "Manage billing",
       "currentPlanBadge": "Current plan",
       "checkoutSuccess": "Subscription updated - it may take a moment to appear below.",
-      "checkoutCancelled": "Checkout cancelled - nothing was changed."
+      "checkoutCancelled": "Checkout cancelled - nothing was changed.",
+      "membersLabel": "Members",
+      "colMembers": "Members"
     }
   },
   "projects": {

@@ -43,7 +43,12 @@ export interface OrgPlanLimits {
   projectLimit: number | null;
   taskLimitPerProject: number | null;
   storageLimitBytes: number | null;
+  /** plans.member_limit (migration 049): seats - organization_members rows, owner included. */
+  memberLimit: number | null;
 }
+
+/** Free's seats, also the fail-closed fallback below - keep equal to 049's value for 'free'. */
+export const FREE_PLAN_MEMBER_LIMIT = 8;
 
 /**
  * Reads the organization's current plan limits via its subscription. Self-
@@ -54,16 +59,28 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
   const { createServiceClient } = await import("@/lib/supabase-server");
   const supabase = createServiceClient();
 
-  const { data, error } = await supabase
-    .from("subscriptions")
-    .select("plans (name, project_limit, task_limit_per_project, storage_limit_bytes)")
-    .eq("organization_id", organizationId)
-    .single();
+  // member_limit is read on its own: it arrived later (049), and a failed
+  // select of a not-yet-migrated column would otherwise drop EVERY limit to
+  // Free's fallback below, not just this one.
+  const [{ data, error }, seats] = await Promise.all([
+    supabase
+      .from("subscriptions")
+      .select("plans (name, project_limit, task_limit_per_project, storage_limit_bytes)")
+      .eq("organization_id", organizationId)
+      .single(),
+    supabase.from("subscriptions").select("plans (member_limit)").eq("organization_id", organizationId).single(),
+  ]);
 
   if (error || !data?.plans) {
     // No subscription row (shouldn't happen post-014/015, but fail closed
     // to Free's limits rather than crashing or silently going unlimited).
-    return { planName: "Free", projectLimit: 2, taskLimitPerProject: 50, storageLimitBytes: 500 * 1024 * 1024 };
+    return {
+      planName: "Free",
+      projectLimit: 2,
+      taskLimitPerProject: 50,
+      storageLimitBytes: 500 * 1024 * 1024,
+      memberLimit: FREE_PLAN_MEMBER_LIMIT,
+    };
   }
 
   const plan = data.plans as unknown as {
@@ -72,13 +89,27 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     task_limit_per_project: number | null;
     storage_limit_bytes: number | null;
   };
+  // Pre-049 (column missing): no seat limit rather than a wrong one.
+  const seatPlan = seats.error ? null : (seats.data?.plans as unknown as { member_limit: number | null } | null);
 
   return {
     planName: plan.name,
     projectLimit: plan.project_limit,
     taskLimitPerProject: plan.task_limit_per_project,
     storageLimitBytes: plan.storage_limit_bytes,
+    memberLimit: seatPlan?.member_limit ?? null,
   };
+}
+
+/** Seats in use: every organization_members row, owner included. Service role - the count must not depend on what the caller can see. */
+export async function getOrganizationMemberCount(organizationId: string): Promise<number> {
+  const { createServiceClient } = await import("@/lib/supabase-server");
+  const { count, error } = await createServiceClient()
+    .from("organization_members")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+  if (error) throw new Error(`Could not count organization members: ${error.message}`);
+  return count ?? 0;
 }
 
 /** `limit === null` means unlimited, same convention as the plans table itself. */
@@ -91,4 +122,15 @@ export function isTaskLimitReached(currentTaskCount: number, limit: number | nul
 export function isStorageLimitReached(currentUsageBytes: number, limit: number | null): boolean {
   if (limit === null) return false;
   return currentUsageBytes >= limit;
+}
+
+/** Same convention: `limit === null` means unlimited. */
+export function isMemberLimitReached(currentMemberCount: number, limit: number | null): boolean {
+  if (limit === null) return false;
+  return currentMemberCount >= limit;
+}
+
+export function memberLimitMessage(planName: string, limit: number): string {
+  const people = limit === 1 ? "person" : "people";
+  return `Your ${planName} plan allows ${limit} ${people} in this organization. Upgrade the plan to add more members.`;
 }

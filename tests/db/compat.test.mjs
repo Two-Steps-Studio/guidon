@@ -2272,5 +2272,31 @@ await withUser(A, async () => {
   check("wartosci zawsze jako parametry", !q.text.includes("drop") && q.values[0].includes("drop"), q.text);
 }
 
+// ------------------------------------------------------------------
+section("38. plans.member_limit: miejsca w organizacji wedlug planu (migracja 049)");
+
+{
+  const seats = await db.query("SELECT id, member_limit FROM public.plans ORDER BY sort_order");
+  const byId = Object.fromEntries(seats.rows.map((row) => [row.id, row.member_limit]));
+  check("Free: 8 osob", byId.free === 8, byId.free);
+  check("Pro: 20, Team: 50, Business: 200", byId.pro === 20 && byId.team === 50 && byId.business === 200, JSON.stringify(byId));
+  check("Enterprise: bez limitu (NULL)", byId.enterprise === null, byId.enterprise);
+
+  await withUser(A, async () => {
+    const r = await db.query("SELECT member_limit FROM public.plans WHERE id = 'free'");
+    check("authenticated czyta member_limit (GRANT SELECT z 015)", r.rows[0]?.member_limit === 8, JSON.stringify(r.rows));
+  });
+  await expectRejected(
+    "authenticated nie zmieni member_limit",
+    () => withUser(A, () => db.query("UPDATE public.plans SET member_limit = 1000 WHERE id = 'free'")),
+    /permission denied/
+  );
+  await expectRejected(
+    "member_limit 0 odrzucony przez CHECK",
+    () => withServiceRole(() => db.query("UPDATE public.plans SET member_limit = 0 WHERE id = 'free'")),
+    /check constraint/
+  );
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

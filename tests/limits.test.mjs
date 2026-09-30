@@ -75,10 +75,28 @@ function testSelfHostedMode() {
   delete process.env.DATABASE_URL;
 }
 
+// Mirrors src/lib/limits.ts's seat check (plans.member_limit, migration 049).
+const FREE_PLAN_MEMBER_LIMIT = 8;
+
+function isMemberLimitReached(currentMemberCount, limit) {
+  if (limit === null) return false;
+  return currentMemberCount >= limit;
+}
+
+function testMemberSeats() {
+  section("miejsca w organizacji (plans.member_limit, migracja 049)");
+
+  check("Free: 7 osob -> mozna dodac 8. osobe", !isMemberLimitReached(7, FREE_PLAN_MEMBER_LIMIT));
+  check("Free: 8 osob -> komplet", isMemberLimitReached(8, FREE_PLAN_MEMBER_LIMIT));
+  check("po zejsciu na nizszy plan (20 osob na Free) -> dalej zablokowane", isMemberLimitReached(20, FREE_PLAN_MEMBER_LIMIT));
+  check("NULL (Enterprise) -> bez limitu", !isMemberLimitReached(10000, null));
+}
+
 function main() {
   testHostedMode();
   testCustomLimit();
   testSelfHostedMode();
+  testMemberSeats();
 
   console.log(`\n  ${pass} pass / ${fail} fail\n`);
   process.exit(fail > 0 ? 1 : 0);

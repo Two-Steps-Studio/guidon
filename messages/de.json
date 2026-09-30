@@ -233,7 +233,9 @@
       "advancedAnalytics": "Erweiterte Analysen",
       "teamRoles": "Teamrollen",
       "auditLogs": "Audit-Protokolle",
-      "prioritySupport": "Prioritäts-Support"
+      "prioritySupport": "Prioritäts-Support",
+      "unlimitedMembers": "Unbegrenzte Mitglieder",
+      "membersCount": "{count, plural, one {# Mitglied} other {# Mitglieder}}"
     },
     "footer": {
       "terms": "Nutzungsbedingungen",
@@ -298,7 +300,10 @@
       "roleMemberOption": "Mitglied",
       "roleAdminOption": "Admin",
       "roleOwnerOption": "Inhaber",
-      "adding": "Wird hinzugefügt..."
+      "adding": "Wird hinzugefügt...",
+      "seatsUsed": "{used} von {limit} Plätzen im {plan}-Plan belegt",
+      "upgradeForSeats": "Upgrade für mehr Plätze",
+      "seatsFull": "Diese Organisation hat alle {limit} Plätze ihres {plan}-Plans belegt. Upgrade den Plan, um weitere Personen hinzuzufügen."
     },
     "settings": {
       "title": "Organisationseinstellungen",
@@ -351,7 +356,9 @@
       "manageBilling": "Abrechnung verwalten",
       "currentPlanBadge": "Aktueller Plan",
       "checkoutSuccess": "Abonnement aktualisiert - es kann einen Moment dauern, bis es unten erscheint.",
-      "checkoutCancelled": "Checkout abgebrochen - es wurde nichts geändert."
+      "checkoutCancelled": "Checkout abgebrochen - es wurde nichts geändert.",
+      "membersLabel": "Mitglieder",
+      "colMembers": "Mitglieder"
     }
   },
   "projects": {

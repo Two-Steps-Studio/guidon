@@ -233,7 +233,9 @@
       "advancedAnalytics": "Zaawansowana analityka",
       "teamRoles": "Role zespołowe",
       "auditLogs": "Dzienniki audytu",
-      "prioritySupport": "Priorytetowe wsparcie"
+      "prioritySupport": "Priorytetowe wsparcie",
+      "unlimitedMembers": "Nieograniczona liczba osób",
+      "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
     },
     "footer": {
       "terms": "Regulamin",
@@ -298,7 +300,10 @@
       "roleMemberOption": "Członek",
       "roleAdminOption": "Administrator",
       "roleOwnerOption": "Właściciel",
-      "adding": "Dodawanie..."
+      "adding": "Dodawanie...",
+      "seatsUsed": "Zajęte miejsca: {used} z {limit} (plan {plan})",
+      "upgradeForSeats": "Zmień plan, by dodać osoby",
+      "seatsFull": "Organizacja wykorzystała wszystkie miejsca ({limit}) w planie {plan}. Zmień plan, aby dodać kolejne osoby."
     },
     "settings": {
       "title": "Ustawienia organizacji",
@@ -351,7 +356,9 @@
       "manageBilling": "Zarządzaj płatnością",
       "currentPlanBadge": "Bieżący plan",
       "checkoutSuccess": "Subskrypcja zaktualizowana - może chwilę potrwać, zanim pojawi się poniżej.",
-      "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło."
+      "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło.",
+      "membersLabel": "Członkowie",
+      "colMembers": "Członkowie"
     }
   },
   "projects": {
