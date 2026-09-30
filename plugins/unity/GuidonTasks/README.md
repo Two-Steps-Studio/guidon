@@ -117,6 +117,15 @@ commit message, PR title or branch name and, with the GitHub integration on
 link and moves by itself: a commit starts it, a PR sends it to Review, and a
 merge into the default branch marks it Done.
 
+## Auto-refresh
+
+The board reloads itself every 30 seconds while Unity is the application in
+front, and the task window reloads its comments on the same cadence. It
+stays quiet - no "Loading" flash, no error banner - and only redraws when
+something changed; a reload that overlaps your own drag or save is thrown
+away. Turn it off with **Settings → Auto-refresh every 30 s** (stored in
+EditorPrefs like the rest of the settings).
+
 ## Moodboard
 
 **Window → Guidon → Moodboard** (or **Moodboard** in the Tasks window's
@@ -149,9 +158,6 @@ realistically useful in a task description viewed at Editor-window width.
 
 ## Not implemented (v1)
 
-- No background auto-refresh - use the **Refresh** button. An always-on
-  poll while the window sits unfocused isn't worth the editor overhead for
-  a "glance at it" tool.
 - No within-column reordering by drag position - dropping a card into a
   column always places it at the end of that column, even if you dropped
   it visually near the top.

@@ -83,6 +83,12 @@ namespace Guidon.Tasks.Editor
 
         private bool _loggingIn;
 
+        // --- auto-refresh ---
+        private const long AutoRefreshMs = 30000;
+        private int _busyCount;
+        // Bumped by every user change, so a background refresh that overlapped one is thrown away.
+        private int _actionCount;
+
         private void OnEnable()
         {
             GuidonTaskDetailWindow.TaskUpserted += OnTaskUpserted;
@@ -97,6 +103,7 @@ namespace Guidon.Tasks.Editor
 
         private void OnTaskUpserted(TaskDto task)
         {
+            _actionCount++;
             if (task.project_id != CurrentProjectId) return;
 
             int index = Array.FindIndex(_tasks, t => t.id == task.id);
@@ -108,6 +115,7 @@ namespace Guidon.Tasks.Editor
 
         private void OnTaskRemoved(string taskId)
         {
+            _actionCount++;
             _tasks = _tasks.Where(t => t.id != taskId).ToArray();
             RebuildBoard();
         }
@@ -139,6 +147,8 @@ namespace Guidon.Tasks.Editor
             BuildBoard(_mainContent);
 
             RefreshVisibility();
+
+            root.schedule.Execute(AutoRefreshTick).Every(AutoRefreshMs);
 
             if (GuidonSettings.IsConfigured)
             {
@@ -205,6 +215,11 @@ namespace Guidon.Tasks.Editor
             _baseUrlField.RegisterValueChangedCallback(evt => _loginButton.SetEnabled(!_loggingIn && !string.IsNullOrEmpty(evt.newValue)));
             _loginRow.Add(_loginButton);
             _settingsFoldout.Add(_loginRow);
+
+            var autoRefresh = new Toggle("Auto-refresh every 30 s") { value = GuidonSettings.AutoRefresh, style = { marginTop = 4f } };
+            autoRefresh.RegisterValueChangedCallback(evt => GuidonSettings.AutoRefresh = evt.newValue);
+            GuidonStyles.StyleToggleLabel(autoRefresh);
+            _settingsFoldout.Add(autoRefresh);
 
             root.Add(_settingsFoldout);
 
@@ -623,6 +638,7 @@ namespace Guidon.Tasks.Editor
 
         private async Task CommitMove(TaskDto task, string newStatus)
         {
+            _actionCount++;
             string previousStatus = task.status;
             float previousSortOrder = task.sort_order;
 
@@ -676,8 +692,51 @@ namespace Guidon.Tasks.Editor
 
         private void SetBusy(bool busy)
         {
-            _busyLabel.style.display = busy ? DisplayStyle.Flex : DisplayStyle.None;
+            _busyCount = Math.Max(0, _busyCount + (busy ? 1 : -1));
+            _busyLabel.style.display = _busyCount > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
+
+        private void AutoRefreshTick()
+        {
+            if (!GuidonSettings.AutoRefresh || !GuidonSettings.IsConfigured || _busyCount > 0) return;
+            if (_pressedTask != null || _draggingTask != null) return;
+            // Only while Unity itself is the app in front - no polling from a background editor.
+            if (!UnityEditorInternal.InternalEditorUtility.isApplicationActive) return;
+            _ = AutoRefresh();
+        }
+
+        /// <summary>
+        /// Quiet version of RefreshTasks: no busy label, no error banner, and the
+        /// board is only rebuilt when the server's tasks or columns actually differ.
+        /// </summary>
+        private async Task AutoRefresh()
+        {
+            string projectId = CurrentProjectId;
+            if (string.IsNullOrEmpty(projectId)) return;
+            int actionsBefore = _actionCount;
+
+            var result = await GuidonApiClient.ListTasks(projectId);
+            var columnsResult = result.Ok ? await GuidonApiClient.ListColumns(projectId) : default;
+            if (this == null || !result.Ok || projectId != CurrentProjectId) return;
+            if (_actionCount != actionsBefore || _busyCount > 0 || _draggingTask != null) return;
+
+            var columns = columnsResult.Ok ? columnsResult.Value : GuidonVocabulary.CurrentColumns;
+            bool tasksChanged = Fingerprint(result.Value) != Fingerprint(_tasks);
+            bool columnsChanged = string.Join("|", columns.Select(c => c.status + ":" + c.label))
+                != string.Join("|", GuidonVocabulary.CurrentColumns.Select(c => c.status + ":" + c.label));
+            if (!tasksChanged && !columnsChanged) return;
+
+            _tasks = result.Value;
+            if (columnsChanged)
+            {
+                GuidonVocabulary.CurrentColumns = columns;
+                BuildColumns();
+            }
+            RebuildBoard();
+        }
+
+        private static string Fingerprint(TaskDto[] tasks) =>
+            string.Join("|", tasks.Select(t => JsonUtility.ToJson(t)));
 
         private async Task RefreshProjects()
         {
