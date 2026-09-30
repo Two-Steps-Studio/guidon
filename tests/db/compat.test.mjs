@@ -2272,5 +2272,85 @@ await withUser(A, async () => {
   check("wartosci zawsze jako parametry", !q.text.includes("drop") && q.values[0].includes("drop"), q.text);
 }
 
+// ------------------------------------------------------------------
+section("38. member_project_limit: limit projektow na czlonka organizacji (migracja 049)");
+
+{
+  const errorOf = async (run) => {
+    try {
+      await run();
+      return null;
+    } catch (error) {
+      return error;
+    }
+  };
+  const addMember = (projectIdToJoin, role = "developer") =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, $3)", [projectIdToJoin, D, role])
+    );
+  // D is a plain 'member' of orgId (section 35); A is its owner.
+  const current = Number(
+    (
+      await db.query(
+        `SELECT count(*)::int AS n FROM public.project_members pm JOIN public.projects p ON p.id = pm.project_id
+         WHERE pm.user_id = $1 AND p.organization_id = $2 AND p.status <> 'deleted'`,
+        [D, orgId]
+      )
+    ).rows[0].n
+  );
+
+  const initial = await db.query("SELECT member_project_limit FROM public.organizations WHERE id = $1", [orgId]);
+  check("domyslnie brak limitu (NULL)", initial.rows[0].member_project_limit === null, initial.rows[0].member_project_limit);
+
+  await withUser(D, async () => {
+    const r = await db.query("UPDATE public.organizations SET member_project_limit = 1 WHERE id = $1 RETURNING id", [orgId]);
+    check("zwykly member nie ustawi limitu (RLS organizations_update)", r.rows.length === 0, r.rows.length);
+  });
+
+  const [p1, p2] = await withUser(A, async () => {
+    const r = await db.query(
+      "UPDATE public.organizations SET member_project_limit = $2 WHERE id = $1 RETURNING member_project_limit",
+      [orgId, current + 1]
+    );
+    check("owner organizacji ustawia limit (GRANT kolumnowy)", r.rows[0]?.member_project_limit === current + 1, JSON.stringify(r.rows));
+    // A owns the org, so creating two projects (= two owner memberships) is exempt from the cap.
+    const a = await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1,'Limit P1') RETURNING id", [orgId]);
+    const b = await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1,'Limit P2') RETURNING id", [orgId]);
+    return [a.rows[0].id, b.rows[0].id];
+  });
+  check("owner organizacji zwolniony z limitu przy tworzeniu projektow", Boolean(p1 && p2));
+
+  const below = await errorOf(() => addMember(p1));
+  check("dodanie czlonka ponizej limitu przechodzi", below === null, below?.message);
+
+  const over = await errorOf(() => addMember(p2));
+  check("dodanie ponad limit -> SQLSTATE GU001", over?.code === "GU001", over?.code ?? "accepted");
+  check("blad niesie limit w DETAIL", over?.detail === String(current + 1), over?.detail);
+
+  const ownCreate = await errorOf(() =>
+    withUser(D, () => db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1,'Limit D') RETURNING id", [orgId]))
+  );
+  check("member na limicie nie utworzy projektu (przez handle_new_project)", ownCreate?.code === "GU001", ownCreate?.code ?? "accepted");
+  const leftover = await db.query("SELECT count(*)::int AS n FROM public.projects WHERE name = 'Limit D'");
+  check("nieudane utworzenie nie zostawia projektu", leftover.rows[0].n === 0, leftover.rows[0].n);
+
+  await db.query("UPDATE public.projects SET status = 'deleted' WHERE id = $1", [p1]);
+  const afterDelete = await errorOf(() => addMember(p2, "viewer"));
+  check("projekty 'deleted' nie licza sie do limitu", afterDelete === null, afterDelete?.message);
+
+  await withUser(A, () => db.query("UPDATE public.organizations SET member_project_limit = NULL WHERE id = $1", [orgId]));
+  const unlimited = await errorOf(() =>
+    withUser(D, () => db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1,'Limit D2') RETURNING id", [orgId]))
+  );
+  check("NULL = bez limitu", unlimited === null, unlimited?.message);
+
+  const zero = await errorOf(() =>
+    withUser(A, () => db.query("UPDATE public.organizations SET member_project_limit = 0 WHERE id = $1", [orgId]))
+  );
+  check("limit 0 odrzucony przez CHECK", zero?.code === "23514", zero?.code ?? "accepted");
+
+  await db.query("DELETE FROM public.projects WHERE id = ANY($1) OR name = 'Limit D2'", [[p1, p2]]);
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

@@ -41,6 +41,8 @@ import { compile, parseColumns, type Filter, type FilterOp, type OrderBy, type Q
 export interface DataError {
   code?: string;
   message: string;
+  /** Postgres DETAIL (node-postgres `.detail`, PostgREST `.details`). */
+  details?: string;
 }
 
 export interface DataResult<T> {
@@ -59,10 +61,12 @@ type Backend =
 
 function toDataError(error: unknown): DataError {
   if (typeof error === "object" && error !== null) {
-    const e = error as { code?: unknown; message?: unknown };
+    const e = error as { code?: unknown; message?: unknown; detail?: unknown; details?: unknown };
+    const details = e.detail ?? e.details;
     return {
       code: typeof e.code === "string" ? e.code : undefined,
       message: typeof e.message === "string" ? e.message : String(error),
+      details: typeof details === "string" && details ? details : undefined,
     };
   }
   return { message: String(error) };

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { errorDetail } from "@/lib/db/errors";
 
 /**
  * Guidon Cloud (hosted - no self-managed Postgres) caps an organization's
@@ -91,4 +92,18 @@ export function isTaskLimitReached(currentTaskCount: number, limit: number | nul
 export function isStorageLimitReached(currentUsageBytes: number, limit: number | null): boolean {
   if (limit === null) return false;
   return currentUsageBytes >= limit;
+}
+
+/**
+ * Readable text for migration 049's per-member project cap (SQLSTATE GU001,
+ * see isMemberProjectLimitReached). Unlike the plan limits above this one
+ * applies in both modes - it's an organization's own policy, enforced by a
+ * trigger on project_members, not a Guidon Cloud entitlement.
+ */
+export function memberProjectLimitMessage(error: unknown, subject: "self" | "other"): string {
+  const limit = Number.parseInt(errorDetail(error) ?? "", 10);
+  const what = Number.isFinite(limit) ? `limit of ${limit} ${limit === 1 ? "project" : "projects"} per member` : "limit on projects per member";
+  return subject === "self"
+    ? `You have reached this organization's ${what}. Ask an organization owner or admin to raise it.`
+    : `This person has reached this organization's ${what}. An organization owner or admin can raise it in the organization settings.`;
 }

@@ -25,3 +25,20 @@ export function isPermissionDenied(error: unknown): boolean {
 export function isNoRowsFromSingle(error: unknown): boolean {
   return codeOf(error) === "PGRST116";
 }
+
+/**
+ * GU001 - raised by migration 049's trigger on project_members when a plain
+ * organization member would exceed organizations.member_project_limit. The
+ * limit itself rides in the error's DETAIL, see memberProjectLimitMessage.
+ */
+export function isMemberProjectLimitReached(error: unknown): boolean {
+  return codeOf(error) === "GU001";
+}
+
+/** Postgres DETAIL - `.detail` on node-postgres errors, `.details` on PostgREST/data-client ones. */
+export function errorDetail(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  const e = error as { detail?: unknown; details?: unknown };
+  const value = e.detail ?? e.details;
+  return typeof value === "string" && value ? value : undefined;
+}

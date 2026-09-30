@@ -9,7 +9,8 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { getUniqueProjectSlug } from "@/lib/data/project-slug";
-import { getOrgPlanLimits, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { getOrgPlanLimits, isHostedProjectLimitReached, hostedProjectLimitMessage, memberProjectLimitMessage } from "@/lib/limits";
+import { isMemberProjectLimitReached } from "@/lib/db/errors";
 import {
   runGuidonImport,
   summarizeGuidonImport,
@@ -73,6 +74,8 @@ async function createProjectForImport(
       });
       return { projectId, error: null };
     } catch (error) {
+      // GU001 - migration 049's member_project_limit, via handle_new_project()'s owner membership.
+      if (isMemberProjectLimitReached(error)) return { projectId: null, error: memberProjectLimitMessage(error, "self") };
       return { projectId: null, error: error instanceof Error ? error.message : "Failed to create project." };
     }
   }
@@ -101,7 +104,10 @@ async function createProjectForImport(
     .select("id")
     .single();
 
-  if (error) return { projectId: null, error: error.message };
+  if (error) {
+    if (isMemberProjectLimitReached(error)) return { projectId: null, error: memberProjectLimitMessage(error, "self") };
+    return { projectId: null, error: error.message };
+  }
   return { projectId: created.id as string, error: null };
 }
 
