@@ -29,6 +29,32 @@
 namespace
 {
 	constexpr float ColumnWidth = 270.f;
+	constexpr float AutoRefreshSeconds = 30.f;
+
+	FString Fingerprint(const TArray<FGuidonTask>& Tasks)
+	{
+		FString Out;
+		for (const FGuidonTask& T : Tasks)
+		{
+			Out += FString::Printf(TEXT("%s|%s|%s|%s|%s|%s|%s|%f|%s;"), *T.Id, *T.Title, *T.Description, *T.Status,
+				*T.Priority, *T.DueDate, *T.ParentTaskId, T.SortOrder, *FString::Join(T.Tags, TEXT(",")));
+		}
+		return Out;
+	}
+
+	FString Fingerprint(const TArray<FGuidonComment>& Comments)
+	{
+		FString Out;
+		for (const FGuidonComment& C : Comments) Out += C.Id + TEXT("|") + C.Content + TEXT(";");
+		return Out;
+	}
+
+	FString Fingerprint(const TArray<FGuidonColumn>& Columns)
+	{
+		FString Out;
+		for (const FGuidonColumn& C : Columns) Out += C.Status + TEXT(":") + C.Label + TEXT("|");
+		return Out;
+	}
 
 	TSharedRef<STextBlock> MakeText(const FText& Text, int32 Size = 9, bool bBold = false, FLinearColor Color = GuidonStyle::Text())
 	{
@@ -283,6 +309,89 @@ void SGuidonTasksWidget::Construct(const FArguments& InArgs)
 	{
 		RefreshProjects();
 	}
+
+	// Active timers only run while this tab is in the widget tree, i.e. open and on screen.
+	RegisterActiveTimer(AutoRefreshSeconds, FWidgetActiveTimerDelegate::CreateSP(this, &SGuidonTasksWidget::AutoRefreshTick));
+}
+
+/**
+ * Quiet reload of the open project's tasks, columns and the selected task's
+ * comments: no "Loading" label, no error, and a rebuild only on a real
+ * change. Skipped while a request or a drag is running, the editor isn't in
+ * front, or you're typing in the details panel. A result that raced a user
+ * request (Actions changed) is dropped.
+ */
+EActiveTimerReturnType SGuidonTasksWidget::AutoRefreshTick(double InCurrentTime, float InDeltaTime)
+{
+	if (!FGuidonSettings::GetAutoRefresh() || !FGuidonSettings::IsConfigured() || CurrentProjectId.IsEmpty()) return EActiveTimerReturnType::Continue;
+	if (bAutoRefreshRunning || PendingRequests > 0 || FSlateApplication::Get().IsDragDropping()) return EActiveTimerReturnType::Continue;
+	if (!FPlatformApplicationMisc::IsThisApplicationForeground()) return EActiveTimerReturnType::Continue;
+	if (HasFocusedDescendants())
+	{
+		TSharedPtr<SWidget> Focused = FSlateApplication::Get().GetKeyboardFocusedWidget();
+		if (Focused.IsValid() && Focused->GetTypeAsString().Contains(TEXT("EditableText"))) return EActiveTimerReturnType::Continue;
+	}
+
+	const FString ProjectId = CurrentProjectId;
+	const FString Selected = SelectedTaskId;
+	const int32 ActionsBefore = Actions;
+	bAutoRefreshRunning = true;
+
+	GuidonApi::ListTasks(ProjectId, [Weak = WeakSelf(), ProjectId, Selected, ActionsBefore](bool bOk, const TArray<FGuidonTask>& Loaded, const FString&)
+	{
+		TSharedPtr<SGuidonTasksWidget> Self = Weak.Pin();
+		if (!Self) return;
+		if (!bOk)
+		{
+			Self->bAutoRefreshRunning = false;
+			return;
+		}
+		GuidonApi::ListColumns(ProjectId, [Weak2 = Self->WeakSelf(), ProjectId, Selected, ActionsBefore, Loaded](bool bColumnsOk, const TArray<FGuidonColumn>& LoadedColumns, const FString&)
+		{
+			TSharedPtr<SGuidonTasksWidget> Self2 = Weak2.Pin();
+			if (!Self2) return;
+			TWeakPtr<SGuidonTasksWidget> Weak3 = Self2->WeakSelf();
+			auto Apply = [Weak3, ProjectId, Selected, ActionsBefore, Loaded, bColumnsOk, LoadedColumns](bool bCommentsOk, const TArray<FGuidonComment>& LoadedComments)
+			{
+				TSharedPtr<SGuidonTasksWidget> S = Weak3.Pin();
+				if (!S) return;
+				S->bAutoRefreshRunning = false;
+				if (S->Actions != ActionsBefore || S->PendingRequests > 0 || S->CurrentProjectId != ProjectId) return;
+
+				bool bBoardChanged = false;
+				if (Fingerprint(Loaded) != Fingerprint(S->Tasks))
+				{
+					S->Tasks = Loaded;
+					if (!S->FindTask(S->SelectedTaskId)) S->SelectedTaskId.Reset();
+					bBoardChanged = true;
+				}
+				if (bColumnsOk && Fingerprint(LoadedColumns) != Fingerprint(S->Columns))
+				{
+					S->SetColumns(LoadedColumns);
+					bBoardChanged = true;
+				}
+				bool bDetailsChanged = bBoardChanged;
+				const TArray<FGuidonComment>* Existing = S->Comments.Find(Selected);
+				if (bCommentsOk && Selected == S->SelectedTaskId && (!Existing || Fingerprint(*Existing) != Fingerprint(LoadedComments)))
+				{
+					S->Comments.Add(Selected, LoadedComments);
+					bDetailsChanged = true;
+				}
+				if (bBoardChanged) S->RebuildBoard();
+				if (bDetailsChanged) S->RebuildDetails();
+			};
+			if (Selected.IsEmpty())
+			{
+				Apply(false, TArray<FGuidonComment>());
+				return;
+			}
+			GuidonApi::ListComments(Selected, [Apply](bool bCommentsOk, const TArray<FGuidonComment>& LoadedComments, const FString&)
+			{
+				Apply(bCommentsOk, LoadedComments);
+			});
+		});
+	});
+	return EActiveTimerReturnType::Continue;
 }
 
 void SGuidonTasksWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -372,6 +481,17 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildToolbar()
 		+ SHorizontalBox::Slot().FillWidth(1.f)
 		[
 			SNullWidget::NullWidget
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 12.f, 0.f)
+		[
+			SNew(SCheckBox)
+			.Visibility_Lambda(LoggedInVisibility)
+			.ToolTipText(LOCTEXT("AutoRefreshTip", "Reload the board every 30 seconds while this tab is open and the editor is in front"))
+			.IsChecked_Lambda([]() { return FGuidonSettings::GetAutoRefresh() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+			.OnCheckStateChanged_Lambda([](ECheckBoxState State) { FGuidonSettings::SetAutoRefresh(State == ECheckBoxState::Checked); })
+			[
+				SNew(STextBlock).Text(LOCTEXT("AutoRefresh", "Auto-refresh")).ColorAndOpacity(FSlateColor(GuidonStyle::MutedText()))
+			]
 		]
 		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 12.f, 0.f)
 		[

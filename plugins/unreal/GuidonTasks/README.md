@@ -73,6 +73,16 @@ columns set in the web app's project settings, loaded from
 columns. Against an older Guidon without that endpoint, the plugin falls
 back to the six default columns.
 
+## Auto-refresh
+
+While the Guidon Tasks tab is open and the editor is the application in
+front, the board and the open task's comments reload every 30 seconds
+(a Slate active timer, so a closed or hidden tab costs nothing). It shows
+no "Loading" label, waits while you drag a card or type in the details
+panel, only redraws on a real change, and drops a reload that overlaps your
+own change. The **Auto-refresh** checkbox in the toolbar turns it off; the
+choice is stored with the other settings.
+
 ## Moodboard
 
 **Window → Guidon Moodboard** (or **Moodboard** in the board's toolbar) opens
@@ -147,7 +157,6 @@ error message appears in the red bar under the toolbar.
 
 ## Not implemented (v1)
 
-- No automatic refresh. Use **Refresh**.
 - No reordering within a column. A dropped card always goes to the end.
 - No editing of assignees or tags. Tags are shown but not editable.
 - The description is edited as raw Markdown. There is no rendered preview.
