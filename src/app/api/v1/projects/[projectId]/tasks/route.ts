@@ -6,6 +6,7 @@ import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
+import { emitTaskEvent } from "@/lib/events/task-events";
 import type { TaskPriority, TaskStatus } from "@/types/task";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -159,6 +160,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         [projectId, guard.userId, createdRow.id]
       )
     );
+    // Subtasks don't notify, same as createSubtask in the web app.
+    if (!parentTaskId) {
+      emitTaskEvent(projectId, guard.userId, { kind: "created", taskId: createdRow.id as string, title });
+    }
 
     return NextResponse.json({ task: createdRow });
   }
@@ -229,6 +234,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     entity_type: "task",
     entity_id: created.id,
   });
+  if (!parentTaskId) {
+    emitTaskEvent(projectId, guard.userId, { kind: "created", taskId: created.id, title }, supabase);
+  }
 
   return NextResponse.json({ task: created });
 }

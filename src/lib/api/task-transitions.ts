@@ -3,7 +3,7 @@ import "server-only";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getApiUserClient } from "./api-key-auth";
-import { notifyDiscordTaskEvent } from "@/lib/discord/notify";
+import { emitTaskEvent } from "@/lib/events/task-events";
 import type { TaskStatus } from "@/types/task";
 import type { ActivityAction } from "@/types/api";
 
@@ -110,7 +110,7 @@ async function setStatusAndLog(
         [projectId, userId, action, taskId, botLabel]
       );
       const title = (result.rows[0].title as string) ?? "";
-      notifyDiscordTaskEvent(
+      emitTaskEvent(
         projectId,
         userId,
         newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus }
@@ -149,7 +149,7 @@ async function setStatusAndLog(
     .insert({ project_id: projectId, user_id: userId, action, entity_type: "task", entity_id: taskId, actor_label: botLabel });
 
   const title = (data as { title?: string }).title ?? "";
-  notifyDiscordTaskEvent(
+  emitTaskEvent(
     projectId,
     userId,
     newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus },

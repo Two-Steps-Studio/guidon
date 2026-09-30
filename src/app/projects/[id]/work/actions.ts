@@ -12,7 +12,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { createNotification } from "@/lib/data/notifications";
-import { notifyDiscordTaskEvent } from "@/lib/discord/notify";
+import { emitTaskEvent } from "@/lib/events/task-events";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
 import { resolveColumnRenumbering } from "@/lib/work/task-board";
 import { isSafeHttpUrl } from "@/lib/validation/url";
@@ -371,7 +371,7 @@ export async function moveTask(
       entityId: taskId,
       details: { status },
     });
-    notifyDiscordTaskEvent(
+    emitTaskEvent(
       projectId,
       access.userId,
       status === "done"
@@ -443,7 +443,7 @@ export async function moveTask(
     entityId: taskId,
     details: { status },
   });
-  notifyDiscordTaskEvent(
+  emitTaskEvent(
     projectId,
     access.userId,
     status === "done"
@@ -544,7 +544,7 @@ export async function createTask(
         entityId: result.rows[0].id,
         details: { title: input.title.trim() },
       });
-      notifyDiscordTaskEvent(projectId, access.userId, {
+      emitTaskEvent(projectId, access.userId, {
         kind: "created",
         taskId: result.rows[0].id,
         title: input.title.trim(),
@@ -585,7 +585,7 @@ export async function createTask(
     entityId: data.id,
     details: { title: input.title.trim() },
   });
-  notifyDiscordTaskEvent(projectId, access.userId, { kind: "created", taskId: data.id, title: input.title.trim() });
+  emitTaskEvent(projectId, access.userId, { kind: "created", taskId: data.id, title: input.title.trim() });
   notifyTaskAssignment(projectId, access.userId, data as Task, { assignee_id: assigneeId });
 
   revalidatePath(`/projects/${projectId}/work`);
