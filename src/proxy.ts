@@ -28,6 +28,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // actual file, so the site was effectively unindexable.
   '/robots.txt',
   '/sitemap.xml',
+  // Browsers fetch the web app manifest without cookies (no crossorigin
+  // credentials), so "Add to Home Screen" got the login page instead and fell
+  // back to a page screenshot as the icon.
+  '/manifest.webmanifest',
   // The MCP endpoint (Claude Code and other MCP clients) authenticates with
   // the same `Authorization: Bearer` API key as /api/v1 - it checks the key
   // itself and 401s without one - and never carries a session cookie, so the
