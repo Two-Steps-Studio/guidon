@@ -1113,11 +1113,13 @@
   },
   "calendar": {
     "title": "Calendario",
-    "subtitle": "Tareas por fecha límite",
+    "subtitle": "Tareas por fecha límite y fases del roadmap",
     "previousMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "today": "Hoy",
-    "moreTasks": "+{count} más"
+    "moreTasks": "+{count} más",
+    "phaseAria": "Fase: {name}",
+    "morePhases": "{count, plural, one {+# fase más} other {+# fases más}}"
   },
   "aiChat": {
     "title": "Asistente de IA de Guidon",

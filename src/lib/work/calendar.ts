@@ -85,6 +85,56 @@ export function buildMonthGrid(year: number, month: number): MonthGrid {
   };
 }
 
+export interface CalendarPhaseInput {
+  id: string;
+  start_date: string | Date | null;
+  planned_end_date: string | Date | null;
+  actual_end_date: string | Date | null;
+}
+
+export interface PhaseSpan<T> {
+  phase: T;
+  /** YYYY-MM-DD, inclusive */
+  start: string;
+  /** YYYY-MM-DD, inclusive */
+  end: string;
+  /** Vertical slot, stable for the phase's whole span so its bar lines up across days. */
+  lane: number;
+}
+
+/**
+ * Places roadmap phases that overlap [rangeStart, rangeEnd) on the grid. A
+ * finished phase ends on its actual end date, otherwise the planned one; a
+ * phase with only one date shows on that single day. Lanes are assigned
+ * greedily by start date, so phases that don't overlap share a lane.
+ */
+export function layoutPhases<T extends CalendarPhaseInput>(
+  phases: T[],
+  rangeStart: string,
+  rangeEnd: string
+): PhaseSpan<T>[] {
+  const spans = phases
+    .map((phase) => {
+      const startKey = dueDateKey(phase.start_date);
+      const endKey = dueDateKey(phase.actual_end_date) ?? dueDateKey(phase.planned_end_date);
+      const start = startKey ?? endKey;
+      const end = endKey ?? startKey;
+      if (!start || !end) return null;
+      return start <= end ? { phase, start, end } : { phase, start: end, end: start };
+    })
+    .filter((span): span is { phase: T; start: string; end: string } => span !== null)
+    .filter((span) => span.start < rangeEnd && span.end >= rangeStart)
+    .sort((a, b) => (a.start === b.start ? a.end.localeCompare(b.end) : a.start.localeCompare(b.start)));
+
+  const laneEnds: string[] = [];
+  return spans.map((span) => {
+    let lane = laneEnds.findIndex((laneEnd) => laneEnd < span.start);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = span.end;
+    return { ...span, lane };
+  });
+}
+
 /**
  * Groups tasks by the YYYY-MM-DD part of `due_date`; tasks without one are
  * skipped. `due_date` can be a `Date` instance (self-hosted's direct `pg`

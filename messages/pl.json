@@ -1113,11 +1113,13 @@
   },
   "calendar": {
     "title": "Kalendarz",
-    "subtitle": "Zadania według terminu",
+    "subtitle": "Zadania według terminu i fazy roadmapy",
     "previousMonth": "Poprzedni miesiąc",
     "nextMonth": "Następny miesiąc",
     "today": "Dziś",
-    "moreTasks": "+{count} więcej"
+    "moreTasks": "+{count} więcej",
+    "phaseAria": "Faza: {name}",
+    "morePhases": "{count, plural, one {+# faza więcej} few {+# fazy więcej} many {+# faz więcej} other {+# fazy więcej}}"
   },
   "aiChat": {
     "title": "Asystent AI Guidona",

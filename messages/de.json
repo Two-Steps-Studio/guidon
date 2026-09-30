@@ -1113,11 +1113,13 @@
   },
   "calendar": {
     "title": "Kalender",
-    "subtitle": "Aufgaben nach Fälligkeitsdatum",
+    "subtitle": "Aufgaben nach Fälligkeitsdatum und Roadmap-Phasen",
     "previousMonth": "Vorheriger Monat",
     "nextMonth": "Nächster Monat",
     "today": "Heute",
-    "moreTasks": "+{count} weitere"
+    "moreTasks": "+{count} weitere",
+    "phaseAria": "Phase: {name}",
+    "morePhases": "{count, plural, one {+# weitere Phase} other {+# weitere Phasen}}"
   },
   "aiChat": {
     "title": "Guidon-KI-Assistent",

@@ -1113,11 +1113,13 @@
   },
   "calendar": {
     "title": "Calendar",
-    "subtitle": "Tasks by due date",
+    "subtitle": "Tasks by due date and roadmap phases",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "today": "Today",
-    "moreTasks": "+{count} more"
+    "moreTasks": "+{count} more",
+    "phaseAria": "Phase: {name}",
+    "morePhases": "{count, plural, one {+# more phase} other {+# more phases}}"
   },
   "aiChat": {
     "title": "Guidon AI Assistant",
