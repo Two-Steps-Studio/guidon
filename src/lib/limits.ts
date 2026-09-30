@@ -42,6 +42,7 @@ export interface OrgPlanLimits {
   planName: string;
   projectLimit: number | null;
   taskLimitPerProject: number | null;
+  memberLimitPerProject: number | null;
   storageLimitBytes: number | null;
 }
 
@@ -56,20 +57,30 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
 
   const { data, error } = await supabase
     .from("subscriptions")
-    .select("plans (name, project_limit, task_limit_per_project, storage_limit_bytes)")
+    // "*" rather than a column list: naming member_limit_per_project (049)
+    // would make this query fail - and every organization fall back to Free
+    // below - on a database where that migration hasn't run yet.
+    .select("plans (*)")
     .eq("organization_id", organizationId)
     .single();
 
   if (error || !data?.plans) {
     // No subscription row (shouldn't happen post-014/015, but fail closed
     // to Free's limits rather than crashing or silently going unlimited).
-    return { planName: "Free", projectLimit: 2, taskLimitPerProject: 50, storageLimitBytes: 500 * 1024 * 1024 };
+    return {
+      planName: "Free",
+      projectLimit: 2,
+      taskLimitPerProject: 50,
+      memberLimitPerProject: 5,
+      storageLimitBytes: 500 * 1024 * 1024,
+    };
   }
 
   const plan = data.plans as unknown as {
     name: string;
     project_limit: number | null;
     task_limit_per_project: number | null;
+    member_limit_per_project?: number | null;
     storage_limit_bytes: number | null;
   };
 
@@ -77,6 +88,7 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     planName: plan.name,
     projectLimit: plan.project_limit,
     taskLimitPerProject: plan.task_limit_per_project,
+    memberLimitPerProject: plan.member_limit_per_project ?? null,
     storageLimitBytes: plan.storage_limit_bytes,
   };
 }
@@ -85,6 +97,12 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
 export function isTaskLimitReached(currentTaskCount: number, limit: number | null): boolean {
   if (limit === null) return false;
   return currentTaskCount >= limit;
+}
+
+/** Same convention: `limit === null` means unlimited. */
+export function isMemberLimitReached(currentMemberCount: number, limit: number | null): boolean {
+  if (limit === null) return false;
+  return currentMemberCount >= limit;
 }
 
 /** Same convention: `limit === null` means unlimited. */

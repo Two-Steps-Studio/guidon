@@ -2157,5 +2157,35 @@ await withUser(A, async () => {
   check("anon nie ma dostepu", threw);
 }
 
+
+section("37. plans.member_limit_per_project: limit czlonkow projektu w planach (migracja 049)");
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id, member_limit_per_project AS n FROM public.plans ORDER BY sort_order");
+  const byId = Object.fromEntries(rows.map((row) => [row.id, row.n]));
+  check("free = 5, pro = 15, team = 50", byId.free === 5 && byId.pro === 15 && byId.team === 50, JSON.stringify(byId));
+  check("business/enterprise bez limitu (NULL)", byId.business === null && byId.enterprise === null, JSON.stringify(byId));
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query("UPDATE public.plans SET member_limit_per_project = 1000 WHERE id = 'free'");
+  } catch {
+    threw = true;
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("authenticated nie moze zmienic limitu planu", threw);
+});
+
+{
+  let threw = false;
+  try {
+    await db.query("UPDATE public.plans SET member_limit_per_project = 0 WHERE id = 'free'");
+  } catch {
+    threw = true;
+  }
+  check("CHECK odrzuca limit 0", threw);
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

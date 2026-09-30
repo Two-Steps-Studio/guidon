@@ -228,6 +228,8 @@
       "projectsCount": "{count, plural, one {# Projekt} other {# Projekte}}",
       "unlimitedTasksPerProject": "Unbegrenzte Aufgaben pro Projekt",
       "tasksPerProjectCount": "{count, plural, one {# Aufgabe pro Projekt} other {# Aufgaben pro Projekt}}",
+      "unlimitedMembersPerProject": "Unbegrenzte Mitglieder pro Projekt",
+      "membersPerProjectCount": "{count, plural, one {# Mitglied pro Projekt} other {# Mitglieder pro Projekt}}",
       "aiTaskApi": "KI-Aufgaben-API",
       "githubIntegration": "GitHub-Integration",
       "advancedAnalytics": "Erweiterte Analysen",
@@ -338,6 +340,7 @@
       "colPrice": "Preis",
       "colProjects": "Projekte",
       "colTasksPerProject": "Aufgaben/Projekt",
+      "colMembersPerProject": "Mitglieder/Projekt",
       "colStorage": "Speicher",
       "colAI": "KI",
       "colGitHub": "GitHub",
@@ -684,7 +687,8 @@
     "roleHintAdmin": "Mitglieder, Einstellungen, Roadmap und Dateien verwalten",
     "roleHintDeveloper": "Aufgaben, Entscheidungen und Wissen erstellen und bearbeiten",
     "roleHintTester": "Aufgaben kommentieren; alles andere lesen",
-    "roleHintViewer": "Nur Lesezugriff"
+    "roleHintViewer": "Nur Lesezugriff",
+    "memberLimitReached": "Dein {plan}-Plan erlaubt {limit} Mitglieder pro Projekt. <link>Plan upgraden</link>, um weitere Personen hinzuzufügen."
   },
   "settings": {
     "title": "Projekteinstellungen",
