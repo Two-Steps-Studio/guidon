@@ -117,6 +117,22 @@ commit message, PR title or branch name and, with the GitHub integration on
 link and moves by itself: a commit starts it, a PR sends it to Review, and a
 merge into the default branch marks it Done.
 
+## Moodboard
+
+**Window → Guidon → Moodboard** (or **Moodboard** in the Tasks window's
+toolbar) shows the project's reference images and concept art - Knowledge →
+Moodboard on the website - as a thumbnail grid, with tag filters and a
+search field. Click an image to see it large; from there **Open source**
+follows its link and **Save to Assets** copies it into
+`Assets/Guidon References/` (named after its caption) and pings it in the
+Project window. Until you save one, images stay in memory only. Unity's
+`Texture2D.LoadImage` reads PNG and JPEG; other formats are listed as
+unavailable. Adding images stays on the website (**Open in Browser**).
+
+Checked: the Editor scripts compile with no warnings against the Unity
+2022.3 and Unity 6 (6000.0) editor assemblies. The window itself hasn't been
+opened in a running editor yet.
+
 ## Description formatting
 
 A task's description supports the common Markdown subset - **bold**,

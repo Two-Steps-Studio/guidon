@@ -287,6 +287,10 @@ namespace Guidon.Tasks.Editor
             GuidonStyles.StyleSecondaryButton(refreshButton);
             row.Add(refreshButton);
 
+            var moodboardButton = new Button(GuidonMoodboardWindow.ShowWindow) { text = "Moodboard", tooltip = "This project's reference images", style = { marginLeft = 4f } };
+            GuidonStyles.StyleSecondaryButton(moodboardButton);
+            row.Add(moodboardButton);
+
             _busyLabel = new Label("Loading...") { style = { marginLeft = 8f } };
             _busyLabel.style.display = DisplayStyle.None;
             GuidonStyles.StyleMutedLabel(_busyLabel);

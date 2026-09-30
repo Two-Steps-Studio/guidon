@@ -25,6 +25,26 @@ namespace Guidon.Tasks.Editor
         public ProjectDto[] projects;
     }
 
+    /// <summary>A moodboard image (GET /api/v1/projects/{id}/references). image_url is signed and short-lived - download it right away.</summary>
+    [Serializable]
+    public class ReferenceDto
+    {
+        public string id;
+        public string name;
+        public string caption;
+        public string[] tags;
+        public string source_url;
+        public string mime_type;
+        public string created_at;
+        public string image_url;
+    }
+
+    [Serializable]
+    internal class ReferencesResponse
+    {
+        public ReferenceDto[] references;
+    }
+
     [Serializable]
     public class TaskDto
     {
