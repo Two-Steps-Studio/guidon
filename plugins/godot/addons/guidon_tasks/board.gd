@@ -12,6 +12,7 @@ const Api := preload("res://addons/guidon_tasks/api.gd")
 const Login := preload("res://addons/guidon_tasks/login.gd")
 const Settings := preload("res://addons/guidon_tasks/settings.gd")
 const Palette := preload("res://addons/guidon_tasks/palette.gd")
+const Moodboard := preload("res://addons/guidon_tasks/moodboard.gd")
 
 const COLUMN_WIDTH := 272  # the site's w-72 column
 
@@ -46,6 +47,9 @@ var _board_area: HSplitContainer
 var _columns_box: HBoxContainer
 var _details: VBoxContainer
 var _confirm: ConfirmationDialog
+var _moodboard: VBoxContainer
+var _moodboard_button: Button
+var _showing_moodboard := false
 
 
 func _ready() -> void:
@@ -84,7 +88,13 @@ func _build() -> void:
 	_project_picker.item_selected.connect(func(index): _select_project(str(_project_picker.get_item_metadata(index))))
 	toolbar.add_child(_project_picker)
 	_logged_in_controls.append(_project_picker)
-	_logged_in_controls.append(_toolbar_button(toolbar, "Refresh", refresh_projects))
+	_logged_in_controls.append(_toolbar_button(toolbar, "Refresh", func():
+		await refresh_projects()
+		if _showing_moodboard:
+			_moodboard.load_project(current_project_id, _api())))
+	_moodboard_button = _toolbar_button(toolbar, "Moodboard", _toggle_moodboard)
+	_moodboard_button.tooltip_text = "Show this project's reference images instead of the board"
+	_logged_in_controls.append(_moodboard_button)
 	_logged_in_controls.append(_toolbar_button(toolbar, "Open in Browser", func():
 		if current_project_id != "":
 			OS.shell_open("%s/projects/%s/work" % [Settings.base_url().trim_suffix("/"), current_project_id])))
@@ -116,6 +126,10 @@ func _build() -> void:
 
 	_build_login_panel()
 	_build_board_area()
+	_moodboard = Moodboard.new()
+	_moodboard.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_moodboard.setup(_p)
+	add_child(_moodboard)
 
 	_confirm = ConfirmationDialog.new()
 	_confirm.title = "Delete Task"
@@ -224,7 +238,9 @@ func _update_chrome() -> void:
 	_account_label.text = ("Logged in as %s" % Settings.get_value("email", "?")) if logged_in else ""
 	_error_bar.visible = _error_label.text != ""
 	_login_panel.visible = not logged_in
-	_board_area.visible = logged_in
+	_board_area.visible = logged_in and not _showing_moodboard
+	_moodboard.visible = logged_in and _showing_moodboard
+	_moodboard_button.text = "Board" if _showing_moodboard else "Moodboard"
 	_login_button.disabled = _login != null
 	_login_button.text = "Waiting for the browser…" if _login != null else "Log In"
 	_cancel_login_button.visible = _login != null
@@ -673,7 +689,16 @@ func _select_project(project_id: String) -> void:
 	selected_task_id = ""
 	adding_in_status = ""
 	_schedule_rebuild()
+	if _showing_moodboard:
+		_moodboard.load_project(project_id, _api())
 	await refresh_tasks()
+
+
+func _toggle_moodboard() -> void:
+	_showing_moodboard = not _showing_moodboard
+	_update_chrome()
+	if _showing_moodboard:
+		_moodboard.load_project(current_project_id, _api())
 
 
 func refresh_tasks() -> void:

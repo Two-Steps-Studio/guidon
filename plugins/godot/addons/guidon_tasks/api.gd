@@ -10,6 +10,7 @@ const STATUS_LABELS := {
 	"ai_working": "AI Working", "review": "Review", "done": "Done",
 }
 const PRIORITIES := ["low", "medium", "high", "critical"]
+const MAX_IMAGE_BYTES := 20 * 1024 * 1024
 
 var _host: Node
 var _base_url: String
@@ -73,6 +74,47 @@ func set_status(task_id: String, status: String) -> Dictionary:
 
 func delete_task(task_id: String) -> Dictionary:
 	return await _send(HTTPClient.METHOD_DELETE, "/api/v1/tasks/%s" % task_id)
+
+
+## The project's moodboard, newest first. Each `image_url` is signed and short-lived.
+func list_references(project_id: String) -> Dictionary:
+	return _field(await _send(HTTPClient.METHOD_GET, "/api/v1/projects/%s/references" % project_id), "references", [])
+
+
+## Downloads a signed moodboard image. No API key is sent - the URL carries its
+## own signature. data = PackedByteArray on success.
+func fetch_image(url: String) -> Dictionary:
+	if not (url.begins_with("https://") or url.begins_with("http://")):
+		return {"ok": false, "data": null, "error": "No image URL."}
+	if not is_instance_valid(_host) or not _host.is_inside_tree():
+		return {"ok": false, "data": null, "error": "Guidon panel is closed."}
+	var http := HTTPRequest.new()
+	http.timeout = 30.0
+	http.body_size_limit = MAX_IMAGE_BYTES
+	_host.add_child(http)
+	var err := http.request(url, PackedStringArray(["User-Agent: GuidonTasks-Godot/1.0"]))
+	if err != OK:
+		http.queue_free()
+		return {"ok": false, "data": null, "error": "Invalid request (%s)." % error_string(err)}
+	var response: Array = await http.request_completed
+	http.queue_free()
+	if response[0] != HTTPRequest.RESULT_SUCCESS:
+		return {"ok": false, "data": null, "error": "Download failed (%s)." % _result_name(response[0])}
+	if response[1] < 200 or response[1] >= 300:
+		return {"ok": false, "data": null, "error": "Download failed (%d)." % response[1]}
+	return {"ok": true, "data": response[3], "error": ""}
+
+
+## Decodes PNG/JPEG/WebP/BMP bytes; null for anything else (GIF, SVG) or corrupt data.
+static func decode_image(bytes: PackedByteArray, mime_type: String) -> Image:
+	var image := Image.new()
+	var err := ERR_FILE_UNRECOGNIZED
+	match mime_type.to_lower():
+		"image/png": err = image.load_png_from_buffer(bytes)
+		"image/jpeg": err = image.load_jpg_from_buffer(bytes)
+		"image/webp": err = image.load_webp_from_buffer(bytes)
+		"image/bmp": err = image.load_bmp_from_buffer(bytes)
+	return image if err == OK else null
 
 
 func list_comments(task_id: String) -> Dictionary:
