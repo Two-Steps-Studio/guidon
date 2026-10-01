@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import { AUTHORABLE_TYPES } from "./source-config";
 import { isSafeHttpUrl } from "@/lib/validation/url";
@@ -47,6 +45,13 @@ function parseSourceForm(formData: FormData) {
 
 // Mirrors context_sources_insert/update (001): owner/admin/developer; delete: owner/admin only.
 
+const NOT_IN_PROJECT = "This knowledge entry does not belong to this project.";
+
+function revalidateKnowledgeViews(projectId: string) {
+  revalidatePath(`/projects/${projectId}/knowledge`);
+  revalidatePath(`/projects/${projectId}/context`);
+}
+
 export async function createSource(
   projectId: string,
   _prevState: SourceFormState,
@@ -60,39 +65,7 @@ export async function createSource(
   const parsed = parseSourceForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  if (hasDirectDatabase()) {
-    let sourceId: string;
-
-    try {
-      sourceId = await withUser(access.userId, async ({ query }) => {
-        const result = await query(
-          `INSERT INTO context_sources (project_id, source_type, title, content, url, author)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           RETURNING id`,
-          [projectId, parsed.type, parsed.title, parsed.content, parsed.url, access.userId]
-        );
-        return result.rows[0].id as string;
-      });
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to add knowledge entry." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "source_created",
-      projectId,
-      entityType: "source",
-      entityId: sourceId,
-      details: { title: parsed.title },
-    });
-
-    revalidatePath(`/projects/${projectId}/knowledge`);
-    revalidatePath(`/projects/${projectId}/context`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("context_sources")
     .insert({
       project_id: projectId,
@@ -102,10 +75,10 @@ export async function createSource(
       url: parsed.url,
       author: access.userId,
     })
-    .select("id")
+    .select<{ id: string }>("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error || !data) return { error: error?.message ?? "Failed to add knowledge entry." };
 
   await logActivity({
     userId: access.userId,
@@ -116,8 +89,7 @@ export async function createSource(
     details: { title: parsed.title },
   });
 
-  revalidatePath(`/projects/${projectId}/knowledge`);
-  revalidatePath(`/projects/${projectId}/context`);
+  revalidateKnowledgeViews(projectId);
   return { error: null };
 }
 
@@ -135,58 +107,17 @@ export async function updateSource(
   const parsed = parseSourceForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  if (hasDirectDatabase()) {
-    try {
-      // project_id scoping plus a RETURNING/row-count check - same pattern
-      // applied to decisions/memory in a previous audit round: without it, a
-      // sourceId from a different project silently "succeeds" with zero
-      // rows affected instead of returning an error.
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `UPDATE context_sources SET source_type = $1, title = $2, content = $3, url = $4
-           WHERE id = $5 AND project_id = $6
-           RETURNING id`,
-          [parsed.type, parsed.title, parsed.content, parsed.url, sourceId, projectId]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This knowledge entry does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to update knowledge entry." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "source_updated",
-      projectId,
-      entityType: "source",
-      entityId: sourceId,
-      details: { title: parsed.title },
-    });
-
-    revalidatePath(`/projects/${projectId}/knowledge`);
-    revalidatePath(`/projects/${projectId}/context`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // project_id scoping plus a row-count check - a sourceId from a different
+  // project (or one RLS filtered) must not "succeed" with zero rows.
+  const { data, error } = await dataClient(access.userId)
     .from("context_sources")
-    .update({
-      source_type: parsed.type,
-      title: parsed.title,
-      content: parsed.content,
-      url: parsed.url,
-    })
+    .update({ source_type: parsed.type, title: parsed.title, content: parsed.content, url: parsed.url })
     .eq("id", sourceId)
     .eq("project_id", projectId)
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This knowledge entry does not belong to this project." };
-  }
+  if (data.length === 0) return { error: NOT_IN_PROJECT };
 
   await logActivity({
     userId: access.userId,
@@ -197,8 +128,7 @@ export async function updateSource(
     details: { title: parsed.title },
   });
 
-  revalidatePath(`/projects/${projectId}/knowledge`);
-  revalidatePath(`/projects/${projectId}/context`);
+  revalidateKnowledgeViews(projectId);
   return { error: null };
 }
 
@@ -211,28 +141,7 @@ export async function deleteSource(
     return { error: "You do not have permission to delete knowledge entries." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM context_sources WHERE id = $1 AND project_id = $2 RETURNING id", [
-          sourceId,
-          projectId,
-        ])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This knowledge entry does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to delete knowledge entry." };
-    }
-
-    revalidatePath(`/projects/${projectId}/knowledge`);
-    revalidatePath(`/projects/${projectId}/context`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("context_sources")
     .delete()
     .eq("id", sourceId)
@@ -240,11 +149,8 @@ export async function deleteSource(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This knowledge entry does not belong to this project." };
-  }
+  if (data.length === 0) return { error: NOT_IN_PROJECT };
 
-  revalidatePath(`/projects/${projectId}/knowledge`);
-  revalidatePath(`/projects/${projectId}/context`);
+  revalidateKnowledgeViews(projectId);
   return { error: null };
 }

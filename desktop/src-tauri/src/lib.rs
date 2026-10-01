@@ -12,6 +12,11 @@
 //   window's X button) is window behavior, not tray behavior, so it lives
 //   in windows.rs's create_main_window alongside the rest of the main
 //   window's lifecycle.
+// - plugins.rs: the editor plugin installer behind the local "Install
+//   Editor Plugins" window - fetches the server's plugin manifest and
+//   extracts a plugin into a project folder the user picks.
+// - single instance and window size/position memory are plugins wired in
+//   run() below.
 // - updater.rs: the manual "Check for Updates..." menu item (Task 5) -
 //   checks the GitHub Releases manifest configured in tauri.conf.json and
 //   reports the result through a native dialog.
@@ -45,26 +50,52 @@
 // a command, so build.rs is unchanged by Task 5.
 mod autostart;
 mod menu;
+mod plugins;
 mod store;
 mod tray;
 mod updater;
 mod windows;
 
 use autostart::{get_autostart_enabled, set_autostart_enabled};
+use plugins::{
+    check_plugin_folder, install_plugin, pick_plugin_folder, plugin_catalog, PluginState,
+};
 use store::{get_server_url, save_server_url};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Must be the first plugin registered (its docs) - a second launch
+        // exits right away and this runs in the first one instead.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            windows::show_main_window(app);
+        }))
+        // Size and position only: restoring VISIBLE would bring the main
+        // window back hidden if the app was quit from the tray while it was
+        // closed-to-tray. Settings and Plugins are small fixed dialogs.
+        .plugin(
+            tauri_plugin_window_state::Builder::new()
+                .with_state_flags(
+                    tauri_plugin_window_state::StateFlags::all()
+                        & !tauri_plugin_window_state::StateFlags::VISIBLE,
+                )
+                .with_denylist(&["settings", "plugins"])
+                .build(),
+        )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .manage(PluginState::default())
         .invoke_handler(tauri::generate_handler![
             get_server_url,
             save_server_url,
             get_autostart_enabled,
-            set_autostart_enabled
+            set_autostart_enabled,
+            plugin_catalog,
+            pick_plugin_folder,
+            check_plugin_folder,
+            install_plugin
         ])
         .setup(|app| {
             windows::create_main_window(app.handle())?;

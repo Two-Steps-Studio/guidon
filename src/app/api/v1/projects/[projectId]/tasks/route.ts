@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { getApiUserClient } from "@/lib/api/api-key-auth";
+import { apiDataClient } from "@/lib/api/api-data-client";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
 import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
@@ -26,26 +26,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // project id" and "a real, empty project" were both just `{ tasks: [] }`,
   // contradicting the documented contract (design doc: "a project they're
   // not a member of returns 404, not empty").
-  if (hasDirectDatabase()) {
-    const projectExists = await withUser(guard.userId, ({ query }) =>
-      query("SELECT 1 FROM projects WHERE id = $1", [projectId])
-    );
-    if (projectExists.rows.length === 0) {
-      return NextResponse.json({ error: "Project not found." }, { status: 404 });
-    }
+  const db = apiDataClient(guard.userId);
 
-    const result = await withUser(guard.userId, ({ query }) =>
-      query("SELECT * FROM tasks WHERE project_id = $1 ORDER BY created_at DESC LIMIT $2", [
-        projectId,
-        TASK_LIMIT,
-      ])
-    );
-    return NextResponse.json({ tasks: result.rows });
-  }
-
-  const supabase = await getApiUserClient(guard.userId);
-
-  const { data: project, error: projectError } = await supabase
+  const { data: project, error: projectError } = await db
     .from("projects")
     .select("id")
     .eq("id", projectId)
@@ -53,7 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (projectError) return NextResponse.json({ error: projectError.message }, { status: 400 });
   if (!project) return NextResponse.json({ error: "Project not found." }, { status: 404 });
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("tasks")
     .select("*")
     .eq("project_id", projectId)
@@ -61,7 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .limit(TASK_LIMIT);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ tasks: data ?? [] });
+  return NextResponse.json({ tasks: data });
 }
 
 /**
@@ -71,8 +54,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * directly) because those Server Actions resolve identity through
  * getProjectAccess()'s browser session/cookie, which doesn't exist for a
  * Bearer-key request - every route in this API keeps its own
- * withUser(guard.userId, ...) / getApiUserClient(guard.userId) logic for
- * exactly that reason (see task-transitions.ts).
+ * apiDataClient(guard.userId) logic for exactly that reason (see
+ * task-transitions.ts).
  *
  * `tasks:write`-gated - a read, PATCH .../status, and POST .../comment
  * already had their own narrower scopes; this covers the rest of task
@@ -118,60 +101,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const status: TaskStatus = isSubtask ? "todo" : requestedStatus;
   const priority: TaskPriority = isSubtask ? "medium" : requestedPriority;
 
-  if (hasDirectDatabase()) {
-    const project = await withUser(guard.userId, ({ query }) =>
-      query("SELECT organization_id FROM projects WHERE id = $1", [projectId])
-    );
-    if (project.rows.length === 0) {
-      return NextResponse.json({ error: "Project not found." }, { status: 404 });
-    }
+  const db = apiDataClient(guard.userId);
 
-    if (parentTaskId) {
-      const parent = await withUser(guard.userId, ({ query }) =>
-        query("SELECT 1 FROM tasks WHERE id = $1 AND project_id = $2", [parentTaskId, projectId])
-      );
-      if (parent.rows.length === 0) {
-        return NextResponse.json({ error: "parent_task_id not found in this project." }, { status: 400 });
-      }
-    }
-
-    let createdRow: Record<string, unknown>;
-    try {
-      const result = await withUser(guard.userId, ({ query }) =>
-        query(
-          `INSERT INTO tasks (project_id, parent_task_id, title, description, status, priority, due_date, tags, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-           RETURNING *`,
-          [projectId, parentTaskId, title, description, status, priority, dueDate, [], guard.userId]
-        )
-      );
-      createdRow = result.rows[0];
-    } catch (error) {
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : "Failed to create task." },
-        { status: 400 }
-      );
-    }
-
-    await withUser(guard.userId, ({ query }) =>
-      query(
-        `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id)
-         VALUES ($1, $2, 'task_created', 'task', $3)`,
-        [projectId, guard.userId, createdRow.id]
-      )
-    );
-    // Subtasks don't notify, same as createSubtask in the web app.
-    if (!parentTaskId) {
-      emitTaskEvent(projectId, guard.userId, { kind: "created", taskId: createdRow.id as string, title });
-    }
-
-    return NextResponse.json({ task: createdRow });
-  }
-
-  const supabase = await getApiUserClient(guard.userId);
-
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
+  const { data: project, error: projectError } = await db
+    .from<{ id: string; organization_id: string }>("projects")
     .select("id, organization_id")
     .eq("id", projectId)
     .maybeSingle();
@@ -179,7 +112,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!project) return NextResponse.json({ error: "Project not found." }, { status: 404 });
 
   if (parentTaskId) {
-    const { data: parent } = await supabase
+    const { data: parent } = await db
       .from("tasks")
       .select("id")
       .eq("id", parentTaskId)
@@ -188,11 +121,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!parent) {
       return NextResponse.json({ error: "parent_task_id not found in this project." }, { status: 400 });
     }
-  } else {
+  } else if (!hasDirectDatabase()) {
     // Plan task limit - hosted-only, mirrors createTask's own asymmetry
     // exactly (self-hosted has never had this limit; subtasks never count
-    // against it either way).
+    // against it either way). Needs a row count, which stays on supabase-js.
     const { planName, taskLimitPerProject } = await getOrgPlanLimits(project.organization_id);
+    const supabase = await getApiUserClient(guard.userId);
     const { count } = await supabase
       .from("tasks")
       .select("id", { count: "exact", head: true })
@@ -209,7 +143,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   }
 
-  const { data: created, error } = await supabase
+  const { data: created, error } = await db
     .from("tasks")
     .insert({
       project_id: projectId,
@@ -222,20 +156,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       tags: [],
       created_by: guard.userId,
     })
-    .select()
+    .select<{ id: string }>("*")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error || !created) return NextResponse.json({ error: error?.message ?? "Failed to create task." }, { status: 400 });
 
-  await supabase.from("activity_logs").insert({
+  await db.from("activity_logs").insert({
     project_id: projectId,
     user_id: guard.userId,
     action: "task_created",
     entity_type: "task",
     entity_id: created.id,
   });
+  // Subtasks don't notify, same as createSubtask in the web app. The API-key
+  // client is only needed by the hosted Discord lookup (see emitTaskEvent).
   if (!parentTaskId) {
-    emitTaskEvent(projectId, guard.userId, { kind: "created", taskId: created.id, title }, supabase);
+    const client = hasDirectDatabase() ? undefined : await getApiUserClient(guard.userId);
+    emitTaskEvent(projectId, guard.userId, { kind: "created", taskId: created.id, title }, client);
   }
 
   return NextResponse.json({ task: created });

@@ -137,7 +137,14 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 </p>
               </div>
               {!key.revoked_at && (
-                <Button size="sm" variant="outline" disabled={revoking} onClick={() => handleRevoke(key.id, key.name)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={revoking}
+                  aria-label={t("revokeKeyAria", { name: key.name })}
+                  title={t("revokeKeyAria", { name: key.name })}
+                  onClick={() => handleRevoke(key.id, key.name)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               )}

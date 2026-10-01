@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createAttempt, deleteAttempt, loadAttempts } from "@/app/projects/[id]/work/actions";
+import { createAttempt, deleteAttempt, loadAttempts } from "@/app/projects/[id]/work/attempts-actions";
 import type { AttemptOutcome, TaskAttempt } from "@/types/task";
 
 /**

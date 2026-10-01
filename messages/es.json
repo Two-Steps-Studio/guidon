@@ -235,7 +235,9 @@
       "advancedAnalytics": "Analítica avanzada",
       "teamRoles": "Roles de equipo",
       "auditLogs": "Registros de auditoría",
-      "prioritySupport": "Soporte prioritario"
+      "prioritySupport": "Soporte prioritario",
+      "unlimitedMembers": "Miembros ilimitados",
+      "membersCount": "{count, plural, one {# miembro} other {# miembros}}"
     },
     "footer": {
       "terms": "Términos del servicio",
@@ -300,7 +302,10 @@
       "roleMemberOption": "Miembro",
       "roleAdminOption": "Administrador",
       "roleOwnerOption": "Propietario",
-      "adding": "Añadiendo..."
+      "adding": "Añadiendo...",
+      "seatsUsed": "{used} de {limit} plazas usadas en el plan {plan}",
+      "upgradeForSeats": "Mejora el plan para más plazas",
+      "seatsFull": "Esta organización ha usado las {limit} plazas de su plan {plan}. Mejora el plan para añadir más personas."
     },
     "settings": {
       "title": "Ajustes de la organización",
@@ -351,7 +356,8 @@
         "delete": "Eliminar webhook",
         "deleteConfirm": "¿Eliminar este webhook? Los envíos se detienen de inmediato.",
         "lastDelivery": "Último envío {when} · HTTP {status}",
-        "neverDelivered": "Aún no hay envíos."
+        "neverDelivered": "Aún no hay envíos.",
+        "nativeFormatHint": "Se envía como mensaje nativo de este servicio en lugar del JSON de Guidon."
       }
     },
     "billing": {
@@ -384,7 +390,9 @@
       "manageBilling": "Gestionar facturación",
       "currentPlanBadge": "Plan actual",
       "checkoutSuccess": "Suscripción actualizada - puede tardar un momento en aparecer abajo.",
-      "checkoutCancelled": "Pago cancelado - no se realizó ningún cambio."
+      "checkoutCancelled": "Pago cancelado - no se realizó ningún cambio.",
+      "membersLabel": "Miembros",
+      "colMembers": "Miembros"
     }
   },
   "projects": {
@@ -1115,6 +1123,7 @@
     "creating": "Creando...",
     "createApiKeyButton": "Crear clave de API",
     "revokedBadge": "Revocada",
+    "revokeKeyAria": "Revocar {name}",
     "keyRevokedToast": "Se revocó \"{name}\".",
     "noApiKeysYet": "Aún no hay claves de API.",
     "createdOn": "Creada el {date}",
@@ -1226,8 +1235,9 @@
     },
     "desktop": {
       "title": "Guidon Desktop",
-      "description": "Una ventana nativa para Guidon Cloud o tu propio servidor, con actualizaciones automáticas. Los instaladores se publican en GitHub Releases.",
-      "releases": "GitHub Releases"
+      "description": "Tu tablero en su propia app de Windows: icono en la bandeja, ventana de tareas siempre visible, inicio con Windows e instalación de los plugins de abajo en tus proyectos con un clic.",
+      "download": "Descargar para Windows",
+      "releases": "Todas las versiones"
     }
   },
   "lightbox": {

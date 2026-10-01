@@ -4,19 +4,15 @@ import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase-server";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { withUser, withServiceRole } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
+import { getOrgPlanLimits, getOrganizationMemberCount, isMemberLimitReached, memberLimitMessage } from "@/lib/limits";
 import type { OrganizationRole } from "@/types/project";
 
 export type MemberActionState = {
   error: string | null;
 };
-
-/** True for a Postgres unique_violation (SQLSTATE 23505) - both node-postgres
- * errors and PostgREST error objects carry it as `.code`. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
-}
 
 export async function addMember(
   orgId: string,
@@ -95,6 +91,21 @@ export async function addMember(
 
     revalidatePath(`/organizations/${orgId}/members`);
     return { error: null };
+  }
+
+  // Guidon Cloud seats: plans.member_limit (migration 049). Self-hosted
+  // returned above - no plans there, same as every other plan limit.
+  // Checked before the lookup so a full organization gets the upgrade
+  // message rather than "not found" for a mistyped address.
+  const [planLimits, memberCount] = await Promise.all([
+    getOrgPlanLimits(orgId),
+    getOrganizationMemberCount(orgId).catch(() => null),
+  ]);
+  if (memberCount === null) {
+    return { error: "Could not check this organization's member limit. Try again." };
+  }
+  if (isMemberLimitReached(memberCount, planLimits.memberLimit)) {
+    return { error: memberLimitMessage(planLimits.planName, planLimits.memberLimit!) };
   }
 
   const supabase = await createClient();

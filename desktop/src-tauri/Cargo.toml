@@ -1,6 +1,6 @@
 [package]
 name = "desktop"
-version = "0.1.0"
+version = "1.0.0"
 description = "Guidon Desktop - a thin shell around the Guidon web app"
 authors = ["Two Steps Studio"]
 edition = "2021"
@@ -28,6 +28,12 @@ serde_json = "1"
 tauri-plugin-store = "2"
 url = "2"
 tauri-plugin-dialog = "2"
+# Plugin installer (src/plugins.rs). Same reqwest/rustls(ring)/zip versions
+# tauri-plugin-updater already pulls in, so these add no second TLS stack.
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "system-proxy"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+zip = { version = "4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+sha2 = "0.10"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -41,3 +47,8 @@ strip = true
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
 tauri-plugin-updater = "2"
+# A second launch (e.g. autostart already running it, then a Start-menu
+# click) focuses the running app instead of adding a second tray icon.
+tauri-plugin-single-instance = "2"
+# Remembers window size/position across launches (not visibility - see lib.rs).
+tauri-plugin-window-state = "2"

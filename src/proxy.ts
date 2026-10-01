@@ -56,7 +56,11 @@ const EXACT_PUBLIC_ROUTES = new Set([
 // /legal/ (Terms, Privacy Policy) must be readable by a visitor who hasn't
 // signed up yet - deciding whether to sign up is exactly when someone reads
 // them - and by search engines/link previews with no session at all.
-const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/']
+// /downloads/plugins/ holds the editor plugins' zips and manifest.json
+// (scripts/build-plugin-zips.mjs) - open-source code, nothing user-specific,
+// and Guidon Desktop's plugin installer fetches them without a browser
+// session. Signing in is still what the plugins themselves need to do anything.
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])

@@ -2,9 +2,7 @@
 
 import { isValidUuid } from "@/lib/api/validate-id";
 import { getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
-import { createClient } from "@/lib/supabase-server";
+import { dataClient } from "@/lib/data-client";
 import type { Task } from "@/types/task";
 
 export type RelatedTask = {
@@ -35,34 +33,28 @@ export async function loadTaskRelatedTasks(
 
   if (!isValidUuid(taskId)) return { relations: [], error: "Invalid task id." };
 
-  let relationRows: RelationRow[];
-
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `SELECT id, source_type, source_id, target_type, target_id
-           FROM context_relations
-           WHERE relation_type = $1
-             AND ((source_type = 'task' AND source_id = $2) OR (target_type = 'task' AND target_id = $2))`,
-          [RELATION_TYPE, taskId]
-        )
-      );
-      relationRows = result.rows;
-    } catch (error) {
-      return { relations: [], error: error instanceof Error ? error.message : "Failed to load related tasks." };
-    }
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("context_relations")
-      .select("id, source_type, source_id, target_type, target_id")
+  // A task can be on either end of a related_to relation - two indexed
+  // lookups instead of one OR across both column pairs.
+  const db = dataClient(access.userId);
+  const COLUMNS = "id, source_type, source_id, target_type, target_id";
+  const [asSource, asTarget] = await Promise.all([
+    db
+      .from<RelationRow>("context_relations")
+      .select(COLUMNS)
       .eq("relation_type", RELATION_TYPE)
-      .or(`and(source_type.eq.task,source_id.eq.${taskId}),and(target_type.eq.task,target_id.eq.${taskId})`);
-
-    if (error) return { relations: [], error: error.message };
-    relationRows = (data ?? []) as RelationRow[];
-  }
+      .eq("source_type", "task")
+      .eq("source_id", taskId),
+    db
+      .from<RelationRow>("context_relations")
+      .select(COLUMNS)
+      .eq("relation_type", RELATION_TYPE)
+      .eq("target_type", "task")
+      .eq("target_id", taskId),
+  ]);
+  const relationError = asSource.error ?? asTarget.error;
+  if (relationError) return { relations: [], error: relationError.message };
+  // A self-relation would appear in both results.
+  const relationRows = Array.from(new Map([...asSource.data, ...asTarget.data].map((row) => [row.id, row])).values());
 
   if (relationRows.length === 0) return { relations: [], error: null };
 
@@ -70,23 +62,11 @@ export async function loadTaskRelatedTasks(
     row.source_type === "task" && row.source_id === taskId ? row.target_id : row.source_id
   );
 
-  let taskRows: TaskRow[];
-
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(`SELECT id, title, status FROM tasks WHERE id = ANY($1::uuid[])`, [otherTaskIds])
-      );
-      taskRows = result.rows;
-    } catch (error) {
-      return { relations: [], error: error instanceof Error ? error.message : "Failed to load related tasks." };
-    }
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase.from("tasks").select("id, title, status").in("id", otherTaskIds);
-    if (error) return { relations: [], error: error.message };
-    taskRows = (data ?? []) as TaskRow[];
-  }
+  const { data: taskRows, error: taskError } = await db
+    .from<TaskRow>("tasks")
+    .select("id, title, status")
+    .in("id", otherTaskIds);
+  if (taskError) return { relations: [], error: taskError.message };
 
   const taskById = new Map(taskRows.map((t) => [t.id, t]));
 
@@ -117,39 +97,19 @@ export async function searchProjectTasksByTitle(
   const trimmed = query.trim();
   if (trimmed.length === 0) return { tasks: [], error: null };
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query: runQuery }) =>
-        runQuery(
-          `SELECT id, title FROM tasks
-           WHERE project_id = $1 AND title ILIKE $2 AND NOT (id = ANY($3::uuid[]))
-           ORDER BY title
-           LIMIT 20`,
-          [projectId, `%${trimmed}%`, excludeIds.length > 0 ? excludeIds : ["00000000-0000-0000-0000-000000000000"]]
-        )
-      );
-      return { tasks: result.rows, error: null };
-    } catch (error) {
-      return { tasks: [], error: error instanceof Error ? error.message : "Search failed." };
-    }
-  }
-
-  const supabase = await createClient();
-  let builder = supabase
-    .from("tasks")
+  // Over-fetch by the number of exclusions and drop them here, so the
+  // result still holds up to 20 matches without a NOT IN filter.
+  const { data, error } = await dataClient(access.userId)
+    .from<{ id: string; title: string }>("tasks")
     .select("id, title")
     .eq("project_id", projectId)
     .ilike("title", `%${trimmed}%`)
     .order("title")
-    .limit(20);
+    .limit(20 + excludeIds.length);
 
-  if (excludeIds.length > 0) {
-    builder = builder.not("id", "in", `(${excludeIds.join(",")})`);
-  }
-
-  const { data, error } = await builder;
   if (error) return { tasks: [], error: error.message };
-  return { tasks: (data ?? []) as { id: string; title: string }[], error: null };
+  const excluded = new Set(excludeIds);
+  return { tasks: data.filter((task) => !excluded.has(task.id)).slice(0, 20), error: null };
 }
 
 /**
@@ -168,24 +128,12 @@ export async function loadTaskById(
   if (!access) return { task: null, error: "You do not have access to this project." };
   if (!isValidUuid(taskId)) return { task: null, error: "Invalid task id." };
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(`SELECT * FROM tasks WHERE id = $1 AND project_id = $2`, [taskId, projectId])
-      );
-      return { task: (result.rows[0] as Task) ?? null, error: null };
-    } catch (error) {
-      return { task: null, error: error instanceof Error ? error.message : "Failed to load task." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tasks")
+  const { data, error } = await dataClient(access.userId)
+    .from<Task>("tasks")
     .select("*")
     .eq("id", taskId)
     .eq("project_id", projectId)
     .maybeSingle();
   if (error) return { task: null, error: error.message };
-  return { task: (data as Task) ?? null, error: null };
+  return { task: data, error: null };
 }

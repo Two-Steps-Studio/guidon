@@ -9,6 +9,9 @@ import { SITE_URL } from "@/lib/site-url";
 import catalog from "../../../plugins/catalog.json";
 
 const REPO_URL = "https://github.com/Two-Steps-Studio/guidon";
+// The latest published release is always a desktop one (desktop/RELEASING.md),
+// so this stays right without a version in the URL.
+const DESKTOP_DOWNLOAD_URL = `${REPO_URL}/releases/latest`;
 
 type PluginId = "unity" | "unreal" | "godot" | "blender" | "vscode" | "jetbrains";
 type Category = "engines" | "creative" | "editors";
@@ -59,6 +62,32 @@ export default async function PluginsPage() {
           <h1 className="text-3xl font-bold">{t("title")}</h1>
           <p className="mt-1 max-w-3xl text-muted-foreground">{t("subtitle")}</p>
         </div>
+
+        <Card className="mb-10">
+          <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <Monitor className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden />
+              <div>
+                <CardTitle>{t("desktop.title")}</CardTitle>
+                <CardDescription className="mt-1 max-w-2xl">{t("desktop.description")}</CardDescription>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
+                <a href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
+                  <Download className="h-4 w-4" aria-hidden />
+                  {t("desktop.download")}
+                </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href={`${REPO_URL}/releases?q=desktop`} target="_blank" rel="noopener noreferrer">
+                  {t("desktop.releases")}
+                  <ExternalLink className="h-4 w-4" aria-hidden />
+                </a>
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
 
         <div className="space-y-10">
           {CATEGORIES.map((category) => (

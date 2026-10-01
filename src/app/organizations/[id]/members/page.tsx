@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { AppShell } from "@/components/layout/app-shell";
+import { getOrgPlanLimits, isMemberLimitReached } from "@/lib/limits";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberActionsMenu } from "./member-actions-menu";
 
@@ -88,6 +89,12 @@ export default async function OrganizationMembersPage({
     });
   }
 
+  // Guidon Cloud seats (plans.member_limit, migration 049) - self-hosted has
+  // no plans. members.length is every organization_members row the caller
+  // can see, which for any member of the organization is all of them.
+  const seats = hasDirectDatabase() ? null : await getOrgPlanLimits(orgId);
+  const seatsFull = seats !== null && isMemberLimitReached(members.length, seats.memberLimit);
+
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
@@ -100,9 +107,27 @@ export default async function OrganizationMembersPage({
           <div className="flex-1">
             <h1 className="text-3xl font-bold">{t("title")}</h1>
             <p className="text-muted-foreground">{t("subtitle")}</p>
+            {seats && seats.memberLimit !== null && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("seatsUsed", { used: members.length, limit: seats.memberLimit, plan: seats.planName })}
+              </p>
+            )}
           </div>
-          {canManage && <AddMemberDialog orgId={orgId} isOwner={access.role === "owner"} />}
+          {canManage && !seatsFull && <AddMemberDialog orgId={orgId} isOwner={access.role === "owner"} />}
+          {canManage && seatsFull && (
+            <Button asChild variant="outline">
+              <Link href={`/organizations/${orgId}/billing`}>{t("upgradeForSeats")}</Link>
+            </Button>
+          )}
         </div>
+
+        {seatsFull && seats && (
+          <Card className="mb-6 border-warning/40 bg-warning/5">
+            <CardContent className="py-4 text-sm">
+              {t("seatsFull", { limit: seats.memberLimit ?? 0, plan: seats.planName })}
+            </CardContent>
+          </Card>
+        )}
 
         {members.length === 0 ? (
           <EmptyState

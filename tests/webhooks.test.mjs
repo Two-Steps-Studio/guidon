@@ -18,6 +18,7 @@ import {
   signWebhookPayload,
 } from "../src/lib/webhooks/security.ts";
 import { isWebhookEventType } from "../src/lib/webhooks/events.ts";
+import { describeReceiverError, detectWebhookFormat, formatWebhookBody } from "../src/lib/webhooks/formats.ts";
 
 let pass = 0;
 let fail = 0;
@@ -98,6 +99,40 @@ const signature = signWebhookPayload(secret, 1790000000, body);
 const expected = `sha256=${createHmac("sha256", secret).update(`1790000000.${body}`).digest("hex")}`;
 check("signature matches the documented scheme", signature === expected, signature);
 check("timestamp is signed", signWebhookPayload(secret, 1790000001, body) !== signature);
+
+console.log("\n  formats (Discord / Slack / Guidon envelope)");
+check("discord.com webhook -> discord", detectWebhookFormat("https://discord.com/api/webhooks/1/abc") === "discord");
+check("discordapp.com / ptb -> discord", detectWebhookFormat("https://discordapp.com/api/webhooks/1/a") === "discord" && detectWebhookFormat("https://ptb.discord.com/api/webhooks/1/a") === "discord");
+check("discord.com, not a webhook path -> guidon", detectWebhookFormat("https://discord.com/channels/1/2") === "guidon");
+check("look-alike host -> guidon", detectWebhookFormat("https://discord.com.evil.test/api/webhooks/1/a") === "guidon");
+check("slack incoming webhook -> slack", detectWebhookFormat("https://hooks.slack.com/services/T/B/x") === "slack");
+check("anything else -> guidon", detectWebhookFormat("https://example.com/hook") === "guidon");
+
+const envelope = {
+  id: "d1", type: "task.status_changed", created_at: "2026-09-30T00:00:00.000Z",
+  project: { id: "p", name: "Space Game" },
+  data: { task: { id: "t", title: "Fix <door> & collision", status: "review", url: "https://useguidon.com/projects/p/work" } },
+};
+check("guidon format = envelope unchanged", formatWebhookBody("guidon", envelope) === envelope);
+const discord = formatWebhookBody("discord", envelope);
+check("discord: one embed with title, url and project footer",
+  discord.embeds.length === 1 && discord.embeds[0].title === envelope.data.task.title && discord.embeds[0].url === envelope.data.task.url && discord.embeds[0].footer.text === "Space Game",
+  JSON.stringify(discord));
+check("discord: status in headline", discord.embeds[0].author.name === "Task moved to Review", discord.embeds[0].author.name);
+check("discord: no @mentions from task titles", Array.isArray(discord.allowed_mentions.parse) && discord.allowed_mentions.parse.length === 0);
+const done = formatWebhookBody("discord", { ...envelope, type: "task.completed", data: { task: { ...envelope.data.task, status: "done" } } });
+check("discord: completed headline", done.embeds[0].author.name === "Task completed");
+const longTitle = formatWebhookBody("discord", { ...envelope, data: { task: { ...envelope.data.task, title: "x".repeat(400) } } });
+check("discord: title clipped to 256", longTitle.embeds[0].title.length === 256, longTitle.embeds[0].title.length);
+const ping = formatWebhookBody("discord", { type: "ping", data: { webhook_id: "w" } });
+check("discord: ping is a non-empty message", ping.embeds[0].title === "Guidon webhook connected");
+const slack = formatWebhookBody("slack", envelope);
+check("slack: text with escaped link label", slack.text === "Task moved to Review in Space Game: <https://useguidon.com/projects/p/work|Fix &lt;door&gt; &amp; collision>", slack.text);
+check("slack: ping has text", typeof formatWebhookBody("slack", { type: "ping" }).text === "string");
+
+check("receiver error: Discord JSON message", describeReceiverError(400, '{"message": "Cannot send an empty message", "code": 50006}') === "Receiver responded with HTTP 400: Cannot send an empty message");
+check("receiver error: plain text first line", describeReceiverError(400, "no_text\nmore") === "Receiver responded with HTTP 400: no_text");
+check("receiver error: empty body", describeReceiverError(502, "") === "Receiver responded with HTTP 502.");
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

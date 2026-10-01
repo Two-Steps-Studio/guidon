@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import type { ContextEntityType, RelationType } from "@/types/context";
 
 export type RelationFormState = { error: string | null };
@@ -74,25 +72,7 @@ export async function createRelation(
     return { error: "Target is required." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      await withUser(access.userId, ({ query }) =>
-        query(
-          `INSERT INTO context_relations (source_type, source_id, target_type, target_id, relation_type, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [sourceType, sourceId.trim(), targetType, targetId.trim(), relationType, access.userId]
-        )
-      );
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to create relation." };
-    }
-
-    revalidatePath(`/projects/${projectId}/context`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("context_relations").insert({
+  const { error } = await dataClient(access.userId).from("context_relations").insert({
     source_type: sourceType,
     source_id: sourceId.trim(),
     target_type: targetType,
@@ -116,32 +96,11 @@ export async function deleteRelation(
     return { error: "You do not have permission to delete relations." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      // Scoped to project_id and checks the row count, same reasoning as
-      // deleteTask in work/actions.ts: without it, a relationId that
-      // doesn't belong to this project (stale client state, or simply the
-      // wrong id) came back as a silent `{ error: null }` "success" with
-      // nothing actually removed.
-      const result = await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM context_relations WHERE id = $1 AND project_id = $2 RETURNING id", [
-          relationId,
-          projectId,
-        ])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This relation could not be found in this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to delete relation." };
-    }
-
-    revalidatePath(`/projects/${projectId}/context`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // Scoped to project_id and checks the row count, same reasoning as
+  // deleteTask in work/actions.ts: a relationId that doesn't belong to this
+  // project (stale client state, or simply the wrong id) must not come back
+  // as a silent "success" with nothing actually removed.
+  const { data, error } = await dataClient(access.userId)
     .from("context_relations")
     .delete()
     .eq("id", relationId)
@@ -149,7 +108,7 @@ export async function deleteRelation(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
+  if (data.length === 0) {
     return { error: "This relation could not be found in this project." };
   }
 

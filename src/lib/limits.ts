@@ -44,7 +44,12 @@ export interface OrgPlanLimits {
   taskLimitPerProject: number | null;
   memberLimitPerProject: number | null;
   storageLimitBytes: number | null;
+  /** plans.member_limit (migration 051): seats - organization_members rows, owner included. */
+  memberLimit: number | null;
 }
+
+/** Free's seats, also the fail-closed fallback below - keep equal to 051's value for 'free'. */
+export const FREE_PLAN_MEMBER_LIMIT = 8;
 
 /**
  * Reads the organization's current plan limits via its subscription. Self-
@@ -73,6 +78,7 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
       taskLimitPerProject: 50,
       memberLimitPerProject: 5,
       storageLimitBytes: 500 * 1024 * 1024,
+      memberLimit: FREE_PLAN_MEMBER_LIMIT,
     };
   }
 
@@ -81,6 +87,8 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     project_limit: number | null;
     task_limit_per_project: number | null;
     member_limit_per_project?: number | null;
+    /** Absent before migration 051 - "*" just doesn't return it. */
+    member_limit?: number | null;
     storage_limit_bytes: number | null;
   };
 
@@ -90,7 +98,19 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     taskLimitPerProject: plan.task_limit_per_project,
     memberLimitPerProject: plan.member_limit_per_project ?? null,
     storageLimitBytes: plan.storage_limit_bytes,
+    memberLimit: plan.member_limit ?? null,
   };
+}
+
+/** Seats in use: every organization_members row, owner included. Service role - the count must not depend on what the caller can see. */
+export async function getOrganizationMemberCount(organizationId: string): Promise<number> {
+  const { createServiceClient } = await import("@/lib/supabase-server");
+  const { count, error } = await createServiceClient()
+    .from("organization_members")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+  if (error) throw new Error(`Could not count organization members: ${error.message}`);
+  return count ?? 0;
 }
 
 /** `limit === null` means unlimited, same convention as the plans table itself. */
@@ -109,4 +129,9 @@ export function isMemberLimitReached(currentMemberCount: number, limit: number |
 export function isStorageLimitReached(currentUsageBytes: number, limit: number | null): boolean {
   if (limit === null) return false;
   return currentUsageBytes >= limit;
+}
+
+export function memberLimitMessage(planName: string, limit: number): string {
+  const people = limit === 1 ? "person" : "people";
+  return `Your ${planName} plan allows ${limit} ${people} in this organization. Upgrade the plan to add more members.`;
 }

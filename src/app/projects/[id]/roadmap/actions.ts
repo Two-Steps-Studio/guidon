@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import type { PhaseStatus } from "@/types/task";
 
@@ -65,6 +63,8 @@ function parsePhaseForm(formData: FormData) {
 // Mirrors roadmap_insert/update/delete (001): owner/admin only - unlike
 // tasks and memory, roadmap phases do not extend write access to developer.
 
+const NOT_IN_PROJECT = "This phase could not be found in this project.";
+
 export async function createPhase(
   projectId: string,
   _prevState: PhaseFormState,
@@ -78,62 +78,18 @@ export async function createPhase(
   const parsed = parsePhaseForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  if (hasDirectDatabase()) {
-    try {
-      await withUser(access.userId, async ({ query }) => {
-        const siblings = await query(
-          "SELECT sort_order FROM roadmap_phases WHERE project_id = $1",
-          [projectId]
-        );
-        const maxSortOrder = siblings.rows.reduce(
-          (max: number, p: { sort_order: number | null }) => Math.max(max, p.sort_order ?? 0),
-          0
-        );
+  const db = dataClient(access.userId);
 
-        const result = await query(
-          `INSERT INTO roadmap_phases
-             (project_id, name, description, start_date, planned_end_date, status, completion_percentage, sort_order, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-           RETURNING id`,
-          [
-            projectId,
-            parsed.name,
-            parsed.description,
-            parsed.start_date,
-            parsed.planned_end_date,
-            parsed.status,
-            parsed.completion_percentage,
-            maxSortOrder + 1,
-            access.userId,
-          ]
-        );
-
-        await logActivity({
-          userId: access.userId,
-          action: "phase_created",
-          projectId,
-          entityType: "phase",
-          entityId: result.rows[0].id,
-          details: { name: parsed.name },
-        });
-      });
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to add roadmap phase." };
-    }
-
-    revalidatePath(`/projects/${projectId}/roadmap`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data: siblings } = await supabase
+  // New phases go last.
+  const { data: last } = await db
     .from("roadmap_phases")
-    .select("sort_order")
-    .eq("project_id", projectId);
+    .select<{ sort_order: number | null }>("sort_order")
+    .eq("project_id", projectId)
+    .order("sort_order", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
 
-  const maxSortOrder = (siblings ?? []).reduce((max, p) => Math.max(max, p.sort_order ?? 0), 0);
-
-  const { data: created, error } = await supabase
+  const { data: created, error } = await db
     .from("roadmap_phases")
     .insert({
       project_id: projectId,
@@ -143,13 +99,13 @@ export async function createPhase(
       planned_end_date: parsed.planned_end_date,
       status: parsed.status,
       completion_percentage: parsed.completion_percentage,
-      sort_order: maxSortOrder + 1,
+      sort_order: (last?.sort_order ?? 0) + 1,
       created_by: access.userId,
     })
-    .select("id")
+    .select<{ id: string }>("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error || !created) return { error: error?.message ?? "Failed to add roadmap phase." };
 
   await logActivity({
     userId: access.userId,
@@ -178,47 +134,7 @@ export async function updatePhase(
   const parsed = parsePhaseForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `UPDATE roadmap_phases
-           SET name = $1, description = $2, start_date = $3, planned_end_date = $4, status = $5, completion_percentage = $6
-           WHERE id = $7 AND project_id = $8
-           RETURNING id`,
-          [
-            parsed.name,
-            parsed.description,
-            parsed.start_date,
-            parsed.planned_end_date,
-            parsed.status,
-            parsed.completion_percentage,
-            phaseId,
-            projectId,
-          ]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This phase could not be found in this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to update roadmap phase." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "phase_updated",
-      projectId,
-      entityType: "phase",
-      entityId: phaseId,
-    });
-
-    revalidatePath(`/projects/${projectId}/roadmap`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("roadmap_phases")
     .update({
       name: parsed.name,
@@ -233,9 +149,7 @@ export async function updatePhase(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This phase could not be found in this project." };
-  }
+  if (data.length === 0) return { error: NOT_IN_PROJECT };
 
   await logActivity({
     userId: access.userId,
@@ -258,35 +172,7 @@ export async function deletePhase(
     return { error: "You do not have permission to delete roadmap phases." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM roadmap_phases WHERE id = $1 AND project_id = $2 RETURNING id", [
-          phaseId,
-          projectId,
-        ])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This phase could not be found in this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to delete roadmap phase." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "phase_deleted",
-      projectId,
-      entityType: "phase",
-      entityId: phaseId,
-    });
-
-    revalidatePath(`/projects/${projectId}/roadmap`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("roadmap_phases")
     .delete()
     .eq("id", phaseId)
@@ -294,9 +180,7 @@ export async function deletePhase(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This phase could not be found in this project." };
-  }
+  if (data.length === 0) return { error: NOT_IN_PROJECT };
 
   await logActivity({
     userId: access.userId,

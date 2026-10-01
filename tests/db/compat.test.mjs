@@ -27,6 +27,9 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// The data client's SQL compiler (pure TS, no imports) - run with
+// --experimental-strip-types, see package.json's test:db.
+import { compile, parseColumns } from "../../src/lib/data-client/sql.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DB_DIR = path.join(HERE, "..", "..", "src", "db");
@@ -2160,7 +2163,118 @@ await withUser(A, async () => {
 }
 
 
-section("37. plans.member_limit_per_project: limit czlonkow projektu w planach (migracja 049)");
+section("37. data-client: SQL z kompilatora (src/lib/data-client/sql.ts) dziala na prawdziwym schemacie pod RLS");
+
+const spec = (over) => ({ table: "project_references", op: "select", columns: ["*"], filters: [], order: [], limit: null, values: null, ...over });
+const run = (q) => db.query(q.text, q.values);
+
+let dcRef;
+await withUser(A, async () => {
+  const ins = await run(compile(spec({
+    op: "insert",
+    columns: ["id", "tags", "caption"],
+    values: [{ project_id: projectId, name: "dc.png", storage_path: "p/dc.png", mime_type: "image/png", uploaded_by: A }],
+  })));
+  dcRef = ins.rows[0]?.id;
+  check("insert ... RETURNING; brak klucza -> DEFAULT (tags = '{}')", Boolean(dcRef) && Array.isArray(ins.rows[0].tags) && ins.rows[0].tags.length === 0, JSON.stringify(ins.rows));
+
+  const multi = await run(compile(spec({
+    op: "insert",
+    columns: ["id"],
+    values: [
+      { project_id: projectId, name: "m1.png", storage_path: "p/m1.png", mime_type: "image/png", uploaded_by: A, caption: "one" },
+      { project_id: projectId, name: "m2.png", storage_path: "p/m2.png", mime_type: "image/png", uploaded_by: A },
+    ],
+  })));
+  check("insert kilku wierszy z roznymi kluczami", multi.rows.length === 2, multi.rows.length);
+
+  const sel = await run(compile(spec({
+    columns: parseColumns("id, name, caption"),
+    filters: [
+      { column: "project_id", op: "eq", value: projectId },
+      { column: "name", op: "in", value: ["m1.png", "m2.png", "dc.png"] },
+      { column: "caption", op: "is", value: null },
+    ],
+    order: [{ column: "name", ascending: false }],
+    limit: 5,
+  })));
+  check("select z eq/in/is null/order/limit", sel.rows.map((r) => r.name).join(",") === "m2.png,dc.png", sel.rows.map((r) => r.name).join(","));
+
+  const none = await run(compile(spec({ filters: [{ column: "id", op: "in", value: [] }] })));
+  check("puste .in() nic nie zwraca", none.rows.length === 0, none.rows.length);
+
+  const upd = await run(compile(spec({
+    op: "update",
+    columns: ["caption", "tags"],
+    values: [{ caption: "Updated", tags: ["a", "b"] }],
+    filters: [{ column: "id", op: "eq", value: dcRef }, { column: "project_id", op: "eq", value: projectId }],
+  })));
+  check("update ... RETURNING (tablica text[] jako parametr)", upd.rows[0]?.caption === "Updated" && upd.rows[0]?.tags.join() === "a,b", JSON.stringify(upd.rows));
+});
+
+await withUser(D, async () => {
+  // D is a developer (section 36): may read, may not edit someone else's reference.
+  const upd = await run(compile(spec({
+    op: "update",
+    columns: ["id"],
+    values: [{ caption: "hijack" }],
+    filters: [{ column: "id", op: "eq", value: dcRef }, { column: "project_id", op: "eq", value: projectId }],
+  })));
+  check("RLS dalej obowiazuje: cudzy UPDATE -> 0 wierszy", upd.rows.length === 0, upd.rows.length);
+
+  let denied = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await run(compile(spec({ op: "update", columns: null, values: [{ storage_path: "x" }], filters: [{ column: "id", op: "eq", value: dcRef }] })));
+  } catch (error) {
+    denied = /permission denied/.test(error.message);
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("GRANT kolumnowy dalej obowiazuje (storage_path)", denied);
+});
+
+await withUser(A, async () => {
+  const del = await run(compile(spec({
+    op: "delete",
+    columns: ["storage_path"],
+    filters: [{ column: "project_id", op: "eq", value: projectId }, { column: "name", op: "like", value: "m%.png" }],
+  })));
+  check("delete ... RETURNING storage_path z LIKE", del.rows.length === 2, del.rows.length);
+
+  // technology/actions.ts duplicate check: ILIKE with LIKE wildcards escaped
+  // must match case-insensitively but literally ("C_" must not match "CS").
+  await db.query("INSERT INTO public.technologies (project_id, name) VALUES ($1, 'CS'), ($1, 'C_')", [projectId]);
+  const esc = (name) => name.replace(/[\\%_]/g, "\\$&");
+  const like = async (name) =>
+    (await run(compile({ table: "technologies", op: "select", columns: ["name"], filters: [
+      { column: "project_id", op: "eq", value: projectId },
+      { column: "name", op: "ilike", value: esc(name) },
+    ], order: [], limit: null, values: null }))).rows.map((r) => r.name).join(",");
+  check("ilike z escapowaniem: 'c_' -> tylko 'C_'", (await like("c_")) === "C_", await like("c_"));
+  check("ilike z escapowaniem: 'cs' -> tylko 'CS'", (await like("cs")) === "CS", await like("cs"));
+  await db.query("DELETE FROM public.technologies WHERE project_id = $1 AND name IN ('CS', 'C_')", [projectId]);
+  await run(compile(spec({ op: "delete", columns: null, filters: [{ column: "id", op: "eq", value: dcRef }] })));
+});
+
+{
+  const throws = (fn) => {
+    try {
+      fn();
+      return false;
+    } catch {
+      return true;
+    }
+  };
+  check("zly identyfikator tabeli odrzucony", throws(() => compile(spec({ table: 'tasks"; drop table tasks; --' }))));
+  check("zly identyfikator kolumny odrzucony", throws(() => compile(spec({ filters: [{ column: "id = id OR 1", op: "eq", value: 1 }] }))));
+  check("embed PostgREST odrzucony", throws(() => parseColumns("id, profiles(full_name)")));
+  check("UPDATE bez filtrow odrzucony", throws(() => compile(spec({ op: "update", values: [{ caption: "x" }] }))));
+  check("DELETE bez filtrow odrzucony", throws(() => compile(spec({ op: "delete", columns: null }))));
+  const q = compile(spec({ filters: [{ column: "name", op: "eq", value: "x'; drop table tasks; --" }] }));
+  check("wartosci zawsze jako parametry", !q.text.includes("drop") && q.values[0].includes("drop"), q.text);
+}
+
+section("38. plans.member_limit_per_project: limit czlonkow projektu w planach (migracja 049)");
 
 await withUser(A, async () => {
   const { rows } = await db.query("SELECT id, member_limit_per_project AS n FROM public.plans ORDER BY sort_order");
@@ -2189,7 +2303,7 @@ await withUser(A, async () => {
   check("CHECK odrzuca limit 0", threw);
 }
 
-section("38. organization_webhooks: tylko owner/admin organizacji, sekret niewidoczny dla authenticated (migracja 050)");
+section("39. organization_webhooks: tylko owner/admin organizacji, sekret niewidoczny dla authenticated (migracja 050)");
 
 async function throwsInSavepoint(sql, params) {
   try {
@@ -2272,6 +2386,31 @@ await withUser(A, async () => {
   check("anon nie ma dostepu", threw);
 }
 
+// ------------------------------------------------------------------
+section("40. plans.member_limit: miejsca w organizacji wedlug planu (migracja 051)");
+
+{
+  const seats = await db.query("SELECT id, member_limit FROM public.plans ORDER BY sort_order");
+  const byId = Object.fromEntries(seats.rows.map((row) => [row.id, row.member_limit]));
+  check("Free: 8 osob", byId.free === 8, byId.free);
+  check("Pro: 20, Team: 50, Business: 200", byId.pro === 20 && byId.team === 50 && byId.business === 200, JSON.stringify(byId));
+  check("Enterprise: bez limitu (NULL)", byId.enterprise === null, byId.enterprise);
+
+  await withUser(A, async () => {
+    const r = await db.query("SELECT member_limit FROM public.plans WHERE id = 'free'");
+    check("authenticated czyta member_limit (GRANT SELECT z 015)", r.rows[0]?.member_limit === 8, JSON.stringify(r.rows));
+  });
+  await expectRejected(
+    "authenticated nie zmieni member_limit",
+    () => withUser(A, () => db.query("UPDATE public.plans SET member_limit = 1000 WHERE id = 'free'")),
+    /permission denied/
+  );
+  await expectRejected(
+    "member_limit 0 odrzucony przez CHECK",
+    () => withServiceRole(() => db.query("UPDATE public.plans SET member_limit = 0 WHERE id = 'free'")),
+    /check constraint/
+  );
+}
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

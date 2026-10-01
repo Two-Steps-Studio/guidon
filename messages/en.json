@@ -235,7 +235,9 @@
       "advancedAnalytics": "Advanced analytics",
       "teamRoles": "Team roles",
       "auditLogs": "Audit logs",
-      "prioritySupport": "Priority support"
+      "prioritySupport": "Priority support",
+      "unlimitedMembers": "Unlimited members",
+      "membersCount": "{count, plural, one {# member} other {# members}}"
     },
     "footer": {
       "terms": "Terms of Service",
@@ -300,7 +302,10 @@
       "roleMemberOption": "Member",
       "roleAdminOption": "Admin",
       "roleOwnerOption": "Owner",
-      "adding": "Adding..."
+      "adding": "Adding...",
+      "seatsUsed": "{used} of {limit} seats used on the {plan} plan",
+      "upgradeForSeats": "Upgrade for more seats",
+      "seatsFull": "This organization has used all {limit} seats on its {plan} plan. Upgrade the plan to add more people."
     },
     "settings": {
       "title": "Organization Settings",
@@ -351,7 +356,8 @@
         "delete": "Delete webhook",
         "deleteConfirm": "Delete this webhook? Deliveries stop immediately.",
         "lastDelivery": "Last delivery {when} · HTTP {status}",
-        "neverDelivered": "No deliveries yet."
+        "neverDelivered": "No deliveries yet.",
+        "nativeFormatHint": "Sent as a native message for this service instead of Guidon's JSON."
       }
     },
     "billing": {
@@ -384,7 +390,9 @@
       "manageBilling": "Manage billing",
       "currentPlanBadge": "Current plan",
       "checkoutSuccess": "Subscription updated - it may take a moment to appear below.",
-      "checkoutCancelled": "Checkout cancelled - nothing was changed."
+      "checkoutCancelled": "Checkout cancelled - nothing was changed.",
+      "membersLabel": "Members",
+      "colMembers": "Members"
     }
   },
   "projects": {
@@ -1115,6 +1123,7 @@
     "creating": "Creating...",
     "createApiKeyButton": "Create API Key",
     "revokedBadge": "Revoked",
+    "revokeKeyAria": "Revoke {name}",
     "keyRevokedToast": "Revoked \"{name}\".",
     "noApiKeysYet": "No API keys yet.",
     "createdOn": "Created {date}",
@@ -1226,8 +1235,9 @@
     },
     "desktop": {
       "title": "Guidon Desktop",
-      "description": "A native window for Guidon Cloud or your own self-hosted server, with automatic updates. Installers are published on GitHub Releases.",
-      "releases": "GitHub Releases"
+      "description": "Your board in its own Windows app: a tray icon, an always-on-top Tasks window, start with Windows, and one-click install of the editor plugins below into your projects.",
+      "download": "Download for Windows",
+      "releases": "All releases"
     }
   },
   "lightbox": {

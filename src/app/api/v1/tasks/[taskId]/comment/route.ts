@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
-import { getApiUserClient } from "@/lib/api/api-key-auth";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { apiDataClient } from "@/lib/api/api-data-client";
+import { isPermissionDenied } from "@/lib/db/errors";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 
 const COMMENT_COLUMNS = "id, task_id, author_id, content, created_at, actor_label";
 const AI_DISABLED_ERROR = "AI features are turned off for this project.";
+const AI_NOT_PERMITTED_ERROR = "AI is not permitted to comment on this project.";
 
 /**
  * Lists a task's comments - `tasks:read`-gated (a read), separate from
@@ -22,34 +22,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
 
-  if (hasDirectDatabase()) {
-    const task = await withUser(guard.userId, ({ query }) =>
-      query("SELECT 1 FROM tasks WHERE id = $1", [taskId])
-    );
-    if (task.rows.length === 0) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+  const db = apiDataClient(guard.userId);
 
-    const result = await withUser(guard.userId, ({ query }) =>
-      query(
-        `SELECT ${COMMENT_COLUMNS} FROM task_comments WHERE task_id = $1 ORDER BY created_at ASC`,
-        [taskId]
-      )
-    );
-    return NextResponse.json({ comments: result.rows });
-  }
-
-  const supabase = await getApiUserClient(guard.userId);
-
-  const { data: task } = await supabase.from("tasks").select("id").eq("id", taskId).maybeSingle();
+  const { data: task } = await db.from("tasks").select("id").eq("id", taskId).maybeSingle();
   if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("task_comments")
     .select(COMMENT_COLUMNS)
     .eq("task_id", taskId)
     .order("created_at", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ comments: data ?? [] });
+  return NextResponse.json({ comments: data });
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -66,102 +51,54 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
 
-  if (hasDirectDatabase()) {
-    // project_ai_permissions.can_create_comments is the app-level check
-    // above, but the real gate is task_comments_insert's RLS policy (001),
-    // which additionally requires the caller's *project role* to be one of
-    // owner/admin/developer/tester - an API key issued to a project viewer
-    // passes the app-level check (no row, or can_create_comments true) but
-    // still gets rejected by RLS's WITH CHECK. Unlike UPDATE (which just
-    // filters to 0 rows), a WITH CHECK violation on INSERT throws
-    // (Postgres error 42501), so it needs its own catch here rather than a
-    // rows-returned check.
-    let result: unknown;
-    try {
-      result = await withUser(guard.userId, async ({ query }) => {
-        const task = await query(
-          "SELECT t.project_id, p.ai_enabled FROM tasks t JOIN projects p ON p.id = t.project_id WHERE t.id = $1",
-          [taskId]
-        );
-        if (task.rows.length === 0) return null;
-        if (!guard.humanClient && !task.rows[0].ai_enabled) return "ai_disabled";
+  const db = apiDataClient(guard.userId);
 
-        const perms = await query(
-          "SELECT can_create_comments FROM project_ai_permissions WHERE project_id = $1",
-          [task.rows[0].project_id]
-        );
-        if (!guard.humanClient && perms.rows[0] && !perms.rows[0].can_create_comments) return "forbidden";
-
-        const comment = await query(
-          `INSERT INTO task_comments (task_id, author_id, content, actor_label) VALUES ($1, $2, $3, $4) RETURNING *`,
-          [taskId, guard.userId, content, guard.botLabel]
-        );
-        await query(
-          `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id, actor_label)
-           VALUES ($1, $2, 'task_ai_commented', 'task', $3, $4)`,
-          [task.rows[0].project_id, guard.userId, taskId, guard.botLabel]
-        );
-        return comment.rows[0];
-      });
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error && error.code === "42501") {
-        return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
-      }
-      throw error;
-    }
-
-    if (result === null) return NextResponse.json({ error: "Task not found." }, { status: 404 });
-    if (result === "ai_disabled") {
-      return NextResponse.json({ error: AI_DISABLED_ERROR }, { status: 403 });
-    }
-    if (result === "forbidden") {
-      return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
-    }
-    return NextResponse.json({ comment: result });
-  }
-
-  const supabase = await getApiUserClient(guard.userId);
-
-  const { data: task } = await supabase.from("tasks").select("project_id").eq("id", taskId).maybeSingle();
+  const { data: task } = await db
+    .from<{ project_id: string }>("tasks")
+    .select("project_id")
+    .eq("id", taskId)
+    .maybeSingle();
   if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
 
-  const [{ data: project }, { data: perms }] = await Promise.all([
-    supabase.from("projects").select("ai_enabled").eq("id", task.project_id).maybeSingle(),
-    supabase
-      .from("project_ai_permissions")
-      .select("can_create_comments")
-      .eq("project_id", task.project_id)
-      .maybeSingle(),
-  ]);
-
-  if (!guard.humanClient && project && !project.ai_enabled) {
-    return NextResponse.json({ error: AI_DISABLED_ERROR }, { status: 403 });
+  // Agent keys (not human_client, migration 039) are gated by the project's
+  // AI switch (046) and its AI permissions; human clients are not.
+  if (!guard.humanClient) {
+    const [{ data: project }, { data: perms }] = await Promise.all([
+      db.from<{ ai_enabled: boolean }>("projects").select("ai_enabled").eq("id", task.project_id).maybeSingle(),
+      db
+        .from<{ can_create_comments: boolean }>("project_ai_permissions")
+        .select("can_create_comments")
+        .eq("project_id", task.project_id)
+        .maybeSingle(),
+    ]);
+    if (project && !project.ai_enabled) {
+      return NextResponse.json({ error: AI_DISABLED_ERROR }, { status: 403 });
+    }
+    if (perms && !perms.can_create_comments) {
+      return NextResponse.json({ error: AI_NOT_PERMITTED_ERROR }, { status: 403 });
+    }
   }
 
-  if (!guard.humanClient && perms && !perms.can_create_comments) {
-    return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
-  }
-
-  const { data: comment, error } = await supabase
+  const { data: comment, error } = await db
     .from("task_comments")
     .insert({ task_id: taskId, author_id: guard.userId, content, actor_label: guard.botLabel })
-    .select()
+    .select("*")
     .single();
 
   if (error) {
-    // Same RLS gate as the self-hosted branch above (task_comments_insert
-    // requires project role owner/admin/developer/tester) - PostgREST
-    // surfaces a WITH CHECK violation as a normal `error` object rather
-    // than throwing, but it still needs mapping to 403 with a stable
-    // message instead of leaking the raw Postgres error text at a
-    // misleading 400.
-    if (error.code === "42501") {
-      return NextResponse.json({ error: "AI is not permitted to comment on this project." }, { status: 403 });
+    // The permissions check above is app-level; the real gate is
+    // task_comments_insert's RLS (001), which also requires the caller's
+    // project role to be owner/admin/developer/tester - a key issued to a
+    // project viewer passes the check above but fails RLS's WITH CHECK
+    // (SQLSTATE 42501). Map it to a stable 403 instead of leaking the raw
+    // Postgres text at a misleading 400.
+    if (isPermissionDenied(error)) {
+      return NextResponse.json({ error: AI_NOT_PERMITTED_ERROR }, { status: 403 });
     }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  await supabase.from("activity_logs").insert({
+  await db.from("activity_logs").insert({
     project_id: task.project_id,
     user_id: guard.userId,
     action: "task_ai_commented",

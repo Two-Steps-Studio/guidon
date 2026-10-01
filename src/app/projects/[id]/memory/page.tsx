@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { displayName } from "@/lib/people";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +21,6 @@ interface MemoryProfile {
   id: string;
   full_name: string | null;
   email: string;
-}
-
-function nameFor(profile: MemoryProfile | undefined, unknownLabel: string): string {
-  if (!profile) return unknownLabel;
-  return profile.full_name || profile.email;
 }
 
 export default async function ProjectMemoryPage({
@@ -192,7 +188,7 @@ export default async function ProjectMemoryPage({
                     {memory.verified && memory.verified_by && memory.verified_at && (
                       <p className="text-xs text-muted-foreground">
                         {t("verifiedBy", {
-                          name: nameFor(profilesById.get(memory.verified_by), t("unknown")),
+                          name: displayName(profilesById.get(memory.verified_by), t("unknown")),
                           date: new Date(memory.verified_at).toLocaleDateString(),
                         })}
                       </p>

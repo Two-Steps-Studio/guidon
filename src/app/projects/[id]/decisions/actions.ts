@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import type { ActivityAction } from "@/types/api";
 import type { Decision } from "@/types/context";
@@ -71,6 +69,11 @@ function parseDecisionForm(formData: FormData) {
 
 // Mirrors decisions_insert/update (001): owner/admin/developer; delete: owner/admin only.
 
+function revalidateDecisionViews(projectId: string) {
+  revalidatePath(`/projects/${projectId}/decisions`);
+  revalidatePath(`/projects/${projectId}/context`);
+}
+
 export async function createDecision(
   projectId: string,
   _prevState: DecisionFormState,
@@ -99,77 +102,8 @@ export async function createDecision(
   const linkSourceType = hasLink ? (linkSourceTypeRaw as string) : null;
   const linkSourceId = hasLink ? (linkSourceIdRaw as string).trim() : null;
 
-  if (hasDirectDatabase()) {
-    let decisionId: string;
-    let relationErrorMessage: string | null;
-
-    try {
-      [decisionId, relationErrorMessage] = await withUser(access.userId, async ({ query }) => {
-        const result = await query(
-          `INSERT INTO context_decisions
-             (project_id, title, description, impact, alternatives, status, decision_type, made_by, made_at, source_type, source_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), $9, $10)
-           RETURNING id`,
-          [
-            projectId,
-            parsed.title,
-            parsed.description,
-            parsed.impact,
-            parsed.alternatives,
-            parsed.status,
-            parsed.decision_type,
-            access.userId,
-            linkSourceType,
-            linkSourceId,
-          ]
-        );
-        const id = result.rows[0].id as string;
-
-        // Same "not rolled back together" reasoning as the Supabase branch
-        // below - no cross-table transaction spanning both inserts at this
-        // layer, so a relation failure here doesn't undo the decision.
-        let relationError: string | null = null;
-        if (hasLink) {
-          try {
-            await query(
-              `INSERT INTO context_relations (source_type, source_id, target_type, target_id, relation_type, created_by)
-               VALUES ($1, $2, 'decision', $3, 'decided_by', $4)`,
-              [linkSourceType, linkSourceId, id, access.userId]
-            );
-          } catch (error) {
-            relationError = error instanceof Error ? error.message : "Failed to link decision.";
-          }
-        }
-
-        return [id, relationError] as const;
-      });
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to create decision." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "decision_created",
-      projectId,
-      entityType: "decision",
-      entityId: decisionId,
-      details: { title: parsed.title },
-    });
-
-    if (relationErrorMessage) {
-      return { error: `Decision saved, but linking it failed: ${relationErrorMessage}` };
-    }
-
-    revalidatePath(`/projects/${projectId}/decisions`);
-    revalidatePath(`/projects/${projectId}/context`);
-    if (linkSourceType === "task") {
-      revalidatePath(`/projects/${projectId}/work`);
-    }
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const db = dataClient(access.userId);
+  const { data: decision, error } = await db
     .from("context_decisions")
     .insert({
       project_id: projectId,
@@ -185,32 +119,33 @@ export async function createDecision(
       source_type: linkSourceType,
       source_id: linkSourceId,
     })
-    .select("id")
+    .select<{ id: string }>("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error || !decision) return { error: error?.message ?? "Failed to create decision." };
 
   await logActivity({
     userId: access.userId,
     action: "decision_created",
     projectId,
     entityType: "decision",
-    entityId: data.id,
+    entityId: decision.id,
     details: { title: parsed.title },
   });
 
-  if (hasLink && data) {
+  if (hasLink) {
     // Mirrors context_relations_insert (001, rewritten by migration 011):
     // owner/admin/developer - same tier already required above, so this
-    // never fails on permissions when the first insert succeeded. Not
-    // rolled back together with the decision (no cross-table transaction
-    // available at this layer): if this second insert fails, the decision
-    // itself is still saved, it just will not appear as linked yet.
-    const { error: relationError } = await supabase.from("context_relations").insert({
+    // never fails on permissions when the first insert succeeded. A separate
+    // write on purpose: if linking fails, the decision itself stays saved
+    // and the caller is told only the link is missing. (The old self-hosted
+    // branch ran both inserts in one transaction, where a failed link
+    // aborted the transaction and lost the decision too.)
+    const { error: relationError } = await db.from("context_relations").insert({
       source_type: linkSourceType,
       source_id: linkSourceId,
       target_type: "decision",
-      target_id: data.id,
+      target_id: decision.id,
       relation_type: "decided_by",
       created_by: access.userId,
     });
@@ -220,8 +155,7 @@ export async function createDecision(
     }
   }
 
-  revalidatePath(`/projects/${projectId}/decisions`);
-  revalidatePath(`/projects/${projectId}/context`);
+  revalidateDecisionViews(projectId);
   if (linkSourceType === "task") {
     revalidatePath(`/projects/${projectId}/work`);
   }
@@ -249,58 +183,13 @@ export async function updateDecision(
         ? "decision_rejected"
         : "decision_updated";
 
-  if (hasDirectDatabase()) {
-    try {
-      // project_id scoping plus a RETURNING/row-count check: without it, a
-      // decisionId that doesn't belong to projectId (stale client state, or
-      // a crafted request against a decision from a different project this
-      // caller happens to also have a role on) would previously either
-      // update the wrong project's decision (no WHERE project_id at all) or,
-      // once RLS's own project-scoped policy caught it, silently affect zero
-      // rows while this still returned `{ error: null }` "success" and logged
-      // a misleading activity entry. Same bug class as setStatusAndLog
-      // (lib/api/task-transitions.ts).
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `UPDATE context_decisions
-           SET title = $1, description = $2, impact = $3, alternatives = $4, status = $5, decision_type = $6
-           WHERE id = $7 AND project_id = $8
-           RETURNING id`,
-          [
-            parsed.title,
-            parsed.description,
-            parsed.impact,
-            parsed.alternatives,
-            parsed.status,
-            parsed.decision_type,
-            decisionId,
-            projectId,
-          ]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This decision does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to update decision." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action,
-      projectId,
-      entityType: "decision",
-      entityId: decisionId,
-      details: { title: parsed.title },
-    });
-
-    revalidatePath(`/projects/${projectId}/decisions`);
-    revalidatePath(`/projects/${projectId}/context`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // project_id scoping plus a RETURNING/row-count check: a decisionId that
+  // doesn't belong to projectId (stale client state, or a crafted request
+  // against a decision from a different project this caller also has a role
+  // on) - or one RLS silently filtered - must not come back as success with
+  // a misleading activity entry. Same bug class as setStatusAndLog
+  // (lib/api/task-transitions.ts).
+  const { data, error } = await dataClient(access.userId)
     .from("context_decisions")
     .update({
       title: parsed.title,
@@ -315,9 +204,7 @@ export async function updateDecision(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This decision does not belong to this project." };
-  }
+  if (data.length === 0) return { error: "This decision does not belong to this project." };
 
   await logActivity({
     userId: access.userId,
@@ -328,8 +215,7 @@ export async function updateDecision(
     details: { title: parsed.title },
   });
 
-  revalidatePath(`/projects/${projectId}/decisions`);
-  revalidatePath(`/projects/${projectId}/context`);
+  revalidateDecisionViews(projectId);
   return { error: null };
 }
 
@@ -342,28 +228,7 @@ export async function deleteDecision(
     return { error: "You do not have permission to delete decisions." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM context_decisions WHERE id = $1 AND project_id = $2 RETURNING id", [
-          decisionId,
-          projectId,
-        ])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This decision does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to delete decision." };
-    }
-
-    revalidatePath(`/projects/${projectId}/decisions`);
-    revalidatePath(`/projects/${projectId}/context`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("context_decisions")
     .delete()
     .eq("id", decisionId)
@@ -371,11 +236,8 @@ export async function deleteDecision(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This decision does not belong to this project." };
-  }
+  if (data.length === 0) return { error: "This decision does not belong to this project." };
 
-  revalidatePath(`/projects/${projectId}/decisions`);
-  revalidatePath(`/projects/${projectId}/context`);
+  revalidateDecisionViews(projectId);
   return { error: null };
 }

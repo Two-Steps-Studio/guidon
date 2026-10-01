@@ -235,7 +235,9 @@
       "advancedAnalytics": "Zaawansowana analityka",
       "teamRoles": "Role zespołowe",
       "auditLogs": "Dzienniki audytu",
-      "prioritySupport": "Priorytetowe wsparcie"
+      "prioritySupport": "Priorytetowe wsparcie",
+      "unlimitedMembers": "Nieograniczona liczba osób",
+      "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
     },
     "footer": {
       "terms": "Regulamin",
@@ -300,7 +302,10 @@
       "roleMemberOption": "Członek",
       "roleAdminOption": "Administrator",
       "roleOwnerOption": "Właściciel",
-      "adding": "Dodawanie..."
+      "adding": "Dodawanie...",
+      "seatsUsed": "Zajęte miejsca: {used} z {limit} (plan {plan})",
+      "upgradeForSeats": "Zmień plan, by dodać osoby",
+      "seatsFull": "Organizacja wykorzystała wszystkie miejsca ({limit}) w planie {plan}. Zmień plan, aby dodać kolejne osoby."
     },
     "settings": {
       "title": "Ustawienia organizacji",
@@ -351,7 +356,8 @@
         "delete": "Usuń webhook",
         "deleteConfirm": "Usunąć ten webhook? Wysyłka zatrzyma się od razu.",
         "lastDelivery": "Ostatnia wysyłka {when} · HTTP {status}",
-        "neverDelivered": "Jeszcze nic nie wysłano."
+        "neverDelivered": "Jeszcze nic nie wysłano.",
+        "nativeFormatHint": "Wysyłane jako zwykła wiadomość w formacie tej usługi zamiast JSON-a Guidona."
       }
     },
     "billing": {
@@ -384,7 +390,9 @@
       "manageBilling": "Zarządzaj płatnością",
       "currentPlanBadge": "Bieżący plan",
       "checkoutSuccess": "Subskrypcja zaktualizowana - może chwilę potrwać, zanim pojawi się poniżej.",
-      "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło."
+      "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło.",
+      "membersLabel": "Członkowie",
+      "colMembers": "Członkowie"
     }
   },
   "projects": {
@@ -1115,6 +1123,7 @@
     "creating": "Tworzenie...",
     "createApiKeyButton": "Utwórz klucz API",
     "revokedBadge": "Odwołany",
+    "revokeKeyAria": "Unieważnij {name}",
     "keyRevokedToast": "Odwołano \"{name}\".",
     "noApiKeysYet": "Brak kluczy API.",
     "createdOn": "Utworzono {date}",
@@ -1226,8 +1235,9 @@
     },
     "desktop": {
       "title": "Guidon Desktop",
-      "description": "Natywne okno dla Guidon Cloud lub Twojego własnego serwera, z automatycznymi aktualizacjami. Instalatory są publikowane w GitHub Releases.",
-      "releases": "GitHub Releases"
+      "description": "Twoja tablica w osobnej aplikacji na Windows: ikona w zasobniku, okno zadań zawsze na wierzchu, start z systemem i instalacja poniższych pluginów do projektów jednym kliknięciem.",
+      "download": "Pobierz dla Windows",
+      "releases": "Wszystkie wydania"
     }
   },
   "lightbox": {

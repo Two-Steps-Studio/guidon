@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
+import { type TaskCardMember } from "@/components/work/task-card";
+import { initialsFor } from "@/lib/people";
 import { addMember, changeMemberRole, removeMember, type MemberRow } from "./actions";
 import type { ProjectRole } from "@/types/project";
 

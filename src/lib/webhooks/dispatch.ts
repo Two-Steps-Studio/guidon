@@ -11,6 +11,7 @@ import {
 } from "@/lib/data/organization-webhooks";
 import type { WebhookEventType } from "./events";
 import { checkWebhookUrl, signWebhookPayload } from "./security";
+import { describeReceiverError, detectWebhookFormat, formatWebhookBody, type WebhookEnvelope } from "./formats";
 
 const DELIVERY_TIMEOUT_MS = 5_000;
 
@@ -39,7 +40,10 @@ export async function deliverWebhook(
 
   const deliveryId = randomUUID();
   const timestamp = Math.floor(Date.now() / 1000);
-  const body = JSON.stringify({ id: deliveryId, type, created_at: new Date(timestamp * 1000).toISOString(), ...payload });
+  const envelope = { id: deliveryId, type, created_at: new Date(timestamp * 1000).toISOString(), ...payload };
+  // Discord/Slack URLs get their native message shape (see formats.ts); the
+  // signature headers are sent either way and cover whichever body goes out.
+  const body = JSON.stringify(formatWebhookBody(detectWebhookFormat(target.url), envelope as WebhookEnvelope));
 
   try {
     const response = await fetch(urlCheck.url, {
@@ -56,11 +60,17 @@ export async function deliverWebhook(
       },
       body,
     });
-    await response.body?.cancel();
     if (response.status >= 300 && response.status < 400) {
+      await response.body?.cancel();
       return { status: response.status, error: "Redirects are not followed - use the final URL." };
     }
-    return { status: response.status, error: response.ok ? null : `Receiver responded with HTTP ${response.status}.` };
+    if (response.ok) {
+      await response.body?.cancel();
+      return { status: response.status, error: null };
+    }
+    // Keep why the receiver refused - bounded, so a huge error page can't stall this.
+    const detail = await response.text().then((text) => text.slice(0, 2000)).catch(() => "");
+    return { status: response.status, error: describeReceiverError(response.status, detail) };
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "TimeoutError";
     return {

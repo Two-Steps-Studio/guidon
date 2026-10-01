@@ -48,6 +48,21 @@ Headers:
 | `X-Guidon-Signature` | `sha256=` + hex HMAC-SHA256 of `"<timestamp>.<raw body>"` with the webhook's signing secret. |
 | `User-Agent` | `Guidon-Webhooks/1.0` |
 
+## Discord and Slack
+
+Point a webhook straight at a **Discord** channel webhook
+(`https://discord.com/api/webhooks/…`) or a **Slack** incoming webhook
+(`https://hooks.slack.com/services/…`) and Guidon sends a native chat message
+instead of the JSON above - an embed with the task title, link, new status and
+project on Discord, a one-line message with a link on Slack. The format is
+picked from the URL; the settings page marks such webhooks with a
+Discord/Slack badge. Both services reject the plain JSON envelope with HTTP 400,
+which is what you'd see in "Last delivery" before this.
+
+When a receiver answers with an error, "Last delivery" shows the first line of
+its response (e.g. Discord's `Cannot send an empty message`), not just the
+status code.
+
 ## Verifying the signature
 
 The signing secret (`whsec_…`) is shown once, when the webhook is created. Verify

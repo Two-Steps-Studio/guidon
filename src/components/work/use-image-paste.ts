@@ -2,23 +2,9 @@
 
 import { useState, type ClipboardEvent, type DragEvent, type RefObject } from "react";
 import { attachmentImageMarkdown, useTaskAttachments } from "@/components/work/task-attachments-context";
+import { imageFiles, withReadableName } from "@/lib/files/images";
 
 type TextField = HTMLTextAreaElement | HTMLInputElement;
-
-function imageFiles(list: FileList | null | undefined): File[] {
-  return Array.from(list ?? []).filter((file) => file.type.startsWith("image/"));
-}
-
-/**
- * Clipboard screenshots arrive as a generic "image.png" - give them a
- * name that still means something in the attachment list a week later.
- */
-function friendlyName(file: File): File {
-  if (file.name && file.name !== "image.png") return file;
-  const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
-  const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") || "png";
-  return new File([file], `screenshot-${stamp}.${ext}`, { type: file.type });
-}
 
 /**
  * Paste (Ctrl/Cmd+V) or drop images into a task text field: each image is
@@ -47,7 +33,7 @@ export function useImagePaste({
   const insert = (files: File[]) => {
     const el = fieldRef.current;
     const tokens = files.map((file, i) => ({
-      file: friendlyName(file),
+      file: withReadableName(file, "screenshot"),
       token: `![Uploading ${Date.now().toString(36)}-${i}…]()`,
     }));
     const insertion = tokens.map((t) => t.token).join("\n");

@@ -10,6 +10,7 @@ use url::Url;
 use crate::store::{stored_server_url, stored_tasks_on_top};
 
 pub(crate) const TASKS_WINDOW_LABEL: &str = "tasks";
+pub(crate) const PLUGINS_WINDOW_LABEL: &str = "plugins";
 
 /// Create the main window, pointed at whatever server URL is currently
 /// persisted (Task 2), not a value hardcoded in tauri.conf.json (Task 1) -
@@ -22,7 +23,10 @@ pub(crate) fn create_main_window(app: &AppHandle) -> tauri::Result<()> {
     let main_url = stored_server_url(app);
     let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(main_url))
         .title("Guidon Desktop")
-        .inner_size(800.0, 600.0)
+        // First-run size; afterwards tauri-plugin-window-state restores
+        // whatever the user left it at (lib.rs).
+        .inner_size(1280.0, 800.0)
+        .min_inner_size(640.0, 480.0)
         .build()?;
 
     // Close-to-tray (Task 3): clicking the window's X button would
@@ -96,6 +100,16 @@ pub(crate) fn set_tasks_on_top(app: &AppHandle, on_top: bool) {
     }
 }
 
+/// Bring the main window to the front - used when a second launch is
+/// redirected here by the single-instance plugin (lib.rs).
+pub(crate) fn show_main_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 /// Toggle the main window's visibility - used by both the tray icon's own
 /// click and its "Show/Hide Guidon" menu item (tray.rs). Hidden rather than
 /// destroyed by close-to-tray above, so this is a plain show/hide flip, not
@@ -138,6 +152,31 @@ pub(crate) fn open_or_focus_settings(app: &AppHandle) {
             .build()
     {
         log_app_error(app, &format!("failed to open settings window: {err}"));
+    }
+}
+
+/// Show the Install Editor Plugins window, creating it on first use. Local,
+/// bundled content like Settings, with only the installer commands
+/// (capabilities/plugins.json).
+pub(crate) fn open_or_focus_plugins(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window(PLUGINS_WINDOW_LABEL) {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    if let Err(err) = WebviewWindowBuilder::new(
+        app,
+        PLUGINS_WINDOW_LABEL,
+        WebviewUrl::App("plugins.html".into()),
+    )
+    .title("Install Editor Plugins")
+    .inner_size(560.0, 640.0)
+    .min_inner_size(440.0, 480.0)
+    .build()
+    {
+        log_app_error(app, &format!("failed to open plugins window: {err}"));
     }
 }
 
@@ -189,12 +228,21 @@ mod tests {
 
     #[test]
     fn keeps_a_self_hosted_sub_path() {
-        assert_eq!(url("https://example.com/guidon"), "https://example.com/guidon/mini");
-        assert_eq!(url("https://example.com/guidon/"), "https://example.com/guidon/mini");
+        assert_eq!(
+            url("https://example.com/guidon"),
+            "https://example.com/guidon/mini"
+        );
+        assert_eq!(
+            url("https://example.com/guidon/"),
+            "https://example.com/guidon/mini"
+        );
     }
 
     #[test]
     fn drops_query_and_fragment() {
-        assert_eq!(url("https://example.com/?a=1#x"), "https://example.com/mini");
+        assert_eq!(
+            url("https://example.com/?a=1#x"),
+            "https://example.com/mini"
+        );
     }
 }
