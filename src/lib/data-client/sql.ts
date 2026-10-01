@@ -115,6 +115,13 @@ function returning(columns: string[] | null): string {
   return columns ? ` RETURNING ${columnList(columns)}` : "";
 }
 
+/** `SELECT count(*)` with the query's filters - supabase-js's `{ count: "exact", head: true }`. */
+export function compileCount(spec: QuerySpec): CompiledQuery {
+  if (spec.op !== "select") throw new Error("data-client: count() only applies to a select");
+  const values: unknown[] = [];
+  return { text: `SELECT count(*)::int AS count FROM ${ident(spec.table)}${where(spec.filters, values)}`, values };
+}
+
 export function compile(spec: QuerySpec): CompiledQuery {
   const table = ident(spec.table);
   const values: unknown[] = [];

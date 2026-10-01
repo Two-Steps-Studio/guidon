@@ -1,6 +1,7 @@
 import "server-only";
 
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { serviceDataClient } from "@/lib/data-client";
 
 /**
  * Guidon Cloud (hosted - no self-managed Postgres) caps an organization's
@@ -104,13 +105,9 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
 
 /** Seats in use: every organization_members row, owner included. Service role - the count must not depend on what the caller can see. */
 export async function getOrganizationMemberCount(organizationId: string): Promise<number> {
-  const { createServiceClient } = await import("@/lib/supabase-server");
-  const { count, error } = await createServiceClient()
-    .from("organization_members")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId);
+  const { data, error } = await serviceDataClient().from("organization_members").eq("organization_id", organizationId).count();
   if (error) throw new Error(`Could not count organization members: ${error.message}`);
-  return count ?? 0;
+  return data;
 }
 
 /**
@@ -125,12 +122,11 @@ export async function getOrganizationMemberCount(organizationId: string): Promis
  */
 export async function hostedTaskLimitError(projectId: string, organizationId: string): Promise<string | null> {
   if (hasDirectDatabase()) return null;
-  const { createServiceClient } = await import("@/lib/supabase-server");
-  const [{ planName, taskLimitPerProject }, { count }] = await Promise.all([
+  const [{ planName, taskLimitPerProject }, { data: count }] = await Promise.all([
     getOrgPlanLimits(organizationId),
-    createServiceClient().from("tasks").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+    serviceDataClient().from("tasks").eq("project_id", projectId).count(),
   ]);
-  if (!isTaskLimitReached(count ?? 0, taskLimitPerProject)) return null;
+  if (!isTaskLimitReached(count, taskLimitPerProject)) return null;
   return `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`;
 }
 
@@ -155,12 +151,11 @@ export async function hostedMemberLimitError(organizationId: string): Promise<st
  */
 export async function hostedProjectMemberLimitError(projectId: string, organizationId: string): Promise<string | null> {
   if (hasDirectDatabase()) return null;
-  const { createServiceClient } = await import("@/lib/supabase-server");
-  const [{ planName, memberLimitPerProject }, { count }] = await Promise.all([
+  const [{ planName, memberLimitPerProject }, { data: count }] = await Promise.all([
     getOrgPlanLimits(organizationId),
-    createServiceClient().from("project_members").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+    serviceDataClient().from("project_members").eq("project_id", projectId).count(),
   ]);
-  if (!isMemberLimitReached(count ?? 0, memberLimitPerProject)) return null;
+  if (!isMemberLimitReached(count, memberLimitPerProject)) return null;
   return `You've reached your ${planName} plan's limit of ${memberLimitPerProject} members per project. Upgrade your plan to add more people.`;
 }
 

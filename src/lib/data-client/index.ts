@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withServiceRole, withUser } from "@/lib/db/session";
 import { createClient, createServiceClient } from "@/lib/supabase-server";
-import { compile, compileRpc, parseColumns, type Filter, type FilterOp, type OrderBy, type QuerySpec } from "./sql";
+import { compile, compileCount, compileRpc, parseColumns, type Filter, type FilterOp, type OrderBy, type QuerySpec } from "./sql";
 
 /**
  * One data-access API for both deployment modes.
@@ -151,6 +151,25 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
   /** Zero or one row; an error only for several. */
   maybeSingle(): Promise<DataResult<T | null>> {
     return this.execute("maybeSingle") as Promise<DataResult<T | null>>;
+  }
+
+  /** How many rows match the filters (columns, order and limit are ignored). */
+  async count(): Promise<DataResult<number>> {
+    if (this.backend.kind === "sql") {
+      try {
+        const { text, values } = compileCount(this.spec);
+        const result = await this.backend.run(text, values);
+        return { data: (result.rows[0] as { count: number }).count, error: null };
+      } catch (error) {
+        return { data: 0, error: toDataError(error) };
+      }
+    }
+    const client = await this.backend.client();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- same dynamic chaining as executeSupabase
+    let q: any = client.from(this.spec.table).select("*", { count: "exact", head: true });
+    for (const f of this.spec.filters) q = q[f.op](f.column, f.value);
+    const { count, error } = await q;
+    return error ? { data: 0, error: toDataError(error) } : { data: count ?? 0, error: null };
   }
 
   then<A = DataResult<T[]>, B = never>(

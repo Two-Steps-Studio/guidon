@@ -29,7 +29,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 // The data client's SQL compiler (pure TS, no imports) - run with
 // --experimental-strip-types, see package.json's test:db.
-import { compile, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
+import { compile, compileCount, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DB_DIR = path.join(HERE, "..", "..", "src", "db");
@@ -2315,6 +2315,15 @@ await withUser(A, async () => {
     rejected = true;
   }
   check("rpc: zla nazwa funkcji odrzucona", rejected);
+
+  const counted = await withUser(A, () =>
+    run(compileCount({ table: "tasks", op: "select", columns: ["*"], filters: [{ column: "id", op: "in", value: ids }, { column: "sort_order", op: "gte", value: 20 }], order: [], limit: null, values: null }))
+  );
+  check("count() z filtrami", counted.rows[0]?.count === 2, JSON.stringify(counted.rows));
+  const hidden = await withUser(B, () =>
+    run(compileCount({ table: "tasks", op: "select", columns: ["*"], filters: [{ column: "id", op: "in", value: ids }], order: [], limit: null, values: null }))
+  );
+  check("count() pod RLS: obcy widzi 0", hidden.rows[0]?.count === 0, JSON.stringify(hidden.rows));
 
   await db.query("DELETE FROM public.tasks WHERE id = ANY($1)", [ids]);
 }
