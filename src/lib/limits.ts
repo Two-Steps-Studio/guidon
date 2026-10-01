@@ -134,6 +134,36 @@ export async function hostedTaskLimitError(projectId: string, organizationId: st
   return `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`;
 }
 
+/**
+ * Guidon Cloud seats (plans.member_limit, migration 051) as a readable
+ * error, or null when there's room - always null self-hosted.
+ */
+export async function hostedMemberLimitError(organizationId: string): Promise<string | null> {
+  if (hasDirectDatabase()) return null;
+  const [{ planName, memberLimit }, count] = await Promise.all([
+    getOrgPlanLimits(organizationId),
+    getOrganizationMemberCount(organizationId).catch(() => null),
+  ]);
+  if (count === null) return "Could not check this organization's member limit. Try again.";
+  if (!isMemberLimitReached(count, memberLimit)) return null;
+  return memberLimitMessage(planName, memberLimit ?? 0);
+}
+
+/**
+ * Guidon Cloud's people-per-project cap (plans.member_limit_per_project,
+ * migration 049), same shape as hostedTaskLimitError.
+ */
+export async function hostedProjectMemberLimitError(projectId: string, organizationId: string): Promise<string | null> {
+  if (hasDirectDatabase()) return null;
+  const { createServiceClient } = await import("@/lib/supabase-server");
+  const [{ planName, memberLimitPerProject }, { count }] = await Promise.all([
+    getOrgPlanLimits(organizationId),
+    createServiceClient().from("project_members").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+  ]);
+  if (!isMemberLimitReached(count ?? 0, memberLimitPerProject)) return null;
+  return `You've reached your ${planName} plan's limit of ${memberLimitPerProject} members per project. Upgrade your plan to add more people.`;
+}
+
 /** `limit === null` means unlimited, same convention as the plans table itself. */
 export function isTaskLimitReached(currentTaskCount: number, limit: number | null): boolean {
   if (limit === null) return false;

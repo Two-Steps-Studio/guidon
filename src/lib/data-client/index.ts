@@ -2,8 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
-import { createClient } from "@/lib/supabase-server";
+import { withServiceRole, withUser } from "@/lib/db/session";
+import { createClient, createServiceClient } from "@/lib/supabase-server";
 import { compile, compileRpc, parseColumns, type Filter, type FilterOp, type OrderBy, type QuerySpec } from "./sql";
 
 /**
@@ -57,8 +57,11 @@ type Row = Record<string, unknown>;
 type Shape = object;
 type Mode = "many" | "single" | "maybeSingle";
 
+/** Runs one statement in a session - withUser(id) or withServiceRole. */
+type SqlRunner = (text: string, values: unknown[]) => Promise<{ rows: unknown[] }>;
+
 type Backend =
-  | { kind: "sql"; userId: string }
+  | { kind: "sql"; run: SqlRunner }
   | { kind: "supabase"; client: () => Promise<SupabaseClient> };
 
 function toDataError(error: unknown): DataError {
@@ -158,14 +161,14 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
   }
 
   private async execute(mode: Mode): Promise<DataResult<T[] | T | null>> {
-    return this.backend.kind === "sql" ? this.executeSql(this.backend.userId, mode) : this.executeSupabase(mode);
+    return this.backend.kind === "sql" ? this.executeSql(this.backend.run, mode) : this.executeSupabase(mode);
   }
 
-  private async executeSql(userId: string, mode: Mode): Promise<DataResult<T[] | T | null>> {
+  private async executeSql(run: SqlRunner, mode: Mode): Promise<DataResult<T[] | T | null>> {
     let rows: T[];
     try {
       const { text, values } = compile(this.spec);
-      const result = await withUser(userId, ({ query }) => query(text, values));
+      const result = await run(text, values);
       rows = result.rows as T[];
     } catch (error) {
       return { data: mode === "many" ? [] : null, error: toDataError(error) };
@@ -242,8 +245,9 @@ async function runRpc(
   if (backend.kind === "sql") {
     try {
       const { text, values } = compileRpc(fn, args, shape);
-      const result = await withUser(backend.userId, ({ query }) => query(text, values));
-      return { data: shape === "rows" ? result.rows : (result.rows[0]?.value ?? null), error: null };
+      const result = await backend.run(text, values);
+      const first = result.rows[0] as { value?: unknown } | undefined;
+      return { data: shape === "rows" ? result.rows : (first?.value ?? null), error: null };
     } catch (error) {
       return { data: empty, error: toDataError(error) };
     }
@@ -256,20 +260,7 @@ async function runRpc(
   return { data: data === "" ? null : (data ?? null), error: null };
 }
 
-/**
- * Data client acting as `userId`. In Supabase mode the queries run on
- * `supabase` (defaults to the request's cookie-session client - pass
- * getApiUserClient(userId) from API-key routes); in self-hosted mode they
- * run under withUser(userId).
- */
-export function dataClient(
-  userId: string,
-  options: { supabase?: () => Promise<SupabaseClient> } = {}
-): DataClient {
-  const backend: Backend = hasDirectDatabase()
-    ? { kind: "sql", userId }
-    : { kind: "supabase", client: options.supabase ?? (createClient as () => Promise<SupabaseClient>) };
-
+function clientFor(backend: Backend): DataClient {
   return {
     from<T extends Shape = Row>(table: string) {
       return new QueryBuilder<T>(backend, table);
@@ -281,6 +272,39 @@ export function dataClient(
       return runRpc(backend, fn, args, "rows") as Promise<DataResult<T[]>>;
     },
   };
+}
+
+/**
+ * Data client acting as `userId`. In Supabase mode the queries run on
+ * `supabase` (defaults to the request's cookie-session client - pass
+ * getApiUserClient(userId) from API-key routes); in self-hosted mode they
+ * run under withUser(userId).
+ */
+export function dataClient(
+  userId: string,
+  options: { supabase?: () => Promise<SupabaseClient> } = {}
+): DataClient {
+  return clientFor(
+    hasDirectDatabase()
+      ? { kind: "sql", run: (text, values) => withUser(userId, ({ query }) => query(text, values)) }
+      : { kind: "supabase", client: options.supabase ?? (createClient as () => Promise<SupabaseClient>) }
+  );
+}
+
+/**
+ * Data client with RLS bypassed: withServiceRole() self-hosted,
+ * createServiceClient() on Supabase. Same rule as those two - only where
+ * the code has already decided the caller may do this (admin panel,
+ * webhooks, notifications fan-out, cleanup that follows an authorized
+ * action) and a comment at the call site says why. Never for reads or
+ * writes that should simply follow the caller's own permissions.
+ */
+export function serviceDataClient(): DataClient {
+  return clientFor(
+    hasDirectDatabase()
+      ? { kind: "sql", run: (text, values) => withServiceRole(({ query }) => query(text, values)) }
+      : { kind: "supabase", client: async () => createServiceClient() as unknown as SupabaseClient }
+  );
 }
 
 export type { QueryBuilder };

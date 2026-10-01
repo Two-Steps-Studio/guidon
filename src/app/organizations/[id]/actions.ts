@@ -2,10 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import { getUniqueProjectSlug } from "@/lib/data/project-slug";
 import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
@@ -64,8 +62,6 @@ export async function createProject(
   // entirely when not - so anything but "on" means AI was switched off.
   const aiEnabled = formData.get("aiEnabled") === "on";
 
-  let projectId: string;
-
   // The owner membership is created by private.handle_new_project(); do not
   // insert it again here (see migration 005/README for the duplicate-key bug
   // that caused). Requires migration 009 for the RETURNING select below.
@@ -74,53 +70,32 @@ export async function createProject(
   // creation working if that migration has not been applied yet.
   const { slug, siblingCount } = await getUniqueProjectSlug(orgId, access.userId, name);
 
-  if (hasDirectDatabase()) {
-    try {
-      projectId = await withUser(access.userId, async ({ query }) => {
-        const result = await query(
-          `INSERT INTO projects (organization_id, name, slug, description, project_type, methodology, ai_enabled, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           RETURNING id`,
-          [orgId, name.trim(), slug, trimmedDescription, projectType, methodology, aiEnabled, access.userId]
-        );
-        return result.rows[0].id as string;
-      });
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to create project." };
-    }
-  } else {
-    const supabase = await createClient();
-
-    // Guidon Cloud's 1-project-per-organization cap (src/lib/limits.ts) -
-    // self-hosted installs never hit this, see isHostedProjectLimitReached().
-    // Checked here, not just hidden in the UI (organizations/[id]/page.tsx),
-    // because this Server Action is reachable directly regardless of what
-    // the page renders.
-    if (isHostedProjectLimitReached(siblingCount, access.organization.project_limit)) {
-      return { error: hostedProjectLimitMessage(access.organization.project_limit) };
-    }
-
-    const { data: project, error } = await supabase
-      .from("projects")
-      .insert({
-        organization_id: orgId,
-        name: name.trim(),
-        slug,
-        description: trimmedDescription,
-        project_type: projectType,
-        methodology,
-        ai_enabled: aiEnabled,
-        created_by: access.userId,
-      })
-      .select("id")
-      .single();
-
-    if (error) {
-      return { error: error.message };
-    }
-
-    projectId = project.id;
+  // Guidon Cloud's per-organization project cap (src/lib/limits.ts) -
+  // self-hosted never hits it, see isHostedProjectLimitReached(). Checked
+  // here, not just hidden in the UI (organizations/[id]/page.tsx), because
+  // this Server Action is reachable directly regardless of what the page
+  // renders.
+  if (isHostedProjectLimitReached(siblingCount, access.organization.project_limit)) {
+    return { error: hostedProjectLimitMessage(access.organization.project_limit) };
   }
+
+  const { data: project, error } = await dataClient(access.userId)
+    .from<{ id: string }>("projects")
+    .insert({
+      organization_id: orgId,
+      name: name.trim(),
+      slug,
+      description: trimmedDescription,
+      project_type: projectType,
+      methodology,
+      ai_enabled: aiEnabled,
+      created_by: access.userId,
+    })
+    .select("id")
+    .single();
+
+  if (error || !project) return { error: error?.message ?? "Failed to create project." };
+  const projectId = project.id;
 
   await logActivity({
     userId: access.userId,
@@ -185,23 +160,15 @@ export async function updateOrganizationAvatar(
     return { error: error instanceof Error ? error.message : "Failed to upload organization image." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      await withUser(access.userId, ({ query }) =>
-        query("UPDATE organizations SET avatar_url = $1 WHERE id = $2", [avatarUrl, orgId])
-      );
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to update organization." };
-    }
-  } else {
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from("organizations")
-      .update({ avatar_url: avatarUrl })
-      .eq("id", orgId);
-
-    if (error) return { error: error.message };
-  }
+  // Row check: an RLS-blocked update (organizations_update needs owner/admin,
+  // same as canManageOrg above) shouldn't report success.
+  const { data: updated, error } = await dataClient(access.userId)
+    .from("organizations")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", orgId)
+    .select("id");
+  if (error) return { error: error.message };
+  if (updated.length === 0) return { error: "You do not have permission to edit this organization." };
 
   revalidatePath(`/organizations/${orgId}`);
   revalidatePath("/organizations");

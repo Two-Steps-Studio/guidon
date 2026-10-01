@@ -8,7 +8,7 @@ import { dataClient } from "@/lib/data-client";
 import { isUniqueViolation } from "@/lib/db/errors";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
-import { getOrgPlanLimits, isMemberLimitReached } from "@/lib/limits";
+import { hostedProjectMemberLimitError } from "@/lib/limits";
 import type { ProjectRole } from "@/types/project";
 
 /**
@@ -66,23 +66,10 @@ export async function addMember(
     return { member: null, error: "This person is not a member of this project's organization." };
   }
 
-  // Guidon Cloud only - self-hosted has no plans (same as checkTaskLimit in
-  // work/actions.ts). Members already over a lowered limit are kept; only
-  // adding more is blocked.
-  if (!hasDirectDatabase()) {
-    const { planName, memberLimitPerProject } = await getOrgPlanLimits(access.project.organization_id);
-    const supabase = await createClient();
-    const { count } = await supabase
-      .from("project_members")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId);
-    if (isMemberLimitReached(count ?? 0, memberLimitPerProject)) {
-      return {
-        member: null,
-        error: `You've reached your ${planName} plan's limit of ${memberLimitPerProject} members per project. Upgrade your plan to add more people.`,
-      };
-    }
-  }
+  // Guidon Cloud only (plans.member_limit_per_project, 049). Members
+  // already over a lowered limit are kept; only adding more is blocked.
+  const limitError = await hostedProjectMemberLimitError(projectId, access.project.organization_id);
+  if (limitError) return { member: null, error: limitError };
 
   const { data: member, error } = await db
     .from("project_members")
