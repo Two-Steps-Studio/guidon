@@ -113,6 +113,27 @@ export async function getOrganizationMemberCount(organizationId: string): Promis
   return count ?? 0;
 }
 
+/**
+ * Guidon Cloud's tasks-per-project cap, as one readable error (or null when
+ * there's room, and always null self-hosted). The single check behind every
+ * way a task gets created - the board, subtasks, /api/v1 tasks and in-game
+ * reports - so they can't drift apart again: the API used to count only
+ * top-level tasks and skip subtasks entirely, which reopened the bypass the
+ * board had closed (nesting unlimited subtasks under one task). Counts every
+ * row in `tasks` for the project, subtasks included, with the service role
+ * so the number doesn't depend on what the caller can see.
+ */
+export async function hostedTaskLimitError(projectId: string, organizationId: string): Promise<string | null> {
+  if (hasDirectDatabase()) return null;
+  const { createServiceClient } = await import("@/lib/supabase-server");
+  const [{ planName, taskLimitPerProject }, { count }] = await Promise.all([
+    getOrgPlanLimits(organizationId),
+    createServiceClient().from("tasks").select("id", { count: "exact", head: true }).eq("project_id", projectId),
+  ]);
+  if (!isTaskLimitReached(count ?? 0, taskLimitPerProject)) return null;
+  return `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`;
+}
+
 /** `limit === null` means unlimited, same convention as the plans table itself. */
 export function isTaskLimitReached(currentTaskCount: number, limit: number | null): boolean {
   if (limit === null) return false;

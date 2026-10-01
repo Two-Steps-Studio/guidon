@@ -5,7 +5,7 @@ import { apiDataClient } from "@/lib/api/api-data-client";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
-import { getOrgPlanLimits, isTaskLimitReached } from "@/lib/limits";
+import { hostedTaskLimitError } from "@/lib/limits";
 import { emitTaskEvent } from "@/lib/events/task-events";
 import type { TaskPriority, TaskStatus } from "@/types/task";
 
@@ -87,9 +87,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     typeof body?.parent_task_id === "string" && body.parent_task_id.trim() ? body.parent_task_id.trim() : null;
   if (parentTaskId && !isValidUuid(parentTaskId)) return invalidIdResponse("parent_task_id");
 
-  // A subtask always starts todo/medium and is never counted against the
-  // plan's task limit - matches createSubtask exactly, which never took a
-  // status/priority input at all. A top-level task defaults to backlog but
+  // A subtask always starts todo/medium - matches createSubtask exactly,
+  // which never took a status/priority input at all. A top-level task defaults to backlog but
   // may specify any column directly (matches createTask, which the web
   // board's per-column "+" button already relies on to create straight
   // into the clicked column rather than always landing in Backlog).
@@ -121,27 +120,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!parent) {
       return NextResponse.json({ error: "parent_task_id not found in this project." }, { status: 400 });
     }
-  } else if (!hasDirectDatabase()) {
-    // Plan task limit - hosted-only, mirrors createTask's own asymmetry
-    // exactly (self-hosted has never had this limit; subtasks never count
-    // against it either way). Needs a row count, which stays on supabase-js.
-    const { planName, taskLimitPerProject } = await getOrgPlanLimits(project.organization_id);
-    const supabase = await getApiUserClient(guard.userId);
-    const { count } = await supabase
-      .from("tasks")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId)
-      .is("parent_task_id", null);
-
-    if (isTaskLimitReached(count ?? 0, taskLimitPerProject)) {
-      return NextResponse.json(
-        {
-          error: `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`,
-        },
-        { status: 403 }
-      );
-    }
   }
+
+  // Plan task limit (Guidon Cloud only), subtasks included - the same
+  // check as the board's createTask/createSubtask, see hostedTaskLimitError.
+  const limitError = await hostedTaskLimitError(projectId, project.organization_id);
+  if (limitError) return NextResponse.json({ error: limitError }, { status: 403 });
 
   const { data: created, error } = await db
     .from("tasks")

@@ -176,3 +176,26 @@ export function compile(spec: QuerySpec): CompiledQuery {
     }
   }
 }
+
+/**
+ * A call to a function in the `public` schema - what supabase-js's
+ * `.rpc(fn, args)` reaches through PostgREST. Arguments are passed by name
+ * (`p_id => $1`), like PostgREST does, so their order never matters and each
+ * bind parameter takes its type from the function's signature (a JS array
+ * becomes uuid[] or int[] as the function declares).
+ *
+ * `shape` decides how the result is read:
+ * - "value": a scalar or void function -> `SELECT public.fn(...) AS value`
+ * - "rows":  a set-returning / TABLE function -> `SELECT * FROM public.fn(...)`
+ */
+export function compileRpc(fn: string, args: Record<string, unknown>, shape: "value" | "rows"): CompiledQuery {
+  const values: unknown[] = [];
+  const named = Object.entries(args)
+    .map(([name, value]) => {
+      values.push(value);
+      return `${ident(name)} => $${values.length}`;
+    })
+    .join(", ");
+  const call = `public.${ident(fn)}(${named})`;
+  return { text: shape === "value" ? `SELECT ${call} AS value` : `SELECT * FROM ${call}`, values };
+}

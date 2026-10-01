@@ -29,7 +29,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 // The data client's SQL compiler (pure TS, no imports) - run with
 // --experimental-strip-types, see package.json's test:db.
-import { compile, parseColumns } from "../../src/lib/data-client/sql.ts";
+import { compile, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DB_DIR = path.join(HERE, "..", "..", "src", "db");
@@ -2272,6 +2272,51 @@ await withUser(A, async () => {
   check("DELETE bez filtrow odrzucony", throws(() => compile(spec({ op: "delete", columns: null }))));
   const q = compile(spec({ filters: [{ column: "name", op: "eq", value: "x'; drop table tasks; --" }] }));
   check("wartosci zawsze jako parametry", !q.text.includes("drop") && q.values[0].includes("drop"), q.text);
+}
+
+// data-client rpc(): named arguments, array params typed by the function's
+// own signature, and RLS still applying inside a non-SECURITY DEFINER function.
+{
+  const ids = await withUser(A, async () => {
+    const rows = [];
+    for (const [title, order] of [["rpc-a", 1], ["rpc-b", 2], ["rpc-c", 3]]) {
+      const r = await db.query(
+        "INSERT INTO public.tasks (project_id, title, status, priority, tags, created_by, sort_order) VALUES ($1, $2, 'todo', 'medium', '{}', $3, $4) RETURNING id",
+        [projectId, title, A, order]
+      );
+      rows.push(r.rows[0].id);
+    }
+    return rows;
+  });
+  const renumber = (orders) =>
+    compileRpc("renumber_task_sort_orders", { p_ids: ids, p_sort_orders: orders, p_project_id: projectId }, "value");
+  const orders = async () =>
+    (await db.query("SELECT sort_order FROM public.tasks WHERE id = ANY($1) ORDER BY title", [ids])).rows.map((r) => r.sort_order).join(",");
+
+  await withUser(B, () => run(renumber([7, 8, 9])));
+  check("rpc pod RLS: obcy uzytkownik nic nie przenumeruje", (await orders()) === "1,2,3", await orders());
+
+  const voidResult = await withUser(A, () => run(renumber([30, 20, 10])));
+  check("rpc (void): nazwane argumenty + tablice uuid[]/int[]", (await orders()) === "30,20,10", await orders());
+  check("rpc (void): value = null", voidResult.rows[0]?.value === null, JSON.stringify(voidResult.rows));
+
+  const found = await withUser(A, () =>
+    run(compileRpc("find_user_id_by_email", { p_organization_id: orgId, p_email: "d@example.test" }, "value"))
+  );
+  check("rpc (skalar): find_user_id_by_email zwraca uuid", found.rows[0]?.value === D, JSON.stringify(found.rows));
+
+  const rowsSql = compileRpc("get_discord_webhook_url", { p_project_id: projectId }, "rows").text;
+  check("rpcRows: SELECT * FROM public.fn(...)", rowsSql === 'SELECT * FROM public."get_discord_webhook_url"("p_project_id" => $1)', rowsSql);
+
+  let rejected = false;
+  try {
+    compileRpc("x(); drop table tasks; --", {}, "value");
+  } catch {
+    rejected = true;
+  }
+  check("rpc: zla nazwa funkcji odrzucona", rejected);
+
+  await db.query("DELETE FROM public.tasks WHERE id = ANY($1)", [ids]);
 }
 
 section("38. plans.member_limit_per_project: limit czlonkow projektu w planach (migracja 049)");

@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
-import { compile, parseColumns, type Filter, type FilterOp, type OrderBy, type QuerySpec } from "./sql";
+import { compile, compileRpc, parseColumns, type Filter, type FilterOp, type OrderBy, type QuerySpec } from "./sql";
 
 /**
  * One data-access API for both deployment modes.
@@ -33,9 +33,13 @@ import { compile, parseColumns, type Filter, type FilterOp, type OrderBy, type Q
  * Both return `{ data, error }` with the same shapes, and errors carry the
  * Postgres SQLSTATE in `code` either way (see lib/db/errors.ts).
  *
+ * RPCs to `public` functions go through `rpc` (scalar/void result) or
+ * `rpcRows` (TABLE / SETOF result), the same split supabase-js makes by
+ * return type.
+ *
  * Not covered, on purpose - keep writing these by hand: PostgREST embeds
- * (joins), RPCs, and multi-statement work that must be atomic (each awaited
- * query here is its own transaction in self-hosted mode).
+ * (joins) and multi-statement work that must be atomic (each awaited query
+ * here is its own transaction in self-hosted mode).
  */
 
 export interface DataError {
@@ -222,6 +226,34 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
 
 export interface DataClient {
   from<T extends Shape = Row>(table: string): QueryBuilder<T>;
+  /** A scalar or void `public` function; `data` is its return value (null for void). */
+  rpc<V = unknown>(fn: string, args?: Record<string, unknown>): Promise<DataResult<V | null>>;
+  /** A TABLE / SETOF `public` function; `data` is its rows. */
+  rpcRows<T extends Shape = Row>(fn: string, args?: Record<string, unknown>): Promise<DataResult<T[]>>;
+}
+
+async function runRpc(
+  backend: Backend,
+  fn: string,
+  args: Record<string, unknown>,
+  shape: "value" | "rows"
+): Promise<DataResult<unknown>> {
+  const empty = shape === "rows" ? [] : null;
+  if (backend.kind === "sql") {
+    try {
+      const { text, values } = compileRpc(fn, args, shape);
+      const result = await withUser(backend.userId, ({ query }) => query(text, values));
+      return { data: shape === "rows" ? result.rows : (result.rows[0]?.value ?? null), error: null };
+    } catch (error) {
+      return { data: empty, error: toDataError(error) };
+    }
+  }
+  const client = await backend.client();
+  const { data, error } = await client.rpc(fn, args);
+  if (error) return { data: empty, error: toDataError(error) };
+  // PostgREST returns "" for a void function - same as the SQL branch's null.
+  if (shape === "rows") return { data: Array.isArray(data) ? data : data == null ? [] : [data], error: null };
+  return { data: data === "" ? null : (data ?? null), error: null };
 }
 
 /**
@@ -241,6 +273,12 @@ export function dataClient(
   return {
     from<T extends Shape = Row>(table: string) {
       return new QueryBuilder<T>(backend, table);
+    },
+    rpc<V = unknown>(fn: string, args: Record<string, unknown> = {}) {
+      return runRpc(backend, fn, args, "value") as Promise<DataResult<V | null>>;
+    },
+    rpcRows<T extends Shape = Row>(fn: string, args: Record<string, unknown> = {}) {
+      return runRpc(backend, fn, args, "rows") as Promise<DataResult<T[]>>;
     },
   };
 }

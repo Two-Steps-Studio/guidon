@@ -5,7 +5,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { buildReport, REPORT_LIMITS, validateReportFiles } from "@/lib/api/game-report";
-import { getOrgPlanLimits, isStorageLimitReached, isTaskLimitReached } from "@/lib/limits";
+import { getOrgPlanLimits, hostedTaskLimitError, isStorageLimitReached } from "@/lib/limits";
 import { getOrganizationStorageUsage, uploadTaskAttachment } from "@/lib/storage/storage";
 import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 
@@ -119,15 +119,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!project) return NextResponse.json({ error: "Project not found." }, { status: 404 });
 
     // Plan limits - hosted-only, same asymmetry as the tasks route and uploadTaskAttachment.
-    const { planName, taskLimitPerProject, storageLimitBytes } = await getOrgPlanLimits(project.organization_id);
-    const { count } = await supabase
-      .from("tasks")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId)
-      .is("parent_task_id", null);
-    if (isTaskLimitReached(count ?? 0, taskLimitPerProject)) {
-      return NextResponse.json({ error: `The project reached its ${planName} plan's task limit.` }, { status: 403 });
-    }
+    const limitError = await hostedTaskLimitError(projectId, project.organization_id);
+    if (limitError) return NextResponse.json({ error: limitError }, { status: 403 });
+    const { planName, storageLimitBytes } = await getOrgPlanLimits(project.organization_id);
     if (totalBytes > 0) {
       const usage = await getOrganizationStorageUsage(project.organization_id);
       if (isStorageLimitReached(usage + totalBytes, storageLimitBytes)) {
