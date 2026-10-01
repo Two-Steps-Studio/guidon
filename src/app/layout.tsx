@@ -105,7 +105,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="min-h-screen bg-background text-foreground">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <main>{children}</main>
+          {/* No <main> here: each page shell supplies exactly one - the
+              sidebar layout's SidebarInset for app pages, auth/layout.tsx,
+              the landing and legal pages, /mini, error.tsx. Wrapping
+              children here too nested two main landmarks on every page. */}
+          {children}
           {/* theme defaults to "light" and does NOT track the OS on its own
               (ask-sonner), so it must be told explicitly - "system" follows
               prefers-color-scheme the same way globals.css does; "light"/

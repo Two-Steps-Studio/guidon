@@ -2,9 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminAccess } from "@/lib/data/admin-access";
-import { createServiceClient } from "@/lib/supabase-server";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withServiceRole } from "@/lib/db/session";
+import { serviceDataClient } from "@/lib/data-client";
 import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "./constants";
 
 export type UpdateProjectLimitState = {
@@ -27,28 +25,13 @@ export async function updateOrganizationProjectLimit(
     return { error: "Project limit must be a whole number of 1 or more." };
   }
 
-  if (hasDirectDatabase()) {
-    const result = await withServiceRole(({ query }) =>
-      query("UPDATE organizations SET project_limit = $1 WHERE id = $2 RETURNING id", [newLimit, orgId])
-    );
-    if (result.rows.length === 0) {
-      return { error: "This organization no longer exists." };
-    }
-  } else {
-    const supabase = createServiceClient();
-    const { data: updatedRows, error } = await supabase
-      .from("organizations")
-      .update({ project_limit: newLimit })
-      .eq("id", orgId)
-      .select("id");
-
-    if (error) {
-      return { error: error.message };
-    }
-    if (!updatedRows || updatedRows.length === 0) {
-      return { error: "This organization no longer exists." };
-    }
-  }
+  const { data: updated, error } = await serviceDataClient()
+    .from("organizations")
+    .update({ project_limit: newLimit })
+    .eq("id", orgId)
+    .select("id");
+  if (error) return { error: error.message };
+  if (updated.length === 0) return { error: "This organization no longer exists." };
 
   revalidatePath("/admin/organizations");
   return { error: null };
@@ -84,62 +67,32 @@ export async function updateOrganizationPlan(
     return { error: "Unknown plan." };
   }
 
-  const UNLIMITED_SENTINEL = ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL;
+  const db = serviceDataClient();
 
-  if (hasDirectDatabase()) {
-    const subResult = await withServiceRole(({ query }) =>
-      query(
-        `UPDATE subscriptions SET plan_id = $1, current_period_start = now(), cancel_at_period_end = false, updated_at = now() WHERE organization_id = $2 RETURNING id`,
-        [planId, orgId]
-      )
-    );
-    if (subResult.rows.length === 0) {
-      return { error: "This organization has no subscription row to update." };
-    }
-    const planRow = await withServiceRole(({ query }) =>
-      query("SELECT project_limit FROM plans WHERE id = $1", [planId])
-    );
-    const newLimit = planRow.rows[0]?.project_limit ?? UNLIMITED_SENTINEL;
-    const orgResult = await withServiceRole(({ query }) =>
-      query("UPDATE organizations SET project_limit = $1 WHERE id = $2 RETURNING id", [
-        newLimit ?? UNLIMITED_SENTINEL,
-        orgId,
-      ])
-    );
-    if (orgResult.rows.length === 0) {
-      return { error: "This organization no longer exists." };
-    }
-  } else {
-    const supabase = createServiceClient();
+  const { data: plan } = await db
+    .from<{ project_limit: number | null }>("plans")
+    .select("project_limit")
+    .eq("id", planId)
+    .maybeSingle();
 
-    const { data: plan } = await supabase
-      .from("plans")
-      .select("project_limit")
-      .eq("id", planId)
-      .single();
+  const now = new Date().toISOString();
+  const { data: updatedSubs, error: subError } = await db
+    .from("subscriptions")
+    .update({ plan_id: planId, current_period_start: now, cancel_at_period_end: false, updated_at: now })
+    .eq("organization_id", orgId)
+    .select("id");
+  if (subError) return { error: subError.message };
+  if (updatedSubs.length === 0) return { error: "This organization has no subscription row to update." };
 
-    const { data: updatedSubs, error: subError } = await supabase
-      .from("subscriptions")
-      .update({ plan_id: planId, current_period_start: new Date().toISOString(), cancel_at_period_end: false })
-      .eq("organization_id", orgId)
-      .select("id");
-
-    if (subError) return { error: subError.message };
-    if (!updatedSubs || updatedSubs.length === 0) {
-      return { error: "This organization has no subscription row to update." };
-    }
-
-    const { data: updatedOrgs, error: orgError } = await supabase
-      .from("organizations")
-      .update({ project_limit: plan?.project_limit ?? UNLIMITED_SENTINEL })
-      .eq("id", orgId)
-      .select("id");
-
-    if (orgError) return { error: orgError.message };
-    if (!updatedOrgs || updatedOrgs.length === 0) {
-      return { error: "This organization no longer exists." };
-    }
-  }
+  // organizations.project_limit is NOT NULL (014), so an unlimited plan
+  // (NULL in plans) is stored as the sentinel - see ./constants.ts.
+  const { data: updatedOrgs, error: orgError } = await db
+    .from("organizations")
+    .update({ project_limit: plan?.project_limit ?? ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL })
+    .eq("id", orgId)
+    .select("id");
+  if (orgError) return { error: orgError.message };
+  if (updatedOrgs.length === 0) return { error: "This organization no longer exists." };
 
   revalidatePath("/admin/organizations");
   return { error: null };
