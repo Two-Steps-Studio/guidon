@@ -75,6 +75,13 @@ function toDataError(error: unknown): DataError {
   return { message: String(error) };
 }
 
+/** Replays filters onto a supabase-js builder; `isNot` is its `.not(col, "is", v)`. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- supabase-js builder, see executeSupabase
+function applyFilters(q: any, filters: Filter[]): any {
+  for (const f of filters) q = f.op === "isNot" ? q.not(f.column, "is", f.value) : q[f.op](f.column, f.value);
+  return q;
+}
+
 class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>> {
   private spec: QuerySpec;
 
@@ -130,6 +137,8 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
   ilike(column: string, pattern: string) { return this.filter(column, "ilike", pattern); }
   in(column: string, values: readonly unknown[]) { return this.filter(column, "in", [...values]); }
   is(column: string, value: null | boolean) { return this.filter(column, "is", value); }
+  /** supabase-js's `.not(column, "is", value)`. */
+  isNot(column: string, value: null | boolean) { return this.filter(column, "isNot", value); }
 
   order(column: string, options: { ascending?: boolean; nullsFirst?: boolean } = {}): this {
     this.spec.order.push({ column, ascending: options.ascending ?? true, nullsFirst: options.nullsFirst } satisfies OrderBy);
@@ -167,7 +176,7 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
     const client = await this.backend.client();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- same dynamic chaining as executeSupabase
     let q: any = client.from(this.spec.table).select("*", { count: "exact", head: true });
-    for (const f of this.spec.filters) q = q[f.op](f.column, f.value);
+    q = applyFilters(q, this.spec.filters);
     const { count, error } = await q;
     return error ? { data: 0, error: toDataError(error) } : { data: count ?? 0, error: null };
   }
@@ -232,7 +241,7 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
         q = table.delete();
         break;
     }
-    for (const f of spec.filters) q = q[f.op](f.column, f.value);
+    q = applyFilters(q, spec.filters);
     if (spec.op !== "select" && columns) q = q.select(columns);
     for (const o of spec.order) q = q.order(o.column, { ascending: o.ascending, nullsFirst: o.nullsFirst });
     if (spec.limit !== null) q = q.limit(spec.limit);

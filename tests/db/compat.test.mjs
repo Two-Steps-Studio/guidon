@@ -2305,6 +2305,12 @@ await withUser(A, async () => {
   );
   check("rpc (skalar): find_user_id_by_email zwraca uuid", found.rows[0]?.value === D, JSON.stringify(found.rows));
 
+  const discordRows = await withUser(A, () => run(compileRpc("get_discord_webhook_url", { p_project_id: projectId }, "rows")));
+  check("rpcRows: funkcja TABLE wykonuje sie pod RLS (tablica wierszy)", Array.isArray(discordRows.rows), JSON.stringify(discordRows.rows));
+  const notNull = await withUser(A, () =>
+    run(compile({ table: "tasks", op: "select", columns: ["title"], filters: [{ column: "id", op: "in", value: ids }, { column: "parent_task_id", op: "isNot", value: null }], order: [], limit: null, values: null }))
+  );
+  check("isNot(null) -> IS NOT NULL", notNull.rows.length === 0, JSON.stringify(notNull.rows));
   const rowsSql = compileRpc("get_discord_webhook_url", { p_project_id: projectId }, "rows").text;
   check("rpcRows: SELECT * FROM public.fn(...)", rowsSql === 'SELECT * FROM public."get_discord_webhook_url"("p_project_id" => $1)', rowsSql);
 
@@ -2324,6 +2330,27 @@ await withUser(A, async () => {
     run(compileCount({ table: "tasks", op: "select", columns: ["*"], filters: [{ column: "id", op: "in", value: ids }], order: [], limit: null, values: null }))
   );
   check("count() pod RLS: obcy widzi 0", hidden.rows[0]?.count === 0, JSON.stringify(hidden.rows));
+
+  // saveDiscordWebhookUrl: update-then-insert works for an owner; the upsert
+  // it replaced can't, because EXCLUDED.webhook_url_encrypted needs a SELECT
+  // grant authenticated doesn't have (035).
+  await expectRejected(
+    "stary upsert webhooka Discorda -> permission denied (powod zmiany)",
+    () => withUser(A, () => db.query(
+      `INSERT INTO public.discord_integrations (project_id, webhook_url_encrypted, linked_by) VALUES ($1, 'enc', $2)
+       ON CONFLICT (project_id) DO UPDATE SET webhook_url_encrypted = EXCLUDED.webhook_url_encrypted`, [projectId, A])),
+    /permission denied/
+  );
+  await withUser(A, async () => {
+    const upd = await run(compile({ table: "discord_integrations", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ webhook_url_encrypted: "enc1" }] }));
+    const ins = upd.rows.length > 0 ? upd : await run(compile({ table: "discord_integrations", op: "insert", columns: ["project_id"], filters: [], order: [], limit: null, values: [{ project_id: projectId, webhook_url_encrypted: "enc1", linked_by: A }] }));
+    check("zapis webhooka Discorda: insert przez ownera dziala", ins.rows.length === 1, JSON.stringify(ins.rows));
+    const again = await run(compile({ table: "discord_integrations", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ webhook_url_encrypted: "enc2" }] }));
+    check("zapis webhooka Discorda: ponowny zapis to update", again.rows.length === 1, JSON.stringify(again.rows));
+  });
+  const stored = await db.query("SELECT webhook_url_encrypted FROM public.discord_integrations WHERE project_id = $1", [projectId]);
+  check("zapis webhooka Discorda: wartosc zapisana", stored.rows[0]?.webhook_url_encrypted === "enc2", JSON.stringify(stored.rows));
+  await db.query("DELETE FROM public.discord_integrations WHERE project_id = $1", [projectId]);
 
   await db.query("DELETE FROM public.tasks WHERE id = ANY($1)", [ids]);
 }

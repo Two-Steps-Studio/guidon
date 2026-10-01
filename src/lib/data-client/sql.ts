@@ -9,7 +9,7 @@
  * values are ever passed as bind parameters, and they always are.
  */
 
-export type FilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "like" | "ilike" | "in" | "is";
+export type FilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "like" | "ilike" | "in" | "is" | "isNot";
 
 export interface Filter {
   column: string;
@@ -106,6 +106,11 @@ function where(filters: Filter[], values: unknown[]): string {
         if (value === true) return `${col} IS TRUE`;
         if (value === false) return `${col} IS FALSE`;
         throw new Error("data-client: .is() only takes null, true or false");
+      case "isNot":
+        if (value === null) return `${col} IS NOT NULL`;
+        if (value === true) return `${col} IS NOT TRUE`;
+        if (value === false) return `${col} IS NOT FALSE`;
+        throw new Error("data-client: .isNot() only takes null, true or false");
     }
   });
   return ` WHERE ${parts.join(" AND ")}`;
