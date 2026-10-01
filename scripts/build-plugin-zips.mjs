@@ -18,6 +18,7 @@ import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises"
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateRawSync } from "node:zlib";
+import { createHash } from "node:crypto";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, "..");
@@ -137,13 +138,31 @@ async function main() {
   await rm(DEST, { recursive: true, force: true });
   await mkdir(DEST, { recursive: true });
 
+  // manifest.json: what Guidon Desktop's plugin installer reads from the
+  // server it's connected to (desktop/src-tauri/src/plugins.rs) - the same
+  // zips the /plugins page links, plus a SHA-256 the installer checks
+  // before extracting and where each one goes (catalog.json's `install`).
+  const manifest = { version: 1, plugins: [] };
+
   for (const plugin of catalog.plugins) {
+    const downloads = [];
     for (const download of plugin.downloads) {
       const { buffer, count } = await buildZip(path.join(ROOT, download.source), download.root);
       await writeFile(path.join(DEST, download.file), buffer);
       console.log(`  ${download.file}: ${count} files, ${(buffer.length / 1024).toFixed(0)} KB`);
+      downloads.push({
+        id: download.id,
+        kind: download.kind,
+        file: download.file,
+        root: download.root,
+        size: buffer.length,
+        sha256: createHash("sha256").update(buffer).digest("hex"),
+        install: download.install ?? null,
+      });
     }
+    manifest.plugins.push({ id: plugin.id, name: plugin.name, requires: plugin.requires, downloads });
   }
+  await writeFile(path.join(DEST, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`Built plugin downloads in ${path.relative(ROOT, DEST)}`);
 }
 

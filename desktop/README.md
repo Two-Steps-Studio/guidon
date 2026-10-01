@@ -140,6 +140,38 @@ Windows login, via `tauri-plugin-autostart`
   `build.rs` for how those two app commands get their own ACL
   permission identifiers generated in the first place.
 
+## Installing editor plugins
+
+"Guidon Desktop" → **Install Editor Plugins...** (also in the tray menu)
+opens a local window (`src/plugins.html` + `plugins.js`, Rust side in
+`src-tauri/src/plugins.rs`) that installs the Unity, Unreal, Godot and
+Blender plugins straight into a project:
+
+1. It loads `<server>/downloads/plugins/manifest.json` from the server in
+   Settings - written by the web app's `scripts/build-plugin-zips.mjs` with
+   each zip's SHA-256 and `plugins/catalog.json`'s `install` spec (target
+   sub-folder, a marker file that identifies the right kind of folder, and
+   the next step to show). A new plugin or a fixed install path ships with
+   the server; no desktop release needed.
+2. You pick a plugin, then your project folder in the native dialog. The
+   window says where it'll go (e.g. `MyGame/Assets/GuidonTasks`) and warns
+   if the folder doesn't look like a project of that kind.
+3. Install downloads the zip, checks it against the manifest's SHA-256, and
+   extracts it. Existing files are overwritten, nothing is deleted - so an
+   update keeps Unity's `.meta` files and anything you added.
+
+Security: the window only passes a download id and a folder; the zip URL
+and checksum always come from the manifest Rust fetched itself, every zip
+entry must stay under the plugin's own folder (no `..`, no absolute paths,
+validated before anything is written), and the four commands are granted to
+this window only (`capabilities/plugins.json`), never to the remote `main`
+and `tasks` windows. VS Code and JetBrains are source downloads that need a
+build, so they stay on the website's /plugins page.
+
+Tests: `cargo test --lib` covers paths, markers, extraction and zip-slip;
+`GUIDON_TEST_SERVER=http://localhost:2137 cargo test --lib live_` installs
+every plugin from a running server into temp folders.
+
 ## Auto-update
 
 The app can check GitHub Releases for a newer version and offer to install

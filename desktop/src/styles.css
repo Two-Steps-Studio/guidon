@@ -156,3 +156,123 @@ button:disabled {
     color: #ff8a75;
   }
 }
+
+/* Install Editor Plugins window (plugins.html) */
+.container-wide {
+  max-width: 500px;
+  text-align: left;
+}
+
+.container-wide h1,
+.container-wide .subtitle {
+  text-align: center;
+}
+
+.step-title {
+  margin: 0 0 0.5em;
+  font-size: 1em;
+}
+
+.plugin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.plugin {
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
+  padding: 0.7em 0.9em;
+  background-color: #ffffff;
+}
+
+.plugin-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5em;
+}
+
+.plugin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.plugin-actions button {
+  font-size: 0.9em;
+  padding: 0.4em 0.8em;
+}
+
+.path {
+  margin: 0.6em 0 0;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.8em;
+  word-break: break-all;
+}
+
+.next {
+  margin: 0.8em 0 0;
+  padding: 0.7em 0.9em;
+  border-radius: 8px;
+  background-color: #eef3fd;
+  font-size: 0.9em;
+}
+
+.status-warn {
+  color: #a15c00;
+}
+
+button.primary {
+  background-color: #396cd8;
+  border-color: #396cd8;
+  color: #ffffff;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0.4em 0;
+  color: #396cd8;
+  font-size: 0.85em;
+  align-self: flex-start;
+}
+
+#step-folder,
+#step-done {
+  display: flex;
+  flex-direction: column;
+}
+
+#step-folder[hidden],
+#step-done[hidden] {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .plugin {
+    background-color: #0f0f0f98;
+    border-color: #444;
+  }
+
+  .next {
+    background-color: #1d2a44;
+  }
+
+  .status-warn {
+    color: #f0b75e;
+  }
+
+  button.primary {
+    background-color: #396cd8;
+    color: #ffffff;
+  }
+
+  .link-button {
+    background: none;
+    color: #8fb0f5;
+  }
+}

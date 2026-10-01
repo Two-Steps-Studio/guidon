@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Install Editor Plugins</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <main class="container container-wide">
+      <h1>Install Editor Plugins</h1>
+      <p class="subtitle" id="server-line">Loading plugins…</p>
+
+      <section id="step-pick" aria-labelledby="pick-heading">
+        <h2 id="pick-heading" class="step-title">1. Choose a plugin</h2>
+        <ul id="plugin-list" class="plugin-list"></ul>
+        <p id="catalog-status" class="status" role="status" aria-live="polite"></p>
+        <button type="button" id="retry-button" hidden>Try again</button>
+      </section>
+
+      <section id="step-folder" aria-labelledby="folder-heading" hidden>
+        <h2 id="folder-heading" class="step-title">2. Choose the folder</h2>
+        <p class="hint" id="folder-hint"></p>
+        <button type="button" id="pick-folder-button">Choose folder…</button>
+        <p class="path" id="folder-path"></p>
+        <p class="status" id="folder-status" role="status" aria-live="polite"></p>
+        <button type="button" id="install-button" class="primary" disabled>Install</button>
+        <button type="button" id="back-button" class="link-button">← Back to the plugin list</button>
+      </section>
+
+      <section id="step-done" aria-labelledby="done-heading" hidden>
+        <h2 id="done-heading" class="step-title">Done</h2>
+        <p class="status" id="done-summary"></p>
+        <p class="path" id="done-path"></p>
+        <p class="next" id="done-next"></p>
+        <button type="button" id="another-button">Install another plugin</button>
+      </section>
+    </main>
+
+    <script type="module" src="plugins.js"></script>
+  </body>
+</html>

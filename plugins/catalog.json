@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source for the /plugins download page (src/app/plugins) and scripts/build-plugin-zips.mjs, which packs every `downloads[]` entry into public/downloads/plugins/<file> before `next dev`/`next build`. `source` is relative to the repo root; `root` is the folder name the files sit under inside the zip (what the user extracts or copies into their project).",
+  "$comment": "Single source for the /plugins download page (src/app/plugins) and scripts/build-plugin-zips.mjs, which packs every `downloads[]` entry into public/downloads/plugins/<file> before `next dev`/`next build`. `source` is relative to the repo root; `root` is the folder name the files sit under inside the zip (what the user extracts or copies into their project). `install` (optional) tells Guidon Desktop's plugin installer where the zip's `root` goes: into `<chosen folder>/<into>/`, after checking `marker` (a relative path, or `*.ext` for any top-level file with that extension) exists in the chosen folder; `folder` describes what to pick and `next` (with {server}) what to do afterwards. Downloads without it (source builds) aren't installable from the desktop app.",
   "plugins": [
     {
       "id": "unity",
@@ -8,8 +8,32 @@
       "requires": null,
       "readme": "plugins/unity/GuidonTasks/README.md",
       "downloads": [
-        { "id": "unity-tasks", "kind": "tasks", "source": "plugins/unity/GuidonTasks", "root": "GuidonTasks", "file": "guidon-unity-tasks.zip" },
-        { "id": "unity-reports", "kind": "reports", "source": "plugins/unity/GuidonReports", "root": "GuidonReports", "file": "guidon-unity-reports.zip" }
+        {
+          "id": "unity-tasks",
+          "kind": "tasks",
+          "source": "plugins/unity/GuidonTasks",
+          "root": "GuidonTasks",
+          "file": "guidon-unity-tasks.zip",
+          "install": {
+            "into": "Assets",
+            "marker": "ProjectSettings/ProjectVersion.txt",
+            "folder": "Unity project folder (the one containing Assets/ and ProjectSettings/)",
+            "next": "In Unity: Window → Guidon → Tasks, set Base URL to {server} and log in."
+          }
+        },
+        {
+          "id": "unity-reports",
+          "kind": "reports",
+          "source": "plugins/unity/GuidonReports",
+          "root": "GuidonReports",
+          "file": "guidon-unity-reports.zip",
+          "install": {
+            "into": "Assets",
+            "marker": "ProjectSettings/ProjectVersion.txt",
+            "folder": "Unity project folder (the one containing Assets/ and ProjectSettings/)",
+            "next": "In Unity: Assets → Create → Guidon → Report Settings (in a Resources folder), then fill in Base Url {server}, the Project Id and a reports:write key."
+          }
+        }
       ]
     },
     {
@@ -19,8 +43,32 @@
       "requires": "UE 5, C++ project",
       "readme": "plugins/unreal/GuidonTasks/README.md",
       "downloads": [
-        { "id": "unreal-tasks", "kind": "tasks", "source": "plugins/unreal/GuidonTasks", "root": "GuidonTasks", "file": "guidon-unreal-tasks.zip" },
-        { "id": "unreal-reports", "kind": "reports", "source": "plugins/unreal/GuidonReports", "root": "GuidonReports", "file": "guidon-unreal-reports.zip" }
+        {
+          "id": "unreal-tasks",
+          "kind": "tasks",
+          "source": "plugins/unreal/GuidonTasks",
+          "root": "GuidonTasks",
+          "file": "guidon-unreal-tasks.zip",
+          "install": {
+            "into": "Plugins",
+            "marker": "*.uproject",
+            "folder": "Unreal project folder (the one containing the .uproject file)",
+            "next": "Reopen the project and let the editor build the module, then open Window → Guidon Tasks, check the Base URL ({server}) and log in."
+          }
+        },
+        {
+          "id": "unreal-reports",
+          "kind": "reports",
+          "source": "plugins/unreal/GuidonReports",
+          "root": "GuidonReports",
+          "file": "guidon-unreal-reports.zip",
+          "install": {
+            "into": "Plugins",
+            "marker": "*.uproject",
+            "folder": "Unreal project folder (the one containing the .uproject file)",
+            "next": "Reopen the project to rebuild, then in Project Settings → Plugins → Guidon Reports set Base Url {server}, the Project Id and a reports:write key."
+          }
+        }
       ]
     },
     {
@@ -30,8 +78,32 @@
       "requires": "Godot 4.2+",
       "readme": "plugins/godot/README.md",
       "downloads": [
-        { "id": "godot-tasks", "kind": "tasks", "source": "plugins/godot/addons/guidon_tasks", "root": "addons/guidon_tasks", "file": "guidon-godot-tasks.zip" },
-        { "id": "godot-reports", "kind": "reports", "source": "plugins/godot/addons/guidon_reports", "root": "addons/guidon_reports", "file": "guidon-godot-reports.zip" }
+        {
+          "id": "godot-tasks",
+          "kind": "tasks",
+          "source": "plugins/godot/addons/guidon_tasks",
+          "root": "addons/guidon_tasks",
+          "file": "guidon-godot-tasks.zip",
+          "install": {
+            "into": "",
+            "marker": "project.godot",
+            "folder": "Godot project folder (the one containing project.godot)",
+            "next": "In Godot: Project → Project Settings → Plugins, enable Guidon Tasks, then log in to {server} from the Guidon panel."
+          }
+        },
+        {
+          "id": "godot-reports",
+          "kind": "reports",
+          "source": "plugins/godot/addons/guidon_reports",
+          "root": "addons/guidon_reports",
+          "file": "guidon-godot-reports.zip",
+          "install": {
+            "into": "",
+            "marker": "project.godot",
+            "folder": "Godot project folder (the one containing project.godot)",
+            "next": "In Godot: enable Guidon Reports under Project → Project Settings → Plugins, then set Base Url {server}, the Project Id and a reports:write key in Project Settings → General → Guidon Reports."
+          }
+        }
       ]
     },
     {
@@ -41,7 +113,19 @@
       "requires": "Blender 3.6+",
       "readme": "plugins/blender/README.md",
       "downloads": [
-        { "id": "blender-tasks", "kind": "tasks", "source": "plugins/blender/guidon_tasks", "root": "guidon_tasks", "file": "guidon-blender-tasks.zip" }
+        {
+          "id": "blender-tasks",
+          "kind": "tasks",
+          "source": "plugins/blender/guidon_tasks",
+          "root": "guidon_tasks",
+          "file": "guidon-blender-tasks.zip",
+          "install": {
+            "into": "",
+            "marker": null,
+            "folder": "Blender add-ons folder (…/Blender/<version>/scripts/addons)",
+            "next": "In Blender: Edit → Preferences → Add-ons, enable Guidon Tasks and log in to {server}."
+          }
+        }
       ]
     },
     {
@@ -51,7 +135,13 @@
       "requires": "VS Code 1.85+",
       "readme": "plugins/vscode/README.md",
       "downloads": [
-        { "id": "vscode-source", "kind": "source", "source": "plugins/vscode", "root": "guidon-vscode", "file": "guidon-vscode-source.zip" }
+        {
+          "id": "vscode-source",
+          "kind": "source",
+          "source": "plugins/vscode",
+          "root": "guidon-vscode",
+          "file": "guidon-vscode-source.zip"
+        }
       ]
     },
     {
@@ -61,7 +151,13 @@
       "requires": "2024.3+, JDK 17+",
       "readme": "plugins/jetbrains/README.md",
       "downloads": [
-        { "id": "jetbrains-source", "kind": "source", "source": "plugins/jetbrains", "root": "guidon-jetbrains", "file": "guidon-jetbrains-source.zip" }
+        {
+          "id": "jetbrains-source",
+          "kind": "source",
+          "source": "plugins/jetbrains",
+          "root": "guidon-jetbrains",
+          "file": "guidon-jetbrains-source.zip"
+        }
       ]
     }
   ]

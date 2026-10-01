@@ -10,6 +10,7 @@ use url::Url;
 use crate::store::{stored_server_url, stored_tasks_on_top};
 
 pub(crate) const TASKS_WINDOW_LABEL: &str = "tasks";
+pub(crate) const PLUGINS_WINDOW_LABEL: &str = "plugins";
 
 /// Create the main window, pointed at whatever server URL is currently
 /// persisted (Task 2), not a value hardcoded in tauri.conf.json (Task 1) -
@@ -141,6 +142,31 @@ pub(crate) fn open_or_focus_settings(app: &AppHandle) {
     }
 }
 
+/// Show the Install Editor Plugins window, creating it on first use. Local,
+/// bundled content like Settings, with only the installer commands
+/// (capabilities/plugins.json).
+pub(crate) fn open_or_focus_plugins(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window(PLUGINS_WINDOW_LABEL) {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    if let Err(err) = WebviewWindowBuilder::new(
+        app,
+        PLUGINS_WINDOW_LABEL,
+        WebviewUrl::App("plugins.html".into()),
+    )
+    .title("Install Editor Plugins")
+    .inner_size(560.0, 640.0)
+    .min_inner_size(440.0, 480.0)
+    .build()
+    {
+        log_app_error(app, &format!("failed to open plugins window: {err}"));
+    }
+}
+
 /// Record a non-fatal failure to a log file under the app's data directory,
 /// rather than crashing or (the previous behavior) `eprintln!`-ing into a
 /// console a packaged Windows GUI-subsystem exe doesn't have (see main.rs's
@@ -189,12 +215,21 @@ mod tests {
 
     #[test]
     fn keeps_a_self_hosted_sub_path() {
-        assert_eq!(url("https://example.com/guidon"), "https://example.com/guidon/mini");
-        assert_eq!(url("https://example.com/guidon/"), "https://example.com/guidon/mini");
+        assert_eq!(
+            url("https://example.com/guidon"),
+            "https://example.com/guidon/mini"
+        );
+        assert_eq!(
+            url("https://example.com/guidon/"),
+            "https://example.com/guidon/mini"
+        );
     }
 
     #[test]
     fn drops_query_and_fragment() {
-        assert_eq!(url("https://example.com/?a=1#x"), "https://example.com/mini");
+        assert_eq!(
+            url("https://example.com/?a=1#x"),
+            "https://example.com/mini"
+        );
     }
 }

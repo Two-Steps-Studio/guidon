@@ -58,6 +58,10 @@ export default async function PluginsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold">{t("title")}</h1>
           <p className="mt-1 max-w-3xl text-muted-foreground">{t("subtitle")}</p>
+          <p className="mt-3 flex max-w-3xl items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            <Monitor className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            {t("desktopHint")}
+          </p>
         </div>
 
         <div className="space-y-10">

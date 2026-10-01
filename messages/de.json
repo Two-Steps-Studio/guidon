@@ -1237,7 +1237,8 @@
       "title": "Guidon Desktop",
       "description": "Ein natives Fenster für Guidon Cloud oder deinen eigenen Server, mit automatischen Updates. Installer werden auf GitHub Releases veröffentlicht.",
       "releases": "GitHub Releases"
-    }
+    },
+    "desktopHint": "Du nutzt Guidon Desktop? Im Menü gibt es „Install Editor Plugins“: Plugin und Projektordner wählen, und die Dateien landen am richtigen Ort (Unity, Unreal, Godot, Blender)."
   },
   "lightbox": {
     "title": "Bild",

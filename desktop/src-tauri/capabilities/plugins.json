@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "plugins",
+  "description": "The Install Editor Plugins window (src/plugins.html, local bundled content served via tauri://, never remote) gets exactly the four installer commands from src/plugins.rs: plugin_catalog (fetch the connected server's /downloads/plugins/manifest.json), pick_plugin_folder (native folder dialog, run in Rust), check_plugin_folder and install_plugin (which take only a download id and a folder - the zip URL and checksum always come from the manifest Rust fetched itself). It writes files into a folder the user picked, so never grant these to the untrusted remote windows (capabilities/default.json) or make this apply globally.",
+  "windows": ["plugins"],
+  "permissions": [
+    "allow-plugin-catalog",
+    "allow-pick-plugin-folder",
+    "allow-check-plugin-folder",
+    "allow-install-plugin"
+  ]
+}

@@ -9,13 +9,19 @@ fn main() {
     // same pattern for the autostart plugin. Declaring them here generates
     // their ACL permission identifiers so they can be granted to the
     // Settings window's capability only (capabilities/settings.json) and
-    // never to the untrusted `main` window.
+    // never to the untrusted `main` window. The four plugin_* commands
+    // (src/plugins.rs) are granted only to the local Plugins window
+    // (capabilities/plugins.json).
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
             "get_server_url",
             "save_server_url",
             "get_autostart_enabled",
             "set_autostart_enabled",
+            "plugin_catalog",
+            "pick_plugin_folder",
+            "check_plugin_folder",
+            "install_plugin",
         ]),
     ))
     .expect("failed to run tauri-build");
