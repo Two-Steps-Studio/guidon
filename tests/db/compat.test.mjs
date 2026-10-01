@@ -29,7 +29,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 // The data client's SQL compiler (pure TS, no imports) - run with
 // --experimental-strip-types, see package.json's test:db.
-import { compile, parseColumns } from "../../src/lib/data-client/sql.ts";
+import { compile, compileCount, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DB_DIR = path.join(HERE, "..", "..", "src", "db");
@@ -2272,6 +2272,87 @@ await withUser(A, async () => {
   check("DELETE bez filtrow odrzucony", throws(() => compile(spec({ op: "delete", columns: null }))));
   const q = compile(spec({ filters: [{ column: "name", op: "eq", value: "x'; drop table tasks; --" }] }));
   check("wartosci zawsze jako parametry", !q.text.includes("drop") && q.values[0].includes("drop"), q.text);
+}
+
+// data-client rpc(): named arguments, array params typed by the function's
+// own signature, and RLS still applying inside a non-SECURITY DEFINER function.
+{
+  const ids = await withUser(A, async () => {
+    const rows = [];
+    for (const [title, order] of [["rpc-a", 1], ["rpc-b", 2], ["rpc-c", 3]]) {
+      const r = await db.query(
+        "INSERT INTO public.tasks (project_id, title, status, priority, tags, created_by, sort_order) VALUES ($1, $2, 'todo', 'medium', '{}', $3, $4) RETURNING id",
+        [projectId, title, A, order]
+      );
+      rows.push(r.rows[0].id);
+    }
+    return rows;
+  });
+  const renumber = (orders) =>
+    compileRpc("renumber_task_sort_orders", { p_ids: ids, p_sort_orders: orders, p_project_id: projectId }, "value");
+  const orders = async () =>
+    (await db.query("SELECT sort_order FROM public.tasks WHERE id = ANY($1) ORDER BY title", [ids])).rows.map((r) => r.sort_order).join(",");
+
+  await withUser(B, () => run(renumber([7, 8, 9])));
+  check("rpc pod RLS: obcy uzytkownik nic nie przenumeruje", (await orders()) === "1,2,3", await orders());
+
+  const voidResult = await withUser(A, () => run(renumber([30, 20, 10])));
+  check("rpc (void): nazwane argumenty + tablice uuid[]/int[]", (await orders()) === "30,20,10", await orders());
+  check("rpc (void): value = null", voidResult.rows[0]?.value === null, JSON.stringify(voidResult.rows));
+
+  const found = await withUser(A, () =>
+    run(compileRpc("find_user_id_by_email", { p_organization_id: orgId, p_email: "d@example.test" }, "value"))
+  );
+  check("rpc (skalar): find_user_id_by_email zwraca uuid", found.rows[0]?.value === D, JSON.stringify(found.rows));
+
+  const discordRows = await withUser(A, () => run(compileRpc("get_discord_webhook_url", { p_project_id: projectId }, "rows")));
+  check("rpcRows: funkcja TABLE wykonuje sie pod RLS (tablica wierszy)", Array.isArray(discordRows.rows), JSON.stringify(discordRows.rows));
+  const notNull = await withUser(A, () =>
+    run(compile({ table: "tasks", op: "select", columns: ["title"], filters: [{ column: "id", op: "in", value: ids }, { column: "parent_task_id", op: "isNot", value: null }], order: [], limit: null, values: null }))
+  );
+  check("isNot(null) -> IS NOT NULL", notNull.rows.length === 0, JSON.stringify(notNull.rows));
+  const rowsSql = compileRpc("get_discord_webhook_url", { p_project_id: projectId }, "rows").text;
+  check("rpcRows: SELECT * FROM public.fn(...)", rowsSql === 'SELECT * FROM public."get_discord_webhook_url"("p_project_id" => $1)', rowsSql);
+
+  let rejected = false;
+  try {
+    compileRpc("x(); drop table tasks; --", {}, "value");
+  } catch {
+    rejected = true;
+  }
+  check("rpc: zla nazwa funkcji odrzucona", rejected);
+
+  const counted = await withUser(A, () =>
+    run(compileCount({ table: "tasks", op: "select", columns: ["*"], filters: [{ column: "id", op: "in", value: ids }, { column: "sort_order", op: "gte", value: 20 }], order: [], limit: null, values: null }))
+  );
+  check("count() z filtrami", counted.rows[0]?.count === 2, JSON.stringify(counted.rows));
+  const hidden = await withUser(B, () =>
+    run(compileCount({ table: "tasks", op: "select", columns: ["*"], filters: [{ column: "id", op: "in", value: ids }], order: [], limit: null, values: null }))
+  );
+  check("count() pod RLS: obcy widzi 0", hidden.rows[0]?.count === 0, JSON.stringify(hidden.rows));
+
+  // saveDiscordWebhookUrl: update-then-insert works for an owner; the upsert
+  // it replaced can't, because EXCLUDED.webhook_url_encrypted needs a SELECT
+  // grant authenticated doesn't have (035).
+  await expectRejected(
+    "stary upsert webhooka Discorda -> permission denied (powod zmiany)",
+    () => withUser(A, () => db.query(
+      `INSERT INTO public.discord_integrations (project_id, webhook_url_encrypted, linked_by) VALUES ($1, 'enc', $2)
+       ON CONFLICT (project_id) DO UPDATE SET webhook_url_encrypted = EXCLUDED.webhook_url_encrypted`, [projectId, A])),
+    /permission denied/
+  );
+  await withUser(A, async () => {
+    const upd = await run(compile({ table: "discord_integrations", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ webhook_url_encrypted: "enc1" }] }));
+    const ins = upd.rows.length > 0 ? upd : await run(compile({ table: "discord_integrations", op: "insert", columns: ["project_id"], filters: [], order: [], limit: null, values: [{ project_id: projectId, webhook_url_encrypted: "enc1", linked_by: A }] }));
+    check("zapis webhooka Discorda: insert przez ownera dziala", ins.rows.length === 1, JSON.stringify(ins.rows));
+    const again = await run(compile({ table: "discord_integrations", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ webhook_url_encrypted: "enc2" }] }));
+    check("zapis webhooka Discorda: ponowny zapis to update", again.rows.length === 1, JSON.stringify(again.rows));
+  });
+  const stored = await db.query("SELECT webhook_url_encrypted FROM public.discord_integrations WHERE project_id = $1", [projectId]);
+  check("zapis webhooka Discorda: wartosc zapisana", stored.rows[0]?.webhook_url_encrypted === "enc2", JSON.stringify(stored.rows));
+  await db.query("DELETE FROM public.discord_integrations WHERE project_id = $1", [projectId]);
+
+  await db.query("DELETE FROM public.tasks WHERE id = ANY($1)", [ids]);
 }
 
 section("38. plans.member_limit_per_project: limit czlonkow projektu w planach (migracja 049)");

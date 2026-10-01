@@ -81,6 +81,7 @@ export default async function Home() {
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
     />
+    <main>
     <div className="relative flex min-h-screen items-center overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
       <WavesBackground className="opacity-60" />
       <div className="container relative z-10 mx-auto px-4 py-20">
@@ -211,6 +212,7 @@ export default async function Home() {
     </section>
 
     {plans.length > 0 && <PricingSection plans={plans} />}
+    </main>
 
     <footer className="border-t border-border py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">

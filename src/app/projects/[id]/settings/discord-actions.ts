@@ -57,7 +57,15 @@ export async function saveDiscordWebhook(projectId: string, webhookUrl: string):
     return { error: "Enter a valid Discord webhook URL (https://discord.com/api/webhooks/...)." };
   }
 
-  await saveDiscordWebhookUrl(projectId, access.userId, trimmed);
+  // The form awaits this result; a thrown error would leave it with no
+  // message at all (that's how the old "permission denied" upsert failure
+  // went unnoticed in the UI).
+  try {
+    await saveDiscordWebhookUrl(projectId, access.userId, trimmed);
+  } catch (error) {
+    console.error("saveDiscordWebhook failed:", error);
+    return { error: "Could not save the Discord webhook. Please try again." };
+  }
   revalidatePath(`/projects/${projectId}/settings`);
   return { error: null };
 }
@@ -68,7 +76,12 @@ export async function removeDiscordWebhook(projectId: string): Promise<DiscordIn
     return { error: "You do not have permission to change this project's Discord integration." };
   }
 
-  await clearDiscordWebhookUrl(projectId, access.userId);
+  try {
+    await clearDiscordWebhookUrl(projectId, access.userId);
+  } catch (error) {
+    console.error("removeDiscordWebhook failed:", error);
+    return { error: "Could not remove the Discord webhook. Please try again." };
+  }
   revalidatePath(`/projects/${projectId}/settings`);
   return { error: null };
 }

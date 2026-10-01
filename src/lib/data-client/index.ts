@@ -2,9 +2,9 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
-import { createClient } from "@/lib/supabase-server";
-import { compile, parseColumns, type Filter, type FilterOp, type OrderBy, type QuerySpec } from "./sql";
+import { withServiceRole, withUser } from "@/lib/db/session";
+import { createClient, createServiceClient } from "@/lib/supabase-server";
+import { compile, compileCount, compileRpc, parseColumns, type Filter, type FilterOp, type OrderBy, type QuerySpec } from "./sql";
 
 /**
  * One data-access API for both deployment modes.
@@ -33,9 +33,13 @@ import { compile, parseColumns, type Filter, type FilterOp, type OrderBy, type Q
  * Both return `{ data, error }` with the same shapes, and errors carry the
  * Postgres SQLSTATE in `code` either way (see lib/db/errors.ts).
  *
+ * RPCs to `public` functions go through `rpc` (scalar/void result) or
+ * `rpcRows` (TABLE / SETOF result), the same split supabase-js makes by
+ * return type.
+ *
  * Not covered, on purpose - keep writing these by hand: PostgREST embeds
- * (joins), RPCs, and multi-statement work that must be atomic (each awaited
- * query here is its own transaction in self-hosted mode).
+ * (joins) and multi-statement work that must be atomic (each awaited query
+ * here is its own transaction in self-hosted mode).
  */
 
 export interface DataError {
@@ -53,8 +57,11 @@ type Row = Record<string, unknown>;
 type Shape = object;
 type Mode = "many" | "single" | "maybeSingle";
 
+/** Runs one statement in a session - withUser(id) or withServiceRole. */
+type SqlRunner = (text: string, values: unknown[]) => Promise<{ rows: unknown[] }>;
+
 type Backend =
-  | { kind: "sql"; userId: string }
+  | { kind: "sql"; run: SqlRunner }
   | { kind: "supabase"; client: () => Promise<SupabaseClient> };
 
 function toDataError(error: unknown): DataError {
@@ -66,6 +73,13 @@ function toDataError(error: unknown): DataError {
     };
   }
   return { message: String(error) };
+}
+
+/** Replays filters onto a supabase-js builder; `isNot` is its `.not(col, "is", v)`. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- supabase-js builder, see executeSupabase
+function applyFilters(q: any, filters: Filter[]): any {
+  for (const f of filters) q = f.op === "isNot" ? q.not(f.column, "is", f.value) : q[f.op](f.column, f.value);
+  return q;
 }
 
 class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>> {
@@ -123,6 +137,8 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
   ilike(column: string, pattern: string) { return this.filter(column, "ilike", pattern); }
   in(column: string, values: readonly unknown[]) { return this.filter(column, "in", [...values]); }
   is(column: string, value: null | boolean) { return this.filter(column, "is", value); }
+  /** supabase-js's `.not(column, "is", value)`. */
+  isNot(column: string, value: null | boolean) { return this.filter(column, "isNot", value); }
 
   order(column: string, options: { ascending?: boolean; nullsFirst?: boolean } = {}): this {
     this.spec.order.push({ column, ascending: options.ascending ?? true, nullsFirst: options.nullsFirst } satisfies OrderBy);
@@ -146,6 +162,25 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
     return this.execute("maybeSingle") as Promise<DataResult<T | null>>;
   }
 
+  /** How many rows match the filters (columns, order and limit are ignored). */
+  async count(): Promise<DataResult<number>> {
+    if (this.backend.kind === "sql") {
+      try {
+        const { text, values } = compileCount(this.spec);
+        const result = await this.backend.run(text, values);
+        return { data: (result.rows[0] as { count: number }).count, error: null };
+      } catch (error) {
+        return { data: 0, error: toDataError(error) };
+      }
+    }
+    const client = await this.backend.client();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- same dynamic chaining as executeSupabase
+    let q: any = client.from(this.spec.table).select("*", { count: "exact", head: true });
+    q = applyFilters(q, this.spec.filters);
+    const { count, error } = await q;
+    return error ? { data: 0, error: toDataError(error) } : { data: count ?? 0, error: null };
+  }
+
   then<A = DataResult<T[]>, B = never>(
     onfulfilled?: ((value: DataResult<T[]>) => A | PromiseLike<A>) | null,
     onrejected?: ((reason: unknown) => B | PromiseLike<B>) | null
@@ -154,14 +189,14 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
   }
 
   private async execute(mode: Mode): Promise<DataResult<T[] | T | null>> {
-    return this.backend.kind === "sql" ? this.executeSql(this.backend.userId, mode) : this.executeSupabase(mode);
+    return this.backend.kind === "sql" ? this.executeSql(this.backend.run, mode) : this.executeSupabase(mode);
   }
 
-  private async executeSql(userId: string, mode: Mode): Promise<DataResult<T[] | T | null>> {
+  private async executeSql(run: SqlRunner, mode: Mode): Promise<DataResult<T[] | T | null>> {
     let rows: T[];
     try {
       const { text, values } = compile(this.spec);
-      const result = await withUser(userId, ({ query }) => query(text, values));
+      const result = await run(text, values);
       rows = result.rows as T[];
     } catch (error) {
       return { data: mode === "many" ? [] : null, error: toDataError(error) };
@@ -206,7 +241,7 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
         q = table.delete();
         break;
     }
-    for (const f of spec.filters) q = q[f.op](f.column, f.value);
+    q = applyFilters(q, spec.filters);
     if (spec.op !== "select" && columns) q = q.select(columns);
     for (const o of spec.order) q = q.order(o.column, { ascending: o.ascending, nullsFirst: o.nullsFirst });
     if (spec.limit !== null) q = q.limit(spec.limit);
@@ -222,6 +257,49 @@ class QueryBuilder<T extends Shape = Row> implements PromiseLike<DataResult<T[]>
 
 export interface DataClient {
   from<T extends Shape = Row>(table: string): QueryBuilder<T>;
+  /** A scalar or void `public` function; `data` is its return value (null for void). */
+  rpc<V = unknown>(fn: string, args?: Record<string, unknown>): Promise<DataResult<V | null>>;
+  /** A TABLE / SETOF `public` function; `data` is its rows. */
+  rpcRows<T extends Shape = Row>(fn: string, args?: Record<string, unknown>): Promise<DataResult<T[]>>;
+}
+
+async function runRpc(
+  backend: Backend,
+  fn: string,
+  args: Record<string, unknown>,
+  shape: "value" | "rows"
+): Promise<DataResult<unknown>> {
+  const empty = shape === "rows" ? [] : null;
+  if (backend.kind === "sql") {
+    try {
+      const { text, values } = compileRpc(fn, args, shape);
+      const result = await backend.run(text, values);
+      const first = result.rows[0] as { value?: unknown } | undefined;
+      return { data: shape === "rows" ? result.rows : (first?.value ?? null), error: null };
+    } catch (error) {
+      return { data: empty, error: toDataError(error) };
+    }
+  }
+  const client = await backend.client();
+  const { data, error } = await client.rpc(fn, args);
+  if (error) return { data: empty, error: toDataError(error) };
+  // PostgREST returns "" for a void function - same as the SQL branch's null.
+  if (shape === "rows") return { data: Array.isArray(data) ? data : data == null ? [] : [data], error: null };
+  return { data: data === "" ? null : (data ?? null), error: null };
+}
+
+function clientFor(backend: Backend): DataClient {
+  return {
+    from<T extends Shape = Row>(table: string) {
+      return new QueryBuilder<T>(backend, table);
+    },
+    rpc<V = unknown>(fn: string, args: Record<string, unknown> = {}) {
+      return runRpc(backend, fn, args, "value") as Promise<DataResult<V | null>>;
+    },
+    rpcRows<T extends Shape = Row>(fn: string, args: Record<string, unknown> = {}) {
+      return runRpc(backend, fn, args, "rows") as Promise<DataResult<T[]>>;
+    },
+  };
 }
 
 /**
@@ -234,15 +312,27 @@ export function dataClient(
   userId: string,
   options: { supabase?: () => Promise<SupabaseClient> } = {}
 ): DataClient {
-  const backend: Backend = hasDirectDatabase()
-    ? { kind: "sql", userId }
-    : { kind: "supabase", client: options.supabase ?? (createClient as () => Promise<SupabaseClient>) };
+  return clientFor(
+    hasDirectDatabase()
+      ? { kind: "sql", run: (text, values) => withUser(userId, ({ query }) => query(text, values)) }
+      : { kind: "supabase", client: options.supabase ?? (createClient as () => Promise<SupabaseClient>) }
+  );
+}
 
-  return {
-    from<T extends Shape = Row>(table: string) {
-      return new QueryBuilder<T>(backend, table);
-    },
-  };
+/**
+ * Data client with RLS bypassed: withServiceRole() self-hosted,
+ * createServiceClient() on Supabase. Same rule as those two - only where
+ * the code has already decided the caller may do this (admin panel,
+ * webhooks, notifications fan-out, cleanup that follows an authorized
+ * action) and a comment at the call site says why. Never for reads or
+ * writes that should simply follow the caller's own permissions.
+ */
+export function serviceDataClient(): DataClient {
+  return clientFor(
+    hasDirectDatabase()
+      ? { kind: "sql", run: (text, values) => withServiceRole(({ query }) => query(text, values)) }
+      : { kind: "supabase", client: async () => createServiceClient() as unknown as SupabaseClient }
+  );
 }
 
 export type { QueryBuilder };

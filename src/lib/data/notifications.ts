@@ -1,9 +1,7 @@
 import "server-only";
 
 import { after } from "next/server";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withServiceRole, withUser } from "@/lib/db/session";
-import { createClient, createServiceClient } from "@/lib/supabase-server";
+import { dataClient, serviceDataClient } from "@/lib/data-client";
 
 export type NotificationType = "task_assigned";
 
@@ -43,19 +41,7 @@ interface CreateNotificationInput {
 export async function createNotification(input: CreateNotificationInput): Promise<void> {
   after(async () => {
     try {
-      if (hasDirectDatabase()) {
-        await withServiceRole(({ query }) =>
-          query(
-            `INSERT INTO notifications (user_id, project_id, type, title, body, link)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [input.userId, input.projectId ?? null, input.type, input.title, input.body ?? null, input.link]
-          )
-        );
-        return;
-      }
-
-      const supabase = createServiceClient();
-      await supabase.from("notifications").insert({
+      const { error } = await serviceDataClient().from("notifications").insert({
         user_id: input.userId,
         project_id: input.projectId ?? null,
         type: input.type,
@@ -63,6 +49,7 @@ export async function createNotification(input: CreateNotificationInput): Promis
         body: input.body ?? null,
         link: input.link,
       });
+      if (error) throw new Error(error.message);
     } catch (error) {
       console.error(`createNotification(${input.type}) failed:`, error);
     }
@@ -79,36 +66,15 @@ const RECENT_LIMIT = 20;
 export async function listNotifications(
   userId: string
 ): Promise<{ notifications: Notification[]; unreadCount: number }> {
-  if (hasDirectDatabase()) {
-    return withUser(userId, async ({ query }) => {
-      const { rows } = await query<Notification>(
-        `SELECT id, project_id, type, title, body, link, read_at, created_at
-         FROM notifications
-         WHERE user_id = $1
-         ORDER BY created_at DESC
-         LIMIT $2`,
-        [userId, RECENT_LIMIT]
-      );
-      const { rows: unread } = await query<{ n: number }>(
-        "SELECT count(*)::int n FROM notifications WHERE user_id = $1 AND read_at IS NULL",
-        [userId]
-      );
-      return { notifications: rows, unreadCount: unread[0]?.n ?? 0 };
-    });
-  }
-
-  const supabase = await createClient();
-  const [{ data }, { count }] = await Promise.all([
-    supabase
-      .from("notifications")
+  const db = dataClient(userId);
+  const [{ data: notifications }, { data: unreadCount }] = await Promise.all([
+    db
+      .from<Notification>("notifications")
       .select("id, project_id, type, title, body, link, read_at, created_at")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(RECENT_LIMIT),
-    supabase
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
-      .is("read_at", null),
+    db.from("notifications").eq("user_id", userId).is("read_at", null).count(),
   ]);
-
-  return { notifications: (data as Notification[]) ?? [], unreadCount: count ?? 0 };
+  return { notifications, unreadCount };
 }

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { serviceDataClient } from "@/lib/data-client";
 
 /**
  * Guidon Cloud (hosted - no self-managed Postgres) caps an organization's
@@ -104,13 +105,58 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
 
 /** Seats in use: every organization_members row, owner included. Service role - the count must not depend on what the caller can see. */
 export async function getOrganizationMemberCount(organizationId: string): Promise<number> {
-  const { createServiceClient } = await import("@/lib/supabase-server");
-  const { count, error } = await createServiceClient()
-    .from("organization_members")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId);
+  const { data, error } = await serviceDataClient().from("organization_members").eq("organization_id", organizationId).count();
   if (error) throw new Error(`Could not count organization members: ${error.message}`);
-  return count ?? 0;
+  return data;
+}
+
+/**
+ * Guidon Cloud's tasks-per-project cap, as one readable error (or null when
+ * there's room, and always null self-hosted). The single check behind every
+ * way a task gets created - the board, subtasks, /api/v1 tasks and in-game
+ * reports - so they can't drift apart again: the API used to count only
+ * top-level tasks and skip subtasks entirely, which reopened the bypass the
+ * board had closed (nesting unlimited subtasks under one task). Counts every
+ * row in `tasks` for the project, subtasks included, with the service role
+ * so the number doesn't depend on what the caller can see.
+ */
+export async function hostedTaskLimitError(projectId: string, organizationId: string): Promise<string | null> {
+  if (hasDirectDatabase()) return null;
+  const [{ planName, taskLimitPerProject }, { data: count }] = await Promise.all([
+    getOrgPlanLimits(organizationId),
+    serviceDataClient().from("tasks").eq("project_id", projectId).count(),
+  ]);
+  if (!isTaskLimitReached(count, taskLimitPerProject)) return null;
+  return `You've reached your ${planName} plan's limit of ${taskLimitPerProject} tasks per project. Upgrade your plan to raise this limit.`;
+}
+
+/**
+ * Guidon Cloud seats (plans.member_limit, migration 051) as a readable
+ * error, or null when there's room - always null self-hosted.
+ */
+export async function hostedMemberLimitError(organizationId: string): Promise<string | null> {
+  if (hasDirectDatabase()) return null;
+  const [{ planName, memberLimit }, count] = await Promise.all([
+    getOrgPlanLimits(organizationId),
+    getOrganizationMemberCount(organizationId).catch(() => null),
+  ]);
+  if (count === null) return "Could not check this organization's member limit. Try again.";
+  if (!isMemberLimitReached(count, memberLimit)) return null;
+  return memberLimitMessage(planName, memberLimit ?? 0);
+}
+
+/**
+ * Guidon Cloud's people-per-project cap (plans.member_limit_per_project,
+ * migration 049), same shape as hostedTaskLimitError.
+ */
+export async function hostedProjectMemberLimitError(projectId: string, organizationId: string): Promise<string | null> {
+  if (hasDirectDatabase()) return null;
+  const [{ planName, memberLimitPerProject }, { data: count }] = await Promise.all([
+    getOrgPlanLimits(organizationId),
+    serviceDataClient().from("project_members").eq("project_id", projectId).count(),
+  ]);
+  if (!isMemberLimitReached(count, memberLimitPerProject)) return null;
+  return `You've reached your ${planName} plan's limit of ${memberLimitPerProject} members per project. Upgrade your plan to add more people.`;
 }
 
 /** `limit === null` means unlimited, same convention as the plans table itself. */

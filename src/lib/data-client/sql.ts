@@ -9,7 +9,7 @@
  * values are ever passed as bind parameters, and they always are.
  */
 
-export type FilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "like" | "ilike" | "in" | "is";
+export type FilterOp = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "like" | "ilike" | "in" | "is" | "isNot";
 
 export interface Filter {
   column: string;
@@ -106,6 +106,11 @@ function where(filters: Filter[], values: unknown[]): string {
         if (value === true) return `${col} IS TRUE`;
         if (value === false) return `${col} IS FALSE`;
         throw new Error("data-client: .is() only takes null, true or false");
+      case "isNot":
+        if (value === null) return `${col} IS NOT NULL`;
+        if (value === true) return `${col} IS NOT TRUE`;
+        if (value === false) return `${col} IS NOT FALSE`;
+        throw new Error("data-client: .isNot() only takes null, true or false");
     }
   });
   return ` WHERE ${parts.join(" AND ")}`;
@@ -113,6 +118,13 @@ function where(filters: Filter[], values: unknown[]): string {
 
 function returning(columns: string[] | null): string {
   return columns ? ` RETURNING ${columnList(columns)}` : "";
+}
+
+/** `SELECT count(*)` with the query's filters - supabase-js's `{ count: "exact", head: true }`. */
+export function compileCount(spec: QuerySpec): CompiledQuery {
+  if (spec.op !== "select") throw new Error("data-client: count() only applies to a select");
+  const values: unknown[] = [];
+  return { text: `SELECT count(*)::int AS count FROM ${ident(spec.table)}${where(spec.filters, values)}`, values };
 }
 
 export function compile(spec: QuerySpec): CompiledQuery {
@@ -175,4 +187,27 @@ export function compile(spec: QuerySpec): CompiledQuery {
       return { text, values };
     }
   }
+}
+
+/**
+ * A call to a function in the `public` schema - what supabase-js's
+ * `.rpc(fn, args)` reaches through PostgREST. Arguments are passed by name
+ * (`p_id => $1`), like PostgREST does, so their order never matters and each
+ * bind parameter takes its type from the function's signature (a JS array
+ * becomes uuid[] or int[] as the function declares).
+ *
+ * `shape` decides how the result is read:
+ * - "value": a scalar or void function -> `SELECT public.fn(...) AS value`
+ * - "rows":  a set-returning / TABLE function -> `SELECT * FROM public.fn(...)`
+ */
+export function compileRpc(fn: string, args: Record<string, unknown>, shape: "value" | "rows"): CompiledQuery {
+  const values: unknown[] = [];
+  const named = Object.entries(args)
+    .map(([name, value]) => {
+      values.push(value);
+      return `${ident(name)} => $${values.length}`;
+    })
+    .join(", ");
+  const call = `public.${ident(fn)}(${named})`;
+  return { text: shape === "value" ? `SELECT ${call} AS value` : `SELECT * FROM ${call}`, values };
 }

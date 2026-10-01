@@ -1,17 +1,14 @@
 import "server-only";
 
-import { createServiceClient } from "@/lib/supabase-server";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withServiceRole } from "@/lib/db/session";
+import { serviceDataClient } from "@/lib/data-client";
 
 /**
  * Cross-tenant queries for the admin panel (TODO.md §25).
  *
- * Every function here uses createServiceClient() (src/lib/supabase-server.ts)
- * - the same service-role client already used elsewhere for privileged reads
- * (e.g. getProjectStorageUsage in src/lib/storage/storage.ts) - because an
- * admin view of "every organization" or "every user" is definitionally a
- * cross-tenant read that RLS is designed to prevent for anyone else.
+ * Everything here runs through serviceDataClient() - withServiceRole()
+ * self-hosted, createServiceClient() on Supabase - because an admin view of
+ * "every organization" or "every user" is definitionally a cross-tenant
+ * read that RLS is designed to prevent for anyone else.
  *
  * This is only safe because every caller sits behind requireAdminAccess()
  * (src/lib/data/admin-access.ts), which every admin page calls before any
@@ -29,37 +26,13 @@ export interface AdminCounts {
 }
 
 export async function getAdminCounts(): Promise<AdminCounts> {
-  if (hasDirectDatabase()) {
-    // Three withServiceRole() calls, not one wrapping Promise.all([...]) -
-    // each checks out its own pooled connection, so this is genuinely
-    // concurrent instead of firing multiple queries on one pg client (the
-    // deprecated shape, removed in pg@9).
-    const [orgs, projects, users] = await Promise.all([
-      withServiceRole(({ query }) => query("SELECT COUNT(*) FROM organizations")),
-      withServiceRole(({ query }) => query("SELECT COUNT(*) FROM projects")),
-      withServiceRole(({ query }) => query("SELECT COUNT(*) FROM profiles")),
-    ]);
-
-    return {
-      organizations: Number(orgs.rows[0].count),
-      projects: Number(projects.rows[0].count),
-      users: Number(users.rows[0].count),
-    };
-  }
-
-  const supabase = createServiceClient();
-
-  const [orgs, projects, users] = await Promise.all([
-    supabase.from("organizations").select("id", { count: "exact", head: true }),
-    supabase.from("projects").select("id", { count: "exact", head: true }),
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
+  const db = serviceDataClient();
+  const [organizations, projects, users] = await Promise.all([
+    db.from("organizations").count(),
+    db.from("projects").count(),
+    db.from("profiles").count(),
   ]);
-
-  return {
-    organizations: orgs.count ?? 0,
-    projects: projects.count ?? 0,
-    users: users.count ?? 0,
-  };
+  return { organizations: organizations.data, projects: projects.data, users: users.data };
 }
 
 export interface AdminOrganizationRow {
@@ -74,127 +47,64 @@ export interface AdminOrganizationRow {
   owner: { email: string; full_name: string | null } | null;
 }
 
-interface OrganizationMemberJoinRow {
-  organization_id: string;
-  role: string;
-  profiles: { email: string; full_name: string | null } | null;
-}
-
 /**
  * Organizations across the whole instance: name, slug, owner, member count,
- * created_at. Owner is resolved via organization_members where role='owner'
- * (organization_members_user_id_fkey references profiles - 001_initial_schema.sql),
- * joined in one extra query rather than N+1 per organization.
+ * plan. Members, their profiles, subscriptions and plan names are four
+ * batched lookups by id - never one query per organization.
  */
 export async function listOrganizationsForAdmin(): Promise<{
   rows: AdminOrganizationRow[];
   truncated: boolean;
 }> {
-  let organizations: { id: string; name: string; slug: string; created_at: string; project_limit: number }[];
-  let memberRows: OrganizationMemberJoinRow[];
+  const db = serviceDataClient();
 
-  if (hasDirectDatabase()) {
-    organizations = await withServiceRole(({ query }) =>
-      query("SELECT id, name, slug, project_limit, created_at FROM organizations ORDER BY created_at DESC LIMIT $1", [
-        LIST_LIMIT,
-      ]).then((result) => result.rows)
-    );
+  const { data: organizations } = await db
+    .from<{ id: string; name: string; slug: string; created_at: string; project_limit: number }>("organizations")
+    .select("id, name, slug, project_limit, created_at")
+    .order("created_at", { ascending: false })
+    .limit(LIST_LIMIT);
+  if (organizations.length === 0) return { rows: [], truncated: false };
 
-    if (organizations.length === 0) {
-      return { rows: [], truncated: false };
-    }
+  const orgIds = organizations.map((org) => org.id);
+  const [{ data: members }, { data: subscriptions }, { data: plans }] = await Promise.all([
+    db
+      .from<{ organization_id: string; user_id: string; role: string }>("organization_members")
+      .select("organization_id, user_id, role")
+      .in("organization_id", orgIds),
+    db.from<{ organization_id: string; plan_id: string }>("subscriptions").select("organization_id, plan_id").in("organization_id", orgIds),
+    db.from<{ id: string; name: string }>("plans").select("id, name"),
+  ]);
 
-    const orgIds = organizations.map((org) => org.id);
-    memberRows = await withServiceRole(({ query }) =>
-      query(
-        `SELECT om.organization_id, om.role, p.email, p.full_name
-         FROM organization_members om
-         LEFT JOIN profiles p ON p.id = om.user_id
-         WHERE om.organization_id = ANY($1::uuid[])`,
-        [orgIds]
-      ).then((result) =>
-        result.rows.map((row) => ({
-          organization_id: row.organization_id,
-          role: row.role,
-          profiles: row.email ? { email: row.email, full_name: row.full_name } : null,
-        }))
-      )
-    );
-  } else {
-    const supabase = createServiceClient();
-
-    const { data: orgs } = await supabase
-      .from("organizations")
-      .select("id, name, slug, project_limit, created_at")
-      .order("created_at", { ascending: false })
-      .limit(LIST_LIMIT);
-
-    organizations = orgs ?? [];
-    if (organizations.length === 0) {
-      return { rows: [], truncated: false };
-    }
-
-    const orgIds = organizations.map((org) => org.id);
-    const { data: members } = await supabase
-      .from("organization_members")
-      .select("organization_id, role, profiles(email, full_name)")
-      .in("organization_id", orgIds);
-
-    memberRows = (members ?? []) as unknown as OrganizationMemberJoinRow[];
-  }
-
-  let subscriptionRows: { organization_id: string; plan_id: string; plan_name: string }[];
-
-  if (hasDirectDatabase()) {
-    subscriptionRows = await withServiceRole(({ query }) =>
-      query(
-        `SELECT s.organization_id, s.plan_id, p.name AS plan_name
-         FROM subscriptions s
-         JOIN plans p ON p.id = s.plan_id
-         WHERE s.organization_id = ANY($1::uuid[])`,
-        [organizations.map((org) => org.id)]
-      ).then((result) => result.rows)
-    );
-  } else {
-    const supabase = createServiceClient();
-    const { data: subs } = await supabase
-      .from("subscriptions")
-      .select("organization_id, plan_id, plans (name)")
-      .in(
-        "organization_id",
-        organizations.map((org) => org.id)
-      );
-
-    subscriptionRows = (subs ?? []).map((row) => ({
-      organization_id: row.organization_id,
-      plan_id: row.plan_id,
-      plan_name: (row.plans as unknown as { name: string } | null)?.name ?? "Free",
-    }));
-  }
-
-  const planByOrg = new Map(subscriptionRows.map((row) => [row.organization_id, row]));
+  const ownerIds = [...new Set(members.filter((m) => m.role === "owner").map((m) => m.user_id))];
+  const owners = await resolveProfilesForAdmin(ownerIds);
+  const profileById = new Map(owners.map((p) => [p.id, { email: p.email, full_name: p.full_name }]));
+  const planName = new Map(plans.map((p) => [p.id, p.name]));
+  const planIdByOrg = new Map(subscriptions.map((s) => [s.organization_id, s.plan_id]));
 
   const countByOrg = new Map<string, number>();
   const ownerByOrg = new Map<string, { email: string; full_name: string | null }>();
-
-  for (const member of memberRows) {
+  for (const member of members) {
     countByOrg.set(member.organization_id, (countByOrg.get(member.organization_id) ?? 0) + 1);
-    if (member.role === "owner" && member.profiles && !ownerByOrg.has(member.organization_id)) {
-      ownerByOrg.set(member.organization_id, member.profiles);
+    const profile = profileById.get(member.user_id);
+    if (member.role === "owner" && profile && !ownerByOrg.has(member.organization_id)) {
+      ownerByOrg.set(member.organization_id, profile);
     }
   }
 
-  const rows: AdminOrganizationRow[] = organizations.map((org) => ({
-    id: org.id,
-    name: org.name,
-    slug: org.slug,
-    created_at: org.created_at,
-    project_limit: org.project_limit,
-    planId: planByOrg.get(org.id)?.plan_id ?? "free",
-    planName: planByOrg.get(org.id)?.plan_name ?? "Free",
-    memberCount: countByOrg.get(org.id) ?? 0,
-    owner: ownerByOrg.get(org.id) ?? null,
-  }));
+  const rows: AdminOrganizationRow[] = organizations.map((org) => {
+    const planId = planIdByOrg.get(org.id) ?? "free";
+    return {
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      created_at: org.created_at,
+      project_limit: org.project_limit,
+      planId,
+      planName: planName.get(planId) ?? "Free",
+      memberCount: countByOrg.get(org.id) ?? 0,
+      owner: ownerByOrg.get(org.id) ?? null,
+    };
+  });
 
   return { rows, truncated: organizations.length === LIST_LIMIT };
 }
@@ -210,25 +120,11 @@ export async function listUsersForAdmin(): Promise<{
   rows: AdminUserRow[];
   truncated: boolean;
 }> {
-  if (hasDirectDatabase()) {
-    const rows = await withServiceRole(({ query }) =>
-      query(
-        "SELECT id, email, full_name, created_at FROM profiles ORDER BY created_at DESC LIMIT $1",
-        [LIST_LIMIT]
-      ).then((result) => result.rows as AdminUserRow[])
-    );
-    return { rows, truncated: rows.length === LIST_LIMIT };
-  }
-
-  const supabase = createServiceClient();
-
-  const { data } = await supabase
-    .from("profiles")
+  const { data: rows } = await serviceDataClient()
+    .from<AdminUserRow>("profiles")
     .select("id, email, full_name, created_at")
     .order("created_at", { ascending: false })
     .limit(LIST_LIMIT);
-
-  const rows = (data ?? []) as AdminUserRow[];
   return { rows, truncated: rows.length === LIST_LIMIT };
 }
 
@@ -247,33 +143,14 @@ export interface AdminActivityRow {
 /**
  * Instance-wide activity, most recent first - the same activity_logs table
  * src/lib/data/activity.ts reads per-project, without the project_id filter.
- *
- * logActivity() (src/lib/data/log-activity.ts) is called from 14+ Server
- * Action files across the app, so this reads real, ongoing data - not
- * assuming any particular action vocabulary is enforced beyond that.
  */
 export async function listRecentActivityForAdmin(limit = 100): Promise<AdminActivityRow[]> {
-  if (hasDirectDatabase()) {
-    return withServiceRole(({ query }) =>
-      query(
-        `SELECT id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at, actor_label
-         FROM activity_logs
-         ORDER BY created_at DESC
-         LIMIT $1`,
-        [limit]
-      ).then((result) => result.rows as AdminActivityRow[])
-    );
-  }
-
-  const supabase = createServiceClient();
-
-  const { data } = await supabase
-    .from("activity_logs")
+  const { data } = await serviceDataClient()
+    .from<AdminActivityRow>("activity_logs")
     .select("id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at, actor_label")
     .order("created_at", { ascending: false })
     .limit(limit);
-
-  return (data ?? []) as AdminActivityRow[];
+  return data;
 }
 
 export interface AdminActorProfile {
@@ -283,24 +160,16 @@ export interface AdminActorProfile {
 }
 
 /**
- * Resolves activity_logs.user_id (ON DELETE SET NULL) to a display name for
- * the admin log, same pattern as src/app/projects/[id]/activity/page.tsx's
- * per-project lookup - service-role here because this spans every tenant's
- * users, not just the admin's own.
+ * Resolves user ids (e.g. activity_logs.user_id, ON DELETE SET NULL) to
+ * display names - service role because this spans every tenant's users.
  */
 export async function resolveProfilesForAdmin(userIds: string[]): Promise<AdminActorProfile[]> {
   if (userIds.length === 0) return [];
-
-  if (hasDirectDatabase()) {
-    const result = await withServiceRole(({ query }) =>
-      query("SELECT id, full_name, email FROM profiles WHERE id = ANY($1::uuid[])", [userIds])
-    );
-    return result.rows as AdminActorProfile[];
-  }
-
-  const supabase = createServiceClient();
-  const { data } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds);
-  return (data ?? []) as AdminActorProfile[];
+  const { data } = await serviceDataClient()
+    .from<AdminActorProfile>("profiles")
+    .select("id, full_name, email")
+    .in("id", userIds);
+  return data;
 }
 
 export interface AdminFeedbackRow {
@@ -313,30 +182,13 @@ export interface AdminFeedbackRow {
 
 /**
  * Instance-wide feedback, most recent first - the "Send feedback" entry in
- * the profile menu (src/app/feedback/actions.ts) writes here. Same shape as
- * listRecentActivityForAdmin above: reads every organization's submissions,
- * which is definitionally a cross-tenant read RLS blocks for anyone else.
+ * the profile menu (src/app/feedback/actions.ts) writes here.
  */
 export async function listFeedbackForAdmin(limit = 200): Promise<AdminFeedbackRow[]> {
-  if (hasDirectDatabase()) {
-    return withServiceRole(({ query }) =>
-      query(
-        `SELECT id, user_id, message, page_url, created_at
-         FROM feedback
-         ORDER BY created_at DESC
-         LIMIT $1`,
-        [limit]
-      ).then((result) => result.rows as AdminFeedbackRow[])
-    );
-  }
-
-  const supabase = createServiceClient();
-
-  const { data } = await supabase
-    .from("feedback")
+  const { data } = await serviceDataClient()
+    .from<AdminFeedbackRow>("feedback")
     .select("id, user_id, message, page_url, created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
-
-  return (data ?? []) as AdminFeedbackRow[];
+  return data;
 }
