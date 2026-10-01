@@ -26,7 +26,11 @@ npm run test:limits            # plan/limits logic tests
 npm run test:reports           # in-game report validation (src/lib/api/game-report.ts)
 npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/task-refs.ts)
 npm run test:webhooks          # organization webhook URL rules, private-address block list, signature (src/lib/webhooks/security.ts)
+
+cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```
+
+Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` from a `desktop-v<version>` tag - see `desktop/RELEASING.md`.
 
 `test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 286) to stay the same or grow, never shrink.
 

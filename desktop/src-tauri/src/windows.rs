@@ -23,7 +23,10 @@ pub(crate) fn create_main_window(app: &AppHandle) -> tauri::Result<()> {
     let main_url = stored_server_url(app);
     let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(main_url))
         .title("Guidon Desktop")
-        .inner_size(800.0, 600.0)
+        // First-run size; afterwards tauri-plugin-window-state restores
+        // whatever the user left it at (lib.rs).
+        .inner_size(1280.0, 800.0)
+        .min_inner_size(640.0, 480.0)
         .build()?;
 
     // Close-to-tray (Task 3): clicking the window's X button would
@@ -94,6 +97,16 @@ pub(crate) fn set_tasks_on_top(app: &AppHandle, on_top: bool) {
     crate::store::save_tasks_on_top(app, on_top);
     if let Some(window) = app.get_webview_window(TASKS_WINDOW_LABEL) {
         let _ = window.set_always_on_top(on_top);
+    }
+}
+
+/// Bring the main window to the front - used when a second launch is
+/// redirected here by the single-instance plugin (lib.rs).
+pub(crate) fn show_main_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
     }
 }
 

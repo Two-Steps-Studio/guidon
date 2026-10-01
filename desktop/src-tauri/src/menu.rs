@@ -49,9 +49,16 @@ pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
         } else if event.id() == OPEN_PLUGINS_MENU_ID {
             open_or_focus_plugins(&handle);
         } else if event.id() == CHECK_FOR_UPDATES_MENU_ID {
-            check_for_updates(&handle, &check_for_updates_item_for_event);
+            check_for_updates(&handle, &check_for_updates_item_for_event, false);
         }
     });
+
+    // One quiet check per launch - see updater.rs. Debug builds skip it:
+    // their version never matches a release and the dialog would only get
+    // in the way while developing.
+    if !cfg!(debug_assertions) {
+        check_for_updates(app.handle(), &check_for_updates_item, true);
+    }
 
     Ok(())
 }

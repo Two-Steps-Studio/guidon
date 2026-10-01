@@ -1235,10 +1235,10 @@
     },
     "desktop": {
       "title": "Guidon Desktop",
-      "description": "Ein natives Fenster für Guidon Cloud oder deinen eigenen Server, mit automatischen Updates. Installer werden auf GitHub Releases veröffentlicht.",
-      "releases": "GitHub Releases"
-    },
-    "desktopHint": "Du nutzt Guidon Desktop? Im Menü gibt es „Install Editor Plugins“: Plugin und Projektordner wählen, und die Dateien landen am richtigen Ort (Unity, Unreal, Godot, Blender)."
+      "description": "Dein Board als eigene Windows-App: Tray-Symbol, ein Aufgabenfenster immer im Vordergrund, Start mit Windows und Installation der Plugins unten in deine Projekte mit einem Klick.",
+      "download": "Für Windows herunterladen",
+      "releases": "Alle Versionen"
+    }
   },
   "lightbox": {
     "title": "Bild",

@@ -172,6 +172,17 @@ Tests: `cargo test --lib` covers paths, markers, extraction and zip-slip;
 `GUIDON_TEST_SERVER=http://localhost:2137 cargo test --lib live_` installs
 every plugin from a running server into temp folders.
 
+## Single instance and window memory
+
+- `tauri-plugin-single-instance` (registered first in `lib.rs`): launching
+  the app while it's already running (autostart plus a Start-menu click,
+  say) focuses the running main window instead of starting a second copy
+  with a second tray icon.
+- `tauri-plugin-window-state`: the main and Tasks windows' size and
+  position persist across launches. Visibility deliberately doesn't - the
+  app was usually quit from the tray with the main window hidden, and it
+  should still open visible next time. Settings and Plugins are excluded.
+
 ## Auto-update
 
 The app can check GitHub Releases for a newer version and offer to install
@@ -179,10 +190,11 @@ it, via `tauri-plugin-updater` (`src-tauri/src/updater.rs`):
 
 - **Trigger** — a "Check for Updates..." item in the native "Guidon
   Desktop" application menu (`src-tauri/src/menu.rs`, next to
-  "Settings..."). This is a manual, user-triggered check only - there is
-  no automatic/periodic background check, and no silent install. If an
-  update is found, a second native confirmation dialog (Yes/No) is shown
-  before anything downloads or installs.
+  "Settings..."), plus one quiet check when the app starts (release
+  builds only). The startup check only shows something when there is an
+  update - "up to date" and network errors go to the log file. Nothing
+  installs silently: an update always waits for a Yes in a native
+  confirmation dialog.
 - **Rust side** — `updater.rs`'s `check_for_updates` calls
   `tauri_plugin_updater::UpdaterExt::updater()` and
   `.check().await` directly, then reports the result with a native message
