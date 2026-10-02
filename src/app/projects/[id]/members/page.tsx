@@ -3,6 +3,7 @@ import { requireProjectAccess } from "@/lib/data/project-access";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { getOrgPlanLimits } from "@/lib/limits";
 import { MemberList } from "./member-list";
 import type { TaskCardMember } from "@/components/work/task-card";
 import type { ProjectRole } from "@/types/project";
@@ -136,6 +137,9 @@ export default async function ProjectMembersPage({
       .filter((candidate) => !onProject.has(candidate.id));
   }
 
+  // Guidon Cloud only - self-hosted has no plans.
+  const planLimits = hasDirectDatabase() ? null : await getOrgPlanLimits(access.project.organization_id);
+
   return (
     <MemberList
       projectId={projectId}
@@ -144,6 +148,9 @@ export default async function ProjectMembersPage({
       initialMembers={members}
       initialCandidates={candidates}
       projectColor={access.project.color}
+      organizationId={access.project.organization_id}
+      memberLimit={planLimits?.memberLimitPerProject ?? null}
+      planName={planLimits?.planName ?? null}
     />
   );
 }

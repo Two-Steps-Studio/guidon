@@ -28,6 +28,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // actual file, so the site was effectively unindexable.
   '/robots.txt',
   '/sitemap.xml',
+  // Browsers fetch the web app manifest without cookies (no crossorigin
+  // credentials), so "Add to Home Screen" got the login page instead and fell
+  // back to a page screenshot as the icon.
+  '/manifest.webmanifest',
   // The MCP endpoint (Claude Code and other MCP clients) authenticates with
   // the same `Authorization: Bearer` API key as /api/v1 - it checks the key
   // itself and 401s without one - and never carries a session cookie, so the
@@ -52,7 +56,11 @@ const EXACT_PUBLIC_ROUTES = new Set([
 // /legal/ (Terms, Privacy Policy) must be readable by a visitor who hasn't
 // signed up yet - deciding whether to sign up is exactly when someone reads
 // them - and by search engines/link previews with no session at all.
-const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/']
+// /downloads/plugins/ holds the editor plugins' zips and manifest.json
+// (scripts/build-plugin-zips.mjs) - open-source code, nothing user-specific,
+// and Guidon Desktop's plugin installer fetches them without a browser
+// session. Signing in is still what the plugins themselves need to do anything.
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])

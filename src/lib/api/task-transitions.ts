@@ -3,7 +3,7 @@ import "server-only";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getApiUserClient } from "./api-key-auth";
-import { notifyDiscordTaskEvent } from "@/lib/discord/notify";
+import { emitTaskEvent } from "@/lib/events/task-events";
 import type { TaskStatus } from "@/types/task";
 import type { ActivityAction } from "@/types/api";
 
@@ -19,7 +19,12 @@ interface ProjectAiPermissions {
 async function loadProjectContext(
   userId: string,
   taskId: string
-): Promise<{ projectId: string; allowAutoComplete: boolean; permissions: ProjectAiPermissions } | null> {
+): Promise<{
+  projectId: string;
+  aiEnabled: boolean;
+  allowAutoComplete: boolean;
+  permissions: ProjectAiPermissions;
+} | null> {
   if (hasDirectDatabase()) {
     const task = await withUser(userId, ({ query }) =>
       query("SELECT project_id FROM tasks WHERE id = $1", [taskId])
@@ -33,7 +38,7 @@ async function loadProjectContext(
     // deprecated shape, removed in pg@9).
     const [project, perms] = await Promise.all([
       withUser(userId, ({ query }) =>
-        query("SELECT allow_ai_auto_complete FROM projects WHERE id = $1", [projectId])
+        query("SELECT allow_ai_auto_complete, ai_enabled FROM projects WHERE id = $1", [projectId])
       ),
       withUser(userId, ({ query }) =>
         query(
@@ -45,6 +50,7 @@ async function loadProjectContext(
 
     return {
       projectId,
+      aiEnabled: project.rows[0]?.ai_enabled ?? true,
       allowAutoComplete: project.rows[0]?.allow_ai_auto_complete ?? false,
       permissions: perms.rows[0] ?? { can_change_status: true, can_complete_tasks: false },
     };
@@ -56,7 +62,7 @@ async function loadProjectContext(
   if (!task) return null;
 
   const [{ data: project }, { data: perms }] = await Promise.all([
-    supabase.from("projects").select("allow_ai_auto_complete").eq("id", task.project_id).maybeSingle(),
+    supabase.from("projects").select("allow_ai_auto_complete, ai_enabled").eq("id", task.project_id).maybeSingle(),
     supabase
       .from("project_ai_permissions")
       .select("can_change_status, can_complete_tasks")
@@ -66,6 +72,7 @@ async function loadProjectContext(
 
   return {
     projectId: task.project_id,
+    aiEnabled: project?.ai_enabled ?? true,
     allowAutoComplete: project?.allow_ai_auto_complete ?? false,
     permissions: perms ?? { can_change_status: true, can_complete_tasks: false },
   };
@@ -103,7 +110,7 @@ async function setStatusAndLog(
         [projectId, userId, action, taskId, botLabel]
       );
       const title = (result.rows[0].title as string) ?? "";
-      notifyDiscordTaskEvent(
+      emitTaskEvent(
         projectId,
         userId,
         newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus }
@@ -142,7 +149,7 @@ async function setStatusAndLog(
     .insert({ project_id: projectId, user_id: userId, action, entity_type: "task", entity_id: taskId, actor_label: botLabel });
 
   const title = (data as { title?: string }).title ?? "";
-  notifyDiscordTaskEvent(
+  emitTaskEvent(
     projectId,
     userId,
     newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus },
@@ -167,17 +174,29 @@ export interface TransitionActor {
   humanClient?: boolean;
 }
 
+const AI_DISABLED: TransitionResult = {
+  ok: false,
+  error: "AI features are turned off for this project. Ask a project admin to enable them in Settings.",
+  status: 403,
+};
+
 export async function startTask(userId: string, taskId: string, actor: TransitionActor = {}): Promise<TransitionResult> {
   const ctx = await loadProjectContext(userId, taskId);
   if (!ctx) return { ok: false, error: "Task not found.", status: 404 };
-  if (!actor.humanClient && !ctx.permissions.can_change_status) {
-    return { ok: false, error: "AI is not permitted to change task status on this project.", status: 403 };
+  if (!actor.humanClient) {
+    if (!ctx.aiEnabled) return AI_DISABLED;
+    if (!ctx.permissions.can_change_status) {
+      return { ok: false, error: "AI is not permitted to change task status on this project.", status: 403 };
+    }
   }
   return setStatusAndLog(
     userId,
     taskId,
     ctx.projectId,
-    "ai_working",
+    // A project with AI switched off (migration 046) has no AI Working
+    // column on its board - a human client "starting" a task there means
+    // plain in-progress work.
+    ctx.aiEnabled ? "ai_working" : "in_progress",
     actor.humanClient ? "task_status_changed" : "task_ai_started",
     actor.botLabel ?? null
   );
@@ -187,6 +206,7 @@ export async function completeTask(userId: string, taskId: string, actor: Transi
   const ctx = await loadProjectContext(userId, taskId);
   if (!ctx) return { ok: false, error: "Task not found.", status: 404 };
   if (!actor.humanClient) {
+    if (!ctx.aiEnabled) return AI_DISABLED;
     if (!ctx.allowAutoComplete) {
       return {
         ok: false,
@@ -216,7 +236,11 @@ export async function setTaskStatus(
 ): Promise<TransitionResult> {
   const ctx = await loadProjectContext(userId, taskId);
   if (!ctx) return { ok: false, error: "Task not found.", status: 404 };
+  if (!ctx.aiEnabled && newStatus === "ai_working") {
+    return { ok: false, error: "The AI Working status is not used on this project (AI features are turned off).", status: 400 };
+  }
   if (!actor.humanClient) {
+    if (!ctx.aiEnabled) return AI_DISABLED;
     if (!ctx.permissions.can_change_status) {
       return { ok: false, error: "AI is not permitted to change task status on this project.", status: 403 };
     }

@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { dataClient } from "@/lib/data-client";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
+import { hostedProjectMemberLimitError } from "@/lib/limits";
 import type { ProjectRole } from "@/types/project";
 
 /**
@@ -30,12 +33,6 @@ function assertManager(role: ProjectRole | null): role is "owner" | "admin" {
   return role === "owner" || role === "admin";
 }
 
-/** True for a Postgres unique_violation (SQLSTATE 23505) - both node-postgres
- * errors and PostgREST error objects carry it as `.code`. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
-}
-
 export async function addMember(
   projectId: string,
   userId: string,
@@ -56,73 +53,38 @@ export async function addMember(
   // the organization at all. Neither project_members_insert_owner nor
   // _insert_admin's WITH CHECK references organization_members either, so
   // RLS doesn't catch this on its own.
-  const inOrg = hasDirectDatabase()
-    ? await withUser(access.userId, ({ query }) =>
-        query(
-          "SELECT 1 FROM organization_members WHERE organization_id = $1 AND user_id = $2",
-          [access.project.organization_id, userId]
-        )
-      ).then((result) => result.rows.length > 0)
-    : await createClient().then(async (supabase) => {
-        const { data } = await supabase
-          .from("organization_members")
-          .select("id")
-          .eq("organization_id", access.project.organization_id)
-          .eq("user_id", userId)
-          .maybeSingle();
-        return Boolean(data);
-      });
+  const db = dataClient(access.userId);
 
-  if (!inOrg) {
+  const { data: orgMembership } = await db
+    .from("organization_members")
+    .select("id")
+    .eq("organization_id", access.project.organization_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!orgMembership) {
     return { member: null, error: "This person is not a member of this project's organization." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const member = await withUser(access.userId, async ({ query }) => {
-        const result = await query(
-          `INSERT INTO project_members (project_id, user_id, role)
-           VALUES ($1, $2, $3)
-           RETURNING id, user_id, role, joined_at`,
-          [projectId, userId, role]
-        );
-        return result.rows[0] as MemberRow;
-      });
+  // Guidon Cloud only (plans.member_limit_per_project, 049). Members
+  // already over a lowered limit are kept; only adding more is blocked.
+  const limitError = await hostedProjectMemberLimitError(projectId, access.project.organization_id);
+  if (limitError) return { member: null, error: limitError };
 
-      await logActivity({
-        userId: access.userId,
-        action: "member_added",
-        projectId,
-        entityType: "project_member",
-        entityId: userId,
-        details: { role },
-      });
-
-      revalidatePath(`/projects/${projectId}/members`);
-      return { member, error: null };
-    } catch (error) {
-      // 23505 = unique_violation - uq_project_members_project_user (001;
-      // 026 also added its own copy of this constraint, later dropped as
-      // redundant by 027).
-      if (isUniqueViolation(error)) {
-        return { member: null, error: "This person is already a member of this project." };
-      }
-      return { member: null, error: error instanceof Error ? error.message : "Failed to add member." };
-    }
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data: member, error } = await db
     .from("project_members")
     .insert({ project_id: projectId, user_id: userId, role })
-    .select("id, user_id, role, joined_at")
+    .select<MemberRow>("id, user_id, role, joined_at")
     .single();
 
-  if (error) {
+  if (error || !member) {
+    // 23505 = unique_violation - uq_project_members_project_user (001;
+    // 026 also added its own copy of this constraint, later dropped as
+    // redundant by 027).
     if (isUniqueViolation(error)) {
       return { member: null, error: "This person is already a member of this project." };
     }
-    return { member: null, error: error.message };
+    return { member: null, error: error?.message ?? "Failed to add member." };
   }
 
   await logActivity({
@@ -135,7 +97,7 @@ export async function addMember(
   });
 
   revalidatePath(`/projects/${projectId}/members`);
-  return { member: data as MemberRow, error: null };
+  return { member, error: null };
 }
 
 export async function changeMemberRole(
@@ -156,44 +118,13 @@ export async function changeMemberRole(
     return { error: "You cannot assign that role." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      // project_id scoping plus a RETURNING/row-count check - mirrors
-      // removeMember just below. Without it, a memberId that doesn't belong
-      // to projectId - or one RLS itself rejected (project_members_update_admin
-      // blocking an admin from touching an owner row) - silently affected
-      // zero rows while this still returned success and logged a
-      // "member_role_changed" activity entry for a change that never
-      // happened.
-      const result = await withUser(access.userId, ({ query }) =>
-        query("UPDATE project_members SET role = $1 WHERE id = $2 AND project_id = $3 RETURNING id", [
-          role,
-          memberId,
-          projectId,
-        ])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This member does not belong to this project, or that role change isn't allowed." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to change role." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "member_role_changed",
-      projectId,
-      entityType: "project_member",
-      entityId: memberId,
-      details: { from: currentMemberRole, to: role },
-    });
-
-    revalidatePath(`/projects/${projectId}/members`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // project_id scoping plus a RETURNING/row-count check - mirrors
+  // removeMember just below. Without it, a memberId that doesn't belong to
+  // projectId - or one RLS itself rejected (project_members_update_admin
+  // blocking an admin from touching an owner row) - silently affected zero
+  // rows while this still returned success and logged a
+  // "member_role_changed" activity entry for a change that never happened.
+  const { data, error } = await dataClient(access.userId)
     .from("project_members")
     .update({ role })
     .eq("id", memberId)
@@ -201,7 +132,7 @@ export async function changeMemberRole(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!data || data.length === 0) {
+  if (data.length === 0) {
     return { error: "This member does not belong to this project, or that role change isn't allowed." };
   }
 
@@ -232,6 +163,9 @@ export async function removeMember(
     return { error: "Only an owner can remove another owner." };
   }
 
+  // Still written per mode on purpose: self-hosted removes the membership
+  // and clears the member's task assignments in ONE transaction, which the
+  // data client (one transaction per query) can't express.
   if (hasDirectDatabase()) {
     try {
       const removed = await withUser(access.userId, async ({ query }) => {

@@ -6,13 +6,19 @@
 // icon (icons/icon.ico, embedded from tauri.conf.json's bundle.icon list)
 // rather than shipping a separate tray-specific asset - see the icon note
 // in desktop/README.md.
-use tauri::menu::{MenuBuilder, MenuItemBuilder};
+use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::App;
 
-use crate::windows::{log_app_error, toggle_main_window};
+use crate::store::stored_tasks_on_top;
+use crate::windows::{
+    log_app_error, open_or_focus_plugins, open_or_focus_tasks, set_tasks_on_top, toggle_main_window,
+};
 
 const SHOW_HIDE_MENU_ID: &str = "tray_show_hide";
+const TASKS_MENU_ID: &str = "tray_tasks";
+const TASKS_ON_TOP_MENU_ID: &str = "tray_tasks_on_top";
+const PLUGINS_MENU_ID: &str = "tray_plugins";
 const QUIT_MENU_ID: &str = "tray_quit";
 
 /// Build and install the tray icon, its right-click menu, and its own
@@ -30,9 +36,19 @@ pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
     };
 
     let show_hide = MenuItemBuilder::with_id(SHOW_HIDE_MENU_ID, "Show/Hide Guidon").build(app)?;
+    let tasks = MenuItemBuilder::with_id(TASKS_MENU_ID, "Tasks Window").build(app)?;
+    let tasks_on_top =
+        CheckMenuItemBuilder::with_id(TASKS_ON_TOP_MENU_ID, "Keep Tasks Window on Top")
+            .checked(stored_tasks_on_top(app.handle()))
+            .build(app)?;
+    let plugins =
+        MenuItemBuilder::with_id(PLUGINS_MENU_ID, "Install Editor Plugins...").build(app)?;
     let quit = MenuItemBuilder::with_id(QUIT_MENU_ID, "Quit").build(app)?;
     let tray_menu = MenuBuilder::new(app)
         .item(&show_hide)
+        .item(&tasks)
+        .item(&tasks_on_top)
+        .item(&plugins)
         .separator()
         .item(&quit)
         .build()?;
@@ -47,9 +63,16 @@ pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
         // reaching on_tray_icon_event below, so plain click-to-toggle would
         // never fire.
         .show_menu_on_left_click(false)
-        .on_menu_event(|app, event| {
+        .on_menu_event(move |app, event| {
             if event.id() == SHOW_HIDE_MENU_ID {
                 toggle_main_window(app);
+            } else if event.id() == TASKS_MENU_ID {
+                open_or_focus_tasks(app);
+            } else if event.id() == TASKS_ON_TOP_MENU_ID {
+                // The OS has already flipped the check mark by now.
+                set_tasks_on_top(app, tasks_on_top.is_checked().unwrap_or(true));
+            } else if event.id() == PLUGINS_MENU_ID {
+                open_or_focus_plugins(app);
             } else if event.id() == QUIT_MENU_ID {
                 app.exit(0);
             }

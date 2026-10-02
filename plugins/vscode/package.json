@@ -16,6 +16,7 @@
   "contributes": {
     "commands": [
       { "command": "guidon.openBoard", "title": "Open Board", "category": "Guidon", "icon": "$(project)" },
+      { "command": "guidon.openMoodboard", "title": "Open Moodboard", "category": "Guidon", "icon": "$(file-media)" },
       { "command": "guidon.login", "title": "Log In", "category": "Guidon" },
       { "command": "guidon.logout", "title": "Log Out", "category": "Guidon" },
       { "command": "guidon.pickProject", "title": "Pick Project", "category": "Guidon" },
@@ -35,6 +36,11 @@
           "type": "string",
           "default": "https://useguidon.com",
           "description": "Your Guidon instance, e.g. https://useguidon.com or http://localhost:2137."
+        },
+        "guidon.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reload the board every 30 seconds while it's visible and VS Code has focus."
         },
         "guidon.branchPrefix": {
           "type": "string",

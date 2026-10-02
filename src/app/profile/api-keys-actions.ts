@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { generateApiKey, hashApiKey, keyPrefix, API_KEY_SCOPES } from "@/lib/api/api-keys";
 import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 
@@ -18,27 +16,18 @@ export type ApiKeyRow = {
   revoked_at: string | null;
 };
 
+const API_KEY_COLUMNS = "id, name, key_prefix, scopes, created_at, last_used_at, revoked_at";
+
 export async function listApiKeys(): Promise<ApiKeyRow[]> {
   const user = await getCurrentUser();
 
-  if (hasDirectDatabase()) {
-    const result = await withUser(user.id, ({ query }) =>
-      query(
-        "SELECT id, name, key_prefix, scopes, created_at, last_used_at, revoked_at FROM api_keys WHERE user_id = $1 ORDER BY created_at DESC",
-        [user.id]
-      )
-    );
-    return result.rows;
-  }
-
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("api_keys")
-    .select("id, name, key_prefix, scopes, created_at, last_used_at, revoked_at")
+  const { data } = await dataClient(user.id)
+    .from<ApiKeyRow>("api_keys")
+    .select(API_KEY_COLUMNS)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  return (data ?? []) as ApiKeyRow[];
+  return data;
 }
 
 export type CreateApiKeyState = { error: string | null; fullKey: string | null; row: ApiKeyRow | null };
@@ -52,29 +41,13 @@ async function mintApiKey(userId: string, name: string, scopes: string[]): Promi
   // component can append the new key to its list immediately - it holds
   // `keys` in useState seeded from the initial server render, which
   // revalidatePath() alone doesn't update without a remount.
-  let row: ApiKeyRow;
+  const { data: row, error } = await dataClient(userId)
+    .from("api_keys")
+    .insert({ user_id: userId, name, key_prefix: prefix, key_hash: hash, scopes })
+    .select<ApiKeyRow>(API_KEY_COLUMNS)
+    .single();
 
-  if (hasDirectDatabase()) {
-    const result = await withUser(userId, ({ query }) =>
-      query(
-        `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING id, name, key_prefix, scopes, created_at, last_used_at, revoked_at`,
-        [userId, name, prefix, hash, scopes]
-      )
-    );
-    row = result.rows[0] as ApiKeyRow;
-  } else {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("api_keys")
-      .insert({ user_id: userId, name, key_prefix: prefix, key_hash: hash, scopes })
-      .select("id, name, key_prefix, scopes, created_at, last_used_at, revoked_at")
-      .single();
-
-    if (error) return { error: error.message, fullKey: null, row: null };
-    row = data as ApiKeyRow;
-  }
+  if (error || !row) return { error: error?.message ?? "Could not create the key.", fullKey: null, row: null };
 
   revalidatePath("/profile");
   return { error: null, fullKey, row };
@@ -127,29 +100,16 @@ export async function createClaudeCodeConnectionKey(): Promise<{ error: string |
 export async function revokeApiKey(keyId: string): Promise<{ error: string | null }> {
   const user = await getCurrentUser();
 
-  if (hasDirectDatabase()) {
-    const result = await withUser(user.id, ({ query }) =>
-      query("UPDATE api_keys SET revoked_at = now() WHERE id = $1 AND user_id = $2 RETURNING id", [
-        keyId,
-        user.id,
-      ])
-    );
-    if (result.rows.length === 0) {
-      return { error: "This key no longer exists, or it isn't yours to revoke." };
-    }
-  } else {
-    const supabase = await createClient();
-    const { data: updatedRows, error } = await supabase
-      .from("api_keys")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", keyId)
-      .eq("user_id", user.id)
-      .select("id");
+  const { data: updatedRows, error } = await dataClient(user.id)
+    .from("api_keys")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", keyId)
+    .eq("user_id", user.id)
+    .select("id");
 
-    if (error) return { error: error.message };
-    if (!updatedRows || updatedRows.length === 0) {
-      return { error: "This key no longer exists, or it isn't yours to revoke." };
-    }
+  if (error) return { error: error.message };
+  if (updatedRows.length === 0) {
+    return { error: "This key no longer exists, or it isn't yours to revoke." };
   }
 
   revalidatePath("/profile");

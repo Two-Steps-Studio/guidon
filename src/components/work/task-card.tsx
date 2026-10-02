@@ -1,6 +1,7 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { initialsFor } from "@/lib/people";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
@@ -29,18 +30,40 @@ export interface TaskCardMember {
   avatar_url: string | null;
 }
 
+// Mouse/pen: distance past which a press commits to a drag instead of a click.
+const DRAG_MOVE_THRESHOLD_PX = 8;
+// Touch: a drag needs a short hold first, so a swipe across a card scrolls the
+// board instead of grabbing the card. Moving further than the tolerance before
+// the hold completes means the user is scrolling, and the gesture is dropped.
+// An earlier 200ms long-press lost to the browser's native scroll on real
+// phones because nothing ever cancelled it; the non-passive touchmove listener
+// in TaskCardComponent now does, but only once the hold has armed the drag.
+const TOUCH_HOLD_MS = 300;
+const TOUCH_HOLD_TOLERANCE_PX = 10;
+
 interface TaskCardProps {
   task: Task;
   assignee?: TaskCardMember;
   commentCount?: number;
+  /** Signed URL of the task's most recently uploaded image attachment, if any. */
+  coverImageUrl?: string;
   subtaskProgress?: SubtaskProgress;
   draggable: boolean;
   isDragging: boolean;
   onOpen: (task: Task) => void;
-  onDragStart: (task: Task) => void;
+  /**
+   * Pointer-based drag-and-drop (kanban-board.tsx owns the actual drag
+   * state/ghost/hit-testing - this component only detects gesture intent
+   * and reports raw viewport coordinates). Replaces native HTML5
+   * draggable/dragstart/dragover/drop, which never fires on touch at all
+   * and gives the browser - not this component - control of the drag
+   * ghost, so it can't track the pointer 1:1 or be grabbed mid-flight.
+   */
+  onDragStart: (task: Task, element: HTMLElement, clientX: number, clientY: number) => void;
+  onDragMove: (clientX: number, clientY: number) => void;
   onDragEnd: () => void;
   /** Alt+Up/Alt+Down calls this - the keyboard equivalent of a within-
-   * column drag, which native HTML5 drag-and-drop has no keyboard path
+   * column drag, which the pointer gesture above has no keyboard path
    * for at all. Undefined (not just a no-op) when the board is read-only,
    * so the shortcut isn't advertised via aria-keyshortcuts when it
    * wouldn't do anything. */
@@ -67,36 +90,45 @@ function descriptionPreview(description: string | null | undefined): string {
     .trim();
 }
 
-export function initialsFor(member: TaskCardMember): string {
-  const source = member.full_name?.trim() || member.email;
-  const parts = source.split(/[\s@._-]+/).filter(Boolean);
+interface Gesture {
+  pointerId: number;
+  pointerType: string;
+  startX: number;
+  startY: number;
+  armed: boolean;
+  holdTimer: ReturnType<typeof setTimeout> | null;
+}
 
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+function clearHoldTimer(gesture: Gesture) {
+  if (gesture.holdTimer != null) {
+    clearTimeout(gesture.holdTimer);
+    gesture.holdTimer = null;
+  }
 }
 
 /**
- * Wrapped in memo() below: KanbanBoard re-renders on every dragover tick
- * (dropTarget state tracks the hovered insertion point, which changes many
- * times per second while dragging) - without memo, every card in every
- * column re-rendered on each of those ticks, not just the one being
- * dragged. KanbanBoard's onDragStart/onDragEnd/onReorder props are stable
- * (useState setters / useCallback), and isDragging/canMoveUp/canMoveDown
- * are plain booleans, so for any card other than the one actually being
- * dragged or reordered, every prop is reference-equal across a re-render
- * and memo correctly skips it.
+ * Wrapped in memo() below: KanbanBoard re-renders on every drag-move tick
+ * (dropTarget/ghost position tracks the pointer, which changes many times
+ * per second while dragging) - without memo, every card in every column
+ * re-rendered on each of those ticks, not just the one being dragged.
+ * KanbanBoard's onDragStart/onDragMove/onDragEnd/onReorder props are
+ * referentially stable (useCallback with empty/ref-based deps - see
+ * kanban-board.tsx), and isDragging/canMoveUp/canMoveDown are plain
+ * booleans, so for any card other than the one actually being dragged or
+ * reordered, every prop is reference-equal across a re-render and memo
+ * correctly skips it.
  */
 function TaskCardComponent({
   task,
   assignee,
   commentCount = 0,
+  coverImageUrl,
   subtaskProgress,
   draggable,
   isDragging,
   onOpen,
   onDragStart,
+  onDragMove,
   onDragEnd,
   onReorder,
   canMoveUp = false,
@@ -111,17 +143,139 @@ function TaskCardComponent({
   const due = dueState(task.due_date, task.status);
   const tags = task.tags ?? [];
 
+  const gestureRef = useRef<Gesture | null>(null);
+  const cardRef = useRef<HTMLElement>(null);
+  // A drag that ends on the card's own element also dispatches a browser
+  // click right after pointerup - without this, dropping a card reopens it.
+  const suppressClickRef = useRef(false);
+
+  // React's onTouchMove is passive and can't preventDefault. This listener is
+  // registered up front (iOS ignores preventDefault from listeners added
+  // mid-gesture) but only blocks scrolling once a hold has armed a drag.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const blockScrollWhileDragging = (event: TouchEvent) => {
+      if (gestureRef.current?.armed) event.preventDefault();
+    };
+    card.addEventListener("touchmove", blockScrollWhileDragging, { passive: false });
+    return () => {
+      card.removeEventListener("touchmove", blockScrollWhileDragging);
+      if (gestureRef.current) clearHoldTimer(gestureRef.current);
+    };
+  }, []);
+
+  const arm = useCallback(
+    (gesture: Gesture, element: HTMLElement) => {
+      clearHoldTimer(gesture);
+      gesture.armed = true;
+      suppressClickRef.current = true;
+      try {
+        element.setPointerCapture(gesture.pointerId);
+      } catch {
+        // Not fatal - the drag still proceeds via normally-bubbled events,
+        // just without capture's "keep tracking outside the card" guarantee.
+      }
+      onDragStart(task, element, gesture.startX, gesture.startY);
+    },
+    [onDragStart, task]
+  );
+
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      // A long-press usually isn't followed by a click, so a flag left over
+      // from the previous drag would otherwise swallow the next real tap.
+      suppressClickRef.current = false;
+      if (!draggable) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      // Don't hijack the "..." move-to menu's own press/click.
+      if ((event.target as HTMLElement).closest("button")) return;
+
+      if (gestureRef.current) clearHoldTimer(gestureRef.current);
+      const gesture: Gesture = {
+        pointerId: event.pointerId,
+        pointerType: event.pointerType,
+        startX: event.clientX,
+        startY: event.clientY,
+        armed: false,
+        holdTimer: null,
+      };
+      gestureRef.current = gesture;
+
+      if (event.pointerType === "touch") {
+        const element = event.currentTarget;
+        gesture.holdTimer = setTimeout(() => {
+          gesture.holdTimer = null;
+          if (gestureRef.current !== gesture || gesture.armed) return;
+          arm(gesture, element);
+          navigator.vibrate?.(10);
+        }, TOUCH_HOLD_MS);
+      }
+    },
+    [arm, draggable]
+  );
+
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      const gesture = gestureRef.current;
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+      if (!gesture.armed) {
+        const distance = Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY);
+        if (gesture.pointerType === "touch") {
+          if (distance > TOUCH_HOLD_TOLERANCE_PX) {
+            clearHoldTimer(gesture);
+            gestureRef.current = null;
+          }
+          return;
+        }
+        if (distance < DRAG_MOVE_THRESHOLD_PX) return;
+        arm(gesture, event.currentTarget);
+      }
+
+      event.preventDefault();
+      onDragMove(event.clientX, event.clientY);
+    },
+    [arm, onDragMove]
+  );
+
+  const endGesture = useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      const gesture = gestureRef.current;
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+      gestureRef.current = null;
+      clearHoldTimer(gesture);
+      if (gesture.armed) {
+        try {
+          event.currentTarget.releasePointerCapture(gesture.pointerId);
+        } catch {
+          // Already released/invalidated - the drag has already ended either way.
+        }
+        onDragEnd();
+      }
+    },
+    [onDragEnd]
+  );
+
   return (
     <article
-      draggable={draggable}
-      onDragStart={(event) => {
-        // dataTransfer must be set for Firefox to start a drag at all.
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", task.id);
-        onDragStart(task);
+      ref={cardRef}
+      data-card-id={task.id}
+      onContextMenu={(event) => {
+        // Android fires contextmenu on a long-press - that's our drag gesture.
+        if (gestureRef.current) event.preventDefault();
       }}
-      onDragEnd={onDragEnd}
-      onClick={() => onOpen(task)}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endGesture}
+      onPointerCancel={endGesture}
+      onClick={() => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          return;
+        }
+        onOpen(task);
+      }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
@@ -143,15 +297,29 @@ function TaskCardComponent({
       aria-label={t("openTaskAria", { title: task.title })}
       aria-keyshortcuts={onReorder ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
       className={cn(
-        "group rounded-lg border border-border bg-card p-3 text-left",
+        "group select-none rounded-lg border border-border bg-card p-3 text-left",
         "shadow-sm transition-colors",
         "hover:border-border-hover hover:bg-surface-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        draggable && "cursor-grab active:cursor-grabbing",
+        // touch-manipulation keeps native scrolling on cards (a drag needs a
+        // hold first - see TOUCH_HOLD_MS). [-webkit-touch-callout:none]
+        // suppresses iOS's long-press callout over the cover image, which
+        // would otherwise pop up alongside the drag.
+        draggable && "cursor-grab touch-manipulation [-webkit-touch-callout:none] active:cursor-grabbing",
         done && "opacity-70 hover:opacity-100",
         isDragging && "opacity-40"
       )}
     >
+      {coverImageUrl && (
+        <div className="-mx-3 -mt-3 mb-2 overflow-hidden rounded-t-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element -- signed, per-task URL from any storage provider (local or Supabase), not a static/optimizable asset - same reasoning as TaskImageGallery's own img */}
+          <img
+            src={coverImageUrl}
+            alt=""
+            className="h-28 w-full object-cover"
+          />
+        </div>
+      )}
       <div className="flex items-start gap-2">
         {done ? (
           <CheckCircle2 aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />

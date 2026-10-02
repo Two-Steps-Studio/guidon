@@ -1,4 +1,29 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tailwind's built-in `dark:` variant only ever follows
+   prefers-color-scheme - it has no idea about the manual theme toggle
+   (theme-switcher.tsx), which works by setting data-theme on <html>
+   exactly like the hand-written --color-* overrides below. Without this,
+   every `dark:*` utility in the app (the invert filter on the wordmark
+   logo, badge/dropdown color variants) silently ignores an explicit
+   Light/Dark choice and keeps reacting to the OS instead, so picking
+   "Light" while the OS is set to dark left the logo inverted to white
+   on a now-white background - invisible.
+   Mirrors the exact same condition as the --color-* overrides further
+   down: explicit data-theme="dark" always wins; otherwise fall back to
+   the OS preference, unless the user explicitly chose "light". */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:not([data-theme="light"]):not([data-theme="light"] *)) {
+      @slot;
+    }
+  }
+}
 
 /* ============================================
    GUIDON DESIGN TOKENS
@@ -113,6 +138,13 @@
   --sidebar-accent-foreground: var(--color-foreground);
   --sidebar-border: var(--color-border);
   --sidebar-ring: var(--color-ring);
+
+  /* Shadow opacity, read by the --shadow-* scale in the @theme block below.
+     Light mode sits a little above Tailwind's default 0.1 / 0.25 - on a
+     white background the defaults barely separate popovers, dialogs and
+     cards from the page. Dark mode keeps the defaults. */
+  --shadow-alpha: 0.14;
+  --shadow-alpha-strong: 0.3;
 }
 
 /* ---- Dark palette (system preference) ---- */
@@ -188,6 +220,9 @@
     --color-priority-medium: #60a5fa;
     --color-priority-high: #fbbf24;
     --color-priority-critical: #f87171;
+
+    --shadow-alpha: 0.1;
+    --shadow-alpha-strong: 0.25;
   }
 }
 
@@ -263,6 +298,9 @@
   --color-priority-medium: #60a5fa;
   --color-priority-high: #fbbf24;
   --color-priority-critical: #f87171;
+
+  --shadow-alpha: 0.1;
+  --shadow-alpha-strong: 0.25;
 }
 
 /* ============================================
@@ -361,6 +399,19 @@
   --color-sidebar: var(--sidebar);
 }
 
+/* Tailwind's default shadow geometry, with the opacity taken from
+   --shadow-alpha / --shadow-alpha-strong (light vs dark, see :root). */
+@theme {
+  --shadow-2xs: 0 1px rgb(0 0 0 / calc(var(--shadow-alpha) * 0.5));
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / calc(var(--shadow-alpha) * 0.5));
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / var(--shadow-alpha)), 0 1px 2px -1px rgb(0 0 0 / var(--shadow-alpha));
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / var(--shadow-alpha)), 0 1px 2px -1px rgb(0 0 0 / var(--shadow-alpha));
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / var(--shadow-alpha)), 0 2px 4px -2px rgb(0 0 0 / var(--shadow-alpha));
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / var(--shadow-alpha)), 0 4px 6px -4px rgb(0 0 0 / var(--shadow-alpha));
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / var(--shadow-alpha)), 0 8px 10px -6px rgb(0 0 0 / var(--shadow-alpha));
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / var(--shadow-alpha-strong));
+}
+
 /* ============================================
    BASE
    ============================================ */
@@ -395,6 +446,27 @@ body {
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-active) transparent;
+  }
+}
+
+/* Optical sizing: tracking tightens and leading contracts as text gets
+   bigger, per Apple's size-specific type discipline. Body text is left at
+   its browser/Tailwind default (near 0 tracking, 1.5 leading). Explicit
+   `tracking-*`/`leading-*` utilities still win - the base layer loses to
+   Tailwind's utilities layer by cascade-layer order. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  h4,
+  h5,
+  h6 {
+    letter-spacing: -0.01em;
+    line-height: 1.25;
   }
 }
 

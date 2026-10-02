@@ -1,22 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient, createServiceClient } from "@/lib/supabase-server";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser, withServiceRole } from "@/lib/db/session";
+import { dataClient, serviceDataClient } from "@/lib/data-client";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { logActivity } from "@/lib/data/log-activity";
+import { hostedMemberLimitError } from "@/lib/limits";
 import type { OrganizationRole } from "@/types/project";
 
 export type MemberActionState = {
   error: string | null;
 };
 
-/** True for a Postgres unique_violation (SQLSTATE 23505) - both node-postgres
- * errors and PostgREST error objects carry it as `.code`. */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
-}
+const NOT_IN_ORG = "This member does not belong to this organization, or that change isn't allowed.";
 
 export async function addMember(
   orgId: string,
@@ -37,83 +33,38 @@ export async function addMember(
   }
   // Every signup path (local-auth.ts, GoTrue) lowercases before storing, so
   // profiles.email is always lowercase - comparing against the raw,
-  // as-typed input here made "John@Example.com" fail to find an account
-  // actually stored as "john@example.com", the normal case.
+  // as-typed input made "John@Example.com" miss "john@example.com".
   const normalizedEmail = email.trim().toLowerCase();
   if (role !== "member" && role !== "admin" && role !== "owner") {
     return { error: "Invalid role." };
   }
-  // Mirrors the RLS policies (001): an admin may not grant ownership,
-  // only an owner can. Checked here too so the error is readable instead
-  // of a raw Postgres RLS rejection.
+  // Mirrors the RLS policies (001): an admin may not grant ownership, only
+  // an owner can. Checked here too so the error is readable.
   if (role === "owner" && access.role !== "owner") {
     return { error: "Only an owner can grant ownership." };
   }
 
-  if (hasDirectDatabase()) {
-    let addedUserId: string;
+  // Guidon Cloud seats (plans.member_limit, 051). Checked before the lookup
+  // so a full organization gets the upgrade message rather than "not
+  // found" for a mistyped address.
+  const seatsError = await hostedMemberLimitError(orgId);
+  if (seatsError) return { error: seatsError };
 
-    try {
-      addedUserId = await withUser(access.userId, async ({ query }) => {
-        const profileResult = await query("SELECT id FROM profiles WHERE email = $1", [
-          normalizedEmail,
-        ]);
-        if (profileResult.rows.length === 0) {
-          throw new Error("User with this email not found.");
-        }
+  const db = dataClient(access.userId);
 
-        await query(
-          "INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, $3)",
-          [orgId, profileResult.rows[0].id, role]
-        );
-        return profileResult.rows[0].id as string;
-      });
-    } catch (error) {
-      // 23505 = unique_violation - uq_organization_members_org_user (001;
-      // 026 also added its own copy of this constraint, later dropped as
-      // redundant by 027). A friendlier message than the raw
-      // constraint-violation text.
-      if (isUniqueViolation(error)) {
-        return { error: "This person is already a member of this organization." };
-      }
-      return { error: error instanceof Error ? error.message : "Failed to add member." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "member_added",
-      organizationId: orgId,
-      entityType: "organization_member",
-      entityId: addedUserId,
-      details: { role },
-    });
-
-    revalidatePath(`/organizations/${orgId}/members`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
-
-  if (profileError || !profile) {
-    return { error: "User with this email not found." };
-  }
-
-  const { error } = await supabase.from("organization_members").insert({
-    organization_id: orgId,
-    user_id: profile.id,
-    role,
+  // Not a plain SELECT on profiles: its RLS (003) only shows people who
+  // already share an organization/project with the caller - never the
+  // person being added. See migration 047.
+  const { data: userId } = await db.rpc<string>("find_user_id_by_email", {
+    p_organization_id: orgId,
+    p_email: normalizedEmail,
   });
+  if (!userId) return { error: "User with this email not found." };
 
+  const { error } = await db.from("organization_members").insert({ organization_id: orgId, user_id: userId, role });
   if (error) {
-    if (isUniqueViolation(error)) {
-      return { error: "This person is already a member of this organization." };
-    }
+    // uq_organization_members_org_user (001/026).
+    if (isUniqueViolation(error)) return { error: "This person is already a member of this organization." };
     return { error: error.message };
   }
 
@@ -122,7 +73,7 @@ export async function addMember(
     action: "member_added",
     organizationId: orgId,
     entityType: "organization_member",
-    entityId: profile.id,
+    entityId: userId,
     details: { role },
   });
 
@@ -144,57 +95,19 @@ export async function updateMemberRole(
     return { error: "Only an owner can grant ownership." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      // organization_id scoping plus a RETURNING/row-count check - mirrors
-      // removeMember just below (and the same pattern already applied to
-      // decisions/memory/knowledge actions). Without it, a memberId that
-      // doesn't belong to orgId - or one RLS itself rejected (an admin
-      // attempting to change an owner's role, blocked by
-      // organization_members_update_admin's own USING clause) - silently
-      // affected zero rows while this still returned success and logged a
-      // "member_role_changed" activity entry for a change that never
-      // happened.
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          "UPDATE organization_members SET role = $1 WHERE id = $2 AND organization_id = $3 RETURNING id",
-          [role, memberId, orgId]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This member does not belong to this organization, or that role change isn't allowed." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to change role." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "member_role_changed",
-      organizationId: orgId,
-      entityType: "organization_member",
-      entityId: memberId,
-      details: { to: role },
-    });
-
-    revalidatePath(`/organizations/${orgId}/members`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // organization_id scoping plus a row check: a memberId from another
+  // organization - or one RLS rejected (an admin changing an owner's role,
+  // blocked by organization_members_update_admin) - used to "succeed" with
+  // zero rows and still log a role change that never happened.
+  const { data, error } = await dataClient(access.userId)
     .from("organization_members")
     .update({ role })
     .eq("id", memberId)
     .eq("organization_id", orgId)
     .select("id");
 
-  if (error) {
-    return { error: error.message };
-  }
-  if (!data || data.length === 0) {
-    return { error: "This member does not belong to this organization, or that role change isn't allowed." };
-  }
+  if (error) return { error: error.message };
+  if (data.length === 0) return { error: NOT_IN_ORG };
 
   await logActivity({
     userId: access.userId,
@@ -211,160 +124,57 @@ export async function updateMemberRole(
 
 /**
  * project_members has no dependency on organization_members - no FK, no
- * cascade trigger - and RLS scopes its DELETE policy to that specific
- * project's own owner/admin (private.project_role(project_id)), not org
- * admins in general. Without this, removing someone from the organization
- * left them with full, indefinite access to any project they'd been added
- * to directly (the only way project_members ever gets a row - see
- * projects/[id]/members/page.tsx's candidate list, which is drawn from
- * organization_members), silently, since the org admin doing the removal
- * often isn't also an admin of every one of that person's projects and the
- * app-identity delete above would just no-op there under RLS.
+ * cascade - and its DELETE policy belongs to each project's own
+ * owner/admin, not org admins in general. Without this, someone removed
+ * from the organization kept full access to every project they'd been
+ * added to, since the org admin doing the removal often isn't an admin of
+ * all of them and a delete under their identity would no-op under RLS.
+ * Also clears tasks.assignee_id in those projects (ON DELETE SET NULL only
+ * fires for a deleted profile), or the person would stay the assignee and
+ * the assignment would reappear if they were re-added.
  *
- * Runs as service_role rather than the calling org admin's own identity:
- * canManageOrg() above already establishes they're authorized to decide
- * this person loses access to the organization, and revoking the project
- * access that access implies is a direct, scoped consequence of that
- * decision (only this exact user, only within this exact org's projects) -
- * not a broader RLS bypass.
- *
- * Also clears tasks.assignee_id for the same user across those same
- * projects - same reasoning as the project_members cleanup above: nothing
- * else ever does this (ON DELETE SET NULL on tasks.assignee_id only fires
- * for a deleted profiles row, not a removed membership), so without it a
- * removed member stays the assignee of their tasks indefinitely, and the
- * assignment silently reappears if they're ever re-added.
+ * Service role: canManageOrg() already established the caller may remove
+ * this person from the organization, and this is the direct, scoped
+ * consequence - only this user, only this organization's projects.
  */
 async function removeUserFromOrgProjects(userId: string, orgId: string): Promise<void> {
-  if (hasDirectDatabase()) {
-    await withServiceRole(async ({ query }) => {
-      await query(
-        `DELETE FROM project_members
-         WHERE user_id = $1 AND project_id IN (SELECT id FROM projects WHERE organization_id = $2)`,
-        [userId, orgId]
-      );
-      await query(
-        `UPDATE tasks SET assignee_id = NULL
-         WHERE assignee_id = $1 AND project_id IN (SELECT id FROM projects WHERE organization_id = $2)`,
-        [userId, orgId]
-      );
-    });
-    return;
-  }
-
-  const supabase = createServiceClient();
-  const { data: projects } = await supabase.from("projects").select("id").eq("organization_id", orgId);
-  const projectIds = (projects ?? []).map((p) => p.id);
+  const service = serviceDataClient();
+  const { data: projects } = await service.from<{ id: string }>("projects").select("id").eq("organization_id", orgId);
+  const projectIds = projects.map((p) => p.id);
   if (projectIds.length === 0) return;
 
-  await supabase.from("project_members").delete().eq("user_id", userId).in("project_id", projectIds);
-  await supabase
-    .from("tasks")
-    .update({ assignee_id: null })
-    .eq("assignee_id", userId)
-    .in("project_id", projectIds);
+  await service.from("project_members").delete().eq("user_id", userId).in("project_id", projectIds);
+  await service.from("tasks").update({ assignee_id: null }).eq("assignee_id", userId).in("project_id", projectIds);
 }
 
-export async function removeMember(
-  orgId: string,
-  memberId: string
-): Promise<{ error: string | null }> {
+export async function removeMember(orgId: string, memberId: string): Promise<{ error: string | null }> {
   const access = await getOrgAccess(orgId);
 
   if (!access || !canManageOrg(access.role)) {
     return { error: "You do not have permission to remove members." };
   }
 
-  if (hasDirectDatabase()) {
-    let userId: string | null = null;
-    let removed = false;
-    try {
-      await withUser(access.userId, async ({ query }) => {
-        const row = await query(
-          "SELECT user_id FROM organization_members WHERE id = $1 AND organization_id = $2",
-          [memberId, orgId]
-        );
-        userId = row.rows[0]?.user_id ?? null;
-        // By (organization_id, user_id), not just this row's own id: 026's
-        // UNIQUE constraint means there's normally only ever one row here,
-        // but this stays correct even for a pre-migration duplicate that
-        // hasn't been cleaned up on an older self-hosted database - a
-        // single "remove" then can't leave a second row silently granting
-        // access.
-        //
-        // Neither branch previously checked rowcount/RETURNING, nor did the
-        // fallback scope by organization_id at all - a memberId belonging to
-        // a different organization (or one RLS silently blocked) would
-        // "succeed" with zero rows affected, and the log below still fired
-        // for a removal that never happened. Mirrors the project-level
-        // removeMember fix in projects/[id]/members/actions.ts.
-        if (userId) {
-          const result = await query(
-            "DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2 RETURNING id",
-            [orgId, userId]
-          );
-          removed = result.rows.length > 0;
-        } else {
-          const result = await query(
-            "DELETE FROM organization_members WHERE id = $1 AND organization_id = $2 RETURNING id",
-            [memberId, orgId]
-          );
-          removed = result.rows.length > 0;
-        }
-      });
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to remove member." };
-    }
-
-    if (!removed) {
-      return { error: "This member does not belong to this organization, or the removal wasn't allowed." };
-    }
-
-    if (userId) await removeUserFromOrgProjects(userId, orgId);
-
-    await logActivity({
-      userId: access.userId,
-      action: "member_removed",
-      organizationId: orgId,
-      entityType: "organization_member",
-      entityId: memberId,
-    });
-
-    revalidatePath(`/organizations/${orgId}/members`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-
-  const { data: memberRow } = await supabase
-    .from("organization_members")
+  const db = dataClient(access.userId);
+  const { data: member } = await db
+    .from<{ user_id: string }>("organization_members")
     .select("user_id")
     .eq("id", memberId)
     .eq("organization_id", orgId)
     .maybeSingle();
 
-  // Same reasoning as the direct-Postgres branch above: by
-  // (organization_id, user_id) when known, so a pre-026 duplicate row can't
-  // survive a "remove". Both branches now also verify a row was actually
-  // deleted, and the fallback stays scoped to organization_id instead of
-  // trusting RLS alone.
-  const { data: deletedRows, error } = memberRow?.user_id
-    ? await supabase
-        .from("organization_members")
-        .delete()
-        .eq("organization_id", orgId)
-        .eq("user_id", memberRow.user_id)
-        .select("id")
-    : await supabase.from("organization_members").delete().eq("id", memberId).eq("organization_id", orgId).select("id");
+  // By (organization_id, user_id) when known, not just this row's id, so a
+  // pre-026 duplicate row can't survive a "remove" and keep granting
+  // access; scoped to organization_id either way, with a row check so a
+  // foreign or RLS-blocked memberId isn't logged as removed.
+  const remove = db.from("organization_members").delete().eq("organization_id", orgId);
+  const { data: deleted, error } = member
+    ? await remove.eq("user_id", member.user_id).select("id")
+    : await remove.eq("id", memberId).select("id");
 
-  if (error) {
-    return { error: error.message };
-  }
-  if (!deletedRows || deletedRows.length === 0) {
-    return { error: "This member does not belong to this organization, or the removal wasn't allowed." };
-  }
+  if (error) return { error: error.message };
+  if (deleted.length === 0) return { error: NOT_IN_ORG };
 
-  if (memberRow?.user_id) await removeUserFromOrgProjects(memberRow.user_id, orgId);
+  if (member) await removeUserFromOrgProjects(member.user_id, orgId);
 
   await logActivity({
     userId: access.userId,

@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Bot, Check } from "lucide-react";
@@ -39,6 +40,13 @@ export function AiPermissionsForm({
   const t = useTranslations("settings");
   const updateWithId = updateAiPermissions.bind(null, projectId);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
+
+  // Same reference-equality detection as settings-form.tsx, in an effect
+  // rather than during render since toast() is a side effect.
+  useEffect(() => {
+    if (state === initialState) return;
+    if (!state.error) toast.success(t("aiSettingsSavedToast"));
+  }, [state, t]);
 
   return (
     <Card>

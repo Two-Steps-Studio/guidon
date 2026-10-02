@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isInsightRateLimited, recordInsightGeneration } from "@/lib/ai/insight-rate-limit";
@@ -57,37 +55,7 @@ export async function createMemory(
   const parsed = parseMemoryForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  if (hasDirectDatabase()) {
-    let memoryId: string;
-
-    try {
-      memoryId = await withUser(access.userId, async ({ query }) => {
-        const result = await query(
-          `INSERT INTO project_memory (project_id, content, memory_type, created_by)
-           VALUES ($1, $2, $3, $4)
-           RETURNING id`,
-          [projectId, parsed.content, parsed.memoryType, access.userId]
-        );
-        return result.rows[0].id as string;
-      });
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to add memory entry." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "memory_created",
-      projectId,
-      entityType: "memory",
-      entityId: memoryId,
-    });
-
-    revalidatePath(`/projects/${projectId}/memory`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("project_memory")
     .insert({
       project_id: projectId,
@@ -95,10 +63,10 @@ export async function createMemory(
       memory_type: parsed.memoryType,
       created_by: access.userId,
     })
-    .select("id")
+    .select<{ id: string }>("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error || !data) return { error: error?.message ?? "Failed to add memory entry." };
 
   await logActivity({
     userId: access.userId,
@@ -110,6 +78,46 @@ export async function createMemory(
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
+}
+
+/**
+ * UPDATE one memory row scoped by `id AND project_id`, treating zero
+ * affected rows (a memoryId from another project, or one RLS filtered) as
+ * an error instead of silent success - see updateDecision
+ * (decisions/actions.ts) for the full story.
+ */
+async function updateMemoryRow(
+  userId: string,
+  projectId: string,
+  memoryId: string,
+  patch: Record<string, unknown>,
+  notFound: string
+): Promise<string | null> {
+  const { data, error } = await dataClient(userId)
+    .from("project_memory")
+    .update(patch)
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .select("id");
+  if (error) return error.message;
+  return data.length === 0 ? notFound : null;
+}
+
+/** DELETE counterpart of updateMemoryRow. */
+async function deleteMemoryRow(
+  userId: string,
+  projectId: string,
+  memoryId: string,
+  notFound: string
+): Promise<string | null> {
+  const { data, error } = await dataClient(userId)
+    .from("project_memory")
+    .delete()
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .select("id");
+  if (error) return error.message;
+  return data.length === 0 ? notFound : null;
 }
 
 export async function updateMemory(
@@ -127,49 +135,14 @@ export async function updateMemory(
   const parsed = parseMemoryForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  if (hasDirectDatabase()) {
-    try {
-      // project_id scoping plus a RETURNING/row-count check - see the
-      // matching comment on updateDecision (decisions/actions.ts) for why:
-      // without it, a memoryId from a different project silently "succeeds"
-      // with zero rows affected instead of returning an error.
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          "UPDATE project_memory SET content = $1, memory_type = $2 WHERE id = $3 AND project_id = $4 RETURNING id",
-          [parsed.content, parsed.memoryType, memoryId, projectId]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This memory entry does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to update memory entry." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "memory_updated",
-      projectId,
-      entityType: "memory",
-      entityId: memoryId,
-    });
-
-    revalidatePath(`/projects/${projectId}/memory`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("project_memory")
-    .update({ content: parsed.content, memory_type: parsed.memoryType })
-    .eq("id", memoryId)
-    .eq("project_id", projectId)
-    .select("id");
-
-  if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This memory entry does not belong to this project." };
-  }
+  const error = await updateMemoryRow(
+    access.userId,
+    projectId,
+    memoryId,
+    { content: parsed.content, memory_type: parsed.memoryType },
+    "This memory entry does not belong to this project."
+  );
+  if (error) return { error };
 
   await logActivity({
     userId: access.userId,
@@ -194,37 +167,13 @@ export async function deleteMemory(
     return { error: "You do not have permission to delete memory entries." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM project_memory WHERE id = $1 AND project_id = $2 RETURNING id", [
-          memoryId,
-          projectId,
-        ])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This memory entry does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to delete memory entry." };
-    }
-
-    revalidatePath(`/projects/${projectId}/memory`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("project_memory")
-    .delete()
-    .eq("id", memoryId)
-    .eq("project_id", projectId)
-    .select("id");
-
-  if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This memory entry does not belong to this project." };
-  }
+  const error = await deleteMemoryRow(
+    access.userId,
+    projectId,
+    memoryId,
+    "This memory entry does not belong to this project."
+  );
+  if (error) return { error };
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
@@ -240,67 +189,34 @@ export async function deleteMemory(
 // trusted project truth."
 // ============================================================
 
+const INSIGHT_NOT_FOUND = "This insight does not belong to this project.";
+
 /**
- * Accept as-is: the insight's own content becomes the fact's content.
- * Mirrors project_memory_update (001): owner/admin/developer - same tier as
- * updateMemory above (verified by reading the policy, not assumed).
+ * Turns an insight into a verified fact - with the reviewer's rewritten
+ * content when given - in one UPDATE (content + verification fields
+ * together, not two separate writes). Mirrors project_memory_update (001):
+ * owner/admin/developer, same tier as updateMemory.
  */
-export async function acceptInsight(
-  projectId: string,
-  memoryId: string
-): Promise<{ error: string | null }> {
+async function verifyInsight(projectId: string, memoryId: string, content: string | null): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
     return { error: "You do not have permission to review insights." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `UPDATE project_memory
-           SET memory_type = 'fact', verified = true, verified_by = $1, verified_at = now()
-           WHERE id = $2 AND project_id = $3
-           RETURNING id`,
-          [access.userId, memoryId, projectId]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This insight does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to accept insight." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "memory_verified",
-      projectId,
-      entityType: "memory",
-      entityId: memoryId,
-    });
-
-    revalidatePath(`/projects/${projectId}/memory`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("project_memory")
-    .update({
+  const error = await updateMemoryRow(
+    access.userId,
+    projectId,
+    memoryId,
+    {
+      ...(content !== null ? { content } : {}),
       memory_type: "fact",
       verified: true,
       verified_by: access.userId,
       verified_at: new Date().toISOString(),
-    })
-    .eq("id", memoryId)
-    .eq("project_id", projectId)
-    .select("id");
-
-  if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This insight does not belong to this project." };
-  }
+    },
+    INSIGHT_NOT_FOUND
+  );
+  if (error) return { error };
 
   await logActivity({
     userId: access.userId,
@@ -314,87 +230,26 @@ export async function acceptInsight(
   return { error: null };
 }
 
-/**
- * Correct then accept: same effect as acceptInsight, but the reviewer
- * rewrites `content` first. One submit, one Server Action call, so it reads
- * as atomic even though it is a single UPDATE (content + verification
- * fields together, not two separate writes).
- */
+/** Accept as-is: the insight's own content becomes the fact's content. */
+export async function acceptInsight(
+  projectId: string,
+  memoryId: string
+): Promise<{ error: string | null }> {
+  return verifyInsight(projectId, memoryId, null);
+}
+
+/** Correct then accept: same as acceptInsight, but the reviewer rewrites `content` first. */
 export async function correctAndAcceptInsight(
   projectId: string,
   memoryId: string,
   _prevState: MemoryFormState,
   formData: FormData
 ): Promise<MemoryFormState> {
-  const access = await getProjectAccess(projectId);
-  if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to review insights." };
-  }
-
   const content = formData.get("content");
   if (typeof content !== "string" || content.trim().length === 0) {
     return { error: "Content is required." };
   }
-
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query(
-          `UPDATE project_memory
-           SET content = $1, memory_type = 'fact', verified = true, verified_by = $2, verified_at = now()
-           WHERE id = $3 AND project_id = $4
-           RETURNING id`,
-          [content.trim(), access.userId, memoryId, projectId]
-        )
-      );
-      if (result.rows.length === 0) {
-        return { error: "This insight does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to accept insight." };
-    }
-
-    await logActivity({
-      userId: access.userId,
-      action: "memory_verified",
-      projectId,
-      entityType: "memory",
-      entityId: memoryId,
-    });
-
-    revalidatePath(`/projects/${projectId}/memory`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("project_memory")
-    .update({
-      content: content.trim(),
-      memory_type: "fact",
-      verified: true,
-      verified_by: access.userId,
-      verified_at: new Date().toISOString(),
-    })
-    .eq("id", memoryId)
-    .eq("project_id", projectId)
-    .select("id");
-
-  if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This insight does not belong to this project." };
-  }
-
-  await logActivity({
-    userId: access.userId,
-    action: "memory_verified",
-    projectId,
-    entityType: "memory",
-    entityId: memoryId,
-  });
-
-  revalidatePath(`/projects/${projectId}/memory`);
-  return { error: null };
+  return verifyInsight(projectId, memoryId, content.trim());
 }
 
 /**
@@ -412,37 +267,8 @@ export async function rejectInsight(
     return { error: "You do not have permission to reject insights." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM project_memory WHERE id = $1 AND project_id = $2 RETURNING id", [
-          memoryId,
-          projectId,
-        ])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This insight does not belong to this project." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to reject insight." };
-    }
-
-    revalidatePath(`/projects/${projectId}/memory`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("project_memory")
-    .delete()
-    .eq("id", memoryId)
-    .eq("project_id", projectId)
-    .select("id");
-
-  if (error) return { error: error.message };
-  if (!data || data.length === 0) {
-    return { error: "This insight does not belong to this project." };
-  }
+  const error = await deleteMemoryRow(access.userId, projectId, memoryId, INSIGHT_NOT_FOUND);
+  if (error) return { error };
 
   revalidatePath(`/projects/${projectId}/memory`);
   return { error: null };
@@ -477,70 +303,32 @@ async function gatherInsightContext(
   projectId: string,
   userId: string
 ): Promise<{ facts: MemoryContentRow[]; constraints: MemoryContentRow[]; decisions: DecisionSummaryRow[] }> {
-  if (hasDirectDatabase()) {
-    // Three withUser() calls, not one wrapping Promise.all([...]) - each
-    // checks out its own pooled connection, so this is genuinely concurrent
-    // instead of firing multiple queries on one pg client (the deprecated
-    // shape, removed in pg@9).
-    const [facts, constraints, decisions] = await Promise.all([
-      withUser(userId, ({ query }) =>
-        query(
-          `SELECT content FROM project_memory
-           WHERE project_id = $1 AND memory_type = 'fact' AND verified = true
-           ORDER BY created_at DESC LIMIT 20`,
-          [projectId]
-        ).then((result) => result.rows)
-      ),
-      withUser(userId, ({ query }) =>
-        query(
-          `SELECT content FROM project_memory
-           WHERE project_id = $1 AND memory_type IN ('constraint', 'project_rule')
-           ORDER BY created_at DESC LIMIT 20`,
-          [projectId]
-        ).then((result) => result.rows)
-      ),
-      withUser(userId, ({ query }) =>
-        query(
-          `SELECT title, description FROM context_decisions
-           WHERE project_id = $1
-           ORDER BY created_at DESC LIMIT 10`,
-          [projectId]
-        ).then((result) => result.rows)
-      ),
-    ]);
-    return { facts, constraints, decisions };
-  }
-
-  const supabase = await createClient();
+  const db = dataClient(userId);
   const [factsRes, constraintsRes, decisionsRes] = await Promise.all([
-    supabase
-      .from("project_memory")
+    db
+      .from<MemoryContentRow>("project_memory")
       .select("content")
       .eq("project_id", projectId)
       .eq("memory_type", "fact")
       .eq("verified", true)
       .order("created_at", { ascending: false })
       .limit(20),
-    supabase
-      .from("project_memory")
+    db
+      .from<MemoryContentRow>("project_memory")
       .select("content")
       .eq("project_id", projectId)
       .in("memory_type", ["constraint", "project_rule"])
       .order("created_at", { ascending: false })
       .limit(20),
-    supabase
-      .from("context_decisions")
+    db
+      .from<DecisionSummaryRow>("context_decisions")
       .select("title, description")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(10),
   ]);
 
-  return {
-    facts: (factsRes.data ?? []) as MemoryContentRow[],
-    constraints: (constraintsRes.data ?? []) as MemoryContentRow[],
-    decisions: (decisionsRes.data ?? []) as DecisionSummaryRow[],
-  };
+  return { facts: factsRes.data, constraints: constraintsRes.data, decisions: decisionsRes.data };
 }
 
 export async function generateInsight(projectId: string): Promise<{ error: string | null }> {
@@ -549,6 +337,12 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
   // Same tier as createMemory - generating an insight is a write.
   if (!access || !canWriteProject(access.role)) {
     return { error: "You do not have permission to generate insights." };
+  }
+
+  // The button is hidden when AI is switched off for the project (migration
+  // 046), but a stale page or a direct action call could still get here.
+  if (!access.project.ai_enabled) {
+    return { error: "AI features are turned off for this project." };
   }
 
   const provider = await resolveAIProvider(access.project.organization_id, access.userId);
@@ -609,25 +403,7 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
   // Unverified ai_insight, same as one created by hand - goes through the
   // Accept/Correct/Reject review above (TODO.md §20). Nothing about coming
   // from generateInsight() instead of the create-memory form skips that gate.
-  if (hasDirectDatabase()) {
-    try {
-      await withUser(access.userId, ({ query }) =>
-        query(
-          `INSERT INTO project_memory (project_id, content, memory_type, verified, created_by)
-           VALUES ($1, $2, 'ai_insight', false, $3)`,
-          [projectId, text, access.userId]
-        )
-      );
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to save the generated insight." };
-    }
-
-    revalidatePath(`/projects/${projectId}/memory`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("project_memory").insert({
+  const { error } = await dataClient(access.userId).from("project_memory").insert({
     project_id: projectId,
     content: text,
     memory_type: "ai_insight",

@@ -18,7 +18,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { ThemeSwitcher } from "@/components/layout/theme-switcher";
+import { FeedbackMenuItem } from "@/components/layout/feedback-dialog";
 import type { SwitchableProject } from "@/lib/data/project-access";
+import type { Theme } from "@/lib/theme";
 import {
   LayoutDashboard,
   FileText,
@@ -39,21 +42,25 @@ import {
   ScrollText,
   User,
   LogOut,
+  MessageSquarePlus,
+  Puzzle,
+  Images,
 } from "lucide-react";
 
-const GLOBAL_NAV = [
+export const GLOBAL_NAV = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
+  { href: "/plugins", labelKey: "plugins", icon: Puzzle },
 ] as const;
 
-interface ProjectNavItem {
+export interface ProjectNavItem {
   href: string;
   labelKey: string;
   icon: typeof LayoutDashboard;
 }
 
-interface ProjectNavGroup {
+export interface ProjectNavGroup {
   labelKey: string | null;
   items: ProjectNavItem[];
 }
@@ -75,7 +82,7 @@ interface ProjectNavGroup {
  * typo'd `labelKey` is a compile error against the `next-intl` message
  * augmentation in global.d.ts.
  */
-const PROJECT_NAV = [
+export const PROJECT_NAV = [
   {
     labelKey: null,
     items: [{ href: "", labelKey: "overview", icon: LayoutDashboard }],
@@ -94,6 +101,7 @@ const PROJECT_NAV = [
     items: [
       { href: "knowledge", labelKey: "knowledge", icon: BookOpen },
       { href: "decisions", labelKey: "decisions", icon: FileText },
+      { href: "references", labelKey: "moodboard", icon: Images },
       { href: "technology", labelKey: "technologies", icon: Cpu },
     ],
   },
@@ -120,6 +128,7 @@ const ADMIN_NAV = [
   { href: "/admin/users", labelKey: "users", icon: Users },
   { href: "/admin/integrations", labelKey: "integrations", icon: Plug },
   { href: "/admin/logs", labelKey: "logs", icon: ScrollText },
+  { href: "/admin/feedback", labelKey: "feedback", icon: MessageSquarePlus },
 ] as const;
 
 export interface AppSidebarProps {
@@ -132,6 +141,8 @@ export interface AppSidebarProps {
   currentProjectName?: string;
   projects?: SwitchableProject[];
   projectColor?: string;
+  /** Resolved server-side from the theme cookie - see app-shell.tsx. */
+  currentTheme?: Theme;
 }
 
 export function AppSidebar({
@@ -140,6 +151,7 @@ export function AppSidebar({
   currentProjectName,
   projects,
   projectColor,
+  currentTheme = "system",
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -299,6 +311,10 @@ export function AppSidebar({
                   <span>{t("logOut")}</span>
                 </Link>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+            <FeedbackMenuItem />
+            <SidebarMenuItem className="px-2">
+              <ThemeSwitcher currentTheme={currentTheme} />
             </SidebarMenuItem>
             <SidebarMenuItem className="px-2">
               <LanguageSwitcher />

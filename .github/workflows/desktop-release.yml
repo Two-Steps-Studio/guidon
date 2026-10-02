@@ -1,0 +1,102 @@
+# Builds Guidon Desktop's Windows installers, signs them for the updater,
+# and creates a DRAFT GitHub Release with the installers, their .sig files
+# and latest.json (what "Check for Updates" reads - tauri.conf.json's
+# plugins.updater.endpoints). Publishing the draft is a manual step, so a
+# release is never live before someone has looked at it.
+#
+# Trigger: push a tag `desktop-v<version>` matching desktop/src-tauri/tauri.conf.json,
+#   git tag desktop-v1.0.0 && git push origin desktop-v1.0.0
+# or run it by hand from the Actions tab (same version check, tag created
+# by the action).
+#
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
+#   TAURI_SIGNING_PRIVATE_KEY           contents of ~/.tauri/guidon-desktop.key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password
+# See desktop/RELEASING.md.
+name: Desktop release
+
+on:
+  push:
+    tags: ["desktop-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version, tag and signing key
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          version=$(node -p "require('./desktop/src-tauri/tauri.conf.json').version")
+          for file in desktop/package.json; do
+            other=$(node -p "require('./$file').version")
+            [ "$other" = "$version" ] || { echo "::error::$file is $other, tauri.conf.json is $version - keep them in sync"; exit 1; }
+          done
+          grep -q "^version = \"$version\"" desktop/src-tauri/Cargo.toml || { echo "::error::Cargo.toml version differs from $version"; exit 1; }
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "desktop-v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match tauri.conf.json version $version (expected desktop-v$version)"
+            exit 1
+          fi
+          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo "::error::Secret TAURI_SIGNING_PRIVATE_KEY is not set - see desktop/RELEASING.md"; exit 1; }
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          # The "## <version>" section, up to the next "## ".
+          awk -v v="$VERSION" '
+            $0 ~ "^## " { if (found) exit; if (index($0, "## " v) == 1) { found = 1; next } }
+            found { print }
+          ' desktop/CHANGELOG.md > release-notes.md
+          [ -s release-notes.md ] || { echo "::error::desktop/CHANGELOG.md has no '## $VERSION' section"; exit 1; }
+          {
+            echo "RELEASE_NOTES<<__NOTES__"
+            cat release-notes.md
+            echo "__NOTES__"
+          } >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+
+      - name: Install Tauri CLI
+        working-directory: desktop
+        run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: desktop
+          tagName: desktop-v__VERSION__
+          releaseName: Guidon Desktop __VERSION__
+          releaseBody: ${{ env.RELEASE_NOTES }}
+          releaseDraft: true
+          prerelease: false
+          # Updater artifacts (.sig + latest.json) only for releases - a plain
+          # `tauri build` stays keyless for contributors (RELEASING.md).
+          args: --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true

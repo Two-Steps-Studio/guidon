@@ -78,6 +78,7 @@
     "dashboard": "Dashboard",
     "projects": "Projects",
     "organizations": "Organizations",
+    "plugins": "Plugins",
     "overview": "Overview",
     "workGroup": "Work",
     "taskBoard": "Task Board",
@@ -86,6 +87,7 @@
     "knowledgeGroup": "Knowledge",
     "knowledge": "Knowledge",
     "decisions": "Decisions",
+    "moodboard": "Moodboard",
     "technologies": "Technologies",
     "contextGroup": "Context",
     "memory": "Memory",
@@ -97,11 +99,34 @@
     "adminGroup": "Admin",
     "integrations": "Integrations",
     "logs": "Logs",
+    "feedback": "Feedback",
     "users": "Users",
     "logOut": "Log out",
     "user": "User",
     "switchProject": "Switch project",
     "calendar": "Calendar"
+  },
+  "commandPalette": {
+    "triggerLabel": "Search...",
+    "title": "Command palette",
+    "description": "Search and jump to anything",
+    "placeholder": "Search tasks, decisions, files...",
+    "navigateGroup": "Navigate",
+    "resultsGroup": "Results",
+    "noResults": "No results found.",
+    "entityType_task": "Task",
+    "entityType_decision": "Decision",
+    "entityType_memory": "Memory",
+    "entityType_file": "File",
+    "entityType_source": "Source",
+    "entityType_project": "Project"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "markAllRead": "Mark all read",
+    "bellAria": "Notifications",
+    "bellAriaUnread": "Notifications ({count} unread)"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -203,12 +228,16 @@
       "projectsCount": "{count, plural, one {# project} other {# projects}}",
       "unlimitedTasksPerProject": "Unlimited tasks per project",
       "tasksPerProjectCount": "{count, plural, one {# task per project} other {# tasks per project}}",
+      "unlimitedMembersPerProject": "Unlimited members per project",
+      "membersPerProjectCount": "{count, plural, one {# member per project} other {# members per project}}",
       "aiTaskApi": "AI Task API",
       "githubIntegration": "GitHub integration",
       "advancedAnalytics": "Advanced analytics",
       "teamRoles": "Team roles",
       "auditLogs": "Audit logs",
-      "prioritySupport": "Priority support"
+      "prioritySupport": "Priority support",
+      "unlimitedMembers": "Unlimited members",
+      "membersCount": "{count, plural, one {# member} other {# members}}"
     },
     "footer": {
       "terms": "Terms of Service",
@@ -273,7 +302,10 @@
       "roleMemberOption": "Member",
       "roleAdminOption": "Admin",
       "roleOwnerOption": "Owner",
-      "adding": "Adding..."
+      "adding": "Adding...",
+      "seatsUsed": "{used} of {limit} seats used on the {plan} plan",
+      "upgradeForSeats": "Upgrade for more seats",
+      "seatsFull": "This organization has used all {limit} seats on its {plan} plan. Upgrade the plan to add more people."
     },
     "settings": {
       "title": "Organization Settings",
@@ -295,7 +327,38 @@
       "apiKeyPlaceholderKeep": "Leave blank to keep the current key",
       "apiKeyPlaceholderNew": "Paste your API key",
       "saving": "Saving...",
-      "save": "Save"
+      "save": "Save",
+      "webhooks": {
+        "title": "Webhooks",
+        "description": "Guidon sends a signed POST request to these URLs when tasks change in any project of this organization - connect CI, chat tools or your own automations.",
+        "empty": "No webhooks yet.",
+        "add": "Add webhook",
+        "urlLabel": "Payload URL",
+        "urlHintCloud": "Must be a public https:// address.",
+        "urlHintSelfHosted": "http:// and internal addresses are allowed on self-hosted installs.",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "e.g. Jenkins build trigger",
+        "eventsLabel": "Events",
+        "eventCreated": "Task created",
+        "eventStatusChanged": "Task moved to another column",
+        "eventCompleted": "Task completed",
+        "save": "Add webhook",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "limit": "An organization can have at most {max} webhooks.",
+        "signatureHint": "Each request carries an X-Guidon-Signature header: sha256=HMAC-SHA256(secret, timestamp + \".\" + body), where timestamp is the X-Guidon-Timestamp header. Verify it before trusting the payload.",
+        "secretTitle": "Signing secret",
+        "secretHint": "Copy it now - it won't be shown again. Store it where your receiver can read it.",
+        "copySecret": "Copy secret",
+        "enabled": "Active",
+        "test": "Test",
+        "testDelivered": "Test sent - receiver answered HTTP {status}.",
+        "delete": "Delete webhook",
+        "deleteConfirm": "Delete this webhook? Deliveries stop immediately.",
+        "lastDelivery": "Last delivery {when} · HTTP {status}",
+        "neverDelivered": "No deliveries yet.",
+        "nativeFormatHint": "Sent as a native message for this service instead of Guidon's JSON."
+      }
     },
     "billing": {
       "title": "Billing",
@@ -313,6 +376,7 @@
       "colPrice": "Price",
       "colProjects": "Projects",
       "colTasksPerProject": "Tasks/project",
+      "colMembersPerProject": "Members/project",
       "colStorage": "Storage",
       "colAI": "AI",
       "colGitHub": "GitHub",
@@ -326,7 +390,9 @@
       "manageBilling": "Manage billing",
       "currentPlanBadge": "Current plan",
       "checkoutSuccess": "Subscription updated - it may take a moment to appear below.",
-      "checkoutCancelled": "Checkout cancelled - nothing was changed."
+      "checkoutCancelled": "Checkout cancelled - nothing was changed.",
+      "membersLabel": "Members",
+      "colMembers": "Members"
     }
   },
   "projects": {
@@ -414,6 +480,8 @@
       "notSet": "Not set",
       "workflowLabel": "Workflow",
       "workflowHelp": "Scrum adds sprints, backlog, and story points — coming soon. For now this just labels the project.",
+      "aiEnabledLabel": "AI features",
+      "aiEnabledHelp": "Enables the AI Working column, the AI task assistant, generated memory insights, AI agent permissions and agent API access. You can change this later in project settings.",
       "cancel": "Cancel",
       "creating": "Creating...",
       "createButton": "Create"
@@ -439,7 +507,6 @@
     "filterByTag": "Filter by tag",
     "allTags": "All tags",
     "clearFilters": "Clear filters",
-    "dismiss": "Dismiss",
     "readOnlyAccess": "You have <b>{role}</b> access - the board is read-only.",
     "noTasksTitle": "No tasks yet",
     "noTasksDescCanEdit": "Create the first task to start tracking work on this project.",
@@ -542,10 +609,12 @@
     "chatInputPlaceholder": "Describe the work...",
     "emptyResponse": "(empty response)",
     "failedToCreateTask": "Failed to create task",
+    "taskCreatedToast": "Created \"{title}\".",
     "failedToLoadComments": "Failed to load comments",
     "failedToLoadContext": "Failed to load context",
     "failedToSaveTask": "Failed to save task",
     "failedToDeleteTask": "Failed to delete task",
+    "taskDeletedToast": "Deleted \"{title}\".",
     "failedToPostComment": "Failed to post comment",
     "failedToCreateSubtask": "Failed to create subtask",
     "failedToUpdateSubtask": "Failed to update subtask",
@@ -568,6 +637,9 @@
     "moveTaskAria": "Move task \"{title}\"",
     "moveToColumn": "Move to {column}",
     "images": "Images",
+    "openImageAria": "Open {name}",
+    "pasteImageHint": "Tip: paste (Ctrl+V) or drop images here - they're attached to the task.",
+    "uploadingPastedImage": "Uploading image…",
     "attachments": "Attachments",
     "attachTaskFile": "Attach a file",
     "uploadingAttachment": "Uploading...",
@@ -625,7 +697,7 @@
     "title": "Members",
     "subtitle": "Who can see and change this project.",
     "addMember": "Add member",
-    "everyoneAlready": "Everyone in the organization is already on this project",
+    "everyoneAlready": "Everyone in the organization is already on this project. To add someone new, add them to the organization first.",
     "dismiss": "Dismiss",
     "readOnlyAccess": "You have <b>{role}</b> access - only owners and admins can change membership.",
     "you": "you",
@@ -640,6 +712,7 @@
     "unknownMember": "Unknown member",
     "dialogTitle": "Add member",
     "dialogDescription": "People must already belong to the organization that owns this project.",
+    "manageOrgMembers": "Manage organization members",
     "personLabel": "Person",
     "roleLabel": "Role",
     "cancel": "Cancel",
@@ -652,7 +725,8 @@
     "roleHintAdmin": "Manage members, settings, roadmap and files",
     "roleHintDeveloper": "Create and edit tasks, decisions and knowledge",
     "roleHintTester": "Comment on tasks; read everything else",
-    "roleHintViewer": "Read-only access"
+    "roleHintViewer": "Read-only access",
+    "memberLimitReached": "Your {plan} plan allows {limit} members per project. <link>Upgrade the plan</link> to add more people."
   },
   "settings": {
     "title": "Project Settings",
@@ -671,6 +745,8 @@
     "notSet": "Not set",
     "workflowLabel": "Workflow",
     "workflowHelp": "Scrum adds sprints, backlog, and story points — coming soon. For now this just labels the project.",
+    "aiEnabledLabel": "AI features",
+    "aiEnabledHelp": "Turns on the AI Working column, the AI task assistant, generated memory insights and access for AI agents. When off, the AI Working column stays visible only while it still holds tasks, and saved AI permissions are kept.",
     "colorLabel": "Project Color",
     "colorHelp": "Choose a color to personalize your project. It will be used throughout the interface.",
     "technologiesLabel": "Technologies (press Enter to add)",
@@ -686,6 +762,7 @@
     "deleting": "Deleting...",
     "saving": "Saving...",
     "saveChanges": "Save Changes",
+    "settingsSavedToast": "Project settings saved.",
     "aiPermissionsTitle": "AI Permissions",
     "aiPermissionsDescription": "What an AI agent using this project's API keys is allowed to do.",
     "permReadContext": "Read project context",
@@ -697,6 +774,7 @@
     "allowAutoComplete": "Allow AI to auto-complete tasks",
     "allowAutoCompleteHelp": "Without this, AI can move tasks to Review but a human always makes the final call to Done.",
     "saveAiSettings": "Save AI Settings",
+    "aiSettingsSavedToast": "AI permissions saved.",
     "boardColumnsTitle": "Board Columns",
     "boardColumnsDescription": "Rename, reorder, or hide columns on this project's task board. The underlying task statuses don't change - this only affects labels and what's shown.",
     "moveUpAria": "Move {label} up",
@@ -725,21 +803,31 @@
     "discordDisconnectConfirm": "Disconnect {guild} from this project? The /task commands stop working there until you run /guidon-link again. Webhook notifications are kept."
   },
   "discordLink": {
-    "title": "Link {guild} to a project",
-    "description": "Choose the project that {guild} should be connected to. Members of the server will be able to use the /task commands for that project.",
+    "title": "Connect the Guidon Discord bot",
+    "description": "{guild} wants to connect to a Guidon project. Once you choose one below, members of that server will be able to use /task commands to view tasks, change their status, and post comments in it.",
     "unnamedServer": "this Discord server",
     "serverLabel": "Discord server",
     "phishingWarning": "Only continue if you ran /guidon-link yourself in a Discord server you administer. Confirming lets that server manage tasks in the chosen project.",
     "unknownOrganization": "Other projects",
     "linkedBadge": "Linked to {guild}",
     "linkedElsewhereWarning": "This project is already linked to the Discord server \"{guild}\". Choosing it replaces its current Discord link.",
-    "confirm": "Link this project",
+    "confirm": "Authorize",
     "genericError": "Could not link the Discord server. Please try again.",
     "emptyTitle": "You don't manage any project",
     "emptyDescription": "Only owners and admins of a project can link a Discord server to it. Ask an admin to link it, or create a project first.",
     "invalidTitle": "This link has expired",
     "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-link in your Discord server again to get a new one.",
     "toProjects": "Go to projects"
+  },
+  "feedback": {
+    "sendFeedback": "Send feedback",
+    "dialogTitle": "Send feedback",
+    "dialogDescription": "Tell us what's working, what's broken, or what you'd like to see - we read every message.",
+    "placeholder": "What's on your mind?",
+    "send": "Send",
+    "thanks": "Thanks! Your feedback has been sent.",
+    "close": "Close",
+    "genericError": "Could not send your feedback. Try again."
   },
   "context": {
     "title": "Context Layer",
@@ -959,6 +1047,13 @@
     "logsDescription": "Instance-wide activity, most recent first, across every organization and project.",
     "logsEmptyTitle": "No activity yet",
     "logsEmptyDescription": "No activity has been recorded on this instance yet.",
+    "feedbackTitle": "Feedback",
+    "feedbackDescription": "Instance-wide feedback, most recent first, across every organization and project.",
+    "feedbackEmptyTitle": "No feedback yet",
+    "feedbackEmptyDescription": "No feedback has been submitted on this instance yet.",
+    "feedbackFrom": "From {name}",
+    "feedbackAnonymous": "Deleted user",
+    "feedbackPageContext": "on {page}",
     "projectScope": "project {id}",
     "organizationScope": "organization {id}",
     "instanceScope": "instance",
@@ -1012,6 +1107,10 @@
     "emailLabel": "Email",
     "emailHelp": "Email can't be changed here.",
     "languageLabel": "Language",
+    "themeLabel": "Theme",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
     "saving": "Saving...",
     "saveChanges": "Save changes",
     "apiKeysTitle": "API Keys",
@@ -1024,15 +1123,17 @@
     "creating": "Creating...",
     "createApiKeyButton": "Create API Key",
     "revokedBadge": "Revoked",
+    "revokeKeyAria": "Revoke {name}",
+    "keyRevokedToast": "Revoked \"{name}\".",
     "noApiKeysYet": "No API keys yet.",
     "createdOn": "Created {date}",
     "lastUsedOn": "Last used {date}",
     "neverUsed": "Never used",
     "integrationsTitle": "Integrations",
     "integrationsDescription": "Tools that connect to Guidon from outside the browser.",
-    "unityPluginTitle": "Unity Editor Plugin",
-    "unityPluginDescription": "View, create, and edit tasks - with drag-and-drop, subtasks, and comments - right inside the Unity Editor. Copy the plugin folder into your project and log in with your Guidon account.",
-    "viewOnGithubButton": "View on GitHub",
+    "pluginsTitle": "Plugins for your tools",
+    "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code and JetBrains IDEs.",
+    "pluginsButton": "Browse plugins",
     "claudeCodeTitle": "Claude Code (MCP)",
     "claudeCodeDescription": "Let Claude Code read your tasks, do the work and update them in Guidon. One click creates a key with the right permissions and gives you the command to paste into your terminal.",
     "claudeCodeCreateButton": "Connect Claude Code",
@@ -1055,11 +1156,13 @@
   },
   "calendar": {
     "title": "Calendar",
-    "subtitle": "Tasks by due date",
+    "subtitle": "Tasks by due date and roadmap phases",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "today": "Today",
-    "moreTasks": "+{count} more"
+    "moreTasks": "+{count} more",
+    "phaseAria": "Phase: {name}",
+    "morePhases": "{count, plural, one {+# more phase} other {+# more phases}}"
   },
   "aiChat": {
     "title": "Guidon AI Assistant",
@@ -1073,5 +1176,121 @@
     "deletedConfirmation": "Deleted task: {title}",
     "deleteFailed": "Could not delete the task.",
     "errorGeneric": "Sorry, I encountered an error. Please try again."
+  },
+  "plugins": {
+    "title": "Plugins & apps",
+    "subtitle": "Work on your Guidon board without leaving the tools you already use. Plugins sign in through your browser with Log In - no API key to copy by hand.",
+    "docs": "Documentation",
+    "footer": "Log Out in a plugin only removes its key from that computer. To revoke a key, go to Profile → API Keys.",
+    "categories": {
+      "engines": "Game engines",
+      "creative": "3D & creative tools",
+      "editors": "Code editors",
+      "desktop": "Desktop app"
+    },
+    "kinds": {
+      "tasks": "Task board",
+      "reports": "In-game reports",
+      "source": "Source code"
+    },
+    "descriptions": {
+      "unity": "Your project's board inside the Unity editor, plus an in-game bug report form that sends reports straight to Guidon.",
+      "unreal": "Task board as an editor tab and in-game bug reports from Blueprints or C++.",
+      "godot": "Two add-ons: a task board dock for the editor and in-game bug reports.",
+      "blender": "Task board in the 3D viewport sidebar (N panel).",
+      "vscode": "Task board in the VS Code sidebar. Download the source and build a .vsix.",
+      "jetbrains": "Task board tool window for IntelliJ IDEA, Rider, PyCharm, WebStorm and other JetBrains IDEs. Download the source and build it with Gradle."
+    },
+    "install": {
+      "unity": {
+        "s1": "Unzip and copy the GuidonTasks folder anywhere under Assets/.",
+        "s2": "Open Window → Guidon → Tasks, set Base URL to {baseUrl} and click Log In.",
+        "s3": "Bug reports: copy GuidonReports under Assets/ and create a key with only the reports:write scope in Profile → API Keys."
+      },
+      "unreal": {
+        "s1": "Unzip into your project's Plugins/ folder (or run install.ps1 from the GuidonTasks folder).",
+        "s2": "Reopen the project and let the editor build the module - a C++ project is required.",
+        "s3": "Open the Guidon Tasks tab, set Base URL to {baseUrl} and click Log In."
+      },
+      "godot": {
+        "s1": "Unzip into your project's root folder - the files land in addons/.",
+        "s2": "Enable the add-on in Project → Project Settings → Plugins.",
+        "s3": "In the Guidon dock, set Base URL to {baseUrl} and click Log In."
+      },
+      "blender": {
+        "s1": "Don't unzip - Blender installs the zip as it is.",
+        "s2": "Blender 4.2+: Preferences → Get Extensions → ⌄ → Install from Disk. Blender 3.6-4.1: Preferences → Add-ons → Install.",
+        "s3": "Allow Online Access in Preferences → System → Network, then set Base URL to {baseUrl} in the N panel and click Log In."
+      },
+      "vscode": {
+        "s1": "Unzip, then run npm install, npm run build and npm run package in the folder.",
+        "s2": "In VS Code: Extensions → ⋯ → Install from VSIX… and pick the generated file.",
+        "s3": "Open the Guidon view, set Base URL to {baseUrl} and click Log In."
+      },
+      "jetbrains": {
+        "s1": "Unzip and run ./gradlew buildPlugin (JDK 17+).",
+        "s2": "Settings → Plugins → ⚙ → Install Plugin from Disk… and pick the zip from build/distributions/.",
+        "s3": "Open the Guidon tool window, set Base URL to {baseUrl} and click Log In."
+      }
+    },
+    "desktop": {
+      "title": "Guidon Desktop",
+      "description": "Your board in its own Windows app: a tray icon, an always-on-top Tasks window, start with Windows, and one-click install of the editor plugins below into your projects.",
+      "download": "Download for Windows",
+      "releases": "All releases"
+    }
+  },
+  "lightbox": {
+    "title": "Image",
+    "hint": "Use the arrow keys or swipe to switch images. Esc closes.",
+    "close": "Close",
+    "previous": "Previous image",
+    "next": "Next image",
+    "download": "Download {name}"
+  },
+  "moodboard": {
+    "title": "Moodboard",
+    "subtitle": "Reference images and concept art for this project.",
+    "addImages": "Add images",
+    "pasteHint": "Tip: drop images anywhere on this page or paste them (Ctrl+V).",
+    "uploading": "Uploading…",
+    "uploadFailed": "Could not upload the image.",
+    "dropHere": "Drop images to add them to the moodboard",
+    "filterByTag": "Filter by tag",
+    "allTags": "All · {count}",
+    "emptyTitle": "No references yet",
+    "emptyDescription": "Collect concept art, screenshots and inspiration in one place. Drop or paste images here, then caption and tag them.",
+    "emptyDescriptionReadOnly": "Nobody has added reference images to this project yet.",
+    "openImage": "Open {name}",
+    "openSource": "Open source link",
+    "editImage": "Edit caption and tags",
+    "deleteImage": "Delete image",
+    "confirmDelete": "Delete \"{name}\" from the moodboard?",
+    "deleted": "Image deleted",
+    "editTitle": "Edit reference",
+    "captionLabel": "Caption",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "environment, lighting, ui",
+    "sourceLabel": "Source link (optional)",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saveFailed": "Could not save changes."
+  },
+  "mini": {
+    "noProjects": "You don't belong to any project yet.",
+    "openProjects": "Open Guidon",
+    "noAccess": "You don't have access to this project.",
+    "projectAria": "Project",
+    "filterAria": "Show tasks",
+    "filterMine": "Mine",
+    "filterAll": "All",
+    "refresh": "Refresh",
+    "addPlaceholder": "New task…",
+    "addPlaceholderMine": "New task for me…",
+    "add": "Add task",
+    "addFailed": "Couldn't add the task.",
+    "statusAria": "Status of {title}",
+    "empty": "No open tasks in this project.",
+    "emptyMine": "No open tasks assigned to you. Switch to All to see the rest."
   }
 }

@@ -154,6 +154,9 @@ export async function updateProjectSettings(
     methodology = methodologyRaw as ProjectMethodology;
   }
 
+  // A plain checkbox: "on" when ticked, absent from FormData when not.
+  const aiEnabled = formData.get("aiEnabled") === "on";
+
   let avatarUrl: string | null | undefined;
   if (avatarFile && avatarFile.size > 0) {
     // Real allowlist, not "starts with image/" (would admit image/svg+xml) -
@@ -217,10 +220,10 @@ export async function updateProjectSettings(
         const result = await query(
           `UPDATE projects
            SET name = $1, description = $2, status = $3, color = $4,
-               avatar_url = COALESCE($5, avatar_url), project_type = $6, methodology = $7
-           WHERE id = $8
+               avatar_url = COALESCE($5, avatar_url), project_type = $6, methodology = $7, ai_enabled = $8
+           WHERE id = $9
            RETURNING id`,
-          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, projectId]
+          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, aiEnabled, projectId]
         );
         if (result.rows.length === 0) return false;
 
@@ -254,6 +257,7 @@ export async function updateProjectSettings(
         color: trimmedColor,
         project_type: projectType,
         methodology,
+        ai_enabled: aiEnabled,
         ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", projectId)
@@ -285,9 +289,11 @@ export async function updateProjectSettings(
     entityId: projectId,
   });
 
-  revalidatePath(`/projects/${projectId}/settings`);
-  revalidatePath(`/projects/${projectId}`);
-  revalidatePath(`/projects/${projectId}/layout`);
+  // "layout" revalidates every page under /projects/[id] - the AI switch
+  // above changes what the work board, memory and settings pages render,
+  // not just this one. (Previously `revalidatePath("/projects/<id>/layout")`,
+  // a literal URL that doesn't exist, so it revalidated nothing.)
+  revalidatePath(`/projects/${projectId}`, "layout");
   return { error: null };
 }
 

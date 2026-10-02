@@ -38,6 +38,9 @@ void FGuidonSettings::SetEmail(const FString& Value) { Set(TEXT("Email"), Value)
 FString FGuidonSettings::GetProjectId() { return Get(TEXT("ProjectId")); }
 void FGuidonSettings::SetProjectId(const FString& Value) { Set(TEXT("ProjectId"), Value); }
 
+bool FGuidonSettings::GetAutoRefresh() { return Get(TEXT("AutoRefresh"), TEXT("1")) != TEXT("0"); }
+void FGuidonSettings::SetAutoRefresh(bool bValue) { Set(TEXT("AutoRefresh"), bValue ? TEXT("1") : TEXT("0")); }
+
 void FGuidonSettings::LogOut()
 {
 	SetApiKey(FString());

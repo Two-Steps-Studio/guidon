@@ -1,0 +1,19 @@
+/* Moodboard panel - reuses board.css's tokens (loaded first). */
+.mb-filter { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px 0; }
+.mb-chip { border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); border-radius: 999px; padding: 2px 10px; cursor: pointer; font-size: 12px; }
+.mb-chip:hover { border-color: var(--border-hover); color: var(--text); }
+.mb-chip.active { background: var(--primary); border-color: var(--primary); color: var(--primary-fg); }
+.mb-empty { padding: 24px 14px; }
+.mb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; padding: 14px; }
+.mb-tile { display: flex; flex-direction: column; padding: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--card); cursor: zoom-in; text-align: left; }
+.mb-tile:hover { border-color: var(--border-hover); }
+.mb-tile img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.mb-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 4 / 3; background: var(--muted); }
+.mb-caption { padding: 6px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mb-lightbox { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 0, 0, 0.8); }
+.mb-lightbox-body { display: flex; flex-direction: column; gap: 10px; max-width: 100%; max-height: 100%; cursor: default; }
+.mb-lightbox-body img { max-width: 100%; max-height: calc(100vh - 140px); object-fit: contain; border-radius: 6px; }
+.mb-lightbox-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #e8eaed; }
+.mb-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.mb-tag { border: 1px solid #2f343e; border-radius: 4px; padding: 0 6px; font-size: 11px; color: #8b93a1; }
+.toolbar { flex-wrap: wrap; }

@@ -81,6 +81,7 @@ export default async function Home() {
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
     />
+    <main>
     <div className="relative flex min-h-screen items-center overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
       <WavesBackground className="opacity-60" />
       <div className="container relative z-10 mx-auto px-4 py-20">
@@ -140,7 +141,7 @@ export default async function Home() {
     </section>
 
     <section className="border-t border-border py-20">
-      <div className="container mx-auto max-w-5xl px-4">
+      <div className="container mx-auto max-w-6xl px-4">
         <div className="mb-16 text-center space-y-3">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>
             {t("featuresTitle")}
@@ -165,12 +166,33 @@ export default async function Home() {
                   reversed ? "md:flex-row-reverse" : ""
                 }`}
               >
-                <div className="shrink-0">
-                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Icon className="w-9 h-9 text-primary" />
+                {/* Real screenshots of the demo project, one per theme -
+                    regenerate with scripts/landing/capture.mjs when the
+                    captured pages change. */}
+                <div className="w-full md:w-[55%] md:shrink-0">
+                  <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+                    <Image
+                      src={`/landing/${feature.key}-light.webp`}
+                      alt={t(`features.${feature.key}.title`)}
+                      width={1600}
+                      height={1000}
+                      sizes="(min-width: 768px) 55vw, 100vw"
+                      className="h-auto w-full dark:hidden"
+                    />
+                    <Image
+                      src={`/landing/${feature.key}-dark.webp`}
+                      alt={t(`features.${feature.key}.title`)}
+                      width={1600}
+                      height={1000}
+                      sizes="(min-width: 768px) 55vw, 100vw"
+                      className="hidden h-auto w-full dark:block"
+                    />
                   </div>
                 </div>
                 <div className="flex-1 text-center md:text-left space-y-3">
+                  <div className="mx-auto md:mx-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
                   <h3 className="text-2xl font-semibold">{t(`features.${feature.key}.title`)}</h3>
                   <p className="text-text-secondary leading-relaxed">{t(`features.${feature.key}.description`)}</p>
                   <ul className="inline-block text-left text-sm text-text-muted space-y-1.5 pt-1">
@@ -190,6 +212,7 @@ export default async function Home() {
     </section>
 
     {plans.length > 0 && <PricingSection plans={plans} />}
+    </main>
 
     <footer className="border-t border-border py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">

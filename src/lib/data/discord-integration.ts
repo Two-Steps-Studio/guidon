@@ -4,6 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
+import { dataClient, serviceDataClient } from "@/lib/data-client";
+import { isUniqueViolation } from "@/lib/db/errors";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
 import { generateApiKey, hashApiKey, keyPrefix, type ApiKeyScope } from "@/lib/api/api-keys";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
@@ -19,8 +21,15 @@ import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
 const DISCORD_WEBHOOK_KEY_INFO = "discord-webhook-v1";
 /** Must match discord-bot/src/db.ts's own API_KEY_INFO constant exactly. */
 const DISCORD_BOT_KEY_INFO = "discord-bot-key-v1";
-/** Exactly what every /task subcommand needs - see discord-bot/src/commands/task.ts. */
+/** Exactly what every /task-* command needs - see discord-bot/src/guidon-api.ts. */
 const DISCORD_BOT_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:status", "comments:write"];
+/**
+ * Fixed, not date-stamped - same reasoning as src/app/auth/plugin-login's
+ * pluginKeyName: a stable name lets a re-link revoke the previous key by
+ * `user_id + name` instead of accumulating a new dead key every time (the
+ * date-stamped name this replaced couldn't be revoked-by-name at all).
+ */
+const DISCORD_BOT_KEY_NAME = "Discord bot";
 
 export interface DiscordIntegrationInfo {
   guildId: string | null;
@@ -45,33 +54,27 @@ export async function getDiscordIntegrationInfo(
   projectId: string,
   userId: string
 ): Promise<DiscordIntegrationInfo | null> {
-  if (hasDirectDatabase()) {
-    const [safeResult, webhookResult] = await Promise.all([
-      withUser(userId, ({ query }) =>
-        query(`SELECT ${SAFE_COLUMNS} FROM discord_integrations WHERE project_id = $1`, [projectId])
-      ),
-      withUser(userId, ({ query }) =>
-        query("SELECT webhook_url_encrypted FROM public.get_discord_webhook_url($1)", [projectId])
-      ),
-    ]);
-    const row = safeResult.rows[0];
-    if (!row) return null;
-    return toInfo(row, webhookResult.rows[0]?.webhook_url_encrypted ?? null);
-  }
-
-  const supabase = await createClient();
+  const db = dataClient(userId);
   const [safeResult, webhookResult] = await Promise.all([
-    supabase.from("discord_integrations").select(SAFE_COLUMNS).eq("project_id", projectId).maybeSingle(),
-    supabase.rpc("get_discord_webhook_url", { p_project_id: projectId }),
+    db.from<IntegrationRow>("discord_integrations").select(SAFE_COLUMNS).eq("project_id", projectId).maybeSingle(),
+    db.rpcRows<{ webhook_url_encrypted: string | null }>("get_discord_webhook_url", { p_project_id: projectId }),
   ]);
   if (safeResult.error || !safeResult.data) return null;
   if (webhookResult.error) throw new Error(`Failed to read Discord integration: ${webhookResult.error.message}`);
-
-  return toInfo(safeResult.data, webhookResult.data?.[0]?.webhook_url_encrypted ?? null);
+  return toInfo(safeResult.data, webhookResult.data[0]?.webhook_url_encrypted ?? null);
 }
 
+type IntegrationRow = {
+  project_id: string;
+  guild_id: string | null;
+  guild_name: string | null;
+  linked_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 function toInfo(
-  row: { project_id: string; guild_id: string | null; guild_name: string | null; linked_by: string | null; created_at: string; updated_at: string },
+  row: IntegrationRow,
   webhookUrlEncrypted: string | null
 ): DiscordIntegrationInfo {
   return {
@@ -103,18 +106,11 @@ export async function getDiscordWebhookUrl(
   userId: string,
   client?: SupabaseClient
 ): Promise<string | null> {
-  if (hasDirectDatabase()) {
-    const result = await withUser(userId, ({ query }) =>
-      query("SELECT webhook_url_encrypted FROM public.get_discord_webhook_url($1)", [projectId])
-    );
-    const encrypted = result.rows[0]?.webhook_url_encrypted as string | null | undefined;
-    return encrypted ? decryptSecret(encrypted, DISCORD_WEBHOOK_KEY_INFO) : null;
-  }
-
-  const supabase = client ?? (await createClient());
-  const { data, error } = await supabase.rpc("get_discord_webhook_url", { p_project_id: projectId });
+  const { data, error } = await dataClient(userId, client ? { supabase: async () => client } : {}).rpcRows<{
+    webhook_url_encrypted: string | null;
+  }>("get_discord_webhook_url", { p_project_id: projectId });
   if (error) throw new Error(`Failed to read Discord webhook: ${error.message}`);
-  const encrypted = data?.[0]?.webhook_url_encrypted as string | null | undefined;
+  const encrypted = data[0]?.webhook_url_encrypted;
   return encrypted ? decryptSecret(encrypted, DISCORD_WEBHOOK_KEY_INFO) : null;
 }
 
@@ -126,27 +122,30 @@ export async function getDiscordWebhookUrl(
  */
 export async function saveDiscordWebhookUrl(projectId: string, userId: string, webhookUrl: string): Promise<void> {
   const encrypted = encryptSecret(webhookUrl, DISCORD_WEBHOOK_KEY_INFO);
+  const db = dataClient(userId);
+  const fields = { webhook_url_encrypted: encrypted, updated_at: new Date().toISOString() };
 
-  if (hasDirectDatabase()) {
-    await withUser(userId, ({ query }) =>
-      query(
-        `INSERT INTO discord_integrations (project_id, webhook_url_encrypted, linked_by, updated_at)
-         VALUES ($1, $2, $3, now())
-         ON CONFLICT (project_id) DO UPDATE SET
-           webhook_url_encrypted = EXCLUDED.webhook_url_encrypted,
-           updated_at = now()`,
-        [projectId, encrypted, userId]
-      )
-    );
-    return;
+  // Update-then-insert, not an upsert: INSERT ... ON CONFLICT DO UPDATE SET
+  // col = EXCLUDED.col reads EXCLUDED.webhook_url_encrypted, which needs a
+  // SELECT grant `authenticated` deliberately doesn't have on that column
+  // (035) - so the upsert this replaces failed with "permission denied" on
+  // every save, in both modes (supabase-js's .upsert() emits the same SQL).
+  // Same approach as linkDiscordGuildToProject below.
+  const updated = await db.from("discord_integrations").update(fields).eq("project_id", projectId).select("project_id");
+  if (updated.error) throw new Error(`Failed to save Discord webhook: ${updated.error.message}`);
+  if (updated.data.length > 0) return;
+
+  const inserted = await db
+    .from("discord_integrations")
+    .insert({ project_id: projectId, linked_by: userId, ...fields })
+    .select("project_id");
+  if (!inserted.error) return;
+  // Lost a race with another first save: the row exists now, so update it.
+  if (isUniqueViolation(inserted.error)) {
+    const retry = await db.from("discord_integrations").update(fields).eq("project_id", projectId).select("project_id");
+    if (!retry.error && retry.data.length > 0) return;
   }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("discord_integrations").upsert(
-    { project_id: projectId, webhook_url_encrypted: encrypted, linked_by: userId, updated_at: new Date().toISOString() },
-    { onConflict: "project_id" }
-  );
-  if (error) throw new Error(`Failed to save Discord webhook: ${error.message}`);
+  throw new Error(`Failed to save Discord webhook: ${inserted.error.message}`);
 }
 
 /**
@@ -155,18 +154,7 @@ export async function saveDiscordWebhookUrl(projectId: string, userId: string, w
  * owns, same split as saveDiscordWebhookUrl above.
  */
 export async function clearDiscordWebhookUrl(projectId: string, userId: string): Promise<void> {
-  if (hasDirectDatabase()) {
-    await withUser(userId, ({ query }) =>
-      query(
-        "UPDATE discord_integrations SET webhook_url_encrypted = NULL, updated_at = now() WHERE project_id = $1",
-        [projectId]
-      )
-    );
-    return;
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
+  const { error } = await dataClient(userId)
     .from("discord_integrations")
     .update({ webhook_url_encrypted: null, updated_at: new Date().toISOString() })
     .eq("project_id", projectId);
@@ -233,11 +221,15 @@ export async function linkDiscordGuildToProject(
   const hash = hashApiKey(rawKey);
   const prefix = keyPrefix(rawKey);
   const encryptedKey = encryptSecret(rawKey, DISCORD_BOT_KEY_INFO);
-  const keyName = `Discord bot (auto-created ${new Date().toISOString().slice(0, 10)})`;
   // An empty name means "no name" - never store guild_name = ''.
   const normalizedName = guildName?.trim() || null;
 
+  // Per mode on purpose: self-hosted runs the clear, the link and the key
+  // in ONE transaction so a failure leaves nothing behind - the data client
+  // makes each statement its own transaction. Supabase can't do that through
+  // PostgREST, hence the compensating revoke below.
   if (hasDirectDatabase()) {
+    let newKeyId: string | null = null;
     try {
       await withUser(userId, async ({ query }) => {
         // Sequential on purpose: one client, one query at a time.
@@ -266,19 +258,27 @@ export async function linkDiscordGuildToProject(
         );
         if (link.rows.length !== 1) throw new LinkFailure("Could not link the Discord server to this project.");
 
+        // Same revoke-then-insert hygiene as authorizePluginLogin, so
+        // reconnecting doesn't leave a dead key behind under Profile > API Keys.
+        await query(
+          "UPDATE api_keys SET revoked_at = now() WHERE user_id = $1 AND name = $2 AND revoked_at IS NULL",
+          [userId, DISCORD_BOT_KEY_NAME]
+        );
         const key = await query(
           `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label)
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [userId, keyName, prefix, hash, DISCORD_BOT_KEY_SCOPES, "Discord bot"]
+          [userId, DISCORD_BOT_KEY_NAME, prefix, hash, DISCORD_BOT_KEY_SCOPES, "Discord bot"]
         );
         if (key.rows.length !== 1) throw new LinkFailure("Could not create the Discord bot's API key.");
+        newKeyId = key.rows[0].id as string;
       });
     } catch (error) {
       if (isGuildUniqueViolation(error)) return { ok: false, error: DISCORD_GUILD_LINKED_ELSEWHERE_ERROR };
       if (error instanceof LinkFailure) return { ok: false, error: error.message };
       throw error;
     }
+    if (newKeyId) await markKeyAsHumanClient(newKeyId);
     return { ok: true };
   }
 
@@ -290,11 +290,20 @@ export async function linkDiscordGuildToProject(
   // window small.
   const supabase = await createClient();
 
+  // Same revoke-then-insert hygiene as authorizePluginLogin, so reconnecting
+  // doesn't leave a dead key behind under Profile > API Keys.
+  await supabase
+    .from("api_keys")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("name", DISCORD_BOT_KEY_NAME)
+    .is("revoked_at", null);
+
   const { data: keyRow, error: keyError } = await supabase
     .from("api_keys")
     .insert({
       user_id: userId,
-      name: keyName,
+      name: DISCORD_BOT_KEY_NAME,
       key_prefix: prefix,
       key_hash: hash,
       scopes: DISCORD_BOT_KEY_SCOPES,
@@ -384,7 +393,25 @@ export async function linkDiscordGuildToProject(
     return failure(linkError, "writing the new link failed");
   }
 
+  await markKeyAsHumanClient(keyRow.id as string);
   return { ok: true };
+}
+
+/**
+ * Marks the just-created Discord bot key human_client (039): the command
+ * that used it was typed by a real Discord member with Manage Server
+ * permission, the same reasoning src/app/auth/plugin-login/actions.ts
+ * documents for a plugin's key - so Guidon's AI-agent gates
+ * (can_change_status, allow_ai_auto_complete, can_complete_tasks) don't
+ * apply to it. That column has no INSERT grant for `authenticated` (039),
+ * hence the separate service-role call rather than setting it inline on
+ * insert above - kept best-effort (logged, not thrown) so a hiccup here
+ * degrades to "still AI-gated", never fails a link that otherwise
+ * succeeded.
+ */
+async function markKeyAsHumanClient(keyId: string): Promise<void> {
+  const { error } = await serviceDataClient().from("api_keys").update({ human_client: true }).eq("id", keyId);
+  if (error) console.error(`linkDiscordGuildToProject: could not mark API key ${keyId} as human_client:`, error);
 }
 
 /**
@@ -402,22 +429,7 @@ export async function disconnectDiscordGuild(projectId: string, userId: string):
   const notDisconnected =
     "Nothing was disconnected: this project is not linked to a Discord server, or you don't have permission.";
 
-  if (hasDirectDatabase()) {
-    const result = await withUser(userId, ({ query }) =>
-      query(
-        `UPDATE discord_integrations
-            SET guild_id = NULL, guild_name = NULL, linked_api_key_encrypted = NULL, linked_by = NULL,
-                updated_at = now()
-          WHERE project_id = $1 AND guild_id IS NOT NULL
-          RETURNING project_id`,
-        [projectId]
-      )
-    );
-    return result.rows.length === 1 ? { ok: true } : { ok: false, error: notDisconnected };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await dataClient(userId)
     .from("discord_integrations")
     .update({
       guild_id: null,
@@ -427,10 +439,10 @@ export async function disconnectDiscordGuild(projectId: string, userId: string):
       updated_at: new Date().toISOString(),
     })
     .eq("project_id", projectId)
-    .not("guild_id", "is", null)
+    .isNot("guild_id", null)
     .select("project_id");
   if (error) throw new Error(`Failed to disconnect Discord server: ${error.message}`);
-  return data && data.length === 1 ? { ok: true } : { ok: false, error: notDisconnected };
+  return data.length === 1 ? { ok: true } : { ok: false, error: notDisconnected };
 }
 
 export interface ManageableProject {
@@ -455,69 +467,43 @@ export interface ManageableProject {
  * have no direct SELECT grant, see 035).
  */
 export async function listManageableProjectsForUser(userId: string): Promise<ManageableProject[]> {
-  if (hasDirectDatabase()) {
-    const result = await withUser(userId, ({ query }) =>
-      query(
-        `SELECT p.id, p.name, p.organization_id, COALESCE(o.name, '') AS organization_name,
-                CASE WHEN di.guild_id IS NULL THEN NULL ELSE COALESCE(di.guild_name, di.guild_id) END AS linked_guild_name
-           FROM project_members pm
-           JOIN projects p ON p.id = pm.project_id
-           LEFT JOIN organizations o ON o.id = p.organization_id
-           LEFT JOIN discord_integrations di ON di.project_id = p.id
-          WHERE pm.user_id = $1 AND pm.role IN ('owner', 'admin')
-          ORDER BY o.name, p.name
-          LIMIT $2`,
-        [userId, PROJECT_LIST_SAFETY_CAP]
-      )
-    );
-    return result.rows.map((row) => ({
-      id: row.id as string,
-      name: row.name as string,
-      organizationId: row.organization_id as string,
-      organizationName: row.organization_name as string,
-      linkedGuildName: (row.linked_guild_name as string | null) ?? null,
-    }));
-  }
-
-  type Embedded<T> = T | T[] | null;
-  interface MemberRow {
-    projects: Embedded<{
-      id: string;
-      name: string;
-      organization_id: string;
-      organizations: Embedded<{ id: string; name: string }>;
-      discord_integrations: Embedded<{ guild_id: string | null; guild_name: string | null }>;
-    }>;
-  }
-  const one = <T,>(value: Embedded<T>): T | null => (Array.isArray(value) ? (value[0] ?? null) : value);
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("project_members")
-    .select(
-      "projects!inner(id, name, organization_id, organizations(id, name), discord_integrations(guild_id, guild_name))"
-    )
+  const db = dataClient(userId);
+  const { data: memberships, error } = await db
+    .from<{ project_id: string }>("project_members")
+    .select("project_id")
     .eq("user_id", userId)
     .in("role", ["owner", "admin"])
     .limit(PROJECT_LIST_SAFETY_CAP);
   if (error) throw new Error(`Failed to list projects: ${error.message}`);
+  const projectIds = memberships.map((m) => m.project_id);
+  if (projectIds.length === 0) return [];
 
-  const projects: ManageableProject[] = [];
-  for (const row of (data ?? []) as unknown as MemberRow[]) {
-    const project = one(row.projects);
-    if (!project) continue;
-    // organizations is only visible to org members: keep the project with an
-    // empty name (same as the self-hosted LEFT JOIN) instead of dropping it.
-    const organization = one(project.organizations);
-    const integration = one(project.discord_integrations);
-    projects.push({
-      id: project.id,
-      name: project.name,
-      organizationId: project.organization_id,
-      organizationName: organization?.name ?? "",
-      linkedGuildName: integration?.guild_id ? (integration.guild_name ?? integration.guild_id) : null,
-    });
-  }
-  projects.sort((a, b) => a.organizationName.localeCompare(b.organizationName) || a.name.localeCompare(b.name));
-  return projects;
+  const [{ data: projects }, { data: integrations }] = await Promise.all([
+    db.from<{ id: string; name: string; organization_id: string }>("projects").select("id, name, organization_id").in("id", projectIds),
+    db
+      .from<{ project_id: string; guild_id: string | null; guild_name: string | null }>("discord_integrations")
+      .select("project_id, guild_id, guild_name")
+      .in("project_id", projectIds),
+  ]);
+  // organizations is only visible to org members: a project admin who isn't
+  // one keeps the project with an empty organization name instead of losing it.
+  const { data: organizations } = await db
+    .from<{ id: string; name: string }>("organizations")
+    .select("id, name")
+    .in("id", [...new Set(projects.map((p) => p.organization_id))]);
+  const orgName = new Map(organizations.map((o) => [o.id, o.name]));
+  const integrationByProject = new Map(integrations.map((i) => [i.project_id, i]));
+
+  return projects
+    .map((project) => {
+      const integration = integrationByProject.get(project.id);
+      return {
+        id: project.id,
+        name: project.name,
+        organizationId: project.organization_id,
+        organizationName: orgName.get(project.organization_id) ?? "",
+        linkedGuildName: integration?.guild_id ? (integration.guild_name ?? integration.guild_id) : null,
+      };
+    })
+    .sort((a, b) => a.organizationName.localeCompare(b.organizationName) || a.name.localeCompare(b.name));
 }

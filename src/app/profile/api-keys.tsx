@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,6 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   const [state, formAction, creating] = useActionState(createApiKey, initialState);
   const [revoking, startRevoke] = useTransition();
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
-  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   // useState(initialKeys) only re-seeds on remount, so revalidatePath("/profile")
   // alone doesn't get the freshly created key into this list - without this,
@@ -52,15 +52,15 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
     }
   };
 
-  const handleRevoke = (keyId: string) => {
+  const handleRevoke = (keyId: string, keyName: string) => {
     startRevoke(async () => {
       const { error } = await revokeApiKey(keyId);
       if (error) {
-        setRevokeError(error);
+        toast.error(error);
         return;
       }
-      setRevokeError(null);
       setKeys((prev) => prev.map((k) => (k.id === keyId ? { ...k, revoked_at: new Date().toISOString() } : k)));
+      toast.success(t("keyRevokedToast", { name: keyName }));
     });
   };
 
@@ -119,12 +119,6 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
         </form>
 
         <div className="space-y-2">
-          {revokeError && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              {revokeError}
-            </div>
-          )}
           {keys.length === 0 && <p className="text-sm text-muted-foreground">{t("noApiKeysYet")}</p>}
           {keys.map((key) => (
             <div key={key.id} className="flex items-center justify-between rounded-md border border-border p-3">
@@ -143,7 +137,14 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 </p>
               </div>
               {!key.revoked_at && (
-                <Button size="sm" variant="outline" disabled={revoking} onClick={() => handleRevoke(key.id)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={revoking}
+                  aria-label={t("revokeKeyAria", { name: key.name })}
+                  title={t("revokeKeyAria", { name: key.name })}
+                  onClick={() => handleRevoke(key.id, key.name)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               )}

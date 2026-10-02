@@ -77,6 +77,8 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         const val MODE_LOADING = "loading"
         const val MODE_LOGIN = "login"
         const val MODE_BOARD = "board"
+        const val MODE_MOODBOARD = "moodboard"
+        const val AUTO_REFRESH_MS = 30_000
     }
 
     // --- state (EDT only)
@@ -120,12 +122,21 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     private val loginButton = GuidonButton("Log In")
     private val cancelLoginButton = JButton("Cancel")
     private var newTaskField: JTextField? = null
+    private val moodboard = MoodboardPanel(project) { disposed }
+    private val moodboardButton = JButton("Moodboard")
+    private var showingMoodboard = false
+    private var dragging = false
+    /** Bumped by every user request (see [bg]), so a background refresh that raced one is dropped. */
+    private var actions = 0
+    private var autoRefreshRunning = false
+    private val autoRefreshTimer = javax.swing.Timer(AUTO_REFRESH_MS) { autoRefresh() }
 
     init {
         add(buildHeader(), BorderLayout.NORTH)
         modePanel.add(centered(mutedLabel("Loading…")), MODE_LOADING)
         modePanel.add(buildLoginPanel(), MODE_LOGIN)
         modePanel.add(buildBoardArea(), MODE_BOARD)
+        modePanel.add(moodboard, MODE_MOODBOARD)
         add(modePanel, BorderLayout.CENTER)
         modes.show(modePanel, MODE_LOADING)
         updateChrome()
@@ -136,10 +147,12 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             updateChrome()
             if (GuidonSettings.isLoggedIn) refreshProjects()
         }
+        autoRefreshTimer.start()
     }
 
     override fun dispose() {
         disposed = true
+        autoRefreshTimer.stop()
         loginCancel?.set(true)
     }
 
@@ -150,6 +163,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     /** Runs [work] on a pooled thread, then [done] on the EDT (skipped once the tool window is gone). */
     private fun <T> bg(work: () -> T, done: (T) -> Unit) {
         pending++
+        actions++
         updateChrome()
         ApplicationManager.getApplication().executeOnPooledThread(Runnable {
             val result = work()
@@ -202,7 +216,16 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         loginButton.isEnabled = !loggingIn
         loginButton.text = if (loggingIn) "Waiting for the browser…" else "Log In"
         cancelLoginButton.isVisible = loggingIn
-        modes.show(modePanel, if (!keyLoaded) MODE_LOADING else if (loggedIn) MODE_BOARD else MODE_LOGIN)
+        moodboardButton.text = if (showingMoodboard) "Board" else "Moodboard"
+        modes.show(
+            modePanel,
+            when {
+                !keyLoaded -> MODE_LOADING
+                !loggedIn -> MODE_LOGIN
+                showingMoodboard -> MODE_MOODBOARD
+                else -> MODE_BOARD
+            },
+        )
         revalidate()
         repaint()
     }
@@ -254,14 +277,27 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         }
         projectCombo.preferredSize = Dimension(JBUI.scale(220), projectCombo.preferredSize.height)
 
-        val refresh = button("Refresh") { refreshProjects() }
+        val refresh = button("Refresh") {
+            refreshProjects()
+            if (showingMoodboard) moodboard.load(currentProjectId, api())
+        }
         val openBrowser = button("Open in Browser") {
             if (currentProjectId.isNotEmpty()) BrowserUtil.browse("${GuidonSettings.baseUrl.trimEnd('/')}/projects/$currentProjectId/work")
         }
         openBrowser.toolTipText = "Open this project's board on the Guidon website"
         val logout = button("Log Out") { logOut() }
         logout.toolTipText = "Forget the key on this machine. It stays under Profile > API Keys until you revoke it there."
-        toolbarControls += listOf(projectCombo, refresh, openBrowser, logout)
+        moodboardButton.toolTipText = "Switch between the board and this project's reference images"
+        val autoRefreshBox = JCheckBox("Auto-refresh", GuidonSettings.autoRefresh).apply {
+            toolTipText = "Reload the board every 30 seconds while this tool window is showing"
+            addActionListener { GuidonSettings.autoRefresh = isSelected }
+        }
+        moodboardButton.addActionListener {
+            showingMoodboard = !showingMoodboard
+            if (showingMoodboard) moodboard.load(currentProjectId, api())
+            updateChrome()
+        }
+        toolbarControls += listOf(projectCombo, refresh, moodboardButton, openBrowser, autoRefreshBox, logout)
 
         val left = JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(6), 0)).apply {
             add(JLabel("Guidon").apply {
@@ -270,7 +306,9 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             })
             add(projectCombo)
             add(refresh)
+            add(moodboardButton)
             add(openBrowser)
+            add(autoRefreshBox)
             add(busyLabel)
         }
         val right = JPanel(FlowLayout(FlowLayout.RIGHT, JBUI.scale(6), 0)).apply {
@@ -491,7 +529,12 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             }
         })
         DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(card, DnDConstants.ACTION_MOVE) { gesture ->
-            gesture.startDrag(DragSource.DefaultMoveDrop, StringSelection(DND_PREFIX + task.id))
+            dragging = true
+            gesture.startDrag(DragSource.DefaultMoveDrop, StringSelection(DND_PREFIX + task.id), object : java.awt.dnd.DragSourceAdapter() {
+                override fun dragDropEnd(e: java.awt.dnd.DragSourceDropEvent) {
+                    dragging = false
+                }
+            })
         }
         return card
     }
@@ -658,6 +701,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         addingInStatus = ""
         scheduleRebuild()
         refreshTasks()
+        if (showingMoodboard) moodboard.load(projectId, api())
     }
 
     private fun refreshTasks() {
@@ -685,6 +729,50 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
                 }
             }
         }
+    }
+
+    /**
+     * Quiet reload of the open project's tasks, columns and the selected task's
+     * comments - no busy label, no error bar, and a rebuild only on a real
+     * change. Skipped while the tool window is hidden, the IDE isn't active,
+     * a request or drag is running, or you're typing in one of its fields
+     * (a rebuild would take the focus away).
+     */
+    private fun autoRefresh() {
+        if (disposed || autoRefreshRunning || !GuidonSettings.autoRefresh || !GuidonSettings.isLoggedIn) return
+        if (!isShowing || showingMoodboard || pending > 0 || dragging || currentProjectId.isEmpty()) return
+        if (!ApplicationManager.getApplication().isActive) return
+        val focus = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+        if (focus is JTextComponent && SwingUtilities.isDescendingFrom(focus, this)) return
+
+        val projectId = currentProjectId
+        val selected = selectedTaskId
+        val actionsBefore = actions
+        val api = api()
+        autoRefreshRunning = true
+        ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+            val loaded = api.listTasks(projectId)
+            val loadedColumns = (api.listColumns(projectId) as? ApiResult.Ok)?.value
+            val loadedComments = if (selected.isNotEmpty()) (api.listComments(selected) as? ApiResult.Ok)?.value else null
+            ApplicationManager.getApplication().invokeLater {
+                autoRefreshRunning = false
+                if (disposed || actions != actionsBefore || pending > 0 || projectId != currentProjectId) return@invokeLater
+                val fresh = (loaded as? ApiResult.Ok)?.value ?: return@invokeLater
+                var boardChanged = false
+                if (fresh != tasks || (loadedColumns != null && loadedColumns != columns)) {
+                    tasks = fresh.toMutableList()
+                    if (loadedColumns != null) columns = loadedColumns
+                    if (tasks.none { it.id == selectedTaskId }) selectedTaskId = ""
+                    boardChanged = true
+                }
+                var detailsChanged = boardChanged
+                if (loadedComments != null && selected == selectedTaskId && loadedComments != comments[selected]) {
+                    comments[selected] = loadedComments
+                    detailsChanged = true
+                }
+                if (boardChanged || detailsChanged) scheduleRebuild(board = boardChanged, details = detailsChanged)
+            }
+        })
     }
 
     private fun loadComments(taskId: String) {
@@ -864,6 +952,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
 
     private fun logOut() {
         loginCancel?.set(true)
+        showingMoodboard = false
         GuidonSettings.email = ""
         projects = emptyList()
         tasks = mutableListOf()

@@ -25,6 +25,10 @@ struct FGuidonSettings
 	static FString GetProjectId();
 	static void SetProjectId(const FString& Value);
 
+	/** Reload the board every 30 s while the tab is open and the editor is in front. On unless turned off. */
+	static bool GetAutoRefresh();
+	static void SetAutoRefresh(bool bValue);
+
 	static bool IsConfigured() { return !GetApiKey().IsEmpty() && !GetBaseUrl().IsEmpty(); }
 
 	/** Clears the local key/email. Doesn't revoke the key server-side - Profile > API Keys still lists "Unreal Plugin". */

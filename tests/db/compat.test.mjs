@@ -27,6 +27,9 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// The data client's SQL compiler (pure TS, no imports) - run with
+// --experimental-strip-types, see package.json's test:db.
+import { compile, compileCount, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DB_DIR = path.join(HERE, "..", "..", "src", "db");
@@ -149,8 +152,18 @@ for (const [label, sql, expected] of [
   // 27->28 tabel, polityk bez zmian: stripe_webhook_events (043) - zero
   // polityk dla authenticated w ogole (jak subscriptions same nie maja
   // insert/update/delete), tylko GRANT dla service_role.
-  ["28 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 28],
-  ["101 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 101],
+  // 28->29 tabel, 101->103 polityk: feedback (044), 2 polityki
+  // (select/insert - kazdy widzi i wstawia tylko swoj wiersz, panel admina
+  // czyta wszystko przez service_role, z pominieciem RLS).
+  // 29->30 tabel, 103->106 polityk: notifications (045), 3 polityki
+  // (select/update/delete - kazdy widzi/oznacza/usuwa tylko swoje wiersze;
+  // zero polityk insert dla authenticated, wstawia wylacznie service_role).
+  // 30->31 tabel, 106->110 polityk: project_references (048), 4 polityki
+  // (select/insert/update/delete).
+  // 31->32 tabel, 110->114 polityk: organization_webhooks (050), 4 polityki
+  // (owner/admin organizacji).
+  ["32 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 32],
+  ["114 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 114],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1884,6 +1897,601 @@ await expectRejected(
   () => withUser(A, () => db.query("SELECT event_id FROM public.stripe_webhook_events")),
   /permission denied/i
 );
+
+// ------------------------------------------------------------------
+section("32. feedback: kazdy widzi/wstawia tylko swoj wiersz, admin czyta wszystko przez service_role (migracja 044)");
+
+let feedbackId;
+await withUser(A, async () => {
+  const { rows } = await db.query(
+    "INSERT INTO public.feedback (user_id, message, page_url) VALUES ($1, 'Swietna appka!', '/dashboard') RETURNING id",
+    [A]
+  );
+  feedbackId = rows[0]?.id;
+  check("A moze wstawic wlasny feedback", rows.length === 1, JSON.stringify(rows));
+});
+
+await expectRejected(
+  "A nie moze wstawic feedbacku jako ktos inny",
+  () =>
+    withUser(A, () =>
+      db.query("INSERT INTO public.feedback (user_id, message) VALUES ($1, 'podszywam sie')", [B])
+    ),
+  /permission denied|new row violates/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id FROM public.feedback WHERE id = $1", [feedbackId]);
+  check("A widzi wlasny feedback", rows.length === 1, rows.length);
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT id FROM public.feedback WHERE id = $1", [feedbackId]);
+  check("B nie widzi cudzego feedbacku", rows.length === 0, rows.length);
+});
+
+await withServiceRole(async () => {
+  const { rows } = await db.query("SELECT id FROM public.feedback WHERE id = $1", [feedbackId]);
+  check("panel admina (service_role) widzi kazdy feedback", rows.length === 1, rows.length);
+});
+
+// ------------------------------------------------------------------
+section("33. notifications: brak insert dla authenticated, kazdy widzi/oznacza/usuwa tylko swoje (migracja 045)");
+
+let notificationId;
+await withServiceRole(async () => {
+  const { rows } = await db.query(
+    `INSERT INTO public.notifications (user_id, project_id, type, title, link)
+     VALUES ($1, $2, 'task_assigned', 'Przypisano Ci zadanie', $3)
+     RETURNING id`,
+    [A, projectId, `/projects/${projectId}/work?openTask=x`]
+  );
+  notificationId = rows[0]?.id;
+  check("service_role moze wstawic powiadomienie dla dowolnego uzytkownika", rows.length === 1, JSON.stringify(rows));
+});
+
+await expectRejected(
+  "A (zwykly authenticated) nie moze wstawic powiadomienia - brak polityki insert",
+  () =>
+    withUser(A, () =>
+      db.query(
+        "INSERT INTO public.notifications (user_id, type, title, link) VALUES ($1, 'task_assigned', 'x', '/x')",
+        [A]
+      )
+    ),
+  /permission denied/i
+);
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id, read_at FROM public.notifications WHERE id = $1", [notificationId]);
+  check("A widzi wlasne powiadomienie", rows.length === 1, rows.length);
+  check("nowe powiadomienie jest nieprzeczytane", rows[0]?.read_at === null, rows[0]?.read_at);
+});
+
+await withUser(B, async () => {
+  const { rows } = await db.query("SELECT id FROM public.notifications WHERE id = $1", [notificationId]);
+  check("B nie widzi cudzego powiadomienia", rows.length === 0, rows.length);
+});
+
+await withUser(B, async () => {
+  const result = await db.query("UPDATE public.notifications SET read_at = now() WHERE id = $1", [notificationId]);
+  check("B nie moze oznaczyc cudzego powiadomienia jako przeczytane", result.rowCount === 0, result.rowCount);
+});
+
+await withUser(A, async () => {
+  const result = await db.query("UPDATE public.notifications SET read_at = now() WHERE id = $1", [notificationId]);
+  check("A moze oznaczyc wlasne powiadomienie jako przeczytane", result.rowCount === 1, result.rowCount);
+});
+
+await withUser(B, async () => {
+  const result = await db.query("DELETE FROM public.notifications WHERE id = $1", [notificationId]);
+  check("B nie moze usunac cudzego powiadomienia", result.rowCount === 0, result.rowCount);
+});
+
+await withUser(A, async () => {
+  const result = await db.query("DELETE FROM public.notifications WHERE id = $1", [notificationId]);
+  check("A moze usunac wlasne powiadomienie", result.rowCount === 1, result.rowCount);
+});
+
+// ------------------------------------------------------------------
+section("34. projects.ai_enabled: domyslnie wlaczone, owner moze przelaczyc (migracja 046)");
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT ai_enabled FROM public.projects WHERE id = $1", [projectId]);
+  check("istniejacy projekt ma ai_enabled = true (DEFAULT)", rows[0]?.ai_enabled === true, rows[0]?.ai_enabled);
+});
+
+await withUser(A, async () => {
+  // Would throw "permission denied for table projects" if 046 forgot to
+  // append ai_enabled to the column-scoped GRANT UPDATE.
+  const result = await db.query("UPDATE public.projects SET ai_enabled = false WHERE id = $1", [projectId]);
+  check("owner moze wylaczyc AI (kolumna w GRANT UPDATE)", result.rowCount === 1, result.rowCount);
+});
+
+await withUser(B, async () => {
+  const result = await db.query("UPDATE public.projects SET ai_enabled = true WHERE id = $1", [projectId]);
+  check("B (spoza projektu) nie moze przelaczyc AI", result.rowCount === 0, result.rowCount);
+});
+
+await withUser(A, async () => {
+  const result = await db.query("UPDATE public.projects SET ai_enabled = true WHERE id = $1 RETURNING ai_enabled", [projectId]);
+  check("owner moze ponownie wlaczyc AI", result.rows[0]?.ai_enabled === true, JSON.stringify(result.rows));
+});
+
+
+section("35. find_user_id_by_email: owner/admin organizacji znajduje osobe spoza niej (migracja 047)");
+
+const D = "44444444-4444-4444-4444-444444444444";
+await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, $2, $3)", [
+  D,
+  "d@example.test",
+  JSON.stringify({ full_name: "Dorota" }),
+]);
+
+await withUser(A, async () => {
+  // The original bug: profiles RLS (003) hides anyone the caller doesn't
+  // already share a workspace with - i.e. exactly the person being added.
+  const plain = await db.query("SELECT id FROM public.profiles WHERE email = 'd@example.test'");
+  check("zwykly SELECT na profiles nie widzi osoby spoza workspace'u (RLS 003)", plain.rows.length === 0, plain.rows.length);
+
+  const found = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "  D@Example.test "]);
+  check("owner organizacji znajduje id po e-mailu (wielkosc liter/spacje bez znaczenia)", found.rows[0]?.id === D, found.rows[0]?.id);
+
+  const missing = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "nobody@example.test"]);
+  check("nieistniejacy e-mail -> NULL", missing.rows[0]?.id === null, missing.rows[0]?.id);
+
+  const added = await db.query(
+    "INSERT INTO public.organization_members (organization_id, user_id, role) VALUES ($1, $2, 'member') RETURNING user_id",
+    [orgId, D]
+  );
+  check("owner dodaje znaleziona osobe do organizacji", added.rows[0]?.user_id === D, JSON.stringify(added.rows));
+});
+
+await withUser(D, async () => {
+  // D is now a plain member of orgId - not owner/admin, so no lookups.
+  const r = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "c@example.test"]);
+  check("zwykly member nie moze wyszukiwac po e-mailu", r.rows[0]?.id === null, r.rows[0]?.id);
+});
+
+await withUser(C, async () => {
+  const r = await db.query("SELECT public.find_user_id_by_email($1, $2) AS id", [orgId, "d@example.test"]);
+  check("osoba spoza organizacji nie moze wyszukiwac po e-mailu", r.rows[0]?.id === null, r.rows[0]?.id);
+});
+
+{
+  let threw = false;
+  try {
+    await withAnon(() => db.query("SELECT public.find_user_id_by_email($1, $2)", [orgId, "d@example.test"]));
+  } catch {
+    threw = true;
+  }
+  check("anon nie ma EXECUTE", threw);
+}
+
+
+section("36. project_references: moodboard - RLS jak task_attachments + UPDATE tylko caption/tags/source_url (migracja 048)");
+
+let refA;
+let refD;
+await withUser(A, async () => {
+  // D is an org member since section 35; make them a developer on the project.
+  await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [projectId, D]);
+  const r = await db.query(
+    `INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by, tags)
+     VALUES ($1, 'castle.png', 'projects/x/references/a.png', 'image/png', $2, '{env,castle}') RETURNING id, tags`,
+    [projectId, A]
+  );
+  refA = r.rows[0]?.id;
+  check("owner dodaje referencje", Boolean(refA) && r.rows[0].tags.length === 2, JSON.stringify(r.rows));
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query(
+      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'doc.pdf', 'p', 'application/pdf', $2)",
+      [projectId, A]
+    );
+  } catch {
+    threw = true;
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("tylko obrazy (CHECK mime_type image/%)", threw);
+});
+
+await withUser(D, async () => {
+  const r = await db.query(
+    "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'mood.jpg', 'p2', 'image/jpeg', $2) RETURNING id",
+    [projectId, D]
+  );
+  refD = r.rows[0]?.id;
+  check("developer dodaje wlasna referencje", Boolean(refD));
+
+  const seen = await db.query("SELECT id FROM public.project_references WHERE project_id = $1", [projectId]);
+  check("developer widzi wszystkie referencje projektu", seen.rows.length === 2, seen.rows.length);
+
+  const own = await db.query("UPDATE public.project_references SET caption = 'Mood' WHERE id = $1 AND project_id = $2", [refD, projectId]);
+  check("autor zmienia podpis swojej referencji", own.rowCount === 1, own.rowCount);
+
+  const other = await db.query("UPDATE public.project_references SET caption = 'x' WHERE id = $1 AND project_id = $2", [refA, projectId]);
+  check("developer nie zmienia cudzej referencji", other.rowCount === 0, other.rowCount);
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query("UPDATE public.project_references SET storage_path = 'someone-else.png' WHERE id = $1", [refD]);
+  } catch (error) {
+    threw = /permission denied/.test(error.message);
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("UPDATE storage_path/project_id zablokowany (GRANT kolumnowy)", threw);
+
+  const del = await db.query("DELETE FROM public.project_references WHERE id = $1 AND project_id = $2", [refA, projectId]);
+  check("developer nie usuwa cudzej referencji", del.rowCount === 0, del.rowCount);
+});
+
+await withUser(B, async () => {
+  const seen = await db.query("SELECT id FROM public.project_references WHERE project_id = $1", [projectId]);
+  check("osoba spoza projektu nie widzi referencji", seen.rows.length === 0, seen.rows.length);
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query(
+      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'x.png', 'p3', 'image/png', $2)",
+      [projectId, B]
+    );
+  } catch {
+    threw = true;
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("osoba spoza projektu nie dodaje referencji", threw);
+});
+
+await withUser(A, async () => {
+  const del = await db.query("DELETE FROM public.project_references WHERE id = $1 AND project_id = $2", [refD, projectId]);
+  check("owner usuwa cudza referencje", del.rowCount === 1, del.rowCount);
+});
+
+{
+  let threw = false;
+  try {
+    await withAnon(() => db.query("SELECT 1 FROM public.project_references LIMIT 1"));
+  } catch {
+    threw = true;
+  }
+  check("anon nie ma dostepu", threw);
+}
+
+
+section("37. data-client: SQL z kompilatora (src/lib/data-client/sql.ts) dziala na prawdziwym schemacie pod RLS");
+
+const spec = (over) => ({ table: "project_references", op: "select", columns: ["*"], filters: [], order: [], limit: null, values: null, ...over });
+const run = (q) => db.query(q.text, q.values);
+
+let dcRef;
+await withUser(A, async () => {
+  const ins = await run(compile(spec({
+    op: "insert",
+    columns: ["id", "tags", "caption"],
+    values: [{ project_id: projectId, name: "dc.png", storage_path: "p/dc.png", mime_type: "image/png", uploaded_by: A }],
+  })));
+  dcRef = ins.rows[0]?.id;
+  check("insert ... RETURNING; brak klucza -> DEFAULT (tags = '{}')", Boolean(dcRef) && Array.isArray(ins.rows[0].tags) && ins.rows[0].tags.length === 0, JSON.stringify(ins.rows));
+
+  const multi = await run(compile(spec({
+    op: "insert",
+    columns: ["id"],
+    values: [
+      { project_id: projectId, name: "m1.png", storage_path: "p/m1.png", mime_type: "image/png", uploaded_by: A, caption: "one" },
+      { project_id: projectId, name: "m2.png", storage_path: "p/m2.png", mime_type: "image/png", uploaded_by: A },
+    ],
+  })));
+  check("insert kilku wierszy z roznymi kluczami", multi.rows.length === 2, multi.rows.length);
+
+  const sel = await run(compile(spec({
+    columns: parseColumns("id, name, caption"),
+    filters: [
+      { column: "project_id", op: "eq", value: projectId },
+      { column: "name", op: "in", value: ["m1.png", "m2.png", "dc.png"] },
+      { column: "caption", op: "is", value: null },
+    ],
+    order: [{ column: "name", ascending: false }],
+    limit: 5,
+  })));
+  check("select z eq/in/is null/order/limit", sel.rows.map((r) => r.name).join(",") === "m2.png,dc.png", sel.rows.map((r) => r.name).join(","));
+
+  const none = await run(compile(spec({ filters: [{ column: "id", op: "in", value: [] }] })));
+  check("puste .in() nic nie zwraca", none.rows.length === 0, none.rows.length);
+
+  const upd = await run(compile(spec({
+    op: "update",
+    columns: ["caption", "tags"],
+    values: [{ caption: "Updated", tags: ["a", "b"] }],
+    filters: [{ column: "id", op: "eq", value: dcRef }, { column: "project_id", op: "eq", value: projectId }],
+  })));
+  check("update ... RETURNING (tablica text[] jako parametr)", upd.rows[0]?.caption === "Updated" && upd.rows[0]?.tags.join() === "a,b", JSON.stringify(upd.rows));
+});
+
+await withUser(D, async () => {
+  // D is a developer (section 36): may read, may not edit someone else's reference.
+  const upd = await run(compile(spec({
+    op: "update",
+    columns: ["id"],
+    values: [{ caption: "hijack" }],
+    filters: [{ column: "id", op: "eq", value: dcRef }, { column: "project_id", op: "eq", value: projectId }],
+  })));
+  check("RLS dalej obowiazuje: cudzy UPDATE -> 0 wierszy", upd.rows.length === 0, upd.rows.length);
+
+  let denied = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await run(compile(spec({ op: "update", columns: null, values: [{ storage_path: "x" }], filters: [{ column: "id", op: "eq", value: dcRef }] })));
+  } catch (error) {
+    denied = /permission denied/.test(error.message);
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("GRANT kolumnowy dalej obowiazuje (storage_path)", denied);
+});
+
+await withUser(A, async () => {
+  const del = await run(compile(spec({
+    op: "delete",
+    columns: ["storage_path"],
+    filters: [{ column: "project_id", op: "eq", value: projectId }, { column: "name", op: "like", value: "m%.png" }],
+  })));
+  check("delete ... RETURNING storage_path z LIKE", del.rows.length === 2, del.rows.length);
+
+  // technology/actions.ts duplicate check: ILIKE with LIKE wildcards escaped
+  // must match case-insensitively but literally ("C_" must not match "CS").
+  await db.query("INSERT INTO public.technologies (project_id, name) VALUES ($1, 'CS'), ($1, 'C_')", [projectId]);
+  const esc = (name) => name.replace(/[\\%_]/g, "\\$&");
+  const like = async (name) =>
+    (await run(compile({ table: "technologies", op: "select", columns: ["name"], filters: [
+      { column: "project_id", op: "eq", value: projectId },
+      { column: "name", op: "ilike", value: esc(name) },
+    ], order: [], limit: null, values: null }))).rows.map((r) => r.name).join(",");
+  check("ilike z escapowaniem: 'c_' -> tylko 'C_'", (await like("c_")) === "C_", await like("c_"));
+  check("ilike z escapowaniem: 'cs' -> tylko 'CS'", (await like("cs")) === "CS", await like("cs"));
+  await db.query("DELETE FROM public.technologies WHERE project_id = $1 AND name IN ('CS', 'C_')", [projectId]);
+  await run(compile(spec({ op: "delete", columns: null, filters: [{ column: "id", op: "eq", value: dcRef }] })));
+});
+
+{
+  const throws = (fn) => {
+    try {
+      fn();
+      return false;
+    } catch {
+      return true;
+    }
+  };
+  check("zly identyfikator tabeli odrzucony", throws(() => compile(spec({ table: 'tasks"; drop table tasks; --' }))));
+  check("zly identyfikator kolumny odrzucony", throws(() => compile(spec({ filters: [{ column: "id = id OR 1", op: "eq", value: 1 }] }))));
+  check("embed PostgREST odrzucony", throws(() => parseColumns("id, profiles(full_name)")));
+  check("UPDATE bez filtrow odrzucony", throws(() => compile(spec({ op: "update", values: [{ caption: "x" }] }))));
+  check("DELETE bez filtrow odrzucony", throws(() => compile(spec({ op: "delete", columns: null }))));
+  const q = compile(spec({ filters: [{ column: "name", op: "eq", value: "x'; drop table tasks; --" }] }));
+  check("wartosci zawsze jako parametry", !q.text.includes("drop") && q.values[0].includes("drop"), q.text);
+}
+
+// data-client rpc(): named arguments, array params typed by the function's
+// own signature, and RLS still applying inside a non-SECURITY DEFINER function.
+{
+  const ids = await withUser(A, async () => {
+    const rows = [];
+    for (const [title, order] of [["rpc-a", 1], ["rpc-b", 2], ["rpc-c", 3]]) {
+      const r = await db.query(
+        "INSERT INTO public.tasks (project_id, title, status, priority, tags, created_by, sort_order) VALUES ($1, $2, 'todo', 'medium', '{}', $3, $4) RETURNING id",
+        [projectId, title, A, order]
+      );
+      rows.push(r.rows[0].id);
+    }
+    return rows;
+  });
+  const renumber = (orders) =>
+    compileRpc("renumber_task_sort_orders", { p_ids: ids, p_sort_orders: orders, p_project_id: projectId }, "value");
+  const orders = async () =>
+    (await db.query("SELECT sort_order FROM public.tasks WHERE id = ANY($1) ORDER BY title", [ids])).rows.map((r) => r.sort_order).join(",");
+
+  await withUser(B, () => run(renumber([7, 8, 9])));
+  check("rpc pod RLS: obcy uzytkownik nic nie przenumeruje", (await orders()) === "1,2,3", await orders());
+
+  const voidResult = await withUser(A, () => run(renumber([30, 20, 10])));
+  check("rpc (void): nazwane argumenty + tablice uuid[]/int[]", (await orders()) === "30,20,10", await orders());
+  check("rpc (void): value = null", voidResult.rows[0]?.value === null, JSON.stringify(voidResult.rows));
+
+  const found = await withUser(A, () =>
+    run(compileRpc("find_user_id_by_email", { p_organization_id: orgId, p_email: "d@example.test" }, "value"))
+  );
+  check("rpc (skalar): find_user_id_by_email zwraca uuid", found.rows[0]?.value === D, JSON.stringify(found.rows));
+
+  const discordRows = await withUser(A, () => run(compileRpc("get_discord_webhook_url", { p_project_id: projectId }, "rows")));
+  check("rpcRows: funkcja TABLE wykonuje sie pod RLS (tablica wierszy)", Array.isArray(discordRows.rows), JSON.stringify(discordRows.rows));
+  const notNull = await withUser(A, () =>
+    run(compile({ table: "tasks", op: "select", columns: ["title"], filters: [{ column: "id", op: "in", value: ids }, { column: "parent_task_id", op: "isNot", value: null }], order: [], limit: null, values: null }))
+  );
+  check("isNot(null) -> IS NOT NULL", notNull.rows.length === 0, JSON.stringify(notNull.rows));
+  const rowsSql = compileRpc("get_discord_webhook_url", { p_project_id: projectId }, "rows").text;
+  check("rpcRows: SELECT * FROM public.fn(...)", rowsSql === 'SELECT * FROM public."get_discord_webhook_url"("p_project_id" => $1)', rowsSql);
+
+  let rejected = false;
+  try {
+    compileRpc("x(); drop table tasks; --", {}, "value");
+  } catch {
+    rejected = true;
+  }
+  check("rpc: zla nazwa funkcji odrzucona", rejected);
+
+  const counted = await withUser(A, () =>
+    run(compileCount({ table: "tasks", op: "select", columns: ["*"], filters: [{ column: "id", op: "in", value: ids }, { column: "sort_order", op: "gte", value: 20 }], order: [], limit: null, values: null }))
+  );
+  check("count() z filtrami", counted.rows[0]?.count === 2, JSON.stringify(counted.rows));
+  const hidden = await withUser(B, () =>
+    run(compileCount({ table: "tasks", op: "select", columns: ["*"], filters: [{ column: "id", op: "in", value: ids }], order: [], limit: null, values: null }))
+  );
+  check("count() pod RLS: obcy widzi 0", hidden.rows[0]?.count === 0, JSON.stringify(hidden.rows));
+
+  // saveDiscordWebhookUrl: update-then-insert works for an owner; the upsert
+  // it replaced can't, because EXCLUDED.webhook_url_encrypted needs a SELECT
+  // grant authenticated doesn't have (035).
+  await expectRejected(
+    "stary upsert webhooka Discorda -> permission denied (powod zmiany)",
+    () => withUser(A, () => db.query(
+      `INSERT INTO public.discord_integrations (project_id, webhook_url_encrypted, linked_by) VALUES ($1, 'enc', $2)
+       ON CONFLICT (project_id) DO UPDATE SET webhook_url_encrypted = EXCLUDED.webhook_url_encrypted`, [projectId, A])),
+    /permission denied/
+  );
+  await withUser(A, async () => {
+    const upd = await run(compile({ table: "discord_integrations", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ webhook_url_encrypted: "enc1" }] }));
+    const ins = upd.rows.length > 0 ? upd : await run(compile({ table: "discord_integrations", op: "insert", columns: ["project_id"], filters: [], order: [], limit: null, values: [{ project_id: projectId, webhook_url_encrypted: "enc1", linked_by: A }] }));
+    check("zapis webhooka Discorda: insert przez ownera dziala", ins.rows.length === 1, JSON.stringify(ins.rows));
+    const again = await run(compile({ table: "discord_integrations", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ webhook_url_encrypted: "enc2" }] }));
+    check("zapis webhooka Discorda: ponowny zapis to update", again.rows.length === 1, JSON.stringify(again.rows));
+  });
+  const stored = await db.query("SELECT webhook_url_encrypted FROM public.discord_integrations WHERE project_id = $1", [projectId]);
+  check("zapis webhooka Discorda: wartosc zapisana", stored.rows[0]?.webhook_url_encrypted === "enc2", JSON.stringify(stored.rows));
+  await db.query("DELETE FROM public.discord_integrations WHERE project_id = $1", [projectId]);
+
+  await db.query("DELETE FROM public.tasks WHERE id = ANY($1)", [ids]);
+}
+
+section("38. plans.member_limit_per_project: limit czlonkow projektu w planach (migracja 049)");
+
+await withUser(A, async () => {
+  const { rows } = await db.query("SELECT id, member_limit_per_project AS n FROM public.plans ORDER BY sort_order");
+  const byId = Object.fromEntries(rows.map((row) => [row.id, row.n]));
+  check("free = 5, pro = 15, team = 50", byId.free === 5 && byId.pro === 15 && byId.team === 50, JSON.stringify(byId));
+  check("business/enterprise bez limitu (NULL)", byId.business === null && byId.enterprise === null, JSON.stringify(byId));
+
+  let threw = false;
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query("UPDATE public.plans SET member_limit_per_project = 1000 WHERE id = 'free'");
+  } catch {
+    threw = true;
+  }
+  await db.query("ROLLBACK TO SAVEPOINT s");
+  check("authenticated nie moze zmienic limitu planu", threw);
+});
+
+{
+  let threw = false;
+  try {
+    await db.query("UPDATE public.plans SET member_limit_per_project = 0 WHERE id = 'free'");
+  } catch {
+    threw = true;
+  }
+  check("CHECK odrzuca limit 0", threw);
+}
+
+section("39. organization_webhooks: tylko owner/admin organizacji, sekret niewidoczny dla authenticated (migracja 050)");
+
+async function throwsInSavepoint(sql, params) {
+  try {
+    await db.query("SAVEPOINT s");
+    await db.query(sql, params);
+    await db.query("RELEASE SAVEPOINT s");
+    return false;
+  } catch {
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    return true;
+  }
+}
+
+const insertWebhookSql = `INSERT INTO public.organization_webhooks (organization_id, url, events, secret_encrypted, created_by)
+  VALUES ($1, 'https://example.com/hook', $2::text[], 'enc', $3) RETURNING id`;
+
+let webhookId;
+await withUser(A, async () => {
+  const inserted = await db.query(insertWebhookSql, [orgId, ["task.created"], A]);
+  webhookId = inserted.rows[0]?.id;
+  check("owner organizacji dodaje webhook", Boolean(webhookId), JSON.stringify(inserted.rows));
+
+  const listed = await db.query("SELECT id, url, events FROM public.organization_webhooks WHERE organization_id = $1", [orgId]);
+  check("owner widzi webhook", listed.rows.length === 1, listed.rows.length);
+
+  check(
+    "owner NIE czyta secret_encrypted (GRANT kolumnowy)",
+    await throwsInSavepoint("SELECT secret_encrypted FROM public.organization_webhooks WHERE id = $1", [webhookId])
+  );
+
+  const updated = await db.query("UPDATE public.organization_webhooks SET enabled = false WHERE id = $1 RETURNING enabled", [webhookId]);
+  check("owner wylacza webhook", updated.rows[0]?.enabled === false, JSON.stringify(updated.rows));
+
+  check(
+    "owner nie zapisuje last_* (tylko service_role)",
+    await throwsInSavepoint("UPDATE public.organization_webhooks SET last_status = 200 WHERE id = $1", [webhookId])
+  );
+  check("CHECK odrzuca nieznane zdarzenie", await throwsInSavepoint(insertWebhookSql, [orgId, ["task.exploded"], A]));
+  check("CHECK odrzuca pusta liste zdarzen", await throwsInSavepoint(insertWebhookSql, [orgId, [], A]));
+  check("created_by musi byc wywolujacym", await throwsInSavepoint(insertWebhookSql, [orgId, ["task.created"], B]));
+});
+
+await withUser(D, async () => {
+  const listed = await db.query("SELECT id FROM public.organization_webhooks WHERE organization_id = $1", [orgId]);
+  check("zwykly member organizacji nie widzi webhookow", listed.rows.length === 0, listed.rows.length);
+  check("zwykly member nie dodaje webhooka", await throwsInSavepoint(insertWebhookSql, [orgId, ["task.created"], D]));
+  const del = await db.query("DELETE FROM public.organization_webhooks WHERE id = $1", [webhookId]);
+  check("zwykly member nie usuwa webhooka", del.rowCount === 0, del.rowCount);
+});
+
+await withUser(C, async () => {
+  const listed = await db.query("SELECT id FROM public.organization_webhooks");
+  check("osoba spoza organizacji nie widzi webhookow", listed.rows.length === 0, listed.rows.length);
+});
+
+await withServiceRole(async () => {
+  const { rows } = await db.query(
+    "UPDATE public.organization_webhooks SET last_status = 204, last_delivery_at = now() WHERE id = $1 RETURNING secret_encrypted, last_status",
+    [webhookId]
+  );
+  check(
+    "service_role czyta sekret i zapisuje status dostawy",
+    rows[0]?.secret_encrypted === "enc" && rows[0]?.last_status === 204,
+    JSON.stringify(rows)
+  );
+});
+
+await withUser(A, async () => {
+  const del = await db.query("DELETE FROM public.organization_webhooks WHERE id = $1", [webhookId]);
+  check("owner usuwa webhook", del.rowCount === 1, del.rowCount);
+});
+
+{
+  let threw = false;
+  try {
+    await withAnon(() => db.query("SELECT 1 FROM public.organization_webhooks LIMIT 1"));
+  } catch {
+    threw = true;
+  }
+  check("anon nie ma dostepu", threw);
+}
+
+// ------------------------------------------------------------------
+section("40. plans.member_limit: miejsca w organizacji wedlug planu (migracja 051)");
+
+{
+  const seats = await db.query("SELECT id, member_limit FROM public.plans ORDER BY sort_order");
+  const byId = Object.fromEntries(seats.rows.map((row) => [row.id, row.member_limit]));
+  check("Free: 8 osob", byId.free === 8, byId.free);
+  check("Pro: 20, Team: 50, Business: 200", byId.pro === 20 && byId.team === 50 && byId.business === 200, JSON.stringify(byId));
+  check("Enterprise: bez limitu (NULL)", byId.enterprise === null, byId.enterprise);
+
+  await withUser(A, async () => {
+    const r = await db.query("SELECT member_limit FROM public.plans WHERE id = 'free'");
+    check("authenticated czyta member_limit (GRANT SELECT z 015)", r.rows[0]?.member_limit === 8, JSON.stringify(r.rows));
+  });
+  await expectRejected(
+    "authenticated nie zmieni member_limit",
+    () => withUser(A, () => db.query("UPDATE public.plans SET member_limit = 1000 WHERE id = 'free'")),
+    /permission denied/
+  );
+  await expectRejected(
+    "member_limit 0 odrzucony przez CHECK",
+    () => withServiceRole(() => db.query("UPDATE public.plans SET member_limit = 0 WHERE id = 'free'")),
+    /check constraint/
+  );
+}
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

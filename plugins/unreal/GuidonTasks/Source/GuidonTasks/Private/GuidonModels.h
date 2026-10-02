@@ -35,6 +35,22 @@ struct FGuidonTask
 	static FGuidonTask FromJson(const TSharedPtr<FJsonObject>& Json);
 };
 
+/** A moodboard image (GET /api/v1/projects/{id}/references). ImageUrl is signed and short-lived - download it right away. */
+struct FGuidonReference
+{
+	FString Id;
+	FString Name;
+	FString Caption;
+	FString SourceUrl;
+	FString MimeType;
+	FString ImageUrl;
+	TArray<FString> Tags;
+
+	FString DisplayName() const { return Caption.IsEmpty() ? Name : Caption; }
+
+	static FGuidonReference FromJson(const TSharedPtr<FJsonObject>& Json);
+};
+
 /** One visible board column: a fixed status with the project's (possibly renamed) label. */
 struct FGuidonColumn
 {

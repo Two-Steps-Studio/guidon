@@ -78,6 +78,7 @@
     "dashboard": "Pulpit",
     "projects": "Projekty",
     "organizations": "Organizacje",
+    "plugins": "Wtyczki",
     "overview": "Przegląd",
     "workGroup": "Praca",
     "taskBoard": "Tablica zadań",
@@ -86,6 +87,7 @@
     "knowledgeGroup": "Wiedza",
     "knowledge": "Wiedza",
     "decisions": "Decyzje",
+    "moodboard": "Moodboard",
     "technologies": "Technologie",
     "contextGroup": "Kontekst",
     "memory": "Pamięć",
@@ -97,11 +99,34 @@
     "adminGroup": "Administracja",
     "integrations": "Integracje",
     "logs": "Dzienniki",
+    "feedback": "Opinie",
     "users": "Użytkownicy",
     "logOut": "Wyloguj się",
     "user": "Użytkownik",
     "switchProject": "Przełącz projekt",
     "calendar": "Kalendarz"
+  },
+  "commandPalette": {
+    "triggerLabel": "Szukaj...",
+    "title": "Paleta poleceń",
+    "description": "Szukaj i przechodź do dowolnego elementu",
+    "placeholder": "Szukaj zadań, decyzji, plików...",
+    "navigateGroup": "Nawigacja",
+    "resultsGroup": "Wyniki",
+    "noResults": "Nie znaleziono wyników.",
+    "entityType_task": "Zadanie",
+    "entityType_decision": "Decyzja",
+    "entityType_memory": "Pamięć",
+    "entityType_file": "Plik",
+    "entityType_source": "Źródło",
+    "entityType_project": "Projekt"
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "empty": "Brak powiadomień.",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "bellAria": "Powiadomienia",
+    "bellAriaUnread": "Powiadomienia ({count} nieprzeczytanych)"
   },
   "dashboard": {
     "title": "Pulpit",
@@ -203,12 +228,16 @@
       "projectsCount": "{count, plural, one {# projekt} few {# projekty} many {# projektów} other {# projektu}}",
       "unlimitedTasksPerProject": "Nieograniczona liczba zadań na projekt",
       "tasksPerProjectCount": "{count, plural, one {# zadanie na projekt} few {# zadania na projekt} many {# zadań na projekt} other {# zadania na projekt}}",
+      "unlimitedMembersPerProject": "Nieograniczona liczba członków projektu",
+      "membersPerProjectCount": "{count, plural, one {# członek w projekcie} few {# członków w projekcie} many {# członków w projekcie} other {# członka w projekcie}}",
       "aiTaskApi": "API zadań AI",
       "githubIntegration": "Integracja z GitHub",
       "advancedAnalytics": "Zaawansowana analityka",
       "teamRoles": "Role zespołowe",
       "auditLogs": "Dzienniki audytu",
-      "prioritySupport": "Priorytetowe wsparcie"
+      "prioritySupport": "Priorytetowe wsparcie",
+      "unlimitedMembers": "Nieograniczona liczba osób",
+      "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
     },
     "footer": {
       "terms": "Regulamin",
@@ -273,7 +302,10 @@
       "roleMemberOption": "Członek",
       "roleAdminOption": "Administrator",
       "roleOwnerOption": "Właściciel",
-      "adding": "Dodawanie..."
+      "adding": "Dodawanie...",
+      "seatsUsed": "Zajęte miejsca: {used} z {limit} (plan {plan})",
+      "upgradeForSeats": "Zmień plan, by dodać osoby",
+      "seatsFull": "Organizacja wykorzystała wszystkie miejsca ({limit}) w planie {plan}. Zmień plan, aby dodać kolejne osoby."
     },
     "settings": {
       "title": "Ustawienia organizacji",
@@ -295,7 +327,38 @@
       "apiKeyPlaceholderKeep": "Zostaw puste, aby zachować bieżący klucz",
       "apiKeyPlaceholderNew": "Wklej swój klucz API",
       "saving": "Zapisywanie...",
-      "save": "Zapisz"
+      "save": "Zapisz",
+      "webhooks": {
+        "title": "Webhooki",
+        "description": "Guidon wysyła podpisane żądanie POST na te adresy, gdy zadania zmieniają się w dowolnym projekcie tej organizacji - podłącz CI, komunikatory albo własne automatyzacje.",
+        "empty": "Brak webhooków.",
+        "add": "Dodaj webhook",
+        "urlLabel": "Adres URL",
+        "urlHintCloud": "Musi to być publiczny adres https://.",
+        "urlHintSelfHosted": "Na instalacjach self-hosted dozwolone są http:// i adresy wewnętrzne.",
+        "descriptionLabel": "Opis (opcjonalnie)",
+        "descriptionPlaceholder": "np. wyzwalacz buildów Jenkinsa",
+        "eventsLabel": "Zdarzenia",
+        "eventCreated": "Utworzenie zadania",
+        "eventStatusChanged": "Przeniesienie zadania do innej kolumny",
+        "eventCompleted": "Ukończenie zadania",
+        "save": "Dodaj webhook",
+        "saving": "Zapisywanie…",
+        "cancel": "Anuluj",
+        "limit": "Organizacja może mieć maksymalnie {max} webhooków.",
+        "signatureHint": "Każde żądanie ma nagłówek X-Guidon-Signature: sha256=HMAC-SHA256(sekret, timestamp + \".\" + body), gdzie timestamp to nagłówek X-Guidon-Timestamp. Sprawdź go, zanim zaufasz treści.",
+        "secretTitle": "Sekret do podpisu",
+        "secretHint": "Skopiuj go teraz - nie zostanie pokazany ponownie. Zapisz go tam, gdzie odbiorca może go odczytać.",
+        "copySecret": "Kopiuj sekret",
+        "enabled": "Aktywny",
+        "test": "Test",
+        "testDelivered": "Test wysłany - odbiorca odpowiedział HTTP {status}.",
+        "delete": "Usuń webhook",
+        "deleteConfirm": "Usunąć ten webhook? Wysyłka zatrzyma się od razu.",
+        "lastDelivery": "Ostatnia wysyłka {when} · HTTP {status}",
+        "neverDelivered": "Jeszcze nic nie wysłano.",
+        "nativeFormatHint": "Wysyłane jako zwykła wiadomość w formacie tej usługi zamiast JSON-a Guidona."
+      }
     },
     "billing": {
       "title": "Rozliczenia",
@@ -313,6 +376,7 @@
       "colPrice": "Cena",
       "colProjects": "Projekty",
       "colTasksPerProject": "Zadania/projekt",
+      "colMembersPerProject": "Członkowie/projekt",
       "colStorage": "Przestrzeń",
       "colAI": "AI",
       "colGitHub": "GitHub",
@@ -326,7 +390,9 @@
       "manageBilling": "Zarządzaj płatnością",
       "currentPlanBadge": "Bieżący plan",
       "checkoutSuccess": "Subskrypcja zaktualizowana - może chwilę potrwać, zanim pojawi się poniżej.",
-      "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło."
+      "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło.",
+      "membersLabel": "Członkowie",
+      "colMembers": "Członkowie"
     }
   },
   "projects": {
@@ -414,6 +480,8 @@
       "notSet": "Nie ustawiono",
       "workflowLabel": "Tryb pracy",
       "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story — wkrótce. Na razie to tylko etykieta projektu.",
+      "aiEnabledLabel": "Funkcje AI",
+      "aiEnabledHelp": "Włącza kolumnę „AI pracuje”, asystenta zadań AI, generowane wnioski w pamięci projektu, uprawnienia agentów AI i dostęp agentów przez API. Możesz to zmienić później w ustawieniach projektu.",
       "cancel": "Anuluj",
       "creating": "Tworzenie...",
       "createButton": "Utwórz"
@@ -439,7 +507,6 @@
     "filterByTag": "Filtruj według etykiety",
     "allTags": "Wszystkie etykiety",
     "clearFilters": "Wyczyść filtry",
-    "dismiss": "Odrzuć",
     "readOnlyAccess": "Masz dostęp <b>{role}</b> - tablica jest tylko do odczytu.",
     "noTasksTitle": "Brak zadań",
     "noTasksDescCanEdit": "Utwórz pierwsze zadanie, aby zacząć śledzić pracę nad tym projektem.",
@@ -542,10 +609,12 @@
     "chatInputPlaceholder": "Opisz pracę...",
     "emptyResponse": "(pusta odpowiedź)",
     "failedToCreateTask": "Nie udało się utworzyć zadania",
+    "taskCreatedToast": "Utworzono \"{title}\".",
     "failedToLoadComments": "Nie udało się wczytać komentarzy",
     "failedToLoadContext": "Nie udało się wczytać kontekstu",
     "failedToSaveTask": "Nie udało się zapisać zadania",
     "failedToDeleteTask": "Nie udało się usunąć zadania",
+    "taskDeletedToast": "Usunięto \"{title}\".",
     "failedToPostComment": "Nie udało się opublikować komentarza",
     "failedToCreateSubtask": "Nie udało się utworzyć podzadania",
     "failedToUpdateSubtask": "Nie udało się zaktualizować podzadania",
@@ -568,6 +637,9 @@
     "moveTaskAria": "Przenieś zadanie „{title}”",
     "moveToColumn": "Przenieś do: {column}",
     "images": "Zdjęcia",
+    "openImageAria": "Otwórz {name}",
+    "pasteImageHint": "Wskazówka: wklej (Ctrl+V) lub upuść tu obrazki - zostaną dołączone do zadania.",
+    "uploadingPastedImage": "Wysyłanie obrazka…",
     "attachments": "Załączniki",
     "attachTaskFile": "Załącz plik",
     "uploadingAttachment": "Przesyłanie...",
@@ -625,7 +697,7 @@
     "title": "Członkowie",
     "subtitle": "Kto widzi i może zmieniać ten projekt.",
     "addMember": "Dodaj członka",
-    "everyoneAlready": "Wszyscy w organizacji są już w tym projekcie",
+    "everyoneAlready": "Wszyscy z organizacji są już w tym projekcie. Aby dodać kogoś nowego, najpierw dodaj tę osobę do organizacji.",
     "dismiss": "Odrzuć",
     "readOnlyAccess": "Masz dostęp <b>{role}</b> - tylko właściciele i administratorzy mogą zmieniać członkostwo.",
     "you": "ty",
@@ -640,6 +712,7 @@
     "unknownMember": "Nieznany członek",
     "dialogTitle": "Dodaj członka",
     "dialogDescription": "Osoby muszą już należeć do organizacji, do której należy ten projekt.",
+    "manageOrgMembers": "Zarządzaj członkami organizacji",
     "personLabel": "Osoba",
     "roleLabel": "Rola",
     "cancel": "Anuluj",
@@ -652,7 +725,8 @@
     "roleHintAdmin": "Zarządzanie członkami, ustawieniami, planem działań i plikami",
     "roleHintDeveloper": "Tworzenie i edytowanie zadań, decyzji i wiedzy",
     "roleHintTester": "Komentowanie zadań; odczyt reszty",
-    "roleHintViewer": "Dostęp tylko do odczytu"
+    "roleHintViewer": "Dostęp tylko do odczytu",
+    "memberLimitReached": "Plan {plan} pozwala na {limit} członków w projekcie. <link>Zmień plan</link>, żeby dodać kolejne osoby."
   },
   "settings": {
     "title": "Ustawienia projektu",
@@ -671,6 +745,8 @@
     "notSet": "Nie ustawiono",
     "workflowLabel": "Tryb pracy",
     "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story — wkrótce. Na razie to tylko etykieta projektu.",
+    "aiEnabledLabel": "Funkcje AI",
+    "aiEnabledHelp": "Włącza kolumnę „AI pracuje”, asystenta zadań AI, generowane wnioski w pamięci projektu i dostęp dla agentów AI. Po wyłączeniu kolumna „AI pracuje” jest widoczna tylko, dopóki są w niej zadania, a zapisane uprawnienia AI zostają zachowane.",
     "colorLabel": "Kolor projektu",
     "colorHelp": "Wybierz kolor, aby spersonalizować swój projekt. Będzie używany w całym interfejsie.",
     "technologiesLabel": "Technologie (naciśnij Enter, aby dodać)",
@@ -686,6 +762,7 @@
     "deleting": "Usuwanie...",
     "saving": "Zapisywanie...",
     "saveChanges": "Zapisz zmiany",
+    "settingsSavedToast": "Zapisano ustawienia projektu.",
     "aiPermissionsTitle": "Uprawnienia AI",
     "aiPermissionsDescription": "Co może robić agent AI korzystający z kluczy API tego projektu.",
     "permReadContext": "Odczyt kontekstu projektu",
@@ -697,6 +774,7 @@
     "allowAutoComplete": "Zezwól AI na automatyczne kończenie zadań",
     "allowAutoCompleteHelp": "Bez tego AI może przenosić zadania do Przeglądu, ale ostateczną decyzję o oznaczeniu jako Zrobione zawsze podejmuje człowiek.",
     "saveAiSettings": "Zapisz ustawienia AI",
+    "aiSettingsSavedToast": "Zapisano uprawnienia AI.",
     "boardColumnsTitle": "Kolumny tablicy",
     "boardColumnsDescription": "Zmieniaj nazwy, kolejność lub ukrywaj kolumny na tablicy zadań tego projektu. Bazowe statusy zadań się nie zmieniają - dotyczy to tylko etykiet i tego, co jest wyświetlane.",
     "moveUpAria": "Przesuń {label} w górę",
@@ -725,21 +803,31 @@
     "discordDisconnectConfirm": "Rozłączyć {guild} od tego projektu? Komendy /task przestaną tam działać, dopóki ponownie nie uruchomisz /guidon-link. Powiadomienia przez webhook zostają."
   },
   "discordLink": {
-    "title": "Połącz {guild} z projektem",
-    "description": "Wybierz projekt, z którym ma być połączony serwer {guild}. Członkowie serwera będą mogli używać komend /task dla tego projektu.",
+    "title": "Połącz bota Guidon z Discorda",
+    "description": "{guild} chce połączyć się z projektem Guidon. Po wybraniu projektu poniżej członkowie tego serwera będą mogli używać komend /task do przeglądania zadań, zmiany ich statusu i dodawania komentarzy.",
     "unnamedServer": "ten serwer Discord",
     "serverLabel": "Serwer Discord",
     "phishingWarning": "Kontynuuj tylko wtedy, gdy /guidon-link uruchomiono przez Ciebie na serwerze Discord, którym zarządzasz. Potwierdzenie pozwala temu serwerowi zarządzać zadaniami w wybranym projekcie.",
     "unknownOrganization": "Pozostałe projekty",
     "linkedBadge": "Połączony z {guild}",
     "linkedElsewhereWarning": "Ten projekt jest już połączony z serwerem Discord „{guild}”. Wybranie go zastąpi jego obecne połączenie z Discordem.",
-    "confirm": "Połącz z tym projektem",
+    "confirm": "Autoryzuj",
     "genericError": "Nie udało się połączyć serwera Discord. Spróbuj ponownie.",
     "emptyTitle": "Nie zarządzasz żadnym projektem",
     "emptyDescription": "Serwer Discord mogą połączyć z projektem tylko jego właściciele i administratorzy. Poproś administratora o połączenie lub najpierw utwórz projekt.",
     "invalidTitle": "Ten link wygasł",
     "invalidDescription": "Link jest nieprawidłowy lub starszy niż 10 minut. Uruchom /guidon-link na swoim serwerze Discord ponownie, aby otrzymać nowy.",
     "toProjects": "Przejdź do projektów"
+  },
+  "feedback": {
+    "sendFeedback": "Wyślij opinię",
+    "dialogTitle": "Wyślij opinię",
+    "dialogDescription": "Napisz, co działa dobrze, co jest zepsute, albo czego brakuje - czytamy każdą wiadomość.",
+    "placeholder": "Co masz na myśli?",
+    "send": "Wyślij",
+    "thanks": "Dzięki! Twoja opinia została wysłana.",
+    "close": "Zamknij",
+    "genericError": "Nie udało się wysłać opinii. Spróbuj ponownie."
   },
   "context": {
     "title": "Warstwa kontekstu",
@@ -959,6 +1047,13 @@
     "logsDescription": "Aktywność w całej instancji, od najnowszych, ze wszystkich organizacji i projektów.",
     "logsEmptyTitle": "Brak aktywności",
     "logsEmptyDescription": "Na tej instancji nie zarejestrowano jeszcze żadnej aktywności.",
+    "feedbackTitle": "Opinie",
+    "feedbackDescription": "Opinie z całej instancji, od najnowszych, ze wszystkich organizacji i projektów.",
+    "feedbackEmptyTitle": "Brak opinii",
+    "feedbackEmptyDescription": "Na tej instancji nie przesłano jeszcze żadnych opinii.",
+    "feedbackFrom": "Od {name}",
+    "feedbackAnonymous": "Usunięty użytkownik",
+    "feedbackPageContext": "na {page}",
     "projectScope": "projekt {id}",
     "organizationScope": "organizacja {id}",
     "instanceScope": "instancja",
@@ -1012,6 +1107,10 @@
     "emailLabel": "E-mail",
     "emailHelp": "E-maila nie można zmienić w tym miejscu.",
     "languageLabel": "Język",
+    "themeLabel": "Motyw",
+    "theme_light": "Jasny",
+    "theme_dark": "Ciemny",
+    "theme_system": "Systemowy",
     "saving": "Zapisywanie...",
     "saveChanges": "Zapisz zmiany",
     "apiKeysTitle": "Klucze API",
@@ -1024,15 +1123,17 @@
     "creating": "Tworzenie...",
     "createApiKeyButton": "Utwórz klucz API",
     "revokedBadge": "Odwołany",
+    "revokeKeyAria": "Unieważnij {name}",
+    "keyRevokedToast": "Odwołano \"{name}\".",
     "noApiKeysYet": "Brak kluczy API.",
     "createdOn": "Utworzono {date}",
     "lastUsedOn": "Ostatnio użyto {date}",
     "neverUsed": "Nigdy nie użyto",
     "integrationsTitle": "Integracje",
     "integrationsDescription": "Narzędzia, które łączą się z Guidonem spoza przeglądarki.",
-    "unityPluginTitle": "Wtyczka do Unity Editor",
-    "unityPluginDescription": "Przeglądaj, twórz i edytuj zadania - z przeciąganiem, podzadaniami i komentarzami - bez wychodzenia z Unity Editora. Skopiuj folder wtyczki do swojego projektu i zaloguj się kontem Guidon.",
-    "viewOnGithubButton": "Zobacz na GitHubie",
+    "pluginsTitle": "Wtyczki do Twoich narzędzi",
+    "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code i IDE JetBrains.",
+    "pluginsButton": "Zobacz wtyczki",
     "claudeCodeTitle": "Claude Code (MCP)",
     "claudeCodeDescription": "Pozwól Claude Code czytać Twoje zadania, wykonywać je i aktualizować w Guidonie. Jedno kliknięcie tworzy klucz z odpowiednimi uprawnieniami i daje komendę do wklejenia w terminalu.",
     "claudeCodeCreateButton": "Połącz Claude Code",
@@ -1055,11 +1156,13 @@
   },
   "calendar": {
     "title": "Kalendarz",
-    "subtitle": "Zadania według terminu",
+    "subtitle": "Zadania według terminu i fazy roadmapy",
     "previousMonth": "Poprzedni miesiąc",
     "nextMonth": "Następny miesiąc",
     "today": "Dziś",
-    "moreTasks": "+{count} więcej"
+    "moreTasks": "+{count} więcej",
+    "phaseAria": "Faza: {name}",
+    "morePhases": "{count, plural, one {+# faza więcej} few {+# fazy więcej} many {+# faz więcej} other {+# fazy więcej}}"
   },
   "aiChat": {
     "title": "Asystent AI Guidona",
@@ -1073,5 +1176,121 @@
     "deletedConfirmation": "Usunięto zadanie: {title}",
     "deleteFailed": "Nie udało się usunąć zadania.",
     "errorGeneric": "Przepraszam, wystąpił błąd. Spróbuj ponownie."
+  },
+  "plugins": {
+    "title": "Wtyczki i aplikacje",
+    "subtitle": "Pracuj na tablicy Guidon bez wychodzenia z narzędzi, których już używasz. Wtyczki logują się przez przeglądarkę przyciskiem Log In - bez ręcznego kopiowania klucza API.",
+    "docs": "Dokumentacja",
+    "footer": "Log Out we wtyczce usuwa klucz tylko z tego komputera. Aby unieważnić klucz, przejdź do Profil → Klucze API.",
+    "categories": {
+      "engines": "Silniki gier",
+      "creative": "Narzędzia 3D i kreatywne",
+      "editors": "Edytory kodu",
+      "desktop": "Aplikacja desktopowa"
+    },
+    "kinds": {
+      "tasks": "Tablica zadań",
+      "reports": "Raporty z gry",
+      "source": "Kod źródłowy"
+    },
+    "descriptions": {
+      "unity": "Tablica projektu w edytorze Unity oraz formularz zgłaszania błędów w grze, który wysyła raporty prosto do Guidon.",
+      "unreal": "Tablica zadań jako zakładka edytora i zgłaszanie błędów w grze z Blueprintów lub C++.",
+      "godot": "Dwa dodatki: panel z tablicą zadań w edytorze i zgłaszanie błędów w grze.",
+      "blender": "Tablica zadań w bocznym panelu widoku 3D (panel N).",
+      "vscode": "Tablica zadań w pasku bocznym VS Code. Pobierz kod źródłowy i zbuduj plik .vsix.",
+      "jetbrains": "Okno narzędziowe z tablicą zadań dla IntelliJ IDEA, Rider, PyCharm, WebStorm i innych IDE JetBrains. Pobierz kod źródłowy i zbuduj go Gradle."
+    },
+    "install": {
+      "unity": {
+        "s1": "Rozpakuj i skopiuj folder GuidonTasks w dowolne miejsce w Assets/.",
+        "s2": "Otwórz Window → Guidon → Tasks, ustaw Base URL na {baseUrl} i kliknij Log In.",
+        "s3": "Zgłoszenia błędów: skopiuj GuidonReports do Assets/ i utwórz w Profil → Klucze API klucz tylko z uprawnieniem reports:write."
+      },
+      "unreal": {
+        "s1": "Rozpakuj do folderu Plugins/ swojego projektu (albo uruchom install.ps1 z folderu GuidonTasks).",
+        "s2": "Otwórz projekt ponownie i pozwól edytorowi zbudować moduł - wymagany jest projekt C++.",
+        "s3": "Otwórz zakładkę Guidon Tasks, ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "godot": {
+        "s1": "Rozpakuj do głównego folderu projektu - pliki trafią do addons/.",
+        "s2": "Włącz dodatek w Project → Project Settings → Plugins.",
+        "s3": "W panelu Guidon ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "blender": {
+        "s1": "Nie rozpakowuj - Blender instaluje plik zip bezpośrednio.",
+        "s2": "Blender 4.2+: Preferences → Get Extensions → ⌄ → Install from Disk. Blender 3.6-4.1: Preferences → Add-ons → Install.",
+        "s3": "Włącz Allow Online Access w Preferences → System → Network, potem w panelu N ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "vscode": {
+        "s1": "Rozpakuj, potem w folderze uruchom npm install, npm run build i npm run package.",
+        "s2": "W VS Code: Extensions → ⋯ → Install from VSIX… i wybierz wygenerowany plik.",
+        "s3": "Otwórz widok Guidon, ustaw Base URL na {baseUrl} i kliknij Log In."
+      },
+      "jetbrains": {
+        "s1": "Rozpakuj i uruchom ./gradlew buildPlugin (JDK 17+).",
+        "s2": "Settings → Plugins → ⚙ → Install Plugin from Disk… i wybierz zip z build/distributions/.",
+        "s3": "Otwórz okno Guidon, ustaw Base URL na {baseUrl} i kliknij Log In."
+      }
+    },
+    "desktop": {
+      "title": "Guidon Desktop",
+      "description": "Twoja tablica w osobnej aplikacji na Windows: ikona w zasobniku, okno zadań zawsze na wierzchu, start z systemem i instalacja poniższych pluginów do projektów jednym kliknięciem.",
+      "download": "Pobierz dla Windows",
+      "releases": "Wszystkie wydania"
+    }
+  },
+  "lightbox": {
+    "title": "Obraz",
+    "hint": "Strzałki lub przesunięcie palcem zmieniają obraz. Esc zamyka.",
+    "close": "Zamknij",
+    "previous": "Poprzedni obraz",
+    "next": "Następny obraz",
+    "download": "Pobierz {name}"
+  },
+  "moodboard": {
+    "title": "Moodboard",
+    "subtitle": "Obrazy referencyjne i concept arty tego projektu.",
+    "addImages": "Dodaj obrazy",
+    "pasteHint": "Wskazówka: upuść obrazy w dowolnym miejscu strony albo wklej je (Ctrl+V).",
+    "uploading": "Wysyłanie…",
+    "uploadFailed": "Nie udało się wysłać obrazu.",
+    "dropHere": "Upuść obrazy, żeby dodać je do moodboardu",
+    "filterByTag": "Filtruj po tagu",
+    "allTags": "Wszystkie · {count}",
+    "emptyTitle": "Brak referencji",
+    "emptyDescription": "Zbieraj concept arty, zrzuty i inspiracje w jednym miejscu. Upuść albo wklej tu obrazy, a potem dodaj podpisy i tagi.",
+    "emptyDescriptionReadOnly": "Nikt jeszcze nie dodał obrazów referencyjnych do tego projektu.",
+    "openImage": "Otwórz {name}",
+    "openSource": "Otwórz źródło",
+    "editImage": "Edytuj podpis i tagi",
+    "deleteImage": "Usuń obraz",
+    "confirmDelete": "Usunąć „{name}” z moodboardu?",
+    "deleted": "Obraz usunięty",
+    "editTitle": "Edytuj referencję",
+    "captionLabel": "Podpis",
+    "tagsLabel": "Tagi",
+    "tagsPlaceholder": "otoczenie, oświetlenie, ui",
+    "sourceLabel": "Link do źródła (opcjonalnie)",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "saveFailed": "Nie udało się zapisać zmian."
+  },
+  "mini": {
+    "noProjects": "Nie należysz jeszcze do żadnego projektu.",
+    "openProjects": "Otwórz Guidona",
+    "noAccess": "Nie masz dostępu do tego projektu.",
+    "projectAria": "Projekt",
+    "filterAria": "Pokaż zadania",
+    "filterMine": "Moje",
+    "filterAll": "Wszystkie",
+    "refresh": "Odśwież",
+    "addPlaceholder": "Nowe zadanie…",
+    "addPlaceholderMine": "Nowe zadanie dla mnie…",
+    "add": "Dodaj zadanie",
+    "addFailed": "Nie udało się dodać zadania.",
+    "statusAria": "Status zadania {title}",
+    "empty": "Brak otwartych zadań w tym projekcie.",
+    "emptyMine": "Nie masz przypisanych otwartych zadań. Przełącz na Wszystkie, żeby zobaczyć resztę."
   }
 }

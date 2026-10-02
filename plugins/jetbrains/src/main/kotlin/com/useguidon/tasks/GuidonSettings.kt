@@ -36,6 +36,11 @@ object GuidonSettings {
         get() = props.getValue(PREFIX + "projectId", "")
         set(value) = props.setValue(PREFIX + "projectId", value)
 
+    /** Reload the board every 30 s while the tool window is showing and the IDE is active. */
+    var autoRefresh: Boolean
+        get() = props.getBoolean(PREFIX + "autoRefresh", true)
+        set(value) = props.setValue(PREFIX + "autoRefresh", value, true)
+
     val apiKey: String get() = cachedApiKey.orEmpty()
 
     val isLoggedIn: Boolean get() = apiKey.isNotEmpty() && baseUrl.isNotEmpty()

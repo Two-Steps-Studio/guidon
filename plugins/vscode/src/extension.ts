@@ -3,6 +3,7 @@ import { GuidonApi } from "./api";
 import { BoardPanel, BoardCommands } from "./board";
 import { currentRepository, gitApi } from "./git";
 import { login } from "./login";
+import { MoodboardPanel } from "./moodboard";
 import { branchName, columnTasks, gitRef, withRef } from "./model";
 import { BoardStore } from "./store";
 
@@ -41,7 +42,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     status.show();
   };
   updateStatus();
-  context.subscriptions.push(status, { dispose: store.onChange(updateStatus) });
+  let moodboardProjectId = store.projectId;
+  const followProject = () => {
+    if (store.projectId === moodboardProjectId) return;
+    moodboardProjectId = store.projectId;
+    MoodboardPanel.projectChanged();
+  };
+  context.subscriptions.push(status, { dispose: store.onChange(updateStatus) }, { dispose: store.onChange(followProject) });
+
+  const openMoodboard = () =>
+    MoodboardPanel.show(context, {
+      api: () => (apiKey ? new GuidonApi(baseUrl(), apiKey) : null),
+      project: () => store.projects.find((p) => p.id === store.projectId) ?? null,
+      webUrl: (projectId) => `${baseUrl().replace(/\/+$/, "")}/projects/${projectId}/references`,
+    });
 
   const commands: BoardCommands = {
     async login(newBaseUrl) {
@@ -75,6 +89,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await context.globalState.update(EMAIL_STATE, "");
       store.reset();
     },
+    openMoodboard,
     openBrowser() {
       if (store.projectId) void vscode.env.openExternal(vscode.Uri.parse(`${baseUrl().replace(/\/+$/, "")}/projects/${store.projectId}/work`));
     },
@@ -123,6 +138,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(
     vscode.commands.registerCommand("guidon.openBoard", () => BoardPanel.show(context, store, commands)),
+    vscode.commands.registerCommand("guidon.openMoodboard", async () => {
+      if (apiKey && store.projects.length === 0) await store.refresh();
+      openMoodboard();
+    }),
     vscode.commands.registerCommand("guidon.login", () => commands.login()),
     vscode.commands.registerCommand("guidon.logout", () => commands.logout()),
     vscode.commands.registerCommand("guidon.refresh", () => store.refresh()),
@@ -144,6 +163,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("guidon.baseUrl")) store.emit();
+    })
+  );
+
+  // Auto-refresh: every 30 s while the board is visible and VS Code has focus,
+  // plus right away when the window comes back into focus after a while.
+  const AUTO_REFRESH_MS = 30_000;
+  let lastAuto = Date.now();
+  const autoRefresh = () => {
+    if (!apiKey || !BoardPanel.isVisible() || !vscode.workspace.getConfiguration("guidon").get<boolean>("autoRefresh", true)) return;
+    lastAuto = Date.now();
+    void store.autoRefresh();
+  };
+  const timer = setInterval(() => {
+    if (vscode.window.state.focused) autoRefresh();
+  }, AUTO_REFRESH_MS);
+  context.subscriptions.push(
+    { dispose: () => clearInterval(timer) },
+    vscode.window.onDidChangeWindowState((state) => {
+      if (state.focused && Date.now() - lastAuto > AUTO_REFRESH_MS / 3) autoRefresh();
     })
   );
 

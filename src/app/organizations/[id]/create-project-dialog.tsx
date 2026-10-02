@@ -122,6 +122,13 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
           {t("workflowHelp")}
         </p>
       </div>
+      <div className="rounded-md border border-border p-3">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" name="aiEnabled" defaultChecked className="h-4 w-4" />
+          {t("aiEnabledLabel")}
+        </label>
+        <p className="mt-1 text-xs text-muted-foreground">{t("aiEnabledHelp")}</p>
+      </div>
       {state.error && (
         <div className="text-sm text-destructive flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />

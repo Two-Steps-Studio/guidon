@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase-server";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
+import { dataClient } from "@/lib/data-client";
 import { technologySlug } from "@/types/technology";
 import type { Technology, TechnologyCategory } from "@/types/technology";
 
@@ -52,90 +50,43 @@ export async function saveTechnology(
   // so this is a plain app-layer check rather than a migration. syncTechnologies/
   // syncTechnologiesLocal (settings/actions.ts) already dedupe case-
   // insensitively when the whole stack is edited as a list from Settings;
-  // this is the other entry point (this project's own Technology page)
-  // that was missing the same check, letting the same name be added twice.
-  if (hasDirectDatabase()) {
-    try {
-      const technology = await withUser(access.userId, async ({ query }) => {
-        const duplicate = await query(
-          "SELECT 1 FROM technologies WHERE project_id = $1 AND lower(name) = lower($2) AND id IS DISTINCT FROM $3",
-          [projectId, payload.name, input.id]
-        );
-        if (duplicate.rows.length > 0) {
-          throw new Error(`"${payload.name}" is already in this project's stack.`);
-        }
-
-        if (input.id) {
-          return query(
-            `UPDATE technologies SET name = $1, category = $2, version = $3, description = $4, icon_slug = $5
-             WHERE id = $6 AND project_id = $7
-             RETURNING *`,
-            [payload.name, payload.category, payload.version, payload.description, payload.icon_slug, input.id, projectId]
-          ).then((result) => result.rows[0]);
-        }
-
-        return query(
-          `INSERT INTO technologies (name, category, version, description, icon_slug, project_id, sort_order)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           RETURNING *`,
-          [
-            payload.name,
-            payload.category,
-            payload.version,
-            payload.description,
-            payload.icon_slug,
-            projectId,
-            input.existingCount,
-          ]
-        ).then((result) => result.rows[0]);
-      });
-
-      // The UPDATE branch above filters by `id AND project_id` but has no
-      // RETURNING-based rowcount check of its own - an `input.id` that
-      // doesn't belong to this project resolved `technology` to undefined
-      // with no error, unlike the Supabase branch below, whose
-      // .select().single() throws when zero rows match. Aligns the two.
-      if (!technology) {
-        return { technology: null, error: "This technology could not be found in this project." };
-      }
-
-      revalidatePath(`/projects/${projectId}/technology`);
-      return { technology: technology as Technology, error: null };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to save technology.";
-      return { technology: null, error: gameEngineHint(message) };
-    }
-  }
-
-  const supabase = await createClient();
-
-  const duplicateQuery = supabase
+  // this is the other entry point (this project's own Technology page).
+  //
+  // Case-insensitive exact match: ILIKE with LIKE's wildcards escaped - an
+  // unescaped `_`/`%` in a name like "C_" used to match "CS" here (Supabase
+  // mode only; self-hosted compared lower(name) exactly).
+  const db = dataClient(access.userId);
+  const { data: duplicates, error: duplicateError } = await db
     .from("technologies")
-    .select("id")
+    .select<{ id: string }>("id")
     .eq("project_id", projectId)
-    .ilike("name", payload.name);
-  const { data: duplicates, error: duplicateError } = await duplicateQuery;
+    .ilike("name", payload.name.replace(/[\\%_]/g, "\\$&"));
   if (duplicateError) return { technology: null, error: duplicateError.message };
-  if ((duplicates ?? []).some((row) => row.id !== input.id)) {
+  if (duplicates.some((row) => row.id !== input.id)) {
     return { technology: null, error: `"${payload.name}" is already in this project's stack.` };
   }
 
-  const query = input.id
-    ? supabase.from("technologies").update(payload).eq("id", input.id).eq("project_id", projectId)
-    : supabase.from("technologies").insert({
-        ...payload,
-        project_id: projectId,
-        sort_order: input.existingCount,
-      });
+  const { data, error } = input.id
+    ? await db
+        .from("technologies")
+        .update(payload)
+        .eq("id", input.id)
+        .eq("project_id", projectId)
+        .select<Technology>("*")
+        .maybeSingle()
+    : await db
+        .from("technologies")
+        .insert({ ...payload, project_id: projectId, sort_order: input.existingCount })
+        .select<Technology>("*")
+        .maybeSingle();
 
-  const { data, error } = await query.select().single();
-
-  if (error) {
-    return { technology: null, error: gameEngineHint(error.message) };
-  }
+  if (error) return { technology: null, error: gameEngineHint(error.message) };
+  // An update scoped by `id AND project_id` that matched nothing (wrong
+  // project, or RLS) must not look like success.
+  if (!data) return { technology: null, error: "This technology could not be found in this project." };
 
   revalidatePath(`/projects/${projectId}/technology`);
-  return { technology: data as Technology, error: null };
+  return { technology: data, error: null };
 }
 
 export async function deleteTechnology(
@@ -147,24 +98,7 @@ export async function deleteTechnology(
     return { error: "You do not have permission to change the stack." };
   }
 
-  if (hasDirectDatabase()) {
-    try {
-      const result = await withUser(access.userId, ({ query }) =>
-        query("DELETE FROM technologies WHERE id = $1 AND project_id = $2 RETURNING id", [technologyId, projectId])
-      );
-      if (result.rows.length === 0) {
-        return { error: "This technology no longer exists, or you're not allowed to remove it." };
-      }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to change the stack." };
-    }
-
-    revalidatePath(`/projects/${projectId}/technology`);
-    return { error: null };
-  }
-
-  const supabase = await createClient();
-  const { data: deletedRows, error } = await supabase
+  const { data, error } = await dataClient(access.userId)
     .from("technologies")
     .delete()
     .eq("id", technologyId)
@@ -172,7 +106,7 @@ export async function deleteTechnology(
     .select("id");
 
   if (error) return { error: error.message };
-  if (!deletedRows || deletedRows.length === 0) {
+  if (data.length === 0) {
     return { error: "This technology no longer exists, or you're not allowed to remove it." };
   }
 

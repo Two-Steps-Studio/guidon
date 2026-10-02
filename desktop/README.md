@@ -21,7 +21,7 @@ npm run tauri build   # release build; installers land under
 
 See `RELEASING.md` for how to cut and publish a signed release.
 
-## Two windows
+## Windows
 
 - **`main`** — loads a Guidon server URL directly (Guidon Cloud by
   default, or a self-hosted instance chosen in Settings). No bundled
@@ -45,8 +45,19 @@ See `RELEASING.md` for how to cut and publish a signed release.
   narrowly to those four commands in
   `src-tauri/capabilities/settings.json` — see that file's description
   before widening it.
+- **`tasks`** — a small (380×600) window with the web app's compact task
+  list (`/mini` on the same server, `src/app/mini` in the web app): pick a
+  project, switch between "Mine"/"All", add a task, change a task's
+  column, open the full task dialog. Opened from "Guidon Desktop" →
+  "Tasks Window" (Ctrl+Shift+T while the app is focused) or the tray menu.
+  Stays on top of other windows by default; the tray's "Keep Tasks Window
+  on Top" check item toggles that and is remembered in the same config
+  store. Remote content like `main`, so it shares `main`'s zero-permission
+  capability (`default.json`) and its browser session - no separate
+  sign-in. Closing it hides it; changing the server URL in Settings
+  reloads it too.
 
-Both windows are created at runtime in `src-tauri/src/lib.rs`'s
+All windows are created at runtime in `src-tauri/src/lib.rs`'s
 `setup()` hook (not declared statically in `tauri.conf.json`'s
 `app.windows`, which is empty) so the `main` window's URL can be
 decided from the persisted config before it's built.
@@ -129,6 +140,49 @@ Windows login, via `tauri-plugin-autostart`
   `build.rs` for how those two app commands get their own ACL
   permission identifiers generated in the first place.
 
+## Installing editor plugins
+
+"Guidon Desktop" → **Install Editor Plugins...** (also in the tray menu)
+opens a local window (`src/plugins.html` + `plugins.js`, Rust side in
+`src-tauri/src/plugins.rs`) that installs the Unity, Unreal, Godot and
+Blender plugins straight into a project:
+
+1. It loads `<server>/downloads/plugins/manifest.json` from the server in
+   Settings - written by the web app's `scripts/build-plugin-zips.mjs` with
+   each zip's SHA-256 and `plugins/catalog.json`'s `install` spec (target
+   sub-folder, a marker file that identifies the right kind of folder, and
+   the next step to show). A new plugin or a fixed install path ships with
+   the server; no desktop release needed.
+2. You pick a plugin, then your project folder in the native dialog. The
+   window says where it'll go (e.g. `MyGame/Assets/GuidonTasks`) and warns
+   if the folder doesn't look like a project of that kind.
+3. Install downloads the zip, checks it against the manifest's SHA-256, and
+   extracts it. Existing files are overwritten, nothing is deleted - so an
+   update keeps Unity's `.meta` files and anything you added.
+
+Security: the window only passes a download id and a folder; the zip URL
+and checksum always come from the manifest Rust fetched itself, every zip
+entry must stay under the plugin's own folder (no `..`, no absolute paths,
+validated before anything is written), and the four commands are granted to
+this window only (`capabilities/plugins.json`), never to the remote `main`
+and `tasks` windows. VS Code and JetBrains are source downloads that need a
+build, so they stay on the website's /plugins page.
+
+Tests: `cargo test --lib` covers paths, markers, extraction and zip-slip;
+`GUIDON_TEST_SERVER=http://localhost:2137 cargo test --lib live_` installs
+every plugin from a running server into temp folders.
+
+## Single instance and window memory
+
+- `tauri-plugin-single-instance` (registered first in `lib.rs`): launching
+  the app while it's already running (autostart plus a Start-menu click,
+  say) focuses the running main window instead of starting a second copy
+  with a second tray icon.
+- `tauri-plugin-window-state`: the main and Tasks windows' size and
+  position persist across launches. Visibility deliberately doesn't - the
+  app was usually quit from the tray with the main window hidden, and it
+  should still open visible next time. Settings and Plugins are excluded.
+
 ## Auto-update
 
 The app can check GitHub Releases for a newer version and offer to install
@@ -136,10 +190,11 @@ it, via `tauri-plugin-updater` (`src-tauri/src/updater.rs`):
 
 - **Trigger** — a "Check for Updates..." item in the native "Guidon
   Desktop" application menu (`src-tauri/src/menu.rs`, next to
-  "Settings..."). This is a manual, user-triggered check only - there is
-  no automatic/periodic background check, and no silent install. If an
-  update is found, a second native confirmation dialog (Yes/No) is shown
-  before anything downloads or installs.
+  "Settings..."), plus one quiet check when the app starts (release
+  builds only). The startup check only shows something when there is an
+  update - "up to date" and network errors go to the log file. Nothing
+  installs silently: an update always waits for a Yes in a native
+  confirmation dialog.
 - **Rust side** — `updater.rs`'s `check_for_updates` calls
   `tauri_plugin_updater::UpdaterExt::updater()` and
   `.check().await` directly, then reports the result with a native message

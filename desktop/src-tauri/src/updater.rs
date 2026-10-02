@@ -19,11 +19,12 @@
 // rather than repurposed, since nothing in this app needs a capability
 // entry for updater or dialog at all.
 //
-// This is a manual, user-triggered check only - no automatic/periodic
-// checking, and no silent background install. Installing an update (if one
-// is found) additionally requires an explicit "Yes" on the confirmation
-// dialog below, so nothing downloads or installs without the user asking
-// for it twice (menu item, then dialog).
+// Two triggers: the "Check for Updates..." menu item, and one quiet check
+// at startup (`quiet = true`, from menu.rs's setup). The quiet one only
+// speaks up when there IS an update - "up to date" and network errors are
+// logged, not shown, so starting the app offline doesn't pop an error.
+// Nothing ever installs silently: an update always needs an explicit "Yes"
+// on the confirmation dialog below.
 use tauri::menu::MenuItem;
 use tauri::{AppHandle, Wry};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
@@ -58,7 +59,7 @@ fn reset_menu_item(item: &MenuItem<Wry>) {
 /// legitimately take a while with literally no other visible sign anything
 /// is happening otherwise) and a re-entrancy guard against firing a second
 /// check while one is already running.
-pub(crate) fn check_for_updates(app: &AppHandle, menu_item: &MenuItem<Wry>) {
+pub(crate) fn check_for_updates(app: &AppHandle, menu_item: &MenuItem<Wry>, quiet: bool) {
     let _ = menu_item.set_enabled(false);
     let _ = menu_item.set_text("Checking for updates...");
 
@@ -111,6 +112,11 @@ pub(crate) fn check_for_updates(app: &AppHandle, menu_item: &MenuItem<Wry>) {
                             }
                         });
                     });
+            }
+            Ok(None) if quiet => reset_menu_item(&menu_item),
+            Err(err) if quiet => {
+                reset_menu_item(&menu_item);
+                crate::windows::log_app_error(&app, &format!("startup update check failed: {err}"));
             }
             Ok(None) => {
                 reset_menu_item(&menu_item);

@@ -3,7 +3,7 @@ import { BoardStore } from "./store";
 
 /** Messages the webview posts (media/board.js). */
 type WebviewMessage =
-  | { type: "ready" | "logout" | "refresh" | "openBrowser" | "dismissError" }
+  | { type: "ready" | "logout" | "refresh" | "openBrowser" | "openMoodboard" | "dismissError" }
   | { type: "login"; baseUrl: string }
   | { type: "selectProject" | "select" | "copyRef" | "startBranch" | "delete"; id: string }
   | { type: "move"; id: string; status: string }
@@ -15,6 +15,7 @@ export interface BoardCommands {
   login(baseUrl?: string): Promise<void>;
   logout(): Promise<void>;
   openBrowser(): void;
+  openMoodboard(): void;
   copyRef(taskId: string): Promise<void>;
   startBranch(taskId: string): Promise<void>;
   confirmDelete(title: string): Promise<boolean>;
@@ -24,6 +25,11 @@ export interface BoardCommands {
 export class BoardPanel {
   private static current: BoardPanel | undefined;
   private readonly disposables: vscode.Disposable[] = [];
+
+  /** Whether the board is open and on screen - the only time a background refresh is worth doing. */
+  static isVisible(): boolean {
+    return BoardPanel.current?.panel.visible ?? false;
+  }
 
   static show(context: vscode.ExtensionContext, store: BoardStore, commands: BoardCommands): void {
     if (BoardPanel.current) {
@@ -72,6 +78,8 @@ export class BoardPanel {
         return store.refresh();
       case "openBrowser":
         return this.commands.openBrowser();
+      case "openMoodboard":
+        return this.commands.openMoodboard();
       case "dismissError":
         return store.setError("");
       case "selectProject":

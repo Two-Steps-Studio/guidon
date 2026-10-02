@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { displayName } from "@/lib/people";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +23,6 @@ interface MemoryProfile {
   email: string;
 }
 
-function nameFor(profile: MemoryProfile | undefined, unknownLabel: string): string {
-  if (!profile) return unknownLabel;
-  return profile.full_name || profile.email;
-}
-
 export default async function ProjectMemoryPage({
   params,
 }: {
@@ -42,8 +38,9 @@ export default async function ProjectMemoryPage({
   // queries below - started here so it runs alongside them instead of as a
   // third sequential round-trip tacked onto the end of the page. Skipped
   // entirely when !canWrite, same short-circuit the original inline
-  // `canWrite && await isAIAvailableForOrg(...)` had.
-  const aiAvailablePromise = canWrite
+  // `canWrite && await isAIAvailableForOrg(...)` had. Also skipped when the
+  // project has AI features switched off (migration 046).
+  const aiAvailablePromise = canWrite && access.project.ai_enabled
     ? isAIAvailableForOrg(access.project.organization_id, access.userId)
     : null;
 
@@ -191,7 +188,7 @@ export default async function ProjectMemoryPage({
                     {memory.verified && memory.verified_by && memory.verified_at && (
                       <p className="text-xs text-muted-foreground">
                         {t("verifiedBy", {
-                          name: nameFor(profilesById.get(memory.verified_by), t("unknown")),
+                          name: displayName(profilesById.get(memory.verified_by), t("unknown")),
                           date: new Date(memory.verified_at).toLocaleDateString(),
                         })}
                       </p>

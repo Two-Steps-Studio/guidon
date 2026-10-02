@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { AlertCircle, Loader2, UserMinus, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { initialsFor, type TaskCardMember } from "@/components/work/task-card";
+import { type TaskCardMember } from "@/components/work/task-card";
+import { initialsFor } from "@/lib/people";
 import { addMember, changeMemberRole, removeMember, type MemberRow } from "./actions";
 import type { ProjectRole } from "@/types/project";
 
@@ -53,13 +55,22 @@ export function MemberList({
   initialMembers,
   initialCandidates,
   projectColor,
+  organizationId,
+  memberLimit,
+  planName,
 }: {
   projectId: string;
+  /** For the "add people to the organization first" link - project members
+   *  can only be picked from the owning organization. */
+  organizationId: string;
   currentUserId: string;
   myRole: ProjectRole | null;
   initialMembers: ProjectMemberRow[];
   initialCandidates: TaskCardMember[];
   projectColor?: string;
+  /** Plan's members-per-project cap; null = unlimited (or self-hosted, which has no plans). */
+  memberLimit: number | null;
+  planName: string | null;
 }) {
   const t = useTranslations("members");
   const [members, setMembers] = useState(initialMembers);
@@ -70,6 +81,8 @@ export function MemberList({
 
   const canManage = myRole === "owner" || myRole === "admin";
   const assignable = canManage ? ASSIGNABLE_BY[myRole as "owner" | "admin"] : [];
+
+  const limitReached = memberLimit !== null && members.length >= memberLimit;
 
   const ownerCount = useMemo(() => members.filter((m) => m.role === "owner").length, [members]);
 
@@ -128,7 +141,9 @@ export function MemberList({
             <p className="mt-0.5 text-sm text-muted-foreground">
               {t("subtitle")}
               {" · "}
-              <span className="tabular-nums">{members.length}</span>
+              <span className="tabular-nums">
+                {memberLimit === null ? members.length : `${members.length} / ${memberLimit}`}
+              </span>
             </p>
           </div>
 
@@ -136,12 +151,7 @@ export function MemberList({
             <Button
               size="sm"
               onClick={() => setAdding(true)}
-              disabled={candidates.length === 0}
-              title={
-                candidates.length === 0
-                  ? t("everyoneAlready")
-                  : undefined
-              }
+              disabled={limitReached}
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <UserPlus className="h-4 w-4" />
@@ -161,6 +171,23 @@ export function MemberList({
               {t("dismiss")}
             </button>
           </div>
+        )}
+
+        {canManage && limitReached && (
+          <p className="mb-4 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-foreground">
+            {t.rich("memberLimitReached", {
+              plan: planName ?? "",
+              limit: memberLimit,
+              link: (chunks) => (
+                <Link
+                  href={`/organizations/${organizationId}/billing`}
+                  className="font-medium text-primary underline underline-offset-2"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
         )}
 
         {!canManage && myRole && (
@@ -251,6 +278,7 @@ export function MemberList({
       {adding && (
         <AddMemberDialog
           projectId={projectId}
+          organizationId={organizationId}
           candidates={candidates}
           assignable={assignable}
           onClose={() => setAdding(false)}
@@ -267,12 +295,14 @@ export function MemberList({
 
 function AddMemberDialog({
   projectId,
+  organizationId,
   candidates,
   assignable,
   onClose,
   onAdded,
 }: {
   projectId: string;
+  organizationId: string;
   candidates: TaskCardMember[];
   assignable: ProjectRole[];
   onClose: () => void;
@@ -315,10 +345,34 @@ function AddMemberDialog({
         <DialogHeader>
           <DialogTitle className="text-base">{t("dialogTitle")}</DialogTitle>
           <DialogDescription>
-            {t("dialogDescription")}
+            {t("dialogDescription")}{" "}
+            <Link
+              href={`/organizations/${organizationId}/members`}
+              className="font-medium text-foreground underline underline-offset-2"
+            >
+              {t("manageOrgMembers")}
+            </Link>
           </DialogDescription>
         </DialogHeader>
 
+        {/* Used to be a disabled "Add member" button whose only explanation
+            was a hover tooltip - invisible on touch screens, so it just
+            looked broken. */}
+        {candidates.length === 0 ? (
+          <div className="space-y-4">
+            <p className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+              {t("everyoneAlready")}
+            </p>
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
+              <Button type="button" variant="outline" size="sm" onClick={onClose}>
+                {t("cancel")}
+              </Button>
+              <Button asChild size="sm">
+                <Link href={`/organizations/${organizationId}/members`}>{t("manageOrgMembers")}</Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="member-user">{t("personLabel")}</Label>
@@ -362,6 +416,7 @@ function AddMemberDialog({
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

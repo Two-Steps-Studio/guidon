@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { Toaster } from "sonner";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
+import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
 import "./globals.css";
 
 const GA_MEASUREMENT_ID = "G-7PBQ5Y339N";
@@ -44,6 +47,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    statusBarStyle: "default",
+  },
   openGraph: {
     type: "website",
     url: "/",
@@ -77,11 +85,37 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = await getLocale();
   const messages = await getMessages();
 
+  // "system" (the default) sets no data-theme attribute at all, so
+  // globals.css's `@media (prefers-color-scheme: dark)` block picks
+  // light/dark exactly as it always has. An explicit light/dark choice
+  // (theme-switcher.tsx) sets data-theme, which globals.css's
+  // `:root[data-theme="dark"]`/`:root:not([data-theme="light"])` rules
+  // already know how to override - reading the cookie here and setting the
+  // attribute server-side (rather than a client-side effect) means the
+  // correct theme paints on the very first frame, no flash of the other
+  // theme while JS hydrates.
+  const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = themeCookie && isSupportedTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
+
   return (
-    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html
+      lang={locale}
+      data-theme={theme === "system" ? undefined : theme}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    >
       <body className="min-h-screen bg-background text-foreground">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <main>{children}</main>
+          {/* No <main> here: each page shell supplies exactly one - the
+              sidebar layout's SidebarInset for app pages, auth/layout.tsx,
+              the landing and legal pages, /mini, error.tsx. Wrapping
+              children here too nested two main landmarks on every page. */}
+          {children}
+          {/* theme defaults to "light" and does NOT track the OS on its own
+              (ask-sonner), so it must be told explicitly - "system" follows
+              prefers-color-scheme the same way globals.css does; "light"/
+              "dark" mirrors the user's explicit choice above so toasts don't
+              look inconsistent with the rest of the UI. */}
+          <Toaster theme={theme} richColors closeButton />
         </NextIntlClientProvider>
       </body>
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA

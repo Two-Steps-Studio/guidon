@@ -6,7 +6,10 @@ import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { getOrgAiSettingsSafe } from "@/lib/data/organization-ai-settings";
 import { AppShell } from "@/components/layout/app-shell";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { MAX_WEBHOOKS_PER_ORGANIZATION, listOrganizationWebhooks } from "@/lib/data/organization-webhooks";
 import { AiSettingsForm } from "./ai-settings-form";
+import { WebhooksSection } from "./webhooks-section";
 
 export default async function OrganizationSettingsPage({
   params,
@@ -17,7 +20,18 @@ export default async function OrganizationSettingsPage({
   const t = await getTranslations("organizations.settings");
   const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
 
-  const configured = await getOrgAiSettingsSafe(orgId, access.userId);
+  const canManage = canManageOrg(access.role);
+  // Webhooks are owner/admin-only under RLS (050), so members wouldn't see any anyway.
+  const [configured, webhooks] = await Promise.all([
+    getOrgAiSettingsSafe(orgId, access.userId),
+    canManage
+      ? // Hide the section rather than fail the whole page (e.g. migration 050 not applied yet).
+        listOrganizationWebhooks(orgId, access.userId).catch((error) => {
+          console.error("Failed to load organization webhooks:", error);
+          return null;
+        })
+      : Promise.resolve(null),
+  ]);
 
   return (
     <AppShell user={user}>
@@ -37,8 +51,17 @@ export default async function OrganizationSettingsPage({
         <AiSettingsForm
           organizationId={orgId}
           configured={configured}
-          canManage={canManageOrg(access.role)}
+          canManage={canManage}
         />
+
+        {webhooks && (
+          <WebhooksSection
+            organizationId={orgId}
+            webhooks={webhooks}
+            maxWebhooks={MAX_WEBHOOKS_PER_ORGANIZATION}
+            allowHttp={hasDirectDatabase()}
+          />
+        )}
       </div>
     </AppShell>
   );

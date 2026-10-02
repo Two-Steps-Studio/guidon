@@ -153,6 +153,44 @@ namespace Guidon.Tasks.Editor
                 : GuidonResult<ProjectDto[]>.Failure(parsed.Error);
         }
 
+        public static async Task<GuidonResult<ReferenceDto[]>> ListReferences(string projectId)
+        {
+            var raw = await SendAsync("GET", $"/api/v1/projects/{projectId}/references");
+            if (!raw.Ok) return GuidonResult<ReferenceDto[]>.Failure(raw.Error);
+
+            var parsed = ParseResponse<ReferencesResponse>(raw.Value, "references");
+            return parsed.Ok
+                ? GuidonResult<ReferenceDto[]>.Success(parsed.Value.references ?? Array.Empty<ReferenceDto>())
+                : GuidonResult<ReferenceDto[]>.Failure(parsed.Error);
+        }
+
+        /// <summary>
+        /// Downloads a signed moodboard image URL. No API key is sent - the
+        /// URL carries its own signature.
+        /// </summary>
+        public static async Task<GuidonResult<byte[]>> DownloadImage(string url)
+        {
+            if (string.IsNullOrEmpty(url) || !(url.StartsWith("https://") || url.StartsWith("http://")))
+                return GuidonResult<byte[]>.Failure("No image URL.");
+
+            using (var request = UnityWebRequest.Get(url))
+            {
+                request.timeout = 30;
+                try
+                {
+                    await request.SendWebRequest();
+                }
+                catch (Exception e)
+                {
+                    return GuidonResult<byte[]>.Failure("Download failed: " + e.Message);
+                }
+
+                return request.result == UnityWebRequest.Result.Success
+                    ? GuidonResult<byte[]>.Success(request.downloadHandler.data)
+                    : GuidonResult<byte[]>.Failure($"{(int)request.responseCode} {request.error}".Trim());
+            }
+        }
+
         public static async Task<GuidonResult<TaskDto[]>> ListTasks(string projectId)
         {
             var raw = await SendAsync("GET", $"/api/v1/projects/{projectId}/tasks");

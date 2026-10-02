@@ -78,6 +78,7 @@
     "dashboard": "Dashboard",
     "projects": "Projekte",
     "organizations": "Organisationen",
+    "plugins": "Plugins",
     "overview": "Übersicht",
     "workGroup": "Arbeit",
     "taskBoard": "Aufgabenboard",
@@ -86,6 +87,7 @@
     "knowledgeGroup": "Wissen",
     "knowledge": "Wissen",
     "decisions": "Entscheidungen",
+    "moodboard": "Moodboard",
     "technologies": "Technologien",
     "contextGroup": "Kontext",
     "memory": "Gedächtnis",
@@ -97,11 +99,34 @@
     "adminGroup": "Admin",
     "integrations": "Integrationen",
     "logs": "Protokolle",
+    "feedback": "Feedback",
     "users": "Benutzer",
     "logOut": "Abmelden",
     "user": "Benutzer",
     "switchProject": "Projekt wechseln",
     "calendar": "Kalender"
+  },
+  "commandPalette": {
+    "triggerLabel": "Suchen...",
+    "title": "Befehlspalette",
+    "description": "Suchen und zu allem springen",
+    "placeholder": "Aufgaben, Entscheidungen, Dateien durchsuchen...",
+    "navigateGroup": "Navigieren",
+    "resultsGroup": "Ergebnisse",
+    "noResults": "Keine Ergebnisse gefunden.",
+    "entityType_task": "Aufgabe",
+    "entityType_decision": "Entscheidung",
+    "entityType_memory": "Erinnerung",
+    "entityType_file": "Datei",
+    "entityType_source": "Quelle",
+    "entityType_project": "Projekt"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "empty": "Noch keine Benachrichtigungen.",
+    "markAllRead": "Alle als gelesen markieren",
+    "bellAria": "Benachrichtigungen",
+    "bellAriaUnread": "Benachrichtigungen ({count} ungelesen)"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -203,12 +228,16 @@
       "projectsCount": "{count, plural, one {# Projekt} other {# Projekte}}",
       "unlimitedTasksPerProject": "Unbegrenzte Aufgaben pro Projekt",
       "tasksPerProjectCount": "{count, plural, one {# Aufgabe pro Projekt} other {# Aufgaben pro Projekt}}",
+      "unlimitedMembersPerProject": "Unbegrenzte Mitglieder pro Projekt",
+      "membersPerProjectCount": "{count, plural, one {# Mitglied pro Projekt} other {# Mitglieder pro Projekt}}",
       "aiTaskApi": "KI-Aufgaben-API",
       "githubIntegration": "GitHub-Integration",
       "advancedAnalytics": "Erweiterte Analysen",
       "teamRoles": "Teamrollen",
       "auditLogs": "Audit-Protokolle",
-      "prioritySupport": "Prioritäts-Support"
+      "prioritySupport": "Prioritäts-Support",
+      "unlimitedMembers": "Unbegrenzte Mitglieder",
+      "membersCount": "{count, plural, one {# Mitglied} other {# Mitglieder}}"
     },
     "footer": {
       "terms": "Nutzungsbedingungen",
@@ -273,7 +302,10 @@
       "roleMemberOption": "Mitglied",
       "roleAdminOption": "Admin",
       "roleOwnerOption": "Inhaber",
-      "adding": "Wird hinzugefügt..."
+      "adding": "Wird hinzugefügt...",
+      "seatsUsed": "{used} von {limit} Plätzen im {plan}-Plan belegt",
+      "upgradeForSeats": "Upgrade für mehr Plätze",
+      "seatsFull": "Diese Organisation hat alle {limit} Plätze ihres {plan}-Plans belegt. Upgrade den Plan, um weitere Personen hinzuzufügen."
     },
     "settings": {
       "title": "Organisationseinstellungen",
@@ -295,7 +327,38 @@
       "apiKeyPlaceholderKeep": "Leer lassen, um den aktuellen Schlüssel zu behalten",
       "apiKeyPlaceholderNew": "Füge deinen API-Schlüssel ein",
       "saving": "Wird gespeichert...",
-      "save": "Speichern"
+      "save": "Speichern",
+      "webhooks": {
+        "title": "Webhooks",
+        "description": "Guidon sendet eine signierte POST-Anfrage an diese URLs, wenn sich Aufgaben in einem Projekt dieser Organisation ändern - verbinde CI, Chat-Tools oder eigene Automatisierungen.",
+        "empty": "Noch keine Webhooks.",
+        "add": "Webhook hinzufügen",
+        "urlLabel": "Payload-URL",
+        "urlHintCloud": "Muss eine öffentliche https://-Adresse sein.",
+        "urlHintSelfHosted": "Bei Self-Hosting sind http:// und interne Adressen erlaubt.",
+        "descriptionLabel": "Beschreibung (optional)",
+        "descriptionPlaceholder": "z. B. Jenkins-Build-Trigger",
+        "eventsLabel": "Ereignisse",
+        "eventCreated": "Aufgabe erstellt",
+        "eventStatusChanged": "Aufgabe in andere Spalte verschoben",
+        "eventCompleted": "Aufgabe abgeschlossen",
+        "save": "Webhook hinzufügen",
+        "saving": "Speichern…",
+        "cancel": "Abbrechen",
+        "limit": "Eine Organisation kann höchstens {max} Webhooks haben.",
+        "signatureHint": "Jede Anfrage enthält den Header X-Guidon-Signature: sha256=HMAC-SHA256(Secret, timestamp + \".\" + body), wobei timestamp der Header X-Guidon-Timestamp ist. Prüfe ihn, bevor du dem Inhalt vertraust.",
+        "secretTitle": "Signatur-Secret",
+        "secretHint": "Jetzt kopieren - es wird nicht erneut angezeigt. Speichere es dort, wo dein Empfänger es lesen kann.",
+        "copySecret": "Secret kopieren",
+        "enabled": "Aktiv",
+        "test": "Test",
+        "testDelivered": "Test gesendet - Empfänger antwortete mit HTTP {status}.",
+        "delete": "Webhook löschen",
+        "deleteConfirm": "Diesen Webhook löschen? Zustellungen stoppen sofort.",
+        "lastDelivery": "Letzte Zustellung {when} · HTTP {status}",
+        "neverDelivered": "Noch keine Zustellungen.",
+        "nativeFormatHint": "Wird als native Nachricht für diesen Dienst gesendet statt als Guidon-JSON."
+      }
     },
     "billing": {
       "title": "Abrechnung",
@@ -313,6 +376,7 @@
       "colPrice": "Preis",
       "colProjects": "Projekte",
       "colTasksPerProject": "Aufgaben/Projekt",
+      "colMembersPerProject": "Mitglieder/Projekt",
       "colStorage": "Speicher",
       "colAI": "KI",
       "colGitHub": "GitHub",
@@ -326,7 +390,9 @@
       "manageBilling": "Abrechnung verwalten",
       "currentPlanBadge": "Aktueller Plan",
       "checkoutSuccess": "Abonnement aktualisiert - es kann einen Moment dauern, bis es unten erscheint.",
-      "checkoutCancelled": "Checkout abgebrochen - es wurde nichts geändert."
+      "checkoutCancelled": "Checkout abgebrochen - es wurde nichts geändert.",
+      "membersLabel": "Mitglieder",
+      "colMembers": "Mitglieder"
     }
   },
   "projects": {
@@ -414,6 +480,8 @@
       "notSet": "Nicht festgelegt",
       "workflowLabel": "Workflow",
       "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu — bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
+      "aiEnabledLabel": "KI-Funktionen",
+      "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis, KI-Agentenberechtigungen und den API-Zugriff für Agenten. Du kannst das später in den Projekteinstellungen ändern.",
       "cancel": "Abbrechen",
       "creating": "Wird erstellt...",
       "createButton": "Erstellen"
@@ -439,7 +507,6 @@
     "filterByTag": "Nach Tag filtern",
     "allTags": "Alle Tags",
     "clearFilters": "Filter zurücksetzen",
-    "dismiss": "Verwerfen",
     "readOnlyAccess": "Du hast Zugriff als <b>{role}</b> - das Board ist schreibgeschützt.",
     "noTasksTitle": "Noch keine Aufgaben",
     "noTasksDescCanEdit": "Erstelle die erste Aufgabe, um die Arbeit an diesem Projekt zu verfolgen.",
@@ -542,10 +609,12 @@
     "chatInputPlaceholder": "Beschreibe die Arbeit...",
     "emptyResponse": "(leere Antwort)",
     "failedToCreateTask": "Aufgabe konnte nicht erstellt werden",
+    "taskCreatedToast": "\"{title}\" erstellt.",
     "failedToLoadComments": "Kommentare konnten nicht geladen werden",
     "failedToLoadContext": "Kontext konnte nicht geladen werden",
     "failedToSaveTask": "Aufgabe konnte nicht gespeichert werden",
     "failedToDeleteTask": "Aufgabe konnte nicht gelöscht werden",
+    "taskDeletedToast": "\"{title}\" gelöscht.",
     "failedToPostComment": "Kommentar konnte nicht veröffentlicht werden",
     "failedToCreateSubtask": "Teilaufgabe konnte nicht erstellt werden",
     "failedToUpdateSubtask": "Teilaufgabe konnte nicht aktualisiert werden",
@@ -568,6 +637,9 @@
     "moveTaskAria": "Aufgabe „{title}“ verschieben",
     "moveToColumn": "Verschieben nach {column}",
     "images": "Bilder",
+    "openImageAria": "{name} öffnen",
+    "pasteImageHint": "Tipp: Bilder hier einfügen (Strg+V) oder ablegen - sie werden an die Aufgabe angehängt.",
+    "uploadingPastedImage": "Bild wird hochgeladen…",
     "attachments": "Anhänge",
     "attachTaskFile": "Datei anhängen",
     "uploadingAttachment": "Wird hochgeladen...",
@@ -625,7 +697,7 @@
     "title": "Mitglieder",
     "subtitle": "Wer dieses Projekt sehen und ändern kann.",
     "addMember": "Mitglied hinzufügen",
-    "everyoneAlready": "Alle in der Organisation sind bereits in diesem Projekt",
+    "everyoneAlready": "Alle Mitglieder der Organisation sind bereits in diesem Projekt. Um jemand Neues hinzuzufügen, füge die Person zuerst zur Organisation hinzu.",
     "dismiss": "Verwerfen",
     "readOnlyAccess": "Du hast Zugriff als <b>{role}</b> - nur Inhaber und Admins können die Mitgliedschaft ändern.",
     "you": "du",
@@ -640,6 +712,7 @@
     "unknownMember": "Unbekanntes Mitglied",
     "dialogTitle": "Mitglied hinzufügen",
     "dialogDescription": "Personen müssen bereits zur Organisation gehören, der dieses Projekt gehört.",
+    "manageOrgMembers": "Organisationsmitglieder verwalten",
     "personLabel": "Person",
     "roleLabel": "Rolle",
     "cancel": "Abbrechen",
@@ -652,7 +725,8 @@
     "roleHintAdmin": "Mitglieder, Einstellungen, Roadmap und Dateien verwalten",
     "roleHintDeveloper": "Aufgaben, Entscheidungen und Wissen erstellen und bearbeiten",
     "roleHintTester": "Aufgaben kommentieren; alles andere lesen",
-    "roleHintViewer": "Nur Lesezugriff"
+    "roleHintViewer": "Nur Lesezugriff",
+    "memberLimitReached": "Dein {plan}-Plan erlaubt {limit} Mitglieder pro Projekt. <link>Plan upgraden</link>, um weitere Personen hinzuzufügen."
   },
   "settings": {
     "title": "Projekteinstellungen",
@@ -671,6 +745,8 @@
     "notSet": "Nicht festgelegt",
     "workflowLabel": "Workflow",
     "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu — bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
+    "aiEnabledLabel": "KI-Funktionen",
+    "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis und den Zugriff für KI-Agenten. Ausgeschaltet bleibt die Spalte „KI arbeitet“ nur sichtbar, solange sie noch Aufgaben enthält; gespeicherte KI-Berechtigungen bleiben erhalten.",
     "colorLabel": "Projektfarbe",
     "colorHelp": "Wähle eine Farbe, um dein Projekt zu personalisieren. Sie wird in der gesamten Oberfläche verwendet.",
     "technologiesLabel": "Technologien (Enter zum Hinzufügen drücken)",
@@ -686,6 +762,7 @@
     "deleting": "Wird gelöscht...",
     "saving": "Wird gespeichert...",
     "saveChanges": "Änderungen speichern",
+    "settingsSavedToast": "Projekteinstellungen gespeichert.",
     "aiPermissionsTitle": "KI-Berechtigungen",
     "aiPermissionsDescription": "Was ein KI-Agent, der die API-Schlüssel dieses Projekts verwendet, tun darf.",
     "permReadContext": "Projektkontext lesen",
@@ -697,6 +774,7 @@
     "allowAutoComplete": "KI erlauben, Aufgaben automatisch abzuschließen",
     "allowAutoCompleteHelp": "Ohne dies kann die KI Aufgaben zu Überprüfung verschieben, aber ein Mensch entscheidet immer endgültig über Erledigt.",
     "saveAiSettings": "KI-Einstellungen speichern",
+    "aiSettingsSavedToast": "KI-Berechtigungen gespeichert.",
     "boardColumnsTitle": "Board-Spalten",
     "boardColumnsDescription": "Benenne Spalten des Aufgabenboards dieses Projekts um, ordne sie neu oder blende sie aus. Die zugrunde liegenden Aufgabenstatus ändern sich nicht - dies betrifft nur Labels und die Anzeige.",
     "moveUpAria": "{label} nach oben verschieben",
@@ -725,21 +803,31 @@
     "discordDisconnectConfirm": "{guild} von diesem Projekt trennen? Die /task-Befehle funktionieren dort nicht mehr, bis du erneut /guidon-link ausführst. Webhook-Benachrichtigungen bleiben erhalten."
   },
   "discordLink": {
-    "title": "{guild} mit einem Projekt verknüpfen",
-    "description": "Wähle das Projekt, mit dem {guild} verbunden werden soll. Mitglieder des Servers können dann die /task-Befehle für dieses Projekt nutzen.",
+    "title": "Guidon-Discord-Bot verbinden",
+    "description": "{guild} möchte sich mit einem Guidon-Projekt verbinden. Nach der Auswahl unten können Mitglieder dieses Servers /task-Befehle nutzen, um Aufgaben anzuzeigen, ihren Status zu ändern und Kommentare zu hinterlassen.",
     "unnamedServer": "diesen Discord-Server",
     "serverLabel": "Discord-Server",
     "phishingWarning": "Fahre nur fort, wenn du /guidon-link selbst auf einem Discord-Server ausgeführt hast, den du verwaltest. Mit der Bestätigung darf dieser Server Aufgaben im gewählten Projekt verwalten.",
     "unknownOrganization": "Weitere Projekte",
     "linkedBadge": "Verknüpft mit {guild}",
     "linkedElsewhereWarning": "Dieses Projekt ist bereits mit dem Discord-Server „{guild}“ verknüpft. Wenn du es auswählst, wird seine bestehende Discord-Verknüpfung ersetzt.",
-    "confirm": "Mit diesem Projekt verknüpfen",
+    "confirm": "Autorisieren",
     "genericError": "Der Discord-Server konnte nicht verknüpft werden. Bitte versuche es erneut.",
     "emptyTitle": "Du verwaltest kein Projekt",
     "emptyDescription": "Nur Inhaber und Admins eines Projekts können einen Discord-Server damit verknüpfen. Bitte einen Admin darum oder erstelle zuerst ein Projekt.",
     "invalidTitle": "Dieser Link ist abgelaufen",
     "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-link auf deinem Discord-Server erneut aus, um einen neuen zu erhalten.",
     "toProjects": "Zu den Projekten"
+  },
+  "feedback": {
+    "sendFeedback": "Feedback senden",
+    "dialogTitle": "Feedback senden",
+    "dialogDescription": "Sag uns, was funktioniert, was kaputt ist oder was du dir wünschst - wir lesen jede Nachricht.",
+    "placeholder": "Was möchtest du uns mitteilen?",
+    "send": "Senden",
+    "thanks": "Danke! Dein Feedback wurde gesendet.",
+    "close": "Schließen",
+    "genericError": "Feedback konnte nicht gesendet werden. Versuche es erneut."
   },
   "context": {
     "title": "Kontextebene",
@@ -959,6 +1047,13 @@
     "logsDescription": "Instanzweite Aktivität, neueste zuerst, über alle Organisationen und Projekte hinweg.",
     "logsEmptyTitle": "Noch keine Aktivität",
     "logsEmptyDescription": "Auf dieser Instanz wurde noch keine Aktivität aufgezeichnet.",
+    "feedbackTitle": "Feedback",
+    "feedbackDescription": "Instanzweites Feedback, neueste zuerst, über alle Organisationen und Projekte hinweg.",
+    "feedbackEmptyTitle": "Noch kein Feedback",
+    "feedbackEmptyDescription": "Auf dieser Instanz wurde noch kein Feedback eingereicht.",
+    "feedbackFrom": "Von {name}",
+    "feedbackAnonymous": "Gelöschter Benutzer",
+    "feedbackPageContext": "auf {page}",
     "projectScope": "Projekt {id}",
     "organizationScope": "Organisation {id}",
     "instanceScope": "Instanz",
@@ -1012,6 +1107,10 @@
     "emailLabel": "E-Mail",
     "emailHelp": "Die E-Mail-Adresse kann hier nicht geändert werden.",
     "languageLabel": "Sprache",
+    "themeLabel": "Erscheinungsbild",
+    "theme_light": "Hell",
+    "theme_dark": "Dunkel",
+    "theme_system": "System",
     "saving": "Speichern...",
     "saveChanges": "Änderungen speichern",
     "apiKeysTitle": "API-Schlüssel",
@@ -1024,15 +1123,17 @@
     "creating": "Wird erstellt...",
     "createApiKeyButton": "API-Schlüssel erstellen",
     "revokedBadge": "Widerrufen",
+    "revokeKeyAria": "{name} widerrufen",
+    "keyRevokedToast": "\"{name}\" widerrufen.",
     "noApiKeysYet": "Noch keine API-Schlüssel.",
     "createdOn": "Erstellt am {date}",
     "lastUsedOn": "Zuletzt verwendet am {date}",
     "neverUsed": "Nie verwendet",
     "integrationsTitle": "Integrationen",
     "integrationsDescription": "Tools, die sich außerhalb des Browsers mit Guidon verbinden.",
-    "unityPluginTitle": "Unity-Editor-Plugin",
-    "unityPluginDescription": "Aufgaben direkt im Unity-Editor ansehen, erstellen und bearbeiten - mit Drag-and-Drop, Unteraufgaben und Kommentaren. Kopiere den Plugin-Ordner in dein Projekt und melde dich mit deinem Guidon-Konto an.",
-    "viewOnGithubButton": "Auf GitHub ansehen",
+    "pluginsTitle": "Plugins für deine Tools",
+    "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code und JetBrains-IDEs.",
+    "pluginsButton": "Plugins ansehen",
     "claudeCodeTitle": "Claude Code (MCP)",
     "claudeCodeDescription": "Lass Claude Code deine Aufgaben lesen, erledigen und in Guidon aktualisieren. Ein Klick erstellt einen Schlüssel mit den passenden Rechten und gibt dir den Befehl für dein Terminal.",
     "claudeCodeCreateButton": "Claude Code verbinden",
@@ -1055,11 +1156,13 @@
   },
   "calendar": {
     "title": "Kalender",
-    "subtitle": "Aufgaben nach Fälligkeitsdatum",
+    "subtitle": "Aufgaben nach Fälligkeitsdatum und Roadmap-Phasen",
     "previousMonth": "Vorheriger Monat",
     "nextMonth": "Nächster Monat",
     "today": "Heute",
-    "moreTasks": "+{count} weitere"
+    "moreTasks": "+{count} weitere",
+    "phaseAria": "Phase: {name}",
+    "morePhases": "{count, plural, one {+# weitere Phase} other {+# weitere Phasen}}"
   },
   "aiChat": {
     "title": "Guidon-KI-Assistent",
@@ -1073,5 +1176,121 @@
     "deletedConfirmation": "Aufgabe gelöscht: {title}",
     "deleteFailed": "Die Aufgabe konnte nicht gelöscht werden.",
     "errorGeneric": "Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuche es erneut."
+  },
+  "plugins": {
+    "title": "Plugins & Apps",
+    "subtitle": "Arbeite mit deinem Guidon-Board, ohne die Tools zu verlassen, die du schon nutzt. Plugins melden sich über den Browser mit Log In an - kein API-Schlüssel zum Abtippen.",
+    "docs": "Dokumentation",
+    "footer": "Log Out in einem Plugin entfernt den Schlüssel nur von diesem Computer. Um einen Schlüssel zu widerrufen, gehe zu Profil → API-Schlüssel.",
+    "categories": {
+      "engines": "Game-Engines",
+      "creative": "3D- & Kreativ-Tools",
+      "editors": "Code-Editoren",
+      "desktop": "Desktop-App"
+    },
+    "kinds": {
+      "tasks": "Aufgabenboard",
+      "reports": "In-Game-Berichte",
+      "source": "Quellcode"
+    },
+    "descriptions": {
+      "unity": "Das Board deines Projekts im Unity-Editor, dazu ein In-Game-Fehlerformular, das Berichte direkt an Guidon sendet.",
+      "unreal": "Aufgabenboard als Editor-Tab und In-Game-Fehlerberichte aus Blueprints oder C++.",
+      "godot": "Zwei Add-ons: ein Aufgabenboard-Dock für den Editor und In-Game-Fehlerberichte.",
+      "blender": "Aufgabenboard in der Seitenleiste des 3D-Viewports (N-Panel).",
+      "vscode": "Aufgabenboard in der VS-Code-Seitenleiste. Lade den Quellcode herunter und baue eine .vsix.",
+      "jetbrains": "Aufgabenboard-Toolfenster für IntelliJ IDEA, Rider, PyCharm, WebStorm und andere JetBrains-IDEs. Lade den Quellcode herunter und baue ihn mit Gradle."
+    },
+    "install": {
+      "unity": {
+        "s1": "Entpacken und den Ordner GuidonTasks irgendwo unter Assets/ ablegen.",
+        "s2": "Window → Guidon → Tasks öffnen, Base URL auf {baseUrl} setzen und Log In klicken.",
+        "s3": "Fehlerberichte: GuidonReports unter Assets/ kopieren und unter Profil → API-Schlüssel einen Schlüssel nur mit dem Scope reports:write erstellen."
+      },
+      "unreal": {
+        "s1": "In den Plugins/-Ordner deines Projekts entpacken (oder install.ps1 aus dem Ordner GuidonTasks ausführen).",
+        "s2": "Projekt neu öffnen und den Editor das Modul bauen lassen - ein C++-Projekt ist nötig.",
+        "s3": "Den Tab Guidon Tasks öffnen, Base URL auf {baseUrl} setzen und Log In klicken."
+      },
+      "godot": {
+        "s1": "Ins Hauptverzeichnis des Projekts entpacken - die Dateien landen in addons/.",
+        "s2": "Das Add-on unter Project → Project Settings → Plugins aktivieren.",
+        "s3": "Im Guidon-Dock Base URL auf {baseUrl} setzen und Log In klicken."
+      },
+      "blender": {
+        "s1": "Nicht entpacken - Blender installiert die Zip-Datei direkt.",
+        "s2": "Blender 4.2+: Preferences → Get Extensions → ⌄ → Install from Disk. Blender 3.6-4.1: Preferences → Add-ons → Install.",
+        "s3": "Allow Online Access unter Preferences → System → Network erlauben, dann im N-Panel Base URL auf {baseUrl} setzen und Log In klicken."
+      },
+      "vscode": {
+        "s1": "Entpacken und im Ordner npm install, npm run build und npm run package ausführen.",
+        "s2": "In VS Code: Extensions → ⋯ → Install from VSIX… und die erzeugte Datei wählen.",
+        "s3": "Die Guidon-Ansicht öffnen, Base URL auf {baseUrl} setzen und Log In klicken."
+      },
+      "jetbrains": {
+        "s1": "Entpacken und ./gradlew buildPlugin ausführen (JDK 17+).",
+        "s2": "Settings → Plugins → ⚙ → Install Plugin from Disk… und die Zip aus build/distributions/ wählen.",
+        "s3": "Das Guidon-Toolfenster öffnen, Base URL auf {baseUrl} setzen und Log In klicken."
+      }
+    },
+    "desktop": {
+      "title": "Guidon Desktop",
+      "description": "Dein Board als eigene Windows-App: Tray-Symbol, ein Aufgabenfenster immer im Vordergrund, Start mit Windows und Installation der Plugins unten in deine Projekte mit einem Klick.",
+      "download": "Für Windows herunterladen",
+      "releases": "Alle Versionen"
+    }
+  },
+  "lightbox": {
+    "title": "Bild",
+    "hint": "Pfeiltasten oder Wischen wechseln das Bild. Esc schließt.",
+    "close": "Schließen",
+    "previous": "Vorheriges Bild",
+    "next": "Nächstes Bild",
+    "download": "{name} herunterladen"
+  },
+  "moodboard": {
+    "title": "Moodboard",
+    "subtitle": "Referenzbilder und Concept Art für dieses Projekt.",
+    "addImages": "Bilder hinzufügen",
+    "pasteHint": "Tipp: Bilder irgendwo auf dieser Seite ablegen oder einfügen (Strg+V).",
+    "uploading": "Wird hochgeladen…",
+    "uploadFailed": "Bild konnte nicht hochgeladen werden.",
+    "dropHere": "Bilder ablegen, um sie zum Moodboard hinzuzufügen",
+    "filterByTag": "Nach Tag filtern",
+    "allTags": "Alle · {count}",
+    "emptyTitle": "Noch keine Referenzen",
+    "emptyDescription": "Sammle Concept Art, Screenshots und Inspiration an einem Ort. Bilder hier ablegen oder einfügen, dann beschriften und taggen.",
+    "emptyDescriptionReadOnly": "Zu diesem Projekt wurden noch keine Referenzbilder hinzugefügt.",
+    "openImage": "{name} öffnen",
+    "openSource": "Quelllink öffnen",
+    "editImage": "Beschriftung und Tags bearbeiten",
+    "deleteImage": "Bild löschen",
+    "confirmDelete": "„{name}“ aus dem Moodboard löschen?",
+    "deleted": "Bild gelöscht",
+    "editTitle": "Referenz bearbeiten",
+    "captionLabel": "Beschriftung",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "umgebung, licht, ui",
+    "sourceLabel": "Quelllink (optional)",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "saveFailed": "Änderungen konnten nicht gespeichert werden."
+  },
+  "mini": {
+    "noProjects": "Du gehörst noch zu keinem Projekt.",
+    "openProjects": "Guidon öffnen",
+    "noAccess": "Du hast keinen Zugriff auf dieses Projekt.",
+    "projectAria": "Projekt",
+    "filterAria": "Aufgaben anzeigen",
+    "filterMine": "Meine",
+    "filterAll": "Alle",
+    "refresh": "Aktualisieren",
+    "addPlaceholder": "Neue Aufgabe…",
+    "addPlaceholderMine": "Neue Aufgabe für mich…",
+    "add": "Aufgabe hinzufügen",
+    "addFailed": "Aufgabe konnte nicht hinzugefügt werden.",
+    "statusAria": "Status von {title}",
+    "empty": "Keine offenen Aufgaben in diesem Projekt.",
+    "emptyMine": "Dir sind keine offenen Aufgaben zugewiesen. Wechsle zu Alle, um den Rest zu sehen."
   }
 }

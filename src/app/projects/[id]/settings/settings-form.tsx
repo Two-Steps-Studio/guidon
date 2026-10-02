@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,6 +50,17 @@ export function SettingsForm({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, startDelete] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // useActionState's dispatched result is always a fresh object, never
+  // reference-equal to the outer `initialState` constant - so this only
+  // skips the very first render (before any submission), same detection
+  // `reactedTo` comparisons elsewhere in this codebase use, but in an
+  // effect rather than during render since toast() is a real side effect
+  // (synchronizing with something outside React), not a state adjustment.
+  useEffect(() => {
+    if (state === initialState) return;
+    if (!state.error) toast.success(t("settingsSavedToast"));
+  }, [state, t]);
 
   const handleTechnologyAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && e.currentTarget.value.trim()) {
@@ -159,6 +171,18 @@ export function SettingsForm({
             <p className="text-xs text-muted-foreground">
               {t("workflowHelp")}
             </p>
+          </div>
+          <div className="rounded-md border border-border p-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                name="aiEnabled"
+                defaultChecked={project.ai_enabled}
+                className="h-4 w-4"
+              />
+              {t("aiEnabledLabel")}
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">{t("aiEnabledHelp")}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="color">{t("colorLabel")}</Label>

@@ -59,7 +59,7 @@ export default async function DiscordLinkPage({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <LinkIcon className="h-5 w-5" />
-              {t("title", { guild: guildLabel })}
+              {t("title")}
             </CardTitle>
             <CardDescription>{t("description", { guild: guildLabel })}</CardDescription>
           </CardHeader>

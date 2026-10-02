@@ -9,19 +9,28 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::App;
 
 use crate::updater::check_for_updates;
-use crate::windows::open_or_focus_settings;
+use crate::windows::{open_or_focus_plugins, open_or_focus_settings, open_or_focus_tasks};
 
 const OPEN_SETTINGS_MENU_ID: &str = "open_settings";
+const OPEN_TASKS_MENU_ID: &str = "open_tasks";
 const CHECK_FOR_UPDATES_MENU_ID: &str = "check_for_updates";
+const OPEN_PLUGINS_MENU_ID: &str = "open_plugins";
 
 /// Build and install the native application menu, and wire up its event
 /// handling.
 pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
     let open_settings =
         MenuItemBuilder::with_id(OPEN_SETTINGS_MENU_ID, "Settings...").build(app)?;
+    let open_tasks = MenuItemBuilder::with_id(OPEN_TASKS_MENU_ID, "Tasks Window")
+        .accelerator("CmdOrCtrl+Shift+T")
+        .build(app)?;
+    let open_plugins =
+        MenuItemBuilder::with_id(OPEN_PLUGINS_MENU_ID, "Install Editor Plugins...").build(app)?;
     let check_for_updates_item =
         MenuItemBuilder::with_id(CHECK_FOR_UPDATES_MENU_ID, "Check for Updates...").build(app)?;
     let app_menu = SubmenuBuilder::new(app, "Guidon Desktop")
+        .item(&open_tasks)
+        .item(&open_plugins)
         .item(&open_settings)
         .item(&check_for_updates_item)
         .separator()
@@ -35,10 +44,21 @@ pub(crate) fn setup(app: &mut App) -> tauri::Result<()> {
     app.on_menu_event(move |_app, event| {
         if event.id() == OPEN_SETTINGS_MENU_ID {
             open_or_focus_settings(&handle);
+        } else if event.id() == OPEN_TASKS_MENU_ID {
+            open_or_focus_tasks(&handle);
+        } else if event.id() == OPEN_PLUGINS_MENU_ID {
+            open_or_focus_plugins(&handle);
         } else if event.id() == CHECK_FOR_UPDATES_MENU_ID {
-            check_for_updates(&handle, &check_for_updates_item_for_event);
+            check_for_updates(&handle, &check_for_updates_item_for_event, false);
         }
     });
+
+    // One quiet check per launch - see updater.rs. Debug builds skip it:
+    // their version never matches a release and the dialog would only get
+    // in the way while developing.
+    if !cfg!(debug_assertions) {
+        check_for_updates(app.handle(), &check_for_updates_item, true);
+    }
 
     Ok(())
 }

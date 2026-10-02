@@ -1,11 +1,12 @@
 # Releasing Guidon Desktop
 
-This is a manual process for now - there's no GitHub Actions release
-workflow yet (a reasonable future addition, out of scope for the
-auto-update wiring this doc accompanies). It covers cutting a new version,
-producing signed installers, and publishing them so existing installs'
-"Check for Updates" menu item (see `README.md`'s "Auto-update" section)
-can find them.
+Releases are built by GitHub Actions (`.github/workflows/desktop-release.yml`)
+on a Windows runner: signed NSIS/MSI installers, their `.sig` files and the
+updater's `latest.json`, attached to a **draft** GitHub Release. You review
+the draft and publish it; from that moment "Check for Updates" (and the
+startup check) in every installed copy offers the new version.
+
+The manual process further down still works and is kept as the fallback.
 
 ## One-time setup: the signing key
 
@@ -56,7 +57,51 @@ install will stop being able to verify (and thus install) further updates
 signed with the old key - they'd need to download a fresh installer
 manually.
 
-## Cutting a release
+## One-time setup: repository secrets
+
+The workflow signs with the same key as above, from two repository secrets
+(GitHub → repository Settings → Secrets and variables → Actions → New
+repository secret):
+
+- `TAURI_SIGNING_PRIVATE_KEY` - the **contents** of `~/.tauri/guidon-desktop.key`
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` - its password
+
+Without them the workflow stops at its first step with an error saying so.
+
+## Cutting a release (GitHub Actions)
+
+1. **Bump the version** in `src-tauri/tauri.conf.json`, `package.json`
+   (and `package-lock.json`'s two top entries) and `src-tauri/Cargo.toml` -
+   all must match; the workflow checks. `tauri.conf.json`'s `version` is what
+   the updater compares against `latest.json`.
+2. **Add a `## <version>` section to `CHANGELOG.md`.** It becomes the GitHub
+   Release text and the notes in `latest.json`; the workflow fails without it.
+3. **Merge to `main`, then tag that commit:**
+
+   ```bash
+   git tag desktop-v1.0.0
+   git push origin desktop-v1.0.0
+   ```
+
+   (Or run "Desktop release" by hand from the Actions tab - it creates the
+   tag itself from `tauri.conf.json`'s version.)
+4. **Wait for the run** (~15 minutes) and open the draft release it created
+   ("Guidon Desktop <version>"). It should carry the `.exe` and `.msi`
+   installers, a `.sig` for each, and `latest.json`.
+5. **Publish** the draft, leaving "Set as the latest release" checked. The
+   updater reads `releases/latest/download/latest.json`, so **only desktop
+   releases may be marked latest** in this repository - mark any other kind
+   of release (if one ever exists) as not-latest, or every installed app
+   stops seeing updates.
+6. **Verify** with an older install: start it (the startup check should
+   offer the update) or use "Check for Updates...".
+
+Tags are `desktop-v*` rather than `v*` because this repository also holds
+the web app and the editor plugins.
+
+## Manual fallback
+
+Only if Actions is unavailable.
 
 1. **Bump the version** in `src-tauri/tauri.conf.json` (`"version"`) and
    `package.json` (`"version"`) - keep them in sync. `tauri.conf.json`'s
@@ -100,7 +145,7 @@ manually.
      "platforms": {
        "windows-x86_64": {
          "signature": "<contents of the .exe.sig or .msi.sig file>",
-         "url": "https://github.com/Two-Steps-Studio/guidon/releases/download/v<version>/Guidon Desktop_<version>_x64-setup.exe"
+         "url": "https://github.com/Two-Steps-Studio/guidon/releases/download/desktop-v<version>/Guidon Desktop_<version>_x64-setup.exe"
        }
      }
    }
@@ -111,7 +156,7 @@ manually.
    works, but only publish one as the update target to avoid ambiguity.
 
 4. **Create the GitHub Release** for this repo
-   (`Two-Steps-Studio/guidon`), tagged `v<version>`, and upload:
+   (`Two-Steps-Studio/guidon`), tagged `desktop-v<version>`, and upload:
    - the installer(s) from step 2
    - their `.sig` file(s)
    - `latest.json` from step 3
@@ -125,12 +170,3 @@ manually.
 5. **Verify** by installing the *previous* version, running it, and using
    "Check for Updates" - it should report the new version, offer to
    install, and succeed.
-
-## Future improvement
-
-A GitHub Actions workflow (e.g. built around
-[`tauri-apps/tauri-action`](https://github.com/tauri-apps/tauri-action))
-could automate steps 2-4, including `latest.json` generation, triggered by
-a version tag push, with the signing key stored as a repo secret. Not
-built as part of this task; the manual process above is the documented
-baseline it would replace.

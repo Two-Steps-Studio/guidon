@@ -28,7 +28,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center p-6">
+    <main className="flex min-h-[60vh] items-center justify-center p-6">
       <Card className="max-w-md border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-destructive/10">
@@ -44,6 +44,6 @@ export default function GlobalError({
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

@@ -35,6 +35,8 @@ export interface ProjectAccess {
     avatar_url: string | null;
     project_type: string | null;
     methodology: ProjectMethodology;
+    /** Migration 046 - one switch for every AI feature on this project. */
+    ai_enabled: boolean;
   };
   /** Null when the user can see the project but is not a member of it -
    *  possible for `organization` and `public` visibility. */
@@ -86,7 +88,7 @@ export const getProjectAccess = cache(async function getProjectAccess(
     const [projectResult, membershipResult] = await Promise.all([
       withUser(userId, ({ query }) =>
         query(
-          `SELECT id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology
+          `SELECT id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology, ai_enabled
            FROM projects WHERE id = $1`,
           [projectId]
         )
@@ -124,7 +126,7 @@ export const getProjectAccess = cache(async function getProjectAccess(
     supabase
       .from("projects")
       .select(
-        "id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology"
+        "id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology, ai_enabled"
       )
       .eq("id", projectId)
       .maybeSingle(),
@@ -136,8 +138,18 @@ export const getProjectAccess = cache(async function getProjectAccess(
       .maybeSingle(),
   ]);
 
+  // A real query error (e.g. a column from a migration that hasn't been
+  // applied to this database yet) must not look like "no access": that
+  // silently bounced every project open back to /projects with nothing in
+  // the logs. Throw it, same as the self-hosted branch's pg error does.
+  // maybeSingle() reports zero rows as data: null with no error.
+  const queryError = projectResult.error ?? membershipResult.error;
+  if (queryError) {
+    throw new Error(`getProjectAccess(${projectId}) failed: ${queryError.code ?? ""} ${queryError.message}`.trim());
+  }
+
   // RLS already filtered this: no row means no access, whatever the reason.
-  if (projectResult.error || !projectResult.data) return null;
+  if (!projectResult.data) return null;
 
   return {
     userId: user.id,

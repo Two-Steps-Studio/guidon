@@ -22,7 +22,8 @@ does for the UI.
   plugin's key. `GET /projects/[projectId]/columns` exists for them: it returns the
   project's visible board columns (labels, order and hidden columns from
   migration 020, resolved by the same `resolveBoardColumns` the web board
-  uses).
+  uses), and `GET /projects/[projectId]/references` returns the project's
+  moodboard (migration 048) with a short-lived signed `image_url` per image.
 - In-game bug reports from shipped games (`plugins/*/GuidonReports`,
   `plugins/godot/addons/guidon_reports`): `POST /projects/[projectId]/reports`
   (multipart; creates a Backlog task plus attachments). It is gated by its own

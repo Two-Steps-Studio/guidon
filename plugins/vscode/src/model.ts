@@ -26,6 +26,19 @@ export interface Comment {
   actor_label: string | null;
 }
 
+/** A moodboard image (GET /api/v1/projects/{id}/references). `image_url` is short-lived - download it right away. */
+export interface Reference {
+  id: string;
+  name: string;
+  caption: string | null;
+  tags: string[];
+  source_url: string | null;
+  mime_type: string;
+  size_bytes: number | null;
+  created_at: string;
+  image_url: string | null;
+}
+
 export interface Column {
   status: string;
   label: string;
