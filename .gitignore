@@ -53,3 +53,4 @@ plugins/**/__pycache__/
 plugins/**/*.zip
 plugins/**/build/
 plugins/**/*.vsix
+/.idea
