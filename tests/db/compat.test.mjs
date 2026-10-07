@@ -2352,6 +2352,46 @@ await withUser(A, async () => {
   check("zapis webhooka Discorda: wartosc zapisana", stored.rows[0]?.webhook_url_encrypted === "enc2", JSON.stringify(stored.rows));
   await db.query("DELETE FROM public.discord_integrations WHERE project_id = $1", [projectId]);
 
+  // Same EXCLUDED problem for the other two encrypted-secret tables - the
+  // app now saves them with the data client's upsertRow (update, then insert).
+  const ownerOrg = (await db.query("SELECT organization_id FROM public.projects WHERE id = $1", [projectId])).rows[0].organization_id;
+  await expectRejected(
+    "stary upsert ustawien AI organizacji -> permission denied",
+    () => withUser(A, () => db.query(
+      `INSERT INTO public.organization_ai_settings (organization_id, provider, model, api_key_encrypted, created_by) VALUES ($1, 'anthropic', 'm', 'enc', $2)
+       ON CONFLICT (organization_id) DO UPDATE SET api_key_encrypted = EXCLUDED.api_key_encrypted`, [ownerOrg, A])),
+    /permission denied/
+  );
+  await withUser(A, async () => {
+    const upd = await run(compile({ table: "organization_ai_settings", op: "update", columns: ["organization_id"], filters: [{ column: "organization_id", op: "eq", value: ownerOrg }], order: [], limit: null, values: [{ api_key_encrypted: "k1" }] }));
+    const ins = upd.rows.length > 0 ? upd : await run(compile({ table: "organization_ai_settings", op: "insert", columns: ["organization_id"], filters: [], order: [], limit: null, values: [{ organization_id: ownerOrg, provider: "anthropic", model: "m", api_key_encrypted: "k1", created_by: A }] }));
+    check("zapis ustawien AI: insert przez ownera organizacji dziala", ins.rows.length === 1, JSON.stringify(ins.rows));
+    const again = await run(compile({ table: "organization_ai_settings", op: "update", columns: ["organization_id"], filters: [{ column: "organization_id", op: "eq", value: ownerOrg }], order: [], limit: null, values: [{ api_key_encrypted: "k2", model: "m2" }] }));
+    check("zapis ustawien AI: ponowny zapis to update", again.rows.length === 1, JSON.stringify(again.rows));
+    const viaRpc = await run(compileRpc("get_org_ai_settings_with_key", { p_organization_id: ownerOrg }, "rows"));
+    check("get_org_ai_settings_with_key (rpcRows) zwraca zapisany klucz", viaRpc.rows[0]?.api_key_encrypted === "k2" && viaRpc.rows[0]?.model === "m2", JSON.stringify(viaRpc.rows));
+  });
+  await db.query("DELETE FROM public.organization_ai_settings WHERE organization_id = $1", [ownerOrg]);
+
+  await expectRejected(
+    "stary upsert polaczenia GitHub -> permission denied",
+    () => withUser(A, () => db.query(
+      `INSERT INTO public.github_connections (project_id, connected_by, github_login, installation_id, repo_owner, repo_name, default_branch, access_token_encrypted, refresh_token_encrypted)
+       VALUES ($1, $2, 'l', 1, 'o', 'r', 'main', 'a', 'r')
+       ON CONFLICT (project_id) DO UPDATE SET access_token_encrypted = EXCLUDED.access_token_encrypted`, [projectId, A])),
+    /permission denied/
+  );
+  await withUser(A, async () => {
+    const first = await run(compile({ table: "github_connections", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ access_token_encrypted: "a1" }] }));
+    const ins = first.rows.length > 0 ? first : await run(compile({ table: "github_connections", op: "insert", columns: ["project_id"], filters: [], order: [], limit: null, values: [{ project_id: projectId, connected_by: A, github_login: "l", installation_id: 1, repo_owner: "o", repo_name: "r", default_branch: "main", access_token_encrypted: "a1", refresh_token_encrypted: "r1", access_token_expires_at: "2030-01-01T00:00:00Z", refresh_token_expires_at: "2030-06-01T00:00:00Z" }] }));
+    check("zapis polaczenia GitHub: update/insert przez ownera projektu dziala", ins.rows.length === 1, JSON.stringify(ins.rows));
+    const upd = await run(compile({ table: "github_connections", op: "update", columns: ["project_id"], filters: [{ column: "project_id", op: "eq", value: projectId }], order: [], limit: null, values: [{ access_token_encrypted: "a2", repo_name: "r2" }] }));
+    check("zapis polaczenia GitHub: ponowny zapis to update", upd.rows.length === 1, JSON.stringify(upd.rows));
+    const secrets = await run(compileRpc("get_github_connection_secrets", { p_project_id: projectId }, "rows"));
+    check("get_github_connection_secrets (rpcRows, publiczny wrapper 030) zwraca token", secrets.rows[0]?.access_token_encrypted === "a2", JSON.stringify(secrets.rows));
+  });
+  await db.query("DELETE FROM public.github_connections WHERE project_id = $1", [projectId]);
+
   await db.query("DELETE FROM public.tasks WHERE id = ANY($1)", [ids]);
 }
 
