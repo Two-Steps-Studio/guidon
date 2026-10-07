@@ -5,7 +5,6 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
 import { dataClient, serviceDataClient } from "@/lib/data-client";
-import { isUniqueViolation } from "@/lib/db/errors";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
 import { generateApiKey, hashApiKey, keyPrefix, type ApiKeyScope } from "@/lib/api/api-keys";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
@@ -122,30 +121,15 @@ export async function getDiscordWebhookUrl(
  */
 export async function saveDiscordWebhookUrl(projectId: string, userId: string, webhookUrl: string): Promise<void> {
   const encrypted = encryptSecret(webhookUrl, DISCORD_WEBHOOK_KEY_INFO);
-  const db = dataClient(userId);
-  const fields = { webhook_url_encrypted: encrypted, updated_at: new Date().toISOString() };
-
-  // Update-then-insert, not an upsert: INSERT ... ON CONFLICT DO UPDATE SET
-  // col = EXCLUDED.col reads EXCLUDED.webhook_url_encrypted, which needs a
-  // SELECT grant `authenticated` deliberately doesn't have on that column
-  // (035) - so the upsert this replaces failed with "permission denied" on
-  // every save, in both modes (supabase-js's .upsert() emits the same SQL).
-  // Same approach as linkDiscordGuildToProject below.
-  const updated = await db.from("discord_integrations").update(fields).eq("project_id", projectId).select("project_id");
-  if (updated.error) throw new Error(`Failed to save Discord webhook: ${updated.error.message}`);
-  if (updated.data.length > 0) return;
-
-  const inserted = await db
-    .from("discord_integrations")
-    .insert({ project_id: projectId, linked_by: userId, ...fields })
-    .select("project_id");
-  if (!inserted.error) return;
-  // Lost a race with another first save: the row exists now, so update it.
-  if (isUniqueViolation(inserted.error)) {
-    const retry = await db.from("discord_integrations").update(fields).eq("project_id", projectId).select("project_id");
-    if (!retry.error && retry.data.length > 0) return;
-  }
-  throw new Error(`Failed to save Discord webhook: ${inserted.error.message}`);
+  // upsertRow, not an upsert: EXCLUDED.webhook_url_encrypted needs a SELECT
+  // grant `authenticated` deliberately doesn't have (035), so the upsert
+  // this replaced failed with "permission denied" on every save.
+  const { error } = await dataClient(userId).upsertRow("discord_integrations", {
+    key: { project_id: projectId },
+    set: { webhook_url_encrypted: encrypted, updated_at: new Date().toISOString() },
+    insertOnly: { linked_by: userId },
+  });
+  if (error) throw new Error(`Failed to save Discord webhook: ${error.message}`);
 }
 
 /**

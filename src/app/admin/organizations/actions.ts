@@ -75,17 +75,10 @@ export async function updateOrganizationPlan(
     .eq("id", planId)
     .maybeSingle();
 
-  const now = new Date().toISOString();
-  const { data: updatedSubs, error: subError } = await db
-    .from("subscriptions")
-    .update({ plan_id: planId, current_period_start: now, cancel_at_period_end: false, updated_at: now })
-    .eq("organization_id", orgId)
-    .select("id");
-  if (subError) return { error: subError.message };
-  if (updatedSubs.length === 0) return { error: "This organization has no subscription row to update." };
-
   // organizations.project_limit is NOT NULL (014), so an unlimited plan
-  // (NULL in plans) is stored as the sentinel - see ./constants.ts.
+  // (NULL in plans) is stored as the sentinel - see ./constants.ts. First,
+  // so a vanished organization stops here instead of failing the
+  // subscription insert below on its foreign key.
   const { data: updatedOrgs, error: orgError } = await db
     .from("organizations")
     .update({ project_limit: plan?.project_limit ?? ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL })
@@ -93,6 +86,17 @@ export async function updateOrganizationPlan(
     .select("id");
   if (orgError) return { error: orgError.message };
   if (updatedOrgs.length === 0) return { error: "This organization no longer exists." };
+
+  // upsertRow, not a plain update: organizations created before migration
+  // 015 never got a subscription row (015's trigger only covers new ones,
+  // 052 backfills them), and the admin panel is exactly where you'd go to
+  // fix that - "no subscription row to update" was a dead end.
+  const now = new Date().toISOString();
+  const { error: subError } = await db.upsertRow("subscriptions", {
+    key: { organization_id: orgId },
+    set: { plan_id: planId, current_period_start: now, cancel_at_period_end: false, updated_at: now },
+  });
+  if (subError) return { error: subError.message };
 
   revalidatePath("/admin/organizations");
   return { error: null };

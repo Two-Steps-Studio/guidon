@@ -1,8 +1,6 @@
 import "server-only";
 
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser, withServiceRole } from "@/lib/db/session";
-import { createClient, createServiceClient } from "@/lib/supabase-server";
+import { dataClient, serviceDataClient } from "@/lib/data-client";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
 import { refreshUserToken } from "@/lib/github/client";
 
@@ -29,24 +27,15 @@ export async function getProjectGithubRepoInfo(
   projectId: string,
   userId: string
 ): Promise<ProjectGithubRepoInfo | null> {
-  if (hasDirectDatabase()) {
-    const result = await withUser(userId, ({ query }) =>
-      query(`SELECT ${SAFE_COLUMNS} FROM github_connections WHERE project_id = $1`, [projectId])
-    );
-    const row = result.rows[0];
-    return row ? toRepoInfo(row) : null;
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("github_connections")
+  const { data } = await dataClient(userId)
+    .from<SafeRow>("github_connections")
     .select(SAFE_COLUMNS)
     .eq("project_id", projectId)
     .maybeSingle();
-
-  if (error || !data) return null;
-  return toRepoInfo(data);
+  return data ? toRepoInfo(data) : null;
 }
+
+type SafeRow = { repo_owner: string; repo_name: string; default_branch: string; github_login: string };
 
 function toRepoInfo(row: {
   repo_owner: string;
@@ -96,37 +85,11 @@ async function persistRefreshedTokens(
   projectId: string,
   refreshed: { accessToken: string; refreshToken: string; accessTokenExpiresAt: Date; refreshTokenExpiresAt: Date }
 ): Promise<void> {
-  const encryptedAccess = encryptSecret(refreshed.accessToken, GITHUB_TOKEN_KEY_INFO);
-  const encryptedRefresh = encryptSecret(refreshed.refreshToken, GITHUB_TOKEN_KEY_INFO);
-
-  if (hasDirectDatabase()) {
-    const result = await withServiceRole(({ query }) =>
-      query(
-        `UPDATE github_connections
-           SET access_token_encrypted = $1, refresh_token_encrypted = $2,
-               access_token_expires_at = $3, refresh_token_expires_at = $4, updated_at = now()
-         WHERE project_id = $5`,
-        [
-          encryptedAccess,
-          encryptedRefresh,
-          refreshed.accessTokenExpiresAt.toISOString(),
-          refreshed.refreshTokenExpiresAt.toISOString(),
-          projectId,
-        ]
-      )
-    );
-    if (result.rowCount === 0) {
-      throw new Error(`Failed to persist refreshed GitHub token: no github_connections row for project ${projectId}`);
-    }
-    return;
-  }
-
-  const supabase = createServiceClient();
-  const { data, error } = await supabase
+  const { data, error } = await serviceDataClient()
     .from("github_connections")
     .update({
-      access_token_encrypted: encryptedAccess,
-      refresh_token_encrypted: encryptedRefresh,
+      access_token_encrypted: encryptSecret(refreshed.accessToken, GITHUB_TOKEN_KEY_INFO),
+      refresh_token_encrypted: encryptSecret(refreshed.refreshToken, GITHUB_TOKEN_KEY_INFO),
       access_token_expires_at: refreshed.accessTokenExpiresAt.toISOString(),
       refresh_token_expires_at: refreshed.refreshTokenExpiresAt.toISOString(),
       updated_at: new Date().toISOString(),
@@ -135,7 +98,7 @@ async function persistRefreshedTokens(
     .select("project_id");
 
   if (error) throw new Error(`Failed to persist refreshed GitHub token: ${error.message}`);
-  if (!data || data.length === 0) {
+  if (data.length === 0) {
     throw new Error(`Failed to persist refreshed GitHub token: no github_connections row for project ${projectId}`);
   }
 }
@@ -161,36 +124,20 @@ export async function getProjectGithubToken(
   // returns just those columns, closing the direct-PostgREST-query path a
   // plain column GRANT can't distinguish "the app needs this server-side"
   // from "any member can fetch this ciphertext directly."
-  let safeRow: { repo_owner: string; repo_name: string; default_branch: string; github_login: string } | null = null;
-  let secrets: {
-    access_token_encrypted: string;
-    refresh_token_encrypted: string;
-    access_token_expires_at: string;
-    refresh_token_expires_at: string;
-  } | null = null;
-
-  if (hasDirectDatabase()) {
-    const [safeResult, secretsResult] = await Promise.all([
-      withUser(userId, ({ query }) =>
-        query(`SELECT ${SAFE_COLUMNS} FROM github_connections WHERE project_id = $1`, [projectId])
-      ),
-      withUser(userId, ({ query }) =>
-        query("SELECT * FROM private.get_github_connection_secrets($1)", [projectId])
-      ),
-    ]);
-    safeRow = safeResult.rows[0] ?? null;
-    secrets = secretsResult.rows[0] ?? null;
-  } else {
-    const supabase = await createClient();
-    const [safeResult, secretsResult] = await Promise.all([
-      supabase.from("github_connections").select(SAFE_COLUMNS).eq("project_id", projectId).maybeSingle(),
-      supabase.rpc("get_github_connection_secrets", { p_project_id: projectId }),
-    ]);
-    if (safeResult.error) throw new Error(`Failed to read GitHub connection: ${safeResult.error.message}`);
-    safeRow = safeResult.data;
-    if (secretsResult.error) throw new Error(`Failed to read GitHub connection secrets: ${secretsResult.error.message}`);
-    secrets = secretsResult.data?.[0] ?? null;
-  }
+  const db = dataClient(userId);
+  const [safeResult, secretsResult] = await Promise.all([
+    db.from<SafeRow>("github_connections").select(SAFE_COLUMNS).eq("project_id", projectId).maybeSingle(),
+    db.rpcRows<{
+      access_token_encrypted: string;
+      refresh_token_encrypted: string;
+      access_token_expires_at: string;
+      refresh_token_expires_at: string;
+    }>("get_github_connection_secrets", { p_project_id: projectId }),
+  ]);
+  if (safeResult.error) throw new Error(`Failed to read GitHub connection: ${safeResult.error.message}`);
+  if (secretsResult.error) throw new Error(`Failed to read GitHub connection secrets: ${secretsResult.error.message}`);
+  const safeRow = safeResult.data;
+  const secrets = secretsResult.data[0] ?? null;
 
   if (!safeRow || !secrets) return null;
   const row: FullConnectionRow = { ...safeRow, ...secrets };
@@ -221,79 +168,34 @@ export interface UpsertGithubConnectionInput {
   refreshTokenExpiresAt: Date;
 }
 
-/** Connects (or re-connects/changes) the repo linked to a project. */
+/**
+ * Connects (or re-connects/changes) the repo linked to a project. upsertRow,
+ * not an upsert: `ON CONFLICT DO UPDATE SET access_token_encrypted =
+ * EXCLUDED...` needs a SELECT grant those columns deliberately don't have
+ * (025), so connecting a repository failed with "permission denied" - see
+ * upsertRow's comment.
+ */
 export async function upsertGithubConnection(input: UpsertGithubConnectionInput): Promise<void> {
-  const encryptedAccess = encryptSecret(input.accessToken, GITHUB_TOKEN_KEY_INFO);
-  const encryptedRefresh = encryptSecret(input.refreshToken, GITHUB_TOKEN_KEY_INFO);
-
-  if (hasDirectDatabase()) {
-    await withUser(input.connectedBy, ({ query }) =>
-      query(
-        `INSERT INTO github_connections
-           (project_id, connected_by, github_login, installation_id, repo_owner, repo_name, default_branch,
-            access_token_encrypted, refresh_token_encrypted, access_token_expires_at, refresh_token_expires_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
-         ON CONFLICT (project_id) DO UPDATE SET
-           connected_by = EXCLUDED.connected_by,
-           github_login = EXCLUDED.github_login,
-           installation_id = EXCLUDED.installation_id,
-           repo_owner = EXCLUDED.repo_owner,
-           repo_name = EXCLUDED.repo_name,
-           default_branch = EXCLUDED.default_branch,
-           access_token_encrypted = EXCLUDED.access_token_encrypted,
-           refresh_token_encrypted = EXCLUDED.refresh_token_encrypted,
-           access_token_expires_at = EXCLUDED.access_token_expires_at,
-           refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
-           updated_at = now()`,
-        [
-          input.projectId,
-          input.connectedBy,
-          input.githubLogin,
-          input.installationId,
-          input.repoOwner,
-          input.repoName,
-          input.defaultBranch,
-          encryptedAccess,
-          encryptedRefresh,
-          input.accessTokenExpiresAt.toISOString(),
-          input.refreshTokenExpiresAt.toISOString(),
-        ]
-      )
-    );
-    return;
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("github_connections").upsert(
-    {
-      project_id: input.projectId,
+  const { error } = await dataClient(input.connectedBy).upsertRow("github_connections", {
+    key: { project_id: input.projectId },
+    set: {
       connected_by: input.connectedBy,
       github_login: input.githubLogin,
       installation_id: input.installationId,
       repo_owner: input.repoOwner,
       repo_name: input.repoName,
       default_branch: input.defaultBranch,
-      access_token_encrypted: encryptedAccess,
-      refresh_token_encrypted: encryptedRefresh,
+      access_token_encrypted: encryptSecret(input.accessToken, GITHUB_TOKEN_KEY_INFO),
+      refresh_token_encrypted: encryptSecret(input.refreshToken, GITHUB_TOKEN_KEY_INFO),
       access_token_expires_at: input.accessTokenExpiresAt.toISOString(),
       refresh_token_expires_at: input.refreshTokenExpiresAt.toISOString(),
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "project_id" }
-  );
-
+  });
   if (error) throw new Error(`Failed to save GitHub connection: ${error.message}`);
 }
 
 export async function deleteGithubConnection(projectId: string, userId: string): Promise<void> {
-  if (hasDirectDatabase()) {
-    await withUser(userId, ({ query }) =>
-      query("DELETE FROM github_connections WHERE project_id = $1", [projectId])
-    );
-    return;
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("github_connections").delete().eq("project_id", projectId);
+  const { error } = await dataClient(userId).from("github_connections").delete().eq("project_id", projectId);
   if (error) throw new Error(`Failed to disconnect GitHub repository: ${error.message}`);
 }

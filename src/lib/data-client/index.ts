@@ -261,6 +261,46 @@ export interface DataClient {
   rpc<V = unknown>(fn: string, args?: Record<string, unknown>): Promise<DataResult<V | null>>;
   /** A TABLE / SETOF `public` function; `data` is its rows. */
   rpcRows<T extends Shape = Row>(fn: string, args?: Record<string, unknown>): Promise<DataResult<T[]>>;
+  /**
+   * Insert-or-update one row identified by `key` (the unique columns),
+   * WITHOUT `INSERT ... ON CONFLICT DO UPDATE`. That form - and supabase-js's
+   * .upsert(), which emits it - reads `EXCLUDED.<col>`, which needs a SELECT
+   * grant; the encrypted secret columns (025/035) deliberately have none for
+   * `authenticated`, so an upsert of them always failed with "permission
+   * denied". This updates `set` where `key` matches, inserts
+   * `key + set + insertOnly` when nothing matched, and retries the update
+   * once if a concurrent first save won the insert. `data` says which happened.
+   */
+  upsertRow(
+    table: string,
+    row: { key: Row; set: Row; insertOnly?: Row }
+  ): Promise<DataResult<"updated" | "inserted" | null>>;
+}
+
+async function upsertRow(
+  client: Pick<DataClient, "from">,
+  table: string,
+  { key, set, insertOnly = {} }: { key: Row; set: Row; insertOnly?: Row }
+): Promise<DataResult<"updated" | "inserted" | null>> {
+  const keyColumns = Object.keys(key);
+  if (keyColumns.length === 0) throw new Error("data-client: upsertRow needs at least one key column");
+  const update = () => {
+    let q = client.from(table).update(set);
+    for (const column of keyColumns) q = q.eq(column, key[column]);
+    return q.select(keyColumns.join(", "));
+  };
+
+  const updated = await update();
+  if (updated.error) return { data: null, error: updated.error };
+  if (updated.data.length > 0) return { data: "updated", error: null };
+
+  const inserted = await client.from(table).insert({ ...insertOnly, ...key, ...set }).select(keyColumns.join(", "));
+  if (!inserted.error) return { data: "inserted", error: null };
+  if (inserted.error.code === "23505") {
+    const retry = await update();
+    if (!retry.error && retry.data.length > 0) return { data: "updated", error: null };
+  }
+  return { data: null, error: inserted.error };
 }
 
 async function runRpc(
@@ -289,9 +329,11 @@ async function runRpc(
 }
 
 function clientFor(backend: Backend): DataClient {
+  const from = <T extends Shape = Row>(table: string) => new QueryBuilder<T>(backend, table);
   return {
-    from<T extends Shape = Row>(table: string) {
-      return new QueryBuilder<T>(backend, table);
+    from,
+    upsertRow(table, row) {
+      return upsertRow({ from }, table, row);
     },
     rpc<V = unknown>(fn: string, args: Record<string, unknown> = {}) {
       return runRpc(backend, fn, args, "value") as Promise<DataResult<V | null>>;
