@@ -2533,5 +2533,26 @@ section("40. plans.member_limit: miejsca w organizacji wedlug planu (migracja 05
   );
 }
 
+// ------------------------------------------------------------------
+section("41. subskrypcja Free dla organizacji sprzed 015 (migracja 052)");
+
+{
+  const sub = () => db.query("SELECT plan_id FROM public.subscriptions WHERE organization_id = $1", [orgId]);
+  const before = (await sub()).rows[0]?.plan_id;
+  // Simulate an organization created before 015: no subscription row at all.
+  await db.query("DELETE FROM public.subscriptions WHERE organization_id = $1", [orgId]);
+  check("organizacja bez wiersza subskrypcji (jak sprzed 015)", (await sub()).rows.length === 0);
+
+  const migration052 = await readFile(path.join(DB_DIR, "migrations", "052_backfill_subscriptions.sql"), "utf8");
+  await db.exec(forPglite(migration052));
+  check("052 zaklada brakujaca subskrypcje Free", (await sub()).rows[0]?.plan_id === "free", JSON.stringify((await sub()).rows));
+  const total = Number((await db.query("SELECT count(*)::int n FROM public.subscriptions")).rows[0].n);
+  await db.exec(forPglite(migration052));
+  check("052 jest idempotentna", Number((await db.query("SELECT count(*)::int n FROM public.subscriptions")).rows[0].n) === total);
+  const orphans = await db.query("SELECT count(*)::int n FROM public.organizations o WHERE NOT EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.organization_id = o.id)");
+  check("po 052 kazda organizacja ma subskrypcje", orphans.rows[0].n === 0, orphans.rows[0].n);
+  if (before && before !== "free") await db.query("UPDATE public.subscriptions SET plan_id = $2 WHERE organization_id = $1", [orgId, before]);
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
