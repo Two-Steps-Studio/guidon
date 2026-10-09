@@ -17,7 +17,6 @@ import {
   markNotificationRead,
 } from "@/app/actions/notifications";
 import type { Notification } from "@/lib/data/notifications";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -39,7 +38,6 @@ export function NotificationsBell() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("notifications");
-  const isMobile = useIsMobile();
 
   const refresh = useCallback(() => {
     startTransition(async () => {
@@ -86,19 +84,15 @@ export function NotificationsBell() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size={isMobile ? "default" : "icon"}
-          className={isMobile ? "relative h-8 gap-2 px-3" : "relative h-8 w-8"}
+          size="icon"
+          className="relative h-8 w-8"
           aria-label={unreadCount > 0 ? t("bellAriaUnread", { count: unreadCount }) : t("bellAria")}
         >
           <Bell className="size-4" />
-          {isMobile && <span className="text-sm">{t("title")}</span>}
           {unreadCount > 0 && (
             <span
               aria-hidden
-              className={isMobile
-                ? "absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground"
-                : "absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground"
-              }
+              className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground"
             >
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
