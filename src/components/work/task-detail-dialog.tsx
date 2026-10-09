@@ -317,6 +317,44 @@ function TaskDetailDialogInner({
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-4">
+          {canEdit && (
+            <div className="flex items-center gap-2">
+              {canDelete && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={deleting || saving}
+                  onClick={handleDelete}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  {deleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  {t("delete")}
+                </Button>
+              )}
+
+              <div className="ml-auto flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onClose}
+                  disabled={saving || deleting}
+                >
+                  {t("cancel")}
+                </Button>
+                <Button type="submit" size="sm" disabled={saving || deleting}>
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("saveChanges")}
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="task-title">{t("titleLabel")}</Label>
             <Input
@@ -448,6 +486,7 @@ function TaskDetailDialogInner({
               </Select>
             </div>
 
+            
             <div className="space-y-2">
               <Label htmlFor="task-assignee">{t("assigneeLabel")}</Label>
               <Select
@@ -504,44 +543,6 @@ function TaskDetailDialogInner({
             >
               {error}
             </p>
-          )}
-
-          {canEdit && (
-            <div className="flex items-center gap-2 border-t border-border pt-4">
-              {canDelete && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={deleting || saving}
-                  onClick={handleDelete}
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                >
-                  {deleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                  {t("delete")}
-                </Button>
-              )}
-
-              <div className="ml-auto flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onClose}
-                  disabled={saving || deleting}
-                >
-                  {t("cancel")}
-                </Button>
-                <Button type="submit" size="sm" disabled={saving || deleting}>
-                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("saveChanges")}
-                </Button>
-              </div>
-            </div>
           )}
         </form>
 
