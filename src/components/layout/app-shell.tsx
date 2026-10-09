@@ -5,6 +5,7 @@ import { AppSidebar, type AppSidebarProps } from "@/components/layout/app-sideba
 import { CommandPalette } from "@/components/layout/command-palette";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
+import { MobileSidebarTrigger } from "@/components/layout/mobile-sidebar-trigger";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
 
@@ -26,7 +27,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
       <AppSidebar {...sidebarProps} currentTheme={currentTheme} />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
-          <SidebarTrigger />
+          <MobileSidebarTrigger />
           <Separator orientation="vertical" className="h-4" />
           <div className="flex-1" />
           <CommandPalette currentProjectId={sidebarProps.projectId} />
