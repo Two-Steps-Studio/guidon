@@ -495,7 +495,7 @@
     "addTaskToColumn": "Dodaj zadanie do {column}",
     "columnAria": "{label}, {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
     "noTasksMatchFilters": "Żadne zadania nie pasują do bieżących filtrów.",
-    "title": "Praca",
+    "title": "Tablica zadań",
     "sortBy": "Sortuj tablicę według",
     "sortManual": "Kolejność ręczna",
     "sortDueDate": "Termin",

@@ -495,7 +495,7 @@
     "addTaskToColumn": "Añadir tarea a {column}",
     "columnAria": "{label}, {count, plural, one {# tarea} other {# tareas}}",
     "noTasksMatchFilters": "Ninguna tarea coincide con los filtros actuales.",
-    "title": "Trabajo",
+    "title": "Tablero de tareas",
     "sortBy": "Ordenar tablero por",
     "sortManual": "Orden manual",
     "sortDueDate": "Fecha límite",

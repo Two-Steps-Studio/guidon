@@ -495,7 +495,7 @@
     "addTaskToColumn": "Add task to {column}",
     "columnAria": "{label}, {count, plural, one {# task} other {# tasks}}",
     "noTasksMatchFilters": "No tasks match the current filters.",
-    "title": "Work",
+    "title": "Task board",
     "sortBy": "Sort board by",
     "sortManual": "Manual order",
     "sortDueDate": "Due date",

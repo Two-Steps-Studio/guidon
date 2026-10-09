@@ -495,7 +495,7 @@
     "addTaskToColumn": "Aufgabe zu {column} hinzufügen",
     "columnAria": "{label}, {count, plural, one {# Aufgabe} other {# Aufgaben}}",
     "noTasksMatchFilters": "Keine Aufgaben entsprechen den aktuellen Filtern.",
-    "title": "Arbeit",
+    "title": "Aufgabenboard",
     "sortBy": "Board sortieren nach",
     "sortManual": "Manuelle Reihenfolge",
     "sortDueDate": "Fälligkeitsdatum",
