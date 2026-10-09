@@ -61,3 +61,4 @@ plugins/**/*.zip
 plugins/**/build/
 plugins/**/*.vsix
 /.idea
+.idea/workspace.xml
