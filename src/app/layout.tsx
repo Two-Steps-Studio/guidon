@@ -47,6 +47,16 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    interactiveWidget: "resizes-content",
+  },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
+  ],
   appleWebApp: {
     capable: true,
     title: SITE_NAME,

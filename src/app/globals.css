@@ -429,6 +429,9 @@
 
 html {
   color-scheme: light dark;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
 }
 
 body {
@@ -480,4 +483,15 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Mobile touch fixes */
+input, textarea, select {
+  font-size: 16px;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
