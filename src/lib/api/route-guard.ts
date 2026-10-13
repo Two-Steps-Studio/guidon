@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiKey, type ApiKeyIdentity } from "./api-key-auth";
 import { isRateLimited, recordRequest } from "./rate-limit";
 import type { ApiKeyScope } from "./api-keys";
+import { isOriginAllowed } from "./key-origins";
 
 /**
  * Runs the common checks every /api/v1 AI Task API route needs, in order:
@@ -15,7 +16,14 @@ import type { ApiKeyScope } from "./api-keys";
  */
 export async function guardApiRequest(
   request: NextRequest,
-  requiredScope: ApiKeyScope
+  requiredScope: ApiKeyScope,
+  /**
+   * The project this route acts on, when the route knows it up front. A key
+   * bound to a project (migration 054) is accepted only by routes that pass
+   * it here and only for that project - every other route refuses such keys,
+   * so a new route is closed to them until it opts in.
+   */
+  options: { projectId?: string } = {}
 ): Promise<ApiKeyIdentity | NextResponse> {
   const identity = await authenticateApiKey(request.headers.get("authorization"));
   if (!identity) {
@@ -32,6 +40,17 @@ export async function guardApiRequest(
       { error: `This API key does not have the '${requiredScope}' scope.` },
       { status: 403 }
     );
+  }
+
+  if (identity.projectId && identity.projectId !== options.projectId) {
+    return NextResponse.json(
+      { error: "This API key is limited to one project and can't be used here." },
+      { status: 403 }
+    );
+  }
+
+  if (!isOriginAllowed(request.headers.get("origin"), identity.allowedOrigins)) {
+    return NextResponse.json({ error: "This API key can't be used from this website." }, { status: 403 });
   }
 
   return identity;

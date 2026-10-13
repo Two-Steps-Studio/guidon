@@ -67,6 +67,12 @@ async function handle(request: NextRequest): Promise<Response> {
     return NextResponse.json({ error: "Invalid or missing API key." }, { status: 401 });
   }
 
+  // Project-bound keys (migration 054) are browser/game report keys - the
+  // tools would refuse them one by one via guardApiRequest anyway.
+  if (identity.projectId) {
+    return NextResponse.json({ error: "This API key is limited to one project and can't be used here." }, { status: 403 });
+  }
+
   // Same status and body as guardApiRequest in src/lib/api/route-guard.ts.
   if (isRateLimited(identity.apiKeyId)) {
     return NextResponse.json({ error: "Rate limit exceeded. Try again shortly." }, { status: 429 });

@@ -65,7 +65,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pr
 }
 
 async function handleReport(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
-  const guard = await guardApiRequest(request, "reports:write");
+  const { projectId } = await params;
+  const guard = await guardApiRequest(request, "reports:write", { projectId });
   if (isGuardError(guard)) return guard;
   // Refused here too, not only at key creation: a key made before that
   // check (or through another path) fails while the game is being tested,
@@ -77,7 +78,6 @@ async function handleReport(request: NextRequest, { params }: { params: Promise<
     );
   }
 
-  const { projectId } = await params;
   if (!isValidUuid(projectId)) return invalidIdResponse("projectId");
 
   // Required, not just checked when present: without it (chunked upload)

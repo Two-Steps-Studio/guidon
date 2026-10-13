@@ -14,6 +14,10 @@ export interface ApiKeyIdentity {
   botLabel: string | null;
   /** Key issued to a human-operated client (Unity plugin, migration 039) - skips the AI-agent gates. */
   humanClient: boolean;
+  /** Set for a key bound to one project (migration 054) - guardApiRequest enforces it. */
+  projectId: string | null;
+  /** Browser origins allowed to use the key (migration 054); null = any. */
+  allowedOrigins: string[] | null;
 }
 
 /**
@@ -39,12 +43,20 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
   if (hasDirectDatabase()) {
     const result = await withServiceRole(({ query }) =>
       query(
-        "SELECT id, user_id, scopes, bot_label, human_client FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
+        "SELECT id, user_id, scopes, bot_label, human_client, project_id, allowed_origins FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
         [keyHash]
       )
     );
     const key = result.rows[0] as
-      | { id: string; user_id: string; scopes: string[]; bot_label: string | null; human_client: boolean }
+      | {
+          id: string;
+          user_id: string;
+          scopes: string[];
+          bot_label: string | null;
+          human_client: boolean;
+          project_id: string | null;
+          allowed_origins: string[] | null;
+        }
       | undefined;
     if (!key) return null;
 
@@ -59,6 +71,8 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
       scopes: key.scopes,
       botLabel: key.bot_label,
       humanClient: key.human_client === true,
+      projectId: key.project_id ?? null,
+      allowedOrigins: key.allowed_origins ?? null,
     };
   }
 
@@ -67,7 +81,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
 
   const { data: key } = await supabase
     .from("api_keys")
-    .select("id, user_id, scopes, bot_label, human_client")
+    .select("id, user_id, scopes, bot_label, human_client, project_id, allowed_origins")
     .eq("key_hash", keyHash)
     .is("revoked_at", null)
     .single();
@@ -81,6 +95,8 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
     scopes: key.scopes,
     botLabel: key.bot_label,
     humanClient: key.human_client === true,
+    projectId: key.project_id ?? null,
+    allowedOrigins: key.allowed_origins ?? null,
   };
 }
 
