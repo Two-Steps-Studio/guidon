@@ -1,5 +1,6 @@
 "use client";
 
+import { isModuleVisible } from "@/lib/work/project-modules";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -123,6 +124,18 @@ export const PROJECT_NAV = [
   },
 ] as const satisfies ProjectNavGroup[];
 
+/**
+ * A group's items minus the modules the project has switched off (migration
+ * 055). Generic so each group keeps its literal item types - labelKey stays
+ * a typed message key for t(), see PROJECT_NAV's comment above.
+ */
+export function visibleNavItems<T extends readonly { href: string }[]>(
+  items: T,
+  disabledModules: readonly string[] | null | undefined
+): T[number][] {
+  return items.filter((item) => isModuleVisible(item.href, disabledModules));
+}
+
 const ADMIN_NAV = [
   { href: "/admin", labelKey: "overview", icon: ShieldCheck },
   { href: "/admin/organizations", labelKey: "organizations", icon: Building2 },
@@ -146,6 +159,8 @@ export interface AppSidebarProps {
   currentTheme?: Theme;
   /** Guidon Cloud with Stripe configured - see app-shell.tsx. */
   showUpgrade?: boolean;
+  /** projects.disabled_modules (migration 055) - sections hidden from the project nav. */
+  disabledModules?: string[];
 }
 
 export function AppSidebar({
@@ -156,6 +171,7 @@ export function AppSidebar({
   projectColor,
   currentTheme = "system",
   showUpgrade = false,
+  disabledModules,
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -219,13 +235,16 @@ export function AppSidebar({
         </SidebarGroup>
 
         {projectId &&
-          PROJECT_NAV.map((group, groupIndex) => (
+          PROJECT_NAV.map((group, groupIndex) => {
+            const items = visibleNavItems(group.items, disabledModules);
+            if (items.length === 0) return null;
+            return (
             <SidebarGroup key={group.labelKey ?? `project-group-${groupIndex}`}>
               {group.labelKey && (
                 <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
               )}
               <SidebarMenu>
-                {group.items.map((item) => {
+                {items.map((item) => {
                   const active = isProjectActive(item.href);
                   const href = `/projects/${projectId}${item.href ? `/${item.href}` : ""}`;
                   return (
@@ -251,7 +270,8 @@ export function AppSidebar({
                 })}
               </SidebarMenu>
             </SidebarGroup>
-          ))}
+            );
+          })}
 
         {isAdmin && (
           <SidebarGroup>

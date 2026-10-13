@@ -13,7 +13,7 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { GLOBAL_NAV, PROJECT_NAV } from "@/components/layout/app-sidebar";
+import { GLOBAL_NAV, PROJECT_NAV, visibleNavItems } from "@/components/layout/app-sidebar";
 
 interface SearchResult {
   type: string;
@@ -28,6 +28,8 @@ interface CommandPaletteProps {
    * and adds that project's own nav (Task Board, Calendar, ...) to the
    * static command list, the same set app-sidebar.tsx shows. */
   currentProjectId?: string;
+  /** projects.disabled_modules (migration 055) - hidden sections aren't offered either. */
+  disabledModules?: string[];
 }
 
 /**
@@ -61,7 +63,7 @@ function resultHref(result: SearchResult, currentProjectId?: string): string {
 const MIN_QUERY_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 200;
 
-export function CommandPalette({ currentProjectId }: CommandPaletteProps) {
+export function CommandPalette({ currentProjectId, disabledModules }: CommandPaletteProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -200,12 +202,15 @@ export function CommandPalette({ currentProjectId }: CommandPaletteProps) {
                 // itself renders this data - flattening first widens
                 // labelKey to plain `string` and next-intl's typed t()
                 // rejects that.
-                PROJECT_NAV.map((group, groupIndex) => (
+                PROJECT_NAV.map((group, groupIndex) => {
+                  const items = visibleNavItems(group.items, disabledModules);
+                  if (items.length === 0) return null;
+                  return (
                   <CommandGroup
                     key={group.labelKey ?? `project-group-${groupIndex}`}
                     heading={group.labelKey ? tNav(group.labelKey) : undefined}
                   >
-                    {group.items.map((item) => (
+                    {items.map((item) => (
                       <CommandItem
                         key={item.href}
                         value={item.href || "overview"}
@@ -216,7 +221,8 @@ export function CommandPalette({ currentProjectId }: CommandPaletteProps) {
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                ))}
+                  );
+                })}
             </>
           )}
         </CommandList>

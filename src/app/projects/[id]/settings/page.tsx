@@ -9,6 +9,7 @@ import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
 import { BoardColumnsForm } from "./board-columns-form";
 import { LabelPresetsForm } from "./label-presets-form";
+import { ModulesForm } from "./modules-form";
 import { ReportWidgetCard } from "./report-widget-card";
 import { listReportWidgetKeys } from "@/app/profile/api-keys-actions";
 import { ExportProjectCard } from "./export-project-card";
@@ -127,6 +128,11 @@ export default async function ProjectSettingsPage({
         project={project}
         initialTechnologies={technologies.map((t) => t.name)}
         isOwner={access.role === "owner"}
+      />
+      <ModulesForm
+        projectId={projectId}
+        initialDisabled={project.disabled_modules ?? []}
+        canManage={canManageProject(access.role)}
       />
       <BoardColumnsForm projectId={projectId} overrides={boardColumns} />
       <LabelPresetsForm

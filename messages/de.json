@@ -480,6 +480,9 @@
       "import": "Importieren"
     },
     "create": {
+      "templateLabel": "Vorlage",
+      "templateNone": "Keine - alle Bereiche, keine Labels",
+      "templateHelp": "Startet das Projekt mit den Bereichen und Labels, die zu deiner Branche passen. Beides lässt sich später in den Projekteinstellungen ändern.",
       "trigger": "Neues Projekt",
       "dialogTitle": "Projekt erstellen",
       "dialogDescription": "Erstelle ein neues Projekt in {orgName}",
@@ -854,6 +857,12 @@
         "urgent": "Dringend"
       }
     },
+    "modulesTitle": "Module",
+    "modulesDescription": "Wähle, welche Bereiche dieses Projekt in der Navigation zeigt. Nicht jedes Team braucht Memory, den Graphen oder ein Moodboard.",
+    "modulesHint": "Ein ausgeblendetes Modul löscht nichts - die Inhalte bleiben, Links funktionieren weiter, und beim Wiedereinschalten ist alles wie vorher.",
+    "modulesSave": "Module speichern",
+    "modulesSaved": "Gespeichert",
+    "modulesManageHint": "Nur Inhaber oder Admins des Projekts können Module ändern.",
     "boardColumnsTitle": "Board-Spalten",
     "boardColumnsDescription": "Benenne Spalten des Aufgabenboards dieses Projekts um, ordne sie neu oder blende sie aus. Die zugrunde liegenden Aufgabenstatus ändern sich nicht - dies betrifft nur Labels und die Anzeige.",
     "moveUpAria": "{label} nach oben verschieben",

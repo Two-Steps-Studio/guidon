@@ -45,7 +45,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
           </Tooltip>
           <Separator orientation="vertical" className="h-4" />
           <div className="flex-1" />
-          <CommandPalette currentProjectId={sidebarProps.projectId} />
+          <CommandPalette currentProjectId={sidebarProps.projectId} disabledModules={sidebarProps.disabledModules} />
           <NotificationsBell />
         </header>
         {children}
