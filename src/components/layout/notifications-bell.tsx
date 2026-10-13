@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -81,24 +82,31 @@ export function NotificationsBell() {
 
   return (
     <DropdownMenu onOpenChange={(open) => open && refresh()}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-8 w-8"
-          aria-label={unreadCount > 0 ? t("bellAriaUnread", { count: unreadCount }) : t("bellAria")}
-        >
-          <Bell className="size-4" />
-          {unreadCount > 0 && (
-            <span
-              aria-hidden
-              className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground"
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-8 w-8"
+              aria-label={unreadCount > 0 ? t("bellAriaUnread", { count: unreadCount }) : t("bellAria")}
             >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
+              <Bell className="size-4" />
+              {unreadCount > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground"
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {unreadCount > 0 ? t("bellAriaUnread", { count: unreadCount }) : t("title")}
+        </TooltipContent>
+      </Tooltip>
       <DropdownMenuContent
         align="end"
         collisionPadding={8}

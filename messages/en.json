@@ -75,6 +75,7 @@
     }
   },
   "nav": {
+    "toggleSidebar": "Toggle sidebar (Ctrl+B)",
     "dashboard": "Dashboard",
     "projects": "Projects",
     "organizations": "Organizations",

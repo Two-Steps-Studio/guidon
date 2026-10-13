@@ -75,6 +75,7 @@
     }
   },
   "nav": {
+    "toggleSidebar": "Seitenleiste ein-/ausblenden (Strg+B)",
     "dashboard": "Dashboard",
     "projects": "Projekte",
     "organizations": "Organisationen",

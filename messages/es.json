@@ -75,6 +75,7 @@
     }
   },
   "nav": {
+    "toggleSidebar": "Mostrar/ocultar barra lateral (Ctrl+B)",
     "dashboard": "Panel",
     "projects": "Proyectos",
     "organizations": "Organizaciones",

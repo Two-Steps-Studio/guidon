@@ -75,6 +75,7 @@
     }
   },
   "nav": {
+    "toggleSidebar": "Pokaż/ukryj pasek boczny (Ctrl+B)",
     "dashboard": "Pulpit",
     "projects": "Projekty",
     "organizations": "Organizacje",
