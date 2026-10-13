@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +41,8 @@ import {
   type BoardColumn,
 } from "@/lib/work/task-board";
 import { type TaskCardMember } from "@/components/work/task-card";
+import { LabelChip } from "@/components/work/label-chip";
+import { useLabelPresets } from "@/components/work/label-presets-context";
 import { DescriptionToolbar, descriptionKeyDown } from "@/components/work/description-toolbar";
 import { toggleTaskAtLine, type EditResult } from "@/lib/work/markdown-edit";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
@@ -124,6 +127,21 @@ function TaskDetailDialogInner({
   const [form, setForm] = useState<TaskForm | null>(() =>
     task ? formToTask(task) : null
   );
+  const labelPresets = useLabelPresets();
+  const currentTags = (form?.tags ?? "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+  // Tapping a preset adds it to (or removes it from) the comma-separated
+  // labels field, so free-typed labels and presets end up in the same place.
+  const togglePreset = (name: string) =>
+    setForm((current) => {
+      if (!current) return current;
+      const tags = current.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
+      const has = tags.some((tag) => tag.toLowerCase() === name.toLowerCase());
+      const next = has ? tags.filter((tag) => tag.toLowerCase() !== name.toLowerCase()) : [...tags, name];
+      return { ...current, tags: next.join(", ") };
+    });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -531,6 +549,28 @@ function TaskDetailDialogInner({
                 setForm({ ...form, tags: event.target.value })
               }
             />
+            {labelPresets.length > 0 && (
+              <div className="flex flex-wrap gap-1.5" aria-label={t("labelPresetsAria")} role="group">
+                {labelPresets.map((preset) => {
+                  const active = currentTags.some((tag) => tag.toLowerCase() === preset.name.toLowerCase());
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      disabled={!canEdit}
+                      aria-pressed={active}
+                      onClick={() => togglePreset(preset.name)}
+                      className={cn(
+                        "rounded-full transition-opacity disabled:cursor-not-allowed",
+                        active ? "opacity-100" : "opacity-50 hover:opacity-80"
+                      )}
+                    >
+                      <LabelChip name={preset.name} color={preset.color} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               {t("commaSeparated")}
             </p>

@@ -1,5 +1,7 @@
 "use client";
 
+import { LabelPresetsProvider } from "@/components/work/label-presets-context";
+import type { LabelPreset } from "@/lib/work/label-presets";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -63,6 +65,7 @@ export function WorkBoard({
   columns = BOARD_COLUMNS,
   aiAvailable = false,
   aiEnabled = true,
+  labelPresets = [],
 }: {
   projectId: string;
   projectName: string;
@@ -79,6 +82,8 @@ export function WorkBoard({
   aiAvailable?: boolean;
   /** projects.ai_enabled (migration 046) - hides agent-only UI in the task dialog. */
   aiEnabled?: boolean;
+  /** Project label presets (migration 053) - coloured labels and one-tap picks in the task dialog. */
+  labelPresets?: LabelPreset[];
 }) {
   const t = useTranslations("work");
   const canDelete = role === "owner" || role === "admin";
@@ -225,7 +230,7 @@ export function WorkBoard({
     }));
 
   return (
-    <>
+    <LabelPresetsProvider value={labelPresets}>
       {/* w-full (not just mx-auto + max-w): this page is a flex item of
           <main> (app-sidebar's layout, flex-col with the default
           align-items:stretch) - but auto margins on a flex item's cross
@@ -422,7 +427,7 @@ export function WorkBoard({
         onClose={() => setCreateFor(null)}
         onCreated={upsertTask}
       />
-    </>
+    </LabelPresetsProvider>
   );
 }
 

@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { canCommentOnProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
+import { getLabelPresets } from "@/lib/data/label-presets";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
@@ -146,6 +147,7 @@ export default async function ProjectWorkPage({
   // Migration 046: a project can switch every AI feature off at once - no
   // point asking the org whether a provider is configured then.
   const aiEnabled = access.project.ai_enabled;
+  const labelPresetsPromise = getLabelPresets(access.userId, projectId);
   const aiAvailablePromise = aiEnabled
     ? isAIAvailableForOrg(access.project.organization_id, access.userId)
     : Promise.resolve(false);
@@ -268,6 +270,7 @@ export default async function ProjectWorkPage({
       columns={columns}
       aiAvailable={await aiAvailablePromise}
       aiEnabled={aiEnabled}
+      labelPresets={await labelPresetsPromise}
     />
   );
 }
