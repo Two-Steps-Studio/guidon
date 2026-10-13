@@ -74,7 +74,16 @@
       "retry": "Spróbuj ponownie"
     }
   },
+  "upgrade": {
+    "title": "Ulepsz plan",
+    "description": "Plan dotyczy całej organizacji. Wybierz organizację, której plan chcesz zmienić.",
+    "choosePlan": "Wybierz plan",
+    "noOrganizationsTitle": "Brak organizacji, którą możesz ulepszyć",
+    "noOrganizationsDescription": "Plan organizacji może zmienić tylko jej właściciel lub administrator. Poproś jednego z nich albo utwórz własną organizację.",
+    "createOrganization": "Utwórz organizację"
+  },
   "nav": {
+    "upgradePlan": "Ulepsz plan",
     "toggleSidebar": "Pokaż/ukryj pasek boczny (Ctrl+B)",
     "dashboard": "Pulpit",
     "projects": "Projekty",

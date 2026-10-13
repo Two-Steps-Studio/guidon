@@ -4,6 +4,7 @@ import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/auth/session-coo
 import { assertValidSupabaseUrl } from '@/lib/supabase-env'
 import { MARKDOWN_CONTENT_TYPE, isSignedInSection, notFoundMarkdown, prefersMarkdown } from '@/lib/agent-web'
 import { SITE_URL } from '@/lib/site-url'
+import { safeRedirect } from '@/lib/auth/safe-redirect'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
@@ -86,6 +87,18 @@ function redirectToLogin(request: NextRequest, pathname: string) {
 }
 
 /**
+ * A signed-in user opening the login/signup page goes where that page would
+ * have sent them after signing in - e.g. the pricing section's "upgrade"
+ * link (/auth/signup?redirect=/upgrade?plan=pro) - instead of always the
+ * dashboard.
+ */
+function redirectSignedIn(request: NextRequest) {
+  const target = new URL(safeRedirect(request.nextUrl.searchParams.get('redirect')), request.url)
+  if (target.origin !== request.nextUrl.origin) return NextResponse.redirect(new URL('/dashboard', request.url))
+  return NextResponse.redirect(target)
+}
+
+/**
  * Answers that don't depend on who is asking, decided before any session
  * lookup (see src/lib/agent-web.ts):
  * - `/` with `Accept: text/markdown` is served the Markdown homepage, with
@@ -136,7 +149,7 @@ async function proxyLocal(request: NextRequest) {
   }
 
   if (userId && AUTH_ENTRY_ROUTES.has(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return redirectSignedIn(request)
   }
 
   return NextResponse.next({ request })
@@ -206,7 +219,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && AUTH_ENTRY_ROUTES.has(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return redirectSignedIn(request)
   }
 
   return response

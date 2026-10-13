@@ -74,7 +74,16 @@
       "retry": "Try again"
     }
   },
+  "upgrade": {
+    "title": "Upgrade plan",
+    "description": "Plans apply to a whole organization. Choose the organization whose plan you want to change.",
+    "choosePlan": "Choose a plan",
+    "noOrganizationsTitle": "No organization you can upgrade",
+    "noOrganizationsDescription": "Only an organization's owner or admins can change its plan. Ask one of them, or create your own organization.",
+    "createOrganization": "Create organization"
+  },
   "nav": {
+    "upgradePlan": "Upgrade plan",
     "toggleSidebar": "Toggle sidebar (Ctrl+B)",
     "dashboard": "Dashboard",
     "projects": "Projects",

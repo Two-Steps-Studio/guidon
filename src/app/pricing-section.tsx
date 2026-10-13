@@ -172,7 +172,19 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                         identically in English today, but are independently
                         translatable so a locale can word the pricing-card
                         CTA differently from the hero without touching both. */}
-                    <Link href="/auth/signup">{t("getStarted")}</Link>
+                    {/* A paid plan goes on to /upgrade after signing up (or
+                        straight there for someone already signed in - see
+                        redirectSignedIn in proxy.ts), which opens the
+                        organization's billing page with this plan picked. */}
+                    <Link
+                      href={
+                        price.cents
+                          ? `/auth/signup?redirect=${encodeURIComponent(`/upgrade?plan=${plan.id}`)}`
+                          : "/auth/signup"
+                      }
+                    >
+                      {t("getStarted")}
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>

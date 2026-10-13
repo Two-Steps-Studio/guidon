@@ -74,7 +74,16 @@
       "retry": "Erneut versuchen"
     }
   },
+  "upgrade": {
+    "title": "Plan upgraden",
+    "description": "Pläne gelten für eine ganze Organisation. Wähle die Organisation, deren Plan du ändern möchtest.",
+    "choosePlan": "Plan wählen",
+    "noOrganizationsTitle": "Keine Organisation, die du upgraden kannst",
+    "noOrganizationsDescription": "Nur Inhaber oder Admins einer Organisation können ihren Plan ändern. Frag eine dieser Personen oder erstelle deine eigene Organisation.",
+    "createOrganization": "Organisation erstellen"
+  },
   "nav": {
+    "upgradePlan": "Plan upgraden",
     "toggleSidebar": "Seitenleiste ein-/ausblenden (Strg+B)",
     "dashboard": "Dashboard",
     "projects": "Projekte",

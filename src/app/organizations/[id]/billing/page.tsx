@@ -61,10 +61,12 @@ export default async function BillingPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ checkout?: string }>;
+  searchParams: Promise<{ checkout?: string; plan?: string }>;
 }) {
   const { id: orgId } = await params;
-  const { checkout } = await searchParams;
+  // `plan` comes from /upgrade (e.g. a pricing-section link) and only
+  // highlights that row - nothing is bought until the user clicks Upgrade.
+  const { checkout, plan: requestedPlanId } = await searchParams;
   const t = await getTranslations("organizations.billing");
   const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
   const canManageBilling = canManageOrg(access.role) && isBillingConfigured();
@@ -205,8 +207,12 @@ export default async function BillingPage({
               <tbody className="divide-y divide-border">
                 {plans.map((plan) => {
                   const isCurrent = plan.id === currentPlanId;
+                  const isRequested = !isCurrent && plan.id === requestedPlanId;
                   return (
-                    <tr key={plan.id} className={`[&>td]:px-4 [&>td]:py-3 ${isCurrent ? "bg-primary/5" : ""}`}>
+                    <tr
+                      key={plan.id}
+                      className={`[&>td]:px-4 [&>td]:py-3 ${isCurrent ? "bg-primary/5" : ""} ${isRequested ? "bg-primary/10 outline outline-2 -outline-offset-2 outline-primary" : ""}`}
+                    >
                       <td className="font-medium">{plan.name}</td>
                       <td>
                         {formatPrice(plan.price_cents, t)}

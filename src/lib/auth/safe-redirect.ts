@@ -5,5 +5,7 @@
 export function safeRedirect(value: string | null | undefined): string {
   if (!value) return "/dashboard";
   if (!value.startsWith("/") || value.startsWith("//")) return "/dashboard";
+  // Browsers read "\" as "/" in URLs, so "/\evil.com" means "//evil.com".
+  if (value.includes("\\")) return "/dashboard";
   return value;
 }

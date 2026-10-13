@@ -74,7 +74,16 @@
       "retry": "Intentar de nuevo"
     }
   },
+  "upgrade": {
+    "title": "Mejorar plan",
+    "description": "Los planes se aplican a toda una organización. Elige la organización cuyo plan quieres cambiar.",
+    "choosePlan": "Elegir plan",
+    "noOrganizationsTitle": "No hay ninguna organización que puedas mejorar",
+    "noOrganizationsDescription": "Solo el propietario o los administradores de una organización pueden cambiar su plan. Pídeselo a uno de ellos o crea tu propia organización.",
+    "createOrganization": "Crear organización"
+  },
   "nav": {
+    "upgradePlan": "Mejorar plan",
     "toggleSidebar": "Mostrar/ocultar barra lateral (Ctrl+B)",
     "dashboard": "Panel",
     "projects": "Proyectos",

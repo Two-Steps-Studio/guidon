@@ -7,6 +7,8 @@ import { AppSidebar, type AppSidebarProps } from "@/components/layout/app-sideba
 import { CommandPalette } from "@/components/layout/command-palette";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { isBillingConfigured } from "@/lib/billing/stripe";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
 
@@ -26,7 +28,13 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar {...sidebarProps} currentTheme={currentTheme} />
+      <AppSidebar
+        {...sidebarProps}
+        currentTheme={currentTheme}
+        // Plans only exist on Guidon Cloud (self-hosted has no limits - see
+        // the billing page), and upgrading needs Stripe.
+        showUpgrade={!hasDirectDatabase() && isBillingConfigured()}
+      />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
           <Tooltip>
