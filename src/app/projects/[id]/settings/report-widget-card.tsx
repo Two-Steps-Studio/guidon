@@ -14,7 +14,8 @@ import { createReportWidgetKey, revokeApiKey, type ApiKeyRow } from "@/app/profi
  * reports:write key bound to this project and, optionally, to the sites
  * it's installed on (migration 054), and shows the <script> tag to paste.
  * The full key is shown once, like every API key; the list below (the
- * caller's own keys for this project) is where it's revoked.
+ * caller's own keys for this project - including the ones the engine
+ * plugins' "Set Up In-Game Reports" minted) is where it's revoked.
  */
 export function ReportWidgetCard({
   projectId,
@@ -130,13 +131,18 @@ export function ReportWidgetCard({
 
         {keys.length > 0 && (
           <div className="space-y-2 border-t border-border pt-4">
-            <p className="text-sm font-medium">{t("reportWidgetActiveKeys")}</p>
+            <div>
+              <p className="text-sm font-medium">{t("reportWidgetActiveKeys")}</p>
+              <p className="text-xs text-muted-foreground">{t("reportWidgetActiveKeysHint")}</p>
+            </div>
             <ul className="space-y-2">
               {keys.map((key) => (
                 <li key={key.id} className="flex items-center justify-between gap-3 text-sm">
                   <div className="min-w-0">
-                    <p className="font-mono text-xs">{key.key_prefix}…</p>
+                    <p className="truncate">{key.name}</p>
                     <p className="truncate text-xs text-muted-foreground">
+                      <span className="font-mono">{key.key_prefix}…</span>
+                      {" · "}
                       {key.allowed_origins?.length ? key.allowed_origins.join(", ") : t("reportWidgetAnySite")}
                       {" · "}
                       {new Date(key.created_at).toLocaleDateString(locale)}

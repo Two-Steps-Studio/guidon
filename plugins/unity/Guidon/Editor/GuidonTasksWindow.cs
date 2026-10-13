@@ -769,6 +769,16 @@ namespace Guidon.Tasks.Editor
             string projectId = CurrentProjectId;
             if (string.IsNullOrEmpty(projectId)) return;
 
+            // Builds that already shipped the old key keep reporting with it until it's revoked.
+            var existing = GuidonReportsSetup.Find();
+            if (existing != null && !string.IsNullOrEmpty(existing.reportKey) && !EditorUtility.DisplayDialog(
+                    "Replace Report Key",
+                    "Create a new report key and save it in place of the current one?\n\nThe old key keeps working in builds that already shipped it. Revoke it on the website (Project Settings > Bug report widget) once you no longer need it.",
+                    "Replace", "Cancel"))
+            {
+                return;
+            }
+
             SetBusy(true);
             _reportsSetupButton.SetEnabled(false);
             var result = await GuidonApiClient.CreateReportKey(projectId);

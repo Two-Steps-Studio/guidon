@@ -680,6 +680,7 @@ func _link(text: String, action: Callable) -> Button:
 
 
 func _confirm_delete(task_id: String, title: String) -> void:
+	_confirm.title = "Delete Task"
 	_confirm.dialog_text = "Delete \"%s\"? Its subtasks and comments are deleted too." % title
 	for connection in _confirm.confirmed.get_connections():
 		_confirm.confirmed.disconnect(connection.callable)
@@ -788,7 +789,7 @@ func _build_reports_bar() -> void:
 	_reports_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_reports_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(_reports_status)
-	_reports_setup_button = _toolbar_button(row, "Set Up In-Game Reports", setup_reports, "primary")
+	_reports_setup_button = _toolbar_button(row, "Set Up In-Game Reports", _on_reports_setup_pressed, "primary")
 	_reports_setup_button.tooltip_text = "Create a report key for this project and save it in Project Settings > Guidon Reports"
 	add_child(_reports_bar)
 
@@ -815,6 +816,20 @@ func _update_reports_status() -> void:
 	else:
 		_reports_status.text = "In-game reports are on: press %s in a running debug build. Reports land in Backlog, tagged in-game." % hotkey
 		_reports_setup_button.text = "New Report Key"
+
+
+## Replacing a saved key gets a confirmation: builds that already shipped
+## the old one keep reporting with it until it's revoked on the website.
+func _on_reports_setup_pressed() -> void:
+	if str(ProjectSettings.get_setting("guidon_reports/report_key", "")) == "":
+		setup_reports()
+		return
+	_confirm.title = "Replace Report Key"
+	_confirm.dialog_text = "Create a new report key and save it in place of the current one?\n\nThe old key keeps working in builds that already shipped it. Revoke it on the website (Project Settings > Bug report widget) once you no longer need it."
+	for connection in _confirm.confirmed.get_connections():
+		_confirm.confirmed.disconnect(connection.callable)
+	_confirm.confirmed.connect(setup_reports, CONNECT_ONE_SHOT)
+	_confirm.popup_centered()
 
 
 ## Creates a reports:write key bound to the open project and saves it, with

@@ -602,6 +602,14 @@ void SGuidonTasksWidget::SetUpReports()
 	const FString ProjectId = CurrentProjectId;
 	if (ProjectId.IsEmpty()) return;
 
+	// Builds that already shipped the old key keep reporting with it until it's revoked.
+	if (!GetDefault<UGuidonReportsSettings>()->ReportKey.IsEmpty()
+		&& FMessageDialog::Open(EAppMsgType::YesNo, LOCTEXT("ReplaceReportKey",
+			"Create a new report key and save it in place of the current one?\n\nThe old key keeps working in builds that already shipped it. Revoke it on the website (Project Settings > Bug report widget) once you no longer need it.")) != EAppReturnType::Yes)
+	{
+		return;
+	}
+
 	BeginRequest();
 	GuidonApi::CreateReportKey(ProjectId, [Weak = WeakSelf(), ProjectId](bool bOk, const FString& Key, const FString& Error)
 	{
