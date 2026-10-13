@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/auth/session-cookie'
 import { assertValidSupabaseUrl } from '@/lib/supabase-env'
+import { MARKDOWN_CONTENT_TYPE, isSignedInSection, notFoundMarkdown, prefersMarkdown } from '@/lib/agent-web'
+import { SITE_URL } from '@/lib/site-url'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
@@ -44,6 +46,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // Stripe webhook - same reasoning: Stripe never carries a session cookie,
   // the route verifies the Stripe-Signature header itself.
   '/api/stripe/webhook',
+  // Machine-readable descriptions of the site for AI agents: the llms.txt
+  // guide (public/llms.txt) and the homepage as Markdown (src/app/index.md).
+  '/llms.txt',
+  '/index.md',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every
@@ -80,6 +86,37 @@ function redirectToLogin(request: NextRequest, pathname: string) {
 }
 
 /**
+ * Answers that don't depend on who is asking, decided before any session
+ * lookup (see src/lib/agent-web.ts):
+ * - `/` with `Accept: text/markdown` is served the Markdown homepage, with
+ *   `Vary: Accept`. The HTML page can't carry that header too - Next
+ *   overwrites `Vary` on every app-router page - but this runs before the
+ *   page cache, so the two never share a cache entry here; browsers never
+ *   ask for Markdown.
+ * - A path that is neither public nor under a signed-in section has no page,
+ *   so it must get a real 404 - redirecting it to the login page told agents
+ *   every path exists. Next renders the 404 page; agents asking for Markdown
+ *   get a Markdown 404 straight from here.
+ */
+function agentResponse(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl
+  const wantsMarkdown = prefersMarkdown(request.headers.get('accept'))
+
+  if (pathname === '/') {
+    return wantsMarkdown ? NextResponse.rewrite(new URL('/index.md', request.url)) : null
+  }
+  if (isPublicRoute(pathname) || isSignedInSection(pathname)) return null
+
+  if (wantsMarkdown) {
+    return new NextResponse(notFoundMarkdown(pathname, SITE_URL), {
+      status: 404,
+      headers: { 'Content-Type': MARKDOWN_CONTENT_TYPE, Vary: 'Accept' },
+    })
+  }
+  return NextResponse.next({ request })
+}
+
+/**
  * Self-hosted branch: no Supabase software is assumed to exist, so identity
  * comes from the signed session cookie (src/lib/auth/local-auth.ts) instead
  * of asking GoTrue. Verification is a local HMAC check - no database round
@@ -106,6 +143,9 @@ async function proxyLocal(request: NextRequest) {
 }
 
 export async function proxy(request: NextRequest) {
+  const early = agentResponse(request)
+  if (early) return early
+
   if (process.env.DATABASE_URL) {
     return proxyLocal(request)
   }

@@ -1,0 +1,52 @@
+# Guidon
+
+> Guidon is context-first project management for development teams: a Kanban task board per project, plus the decisions, sources, technologies and project memory behind the work. AI agents can pick up tasks, read their full context, report progress and hand finished work back for human review through an MCP server and a REST API.
+
+Guidon is a web app at https://useguidon.com (it can also be self-hosted). Everything is organised as organizations -> projects -> tasks. Tasks move through the board columns `backlog`, `todo`, `in_progress`, `ai_working`, `review` and `done`; projects can rename or hide columns.
+
+## When to use Guidon
+
+Use Guidon when an agent should:
+
+- Find the next task to work on in a team's project and claim it, so humans see the agent is on it (`start_task` moves it to the AI-working column).
+- Get everything needed to do a task in one call: description, project constraints, verified facts, related decisions, files, pull requests and previous attempts (`get_task_context`).
+- Report what it did: comment on the task with a summary and PR link, record failed or partial attempts with the reason, and move the task to `review` for a human to check.
+- Create follow-up tasks or subtasks it discovers while working.
+
+Don't use Guidon for general note-taking, chat, or as a code host - it tracks the work and its context, the code lives in your Git host.
+
+## How to connect
+
+1. A Guidon user creates an API key in their profile (https://useguidon.com/profile). Keys look like `guidon_...` and act as that user, limited to the projects they can access and to the key's scopes.
+2. Send it as `Authorization: Bearer guidon_...` on every request. Requests without a valid key get HTTP 401.
+
+### MCP server (recommended for agents)
+
+- Endpoint: `https://useguidon.com/api/mcp` (MCP Streamable HTTP transport).
+- Claude Code: `claude mcp add --transport http guidon https://useguidon.com/api/mcp --header "Authorization: Bearer guidon_..."`
+- Tools: `list_projects`, `list_tasks`, `get_task`, `get_task_context`, `create_task`, `update_task`, `delete_task`, `start_task`, `set_task_status`, `complete_task`, `comment_on_task`, `list_attempts`, `record_attempt`.
+- Typical flow: `list_projects` -> `list_tasks` -> `get_task_context` -> `start_task` -> do the work -> `comment_on_task` -> `set_task_status` with `review`.
+- `complete_task` (straight to Done) only works when the project allows AI auto-complete; prefer `review`.
+
+### REST API
+
+Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key:
+
+- `GET /projects` - projects the key's user belongs to
+- `GET|POST /projects/{projectId}/tasks` - list or create tasks
+- `GET /projects/{projectId}/columns` - the project's visible board columns
+- `GET|PATCH|DELETE /tasks/{taskId}` - read, edit or delete a task
+- `GET /tasks/{taskId}/context` - the task's full working context as Markdown
+- `POST /tasks/{taskId}/start` - claim a task
+- `PATCH /tasks/{taskId}/status` - move a task to another column
+- `POST /tasks/{taskId}/complete` - mark done (if the project allows it)
+- `GET|POST /tasks/{taskId}/comment` - read or post task comments
+- `GET|POST /tasks/{taskId}/attempts` - list or record attempts
+
+## Pages
+
+- [Homepage](https://useguidon.com/): what Guidon is and its features. Also served as Markdown to `Accept: text/markdown`, or at [/index.md](https://useguidon.com/index.md).
+- [Sign up](https://useguidon.com/auth/signup)
+- [Terms of Service](https://useguidon.com/legal/terms)
+- [Privacy Policy](https://useguidon.com/legal/privacy)
+- [Sitemap](https://useguidon.com/sitemap.xml)
