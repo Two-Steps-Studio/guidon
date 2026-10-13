@@ -32,6 +32,10 @@ does for the UI.
   with another scope: key creation refuses it, and the route answers 403 to
   a key that has other scopes too. Validation lives in
   `src/lib/api/game-report.ts` (`npm run test:reports`).
+- The web bug-report widget (`public/widget/report.js`, set up from a
+  project's Settings -> "Bug report widget") posts to the same reports route
+  with `source=web` (tag `web` instead of `in-game`). The route answers CORS
+  (`*`, bearer key, no cookies) so the widget works from any site.
 - Authenticated by API key + scope via `guardApiRequest` (`search` is the
   exception: it uses the browser session).
 

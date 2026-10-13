@@ -74,5 +74,16 @@ check("reports:write alone is allowed", !reportsScopeMixedWithOthers(["reports:w
 check("reports:write + tasks:read is refused", reportsScopeMixedWithOthers(["reports:write", "tasks:read"]));
 check("keys without reports:write are unaffected", !reportsScopeMixedWithOthers(["tasks:read", "tasks:write"]));
 
+console.log("\n  source (web widget)");
+{
+  const web = buildReport({ title: "Button does nothing", description: "Clicked Save", source: "web", reporter: "ana@example.com" });
+  check("web: tagged web, not in-game", web.ok && JSON.stringify(web.value.tags) === '["bug","web"]', JSON.stringify(web.value?.tags));
+  check("web: footer says website", web.ok && web.value.description.includes("Reported from the website by **ana@example.com**"));
+  const game = buildReport({ title: "x" });
+  check("no source: still a game report", game.ok && game.value.tags.includes("in-game") && game.value.description.includes("Reported from the game"));
+  const odd = buildReport({ title: "x", source: "<script>" });
+  check("unknown source falls back to game", odd.ok && odd.value.tags.includes("in-game"));
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail === 0 ? 0 : 1);

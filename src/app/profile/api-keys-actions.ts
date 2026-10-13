@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { dataClient } from "@/lib/data-client";
 import { generateApiKey, hashApiKey, keyPrefix, API_KEY_SCOPES } from "@/lib/api/api-keys";
 import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
+import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 
 export type ApiKeyRow = {
   id: string;
@@ -114,4 +115,28 @@ export async function revokeApiKey(keyId: string): Promise<{ error: string | nul
 
   revalidatePath("/profile");
   return { error: null };
+}
+
+/**
+ * Key for the web bug-report widget (public/widget/report.js), created from
+ * the project's settings. reports:write only - the key sits in a public web
+ * page, and that scope can file reports but read or change nothing. Filing
+ * still runs as this user under RLS (tasks_insert: owner/admin/developer),
+ * which is the same gate as the check below.
+ */
+export async function createReportWidgetKey(
+  projectId: string
+): Promise<{ error: string | null; fullKey: string | null }> {
+  const access = await getProjectAccess(projectId);
+  if (!access || !canWriteProject(access.role)) {
+    return { error: "You need to be able to create tasks in this project to set up the widget.", fullKey: null };
+  }
+  const date = new Date().toISOString().slice(0, 10);
+  try {
+    const result = await mintApiKey(access.userId, `Web bug reports - ${access.project.name} ${date}`, ["reports:write"]);
+    return { error: result.error, fullKey: result.fullKey };
+  } catch (error) {
+    console.error("Failed to create the report widget key:", error);
+    return { error: "Could not create the key. Try again.", fullKey: null };
+  }
 }

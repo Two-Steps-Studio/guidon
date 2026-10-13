@@ -30,14 +30,41 @@ const FORBIDDEN = "This API key's user may not create tasks in this project (nee
  * leaked report key can file reports (rate-limited per key like every
  * route) but never read or change the project. multipart/form-data:
  * `title` (required), `description`, `category` (bug|crash|feedback),
- * `reporter`, `metadata` (JSON object of short values), `file` (repeatable).
+ * `reporter`, `metadata` (JSON object of short values), `source` (game|web,
+ * default game), `file` (repeatable).
  *
  * Identity is still the key's user, and RLS still decides: tasks_insert
  * needs owner/admin/developer, task_attachments_insert owner/admin/
  * developer/tester, so a report key must be created by someone with one of
  * the former roles in the project.
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+/**
+ * The web widget (public/widget/report.js) posts here from whatever site it's
+ * embedded on, so the route answers cross-origin requests. `*` is safe: the
+ * request carries a bearer key, never cookies, and that key can only file
+ * reports (see above) - anyone who can read the page already has it.
+ */
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
+function withCors(response: Response): Response {
+  for (const [key, value] of Object.entries(CORS_HEADERS)) response.headers.set(key, value);
+  return response;
+}
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
+export async function POST(request: NextRequest, context: { params: Promise<{ projectId: string }> }) {
+  return withCors(await handleReport(request, context));
+}
+
+async function handleReport(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const guard = await guardApiRequest(request, "reports:write");
   if (isGuardError(guard)) return guard;
   // Refused here too, not only at key creation: a key made before that
@@ -77,6 +104,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     category: form.get("category"),
     reporter: form.get("reporter"),
     metadata: form.get("metadata"),
+    source: form.get("source"),
   });
   if (!report.ok) return NextResponse.json({ error: report.error }, { status: 400 });
 

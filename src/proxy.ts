@@ -67,7 +67,9 @@ const EXACT_PUBLIC_ROUTES = new Set([
 // (scripts/build-plugin-zips.mjs) - open-source code, nothing user-specific,
 // and Guidon Desktop's plugin installer fetches them without a browser
 // session. Signing in is still what the plugins themselves need to do anything.
-const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/']
+// /widget/ holds the embeddable bug-report widget (public/widget/report.js),
+// loaded by other people's websites with no Guidon session.
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/', '/widget/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])

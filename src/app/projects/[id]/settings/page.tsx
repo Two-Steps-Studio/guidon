@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { canManageProject, requireProjectAccess } from "@/lib/data/project-access";
+import { canManageProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
+import { SITE_URL } from "@/lib/site-url";
 import { getLabelPresets } from "@/lib/data/label-presets";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -8,6 +9,7 @@ import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
 import { BoardColumnsForm } from "./board-columns-form";
 import { LabelPresetsForm } from "./label-presets-form";
+import { ReportWidgetCard } from "./report-widget-card";
 import { ExportProjectCard } from "./export-project-card";
 import { DiscordIntegrationForm } from "./discord-integration-form";
 import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
@@ -142,6 +144,7 @@ export default async function ProjectSettingsPage({
         />
       )}
       <DiscordIntegrationForm projectId={projectId} initialInfo={discordInfo} />
+      {canWriteProject(access.role) && <ReportWidgetCard projectId={projectId} siteUrl={SITE_URL} />}
       <ExportProjectCard projectId={projectId} />
     </div>
   );
