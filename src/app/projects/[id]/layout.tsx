@@ -40,6 +40,7 @@ export default async function ProjectLayout({
       currentProjectName={access.project.name}
       projects={switchableProjects}
       projectColor={access.project.color}
+      disabledModules={access.project.disabled_modules}
     >
       {children}
       <AIChat projectId={id} />

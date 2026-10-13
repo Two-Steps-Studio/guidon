@@ -16,11 +16,13 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createProject, type CreateProjectState } from "./actions";
 import { type ProjectType, type ProjectMethodology } from "@/types/project";
+import { PROJECT_TEMPLATES, type ProjectTemplate } from "@/lib/work/project-modules";
 
 const initialState: CreateProjectState = { error: null };
 
 const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
 const PROJECT_METHODOLOGY_VALUES: ProjectMethodology[] = ["standard", "scrum"];
+const TEMPLATE_VALUES = Object.keys(PROJECT_TEMPLATES) as ProjectTemplate[];
 
 export function CreateProjectDialog({
   orgId,
@@ -70,6 +72,7 @@ export function CreateProjectDialog({
 function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void }) {
   const t = useTranslations("projects.create");
   const tCommon = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const createProjectWithOrg = createProject.bind(null, orgId);
   const [state, formAction, pending] = useActionState(createProjectWithOrg, initialState);
 
@@ -102,6 +105,23 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
             </option>
           ))}
         </select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="projectTemplate">{t("templateLabel")}</Label>
+        <select
+          id="projectTemplate"
+          name="template"
+          defaultValue=""
+          className="w-full px-3 py-2 border rounded-md bg-background"
+        >
+          <option value="">{t("templateNone")}</option>
+          {TEMPLATE_VALUES.map((value) => (
+            <option key={value} value={value}>
+              {tSettings(`labelStarter.${value}.title`)}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">{t("templateHelp")}</p>
       </div>
       <div className="space-y-2">
         <Label>{t("workflowLabel")}</Label>

@@ -11,6 +11,9 @@ import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import type { ProjectMethodology, ProjectType } from "@/types/project";
+import { getTranslations } from "next-intl/server";
+import { PROJECT_TEMPLATES, isProjectTemplate, type ProjectTemplate } from "@/lib/work/project-modules";
+import { LABEL_STARTER_SETS } from "@/lib/work/label-presets";
 
 export type CreateProjectState = {
   error: string | null;
@@ -62,6 +65,15 @@ export async function createProject(
   // entirely when not - so anything but "on" means AI was switched off.
   const aiEnabled = formData.get("aiEnabled") === "on";
 
+  // Optional template (src/lib/work/project-modules.ts): hidden modules +
+  // the matching label set. Empty = everything visible, no labels, as before.
+  const templateRaw = formData.get("template");
+  let template: ProjectTemplate | null = null;
+  if (typeof templateRaw === "string" && templateRaw) {
+    if (!isProjectTemplate(templateRaw)) return { error: "Invalid template." };
+    template = templateRaw;
+  }
+
   // The owner membership is created by private.handle_new_project(); do not
   // insert it again here (see migration 005/README for the duplicate-key bug
   // that caused). Requires migration 009 for the RETURNING select below.
@@ -89,6 +101,7 @@ export async function createProject(
       project_type: projectType,
       methodology,
       ai_enabled: aiEnabled,
+      ...(template ? { disabled_modules: [...PROJECT_TEMPLATES[template].disabledModules] } : {}),
       created_by: access.userId,
     })
     .select("id")
@@ -96,6 +109,8 @@ export async function createProject(
 
   if (error || !project) return { error: error?.message ?? "Failed to create project." };
   const projectId = project.id;
+
+  if (template) await addTemplateLabels(access.userId, projectId, template);
 
   await logActivity({
     userId: access.userId,
@@ -108,6 +123,28 @@ export async function createProject(
 
   revalidatePath(`/organizations/${orgId}`);
   redirect(`/projects/${projectId}`);
+}
+
+/**
+ * The template's labels, named in the creator's language. Runs after the
+ * project exists (handle_new_project has made the creator owner, so the
+ * owner/admin insert policy from 053 lets them in). A failure here doesn't
+ * undo the project - labels are a convenience, and settings can add them.
+ */
+async function addTemplateLabels(userId: string, projectId: string, template: ProjectTemplate) {
+  const t = await getTranslations("settings");
+  const db = dataClient(userId);
+  let sortOrder = 0;
+  for (const [key, color] of LABEL_STARTER_SETS[template]) {
+    const name = t(`labelStarter.${template}.${key}` as Parameters<typeof t>[0]);
+    const { error } = await db
+      .from("project_label_presets")
+      .insert({ project_id: projectId, name, color, sort_order: sortOrder++ });
+    if (error) {
+      console.error(`Template labels for project ${projectId} failed:`, error.message);
+      return;
+    }
+  }
 }
 
 export type OrgAvatarState = {

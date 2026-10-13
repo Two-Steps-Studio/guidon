@@ -38,6 +38,8 @@ export interface Project {
   methodology: ProjectMethodology;
   /** Migration 046 - one switch for every AI feature on this project. */
   ai_enabled: boolean;
+  /** Migration 055 - sections hidden from navigation (src/lib/work/project-modules.ts). */
+  disabled_modules: string[];
   allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;
