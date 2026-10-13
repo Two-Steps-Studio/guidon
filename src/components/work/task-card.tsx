@@ -22,6 +22,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { LabelChip } from "@/components/work/label-chip";
+import { useLabelPresets } from "@/components/work/label-presets-context";
+import { findLabelPreset } from "@/lib/work/label-presets";
 
 export interface TaskCardMember {
   id: string;
@@ -142,6 +145,7 @@ function TaskCardComponent({
   const done = isDone(task.status);
   const due = dueState(task.due_date, task.status);
   const tags = task.tags ?? [];
+  const labelPresets = useLabelPresets();
 
   const gestureRef = useRef<Gesture | null>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -367,14 +371,21 @@ function TaskCardComponent({
 
       {tags.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-1 pl-3.5">
-          {tags.slice(0, 3).map((tag) => (
-            <li
-              key={tag}
-              className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground"
-            >
-              {tag}
-            </li>
-          ))}
+          {tags.slice(0, 3).map((tag) => {
+            const preset = findLabelPreset(labelPresets, tag);
+            return preset ? (
+              <li key={tag} className="max-w-full">
+                <LabelChip name={tag} color={preset.color} className="py-0 text-[11px] leading-4" />
+              </li>
+            ) : (
+              <li
+                key={tag}
+                className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground"
+              >
+                {tag}
+              </li>
+            );
+          })}
           {tags.length > 3 && (
             <li className="px-1 py-0.5 text-[11px] leading-none text-muted-foreground">
               +{tags.length - 3}

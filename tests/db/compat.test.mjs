@@ -162,8 +162,9 @@ for (const [label, sql, expected] of [
   // (select/insert/update/delete).
   // 31->32 tabel, 110->114 polityk: organization_webhooks (050), 4 polityki
   // (owner/admin organizacji).
-  ["32 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 32],
-  ["114 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 114],
+  // 32->33 tabel, 114->118 polityk: project_label_presets (053), 4 polityki
+  ["33 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 33],
+  ["118 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 118],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -2552,6 +2553,88 @@ section("41. subskrypcja Free dla organizacji sprzed 015 (migracja 052)");
   const orphans = await db.query("SELECT count(*)::int n FROM public.organizations o WHERE NOT EXISTS (SELECT 1 FROM public.subscriptions s WHERE s.organization_id = o.id)");
   check("po 052 kazda organizacja ma subskrypcje", orphans.rows[0].n === 0, orphans.rows[0].n);
   if (before && before !== "free") await db.query("UPDATE public.subscriptions SET plan_id = $2 WHERE organization_id = $1", [orgId, before]);
+}
+
+section("42. project_label_presets: slownik etykiet projektu - czytaja czlonkowie, zmienia owner/admin (migracja 053)");
+
+{
+  let presetId;
+  await withUser(A, async () => {
+    const r = await db.query(
+      "INSERT INTO public.project_label_presets (project_id, name, color) VALUES ($1, 'Bug', '#ef4444') RETURNING id",
+      [projectId]
+    );
+    presetId = r.rows[0]?.id;
+    check("owner dodaje preset etykiety", Boolean(presetId));
+
+    for (const [label, sql] of [
+      ["duplikat nazwy bez wzgledu na wielkosc liter", "INSERT INTO public.project_label_presets (project_id, name) VALUES ($1, 'bug')"],
+      ["zly kolor (CHECK)", "INSERT INTO public.project_label_presets (project_id, name, color) VALUES ($1, 'Red', 'red')"],
+      ["pusta nazwa (CHECK)", "INSERT INTO public.project_label_presets (project_id, name) VALUES ($1, '   ')"],
+      ["spacje na brzegach nazwy (CHECK)", "INSERT INTO public.project_label_presets (project_id, name) VALUES ($1, ' UI')"],
+    ]) {
+      let threw = false;
+      try {
+        await db.query("SAVEPOINT s");
+        await db.query(sql, [projectId]);
+      } catch {
+        threw = true;
+      }
+      await db.query("ROLLBACK TO SAVEPOINT s");
+      check(`odrzucone: ${label}`, threw);
+    }
+
+    const upd = await db.query("UPDATE public.project_label_presets SET color = '#22c55e' WHERE id = $1 AND project_id = $2", [presetId, projectId]);
+    check("owner zmienia kolor presetu", upd.rowCount === 1, upd.rowCount);
+  });
+
+  await withUser(D, async () => {
+    const seen = await db.query("SELECT name FROM public.project_label_presets WHERE project_id = $1", [projectId]);
+    check("developer widzi presety projektu", seen.rows.length === 1, seen.rows.length);
+
+    const upd = await db.query("UPDATE public.project_label_presets SET name = 'x' WHERE id = $1 AND project_id = $2", [presetId, projectId]);
+    check("developer nie zmienia presetu", upd.rowCount === 0, upd.rowCount);
+    const del = await db.query("DELETE FROM public.project_label_presets WHERE id = $1 AND project_id = $2", [presetId, projectId]);
+    check("developer nie usuwa presetu", del.rowCount === 0, del.rowCount);
+
+    let threw = false;
+    try {
+      await db.query("SAVEPOINT s");
+      await db.query("INSERT INTO public.project_label_presets (project_id, name) VALUES ($1, 'Feature')", [projectId]);
+    } catch {
+      threw = true;
+    }
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    check("developer nie dodaje presetu", threw);
+  });
+
+  await withUser(B, async () => {
+    const seen = await db.query("SELECT id FROM public.project_label_presets WHERE project_id = $1", [projectId]);
+    check("osoba spoza projektu nie widzi presetow", seen.rows.length === 0, seen.rows.length);
+  });
+
+  await withUser(A, async () => {
+    let threw = false;
+    try {
+      await db.query("SAVEPOINT s");
+      await db.query("UPDATE public.project_label_presets SET project_id = project_id WHERE id = $1", [presetId]);
+    } catch (error) {
+      threw = /permission denied/.test(error.message);
+    }
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    check("UPDATE project_id zablokowany (GRANT kolumnowy)", threw);
+
+    const del = await db.query("DELETE FROM public.project_label_presets WHERE id = $1 AND project_id = $2", [presetId, projectId]);
+    check("owner usuwa preset", del.rowCount === 1, del.rowCount);
+  });
+
+  let threw = false;
+  try {
+    await withAnon(() => db.query("SELECT 1 FROM public.project_label_presets LIMIT 1"));
+  } catch {
+    threw = true;
+  }
+  check("anon nie ma dostepu do presetow", threw);
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

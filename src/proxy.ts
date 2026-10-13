@@ -2,6 +2,9 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/auth/session-cookie'
 import { assertValidSupabaseUrl } from '@/lib/supabase-env'
+import { MARKDOWN_CONTENT_TYPE, isSignedInSection, notFoundMarkdown, prefersMarkdown } from '@/lib/agent-web'
+import { SITE_URL } from '@/lib/site-url'
+import { safeRedirect } from '@/lib/auth/safe-redirect'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
@@ -44,6 +47,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // Stripe webhook - same reasoning: Stripe never carries a session cookie,
   // the route verifies the Stripe-Signature header itself.
   '/api/stripe/webhook',
+  // Machine-readable descriptions of the site for AI agents: the llms.txt
+  // guide (public/llms.txt) and the homepage as Markdown (src/app/index.md).
+  '/llms.txt',
+  '/index.md',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every
@@ -60,7 +67,9 @@ const EXACT_PUBLIC_ROUTES = new Set([
 // (scripts/build-plugin-zips.mjs) - open-source code, nothing user-specific,
 // and Guidon Desktop's plugin installer fetches them without a browser
 // session. Signing in is still what the plugins themselves need to do anything.
-const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/']
+// /widget/ holds the embeddable bug-report widget (public/widget/report.js),
+// loaded by other people's websites with no Guidon session.
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/', '/widget/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])
@@ -77,6 +86,49 @@ function redirectToLogin(request: NextRequest, pathname: string) {
   // safeRedirect() still only accepts same-site paths.
   redirectUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
   return NextResponse.redirect(redirectUrl)
+}
+
+/**
+ * A signed-in user opening the login/signup page goes where that page would
+ * have sent them after signing in - e.g. the pricing section's "upgrade"
+ * link (/auth/signup?redirect=/upgrade?plan=pro) - instead of always the
+ * dashboard.
+ */
+function redirectSignedIn(request: NextRequest) {
+  const target = new URL(safeRedirect(request.nextUrl.searchParams.get('redirect')), request.url)
+  if (target.origin !== request.nextUrl.origin) return NextResponse.redirect(new URL('/dashboard', request.url))
+  return NextResponse.redirect(target)
+}
+
+/**
+ * Answers that don't depend on who is asking, decided before any session
+ * lookup (see src/lib/agent-web.ts):
+ * - `/` with `Accept: text/markdown` is served the Markdown homepage, with
+ *   `Vary: Accept`. The HTML page can't carry that header too - Next
+ *   overwrites `Vary` on every app-router page - but this runs before the
+ *   page cache, so the two never share a cache entry here; browsers never
+ *   ask for Markdown.
+ * - A path that is neither public nor under a signed-in section has no page,
+ *   so it must get a real 404 - redirecting it to the login page told agents
+ *   every path exists. Next renders the 404 page; agents asking for Markdown
+ *   get a Markdown 404 straight from here.
+ */
+function agentResponse(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl
+  const wantsMarkdown = prefersMarkdown(request.headers.get('accept'))
+
+  if (pathname === '/') {
+    return wantsMarkdown ? NextResponse.rewrite(new URL('/index.md', request.url)) : null
+  }
+  if (isPublicRoute(pathname) || isSignedInSection(pathname)) return null
+
+  if (wantsMarkdown) {
+    return new NextResponse(notFoundMarkdown(pathname, SITE_URL), {
+      status: 404,
+      headers: { 'Content-Type': MARKDOWN_CONTENT_TYPE, Vary: 'Accept' },
+    })
+  }
+  return NextResponse.next({ request })
 }
 
 /**
@@ -99,13 +151,16 @@ async function proxyLocal(request: NextRequest) {
   }
 
   if (userId && AUTH_ENTRY_ROUTES.has(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return redirectSignedIn(request)
   }
 
   return NextResponse.next({ request })
 }
 
 export async function proxy(request: NextRequest) {
+  const early = agentResponse(request)
+  if (early) return early
+
   if (process.env.DATABASE_URL) {
     return proxyLocal(request)
   }
@@ -166,7 +221,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && AUTH_ENTRY_ROUTES.has(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return redirectSignedIn(request)
   }
 
   return response

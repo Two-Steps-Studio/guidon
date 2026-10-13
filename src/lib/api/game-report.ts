@@ -28,6 +28,17 @@ export const REPORT_LIMITS = {
 /** Screenshots and logs only - no SVG (can carry script) and no archives. */
 export const REPORT_FILE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".txt", ".log", ".json"] as const;
 
+/**
+ * Where the report came from: a game build (the engine SDKs - the default,
+ * so their requests stay unchanged) or the web widget (public/widget/
+ * report.js) embedded on a website.
+ */
+export const REPORT_SOURCES = ["game", "web"] as const;
+export type ReportSource = (typeof REPORT_SOURCES)[number];
+
+const SOURCE_TAG: Record<ReportSource, string> = { game: "in-game", web: "web" };
+const SOURCE_LABEL: Record<ReportSource, string> = { game: "the game", web: "the website" };
+
 export interface ReportFileInfo {
   name: string;
   size: number;
@@ -115,6 +126,7 @@ export function buildReport(fields: {
   category?: unknown;
   reporter?: unknown;
   metadata?: unknown;
+  source?: unknown;
 }): ReportResult<ParsedReport> {
   const rawTitle = truncate(singleLine(asString(fields.title)), REPORT_LIMITS.titleLength);
   if (!rawTitle) return { ok: false, error: "title is required." };
@@ -124,6 +136,11 @@ export function buildReport(fields: {
     ? (categoryInput as ReportCategory)
     : "bug";
 
+  const sourceInput = asString(fields.source).trim().toLowerCase();
+  const source: ReportSource = (REPORT_SOURCES as readonly string[]).includes(sourceInput)
+    ? (sourceInput as ReportSource)
+    : "game";
+
   const metadata = parseMetadata(fields.metadata);
   if (!metadata.ok) return metadata;
 
@@ -132,7 +149,7 @@ export function buildReport(fields: {
 
   const parts: string[] = [];
   if (body) parts.push(body, "");
-  parts.push("---", `Reported from the game${reporter ? ` by **${cell(reporter)}**` : ""}.`);
+  parts.push("---", `Reported from ${SOURCE_LABEL[source]}${reporter ? ` by **${cell(reporter)}**` : ""}.`);
   if (metadata.value.length > 0) {
     parts.push("", "| Field | Value |", "|---|---|");
     for (const [key, value] of metadata.value) parts.push(`| ${cell(key)} | ${cell(value)} |`);
@@ -144,7 +161,7 @@ export function buildReport(fields: {
       title: `${CATEGORY_PREFIX[category]} ${rawTitle}`,
       description: parts.join("\n"),
       category,
-      tags: [category, "in-game"],
+      tags: [category, SOURCE_TAG[source]],
     },
   };
 }

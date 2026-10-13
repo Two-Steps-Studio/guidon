@@ -121,7 +121,12 @@ export default async function Home() {
       </div>
     </div>
 
-    <section className="px-4 pb-20">
+    <section className="px-4 pb-20" aria-labelledby="board-preview-title">
+      {/* The board's column headers are <h3>s; this keeps the outline
+          sequential (h1 -> h2 -> h3) for screen readers and crawlers. */}
+      <h2 id="board-preview-title" className="sr-only">
+        {t("boardPreviewTitle")}
+      </h2>
       <div className="container mx-auto max-w-6xl">
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
           <div className="flex items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-2.5">

@@ -45,6 +45,7 @@ import {
   MessageSquarePlus,
   Puzzle,
   Images,
+  Sparkles,
 } from "lucide-react";
 
 export const GLOBAL_NAV = [
@@ -143,6 +144,8 @@ export interface AppSidebarProps {
   projectColor?: string;
   /** Resolved server-side from the theme cookie - see app-shell.tsx. */
   currentTheme?: Theme;
+  /** Guidon Cloud with Stripe configured - see app-shell.tsx. */
+  showUpgrade?: boolean;
 }
 
 export function AppSidebar({
@@ -152,6 +155,7 @@ export function AppSidebar({
   projects,
   projectColor,
   currentTheme = "system",
+  showUpgrade = false,
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -300,6 +304,16 @@ export function AppSidebar({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {showUpgrade && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={t("upgradePlan")} isActive={isGlobalActive("/upgrade")}>
+                  <Link href="/upgrade">
+                    <Sparkles />
+                    <span>{t("upgradePlan")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               {/* /auth/logout (auth/logout/logout-client.tsx) already signs
                   the user out on visit - nothing anywhere in the UI linked

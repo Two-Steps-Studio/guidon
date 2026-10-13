@@ -98,13 +98,13 @@ export default async function OrganizationMembersPage({
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="mb-8 flex flex-wrap items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href={`/organizations/${orgId}`} aria-label={t("backToOrganization")}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1 basis-48">
             <h1 className="text-3xl font-bold">{t("title")}</h1>
             <p className="text-muted-foreground">{t("subtitle")}</p>
             {seats && seats.memberLimit !== null && (
@@ -153,19 +153,19 @@ export default async function OrganizationMembersPage({
           <div className="space-y-3">
             {members.map((member) => (
               <Card key={member.id}>
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <CardContent className="flex items-center justify-between gap-3 py-4">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <Mail className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-medium">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">
                         {member.profiles.full_name || member.profiles.email}
                       </p>
-                      <p className="text-sm text-muted-foreground">{member.profiles.email}</p>
+                      <p className="truncate text-sm text-muted-foreground">{member.profiles.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex shrink-0 items-center gap-2 sm:gap-4">
                     <Badge variant={member.role === "owner" ? "default" : member.role === "admin" ? "secondary" : "outline"}>
                       <Shield className="h-3 w-3 mr-1" />
                       {tCommon("role", { role: member.role })}

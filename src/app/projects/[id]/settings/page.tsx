@@ -1,11 +1,15 @@
 import { getTranslations } from "next-intl/server";
-import { requireProjectAccess } from "@/lib/data/project-access";
+import { canManageProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
+import { SITE_URL } from "@/lib/site-url";
+import { getLabelPresets } from "@/lib/data/label-presets";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
 import { BoardColumnsForm } from "./board-columns-form";
+import { LabelPresetsForm } from "./label-presets-form";
+import { ReportWidgetCard } from "./report-widget-card";
 import { ExportProjectCard } from "./export-project-card";
 import { DiscordIntegrationForm } from "./discord-integration-form";
 import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
@@ -49,6 +53,7 @@ export default async function ProjectSettingsPage({
   // internally and runs its own concurrent queries - started here so it
   // runs alongside the rest of this page's data instead of after it.
   const discordInfoPromise = getDiscordIntegrationInfo(projectId, access.userId);
+  const labelPresetsPromise = getLabelPresets(access.userId, projectId);
 
   if (hasDirectDatabase()) {
     // Four withUser() calls, not one wrapping Promise.all([...]) - each
@@ -108,7 +113,7 @@ export default async function ProjectSettingsPage({
     boardColumns = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
-  const discordInfo = await discordInfoPromise;
+  const [discordInfo, labelPresets] = await Promise.all([discordInfoPromise, labelPresetsPromise]);
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -123,6 +128,11 @@ export default async function ProjectSettingsPage({
         isOwner={access.role === "owner"}
       />
       <BoardColumnsForm projectId={projectId} overrides={boardColumns} />
+      <LabelPresetsForm
+        projectId={projectId}
+        initialPresets={labelPresets}
+        canManage={canManageProject(access.role)}
+      />
       {/* Hidden, not just disabled, when the project has AI switched off
           (migration 046) - the saved permissions are kept as-is and come
           back untouched if AI is turned on again. */}
@@ -134,6 +144,7 @@ export default async function ProjectSettingsPage({
         />
       )}
       <DiscordIntegrationForm projectId={projectId} initialInfo={discordInfo} />
+      {canWriteProject(access.role) && <ReportWidgetCard projectId={projectId} siteUrl={SITE_URL} />}
       <ExportProjectCard projectId={projectId} />
     </div>
   );

@@ -4,6 +4,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -75,6 +76,17 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
+
+    // On phones the sidebar is a full-height sheet over the page: following a
+    // link in it changed the page underneath but left the sheet covering it.
+    // Close it whenever the route changes (adjusting state during render, so
+    // there's no extra effect pass).
+    const pathname = usePathname()
+    const [lastPathname, setLastPathname] = React.useState(pathname)
+    if (pathname !== lastPathname) {
+      setLastPathname(pathname)
+      setOpenMobile(false)
+    }
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
