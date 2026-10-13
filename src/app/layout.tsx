@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -27,6 +27,20 @@ const SITE_TITLE = "Guidon - Context-First Project Management";
 const SITE_DESCRIPTION =
   "Guidon is context-first project management for development teams: track tasks, decisions, sources, and project memory together, so the \"why\" behind your work never gets lost.";
 
+// Next ignores `viewport`/`themeColor` inside `metadata` - they must be a
+// separate export, or the viewport-fit/interactive-widget settings never
+// reach the page.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
+  ],
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -47,16 +61,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    viewportFit: "cover",
-    interactiveWidget: "resizes-content",
-  },
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
-  ],
   appleWebApp: {
     capable: true,
     title: SITE_NAME,
