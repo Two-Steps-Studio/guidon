@@ -480,6 +480,9 @@
       "import": "Importar"
     },
     "create": {
+      "templateLabel": "Plantilla",
+      "templateNone": "Ninguna: todas las secciones, sin etiquetas",
+      "templateHelp": "Empieza el proyecto con las secciones y etiquetas adecuadas a tu sector. Puedes cambiar ambas después en los ajustes del proyecto.",
       "trigger": "Nuevo proyecto",
       "dialogTitle": "Crear proyecto",
       "dialogDescription": "Crea un nuevo proyecto en {orgName}",
@@ -854,6 +857,12 @@
         "urgent": "Urgente"
       }
     },
+    "modulesTitle": "Módulos",
+    "modulesDescription": "Elige qué secciones muestra este proyecto en la navegación. No todos los equipos necesitan Memoria, el Grafo o un Moodboard.",
+    "modulesHint": "Ocultar un módulo no borra nada: su contenido se conserva, los enlaces siguen funcionando y al volver a activarlo todo vuelve a estar como estaba.",
+    "modulesSave": "Guardar módulos",
+    "modulesSaved": "Guardado",
+    "modulesManageHint": "Solo el propietario o los administradores del proyecto pueden cambiar los módulos.",
     "boardColumnsTitle": "Columnas del tablero",
     "boardColumnsDescription": "Cambia el nombre, reordena u oculta columnas en el tablero de tareas de este proyecto. Los estados de tarea subyacentes no cambian - esto solo afecta a las etiquetas y a lo que se muestra.",
     "moveUpAria": "Mover {label} hacia arriba",

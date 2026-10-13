@@ -14,6 +14,7 @@ import {
   findLabelPreset,
   isValidLabelColor,
 } from "../src/lib/work/label-presets.ts";
+import { PROJECT_MODULES, PROJECT_TEMPLATES, isProjectTemplate } from "../src/lib/work/project-modules.ts";
 
 let pass = 0;
 let fail = 0;
@@ -52,6 +53,15 @@ check("every starter colour is #rrggbb", Object.values(LABEL_STARTER_SETS).flat(
 const presets = [{ id: "1", name: "Bug", color: "#ef4444", sort_order: 0 }];
 check("findLabelPreset is case-insensitive", findLabelPreset(presets, " bug ")?.id === "1");
 check("findLabelPreset misses unknown tags", findLabelPreset(presets, "ui") === undefined);
+
+console.log("\n  project templates");
+check("every template has a label set of the same name", Object.keys(PROJECT_TEMPLATES).every((k) => k in LABEL_STARTER_SETS));
+check("every label set is offered as a template", Object.keys(LABEL_STARTER_SETS).every((k) => k in PROJECT_TEMPLATES));
+check(
+  "templates only hide real modules",
+  Object.values(PROJECT_TEMPLATES).every((tpl) => tpl.disabledModules.every((m) => PROJECT_MODULES.includes(m)))
+);
+check("isProjectTemplate rejects prototype keys", !isProjectTemplate("toString") && !isProjectTemplate("__proto__") && isProjectTemplate("gamedev"));
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

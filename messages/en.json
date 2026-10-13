@@ -480,6 +480,9 @@
       "import": "Import"
     },
     "create": {
+      "templateLabel": "Template",
+      "templateNone": "None - all sections, no labels",
+      "templateHelp": "Starts the project with the sections and labels that fit your field. You can change both later in project settings.",
       "trigger": "New Project",
       "dialogTitle": "Create Project",
       "dialogDescription": "Create a new project in {orgName}",
@@ -854,6 +857,12 @@
         "urgent": "Urgent"
       }
     },
+    "modulesTitle": "Modules",
+    "modulesDescription": "Choose which sections this project shows in its navigation. Not every team needs Memory, the Graph or a Moodboard.",
+    "modulesHint": "Hiding a module doesn't delete anything - its content stays, links to it keep working, and turning it back on shows everything as it was.",
+    "modulesSave": "Save modules",
+    "modulesSaved": "Saved",
+    "modulesManageHint": "Only the project's owner or admins can change modules.",
     "boardColumnsTitle": "Board Columns",
     "boardColumnsDescription": "Rename, reorder, or hide columns on this project's task board. The underlying task statuses don't change - this only affects labels and what's shown.",
     "moveUpAria": "Move {label} up",

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isModuleVisible } from "@/lib/work/project-modules";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ export default async function ProjectPage({
   // for a second full round-trip after access resolves.
   const [access, stats] = await Promise.all([requireProjectAccess(projectId), getProjectStats(projectId)]);
   const { project } = access;
+  const showRoadmap = isModuleVisible("roadmap", project.disabled_modules);
 
   const quickAccess = [
     {
@@ -150,24 +152,26 @@ export default async function ProjectPage({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("roadmap")}</CardTitle>
-            <Calendar className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.completed_phases}/{stats.total_phases}
-            </div>
-            <p className="text-xs text-muted-foreground">{t("phasesCompleted")}</p>
-          </CardContent>
-        </Card>
+        {showRoadmap && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("roadmap")}</CardTitle>
+              <Calendar className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.completed_phases}/{stats.total_phases}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("phasesCompleted")}</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">{t("quickAccess")}</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {quickAccess.map((item) => (
+          {quickAccess.filter((item) => isModuleVisible(item.href, project.disabled_modules)).map((item) => (
             <Link key={item.href} href={`/projects/${projectId}/${item.href}`}>
               <Card 
                 className="cursor-pointer hover:border-primary transition-colors h-full"

@@ -480,6 +480,9 @@
       "import": "Importuj"
     },
     "create": {
+      "templateLabel": "Szablon",
+      "templateNone": "Brak - wszystkie sekcje, bez etykiet",
+      "templateHelp": "Zaczyna projekt z sekcjami i etykietami dopasowanymi do branży. Oba można później zmienić w ustawieniach projektu.",
       "trigger": "Nowy projekt",
       "dialogTitle": "Utwórz projekt",
       "dialogDescription": "Utwórz nowy projekt w {orgName}",
@@ -854,6 +857,12 @@
         "urgent": "Pilne"
       }
     },
+    "modulesTitle": "Moduły",
+    "modulesDescription": "Wybierz, które sekcje projekt pokazuje w nawigacji. Nie każdy zespół potrzebuje Pamięci, Grafu czy Moodboardu.",
+    "modulesHint": "Ukrycie modułu niczego nie usuwa - jego zawartość zostaje, linki dalej działają, a po ponownym włączeniu wszystko wraca.",
+    "modulesSave": "Zapisz moduły",
+    "modulesSaved": "Zapisano",
+    "modulesManageHint": "Moduły może zmieniać tylko właściciel lub administrator projektu.",
     "boardColumnsTitle": "Kolumny tablicy",
     "boardColumnsDescription": "Zmieniaj nazwy, kolejność lub ukrywaj kolumny na tablicy zadań tego projektu. Bazowe statusy zadań się nie zmieniają - dotyczy to tylko etykiet i tego, co jest wyświetlane.",
     "moveUpAria": "Przesuń {label} w górę",

@@ -2688,5 +2688,49 @@ section("43. api_keys.project_id/allowed_origins: klucz przypiety do projektu (m
   });
 }
 
+section("44. projects.disabled_modules: wylaczane moduly projektu (migracja 055)");
+
+{
+  const { PROJECT_MODULES } = await import("../../src/lib/work/project-modules.ts");
+  const def = await db.query(
+    "SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'projects_disabled_modules_check'"
+  );
+  const allowed = [...(def.rows[0]?.def ?? "").matchAll(/'([a-z_]+)'::text/g)].map((m) => m[1]).sort();
+  check(
+    "CHECK w 055 == PROJECT_MODULES w project-modules.ts",
+    JSON.stringify(allowed) === JSON.stringify([...PROJECT_MODULES].sort()),
+    `${allowed.join(",")} vs ${[...PROJECT_MODULES].sort().join(",")}`
+  );
+
+  await withUser(A, async () => {
+    const r = await db.query(
+      "UPDATE public.projects SET disabled_modules = '{memory,context}' WHERE id = $1 RETURNING disabled_modules",
+      [projectId]
+    );
+    check("owner ukrywa moduly", JSON.stringify(r.rows[0]?.disabled_modules) === '["memory","context"]', JSON.stringify(r.rows));
+
+    let threw = false;
+    try {
+      await db.query("SAVEPOINT s");
+      await db.query("UPDATE public.projects SET disabled_modules = '{work}' WHERE id = $1", [projectId]);
+    } catch {
+      threw = true;
+    }
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    check("tablicy zadan (work) nie da sie wylaczyc (CHECK)", threw);
+  });
+
+  await withUser(D, async () => {
+    const r = await db.query("UPDATE public.projects SET disabled_modules = '{}' WHERE id = $1", [projectId]);
+    check("developer nie zmienia modulow (projects_update: owner/admin)", r.rowCount === 0, r.rowCount);
+    const seen = await db.query("SELECT disabled_modules FROM public.projects WHERE id = $1", [projectId]);
+    check("developer widzi ukryte moduly (potrzebne do nawigacji)", seen.rows[0]?.disabled_modules?.length === 2);
+  });
+
+  await withUser(A, async () => {
+    await db.query("UPDATE public.projects SET disabled_modules = '{}' WHERE id = $1", [projectId]);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

@@ -37,6 +37,8 @@ export interface ProjectAccess {
     methodology: ProjectMethodology;
     /** Migration 046 - one switch for every AI feature on this project. */
     ai_enabled: boolean;
+    /** Migration 055 - sections hidden from this project's navigation. */
+    disabled_modules: string[];
   };
   /** Null when the user can see the project but is not a member of it -
    *  possible for `organization` and `public` visibility. */
@@ -88,7 +90,8 @@ export const getProjectAccess = cache(async function getProjectAccess(
     const [projectResult, membershipResult] = await Promise.all([
       withUser(userId, ({ query }) =>
         query(
-          `SELECT id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology, ai_enabled
+          `SELECT id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology, ai_enabled,
+                  disabled_modules
            FROM projects WHERE id = $1`,
           [projectId]
         )
@@ -126,7 +129,7 @@ export const getProjectAccess = cache(async function getProjectAccess(
     supabase
       .from("projects")
       .select(
-        "id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology, ai_enabled"
+        "id, name, slug, organization_id, description, status, visibility, color, avatar_url, project_type, methodology, ai_enabled, disabled_modules"
       )
       .eq("id", projectId)
       .maybeSingle(),
