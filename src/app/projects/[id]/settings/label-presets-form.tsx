@@ -2,13 +2,19 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { AlertCircle, Plus, Tag, Trash2 } from "lucide-react";
+import { AlertCircle, Plus, Sparkles, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LabelChip } from "@/components/work/label-chip";
-import { LABEL_COLORS, LABEL_NAME_MAX_LENGTH, type LabelPreset } from "@/lib/work/label-presets";
-import { addLabelPreset, deleteLabelPreset, updateLabelPreset } from "./label-presets-actions";
+import {
+  LABEL_COLORS,
+  LABEL_NAME_MAX_LENGTH,
+  LABEL_STARTER_SETS,
+  type LabelPreset,
+  type LabelStarterSet,
+} from "@/lib/work/label-presets";
+import { addLabelPreset, addLabelPresetSet, deleteLabelPreset, updateLabelPreset } from "./label-presets-actions";
 
 function ColorPicker({
   value,
@@ -67,6 +73,21 @@ export function LabelPresetsForm({
       }
       setPresets((prev) => [...prev, result.preset!]);
       setNewName("");
+    });
+  };
+
+  const addSet = (set: LabelStarterSet) => {
+    setError(null);
+    const labels = LABEL_STARTER_SETS[set].map(([key, color]) => ({
+      // Every (set, key) pair exists in messages; TS can't narrow the
+      // cross-product of the two unions, hence the cast.
+      name: t(`labelStarter.${set}.${key}` as Parameters<typeof t>[0]),
+      color,
+    }));
+    startTransition(async () => {
+      const result = await addLabelPresetSet(projectId, labels);
+      if (result.added.length > 0) setPresets((prev) => [...prev, ...result.added]);
+      if (result.error) setError(result.error);
     });
   };
 
@@ -163,6 +184,19 @@ export function LabelPresetsForm({
               </Button>
             </div>
             <ColorPicker value={newColor} onChange={setNewColor} disabled={pending} labelFor={colorLabel} />
+            <div className="space-y-2 pt-2">
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Sparkles className="h-4 w-4" />
+                {t("labelStarterHint")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(LABEL_STARTER_SETS) as LabelStarterSet[]).map((set) => (
+                  <Button key={set} type="button" variant="outline" size="sm" disabled={pending} onClick={() => addSet(set)}>
+                    {t(`labelStarter.${set}.title`)}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </form>
         ) : (
           <p className="text-sm text-muted-foreground">{t("labelPresetsManageHint")}</p>

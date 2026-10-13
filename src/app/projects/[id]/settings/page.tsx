@@ -10,6 +10,7 @@ import { AiPermissionsForm } from "./ai-permissions-form";
 import { BoardColumnsForm } from "./board-columns-form";
 import { LabelPresetsForm } from "./label-presets-form";
 import { ReportWidgetCard } from "./report-widget-card";
+import { listReportWidgetKeys } from "@/app/profile/api-keys-actions";
 import { ExportProjectCard } from "./export-project-card";
 import { DiscordIntegrationForm } from "./discord-integration-form";
 import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
@@ -144,7 +145,9 @@ export default async function ProjectSettingsPage({
         />
       )}
       <DiscordIntegrationForm projectId={projectId} initialInfo={discordInfo} />
-      {canWriteProject(access.role) && <ReportWidgetCard projectId={projectId} siteUrl={SITE_URL} />}
+      {canWriteProject(access.role) && (
+        <ReportWidgetCard projectId={projectId} siteUrl={SITE_URL} initialKeys={await listReportWidgetKeys(projectId)} />
+      )}
       <ExportProjectCard projectId={projectId} />
     </div>
   );

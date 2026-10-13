@@ -12,6 +12,7 @@
 
 import { buildReport, parseMetadata, validateReportFiles, REPORT_LIMITS } from "../src/lib/api/game-report.ts";
 import { reportsScopeMixedWithOthers } from "../src/lib/api/scopes.ts";
+import { isOriginAllowed, parseAllowedOrigins } from "../src/lib/api/key-origins.ts";
 
 let pass = 0;
 let fail = 0;
@@ -83,6 +84,22 @@ console.log("\n  source (web widget)");
   check("no source: still a game report", game.ok && game.value.tags.includes("in-game") && game.value.description.includes("Reported from the game"));
   const odd = buildReport({ title: "x", source: "<script>" });
   check("unknown source falls back to game", odd.ok && odd.value.tags.includes("in-game"));
+}
+
+console.log("\n  allowed origins (widget keys, migration 054)");
+{
+  const parsed = parseAllowedOrigins("Shop.Example.com, https://shop.example.com/cart?x=1\nhttp://localhost:3000");
+  check("bare host gets https, path dropped, lowercased, deduped", parsed.ok && JSON.stringify(parsed.value) === '["https://shop.example.com","http://localhost:3000"]', JSON.stringify(parsed));
+  check("empty input = no restriction", parseAllowedOrigins("  ").ok && parseAllowedOrigins("  ").value.length === 0);
+  check("ftp refused", !parseAllowedOrigins("ftp://x.com").ok);
+  check("credentials refused", !parseAllowedOrigins("https://a:b@x.com").ok);
+  check("garbage refused", !parseAllowedOrigins("http://").ok);
+  check("more than 10 refused", !parseAllowedOrigins(Array.from({ length: 11 }, (_, i) => `s${i}.com`).join(",")).ok);
+  check("no list allows anything", isOriginAllowed("https://evil.com", null) && isOriginAllowed(null, []));
+  check("listed origin allowed (case-insensitive)", isOriginAllowed("https://Shop.Example.com", ["https://shop.example.com"]));
+  check("other origin refused", !isOriginAllowed("https://evil.com", ["https://shop.example.com"]));
+  check("subdomain is a different origin", !isOriginAllowed("https://a.shop.example.com", ["https://shop.example.com"]));
+  check("missing Origin refused when a list is set", !isOriginAllowed(null, ["https://shop.example.com"]));
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

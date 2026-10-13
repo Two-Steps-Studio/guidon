@@ -2637,5 +2637,56 @@ section("42. project_label_presets: slownik etykiet projektu - czytaja czlonkowi
   check("anon nie ma dostepu do presetow", threw);
 }
 
+section("43. api_keys.project_id/allowed_origins: klucz przypiety do projektu (migracja 054)");
+
+{
+  const insertKey = (userId, suffix, projectIdArg, origins = null) =>
+    db.query(
+      `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, project_id, allowed_origins)
+       VALUES ($1, 'widget', 'guidon_x', $2, '{reports:write}', $3, $4) RETURNING id, project_id, allowed_origins`,
+      [userId, `hash-054-${suffix}`, projectIdArg, origins]
+    );
+
+  let ownerKey;
+  await withUser(A, async () => {
+    const r = await insertKey(A, "a", projectId, ["https://shop.example.com"]);
+    ownerKey = r.rows[0]?.id;
+    check("owner tworzy klucz przypiety do projektu z domenami", r.rows[0]?.project_id === projectId && r.rows[0]?.allowed_origins?.[0] === "https://shop.example.com", JSON.stringify(r.rows));
+
+    let threw = false;
+    try {
+      await db.query("SAVEPOINT s");
+      await db.query("UPDATE public.api_keys SET project_id = NULL WHERE id = $1", [ownerKey]);
+    } catch (error) {
+      threw = /permission denied/.test(error.message);
+    }
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    check("przypiecia nie da sie zdjac UPDATE-em (GRANT tylko revoked_at)", threw);
+
+    const revoke = await db.query("UPDATE public.api_keys SET revoked_at = now() WHERE id = $1 RETURNING id", [ownerKey]);
+    check("owner dalej moze uniewaznic klucz", revoke.rows.length === 1);
+  });
+
+  await withUser(D, async () => {
+    const r = await insertKey(D, "d", projectId);
+    check("developer projektu tworzy klucz przypiety do projektu", r.rows.length === 1);
+  });
+
+  await withUser(B, async () => {
+    let threw = false;
+    try {
+      await db.query("SAVEPOINT s");
+      await insertKey(B, "b", projectId);
+    } catch {
+      threw = true;
+    }
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    check("osoba spoza projektu nie przypnie klucza do cudzego projektu", threw);
+
+    const r = await insertKey(B, "b2", null);
+    check("klucz bez projektu dalej mozna tworzyc", r.rows.length === 1 && r.rows[0].project_id === null);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

@@ -6,6 +6,7 @@ import { dataClient } from "@/lib/data-client";
 import { generateApiKey, hashApiKey, keyPrefix, API_KEY_SCOPES } from "@/lib/api/api-keys";
 import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { parseAllowedOrigins } from "@/lib/api/key-origins";
 
 export type ApiKeyRow = {
   id: string;
@@ -15,9 +16,12 @@ export type ApiKeyRow = {
   created_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
+  /** Migration 054 - set for keys bound to one project (the web widget's). */
+  project_id: string | null;
+  allowed_origins: string[] | null;
 };
 
-const API_KEY_COLUMNS = "id, name, key_prefix, scopes, created_at, last_used_at, revoked_at";
+const API_KEY_COLUMNS = "id, name, key_prefix, scopes, created_at, last_used_at, revoked_at, project_id, allowed_origins";
 
 export async function listApiKeys(): Promise<ApiKeyRow[]> {
   const user = await getCurrentUser();
@@ -33,7 +37,12 @@ export async function listApiKeys(): Promise<ApiKeyRow[]> {
 
 export type CreateApiKeyState = { error: string | null; fullKey: string | null; row: ApiKeyRow | null };
 
-async function mintApiKey(userId: string, name: string, scopes: string[]): Promise<CreateApiKeyState> {
+async function mintApiKey(
+  userId: string,
+  name: string,
+  scopes: string[],
+  binding: { projectId: string; allowedOrigins: string[] | null } | null = null
+): Promise<CreateApiKeyState> {
   const fullKey = generateApiKey();
   const hash = hashApiKey(fullKey);
   const prefix = keyPrefix(fullKey);
@@ -44,7 +53,14 @@ async function mintApiKey(userId: string, name: string, scopes: string[]): Promi
   // revalidatePath() alone doesn't update without a remount.
   const { data: row, error } = await dataClient(userId)
     .from("api_keys")
-    .insert({ user_id: userId, name, key_prefix: prefix, key_hash: hash, scopes })
+    .insert({
+      user_id: userId,
+      name,
+      key_prefix: prefix,
+      key_hash: hash,
+      scopes,
+      ...(binding ? { project_id: binding.projectId, allowed_origins: binding.allowedOrigins } : {}),
+    })
     .select<ApiKeyRow>(API_KEY_COLUMNS)
     .single();
 
@@ -119,24 +135,44 @@ export async function revokeApiKey(keyId: string): Promise<{ error: string | nul
 
 /**
  * Key for the web bug-report widget (public/widget/report.js), created from
- * the project's settings. reports:write only - the key sits in a public web
- * page, and that scope can file reports but read or change nothing. Filing
- * still runs as this user under RLS (tasks_insert: owner/admin/developer),
- * which is the same gate as the check below.
+ * the project's settings. reports:write only, bound to this project and
+ * optionally to the sites it's installed on (migration 054): the key sits in
+ * a public web page, so a copied key can file reports into this project from
+ * these sites and do nothing else. Filing still runs as this user under RLS
+ * (tasks_insert: owner/admin/developer), the same gate as the check below.
  */
 export async function createReportWidgetKey(
-  projectId: string
-): Promise<{ error: string | null; fullKey: string | null }> {
+  projectId: string,
+  originsInput: string
+): Promise<{ error: string | null; fullKey: string | null; row: ApiKeyRow | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You need to be able to create tasks in this project to set up the widget.", fullKey: null };
+    return { error: "You need to be able to create tasks in this project to set up the widget.", fullKey: null, row: null };
   }
+  const origins = parseAllowedOrigins(originsInput);
+  if (!origins.ok) return { error: origins.error, fullKey: null, row: null };
+
   const date = new Date().toISOString().slice(0, 10);
   try {
-    const result = await mintApiKey(access.userId, `Web bug reports - ${access.project.name} ${date}`, ["reports:write"]);
-    return { error: result.error, fullKey: result.fullKey };
+    return await mintApiKey(access.userId, `Web bug reports - ${access.project.name} ${date}`, ["reports:write"], {
+      projectId,
+      allowedOrigins: origins.value.length > 0 ? origins.value : null,
+    });
   } catch (error) {
     console.error("Failed to create the report widget key:", error);
-    return { error: "Could not create the key. Try again.", fullKey: null };
+    return { error: "Could not create the key. Try again.", fullKey: null, row: null };
   }
+}
+
+/** The caller's own active widget keys for this project (RLS: api_keys_select is own rows only). */
+export async function listReportWidgetKeys(projectId: string): Promise<ApiKeyRow[]> {
+  const user = await getCurrentUser();
+  const { data } = await dataClient(user.id)
+    .from<ApiKeyRow>("api_keys")
+    .select(API_KEY_COLUMNS)
+    .eq("user_id", user.id)
+    .eq("project_id", projectId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false });
+  return data ?? [];
 }
