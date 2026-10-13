@@ -49,7 +49,9 @@ export default async function OrganizationDetailPage({
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
-        <div className="flex items-center gap-4 mb-8">
+        {/* Wraps on phones: the action buttons drop below the title instead
+            of pushing the whole page wider than the screen. */}
+        <div className="mb-8 flex flex-wrap items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/organizations" aria-label={t("backToOrganizations")}>
               <ArrowLeft className="h-4 w-4" />
@@ -61,33 +63,35 @@ export default async function OrganizationDetailPage({
             avatarUrl={organization.avatar_url}
             canEdit={canManageOrg(access.role)}
           />
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold">{organization.name}</h1>
+          <div className="min-w-0 flex-1 basis-40">
+            <h1 className="break-words text-2xl font-bold sm:text-3xl">{organization.name}</h1>
             <p className="text-muted-foreground">{organization.description || tCommon("noDescription")}</p>
           </div>
-          <Button variant="outline" asChild>
-            <Link href={`/organizations/${orgId}/members`}>
-              <Users className="h-4 w-4 mr-2" />
-              {t("members")}
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href={`/organizations/${orgId}/billing`}>
-              <CreditCard className="h-4 w-4 mr-2" />
-              {t("billing")}
-            </Link>
-          </Button>
-          {canManageOrg(access.role) && (
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             <Button variant="outline" asChild>
-              <Link href={`/organizations/${orgId}/settings`}>
-                <Settings className="h-4 w-4 mr-2" />
-                {t("settings")}
+              <Link href={`/organizations/${orgId}/members`}>
+                <Users className="h-4 w-4 mr-2" />
+                {t("members")}
               </Link>
             </Button>
-          )}
+            <Button variant="outline" asChild>
+              <Link href={`/organizations/${orgId}/billing`}>
+                <CreditCard className="h-4 w-4 mr-2" />
+                {t("billing")}
+              </Link>
+            </Button>
+            {canManageOrg(access.role) && (
+              <Button variant="outline" asChild>
+                <Link href={`/organizations/${orgId}/settings`}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  {t("settings")}
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">{t("projects")}</h2>
           {!limitReached && <CreateProjectDialog orgId={orgId} orgName={organization.name} />}
         </div>
