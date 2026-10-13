@@ -3,25 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { dataClient } from "@/lib/data-client";
-import { generateApiKey, hashApiKey, keyPrefix, API_KEY_SCOPES } from "@/lib/api/api-keys";
+import { API_KEY_SCOPES } from "@/lib/api/api-keys";
+import { API_KEY_COLUMNS, mintApiKey as mintApiKeyRow, type MintedApiKeyRow } from "@/lib/api/mint-api-key";
 import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { parseAllowedOrigins } from "@/lib/api/key-origins";
 
-export type ApiKeyRow = {
-  id: string;
-  name: string;
-  key_prefix: string;
-  scopes: string[];
-  created_at: string;
-  last_used_at: string | null;
-  revoked_at: string | null;
-  /** Migration 054 - set for keys bound to one project (the web widget's). */
-  project_id: string | null;
-  allowed_origins: string[] | null;
-};
-
-const API_KEY_COLUMNS = "id, name, key_prefix, scopes, created_at, last_used_at, revoked_at, project_id, allowed_origins";
+export type ApiKeyRow = MintedApiKeyRow;
 
 export async function listApiKeys(): Promise<ApiKeyRow[]> {
   const user = await getCurrentUser();
@@ -43,31 +31,13 @@ async function mintApiKey(
   scopes: string[],
   binding: { projectId: string; allowedOrigins: string[] | null } | null = null
 ): Promise<CreateApiKeyState> {
-  const fullKey = generateApiKey();
-  const hash = hashApiKey(fullKey);
-  const prefix = keyPrefix(fullKey);
-
-  // Returned to the caller (not just revalidatePath'd) so the client
-  // component can append the new key to its list immediately - it holds
-  // `keys` in useState seeded from the initial server render, which
+  const result = await mintApiKeyRow(dataClient(userId), userId, name, scopes, binding);
+  // The row is returned to the caller (not just revalidatePath'd) so the
+  // client component can append the new key to its list immediately - it
+  // holds `keys` in useState seeded from the initial server render, which
   // revalidatePath() alone doesn't update without a remount.
-  const { data: row, error } = await dataClient(userId)
-    .from("api_keys")
-    .insert({
-      user_id: userId,
-      name,
-      key_prefix: prefix,
-      key_hash: hash,
-      scopes,
-      ...(binding ? { project_id: binding.projectId, allowed_origins: binding.allowedOrigins } : {}),
-    })
-    .select<ApiKeyRow>(API_KEY_COLUMNS)
-    .single();
-
-  if (error || !row) return { error: error?.message ?? "Could not create the key.", fullKey: null, row: null };
-
-  revalidatePath("/profile");
-  return { error: null, fullKey, row };
+  if (!result.error) revalidatePath("/profile");
+  return result;
 }
 
 export async function createApiKey(

@@ -1277,33 +1277,33 @@
       "desktop": "Aplicación de escritorio"
     },
     "kinds": {
+      "plugin": "Descargar",
       "tasks": "Tablero de tareas",
-      "reports": "Informes en el juego",
       "source": "Código fuente"
     },
     "descriptions": {
-      "unity": "El tablero de tu proyecto dentro del editor de Unity, además de un formulario de errores en el juego que envía los informes directamente a Guidon.",
-      "unreal": "Tablero de tareas como pestaña del editor e informes de errores en el juego desde Blueprints o C++.",
-      "godot": "Dos complementos: un panel con el tablero de tareas para el editor e informes de errores en el juego.",
+      "unity": "Un solo paquete: el tablero y el moodboard de tu proyecto dentro del editor de Unity, además de informes de errores en el juego que llegan a ese tablero.",
+      "unreal": "Un solo plugin: el tablero de tareas y el moodboard como pestañas del editor, además de informes de errores en el juego desde Blueprints o C++.",
+      "godot": "Un solo complemento: tablero de tareas, moodboard y panel de informes en el editor, además de informes de errores en el juego.",
       "blender": "Tablero de tareas en la barra lateral del visor 3D (panel N).",
       "vscode": "Tablero de tareas en la barra lateral de VS Code. Descarga el código fuente y genera un .vsix.",
       "jetbrains": "Ventana de herramientas con el tablero para IntelliJ IDEA, Rider, PyCharm, WebStorm y otros IDE de JetBrains. Descarga el código fuente y compílalo con Gradle."
     },
     "install": {
       "unity": {
-        "s1": "Descomprime y copia la carpeta GuidonTasks en cualquier lugar dentro de Assets/.",
+        "s1": "Descomprime y copia la carpeta Guidon en cualquier lugar dentro de Assets/ (borra GuidonTasks y GuidonReports si los tenías).",
         "s2": "Abre Window → Guidon → Tasks, pon {baseUrl} como Base URL y haz clic en Log In.",
-        "s3": "Informes de errores: copia GuidonReports dentro de Assets/ y crea en Perfil → Claves de API una clave solo con el permiso reports:write."
+        "s3": "Informes de errores: haz clic en Reports en la barra del tablero y luego en Set Up In-Game Reports; la clave se crea y se guarda por ti."
       },
       "unreal": {
-        "s1": "Descomprime en la carpeta Plugins/ de tu proyecto (o ejecuta install.ps1 desde la carpeta GuidonTasks).",
-        "s2": "Vuelve a abrir el proyecto y deja que el editor compile el módulo; hace falta un proyecto C++.",
-        "s3": "Abre la pestaña Guidon Tasks, pon {baseUrl} como Base URL y haz clic en Log In."
+        "s1": "Descomprime en la carpeta Plugins/ del proyecto o ejecuta install.ps1 desde la carpeta Guidon (también elimina los plugins antiguos GuidonTasks/GuidonReports).",
+        "s2": "Vuelve a abrir el proyecto y deja que el editor compile los módulos; hace falta un proyecto C++.",
+        "s3": "Abre la pestaña Guidon Tasks, pon {baseUrl} como Base URL y haz clic en Log In. Reports en la barra configura los informes del juego."
       },
       "godot": {
-        "s1": "Descomprime en la carpeta raíz del proyecto; los archivos quedan en addons/.",
-        "s2": "Activa el complemento en Project → Project Settings → Plugins.",
-        "s3": "En el panel de Guidon, pon {baseUrl} como Base URL y haz clic en Log In."
+        "s1": "Descomprime en la carpeta raíz del proyecto; los archivos quedan en addons/guidon (borra addons/guidon_tasks y addons/guidon_reports si los tenías).",
+        "s2": "Activa Guidon en Project → Project Settings → Plugins.",
+        "s3": "En el panel de Guidon, pon {baseUrl} como Base URL y haz clic en Log In. Reports en la barra configura los informes del juego."
       },
       "blender": {
         "s1": "No lo descomprimas: Blender instala el zip tal cual.",

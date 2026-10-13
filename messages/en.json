@@ -1277,33 +1277,33 @@
       "desktop": "Desktop app"
     },
     "kinds": {
+      "plugin": "Download",
       "tasks": "Task board",
-      "reports": "In-game reports",
       "source": "Source code"
     },
     "descriptions": {
-      "unity": "Your project's board inside the Unity editor, plus an in-game bug report form that sends reports straight to Guidon.",
-      "unreal": "Task board as an editor tab and in-game bug reports from Blueprints or C++.",
-      "godot": "Two add-ons: a task board dock for the editor and in-game bug reports.",
+      "unity": "One package: your project's board and moodboard inside the Unity editor, plus in-game bug reports that land on that board.",
+      "unreal": "One plugin: the task board and moodboard as editor tabs, plus in-game bug reports from Blueprints or C++.",
+      "godot": "One add-on: a task board, moodboard and bug-report panel in the editor, plus in-game bug reports.",
       "blender": "Task board in the 3D viewport sidebar (N panel).",
       "vscode": "Task board in the VS Code sidebar. Download the source and build a .vsix.",
       "jetbrains": "Task board tool window for IntelliJ IDEA, Rider, PyCharm, WebStorm and other JetBrains IDEs. Download the source and build it with Gradle."
     },
     "install": {
       "unity": {
-        "s1": "Unzip and copy the GuidonTasks folder anywhere under Assets/.",
+        "s1": "Unzip and copy the Guidon folder anywhere under Assets/ (delete GuidonTasks and GuidonReports if you had them).",
         "s2": "Open Window → Guidon → Tasks, set Base URL to {baseUrl} and click Log In.",
-        "s3": "Bug reports: copy GuidonReports under Assets/ and create a key with only the reports:write scope in Profile → API Keys."
+        "s3": "Bug reports: click Reports in the board's toolbar, then Set Up In-Game Reports - the key is created and saved for you."
       },
       "unreal": {
-        "s1": "Unzip into your project's Plugins/ folder (or run install.ps1 from the GuidonTasks folder).",
-        "s2": "Reopen the project and let the editor build the module - a C++ project is required.",
-        "s3": "Open the Guidon Tasks tab, set Base URL to {baseUrl} and click Log In."
+        "s1": "Unzip into your project's Plugins/ folder, or run install.ps1 from the Guidon folder (it also removes the old GuidonTasks/GuidonReports plugins).",
+        "s2": "Reopen the project and let the editor build the modules - a C++ project is required.",
+        "s3": "Open the Guidon Tasks tab, set Base URL to {baseUrl} and click Log In. Reports in its toolbar sets up in-game bug reports."
       },
       "godot": {
-        "s1": "Unzip into your project's root folder - the files land in addons/.",
-        "s2": "Enable the add-on in Project → Project Settings → Plugins.",
-        "s3": "In the Guidon dock, set Base URL to {baseUrl} and click Log In."
+        "s1": "Unzip into your project's root folder - the files land in addons/guidon (delete addons/guidon_tasks and addons/guidon_reports if you had them).",
+        "s2": "Enable Guidon in Project → Project Settings → Plugins.",
+        "s3": "In the Guidon panel, set Base URL to {baseUrl} and click Log In. Reports in its toolbar sets up in-game bug reports."
       },
       "blender": {
         "s1": "Don't unzip - Blender installs the zip as it is.",

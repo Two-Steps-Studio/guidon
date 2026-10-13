@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 2,
+	"VersionName": "2.0.0",
+	"FriendlyName": "Guidon",
+	"Description": "Your Guidon project in Unreal: the Kanban board and moodboard as editor tabs, and in-game bug reports - a hotkey opens a form, and the report arrives as a task with a screenshot, recent log and build/platform/level details.",
+	"Category": "Editor",
+	"CreatedBy": "Two Steps Studio",
+	"CreatedByURL": "https://useguidon.com",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GuidonTasks",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "GuidonReports",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}

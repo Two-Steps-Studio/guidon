@@ -15,7 +15,7 @@ const DESKTOP_DOWNLOAD_URL = `${REPO_URL}/releases/latest`;
 
 type PluginId = "unity" | "unreal" | "godot" | "blender" | "vscode" | "jetbrains";
 type Category = "engines" | "creative" | "editors";
-type DownloadKind = "tasks" | "reports" | "source";
+type DownloadKind = "plugin" | "tasks" | "source";
 
 interface CatalogPlugin {
   id: PluginId;
@@ -46,8 +46,8 @@ const CATEGORIES = [
 ] as const;
 
 const KIND_KEYS = {
+  plugin: "kinds.plugin",
   tasks: "kinds.tasks",
-  reports: "kinds.reports",
   source: "kinds.source",
 } as const satisfies Record<DownloadKind, string>;
 

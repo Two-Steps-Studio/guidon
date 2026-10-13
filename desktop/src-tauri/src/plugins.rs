@@ -468,10 +468,10 @@ mod tests {
             Path::new("/p/Plugins/GuidonTasks")
         );
         assert_eq!(
-            install_paths(project, &spec("", None), "addons/guidon_tasks")
+            install_paths(project, &spec("", None), "addons/guidon")
                 .unwrap()
                 .1,
-            Path::new("/p/addons/guidon_tasks")
+            Path::new("/p/addons/guidon")
         );
         assert!(install_paths(project, &spec("../x", None), "GuidonTasks").is_err());
         assert!(install_paths(project, &spec("", None), "/etc")
@@ -547,12 +547,12 @@ mod tests {
     #[test]
     fn nested_root_for_godot() {
         let dir = temp_dir("godot");
-        let bytes = zip_of(&[("addons/guidon_tasks/plugin.cfg", "cfg")]);
+        let bytes = zip_of(&[("addons/guidon/plugin.cfg", "cfg")]);
         assert_eq!(
-            extract_plugin(&bytes, "addons/guidon_tasks", &dir).unwrap(),
+            extract_plugin(&bytes, "addons/guidon", &dir).unwrap(),
             1
         );
-        assert!(dir.join("addons/guidon_tasks/plugin.cfg").exists());
+        assert!(dir.join("addons/guidon/plugin.cfg").exists());
         fs::remove_dir_all(dir).unwrap();
     }
 

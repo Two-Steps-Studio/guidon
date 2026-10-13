@@ -19,8 +19,8 @@ function isRlsRejection(error: unknown): boolean {
 const FORBIDDEN = "This API key's user may not create tasks in this project (needs owner, admin or developer).";
 
 /**
- * In-game bug reports: the Guidon report SDKs for Unity/Unreal (plugins/*
- * /GuidonReports) post here from inside a running game - a title, the
+ * In-game bug reports: the reporters in the Unity/Unreal/Godot plugins
+ * (plugins/{unity,unreal,godot}) post here from inside a running game - a title, the
  * player's description, a small metadata table (build, platform, scene,
  * position...) and up to three screenshots/logs. Creates one Backlog task
  * tagged `<category>` + `in-game`, with the files as task attachments.

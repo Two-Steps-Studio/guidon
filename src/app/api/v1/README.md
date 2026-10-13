@@ -24,14 +24,18 @@ does for the UI.
   migration 020, resolved by the same `resolveBoardColumns` the web board
   uses), and `GET /projects/[projectId]/references` returns the project's
   moodboard (migration 048) with a short-lived signed `image_url` per image.
-- In-game bug reports from shipped games (`plugins/*/GuidonReports`,
-  `plugins/godot/addons/guidon_reports`): `POST /projects/[projectId]/reports`
+- In-game bug reports from shipped games (the reporter in `plugins/unity/Guidon/Runtime`,
+  `plugins/unreal/Guidon/Source/GuidonReports`, `plugins/godot/addons/guidon/reporter.gd`): `POST /projects/[projectId]/reports`
   (multipart; creates a Backlog task plus attachments). It is gated by its own
   `reports:write` scope, which unlocks nothing else. The key lives inside
   game builds and must be assumed public, so `reports:write` can't be combined
   with another scope: key creation refuses it, and the route answers 403 to
   a key that has other scopes too. Validation lives in
   `src/lib/api/game-report.ts` (`npm run test:reports`).
+  The engine plugins' "Set up in-game reports" button gets that key from
+  `POST /projects/[projectId]/report-keys` (body `{ "client": "godot" }`):
+  `reports:write` only, bound to the project (migration 054), and only for a
+  plugin-login key (`human_client`) - an agent key can't mint keys.
 - The web bug-report widget (`public/widget/report.js`, set up from a
   project's Settings -> "Bug report widget") posts to the same reports route
   with `source=web` (tag `web` instead of `in-game`). The route answers CORS

@@ -5,7 +5,7 @@
 A Guidon project board in Blender's sidebar. You can view, create, edit,
 move between columns, delete, add subtasks to and comment on tasks without
 leaving Blender. It's the Blender counterpart of the
-[Unity plugin](../unity/GuidonTasks/README.md) and talks to the same
+[Unity plugin](../unity/Guidon/README.md) and talks to the same
 public API (`/api/v1`, see [the API's README](../../src/app/api/v1/README.md)).
 
 ## Install

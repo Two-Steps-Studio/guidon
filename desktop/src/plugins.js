@@ -6,7 +6,7 @@
 
 const invoke = (...args) => window.__TAURI__.core.invoke(...args);
 
-const KIND_LABELS = { tasks: "Task board", reports: "In-game reports" };
+const KIND_LABELS = { plugin: "Board + in-game reports", tasks: "Task board", reports: "In-game reports" };
 
 const $ = (selector) => document.querySelector(selector);
 const steps = { pick: $("#step-pick"), folder: $("#step-folder"), done: $("#step-done") };

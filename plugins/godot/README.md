@@ -2,16 +2,23 @@
 
 > See [`../CONVENTIONS.md`](../CONVENTIONS.md) for the terminology/login-flow standard every Guidon plugin follows.
 
-Two independent add-ons for **Godot 4.2+**. Copy either folder, or both,
-into your project's `addons/` and enable it in **Project → Project Settings →
-Plugins**.
+One add-on for **Godot 4.2+**: copy `addons/guidon` into your project's
+`addons/` and enable **Guidon** in **Project → Project Settings → Plugins**.
+It adds a "Guidon" bottom panel with your board, the project's moodboard and
+its bug reports, and - once you set reports up - an in-game reporter.
 
-| Add-on | What it is | Ships in your game? |
+| Part | What it is | Ships in your game? |
 |---|---|---|
-| [`guidon_tasks`](addons/guidon_tasks) | Your Guidon board in the editor: a "Guidon" bottom panel | No, editor only |
-| [`guidon_reports`](addons/guidon_reports) | In-game bug reports: players/testers press a key, a Guidon task is created | Yes, as an autoload |
+| Board, Moodboard, Reports filter | The "Guidon" bottom panel | No, editor only |
+| In-game reporter (`reporter.gd`) | Players/testers press a key, a Guidon task is created | Yes, as the `GuidonReporter` autoload - added only when you set reports up |
 
-## Guidon Tasks (editor)
+**Upgrading from 1.x** (the separate `guidon_tasks` and `guidon_reports`
+add-ons): disable both, delete their folders, copy `addons/guidon` in and
+enable it. Your report settings are kept (same `guidon_reports/*` keys), and
+an existing `GuidonReporter` autoload is pointed at the new folder
+automatically. The editor warns while an old folder is still there.
+
+## Board (editor)
 
 The Godot counterpart of the Unity, Unreal, Blender and JetBrains plugins,
 using the same public API (`/api/v1`).
@@ -43,7 +50,7 @@ using the same public API (`/api/v1`).
 - The panel uses the website's colors (`src/app/globals.css`), with a light or
   dark set that follows the editor theme.
 
-## Guidon Reports (in-game)
+## In-game reports
 
 Press **F9** (configurable) in a running game. The game pauses and a small
 form asks what happened. **Send** creates a Backlog task titled
@@ -56,12 +63,20 @@ form asks what happened. **Send** creates a Backlog task titled
 
 ### Setup
 
-1. On the Guidon website, go to **Profile → API Keys** and create a key with
-   **only** the `reports:write` scope. It must be created by someone who is
-   an owner, admin or developer of the project.
-2. Enable the add-on. In **Project Settings → General → Guidon Reports**
-   (turn on *Advanced Settings*), fill in **Base Url**, **Project Id** (the id
-   in the project's URL, `/projects/<id>/…`) and **Report Key**.
+In the Guidon panel, click **Reports** (the board then shows only bug
+reports - from the game and from the website's widget - and **All Tasks**
+switches back), then **Set Up In-Game Reports**. That creates a report key
+for the open project, saves it with the server and project in **Project
+Settings → General → Guidon Reports** (turn on *Advanced Settings*), and adds
+the `GuidonReporter` autoload. You need the owner, admin or developer role in
+the project. **Send Reports Here** appears when the game reports into a
+different project.
+
+By hand instead: on the website, **Profile → API Keys**, create a key with
+**only** the `reports:write` scope, and fill in **Base Url**, **Project Id**
+(the id in the project's URL, `/projects/<id>/…`) and **Report Key** in
+those Project Settings, then add `res://addons/guidon/reporter.gd` as the
+`GuidonReporter` autoload.
 
 > **The report key ships inside your game** (it's in `project.godot`). Treat
 > it as public. That's why it must have only `reports:write`: that scope can
@@ -88,18 +103,24 @@ if result.ok: print("sent")
 
 ### Verified
 
-Both add-ons were run in **Godot 4.3** against a real local Guidon instance
+Run in **Godot 4.3** against a real local Guidon instance
 (Next.js + PostgreSQL 16, every migration applied).
 
 - **Tasks:** the headless editor loads the add-on without errors. Tested:
   real browser login (a scripted browser clicked Authorize), custom
   columns, click-to-open, drag-and-drop with real mouse events, create,
   subtasks, comments, edit and save, date validation, delete and log out.
-- **Moodboard** (added later): not run in Godot yet - no Godot binary was
-  available where it was written. It was reviewed against the Godot 4.2 API
-  and follows the same `HTTPRequest`/await pattern as the rest of `api.gd`;
-  the remaining risk is a GDScript parse or layout issue only the editor
-  would show.
+- **Moodboard** (added later): parses and loads with the panel in the
+  editor (checked with the 2.0 merge); showing real images in Godot hasn't
+  been run yet.
 - **Reports:** F9 opened the form and paused the game. Tested: sending from
   the form and via `submit()`, the screenshot and log arriving as task
   attachments, and custom metadata showing up in the task.
+- **2.0 merge** (one add-on): the headless editor loads it without errors
+  and keeps settings at their defaults out of `project.godot`; a project
+  with the 1.x autoload gets it repointed and the old-folder warning. A
+  scripted run against a real server: **Reports** narrowed the board to the
+  report tasks, **Set Up In-Game Reports** created a project-bound key and
+  saved it, and `GuidonReporter.submit()` with those settings filed a report
+  that then showed up under **Reports**. The panel was rendered (OpenGL,
+  Xvfb) to check the reports bar's layout. Not run by hand in the editor UI.

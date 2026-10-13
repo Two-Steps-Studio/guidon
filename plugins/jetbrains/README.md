@@ -8,7 +8,7 @@ RubyMine, RustRover and Android Studio. The plugin depends only on
 `com.intellij.modules.platform`, so one build covers all of them. You can view,
 create, edit, drag cards between columns, delete, add subtasks to and comment
 on tasks. It's the JetBrains counterpart of the
-[Unity plugin](../unity/GuidonTasks/README.md) and uses the same public API
+[Unity plugin](../unity/Guidon/README.md) and uses the same public API
 (`/api/v1`, see [the API's README](../../src/app/api/v1/README.md)).
 
 ## Build and install
