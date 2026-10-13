@@ -811,6 +811,49 @@
     "reportWidgetCopyFailed": "Kopieren fehlgeschlagen - markiere den Code und kopiere ihn manuell.",
     "reportWidgetKeyOnce": "Kopiere den Code jetzt - der Schlüssel wird nicht noch einmal angezeigt. Widerrufen kannst du ihn in der Liste unten.",
     "reportWidgetOptions": "Optionen: data-lang=\"de\", data-position=\"left\", data-color=\"#2563eb\", data-reporter=\"E-Mail des Nutzers\" oder data-button=\"false\" und window.GuidonReport.open() von einem eigenen Button aufrufen.",
+    "labelStarterHint": "Oder starte mit einem Set für deine Branche:",
+    "labelStarter": {
+      "software": {
+        "title": "Software",
+        "bug": "Fehler",
+        "feature": "Feature",
+        "improvement": "Verbesserung",
+        "techDebt": "Technische Schulden",
+        "docs": "Doku"
+      },
+      "gamedev": {
+        "title": "Gamedev",
+        "bug": "Fehler",
+        "gameplay": "Gameplay",
+        "art": "Grafik",
+        "audio": "Audio",
+        "levelDesign": "Leveldesign",
+        "performance": "Performance"
+      },
+      "design": {
+        "title": "Design",
+        "research": "Recherche",
+        "wireframe": "Wireframe",
+        "visual": "Visuelles Design",
+        "feedback": "Feedback",
+        "handoff": "Übergabe"
+      },
+      "marketing": {
+        "title": "Marketing",
+        "campaign": "Kampagne",
+        "content": "Content",
+        "social": "Social Media",
+        "seo": "SEO",
+        "ads": "Anzeigen"
+      },
+      "support": {
+        "title": "Support",
+        "bug": "Fehler",
+        "question": "Frage",
+        "featureRequest": "Feature-Wunsch",
+        "urgent": "Dringend"
+      }
+    },
     "boardColumnsTitle": "Board-Spalten",
     "boardColumnsDescription": "Benenne Spalten des Aufgabenboards dieses Projekts um, ordne sie neu oder blende sie aus. Die zugrunde liegenden Aufgabenstatus ändern sich nicht - dies betrifft nur Labels und die Anzeige.",
     "moveUpAria": "{label} nach oben verschieben",

@@ -811,6 +811,49 @@
     "reportWidgetCopyFailed": "Nie udało się skopiować - zaznacz kod i skopiuj ręcznie.",
     "reportWidgetKeyOnce": "Skopiuj kod teraz - klucz nie zostanie pokazany ponownie. Możesz go unieważnić na liście poniżej.",
     "reportWidgetOptions": "Opcje: data-lang=\"pl\", data-position=\"left\", data-color=\"#2563eb\", data-reporter=\"e-mail użytkownika\" albo data-button=\"false\" i wywołanie window.GuidonReport.open() z własnego przycisku.",
+    "labelStarterHint": "Albo zacznij od zestawu dla swojej branży:",
+    "labelStarter": {
+      "software": {
+        "title": "Oprogramowanie",
+        "bug": "Błąd",
+        "feature": "Funkcja",
+        "improvement": "Ulepszenie",
+        "techDebt": "Dług techniczny",
+        "docs": "Dokumentacja"
+      },
+      "gamedev": {
+        "title": "Gamedev",
+        "bug": "Błąd",
+        "gameplay": "Rozgrywka",
+        "art": "Grafika",
+        "audio": "Dźwięk",
+        "levelDesign": "Projekt poziomów",
+        "performance": "Wydajność"
+      },
+      "design": {
+        "title": "Design",
+        "research": "Badania",
+        "wireframe": "Makieta",
+        "visual": "Projekt graficzny",
+        "feedback": "Uwagi",
+        "handoff": "Przekazanie"
+      },
+      "marketing": {
+        "title": "Marketing",
+        "campaign": "Kampania",
+        "content": "Treści",
+        "social": "Social media",
+        "seo": "SEO",
+        "ads": "Reklamy"
+      },
+      "support": {
+        "title": "Wsparcie",
+        "bug": "Błąd",
+        "question": "Pytanie",
+        "featureRequest": "Prośba o funkcję",
+        "urgent": "Pilne"
+      }
+    },
     "boardColumnsTitle": "Kolumny tablicy",
     "boardColumnsDescription": "Zmieniaj nazwy, kolejność lub ukrywaj kolumny na tablicy zadań tego projektu. Bazowe statusy zadań się nie zmieniają - dotyczy to tylko etykiet i tego, co jest wyświetlane.",
     "moveUpAria": "Przesuń {label} w górę",

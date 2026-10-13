@@ -98,3 +98,49 @@ export async function deleteLabelPreset(projectId: string, presetId: string): Pr
   revalidate(projectId);
   return { error: null };
 }
+
+/**
+ * Adds a starter set (LABEL_STARTER_SETS, names already translated by the
+ * client) - skipping names the project already has, case-insensitively, so
+ * it can be applied on top of existing labels or twice without errors.
+ */
+export async function addLabelPresetSet(
+  projectId: string,
+  labels: Array<{ name: string; color: string }>
+): Promise<{ added: LabelPreset[]; error: string | null }> {
+  const access = await getProjectAccess(projectId);
+  if (!access || !canManageProject(access.role)) return { added: [], error: NO_PERMISSION };
+  if (labels.length === 0 || labels.length > 20) return { added: [], error: "Invalid label set." };
+  for (const label of labels) {
+    const invalid = validate(label.name.trim(), label.color);
+    if (invalid) return { added: [], error: invalid };
+  }
+
+  const db = dataClient(access.userId);
+  const { data: existing, error: listError } = await db
+    .from<{ name: string }>("project_label_presets")
+    .select("name")
+    .eq("project_id", projectId);
+  if (listError) return { added: [], error: listError.message };
+  const taken = new Set((existing ?? []).map((row) => row.name.toLowerCase()));
+  let sortOrder = existing?.length ?? 0;
+
+  const added: LabelPreset[] = [];
+  for (const label of labels) {
+    const name = label.name.trim();
+    if (taken.has(name.toLowerCase())) continue;
+    taken.add(name.toLowerCase());
+    const { data: preset, error } = await db
+      .from("project_label_presets")
+      .insert({ project_id: projectId, name, color: label.color, sort_order: sortOrder++ })
+      .select<LabelPreset>(COLUMNS)
+      .single();
+    // A concurrent add of the same name loses the race on the unique index - skip it.
+    if (error?.code === "23505") continue;
+    if (error || !preset) return { added, error: error?.message ?? "Failed to add the labels." };
+    added.push(preset);
+  }
+
+  if (added.length > 0) revalidate(projectId);
+  return { added, error: null };
+}

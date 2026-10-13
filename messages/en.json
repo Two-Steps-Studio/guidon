@@ -811,6 +811,49 @@
     "reportWidgetCopyFailed": "Couldn't copy - select the code and copy it manually.",
     "reportWidgetKeyOnce": "Copy the code now - the key won't be shown again. You can revoke it in the list below.",
     "reportWidgetOptions": "Options: data-lang=\"pl\", data-position=\"left\", data-color=\"#2563eb\", data-reporter=\"user's email\", or data-button=\"false\" and call window.GuidonReport.open() from your own button.",
+    "labelStarterHint": "Or start from a set for your field:",
+    "labelStarter": {
+      "software": {
+        "title": "Software",
+        "bug": "Bug",
+        "feature": "Feature",
+        "improvement": "Improvement",
+        "techDebt": "Tech debt",
+        "docs": "Docs"
+      },
+      "gamedev": {
+        "title": "Game dev",
+        "bug": "Bug",
+        "gameplay": "Gameplay",
+        "art": "Art",
+        "audio": "Audio",
+        "levelDesign": "Level design",
+        "performance": "Performance"
+      },
+      "design": {
+        "title": "Design",
+        "research": "Research",
+        "wireframe": "Wireframe",
+        "visual": "Visual design",
+        "feedback": "Feedback",
+        "handoff": "Handoff"
+      },
+      "marketing": {
+        "title": "Marketing",
+        "campaign": "Campaign",
+        "content": "Content",
+        "social": "Social media",
+        "seo": "SEO",
+        "ads": "Ads"
+      },
+      "support": {
+        "title": "Support",
+        "bug": "Bug",
+        "question": "Question",
+        "featureRequest": "Feature request",
+        "urgent": "Urgent"
+      }
+    },
     "boardColumnsTitle": "Board Columns",
     "boardColumnsDescription": "Rename, reorder, or hide columns on this project's task board. The underlying task statuses don't change - this only affects labels and what's shown.",
     "moveUpAria": "Move {label} up",

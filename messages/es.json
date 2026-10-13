@@ -811,6 +811,49 @@
     "reportWidgetCopyFailed": "No se pudo copiar: selecciona el código y cópialo manualmente.",
     "reportWidgetKeyOnce": "Copia el código ahora: la clave no se volverá a mostrar. Puedes revocarla en la lista de abajo.",
     "reportWidgetOptions": "Opciones: data-lang=\"es\", data-position=\"left\", data-color=\"#2563eb\", data-reporter=\"correo del usuario\", o data-button=\"false\" y llamar a window.GuidonReport.open() desde tu propio botón.",
+    "labelStarterHint": "O empieza con un conjunto para tu sector:",
+    "labelStarter": {
+      "software": {
+        "title": "Software",
+        "bug": "Error",
+        "feature": "Funcionalidad",
+        "improvement": "Mejora",
+        "techDebt": "Deuda técnica",
+        "docs": "Documentación"
+      },
+      "gamedev": {
+        "title": "Videojuegos",
+        "bug": "Error",
+        "gameplay": "Jugabilidad",
+        "art": "Arte",
+        "audio": "Audio",
+        "levelDesign": "Diseño de niveles",
+        "performance": "Rendimiento"
+      },
+      "design": {
+        "title": "Diseño",
+        "research": "Investigación",
+        "wireframe": "Wireframe",
+        "visual": "Diseño visual",
+        "feedback": "Comentarios",
+        "handoff": "Entrega"
+      },
+      "marketing": {
+        "title": "Marketing",
+        "campaign": "Campaña",
+        "content": "Contenido",
+        "social": "Redes sociales",
+        "seo": "SEO",
+        "ads": "Anuncios"
+      },
+      "support": {
+        "title": "Soporte",
+        "bug": "Error",
+        "question": "Pregunta",
+        "featureRequest": "Solicitud de función",
+        "urgent": "Urgente"
+      }
+    },
     "boardColumnsTitle": "Columnas del tablero",
     "boardColumnsDescription": "Cambia el nombre, reordena u oculta columnas en el tablero de tareas de este proyecto. Los estados de tarea subyacentes no cambian - esto solo afecta a las etiquetas y a lo que se muestra.",
     "moveUpAria": "Mover {label} hacia arriba",
