@@ -126,7 +126,7 @@ The remaining risk is a mismatch between the stubs and the real platform API
 signatures, which would show up as a compile error on the first
 `./gradlew buildPlugin`.
 
-The moodboard view and auto-refresh were added later and haven't been built yet: this machine
+The moodboard view, auto-refresh and the **Reports** filter were added later and haven't been built yet (a later attempt at `./gradlew compileKotlin` was turned away by Maven Central with HTTP 429 while fetching the Kotlin Gradle plugin): this machine
 had no Gradle/IntelliJ SDK cache, and `./gradlew buildPlugin` downloads about
 1 GB. Run that before shipping it; the new code is `ui/MoodboardPanel.kt` plus
 `listReferences`/`downloadImage` in `core/GuidonApi.kt`.
