@@ -53,6 +53,11 @@ class GuidonWindowProps(bpy.types.PropertyGroup):
     comment_text: StringProperty(name="Comment")
     menu_task_id: StringProperty(options={"HIDDEN"})  # which task GUIDON_MT_status acts on
     moodboard_filter: StringProperty(name="Filter", description="Search captions and tags")
+    reports_only: BoolProperty(
+        name="Reports",
+        description="Show only bug reports filed from your website or games (tagged web or in-game)",
+        default=False,
+    )
 
 
 _classes = (GuidonPreferences, GuidonWindowProps) + ops.classes + panels.classes + moodboard.classes

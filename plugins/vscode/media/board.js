@@ -5,6 +5,8 @@
   const vscode = acquireVsCodeApi();
   /** @type {any} */ let state = null;
   let addingIn = "";
+  /** Reports filter: only tasks filed by the website widget or an in-game reporter. Kept across reloads. */
+  let reportsOnly = Boolean(vscode.getState()?.reportsOnly);
   /** Details edit buffers - survive re-renders, reset when another task opens. */
   let edit = { id: "", title: "", description: "", priority: "medium", due: "", subtask: "", comment: "" };
 
@@ -22,10 +24,13 @@
     return "";
   }
 
+  // The reports route tags what it files: "web" (widget) or "in-game" (engine plugins).
+  const isReport = (task) => (task.tags ?? []).some((tag) => tag === "web" || tag === "in-game");
+
   function columnTasks(status) {
     return state.tasks
       .map((t, i) => ({ t, i }))
-      .filter(({ t }) => t.status === status && !t.parent_task_id)
+      .filter(({ t }) => t.status === status && !t.parent_task_id && (!reportsOnly || isReport(t)))
       .sort((a, b) => (a.t.sort_order ?? 0) - (b.t.sort_order ?? 0) || a.i - b.i)
       .map(({ t }) => t);
   }
@@ -108,9 +113,11 @@
     } else {
       app.innerHTML = `<div class="toolbar"><span class="brand">Guidon</span>
           <select id="f-project">${state.projects.map((p) => `<option value="${esc(p.id)}" ${p.id === state.projectId ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
-          <button class="btn" data-action="refresh">Refresh</button><button class="btn" data-action="moodboard">Moodboard</button><button class="btn" data-action="browser">Open in Browser</button>
+          <button class="btn" data-action="refresh">Refresh</button><button class="btn" data-action="moodboard">Moodboard</button>
+          <button class="btn ${reportsOnly ? "primary" : ""}" data-action="reports" title="Show only bug reports from your website and games">${reportsOnly ? "All Tasks" : "Reports"}</button><button class="btn" data-action="browser">Open in Browser</button>
           ${state.busy ? `<span class="muted">Loading…</span>` : ""}<span class="spacer"></span>
           <span class="muted">Logged in as ${esc(state.email || "?")}</span><button class="btn" data-action="logout">Log Out</button></div>${error}
+        ${reportsOnly && state.projectId && !state.tasks.some(isReport) ? `<div class="notice muted">No bug reports in this project yet. Add the bug report widget to your website (Project Settings → Bug report widget on the website), or set up in-game reports from the Unity, Unreal or Godot plugin.</div>` : ""}
         <div class="layout"><div class="board">${state.projectId ? state.columns.map(column).join("") : `<span class="muted">No projects loaded yet.</span>`}</div>${details()}</div>`;
     }
 
@@ -138,6 +145,10 @@
       case "refresh": return post("refresh");
       case "browser": return post("openBrowser");
       case "moodboard": return post("openMoodboard");
+      case "reports":
+        reportsOnly = !reportsOnly;
+        vscode.setState({ ...(vscode.getState() ?? {}), reportsOnly });
+        return render();
       case "dismiss": return post("dismissError");
       case "add": addingIn = addingIn === actionEl.dataset.status ? "" : actionEl.dataset.status ?? ""; return render();
       case "open": return post("select", { id: actionEl.dataset.task });

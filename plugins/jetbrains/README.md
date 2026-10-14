@@ -53,6 +53,9 @@ It targets 2024.3 (build 243) and newer, with no upper limit.
      with a search field and a tag filter. Double-click an image to see it
      large, with **Open source** for its link. **Board** switches back.
      Images are decoded with ImageIO (PNG, JPEG, BMP, GIF) in memory only.
+   - **Reports** narrows the board to bug reports: tasks filed by the
+     website's bug report widget (tag `web`) or an engine plugin's in-game
+     reporter (`in-game`). **All Tasks** switches back.
    - **Copy Git ref** copies `guidon#1a2b3c4d`. Put it in a commit message, PR title or branch name and, with the GitHub integration on, the task gets a link and moves by itself (see `docs/configuration.md`, `GITHUB_APP_WEBHOOK_SECRET`).
 
 The board uses the web app's design tokens (`src/app/globals.css`) as

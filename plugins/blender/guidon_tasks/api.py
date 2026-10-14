@@ -195,6 +195,12 @@ def column_tasks(tasks, status):
     return top
 
 
+def is_report(task):
+    """Filed by the website widget or an in-game reporter - the reports route tags it "web" or "in-game"."""
+    tags = task.get("tags") or []
+    return "web" in tags or "in-game" in tags
+
+
 def subtasks_of(tasks, task_id):
     subs = [t for t in tasks if t.get("parent_task_id") == task_id]
     subs.sort(key=lambda t: t.get("created_at") or "")

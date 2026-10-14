@@ -125,6 +125,9 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     private val moodboard = MoodboardPanel(project) { disposed }
     private val moodboardButton = JButton("Moodboard")
     private var showingMoodboard = false
+    private val reportsButton = JButton("Reports")
+    /** Reports filter: the board shows only tasks filed by the website widget or an in-game reporter. */
+    private var reportsOnly = false
     private var dragging = false
     /** Bumped by every user request (see [bg]), so a background refresh that raced one is dropped. */
     private var actions = 0
@@ -217,6 +220,8 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         loginButton.text = if (loggingIn) "Waiting for the browser…" else "Log In"
         cancelLoginButton.isVisible = loggingIn
         moodboardButton.text = if (showingMoodboard) "Board" else "Moodboard"
+        reportsButton.text = if (reportsOnly) "All Tasks" else "Reports"
+        reportsButton.isEnabled = !showingMoodboard
         modes.show(
             modePanel,
             when {
@@ -297,7 +302,13 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             if (showingMoodboard) moodboard.load(currentProjectId, api())
             updateChrome()
         }
-        toolbarControls += listOf(projectCombo, refresh, moodboardButton, openBrowser, autoRefreshBox, logout)
+        reportsButton.toolTipText = "Show only bug reports filed from your website or games"
+        reportsButton.addActionListener {
+            reportsOnly = !reportsOnly
+            updateChrome()
+            scheduleRebuild(board = true, details = false)
+        }
+        toolbarControls += listOf(projectCombo, refresh, moodboardButton, reportsButton, openBrowser, autoRefreshBox, logout)
 
         val left = JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(6), 0)).apply {
             add(JLabel("Guidon").apply {
@@ -307,6 +318,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             add(projectCombo)
             add(refresh)
             add(moodboardButton)
+            add(reportsButton)
             add(openBrowser)
             add(autoRefreshBox)
             add(busyLabel)
@@ -379,6 +391,10 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         if (currentProjectId.isEmpty()) {
             boardPanel.add(mutedLabel(if (projects.isEmpty()) "No projects loaded yet." else "Pick a project above."))
         } else {
+            if (reportsOnly && tasks.none(Board::isReport)) {
+                boardPanel.add(mutedLabel("No bug reports yet. Add the website widget or an engine plugin's in-game reports."))
+                boardPanel.add(Box.createHorizontalStrut(JBUI.scale(10)))
+            }
             for (column in columns) {
                 boardPanel.add(buildColumn(column.status, column.label))
                 boardPanel.add(Box.createHorizontalStrut(JBUI.scale(10)))
@@ -390,7 +406,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     }
 
     private fun buildColumn(status: String, label: String): JComponent {
-        val columnTasks = Board.column(tasks, status)
+        val columnTasks = Board.column(if (reportsOnly) tasks.filter(Board::isReport) else tasks, status)
         // The site's column: rounded-xl, background-secondary, header row over a divider.
         val column = RoundedPanel(BorderLayout(0, 0), GuidonColors.column, GuidonColors.border, JBUI.scale(24))
         column.border = JBUI.Borders.empty(1)

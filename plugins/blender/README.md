@@ -60,6 +60,12 @@ other request. It doesn't show the spinner, and a reload that overlaps one
 of your own actions is thrown away, so nothing you just did gets undone on
 screen. Turn it off with **Auto-refresh** in the add-on's preferences.
 
+## Reports
+
+**Reports** (a toggle under the project picker) narrows the board to bug reports:
+tasks filed by the website's bug report widget (tag `web`) or an engine
+plugin's in-game reporter (`in-game`). Toggle it off for every task.
+
 ## Moodboard
 
 The **Moodboard** panel (closed by default, in the 3D Viewport's and Image
@@ -116,6 +122,11 @@ server. Revoke it on the website if you lose a machine.
   response after a project switch) was checked in plain Python with a stub
   `bpy` against a fake server; the panel itself hasn't been run inside
   Blender yet.
+- The **Reports** toggle: Blender 4.2.3 in background mode registered and
+  unregistered the add-on, and the board panel's `draw()` (with a recording
+  stand-in for the layout) listed every task with the toggle off, only the
+  `web`-tagged one with it on, and the empty-state note when no report
+  existed. Not clicked in the real UI.
 - Status changes follow the project's permission rules. When the server
   refuses a change, its error message is shown at the top of the panel.
 

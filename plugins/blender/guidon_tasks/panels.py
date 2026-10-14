@@ -113,9 +113,13 @@ class _BoardPanel(_GuidonPanel):
             return
 
         props = context.window_manager.guidon
+        layout.prop(props, "reports_only", text="Reports", toggle=True, icon="ERROR")
+        board_tasks = [t for t in state.tasks if api.is_report(t)] if props.reports_only else state.tasks
+        if props.reports_only and not board_tasks:
+            _wrapped(layout, context, "No bug reports yet. Add the website widget or an engine plugin's in-game reports.")
         for status, label in state.columns:
             index = api.STATUSES.index(status)
-            tasks = api.column_tasks(state.tasks, status)
+            tasks = api.column_tasks(board_tasks, status)
             box = layout.box()
             header = box.row(align=True)
             header.label(text="", icon=_STATUS_ICONS.get(status, _DEFAULT_COLOR_ICON))

@@ -81,6 +81,9 @@ object Board {
     fun column(tasks: List<GuidonTask>, status: String): List<GuidonTask> =
         tasks.filter { it.status == status && !it.isSubtask }.sortedBy { it.sortOrder }
 
+    /** Filed by the website widget or an in-game reporter - the reports route tags it "web" or "in-game". */
+    fun isReport(task: GuidonTask): Boolean = task.tags.any { it == "web" || it == "in-game" }
+
     fun subtasks(tasks: List<GuidonTask>, parentId: String): List<GuidonTask> =
         tasks.filter { it.parentTaskId == parentId }.sortedBy { it.createdAt }
 
