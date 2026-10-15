@@ -13,8 +13,10 @@ Audited directly against the real source of all six existing plugins on 2026-09-
 | Server address setting | **Base URL** |
 | Reload the board from the server | **Refresh** |
 | Copy `guidon#<id>` for a commit/PR/branch | **Copy Git ref** |
+| Narrow the board to bug reports (tags `web`/`in-game`) | **Reports** (toggles to **All Tasks**) |
+| Mint a project-bound report key and save it in the engine's settings (Unity/Unreal/Godot) | **Set Up In-Game Reports** |
 
-These five are the ones a user actually reads and compares between plugins in normal use. Get these exactly right; don't invent a synonym ("Sign In", "Server URL", "Sync") even if it reads more naturally in isolation - the point is recognition on sight, not local elegance.
+These are the ones a user actually reads and compares between plugins in normal use. Get these exactly right; don't invent a synonym ("Sign In", "Server URL", "Sync") even if it reads more naturally in isolation - the point is recognition on sight, not local elegance.
 
 **Accepted exception, not a bug:** a genuinely space-constrained context (Blender's narrow N-panel sidebar is the current example: `text="URL"` instead of "Base URL", `text="Git Ref"` instead of "Copy Git ref", both in `plugins/blender/guidon_tasks/panels.py`) may shorten a label where the full text would wrap or clip in a real, narrow layout. The underlying setting/operator keeps the full canonical name internally (Blender's own `StringProperty(name="Base URL", ...)` and the operator's `bl_label = "Copy Git Ref"` both do) - only the on-screen rendering in that one cramped spot is shortened. Do not "fix" an abbreviation like this into the full label without actually running the host application and confirming the longer text still fits; a cosmetic-only change that can't be verified and risks a real layout regression is a bad trade.
 

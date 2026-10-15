@@ -8,7 +8,7 @@ RubyMine, RustRover and Android Studio. The plugin depends only on
 `com.intellij.modules.platform`, so one build covers all of them. You can view,
 create, edit, drag cards between columns, delete, add subtasks to and comment
 on tasks. It's the JetBrains counterpart of the
-[Unity plugin](../unity/GuidonTasks/README.md) and uses the same public API
+[Unity plugin](../unity/Guidon/README.md) and uses the same public API
 (`/api/v1`, see [the API's README](../../src/app/api/v1/README.md)).
 
 ## Build and install
@@ -53,6 +53,9 @@ It targets 2024.3 (build 243) and newer, with no upper limit.
      with a search field and a tag filter. Double-click an image to see it
      large, with **Open source** for its link. **Board** switches back.
      Images are decoded with ImageIO (PNG, JPEG, BMP, GIF) in memory only.
+   - **Reports** narrows the board to bug reports: tasks filed by the
+     website's bug report widget (tag `web`) or an engine plugin's in-game
+     reporter (`in-game`). **All Tasks** switches back.
    - **Copy Git ref** copies `guidon#1a2b3c4d`. Put it in a commit message, PR title or branch name and, with the GitHub integration on, the task gets a link and moves by itself (see `docs/configuration.md`, `GITHUB_APP_WEBHOOK_SECRET`).
 
 The board uses the web app's design tokens (`src/app/globals.css`) as
@@ -123,7 +126,7 @@ The remaining risk is a mismatch between the stubs and the real platform API
 signatures, which would show up as a compile error on the first
 `./gradlew buildPlugin`.
 
-The moodboard view and auto-refresh were added later and haven't been built yet: this machine
+The moodboard view, auto-refresh and the **Reports** filter were added later and haven't been built yet (a later attempt at `./gradlew compileKotlin` was turned away by Maven Central with HTTP 429 while fetching the Kotlin Gradle plugin): this machine
 had no Gradle/IntelliJ SDK cache, and `./gradlew buildPlugin` downloads about
 1 GB. Run that before shipping it; the new code is `ui/MoodboardPanel.kt` plus
 `listReferences`/`downloadImage` in `core/GuidonApi.kt`.

@@ -40,6 +40,10 @@ VS Code 1.85 or newer.
   on the website) as a grid. Filter by tag, search captions, click an image
   to see it large, **Open source** follows its source link. It follows the
   project picked on the board. Adding images stays on the website.
+- **Reports** in the board's toolbar narrows the board to bug reports: tasks
+  filed by the website's bug report widget (tag `web`) or an engine plugin's
+  in-game reporter (`in-game`). **All Tasks** switches back; the choice is
+  kept when the panel reloads.
 - **Log In** opens the Guidon website in your browser. Click **Authorize**
   there and VS Code picks up the key.
 
@@ -134,6 +138,11 @@ The moodboard panel was added later and checked less: `tsc` compiles it, and
 messages (grid, placeholders for failed images, tag filter, search, lightbox,
 Esc/backdrop close, Open source/Refresh messages). It hasn't run against a
 live server inside VS Code.
+
+The **Reports** filter (`media/board.js` only) ran the same way: a scripted
+board with a normal task, a `web` and an `in-game` report showed 3 cards,
+then 2 with the filter on; with no reports the empty-state note appeared, and
+switching back removed it.
 
 The remaining risk is behavior of the real VS Code API that the stand-in
 doesn't reproduce.

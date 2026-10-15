@@ -13,7 +13,10 @@ First stable release.
   Editor Plugins (also in the tray): pick Unity, Unreal Engine, Godot or
   Blender, choose your project folder, and the plugin lands where the
   engine expects it (`Assets/`, `Plugins/`, `addons/`). Running it again
-  updates the plugin in place and keeps your own files.
+  updates the plugin in place and keeps your own files. Unity, Unreal and
+  Godot are one download each (board, moodboard and in-game reports
+  together); if the separate Tasks/Reports plugins from before are still in
+  the project, the installer points them out so you can delete them.
 - **Updates on startup.** The app checks for a new version once when it
   starts and asks before installing anything. "Check for Updates..." still
   works any time.

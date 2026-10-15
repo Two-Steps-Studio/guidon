@@ -6,7 +6,7 @@
 
 const invoke = (...args) => window.__TAURI__.core.invoke(...args);
 
-const KIND_LABELS = { tasks: "Task board", reports: "In-game reports" };
+const KIND_LABELS = { plugin: "Board + in-game reports", tasks: "Task board", reports: "In-game reports" };
 
 const $ = (selector) => document.querySelector(selector);
 const steps = { pick: $("#step-pick"), folder: $("#step-folder"), done: $("#step-done") };
@@ -102,7 +102,15 @@ async function pickFolder() {
     if (!check.looks_right) {
       setStatus(status, `This doesn't look like the right folder - expected your ${selected.download.folder}. ${where} Install anyway only if you're sure.`, "warn");
     } else {
-      setStatus(status, check.already_installed ? `Already installed - this updates it in place (your own files there are kept). ${where}` : where);
+      const base = check.already_installed ? `Already installed - this updates it in place (your own files there are kept). ${where}` : where;
+      // Older versions (e.g. the separate Tasks/Reports plugins the merged one
+      // replaces) are only reported - deleting files in a project stays the user's call.
+      const old = check.old_versions ?? [];
+      if (old.length > 0) {
+        setStatus(status, `${base} An older version is also there: ${old.join(", ")}. Delete it after installing - the engine won't build or load both.`, "warn");
+      } else {
+        setStatus(status, base);
+      }
     }
     $("#install-button").textContent = check.already_installed ? "Update" : "Install";
     $("#install-button").disabled = false;

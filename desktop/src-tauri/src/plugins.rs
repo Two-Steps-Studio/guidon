@@ -71,6 +71,11 @@ pub(crate) struct InstallSpec {
     pub folder: String,
     /// What to do after installing; `{server}` is replaced with the server URL.
     pub next: String,
+    /// Where older versions of this plugin sat, relative to `into` (e.g. the
+    /// pre-2.0 `GuidonTasks`/`GuidonReports` that the merged plugin replaces).
+    /// Found ones are reported, never deleted - removing them is the user's call.
+    #[serde(default)]
+    pub replaces: Vec<String>,
 }
 
 /// The last manifest fetched, with the server it came from - install and
@@ -107,6 +112,8 @@ pub(crate) struct FolderCheck {
     target: String,
     /// Something is already there - installing updates it.
     already_installed: bool,
+    /// Older versions of the plugin present in the folder (`replaces`), to remove by hand.
+    old_versions: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -175,6 +182,18 @@ pub(crate) fn install_paths(
     let base = folder.join(relative_path(&spec.into)?);
     let target = base.join(relative_path(root)?);
     Ok((base, target))
+}
+
+/// The `replaces` folders that exist under `base` - an older version of the
+/// plugin the user should delete. Entries that aren't plain relative paths
+/// are skipped rather than failing the check.
+pub(crate) fn old_versions(base: &Path, replaces: &[String]) -> Vec<PathBuf> {
+    replaces
+        .iter()
+        .filter_map(|old| relative_path(old).ok())
+        .map(|old| base.join(old))
+        .filter(|path| path.exists())
+        .collect()
 }
 
 pub(crate) fn verify_sha256(bytes: &[u8], expected_hex: &str) -> Result<(), String> {
@@ -361,11 +380,15 @@ pub(crate) fn check_plugin_folder(
     let (_, manifest) = cached(&state)?;
     let (download, spec) = find_download(&manifest, &download_id)?;
     let folder = existing_folder(&folder)?;
-    let (_, target) = install_paths(&folder, spec, &download.root)?;
+    let (base, target) = install_paths(&folder, spec, &download.root)?;
     Ok(FolderCheck {
         looks_right: marker_matches(&folder, spec.marker.as_deref()),
         already_installed: target.exists(),
         target: target.to_string_lossy().into_owned(),
+        old_versions: old_versions(&base, &spec.replaces)
+            .iter()
+            .map(|path| path.to_string_lossy().into_owned())
+            .collect(),
     })
 }
 
@@ -435,7 +458,32 @@ mod tests {
             marker: marker.map(Into::into),
             folder: String::new(),
             next: String::new(),
+            replaces: Vec::new(),
         }
+    }
+
+    #[test]
+    fn old_versions_lists_only_existing_relative_folders() {
+        let dir = temp_dir("old-versions");
+        fs::create_dir_all(dir.join("Assets/GuidonTasks")).unwrap();
+        let base = dir.join("Assets");
+        let found = old_versions(
+            &base,
+            &[
+                "GuidonTasks".into(),
+                "GuidonReports".into(),
+                "../Assets/GuidonTasks".into(),
+                "/etc".into(),
+            ],
+        );
+        assert_eq!(found, vec![base.join("GuidonTasks")]);
+    }
+
+    #[test]
+    fn install_spec_without_replaces_still_parses() {
+        let spec: InstallSpec =
+            serde_json::from_str(r#"{"into":"","marker":null,"folder":"f","next":"n"}"#).unwrap();
+        assert!(spec.replaces.is_empty());
     }
 
     #[test]
@@ -468,10 +516,10 @@ mod tests {
             Path::new("/p/Plugins/GuidonTasks")
         );
         assert_eq!(
-            install_paths(project, &spec("", None), "addons/guidon_tasks")
+            install_paths(project, &spec("", None), "addons/guidon")
                 .unwrap()
                 .1,
-            Path::new("/p/addons/guidon_tasks")
+            Path::new("/p/addons/guidon")
         );
         assert!(install_paths(project, &spec("../x", None), "GuidonTasks").is_err());
         assert!(install_paths(project, &spec("", None), "/etc")
@@ -547,12 +595,9 @@ mod tests {
     #[test]
     fn nested_root_for_godot() {
         let dir = temp_dir("godot");
-        let bytes = zip_of(&[("addons/guidon_tasks/plugin.cfg", "cfg")]);
-        assert_eq!(
-            extract_plugin(&bytes, "addons/guidon_tasks", &dir).unwrap(),
-            1
-        );
-        assert!(dir.join("addons/guidon_tasks/plugin.cfg").exists());
+        let bytes = zip_of(&[("addons/guidon/plugin.cfg", "cfg")]);
+        assert_eq!(extract_plugin(&bytes, "addons/guidon", &dir).unwrap(), 1);
+        assert!(dir.join("addons/guidon/plugin.cfg").exists());
         fs::remove_dir_all(dir).unwrap();
     }
 

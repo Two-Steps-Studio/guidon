@@ -800,10 +800,11 @@
     "labelColorAria": "Farbe {color}",
     "reportWidgetOriginsLabel": "Websites, die den Schlüssel verwenden dürfen (optional)",
     "reportWidgetOriginsHint": "Kommagetrennt, z. B. shop.example.com. Leer lassen für jede Website. Meldungen von anderen Websites werden abgelehnt.",
-    "reportWidgetActiveKeys": "Deine aktiven Widget-Schlüssel",
+    "reportWidgetActiveKeys": "Deine aktiven Berichtsschlüssel",
+    "reportWidgetActiveKeysHint": "Hier stehen auch die Schlüssel, die die Plugins für Unity, Unreal und Godot (Set Up In-Game Reports) erstellt haben.",
     "reportWidgetAnySite": "jede Website",
     "reportWidgetRevoke": "Schlüssel widerrufen",
-    "reportWidgetRevokeConfirm": "Diesen Schlüssel widerrufen? Das Widget auf Websites, die ihn verwenden, sendet dann keine Meldungen mehr.",
+    "reportWidgetRevokeConfirm": "Diesen Schlüssel widerrufen? Websites und Spiel-Builds, die ihn nutzen, senden dann keine Berichte mehr.",
     "reportWidgetTitle": "Widget für Fehlermeldungen",
     "reportWidgetDescription": "Lass die Nutzer deiner Website Fehler direkt in dieses Projekt melden. Jede Meldung wird eine Backlog-Aufgabe mit dem Label \"web\", inklusive Seitenadresse, Browser, letzten JavaScript-Fehlern und Screenshots.",
     "reportWidgetStep1": "Erstelle einen Widget-Schlüssel - er funktioniert nur für Meldungen in diesem Projekt und darf daher in einer öffentlichen Seite stehen.",
@@ -1277,33 +1278,33 @@
       "desktop": "Desktop-App"
     },
     "kinds": {
+      "plugin": "Herunterladen",
       "tasks": "Aufgabenboard",
-      "reports": "In-Game-Berichte",
       "source": "Quellcode"
     },
     "descriptions": {
-      "unity": "Das Board deines Projekts im Unity-Editor, dazu ein In-Game-Fehlerformular, das Berichte direkt an Guidon sendet.",
-      "unreal": "Aufgabenboard als Editor-Tab und In-Game-Fehlerberichte aus Blueprints oder C++.",
-      "godot": "Zwei Add-ons: ein Aufgabenboard-Dock für den Editor und In-Game-Fehlerberichte.",
+      "unity": "Ein Paket: Board und Moodboard deines Projekts im Unity-Editor, dazu In-Game-Fehlerberichte, die auf diesem Board landen.",
+      "unreal": "Ein Plugin: Aufgabenboard und Moodboard als Editor-Tabs, dazu In-Game-Fehlerberichte aus Blueprints oder C++.",
+      "godot": "Ein Add-on: Aufgabenboard, Moodboard und Berichtsansicht im Editor, dazu In-Game-Fehlerberichte.",
       "blender": "Aufgabenboard in der Seitenleiste des 3D-Viewports (N-Panel).",
       "vscode": "Aufgabenboard in der VS-Code-Seitenleiste. Lade den Quellcode herunter und baue eine .vsix.",
       "jetbrains": "Aufgabenboard-Toolfenster für IntelliJ IDEA, Rider, PyCharm, WebStorm und andere JetBrains-IDEs. Lade den Quellcode herunter und baue ihn mit Gradle."
     },
     "install": {
       "unity": {
-        "s1": "Entpacken und den Ordner GuidonTasks irgendwo unter Assets/ ablegen.",
+        "s1": "Entpacken und den Ordner Guidon irgendwo unter Assets/ ablegen (GuidonTasks und GuidonReports löschen, falls vorhanden).",
         "s2": "Window → Guidon → Tasks öffnen, Base URL auf {baseUrl} setzen und Log In klicken.",
-        "s3": "Fehlerberichte: GuidonReports unter Assets/ kopieren und unter Profil → API-Schlüssel einen Schlüssel nur mit dem Scope reports:write erstellen."
+        "s3": "Fehlerberichte: In der Board-Leiste Reports und dann Set Up In-Game Reports klicken - der Schlüssel wird für dich erstellt und gespeichert."
       },
       "unreal": {
-        "s1": "In den Plugins/-Ordner deines Projekts entpacken (oder install.ps1 aus dem Ordner GuidonTasks ausführen).",
-        "s2": "Projekt neu öffnen und den Editor das Modul bauen lassen - ein C++-Projekt ist nötig.",
-        "s3": "Den Tab Guidon Tasks öffnen, Base URL auf {baseUrl} setzen und Log In klicken."
+        "s1": "In den Plugins/-Ordner des Projekts entpacken oder install.ps1 aus dem Ordner Guidon ausführen (entfernt auch die alten Plugins GuidonTasks/GuidonReports).",
+        "s2": "Projekt neu öffnen und den Editor die Module bauen lassen - ein C++-Projekt ist nötig.",
+        "s3": "Den Tab Guidon Tasks öffnen, Base URL auf {baseUrl} setzen und Log In klicken. Reports in der Leiste richtet In-Game-Berichte ein."
       },
       "godot": {
-        "s1": "Ins Hauptverzeichnis des Projekts entpacken - die Dateien landen in addons/.",
-        "s2": "Das Add-on unter Project → Project Settings → Plugins aktivieren.",
-        "s3": "Im Guidon-Dock Base URL auf {baseUrl} setzen und Log In klicken."
+        "s1": "Ins Hauptverzeichnis des Projekts entpacken - die Dateien landen in addons/guidon (addons/guidon_tasks und addons/guidon_reports löschen, falls vorhanden).",
+        "s2": "Guidon unter Project → Project Settings → Plugins aktivieren.",
+        "s3": "Im Guidon-Panel Base URL auf {baseUrl} setzen und Log In klicken. Reports in der Leiste richtet In-Game-Berichte ein."
       },
       "blender": {
         "s1": "Nicht entpacken - Blender installiert die Zip-Datei direkt.",

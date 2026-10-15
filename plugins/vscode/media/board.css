@@ -46,6 +46,7 @@ textarea { resize: vertical; width: 100%; }
 
 .error { margin: 10px 14px 0; padding: 8px 12px; border: 1px solid var(--danger); background: var(--danger-bg); color: var(--danger); border-radius: 6px; display: flex; gap: 8px; align-items: center; }
 .error span { flex: 1; }
+.notice { margin: 10px 14px 0; padding: 8px 12px; border: 1px solid var(--border); background: var(--column); border-radius: 6px; }
 
 .login { display: flex; justify-content: center; padding: 60px 16px; }
 .login .card { width: 360px; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); display: flex; flex-direction: column; gap: 10px; }
