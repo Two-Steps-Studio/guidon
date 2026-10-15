@@ -150,3 +150,27 @@ board renders correctly before and after 002.
 Until this is applied, every query that joins `profiles` returns null for other
 users. The UI degrades to "Unknown member" rather than dropping the row, but
 member names will not appear.
+
+## Catching up a database whose migrations were applied by hand
+
+`npm run migrate` keeps its own registry (`guidon_migrations`). A database
+kept current by pasting files into the Supabase SQL editor has no registry,
+and the runner would start again at 000. Instead:
+
+```bash
+npm run db:catch-up -- --status --out status.sql   # read-only: which migrations are in place
+npm run db:catch-up -- --out catch-up.sql          # applies only the missing ones
+```
+
+Paste `catch-up.sql` into the SQL editor. For each migration it checks a
+probe (`probes.mjs` - something that migration creates), applies the file
+only if the probe says it's missing, and records every migration in
+`guidon_migrations` with the runner's own checksum. It is one transaction:
+if any step fails, nothing changes. Afterwards `npm run migrate` works
+normally against that database.
+
+A new migration needs a probe in `probes.mjs`; the generator refuses to run
+without one. `DATABASE_URL=<scratch db> node scripts/db-catch-up.mjs --verify`
+applies the chain to an empty database one file at a time and checks that
+each probe turns true exactly at its own migration.
+

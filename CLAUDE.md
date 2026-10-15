@@ -18,6 +18,7 @@ npx tsc --noEmit              # type-check without emitting
 npm run migrate               # apply pending DB migrations (requires DATABASE_URL)
 npm run migrate:status        # list applied/pending migrations, changes nothing
 node scripts/migrate.mjs --dry-run   # show what would run, changes nothing
+npm run db:catch-up -- --out catch-up.sql   # SQL that brings a hand-maintained DB (e.g. Supabase SQL editor, no guidon_migrations) up to date and registers every migration; --status for a read-only check
 
 npm run test:db               # migration chain + RLS-compatibility layer + data-client SQL against PGlite (real Postgres, no Docker/Supabase)
 npm run test:ai                # AI provider factory's env-resolution logic, no live API key needed
@@ -80,4 +81,4 @@ See `README.md`'s "Project structure" tree for the directory layout — it stays
 
 ### Migrations
 
-`src/db/migrations/000_baseline_schema.sql` through the current numbered file, applied in order by `scripts/migrate.mjs`, each recorded with a checksum in `guidon_migrations` (a changed already-applied file is a hard error, never a silent skip). `src/db/migrations/README.md` is the authoritative per-migration reference — check it before assuming a table/column/policy's shape from memory. `src/db/bootstrap/000_auth_compat.sql` recreates `auth.uid()`/`auth.users`/roles on plain PostgreSQL so the same RLS policies work outside Supabase.
+`src/db/migrations/000_baseline_schema.sql` through the current numbered file, applied in order by `scripts/migrate.mjs`, each recorded with a checksum in `guidon_migrations` (a changed already-applied file is a hard error, never a silent skip). `src/db/migrations/README.md` is the authoritative per-migration reference — check it before assuming a table/column/policy's shape from memory. Every new migration also needs a probe in `src/db/migrations/probes.mjs` (a read-only check that it's applied) - `db:catch-up` refuses to run without one; `DATABASE_URL=<scratch db> node scripts/db-catch-up.mjs --verify` checks all probes against the chain step by step. `src/db/bootstrap/000_auth_compat.sql` recreates `auth.uid()`/`auth.users`/roles on plain PostgreSQL so the same RLS policies work outside Supabase.
