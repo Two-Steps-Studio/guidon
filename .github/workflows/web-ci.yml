@@ -1,0 +1,60 @@
+# Web app checks on every pull request and push to main: lint, type-check,
+# the plain-Node test scripts and a production build. test:db runs the whole
+# migration chain and the RLS policies against PGlite (real Postgres in
+# WASM), so no database service is needed; nothing here talks to Supabase,
+# Stripe or an AI provider. Guidon Desktop has its own desktop-ci.yml.
+name: Web CI
+
+on:
+  pull_request:
+    paths-ignore: ["desktop/**", ".github/workflows/desktop-*.yml"]
+  push:
+    branches: [main]
+    paths-ignore: ["desktop/**", ".github/workflows/desktop-*.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: lint, types, tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+      - run: npx tsc --noEmit
+
+      - name: Tests
+        run: |
+          set -e
+          for suite in db ai auth limits reports github webhooks agent-web labels; do
+            echo "::group::test:$suite"
+            npm run --silent "test:$suite"
+            echo "::endgroup::"
+          done
+
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build

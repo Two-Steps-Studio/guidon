@@ -32,6 +32,8 @@ npm run test:labels            # label starter sets complete in every locale, pr
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```
 
+CI: `.github/workflows/web-ci.yml` runs `lint`, `tsc`, every `test:*` script above and `npm run build` on each pull request and push to `main` (nothing external - `test:db` uses PGlite); add a new `test:*` script to its loop.
+
 Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` from a `desktop-v<version>` tag - see `desktop/RELEASING.md`.
 
 `test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 341) to stay the same or grow, never shrink.
