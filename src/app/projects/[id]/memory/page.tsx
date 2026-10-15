@@ -113,7 +113,7 @@ export default async function ProjectMemoryPage({
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-start gap-2">

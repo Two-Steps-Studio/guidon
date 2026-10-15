@@ -64,7 +64,7 @@ export default async function OrganizationDetailPage({
             canEdit={canManageOrg(access.role)}
           />
           <div className="min-w-0 flex-1 basis-40">
-            <h1 className="break-words text-2xl font-bold sm:text-3xl">{organization.name}</h1>
+            <h1 className="break-words text-2xl font-semibold tracking-tight">{organization.name}</h1>
             <p className="text-muted-foreground">{organization.description || tCommon("noDescription")}</p>
           </div>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">

@@ -144,7 +144,7 @@ export function MoodboardBoard({
     >
       <div className="mb-6 flex flex-wrap items-start gap-4">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="text-muted-foreground">{subtitle}</p>
         </div>
         {canUpload && (
@@ -247,7 +247,7 @@ export function MoodboardBoard({
                               key={tag}
                               type="button"
                               onClick={() => setActiveTag(tag)}
-                              className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                              className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
                             >
                               #{tag}
                             </button>

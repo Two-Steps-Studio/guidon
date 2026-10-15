@@ -68,7 +68,7 @@ export default async function OrganizationsPage({
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{t("list.title")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("list.title")}</h1>
             <p className="text-muted-foreground">{t("list.subtitle")}</p>
           </div>
           <CreateOrganizationDialog openOnMount={create === "1"} />

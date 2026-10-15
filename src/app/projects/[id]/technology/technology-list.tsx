@@ -126,7 +126,7 @@ export function TechnologyList({
       <div className="mx-auto max-w-4xl p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {projectName}
               {technologies.length > 0 && (
@@ -203,7 +203,7 @@ export function TechnologyList({
                           <div className="flex flex-wrap items-baseline gap-2">
                             <span className="text-sm font-medium text-foreground">{tech.name}</span>
                             {tech.version && (
-                              <span className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] leading-none text-muted-foreground">
+                              <span className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs leading-none text-muted-foreground">
                                 {tech.version}
                               </span>
                             )}

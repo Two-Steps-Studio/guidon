@@ -29,7 +29,7 @@ export default async function ConnectRepoPage({
 
   return (
     <div className="container mx-auto max-w-2xl px-6 py-8">
-      <h1 className="text-2xl font-bold">{t("chooseRepoTitle")}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{t("chooseRepoTitle")}</h1>
       <p className="mb-6 text-muted-foreground">
         {t("chooseRepoDescription")}
       </p>

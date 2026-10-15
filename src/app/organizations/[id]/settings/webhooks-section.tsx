@@ -184,12 +184,12 @@ function WebhookRow({ organizationId, webhook }: { organizationId: string; webho
           {webhook.description && <p className="text-xs text-muted-foreground">{webhook.description}</p>}
           <div className="mt-1 flex flex-wrap gap-1">
             {format !== "guidon" && (
-              <Badge variant="secondary" className="text-[10px]" title={t("nativeFormatHint")}>
+              <Badge variant="secondary" className="text-xs" title={t("nativeFormatHint")}>
                 {format === "discord" ? "Discord" : "Slack"}
               </Badge>
             )}
             {webhook.events.map((event) => (
-              <Badge key={event} variant="outline" className="font-mono text-[10px]">
+              <Badge key={event} variant="outline" className="font-mono text-xs">
                 {event}
               </Badge>
             ))}

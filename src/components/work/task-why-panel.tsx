@@ -55,7 +55,7 @@ function RelatedItemRow({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="text-xs">
               {tCommon("entityType", { type: item.entityType })}
             </Badge>
             {item.status && (
@@ -128,7 +128,7 @@ export function TaskWhyPanel({
           {decision && (
             <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5">
               <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="text-[10px]">{t("decisionBadge")}</Badge>
+                <Badge variant="outline" className="text-xs">{t("decisionBadge")}</Badge>
                 <Badge className={DECISION_STATUS_CONFIG[decision.status as DecisionStatus]?.color}>
                   {tCommon("decisionStatus", { status: decision.status })}
                 </Badge>

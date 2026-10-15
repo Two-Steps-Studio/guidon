@@ -37,7 +37,7 @@ export function KnowledgeList({
     <div className="mx-auto max-w-5xl p-6">
       <header className="mb-6 flex flex-wrap items-end gap-4">
         <div className="flex-1">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {t("subtitle")}
           </p>
@@ -100,7 +100,7 @@ export function KnowledgeList({
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-sm font-medium text-foreground">{source.title || t("untitled")}</h3>
-                  <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground">
+                  <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs leading-none text-muted-foreground">
                     {tCommon("sourceType", { type: source.source_type })}
                   </span>
                 </div>
@@ -111,7 +111,7 @@ export function KnowledgeList({
                   </p>
                 )}
 
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <time dateTime={source.created_at}>{new Date(source.created_at).toLocaleDateString()}</time>
                   {source.url && (
                     <a

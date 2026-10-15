@@ -451,7 +451,7 @@ export function KanbanBoard({
               </h3>
               <AnimatedNumber
                 value={columnTasks.length}
-                className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+                className="ml-auto rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
               />
               {canEdit && (
                 <Button

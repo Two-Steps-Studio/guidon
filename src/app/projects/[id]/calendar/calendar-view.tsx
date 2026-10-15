@@ -176,7 +176,7 @@ export function CalendarView({
                           title={phase.name}
                           aria-label={t("phaseAria", { name: phase.name })}
                           className={cn(
-                            "relative block h-4 text-[10px] font-medium leading-4 transition-colors",
+                            "relative block h-4 text-xs font-medium leading-4 transition-colors",
                             PHASE_BAR_CLASSES[phase.status],
                             isStart && "ml-1.5 rounded-l",
                             isEnd && "mr-1.5 rounded-r"
@@ -194,7 +194,7 @@ export function CalendarView({
                       );
                     })}
                     {hiddenPhases > 0 && (
-                      <p className="px-2.5 text-[10px] text-muted-foreground">
+                      <p className="px-2.5 text-xs text-muted-foreground">
                         {t("morePhases", { count: hiddenPhases })}
                       </p>
                     )}
@@ -206,7 +206,7 @@ export function CalendarView({
                       <button
                         type="button"
                         onClick={() => setOpenTask(task)}
-                        className="flex w-full items-center gap-1 truncate rounded px-1 py-0.5 text-left text-[11px] hover:bg-surface-hover"
+                        className="flex w-full items-center gap-1 truncate rounded px-1 py-0.5 text-left text-xs hover:bg-surface-hover"
                         title={task.title}
                       >
                         <span
@@ -221,7 +221,7 @@ export function CalendarView({
                     </li>
                   ))}
                   {dayTasks.length > 4 && (
-                    <li className="px-1 text-[11px] text-muted-foreground">
+                    <li className="px-1 text-xs text-muted-foreground">
                       {t("moreTasks", { count: dayTasks.length - 4 })}
                     </li>
                   )}

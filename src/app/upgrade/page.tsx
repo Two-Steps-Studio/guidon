@@ -58,7 +58,7 @@ export default async function UpgradePage({
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-2xl px-6 py-8">
-        <h1 className="mb-2 text-3xl font-bold">{t("title")}</h1>
+        <h1 className="mb-2 text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="mb-8 text-muted-foreground">{t("description")}</p>
 
         {organizations && organizations.length > 0 ? (

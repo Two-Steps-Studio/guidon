@@ -140,7 +140,7 @@ export function TaskCommentsSection({
                   <li key={comment.id} className="group flex gap-2.5">
                     <span
                       aria-hidden
-                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
+                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-medium text-secondary-foreground"
                     >
                       {isBot ? <Bot className="h-3.5 w-3.5" /> : author ? initialsFor(author) : "?"}
                     </span>

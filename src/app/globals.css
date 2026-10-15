@@ -486,8 +486,14 @@ body {
 }
 
 /* Mobile touch fixes */
-input, textarea, select {
-  font-size: 16px;
+/* iOS zooms into any focused field under 16px. Only touch screens need
+   this: unconditionally it also beat every text-sm field on desktop (an
+   unlayered rule wins over Tailwind's layered utilities), so inputs there
+   were a size larger than their 14px labels. */
+@media (pointer: coarse) {
+  input, textarea, select {
+    font-size: 16px;
+  }
 }
 
 button, a, [role="button"] {

@@ -376,26 +376,26 @@ function TaskCardComponent({
             const preset = findLabelPreset(labelPresets, tag);
             return preset ? (
               <li key={tag} className="max-w-full">
-                <LabelChip name={tag} color={preset.color} className="py-0 text-[11px] leading-4" />
+                <LabelChip name={tag} color={preset.color} className="py-0 text-xs leading-4" />
               </li>
             ) : (
               <li
                 key={tag}
-                className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground"
+                className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs leading-none text-muted-foreground"
               >
                 {tag}
               </li>
             );
           })}
           {tags.length > 3 && (
-            <li className="px-1 py-0.5 text-[11px] leading-none text-muted-foreground">
+            <li className="px-1 py-0.5 text-xs leading-none text-muted-foreground">
               +{tags.length - 3}
             </li>
           )}
         </ul>
       )}
 
-      <div className="mt-3 flex items-center gap-3 pl-3.5 text-[11px] text-muted-foreground">
+      <div className="mt-3 flex items-center gap-3 pl-3.5 text-xs text-muted-foreground">
         <span className="sr-only">{t("priorityScreenReader")}</span>
         <span className="tabular-nums">{t("priority", { priority })}</span>
 

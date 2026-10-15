@@ -146,7 +146,7 @@ export default async function ProjectCalendarPage({
   return (
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">{tCalendar("title")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{tCalendar("title")}</h1>
         <p className="text-muted-foreground">{tCalendar("subtitle")}</p>
       </div>
       <CalendarView

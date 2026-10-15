@@ -105,7 +105,7 @@ export default async function OrganizationMembersPage({
             </Link>
           </Button>
           <div className="min-w-0 flex-1 basis-48">
-            <h1 className="text-3xl font-bold">{t("title")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
             <p className="text-muted-foreground">{t("subtitle")}</p>
             {seats && seats.memberLimit !== null && (
               <p className="mt-1 text-sm text-muted-foreground">

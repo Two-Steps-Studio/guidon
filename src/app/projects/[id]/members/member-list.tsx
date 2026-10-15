@@ -137,7 +137,7 @@ export function MemberList({
       <div className="mx-auto max-w-3xl p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {t("subtitle")}
               {" · "}

@@ -250,7 +250,7 @@ export function WorkBoard({
       <div className="mx-auto min-w-0 w-full max-w-[1600px] p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {projectName}
               {progress.total > 0 && (

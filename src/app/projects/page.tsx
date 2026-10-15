@@ -118,7 +118,7 @@ export default async function ProjectsPage() {
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{t("title")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
             <p className="text-muted-foreground">{t("subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">

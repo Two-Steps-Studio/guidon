@@ -81,7 +81,7 @@ export default async function BillingPage({
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-            <h1 className="text-3xl font-bold">{t("title")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
           </div>
           <Card>
             <CardContent className="py-6 text-muted-foreground">
@@ -138,7 +138,7 @@ export default async function BillingPage({
               </Link>
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">{t("title")}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
               <p className="text-muted-foreground">{t("currentPlan", { plan: planLimits.planName })}</p>
             </div>
           </div>

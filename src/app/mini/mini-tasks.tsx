@@ -195,7 +195,7 @@ export function MiniTasks({
           {task.title}
         </button>
         {task.due_date && due !== "none" && (
-          <span className={cn("shrink-0 text-[11px] tabular-nums", DUE_STATE_CLASSES[due])}>{formatDueDate(task.due_date)}</span>
+          <span className={cn("shrink-0 text-xs tabular-nums", DUE_STATE_CLASSES[due])}>{formatDueDate(task.due_date)}</span>
         )}
         {filter === "all" && assignee && (
           <span
@@ -298,7 +298,7 @@ export function MiniTasks({
           if (columnTasks.length === 0) return null;
           return (
             <section key={column.status}>
-              <h2 className="sticky top-0 z-10 flex items-center gap-2 bg-background-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <h2 className="sticky top-0 z-10 flex items-center gap-2 bg-background-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", column.accentClass)} />
                 {column.label}
                 <span className="tabular-nums">{columnTasks.length}</span>
@@ -314,7 +314,7 @@ export function MiniTasks({
               type="button"
               onClick={() => setShowDone((value) => !value)}
               aria-expanded={showDone}
-              className="sticky top-0 z-10 flex w-full items-center gap-2 bg-background-secondary px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+              className="sticky top-0 z-10 flex w-full items-center gap-2 bg-background-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
               {showDone ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
               {doneColumn.label}
