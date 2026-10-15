@@ -888,7 +888,15 @@
     "discordLinkInstructions": "Aby połączyć serwer Discord, dodaj do niego bota Guidon, a następnie uruchom na tym serwerze komendę /guidon-link i wybierz ten projekt na otwartej stronie.",
     "discordJustConnected": "Połączono! Wypróbuj /task list na swoim serwerze Discord.",
     "discordDisconnect": "Rozłącz",
-    "discordDisconnectConfirm": "Rozłączyć {guild} od tego projektu? Komendy /task przestaną tam działać, dopóki ponownie nie uruchomisz /guidon-link. Powiadomienia przez webhook zostają."
+    "discordDisconnectConfirm": "Rozłączyć {guild} od tego projektu? Komendy /task przestaną tam działać, dopóki ponownie nie uruchomisz /guidon-link. Powiadomienia przez webhook zostają.",
+    "slackTitle": "Slack",
+    "slackDescription": "Pracuj nad projektem ze Slacka: lista zadań, rozpoczynanie, kończenie i komentowanie komendą /guidon na połączonym kanale. Komendy działają jako osoba, która połączyła kanał, i są widoczne jako „Slack bot”.",
+    "slackConnected": "Kanał Slacka połączony.",
+    "slackNotConfigured": "Integracja ze Slackiem nie jest jeszcze skonfigurowana na tym serwerze Guidon - administrator serwera musi utworzyć aplikację Slack (docs/slack.md) i ustawić SLACK_SIGNING_SECRET.",
+    "slackStep1": "Na kanale Slacka tego projektu wpisz /guidon link.",
+    "slackStep2": "Otwórz link z odpowiedzi i wybierz ten projekt.",
+    "slackDisconnect": "Rozłącz kanał",
+    "slackDisconnectConfirm": "Rozłączyć ten kanał Slacka? Komendy /guidon przestaną tam działać, dopóki ktoś nie połączy go ponownie."
   },
   "discordLink": {
     "title": "Połącz bota Guidon z Discorda",
@@ -905,6 +913,22 @@
     "emptyDescription": "Serwer Discord mogą połączyć z projektem tylko jego właściciele i administratorzy. Poproś administratora o połączenie lub najpierw utwórz projekt.",
     "invalidTitle": "Ten link wygasł",
     "invalidDescription": "Link jest nieprawidłowy lub starszy niż 10 minut. Uruchom /guidon-link na swoim serwerze Discord ponownie, aby otrzymać nowy.",
+    "toProjects": "Przejdź do projektów"
+  },
+  "slackLink": {
+    "title": "Połącz kanał Slacka",
+    "description": "{channel} w {workspace} chce połączyć się z projektem Guidon. Po wybraniu projektu osoby z tego kanału mogą przeglądać jego zadania, rozpoczynać je, kończyć i komentować komendą /guidon - jako Ty, z podpisem „Slack bot”.",
+    "unnamedChannel": "Ten kanał",
+    "unnamedWorkspace": "Twoim workspace Slacka",
+    "pickProject": "Projekt",
+    "unknownOrganization": "Inne projekty",
+    "phishingWarning": "Kontynuuj tylko wtedy, gdy ten link pochodzi z komendy /guidon link wpisanej przez Ciebie na zaufanym kanale Slacka. Potwierdzenie pozwala każdemu na tym kanale zmieniać zadania w wybranym projekcie w Twoim imieniu.",
+    "confirm": "Połącz",
+    "genericError": "Nie udało się połączyć kanału Slacka. Spróbuj ponownie.",
+    "emptyTitle": "Nie zarządzasz żadnym projektem",
+    "emptyDescription": "Kanał Slacka może połączyć tylko właściciel lub administrator projektu.",
+    "invalidTitle": "Ten link wygasł",
+    "invalidDescription": "Link jest nieprawidłowy albo starszy niż 10 minut. Wpisz ponownie /guidon link na kanale Slacka, żeby dostać nowy.",
     "toProjects": "Przejdź do projektów"
   },
   "feedback": {

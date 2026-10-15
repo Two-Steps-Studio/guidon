@@ -26,6 +26,7 @@ export const SIGNED_IN_SECTIONS: ReadonlySet<string> = new Set([
   "plugins",
   "profile",
   "projects",
+  "slack",
   "upgrade",
 ]);
 

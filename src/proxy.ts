@@ -47,6 +47,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // Stripe webhook - same reasoning: Stripe never carries a session cookie,
   // the route verifies the Stripe-Signature header itself.
   '/api/stripe/webhook',
+  // Slack slash commands (/guidon) - Slack never carries a session cookie;
+  // the route verifies X-Slack-Signature against SLACK_SIGNING_SECRET itself
+  // and 401s without it.
+  '/api/integrations/slack/commands',
   // Machine-readable descriptions of the site for AI agents: the llms.txt
   // guide (public/llms.txt) and the homepage as Markdown (src/app/index.md).
   '/llms.txt',

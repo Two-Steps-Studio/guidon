@@ -163,8 +163,9 @@ for (const [label, sql, expected] of [
   // 31->32 tabel, 110->114 polityk: organization_webhooks (050), 4 polityki
   // (owner/admin organizacji).
   // 32->33 tabel, 114->118 polityk: project_label_presets (053), 4 polityki
-  ["33 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 33],
-  ["118 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 118],
+  // 33->34 tabel, 118->121 polityk: slack_integrations (056), 3 polityki (bez UPDATE)
+  ["34 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 34],
+  ["121 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 121],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -2729,6 +2730,59 @@ section("44. projects.disabled_modules: wylaczane moduly projektu (migracja 055)
 
   await withUser(A, async () => {
     await db.query("UPDATE public.projects SET disabled_modules = '{}' WHERE id = $1", [projectId]);
+  });
+}
+
+section("45. slack_integrations: kanal Slacka -> projekt (migracja 056)");
+
+{
+  const insertLink = (channel, linkedBy) =>
+    db.query(
+      `INSERT INTO public.slack_integrations (project_id, team_id, team_name, channel_id, channel_name, linked_by)
+       VALUES ($1, 'T056', 'acme', $2, 'space-game', $3) RETURNING id, linked_by`,
+      [projectId, channel, linkedBy]
+    );
+  const refused = async (fn) => {
+    let threw = false;
+    try {
+      await db.query("SAVEPOINT s");
+      await fn();
+    } catch {
+      threw = true;
+    }
+    await db.query("ROLLBACK TO SAVEPOINT s");
+    return threw;
+  };
+
+  let linkId;
+  await withUser(A, async () => {
+    const r = await insertLink("C056A", A);
+    linkId = r.rows[0]?.id;
+    check("owner laczy kanal jako on sam", r.rows[0]?.linked_by === A, JSON.stringify(r.rows));
+    check("owner nie polaczy kanalu w cudzym imieniu (linked_by = auth.uid())", await refused(() => insertLink("C056B", D)));
+    check("ten sam kanal drugi raz -> UNIQUE (team_id, channel_id)", await refused(() => insertLink("C056A", A)));
+    check(
+      "brak UPDATE (przeniesienie = rozlacz + polacz)",
+      await refused(() => db.query("UPDATE public.slack_integrations SET project_id = project_id WHERE id = $1", [linkId]))
+    );
+  });
+
+  await withUser(D, async () => {
+    const seen = await db.query("SELECT channel_name FROM public.slack_integrations WHERE project_id = $1", [projectId]);
+    check("developer widzi polaczone kanaly", seen.rows.length === 1);
+    check("developer nie laczy kanalu (owner/admin)", await refused(() => insertLink("C056C", D)));
+    const del = await db.query("DELETE FROM public.slack_integrations WHERE id = $1 RETURNING id", [linkId]);
+    check("developer nie rozlacza kanalu", del.rows.length === 0);
+  });
+
+  await withUser(B, async () => {
+    const seen = await db.query("SELECT id FROM public.slack_integrations WHERE id = $1", [linkId]);
+    check("osoba spoza projektu nie widzi polaczenia", seen.rows.length === 0);
+  });
+
+  await withUser(A, async () => {
+    const del = await db.query("DELETE FROM public.slack_integrations WHERE id = $1 AND project_id = $2 RETURNING id", [linkId, projectId]);
+    check("owner rozlacza kanal", del.rows.length === 1);
   });
 }
 

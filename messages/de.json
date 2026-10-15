@@ -888,7 +888,15 @@
     "discordLinkInstructions": "Um einen Discord-Server zu verknüpfen, füge den Guidon-Bot hinzu, führe auf diesem Server /guidon-link aus und wähle auf der geöffneten Seite dieses Projekt aus.",
     "discordJustConnected": "Verbunden! Probiere /task list auf deinem Discord-Server aus.",
     "discordDisconnect": "Trennen",
-    "discordDisconnectConfirm": "{guild} von diesem Projekt trennen? Die /task-Befehle funktionieren dort nicht mehr, bis du erneut /guidon-link ausführst. Webhook-Benachrichtigungen bleiben erhalten."
+    "discordDisconnectConfirm": "{guild} von diesem Projekt trennen? Die /task-Befehle funktionieren dort nicht mehr, bis du erneut /guidon-link ausführst. Webhook-Benachrichtigungen bleiben erhalten.",
+    "slackTitle": "Slack",
+    "slackDescription": "Arbeite von Slack aus an diesem Projekt: Aufgaben auflisten, starten, abschließen und kommentieren mit dem Befehl /guidon in einem verbundenen Kanal. Befehle handeln als die Person, die den Kanal verbunden hat, und erscheinen als „Slack bot“.",
+    "slackConnected": "Slack-Kanal verbunden.",
+    "slackNotConfigured": "Die Slack-Integration ist auf diesem Guidon-Server noch nicht eingerichtet - der Server-Admin muss die Slack-App anlegen (docs/slack.md) und SLACK_SIGNING_SECRET setzen.",
+    "slackStep1": "Gib im Slack-Kanal dieses Projekts /guidon link ein.",
+    "slackStep2": "Öffne den Link aus der Antwort und wähle dieses Projekt.",
+    "slackDisconnect": "Kanal trennen",
+    "slackDisconnectConfirm": "Diesen Slack-Kanal trennen? /guidon-Befehle funktionieren dort nicht mehr, bis ihn jemand wieder verbindet."
   },
   "discordLink": {
     "title": "Guidon-Discord-Bot verbinden",
@@ -905,6 +913,22 @@
     "emptyDescription": "Nur Inhaber und Admins eines Projekts können einen Discord-Server damit verknüpfen. Bitte einen Admin darum oder erstelle zuerst ein Projekt.",
     "invalidTitle": "Dieser Link ist abgelaufen",
     "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-link auf deinem Discord-Server erneut aus, um einen neuen zu erhalten.",
+    "toProjects": "Zu den Projekten"
+  },
+  "slackLink": {
+    "title": "Slack-Kanal verbinden",
+    "description": "{channel} in {workspace} möchte sich mit einem Guidon-Projekt verbinden. Sobald du eines wählst, können Personen in diesem Kanal mit /guidon seine Aufgaben auflisten, starten, abschließen und kommentieren - in deinem Namen, angezeigt als „Slack bot“.",
+    "unnamedChannel": "Dieser Kanal",
+    "unnamedWorkspace": "deinem Slack-Workspace",
+    "pickProject": "Projekt",
+    "unknownOrganization": "Weitere Projekte",
+    "phishingWarning": "Fahre nur fort, wenn du /guidon link selbst in einem vertrauenswürdigen Slack-Kanal eingegeben hast. Mit der Bestätigung kann jeder in diesem Kanal Aufgaben im gewählten Projekt in deinem Namen ändern.",
+    "confirm": "Verbinden",
+    "genericError": "Der Slack-Kanal konnte nicht verbunden werden. Bitte versuche es erneut.",
+    "emptyTitle": "Du verwaltest kein Projekt",
+    "emptyDescription": "Nur Owner und Admins eines Projekts können einen Slack-Kanal damit verbinden.",
+    "invalidTitle": "Dieser Link ist abgelaufen",
+    "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Gib /guidon link im Slack-Kanal erneut ein, um einen neuen zu erhalten.",
     "toProjects": "Zu den Projekten"
   },
   "feedback": {

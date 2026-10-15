@@ -888,7 +888,15 @@
     "discordLinkInstructions": "To link a Discord server, add the Guidon bot to it, then run /guidon-link in that server and choose this project on the page it opens.",
     "discordJustConnected": "Connected! Try /task list in your Discord server.",
     "discordDisconnect": "Disconnect",
-    "discordDisconnectConfirm": "Disconnect {guild} from this project? The /task commands stop working there until you run /guidon-link again. Webhook notifications are kept."
+    "discordDisconnectConfirm": "Disconnect {guild} from this project? The /task commands stop working there until you run /guidon-link again. Webhook notifications are kept.",
+    "slackTitle": "Slack",
+    "slackDescription": "Work on this project from Slack: list tasks, start or finish them and comment with the /guidon command in a connected channel. Commands act as the person who connected the channel and show up as \"Slack bot\".",
+    "slackConnected": "Slack channel connected.",
+    "slackNotConfigured": "The Slack integration isn't set up on this Guidon server yet - the server admin needs to create the Slack app (docs/slack.md) and set SLACK_SIGNING_SECRET.",
+    "slackStep1": "In the Slack channel for this project, type /guidon link.",
+    "slackStep2": "Open the link it replies with and choose this project.",
+    "slackDisconnect": "Disconnect channel",
+    "slackDisconnectConfirm": "Disconnect this Slack channel? /guidon commands there will stop working until someone connects it again."
   },
   "discordLink": {
     "title": "Connect the Guidon Discord bot",
@@ -905,6 +913,22 @@
     "emptyDescription": "Only owners and admins of a project can link a Discord server to it. Ask an admin to link it, or create a project first.",
     "invalidTitle": "This link has expired",
     "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-link in your Discord server again to get a new one.",
+    "toProjects": "Go to projects"
+  },
+  "slackLink": {
+    "title": "Connect a Slack channel",
+    "description": "{channel} in {workspace} wants to connect to a Guidon project. Once you choose one, people in that channel can list its tasks, start or finish them and comment with /guidon - acting as you, shown as \"Slack bot\".",
+    "unnamedChannel": "This channel",
+    "unnamedWorkspace": "your Slack workspace",
+    "pickProject": "Project",
+    "unknownOrganization": "Other projects",
+    "phishingWarning": "Only continue if you ran /guidon link yourself in a Slack channel you trust. Confirming lets everyone in that channel change tasks in the chosen project as you.",
+    "confirm": "Connect",
+    "genericError": "Could not connect the Slack channel. Please try again.",
+    "emptyTitle": "You don't manage any project",
+    "emptyDescription": "Only owners and admins of a project can connect a Slack channel to it.",
+    "invalidTitle": "This link has expired",
+    "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon link in the Slack channel again to get a new one.",
     "toProjects": "Go to projects"
   },
   "feedback": {

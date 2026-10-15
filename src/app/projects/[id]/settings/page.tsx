@@ -14,6 +14,8 @@ import { ReportWidgetCard } from "./report-widget-card";
 import { listReportWidgetKeys } from "@/app/profile/api-keys-actions";
 import { ExportProjectCard } from "./export-project-card";
 import { DiscordIntegrationForm } from "./discord-integration-form";
+import { SlackIntegrationCard } from "./slack-integration-card";
+import { listSlackChannelLinks } from "@/lib/data/slack-integration";
 import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
 import type { Project } from "@/types/project";
 import type { Technology } from "@/types/technology";
@@ -39,10 +41,13 @@ const DEFAULT_AI_PERMISSIONS: AiPermissionsRow = {
 
 export default async function ProjectSettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ slackConnected?: string }>;
 }) {
   const { id: projectId } = await params;
+  const { slackConnected } = await searchParams;
   const t = await getTranslations("settings");
   const access = await requireProjectAccess(projectId);
 
@@ -56,6 +61,7 @@ export default async function ProjectSettingsPage({
   // runs alongside the rest of this page's data instead of after it.
   const discordInfoPromise = getDiscordIntegrationInfo(projectId, access.userId);
   const labelPresetsPromise = getLabelPresets(access.userId, projectId);
+  const slackLinksPromise = listSlackChannelLinks(projectId, access.userId);
 
   if (hasDirectDatabase()) {
     // Four withUser() calls, not one wrapping Promise.all([...]) - each
@@ -115,7 +121,11 @@ export default async function ProjectSettingsPage({
     boardColumns = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
-  const [discordInfo, labelPresets] = await Promise.all([discordInfoPromise, labelPresetsPromise]);
+  const [discordInfo, labelPresets, slackLinks] = await Promise.all([
+    discordInfoPromise,
+    labelPresetsPromise,
+    slackLinksPromise,
+  ]);
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -151,6 +161,13 @@ export default async function ProjectSettingsPage({
         />
       )}
       <DiscordIntegrationForm projectId={projectId} initialInfo={discordInfo} />
+      <SlackIntegrationCard
+        projectId={projectId}
+        initialLinks={slackLinks}
+        canManage={canManageProject(access.role)}
+        configured={Boolean(process.env.SLACK_SIGNING_SECRET)}
+        connected={slackConnected === "1"}
+      />
       {canWriteProject(access.role) && (
         <ReportWidgetCard projectId={projectId} siteUrl={SITE_URL} initialKeys={await listReportWidgetKeys(projectId)} />
       )}
