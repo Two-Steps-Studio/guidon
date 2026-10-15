@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -97,7 +98,7 @@ export function NotificationsBell() {
                   aria-hidden
                   className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground"
                 >
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {unreadCount > 9 ? "9+" : <AnimatedNumber value={unreadCount} />}
                 </span>
               )}
             </Button>

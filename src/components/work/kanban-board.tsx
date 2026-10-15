@@ -17,6 +17,7 @@ import {
   type SubtaskProgress,
 } from "@/lib/work/task-board";
 import { TaskCard, type TaskCardMember } from "@/components/work/task-card";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import type { Task, TaskStatus } from "@/types/task";
 
 interface KanbanBoardProps {
@@ -448,9 +449,10 @@ export function KanbanBoard({
               <h3 className="text-sm font-medium text-foreground">
                 {column.label}
               </h3>
-              <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums text-muted-foreground">
-                {columnTasks.length}
-              </span>
+              <AnimatedNumber
+                value={columnTasks.length}
+                className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+              />
               {canEdit && (
                 <Button
                   variant="ghost"

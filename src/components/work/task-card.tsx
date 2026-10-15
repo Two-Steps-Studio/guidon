@@ -296,6 +296,7 @@ function TaskCardComponent({
           onReorder(task, "down");
         }
       }}
+      data-task-id={task.id}
       role="button"
       tabIndex={0}
       aria-label={t("openTaskAria", { title: task.title })}

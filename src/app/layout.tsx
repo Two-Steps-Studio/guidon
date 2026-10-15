@@ -29,17 +29,28 @@ const SITE_DESCRIPTION =
 
 // Next ignores `viewport`/`themeColor` inside `metadata` - they must be a
 // separate export, or the viewport-fit/interactive-widget settings never
-// reach the page.
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  interactiveWidget: "resizes-content",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
-  ],
-};
+// reach the page. Generated per request so an explicit light/dark choice
+// (theme cookie, see RootLayout) also colors the mobile browser bar -
+// otherwise a dark app on a light-mode phone sat under a white bar.
+export async function generateViewport(): Promise<Viewport> {
+  const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = themeCookie && isSupportedTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    interactiveWidget: "resizes-content",
+    themeColor:
+      theme === "dark"
+        ? "#0b0d10"
+        : theme === "light"
+          ? "#ffffff"
+          : [
+              { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+              { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
+            ],
+  };
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

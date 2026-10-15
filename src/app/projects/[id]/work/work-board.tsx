@@ -40,6 +40,7 @@ import {
   type BoardColumn,
 } from "@/lib/work/task-board";
 import { createTask, moveTask } from "./actions";
+import { celebrateTask } from "@/lib/motion/celebrate";
 import { AiTaskChat } from "./ai-task-chat";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
@@ -186,6 +187,7 @@ export function WorkBoard({
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
     const previousStatus = task.status;
     const previousSortOrder = task.sort_order;
+    if (status === "done" && previousStatus !== "done") celebrateTask(task.id);
 
     // Optimistic: the board should feel instant on drop.
     setState((current) => ({
@@ -215,13 +217,17 @@ export function WorkBoard({
     }
   };
 
-  const upsertTask = (task: Task) =>
+  const upsertTask = (task: Task) => {
+    // Finished from the task dialog (status select) - same moment as a drop on Done.
+    const before = state.tasks.find((item) => item.id === task.id);
+    if (before && before.status !== "done" && task.status === "done") celebrateTask(task.id);
     setState((current) => ({
       ...current,
       tasks: current.tasks.some((item) => item.id === task.id)
         ? current.tasks.map((item) => (item.id === task.id ? task : item))
         : [...current.tasks, task],
     }));
+  };
 
   const removeTask = (taskId: string) =>
     setState((current) => ({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition, startTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,7 +92,10 @@ export function FilesBrowser({
   const submitFile = (file: File) => {
     const data = new FormData();
     data.set("file", file);
-    uploadAction(data);
+    // Dispatched from a change/drop handler, not a <form action>: without a
+    // transition React warns and `uploading` never turns true, so the button
+    // showed no progress during the upload.
+    startTransition(() => uploadAction(data));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
