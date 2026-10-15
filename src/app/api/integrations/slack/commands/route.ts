@@ -76,7 +76,10 @@ export async function POST(request: NextRequest) {
 
 async function handle(form: URLSearchParams, teamId: string, channelId: string): Promise<Reply> {
   const command = parseSlackCommand(form.get("text") ?? "");
+  // Name for the comment text stored in Guidon; in Slack replies a mention, which Slack renders and keeps current.
   const slackUser = form.get("user_name") || "Someone";
+  const slackUserId = form.get("user_id") ?? "";
+  const who = /^[UW][A-Z0-9]{2,}$/.test(slackUserId) ? `<@${slackUserId}>` : escapeMrkdwn(slackUser);
 
   switch (command.kind) {
     case "help":
@@ -86,7 +89,7 @@ async function handle(form: URLSearchParams, teamId: string, channelId: string):
     case "unknown":
       return ephemeral(`Unknown command "${escapeMrkdwn(command.word)}".\n\n${HELP_TEXT}`);
     case "link":
-      return linkReply(form, teamId, channelId);
+      return linkReply(form, teamId, channelId, await findSlackChannelLink(teamId, channelId));
   }
 
   const link = await findSlackChannelLink(teamId, channelId);
@@ -96,6 +99,15 @@ async function handle(form: URLSearchParams, teamId: string, channelId: string):
   }
   const userId = link.linkedBy;
   const db = apiDataClient(userId);
+
+  // RLS doesn't error for someone who lost access - it just shows nothing.
+  // Asking for the project itself tells "no access" apart from "no tasks".
+  const { data: project } = await db
+    .from<{ id: string; name: string }>("projects")
+    .select("id, name")
+    .eq("id", link.projectId)
+    .maybeSingle();
+  if (!project) return ephemeral(noAccessText());
 
   const { data: tasks, error } = await db
     .from<SlackTask & { sort_order: number | null }>("tasks")
@@ -117,7 +129,7 @@ async function handle(form: URLSearchParams, teamId: string, channelId: string):
       .sort((a, b) => (order.get(a.status) ?? 0) - (order.get(b.status) ?? 0));
     const labelFor = await columnLabels(link);
     const scope = command.statuses === "all" ? "all tasks" : statuses === DEFAULT_LIST_STATUSES ? "open tasks" : labelFor(statuses[0]);
-    return ephemeral(`*${escapeMrkdwn(scope)}*\n${formatTaskList(shown, labelFor, (id) => taskUrl(link.projectId, id))}`);
+    return ephemeral(`*${escapeMrkdwn(project.name)}* - ${escapeMrkdwn(scope)}\n${formatTaskList(shown, labelFor, (id) => taskUrl(link.projectId, id))}`);
   }
 
   const resolved = resolveTaskRef(command.ref, tasks);
@@ -141,7 +153,7 @@ async function handle(form: URLSearchParams, teamId: string, channelId: string):
       console.error("Slack comment failed:", commentError);
       return ephemeral("Could not post the comment.");
     }
-    return { response_type: "in_channel", text: `${escapeMrkdwn(slackUser)} commented on ${taskLabel}:\n>${escapeMrkdwn(command.text).replace(/\n/g, "\n>")}` };
+    return { response_type: "in_channel", text: `${who} commented on ${taskLabel}:\n>${escapeMrkdwn(command.text).replace(/\n/g, "\n>")}` };
   }
 
   const status = command.kind === "start" ? "in_progress" : "done";
@@ -150,10 +162,10 @@ async function handle(form: URLSearchParams, teamId: string, channelId: string):
     return ephemeral(result.status === 403 || result.status === 404 ? noAccessText() : `Could not update the task: ${escapeMrkdwn(result.error)}`);
   }
   const verb = command.kind === "start" ? "started" : "finished";
-  return { response_type: "in_channel", text: `${escapeMrkdwn(slackUser)} ${verb} ${taskLabel}` };
+  return { response_type: "in_channel", text: `${who} ${verb} ${taskLabel}` };
 }
 
-function linkReply(form: URLSearchParams, teamId: string, channelId: string): Reply {
+function linkReply(form: URLSearchParams, teamId: string, channelId: string, current: SlackChannelLink | null): Reply {
   const secret = process.env.AUTH_SECRET;
   if (!secret) return ephemeral("This Guidon server has no AUTH_SECRET set, so it can't create a link.");
   const token = createSlackLinkToken(
@@ -166,8 +178,11 @@ function linkReply(form: URLSearchParams, teamId: string, channelId: string): Re
     secret
   );
   const url = `${SITE_URL}/slack/link?token=${encodeURIComponent(token)}`;
+  const already = current
+    ? "This channel is already connected to a project; choosing another one moves it (you need to manage both).\n"
+    : "";
   return ephemeral(
-    `<${url}|Connect this channel to a Guidon project>\nOpen it within 10 minutes and pick a project you own or administer. ` +
+    `${already}<${url}|Connect this channel to a Guidon project>\nOpen it within 10 minutes and pick a project you own or administer. ` +
       "Commands in this channel then act as you, labelled \"Slack bot\"."
   );
 }
