@@ -1,6 +1,5 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { mkdir, readFile, rm, stat, readdir } from "node:fs/promises";
 import path from "node:path";
@@ -10,7 +9,7 @@ import {
   type StorageProvider,
   type UploadOptions,
 } from "../provider";
-import { SITE_URL } from "@/lib/site-url";
+import { appStorageUrl } from "../signed-url";
 
 /**
  * Local filesystem storage - the self-hosted default (TODO.md §5).
@@ -20,9 +19,6 @@ import { SITE_URL } from "@/lib/site-url";
  * application's authorisation and nothing under STORAGE_PATH is web-reachable
  * by guessing a filename.
  */
-/** Effectively permanent - see getUrl()'s `public` option. */
-const PUBLIC_URL_TTL_SECONDS = 50 * 365 * 24 * 60 * 60;
-
 export class LocalStorageProvider implements StorageProvider {
   readonly name = "local" as const;
 
@@ -98,51 +94,13 @@ export class LocalStorageProvider implements StorageProvider {
     }
   }
 
-  /**
-   * Signed URL pointing at the application's own storage route. The signature
-   * covers bucket, path, expiry AND the public flag, so a URL cannot be
-   * edited to reach another object, extend its own lifetime, or flip a
-   * private file to serve as if it were public.
-   *
-   * `public: true` only changes the signed lifetime here: PUBLIC_URL_TTL_SECONDS
-   * (50 years) instead of the normal 10-minute default. Whether the object
-   * is served inline with its real Content-Type or forced to download is a
-   * separate decision /api/storage makes purely from the extension
-   * (SAFE_INLINE_EXTENSION_TO_MIME, storage-constants.ts) - independent of
-   * `public`, since a private signed link is just as safe to render inline
-   * as a public one for the same narrow, non-executable set of formats.
-   */
+  /** Signed URL to the application's own storage route - see ../signed-url.ts. */
   async getUrl(
     bucket: string,
     objectPath: string,
     options?: { expiresInSeconds?: number; public?: boolean }
   ): Promise<string> {
-    assertSafeBucket(bucket);
-    const safePath = assertSafeStoragePath(objectPath);
-
-    const isPublic = Boolean(options?.public);
-    const ttl = isPublic ? PUBLIC_URL_TTL_SECONDS : options?.expiresInSeconds ?? 600;
-    const expires = Math.floor(Date.now() / 1000) + ttl;
-    const signature = signStoragePath(bucket, safePath, expires, isPublic);
-
-    const params = new URLSearchParams({
-      bucket,
-      path: safePath,
-      expires: String(expires),
-      signature,
-      ...(isPublic ? { public: "1" } : {}),
-    });
-
-    // SITE_URL (lib/site-url.ts), not a direct NEXT_PUBLIC_APP_URL read - this
-    // method runs server-side only (this whole provider does real filesystem
-    // I/O), so it doesn't need the client-exposed var, and reading it
-    // directly here was a second, unnormalized "site origin" source that the
-    // APP_URL fix didn't cover: a bare-domain NEXT_PUBLIC_APP_URL wouldn't
-    // crash (this is plain string concatenation, not new URL()), but would
-    // silently produce a broken signed URL like "useguidon.com/api/storage?..."
-    // that browsers resolve as a relative path against the current page
-    // instead of the intended origin.
-    return `${SITE_URL}/api/storage?${params.toString()}`;
+    return appStorageUrl(bucket, objectPath, options);
   }
 
   async usage(bucket: string, prefix: string): Promise<number> {
@@ -189,54 +147,9 @@ export class LocalStorageProvider implements StorageProvider {
   }
 }
 
-// ============================================
-// URL SIGNING
-// ============================================
-
-function signingSecret(): string {
-  const secret = process.env.AUTH_SECRET ?? process.env.STORAGE_SIGNING_SECRET;
-
-  if (!secret) {
-    // Failing loudly beats signing with a default that every install shares.
-    throw new Error(
-      "AUTH_SECRET (or STORAGE_SIGNING_SECRET) must be set to serve local storage"
-    );
-  }
-
-  return secret;
-}
-
-export function signStoragePath(
-  bucket: string,
-  objectPath: string,
-  expires: number,
-  isPublic = false
-): string {
-  return createHmac("sha256", signingSecret())
-    .update(`${bucket}:${objectPath}:${expires}:${isPublic ? "public" : "private"}`)
-    .digest("hex");
-}
-
-export function verifyStorageSignature(
-  bucket: string,
-  objectPath: string,
-  expires: number,
-  signature: string,
-  isPublic = false
-): boolean {
-  if (!Number.isFinite(expires) || expires < Math.floor(Date.now() / 1000)) {
-    return false;
-  }
-
-  const expected = signStoragePath(bucket, objectPath, expires, isPublic);
-  const a = Buffer.from(expected, "hex");
-  const b = Buffer.from(signature, "hex");
-
-  // timingSafeEqual throws on length mismatch, so guard first.
-  if (a.length !== b.length) return false;
-
-  return timingSafeEqual(a, b);
-}
+// URL signing lives in ../signed-url.ts (shared with the S3 provider);
+// re-exported for existing imports.
+export { signStoragePath, verifyStorageSignature } from "../signed-url";
 
 // ============================================
 // HELPERS

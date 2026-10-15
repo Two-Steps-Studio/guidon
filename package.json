@@ -23,6 +23,7 @@
     "test:labels": "node --experimental-strip-types tests/label-presets.test.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@monaco-editor/react": "^4.7.0",
     "@next/third-parties": "^16.3.3",

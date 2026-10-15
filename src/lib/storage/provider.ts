@@ -146,13 +146,12 @@ export async function getStorageProvider(): Promise<StorageProvider> {
       break;
     }
 
-    case "s3":
-      // Deliberately not implemented rather than stubbed: a provider that
-      // silently drops uploads is worse than a clear failure. The interface
-      // above is what an S3 implementation needs to satisfy.
-      throw new Error(
-        "STORAGE_PROVIDER=s3 is not implemented yet. Use 'supabase' or 'local'."
-      );
+    case "s3": {
+      // Loaded only when selected: the AWS SDK is large and nothing else needs it.
+      const { S3StorageProvider } = await import("./providers/s3");
+      cached = new S3StorageProvider();
+      break;
+    }
 
     case "supabase":
     default: {
