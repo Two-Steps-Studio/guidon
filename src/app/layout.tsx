@@ -118,20 +118,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-theme={theme === "system" ? undefined : theme}
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="relative min-h-screen bg-background text-foreground">
+      <body className="relative isolate min-h-screen bg-background text-foreground">
         <DitherBackground />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {/* No <main> here: each page shell supplies exactly one - the
-              sidebar layout's SidebarInset for app pages, auth/layout.tsx,
-              the landing and legal pages, /mini, error.tsx. Wrapping
-              children here too nested two main landmarks on every page. */}
-          {children}
-          {/* theme defaults to "light" and does NOT track the OS on its own
-              (ask-sonner), so it must be told explicitly - "system" follows
-              prefers-color-scheme the same way globals.css does; "light"/
-              "dark" mirrors the user's explicit choice above so toasts don't
-              look inconsistent with the rest of the UI. */}
-          <Toaster theme={theme} richColors closeButton />
+          <div className="relative z-10">
+            {/* No <main> here: each page shell supplies exactly one - the
+                sidebar layout's SidebarInset for app pages, auth/layout.tsx,
+                the landing and legal pages, /mini, error.tsx. Wrapping
+                children here too nested two main landmarks on every page. */}
+            {children}
+            {/* theme defaults to "light" and does NOT track the OS on its own
+                (ask-sonner), so it must be told explicitly - "system" follows
+                prefers-color-scheme the same way globals.css does; "light"/
+                "dark" mirrors the user's explicit choice above so toasts don't
+                look inconsistent with the rest of the UI. */}
+            <Toaster theme={theme} richColors closeButton />
+          </div>
         </NextIntlClientProvider>
       </body>
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA

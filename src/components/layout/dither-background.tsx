@@ -78,5 +78,5 @@ export function DitherBackground() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="fixed inset-0 z-0 h-full w-full opacity-70" />;
+  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-70" />;
 }
