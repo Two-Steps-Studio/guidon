@@ -5,6 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "sonner";
+import { DitherBackground } from "@/components/layout/dither-background";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
@@ -117,7 +118,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-theme={theme === "system" ? undefined : theme}
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="min-h-screen bg-background text-foreground">
+      <body className="relative min-h-screen bg-background text-foreground">
+        <DitherBackground />
         <NextIntlClientProvider locale={locale} messages={messages}>
           {/* No <main> here: each page shell supplies exactly one - the
               sidebar layout's SidebarInset for app pages, auth/layout.tsx,
