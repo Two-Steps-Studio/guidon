@@ -82,7 +82,7 @@ export default async function Home() {
       dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
     />
     <main>
-    <div className="relative flex min-h-screen items-center overflow-hidden bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background">
+    <div className="relative flex min-h-screen items-center overflow-hidden bg-background/55 dark:bg-background/35">
       <WavesBackground className="opacity-60" />
       <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="max-w-5xl mx-auto text-center space-y-12">
