@@ -19,6 +19,7 @@ export function DitherBackground() {
     let height = 0;
     let dpr = 1;
     let dark = false;
+    let particles: Array<{ x: number; y: number; size: number; speed: number; phase: number }> = [];
 
     const getTheme = () => {
       const explicit = document.documentElement.getAttribute("data-theme");
@@ -33,31 +34,42 @@ export function DitherBackground() {
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const columns = Math.ceil(width / 34);
+      const rows = Math.ceil(height / 34);
+      const random = (seed: number) => {
+        const value = Math.sin(seed * 12.9898) * 43758.5453;
+        return value - Math.floor(value);
+      };
+      particles = Array.from({ length: columns * rows }, (_, index) => ({
+        x: (index % columns) * 34 + random(index + 1) * 28,
+        y: Math.floor(index / columns) * 34 + random(index + 101) * 28,
+        size: 1 + random(index + 201) * 3,
+        speed: 0.35 + random(index + 301) * 0.9,
+        phase: random(index + 401) * Math.PI * 2,
+      }));
     };
 
     const draw = (time: number) => {
       const wave = dark ? DARK_WAVE : LIGHT_WAVE;
       context.clearRect(0, 0, width, height);
-
-      // Use a larger dither grid so the pattern reads as a soft background
-      // instead of a dense strip of pixels at the top of the page.
-      const step = 8;
-      const maxDistance = Math.max(width, height) * 1.15;
       context.fillStyle = wave;
-      for (let y = 0; y < height; y += step) {
-        for (let x = 0; x < width; x += step) {
-          const waveX = x + Math.sin(y * 0.012 + time * 0.00035) * 90;
-          const waveY = y + Math.cos(x * 0.009 + time * 0.00025) * 55;
-          const distance = Math.hypot(waveX - width * 0.55, waveY - height * 0.42);
-          const intensity = Math.max(0, 1 - distance / maxDistance);
-          const ripple = (Math.sin(x * 0.07 + y * 0.035 + time * 0.001) + 1) / 2;
-          const threshold = intensity * 0.34 + ripple * 0.16;
-          if (threshold > 0.18) {
-            context.globalAlpha = Math.min(0.5, threshold * (dark ? 1.05 : 0.72));
-            context.fillRect(x, y, 2, 2);
-          }
+
+      for (const particle of particles) {
+        const driftX = Math.sin(time * 0.00045 * particle.speed + particle.phase) * 24;
+        const driftY = Math.cos(time * 0.00032 * particle.speed + particle.phase) * 18;
+        const x = particle.x + driftX;
+        const y = particle.y + driftY;
+        const distance = Math.hypot(x - width * 0.52, y - height * 0.42);
+        const glow = Math.max(0, 1 - distance / (Math.max(width, height) * 0.9));
+        const pulse = (Math.sin(time * 0.0012 * particle.speed + particle.phase) + 1) / 2;
+
+        if (glow > 0.04) {
+          context.globalAlpha = Math.min(0.5, 0.08 + glow * 0.3 + pulse * 0.12);
+          context.fillRect(x, y, particle.size, particle.size);
         }
       }
+
       context.globalAlpha = 1;
       animationFrame = requestAnimationFrame(draw);
     };
