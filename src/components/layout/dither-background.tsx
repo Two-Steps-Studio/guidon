@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-const DARK_WAVE = "#8fb5ff";
-const LIGHT_WAVE = "#245bea";
+const DARK_WAVE = "#6ea3ff";
+const LIGHT_WAVE = "#1d4fd8";
 
 export function DitherBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,7 +51,7 @@ export function DitherBackground() {
           const ripple = (Math.sin(x * 0.07 + y * 0.035 + time * 0.001) + 1) / 2;
           const threshold = intensity * 0.34 + ripple * 0.16;
           if (threshold > 0.18) {
-            context.globalAlpha = Math.min(0.34, threshold * (dark ? 0.72 : 0.38));
+            context.globalAlpha = Math.min(0.5, threshold * (dark ? 1.05 : 0.72));
             context.fillRect(x, y, 2, 2);
           }
         }
@@ -78,5 +78,5 @@ export function DitherBackground() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-80" />;
+  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-30 h-full w-full opacity-90" />;
 }
