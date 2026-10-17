@@ -97,7 +97,7 @@ export function SignupForm({ local }: { local: boolean }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background-secondary to-background-tertiary dark:from-background-secondary dark:to-background flex flex-col items-center justify-center gap-6 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background-secondary/70 to-background-tertiary/40 dark:from-background-secondary/70 dark:to-background/30 flex flex-col items-center justify-center gap-6 p-4">
       <Image
         src="/assets/guidon-wordmark.png"
         alt="Guidon"

@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
-import { WavesBackground } from "@/components/layout/waves-background";
 
 // Matches the display font used for headlines on the rest of the landing
 // page (src/app/page.tsx) - kept as a separate call since next/font/google
@@ -107,7 +106,6 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
 
   return (
     <section className="relative overflow-hidden border-t border-border bg-background-secondary/30 py-20">
-      <WavesBackground className="opacity-20" />
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <div className="mb-12 space-y-4 text-center">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>{t("title")}</h2>

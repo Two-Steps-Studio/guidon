@@ -353,7 +353,12 @@ const SidebarInset = React.forwardRef<
         // letting the deep content scroll internally. Standard fix for the
         // flexbox min-width:auto trap; harmless on pages whose content
         // already fits.
-        "relative flex w-full min-w-0 flex-1 flex-col bg-background",
+        // bg-background/75, not bg-background: the app-wide Dither background
+        // (src/components/layout/dither-background.tsx) sits behind everything,
+        // and an opaque sheet here hid it on every page rendered through
+        // AppShell. 75% keeps body text and cards readable while letting the
+        // texture read through in the gaps.
+        "relative flex w-full min-w-0 flex-1 flex-col bg-background/75",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
         className
       )}
