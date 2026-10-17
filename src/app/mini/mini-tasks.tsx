@@ -226,7 +226,7 @@ export function MiniTasks({
   const doneTasks = doneColumn ? byStatus.get("done") ?? [] : [];
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-background/75">
       <header className="flex shrink-0 items-center gap-2 border-b border-border p-2">
         <Select
           aria-label={t("projectAria")}

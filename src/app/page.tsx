@@ -4,7 +4,6 @@ import { Fraunces } from "next/font/google";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, type LucideIcon } from "lucide-react";
-import { WavesBackground } from "@/components/layout/waves-background";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
@@ -83,7 +82,6 @@ export default async function Home() {
     />
     <main>
     <div className="relative flex min-h-screen items-center overflow-hidden bg-background/55 dark:bg-background/35">
-      <WavesBackground className="opacity-60" />
       <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="max-w-5xl mx-auto text-center space-y-12">
           <div className="space-y-6">
