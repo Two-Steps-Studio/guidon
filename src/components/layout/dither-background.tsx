@@ -53,8 +53,8 @@ export function DitherBackground() {
         colorNum={4}
         pixelSize={3}
         scale={1.2}
-        waveSpeed={0.15}
-        waveFrequency={3}
+        waveSpeed={0.05}
+        waveFrequency={2}
         waveAmplitude={0.3}
         enableMouseInteraction={false}
         clickRipple={false}
