@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-const DARK_WAVE = "#6e99ed";
-const LIGHT_WAVE = "#1d4fd8";
+const DARK_WAVE = "#8fb5ff";
+const LIGHT_WAVE = "#245bea";
 
 export function DitherBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -78,5 +78,5 @@ export function DitherBackground() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-70" />;
+  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-10 h-full w-full opacity-45" />;
 }
