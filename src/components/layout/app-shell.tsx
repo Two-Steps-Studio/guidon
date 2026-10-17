@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { AppSidebar, type AppSidebarProps } from "@/components/layout/app-sidebar";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
@@ -49,6 +50,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
           <NotificationsBell />
         </header>
         {children}
+        <SiteFooter />
       </SidebarInset>
     </SidebarProvider>
   );

@@ -45,7 +45,7 @@ export function DitherBackground() {
   const theme = useSyncExternalStore<EffectiveTheme>(subscribeTheme, readTheme, () => "light");
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-55 dark:opacity-70">
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-100">
       <Dither
         waveColor={WAVE_COLOR[theme]}
         backgroundColor="transparent"
@@ -53,7 +53,7 @@ export function DitherBackground() {
         colorNum={4}
         pixelSize={3}
         scale={1.2}
-        waveSpeed={0.05}
+        waveSpeed={0.15}
         waveFrequency={3}
         waveAmplitude={0.3}
         enableMouseInteraction={false}

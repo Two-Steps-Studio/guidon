@@ -8,6 +8,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
 import { DemoBoardPreview } from "./demo-board-preview";
+import { SiteFooter } from "@/components/layout/site-footer";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -216,20 +217,7 @@ export default async function Home() {
 
     {plans.length > 0 && <PricingSection plans={plans} />}
     </main>
-
-    <footer className="border-t border-border py-8">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
-        <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
-        <div className="flex gap-6">
-          <Link href="/legal/terms" className="hover:text-foreground">
-            {t("footer.terms")}
-          </Link>
-          <Link href="/legal/privacy" className="hover:text-foreground">
-            {t("footer.privacy")}
-          </Link>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
     </>
   );
 }

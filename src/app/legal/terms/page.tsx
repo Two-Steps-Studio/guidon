@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SiteFooter } from "@/components/layout/site-footer";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -188,6 +189,7 @@ export default function TermsPage() {
           </section>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }
