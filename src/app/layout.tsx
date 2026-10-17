@@ -121,7 +121,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="relative isolate min-h-screen bg-background text-foreground">
         <DitherBackground />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <div className="relative z-10">
+          <div className="relative z-20">
             {/* No <main> here: each page shell supplies exactly one - the
                 sidebar layout's SidebarInset for app pages, auth/layout.tsx,
                 the landing and legal pages, /mini, error.tsx. Wrapping
