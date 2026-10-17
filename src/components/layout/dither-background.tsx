@@ -39,8 +39,10 @@ export function DitherBackground() {
       const wave = dark ? DARK_WAVE : LIGHT_WAVE;
       context.clearRect(0, 0, width, height);
 
-      const step = 4;
-      const maxDistance = Math.max(width, height) * 0.75;
+      // Use a larger dither grid so the pattern reads as a soft background
+      // instead of a dense strip of pixels at the top of the page.
+      const step = 8;
+      const maxDistance = Math.max(width, height) * 1.15;
       context.fillStyle = wave;
       for (let y = 0; y < height; y += step) {
         for (let x = 0; x < width; x += step) {
@@ -78,5 +80,5 @@ export function DitherBackground() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-30 h-full w-full opacity-90" />;
+  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-90" />;
 }
