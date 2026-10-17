@@ -1,82 +1,64 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useSyncExternalStore } from "react";
+import Dither from "@/components/Dither";
 
-const DARK_WAVE = "#8fb5ff";
-const LIGHT_WAVE = "#245bea";
+type EffectiveTheme = "light" | "dark";
+
+/** Same rule as globals.css's `@custom-variant dark`: an explicit
+ *  data-theme wins, otherwise the OS preference. */
+function readTheme(): EffectiveTheme {
+  const explicit = document.documentElement.getAttribute("data-theme");
+  if (explicit === "dark" || explicit === "light") return explicit;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function subscribeTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener("change", onChange);
+  return () => {
+    observer.disconnect();
+    media.removeEventListener("change", onChange);
+  };
+}
+
+/**
+ * The app-wide background: React Bits' Dither, one fixed WebGL canvas behind
+ * every page (the layout keeps content above it at z-20).
+ *
+ * `backgroundColor="transparent"` dithers the wave over the page's own
+ * background instead of painting an opaque rectangle, so the light/dark
+ * palette in globals.css still shows through. Wave colors mirror the previous
+ * hand-rolled canvas (lighter blue reads on near-black, deeper blue on white)
+ * and are re-read whenever the theme changes, via useSyncExternalStore -
+ * including the OS switch, which sets no data-theme attribute at all.
+ *
+ * Mouse interaction is off: the component listens on `window`, and a
+ * cursor-reactive effect running over the whole app would compete with the
+ * actual UI rather than sit behind it.
+ */
+const WAVE_COLOR: Record<EffectiveTheme, string> = { light: "#245bea", dark: "#8fb5ff" };
 
 export function DitherBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const theme = useSyncExternalStore<EffectiveTheme>(subscribeTheme, readTheme, () => "light");
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d", { alpha: true });
-    if (!context) return;
-
-    let animationFrame = 0;
-    let width = 0;
-    let height = 0;
-    let dpr = 1;
-    let dark = false;
-
-    const getTheme = () => {
-      const explicit = document.documentElement.getAttribute("data-theme");
-      dark = explicit === "dark" || (explicit !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    };
-
-    const resize = () => {
-      const bounds = canvas.getBoundingClientRect();
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = Math.max(1, Math.floor(bounds.width));
-      height = Math.max(1, Math.floor(bounds.height));
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-
-    const draw = (time: number) => {
-      const wave = dark ? DARK_WAVE : LIGHT_WAVE;
-      context.clearRect(0, 0, width, height);
-
-      const step = 4;
-      const maxDistance = Math.max(width, height) * 0.75;
-      context.fillStyle = wave;
-      for (let y = 0; y < height; y += step) {
-        for (let x = 0; x < width; x += step) {
-          const waveX = x + Math.sin(y * 0.012 + time * 0.00035) * 90;
-          const waveY = y + Math.cos(x * 0.009 + time * 0.00025) * 55;
-          const distance = Math.hypot(waveX - width * 0.55, waveY - height * 0.42);
-          const intensity = Math.max(0, 1 - distance / maxDistance);
-          const ripple = (Math.sin(x * 0.07 + y * 0.035 + time * 0.001) + 1) / 2;
-          const threshold = intensity * 0.34 + ripple * 0.16;
-          if (threshold > 0.18) {
-            context.globalAlpha = Math.min(0.34, threshold * (dark ? 0.72 : 0.38));
-            context.fillRect(x, y, 2, 2);
-          }
-        }
-      }
-      context.globalAlpha = 1;
-      animationFrame = requestAnimationFrame(draw);
-    };
-
-    getTheme();
-    resize();
-    animationFrame = requestAnimationFrame(draw);
-
-    const observer = new MutationObserver(() => getTheme());
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    media.addEventListener("change", getTheme);
-    window.addEventListener("resize", resize);
-
-    return () => {
-      cancelAnimationFrame(animationFrame);
-      observer.disconnect();
-      media.removeEventListener("change", getTheme);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-80" />;
+  return (
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-40 dark:opacity-55">
+      <Dither
+        waveColor={WAVE_COLOR[theme]}
+        backgroundColor="transparent"
+        ditherMode="bayer"
+        colorNum={4}
+        pixelSize={3}
+        scale={1.2}
+        waveSpeed={0.05}
+        waveFrequency={3}
+        waveAmplitude={0.3}
+        enableMouseInteraction={false}
+        clickRipple={false}
+      />
+    </div>
+  );
 }
