@@ -57,7 +57,7 @@ repo).
 
 ```bash
 npm install
-npm run deploy-commands   # registers /task-list, /task-start, /task-complete, /task-comment, /guidon-link, /guidon-webhook with Discord - run once, and again after changing a command
+npm run deploy-commands   # registers /task-list, /task-start, /task-complete, /task-comment, /guidon-link, /guidon-webhook, /guidon-login, /guidon-logout with Discord - run once, and again after changing a command
 npm run dev                # local development (auto-restarts on change)
 npm run build && npm start # production
 ```
@@ -87,6 +87,21 @@ link; **Settings → Discord → Disconnect** on the project removes the link
   the other project. If the server is currently linked to a project you don't
   manage, an admin of that project has to disconnect it first.
 
+## 5. Members sign in with their own account
+
+Anyone in the server can run `/guidon-login`: the bot replies privately with a
+link, the person opens it, signs in to Guidon (same as the editor plugins'
+login) and confirms. Guidon creates a personal key for them ("Discord
+(<username>)" under Profile → API Keys), and from then on their `/task-*`
+commands act as **them**, with their own role in the project - the comment or
+status change shows their name, and someone without access to the project
+can't change it. `/guidon-logout` revokes the key.
+
+Without signing in, `/task-list` still works with the server's key, and
+members with **Manage Server** can still run the other commands with it (how
+it worked before personal sign-in). Everyone else is asked to `/guidon-login`
+first.
+
 Optionally follow up with `/guidon-webhook url:<a Discord channel webhook
 URL>` to also receive task-event notifications in that channel (same effect
 as setting it from the web app's Settings page).
@@ -97,19 +112,21 @@ as setting it from the web app's Settings page).
 |---|---|
 | `/guidon-link` | Get a private link to link this server to a Guidon project, or move it to another one (admin only) |
 | `/guidon-webhook` | Set the notification webhook for the linked project (admin only) |
-| `/task-list` | List the linked project's tasks - open to everyone by default |
-| `/task-start <task-id>` | Mark a task in progress - defaults to Manage Server |
-| `/task-complete <task-id>` | Mark a task done - defaults to Manage Server |
-| `/task-comment <task-id> <text>` | Add a comment to a task - defaults to Manage Server |
+| `/guidon-login` | Get a private link to sign in with your own Guidon account |
+| `/guidon-logout` | Sign out (revokes your personal key) |
+| `/task-list` | List the linked project's tasks |
+| `/task-start <task-id>` | Mark a task in progress |
+| `/task-complete <task-id>` | Mark a task done |
+| `/task-comment <task-id> <text>` | Add a comment to a task |
 
 `/task-start`, `/task-complete`, and `/task-comment` are separate top-level
 commands (not subcommands of one `/task`) specifically so a server admin can
 grant or restrict each one to different roles from Discord's own **Server
 Settings → Integrations → Guidon** permission screen - Discord only supports
-per-role overrides at the whole-command level, not per-subcommand. `/task-list`
-has no default restriction; the other three default to requiring **Manage
-Server** (same default `/guidon-webhook` already uses) until an admin
-reassigns them to specific roles there.
+per-role overrides at the whole-command level, not per-subcommand. None of
+them is restricted by default any more: a signed-in member acts with their
+own Guidon permissions, and without sign-in the bot only lets Manage Server
+members change tasks (see section 5).
 
 **Not included:** task creation. `/api/v1` does have a task-creation
 endpoint (`POST /api/v1/projects/[projectId]/tasks`, guarded by the

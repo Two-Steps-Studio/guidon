@@ -908,6 +908,18 @@
     "invalidDescription": "Link jest nieprawidłowy lub starszy niż 10 minut. Uruchom /guidon-link na swoim serwerze Discord ponownie, aby otrzymać nowy.",
     "toProjects": "Przejdź do projektów"
   },
+  "discordLogin": {
+    "title": "Zaloguj się do bota Guidon na Discordzie",
+    "description": "Konto Discord {discord} chce używać Twojego konta Guidon ({account}). Komendy /task, które uruchomisz na Discordzie, będą działać jako Ty, z Twoją rolą w każdym projekcie.",
+    "unnamedAccount": "(nieznane)",
+    "phishingWarning": "Kontynuuj tylko wtedy, gdy komendę /guidon-login uruchomiono z Twojego konta na Discordzie. Wylogować się możesz w każdej chwili komendą /guidon-logout albo unieważniając klucz „Discord” w Profil → Klucze API.",
+    "confirm": "Zaloguj",
+    "done": "Gotowe - Twoje konto Discord jest zalogowane. Możesz wrócić na Discorda.",
+    "genericError": "Nie udało się zalogować konta Discord. Spróbuj ponownie.",
+    "invalidTitle": "Ten link wygasł",
+    "invalidDescription": "Link jest nieprawidłowy lub starszy niż 10 minut. Uruchom /guidon-login na Discordzie ponownie, aby dostać nowy.",
+    "toDashboard": "Przejdź do pulpitu"
+  },
   "feedback": {
     "sendFeedback": "Wyślij opinię",
     "dialogTitle": "Wyślij opinię",

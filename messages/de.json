@@ -908,6 +908,18 @@
     "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-link auf deinem Discord-Server erneut aus, um einen neuen zu erhalten.",
     "toProjects": "Zu den Projekten"
   },
+  "discordLogin": {
+    "title": "Beim Guidon-Discord-Bot anmelden",
+    "description": "Das Discord-Konto {discord} möchte dein Guidon-Konto ({account}) verwenden. Die /task-Befehle, die du auf Discord ausführst, handeln dann als du, mit deiner eigenen Rolle im jeweiligen Projekt.",
+    "unnamedAccount": "(unbekannt)",
+    "phishingWarning": "Fahre nur fort, wenn du /guidon-login selbst auf Discord ausgeführt hast. Abmelden kannst du dich jederzeit mit /guidon-logout oder indem du den Schlüssel „Discord“ unter Profil → API-Schlüssel widerrufst.",
+    "confirm": "Anmelden",
+    "done": "Fertig - dein Discord-Konto ist angemeldet. Du kannst zu Discord zurückkehren.",
+    "genericError": "Das Discord-Konto konnte nicht angemeldet werden. Bitte versuche es erneut.",
+    "invalidTitle": "Dieser Link ist abgelaufen",
+    "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-login auf Discord erneut aus, um einen neuen zu erhalten.",
+    "toDashboard": "Zum Dashboard"
+  },
   "feedback": {
     "sendFeedback": "Feedback senden",
     "dialogTitle": "Feedback senden",

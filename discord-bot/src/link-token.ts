@@ -26,3 +26,22 @@ export function createGuildLinkToken(guildId: string, guildName: string): string
   const signature = createHmac("sha256", config.authSecret).update(payloadB64).digest("base64url");
   return `${payloadB64}.${signature}`;
 }
+
+/**
+ * Token for the `/guidon-login` reply URL: the Discord account asking to sign
+ * in to a Guidon account (verified by verifyUserLoginToken in the web app).
+ * The user id comes from the interaction, i.e. from Discord itself - so only
+ * whoever ran the command as that account gets this link (the reply is
+ * ephemeral).
+ */
+export function createUserLoginToken(discordUserId: string, discordUsername: string): string {
+  const payload = {
+    typ: "user-login",
+    discordUserId,
+    discordUsername,
+    exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = createHmac("sha256", config.authSecret).update(payloadB64).digest("base64url");
+  return `${payloadB64}.${signature}`;
+}

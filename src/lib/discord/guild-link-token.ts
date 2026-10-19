@@ -3,22 +3,16 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 /**
- * Verifies the token discord-bot/ signs into the `/guidon-link` reply URL
+ * Verifies the tokens discord-bot/ signs into the `/guidon-link` and
+ * `/guidon-login` reply URLs
  * (discord-bot/src/link-token.ts holds the signing side; keep them in sync).
  * Same envelope as the other short-lived signed values here: base64url(JSON
  * payload) + "." + base64url(HMAC-SHA256(payloadB64, AUTH_SECRET)).
  *
- * The payload carries no user id - whoever is signed in when opening the
- * link and confirming is the one linking the server; the role check happens
- * in the Server Action, not here.
+ * Neither payload carries a Guidon user id - whoever is signed in when
+ * opening the link and confirming is the one linking; role checks happen in
+ * the Server Actions, not here.
  */
-
-interface GuildLinkPayload {
-  typ: string;
-  guildId: string;
-  guildName?: string | null;
-  exp: number;
-}
 
 function signingSecret(): string {
   const secret = process.env.AUTH_SECRET;
@@ -33,12 +27,11 @@ function sign(payload: string): string {
 }
 
 /**
- * Returns the guild the token was minted for, or null if the token is
- * missing, malformed, unsigned by this AUTH_SECRET, or expired.
+ * Checks the signature and expiry of a token and its purpose claim (`typ`),
+ * returning its payload. Purpose claims keep one kind of token (or any other
+ * value signed with AUTH_SECRET) from being replayed as another.
  */
-export function verifyGuildLinkToken(
-  token: string | null | undefined
-): { guildId: string; guildName: string | null } | null {
+function decodeToken(token: string | null | undefined, typ: string): Record<string, unknown> | null {
   if (!token) return null;
 
   const dot = token.lastIndexOf(".");
@@ -53,7 +46,7 @@ export function verifyGuildLinkToken(
     return null;
   }
 
-  let payload: GuildLinkPayload;
+  let payload: unknown;
   try {
     payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf8"));
   } catch {
@@ -61,16 +54,40 @@ export function verifyGuildLinkToken(
   }
 
   if (!payload || typeof payload !== "object") return null;
-  // Purpose claim (see discord-bot/src/link-token.ts): reject anything else
-  // that happens to be signed with the same AUTH_SECRET.
-  if (payload.typ !== "guild-link") return null;
-  if (typeof payload.guildId !== "string" || payload.guildId.length === 0 || typeof payload.exp !== "number") {
-    return null;
-  }
-  if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+  const fields = payload as Record<string, unknown>;
+  if (fields.typ !== typ) return null;
+  if (typeof fields.exp !== "number" || fields.exp < Math.floor(Date.now() / 1000)) return null;
+  return fields;
+}
 
+/**
+ * Returns the guild the token was minted for, or null if the token is
+ * missing, malformed, unsigned by this AUTH_SECRET, or expired.
+ */
+export function verifyGuildLinkToken(
+  token: string | null | undefined
+): { guildId: string; guildName: string | null } | null {
+  const payload = decodeToken(token, "guild-link");
+  if (!payload || typeof payload.guildId !== "string" || payload.guildId.length === 0) return null;
   return {
     guildId: payload.guildId,
     guildName: typeof payload.guildName === "string" ? payload.guildName : null,
+  };
+}
+
+/**
+ * The `/guidon-login` token (discord-bot/src/link-token.ts,
+ * createUserLoginToken): the Discord account that asked to sign in. Discord
+ * itself vouches for the user id - the bot reads it from the interaction, so
+ * holding this link means having run the command as that account.
+ */
+export function verifyUserLoginToken(
+  token: string | null | undefined
+): { discordUserId: string; discordUsername: string | null } | null {
+  const payload = decodeToken(token, "user-login");
+  if (!payload || typeof payload.discordUserId !== "string" || !/^\d{1,32}$/.test(payload.discordUserId)) return null;
+  return {
+    discordUserId: payload.discordUserId,
+    discordUsername: typeof payload.discordUsername === "string" ? payload.discordUsername : null,
   };
 }

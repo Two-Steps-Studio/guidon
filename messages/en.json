@@ -908,6 +908,18 @@
     "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-link in your Discord server again to get a new one.",
     "toProjects": "Go to projects"
   },
+  "discordLogin": {
+    "title": "Sign in to the Guidon Discord bot",
+    "description": "The Discord account {discord} wants to use your Guidon account ({account}). The /task commands you run on Discord will then act as you, with your own role in each project.",
+    "unnamedAccount": "(unknown)",
+    "phishingWarning": "Only continue if you ran /guidon-login yourself in Discord. You can sign out any time with /guidon-logout, or by revoking the \"Discord\" key under Profile → API Keys.",
+    "confirm": "Sign in",
+    "done": "Done - your Discord account is signed in. You can go back to Discord.",
+    "genericError": "Could not sign in the Discord account. Please try again.",
+    "invalidTitle": "This link has expired",
+    "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-login in Discord again to get a new one.",
+    "toDashboard": "Go to dashboard"
+  },
   "feedback": {
     "sendFeedback": "Send feedback",
     "dialogTitle": "Send feedback",

@@ -908,6 +908,18 @@
     "invalidDescription": "El enlace no es válido o tiene más de 10 minutos. Ejecuta /guidon-link de nuevo en tu servidor de Discord para obtener uno nuevo.",
     "toProjects": "Ir a proyectos"
   },
+  "discordLogin": {
+    "title": "Iniciar sesión en el bot de Discord de Guidon",
+    "description": "La cuenta de Discord {discord} quiere usar tu cuenta de Guidon ({account}). Los comandos /task que ejecutes en Discord actuarán como tú, con tu propio rol en cada proyecto.",
+    "unnamedAccount": "(desconocida)",
+    "phishingWarning": "Continúa solo si ejecutaste /guidon-login tú mismo en Discord. Puedes cerrar sesión cuando quieras con /guidon-logout o revocando la clave «Discord» en Perfil → Claves API.",
+    "confirm": "Iniciar sesión",
+    "done": "Listo: tu cuenta de Discord ha iniciado sesión. Puedes volver a Discord.",
+    "genericError": "No se pudo iniciar sesión con la cuenta de Discord. Inténtalo de nuevo.",
+    "invalidTitle": "Este enlace ha caducado",
+    "invalidDescription": "El enlace no es válido o tiene más de 10 minutos. Ejecuta /guidon-login en Discord de nuevo para obtener uno nuevo.",
+    "toDashboard": "Ir al panel"
+  },
   "feedback": {
     "sendFeedback": "Enviar comentarios",
     "dialogTitle": "Enviar comentarios",

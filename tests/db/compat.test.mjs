@@ -133,7 +133,78 @@ for (const name of migrations) {
     check(name, true);
   } catch (error) {
     check(name, false, error.message);
-    console.log(`\n  ${pass} pass / ${fail} fail\n`);
+    section("45. discord_user_links: osobiste logowanie do bota Discord (migracja 057)");
+
+{
+  const discordId = "123456789012345678";
+
+  await withUser(A, async () => {
+    const r = await db.query(
+      // Same columns as linkDiscordUser's upsertRow insert (updated_at included).
+      `INSERT INTO public.discord_user_links (discord_user_id, user_id, discord_username, api_key_encrypted, updated_at)
+       VALUES ($1, $2, 'alice', 'enc-a', now()) RETURNING discord_user_id`,
+      [discordId, A]
+    );
+    check("uzytkownik podpina swoje konto Discord", r.rows.length === 1);
+    const seen = await db.query("SELECT discord_username FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("widzi swoj wiersz", seen.rows[0]?.discord_username === "alice");
+    check(
+      "nie czyta zaszyfrowanego klucza (brak grantu kolumny)",
+      await throwsInSavepoint("SELECT api_key_encrypted FROM public.discord_user_links")
+    );
+    const upd = await db.query(
+      "UPDATE public.discord_user_links SET api_key_encrypted = 'enc-a2' WHERE discord_user_id = $1",
+      [discordId]
+    );
+    check("podmienia swoj klucz (ponowne /guidon-login)", upd.rowCount === 1);
+    check(
+      "nie przepisuje wiersza na kogos innego (WITH CHECK)",
+      await throwsInSavepoint("UPDATE public.discord_user_links SET user_id = $2 WHERE discord_user_id = $1", [discordId, B])
+    );
+  });
+
+  await withUser(B, async () => {
+    const seen = await db.query("SELECT 1 FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("inny uzytkownik nie widzi cudzego wiersza", seen.rows.length === 0);
+    const upd = await db.query(
+      "UPDATE public.discord_user_links SET api_key_encrypted = 'enc-b' WHERE discord_user_id = $1",
+      [discordId]
+    );
+    check("inny uzytkownik nie przejmuje konta Discord (UPDATE 0 wierszy)", upd.rowCount === 0);
+    check(
+      "INSERT tego samego konta Discord przez innego uzytkownika -> konflikt klucza",
+      await throwsInSavepoint(
+        `INSERT INTO public.discord_user_links (discord_user_id, user_id, api_key_encrypted) VALUES ($1, $2, 'enc-b')`,
+        [discordId, B]
+      )
+    );
+    check(
+      "nie podpina konta Discord na cudze user_id (WITH CHECK)",
+      await throwsInSavepoint(
+        `INSERT INTO public.discord_user_links (discord_user_id, user_id, api_key_encrypted) VALUES ('999', $1, 'x')`,
+        [A]
+      )
+    );
+    const del = await db.query("DELETE FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("inny uzytkownik nie usuwa cudzego wiersza", del.rowCount === 0);
+  });
+
+  await withServiceRole(async () => {
+    const r = await db.query("SELECT api_key_encrypted FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("bot (service_role) czyta klucz", r.rows[0]?.api_key_encrypted === "enc-a2");
+  });
+
+  await withAnon(async () => {
+    check("anon nie ma dostepu", await throwsInSavepoint("SELECT discord_user_id FROM public.discord_user_links"));
+  });
+
+  await withUser(A, async () => {
+    const del = await db.query("DELETE FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("uzytkownik usuwa swoj wiersz", del.rowCount === 1);
+  });
+}
+
+console.log(`\n  ${pass} pass / ${fail} fail\n`);
     process.exit(1);
   }
 }
@@ -163,8 +234,9 @@ for (const [label, sql, expected] of [
   // 31->32 tabel, 110->114 polityk: organization_webhooks (050), 4 polityki
   // (owner/admin organizacji).
   // 32->33 tabel, 114->118 polityk: project_label_presets (053), 4 polityki
-  ["33 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 33],
-  ["118 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 118],
+  // 33->34 tabel, 118->122 polityk: discord_user_links (057), 4 polityki
+  ["34 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 34],
+  ["122 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 122],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -2729,6 +2801,77 @@ section("44. projects.disabled_modules: wylaczane moduly projektu (migracja 055)
 
   await withUser(A, async () => {
     await db.query("UPDATE public.projects SET disabled_modules = '{}' WHERE id = $1", [projectId]);
+  });
+}
+
+section("45. discord_user_links: osobiste logowanie do bota Discord (migracja 057)");
+
+{
+  const discordId = "123456789012345678";
+
+  await withUser(A, async () => {
+    const r = await db.query(
+      // Same columns as linkDiscordUser's upsertRow insert (updated_at included).
+      `INSERT INTO public.discord_user_links (discord_user_id, user_id, discord_username, api_key_encrypted, updated_at)
+       VALUES ($1, $2, 'alice', 'enc-a', now()) RETURNING discord_user_id`,
+      [discordId, A]
+    );
+    check("uzytkownik podpina swoje konto Discord", r.rows.length === 1);
+    const seen = await db.query("SELECT discord_username FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("widzi swoj wiersz", seen.rows[0]?.discord_username === "alice");
+    check(
+      "nie czyta zaszyfrowanego klucza (brak grantu kolumny)",
+      await throwsInSavepoint("SELECT api_key_encrypted FROM public.discord_user_links")
+    );
+    const upd = await db.query(
+      "UPDATE public.discord_user_links SET api_key_encrypted = 'enc-a2' WHERE discord_user_id = $1",
+      [discordId]
+    );
+    check("podmienia swoj klucz (ponowne /guidon-login)", upd.rowCount === 1);
+    check(
+      "nie przepisuje wiersza na kogos innego (WITH CHECK)",
+      await throwsInSavepoint("UPDATE public.discord_user_links SET user_id = $2 WHERE discord_user_id = $1", [discordId, B])
+    );
+  });
+
+  await withUser(B, async () => {
+    const seen = await db.query("SELECT 1 FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("inny uzytkownik nie widzi cudzego wiersza", seen.rows.length === 0);
+    const upd = await db.query(
+      "UPDATE public.discord_user_links SET api_key_encrypted = 'enc-b' WHERE discord_user_id = $1",
+      [discordId]
+    );
+    check("inny uzytkownik nie przejmuje konta Discord (UPDATE 0 wierszy)", upd.rowCount === 0);
+    check(
+      "INSERT tego samego konta Discord przez innego uzytkownika -> konflikt klucza",
+      await throwsInSavepoint(
+        `INSERT INTO public.discord_user_links (discord_user_id, user_id, api_key_encrypted) VALUES ($1, $2, 'enc-b')`,
+        [discordId, B]
+      )
+    );
+    check(
+      "nie podpina konta Discord na cudze user_id (WITH CHECK)",
+      await throwsInSavepoint(
+        `INSERT INTO public.discord_user_links (discord_user_id, user_id, api_key_encrypted) VALUES ('999', $1, 'x')`,
+        [A]
+      )
+    );
+    const del = await db.query("DELETE FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("inny uzytkownik nie usuwa cudzego wiersza", del.rowCount === 0);
+  });
+
+  await withServiceRole(async () => {
+    const r = await db.query("SELECT api_key_encrypted FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("bot (service_role) czyta klucz", r.rows[0]?.api_key_encrypted === "enc-a2");
+  });
+
+  await withAnon(async () => {
+    check("anon nie ma dostepu", await throwsInSavepoint("SELECT discord_user_id FROM public.discord_user_links"));
+  });
+
+  await withUser(A, async () => {
+    const del = await db.query("DELETE FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
+    check("uzytkownik usuwa swoj wiersz", del.rowCount === 1);
   });
 }
 
