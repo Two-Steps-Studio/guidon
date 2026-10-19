@@ -252,6 +252,7 @@
       "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
     },
     "footer": {
+      "developers": "Dla deweloperów",
       "terms": "Regulamin",
       "privacy": "Polityka prywatności",
       "copyright": "© {year} Guidon"

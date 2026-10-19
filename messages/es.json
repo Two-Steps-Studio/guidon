@@ -252,6 +252,7 @@
       "membersCount": "{count, plural, one {# miembro} other {# miembros}}"
     },
     "footer": {
+      "developers": "Desarrolladores",
       "terms": "Términos del servicio",
       "privacy": "Política de privacidad",
       "copyright": "© {year} Guidon"

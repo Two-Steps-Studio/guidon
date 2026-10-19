@@ -30,7 +30,7 @@ Don't use Guidon for general note-taking, chat, or as a code host - it tracks th
 
 ### REST API
 
-Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key:
+Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full description: [OpenAPI 3.1](https://useguidon.com/openapi.json); API catalog (RFC 9727): [/.well-known/api-catalog](https://useguidon.com/.well-known/api-catalog). Errors are JSON `{ "error": "..." }` with the HTTP status.
 
 - `GET /projects` - projects the key's user belongs to
 - `GET|POST /projects/{projectId}/tasks` - list or create tasks
@@ -43,9 +43,15 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key:
 - `GET|POST /tasks/{taskId}/comment` - read or post task comments
 - `GET|POST /tasks/{taskId}/attempts` - list or record attempts
 
+## Docs
+
+- [Developer guide](https://useguidon.com/developers.md): API keys and scopes, MCP setup for Claude, Cursor, VS Code, Codex and Gemini, endpoints, errors. Section index: [/developers/llms.txt](https://useguidon.com/developers/llms.txt).
+- [Pricing](https://useguidon.com/pricing.md): Guidon Cloud plans, limits and features as Markdown.
+
 ## Pages
 
-- [Homepage](https://useguidon.com/): what Guidon is and its features. Also served as Markdown to `Accept: text/markdown`, or at [/index.md](https://useguidon.com/index.md).
+- [Homepage](https://useguidon.com/): what Guidon is and its features. Also served as Markdown to `Accept: text/markdown` and `?mode=agent`, or at [/index.md](https://useguidon.com/index.md).
+- [Developers](https://useguidon.com/developers)
 - [Sign up](https://useguidon.com/auth/signup)
 - [Terms of Service](https://useguidon.com/legal/terms)
 - [Privacy Policy](https://useguidon.com/legal/privacy)

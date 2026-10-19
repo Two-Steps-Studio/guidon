@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
@@ -40,6 +41,12 @@ const FEATURE_SECTIONS: FeatureSection[] = [
 // deploy. Revalidating hourly is enough freshness for prices that change
 // rarely, without making the whole marketing page dynamic-per-request.
 export const revalidate = 3600;
+
+// The Markdown twin agents get at the same URL (src/proxy.ts) is also
+// advertised in the head, for clients that look for it there.
+export const metadata: Metadata = {
+  alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
+};
 
 // Structured data so search engines can understand what Guidon is beyond the
 // visible copy - a SoftwareApplication listing is the schema Google expects

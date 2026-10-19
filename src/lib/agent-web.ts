@@ -142,3 +142,112 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     "",
   ].join("\n");
 }
+
+/**
+ * Opens a served Markdown document with a `---` frontmatter block, so agents
+ * get its title, description, canonical URL and date without scraping.
+ * Values are JSON-quoted, which is valid YAML for any string.
+ */
+export function withFrontmatter(
+  markdown: string,
+  meta: { title: string; description?: string; canonical?: string; lastUpdated?: string }
+): string {
+  const lines = ["---", `title: ${JSON.stringify(meta.title)}`];
+  if (meta.description) lines.push(`description: ${JSON.stringify(meta.description)}`);
+  if (meta.canonical) lines.push(`canonical: ${JSON.stringify(meta.canonical)}`);
+  if (meta.lastUpdated) lines.push(`last-updated: ${JSON.stringify(meta.lastUpdated)}`);
+  lines.push("---", "");
+  return `${lines.join("\n")}${markdown}`;
+}
+
+/**
+ * AI crawlers and AI assistants fetching a page for a user. They get the
+ * Markdown twin of a page even when they ask for HTML - the same content
+ * without the app shell. Search-engine crawlers (Googlebot, Bingbot) are
+ * deliberately not here: they index the HTML page itself.
+ */
+const AI_BOT_PATTERN =
+  /\b(GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-User|Claude-SearchBot|anthropic-ai|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|DeepSeekBot|ora-agent|cohere-ai|MistralAI-User)\b/i;
+
+export function isAiAgentUserAgent(userAgent: string | null | undefined): boolean {
+  return !!userAgent && AI_BOT_PATTERN.test(userAgent);
+}
+
+/**
+ * Public HTML pages that have a Markdown twin. The proxy serves the twin to
+ * `Accept: text/markdown`, `?mode=agent` and AI user agents; each twin is
+ * also reachable at its own URL.
+ */
+export const MARKDOWN_TWINS: Readonly<Record<string, string>> = {
+  "/": "/index.md",
+  "/developers": "/developers.md",
+};
+
+/** Plan fields the pricing Markdown needs (the `plans` table, migration 015 and later). */
+export interface PricingPlan {
+  name: string;
+  price_cents: number | null;
+  price_pln_cents?: number | null;
+  project_limit: number | null;
+  task_limit_per_project: number | null;
+  member_limit?: number | null;
+  storage_limit_bytes: number | null;
+  has_ai_features: boolean;
+  has_github_integration: boolean;
+  has_advanced_analytics: boolean;
+  has_team_roles: boolean;
+  has_audit_logs: boolean;
+  has_priority_support: boolean;
+}
+
+function limit(value: number | null | undefined, unit: string): string {
+  return value === null || value === undefined ? `Unlimited ${unit}` : `${value} ${unit}`;
+}
+
+function storage(bytes: number | null): string {
+  if (bytes === null) return "Unlimited storage";
+  const gb = bytes / (1024 * 1024 * 1024);
+  return gb >= 1 ? `${Math.round(gb)} GB storage` : `${Math.round(bytes / (1024 * 1024))} MB storage`;
+}
+
+/** /pricing.md: Guidon Cloud's plans as plain Markdown, from the same `plans` rows the landing page shows. */
+export function pricingMarkdown(plans: PricingPlan[], siteUrl: string): string {
+  const sections = plans.flatMap((plan) => {
+    const price =
+      plan.price_cents === null
+        ? "Custom pricing - contact us"
+        : plan.price_cents === 0
+          ? "Free"
+          : `€${(plan.price_cents / 100).toFixed(2)} per month` +
+            (plan.price_pln_cents ? ` (${(plan.price_pln_cents / 100).toFixed(2)} zł)` : "");
+    const features = [
+      plan.has_ai_features && "AI Task API and MCP server for agents",
+      plan.has_github_integration && "GitHub integration",
+      plan.has_advanced_analytics && "Advanced analytics",
+      plan.has_team_roles && "Team roles",
+      plan.has_audit_logs && "Audit logs",
+      plan.has_priority_support && "Priority support",
+    ].filter(Boolean);
+    return [
+      `## ${plan.name}`,
+      "",
+      `- Price: ${price}`,
+      `- ${limit(plan.project_limit, "projects")}`,
+      `- ${limit(plan.task_limit_per_project, "tasks per project")}`,
+      ...(plan.member_limit !== undefined ? [`- ${limit(plan.member_limit, "members")}`] : []),
+      `- ${storage(plan.storage_limit_bytes)}`,
+      ...features.map((feature) => `- ${feature}`),
+      "",
+    ];
+  });
+
+  return [
+    "# Guidon pricing",
+    "",
+    "Plans for Guidon Cloud (https://useguidon.com), billed per organization. Guidon can also be self-hosted, where these limits and prices don't apply.",
+    "",
+    ...(sections.length ? sections : ["Pricing is not available right now - see the homepage.", ""]),
+    `Sign up: ${siteUrl}/auth/signup - Upgrade from an organization's billing page.`,
+    "",
+  ].join("\n");
+}

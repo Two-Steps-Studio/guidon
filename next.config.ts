@@ -122,6 +122,25 @@ const nextConfig: NextConfig = {
   // the proxy.
   async headers() {
     return [
+      // RFC 8288 Link header on the homepage: where agents find the sitemap,
+      // the Markdown twin, the API description and the API catalog without
+      // parsing HTML.
+      {
+        source: "/",
+        headers: [
+          {
+            key: "Link",
+            value: [
+              '</sitemap.xml>; rel="sitemap"',
+              '</index.md>; rel="alternate"; type="text/markdown"',
+              '</openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
+              '</developers>; rel="service-doc"',
+              '</.well-known/api-catalog>; rel="api-catalog"',
+              '</llms.txt>; rel="describedby"; type="text/plain"',
+            ].join(", "),
+          },
+        ],
+      },
       {
         source: "/:path*",
         headers: [
