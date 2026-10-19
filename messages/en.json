@@ -677,7 +677,19 @@
     "failedToLoadRelatedTasks": "Failed to load related tasks.",
     "failedToLinkTask": "Failed to link the task.",
     "failedToRemoveRelation": "Failed to remove the link.",
-    "loadingRelatedTasks": "Loading related tasks..."
+    "loadingRelatedTasks": "Loading related tasks...",
+    "bulkToolbar": "Bulk actions",
+    "bulkSelected": "{count, plural, one {# selected} other {# selected}}",
+    "bulkMove": "Move",
+    "bulkAssign": "Assign",
+    "bulkLabel": "Label",
+    "bulkLabelHint": "+ adds to all, − removes from all",
+    "bulkDelete": "Delete",
+    "bulkDeleteConfirm": "{count, plural, one {Delete # task?} other {Delete # tasks?}} Their subtasks, comments and attachments are deleted too. This can't be undone.",
+    "bulkClear": "Clear selection (Esc)",
+    "bulkDone": "{count, plural, =0 {Nothing to change} one {# task updated} other {# tasks updated}}",
+    "bulkHint": "Ctrl/Cmd-click cards to select several, Shift-click for a range",
+    "cardSelected": "Selected"
   },
   "roadmap": {
     "title": "Roadmap",

@@ -57,6 +57,10 @@ interface KanbanBoardProps {
     sortOrder: number
   ) => Promise<void> | void;
   projectColor?: string;
+  /** Bulk selection (owned by the parent, which shows the bulk-action bar). */
+  selectedIds?: ReadonlySet<string>;
+  /** Omitted on a read-only board - no selection there. */
+  onSelectionChange?: (ids: Set<string>) => void;
 }
 
 interface DropTarget {
@@ -112,6 +116,8 @@ export function KanbanBoard({
   onCreateTask,
   onMoveTask,
   projectColor,
+  selectedIds,
+  onSelectionChange,
 }: KanbanBoardProps) {
   const t = useTranslations("work");
   const [pointerDrag, setPointerDrag] = useState<PointerDrag | null>(null);
@@ -146,6 +152,39 @@ export function KanbanBoard({
     [tasks, sortMode]
   );
   const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
+
+  // Ctrl/Cmd-click toggles one card; Shift-click selects every card between
+  // the last clicked one and this one when both are in the same column
+  // (otherwise it toggles, like Ctrl). Refs keep the callback stable so
+  // TaskCard's memo() still holds while the selection changes.
+  const selectionRef = useRef<ReadonlySet<string>>(selectedIds ?? new Set());
+  const anchorRef = useRef<string | null>(null);
+  const groupsRef = useRef(groups);
+  useEffect(() => {
+    selectionRef.current = selectedIds ?? new Set();
+    groupsRef.current = groups;
+    if (!selectedIds?.size) anchorRef.current = null;
+  });
+  const handleSelect = useCallback(
+    (task: Task, range: boolean) => {
+      if (!onSelectionChange) return;
+      const next = new Set(selectionRef.current);
+      const column = groupsRef.current[normalizeTaskStatus(task.status)] ?? [];
+      const anchorIndex = range && anchorRef.current ? column.findIndex((item) => item.id === anchorRef.current) : -1;
+      const index = column.findIndex((item) => item.id === task.id);
+      if (anchorIndex !== -1 && index !== -1) {
+        const [from, to] = anchorIndex < index ? [anchorIndex, index] : [index, anchorIndex];
+        for (const item of column.slice(from, to + 1)) next.add(item.id);
+      } else if (next.has(task.id)) {
+        next.delete(task.id);
+      } else {
+        next.add(task.id);
+      }
+      anchorRef.current = task.id;
+      onSelectionChange(next);
+    },
+    [onSelectionChange]
+  );
 
   const handleReorder = useCallback(
     async (task: Task, direction: "up" | "down") => {
@@ -501,6 +540,8 @@ export function KanbanBoard({
                     canMoveDown={index < columnTasks.length - 1}
                     moveTargets={canEdit ? columns.filter((c) => c.status !== column.status) : undefined}
                     onMoveTo={canEdit ? handleMoveTo : undefined}
+                    selected={selectedIds?.has(task.id) ?? false}
+                    onSelect={canEdit && onSelectionChange ? handleSelect : undefined}
                   />
                 </div>
               ))}

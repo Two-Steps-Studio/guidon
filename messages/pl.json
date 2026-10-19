@@ -677,7 +677,19 @@
     "failedToLoadRelatedTasks": "Nie udało się wczytać powiązanych tasków.",
     "failedToLinkTask": "Nie udało się powiązać taska.",
     "failedToRemoveRelation": "Nie udało się usunąć powiązania.",
-    "loadingRelatedTasks": "Wczytywanie powiązanych tasków..."
+    "loadingRelatedTasks": "Wczytywanie powiązanych tasków...",
+    "bulkToolbar": "Akcje zbiorcze",
+    "bulkSelected": "{count, plural, one {# zaznaczone} few {# zaznaczone} other {# zaznaczonych}}",
+    "bulkMove": "Przenieś",
+    "bulkAssign": "Przypisz",
+    "bulkLabel": "Etykieta",
+    "bulkLabelHint": "+ dodaje do wszystkich, − usuwa ze wszystkich",
+    "bulkDelete": "Usuń",
+    "bulkDeleteConfirm": "{count, plural, one {Usunąć # zadanie?} few {Usunąć # zadania?} other {Usunąć # zadań?}} Ich podzadania, komentarze i załączniki też zostaną usunięte. Tego nie da się cofnąć.",
+    "bulkClear": "Wyczyść zaznaczenie (Esc)",
+    "bulkDone": "{count, plural, =0 {Nic do zmiany} one {Zaktualizowano # zadanie} few {Zaktualizowano # zadania} other {Zaktualizowano # zadań}}",
+    "bulkHint": "Ctrl/Cmd+klik zaznacza kilka kart, Shift+klik zakres",
+    "cardSelected": "Zaznaczone"
   },
   "roadmap": {
     "title": "Plan działań",

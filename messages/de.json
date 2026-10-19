@@ -677,7 +677,19 @@
     "failedToLoadRelatedTasks": "Verknüpfte Aufgaben konnten nicht geladen werden.",
     "failedToLinkTask": "Die Aufgabe konnte nicht verknüpft werden.",
     "failedToRemoveRelation": "Die Verknüpfung konnte nicht entfernt werden.",
-    "loadingRelatedTasks": "Verknüpfte Aufgaben werden geladen..."
+    "loadingRelatedTasks": "Verknüpfte Aufgaben werden geladen...",
+    "bulkToolbar": "Sammelaktionen",
+    "bulkSelected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
+    "bulkMove": "Verschieben",
+    "bulkAssign": "Zuweisen",
+    "bulkLabel": "Label",
+    "bulkLabelHint": "+ fügt allen hinzu, − entfernt bei allen",
+    "bulkDelete": "Löschen",
+    "bulkDeleteConfirm": "{count, plural, one {# Aufgabe löschen?} other {# Aufgaben löschen?}} Ihre Unteraufgaben, Kommentare und Anhänge werden ebenfalls gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "bulkClear": "Auswahl aufheben (Esc)",
+    "bulkDone": "{count, plural, =0 {Nichts zu ändern} one {# Aufgabe aktualisiert} other {# Aufgaben aktualisiert}}",
+    "bulkHint": "Strg/Cmd-Klick wählt mehrere Karten, Umschalt-Klick einen Bereich",
+    "cardSelected": "Ausgewählt"
   },
   "roadmap": {
     "title": "Roadmap",

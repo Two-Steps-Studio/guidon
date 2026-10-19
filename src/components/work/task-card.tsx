@@ -77,6 +77,10 @@ interface TaskCardProps {
   moveTargets?: readonly BoardColumn[];
   /** Touch-friendly alternative to dragging - see kanban-board.tsx's handleMoveTo doc comment for why this exists. */
   onMoveTo?: (task: Task, status: TaskStatus) => void;
+  /** Part of the board's bulk selection (Ctrl/Cmd/Shift-click). */
+  selected?: boolean;
+  /** Ctrl/Cmd-click toggles this card, Shift-click extends from the last one. Undefined on a read-only board. */
+  onSelect?: (task: Task, range: boolean) => void;
 }
 
 /** One plain-text line of a (markdown) description for the card, or "" when there is none. */
@@ -138,6 +142,8 @@ function TaskCardComponent({
   canMoveDown = false,
   moveTargets,
   onMoveTo,
+  selected = false,
+  onSelect,
 }: TaskCardProps) {
   const t = useTranslations("work");
   const priority = normalizeTaskPriority(task.priority);
@@ -192,6 +198,8 @@ function TaskCardComponent({
       suppressClickRef.current = false;
       if (!draggable) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
+      // A modifier-click selects the card (onClick below) - never a drag.
+      if (onSelect && (event.metaKey || event.ctrlKey || event.shiftKey)) return;
       // Don't hijack the "..." move-to menu's own press/click.
       if ((event.target as HTMLElement).closest("button")) return;
 
@@ -216,7 +224,7 @@ function TaskCardComponent({
         }, TOUCH_HOLD_MS);
       }
     },
-    [arm, draggable]
+    [arm, draggable, onSelect]
   );
 
   const handlePointerMove = useCallback(
@@ -273,9 +281,14 @@ function TaskCardComponent({
       onPointerMove={handlePointerMove}
       onPointerUp={endGesture}
       onPointerCancel={endGesture}
-      onClick={() => {
+      onClick={(event) => {
         if (suppressClickRef.current) {
           suppressClickRef.current = false;
+          return;
+        }
+        if (onSelect && (event.metaKey || event.ctrlKey || event.shiftKey)) {
+          event.preventDefault();
+          onSelect(task, event.shiftKey);
           return;
         }
         onOpen(task);
@@ -311,9 +324,11 @@ function TaskCardComponent({
         // would otherwise pop up alongside the drag.
         draggable && "cursor-grab touch-manipulation [-webkit-touch-callout:none] active:cursor-grabbing",
         done && "opacity-70 hover:opacity-100",
-        isDragging && "opacity-40"
+        isDragging && "opacity-40",
+        selected && "border-primary bg-primary/5 ring-2 ring-primary/60 hover:border-primary"
       )}
     >
+      {selected && <span className="sr-only">{t("cardSelected")}</span>}
       {coverImageUrl && (
         <div className="-mx-3 -mt-3 mb-2 overflow-hidden rounded-t-lg">
           {/* eslint-disable-next-line @next/next/no-img-element -- signed, per-task URL from any storage provider (local or Supabase), not a static/optimizable asset - same reasoning as TaskImageGallery's own img */}

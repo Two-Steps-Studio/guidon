@@ -46,6 +46,7 @@ export const ACTION_CONFIG: Record<ActivityAction, ActionConfig> = {
   task_updated: { label: "Task updated", icon: Layers, color: "text-primary" },
   task_deleted: { label: "Task deleted", icon: Trash2, color: "text-destructive" },
   task_status_changed: { label: "Task status changed", icon: Layers, color: "text-primary" },
+  tasks_bulk_updated: { label: "Tasks changed in bulk", icon: Layers, color: "text-primary" },
   task_ai_started: { label: "AI started task", icon: Bot, color: "text-info" },
   task_ai_commented: { label: "AI added comment", icon: Bot, color: "text-info" },
   task_ai_status_changed: { label: "AI changed status", icon: Bot, color: "text-info" },

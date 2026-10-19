@@ -40,6 +40,8 @@ import {
   type BoardColumn,
 } from "@/lib/work/task-board";
 import { createTask, moveTask } from "./actions";
+import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
+import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
@@ -182,6 +184,81 @@ export function WorkBoard({
       return true;
     });
   }, [topLevelTasks, assigneeFilter, priorityFilter, tagFilter]);
+
+  // Bulk selection (Ctrl/Cmd/Shift-click on cards). Only cards the current
+  // filters show count - a hidden card is never changed by surprise.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectedTasks = useMemo(
+    () => filteredTasks.filter((task) => selectedIds.has(task.id)),
+    [filteredTasks, selectedIds]
+  );
+  const bulkLabels = useMemo(
+    () => Array.from(new Set([...labelPresets.map((preset) => preset.name), ...availableTags])).sort(),
+    [labelPresets, availableTags]
+  );
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedIds(new Set());
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedIds.size]);
+
+  const handleBulk = async (operation: BulkOperation) => {
+    // Board order (column, then position), so moved cards keep their relative order.
+    const columnIndex = new Map(columns.map((column, index) => [column.status, index]));
+    const ids = selectedTasks
+      .slice()
+      .sort(
+        (a, b) =>
+          (columnIndex.get(normalizeTaskStatus(a.status)) ?? 0) - (columnIndex.get(normalizeTaskStatus(b.status)) ?? 0) ||
+          (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      )
+      .map((task) => task.id);
+    const result = await bulkUpdateTasks(projectId, ids, operation);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    const chosen = new Set(ids);
+    setState((current) => {
+      if (operation.kind === "delete") {
+        // Subtasks of a deleted card go with it (ON DELETE CASCADE).
+        return {
+          ...current,
+          tasks: current.tasks.filter((task) => !chosen.has(task.id) && !chosen.has(task.parent_task_id ?? "")),
+        };
+      }
+      const lastOrder = Math.max(0, ...current.tasks.map((task) => task.sort_order ?? 0));
+      const position = new Map(ids.map((id, index) => [id, index + 1]));
+      return {
+        ...current,
+        tasks: current.tasks.map((task) => {
+          if (!chosen.has(task.id)) return task;
+          switch (operation.kind) {
+            case "move":
+              return { ...task, status: operation.status, sort_order: lastOrder + (position.get(task.id) ?? 0) * 1000 };
+            case "assign":
+              return { ...task, assignee_id: operation.assigneeId };
+            case "label": {
+              const tags = task.tags ?? [];
+              return {
+                ...task,
+                tags: operation.add
+                  ? tags.includes(operation.label) ? tags : [...tags, operation.label]
+                  : tags.filter((tag) => tag !== operation.label),
+              };
+            }
+            default:
+              return task;
+          }
+        }),
+      };
+    });
+    toast.success(t("bulkDone", { count: result.count }));
+    if (operation.kind === "delete") setSelectedIds(new Set());
+  };
 
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
     const previousStatus = task.status;
@@ -353,6 +430,9 @@ export function WorkBoard({
               {t("clearFilters")}
             </button>
           )}
+          {canEdit && (
+            <span className="ml-auto hidden text-xs text-muted-foreground md:inline">{t("bulkHint")}</span>
+          )}
         </div>
 
         {!canEdit && role && (
@@ -389,9 +469,23 @@ export function WorkBoard({
             onCreateTask={setCreateFor}
             onMoveTask={handleMove}
             projectColor={projectColor}
+            selectedIds={selectedIds}
+            onSelectionChange={canEdit ? setSelectedIds : undefined}
           />
         )}
       </div>
+
+      {selectedTasks.length > 0 && (
+        <BulkBar
+          selected={selectedTasks}
+          columns={columns}
+          members={members}
+          labels={bulkLabels}
+          canDelete={canDelete}
+          onRun={handleBulk}
+          onClear={() => setSelectedIds(new Set())}
+        />
+      )}
 
       {openTask && (
         <TaskDetailDialog
