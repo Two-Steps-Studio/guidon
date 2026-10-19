@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { AppShell } from "@/components/layout/app-shell";
 
-export const metadata: Metadata = { title: "Admin - Guidon" };
+export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminLayout({
   children,
