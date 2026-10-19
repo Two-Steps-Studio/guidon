@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { setLocale } from "@/app/actions/set-locale";
-import { Select } from "@/components/ui/select";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { SUPPORTED_LOCALES } from "@/i18n/locales";
 
 const LOCALE_LABELS: Record<string, string> = {
@@ -19,22 +19,16 @@ export function LanguageSwitcher() {
   const t = useTranslations("profile");
 
   return (
-    <Select
+    <SelectMenu
       aria-label={t("languageLabel")}
       value={currentLocale}
       disabled={isPending}
-      onChange={(event) => {
-        const value = event.target.value;
+      options={SUPPORTED_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
+      onValueChange={(value) => {
         startTransition(async () => {
           await setLocale(value);
         });
       }}
-    >
-      {SUPPORTED_LOCALES.map((locale) => (
-        <option key={locale} value={locale}>
-          {LOCALE_LABELS[locale]}
-        </option>
-      ))}
-    </Select>
+    />
   );
 }
