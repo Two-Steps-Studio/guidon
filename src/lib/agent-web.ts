@@ -22,6 +22,7 @@ export const SIGNED_IN_SECTIONS: ReadonlySet<string> = new Set([
   "dashboard",
   "discord",
   "mini",
+  "my-tasks",
   "organizations",
   "plugins",
   "profile",

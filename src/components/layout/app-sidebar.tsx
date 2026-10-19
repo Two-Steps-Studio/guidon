@@ -26,6 +26,7 @@ import type { SwitchableProject } from "@/lib/data/project-access";
 import type { Theme } from "@/lib/theme";
 import {
   LayoutDashboard,
+  ListChecks,
   FileText,
   Building2,
   CheckSquare,
@@ -52,6 +53,7 @@ import {
 
 export const GLOBAL_NAV = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/my-tasks", labelKey: "myTasks", icon: ListChecks },
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
   { href: "/plugins", labelKey: "plugins", icon: Puzzle },

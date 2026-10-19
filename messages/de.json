@@ -86,6 +86,7 @@
     "upgradePlan": "Plan upgraden",
     "toggleSidebar": "Seitenleiste ein-/ausblenden (Strg+B)",
     "dashboard": "Dashboard",
+    "myTasks": "Meine Aufgaben",
     "projects": "Projekte",
     "organizations": "Organisationen",
     "plugins": "Plugins",
@@ -919,6 +920,18 @@
     "invalidTitle": "Dieser Link ist abgelaufen",
     "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-login auf Discord erneut aus, um einen neuen zu erhalten.",
     "toDashboard": "Zum Dashboard"
+  },
+  "myTasks": {
+    "title": "Meine Aufgaben",
+    "subtitle": "{count, plural, =0 {Dir ist nichts zugewiesen} one {# offene Aufgabe für dich} other {# offene Aufgaben für dich}} in allen Projekten",
+    "group_overdue": "Überfällig",
+    "group_today": "Heute",
+    "group_week": "Nächste 7 Tage",
+    "group_later": "Später",
+    "group_none": "Ohne Fälligkeit",
+    "statusLabel": "Status von {task}",
+    "emptyTitle": "Dir ist nichts zugewiesen",
+    "emptyDescription": "Aufgaben, die dir in einem Projekt zugewiesen sind, erscheinen hier."
   },
   "feedback": {
     "sendFeedback": "Feedback senden",
