@@ -42,6 +42,9 @@ export default async function ProjectPage({
   const [access, stats] = await Promise.all([requireProjectAccess(projectId), getProjectStats(projectId)]);
   const { project } = access;
   const showRoadmap = isModuleVisible("roadmap", project.disabled_modules);
+  // With the task board hidden (migration 058) its counters go too - a
+  // project used as a knowledge base would only ever show "0 tasks".
+  const showTasks = isModuleVisible("work", project.disabled_modules);
 
   const quickAccess = [
     {
@@ -118,55 +121,61 @@ export default async function ProjectPage({
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("totalTasks")}</CardTitle>
-            <FolderKanban className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total_tasks}</div>
-            <p className="text-xs text-muted-foreground">{t("completedSuffix", { count: stats.completed_tasks })}</p>
-          </CardContent>
-        </Card>
+      {(showTasks || showRoadmap) && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          {showTasks && (
+            <>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("totalTasks")}</CardTitle>
+                  <FolderKanban className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.total_tasks}</div>
+                  <p className="text-xs text-muted-foreground">{t("completedSuffix", { count: stats.completed_tasks })}</p>
+                </CardContent>
+              </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("inProgress")}</CardTitle>
-            <Clock className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.in_progress_tasks}</div>
-            <p className="text-xs text-muted-foreground">{t("activeTasks")}</p>
-          </CardContent>
-        </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("inProgress")}</CardTitle>
+                  <Clock className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.in_progress_tasks}</div>
+                  <p className="text-xs text-muted-foreground">{t("activeTasks")}</p>
+                </CardContent>
+              </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("completion")}</CardTitle>
-            <TrendingUp className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completion_percentage}%</div>
-            <p className="text-xs text-muted-foreground">{t("projectProgress")}</p>
-          </CardContent>
-        </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("completion")}</CardTitle>
+                  <TrendingUp className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.completion_percentage}%</div>
+                  <p className="text-xs text-muted-foreground">{t("projectProgress")}</p>
+                </CardContent>
+              </Card>
+            </>
+          )}
 
-        {showRoadmap && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("roadmap")}</CardTitle>
-              <Calendar className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.completed_phases}/{stats.total_phases}
-              </div>
-              <p className="text-xs text-muted-foreground">{t("phasesCompleted")}</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          {showRoadmap && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t("roadmap")}</CardTitle>
+                <Calendar className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {stats.completed_phases}/{stats.total_phases}
+                </div>
+                <p className="text-xs text-muted-foreground">{t("phasesCompleted")}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">{t("quickAccess")}</h2>

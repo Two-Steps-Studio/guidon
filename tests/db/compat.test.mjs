@@ -2769,7 +2769,7 @@ section("44. projects.disabled_modules: wylaczane moduly projektu (migracja 055)
   );
   const allowed = [...(def.rows[0]?.def ?? "").matchAll(/'([a-z_]+)'::text/g)].map((m) => m[1]).sort();
   check(
-    "CHECK w 055 == PROJECT_MODULES w project-modules.ts",
+    "CHECK (055/058) == PROJECT_MODULES w project-modules.ts",
     JSON.stringify(allowed) === JSON.stringify([...PROJECT_MODULES].sort()),
     `${allowed.join(",")} vs ${[...PROJECT_MODULES].sort().join(",")}`
   );
@@ -2781,15 +2781,22 @@ section("44. projects.disabled_modules: wylaczane moduly projektu (migracja 055)
     );
     check("owner ukrywa moduly", JSON.stringify(r.rows[0]?.disabled_modules) === '["memory","context"]', JSON.stringify(r.rows));
 
+    const work = await db.query(
+      "UPDATE public.projects SET disabled_modules = '{work,memory,context}' WHERE id = $1 RETURNING disabled_modules",
+      [projectId]
+    );
+    check("tablice zadan (work) tez da sie wylaczyc (058)", work.rows[0]?.disabled_modules?.includes("work"), JSON.stringify(work.rows));
+    await db.query("UPDATE public.projects SET disabled_modules = '{memory,context}' WHERE id = $1", [projectId]);
+
     let threw = false;
     try {
       await db.query("SAVEPOINT s");
-      await db.query("UPDATE public.projects SET disabled_modules = '{work}' WHERE id = $1", [projectId]);
+      await db.query("UPDATE public.projects SET disabled_modules = '{settings}' WHERE id = $1", [projectId]);
     } catch {
       threw = true;
     }
     await db.query("ROLLBACK TO SAVEPOINT s");
-    check("tablicy zadan (work) nie da sie wylaczyc (CHECK)", threw);
+    check("ustawien (settings) nie da sie wylaczyc (CHECK)", threw);
   });
 
   await withUser(D, async () => {
