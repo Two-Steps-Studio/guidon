@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import Dither from "@/components/Dither";
+import { useBackgroundMotion } from "@/lib/background-motion";
 
 type EffectiveTheme = "light" | "dark";
 
@@ -43,9 +44,15 @@ const WAVE_COLOR: Record<EffectiveTheme, string> = { light: "#245bea", dark: "#8
 
 export function DitherBackground() {
   const theme = useSyncExternalStore<EffectiveTheme>(subscribeTheme, readTheme, () => "light");
+  // Profile -> Background animation; "auto" leaves the OS reduced-motion
+  // setting in charge (Dither then shows a still frame).
+  const motion = useBackgroundMotion();
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-100">
+    // h-lvh, not inset-0: the large viewport height doesn't change when a
+    // phone's address bar slides away during scrolling, so the canvas isn't
+    // resized - and the whole pattern re-scaled and shifted - on every scroll.
+    <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh">
       <Dither
         waveColor={WAVE_COLOR[theme]}
         backgroundColor="transparent"
@@ -56,6 +63,8 @@ export function DitherBackground() {
         waveSpeed={0.05}
         waveFrequency={2}
         waveAmplitude={0.3}
+        disableAnimation={motion === "off"}
+        ignoreReducedMotion={motion === "on"}
         enableMouseInteraction={false}
         clickRipple={false}
       />

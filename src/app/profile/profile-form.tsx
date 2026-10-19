@@ -11,6 +11,7 @@ import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { updateProfile, type ProfileFormState } from "./actions";
 import type { CurrentUser } from "@/lib/data/current-user";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { BackgroundMotionSwitcher } from "@/components/layout/background-motion-switcher";
 
 const initialState: ProfileFormState = { error: null };
 
@@ -71,6 +72,12 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
           <div className="space-y-2">
             <Label htmlFor="language">{t("languageLabel")}</Label>
             <LanguageSwitcher />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("backgroundMotionLabel")}</Label>
+            <BackgroundMotionSwitcher />
+            <p className="text-xs text-muted-foreground">{t("backgroundMotionHelp")}</p>
           </div>
 
           {state.error && (

@@ -1285,7 +1285,12 @@
     "mcpStep_other_url": "Server-URL (Transport: Streamable HTTP)",
     "mcpStep_other_header": "Sende diesen HTTP-Header bei jeder Anfrage",
     "mcpTry": "Probiere diesen Prompt in deiner KI-App",
-    "mcpTryPrompt": "Liste meine Guidon-Projekte auf, zeige die Aufgaben in To do und beginne mit der wichtigsten."
+    "mcpTryPrompt": "Liste meine Guidon-Projekte auf, zeige die Aufgaben in To do und beginne mit der wichtigsten.",
+    "backgroundMotionLabel": "Hintergrundanimation",
+    "backgroundMotion_auto": "Automatisch (Systemeinstellung)",
+    "backgroundMotion_on": "An",
+    "backgroundMotion_off": "Aus",
+    "backgroundMotionHelp": "Wird auf diesem Gerät gespeichert. Automatisch hält die Animation an, wenn dein System reduzierte Bewegung verlangt (unter Windows: Einstellungen → Barrierefreiheit → Visuelle Effekte → Animationseffekte)."
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",

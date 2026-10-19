@@ -1285,7 +1285,12 @@
     "mcpStep_other_url": "Server URL (transport: Streamable HTTP)",
     "mcpStep_other_header": "Send this HTTP header with every request",
     "mcpTry": "Try this prompt in your AI app",
-    "mcpTryPrompt": "List my Guidon projects, show the tasks in To do, and start on the highest priority one."
+    "mcpTryPrompt": "List my Guidon projects, show the tasks in To do, and start on the highest priority one.",
+    "backgroundMotionLabel": "Background animation",
+    "backgroundMotion_auto": "Automatic (system setting)",
+    "backgroundMotion_on": "On",
+    "backgroundMotion_off": "Off",
+    "backgroundMotionHelp": "Saved on this device. Automatic stops the animation when your system asks for reduced motion (on Windows: Settings → Accessibility → Visual effects → Animation effects)."
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",
