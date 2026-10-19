@@ -5,7 +5,7 @@
  *
  *   1. node scripts/landing/seed-demo.mjs      (prints DEMO_PROJECT_ID / DEMO_TASK_ID)
  *   2. npm run build && npm run start
- *   3. BASE_URL=http://localhost:2137 DEMO_USER_EMAIL=... DEMO_USER_PASSWORD=... \
+ *   3. BASE_URL=http://localhost:5803 DEMO_USER_EMAIL=... DEMO_USER_PASSWORD=... \
  *      DEMO_PROJECT_ID=... DEMO_TASK_ID=... node scripts/landing/capture.mjs
  *
  * Re-run whenever a captured page's look changes noticeably - unlike the
@@ -31,7 +31,7 @@ for (const key of ["DEMO_USER_EMAIL", "DEMO_USER_PASSWORD", "DEMO_PROJECT_ID", "
     process.exit(1);
   }
 }
-const BASE = env.BASE_URL ?? "http://localhost:2137";
+const BASE = env.BASE_URL ?? "http://localhost:5803";
 const P = `${BASE}/projects/${env.DEMO_PROJECT_ID}`;
 
 const { chromium } = await import(env.PLAYWRIGHT_MODULE ?? "playwright");

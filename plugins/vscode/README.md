@@ -70,7 +70,7 @@ that reference easy to use:
 
 | Setting | Default | |
 |---|---|---|
-| `guidon.baseUrl` | `https://useguidon.com` | Your Guidon instance, e.g. `http://localhost:2137` |
+| `guidon.baseUrl` | `https://useguidon.com` | Your Guidon instance, e.g. `http://localhost:5803` |
 | `guidon.autoRefresh` | `true` | Reload the board every 30 s while it's visible and VS Code has focus |
 | `guidon.branchPrefix` | *(empty)* | Prefix for branches from "Start Task on a New Branch" |
 

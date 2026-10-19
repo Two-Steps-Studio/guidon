@@ -602,7 +602,7 @@ mod tests {
     }
 
     /// End to end against a running Guidon server (manifest, public zip
-    /// route, checksums, extraction): `GUIDON_TEST_SERVER=http://localhost:2137
+    /// route, checksums, extraction): `GUIDON_TEST_SERVER=http://localhost:5803
     /// cargo test --lib live_`. Skipped when the variable isn't set.
     #[test]
     fn live_install_every_plugin_from_server() {

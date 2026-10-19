@@ -70,7 +70,7 @@ ever lost.
    plugin installer put it there.
 2. In Unity, open **Window → Guidon → Tasks**. Expand **Settings**, set
    **Base URL** to your Guidon instance (e.g. `https://useguidon.com` or
-   `http://localhost:2137` for a local dev server), then click **Log In**.
+   `http://localhost:5803` for a local dev server), then click **Log In**.
    Your browser opens to a Guidon page asking you to approve the plugin -
    approve it, and the Unity window picks up the result automatically
    (usually within a second or two of clicking Authorize).

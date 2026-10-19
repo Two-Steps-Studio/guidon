@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "predev": "node scripts/build-plugin-zips.mjs",
-    "dev": "next dev --webpack -p 2137",
+    "dev": "next dev --webpack -p 5803",
     "prebuild": "node scripts/build-plugin-zips.mjs",
     "build": "next build",
-    "start": "next start -p 2137",
+    "start": "next start -p 5803",
     "lint": "eslint",
     "postinstall": "node scripts/copy-monaco-assets.mjs",
     "migrate": "node scripts/migrate.mjs",

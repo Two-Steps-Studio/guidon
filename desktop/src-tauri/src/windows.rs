@@ -223,7 +223,7 @@ mod tests {
     fn appends_mini_to_the_server_url() {
         assert_eq!(url("https://useguidon.com"), "https://useguidon.com/mini");
         assert_eq!(url("https://useguidon.com/"), "https://useguidon.com/mini");
-        assert_eq!(url("http://10.0.0.5:2137"), "http://10.0.0.5:2137/mini");
+        assert_eq!(url("http://10.0.0.5:5803"), "http://10.0.0.5:5803/mini");
     }
 
     #[test]

@@ -169,7 +169,7 @@ and `tasks` windows. VS Code and JetBrains are source downloads that need a
 build, so they stay on the website's /plugins page.
 
 Tests: `cargo test --lib` covers paths, markers, extraction and zip-slip;
-`GUIDON_TEST_SERVER=http://localhost:2137 cargo test --lib live_` installs
+`GUIDON_TEST_SERVER=http://localhost:5803 cargo test --lib live_` installs
 every plugin from a running server into temp folders.
 
 ## Single instance and window memory

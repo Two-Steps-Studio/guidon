@@ -56,7 +56,7 @@ npm run migrate:status   # optional: see what schema state your Supabase project
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:5803](http://localhost:5803).
 
 Available scripts (`package.json`):
 

@@ -35,7 +35,7 @@
         "guidon.baseUrl": {
           "type": "string",
           "default": "https://useguidon.com",
-          "description": "Your Guidon instance, e.g. https://useguidon.com or http://localhost:2137."
+          "description": "Your Guidon instance, e.g. https://useguidon.com or http://localhost:5803."
         },
         "guidon.autoRefresh": {
           "type": "boolean",
