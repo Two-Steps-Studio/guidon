@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 
 export async function SiteFooter() {
   const t = await getTranslations("landing");
@@ -12,6 +13,12 @@ export async function SiteFooter() {
           <Link href="/developers" className="hover:text-foreground">
             {t("footer.developers")}
           </Link>
+          <a href={SELF_HOSTING_DOCS_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+            {t("footer.selfHosting")}
+          </a>
+          <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+            GitHub
+          </a>
           <Link href="/legal/terms" className="hover:text-foreground">
             {t("footer.terms")}
           </Link>

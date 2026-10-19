@@ -255,7 +255,14 @@
       "developers": "Dla deweloperów",
       "terms": "Regulamin",
       "privacy": "Polityka prywatności",
-      "copyright": "© {year} Guidon"
+      "copyright": "© {year} Guidon",
+      "selfHosting": "Self-hosting"
+    },
+    "selfHost": {
+      "title": "Postaw Guidona na własnym serwerze",
+      "description": "Ta sama aplikacja na infrastrukturze, którą kontrolujesz: Docker Compose ze zwykłym PostgreSQL, lokalnymi plikami i opcjonalnym lokalnym AI (Ollama). Na własnej instalacji nie ma limitów planów.",
+      "guide": "Instrukcja self-hostingu",
+      "github": "Kod na GitHubie"
     }
   },
   "organizations": {

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, type LucideIcon } from "lucide-react";
+import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Server, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
 import { DemoBoardPreview } from "./demo-board-preview";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -60,6 +61,7 @@ const STRUCTURED_DATA = {
   description:
     "Context-first project management for development teams. Track tasks, decisions, sources, and project memory together.",
   url: "https://useguidon.com",
+  sameAs: [GITHUB_REPO_URL],
   offers: {
     "@type": "Offer",
     category: "Freemium",
@@ -223,6 +225,34 @@ export default async function Home() {
     </section>
 
     {plans.length > 0 && <PricingSection plans={plans} />}
+
+    <section className="border-t border-border py-20" aria-labelledby="self-host-title">
+      <div className="container mx-auto max-w-3xl px-4">
+        <div className="scrim space-y-4 rounded-2xl px-6 py-8 text-center">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+            <Server className="h-5 w-5 text-primary" />
+          </div>
+          <h2 id="self-host-title" className={`${displayFont.className} text-3xl md:text-4xl`}>
+            {t("selfHost.title")}
+          </h2>
+          <p className="mx-auto max-w-2xl text-text-secondary">{t("selfHost.description")}</p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <a href={SELF_HOSTING_DOCS_URL} target="_blank" rel="noopener noreferrer">
+                <Server className="mr-2 h-4 w-4" />
+                {t("selfHost.guide")}
+              </a>
+            </Button>
+            <Button variant="outline" asChild>
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                <Github className="mr-2 h-4 w-4" />
+                {t("selfHost.github")}
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
     </main>
     <SiteFooter />
     </>

@@ -255,7 +255,14 @@
       "developers": "Developers",
       "terms": "Terms of Service",
       "privacy": "Privacy Policy",
-      "copyright": "© {year} Guidon"
+      "copyright": "© {year} Guidon",
+      "selfHosting": "Self-hosting"
+    },
+    "selfHost": {
+      "title": "Run Guidon on your own server",
+      "description": "The same app, on infrastructure you control: Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama). No plan limits on your own install.",
+      "guide": "Self-hosting guide",
+      "github": "Code on GitHub"
     }
   },
   "organizations": {

@@ -25,6 +25,7 @@ import {
   withFrontmatter,
 } from "../src/lib/agent-web.ts";
 import { developersLlmsTxt, developersMarkdown } from "../src/lib/developers-doc.ts";
+import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "../src/lib/project-links.ts";
 
 let pass = 0;
 let fail = 0;
@@ -171,6 +172,11 @@ check("every MCP tool named in the guide exists", devTools.length > 0 && devTool
 const devLlms = developersLlmsTxt("https://useguidon.com");
 check("section llms.txt: H1 + summary", devLlms.startsWith("# ") && /\n> \S/.test(devLlms));
 check("root llms.txt links the section llms.txt", llms.includes("/developers/llms.txt"));
+check(
+  "developer guide links GitHub + self-hosting (same URLs as lib/project-links.ts)",
+  dev.includes(`(${GITHUB_REPO_URL})`) && dev.includes(`(${SELF_HOSTING_DOCS_URL})`)
+);
+check("root llms.txt links the GitHub repository", llms.includes(GITHUB_REPO_URL));
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

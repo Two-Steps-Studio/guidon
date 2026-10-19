@@ -1,5 +1,9 @@
 // No imports: loaded by tests/agent-web.test.mjs with Node's type stripping.
 
+// Same values as lib/project-links.ts (test:agent-web checks they match).
+const GITHUB_REPO_URL = "https://github.com/two-steps-studio/guidon";
+const SELF_HOSTING_DOCS_URL = `${GITHUB_REPO_URL}/blob/main/docs/self-hosting.md`;
+
 /**
  * The developer guide: one Markdown source for /developers (rendered as
  * HTML), /developers.md (its Markdown twin) and the section index
@@ -93,7 +97,7 @@ Errors are JSON with an HTTP status: \`{ "error": "Task not found." }\`.
 - [Guide for AI agents (llms.txt)](${siteUrl}/llms.txt) - when to use Guidon and how
 - [Pricing as Markdown](${siteUrl}/pricing.md)
 - Editor plugins (Unity, Unreal Engine, Godot, Blender, JetBrains, VS Code) and Guidon Desktop: [Plugins](${siteUrl}/plugins)
-- Guidon is open source and can be self-hosted.
+- Source code: [GitHub](${GITHUB_REPO_URL}). Guidon can be self-hosted with Docker Compose and a plain PostgreSQL - see the [self-hosting guide](${SELF_HOSTING_DOCS_URL}).
 `;
 }
 

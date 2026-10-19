@@ -2,7 +2,7 @@
 
 > Guidon is context-first project management for development teams: a Kanban task board per project, plus the decisions, sources, technologies and project memory behind the work. AI agents can pick up tasks, read their full context, report progress and hand finished work back for human review through an MCP server and a REST API.
 
-Guidon is a web app at https://useguidon.com (it can also be self-hosted). Everything is organised as organizations -> projects -> tasks. Tasks move through the board columns `backlog`, `todo`, `in_progress`, `ai_working`, `review` and `done`; projects can rename or hide columns.
+Guidon is a web app at https://useguidon.com (it can also be self-hosted - source and guide: https://github.com/two-steps-studio/guidon). Everything is organised as organizations -> projects -> tasks. Tasks move through the board columns `backlog`, `todo`, `in_progress`, `ai_working`, `review` and `done`; projects can rename or hide columns.
 
 ## When to use Guidon
 
