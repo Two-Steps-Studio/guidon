@@ -1302,7 +1302,11 @@
     "backgroundMotion_auto": "Automatic (system setting)",
     "backgroundMotion_on": "On",
     "backgroundMotion_off": "Off",
-    "backgroundMotionHelp": "Saved on this device. Automatic stops the animation when your system asks for reduced motion (on Windows: Settings → Accessibility → Visual effects → Animation effects)."
+    "backgroundMotionHelp": "Saved on this device. Automatic stops the animation when your system asks for reduced motion (on Windows: Settings → Accessibility → Visual effects → Animation effects).",
+    "soundsLabel": "Sounds",
+    "sounds_on": "On",
+    "sounds_off": "Off",
+    "soundsHelp": "Short, quiet sounds when you complete or create a task and when a notification arrives. Saved on this device."
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",

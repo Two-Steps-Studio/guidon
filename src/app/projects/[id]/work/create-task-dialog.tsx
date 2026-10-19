@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import { createTask, updateTask } from "./actions";
 import { uploadTaskAttachment } from "./attachments-actions";
+import { playSound } from "@/lib/sounds";
 
 /** A file chosen before the task exists - uploaded right after it's created. */
 interface PendingFile {
@@ -190,6 +191,7 @@ export function CreateTaskDialog({
         if (failed > 0) toast.error(t("createAttachmentsFailed", { count: failed }));
       }
 
+      playSound("create");
       onCreated(task);
       onClose();
       toast.success(t("taskCreatedToast", { title: task.title }));

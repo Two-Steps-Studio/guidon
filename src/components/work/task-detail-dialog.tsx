@@ -47,6 +47,7 @@ import { useLabelPresets } from "@/components/work/label-presets-context";
 import { DescriptionToolbar, descriptionKeyDown } from "@/components/work/description-toolbar";
 import { toggleTaskAtLine, type EditResult } from "@/lib/work/markdown-edit";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
+import { playSound } from "@/lib/sounds";
 
 interface TaskDetailDialogProps {
   projectId: string;
@@ -240,6 +241,7 @@ function TaskDetailDialogInner({
 
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToSaveTask"));
 
+      if (result.task.status === "done" && task.status !== "done") playSound("complete");
       onSaved(result.task);
       onClose();
     } catch (err) {

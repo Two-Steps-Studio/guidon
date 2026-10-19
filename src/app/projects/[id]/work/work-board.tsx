@@ -31,6 +31,7 @@ import {
   type BoardColumn,
 } from "@/lib/work/task-board";
 import { moveTask } from "./actions";
+import { playSound } from "@/lib/sounds";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
 import { BulkBar } from "./bulk-bar";
@@ -224,9 +225,11 @@ export function WorkBoard({
       .map((task) => task.id);
     const result = await bulkUpdateTasks(projectId, ids, operation);
     if (result.error) {
+      playSound("error");
       toast.error(result.error);
       return;
     }
+    if (operation.kind === "move" && operation.status === "done") playSound("complete");
     const chosen = new Set(ids);
     setState((current) => {
       if (operation.kind === "delete") {
@@ -270,7 +273,8 @@ export function WorkBoard({
     const previousStatus = task.status;
     const previousSortOrder = task.sort_order;
 
-    // Optimistic: the board should feel instant on drop.
+    // Optimistic: the board should feel instant on drop - the sound too.
+    if (status === "done" && previousStatus !== "done") playSound("complete");
     setState((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
@@ -294,6 +298,7 @@ export function WorkBoard({
             : item
         ),
       }));
+      playSound("error");
       toast.error(result.error);
     }
   };

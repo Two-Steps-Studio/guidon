@@ -1302,7 +1302,11 @@
     "backgroundMotion_auto": "Automática (ajuste del sistema)",
     "backgroundMotion_on": "Activada",
     "backgroundMotion_off": "Desactivada",
-    "backgroundMotionHelp": "Se guarda en este dispositivo. En automático la animación se detiene cuando el sistema pide reducir el movimiento (en Windows: Configuración → Accesibilidad → Efectos visuales → Efectos de animación)."
+    "backgroundMotionHelp": "Se guarda en este dispositivo. En automático la animación se detiene cuando el sistema pide reducir el movimiento (en Windows: Configuración → Accesibilidad → Efectos visuales → Efectos de animación).",
+    "soundsLabel": "Sonidos",
+    "sounds_on": "Activados",
+    "sounds_off": "Desactivados",
+    "soundsHelp": "Sonidos breves y suaves al completar o crear una tarea y al llegar una notificación. Se guarda en este dispositivo."
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",

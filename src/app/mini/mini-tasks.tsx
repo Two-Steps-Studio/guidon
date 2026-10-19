@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Task, TaskStatus } from "@/types/task";
 import { MINI_FILTER_COOKIE, MINI_PROJECT_COOKIE } from "./mini-cookies";
+import { playSound } from "@/lib/sounds";
 
 export interface MiniProject {
   id: string;
@@ -165,6 +166,7 @@ export function MiniTasks({
 
   const handleMove = async (task: Task, status: TaskStatus) => {
     const previous = task;
+    if (status === "done" && task.status !== "done") playSound("complete");
     const sortOrder = endOfColumnSortOrder(tasks, status, task.id);
     upsert({ ...task, status, sort_order: sortOrder });
     setError(null);

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { BOARD_COLUMNS, isDone, normalizeTaskStatus, type BoardColumn } from "@/lib/work/task-board";
 import type { Task, TaskStatus } from "@/types/task";
+import { playSound } from "@/lib/sounds";
 
 /**
  * A subtask can be sitting on a status the project has since hidden from
@@ -113,6 +114,7 @@ export function TaskSubtasksSection({
       const result = await updateTask(projectId, subtask.id, { status });
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToUpdateSubtask"));
 
+      if (status === "done" && subtask.status !== "done") playSound("complete");
       onSaved(result.task);
     } catch (err) {
       setSubtaskError(err instanceof Error ? err.message : t("failedToUpdateSubtask"));

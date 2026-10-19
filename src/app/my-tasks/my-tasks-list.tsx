@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { moveTask } from "@/app/projects/[id]/work/actions";
+import { playSound } from "@/lib/sounds";
 import {
   DUE_STATE_CLASSES,
   PRIORITY_DOT_CLASSES,
@@ -85,11 +86,13 @@ export function MyTasksList({
 
   const setStatus = async (task: Task, status: TaskStatus) => {
     const previous = task.status;
+    if (status === "done" && previous !== "done") playSound("complete");
     setTasks((list) => list.map((item) => (item.id === task.id ? { ...item, status } : item)));
     // The task's own sort_order: moveTask renumbers the target column if it collides.
     const result = await moveTask(task.project_id, task.id, status, task.sort_order ?? 0);
     if (result.error) {
       setTasks((list) => list.map((item) => (item.id === task.id ? { ...item, status: previous } : item)));
+      playSound("error");
       toast.error(result.error);
     }
   };
