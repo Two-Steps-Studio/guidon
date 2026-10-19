@@ -690,7 +690,11 @@
     "bulkClear": "Quitar selección (Esc)",
     "bulkDone": "{count, plural, =0 {Nada que cambiar} one {# tarea actualizada} other {# tareas actualizadas}}",
     "bulkHint": "Ctrl/Cmd+clic para seleccionar varias tarjetas, Mayús+clic para un rango",
-    "cardSelected": "Seleccionada"
+    "cardSelected": "Seleccionada",
+    "attachmentsLabel": "Adjuntos",
+    "addAttachments": "Añadir archivos",
+    "removeAttachment": "Quitar {name}",
+    "createAttachmentsFailed": "{count, plural, one {No se pudo adjuntar # archivo} other {No se pudieron adjuntar # archivos}}; añádelos desde la tarea."
   },
   "roadmap": {
     "title": "Hoja de ruta",

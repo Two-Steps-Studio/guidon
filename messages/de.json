@@ -690,7 +690,11 @@
     "bulkClear": "Auswahl aufheben (Esc)",
     "bulkDone": "{count, plural, =0 {Nichts zu ändern} one {# Aufgabe aktualisiert} other {# Aufgaben aktualisiert}}",
     "bulkHint": "Strg/Cmd-Klick wählt mehrere Karten, Umschalt-Klick einen Bereich",
-    "cardSelected": "Ausgewählt"
+    "cardSelected": "Ausgewählt",
+    "attachmentsLabel": "Anhänge",
+    "addAttachments": "Dateien hinzufügen",
+    "removeAttachment": "{name} entfernen",
+    "createAttachmentsFailed": "{count, plural, one {# Datei konnte} other {# Dateien konnten}} nicht angehängt werden - füge sie in der Aufgabe hinzu."
   },
   "roadmap": {
     "title": "Roadmap",

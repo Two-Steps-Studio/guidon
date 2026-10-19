@@ -99,6 +99,8 @@ export async function createTask(
     assigneeId: string;
     dueDate: string;
     sortOrder: number;
+    /** Labels, as typed or picked from the project's presets. */
+    tags?: string[];
   }
 ): Promise<TaskActionResult> {
   const access = await getProjectAccess(projectId);
@@ -117,6 +119,12 @@ export async function createTask(
   const description = input.description.trim() || null;
   const assigneeId = input.assigneeId || null;
   const dueDate = input.dueDate ? new Date(input.dueDate).toISOString() : null;
+  // Trimmed, empty ones dropped, case-insensitive duplicates removed.
+  const tags = (Array.isArray(input.tags) ? input.tags : [])
+    .filter((tag): tag is string => typeof tag === "string")
+    .map((tag) => tag.trim().slice(0, 50))
+    .filter((tag, index, all) => tag && all.findIndex((other) => other.toLowerCase() === tag.toLowerCase()) === index)
+    .slice(0, 30);
 
   const { data: task, error } = await dataClient(access.userId)
     .from<Task>("tasks")
@@ -128,7 +136,7 @@ export async function createTask(
       priority: input.priority,
       assignee_id: assigneeId,
       due_date: dueDate,
-      tags: [],
+      tags,
       created_by: access.userId,
       sort_order: input.sortOrder,
     })

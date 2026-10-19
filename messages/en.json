@@ -690,7 +690,11 @@
     "bulkClear": "Clear selection (Esc)",
     "bulkDone": "{count, plural, =0 {Nothing to change} one {# task updated} other {# tasks updated}}",
     "bulkHint": "Ctrl/Cmd-click cards to select several, Shift-click for a range",
-    "cardSelected": "Selected"
+    "cardSelected": "Selected",
+    "attachmentsLabel": "Attachments",
+    "addAttachments": "Add files",
+    "removeAttachment": "Remove {name}",
+    "createAttachmentsFailed": "{count, plural, one {# file} other {# files}} couldn't be attached - add {count, plural, one {it} other {them}} from the task."
   },
   "roadmap": {
     "title": "Roadmap",

@@ -690,7 +690,11 @@
     "bulkClear": "Wyczyść zaznaczenie (Esc)",
     "bulkDone": "{count, plural, =0 {Nic do zmiany} one {Zaktualizowano # zadanie} few {Zaktualizowano # zadania} other {Zaktualizowano # zadań}}",
     "bulkHint": "Ctrl/Cmd+klik zaznacza kilka kart, Shift+klik zakres",
-    "cardSelected": "Zaznaczone"
+    "cardSelected": "Zaznaczone",
+    "attachmentsLabel": "Załączniki",
+    "addAttachments": "Dodaj pliki",
+    "removeAttachment": "Usuń {name}",
+    "createAttachmentsFailed": "{count, plural, one {Nie udało się dołączyć # pliku} few {Nie udało się dołączyć # plików} other {Nie udało się dołączyć # plików}} - dodaj je z poziomu zadania."
   },
   "roadmap": {
     "title": "Plan działań",
