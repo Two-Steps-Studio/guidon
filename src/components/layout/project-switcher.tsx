@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Select } from '@/components/ui/select';
+import { SelectMenu } from '@/components/ui/select-menu';
 import type { SwitchableProject } from '@/lib/data/project-access';
 
 interface ProjectSwitcherProps {
@@ -25,37 +25,25 @@ export function ProjectSwitcher({ projectId, currentProjectName, projects }: Pro
   const t = useTranslations('nav');
   const router = useRouter();
 
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextId = event.target.value;
-    if (nextId && nextId !== projectId) {
-      router.push(`/projects/${nextId}`);
-    }
-  };
-
   // Single-project orgs still show the switcher (consistent chrome), but as
   // plain text - a one-option select with nowhere to go isn't a control.
   if (projects.length <= 1) {
     return (
-      <div className="px-3 py-2 text-sm font-medium text-foreground truncate" title={currentProjectName}>
+      <div className="px-3 py-2 text-sm font-medium text-foreground truncate group-data-[collapsible=icon]:hidden" title={currentProjectName}>
         {currentProjectName}
       </div>
     );
   }
 
   return (
-    <div className="px-3 py-2">
-      <Select
+    <div className="px-3 py-2 group-data-[collapsible=icon]:hidden">
+      <SelectMenu
         aria-label={t('switchProject')}
         value={projectId}
-        onChange={handleChange}
-        className="text-sm font-medium"
-      >
-        {projects.map((project) => (
-          <option key={project.id} value={project.id}>
-            {project.name}
-          </option>
-        ))}
-      </Select>
+        options={projects.map((project) => ({ value: project.id, label: project.name }))}
+        onValueChange={(nextId) => router.push(`/projects/${nextId}`)}
+        className="font-medium"
+      />
     </div>
   );
 }
