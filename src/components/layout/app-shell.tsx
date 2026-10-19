@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppSidebar, type AppSidebarProps } from "@/components/layout/app-sidebar";
+import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -51,6 +52,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
         </header>
         {children}
         <SiteFooter />
+        <KeyboardShortcuts />
       </SidebarInset>
     </SidebarProvider>
   );

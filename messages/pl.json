@@ -1429,5 +1429,18 @@
     "statusAria": "Status zadania {title}",
     "empty": "Brak otwartych zadań w tym projekcie.",
     "emptyMine": "Nie masz przypisanych otwartych zadań. Przełącz na Wszystkie, żeby zobaczyć resztę."
+  },
+  "shortcuts": {
+    "title": "Skróty klawiszowe",
+    "description": "Na Macu zamiast Ctrl użyj ⌘.",
+    "save": "Zapisz edytowany formularz",
+    "search": "Szukaj i przechodź w dowolne miejsce",
+    "searchSlash": "Otwórz wyszukiwanie",
+    "sidebar": "Pokaż lub ukryj pasek boczny",
+    "newTask": "Nowe zadanie (na tablicy zadań)",
+    "select": "Zaznacz kilka kart na tablicy (Shift+klik: zakres)",
+    "reorder": "Przesuń zaznaczoną kartę w górę lub w dół",
+    "close": "Zamknij okno lub wyczyść zaznaczenie",
+    "help": "Pokaż tę listę"
   }
 }

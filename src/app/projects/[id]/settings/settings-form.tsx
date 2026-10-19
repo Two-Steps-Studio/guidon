@@ -61,7 +61,7 @@ export function SettingsForm({
   };
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-6" data-save-shortcut>
       <input type="hidden" name="technologies" value={JSON.stringify(technologies)} />
 
       <Card>

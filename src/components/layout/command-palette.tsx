@@ -13,6 +13,7 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
+import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/layout/keyboard-shortcuts";
 import { GLOBAL_NAV, PROJECT_NAV, visibleNavItems } from "@/components/layout/app-sidebar";
 
 interface SearchResult {
@@ -87,8 +88,14 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
         setOpen((prev) => !prev);
       }
     }
+    // "/" and other callers (keyboard-shortcuts.tsx) open it with an event.
+    const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(OPEN_COMMAND_PALETTE_EVENT, onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, onOpen);
+    };
   }, []);
 
   function resetSearch() {

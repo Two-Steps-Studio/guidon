@@ -334,7 +334,7 @@ function TaskDetailDialogInner({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4" data-save-shortcut>
           {canEdit && (
             <div className="flex items-center gap-2">
               {canDelete && (

@@ -221,6 +221,15 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
 
   return (
     <div
+      // Ctrl/Cmd+S commits the open file, same as the Commit button - and
+      // marks the key handled so the app-wide shortcut (keyboard-shortcuts.tsx)
+      // doesn't also submit some other form.
+      onKeyDownCapture={(event) => {
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "s") {
+          event.preventDefault();
+          if (activeTab?.dirty && !activeTab.saving) void handleSave();
+        }
+      }}
       className={
         maximized
           ? "fixed top-12 right-0 bottom-0 z-30 flex overflow-hidden border-t border-border bg-background"

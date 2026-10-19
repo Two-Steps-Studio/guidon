@@ -1429,5 +1429,18 @@
     "statusAria": "Status von {title}",
     "empty": "Keine offenen Aufgaben in diesem Projekt.",
     "emptyMine": "Dir sind keine offenen Aufgaben zugewiesen. Wechsle zu Alle, um den Rest zu sehen."
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "description": "Auf dem Mac ⌘ statt Strg verwenden.",
+    "save": "Das bearbeitete Formular speichern",
+    "search": "Suchen und überallhin springen",
+    "searchSlash": "Suche öffnen",
+    "sidebar": "Seitenleiste ein- oder ausblenden",
+    "newTask": "Neue Aufgabe (auf dem Board)",
+    "select": "Mehrere Karten auf dem Board auswählen (Umschalt-Klick: Bereich)",
+    "reorder": "Fokussierte Karte nach oben oder unten verschieben",
+    "close": "Dialog schließen oder Auswahl aufheben",
+    "help": "Diese Liste anzeigen"
   }
 }

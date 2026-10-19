@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { KanbanBoard } from "@/components/work/kanban-board";
+import { isTypingTarget } from "@/components/layout/keyboard-shortcuts";
 
 // TaskDetailDialog (and the attempts/why-panel sections it always imports)
 // only matter once a task is actually opened - code-split so the board's
@@ -204,6 +205,20 @@ export function WorkBoard({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [selectedIds.size]);
+
+  // "N" opens the new-task dialog in the first column (keyboard-shortcuts.tsx
+  // lists it) - not while typing or while another dialog is open.
+  useEffect(() => {
+    if (!canEdit) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "n" || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
+      if (isTypingTarget(event.target) || document.querySelector('[role="dialog"]')) return;
+      event.preventDefault();
+      setCreateFor(columns[0]?.status ?? "todo");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [canEdit, columns]);
 
   const handleBulk = async (operation: BulkOperation) => {
     // Board order (column, then position), so moved cards keep their relative order.
@@ -608,7 +623,7 @@ function CreateTaskDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" data-save-shortcut>
           <div className="space-y-2">
             <Label htmlFor="new-task-title">{t("titleLabel")}</Label>
             <Input

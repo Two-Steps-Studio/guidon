@@ -1429,5 +1429,18 @@
     "statusAria": "Estado de {title}",
     "empty": "No hay tareas abiertas en este proyecto.",
     "emptyMine": "No tienes tareas abiertas asignadas. Cambia a Todas para ver el resto."
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "description": "En Mac usa ⌘ en lugar de Ctrl.",
+    "save": "Guardar el formulario que estás editando",
+    "search": "Buscar e ir a cualquier sitio",
+    "searchSlash": "Abrir la búsqueda",
+    "sidebar": "Mostrar u ocultar la barra lateral",
+    "newTask": "Nueva tarea (en el tablero)",
+    "select": "Seleccionar varias tarjetas del tablero (Mayús+clic: rango)",
+    "reorder": "Mover la tarjeta enfocada arriba o abajo",
+    "close": "Cerrar un diálogo o quitar la selección",
+    "help": "Mostrar esta lista"
   }
 }

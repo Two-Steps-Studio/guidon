@@ -1429,5 +1429,18 @@
     "statusAria": "Status of {title}",
     "empty": "No open tasks in this project.",
     "emptyMine": "No open tasks assigned to you. Switch to All to see the rest."
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "On Mac use ⌘ instead of Ctrl.",
+    "save": "Save the form you're editing",
+    "search": "Search and jump anywhere",
+    "searchSlash": "Open search",
+    "sidebar": "Show or hide the sidebar",
+    "newTask": "New task (on the task board)",
+    "select": "Select several cards on the board (Shift-click for a range)",
+    "reorder": "Move the focused card up or down",
+    "close": "Close a dialog or clear the selection",
+    "help": "Show this list"
   }
 }

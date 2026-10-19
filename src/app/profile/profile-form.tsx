@@ -35,7 +35,7 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
         </div>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="space-y-4" data-save-shortcut>
           <div className="space-y-2">
             <Label htmlFor="full_name">{t("nameLabel")}</Label>
             <Input
