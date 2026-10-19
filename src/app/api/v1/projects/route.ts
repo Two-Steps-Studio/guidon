@@ -13,7 +13,7 @@ import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
  * already needs that scope to do anything useful with the result.
  *
  * No WHERE clause needed on either branch - same pattern as
- * src/app/projects/page.tsx's direct-DB query: RLS (projects_select,
+ * src/app/projects/(list)/page.tsx's direct-DB query: RLS (projects_select,
  * private.is_org_member) already filters to exactly the caller's visible
  * projects via withUser()/getApiUserClient()'s scoped identity.
  */

@@ -1,18 +1,13 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonCardGrid, SkeletonHeader, SkeletonPage, SkeletonStats } from "@/components/layout/page-skeletons";
 
-export default function ProjectLoading() {
+export default function Loading() {
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-10 w-32" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-      <Skeleton className="h-[500px] w-full" />
-    </div>
+    <SkeletonPage className="max-w-7xl">
+      <SkeletonHeader actions={1} />
+      <SkeletonStats count={4} />
+      <Skeleton className="mb-4 h-6 w-32" />
+      <SkeletonCardGrid count={6} lines={2} />
+    </SkeletonPage>
   );
 }
