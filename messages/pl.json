@@ -1442,5 +1442,13 @@
     "reorder": "Przesuń zaznaczoną kartę w górę lub w dół",
     "close": "Zamknij okno lub wyczyść zaznaczenie",
     "help": "Pokaż tę listę"
+  },
+  "datePicker": {
+    "placeholder": "Wybierz datę",
+    "clear": "Wyczyść datę",
+    "today": "Dziś",
+    "previousMonth": "Poprzedni miesiąc",
+    "nextMonth": "Następny miesiąc",
+    "dialogLabel": "Wybierz datę"
   }
 }

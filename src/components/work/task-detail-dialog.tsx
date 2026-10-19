@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -526,14 +527,11 @@ function TaskDetailDialogInner({
 
             <div className="space-y-2">
               <Label htmlFor="task-due">{t("dueDateLabel")}</Label>
-              <Input
+              <DatePicker
                 id="task-due"
-                type="date"
                 value={form.due_date}
                 disabled={!canEdit}
-                onChange={(event) =>
-                  setForm({ ...form, due_date: event.target.value })
-                }
+                onChange={(due_date) => setForm({ ...form, due_date })}
               />
             </div>
           </div>

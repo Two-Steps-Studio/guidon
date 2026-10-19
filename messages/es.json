@@ -1442,5 +1442,13 @@
     "reorder": "Mover la tarjeta enfocada arriba o abajo",
     "close": "Cerrar un diálogo o quitar la selección",
     "help": "Mostrar esta lista"
+  },
+  "datePicker": {
+    "placeholder": "Elegir fecha",
+    "clear": "Borrar fecha",
+    "today": "Hoy",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "dialogLabel": "Elige una fecha"
   }
 }

@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -681,12 +682,7 @@ function CreateTaskDialog({
 
             <div className="space-y-2">
               <Label htmlFor="new-task-due">{t("dueDateLabel")}</Label>
-              <Input
-                id="new-task-due"
-                type="date"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
+              <DatePicker id="new-task-due" value={dueDate} onChange={setDueDate} />
             </div>
           </div>
 

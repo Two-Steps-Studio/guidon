@@ -1442,5 +1442,13 @@
     "reorder": "Fokussierte Karte nach oben oder unten verschieben",
     "close": "Dialog schließen oder Auswahl aufheben",
     "help": "Diese Liste anzeigen"
+  },
+  "datePicker": {
+    "placeholder": "Datum wählen",
+    "clear": "Datum löschen",
+    "today": "Heute",
+    "previousMonth": "Vorheriger Monat",
+    "nextMonth": "Nächster Monat",
+    "dialogLabel": "Datum wählen"
   }
 }

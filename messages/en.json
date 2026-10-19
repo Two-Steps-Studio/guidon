@@ -1442,5 +1442,13 @@
     "reorder": "Move the focused card up or down",
     "close": "Close a dialog or clear the selection",
     "help": "Show this list"
+  },
+  "datePicker": {
+    "placeholder": "Pick a date",
+    "clear": "Clear date",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "dialogLabel": "Choose a date"
   }
 }
