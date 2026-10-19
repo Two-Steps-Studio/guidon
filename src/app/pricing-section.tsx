@@ -107,9 +107,9 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
   return (
     <section className="relative overflow-hidden border-t border-border bg-background-secondary/30 py-20">
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
-        <div className="mb-12 space-y-4 text-center">
+        <div className="scrim mx-auto mb-12 max-w-3xl space-y-4 rounded-2xl px-6 py-6 text-center">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>{t("title")}</h2>
-          <p className="text-text-muted">{t("subtitle")}</p>
+          <p className="text-text-secondary">{t("subtitle")}</p>
 
           <div
             role="group"

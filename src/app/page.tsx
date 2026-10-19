@@ -89,7 +89,7 @@ export default async function Home() {
       dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
     />
     <main>
-    <div className="relative flex min-h-screen items-center overflow-hidden bg-background/55 dark:bg-background/35">
+    <div className="relative flex min-h-screen items-center overflow-hidden bg-background/70 dark:bg-background/60">
       <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="max-w-5xl mx-auto text-center space-y-12">
           <div className="space-y-6">
@@ -107,7 +107,7 @@ export default async function Home() {
               >
                 {t("heroTitle")}
               </h1>
-              <p className="text-xl text-text-muted dark:text-text-muted max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl text-text-secondary max-w-3xl mx-auto leading-relaxed">
                 {t("heroSubtitle")}
               </p>
             </div>
@@ -153,11 +153,11 @@ export default async function Home() {
 
     <section className="border-t border-border py-20">
       <div className="container mx-auto max-w-6xl px-4">
-        <div className="mb-16 text-center space-y-3">
+        <div className="scrim mx-auto mb-16 max-w-3xl space-y-3 rounded-2xl px-6 py-6 text-center">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>
             {t("featuresTitle")}
           </h2>
-          <p className="text-text-muted max-w-2xl mx-auto">
+          <p className="text-text-secondary max-w-2xl mx-auto">
             {t("featuresSubtitle")}
           </p>
         </div>
@@ -200,13 +200,13 @@ export default async function Home() {
                     />
                   </div>
                 </div>
-                <div className="flex-1 text-center md:text-left space-y-3">
+                <div className="scrim flex-1 space-y-3 rounded-2xl p-6 text-center md:text-left">
                   <div className="mx-auto md:mx-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="text-2xl font-semibold">{t(`features.${feature.key}.title`)}</h3>
                   <p className="text-text-secondary leading-relaxed">{t(`features.${feature.key}.description`)}</p>
-                  <ul className="inline-block text-left text-sm text-text-muted space-y-1.5 pt-1">
+                  <ul className="inline-block text-left text-sm text-text-secondary space-y-1.5 pt-1">
                     {bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2">
                         <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
