@@ -287,7 +287,15 @@ export function KanbanBoard({
   // one can change what's under the pointer.
   const updateDropTarget = useCallback((pos: { x: number; y: number }, draggedTaskId: string) => {
     const el = document.elementFromPoint(pos.x, pos.y);
-    const columnEl = el?.closest<HTMLElement>("[data-column-status]") ?? null;
+    // Columns are only as tall as their cards (items-start), so the area
+    // below a short column still counts as that column - its end.
+    const columnEl =
+      el?.closest<HTMLElement>("[data-column-status]") ??
+      Array.from(boardScrollRef.current?.querySelectorAll<HTMLElement>("[data-column-status]") ?? []).find((column) => {
+        const rect = column.getBoundingClientRect();
+        return pos.x >= rect.left && pos.x <= rect.right && pos.y >= rect.top;
+      }) ??
+      null;
     if (!columnEl) return;
 
     const status = columnEl.dataset.columnStatus as TaskStatus;
@@ -458,7 +466,10 @@ export function KanbanBoard({
   return (
     <div
       ref={boardScrollRef}
-      className="relative flex gap-4 overflow-x-auto pb-4"
+      // items-start: each column is as tall as its own cards (up to the
+      // scroll cap below), instead of every column stretching to the tallest
+      // one and leaving a tall empty area under a short list.
+      className="relative flex items-start gap-4 overflow-x-auto pb-4"
       role="list"
       aria-label={t("taskBoardAria")}
     >
