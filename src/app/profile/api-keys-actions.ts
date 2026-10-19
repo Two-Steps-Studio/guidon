@@ -67,19 +67,25 @@ export async function createApiKey(
 }
 
 // Everything the MCP endpoint's tools can call (src/lib/mcp/http/tools.ts) -
-// the Profile "Connect Claude Code" card creates a key with exactly this set
+// the Profile "Connect an AI app" card creates a key with exactly this set
 // so nobody has to know which scopes the tools need.
-const CLAUDE_CODE_MCP_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"];
+const MCP_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"];
 
-export async function createClaudeCodeConnectionKey(): Promise<{ error: string | null; fullKey: string | null }> {
+/** Names the key after the app it's for (shown under API keys); anything else is "AI app". */
+const MCP_CLIENT_NAMES = new Set(["Claude Code", "Claude Desktop", "Cursor", "VS Code", "Codex CLI", "Gemini CLI", "AI app"]);
+
+export async function createMcpConnectionKey(
+  clientName: string
+): Promise<{ error: string | null; fullKey: string | null }> {
   const user = await getCurrentUser();
   const date = new Date().toISOString().slice(0, 10);
+  const label = MCP_CLIENT_NAMES.has(clientName) ? clientName : "AI app";
 
   try {
-    const result = await mintApiKey(user.id, `Claude Code (MCP) ${date}`, CLAUDE_CODE_MCP_SCOPES);
+    const result = await mintApiKey(user.id, `${label} (MCP) ${date}`, MCP_SCOPES);
     return { error: result.error, fullKey: result.fullKey };
   } catch (error) {
-    console.error("Failed to create the Claude Code connection key:", error);
+    console.error("Failed to create the MCP connection key:", error);
     return { error: "Could not create the key. Try again.", fullKey: null };
   }
 }
