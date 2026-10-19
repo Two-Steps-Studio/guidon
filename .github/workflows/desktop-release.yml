@@ -1,4 +1,5 @@
-# Builds Guidon Desktop's Windows installers, signs them for the updater,
+# Builds Guidon Desktop's Windows (NSIS/MSI) and Linux (AppImage/deb/rpm)
+# installers, signs them for the updater,
 # and creates a DRAFT GitHub Release with the installers, their .sig files
 # and latest.json (what "Check for Updates" reads - tauri.conf.json's
 # plugins.updater.endpoints). Publishing the draft is a manual step, so a
@@ -29,7 +30,16 @@ concurrency:
 
 jobs:
   release:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      # One platform at a time: both upload to the same draft release and
+      # merge their entry into its latest.json, which races in parallel.
+      max-parallel: 1
+      matrix:
+        # 22.04, not latest: the AppImage links against the build machine's
+        # glibc, so the oldest supported runner keeps it running on more distros.
+        os: [windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash
@@ -66,6 +76,12 @@ jobs:
             cat release-notes.md
             echo "__NOTES__"
           } >> "$GITHUB_ENV"
+
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf
 
       - uses: actions/setup-node@v4
         with:
