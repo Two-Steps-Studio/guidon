@@ -500,7 +500,12 @@
       "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto, los permisos de agentes de IA y el acceso de agentes por API. Puedes cambiarlo más tarde en la configuración del proyecto.",
       "cancel": "Cancelar",
       "creating": "Creando...",
-      "createButton": "Crear"
+      "createButton": "Crear",
+      "sourceLabel": "Empezar desde",
+      "sourceBlank": "Proyecto vacío",
+      "sourceFile": "Desde archivo .guidon",
+      "fileHelp": "Un proyecto exportado desde Guidon (Ajustes del proyecto → Exportar). Suéltalo aquí o haz clic para elegirlo.",
+      "createFromFile": "Crear desde archivo"
     }
   },
   "work": {

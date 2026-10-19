@@ -500,7 +500,12 @@
       "aiEnabledHelp": "Włącza kolumnę „AI pracuje”, asystenta zadań AI, generowane wnioski w pamięci projektu, uprawnienia agentów AI i dostęp agentów przez API. Możesz to zmienić później w ustawieniach projektu.",
       "cancel": "Anuluj",
       "creating": "Tworzenie...",
-      "createButton": "Utwórz"
+      "createButton": "Utwórz",
+      "sourceLabel": "Zacznij od",
+      "sourceBlank": "Pusty projekt",
+      "sourceFile": "Z pliku .guidon",
+      "fileHelp": "Projekt wyeksportowany z Guidona (Ustawienia projektu → Eksport). Upuść go tutaj albo kliknij, żeby wybrać.",
+      "createFromFile": "Utwórz z pliku"
     }
   },
   "work": {

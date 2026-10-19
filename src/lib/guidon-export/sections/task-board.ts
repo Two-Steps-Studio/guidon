@@ -4,6 +4,7 @@ import { z } from "zod";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
+import { BOARD_COLUMNS } from "@/lib/work/task-board";
 import type { GuidonSection } from "../types";
 import type { IdRemapper } from "../id-remapper";
 
@@ -193,7 +194,15 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
     if (hasDirectDatabase()) {
       await withUser(userId, async ({ query }) => {
         await query("DELETE FROM tasks WHERE project_id = $1", [projectId]);
-        await query("DELETE FROM project_board_columns WHERE project_id = $1", [projectId]);
+        // Reset, not DELETE: project_board_columns has no DELETE grant or
+        // policy (020), so deleting failed every import with "permission
+        // denied". A row holding the defaults reads exactly like no row.
+        for (const [index, column] of BOARD_COLUMNS.entries()) {
+          await query(
+            "UPDATE project_board_columns SET label = NULL, sort_order = $3, hidden = false, updated_at = now() WHERE project_id = $1 AND status = $2",
+            [projectId, column.status, index]
+          );
+        }
 
         // A task's exported assignee only makes sense if that same person is
         // a member of the TARGET project - "new" mode can land in a
@@ -331,8 +340,8 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
     }
 
     // Only now remove what the new data didn't replace - old tasks (fresh
-    // ids mean no collision with what was just inserted) and any column
-    // override for a status this import doesn't mention.
+    // ids mean no collision with what was just inserted) - and reset any
+    // column override for a status this import doesn't mention.
     if (oldTasks && oldTasks.length > 0) {
       const { error } = await supabase
         .from("tasks")
@@ -343,13 +352,20 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
 
     const newStatuses = new Set(data.columns.map((c) => c.status));
     const staleStatuses = (oldColumns ?? []).map((c) => c.status).filter((s) => !newStatuses.has(s));
-    if (staleStatuses.length > 0) {
+    // Reset to the defaults rather than delete - see the direct-Postgres
+    // branch: the table has no DELETE grant.
+    for (const status of staleStatuses) {
       const { error } = await supabase
         .from("project_board_columns")
-        .delete()
+        .update({
+          label: null,
+          sort_order: BOARD_COLUMNS.findIndex((column) => column.status === status),
+          hidden: false,
+          updated_at: new Date().toISOString(),
+        })
         .eq("project_id", projectId)
-        .in("status", staleStatuses);
-      if (error) throw new Error(`Failed to remove stale board columns: ${error.message}`);
+        .eq("status", status);
+      if (error) throw new Error(`Failed to reset stale board columns: ${error.message}`);
     }
   },
 };

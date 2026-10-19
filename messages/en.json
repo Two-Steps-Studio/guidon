@@ -500,7 +500,12 @@
       "aiEnabledHelp": "Enables the AI Working column, the AI task assistant, generated memory insights, AI agent permissions and agent API access. You can change this later in project settings.",
       "cancel": "Cancel",
       "creating": "Creating...",
-      "createButton": "Create"
+      "createButton": "Create",
+      "sourceLabel": "Start from",
+      "sourceBlank": "Blank project",
+      "sourceFile": "From .guidon file",
+      "fileHelp": "A project exported from Guidon (Project settings → Export). Drop it here or click to choose.",
+      "createFromFile": "Create from file"
     }
   },
   "work": {

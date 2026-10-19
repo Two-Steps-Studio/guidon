@@ -500,7 +500,12 @@
       "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis, KI-Agentenberechtigungen und den API-Zugriff für Agenten. Du kannst das später in den Projekteinstellungen ändern.",
       "cancel": "Abbrechen",
       "creating": "Wird erstellt...",
-      "createButton": "Erstellen"
+      "createButton": "Erstellen",
+      "sourceLabel": "Beginnen mit",
+      "sourceBlank": "Leeres Projekt",
+      "sourceFile": "Aus .guidon-Datei",
+      "fileHelp": "Ein aus Guidon exportiertes Projekt (Projekteinstellungen → Export). Hier ablegen oder klicken, um es auszuwählen.",
+      "createFromFile": "Aus Datei erstellen"
     }
   },
   "work": {

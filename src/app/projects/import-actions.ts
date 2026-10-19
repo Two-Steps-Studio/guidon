@@ -39,6 +39,8 @@ export interface ImportGuidonFileInput {
   mode: ImportGuidonMode;
   /** Organization id when mode is "new", target project id when mode is "overwrite". */
   targetId: string;
+  /** "new" only: name for the created project instead of the one in the file. */
+  projectName?: string;
 }
 
 export interface ImportGuidonFileResult {
@@ -165,7 +167,7 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
     const created = await createProjectForImport(
       input.targetId,
       userId,
-      validated.result.projectName,
+      input.projectName?.trim() || validated.result.projectName,
       validated.result.projectDescription,
       validated.result.projectType,
       validated.result.methodology
@@ -207,7 +209,7 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
     projectId,
     entityType: "project",
     entityId: projectId,
-    details: { mode: input.mode, name: validated.result.projectName },
+    details: { mode: input.mode, name: (input.mode === "new" && input.projectName?.trim()) || validated.result.projectName },
   });
 
   revalidatePath("/projects");
