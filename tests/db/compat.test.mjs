@@ -3157,7 +3157,7 @@ section("50. zadania cykliczne (migracja 063)");
   });
 }
 
-section("51. cudze projekty niewidoczne, takze 'public' (migracja 065)");
+section("51. cudze projekty niewidoczne, takze 'public' (migracja 064)");
 
 {
   const stranger = "eeeeeeee-0000-4000-8000-000000000065";
