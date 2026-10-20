@@ -586,6 +586,7 @@
     "openTaskAria": "Aufgabe {title} öffnen",
     "priorityScreenReader": "Priorität: ",
     "subtasksScreenReader": "Teilaufgaben: ",
+    "newBadge": "Neu",
     "unassignedTitle": "Nicht zugewiesen",
     "detailTitle": "Aufgabendetails",
     "editDescription": "Bearbeite die Aufgabe und speichere dann deine Änderungen.",

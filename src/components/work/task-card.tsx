@@ -8,6 +8,7 @@ import {
   DUE_STATE_CLASSES,
   dueState,
   formatDueDate,
+  isNewTask,
   isTaskDone,
   priorityDef,
   priorityDot,
@@ -175,6 +176,7 @@ function TaskCardComponent({
   const priority = priorityDef(task.priority, priorities);
   const priorityStyle = priorityDot(task.priority, priorities);
   const preview = descriptionPreview(task.description);
+  const fresh = isNewTask(task);
   const done = isTaskDone(task);
   const due = dueState(task.due_date, task.status, done);
   const tags = task.tags ?? [];
@@ -383,6 +385,11 @@ function TaskCardComponent({
           )}
         >
           {task.title}
+          {fresh && (
+            <span className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded bg-primary/10 px-1 py-px align-middle text-[10px] font-semibold uppercase leading-3 tracking-wide text-primary">
+              {t("newBadge")}
+            </span>
+          )}
         </h4>
         {onMoveTo && moveTargets && moveTargets.length > 0 && (
           <DropdownMenu>

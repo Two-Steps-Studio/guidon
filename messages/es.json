@@ -586,6 +586,7 @@
     "openTaskAria": "Abrir tarea {title}",
     "priorityScreenReader": "Prioridad: ",
     "subtasksScreenReader": "Subtareas: ",
+    "newBadge": "Nuevo",
     "unassignedTitle": "Sin asignar",
     "detailTitle": "Detalles de la tarea",
     "editDescription": "Edita la tarea y luego guarda los cambios.",

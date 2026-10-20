@@ -505,6 +505,16 @@ export interface SubtaskProgress {
   items?: { id: string; title: string; done: boolean }[];
 }
 
+/** How long a task counts as new on the board ("New" badge on its card). */
+export const NEW_TASK_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** Created in the last day and not finished yet - a finished task isn't news. */
+export function isNewTask(task: Pick<Task, "created_at" | "status" | "is_done">, now: number = Date.now()): boolean {
+  if (task.is_done || task.status === "done" || !task.created_at) return false;
+  const age = now - new Date(task.created_at).getTime();
+  return age >= 0 && age < NEW_TASK_WINDOW_MS;
+}
+
 /** How many subtasks a board card lists by name; the rest are "+N". */
 export const CARD_SUBTASK_PREVIEW = 3;
 

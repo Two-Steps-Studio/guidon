@@ -586,6 +586,7 @@
     "openTaskAria": "Otwórz zadanie {title}",
     "priorityScreenReader": "Priorytet: ",
     "subtasksScreenReader": "Podzadania: ",
+    "newBadge": "Nowe",
     "unassignedTitle": "Nieprzypisane",
     "detailTitle": "Szczegóły zadania",
     "editDescription": "Edytuj zadanie, a następnie zapisz zmiany.",
