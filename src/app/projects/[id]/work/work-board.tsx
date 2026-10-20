@@ -6,7 +6,7 @@ import type { LabelPreset } from "@/lib/work/label-presets";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
 import { moveTask } from "./actions";
 import { playSound } from "@/lib/sounds";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { ImportTasksDialog } from "./import-tasks-dialog";
 import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
 import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
@@ -96,6 +97,7 @@ export function WorkBoard({
   });
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Deep link from the command palette (command-palette.tsx's resultHref) -
   // `?openTask=<id>` opens that task's detail dialog on arrival, same as
@@ -385,6 +387,13 @@ export function WorkBoard({
           )}
 
           {canEdit && (
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" />
+              {t("importButton")}
+            </Button>
+          )}
+
+          {canEdit && (
             <Button
               size="sm"
               onClick={() => setCreateFor(columns[0]?.status ?? "todo")}
@@ -529,6 +538,18 @@ export function WorkBoard({
             const target = state.tasks.find((t) => t.id === taskId);
             if (target) setOpenTask(target);
           }}
+        />
+      )}
+
+      {canEdit && (
+        <ImportTasksDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          projectId={projectId}
+          columns={columns}
+          priorities={priorities}
+          members={members}
+          onImported={(tasks) => tasks.forEach(upsertTask)}
         />
       )}
 

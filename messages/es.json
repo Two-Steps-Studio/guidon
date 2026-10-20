@@ -714,7 +714,22 @@
     "attachmentsLabel": "Adjuntos",
     "addAttachments": "Añadir archivos",
     "removeAttachment": "Quitar {name}",
-    "createAttachmentsFailed": "{count, plural, one {No se pudo adjuntar # archivo} other {No se pudieron adjuntar # archivos}}; añádelos desde la tarea."
+    "createAttachmentsFailed": "{count, plural, one {No se pudo adjuntar # archivo} other {No se pudieron adjuntar # archivos}}; añádelos desde la tarea.",
+    "importButton": "Importar",
+    "importTitle": "Importar tareas",
+    "importDescription": "Trae tareas de Jira, Trello, GitHub, Linear, Asana, Notion o una hoja de cálculo - una exportación CSV o JSON. Se añaden a este tablero; no cambia nada existente.",
+    "importChooseFile": "Elige un archivo CSV o JSON, o suéltalo aquí",
+    "importPastePlaceholder": "…o pega CSV / JSON aquí",
+    "importPasteAria": "Datos de importación pegados",
+    "importFileTooLarge": "Ese archivo supera los 5 MB.",
+    "importFound": "{count, plural, one {# tarea encontrada} other {# tareas encontradas}} ({format})",
+    "importNothingFound": "No se encontraron tareas - el archivo necesita una columna título/nombre/summary.",
+    "importUnmatchedStatuses": "Sin columna para: {values} - esas tareas van a «{column}».",
+    "importUnmatchedPriorities": "Sin prioridad para: {values} - esas tareas quedan en Media.",
+    "importUnmatchedAssignees": "No son miembros del proyecto: {values} - esas tareas quedan sin asignar.",
+    "importMore": "…y {count} más",
+    "importSubmit": "Importar {count, plural, one {# tarea} other {# tareas}}",
+    "importDone": "{count, plural, one {# tarea importada} other {# tareas importadas}}"
   },
   "roadmap": {
     "title": "Hoja de ruta",
@@ -1092,7 +1107,7 @@
     "emptyTitle": "Aún no hay actividad",
     "emptyDescription": "Los cambios en este proyecto aparecerán aquí en cuanto ocurran.",
     "someone": "Alguien",
-    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} ai_account_created {Cuenta de IA creada} ai_account_disabled {Cuenta de IA desactivada} other {Actividad}}"
+    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} ai_account_created {Cuenta de IA creada} ai_account_disabled {Cuenta de IA desactivada} tasks_imported {Tareas importadas} other {Actividad}}"
   },
   "files": {
     "title": "Archivos",

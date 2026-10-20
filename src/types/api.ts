@@ -110,6 +110,7 @@ export type ActivityAction =
   | "task_deleted"
   | "task_status_changed"
   | "tasks_bulk_updated"
+  | "tasks_imported"
   | "task_ai_started"
   | "task_ai_commented"
   | "task_ai_status_changed"

@@ -28,13 +28,14 @@ npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/
 npm run test:webhooks          # organization webhook URL rules, private-address block list, signature (src/lib/webhooks/security.ts)
 npm run test:agent-web         # real 404s for unknown paths, Accept: text/markdown negotiation, llms.txt (src/lib/agent-web.ts)
 npm run test:labels            # label starter sets complete in every locale, project templates consistent (src/lib/work/{label-presets,project-modules}.ts)
+npm run test:import            # task import from CSV/JSON/Trello exports: parsing, dates, status/priority/assignee matching (src/lib/work/task-import.ts)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```
 
 Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` from a `desktop-v<version>` tag - see `desktop/RELEASING.md`.
 
-`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 382) to stay the same or grow, never shrink.
+`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 382) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) — UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 
