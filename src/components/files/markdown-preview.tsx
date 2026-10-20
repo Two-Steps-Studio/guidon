@@ -71,21 +71,16 @@ export function MarkdownPreview({
           h4: (props) => <h4 className="mb-2 mt-4 text-base font-semibold first:mt-0" {...props} />,
           p: (props) => <p className="mb-4 last:mb-0" {...props} />,
           a: (props) => <a className="text-primary underline hover:no-underline" target="_blank" rel="noreferrer" {...props} />,
-          ul: ({ className, ...props }) => (
-            <ul
-              className={
-                className?.includes("contains-task-list")
-                  ? "mb-4 space-y-1 pl-1"
-                  : "mb-4 list-disc space-y-1 pl-6"
-              }
-              {...props}
-            />
-          ),
+          // One shape for every list: GFM marks a whole list "contains-task-list"
+          // as soon as one item is a checkbox, and plain items in such a mixed
+          // list still need their bullet - the checkbox items sit in the
+          // bullet's place instead (li below).
+          ul: (props) => <ul {...props} className="mb-4 list-disc space-y-1 pl-6" />,
           li: ({ node, className, children, ...props }) => {
             const isTask = className?.includes("task-list-item") ?? false;
             const line = node?.position?.start.line;
             return (
-              <li className={isTask ? "list-none" : className} {...props}>
+              <li className={isTask ? "-ml-5 list-none" : className} {...props}>
                 {isTask && line ? (
                   <TaskLineContext.Provider value={line - 1}>{children}</TaskLineContext.Provider>
                 ) : (

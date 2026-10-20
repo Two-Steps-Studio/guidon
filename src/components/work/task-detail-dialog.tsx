@@ -153,9 +153,12 @@ function TaskDetailDialogInner({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Defaults to editing (today's behavior unchanged) - Markdown preview is
-  // opt-in per open dialog, not remembered across tasks.
-  const [previewingDescription, setPreviewingDescription] = useState(false);
+  // A written description opens rendered (links clickable, lists and
+  // checklists as such) and "Edit" switches to the text; an empty one opens
+  // straight in the editor. Someone who can't edit only sees it rendered.
+  const [previewingDescription, setPreviewingDescription] = useState(
+    () => !canEdit || Boolean(task?.description?.trim())
+  );
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const applyDescriptionEdit = (result: EditResult) => {
     setForm((current) => (current ? { ...current, description: result.value } : current));
@@ -412,25 +415,27 @@ function TaskDetailDialogInner({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="task-description">{t("descriptionLabel")}</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setPreviewingDescription((current) => !current)}
-              >
-                {previewingDescription ? (
-                  <>
-                    <Pencil className="h-3.5 w-3.5" />
-                    {t("editDescriptionButton")}
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-3.5 w-3.5" />
-                    {t("previewDescription")}
-                  </>
-                )}
-              </Button>
+              {canEdit && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setPreviewingDescription((current) => !current)}
+                >
+                  {previewingDescription ? (
+                    <>
+                      <Pencil className="h-3.5 w-3.5" />
+                      {t("editDescriptionButton")}
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-3.5 w-3.5" />
+                      {t("previewDescription")}
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
             {previewingDescription ? (
               <div className="max-h-64 overflow-y-auto rounded-md border border-input">

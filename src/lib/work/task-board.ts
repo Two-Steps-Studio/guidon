@@ -501,12 +501,20 @@ export function groupSubtasksByParent(tasks: Task[]): Record<string, Task[]> {
 export interface SubtaskProgress {
   done: number;
   total: number;
+  /** The first few subtasks in board order, for the card's checklist under the description. */
+  items?: { id: string; title: string; done: boolean }[];
 }
+
+/** How many subtasks a board card lists by name; the rest are "+N". */
+export const CARD_SUBTASK_PREVIEW = 3;
 
 export function subtaskProgress(subtasks: Task[], columns?: readonly BoardColumn[]): SubtaskProgress {
   return {
     done: subtasks.filter((task) => isTaskDone(task, columns)).length,
     total: subtasks.length,
+    items: subtasks
+      .slice(0, CARD_SUBTASK_PREVIEW)
+      .map((task) => ({ id: task.id, title: task.title, done: isTaskDone(task, columns) })),
   };
 }
 
