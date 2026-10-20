@@ -119,7 +119,7 @@ export default async function Home() {
           <div>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-base px-8 py-6 h-auto" asChild>
-                <Link href="/auth/signup">{t("getStarted")}</Link>
+                <Link href="/start">{t("getStarted")}</Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto" asChild>
                 <Link href="/auth/login">{t("signIn")}</Link>

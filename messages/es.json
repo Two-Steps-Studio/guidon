@@ -1662,5 +1662,68 @@
     "cancel": "Cancelar",
     "createSubmit": "Crear cuenta de IA",
     "aiBadge": "IA"
+  },
+  "onboarding": {
+    "metaTitle": "Empezar",
+    "stepOf": "Paso {step} de {total}",
+    "back": "Atrás",
+    "continue": "Continuar",
+    "typeTitle": "¿Qué estás creando?",
+    "typeDescription": "Elige lo más parecido: prepara las secciones y etiquetas adecuadas. Puedes cambiarlo todo después.",
+    "nameTitle": "¿Cómo se llama?",
+    "nameDescription": "Tu proyecto y el estudio o equipo al que pertenece.",
+    "projectNameLabel": "Nombre del proyecto",
+    "projectNamePlaceholder": "p. ej. Emberfall",
+    "studioNameLabel": "Estudio o equipo (opcional)",
+    "studioNamePlaceholder": "p. ej. Two Steps Studio",
+    "studioNameHint": "Tu organización en Guidon: quien invites se une a ella.",
+    "workflowTitle": "¿Cómo trabajas?",
+    "workflowDescription": "Una configuración inicial para tu campo. Secciones y etiquetas se cambian en cualquier momento.",
+    "templateHint": {
+      "gamedev": "Todas las secciones y etiquetas como gameplay, arte, audio, bug.",
+      "software": "Para código: decisiones, roadmap, tecnologías, memoria.",
+      "design": "Moodboards y referencias, sin tecnologías.",
+      "marketing": "Campañas y contenido, poca técnica.",
+      "support": "Solo el tablero y los archivos: simple y rápido."
+    },
+    "methodologyLabel": "Estilo de tablero",
+    "methodologyHint": {
+      "standard": "Un tablero kanban: mueve tareas entre columnas.",
+      "scrum": "Kanban con etiqueta scrum, para equipos que trabajan en sprints."
+    },
+    "teamTitle": "¿Quién trabaja en ello?",
+    "teamDescription": "Para que Guidon sugiera los siguientes pasos adecuados.",
+    "team": {
+      "solo": "Solo yo",
+      "small": "Un equipo pequeño",
+      "studio": "Un estudio"
+    },
+    "teamHint": {
+      "solo": "Dev en solitario o freelance",
+      "small": "2-10 personas",
+      "studio": "Más gente, varios proyectos"
+    },
+    "readyTitle": "Último paso: tu cuenta",
+    "readyDescription": "Crea una cuenta gratis y tu proyecto estará listo justo después, con estos ajustes.",
+    "readyTitleSignedIn": "Todo listo",
+    "readyDescriptionSignedIn": "Crearemos tu espacio con estos ajustes.",
+    "summaryProject": "Proyecto",
+    "summaryStudio": "Organización",
+    "summaryWorkflow": "Configuración",
+    "summaryTeam": "Equipo",
+    "studioDefault": "Equipo {project}",
+    "createAccount": "Crear cuenta gratis",
+    "createWorkspace": "Crear mi espacio",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "signIn": "Inicia sesión",
+    "finishing": "Preparando tu espacio...",
+    "finishFailed": "No se pudo crear tu espacio.",
+    "skipToDashboard": "Ir al panel",
+    "welcomeTitle": "Tu proyecto está listo",
+    "welcomeDescription": "Unas cosas rápidas para empezar:",
+    "welcomeFirstTask": "Añade tu primera tarea",
+    "welcomeInvite": "Invita a tu equipo",
+    "welcomeImport": "Importa tareas de Trello, Jira o CSV",
+    "welcomeDismiss": "Cerrar"
   }
 }

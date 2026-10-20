@@ -1662,5 +1662,68 @@
     "cancel": "Cancel",
     "createSubmit": "Create AI account",
     "aiBadge": "AI"
+  },
+  "onboarding": {
+    "metaTitle": "Get started",
+    "stepOf": "Step {step} of {total}",
+    "back": "Back",
+    "continue": "Continue",
+    "typeTitle": "What are you building?",
+    "typeDescription": "Pick the closest - it sets up the right sections and labels. You can change everything later.",
+    "nameTitle": "What's it called?",
+    "nameDescription": "Your project, and the studio or team it belongs to.",
+    "projectNameLabel": "Project name",
+    "projectNamePlaceholder": "e.g. Emberfall",
+    "studioNameLabel": "Studio or team (optional)",
+    "studioNamePlaceholder": "e.g. Two Steps Studio",
+    "studioNameHint": "Your organization in Guidon - teammates you invite join it.",
+    "workflowTitle": "How do you work?",
+    "workflowDescription": "A starting setup for your field. Sections and labels can be changed any time.",
+    "templateHint": {
+      "gamedev": "Every section, plus labels like gameplay, art, audio, bug.",
+      "software": "Code-focused: decisions, roadmap, tech stack, memory.",
+      "design": "Moodboards and references, no tech stack.",
+      "marketing": "Campaigns and content, light on tech.",
+      "support": "Just the board and files - simple and quick."
+    },
+    "methodologyLabel": "Board style",
+    "methodologyHint": {
+      "standard": "A kanban board: move tasks across columns.",
+      "scrum": "Kanban plus a scrum label, for teams working in sprints."
+    },
+    "teamTitle": "Who's working on it?",
+    "teamDescription": "So Guidon can suggest the right next steps.",
+    "team": {
+      "solo": "Just me",
+      "small": "A small team",
+      "studio": "A studio"
+    },
+    "teamHint": {
+      "solo": "Solo dev or freelancer",
+      "small": "2-10 people",
+      "studio": "More people, several projects"
+    },
+    "readyTitle": "Last step: your account",
+    "readyDescription": "Create a free account and your project will be ready right after - with these settings.",
+    "readyTitleSignedIn": "All set",
+    "readyDescriptionSignedIn": "We'll create your workspace with these settings.",
+    "summaryProject": "Project",
+    "summaryStudio": "Organization",
+    "summaryWorkflow": "Setup",
+    "summaryTeam": "Team",
+    "studioDefault": "{project} team",
+    "createAccount": "Create free account",
+    "createWorkspace": "Create my workspace",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "finishing": "Setting up your workspace...",
+    "finishFailed": "Couldn't create your workspace.",
+    "skipToDashboard": "Go to the dashboard",
+    "welcomeTitle": "Your project is ready",
+    "welcomeDescription": "A few quick things to get going:",
+    "welcomeFirstTask": "Add your first task",
+    "welcomeInvite": "Invite your team",
+    "welcomeImport": "Import tasks from Trello, Jira or CSV",
+    "welcomeDismiss": "Dismiss"
   }
 }

@@ -11,9 +11,8 @@ import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import type { ProjectMethodology, ProjectType } from "@/types/project";
-import { getTranslations } from "next-intl/server";
 import { PROJECT_TEMPLATES, isProjectTemplate, type ProjectTemplate } from "@/lib/work/project-modules";
-import { LABEL_STARTER_SETS } from "@/lib/work/label-presets";
+import { addTemplateLabels } from "@/lib/work/template-labels";
 import { tr } from "@/lib/i18n/server-errors";
 
 export type CreateProjectState = {
@@ -125,28 +124,6 @@ export async function createProject(
 
   revalidatePath(`/organizations/${orgId}`);
   redirect(`/projects/${projectId}`);
-}
-
-/**
- * The template's labels, named in the creator's language. Runs after the
- * project exists (handle_new_project has made the creator owner, so the
- * owner/admin insert policy from 053 lets them in). A failure here doesn't
- * undo the project - labels are a convenience, and settings can add them.
- */
-async function addTemplateLabels(userId: string, projectId: string, template: ProjectTemplate) {
-  const t = await getTranslations("settings");
-  const db = dataClient(userId);
-  let sortOrder = 0;
-  for (const [key, color] of LABEL_STARTER_SETS[template]) {
-    const name = t(`labelStarter.${template}.${key}` as Parameters<typeof t>[0]);
-    const { error } = await db
-      .from("project_label_presets")
-      .insert({ project_id: projectId, name, color, sort_order: sortOrder++ });
-    if (error) {
-      console.error(`Template labels for project ${projectId} failed:`, error.message);
-      return;
-    }
-  }
 }
 
 export type OrgAvatarState = {

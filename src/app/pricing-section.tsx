@@ -178,7 +178,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                       href={
                         price.cents
                           ? `/auth/signup?redirect=${encodeURIComponent(`/upgrade?plan=${plan.id}`)}`
-                          : "/auth/signup"
+                          : "/start"
                       }
                     >
                       {t("getStarted")}

@@ -66,6 +66,9 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/developers/llms.txt',
   '/openapi.json',
   '/pricing.md',
+  // Onboarding before the account exists (app/start) - the questions come
+  // first, signing up last. /start/finish needs a session and isn't listed.
+  '/start',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every

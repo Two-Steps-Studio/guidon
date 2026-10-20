@@ -6,7 +6,8 @@ import type { LabelPreset } from "@/lib/work/label-presets";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, X } from "lucide-react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ export function WorkBoard({
   aiEnabled = true,
   labelPresets = [],
   priorities,
+  welcome = false,
 }: {
   projectId: string;
   projectName: string;
@@ -85,6 +87,8 @@ export function WorkBoard({
   labelPresets?: LabelPreset[];
   /** The project's priorities in importance order (resolvePriorities). */
   priorities: PriorityDef[];
+  /** Just created through onboarding - show the first-steps card. */
+  welcome?: boolean;
 }) {
   const t = useTranslations("work");
   const canDelete = role === "owner" || role === "admin";
@@ -98,6 +102,8 @@ export function WorkBoard({
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(welcome);
+  const tOnboarding = useTranslations("onboarding");
 
   // Deep link from the command palette (command-palette.tsx's resultHref) -
   // `?openTask=<id>` opens that task's detail dialog on arrival, same as
@@ -414,6 +420,31 @@ export function WorkBoard({
             </Button>
           )}
         </header>
+
+        {showWelcome && canEdit && (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">{tOnboarding("welcomeTitle")}</p>
+              <p className="text-xs text-muted-foreground">{tOnboarding("welcomeDescription")}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" onClick={() => setCreateFor(columns[0]?.status ?? "todo")}>
+                <Plus className="h-4 w-4" />
+                {tOnboarding("welcomeFirstTask")}
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/projects/${projectId}/members`}>{tOnboarding("welcomeInvite")}</Link>
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4" />
+                {tOnboarding("welcomeImport")}
+              </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={tOnboarding("welcomeDismiss")} onClick={() => setShowWelcome(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Select

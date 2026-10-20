@@ -1662,5 +1662,68 @@
     "cancel": "Abbrechen",
     "createSubmit": "KI-Konto erstellen",
     "aiBadge": "KI"
+  },
+  "onboarding": {
+    "metaTitle": "Los geht's",
+    "stepOf": "Schritt {step} von {total}",
+    "back": "Zurück",
+    "continue": "Weiter",
+    "typeTitle": "Was baust du?",
+    "typeDescription": "Wähle das Passendste - es richtet die richtigen Bereiche und Labels ein. Alles lässt sich später ändern.",
+    "nameTitle": "Wie heißt es?",
+    "nameDescription": "Dein Projekt und das Studio oder Team, zu dem es gehört.",
+    "projectNameLabel": "Projektname",
+    "projectNamePlaceholder": "z. B. Emberfall",
+    "studioNameLabel": "Studio oder Team (optional)",
+    "studioNamePlaceholder": "z. B. Two Steps Studio",
+    "studioNameHint": "Deine Organisation in Guidon - wen du einlädst, tritt ihr bei.",
+    "workflowTitle": "Wie arbeitest du?",
+    "workflowDescription": "Eine Starteinrichtung für dein Feld. Bereiche und Labels kannst du jederzeit ändern.",
+    "templateHint": {
+      "gamedev": "Alle Bereiche, dazu Labels wie Gameplay, Art, Audio, Bug.",
+      "software": "Code-orientiert: Entscheidungen, Roadmap, Tech-Stack, Memory.",
+      "design": "Moodboards und Referenzen, ohne Tech-Stack.",
+      "marketing": "Kampagnen und Inhalte, wenig Technik.",
+      "support": "Nur Board und Dateien - einfach und schnell."
+    },
+    "methodologyLabel": "Board-Stil",
+    "methodologyHint": {
+      "standard": "Ein Kanban-Board: Aufgaben über Spalten verschieben.",
+      "scrum": "Kanban mit Scrum-Kennzeichnung, für Teams in Sprints."
+    },
+    "teamTitle": "Wer arbeitet daran?",
+    "teamDescription": "Damit Guidon die richtigen nächsten Schritte vorschlägt.",
+    "team": {
+      "solo": "Nur ich",
+      "small": "Ein kleines Team",
+      "studio": "Ein Studio"
+    },
+    "teamHint": {
+      "solo": "Solo-Dev oder Freelancer",
+      "small": "2-10 Personen",
+      "studio": "Mehr Leute, mehrere Projekte"
+    },
+    "readyTitle": "Letzter Schritt: dein Konto",
+    "readyDescription": "Leg ein kostenloses Konto an, und dein Projekt ist gleich danach fertig - mit diesen Einstellungen.",
+    "readyTitleSignedIn": "Alles bereit",
+    "readyDescriptionSignedIn": "Wir legen deinen Arbeitsbereich mit diesen Einstellungen an.",
+    "summaryProject": "Projekt",
+    "summaryStudio": "Organisation",
+    "summaryWorkflow": "Einrichtung",
+    "summaryTeam": "Team",
+    "studioDefault": "Team {project}",
+    "createAccount": "Kostenloses Konto anlegen",
+    "createWorkspace": "Meinen Arbeitsbereich anlegen",
+    "haveAccount": "Schon ein Konto?",
+    "signIn": "Anmelden",
+    "finishing": "Dein Arbeitsbereich wird eingerichtet...",
+    "finishFailed": "Der Arbeitsbereich konnte nicht angelegt werden.",
+    "skipToDashboard": "Zum Dashboard",
+    "welcomeTitle": "Dein Projekt ist bereit",
+    "welcomeDescription": "Ein paar schnelle Schritte zum Start:",
+    "welcomeFirstTask": "Erste Aufgabe anlegen",
+    "welcomeInvite": "Team einladen",
+    "welcomeImport": "Aufgaben aus Trello, Jira oder CSV importieren",
+    "welcomeDismiss": "Schließen"
   }
 }
