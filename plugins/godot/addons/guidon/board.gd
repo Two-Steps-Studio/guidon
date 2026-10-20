@@ -23,6 +23,7 @@ const AUTO_REFRESH_SECONDS := 30.0
 var projects: Array = []
 var tasks: Array = []
 var columns: Array = Api.default_columns()
+var priorities: Array = Api.default_priorities()  # most important first
 var comments := {}  # task_id -> Array
 var current_project_id := ""
 var selected_task_id := ""
@@ -323,10 +324,12 @@ func _rebuild_board() -> void:
 		_columns_box.add_child(_p.label("No projects loaded yet." if projects.is_empty() else "Pick a project above.", "text_muted"))
 		return
 	for column in columns:
-		_columns_box.add_child(_build_column(column.status, column.label))
+		_columns_box.add_child(_build_column(column))
 
 
-func _build_column(status: String, label: String) -> Control:
+func _build_column(column_info: Dictionary) -> Control:
+	var status: String = column_info.status
+	var label: String = column_info.label
 	var column_tasks := Api.column_tasks(tasks.filter(Api.is_report) if _reports_only else tasks, status)
 	var column := ColumnPanel.new()
 	column.board = self
@@ -350,7 +353,7 @@ func _build_column(status: String, label: String) -> Control:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 8)
 	header_margin.add_child(header)
-	header.add_child(_p.dot(_p.status(status)))
+	header.add_child(_p.dot(_p.status(status, column_info.get("color", ""))))
 	var title: Label = _p.label(label, "text", 14)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
@@ -419,12 +422,12 @@ func _build_card(task: Dictionary) -> Control:
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_theme_constant_override("separation", 6)
 	card.add_child(body)
-	var priority := str(task.get("priority", "medium"))
+	var priority := Api.priority_info(priorities, Api._str(task.get("priority")))
 	var title_row := HBoxContainer.new()
 	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_row.add_theme_constant_override("separation", 8)
 	body.add_child(title_row)
-	var priority_dot: Panel = _p.dot(_p.priority(priority), 6)
+	var priority_dot: Panel = _p.dot(_p.priority(priority.key, priority.color), 6)
 	priority_dot.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	title_row.add_child(priority_dot)
 	var title: Label = _p.label(card.task_title, "text", 14)
@@ -455,13 +458,13 @@ func _build_card(task: Dictionary) -> Control:
 	footer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	footer.add_theme_constant_override("separation", 12)
 	body.add_child(footer)
-	footer.add_child(_p.label(priority.capitalize(), "text_muted", 11))
+	footer.add_child(_p.label(priority.label, "text_muted", 11))
 	var due := Api._str(task.get("due_date"))
 	if due != "":
 		footer.add_child(_p.label(due.substr(0, 10), "text_muted", 11))
 	var subs := Api.subtasks(tasks, card.task_id)
 	if not subs.is_empty():
-		var done := subs.filter(func(sub): return sub.get("status") == "done").size()
+		var done := subs.filter(func(sub): return Api.is_task_done(sub, columns)).size()
 		footer.add_child(_p.label("✓ %d/%d" % [done, subs.size()], "text_muted", 11))
 	for child in footer.get_children() + title_row.get_children() + body.get_children():
 		if child is Control:
@@ -576,10 +579,17 @@ func _rebuild_details() -> void:
 	priority_box.add_child(_section("Priority"))
 	var priority_picker := OptionButton.new()
 	_p.style_button(priority_picker)
-	for priority in Api.PRIORITIES:
-		priority_picker.add_item(priority.capitalize())
-	priority_picker.select(maxi(0, Api.PRIORITIES.find(_edit.priority)))
-	priority_picker.item_selected.connect(func(index): _edit.priority = Api.PRIORITIES[index])
+	# The project's priorities, most important first; a key it no longer lists
+	# (hidden, or from an older setup) stays selectable so saving doesn't change it.
+	var priority_options := priorities.duplicate()
+	if Api.priority_rank(priorities, _edit.priority) == priorities.size():
+		priority_options.append(Api.priority_info(priorities, _edit.priority))
+	for priority in priority_options:
+		priority_picker.add_item(priority.label)
+		priority_picker.set_item_icon(priority_picker.item_count - 1, _dot_icon(_p.priority(priority.key, priority.color)))
+		priority_picker.set_item_metadata(priority_picker.item_count - 1, priority.key)
+	priority_picker.select(maxi(0, priority_options.map(func(priority): return priority.key).find(_edit.priority)))
+	priority_picker.item_selected.connect(func(index): _edit.priority = str(priority_picker.get_item_metadata(index)))
 	priority_box.add_child(priority_picker)
 
 	_details.add_child(_section("Due date (YYYY-MM-DD)"))
@@ -611,8 +621,8 @@ func _rebuild_details() -> void:
 			var sub_row := HBoxContainer.new()
 			_details.add_child(sub_row)
 			var check := CheckBox.new()
-			check.button_pressed = sub.get("status") == "done"
-			check.toggled.connect(func(on): move_task(sub_id, "done" if on else "todo"))
+			check.button_pressed = Api.is_task_done(sub, columns)
+			check.toggled.connect(func(on): move_task(sub_id, Api.done_status(columns) if on else Api.open_status(columns)))
 			sub_row.add_child(check)
 			sub_row.add_child(_link(str(sub.get("title", "")), func(): select_task(sub_id)))
 		var new_sub := LineEdit.new()
@@ -655,6 +665,17 @@ func _rebuild_details() -> void:
 	post_row.alignment = BoxContainer.ALIGNMENT_END
 	_details.add_child(post_row)
 	_toolbar_button(post_row, "Post", post_comment, "primary")
+
+
+## A small round swatch for OptionButton items (the priority picker).
+static func _dot_icon(color: Color, diameter: int = 10) -> ImageTexture:
+	var image := Image.create(diameter, diameter, false, Image.FORMAT_RGBA8)
+	var center := (diameter - 1) / 2.0
+	for y in diameter:
+		for x in diameter:
+			var inside := Vector2(x - center, y - center).length() <= diameter / 2.0
+			image.set_pixel(x, y, color if inside else Color(0, 0, 0, 0))
+	return ImageTexture.create_from_image(image)
 
 
 func _section(text: String) -> Label:
@@ -719,6 +740,7 @@ func _select_project(project_id: String) -> void:
 	Settings.set_value("project_id", project_id)
 	tasks = []
 	columns = Api.default_columns()
+	priorities = Api.default_priorities()
 	comments = {}
 	selected_task_id = ""
 	adding_in_status = ""
@@ -751,15 +773,19 @@ func _auto_refresh() -> void:
 	if not result.ok:
 		return
 	var column_result: Dictionary = await api.list_columns(project_id)
+	var priority_result: Dictionary = await api.list_priorities(project_id)
 	var comment_result: Dictionary = await api.list_comments(selected) if selected != "" else {"ok": false}
 	if _actions != actions_before or busy > 0 or project_id != current_project_id:
 		return
 
 	var changed := false
 	var new_columns: Array = column_result.data if column_result.ok else columns
-	if JSON.stringify(result.data) != JSON.stringify(tasks) or JSON.stringify(new_columns) != JSON.stringify(columns):
+	var new_priorities: Array = priority_result.data if priority_result.ok else priorities
+	if JSON.stringify(result.data) != JSON.stringify(tasks) or JSON.stringify(new_columns) != JSON.stringify(columns) \
+			or JSON.stringify(new_priorities) != JSON.stringify(priorities):
 		tasks = result.data
 		columns = new_columns
+		priorities = new_priorities
 		if _find(selected_task_id) == null:
 			selected_task_id = ""
 		changed = true
@@ -867,6 +893,8 @@ func refresh_tasks() -> void:
 	var result: Dictionary = await api.list_tasks(project_id)
 	# A columns failure (e.g. an older server without the endpoint) just means the default columns.
 	var column_result: Dictionary = await api.list_columns(project_id) if result.ok else {"ok": false}
+	# Same for priorities: a 404 from a server before custom priorities -> the four built-ins.
+	var priority_result: Dictionary = await api.list_priorities(project_id) if result.ok else {"ok": false}
 	_end()
 	if project_id != current_project_id:
 		return
@@ -875,6 +903,7 @@ func refresh_tasks() -> void:
 		return
 	tasks = result.data
 	columns = column_result.data if column_result.ok else Api.default_columns()
+	priorities = priority_result.data if priority_result.ok else Api.default_priorities()
 	if _find(selected_task_id) == null:
 		selected_task_id = ""
 	_schedule_rebuild()

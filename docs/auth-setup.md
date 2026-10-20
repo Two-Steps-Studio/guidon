@@ -1,7 +1,10 @@
-# Logowanie przez Google i Discord — konfiguracja
+# Logowanie przez Google, GitHub, Discord i inne — konfiguracja
 
 Kod jest gotowy w obu aplikacjach. Poniższe kroki trzeba wykonać **poza
 repozytorium**: klucze powstają w Google Cloud, Discordzie i panelu Supabase.
+
+Punkty 1–6 dotyczą trybu hostowanego (Supabase). Self-hosted (z
+`DATABASE_URL`) nie używa Supabase — patrz „Self-hosted” na końcu.
 
 Dwa osobne projekty Supabase = dwie osobne konfiguracje:
 
@@ -81,8 +84,14 @@ Bez wpisu dla `localhost` logowanie nie zadziała w trakcie developmentu.
 Dopiero **po** skonfigurowaniu providerów w Supabase dopisz w `.env.local`:
 
 ```env
-NEXT_PUBLIC_AUTH_PROVIDERS=google,discord
+NEXT_PUBLIC_AUTH_PROVIDERS=google,github,discord
 ```
+
+Obsługiwane: `google`, `github`, `discord`, `gitlab`. GitHub i GitLab
+konfiguruje się tak samo jak Discorda: w GitHubie **Settings → Developer
+settings → OAuth Apps → New OAuth App** (Authorization callback URL = adres
+z punktu 1), w GitLabie **Preferences → Applications** (scope `read_user`),
+a klucze wkleja w Supabase → **Authentication → Providers**.
 
 Przyciski pojawiają się wyłącznie dla wymienionych providerów. Instalacja
 bez tej zmiennej zostaje przy logowaniu hasłem — celowo, żeby nie pokazywać
@@ -114,13 +123,44 @@ później scalanie kont jest znacznie trudniejsze.
 
 ---
 
+## Self-hosted
+
+Bez Supabase Guidon ma własnego klienta OAuth/OIDC. Każdy dostawca włącza
+się sam, gdy w środowisku są jego klucze (odczyt w runtime — jeden obraz
+Dockera dla każdej konfiguracji). Adres przekierowania, który wpisuje się
+u dostawcy:
+
+```
+<APP_URL>/auth/oauth/<google|github|discord|gitlab|oidc>/callback
+```
+
+Zmienne: `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`,
+`DISCORD_OAUTH_CLIENT_ID/SECRET`, `GITLAB_CLIENT_ID/SECRET` (+ `GITLAB_URL`
+dla własnego GitLaba) oraz `OIDC_ISSUER`, `OIDC_CLIENT_ID/SECRET`,
+`OIDC_NAME` dla dowolnego dostawcy OpenID Connect (Keycloak, Authentik,
+Entra ID…). Szczegóły: `docs/configuration.md`, sekcja SIGN-IN PROVIDERS.
+
+Przyjmowany jest tylko **zweryfikowany** e-mail: loguje do konta Guidona z
+tym adresem (konto z hasłem może od tej pory logować się też np. Google'em)
+albo zakłada nowe, bez hasła.
+
+---
+
 ## „Zaloguj przez Two Steps Studio"
 
-To **nie** jest provider Supabase, tylko własny przepływ Guidona. Nie jest
-jeszcze zaimplementowany — `tss` na liście providerów kieruje na
-`/auth/tss`, której na razie nie ma.
+To po prostu dostawca `oidc` wskazujący na serwer tożsamości TSS — gdy TSS
+go uruchomi (np. Supabase Auth projektu tss-website jako serwer OAuth 2.1 /
+OIDC, albo Keycloak), wystarczy ustawić:
 
-Wymaga zbudowania w tss-website punktu autoryzacji, który wystawi Guidonowi
-podpisany token tożsamości. Projekt tego przepływu jest osobnym krokiem;
-patrz `docs/self-hosting-audit.md` i TODO.md §1 — self-hosted Guidon nie może
-od TSS zależeć, więc ta metoda zawsze musi być jedną z kilku, nigdy jedyną.
+```env
+OIDC_ISSUER=https://<adres issuera TSS>
+OIDC_CLIENT_ID=...
+OIDC_CLIENT_SECRET=...
+OIDC_NAME=Two Steps Studio
+```
+
+Issuer musi wystawiać `/.well-known/openid-configuration` i claim
+`email_verified`. Działa dziś w trybie self-hosted; w trybie hostowanym
+wymaga dodania tego dostawcy w Supabase (osobny krok). Self-hosted Guidon nie
+może od TSS zależeć (TODO.md §1), więc ta metoda zawsze jest jedną z kilku,
+nigdy jedyną.

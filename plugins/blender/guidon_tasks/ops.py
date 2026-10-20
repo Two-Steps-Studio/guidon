@@ -49,10 +49,16 @@ def load_tasks(context=None):
         ok, value = c.list_tasks(project_id)
         if not ok:
             return ok, value
-        # Any failure here (e.g. an older server without the endpoint) just
-        # means the default columns - the tasks themselves loaded fine.
+        # Any failure here (e.g. an older server without the endpoint, a 404
+        # for /priorities before migration 060) just means the built-in
+        # columns/priorities - the tasks themselves loaded fine.
         columns_ok, columns = c.list_columns(project_id)
-        return True, (value, columns if columns_ok else api.DEFAULT_COLUMNS)
+        priorities_ok, priorities = c.list_priorities(project_id)
+        return True, (
+            value,
+            columns if columns_ok else api.DEFAULT_COLUMNS,
+            priorities if priorities_ok else api.DEFAULT_PRIORITIES,
+        )
 
     def done(result):
         ok, value = result
@@ -61,7 +67,7 @@ def load_tasks(context=None):
         _ok()
         # Ignore a stale response if the user switched project meanwhile.
         if prefs().project_id == project_id:
-            state.tasks, state.columns = value[0] or [], value[1]
+            state.tasks, state.columns, state.priorities = value[0] or [], value[1], value[2]
             if state.selected_task_id and not state.find_task(state.selected_task_id):
                 state.selected_task_id = ""
 
@@ -95,20 +101,28 @@ def auto_refresh_tick():
         if not ok:
             return False, tasks
         columns_ok, columns = c.list_columns(project_id)
+        priorities_ok, priorities = c.list_priorities(project_id)
         comments_ok, comments = c.list_comments(selected) if selected else (False, None)
-        return True, (tasks or [], columns if columns_ok else None, comments if comments_ok else None)
+        return True, (
+            tasks or [],
+            columns if columns_ok else None,
+            priorities if priorities_ok else None,
+            comments if comments_ok else None,
+        )
 
     def done(result):
         ok, value = result
         if not ok or jobs.actions != actions_before or prefs().project_id != project_id:
             return
-        tasks, columns, comments = value
+        tasks, columns, priorities, comments = value
         if tasks != state.tasks:
             state.tasks = tasks
             if state.selected_task_id and not state.find_task(state.selected_task_id):
                 state.selected_task_id = ""
         if columns is not None and columns != state.columns:
             state.columns = columns
+        if priorities is not None and priorities != state.priorities:
+            state.priorities = priorities
         if comments is not None and selected == state.selected_task_id:
             state.comments[selected] = comments
 
@@ -260,6 +274,7 @@ class GUIDON_OT_pick_project(bpy.types.Operator):
             state.tasks = []
             state.selected_task_id = ""
             state.columns = api.DEFAULT_COLUMNS
+            state.priorities = api.DEFAULT_PRIORITIES
             load_tasks(context)
         return {"FINISHED"}
 
@@ -273,6 +288,21 @@ class GUIDON_OT_open_board(bpy.types.Operator):
         p = prefs(context)
         if p.project_id:
             webbrowser.open("{}/projects/{}/work".format(p.base_url.rstrip("/"), p.project_id))
+        return {"FINISHED"}
+
+
+class GUIDON_OT_toggle_column(bpy.types.Operator):
+    bl_idname = "guidon.toggle_column"
+    bl_label = "Toggle Column"
+    bl_description = "Show or hide this column's tasks"
+
+    status: StringProperty()
+
+    def execute(self, context):
+        column = next((c for c in state.columns if c.status == self.status), None)
+        if column is None:
+            return {"CANCELLED"}
+        state.expanded[column.status] = not state.column_expanded(column)
         return {"FINISHED"}
 
 
@@ -290,8 +320,36 @@ class GUIDON_OT_select_task(bpy.types.Operator):
         return {"FINISHED"}
 
 
-_STATUS_ITEMS = [(s, api.STATUS_LABELS[s], "") for s in api.STATUSES]
-_PRIORITY_ITEMS = [(p, p.capitalize(), "") for p in api.PRIORITIES]
+def _status_items(self, context):
+    """The project's visible columns (custom ones included), then any
+    built-in status the board hides - so toggling a subtask to done/todo
+    still works on a project that hides those columns."""
+    items = [(c.status, c.label, "") for c in state.columns]
+    shown = {c.status for c in state.columns}
+    items += [(s, api.STATUS_LABELS[s], "") for s in api.STATUSES if s not in shown]
+    _status_items.cache = items  # Blender needs the strings kept alive
+    return items
+
+
+def _priority_items(self, context):
+    """The project's visible priorities, most important first. A task whose
+    priority the project no longer offers keeps it listed (label = key), so
+    opening Edit never silently swaps it for another one."""
+    items = [(p.key, p.label, "") for p in state.priorities]
+    try:
+        task_id = self.task_id
+    except AttributeError:  # GUIDON_OT_create_task has no task_id
+        task_id = ""
+    current = (state.find_task(task_id) or {}).get("priority") if task_id else None
+    if current and current not in (p.key for p in state.priorities):
+        items.append((current, current, "Not offered by this project"))
+    _priority_items.cache = items  # Blender needs the strings kept alive
+    return items
+
+
+def _default_priority():
+    keys = [p.key for p in state.priorities]
+    return "medium" if "medium" in keys else keys[-1]
 
 
 class GUIDON_OT_set_status(bpy.types.Operator):
@@ -300,7 +358,7 @@ class GUIDON_OT_set_status(bpy.types.Operator):
     bl_description = "Move the task to another column"
 
     task_id: StringProperty()
-    status: EnumProperty(name="Status", items=_STATUS_ITEMS)
+    status: EnumProperty(name="Status", items=_status_items)
 
     def execute(self, context):
         if not _guard(self):
@@ -347,7 +405,7 @@ class GUIDON_OT_move_task(bpy.types.Operator):
 
     def execute(self, context):
         task = state.find_task(self.task_id)
-        order = [status for status, _ in state.columns]
+        order = [column.status for column in state.columns]
         if task is None or task.get("status") not in order:
             return {"CANCELLED"}
         index = order.index(task["status"]) + self.direction
@@ -367,7 +425,8 @@ class GUIDON_OT_toggle_subtask(bpy.types.Operator):
         task = state.find_task(self.task_id)
         if task is None:
             return {"CANCELLED"}
-        return bpy.ops.guidon.set_status(task_id=self.task_id, status="todo" if task.get("status") == "done" else "done")
+        done = api.is_done(task, state.columns)
+        return bpy.ops.guidon.set_status(task_id=self.task_id, status="todo" if done else "done")
 
 
 class GUIDON_OT_create_task(bpy.types.Operator):
@@ -379,12 +438,13 @@ class GUIDON_OT_create_task(bpy.types.Operator):
     parent_task_id: StringProperty(options={"HIDDEN"})
     title: StringProperty(name="Title")
     description: StringProperty(name="Description")
-    priority: EnumProperty(name="Priority", items=_PRIORITY_ITEMS, default="medium")
+    priority: EnumProperty(name="Priority", items=_priority_items)
     due_date: StringProperty(name="Due Date", description="YYYY-MM-DD, empty for none")
 
     def invoke(self, context, event):
         self.title = ""
         self.description = ""
+        self.priority = _default_priority()
         self.due_date = ""
         return context.window_manager.invoke_props_dialog(self, width=360)
 
@@ -423,7 +483,7 @@ class GUIDON_OT_edit_task(bpy.types.Operator):
 
     task_id: StringProperty(options={"HIDDEN"})
     title: StringProperty(name="Title")
-    priority: EnumProperty(name="Priority", items=_PRIORITY_ITEMS, default="medium")
+    priority: EnumProperty(name="Priority", items=_priority_items)
     due_date: StringProperty(name="Due Date", description="YYYY-MM-DD, empty for none")
 
     def invoke(self, context, event):
@@ -431,8 +491,8 @@ class GUIDON_OT_edit_task(bpy.types.Operator):
         if task is None:
             return {"CANCELLED"}
         self.title = task.get("title") or ""
-        if task.get("priority") in api.PRIORITIES:
-            self.priority = task["priority"]
+        # _priority_items always lists the task's own key, even an unknown one.
+        self.priority = task.get("priority") or _default_priority()
         self.due_date = (task.get("due_date") or "")[:10]
         return context.window_manager.invoke_props_dialog(self, width=360)
 
@@ -445,7 +505,12 @@ class GUIDON_OT_edit_task(bpy.types.Operator):
             return {"CANCELLED"}
         c = client(context)
         task_id = self.task_id
-        fields = dict(title=title, priority=self.priority, due_date=self.due_date.strip())
+        fields = dict(title=title, due_date=self.due_date.strip())
+        # Only send a changed priority: re-sending a key the project has since
+        # removed would get the whole edit refused with a 400.
+        task = state.find_task(task_id)
+        if task is None or self.priority != task.get("priority"):
+            fields["priority"] = self.priority
         jobs.run(lambda: c.update_task(task_id, **fields), _apply_task)
         return {"FINISHED"}
 
@@ -573,6 +638,7 @@ classes = (
     GUIDON_OT_refresh,
     GUIDON_OT_pick_project,
     GUIDON_OT_open_board,
+    GUIDON_OT_toggle_column,
     GUIDON_OT_select_task,
     GUIDON_OT_set_status,
     GUIDON_OT_move_task,

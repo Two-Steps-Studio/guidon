@@ -3,7 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { dataClient } from "@/lib/data-client";
-import { resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
+import { resolveBoardColumns, resolvePriorities } from "@/lib/work/task-board";
+import { getWorkflowOverridesFor } from "@/lib/data/workflow";
 import type { Task } from "@/types/task";
 import { MyTasksList, type MyTasksProject } from "./my-tasks-list";
 
@@ -25,38 +26,35 @@ export default async function MyTasksPage() {
     .from<Task>("tasks")
     .select("*")
     .eq("assignee_id", user.id)
-    .neq("status", "done")
+    .eq("is_done", false)
     .order("due_date", { ascending: true })
     .limit(TASK_LIMIT);
   if (error) throw new Error(`Failed to load your tasks: ${error.message}`);
 
   const projectIds = [...new Set(tasks.map((task) => task.project_id))];
-  const [projectsResult, overridesResult] = projectIds.length
-    ? await Promise.all([
-        db
+  const [projectsResult, workflows] = await Promise.all([
+    projectIds.length
+      ? db
           .from<{ id: string; name: string; color: string | null; ai_enabled: boolean }>("projects")
           .select("id, name, color, ai_enabled")
-          .in("id", projectIds),
-        db
-          .from<BoardColumnOverride & { project_id: string }>("project_board_columns")
-          .select("project_id, status, label, sort_order, hidden")
-          .in("project_id", projectIds),
-      ])
-    : [{ data: [], error: null }, { data: [], error: null }];
+          .in("id", projectIds)
+      : Promise.resolve({ data: [], error: null }),
+    getWorkflowOverridesFor(user.id, projectIds),
+  ]);
   if (projectsResult.error) throw new Error(`Failed to load projects: ${projectsResult.error.message}`);
-  if (overridesResult.error) throw new Error(`Failed to load board columns: ${overridesResult.error.message}`);
 
   const projects: Record<string, MyTasksProject> = {};
-  for (const project of projectsResult.data) {
-    const overrides = overridesResult.data.filter((row) => row.project_id === project.id);
-    const resolved = resolveBoardColumns(overrides, (status) => ({
+  for (const project of projectsResult.data ?? []) {
+    const workflow = workflows.get(project.id) ?? { columns: [], priorities: [] };
+    const resolved = resolveBoardColumns(workflow.columns, (status) => ({
       label: tWork("status", { status }),
       hint: tWork("statusHint", { status }),
     }));
     // Same rule as the Work board: no "AI Working" on an AI-off project (the
     // list still shows it for a task already sitting there - my-tasks-list).
     const columns = project.ai_enabled ? resolved : resolved.filter((column) => column.status !== "ai_working");
-    projects[project.id] = { id: project.id, name: project.name, color: project.color, columns };
+    const priorities = resolvePriorities(workflow.priorities, (priority) => tWork("priority", { priority }));
+    projects[project.id] = { id: project.id, name: project.name, color: project.color, columns, priorities };
   }
 
   return (

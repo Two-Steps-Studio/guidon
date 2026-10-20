@@ -11,6 +11,9 @@
   let edit = { id: "", title: "", description: "", priority: "medium", due: "", subtask: "", comment: "" };
 
   const STATUS_COLOR = { backlog: "--text-muted", todo: "--info", in_progress: "--warning", ai_working: "--info", review: "--primary", done: "--success" };
+  /** Built-in priorities keep their theme colours (--p-<key> in board.css) unless the project set its own. */
+  const BUILTIN_PRIORITIES = ["low", "medium", "high", "critical"];
+  const HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const post = (type, data = {}) => vscode.postMessage({ type, ...data });
   const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : "");
@@ -27,11 +30,36 @@
   // The reports route tags what it files: "web" (widget) or "in-game" (engine plugins).
   const isReport = (task) => (task.tags ?? []).some((tag) => tag === "web" || tag === "in-game");
 
+  // Done-ness: the task's own is_done (newer servers), else its column's, else the built-in "done".
+  const isDoneStatus = (status) => status === "done" || state.columns.some((c) => c.status === status && c.is_done);
+  const isDone = (task) => (typeof task.is_done === "boolean" ? task.is_done : isDoneStatus(task.status));
+  /** Where a ticked subtask goes: Done if shown, else the first done column. Unticked: Todo if shown, else the first open column. */
+  const doneStatus = () => (state.columns.some((c) => c.status === "done") ? "done" : state.columns.find((c) => c.is_done)?.status ?? "done");
+  const openStatus = () => (state.columns.some((c) => c.status === "todo") ? "todo" : state.columns.find((c) => !c.is_done)?.status ?? "todo");
+
+  // Priorities: the project's list (most important first); a key not in it still renders, labelled with the key, in grey.
+  const priorityDef = (key) => state.priorities.find((p) => p.key === key);
+  const priorityLabel = (key) => priorityDef(key)?.label || (BUILTIN_PRIORITIES.includes(key) ? cap(key) : String(key ?? ""));
+  function priorityColor(key) {
+    const color = priorityDef(key)?.color;
+    if (color && HEX.test(color)) return color;
+    return BUILTIN_PRIORITIES.includes(key) ? `var(--p-${key})` : "var(--text-muted)";
+  }
+  const priorityRank = (key) => {
+    const index = state.priorities.findIndex((p) => p.key === key);
+    return index >= 0 ? index : state.priorities.length;
+  };
+
+  function columnColor(col) {
+    if (col.color && HEX.test(col.color)) return col.color;
+    return `var(${STATUS_COLOR[col.status] ?? (col.is_done ? "--success" : "--text-muted")})`;
+  }
+
   function columnTasks(status) {
     return state.tasks
       .map((t, i) => ({ t, i }))
       .filter(({ t }) => t.status === status && !t.parent_task_id && (!reportsOnly || isReport(t)))
-      .sort((a, b) => (a.t.sort_order ?? 0) - (b.t.sort_order ?? 0) || a.i - b.i)
+      .sort((a, b) => (a.t.sort_order ?? 0) - (b.t.sort_order ?? 0) || priorityRank(a.t.priority) - priorityRank(b.t.priority) || a.i - b.i)
       .map(({ t }) => t);
   }
 
@@ -39,13 +67,13 @@
 
   function card(task) {
     const subs = subtasks(task.id);
-    const done = subs.filter((s) => s.status === "done").length;
+    const done = subs.filter(isDone).length;
     const tags = task.tags ?? [];
-    return `<div class="card ${task.id === state.selectedTaskId ? "selected" : ""} ${task.status === "done" ? "done" : ""}" draggable="true" data-task="${esc(task.id)}">
-      <div class="title"><span class="dot" style="background:var(--p-${esc(task.priority)})"></span><span>${esc(task.title)}</span></div>
+    return `<div class="card ${task.id === state.selectedTaskId ? "selected" : ""} ${isDone(task) ? "done" : ""}" draggable="true" data-task="${esc(task.id)}">
+      <div class="title"><span class="dot" style="background:${esc(priorityColor(task.priority))}" title="${esc(priorityLabel(task.priority))}"></span><span>${esc(task.title)}</span></div>
       ${preview(task.description) ? `<div class="preview">${esc(preview(task.description))}</div>` : ""}
       ${tags.length ? `<div class="tags">${tags.slice(0, 3).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}${tags.length > 3 ? `<span class="small muted">+${tags.length - 3}</span>` : ""}</div>` : ""}
-      <div class="footer"><span>${esc(cap(task.priority))}</span>${task.due_date ? `<span>${esc(task.due_date.slice(0, 10))}</span>` : ""}${subs.length ? `<span>✓ ${done}/${subs.length}</span>` : ""}</div>
+      <div class="footer"><span>${esc(priorityLabel(task.priority))}</span>${task.due_date ? `<span>${esc(task.due_date.slice(0, 10))}</span>` : ""}${subs.length ? `<span>✓ ${done}/${subs.length}</span>` : ""}</div>
     </div>`;
   }
 
@@ -53,7 +81,7 @@
     const tasks = columnTasks(col.status);
     const adding = addingIn === col.status;
     return `<section class="column" data-status="${esc(col.status)}">
-      <header><span class="dot" style="background:var(${STATUS_COLOR[col.status] ?? "--text-muted"})"></span><h3>${esc(col.label)}</h3><span class="pill">${tasks.length}</span>
+      <header><span class="dot" style="background:${esc(columnColor(col))}"></span><h3>${esc(col.label)}</h3><span class="pill">${tasks.length}</span>
         <button class="btn ghost" data-action="add" data-status="${esc(col.status)}" title="Create a task in this column">+</button></header>
       <div class="cards">${tasks.map(card).join("")}
         ${adding ? `<input id="new-task" data-status="${esc(col.status)}" placeholder="Task title, Enter to create">` : tasks.length ? "" : `<div class="empty">Drop tasks here</div>`}
@@ -69,6 +97,8 @@
     const options = state.columns.map((c) => c.status);
     if (!options.includes(task.status)) options.push(task.status);
     const label = (s) => state.columns.find((c) => c.status === s)?.label ?? s;
+    const priorities = state.priorities.map((p) => p.key);
+    if (!priorities.includes(edit.priority)) priorities.push(edit.priority);
     const comments = state.comments[task.id];
     return `<aside class="details">
       ${task.parent_task_id ? `<div class="sub"><a data-action="open" data-task="${esc(task.parent_task_id)}">← Back to parent task</a></div>` : ""}
@@ -78,13 +108,13 @@
       <label>Title</label><input id="f-title" value="${esc(edit.title)}">
       <div class="row">
         <div><label>Status</label><select id="f-status">${options.map((s) => `<option value="${esc(s)}" ${s === task.status ? "selected" : ""}>${esc(label(s))}</option>`).join("")}</select></div>
-        <div><label>Priority</label><select id="f-priority">${["low", "medium", "high", "critical"].map((p) => `<option value="${p}" ${p === edit.priority ? "selected" : ""}>${cap(p)}</option>`).join("")}</select></div>
+        <div><label>Priority</label><select id="f-priority">${priorities.map((p) => `<option value="${esc(p)}" ${p === edit.priority ? "selected" : ""}>${esc(priorityLabel(p))}</option>`).join("")}</select></div>
       </div>
       <label>Due date</label><input id="f-due" placeholder="YYYY-MM-DD" value="${esc(edit.due)}">
       <label>Description (Markdown)</label><textarea id="f-description" rows="7">${esc(edit.description)}</textarea>
       <div class="actions"><button class="btn primary" data-action="save">Save</button><button class="btn destructive" data-action="delete">Delete</button></div>
       ${task.parent_task_id ? "" : `<label>Subtasks</label>
-        ${subtasks(task.id).map((s) => `<div class="sub"><input type="checkbox" data-action="toggle" data-task="${esc(s.id)}" ${s.status === "done" ? "checked" : ""}><a data-action="open" data-task="${esc(s.id)}">${esc(s.title)}</a></div>`).join("")}
+        ${subtasks(task.id).map((s) => `<div class="sub"><input type="checkbox" data-action="toggle" data-task="${esc(s.id)}" ${isDone(s) ? "checked" : ""}><a data-action="open" data-task="${esc(s.id)}">${esc(s.title)}</a></div>`).join("")}
         <input id="f-subtask" placeholder="New subtask, Enter to add" value="${esc(edit.subtask)}">`}
       <label>Comments</label>
       ${comments === undefined ? `<span class="muted small">Loading…</span>` : comments.length === 0 ? `<span class="muted small">No comments yet.</span>` :
@@ -165,7 +195,7 @@
     if (el.id === "f-project") return post("selectProject", { id: el.value });
     if (el.id === "f-status") return post("move", { id: state.selectedTaskId, status: el.value });
     if (el.id === "f-priority") edit.priority = el.value;
-    if (el.dataset.action === "toggle") post("move", { id: el.dataset.task, status: el.checked ? "done" : "todo" });
+    if (el.dataset.action === "toggle") post("move", { id: el.dataset.task, status: el.checked ? doneStatus() : openStatus() });
   });
 
   document.addEventListener("input", (e) => {

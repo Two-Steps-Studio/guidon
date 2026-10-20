@@ -43,8 +43,9 @@ namespace
 		FString Out;
 		for (const FGuidonTask& T : Tasks)
 		{
-			Out += FString::Printf(TEXT("%s|%s|%s|%s|%s|%s|%s|%f|%s;"), *T.Id, *T.Title, *T.Description, *T.Status,
-				*T.Priority, *T.DueDate, *T.ParentTaskId, T.SortOrder, *FString::Join(T.Tags, TEXT(",")));
+			Out += FString::Printf(TEXT("%s|%s|%s|%s|%s|%s|%s|%f|%d%d|%s;"), *T.Id, *T.Title, *T.Description, *T.Status,
+				*T.Priority, *T.DueDate, *T.ParentTaskId, T.SortOrder, T.bHasIsDone ? 1 : 0, T.bIsDone ? 1 : 0,
+				*FString::Join(T.Tags, TEXT(",")));
 		}
 		return Out;
 	}
@@ -59,7 +60,17 @@ namespace
 	FString Fingerprint(const TArray<FGuidonColumn>& Columns)
 	{
 		FString Out;
-		for (const FGuidonColumn& C : Columns) Out += C.Status + TEXT(":") + C.Label + TEXT("|");
+		for (const FGuidonColumn& C : Columns)
+		{
+			Out += C.Status + TEXT(":") + C.Label + TEXT(":") + C.Color + (C.bIsDone ? TEXT(":done|") : TEXT("|"));
+		}
+		return Out;
+	}
+
+	FString Fingerprint(const TArray<FGuidonPriority>& Priorities)
+	{
+		FString Out;
+		for (const FGuidonPriority& P : Priorities) Out += P.Key + TEXT(":") + P.Label + TEXT(":") + P.Color + TEXT("|");
 		return Out;
 	}
 
@@ -229,10 +240,7 @@ TWeakPtr<SGuidonTasksWidget> SGuidonTasksWidget::WeakSelf()
 void SGuidonTasksWidget::Construct(const FArguments& InArgs)
 {
 	SetColumns(GuidonVocabulary::DefaultColumns());
-	for (const FString& Priority : GuidonVocabulary::Priorities())
-	{
-		PriorityOptions.Add(MakeShared<FString>(Priority));
-	}
+	SetPriorities(GuidonVocabulary::DefaultPriorities());
 	CurrentProjectId = FGuidonSettings::GetProjectId();
 	BaseUrlEdit = FGuidonSettings::GetBaseUrl();
 
@@ -361,44 +369,55 @@ EActiveTimerReturnType SGuidonTasksWidget::AutoRefreshTick(double InCurrentTime,
 		{
 			TSharedPtr<SGuidonTasksWidget> Self2 = Weak2.Pin();
 			if (!Self2) return;
-			TWeakPtr<SGuidonTasksWidget> Weak3 = Self2->WeakSelf();
-			auto Apply = [Weak3, ProjectId, Selected, ActionsBefore, Loaded, bColumnsOk, LoadedColumns](bool bCommentsOk, const TArray<FGuidonComment>& LoadedComments)
+			// An older server without /priorities fails here every time - that's fine, the priorities just stay as they are.
+			GuidonApi::ListPriorities(ProjectId, [Weak2b = Self2->WeakSelf(), ProjectId, Selected, ActionsBefore, Loaded, bColumnsOk, LoadedColumns](bool bPrioritiesOk, const TArray<FGuidonPriority>& LoadedPriorities, const FString&)
 			{
-				TSharedPtr<SGuidonTasksWidget> S = Weak3.Pin();
-				if (!S) return;
-				S->bAutoRefreshRunning = false;
-				if (S->Actions != ActionsBefore || S->PendingRequests > 0 || S->CurrentProjectId != ProjectId) return;
+				TSharedPtr<SGuidonTasksWidget> Self3 = Weak2b.Pin();
+				if (!Self3) return;
+				TWeakPtr<SGuidonTasksWidget> Weak3 = Self3->WeakSelf();
+				auto Apply = [Weak3, ProjectId, Selected, ActionsBefore, Loaded, bColumnsOk, LoadedColumns, bPrioritiesOk, LoadedPriorities](bool bCommentsOk, const TArray<FGuidonComment>& LoadedComments)
+				{
+					TSharedPtr<SGuidonTasksWidget> S = Weak3.Pin();
+					if (!S) return;
+					S->bAutoRefreshRunning = false;
+					if (S->Actions != ActionsBefore || S->PendingRequests > 0 || S->CurrentProjectId != ProjectId) return;
 
-				bool bBoardChanged = false;
-				if (Fingerprint(Loaded) != Fingerprint(S->Tasks))
+					bool bBoardChanged = false;
+					if (Fingerprint(Loaded) != Fingerprint(S->Tasks))
+					{
+						S->Tasks = Loaded;
+						if (!S->FindTask(S->SelectedTaskId)) S->SelectedTaskId.Reset();
+						bBoardChanged = true;
+					}
+					if (bColumnsOk && Fingerprint(LoadedColumns) != Fingerprint(S->Columns))
+					{
+						S->SetColumns(LoadedColumns);
+						bBoardChanged = true;
+					}
+					if (bPrioritiesOk && Fingerprint(LoadedPriorities) != Fingerprint(S->Priorities))
+					{
+						S->SetPriorities(LoadedPriorities);
+						bBoardChanged = true;
+					}
+					bool bDetailsChanged = bBoardChanged;
+					const TArray<FGuidonComment>* Existing = S->Comments.Find(Selected);
+					if (bCommentsOk && Selected == S->SelectedTaskId && (!Existing || Fingerprint(*Existing) != Fingerprint(LoadedComments)))
+					{
+						S->Comments.Add(Selected, LoadedComments);
+						bDetailsChanged = true;
+					}
+					if (bBoardChanged) S->RebuildBoard();
+					if (bDetailsChanged) S->RebuildDetails();
+				};
+				if (Selected.IsEmpty())
 				{
-					S->Tasks = Loaded;
-					if (!S->FindTask(S->SelectedTaskId)) S->SelectedTaskId.Reset();
-					bBoardChanged = true;
+					Apply(false, TArray<FGuidonComment>());
+					return;
 				}
-				if (bColumnsOk && Fingerprint(LoadedColumns) != Fingerprint(S->Columns))
+				GuidonApi::ListComments(Selected, [Apply](bool bCommentsOk, const TArray<FGuidonComment>& LoadedComments, const FString&)
 				{
-					S->SetColumns(LoadedColumns);
-					bBoardChanged = true;
-				}
-				bool bDetailsChanged = bBoardChanged;
-				const TArray<FGuidonComment>* Existing = S->Comments.Find(Selected);
-				if (bCommentsOk && Selected == S->SelectedTaskId && (!Existing || Fingerprint(*Existing) != Fingerprint(LoadedComments)))
-				{
-					S->Comments.Add(Selected, LoadedComments);
-					bDetailsChanged = true;
-				}
-				if (bBoardChanged) S->RebuildBoard();
-				if (bDetailsChanged) S->RebuildDetails();
-			};
-			if (Selected.IsEmpty())
-			{
-				Apply(false, TArray<FGuidonComment>());
-				return;
-			}
-			GuidonApi::ListComments(Selected, [Apply](bool bCommentsOk, const TArray<FGuidonComment>& LoadedComments, const FString&)
-			{
-				Apply(bCommentsOk, LoadedComments);
+					Apply(bCommentsOk, LoadedComments);
+				});
 			});
 		});
 	});
@@ -718,7 +737,7 @@ void SGuidonTasksWidget::DoRebuildBoard()
 	{
 		BoardBox->AddSlot().AutoWidth().Padding(0.f, 0.f, 10.f, 0.f)
 		[
-			BuildColumn(Column.Status, Column.Label)
+			BuildColumn(Column)
 		];
 	}
 
@@ -744,8 +763,81 @@ void SGuidonTasksWidget::SetColumns(const TArray<FGuidonColumn>& NewColumns)
 	}
 }
 
-TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FString& Status, const FString& Label)
+void SGuidonTasksWidget::SetPriorities(const TArray<FGuidonPriority>& NewPriorities)
 {
+	Priorities = NewPriorities.Num() > 0 ? NewPriorities : GuidonVocabulary::DefaultPriorities();
+	PriorityOptions.Reset();
+	for (const FGuidonPriority& Priority : Priorities)
+	{
+		PriorityOptions.Add(MakeShared<FString>(Priority.Key));
+	}
+}
+
+FLinearColor SGuidonTasksWidget::ColumnColor(const FString& Status) const
+{
+	const FGuidonColumn* Column = Columns.FindByPredicate([&Status](const FGuidonColumn& C) { return C.Status == Status; });
+	return GuidonStyle::StatusColor(Status, Column ? Column->Color : FString());
+}
+
+FText SGuidonTasksWidget::PriorityLabel(const FString& Priority) const
+{
+	const FGuidonPriority* Found = Priorities.FindByPredicate([&Priority](const FGuidonPriority& P) { return P.Key == Priority; });
+	return Found && !Found->Label.IsEmpty() ? FText::FromString(Found->Label) : GuidonVocabulary::PriorityLabel(Priority);
+}
+
+FLinearColor SGuidonTasksWidget::PriorityColor(const FString& Priority) const
+{
+	const FGuidonPriority* Found = Priorities.FindByPredicate([&Priority](const FGuidonPriority& P) { return P.Key == Priority; });
+	return GuidonStyle::PriorityColor(Priority, Found ? Found->Color : FString());
+}
+
+int32 SGuidonTasksWidget::PriorityRank(const FString& Priority) const
+{
+	const int32 Index = Priorities.IndexOfByPredicate([&Priority](const FGuidonPriority& P) { return P.Key == Priority; });
+	return Index == INDEX_NONE ? Priorities.Num() : Index;
+}
+
+bool SGuidonTasksWidget::IsDoneStatus(const FString& Status) const
+{
+	if (Status == TEXT("done"))
+	{
+		return true;
+	}
+	const FGuidonColumn* Column = Columns.FindByPredicate([&Status](const FGuidonColumn& C) { return C.Status == Status; });
+	return Column && Column->bIsDone;
+}
+
+bool SGuidonTasksWidget::IsTaskDone(const FGuidonTask& Task) const
+{
+	return Task.bHasIsDone ? Task.bIsDone : IsDoneStatus(Task.Status);
+}
+
+FString SGuidonTasksWidget::DoneStatus() const
+{
+	const FGuidonColumn* Column = Columns.FindByPredicate([](const FGuidonColumn& C) { return C.Status == TEXT("done"); });
+	if (!Column)
+	{
+		Column = Columns.FindByPredicate([](const FGuidonColumn& C) { return C.bIsDone; });
+	}
+	return Column ? Column->Status : FString(TEXT("done"));
+}
+
+FString SGuidonTasksWidget::OpenStatus() const
+{
+	const FGuidonColumn* Column = Columns.FindByPredicate([](const FGuidonColumn& C) { return C.Status == TEXT("todo"); });
+	if (!Column)
+	{
+		Column = Columns.FindByPredicate([](const FGuidonColumn& C) { return !C.bIsDone && C.Status != TEXT("done"); });
+	}
+	return Column ? Column->Status : FString(TEXT("todo"));
+}
+
+TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FGuidonColumn& Column)
+{
+	// Copies: the lambdas below outlive this call (they're captured by value into the widgets).
+	const FString Status = Column.Status;
+	const FString Label = Column.Label;
+
 	TArray<const FGuidonTask*> ColumnItems = ColumnTasks(Status);
 	if (bReportsOnly)
 	{
@@ -796,7 +888,7 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildColumn(const FString& Status, const
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 6.f, 0.f)
 					[
-						SNew(SBox).WidthOverride(8.f).HeightOverride(8.f)[SNew(SImage).Image(GuidonStyle::DotBrush(Status))]
+						SNew(SBox).WidthOverride(8.f).HeightOverride(8.f)[SNew(SImage).Image(GuidonStyle::DotBrush(ColumnColor(Status)))]
 					]
 					+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center)
 					[
@@ -852,7 +944,7 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildCard(const FGuidonTask& Task)
 		SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Top).Padding(0.f, 5.f, 8.f, 0.f)
 		[
-			SNew(SBox).WidthOverride(6.f).HeightOverride(6.f)[SNew(SImage).Image(GuidonStyle::PriorityDotBrush(Task.Priority))]
+			SNew(SBox).WidthOverride(6.f).HeightOverride(6.f)[SNew(SImage).Image(GuidonStyle::PriorityDotBrush(PriorityColor(Task.Priority)))]
 		]
 		+ SHorizontalBox::Slot().FillWidth(1.f)
 		[
@@ -893,7 +985,7 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildCard(const FGuidonTask& Task)
 	TSharedRef<SHorizontalBox> Footer = SNew(SHorizontalBox);
 	Footer->AddSlot().AutoWidth().Padding(0.f, 0.f, 10.f, 0.f)
 	[
-		MakeMuted(GuidonVocabulary::PriorityLabel(Task.Priority))
+		MakeMuted(PriorityLabel(Task.Priority))
 	];
 	if (!Task.DueDate.IsEmpty())
 	{
@@ -902,7 +994,7 @@ TSharedRef<SWidget> SGuidonTasksWidget::BuildCard(const FGuidonTask& Task)
 	const TArray<const FGuidonTask*> Subs = Subtasks(Task.Id);
 	if (Subs.Num() > 0)
 	{
-		const int32 Done = Subs.FilterByPredicate([](const FGuidonTask* Sub) { return Sub->Status == TEXT("done"); }).Num();
+		const int32 Done = Subs.FilterByPredicate([this](const FGuidonTask* Sub) { return IsTaskDone(*Sub); }).Num();
 		Footer->AddSlot().AutoWidth()[MakeMuted(FText::FromString(FString::Printf(TEXT("\u2713 %d/%d"), Done, Subs.Num())))];
 	}
 	Body->AddSlot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)[Footer];
@@ -1013,13 +1105,13 @@ void SGuidonTasksWidget::DoRebuildDetails()
 				SNew(SComboBox<TSharedPtr<FString>>)
 				.OptionsSource(&PriorityOptions)
 				.InitiallySelectedItem(CurrentPriority)
-				.OnGenerateWidget_Lambda([](TSharedPtr<FString> Item) -> TSharedRef<SWidget> { return MakeText(GuidonVocabulary::PriorityLabel(*Item)); })
+				.OnGenerateWidget_Lambda([this](TSharedPtr<FString> Item) -> TSharedRef<SWidget> { return MakeText(PriorityLabel(*Item)); })
 				.OnSelectionChanged_Lambda([this](TSharedPtr<FString> Item, ESelectInfo::Type)
 				{
 					if (Item.IsValid()) EditPriority = *Item;
 				})
 				[
-					SNew(STextBlock).Text_Lambda([this]() { return GuidonVocabulary::PriorityLabel(EditPriority); })
+					SNew(STextBlock).Text_Lambda([this]() { return PriorityLabel(EditPriority); })
 				]
 			]
 		]
@@ -1090,10 +1182,11 @@ void SGuidonTasksWidget::DoRebuildDetails()
 				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
 				[
 					SNew(SCheckBox)
-					.IsChecked(Sub->Status == TEXT("done") ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
+					.IsChecked(IsTaskDone(*Sub) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
 					.OnCheckStateChanged_Lambda([this, SubId](ECheckBoxState State)
 					{
-						MoveTask(SubId, State == ECheckBoxState::Checked ? TEXT("done") : TEXT("todo"));
+						// The project's own done/open columns when the built-in ones are hidden.
+						MoveTask(SubId, State == ECheckBoxState::Checked ? DoneStatus() : OpenStatus());
 					})
 				]
 				+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center)
@@ -1209,8 +1302,17 @@ TArray<const FGuidonTask*> SGuidonTasksWidget::ColumnTasks(const FString& Status
 			Result.Add(&Task);
 		}
 	}
-	// Stable: equal sort_orders keep the API's newest-first order.
-	Result.StableSort([](const FGuidonTask* A, const FGuidonTask* B) { return A->SortOrder < B->SortOrder; });
+	// Like the web board (task-board.ts taskComparator): sort_order, then the project's priority order
+	// (list index = rank). Stable: remaining ties keep the API's newest-first order.
+	// TArray::StableSort hands a pointer array's predicate references (TDereferenceWrapper), not pointers.
+	Result.StableSort([this](const FGuidonTask& A, const FGuidonTask& B)
+	{
+		if (A.SortOrder != B.SortOrder)
+		{
+			return A.SortOrder < B.SortOrder;
+		}
+		return PriorityRank(A.Priority) < PriorityRank(B.Priority);
+	});
 	return Result;
 }
 
@@ -1224,7 +1326,7 @@ TArray<const FGuidonTask*> SGuidonTasksWidget::Subtasks(const FString& ParentId)
 			Result.Add(&Task);
 		}
 	}
-	Result.StableSort([](const FGuidonTask* A, const FGuidonTask* B) { return A->CreatedAt < B->CreatedAt; });
+	Result.StableSort([](const FGuidonTask& A, const FGuidonTask& B) { return A.CreatedAt < B.CreatedAt; });
 	return Result;
 }
 
@@ -1274,6 +1376,7 @@ void SGuidonTasksWidget::OnProjectSelected(FProjectPtr Project, ESelectInfo::Typ
 	FGuidonSettings::SetProjectId(CurrentProjectId);
 	Tasks.Reset();
 	SetColumns(GuidonVocabulary::DefaultColumns());
+	SetPriorities(GuidonVocabulary::DefaultPriorities());
 	Comments.Reset();
 	SelectedTaskId.Reset();
 	AddingInStatus.Reset();
@@ -1332,6 +1435,22 @@ void SGuidonTasksWidget::RefreshTasks()
 			}
 			// A failure here (e.g. an older server without the endpoint) just means the default columns.
 			Inner->SetColumns(bColumnsOk ? LoadedColumns : GuidonVocabulary::DefaultColumns());
+			Inner->RebuildBoard();
+			Inner->RebuildDetails();
+		});
+
+		Self->BeginRequest();
+		GuidonApi::ListPriorities(ProjectId, [WeakInner = Self->WeakSelf(), ProjectId](bool bPrioritiesOk, const TArray<FGuidonPriority>& LoadedPriorities, const FString&)
+		{
+			TSharedPtr<SGuidonTasksWidget> Inner = WeakInner.Pin();
+			if (!Inner) return;
+			Inner->EndRequest();
+			if (Inner->CurrentProjectId != ProjectId)
+			{
+				return;
+			}
+			// An older server without the endpoint answers 404 - fall back to the four built-ins.
+			Inner->SetPriorities(bPrioritiesOk ? LoadedPriorities : GuidonVocabulary::DefaultPriorities());
 			Inner->RebuildBoard();
 			Inner->RebuildDetails();
 		});
@@ -1400,6 +1519,8 @@ void SGuidonTasksWidget::MoveTask(const FString& TaskId, const FString& NewStatu
 		Task->SortOrder = NewSortOrder;
 	}
 	Task->Status = NewStatus;
+	// The server's is_done described the old status; derive it from the columns until the response replaces the task.
+	Task->bHasIsDone = false;
 	RebuildBoard();
 	RebuildDetails();
 

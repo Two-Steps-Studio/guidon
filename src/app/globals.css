@@ -473,6 +473,15 @@ body {
   }
 }
 
+/* A page that is exactly one screen tall (the task board, from md up - its
+   columns scroll inside) has no "below" to scroll to, so the footer after it
+   isn't rendered there either. */
+@media (min-width: 48rem) {
+  body:has([data-fills-viewport]) [data-site-footer] {
+    display: none;
+  }
+}
+
 /* Respect users who ask for less motion. */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -114,7 +114,7 @@ export function TaskSubtasksSection({
       const result = await updateTask(projectId, subtask.id, { status });
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToUpdateSubtask"));
 
-      if (status === "done" && subtask.status !== "done") playSound("complete");
+      if (result.task.is_done && !subtask.is_done) playSound("complete");
       onSaved(result.task);
     } catch (err) {
       setSubtaskError(err instanceof Error ? err.message : t("failedToUpdateSubtask"));

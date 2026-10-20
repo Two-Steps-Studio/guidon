@@ -4,7 +4,7 @@ import { getApiUserClient } from "@/lib/api/api-key-auth";
 import { apiDataClient } from "@/lib/api/api-data-client";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
-import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
+import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import { hostedTaskLimitError } from "@/lib/limits";
 import { emitTaskEvent } from "@/lib/events/task-events";
 import type { TaskPriority, TaskStatus } from "@/types/task";
@@ -74,9 +74,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const description = typeof body?.description === "string" ? body.description.trim() || null : null;
   const requestedPriority =
-    typeof body?.priority === "string" && (TASK_PRIORITIES as readonly string[]).includes(body.priority)
-      ? (body.priority as TaskPriority)
-      : "medium";
+    // A built-in or one of the project's own (GET .../priorities); the
+    // database rejects a well-formed key the project doesn't have.
+    typeof body?.priority === "string" && WORKFLOW_KEY_RE.test(body.priority) ? (body.priority as TaskPriority) : "medium";
   const dueDate =
     typeof body?.due_date === "string" && body.due_date ? new Date(body.due_date).toISOString() : null;
   // An empty string is treated the same as "not provided" - some clients
@@ -93,9 +93,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   // board's per-column "+" button already relies on to create straight
   // into the clicked column rather than always landing in Backlog).
   const requestedStatus =
-    typeof body?.status === "string" && (TASK_STATUSES as readonly string[]).includes(body.status)
-      ? (body.status as TaskStatus)
-      : "backlog";
+    typeof body?.status === "string" && WORKFLOW_KEY_RE.test(body.status) ? (body.status as TaskStatus) : "backlog";
   const isSubtask = parentTaskId !== null;
   const status: TaskStatus = isSubtask ? "todo" : requestedStatus;
   const priority: TaskPriority = isSubtask ? "medium" : requestedPriority;

@@ -23,13 +23,8 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { dataClient } from "@/lib/data-client";
 import { displayName } from "@/lib/people";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
-import {
-  DUE_STATE_CLASSES,
-  PRIORITY_DOT_CLASSES,
-  dueState,
-  formatDueDate,
-  normalizeTaskPriority,
-} from "@/lib/work/task-board";
+import { DUE_STATE_CLASSES, dueState, formatDueDate, priorityDot, resolvePriorities } from "@/lib/work/task-board";
+import { getWorkflowOverridesFor } from "@/lib/data/workflow";
 import { cn } from "@/lib/utils";
 import { configFor } from "@/app/projects/[id]/activity/action-config";
 import type { Task } from "@/types/task";
@@ -85,13 +80,13 @@ async function loadDashboard(userId: string) {
       .order("updated_at", { ascending: false })
       .limit(PROJECT_LIST_SAFETY_CAP),
     db.from("projects").count(),
-    db.from("tasks").eq("assignee_id", userId).neq("status", "done").count(),
-    db.from("tasks").eq("assignee_id", userId).neq("status", "done").lt("due_date", today).count(),
+    db.from("tasks").eq("assignee_id", userId).eq("is_done", false).count(),
+    db.from("tasks").eq("assignee_id", userId).eq("is_done", false).lt("due_date", today).count(),
     db
       .from<Task>("tasks")
       .select("*")
       .eq("assignee_id", userId)
-      .neq("status", "done")
+      .eq("is_done", false)
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("updated_at", { ascending: false })
       .limit(UPCOMING_TASKS),
@@ -107,7 +102,7 @@ async function loadDashboard(userId: string) {
   const [inProgressRes, doneThisWeekRes, activityRes, ...progress] = projectIds.length
     ? await Promise.all([
         db.from("tasks").in("project_id", projectIds).in("status", ["in_progress", "ai_working"]).count(),
-        db.from("tasks").in("project_id", projectIds).eq("status", "done").gte("updated_at", weekAgo).count(),
+        db.from("tasks").in("project_id", projectIds).eq("is_done", true).gte("updated_at", weekAgo).count(),
         db
           .from<ActivityRow>("activity_logs")
           .select("id, project_id, user_id, action, created_at, actor_label")
@@ -116,10 +111,16 @@ async function loadDashboard(userId: string) {
           .limit(ACTIVITY_ITEMS),
         ...cardProjects.flatMap((project) => [
           db.from("tasks").eq("project_id", project.id).is("parent_task_id", null).count(),
-          db.from("tasks").eq("project_id", project.id).is("parent_task_id", null).eq("status", "done").count(),
+          db.from("tasks").eq("project_id", project.id).is("parent_task_id", null).eq("is_done", true).count(),
         ]),
       ])
     : [{ data: 0, error: null }, { data: 0, error: null }, { data: [] as ActivityRow[], error: null }];
+
+  const upcoming = upcomingRes.data ?? [];
+  const workflows = await getWorkflowOverridesFor(userId, [...new Set(upcoming.map((task) => task.project_id))], db);
+  const priorities = new Map(
+    [...workflows].map(([projectId, workflow]) => [projectId, resolvePriorities(workflow.priorities)])
+  );
 
   const activity = (activityRes.data ?? []) as ActivityRow[];
   const actorIds = [...new Set(activity.map((entry) => entry.user_id).filter((id): id is string => !!id))];
@@ -144,7 +145,8 @@ async function loadDashboard(userId: string) {
     myOverdue: myOverdueRes.data ?? 0,
     inProgress: Number(inProgressRes.data ?? 0),
     doneThisWeek: Number(doneThisWeekRes.data ?? 0),
-    upcoming: upcomingRes.data ?? [],
+    upcoming,
+    priorities,
     activity,
     actors: new Map((actors ?? []).map((actor) => [actor.id, actor])),
   };
@@ -288,7 +290,8 @@ export default async function DashboardPage() {
                     <ul className="divide-y divide-border border-t border-border">
                       {data.upcoming.map((task) => {
                         const project = data.projectNames.get(task.project_id);
-                        const due = dueState(task.due_date, task.status);
+                        const due = dueState(task.due_date, task.status, task.is_done);
+                        const dot = priorityDot(task.priority, data.priorities.get(task.project_id));
                         return (
                           <li key={task.id}>
                             <Link
@@ -296,7 +299,8 @@ export default async function DashboardPage() {
                               className="flex items-center gap-3 px-6 py-3 hover:bg-accent/50"
                             >
                               <span
-                                className={cn("h-2 w-2 shrink-0 rounded-full", PRIORITY_DOT_CLASSES[normalizeTaskPriority(task.priority)])}
+                                className={cn("h-2 w-2 shrink-0 rounded-full", dot.className)}
+                                style={dot.style}
                                 aria-hidden
                               />
                               <span className="min-w-0 flex-1">

@@ -1,5 +1,5 @@
 import { GuidonApi } from "./api";
-import { appendSortOrder, Column, columnTasks, Comment, DEFAULT_COLUMNS, isValidDueDate, Project, Task } from "./model";
+import { appendSortOrder, boardColumns, Column, columnTasks, Comment, DEFAULT_COLUMNS, DEFAULT_PRIORITIES, isDoneStatus, isValidDueDate, Priority, Project, Task } from "./model";
 
 /** Everything the board shows - posted to the webview as-is after each change. */
 export interface BoardState {
@@ -11,7 +11,10 @@ export interface BoardState {
   error: string;
   projects: Project[];
   projectId: string;
+  /** The project's columns plus one for any status a task carries that none of them has (boardColumns). */
   columns: Column[];
+  /** The project's priorities, most important first. */
+  priorities: Priority[];
   tasks: Task[];
   selectedTaskId: string;
   comments: Record<string, Comment[]>;
@@ -33,6 +36,7 @@ export class BoardStore {
   projects: Project[] = [];
   tasks: Task[] = [];
   columns: Column[] = DEFAULT_COLUMNS;
+  priorities: Priority[] = DEFAULT_PRIORITIES;
   comments: Record<string, Comment[]> = {};
   selectedTaskId = "";
   error = "";
@@ -62,7 +66,8 @@ export class BoardStore {
       error: this.error,
       projects: this.projects,
       projectId: this.projectId,
-      columns: this.columns,
+      columns: boardColumns(this.columns, this.tasks),
+      priorities: this.priorities,
       tasks: this.tasks,
       selectedTaskId: this.selectedTaskId,
       comments: this.comments,
@@ -82,6 +87,7 @@ export class BoardStore {
     this.projects = [];
     this.tasks = [];
     this.columns = DEFAULT_COLUMNS;
+    this.priorities = DEFAULT_PRIORITIES;
     this.comments = {};
     this.selectedTaskId = "";
     this.error = "";
@@ -131,6 +137,7 @@ export class BoardStore {
     this.host.setProjectId(projectId);
     this.tasks = [];
     this.columns = DEFAULT_COLUMNS;
+    this.priorities = DEFAULT_PRIORITIES;
     this.comments = {};
     this.selectedTaskId = "";
     this.emit();
@@ -144,19 +151,21 @@ export class BoardStore {
       return this.emit();
     }
     await this.run(async (api) => {
-      const [tasks, columns] = await Promise.all([api.listTasks(projectId), api.listColumns(projectId)]);
+      const [tasks, columns, priorities] = await Promise.all([api.listTasks(projectId), api.listColumns(projectId), api.listPriorities(projectId)]);
       if (projectId !== this.projectId) return; // switched project meanwhile
       if (!tasks.ok) return this.setError(tasks.error);
       this.tasks = tasks.value;
       // A columns failure (e.g. an older server without the endpoint) just means the defaults.
       this.columns = columns.ok ? columns.value : DEFAULT_COLUMNS;
+      // Same for priorities: a server before migration 060 404s here.
+      this.priorities = priorities.ok ? priorities.value : DEFAULT_PRIORITIES;
       if (!this.findTask(this.selectedTaskId)) this.selectedTaskId = "";
     });
     if (this.selectedTaskId) await this.loadComments(this.selectedTaskId);
   }
 
   /**
-   * Background refresh: reloads the current project's tasks, columns and the
+   * Background refresh: reloads the current project's tasks, columns, priorities and the
    * open task's comments without the busy indicator, and only emits when
    * something actually changed. Skipped while a user action is in flight;
    * a result that raced one is dropped. Errors are ignored - the next manual
@@ -168,9 +177,10 @@ export class BoardStore {
     if (!api || !projectId || this.pending > 0) return false;
     const actionsBefore = this.actions;
     const selected = this.selectedTaskId;
-    const [tasks, columns, comments] = await Promise.all([
+    const [tasks, columns, priorities, comments] = await Promise.all([
       api.listTasks(projectId),
       api.listColumns(projectId),
+      api.listPriorities(projectId),
       selected ? api.listComments(selected) : Promise.resolve(null),
     ]);
     if (this.actions !== actionsBefore || this.pending > 0 || projectId !== this.projectId || !tasks.ok) return false;
@@ -183,6 +193,10 @@ export class BoardStore {
     }
     if (columns.ok && JSON.stringify(columns.value) !== JSON.stringify(this.columns)) {
       this.columns = columns.value;
+      changed = true;
+    }
+    if (priorities.ok && JSON.stringify(priorities.value) !== JSON.stringify(this.priorities)) {
+      this.priorities = priorities.value;
       changed = true;
     }
     if (comments?.ok && selected === this.selectedTaskId && JSON.stringify(comments.value) !== JSON.stringify(this.comments[selected])) {
@@ -215,7 +229,7 @@ export class BoardStore {
     const previous = { ...task };
     const reorder = !task.parent_task_id;
     const sortOrder = reorder ? appendSortOrder(columnTasks(this.tasks, status)) : task.sort_order;
-    this.replace({ ...task, status, sort_order: sortOrder });
+    this.replace({ ...task, status, sort_order: sortOrder, ...(typeof task.is_done === "boolean" ? { is_done: isDoneStatus(this.columns, status) } : {}) });
     this.emit();
     const ok = await this.run(async (api) => {
       const moved = await api.setStatus(taskId, status);

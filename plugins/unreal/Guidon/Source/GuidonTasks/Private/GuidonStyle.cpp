@@ -18,13 +18,42 @@ FLinearColor GuidonStyle::Accent() { return Hex(TEXT("#4d8dff")); }
 FLinearColor GuidonStyle::Destructive() { return Hex(TEXT("#f87171")); }
 FLinearColor GuidonStyle::MutedBackground() { return Hex(TEXT("#16191f")); } // --color-muted (dark)
 
+bool GuidonStyle::TryParseHex(const FString& InHex, FLinearColor& OutColor)
+{
+	FString Digits = InHex.TrimStartAndEnd();
+	Digits.RemoveFromStart(TEXT("#"));
+	if (Digits.Len() == 3)
+	{
+		Digits = FString::Printf(TEXT("%c%c%c%c%c%c"), Digits[0], Digits[0], Digits[1], Digits[1], Digits[2], Digits[2]);
+	}
+	if (Digits.Len() != 6)
+	{
+		return false;
+	}
+	for (const TCHAR Ch : Digits)
+	{
+		if (!FChar::IsHexDigit(Ch))
+		{
+			return false;
+		}
+	}
+	OutColor = FLinearColor(FColor::FromHex(Digits));
+	return true;
+}
+
 FLinearColor GuidonStyle::StatusColor(const FString& Status)
 {
 	if (Status == TEXT("todo") || Status == TEXT("ai_working")) return Hex(TEXT("#60a5fa"));
 	if (Status == TEXT("in_progress")) return Hex(TEXT("#fbbf24"));
 	if (Status == TEXT("review")) return Accent();
 	if (Status == TEXT("done")) return Hex(TEXT("#34d399"));
-	return MutedText(); // backlog
+	return MutedText(); // backlog, and any custom/unknown status without a colour
+}
+
+FLinearColor GuidonStyle::StatusColor(const FString& Status, const FString& HexOverride)
+{
+	FLinearColor Color;
+	return TryParseHex(HexOverride, Color) ? Color : StatusColor(Status);
 }
 
 FLinearColor GuidonStyle::PriorityColor(const FString& Priority)
@@ -32,7 +61,13 @@ FLinearColor GuidonStyle::PriorityColor(const FString& Priority)
 	if (Priority == TEXT("medium")) return Hex(TEXT("#60a5fa"));
 	if (Priority == TEXT("high")) return Hex(TEXT("#fbbf24"));
 	if (Priority == TEXT("critical")) return Hex(TEXT("#f87171"));
-	return MutedText(); // low
+	return MutedText(); // low, and any custom/unknown priority without a colour
+}
+
+FLinearColor GuidonStyle::PriorityColor(const FString& Priority, const FString& HexOverride)
+{
+	FLinearColor Color;
+	return TryParseHex(HexOverride, Color) ? Color : PriorityColor(Priority);
 }
 
 const FSlateBrush* GuidonStyle::WindowBrush()
@@ -69,24 +104,25 @@ const FSlateBrush* GuidonStyle::ErrorBrush()
 	return &Brush;
 }
 
-const FSlateBrush* GuidonStyle::DotBrush(const FString& Status)
+const FSlateBrush* GuidonStyle::DotBrush(const FLinearColor& Color)
 {
+	// Keyed by the 8-bit colour: a handful of entries per session, heap-allocated so pointers stay valid across rehashes.
 	static TMap<FString, TUniquePtr<FSlateRoundedBoxBrush>> Brushes;
-	TUniquePtr<FSlateRoundedBoxBrush>& Brush = Brushes.FindOrAdd(Status);
+	TUniquePtr<FSlateRoundedBoxBrush>& Brush = Brushes.FindOrAdd(Color.ToFColor(true).ToHex());
 	if (!Brush)
 	{
-		Brush = MakeUnique<FSlateRoundedBoxBrush>(StatusColor(Status), 4.f, FVector2D(8.f, 8.f));
+		Brush = MakeUnique<FSlateRoundedBoxBrush>(Color, 4.f, FVector2D(8.f, 8.f));
 	}
 	return Brush.Get();
 }
 
-const FSlateBrush* GuidonStyle::PriorityDotBrush(const FString& Priority)
+const FSlateBrush* GuidonStyle::PriorityDotBrush(const FLinearColor& Color)
 {
 	static TMap<FString, TUniquePtr<FSlateRoundedBoxBrush>> Brushes;
-	TUniquePtr<FSlateRoundedBoxBrush>& Brush = Brushes.FindOrAdd(Priority);
+	TUniquePtr<FSlateRoundedBoxBrush>& Brush = Brushes.FindOrAdd(Color.ToFColor(true).ToHex());
 	if (!Brush)
 	{
-		Brush = MakeUnique<FSlateRoundedBoxBrush>(PriorityColor(Priority), 3.f, FVector2D(6.f, 6.f));
+		Brush = MakeUnique<FSlateRoundedBoxBrush>(Color, 3.f, FVector2D(6.f, 6.f));
 	}
 	return Brush.Get();
 }

@@ -12,6 +12,7 @@ import { updateProfile, type ProfileFormState } from "./actions";
 import type { CurrentUser } from "@/lib/data/current-user";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { BackgroundMotionSwitcher } from "@/components/layout/background-motion-switcher";
+import { WallpaperPicker } from "@/components/layout/wallpaper-picker";
 import { SoundSwitcher } from "@/components/layout/sound-switcher";
 
 const initialState: ProfileFormState = { error: null };
@@ -79,6 +80,12 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
             <Label>{t("backgroundMotionLabel")}</Label>
             <BackgroundMotionSwitcher />
             <p className="text-xs text-muted-foreground">{t("backgroundMotionHelp")}</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("wallpaperLabel")}</Label>
+            <WallpaperPicker />
+            <p className="text-xs text-muted-foreground">{t("wallpaperHelp")}</p>
           </div>
 
           <div className="space-y-2">

@@ -235,8 +235,12 @@ for (const [label, sql, expected] of [
   // (owner/admin organizacji).
   // 32->33 tabel, 114->118 polityk: project_label_presets (053), 4 polityki
   // 33->34 tabel, 118->122 polityk: discord_user_links (057), 4 polityki
-  ["34 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 34],
-  ["122 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 122],
+  // 34->35 tabel, 122->124 polityk: ai_accounts (059) + profiles_select_ai_accounts
+  // 35->36 tabel, 124->129 polityk: project_task_priorities (060, 4) + project_board_columns_delete
+  // 36->38 tabel, polityk bez zmian: promo_codes + promo_redemptions (062) -
+  // zero polityk, pisze i czyta tylko service_role (jak stripe_webhook_events).
+  ["38 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 38],
+  ["129 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 129],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1764,12 +1768,12 @@ await withUser(A, async () => {
 });
 
 await expectRejected(
-  "tasks_status_check nadal odrzuca nieznany status",
+  "nieznany status odrzucony (trigger validate_task_workflow, 060)",
   () =>
     withUser(A, () =>
       db.query("INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'zly status', 'nie_ma_takiego')", [projectId])
     ),
-  /check constraint|tasks_status_check/i
+  /check constraint|tasks_status_check|Unknown status/i
 );
 
 // ------------------------------------------------------------------
@@ -2880,6 +2884,246 @@ section("45. discord_user_links: osobiste logowanie do bota Discord (migracja 05
     const del = await db.query("DELETE FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
     check("uzytkownik usuwa swoj wiersz", del.rowCount === 1);
   });
+}
+
+section("46. ai_accounts: konta AI, zapis tylko przez serwer (migracja 059)");
+
+{
+  const bot = "bbbbbbbb-0000-4000-8000-000000000059";
+  const outsider = "eeeeeeee-0000-4000-8000-000000000059";
+  await withServiceRole(async () => {
+    // Like createAiAccount: a user with no password and an .invalid address.
+    await db.query(
+      "INSERT INTO auth.users (id, email, email_confirmed_at, raw_user_meta_data) VALUES ($1, $2, now(), $3)",
+      [bot, "ai-test@agents.guidon.invalid", JSON.stringify({ full_name: "Claude - backend" })]
+    );
+    await db.query("INSERT INTO auth.users (id, email) VALUES ($1, 'outsider@example.test')", [outsider]);
+    const r = await db.query(
+      "INSERT INTO public.ai_accounts (user_id, organization_id, created_by) VALUES ($1, $2, $3) RETURNING user_id",
+      [bot, orgId, A]
+    );
+    check("serwer (service_role) zaklada konto AI", r.rows.length === 1);
+  });
+
+  await withUser(A, async () => {
+    const seen = await db.query("SELECT created_by FROM public.ai_accounts WHERE user_id = $1", [bot]);
+    check("czlonek organizacji widzi konto AI", seen.rows[0]?.created_by === A);
+    const profile = await db.query("SELECT full_name FROM public.profiles WHERE id = $1", [bot]);
+    check(
+      "profil konta AI widoczny bez czlonkostwa (historia po wylaczeniu)",
+      profile.rows[0]?.full_name === "Claude - backend",
+      JSON.stringify(profile.rows)
+    );
+    check(
+      "admin nie oznacza dowolnego profilu jako konto AI (brak INSERT)",
+      await throwsInSavepoint("INSERT INTO public.ai_accounts (user_id, organization_id) VALUES ($1, $2)", [B, orgId])
+    );
+    check(
+      "ani nie zmienia konta AI (brak UPDATE)",
+      await throwsInSavepoint("UPDATE public.ai_accounts SET created_by = $2 WHERE user_id = $1", [bot, B])
+    );
+  });
+
+  await withUser(outsider, async () => {
+    const seen = await db.query("SELECT 1 FROM public.ai_accounts WHERE user_id = $1", [bot]);
+    check("ktos spoza organizacji nie widzi konta AI", seen.rows.length === 0);
+    const profile = await db.query("SELECT 1 FROM public.profiles WHERE id = $1", [bot]);
+    check("ani jego profilu", profile.rows.length === 0);
+  });
+}
+
+section("47. dowolne kolumny i priorytety + edycja cudzych zadan (migracja 060)");
+
+{
+  let taskId;
+  await withUser(A, async () => {
+    const t = await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'workflow 060') RETURNING id, is_done", [projectId]);
+    taskId = t.rows[0].id;
+    check("nowe zadanie nie jest zrobione", t.rows[0].is_done === false);
+
+    await db.query(
+      "INSERT INTO public.project_board_columns (project_id, status, label, sort_order, is_done) VALUES ($1, 'qa', 'QA', 7, false), ($1, 'shipped', 'Shipped', 8, true)",
+      [projectId]
+    );
+    const qa = await db.query("UPDATE public.tasks SET status = 'qa' WHERE id = $1 RETURNING status, is_done", [taskId]);
+    check("zadanie wchodzi do wlasnej kolumny", qa.rows[0]?.status === "qa" && qa.rows[0].is_done === false, JSON.stringify(qa.rows));
+    const shipped = await db.query("UPDATE public.tasks SET status = 'shipped' WHERE id = $1 RETURNING is_done", [taskId]);
+    check("kolumna z is_done -> zadanie zrobione", shipped.rows[0]?.is_done === true);
+    await db.query("UPDATE public.project_board_columns SET is_done = false WHERE project_id = $1 AND status = 'shipped'", [projectId]);
+    const after = await db.query("SELECT is_done FROM public.tasks WHERE id = $1", [taskId]);
+    check("zmiana is_done kolumny przelicza zadania", after.rows[0]?.is_done === false);
+    const done = await db.query("UPDATE public.tasks SET status = 'done' WHERE id = $1 RETURNING is_done", [taskId]);
+    check("wbudowane done zawsze zrobione", done.rows[0]?.is_done === true);
+
+    check(
+      "nieznany status innego projektu odrzucony",
+      await throwsInSavepoint("UPDATE public.tasks SET status = 'nie_istnieje' WHERE id = $1", [taskId])
+    );
+    await db.query("UPDATE public.tasks SET status = 'qa' WHERE id = $1", [taskId]);
+    check(
+      "nie da sie usunac kolumny z zadaniami",
+      await throwsInSavepoint("DELETE FROM public.project_board_columns WHERE project_id = $1 AND status = 'qa'", [projectId])
+    );
+    const delEmpty = await db.query("DELETE FROM public.project_board_columns WHERE project_id = $1 AND status = 'shipped'", [projectId]);
+    check("pusta wlasna kolumna sie usuwa", delEmpty.rowCount === 1);
+
+    await db.query("INSERT INTO public.project_task_priorities (project_id, key, label, color, rank) VALUES ($1, 'blocker', 'Blocker', '#ff0000', -1)", [projectId]);
+    const pr = await db.query("UPDATE public.tasks SET priority = 'blocker' WHERE id = $1 RETURNING priority", [taskId]);
+    check("wlasny priorytet dziala", pr.rows[0]?.priority === "blocker");
+    check(
+      "nieznany priorytet odrzucony",
+      await throwsInSavepoint("UPDATE public.tasks SET priority = 'whatever' WHERE id = $1", [taskId])
+    );
+    check(
+      "nie da sie usunac priorytetu w uzyciu",
+      await throwsInSavepoint("DELETE FROM public.project_task_priorities WHERE project_id = $1 AND key = 'blocker'", [projectId])
+    );
+  });
+
+  await withUser(D, async () => {
+    const moved = await db.query("UPDATE public.tasks SET status = 'todo' WHERE id = $1 RETURNING status", [taskId]);
+    check("developer przesuwa zadanie utworzone przez kogos innego (poprawka validate_task)", moved.rows[0]?.status === "todo", JSON.stringify(moved.rows));
+    check(
+      "ale nie zmienia created_by",
+      await throwsInSavepoint("UPDATE public.tasks SET created_by = $2 WHERE id = $1", [taskId, D])
+    );
+    check(
+      "developer nie dodaje kolumn (owner/admin)",
+      await throwsInSavepoint("INSERT INTO public.project_board_columns (project_id, status, label, sort_order) VALUES ($1, 'dev_col', 'X', 9)", [projectId])
+    );
+    check(
+      "ani priorytetow",
+      await throwsInSavepoint("INSERT INTO public.project_task_priorities (project_id, key, rank) VALUES ($1, 'dev_p', 9)", [projectId])
+    );
+    const seen = await db.query("SELECT label FROM public.project_task_priorities WHERE project_id = $1", [projectId]);
+    check("developer widzi priorytety projektu", seen.rows[0]?.label === "Blocker");
+  });
+}
+
+section("48. usuwanie ukonczonych zadan po N dniach (migracja 061)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000061";
+  let oldDone, freshDone, openTask, oldSub, openParent, doneSubOfOpen;
+  const insert = (title, status = null, parent = null) =>
+    db.query(
+      "INSERT INTO public.tasks (project_id, title, status, parent_task_id) VALUES ($1, $2, COALESCE($3, 'todo'), $4) RETURNING id, done_at",
+      [projectId, title, status, parent]
+    );
+
+  await withUser(A, async () => {
+    const d = await insert("061 old done", "done");
+    oldDone = d.rows[0].id;
+    check("zadanie utworzone jako done dostaje done_at", d.rows[0].done_at !== null);
+    freshDone = (await insert("061 fresh done", "done")).rows[0].id;
+    openTask = (await insert("061 open")).rows[0].id;
+    const o = await insert("061 open parent");
+    openParent = o.rows[0].id;
+    check("otwarte zadanie nie ma done_at", o.rows[0].done_at === null);
+    oldSub = (await insert("061 sub", null, oldDone)).rows[0].id;
+    doneSubOfOpen = (await insert("061 done sub", "done", openParent)).rows[0].id;
+
+    const back = await db.query("UPDATE public.tasks SET done_at = now() - interval '400 days' WHERE id = $1 RETURNING done_at", [oldDone]);
+    check("klient nie moze postarzyc done_at", Date.now() - new Date(back.rows[0].done_at).getTime() < 60_000, back.rows[0].done_at);
+    const reopened = await db.query("UPDATE public.tasks SET status = 'todo' WHERE id = $1 RETURNING done_at", [freshDone]);
+    check("powrot do pracy czysci done_at", reopened.rows[0].done_at === null);
+    await db.query("UPDATE public.tasks SET status = 'done' WHERE id = $1", [freshDone]);
+
+    const off = await db.query("SELECT public.purge_finished_tasks($1) AS n", [projectId]);
+    check("wylaczone ustawienie niczego nie usuwa", off.rows[0].n === 0);
+  });
+
+  await withUser(D, async () => {
+    const res = await db.query("UPDATE public.projects SET done_cleanup_days = 1 WHERE id = $1 RETURNING id", [projectId]);
+    check("developer nie zmienia ustawienia", res.rows.length === 0);
+  });
+
+  await withUser(A, async () => {
+    check("zle ustawienie odrzucone", await throwsInSavepoint("UPDATE public.projects SET done_cleanup_days = 0 WHERE id = $1", [projectId]));
+    const set = await db.query("UPDATE public.projects SET done_cleanup_days = 30 WHERE id = $1 RETURNING done_cleanup_days", [projectId]);
+    check("owner wlacza usuwanie po 30 dniach", set.rows[0]?.done_cleanup_days === 30);
+  });
+
+  // Postarzenie z pominieciem triggera - tylko wlasciciel tabeli tak moze.
+  await db.exec("ALTER TABLE public.tasks DISABLE TRIGGER workflow_set_task_done_at");
+  await db.query("UPDATE public.tasks SET done_at = now() - interval '40 days' WHERE id = ANY($1)", [[oldDone, doneSubOfOpen]]);
+  await db.exec("ALTER TABLE public.tasks ENABLE TRIGGER workflow_set_task_done_at");
+
+  await withUser(stranger, async () => {
+    const n = await db.query("SELECT public.purge_finished_tasks($1) AS n", [projectId]);
+    check("ktos bez dostepu do projektu niczego nie usuwa", n.rows[0].n === 0);
+  });
+
+  await withUser(D, async () => {
+    const n = await db.query("SELECT public.purge_finished_tasks($1) AS n", [projectId]);
+    check("czlonek projektu uruchamia czyszczenie: 1 stare zadanie", n.rows[0].n === 1, n.rows[0].n);
+  });
+
+  await withServiceRole(async () => {
+    const left = await db.query("SELECT id FROM public.tasks WHERE id = ANY($1)", [[oldDone, oldSub, freshDone, openTask, openParent, doneSubOfOpen]]);
+    const ids = new Set(left.rows.map((r) => r.id));
+    check("stare ukonczone zadanie usuniete", !ids.has(oldDone));
+    check("razem z subtaskiem", !ids.has(oldSub));
+    check("swiezo ukonczone zostaje", ids.has(freshDone));
+    check("otwarte zostaje", ids.has(openTask) && ids.has(openParent));
+    check("stary ukonczony subtask otwartego zadania zostaje", ids.has(doneSubOfOpen));
+    await db.query("UPDATE public.projects SET done_cleanup_days = NULL WHERE id = $1", [projectId]);
+  });
+}
+
+section("49. kody promocyjne: plan za darmo na N dni (migracja 062)");
+
+{
+  const orgs = [];
+  for (const slug of ["promo-a", "promo-b", "promo-c"]) {
+    const o = await withUser(A, () => db.query("INSERT INTO public.organizations (name, slug) VALUES ($1, $1) RETURNING id", [slug]));
+    orgs.push(o.rows[0].id);
+  }
+  const [orgA, orgB, orgC] = orgs;
+  const redeem = (code, org) =>
+    withServiceRole(async () => (await db.query("SELECT * FROM public.redeem_promo_code($1, $2, $3)", [code, org, A])).rows[0]);
+
+  await withServiceRole(async () => {
+    await db.query(
+      `INSERT INTO public.promo_codes (code, plan_id, duration_days, max_redemptions) VALUES
+         ('PRO30', 'pro', 30, 2), ('PRO10', 'pro', 10, NULL), ('TEAM5', 'team', 5, NULL)`
+    );
+    await db.query("INSERT INTO public.promo_codes (code, plan_id, duration_days, active) VALUES ('OFF1', 'pro', 30, false)");
+    await db.query("INSERT INTO public.promo_codes (code, plan_id, duration_days, expires_at) VALUES ('OLD1', 'pro', 30, now() - interval '1 day')");
+  });
+
+  await withUser(A, async () => {
+    check("uzytkownik nie widzi kodow", await throwsInSavepoint("SELECT * FROM public.promo_codes"));
+    check("ani nie realizuje kodu sam", await throwsInSavepoint("SELECT * FROM public.redeem_promo_code('PRO30', $1, $2)", [orgA, A]));
+    const own = await db.query("UPDATE public.subscriptions SET promo_plan_id = 'business', promo_until = now() + interval '1 year' WHERE organization_id = $1 RETURNING 1", [orgA]).catch(() => ({ rows: [] }));
+    check("owner nie daje sobie planu przez subscriptions", own.rows.length === 0);
+  });
+
+  const first = await redeem(" pro30 ", orgA);
+  check("kod dziala (male litery, spacje)", first.error === null && first.plan_id === "pro", JSON.stringify(first));
+  const days = (until) => Math.round((new Date(until).getTime() - Date.now()) / 86400000);
+  check("na 30 dni", days(first.granted_until) === 30, first.granted_until);
+  check("drugi raz w tej samej organizacji: already_redeemed", (await redeem("PRO30", orgA)).error === "already_redeemed");
+  const stacked = await redeem("PRO10", orgA);
+  check("drugi kod na ten sam plan dodaje dni", stacked.error === null && days(stacked.granted_until) === 40, stacked.granted_until);
+  check("kod na lepszy plan zastepuje promocje", (await redeem("TEAM5", orgA)).plan_id === "team");
+  check("inna organizacja: PRO10 i TEAM5", (await redeem("PRO10", orgB)).error === null && (await redeem("TEAM5", orgB)).error === null);
+  check("slabszy kod przy trwajacej lepszej promocji: has_better_plan", (await redeem("PRO30", orgB)).error === "has_better_plan");
+
+  check("nieznany kod", (await redeem("NOPE", orgC)).error === "not_found");
+  check("wylaczony kod", (await redeem("OFF1", orgC)).error === "inactive");
+  check("przeterminowany kod", (await redeem("OLD1", orgC)).error === "expired");
+
+  await withServiceRole(() => db.query("UPDATE public.subscriptions SET plan_id = 'business', status = 'active' WHERE organization_id = $1", [orgC]));
+  check("oplacony lepszy plan: has_better_plan i kod niezuzyty", (await redeem("PRO30", orgC)).error === "has_better_plan");
+  await withServiceRole(() => db.query("UPDATE public.subscriptions SET plan_id = 'free' WHERE organization_id = $1", [orgC]));
+  check("drugie uzycie PRO30 (limit 2)", (await redeem("PRO30", orgC)).error === null);
+  check("trzecie: used_up", (await redeem("PRO30", orgB)).error === "used_up");
+
+  const sub = await withServiceRole(async () => (await db.query("SELECT promo_plan_id FROM public.subscriptions WHERE organization_id = $1", [orgB])).rows[0]);
+  check("used_up niczego nie zmienia w subskrypcji", sub.promo_plan_id === "team");
+  const count = await withServiceRole(async () => (await db.query("SELECT redemption_count FROM public.promo_codes WHERE code = 'PRO30'")).rows[0]);
+  check("licznik uzyc = 2", count.redemption_count === 2, count.redemption_count);
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

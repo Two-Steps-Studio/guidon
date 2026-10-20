@@ -64,13 +64,22 @@ columns, cards with the priority dot, the count and tag pills, and the solid
 brand-blue Save/Post/Log In buttons. Fields and dropdowns keep the IDE's own
 look.
 
-## Board columns
+## Board columns and priorities
 
-The board shows the project's own columns: the labels, order and hidden
-columns set in the web app's project settings, loaded from
-`GET /api/v1/projects/{id}/columns`. The status list offers only visible
-columns. Against an older Guidon without that endpoint, the plugin falls
-back to the six default columns.
+The board shows the project's own columns: the labels, order, colours and
+hidden columns set in the web app's project settings, plus any columns the
+project defines itself, loaded from `GET /api/v1/projects/{id}/columns`.
+The status list offers only visible columns. A subtask counts as finished
+when it is in a done column (`is_done`), not only in **Done**. Against an
+older Guidon without that endpoint, the plugin falls back to the six
+default columns, and **Done** is the only done column.
+
+Priorities work the same way: the picker, the card label and the priority
+dot use the project's list from `GET /api/v1/projects/{id}/priorities`, most
+important first, including its own priorities and colours. Against an older
+Guidon (no such endpoint) the plugin falls back to Critical, High, Medium
+and Low. A status or priority the plugin doesn't know is shown by its key
+with a grey dot, never changed.
 
 ## Login and storage
 

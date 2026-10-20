@@ -5,7 +5,7 @@
   "scripts": {
     "predev": "node scripts/build-plugin-zips.mjs",
     "dev": "next dev --webpack -p 5803",
-    "prebuild": "node scripts/build-plugin-zips.mjs",
+    "prebuild": "node scripts/build-plugin-zips.mjs && node scripts/copy-monaco-assets.mjs",
     "build": "next build",
     "start": "next start -p 5803",
     "lint": "eslint",
@@ -13,14 +13,15 @@
     "migrate": "node scripts/migrate.mjs",
     "migrate:status": "node scripts/migrate.mjs --status",
     "test:db": "node --experimental-strip-types tests/db/compat.test.mjs",
-    "test:ai": "node --experimental-strip-types tests/ai/provider.test.mjs",
-    "test:auth": "node tests/auth/local-auth.test.mjs",
+    "test:ai": "node --experimental-strip-types tests/ai/provider.test.mjs && node tests/ai/task-learning.test.mjs",
+    "test:auth": "node tests/auth/local-auth.test.mjs && node tests/auth/oauth.test.mjs",
     "test:limits": "node tests/limits.test.mjs",
     "test:reports": "node --experimental-strip-types tests/game-report.test.mjs",
     "test:github": "node --experimental-strip-types tests/github-webhook.test.mjs",
     "test:webhooks": "node --experimental-strip-types tests/webhooks.test.mjs",
     "test:agent-web": "node --experimental-strip-types tests/agent-web.test.mjs",
-    "test:labels": "node --experimental-strip-types tests/label-presets.test.mjs"
+    "test:labels": "node --experimental-strip-types tests/label-presets.test.mjs",
+    "test:import": "node tests/task-import.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

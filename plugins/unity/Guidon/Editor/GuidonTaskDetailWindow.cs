@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -42,6 +43,7 @@ namespace Guidon.Tasks.Editor
         private Label _descriptionPreviewLabel;
         private Button _descriptionToggleButton;
         private DropdownField _priorityDropdown;
+        private List<string> _priorityKeys; // parallel to _priorityDropdown.choices
         private TextField _dueDateField;
         private DropdownField _statusDropdown;
         private Label _statusMessageLabel;
@@ -117,9 +119,7 @@ namespace Guidon.Tasks.Editor
 
             BuildDescriptionField(scroll);
 
-            _priorityDropdown = new DropdownField { choices = GuidonVocabulary.Priorities.ToList() };
-            _priorityDropdown.SetValueWithoutNotify(_task?.priority ?? "medium");
-            GuidonStyles.AddLabeledField(scroll, "Priority", _priorityDropdown);
+            BuildPriorityDropdown(scroll);
 
             _dueDateField = new TextField { value = FormatDueDateForField(_task?.due_date) };
             GuidonStyles.AddLabeledField(scroll, "Due date (yyyy-MM-dd)", _dueDateField);
@@ -177,6 +177,47 @@ namespace Guidon.Tasks.Editor
                 string content = string.IsNullOrEmpty(_descriptionField.value) ? "(no description)" : _descriptionField.value;
                 _descriptionPreviewLabel.text = GuidonMarkdown.ToRichText(content);
             }
+        }
+
+        /// <summary>
+        /// The project's visible priorities (most important first, with its
+        /// labels). Choices are labels, so the selected key is looked up via
+        /// _priorityKeys. A task already carrying a hidden/unknown key keeps
+        /// it as an extra entry (label = the key) rather than being silently
+        /// changed on Save.
+        /// </summary>
+        private void BuildPriorityDropdown(VisualElement parent)
+        {
+            var priorities = GuidonVocabulary.CurrentPriorities.ToList();
+            string current = _task?.priority;
+            if (string.IsNullOrEmpty(current))
+            {
+                // New task: "medium" like the server's own default when the
+                // project lists it, else its least important priority.
+                current = priorities.Any(p => p.key == "medium") || priorities.Count == 0
+                    ? "medium"
+                    : priorities[priorities.Count - 1].key;
+            }
+            if (priorities.All(p => p.key != current))
+            {
+                priorities.Add(new PriorityDto { key = current, label = GuidonVocabulary.PriorityLabel(current) });
+            }
+
+            // Same duplicate-label disambiguation as the status dropdown below.
+            var labelCounts = priorities.GroupBy(p => p.label).ToDictionary(g => g.Key, g => g.Count());
+            var labels = priorities.Select(p => labelCounts[p.label] > 1 ? $"{p.label} ({p.key})" : p.label).ToList();
+            _priorityKeys = priorities.Select(p => p.key).ToList();
+
+            _priorityDropdown = new DropdownField { choices = labels };
+            _priorityDropdown.SetValueWithoutNotify(labels[_priorityKeys.IndexOf(current)]);
+            GuidonStyles.AddLabeledField(parent, "Priority", _priorityDropdown);
+        }
+
+        /// <summary>The priority key behind the dropdown's selected label.</summary>
+        private string SelectedPriorityKey()
+        {
+            int index = _priorityDropdown.choices.IndexOf(_priorityDropdown.value);
+            return index >= 0 && index < _priorityKeys.Count ? _priorityKeys[index] : _task?.priority;
         }
 
         private void BuildStatusDropdown(VisualElement parent)
@@ -267,7 +308,7 @@ namespace Guidon.Tasks.Editor
                 return;
             }
 
-            string priority = _priorityDropdown.value;
+            string priority = SelectedPriorityKey();
             string dueDateIso = ParseDueDateToIso(_dueDateField.value, out string dueDateError);
             if (dueDateError != null)
             {
@@ -371,7 +412,7 @@ namespace Guidon.Tasks.Editor
         {
             var row = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center } };
 
-            var toggle = new Toggle { value = subtask.status == "done", text = subtask.title, style = { flexGrow = 1 } };
+            var toggle = new Toggle { value = GuidonVocabulary.IsDone(subtask), text = subtask.title, style = { flexGrow = 1 } };
             toggle.RegisterValueChangedCallback(evt => { _ = ToggleSubtask(subtask, evt.newValue, toggle); });
             GuidonStyles.StyleToggleLabel(toggle);
             row.Add(toggle);

@@ -15,6 +15,7 @@ import com.useguidon.tasks.core.GuidonComment
 import com.useguidon.tasks.core.GuidonProject
 import com.useguidon.tasks.core.GuidonTask
 import com.useguidon.tasks.core.LoopbackLogin
+import com.useguidon.tasks.core.PriorityOption
 import com.useguidon.tasks.core.Vocabulary
 import java.awt.BorderLayout
 import java.awt.CardLayout
@@ -85,6 +86,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
     private var projects: List<GuidonProject> = emptyList()
     private var tasks: MutableList<GuidonTask> = mutableListOf()
     private var columns: List<BoardColumn> = Vocabulary.defaultColumns
+    private var priorities: List<PriorityOption> = Vocabulary.defaultPriorities
     private val comments = mutableMapOf<String, List<GuidonComment>>()
     private var currentProjectId = GuidonSettings.projectId
     private var selectedTaskId = ""
@@ -396,7 +398,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
                 boardPanel.add(Box.createHorizontalStrut(JBUI.scale(10)))
             }
             for (column in columns) {
-                boardPanel.add(buildColumn(column.status, column.label))
+                boardPanel.add(buildColumn(column))
                 boardPanel.add(Box.createHorizontalStrut(JBUI.scale(10)))
             }
         }
@@ -405,7 +407,9 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         newTaskField?.requestFocusInWindow()
     }
 
-    private fun buildColumn(status: String, label: String): JComponent {
+    private fun buildColumn(boardColumn: BoardColumn): JComponent {
+        val status = boardColumn.status
+        val label = boardColumn.label
         val columnTasks = Board.column(if (reportsOnly) tasks.filter(Board::isReport) else tasks, status)
         // The site's column: rounded-xl, background-secondary, header row over a divider.
         val column = RoundedPanel(BorderLayout(0, 0), GuidonColors.column, GuidonColors.border, JBUI.scale(24))
@@ -422,7 +426,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
                 javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, GuidonColors.border),
                 JBUI.Borders.empty(8, 12),
             )
-            add(StatusDot(GuidonColors.status(status)))
+            add(StatusDot(GuidonColors.status(status, boardColumn.color)))
             add(Box.createHorizontalStrut(JBUI.scale(6)))
             add(JLabel(label).apply {
                 foreground = GuidonColors.text
@@ -499,7 +503,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             add(JPanel(BorderLayout()).apply {
                 isOpaque = false
                 border = JBUI.Borders.emptyTop(5)
-                add(StatusDot(GuidonColors.priority(task.priority), 6), BorderLayout.NORTH)
+                add(StatusDot(GuidonColors.priority(task.priority, Vocabulary.priorityColor(task.priority, priorities)), 6), BorderLayout.NORTH)
             }, BorderLayout.WEST)
             add(wrappingLabel(task.title, CARD_TEXT_WIDTH - 14, GuidonColors.text, bold = true), BorderLayout.CENTER)
         }, 0)
@@ -513,7 +517,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             body.row(tags, 4)
         }
         val footer = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply { isOpaque = false }
-        footer.add(mutedLabel(Vocabulary.priorityLabel(task.priority)))
+        footer.add(mutedLabel(Vocabulary.priorityLabel(task.priority, priorities)))
         if (task.dueDate.isNotEmpty()) {
             footer.add(Box.createHorizontalStrut(JBUI.scale(10)))
             footer.add(mutedLabel(task.dueDate.take(10)))
@@ -521,7 +525,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         val subs = Board.subtasks(tasks, task.id)
         if (subs.isNotEmpty()) {
             footer.add(Box.createHorizontalStrut(JBUI.scale(10)))
-            footer.add(mutedLabel("✓ ${subs.count { it.status == "done" }}/${subs.size}"))
+            footer.add(mutedLabel("✓ ${subs.count { Board.isDone(it, columns) }}/${subs.size}"))
         }
         body.row(footer, 6)
         card.add(body, BorderLayout.CENTER)
@@ -586,9 +590,11 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
             // Applied immediately, like dragging the card - Save is for the text fields.
             addActionListener { (selectedItem as? String)?.let { moveTask(task.id, it) } }
         }
-        val priorityCombo = JComboBox(Vocabulary.priorities.toTypedArray()).apply {
+        // The project's priorities, most important first; a hidden or unknown current one stays selectable.
+        val priorityOptions = priorities.map { it.key }.let { if (editPriority in it) it else it + editPriority }
+        val priorityCombo = JComboBox(priorityOptions.toTypedArray()).apply {
             selectedItem = editPriority
-            renderer = labelRenderer { Vocabulary.priorityLabel(it) }
+            renderer = labelRenderer { Vocabulary.priorityLabel(it, priorities) }
             addActionListener { (selectedItem as? String)?.let { editPriority = it } }
         }
         form.row(JPanel(GridLayout(1, 2, JBUI.scale(8), 0)).apply {
@@ -626,7 +632,8 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
                     isOpaque = false
                     add(JCheckBox().apply {
                         isOpaque = false
-                        isSelected = sub.status == "done"
+                        isSelected = Board.isDone(sub, columns)
+                        // Ticked = in any done column (custom ones too); ticking moves it to the built-in done, unticking to todo.
                         addActionListener { moveTask(sub.id, if (isSelected) "done" else "todo") }
                     }, BorderLayout.WEST)
                     add(linkButton(sub.title) { selectTask(sub.id) }, BorderLayout.CENTER)
@@ -712,6 +719,7 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         GuidonSettings.projectId = projectId
         tasks = mutableListOf()
         columns = Vocabulary.defaultColumns
+        priorities = Vocabulary.defaultPriorities
         comments.clear()
         selectedTaskId = ""
         addingInStatus = ""
@@ -729,16 +737,18 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         }
         val api = api()
         bg({
-            // A columns failure (e.g. an older server without the endpoint) just means the default columns.
+            // A columns/priorities failure (e.g. an older server without the endpoint) just means the defaults.
             val loadedColumns = (api.listColumns(projectId) as? ApiResult.Ok)?.value ?: Vocabulary.defaultColumns
-            api.listTasks(projectId) to loadedColumns
-        }) { (result, loadedColumns) ->
+            val loadedPriorities = (api.listPriorities(projectId) as? ApiResult.Ok)?.value ?: Vocabulary.defaultPriorities
+            Triple(api.listTasks(projectId), loadedColumns, loadedPriorities)
+        }) { (result, loadedColumns, loadedPriorities) ->
             if (projectId != currentProjectId) return@bg // switched project meanwhile
             when (result) {
                 is ApiResult.Err -> showError(result.message)
                 is ApiResult.Ok -> {
                     tasks = result.value.toMutableList()
                     columns = loadedColumns
+                    priorities = loadedPriorities
                     if (tasks.none { it.id == selectedTaskId }) selectedTaskId = ""
                     scheduleRebuild()
                     if (selectedTaskId.isNotEmpty()) loadComments(selectedTaskId)
@@ -769,15 +779,19 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         ApplicationManager.getApplication().executeOnPooledThread(Runnable {
             val loaded = api.listTasks(projectId)
             val loadedColumns = (api.listColumns(projectId) as? ApiResult.Ok)?.value
+            val loadedPriorities = (api.listPriorities(projectId) as? ApiResult.Ok)?.value
             val loadedComments = if (selected.isNotEmpty()) (api.listComments(selected) as? ApiResult.Ok)?.value else null
             ApplicationManager.getApplication().invokeLater {
                 autoRefreshRunning = false
                 if (disposed || actions != actionsBefore || pending > 0 || projectId != currentProjectId) return@invokeLater
                 val fresh = (loaded as? ApiResult.Ok)?.value ?: return@invokeLater
                 var boardChanged = false
-                if (fresh != tasks || (loadedColumns != null && loadedColumns != columns)) {
+                if (fresh != tasks || (loadedColumns != null && loadedColumns != columns) ||
+                    (loadedPriorities != null && loadedPriorities != priorities)
+                ) {
                     tasks = fresh.toMutableList()
                     if (loadedColumns != null) columns = loadedColumns
+                    if (loadedPriorities != null) priorities = loadedPriorities
                     if (tasks.none { it.id == selectedTaskId }) selectedTaskId = ""
                     boardChanged = true
                 }
@@ -833,7 +847,8 @@ class GuidonPanel(private val project: Project) : JPanel(BorderLayout()), Dispos
         val previous = tasks[index]
         val reorder = !previous.isSubtask
         val newSortOrder = if (reorder) Board.appendSortOrder(Board.column(tasks, newStatus)) else previous.sortOrder
-        tasks[index] = previous.copy(status = newStatus, sortOrder = newSortOrder)
+        // is_done follows the target column until the server's answer replaces the task.
+        tasks[index] = previous.copy(status = newStatus, sortOrder = newSortOrder, isDone = Board.isDoneStatus(newStatus, columns))
         scheduleRebuild()
 
         val api = api()

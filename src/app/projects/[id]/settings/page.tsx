@@ -8,17 +8,18 @@ import { withUser } from "@/lib/db/session";
 import { DangerZoneCard } from "./danger-zone-card";
 import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
-import { BoardColumnsForm } from "./board-columns-form";
+import { BoardColumnsForm, PrioritiesForm } from "./board-columns-form";
+import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { LabelPresetsForm } from "./label-presets-form";
 import { ModulesForm } from "./modules-form";
 import { ReportWidgetCard } from "./report-widget-card";
 import { listReportWidgetKeys } from "@/app/profile/api-keys-actions";
 import { ExportProjectCard } from "./export-project-card";
+import { FinishedTasksForm } from "./finished-tasks-form";
 import { DiscordIntegrationForm } from "./discord-integration-form";
 import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
 import type { Project } from "@/types/project";
 import type { Technology } from "@/types/technology";
-import type { BoardColumnOverride } from "@/lib/work/task-board";
 
 interface AiPermissionsRow {
   can_read_context: boolean;
@@ -50,7 +51,6 @@ export default async function ProjectSettingsPage({
   let project: Project;
   let technologies: Technology[];
   let aiPermissions: AiPermissionsRow;
-  let boardColumns: BoardColumnOverride[];
 
   // getDiscordIntegrationInfo() already branches on hasDirectDatabase()
   // internally and runs its own concurrent queries - started here so it
@@ -59,11 +59,11 @@ export default async function ProjectSettingsPage({
   const labelPresetsPromise = getLabelPresets(access.userId, projectId);
 
   if (hasDirectDatabase()) {
-    // Four withUser() calls, not one wrapping Promise.all([...]) - each
+    // Three withUser() calls, not one wrapping Promise.all([...]) - each
     // checks out its own pooled connection, so this is genuinely concurrent
     // instead of firing multiple queries on one pg client (the deprecated
     // shape, removed in pg@9).
-    const [projectRes, techRes, permsRes, columnsRes] = await Promise.all([
+    const [projectRes, techRes, permsRes] = await Promise.all([
       withUser(access.userId, ({ query }) => query("SELECT * FROM projects WHERE id = $1", [projectId])),
       withUser(access.userId, ({ query }) =>
         query(
@@ -78,20 +78,13 @@ export default async function ProjectSettingsPage({
           [projectId]
         )
       ),
-      withUser(access.userId, ({ query }) =>
-        query(
-          "SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1",
-          [projectId]
-        )
-      ),
     ]);
     project = projectRes.rows[0];
     technologies = techRes.rows;
     aiPermissions = permsRes.rows[0] ?? DEFAULT_AI_PERMISSIONS;
-    boardColumns = columnsRes.rows;
   } else {
     const supabase = await createClient();
-    const [projectRes, techRes, permsRes, columnsRes] = await Promise.all([
+    const [projectRes, techRes, permsRes] = await Promise.all([
       supabase.from("projects").select("*").eq("id", projectId).single(),
       supabase
         .from("technologies")
@@ -104,19 +97,18 @@ export default async function ProjectSettingsPage({
         .select("can_read_context, can_create_comments, can_change_status, can_complete_tasks, can_modify_settings, can_delete_tasks")
         .eq("project_id", projectId)
         .maybeSingle(),
-      supabase
-        .from("project_board_columns")
-        .select("status, label, sort_order, hidden")
-        .eq("project_id", projectId),
     ]);
 
     project = projectRes.data as Project;
     technologies = (techRes.data ?? []) as Technology[];
     aiPermissions = (permsRes.data as AiPermissionsRow | null) ?? DEFAULT_AI_PERMISSIONS;
-    boardColumns = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
-  const [discordInfo, labelPresets] = await Promise.all([discordInfoPromise, labelPresetsPromise]);
+  const [discordInfo, labelPresets, workflow] = await Promise.all([
+    discordInfoPromise,
+    labelPresetsPromise,
+    getWorkflowOverrides(access.userId, projectId),
+  ]);
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
@@ -134,7 +126,13 @@ export default async function ProjectSettingsPage({
         initialDisabled={project.disabled_modules ?? []}
         canManage={canManageProject(access.role)}
       />
-      <BoardColumnsForm projectId={projectId} overrides={boardColumns} />
+      <BoardColumnsForm projectId={projectId} overrides={workflow.columns} />
+      <FinishedTasksForm
+        projectId={projectId}
+        initialDays={project.done_cleanup_days ?? null}
+        canManage={canManageProject(access.role)}
+      />
+      <PrioritiesForm projectId={projectId} overrides={workflow.priorities} />
       <LabelPresetsForm
         projectId={projectId}
         initialPresets={labelPresets}

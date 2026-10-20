@@ -1,23 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import {
-  enabledOAuthProviders,
-  type OAuthProviderId,
-} from "@/lib/auth/oauth-providers";
+import type { OAuthProviderId, OAuthSetup } from "@/lib/auth/oauth-providers";
 
 /**
- * Sign-in buttons for whichever providers this deployment has configured.
- * Renders nothing when none are enabled, so a password-only install shows no
- * empty divider.
+ * Sign-in buttons for whichever providers this deployment has configured
+ * (oauthSetup(), decided server-side by the login/signup page). Renders
+ * nothing when none are enabled, so a password-only install shows no empty
+ * divider.
  */
-export function OAuthButtons({ redirectTo = "/dashboard" }: { redirectTo?: string }) {
-  const router = useRouter();
-  const providers = enabledOAuthProviders();
+export function OAuthButtons({ setup, redirectTo = "/dashboard" }: { setup: OAuthSetup; redirectTo?: string }) {
+  const { mode, providers } = setup;
   const [busy, setBusy] = useState<OAuthProviderId | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,19 +24,18 @@ export function OAuthButtons({ redirectTo = "/dashboard" }: { redirectTo?: strin
     setError(null);
 
     try {
-      // Two Steps Studio is not a Supabase provider - it is Guidon's own
-      // flow, handled by /auth/tss. See docs/auth-setup.md.
-      if (id === "tss") {
-        router.push(`/auth/tss?redirect=${encodeURIComponent(redirectTo)}`);
+      // Self-hosted: Guidon's own OAuth client (app/auth/oauth/[provider]).
+      // A full page load, not router.push(): the route answers with a redirect
+      // to the provider's site, which client-side navigation can't follow.
+      if (mode === "local") {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a route handler that redirects off-site, see above
+        window.location.assign(`${window.location.origin}/auth/oauth/${id}?redirect=${encodeURIComponent(redirectTo)}`);
         return;
       }
 
-      const provider = providers.find((p) => p.id === id)?.supabaseProvider;
-      if (!provider) throw new Error("Provider is not configured");
-
       const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: id as "google" | "github" | "discord" | "gitlab",
         options: {
           // Supabase sends the user back here with a code to exchange.
           redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
@@ -95,7 +90,7 @@ export function OAuthButtons({ redirectTo = "/dashboard" }: { redirectTo?: strin
   );
 }
 
-/** Inline marks - avoids shipping an icon dependency for three logos. */
+/** Inline marks - avoids shipping an icon dependency for a few logos. */
 function ProviderMark({ id }: { id: OAuthProviderId }) {
   if (id === "google") {
     return (
@@ -128,12 +123,33 @@ function ProviderMark({ id }: { id: OAuthProviderId }) {
     );
   }
 
+  if (id === "github") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-foreground" aria-hidden>
+        <path d="M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z" />
+      </svg>
+    );
+  }
+
+  if (id === "gitlab") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+        <path fill="#E24329" d="m12 22.1 4.4-13.6H7.6z" />
+        <path fill="#FC6D26" d="M12 22.1 7.6 8.5H1.4z" />
+        <path fill="#FCA326" d="M1.4 8.5.1 12.6a.9.9 0 0 0 .3 1L12 22.1z" />
+        <path fill="#E24329" d="M1.4 8.5h6.2L4.9.3a.5.5 0 0 0-.9 0z" />
+        <path fill="#FC6D26" d="m12 22.1 4.4-13.6h6.2z" />
+        <path fill="#FCA326" d="m22.6 8.5 1.3 4.1a.9.9 0 0 1-.3 1L12 22.1z" />
+        <path fill="#E24329" d="M22.6 8.5h-6.2L19.1.3a.5.5 0 0 1 .9 0z" />
+      </svg>
+    );
+  }
+
+  // Any OpenID Connect issuer (OIDC_NAME) - a generic key mark.
   return (
-    <span
-      aria-hidden
-      className="flex h-4 w-4 items-center justify-center rounded-sm bg-primary text-[9px] font-bold text-primary-foreground"
-    >
-      T
-    </span>
+    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current" strokeWidth={2} aria-hidden>
+      <circle cx="7.5" cy="15.5" r="4.5" />
+      <path d="m10.7 12.3 9.8-9.8M17 6l3 3M15 8l2 2" strokeLinecap="round" />
+    </svg>
   );
 }

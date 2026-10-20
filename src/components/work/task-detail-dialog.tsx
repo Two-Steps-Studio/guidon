@@ -35,12 +35,13 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   BOARD_COLUMNS,
-  TASK_PRIORITIES,
   dueDateKey,
   normalizeTaskPriority,
   normalizeTaskStatus,
+  priorityDef,
   type BoardColumn,
 } from "@/lib/work/task-board";
+import { useWorkflow } from "@/components/work/workflow-context";
 import { type TaskCardMember } from "@/components/work/task-card";
 import { LabelChip } from "@/components/work/label-chip";
 import { useLabelPresets } from "@/components/work/label-presets-context";
@@ -115,7 +116,7 @@ function TaskDetailDialogInner({
   canDelete,
   canComment,
   currentUserId,
-  columns = BOARD_COLUMNS,
+  columns: columnsProp,
   aiEnabled = true,
   onClose,
   onSaved,
@@ -126,6 +127,11 @@ function TaskDetailDialogInner({
   // keys this component by task id, so opening a different task remounts it
   // and re-runs these initialisers.
   const t = useTranslations("work");
+  // Columns from the caller when it has them (the board passes its visible
+  // set), else the project's from WorkflowProvider; priorities always from there.
+  const workflow = useWorkflow();
+  const columns = columnsProp ?? workflow.columns;
+  const priorities = workflow.priorities;
   const [form, setForm] = useState<TaskForm | null>(() =>
     task ? formToTask(task) : null
   );
@@ -147,9 +153,12 @@ function TaskDetailDialogInner({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Defaults to editing (today's behavior unchanged) - Markdown preview is
-  // opt-in per open dialog, not remembered across tasks.
-  const [previewingDescription, setPreviewingDescription] = useState(false);
+  // A written description opens rendered (links clickable, lists and
+  // checklists as such) and "Edit" switches to the text; an empty one opens
+  // straight in the editor. Someone who can't edit only sees it rendered.
+  const [previewingDescription, setPreviewingDescription] = useState(
+    () => !canEdit || Boolean(task?.description?.trim())
+  );
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const applyDescriptionEdit = (result: EditResult) => {
     setForm((current) => (current ? { ...current, description: result.value } : current));
@@ -241,7 +250,7 @@ function TaskDetailDialogInner({
 
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToSaveTask"));
 
-      if (result.task.status === "done" && task.status !== "done") playSound("complete");
+      if (result.task.is_done && !task.is_done) playSound("complete");
       onSaved(result.task);
       onClose();
     } catch (err) {
@@ -292,9 +301,23 @@ function TaskDetailDialogInner({
   // per-project column visibility) - keep the current value selectable
   // even then, rather than silently rendering an option list that doesn't
   // contain the form's own value.
-  const statusOptions = columns.some((c) => c.status === form.status)
+  const statusOptions: readonly BoardColumn[] = columns.some((c) => c.status === form.status)
     ? columns
-    : [...columns, BOARD_COLUMNS.find((c) => c.status === form.status)!];
+    : [
+        ...columns,
+        BOARD_COLUMNS.find((c) => c.status === form.status) ?? {
+          status: form.status,
+          label: form.status,
+          hint: "",
+          accentClass: "bg-muted-foreground",
+          isDone: false,
+          custom: true,
+        },
+      ];
+  // Same for a priority the project has since hidden.
+  const priorityOptions = priorities.some((p) => p.key === form.priority)
+    ? priorities
+    : [...priorities, priorityDef(form.priority)];
 
   return (
     <>
@@ -392,25 +415,27 @@ function TaskDetailDialogInner({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="task-description">{t("descriptionLabel")}</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setPreviewingDescription((current) => !current)}
-              >
-                {previewingDescription ? (
-                  <>
-                    <Pencil className="h-3.5 w-3.5" />
-                    {t("editDescriptionButton")}
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-3.5 w-3.5" />
-                    {t("previewDescription")}
-                  </>
-                )}
-              </Button>
+              {canEdit && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setPreviewingDescription((current) => !current)}
+                >
+                  {previewingDescription ? (
+                    <>
+                      <Pencil className="h-3.5 w-3.5" />
+                      {t("editDescriptionButton")}
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-3.5 w-3.5" />
+                      {t("previewDescription")}
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
             {previewingDescription ? (
               <div className="max-h-64 overflow-y-auto rounded-md border border-input">
@@ -499,9 +524,9 @@ function TaskDetailDialogInner({
                   })
                 }
               >
-                {TASK_PRIORITIES.map((priority) => (
-                  <option key={priority} value={priority}>
-                    {t("priority", { priority })}
+                {priorityOptions.map((priority) => (
+                  <option key={priority.key} value={priority.key}>
+                    {priority.label}
                   </option>
                 ))}
               </Select>

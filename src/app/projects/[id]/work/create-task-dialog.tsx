@@ -22,7 +22,8 @@ import { LabelChip } from "@/components/work/label-chip";
 import { useLabelPresets } from "@/components/work/label-presets-context";
 import type { TaskCardMember } from "@/components/work/task-card";
 import type { EditResult } from "@/lib/work/markdown-edit";
-import { TASK_PRIORITIES, normalizeTaskStatus, type BoardColumn } from "@/lib/work/task-board";
+import { normalizeTaskStatus, priorityDef, type BoardColumn } from "@/lib/work/task-board";
+import { usePriorities } from "@/components/work/workflow-context";
 import { cn } from "@/lib/utils";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import { createTask, updateTask } from "./actions";
@@ -76,6 +77,9 @@ export function CreateTaskDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
+  // The project's priorities (060); Medium stays offered even if hidden, as the default.
+  const priorities = usePriorities();
+  const priorityOptions = priorities.some((p) => p.key === priority) ? priorities : [...priorities, priorityDef(priority)];
   const [assigneeId, setAssigneeId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [tags, setTags] = useState("");
@@ -267,9 +271,9 @@ export function CreateTaskDialog({
                 value={priority}
                 onChange={(event) => setPriority(event.target.value as TaskPriority)}
               >
-                {TASK_PRIORITIES.map((value) => (
-                  <option key={value} value={value}>
-                    {t("priority", { priority: value })}
+                {priorityOptions.map((option) => (
+                  <option key={option.key} value={option.key}>
+                    {option.label}
                   </option>
                 ))}
               </Select>

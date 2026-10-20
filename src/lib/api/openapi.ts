@@ -1,5 +1,16 @@
 import { z } from "zod";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
+
+const statusSchema = {
+  type: "string",
+  pattern: "^[a-z][a-z0-9_]{0,39}$",
+  description: `A column key of the task's project (GET /projects/{projectId}/columns). Built-in: ${TASK_STATUSES.join(", ")}.`,
+};
+const prioritySchema = {
+  type: "string",
+  pattern: "^[a-z][a-z0-9_]{0,39}$",
+  description: `A priority key of the task's project (GET /projects/{projectId}/priorities). Built-in: ${TASK_PRIORITIES.join(", ")}.`,
+};
 import { REPORT_CATEGORIES, REPORT_SOURCES } from "@/lib/api/game-report";
 import {
   commentFields,
@@ -8,6 +19,7 @@ import {
   setStatusFields,
   updateTaskFields,
 } from "@/lib/api/v1-schemas";
+import { PROJECT_RESOURCES } from "@/lib/api/project-resources";
 
 /**
  * OpenAPI 3.1 description of /api/v1 (served at /openapi.json, listed in
@@ -75,13 +87,51 @@ function op(
   };
 }
 
+/** JSON Schema of a whole zod object (the project-resource bodies). */
+function objectBody(schema: z.ZodObject<z.ZodRawShape>): JsonSchema {
+  const out = z.toJSONSchema(schema, { target: "draft-2020-12" }) as JsonSchema;
+  delete out.$schema;
+  return out;
+}
+
+/** Decisions, knowledge, roadmap, memory, tech stack - from lib/api/project-resources.ts. */
+function projectResourcePaths(): Record<string, unknown> {
+  const paths: Record<string, unknown> = {};
+  for (const r of PROJECT_RESOURCES) {
+    const tag = "Project knowledge";
+    const id = r.noun.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+    const Id = id.charAt(0).toUpperCase() + id.slice(1);
+    const Plural = r.plural.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()).replace(/^./, (c) => c.toUpperCase());
+    const itemSchema = { type: "object", description: `A row of ${r.table}.` };
+    const itemParam = { name: "itemId", in: "path", required: true, description: `The ${r.noun.replace(/_/g, " ")}'s UUID.`, schema: { type: "string", format: "uuid" } };
+    paths[`/projects/{projectId}/${r.path}`] = {
+      parameters: [projectIdParam],
+      get: op(`list${Plural}`, `${r.summary} (up to 500)`, "project:read", ok(Plural, wrap(r.listKey, { type: "array", items: itemSchema })), { tags: [tag] }),
+      post: op(`create${Id}`, `Add a ${r.noun.replace(/_/g, " ")}`, "project:write", ok(`The created ${r.noun.replace(/_/g, " ")}`, wrap(r.itemKey, itemSchema), "201"), {
+        tags: [tag],
+        requestBody: { required: true, content: json(objectBody(r.create)) },
+      }),
+    };
+    paths[`/projects/{projectId}/${r.path}/{itemId}`] = {
+      parameters: [projectIdParam, itemParam],
+      get: op(`get${Id}`, `Get a ${r.noun.replace(/_/g, " ")}`, "project:read", ok(Id, wrap(r.itemKey, itemSchema)), { tags: [tag] }),
+      patch: op(`update${Id}`, `Change some fields of a ${r.noun.replace(/_/g, " ")}`, "project:write", ok(`The updated ${r.noun.replace(/_/g, " ")}`, wrap(r.itemKey, itemSchema)), {
+        tags: [tag],
+        requestBody: { required: true, content: json(objectBody(r.update)) },
+      }),
+      delete: op(`delete${Id}`, `Delete a ${r.noun.replace(/_/g, " ")}`, "project:write", ok("Deleted", { type: "object", properties: { ok: { type: "boolean", const: true } } }), { tags: [tag] }),
+    };
+  }
+  return paths;
+}
+
 export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
   return {
     openapi: "3.1.0",
     info: {
       title: "Guidon API",
       version: "1.0.0",
-      summary: "Tasks, comments and attempts in Guidon projects, for AI agents and integrations.",
+      summary: "Tasks, decisions, knowledge, roadmap and memory of Guidon projects, for AI agents and integrations.",
       description:
         "Guidon is context-first project management for development teams. This API lets an agent find a task, " +
         "read its full working context, claim it, record what it tried, comment and hand it back for review.\n\n" +
@@ -99,6 +149,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       { name: "Comments", description: "Task comments." },
       { name: "Attempts", description: "What was tried on a task and how it went, so later work learns from it." },
       { name: "Reports", description: "Bug reports from shipped games and websites." },
+      { name: "Project knowledge", description: "Everything around the board: decisions, knowledge sources, roadmap phases, project memory and the tech stack." },
     ],
     paths: {
       "/projects": {
@@ -116,6 +167,10 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       "/projects/{projectId}/columns": {
         parameters: [projectIdParam],
         get: op("listColumns", "The project's visible board columns, in order", "tasks:read", ok("Columns", wrap("columns", { type: "array", items: ref("Column") })), { tags: ["Projects"] }),
+      },
+      "/projects/{projectId}/priorities": {
+        parameters: [projectIdParam],
+        get: op("listPriorities", "The project's task priorities, most important first", "tasks:read", ok("Priorities", wrap("priorities", { type: "array", items: ref("Priority") })), { tags: ["Projects"] }),
       },
       "/projects/{projectId}/references": {
         parameters: [projectIdParam],
@@ -198,6 +253,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           requestBody: { required: true, content: json(body(recordAttemptFields)) },
         }),
       },
+      ...projectResourcePaths(),
     },
     components: {
       securitySchemes: {
@@ -205,7 +261,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           type: "http",
           scheme: "bearer",
           bearerFormat: "guidon_...",
-          description: "A user's API key from Profile -> API keys. Scopes: tasks:read, tasks:write, tasks:status, comments:write, attempts:write, reports:write.",
+          description: "A user's API key from Profile -> API keys. Scopes: tasks:read, tasks:write, tasks:status, comments:write, attempts:write, reports:write, project:read, project:write.",
         },
       },
       schemas: {
@@ -222,8 +278,9 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
             parent_task_id: { type: ["string", "null"], format: "uuid" },
             title: { type: "string" },
             description: { type: ["string", "null"] },
-            status: { type: "string", enum: [...TASK_STATUSES] },
-            priority: { type: "string", enum: [...TASK_PRIORITIES] },
+            status: statusSchema,
+            priority: prioritySchema,
+            is_done: { type: "boolean", description: "In done or a column the project marks as done." },
             tags: { type: "array", items: { type: "string" } },
             assignee_id: { type: ["string", "null"], format: "uuid" },
             due_date: { type: ["string", "null"], format: "date-time" },
@@ -234,7 +291,22 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         },
         Column: {
           type: "object",
-          properties: { status: { type: "string", enum: [...TASK_STATUSES] }, label: { type: "string" } },
+          properties: {
+            status: statusSchema,
+            label: { type: "string" },
+            is_done: { type: "boolean", description: "Tasks in this column count as finished." },
+            custom: { type: "boolean", description: "A column the project added, not a built-in one." },
+            color: { type: ["string", "null"], description: "Hex colour of a custom column." },
+          },
+        },
+        Priority: {
+          type: "object",
+          properties: {
+            key: prioritySchema,
+            label: { type: "string" },
+            custom: { type: "boolean" },
+            color: { type: ["string", "null"] },
+          },
         },
         Comment: {
           type: "object",

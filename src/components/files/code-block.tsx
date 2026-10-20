@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useEffectiveTheme } from "@/lib/use-effective-theme";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -92,7 +93,8 @@ interface CodeBlockProps {
 export default function CodeBlock({ url, language, plain }: CodeBlockProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [dark, setDark] = useState(false);
+  // Follows the app's theme switcher live, not just the OS setting.
+  const dark = useEffectiveTheme() === "dark";
 
   useEffect(() => {
     let cancelled = false;
@@ -117,31 +119,6 @@ export default function CodeBlock({ url, language, plain }: CodeBlockProps) {
     };
   }, [url]);
 
-  // Match the viewer's theme to the page, including live changes - both the
-  // OS-level scheme (matchMedia) and the app's own theme toggle, which sets
-  // data-theme on <html> with no OS-level change involved. Reading
-  // data-theme only once, outside resolve(), meant switching the app's
-  // theme while a code file was already open left the syntax highlighter's
-  // theme (oneDark/oneLight) stale relative to the rest of the repainted UI.
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-color-scheme: dark)");
-    const root = document.documentElement;
-
-    const resolve = () => {
-      const explicit = root.getAttribute("data-theme");
-      setDark(explicit === "dark" || (explicit !== "light" && query.matches));
-    };
-
-    resolve();
-    query.addEventListener("change", resolve);
-    const observer = new MutationObserver(resolve);
-    observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-
-    return () => {
-      query.removeEventListener("change", resolve);
-      observer.disconnect();
-    };
-  }, []);
 
   if (error) {
     return (

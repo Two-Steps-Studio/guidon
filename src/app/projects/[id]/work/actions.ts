@@ -60,11 +60,11 @@ export async function moveTask(
   }
 
   const { data: moved, error } = await db
-    .from<{ id: string; title: string }>("tasks")
+    .from<{ id: string; title: string; is_done: boolean }>("tasks")
     .update(plan ? { status } : { status, sort_order: Math.round(sortOrder) })
     .eq("id", taskId)
     .eq("project_id", projectId)
-    .select("id, title")
+    .select("id, title, is_done")
     .maybeSingle();
   if (error) return { error: error.message };
   if (!moved) return { error: "This task could not be found in this project." };
@@ -80,7 +80,8 @@ export async function moveTask(
   emitTaskEvent(
     projectId,
     access.userId,
-    status === "done"
+    // is_done, not status === "done": a project's own done column finishes too.
+    moved.is_done
       ? { kind: "completed", taskId, title: moved.title }
       : { kind: "status_changed", taskId, title: moved.title, status }
   );

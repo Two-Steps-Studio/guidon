@@ -4,6 +4,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getApiUserClient } from "./api-key-auth";
 import { emitTaskEvent } from "@/lib/events/task-events";
+import { apiDataClient } from "./api-data-client";
 import type { TaskStatus } from "@/types/task";
 import type { ActivityAction } from "@/types/api";
 
@@ -88,7 +89,16 @@ async function setStatusAndLog(
 ): Promise<TransitionResult> {
   if (hasDirectDatabase()) {
     return withUser(userId, async ({ query }) => {
-      const result = await query("UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *", [newStatus, taskId]);
+      let result;
+      try {
+        result = await query("UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *", [newStatus, taskId]);
+      } catch (error) {
+        // validate_task_workflow (060): a status the project has no column for.
+        if ((error as { code?: string }).code === "23514") {
+          return { ok: false, error: (error as Error).message, status: 400 };
+        }
+        throw error;
+      }
       // tasks_select (any project member, including viewer) is broader than
       // tasks_update (owner/admin/developer only) - loadProjectContext's own
       // SELECT above already proved the task is visible to this API key's
@@ -113,7 +123,7 @@ async function setStatusAndLog(
       emitTaskEvent(
         projectId,
         userId,
-        newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus }
+        result.rows[0].is_done ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus }
       );
       return { ok: true, task: result.rows[0] };
     });
@@ -152,7 +162,7 @@ async function setStatusAndLog(
   emitTaskEvent(
     projectId,
     userId,
-    newStatus === "done" ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus },
+    (data as { is_done?: boolean }).is_done ? { kind: "completed", taskId, title } : { kind: "status_changed", taskId, title, status: newStatus },
     supabase
   );
 
@@ -228,6 +238,18 @@ export async function completeTask(userId: string, taskId: string, actor: Transi
   );
 }
 
+/** The built-in done, or one of the project's own columns marked as done (migration 060). */
+async function isDoneStatus(userId: string, projectId: string, status: string): Promise<boolean> {
+  if (status === "done") return true;
+  const { data } = await apiDataClient(userId)
+    .from<{ is_done: boolean }>("project_board_columns")
+    .select("is_done")
+    .eq("project_id", projectId)
+    .eq("status", status)
+    .maybeSingle();
+  return !!data?.is_done;
+}
+
 export async function setTaskStatus(
   userId: string,
   taskId: string,
@@ -244,7 +266,11 @@ export async function setTaskStatus(
     if (!ctx.permissions.can_change_status) {
       return { ok: false, error: "AI is not permitted to change task status on this project.", status: 403 };
     }
-    if (newStatus === "done" && !(ctx.allowAutoComplete && ctx.permissions.can_complete_tasks)) {
+    // A custom done column finishes the task too - same permission as /complete.
+    if (
+      (await isDoneStatus(userId, ctx.projectId, newStatus)) &&
+      !(ctx.allowAutoComplete && ctx.permissions.can_complete_tasks)
+    ) {
       return {
         ok: false,
         error: "Completing a task requires allow_ai_auto_complete and the can_complete_tasks permission. Use /review instead.",

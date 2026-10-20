@@ -6,15 +6,16 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   DUE_STATE_CLASSES,
-  PRIORITY_DOT_CLASSES,
   dueState,
   formatDueDate,
-  isDone,
-  normalizeTaskPriority,
+  isNewTask,
+  isTaskDone,
+  priorityDef,
+  priorityDot,
 } from "@/lib/work/task-board";
 import type { Task, TaskStatus } from "@/types/task";
 import type { BoardColumn, SubtaskProgress } from "@/lib/work/task-board";
-import { CalendarDays, CheckCircle2, ListChecks, MessageSquare, MoreVertical } from "lucide-react";
+import { CalendarDays, CheckCircle2, CheckSquare, ListChecks, MessageSquare, MoreVertical, Square } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LabelChip } from "@/components/work/label-chip";
 import { useLabelPresets } from "@/components/work/label-presets-context";
+import { usePriorities } from "@/components/work/workflow-context";
 import { findLabelPreset } from "@/lib/work/label-presets";
 
 export interface TaskCardMember {
@@ -83,19 +85,43 @@ interface TaskCardProps {
   onSelect?: (task: Task, range: boolean) => void;
 }
 
-/** One plain-text line of a (markdown) description for the card, or "" when there is none. */
-function descriptionPreview(description: string | null | undefined): string {
-  if (!description) return "";
-  return description
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/^\s*[-*+]\s+\[[xX]\]\s+/gm, "☑ ")
-    .replace(/^\s*[-*+]\s+\[ \]\s+/gm, "☐ ")
-    .replace(/^\s*[-*+]\s+/gm, "• ")
-    .replace(/[#>*_~`|]/g, "")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\s+/g, " ")
-    .trim();
+/**
+ * A (markdown) description as plain-text lines for the card: each list or
+ * checklist item its own line, the way it was written, instead of all of it
+ * run together; each paragraph of prose one line. Empty when there's nothing
+ * to show.
+ */
+export function descriptionPreview(description: string | null | undefined): { text: string; item: boolean }[] {
+  if (!description) return [];
+  const lines: { text: string; item: boolean }[] = [];
+  let prose: string[] = [];
+  const flush = () => {
+    if (prose.length) lines.push({ text: prose.join(" "), item: false });
+    prose = [];
+  };
+  for (const raw of description.replace(/```[\s\S]*?```/g, "\n").split("\n")) {
+    const item = raw.match(/^\s*(?:[-*+]|\d+[.)])\s+(\[[ xX]\]\s+)?(.*)$/);
+    const text = (item ? item[2] : raw)
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[#>*_~`|]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (item) {
+      flush();
+      if (text) lines.push({ text: `${item[1] ? (/x/i.test(item[1]) ? "☑" : "☐") : "•"} ${text}`, item: true });
+    } else if (text) {
+      prose.push(text);
+    } else {
+      flush();
+    }
+  }
+  flush();
+  return lines;
 }
+
+/** How many description lines a card shows. */
+const CARD_DESCRIPTION_LINES = 4;
 
 interface Gesture {
   pointerId: number;
@@ -146,10 +172,13 @@ function TaskCardComponent({
   onSelect,
 }: TaskCardProps) {
   const t = useTranslations("work");
-  const priority = normalizeTaskPriority(task.priority);
+  const priorities = usePriorities();
+  const priority = priorityDef(task.priority, priorities);
+  const priorityStyle = priorityDot(task.priority, priorities);
   const preview = descriptionPreview(task.description);
-  const done = isDone(task.status);
-  const due = dueState(task.due_date, task.status);
+  const fresh = isNewTask(task);
+  const done = isTaskDone(task);
+  const due = dueState(task.due_date, task.status, done);
   const tags = task.tags ?? [];
   const labelPresets = useLabelPresets();
 
@@ -345,7 +374,8 @@ function TaskCardComponent({
         ) : (
           <span
             aria-hidden
-            className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", PRIORITY_DOT_CLASSES[priority])}
+            className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", priorityStyle.className)}
+            style={priorityStyle.style}
           />
         )}
         <h4
@@ -355,6 +385,11 @@ function TaskCardComponent({
           )}
         >
           {task.title}
+          {fresh && (
+            <span className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded bg-primary/10 px-1 py-px align-middle text-[10px] font-semibold uppercase leading-3 tracking-wide text-primary">
+              {t("newBadge")}
+            </span>
+          )}
         </h4>
         {onMoveTo && moveTargets && moveTargets.length > 0 && (
           <DropdownMenu>
@@ -380,8 +415,35 @@ function TaskCardComponent({
         )}
       </div>
 
-      {preview && (
-        <p className="mt-1 pl-3.5 text-xs leading-snug text-muted-foreground line-clamp-2">{preview}</p>
+      {preview.length > 0 && (
+        // A paragraph gets up to two lines, a list item one, so a list in the
+        // description still shows as a list instead of being cut off by prose.
+        <div className="mt-1 space-y-0.5 pl-3.5 text-xs leading-snug text-muted-foreground">
+          {preview.slice(0, CARD_DESCRIPTION_LINES).map((line, index) => (
+            <p key={index} className={line.item ? "truncate" : "line-clamp-2"}>
+              {line.text}
+              {index === CARD_DESCRIPTION_LINES - 1 && preview.length > CARD_DESCRIPTION_LINES && " …"}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {subtaskProgress?.items && subtaskProgress.items.length > 0 && (
+        <ul className="mt-1.5 space-y-0.5 pl-3.5 text-xs text-muted-foreground" aria-label={t("subtasksScreenReader")}>
+          {subtaskProgress.items.map((item) => (
+            <li key={item.id} className="flex items-center gap-1.5">
+              {item.done ? (
+                <CheckSquare className="h-3 w-3 shrink-0 text-success" aria-hidden />
+              ) : (
+                <Square className="h-3 w-3 shrink-0" aria-hidden />
+              )}
+              <span className={cn("truncate", item.done && "line-through")}>{item.title}</span>
+            </li>
+          ))}
+          {subtaskProgress.total > subtaskProgress.items.length && (
+            <li className="pl-[18px]">+{subtaskProgress.total - subtaskProgress.items.length}</li>
+          )}
+        </ul>
       )}
 
       {tags.length > 0 && (
@@ -411,7 +473,7 @@ function TaskCardComponent({
 
       <div className="mt-3 flex items-center gap-3 pl-3.5 text-[11px] text-muted-foreground">
         <span className="sr-only">{t("priorityScreenReader")}</span>
-        <span className="tabular-nums">{t("priority", { priority })}</span>
+        <span className="tabular-nums">{priority.label}</span>
 
         {task.due_date && due !== "none" && (
           <span className={cn("flex items-center gap-1", DUE_STATE_CLASSES[due])}>

@@ -4,17 +4,31 @@ import { z } from "zod";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
-import { BOARD_COLUMNS } from "@/lib/work/task-board";
+import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
 import type { GuidonSection } from "../types";
 import type { IdRemapper } from "../id-remapper";
 
-const TaskStatusEnum = z.enum(["backlog", "todo", "in_progress", "ai_working", "review", "done"]);
-const TaskPriorityEnum = z.enum(["low", "medium", "high", "critical"]);
+// Keys, not fixed lists: projects define their own columns and priorities
+// (migration 060). Files from before that only ever hold the built-ins.
+const WorkflowKey = z.string().regex(/^[a-z][a-z0-9_]{0,39}$/);
+const TaskStatusEnum = WorkflowKey;
+const TaskPriorityEnum = WorkflowKey;
+const HexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional();
 
 const ColumnOverrideSchema = z.object({
   status: TaskStatusEnum,
-  label: z.string().nullable(),
+  label: z.string().max(50).nullable(),
   sortOrder: z.number().int(),
+  hidden: z.boolean(),
+  isDone: z.boolean().optional(),
+  color: HexColor,
+});
+
+const PrioritySchema = z.object({
+  key: TaskPriorityEnum,
+  label: z.string().max(50).nullable(),
+  color: HexColor,
+  rank: z.number().int(),
   hidden: z.boolean(),
 });
 
@@ -37,13 +51,24 @@ const TaskSchema = z.object({
 });
 
 const TaskBoardSchema = z.object({
-  columns: z.array(ColumnOverrideSchema).default([]),
+  columns: z.array(ColumnOverrideSchema).max(100).default([]),
+  priorities: z.array(PrioritySchema).max(100).default([]),
   // Cap independent of any plan's task limit - insertTasksInDependencyOrder
   // inserts one row at a time inside a single withUser() connection (or one
   // request per row on the Supabase path), so an unbounded array is a
   // resource-exhaustion vector on its own before the plan-limit check in
   // import-actions.ts even runs.
   tasks: z.array(TaskSchema).max(5000, "A .guidon file can contain at most 5000 tasks.").default([]),
+}).superRefine((board, ctx) => {
+  // A task can only use a built-in status/priority or one the file defines
+  // - checked here so a bad file gets a clear message instead of failing
+  // halfway through the import on the database's own check.
+  const statuses = new Set<string>([...TASK_STATUSES, ...board.columns.map((c) => c.status)]);
+  const priorities = new Set<string>([...TASK_PRIORITIES, ...board.priorities.map((p) => p.key)]);
+  const badStatus = board.tasks.find((task) => !statuses.has(task.status));
+  if (badStatus) ctx.addIssue({ code: "custom", message: `Task "${badStatus.title}" uses status "${badStatus.status}", which the file doesn't define.` });
+  const badPriority = board.tasks.find((task) => !priorities.has(task.priority));
+  if (badPriority) ctx.addIssue({ code: "custom", message: `Task "${badPriority.title}" uses priority "${badPriority.priority}", which the file doesn't define.` });
 });
 
 export type TaskBoardData = z.infer<typeof TaskBoardSchema>;
@@ -69,7 +94,34 @@ interface ColumnRow {
   label: string | null;
   sort_order: number;
   hidden: boolean;
+  is_done: boolean;
+  color: string | null;
 }
+
+interface PriorityRow {
+  key: string;
+  label: string | null;
+  color: string | null;
+  rank: number;
+  hidden: boolean;
+}
+
+const toColumnExport = (row: ColumnRow): TaskBoardData["columns"][number] => ({
+  status: row.status,
+  label: row.label,
+  sortOrder: row.sort_order,
+  hidden: row.hidden,
+  isDone: row.is_done,
+  color: row.color,
+});
+
+const toPriorityExport = (row: PriorityRow): TaskBoardData["priorities"][number] => ({
+  key: row.key,
+  label: row.label,
+  color: row.color,
+  rank: row.rank,
+  hidden: row.hidden,
+});
 
 function toTaskExport(row: TaskRow): TaskBoardData["tasks"][number] {
   return {
@@ -138,7 +190,7 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
 
   async exportData(projectId, userId) {
     if (hasDirectDatabase()) {
-      const [tasksResult, columnsResult] = await Promise.all([
+      const [tasksResult, columnsResult, prioritiesResult] = await Promise.all([
         withUser(userId, ({ query }) =>
           query(
             `SELECT id, title, description, status, priority, tags, due_date, progress_percent,
@@ -148,25 +200,25 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
           )
         ),
         withUser(userId, ({ query }) =>
-          query("SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1", [
-            projectId,
-          ])
+          query(
+            "SELECT status, label, sort_order, hidden, is_done, color FROM project_board_columns WHERE project_id = $1",
+            [projectId]
+          )
+        ),
+        withUser(userId, ({ query }) =>
+          query("SELECT key, label, color, rank, hidden FROM project_task_priorities WHERE project_id = $1", [projectId])
         ),
       ]);
 
       return {
-        columns: (columnsResult.rows as ColumnRow[]).map((row) => ({
-          status: row.status as z.infer<typeof TaskStatusEnum>,
-          label: row.label,
-          sortOrder: row.sort_order,
-          hidden: row.hidden,
-        })),
+        columns: (columnsResult.rows as ColumnRow[]).map(toColumnExport),
+        priorities: (prioritiesResult.rows as PriorityRow[]).map(toPriorityExport),
         tasks: (tasksResult.rows as TaskRow[]).map(toTaskExport),
       };
     }
 
     const supabase = await createClient();
-    const [tasksResult, columnsResult] = await Promise.all([
+    const [tasksResult, columnsResult, prioritiesResult] = await Promise.all([
       supabase
         .from("tasks")
         .select(
@@ -175,17 +227,14 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
         .eq("project_id", projectId),
       supabase
         .from("project_board_columns")
-        .select("status, label, sort_order, hidden")
+        .select("status, label, sort_order, hidden, is_done, color")
         .eq("project_id", projectId),
+      supabase.from("project_task_priorities").select("key, label, color, rank, hidden").eq("project_id", projectId),
     ]);
 
     return {
-      columns: ((columnsResult.data ?? []) as ColumnRow[]).map((row) => ({
-        status: row.status as z.infer<typeof TaskStatusEnum>,
-        label: row.label,
-        sortOrder: row.sort_order,
-        hidden: row.hidden,
-      })),
+      columns: ((columnsResult.data ?? []) as ColumnRow[]).map(toColumnExport),
+      priorities: ((prioritiesResult.data ?? []) as PriorityRow[]).map(toPriorityExport),
       tasks: ((tasksResult.data ?? []) as TaskRow[]).map(toTaskExport),
     };
   },
@@ -194,13 +243,24 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
     if (hasDirectDatabase()) {
       await withUser(userId, async ({ query }) => {
         await query("DELETE FROM tasks WHERE project_id = $1", [projectId]);
-        // Reset, not DELETE: project_board_columns has no DELETE grant or
-        // policy (020), so deleting failed every import with "permission
-        // denied". A row holding the defaults reads exactly like no row.
-        for (const [index, column] of BOARD_COLUMNS.entries()) {
+        // The file's columns and priorities replace the project's, and go in
+        // before the tasks: a task's status/priority must exist in the
+        // project (validate_task_workflow, 060). Deletable now that 060
+        // granted DELETE; with the tasks gone nothing is in use.
+        await query("DELETE FROM project_board_columns WHERE project_id = $1", [projectId]);
+        await query("DELETE FROM project_task_priorities WHERE project_id = $1", [projectId]);
+        for (const column of data.columns) {
           await query(
-            "UPDATE project_board_columns SET label = NULL, sort_order = $3, hidden = false, updated_at = now() WHERE project_id = $1 AND status = $2",
-            [projectId, column.status, index]
+            `INSERT INTO project_board_columns (project_id, status, label, sort_order, hidden, is_done, color, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, now())`,
+            [projectId, column.status, column.label, column.sortOrder, column.hidden, column.isDone ?? false, column.color ?? null]
+          );
+        }
+        for (const priority of data.priorities) {
+          await query(
+            `INSERT INTO project_task_priorities (project_id, key, label, color, rank, hidden)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [projectId, priority.key, priority.label, priority.color ?? null, priority.rank, priority.hidden]
           );
         }
 
@@ -247,16 +307,6 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
           },
           idMap
         );
-
-        for (const column of data.columns) {
-          await query(
-            `INSERT INTO project_board_columns (project_id, status, label, sort_order, hidden, updated_at)
-             VALUES ($1, $2, $3, $4, $5, now())
-             ON CONFLICT (project_id, status) DO UPDATE SET
-               label = EXCLUDED.label, sort_order = EXCLUDED.sort_order, hidden = EXCLUDED.hidden, updated_at = now()`,
-            [projectId, column.status, column.label, column.sortOrder, column.hidden]
-          );
-        }
       });
       return;
     }
@@ -284,6 +334,12 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
       .eq("project_id", projectId);
     if (oldColumnsError) throw new Error(`Failed to read existing board columns: ${oldColumnsError.message}`);
 
+    const { data: oldPriorities, error: oldPrioritiesError } = await supabase
+      .from("project_task_priorities")
+      .select("key")
+      .eq("project_id", projectId);
+    if (oldPrioritiesError) throw new Error(`Failed to read existing priorities: ${oldPrioritiesError.message}`);
+
     // See the matching comment in the direct-Postgres branch above: an
     // exported assignee only carries over if that person is a member of
     // the target project.
@@ -293,6 +349,40 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
       .eq("project_id", projectId);
     if (membersError) throw new Error(`Failed to read project members: ${membersError.message}`);
     const memberIds = new Set((members ?? []).map((m) => m.user_id));
+
+    // Columns and priorities first: a task's status/priority must exist in
+    // the project before the task goes in (validate_task_workflow, 060).
+    if (data.columns.length > 0) {
+      const { error } = await supabase.from("project_board_columns").upsert(
+        data.columns.map((column) => ({
+          project_id: projectId,
+          status: column.status,
+          label: column.label,
+          sort_order: column.sortOrder,
+          hidden: column.hidden,
+          is_done: column.isDone ?? false,
+          color: column.color ?? null,
+          updated_at: new Date().toISOString(),
+        })),
+        { onConflict: "project_id,status" }
+      );
+      if (error) throw new Error(`Failed to import board columns: ${error.message}`);
+    }
+    if (data.priorities.length > 0) {
+      const { error } = await supabase.from("project_task_priorities").upsert(
+        data.priorities.map((priority) => ({
+          project_id: projectId,
+          key: priority.key,
+          label: priority.label,
+          color: priority.color ?? null,
+          rank: priority.rank,
+          hidden: priority.hidden,
+          updated_at: new Date().toISOString(),
+        })),
+        { onConflict: "project_id,key" }
+      );
+      if (error) throw new Error(`Failed to import priorities: ${error.message}`);
+    }
 
     await insertTasksInDependencyOrder(
       data.tasks,
@@ -324,24 +414,8 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
       idMap
     );
 
-    if (data.columns.length > 0) {
-      const { error } = await supabase.from("project_board_columns").upsert(
-        data.columns.map((column) => ({
-          project_id: projectId,
-          status: column.status,
-          label: column.label,
-          sort_order: column.sortOrder,
-          hidden: column.hidden,
-          updated_at: new Date().toISOString(),
-        })),
-        { onConflict: "project_id,status" }
-      );
-      if (error) throw new Error(`Failed to import board columns: ${error.message}`);
-    }
-
     // Only now remove what the new data didn't replace - old tasks (fresh
-    // ids mean no collision with what was just inserted) - and reset any
-    // column override for a status this import doesn't mention.
+    // ids mean no collision with what was just inserted).
     if (oldTasks && oldTasks.length > 0) {
       const { error } = await supabase
         .from("tasks")
@@ -350,22 +424,27 @@ export const taskBoardSection: GuidonSection<TaskBoardData> = {
       if (error) throw new Error(`Failed to remove replaced tasks: ${error.message}`);
     }
 
+    // Then the old columns and priorities the file doesn't have - after the
+    // old tasks, so none of them is still in use.
     const newStatuses = new Set(data.columns.map((c) => c.status));
-    const staleStatuses = (oldColumns ?? []).map((c) => c.status).filter((s) => !newStatuses.has(s));
-    // Reset to the defaults rather than delete - see the direct-Postgres
-    // branch: the table has no DELETE grant.
-    for (const status of staleStatuses) {
+    const staleStatuses = (oldColumns ?? []).map((c) => c.status).filter((status) => !newStatuses.has(status));
+    if (staleStatuses.length > 0) {
       const { error } = await supabase
         .from("project_board_columns")
-        .update({
-          label: null,
-          sort_order: BOARD_COLUMNS.findIndex((column) => column.status === status),
-          hidden: false,
-          updated_at: new Date().toISOString(),
-        })
+        .delete()
         .eq("project_id", projectId)
-        .eq("status", status);
-      if (error) throw new Error(`Failed to reset stale board columns: ${error.message}`);
+        .in("status", staleStatuses);
+      if (error) throw new Error(`Failed to remove stale board columns: ${error.message}`);
+    }
+    const newPriorities = new Set(data.priorities.map((p) => p.key));
+    const stalePriorities = (oldPriorities ?? []).map((p) => p.key).filter((key) => !newPriorities.has(key));
+    if (stalePriorities.length > 0) {
+      const { error } = await supabase
+        .from("project_task_priorities")
+        .delete()
+        .eq("project_id", projectId)
+        .in("key", stalePriorities);
+      if (error) throw new Error(`Failed to remove stale priorities: ${error.message}`);
     }
   },
 };

@@ -200,7 +200,9 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
       updateTab(path, {
         saving: false,
         saveError: null,
-        sha: result.sha ?? sha,
+        // A PR commit lands on the new branch - the base branch, which the
+        // next commit goes to by default, still has the file as it was.
+        sha: mode === "pr" ? sha : (result.sha ?? sha),
         dirty: false,
         success: { commitUrl: result.commitUrl, pullRequestUrl: result.pullRequestUrl },
       });

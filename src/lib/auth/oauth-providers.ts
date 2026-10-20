@@ -5,54 +5,55 @@
  * install that has not set a provider up simply does not offer it - rather
  * than showing a button that fails on click.
  *
- * `guidon-tss` is Guidon-specific: signing in with a Two Steps Studio account.
- * It is deliberately optional. TODO.md §1 requires self-hosted Guidon to work
- * when the user has no TSS account and when TSS servers are unreachable, so it
- * must never be the only way in.
+ * Two mechanisms, decided by the install's mode:
+ * - hosted (Supabase Auth): NEXT_PUBLIC_AUTH_PROVIDERS lists the Supabase
+ *   providers switched on in the Supabase dashboard (docs/auth-setup.md);
+ * - self-hosted (DATABASE_URL): Guidon's own OAuth/OIDC client, each provider
+ *   on when its keys are in the environment (oauth-local-core.ts). The
+ *   generic `oidc` one is how a Two Steps Studio account - or Keycloak,
+ *   Authentik, Entra ID - signs in. It is optional by design: TODO.md §1
+ *   requires self-hosted Guidon to work without any TSS account or server.
  */
 
-export type OAuthProviderId = "google" | "discord" | "tss";
+import { localOAuthProviders, type LocalOAuthId } from "@/lib/auth/oauth-local-core";
 
-export interface OAuthProviderConfig {
+export type OAuthProviderId = "google" | "github" | "discord" | "gitlab" | "oidc";
+
+export interface OAuthButtonProvider {
   id: OAuthProviderId;
   label: string;
-  /** Supabase provider name; absent for TSS, which is not a Supabase provider. */
-  supabaseProvider?: "google" | "discord";
 }
 
-export const OAUTH_PROVIDERS: Record<OAuthProviderId, OAuthProviderConfig> = {
-  google: {
-    id: "google",
-    label: "Google",
-    supabaseProvider: "google",
-  },
-  discord: {
-    id: "discord",
-    label: "Discord",
-    supabaseProvider: "discord",
-  },
-  tss: {
-    id: "tss",
-    label: "Two Steps Studio",
-  },
+export interface OAuthSetup {
+  /** `supabase`: signInWithOAuth; `local`: /auth/oauth/<id>. */
+  mode: "supabase" | "local";
+  providers: OAuthButtonProvider[];
+}
+
+/** Supabase's own provider names for the hosted buttons. */
+const SUPABASE_PROVIDERS: Partial<Record<OAuthProviderId, OAuthButtonProvider>> = {
+  google: { id: "google", label: "Google" },
+  github: { id: "github", label: "GitHub" },
+  discord: { id: "discord", label: "Discord" },
+  gitlab: { id: "gitlab", label: "GitLab" },
 };
 
 /**
- * Providers enabled for this deployment.
+ * Server-side (login/signup pages): which buttons to show and how they work.
  *
- * Read from NEXT_PUBLIC_AUTH_PROVIDERS as a comma-separated list, e.g.
- *
- *   NEXT_PUBLIC_AUTH_PROVIDERS=google,discord,tss
- *
- * Empty or unset means password-only, which is the correct default for a
- * fresh self-hosted install with nothing configured yet.
+ * Hosted: NEXT_PUBLIC_AUTH_PROVIDERS, a comma-separated list such as
+ * `google,github,discord`. Empty or unset means password-only.
  */
-export function enabledOAuthProviders(): OAuthProviderConfig[] {
-  const raw = process.env.NEXT_PUBLIC_AUTH_PROVIDERS ?? "";
-
-  return raw
+export function oauthSetup(local: boolean): OAuthSetup {
+  if (local) {
+    return {
+      mode: "local",
+      providers: localOAuthProviders(process.env).map(({ id, label }) => ({ id: id as LocalOAuthId, label })),
+    };
+  }
+  const providers = (process.env.NEXT_PUBLIC_AUTH_PROVIDERS ?? "")
     .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter((value): value is OAuthProviderId => value in OAUTH_PROVIDERS)
-    .map((id) => OAUTH_PROVIDERS[id]);
+    .map((value) => SUPABASE_PROVIDERS[value.trim().toLowerCase() as OAuthProviderId])
+    .filter((provider): provider is OAuthButtonProvider => Boolean(provider));
+  return { mode: "supabase", providers: [...new Map(providers.map((p) => [p.id, p])).values()] };
 }

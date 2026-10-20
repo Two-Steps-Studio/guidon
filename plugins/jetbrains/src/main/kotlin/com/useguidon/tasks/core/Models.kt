@@ -23,6 +23,12 @@ data class GuidonTask(
     val tags: List<String>,
     /** Fractional on purpose - the web board inserts at midpoints (task-board.ts sortOrderForPosition). */
     val sortOrder: Double,
+    /**
+     * The server's `is_done` (true when the task sits in a done column, which a
+     * project can define itself). null when an older server doesn't send it -
+     * then Board.isDone falls back to the column list / `status == "done"`.
+     */
+    val isDone: Boolean? = null,
 ) {
     val isSubtask get() = parentTaskId.isNotEmpty()
 }
@@ -40,8 +46,32 @@ data class GuidonReference(
     val displayName get() = caption.ifEmpty { name }
 }
 
-/** One visible board column: a fixed status with the project's (possibly renamed) label. */
-data class BoardColumn(val status: String, val label: String)
+/**
+ * One visible board column (GET /api/v1/projects/{id}/columns): a built-in or
+ * project-defined status key with its label. [isDone] marks a column whose
+ * tasks count as finished; [color] is the project's "#rrggbb" or "" for the
+ * built-in colour. Older servers send only status/label - the defaults then
+ * make `done` the only done column.
+ */
+data class BoardColumn(
+    val status: String,
+    val label: String,
+    val isDone: Boolean = status == "done",
+    val custom: Boolean = false,
+    val color: String = "",
+)
+
+/**
+ * One task priority (GET /api/v1/projects/{id}/priorities). The list comes
+ * most important first, so its index is the rank. [color] is "#rrggbb" or ""
+ * for the plugin's built-in colour of that key.
+ */
+data class PriorityOption(
+    val key: String,
+    val label: String,
+    val color: String = "",
+    val custom: Boolean = false,
+)
 
 data class GuidonComment(
     val id: String,
@@ -51,13 +81,23 @@ data class GuidonComment(
 )
 
 /**
- * Guidon's task vocabulary, mirrored by hand from src/lib/work/task-board.ts
- * (BOARD_COLUMNS / TASK_PRIORITIES) - a manual-sync point, same as the
- * Unity plugin's GuidonVocabulary.
+ * Guidon's built-in task vocabulary, mirrored by hand from
+ * src/lib/work/task-board.ts (BOARD_COLUMNS / TASK_PRIORITIES) - a
+ * manual-sync point, same as the Unity plugin's GuidonVocabulary. Projects can
+ * add their own statuses and priorities (migration 060), so these are only
+ * the fallback when the server can't say; any other key is kept as-is and
+ * shown with its key as label and a neutral colour.
  */
 object Vocabulary {
     val statuses = listOf("backlog", "todo", "in_progress", "ai_working", "review", "done")
-    val priorities = listOf("low", "medium", "high", "critical")
+
+    /** Built-in priorities, most important first (task-board.ts PRIORITY_RANK). */
+    val priorities = listOf("critical", "high", "medium", "low")
+
+    /** What a project-defined status or priority key may look like (the server's own rule). */
+    private val customKey = Regex("^[a-z][a-z0-9_]{0,39}$")
+
+    fun isValidKey(key: String): Boolean = customKey.matches(key)
 
     fun statusLabel(status: String) = when (status) {
         "backlog" -> "Backlog"
@@ -69,10 +109,20 @@ object Vocabulary {
         else -> status
     }
 
-    fun priorityLabel(priority: String) = priority.replaceFirstChar { it.uppercase() }
+    /** The project's label for [priority]; a built-in's default label; otherwise the raw key. */
+    fun priorityLabel(priority: String, options: List<PriorityOption> = defaultPriorities): String =
+        options.find { it.key == priority }?.label
+            ?: if (priority in priorities) priority.replaceFirstChar { it.uppercase() } else priority
+
+    /** The project's "#rrggbb" for [priority], or "" (built-in / unknown colour). */
+    fun priorityColor(priority: String, options: List<PriorityOption>): String =
+        options.find { it.key == priority }?.color.orEmpty()
 
     /** What the board shows when the server can't say (an older Guidon without the columns endpoint). */
     val defaultColumns = statuses.map { BoardColumn(it, statusLabel(it)) }
+
+    /** What the pickers offer when the server can't say (an older Guidon without the priorities endpoint). */
+    val defaultPriorities = priorities.map { PriorityOption(it, it.replaceFirstChar { c -> c.uppercase() }) }
 }
 
 /** Board ordering rules, shared by the UI and the tests. */
@@ -80,6 +130,21 @@ object Board {
     /** Top-level tasks of one column, by sort_order; ties keep the API's newest-first order. */
     fun column(tasks: List<GuidonTask>, status: String): List<GuidonTask> =
         tasks.filter { it.status == status && !it.isSubtask }.sortedBy { it.sortOrder }
+
+    /**
+     * Whether [task] counts as finished: the server's `is_done` when it sent
+     * one, else its column's `is_done`, else (older servers) `status == "done"`.
+     */
+    fun isDone(task: GuidonTask, columns: List<BoardColumn>): Boolean =
+        task.isDone ?: isDoneStatus(task.status, columns)
+
+    /** Whether [status] is a done column of the project; `done` alone when the column list doesn't know it. */
+    fun isDoneStatus(status: String, columns: List<BoardColumn>): Boolean =
+        columns.find { it.status == status }?.isDone ?: (status == "done")
+
+    /** Importance rank of [priority] in the project's list (0 = most important); unknown keys sort last. */
+    fun priorityRank(priority: String, options: List<PriorityOption>): Int =
+        options.indexOfFirst { it.key == priority }.let { if (it < 0) options.size else it }
 
     /** Filed by the website widget or an in-game reporter - the reports route tags it "web" or "in-game". */
     fun isReport(task: GuidonTask): Boolean = task.tags.any { it == "web" || it == "in-game" }

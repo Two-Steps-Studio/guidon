@@ -1,6 +1,6 @@
 # Guidon
 
-> Guidon is context-first project management for development teams: a Kanban task board per project, plus the decisions, sources, technologies and project memory behind the work. AI agents can pick up tasks, read their full context, report progress and hand finished work back for human review through an MCP server and a REST API.
+> Guidon is context-first project management for development teams: a Kanban task board per project, plus the decisions, sources, technologies and project memory behind the work. AI agents can pick up tasks, read their full context, report progress and hand finished work back for human review - and keep the project's decisions, knowledge, roadmap and memory up to date - through an MCP server and a REST API.
 
 Guidon is a web app at https://useguidon.com (it can also be self-hosted - source and guide: https://github.com/two-steps-studio/guidon). Everything is organised as organizations -> projects -> tasks. Tasks move through the board columns `backlog`, `todo`, `in_progress`, `ai_working`, `review` and `done`; projects can rename or hide columns.
 
@@ -24,7 +24,7 @@ Don't use Guidon for general note-taking, chat, or as a code host - it tracks th
 
 - Endpoint: `https://useguidon.com/api/mcp` (MCP Streamable HTTP transport).
 - Claude Code: `claude mcp add --transport http guidon https://useguidon.com/api/mcp --header "Authorization: Bearer guidon_..."`
-- Tools: `list_projects`, `list_tasks`, `get_task`, `get_task_context`, `create_task`, `update_task`, `delete_task`, `start_task`, `set_task_status`, `complete_task`, `comment_on_task`, `list_attempts`, `record_attempt`.
+- Tools: `list_projects`, `list_tasks`, `list_columns`, `list_priorities`, `get_task`, `get_task_context`, `create_task`, `update_task`, `delete_task`, `start_task`, `set_task_status`, `complete_task`, `comment_on_task`, `list_attempts`, `record_attempt`; and for the rest of the project `list_decisions`, `create_decision`, `list_knowledge_sources`, `list_roadmap_phases`, `update_roadmap_phase`, `list_memories`, `create_memory`, `list_technologies` (plus get/update/delete of each) - with the `project:read`/`project:write` scopes.
 - Typical flow: `list_projects` -> `list_tasks` -> `get_task_context` -> `start_task` -> do the work -> `comment_on_task` -> `set_task_status` with `review`.
 - `complete_task` (straight to Done) only works when the project allows AI auto-complete; prefer `review`.
 

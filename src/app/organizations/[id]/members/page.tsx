@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ArrowLeft, Mail, Plus, Shield, Users } from "lucide-react";
+import { ArrowLeft, Bot, Mail, Plus, Shield, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -14,6 +14,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getOrgPlanLimits, isMemberLimitReached } from "@/lib/limits";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberActionsMenu } from "./member-actions-menu";
+import { isAiAccountEmail } from "@/lib/ai-account-email";
 
 interface MemberRow {
   id: string;
@@ -40,6 +41,7 @@ export default async function OrganizationMembersPage({
   const { id: orgId } = await params;
   const t = await getTranslations("organizations.members");
   const tCommon = await getTranslations("organizations.common");
+  const tAi = await getTranslations("aiAccounts");
   const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
   const canManage = canManageOrg(access.role);
 
@@ -156,13 +158,26 @@ export default async function OrganizationMembersPage({
                 <CardContent className="flex items-center justify-between gap-3 py-4">
                   <div className="flex min-w-0 items-center gap-4">
                     <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-primary" />
+                      {isAiAccountEmail(member.profiles.email) ? (
+                        <Bot className="h-5 w-5 text-primary" />
+                      ) : (
+                        <Mail className="h-5 w-5 text-primary" />
+                      )}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate font-medium">
+                      <p className="flex items-center gap-2 truncate font-medium">
                         {member.profiles.full_name || member.profiles.email}
+                        {isAiAccountEmail(member.profiles.email) && <Badge variant="outline">{tAi("aiBadge")}</Badge>}
                       </p>
-                      <p className="truncate text-sm text-muted-foreground">{member.profiles.email}</p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {isAiAccountEmail(member.profiles.email) ? (
+                          <Link href={`/organizations/${orgId}/ai-accounts`} className="hover:underline">
+                            {tAi("title")}
+                          </Link>
+                        ) : (
+                          member.profiles.email
+                        )}
+                      </p>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2 sm:gap-4">

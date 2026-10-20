@@ -1,4 +1,4 @@
-import { Column, Comment, DEFAULT_COLUMNS, Project, Reference, STATUSES, STATUS_LABELS, Task } from "./model";
+import { Column, Comment, DEFAULT_COLUMNS, DEFAULT_PRIORITIES, HEX_COLOR, Priority, PRIORITY_LABELS, Project, Reference, STATUS_LABELS, Task, WORKFLOW_KEY } from "./model";
 
 /** Moodboard images above this are skipped rather than held in memory as data: URIs. */
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
@@ -25,19 +25,52 @@ export class GuidonApi {
     return this.field("GET", `/api/v1/projects/${projectId}/tasks`, "tasks", []);
   }
 
-  /** The project's visible columns; unknown statuses dropped, empty -> the defaults. */
+  /**
+   * The project's visible columns, in board order - built-in and the
+   * project's own (migration 060). Malformed or duplicate keys are dropped,
+   * empty -> the defaults. An older server sends only {status, label}: then
+   * `done` is the only done column.
+   */
   async listColumns(projectId: string): Promise<Result<Column[]>> {
-    const result = await this.field<Array<{ status?: unknown; label?: unknown }>>("GET", `/api/v1/projects/${projectId}/columns`, "columns", []);
+    const result = await this.field<Array<{ status?: unknown; label?: unknown; is_done?: unknown; color?: unknown }>>("GET", `/api/v1/projects/${projectId}/columns`, "columns", []);
     if (!result.ok) return result;
     const seen = new Set<string>();
     const columns: Column[] = [];
-    for (const column of result.value) {
+    for (const column of Array.isArray(result.value) ? result.value : []) {
       const status = typeof column?.status === "string" ? column.status : "";
-      if (!(STATUSES as readonly string[]).includes(status) || seen.has(status)) continue;
+      if (!WORKFLOW_KEY.test(status) || seen.has(status)) continue;
       seen.add(status);
-      columns.push({ status, label: typeof column.label === "string" && column.label ? column.label : STATUS_LABELS[status] });
+      columns.push({
+        status,
+        label: typeof column.label === "string" && column.label ? column.label : STATUS_LABELS[status] ?? status,
+        is_done: typeof column.is_done === "boolean" ? column.is_done || status === "done" : status === "done",
+        color: typeof column.color === "string" && HEX_COLOR.test(column.color) ? column.color : null,
+      });
     }
     return { ok: true, value: columns.length ? columns : DEFAULT_COLUMNS };
+  }
+
+  /**
+   * The project's priorities, most important first (migration 060), hidden
+   * ones left out. Malformed or duplicate keys are dropped, empty -> the
+   * built-ins. An older server 404s here - the caller falls back to the built-ins.
+   */
+  async listPriorities(projectId: string): Promise<Result<Priority[]>> {
+    const result = await this.field<Array<{ key?: unknown; label?: unknown; color?: unknown }>>("GET", `/api/v1/projects/${projectId}/priorities`, "priorities", []);
+    if (!result.ok) return result;
+    const seen = new Set<string>();
+    const priorities: Priority[] = [];
+    for (const priority of Array.isArray(result.value) ? result.value : []) {
+      const key = typeof priority?.key === "string" ? priority.key : "";
+      if (!WORKFLOW_KEY.test(key) || seen.has(key)) continue;
+      seen.add(key);
+      priorities.push({
+        key,
+        label: typeof priority.label === "string" && priority.label ? priority.label : PRIORITY_LABELS[key] ?? key,
+        color: typeof priority.color === "string" && HEX_COLOR.test(priority.color) ? priority.color : null,
+      });
+    }
+    return { ok: true, value: priorities.length ? priorities : DEFAULT_PRIORITIES };
   }
 
   listReferences(projectId: string): Promise<Result<Reference[]>> {

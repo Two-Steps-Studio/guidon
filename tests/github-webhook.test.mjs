@@ -9,7 +9,7 @@
  * type stripping can load it directly.
  */
 
-import { extractTaskRefs, planPullRequest, planPush, taskRef } from "../src/lib/github/task-refs.ts";
+import { extractTaskRefs, planPullRequest, planPush, shouldMove, taskRef } from "../src/lib/github/task-refs.ts";
 
 let pass = 0;
 let fail = 0;
@@ -88,6 +88,16 @@ const pr = (action, extra = {}) => ({
   check("branch-name ref", eq(planPullRequest(pr("opened", { title: "x", body: null, head: { ref: "guidon-cccccccc" } }), "main").map((a) => a.ref), ["cccccccc"]));
   check("no refs -> nothing", planPullRequest(pr("opened", { title: "x", body: "y" }), "main").length === 0);
   check("malformed payload -> nothing", planPullRequest({ action: "opened" }, "main").length === 0);
+}
+
+// Custom columns (migration 060).
+{
+  const closes = { ref: "x", eventKey: "k", comment: "", targetStatus: "done", fromStatuses: ["backlog", "todo", "in_progress", "ai_working", "review"] };
+  const opened = { ref: "x", eventKey: "k", comment: "", targetStatus: "in_progress", fromStatuses: ["backlog", "todo"] };
+  check("merge finishes a task waiting in a custom column", shouldMove(closes, "qa", false));
+  check("but not one already in a custom done column", !shouldMove(closes, "shipped", true));
+  check("an opened PR doesn't pull a task out of a custom column", !shouldMove(opened, "qa", false));
+  check("built-in rules unchanged", shouldMove(opened, "todo", false) && !shouldMove(opened, "review", false) && !shouldMove(closes, "done", true));
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

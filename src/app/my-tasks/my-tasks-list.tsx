@@ -11,12 +11,14 @@ import { moveTask } from "@/app/projects/[id]/work/actions";
 import { playSound } from "@/lib/sounds";
 import {
   DUE_STATE_CLASSES,
-  PRIORITY_DOT_CLASSES,
   dueState,
   formatDueDate,
-  normalizeTaskPriority,
+  isDone,
   normalizeTaskStatus,
+  priorityDef,
+  priorityDot,
   type BoardColumn,
+  type PriorityDef,
 } from "@/lib/work/task-board";
 import { cn } from "@/lib/utils";
 import type { Task, TaskStatus } from "@/types/task";
@@ -26,11 +28,11 @@ export interface MyTasksProject {
   name: string;
   color: string | null;
   columns: BoardColumn[];
+  priorities: PriorityDef[];
 }
 
 type Group = "overdue" | "today" | "week" | "later" | "none";
 const GROUP_ORDER: Group[] = ["overdue", "today", "week", "later", "none"];
-const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as const;
 
 /** YYYY-MM-DD of the viewer's local calendar day, `offset` days from today. */
 function localDay(offset = 0): string {
@@ -77,21 +79,24 @@ export function MyTasksList({
       list.sort(
         (a, b) =>
           dueDay(a).localeCompare(dueDay(b)) ||
-          PRIORITY_RANK[normalizeTaskPriority(a.priority)] - PRIORITY_RANK[normalizeTaskPriority(b.priority)] ||
+          priorityDef(a.priority, projects[a.project_id]?.priorities).rank -
+            priorityDef(b.priority, projects[b.project_id]?.priorities).rank ||
           a.title.localeCompare(b.title)
       );
     }
     return GROUP_ORDER.map((group) => ({ group, tasks: byGroup.get(group)! })).filter((entry) => entry.tasks.length);
-  }, [tasks]);
+  }, [tasks, projects]);
 
   const setStatus = async (task: Task, status: TaskStatus) => {
     const previous = task.status;
-    if (status === "done" && previous !== "done") playSound("complete");
-    setTasks((list) => list.map((item) => (item.id === task.id ? { ...item, status } : item)));
+    const columns = projects[task.project_id]?.columns;
+    const nowDone = isDone(status, columns);
+    if (nowDone && !isDone(previous, columns)) playSound("complete");
+    setTasks((list) => list.map((item) => (item.id === task.id ? { ...item, status, is_done: nowDone } : item)));
     // The task's own sort_order: moveTask renumbers the target column if it collides.
     const result = await moveTask(task.project_id, task.id, status, task.sort_order ?? 0);
     if (result.error) {
-      setTasks((list) => list.map((item) => (item.id === task.id ? { ...item, status: previous } : item)));
+      setTasks((list) => list.map((item) => (item.id === task.id ? { ...item, status: previous, is_done: task.is_done } : item)));
       playSound("error");
       toast.error(result.error);
     }
@@ -121,8 +126,9 @@ export function MyTasksList({
             {groupTasks.map((task) => {
               const project = projects[task.project_id];
               const status = normalizeTaskStatus(task.status);
-              const done = status === "done";
-              const due = dueState(task.due_date, task.status);
+              const done = isDone(status, project.columns);
+              const due = dueState(task.due_date, task.status, done);
+              const dot = priorityDot(task.priority, project.priorities);
               const options = project.columns.map((column) => ({ value: column.status, label: column.label }));
               if (!options.some((option) => option.value === status)) {
                 options.push({ value: status, label: status });
@@ -131,10 +137,8 @@ export function MyTasksList({
                 <li key={task.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 sm:flex-nowrap">
                   <span
                     aria-hidden
-                    className={cn(
-                      "h-2 w-2 shrink-0 rounded-full",
-                      PRIORITY_DOT_CLASSES[normalizeTaskPriority(task.priority)]
-                    )}
+                    className={cn("h-2 w-2 shrink-0 rounded-full", dot.className)}
+                    style={dot.style}
                   />
                   <div className="min-w-0 flex-1">
                     <Link

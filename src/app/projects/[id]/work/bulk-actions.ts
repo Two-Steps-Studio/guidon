@@ -7,7 +7,7 @@ import { logActivity } from "@/lib/data/log-activity";
 import { createNotification } from "@/lib/data/notifications";
 import { emitTaskEvent } from "@/lib/events/task-events";
 import { isValidUuid } from "@/lib/api/validate-id";
-import { TASK_STATUSES } from "@/lib/work/task-board";
+import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import type { TaskStatus } from "@/types/task";
 
 /** Far more than anyone selects by hand; keeps one request bounded. */
@@ -49,7 +49,8 @@ export async function bulkUpdateTasks(projectId: string, taskIds: string[], oper
 
   switch (operation.kind) {
     case "move": {
-      if (!TASK_STATUSES.includes(operation.status)) return { error: "Unknown status.", count: 0 };
+      // A built-in or one of the project's own columns - the database checks it exists (060).
+      if (!WORKFLOW_KEY_RE.test(operation.status)) return { error: "Unknown status.", count: 0 };
       // Appended after the target column's last card, in the order selected.
       const { data: last, error: lastError } = await db
         .from<{ sort_order: number }>("tasks")
@@ -63,11 +64,11 @@ export async function bulkUpdateTasks(projectId: string, taskIds: string[], oper
       const base = (last[0]?.sort_order ?? 0) + SORT_STEP;
 
       const { data: moved, error } = await db
-        .from<{ id: string; title: string }>("tasks")
+        .from<{ id: string; title: string; is_done: boolean }>("tasks")
         .update({ status: operation.status })
         .in("id", ids)
         .eq("project_id", projectId)
-        .select("id, title");
+        .select("id, title, is_done");
       if (error) return { error: error.message, count: 0 };
       count = moved.length;
       if (count === 0) break;
@@ -87,7 +88,7 @@ export async function bulkUpdateTasks(projectId: string, taskIds: string[], oper
         emitTaskEvent(
           projectId,
           access.userId,
-          operation.status === "done"
+          task.is_done
             ? { kind: "completed", taskId: task.id, title: task.title }
             : { kind: "status_changed", taskId: task.id, title: task.title, status: operation.status }
         );

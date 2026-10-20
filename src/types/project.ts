@@ -40,6 +40,8 @@ export interface Project {
   ai_enabled: boolean;
   /** Migration 055 - sections hidden from navigation (src/lib/work/project-modules.ts). */
   disabled_modules: string[];
+  /** Migration 061 - finished tasks are deleted this many days after completion; null = never. */
+  done_cleanup_days?: number | null;
   allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;

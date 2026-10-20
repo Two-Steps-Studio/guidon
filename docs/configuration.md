@@ -51,8 +51,44 @@ in.
 
 ## SIGN-IN PROVIDERS
 
+Password sign-in always works. "Sign in with ..." buttons are opt-in, and
+how they are switched on depends on the install's mode
+(`src/lib/auth/oauth-providers.ts`); a provider that isn't configured gets
+no button rather than one that fails on click.
+
+### Guidon Cloud / Supabase mode
+
 | Variable | Meaning |
 |---|---|
+| `NEXT_PUBLIC_AUTH_PROVIDERS` | Comma-separated: `google`, `github`, `discord`, `gitlab`. Each must also be enabled in the Supabase project - see [auth-setup.md](./auth-setup.md). Build-time (`NEXT_PUBLIC_`). |
+
+### Self-hosted mode (`DATABASE_URL` set)
+
+Guidon's own OAuth 2.0 / OpenID Connect client (`src/lib/auth/oauth-local*.ts`,
+`src/app/auth/oauth/`). Each provider is on when both of its keys are set -
+read at runtime, so one Docker image works for any combination. The
+callback URL to register with the provider is
+`<APP_URL>/auth/oauth/<provider>/callback`, so set `APP_URL`.
+
+| Variables | Provider (callback `<provider>`) |
+|---|---|
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google (`google`) |
+| `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth App (`github`) - separate from the `GITHUB_APP_*` repository connection below |
+| `DISCORD_OAUTH_CLIENT_ID`, `DISCORD_OAUTH_CLIENT_SECRET` | Discord (`discord`) |
+| `GITLAB_CLIENT_ID`, `GITLAB_CLIENT_SECRET`, optional `GITLAB_URL` | GitLab.com or a self-managed GitLab (`gitlab`) |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_NAME` | Any OpenID Connect issuer - Keycloak, Authentik, Entra ID, a Two Steps Studio account (`oidc`); `OIDC_NAME` is the button's label |
+
+Only a **verified** email is accepted. It signs in to the Guidon account
+with that email (so a password user can also use Google from then on), or
+creates one without a password. A provider that doesn't vouch for the
+address - e.g. an OIDC issuer that sends no `email_verified: true` - can't
+be used to sign in.
+
+A Two Steps Studio account is just the `oidc` provider pointed at TSS's
+issuer once TSS runs one. It is never required: self-hosted Guidon has to
+work with no TSS account and with TSS unreachable (TODO.md §1).
+
+---|---|
 | `NEXT_PUBLIC_AUTH_PROVIDERS` | Comma-separated: `google`, `discord`, `tss`. Controls which OAuth buttons render. |
 
 Only listed providers get a button (`src/lib/auth/oauth-providers.ts`), so an
@@ -221,6 +257,19 @@ essentially never changes, so a full editor would be unused complexity.
 `enterprise` (034) has no fixed price by design ("contact us") and is never
 sold through Checkout. A plan with `stripe_price_id IS NULL` simply shows no
 Upgrade button.
+
+**Promo codes.** Two kinds, for two jobs:
+
+- *A discount on a paid plan* (e.g. 50% off for 3 months): create a coupon and
+  a promotion code in the Stripe Dashboard (Products -> Coupons). Checkout
+  shows an "Add promotion code" field, Stripe applies it. Nothing to set up in
+  Guidon.
+- *A paid plan for free for a while* (e.g. Pro for 30 days, for a game jam or
+  a partner): an instance admin creates the code at `/admin/promo-codes`
+  (needs `ADMIN_EMAILS`), the organization's owner/admin redeems it on its
+  Billing page. No card, no Stripe involved - it works even when Stripe isn't
+  configured. When the period ends the organization is back on its own plan;
+  nothing is deleted (over a limit, it just can't add more). Migration 062.
 
 ---
 

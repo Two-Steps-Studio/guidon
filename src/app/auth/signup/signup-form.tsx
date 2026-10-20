@@ -13,11 +13,13 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
+import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
+import { isAiAccountEmail } from "@/lib/ai-account-email"
 
 /** `local` - see login-form.tsx's comment; same reasoning applies here. */
-export function SignupForm({ local }: { local: boolean }) {
+export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup }) {
   const t = useTranslations("auth.signup")
   const tCommon = useTranslations("auth.common")
   const [email, setEmail] = useState("")
@@ -35,6 +37,8 @@ export function SignupForm({ local }: { local: boolean }) {
     setError(null)
 
     try {
+      // Reserved for AI accounts; the Supabase path has no server step to refuse it.
+      if (isAiAccountEmail(email.trim())) throw new Error(t("invalidEmail"))
       if (local) {
         const result = await signupLocalAction(email, password, fullName)
         if ("error" in result) throw new Error(result.error)
@@ -165,9 +169,9 @@ export function SignupForm({ local }: { local: boolean }) {
             </Button>
           </form>
 
-          {!local && (
+          {oauth.providers.length > 0 && (
             <div className="mt-4">
-              <OAuthButtons redirectTo={redirectTarget} />
+              <OAuthButtons setup={oauth} redirectTo={redirectTarget} />
             </div>
           )}
 

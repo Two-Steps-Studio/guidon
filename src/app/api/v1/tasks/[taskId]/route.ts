@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { apiDataClient } from "@/lib/api/api-data-client";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
-import { TASK_PRIORITIES } from "@/lib/work/task-board";
+import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import type { TaskPriority } from "@/types/task";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -27,7 +27,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 type PatchableColumn = "title" | "description" | "priority" | "due_date" | "sort_order";
 
 function isValidTaskPriority(value: unknown): value is TaskPriority {
-  return typeof value === "string" && (TASK_PRIORITIES as readonly string[]).includes(value);
+  // Built-in or the project's own; the database checks the project has it (060).
+  return typeof value === "string" && WORKFLOW_KEY_RE.test(value);
 }
 
 /**
@@ -62,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if ("priority" in body) {
     if (!isValidTaskPriority(body.priority)) {
       return NextResponse.json(
-        { error: `priority must be one of: ${TASK_PRIORITIES.join(", ")}` },
+        { error: "priority must be one of the project's priority keys - see GET /projects/{projectId}/priorities." },
         { status: 400 }
       );
     }

@@ -444,7 +444,11 @@ namespace Guidon.Tasks.Editor
                 var columnTasks = _tasks
                     .Where(t => string.IsNullOrEmpty(t.parent_task_id) && t.status == status)
                     .Where(t => !_reportsOnly || IsReport(t))
+                    // Same order as the web board's taskComparator: sort_order,
+                    // then the project's priority rank, then age.
                     .OrderBy(t => t.sort_order)
+                    .ThenBy(t => GuidonVocabulary.PriorityRank(t.priority))
+                    .ThenBy(t => t.created_at, StringComparer.Ordinal)
                     .ToList();
 
                 _columnCountLabels[status].text = columnTasks.Count.ToString();
@@ -548,7 +552,7 @@ namespace Guidon.Tasks.Editor
         {
             var row = new VisualElement { style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginLeft = 14f, marginTop = 4f } };
 
-            var priorityLabel = new Label(task.priority) { style = { marginRight = 10f } };
+            var priorityLabel = new Label(GuidonVocabulary.PriorityLabel(task.priority)) { style = { marginRight = 10f } };
             GuidonStyles.StyleMutedLabel(priorityLabel);
             row.Add(priorityLabel);
 
@@ -562,7 +566,7 @@ namespace Guidon.Tasks.Editor
             int subtaskTotal = _tasks.Count(t => t.parent_task_id == task.id);
             if (subtaskTotal > 0)
             {
-                int subtaskDone = _tasks.Count(t => t.parent_task_id == task.id && t.status == "done");
+                int subtaskDone = _tasks.Count(t => t.parent_task_id == task.id && GuidonVocabulary.IsDone(t));
                 var subtaskLabel = new Label($"✓ {subtaskDone}/{subtaskTotal}");
                 GuidonStyles.StyleMutedLabel(subtaskLabel);
                 row.Add(subtaskLabel);
@@ -654,6 +658,7 @@ namespace Guidon.Tasks.Editor
         {
             _actionCount++;
             string previousStatus = task.status;
+            bool previousIsDone = task.is_done;
             float previousSortOrder = task.sort_order;
 
             var targetColumn = _tasks
@@ -669,6 +674,7 @@ namespace Guidon.Tasks.Editor
             // `_tasks`, so mutating it in place and rebuilding is enough
             // for the card to visually move immediately.
             task.status = newStatus;
+            task.is_done = GuidonVocabulary.IsDoneStatus(newStatus);
             task.sort_order = newSortOrder;
             RebuildBoard();
 
@@ -680,11 +686,14 @@ namespace Guidon.Tasks.Editor
                     // Roll back - left exactly where it was rather than
                     // silently stuck in a column the server rejected.
                     task.status = previousStatus;
+                    task.is_done = previousIsDone;
                     task.sort_order = previousSortOrder;
                     ShowStatusMessage(statusResult.Error);
                     RebuildBoard();
                     return;
                 }
+                // The server's word on whether that column is a done one.
+                if (statusResult.Value != null) task.is_done = statusResult.Value.is_done || GuidonVocabulary.IsDoneStatus(newStatus);
             }
 
             var sortResult = await GuidonApiClient.UpdateSortOrder(task.id, newSortOrder);
@@ -830,16 +839,20 @@ namespace Guidon.Tasks.Editor
 
             var result = await GuidonApiClient.ListTasks(projectId);
             var columnsResult = result.Ok ? await GuidonApiClient.ListColumns(projectId) : default;
+            var prioritiesResult = result.Ok ? await GuidonApiClient.ListPriorities(projectId) : default;
             if (this == null || !result.Ok || projectId != CurrentProjectId) return;
             if (_actionCount != actionsBefore || _busyCount > 0 || _draggingTask != null) return;
 
+            // A failed columns/priorities call keeps what the board already has rather than flickering to the defaults.
             var columns = columnsResult.Ok ? columnsResult.Value : GuidonVocabulary.CurrentColumns;
+            var priorities = prioritiesResult.Ok ? prioritiesResult.Value : GuidonVocabulary.CurrentPriorities;
             bool tasksChanged = Fingerprint(result.Value) != Fingerprint(_tasks);
-            bool columnsChanged = string.Join("|", columns.Select(c => c.status + ":" + c.label))
-                != string.Join("|", GuidonVocabulary.CurrentColumns.Select(c => c.status + ":" + c.label));
-            if (!tasksChanged && !columnsChanged) return;
+            bool columnsChanged = Fingerprint(columns) != Fingerprint(GuidonVocabulary.CurrentColumns);
+            bool prioritiesChanged = Fingerprint(priorities) != Fingerprint(GuidonVocabulary.CurrentPriorities);
+            if (!tasksChanged && !columnsChanged && !prioritiesChanged) return;
 
             _tasks = result.Value;
+            GuidonVocabulary.CurrentPriorities = priorities;
             if (columnsChanged)
             {
                 GuidonVocabulary.CurrentColumns = columns;
@@ -850,6 +863,12 @@ namespace Guidon.Tasks.Editor
 
         private static string Fingerprint(TaskDto[] tasks) =>
             string.Join("|", tasks.Select(t => JsonUtility.ToJson(t)));
+
+        private static string Fingerprint(ColumnDto[] columns) =>
+            string.Join("|", columns.Select(c => JsonUtility.ToJson(c)));
+
+        private static string Fingerprint(PriorityDto[] priorities) =>
+            string.Join("|", priorities.Select(p => JsonUtility.ToJson(p)));
 
         private async Task RefreshProjects()
         {
@@ -889,8 +908,11 @@ namespace Guidon.Tasks.Editor
 
             string projectId = _projects[_selectedProjectIndex].id;
             var result = await GuidonApiClient.ListTasks(projectId);
-            // A columns failure (e.g. an older server without the endpoint) just means the default columns.
+            // A columns/priorities failure (e.g. an older server without the
+            // endpoint - /priorities is a 404 before migration 060) just
+            // means the built-in columns/priorities.
             var columnsResult = result.Ok ? await GuidonApiClient.ListColumns(projectId) : default;
+            var prioritiesResult = result.Ok ? await GuidonApiClient.ListPriorities(projectId) : default;
             SetBusy(false);
 
             if (!result.Ok)
@@ -901,6 +923,7 @@ namespace Guidon.Tasks.Editor
 
             _tasks = result.Value;
             GuidonVocabulary.CurrentColumns = columnsResult.Ok ? columnsResult.Value : GuidonVocabulary.DefaultColumns();
+            GuidonVocabulary.CurrentPriorities = prioritiesResult.Ok ? prioritiesResult.Value : GuidonVocabulary.DefaultPriorities();
             BuildColumns();
             RebuildBoard();
             UpdateReportsStatus();

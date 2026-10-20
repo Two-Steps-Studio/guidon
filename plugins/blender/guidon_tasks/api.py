@@ -7,10 +7,13 @@ calls run on a worker thread (see jobs.py), where an uncaught exception
 would surface nowhere useful.
 """
 
+import colorsys
 import json
 import os
+import re
 import urllib.error
 import urllib.request
+from collections import namedtuple
 
 TIMEOUT_SECONDS = 20
 MAX_IMAGE_BYTES = 20 * 1024 * 1024
@@ -24,9 +27,12 @@ IMAGE_EXTENSIONS = {
     "image/tiff": ".tif",
 }
 
-# Mirrors src/lib/work/task-board.ts (BOARD_COLUMNS / TASK_PRIORITIES) by
-# hand - there is no shared-schema codegen, so this is a manual-sync point,
-# same as GuidonVocabulary in the Unity plugin.
+# The built-in vocabulary, mirrored from src/lib/work/task-board.ts
+# (BOARD_COLUMNS / TASK_PRIORITIES) by hand - there is no shared-schema
+# codegen, so this is a manual-sync point, same as GuidonVocabulary in the
+# Unity plugin. Projects can add their own statuses and priorities on top
+# (migration 060), loaded from /columns and /priorities; these are only the
+# fallback for an older server and the labels/icons of the built-in keys.
 STATUSES = ("backlog", "todo", "in_progress", "ai_working", "review", "done")
 STATUS_LABELS = {
     "backlog": "Backlog",
@@ -37,10 +43,27 @@ STATUS_LABELS = {
     "done": "Done",
 }
 PRIORITIES = ("low", "medium", "high", "critical")
+PRIORITY_LABELS = {p: p.capitalize() for p in PRIORITIES}
+
+# What a project-defined status/priority key looks like (server-side check).
+KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
+
+
+class Column(namedtuple("Column", "status label is_done color")):
+    """One visible board column. ``color`` is a "#rrggbb" or None (= built-in look)."""
+
+
+class Priority(namedtuple("Priority", "key label color")):
+    """One visible priority, most important first. ``color`` as for Column."""
+
 
 # What the board shows when the server can't say (an older Guidon without
-# the columns endpoint): every status, default labels, default order.
-DEFAULT_COLUMNS = tuple((s, STATUS_LABELS[s]) for s in STATUSES)
+# the columns endpoint): every status, default labels, default order, and
+# "done" as the only done column.
+DEFAULT_COLUMNS = tuple(Column(s, STATUS_LABELS[s], s == "done", None) for s in STATUSES)
+# Same for a server without the priorities endpoint (404): the four
+# built-ins, most important first like the endpoint returns them.
+DEFAULT_PRIORITIES = tuple(Priority(p, PRIORITY_LABELS[p], None) for p in reversed(PRIORITIES))
 
 
 class Client:
@@ -95,9 +118,15 @@ class Client:
         return self._get_field("GET", "/api/v1/projects/{}/tasks".format(project_id), "tasks", default=[])
 
     def list_columns(self, project_id):
-        """The project's visible board columns in board order, as (status, label) pairs."""
+        """The project's visible board columns in board order, as Column tuples."""
         ok, value = self._get_field("GET", "/api/v1/projects/{}/columns".format(project_id), "columns", default=[])
         return (True, parse_columns(value)) if ok else (False, value)
+
+    def list_priorities(self, project_id):
+        """The project's visible priorities, most important first, as Priority
+        tuples. An older server answers 404 - callers fall back to DEFAULT_PRIORITIES."""
+        ok, value = self._get_field("GET", "/api/v1/projects/{}/priorities".format(project_id), "priorities", default=[])
+        return (True, parse_priorities(value)) if ok else (False, value)
 
     def create_task(self, project_id, title, description="", priority="", due_date="", parent_task_id="", status=""):
         body = {"title": title}
@@ -166,13 +195,75 @@ def _server_error(http_error):
     return payload.get("error") if isinstance(payload, dict) else None
 
 
+def _valid_key(value):
+    return isinstance(value, str) and bool(KEY_PATTERN.match(value))
+
+
+def _color(value):
+    return value if isinstance(value, str) and re.match(r"^#[0-9a-fA-F]{6}$", value) else None
+
+
 def parse_columns(raw):
+    """Server columns -> Column tuples. Custom statuses are kept as-is; an
+    older server sends only {status, label}, so "done" is then the only done
+    column."""
     columns = []
     for column in raw if isinstance(raw, list) else []:
         status = column.get("status") if isinstance(column, dict) else None
-        if status in STATUSES and status not in (c[0] for c in columns):
-            columns.append((status, column.get("label") or STATUS_LABELS[status]))
+        if not _valid_key(status) or status in (c.status for c in columns):
+            continue
+        is_done = column.get("is_done")
+        columns.append(
+            Column(
+                status,
+                column.get("label") or STATUS_LABELS.get(status, status),
+                is_done if isinstance(is_done, bool) else status == "done",
+                _color(column.get("color")),
+            )
+        )
     return tuple(columns) or DEFAULT_COLUMNS
+
+
+def parse_priorities(raw):
+    priorities = []
+    for priority in raw if isinstance(raw, list) else []:
+        key = priority.get("key") if isinstance(priority, dict) else None
+        if not _valid_key(key) or key in (p.key for p in priorities):
+            continue
+        priorities.append(Priority(key, priority.get("label") or PRIORITY_LABELS.get(key, key), _color(priority.get("color"))))
+    return tuple(priorities) or DEFAULT_PRIORITIES
+
+
+def is_done(task, columns):
+    """Whether a task counts as finished: the server's ``is_done`` when it
+    sends one, else its column's ``is_done``, else ``status == "done"``."""
+    value = task.get("is_done")
+    if isinstance(value, bool):
+        return value
+    status = task.get("status")
+    for column in columns:
+        if column.status == status:
+            return column.is_done
+    return status == "done"
+
+
+def color_tag(hex_color):
+    """Nearest of Blender's nine color tags ("01".."09") for a "#rrggbb" -
+    01 red, 02 orange, 03 yellow, 04 green, 05 blue, 06 violet, 07 pink,
+    08 brown, 09 gray. None for no/invalid color."""
+    if not _color(hex_color):
+        return None
+    r, g, b = (int(hex_color[i : i + 2], 16) / 255.0 for i in (1, 3, 5))
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    hue = h * 360
+    if s < 0.2 or v < 0.15:
+        return "09"
+    if 15 <= hue < 50 and v < 0.55:
+        return "08"
+    for limit, tag in ((15, "01"), (40, "02"), (70, "03"), (170, "04"), (250, "05"), (290, "06"), (345, "07")):
+        if hue < limit:
+            return tag
+    return "01"
 
 
 def git_ref(task_id):

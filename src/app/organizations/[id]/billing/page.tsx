@@ -13,6 +13,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { isBillingConfigured } from "@/lib/billing/stripe";
 import { UpgradeButton, ManageBillingButton } from "./billing-actions";
+import { PromoCodeCard } from "./promo-code-card";
 
 /** Matches src/app/organizations/[id]/billing/actions.ts's TRIAL_PERIOD_DAYS. */
 const TRIAL_PERIOD_DAYS = 14;
@@ -139,7 +140,11 @@ export default async function BillingPage({
             </Button>
             <div>
               <h1 className="text-3xl font-bold">{t("title")}</h1>
-              <p className="text-muted-foreground">{t("currentPlan", { plan: planLimits.planName })}</p>
+              <p className="text-muted-foreground">
+                {planLimits.promoUntil
+                  ? t("currentPlanPromo", { plan: planLimits.planName, date: new Date(planLimits.promoUntil) })
+                  : t("currentPlan", { plan: planLimits.planName })}
+              </p>
             </div>
           </div>
           {canManageBilling && hasActivePaidSubscription && (
@@ -180,6 +185,12 @@ export default async function BillingPage({
             })}
           </CardContent>
         </Card>
+
+        {/* Not tied to Stripe being configured: a promo code grants a plan
+            without any payment (migration 062). */}
+        {canManageOrg(access.role) && (
+          <PromoCodeCard organizationId={orgId} planNames={Object.fromEntries(plans.map((plan) => [plan.id, plan.name]))} />
+        )}
 
         <Card>
           <CardHeader>

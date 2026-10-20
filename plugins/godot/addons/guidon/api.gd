@@ -4,12 +4,17 @@ extends RefCounted
 ## editor plugins. Every call returns {"ok": bool, "data": Variant,
 ## "error": String} and never throws; `await` it.
 
+## The built-in statuses and priorities - the fallback for older servers.
+## A project can add its own (migration 060): any key matching KEY_PATTERN.
 const STATUSES := ["backlog", "todo", "in_progress", "ai_working", "review", "done"]
 const STATUS_LABELS := {
 	"backlog": "Backlog", "todo": "Todo", "in_progress": "In Progress",
 	"ai_working": "AI Working", "review": "Review", "done": "Done",
 }
-const PRIORITIES := ["low", "medium", "high", "critical"]
+## Most important first, like GET .../priorities.
+const PRIORITIES := ["critical", "high", "medium", "low"]
+const PRIORITY_LABELS := {"critical": "Critical", "high": "High", "medium": "Medium", "low": "Low"}
+const KEY_PATTERN := "^[a-z][a-z0-9_]{0,39}$"
 const MAX_IMAGE_BYTES := 20 * 1024 * 1024
 
 var _host: Node
@@ -23,11 +28,25 @@ func _init(host: Node, base_url: String, api_key: String) -> void:
 	_api_key = api_key
 
 
+## Columns are {status, label, is_done, color}; color is a hex string or "" (built-in colour).
 static func default_columns() -> Array:
 	var columns := []
 	for status in STATUSES:
-		columns.append({"status": status, "label": STATUS_LABELS[status]})
+		columns.append({"status": status, "label": STATUS_LABELS[status], "is_done": status == "done", "color": ""})
 	return columns
+
+
+## Priorities are {key, label, color}, most important first; color is a hex string or "".
+static func default_priorities() -> Array:
+	var priorities := []
+	for key in PRIORITIES:
+		priorities.append({"key": key, "label": PRIORITY_LABELS[key], "color": ""})
+	return priorities
+
+
+## A status/priority key the server can accept (built-in or a project's own).
+static func is_valid_key(value) -> bool:
+	return value is String and RegEx.create_from_string(KEY_PATTERN).search(value) != null
 
 
 func list_projects() -> Dictionary:
@@ -38,19 +57,52 @@ func list_tasks(project_id: String) -> Dictionary:
 	return _field(await _send(HTTPClient.METHOD_GET, "/api/v1/projects/%s/tasks" % project_id), "tasks", [])
 
 
-## The project's visible columns in board order; unknown statuses dropped, empty -> defaults.
+## The project's visible columns in board order, custom ones included. Older
+## servers send only {status, label}: then "done" is the only done column.
+## Malformed entries are skipped; nothing usable -> defaults.
 func list_columns(project_id: String) -> Dictionary:
 	var result := _field(await _send(HTTPClient.METHOD_GET, "/api/v1/projects/%s/columns" % project_id), "columns", [])
 	if not result.ok:
 		return result
 	var columns := []
 	var seen := {}
-	for column in result.data:
-		if column is Dictionary and STATUSES.has(column.get("status")) and not seen.has(column.status):
-			seen[column.status] = true
-			var label = column.get("label")
-			columns.append({"status": column.status, "label": label if label is String and label != "" else STATUS_LABELS[column.status]})
+	for column in (result.data if result.data is Array else []):
+		if not column is Dictionary or not is_valid_key(column.get("status")) or seen.has(column.status):
+			continue
+		var status: String = column.status
+		seen[status] = true
+		var label = column.get("label")
+		var is_done = column.get("is_done")
+		columns.append({
+			"status": status,
+			"label": label if label is String and label != "" else STATUS_LABELS.get(status, status),
+			"is_done": is_done if is_done is bool else status == "done",
+			"color": _hex(column.get("color")),
+		})
 	result.data = columns if not columns.is_empty() else default_columns()
+	return result
+
+
+## The project's visible priorities, most important first. Fails (404) on
+## servers from before custom priorities - callers fall back to default_priorities().
+func list_priorities(project_id: String) -> Dictionary:
+	var result := _field(await _send(HTTPClient.METHOD_GET, "/api/v1/projects/%s/priorities" % project_id), "priorities", [])
+	if not result.ok:
+		return result
+	var priorities := []
+	var seen := {}
+	for priority in (result.data if result.data is Array else []):
+		if not priority is Dictionary or not is_valid_key(priority.get("key")) or seen.has(priority.key):
+			continue
+		var key: String = priority.key
+		seen[key] = true
+		var label = priority.get("label")
+		priorities.append({
+			"key": key,
+			"label": label if label is String and label != "" else PRIORITY_LABELS.get(key, key),
+			"color": _hex(priority.get("color")),
+		})
+	result.data = priorities if not priorities.is_empty() else default_priorities()
 	return result
 
 
@@ -200,6 +252,60 @@ static func column_tasks(tasks: Array, status: String) -> Array:
 	return indexed.map(func(entry): return entry[2])
 
 
+## Whether a task counts as finished: the task's own `is_done` (newer servers),
+## else its column's, else status == "done".
+static func is_task_done(task: Dictionary, columns: Array) -> bool:
+	var is_done = task.get("is_done")
+	if is_done is bool:
+		return is_done
+	var status := _str(task.get("status"))
+	for column in columns:
+		if column.status == status:
+			return column.get("is_done", status == "done")
+	return status == "done"
+
+
+## The column a subtask's checkbox ticks into: the first done column on the board, else "done".
+static func done_status(columns: Array) -> String:
+	for column in columns:
+		if column.get("is_done", false):
+			return column.status
+	return "done"
+
+
+## Where unticking a subtask puts it: "todo" if the board shows it, else its first open column.
+static func open_status(columns: Array) -> String:
+	var first := ""
+	for column in columns:
+		if column.get("is_done", false):
+			continue
+		if column.status == "todo":
+			return "todo"
+		if first == "":
+			first = column.status
+	return first if first != "" else "todo"
+
+
+## {key, label, color} for a priority key; unknown keys (hidden, or another
+## project's) still render, labelled with the key. Empty -> medium.
+static func priority_info(priorities: Array, key: String) -> Dictionary:
+	if key == "":
+		key = "medium"
+	for priority in priorities:
+		if priority.key == key:
+			return priority
+	return {"key": key, "label": PRIORITY_LABELS.get(key, key), "color": ""}
+
+
+## Importance rank (0 = most important) = position in the project's list;
+## unknown keys sort after every known one.
+static func priority_rank(priorities: Array, key: String) -> int:
+	for i in priorities.size():
+		if priorities[i].key == key:
+			return i
+	return priorities.size()
+
+
 ## Tasks filed by the in-game reporter or the web widget (POST .../reports tags them).
 static func is_report(task: Dictionary) -> bool:
 	var tags = task.get("tags")
@@ -228,6 +334,11 @@ static func git_ref(task_id: String) -> String:
 
 static func _str(value) -> String:
 	return "" if value == null else str(value)
+
+
+## A colour from the API as "#rrggbb" if Godot can parse it, else "".
+static func _hex(value) -> String:
+	return value if value is String and value != "" and Color.html_is_valid(value) else ""
 
 
 static func _num(value) -> float:

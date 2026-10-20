@@ -2,13 +2,13 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, CreditCard, FolderKanban, Plus, Settings, Users } from "lucide-react";
+import { ArrowLeft, Bot, CreditCard, FolderKanban, Plus, Settings, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { effectiveOrgProjectLimit, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { AppShell } from "@/components/layout/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateProjectDialog } from "./create-project-dialog";
@@ -44,7 +44,8 @@ export default async function OrganizationDetailPage({
     projects = (projectsData ?? []) as Project[];
   }
 
-  const limitReached = isHostedProjectLimitReached(projects.length, organization.project_limit);
+  const projectLimit = await effectiveOrgProjectLimit(orgId, organization.project_limit);
+  const limitReached = isHostedProjectLimitReached(projects.length, projectLimit);
 
   return (
     <AppShell user={user}>
@@ -82,6 +83,14 @@ export default async function OrganizationDetailPage({
             </Button>
             {canManageOrg(access.role) && (
               <Button variant="outline" asChild>
+                <Link href={`/organizations/${orgId}/ai-accounts`}>
+                  <Bot className="h-4 w-4 mr-2" />
+                  {t("aiAccounts")}
+                </Link>
+              </Button>
+            )}
+            {canManageOrg(access.role) && (
+              <Button variant="outline" asChild>
                 <Link href={`/organizations/${orgId}/settings`}>
                   <Settings className="h-4 w-4 mr-2" />
                   {t("settings")}
@@ -99,7 +108,7 @@ export default async function OrganizationDetailPage({
         {limitReached && (
           <Card className="mb-6 border-dashed">
             <CardContent className="py-4 text-sm text-muted-foreground">
-              {hostedProjectLimitMessage(organization.project_limit)}
+              {hostedProjectLimitMessage(projectLimit)}
             </CardContent>
           </Card>
         )}

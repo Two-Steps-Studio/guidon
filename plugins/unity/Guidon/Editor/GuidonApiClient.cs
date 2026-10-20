@@ -52,7 +52,7 @@ namespace Guidon.Tasks.Editor
     }
 
     /// <summary>
-    /// Thin wrapper over Guidon's /api/v1 for the six calls this plugin
+    /// Thin wrapper over Guidon's /api/v1 for the calls this plugin
     /// needs. UnityWebRequest + JsonUtility rather than HttpClient/
     /// Newtonsoft - both ship with Unity, zero extra package dependency,
     /// the idiomatic choice for Editor tooling.
@@ -203,8 +203,11 @@ namespace Guidon.Tasks.Editor
         }
 
         /// <summary>
-        /// The project's visible columns in board order. Unknown statuses and
-        /// duplicates are dropped; an empty answer means the defaults.
+        /// The project's visible columns in board order - built-in and the
+        /// project's own (any valid key, not just the six built-ins).
+        /// Malformed keys and duplicates are dropped; an empty answer means
+        /// the defaults. "done" is always a done column, even from an older
+        /// server that sends no is_done.
         /// </summary>
         public static async Task<GuidonResult<ColumnDto[]>> ListColumns(string projectId)
         {
@@ -215,15 +218,54 @@ namespace Guidon.Tasks.Editor
             if (!parsed.Ok) return GuidonResult<ColumnDto[]>.Failure(parsed.Error);
 
             var columns = (parsed.Value.columns ?? Array.Empty<ColumnDto>())
-                .Where(c => c != null && Array.IndexOf(GuidonVocabulary.Statuses, c.status) >= 0)
+                .Where(c => c != null && GuidonVocabulary.IsValidKey(c.status))
                 .GroupBy(c => c.status)
-                .Select(g => new ColumnDto
+                .Select(g =>
                 {
-                    status = g.Key,
-                    label = string.IsNullOrEmpty(g.First().label) ? GuidonVocabulary.StatusLabel(g.Key) : g.First().label,
+                    ColumnDto c = g.First();
+                    return new ColumnDto
+                    {
+                        status = g.Key,
+                        label = string.IsNullOrEmpty(c.label) ? GuidonVocabulary.StatusLabel(g.Key) : c.label,
+                        is_done = c.is_done || g.Key == "done",
+                        custom = c.custom,
+                        color = string.IsNullOrEmpty(c.color) ? null : c.color,
+                    };
                 })
                 .ToArray();
             return GuidonResult<ColumnDto[]>.Success(columns.Length > 0 ? columns : GuidonVocabulary.DefaultColumns());
+        }
+
+        /// <summary>
+        /// The project's visible priorities, most important first. Fails on
+        /// an older server (404 - no such endpoint); callers then use
+        /// GuidonVocabulary.DefaultPriorities(). Malformed keys and
+        /// duplicates are dropped; an empty answer means the defaults.
+        /// </summary>
+        public static async Task<GuidonResult<PriorityDto[]>> ListPriorities(string projectId)
+        {
+            var raw = await SendAsync("GET", $"/api/v1/projects/{projectId}/priorities");
+            if (!raw.Ok) return GuidonResult<PriorityDto[]>.Failure(raw.Error);
+
+            var parsed = ParseResponse<PrioritiesResponse>(raw.Value, "priorities");
+            if (!parsed.Ok) return GuidonResult<PriorityDto[]>.Failure(parsed.Error);
+
+            var priorities = (parsed.Value.priorities ?? Array.Empty<PriorityDto>())
+                .Where(p => p != null && GuidonVocabulary.IsValidKey(p.key))
+                .GroupBy(p => p.key)
+                .Select(g =>
+                {
+                    PriorityDto p = g.First();
+                    return new PriorityDto
+                    {
+                        key = g.Key,
+                        label = string.IsNullOrEmpty(p.label) ? GuidonVocabulary.BuiltInPriorityLabel(g.Key) : p.label,
+                        color = string.IsNullOrEmpty(p.color) ? null : p.color,
+                        custom = p.custom,
+                    };
+                })
+                .ToArray();
+            return GuidonResult<PriorityDto[]>.Success(priorities.Length > 0 ? priorities : GuidonVocabulary.DefaultPriorities());
         }
 
         public static async Task<GuidonResult<TaskDto>> SetTaskStatus(string taskId, string status)

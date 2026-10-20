@@ -1,11 +1,12 @@
 "use client";
 
 import { LabelPresetsProvider } from "@/components/work/label-presets-context";
+import { WorkflowProvider } from "@/components/work/workflow-context";
 import type { LabelPreset } from "@/lib/work/label-presets";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,17 +23,19 @@ const TaskDetailDialog = dynamic(() =>
 import type { TaskCardMember } from "@/components/work/task-card";
 import {
   BOARD_COLUMNS,
-  TASK_PRIORITIES,
   boardProgress,
   groupSubtasksByParent,
+  isDone,
   normalizeTaskPriority,
   normalizeTaskStatus,
   subtaskProgress,
   type BoardColumn,
+  type PriorityDef,
 } from "@/lib/work/task-board";
 import { moveTask } from "./actions";
 import { playSound } from "@/lib/sounds";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { ImportTasksDialog } from "./import-tasks-dialog";
 import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
 import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
@@ -61,6 +64,7 @@ export function WorkBoard({
   aiAvailable = false,
   aiEnabled = true,
   labelPresets = [],
+  priorities,
 }: {
   projectId: string;
   projectName: string;
@@ -79,6 +83,8 @@ export function WorkBoard({
   aiEnabled?: boolean;
   /** Project label presets (migration 053) - coloured labels and one-tap picks in the task dialog. */
   labelPresets?: LabelPreset[];
+  /** The project's priorities in importance order (resolvePriorities). */
+  priorities: PriorityDef[];
 }) {
   const t = useTranslations("work");
   const canDelete = role === "owner" || role === "admin";
@@ -91,6 +97,7 @@ export function WorkBoard({
   });
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Deep link from the command palette (command-palette.tsx's resultHref) -
   // `?openTask=<id>` opens that task's detail dialog on arrival, same as
@@ -138,13 +145,13 @@ export function WorkBoard({
       Object.fromEntries(
         Object.entries(subtasksByParent).map(([taskId, subtasks]) => [
           taskId,
-          subtaskProgress(subtasks),
+          subtaskProgress(subtasks, columns),
         ])
       ),
-    [subtasksByParent]
+    [subtasksByParent, columns]
   );
 
-  const progress = useMemo(() => boardProgress(topLevelTasks), [topLevelTasks]);
+  const progress = useMemo(() => boardProgress(topLevelTasks, columns), [topLevelTasks, columns]);
 
   // Tag options come from the full unfiltered set, so the dropdown's
   // choices stay stable while assignee/priority filters are active rather
@@ -229,7 +236,7 @@ export function WorkBoard({
       toast.error(result.error);
       return;
     }
-    if (operation.kind === "move" && operation.status === "done") playSound("complete");
+    if (operation.kind === "move" && isDone(operation.status, columns)) playSound("complete");
     const chosen = new Set(ids);
     setState((current) => {
       if (operation.kind === "delete") {
@@ -247,7 +254,12 @@ export function WorkBoard({
           if (!chosen.has(task.id)) return task;
           switch (operation.kind) {
             case "move":
-              return { ...task, status: operation.status, sort_order: lastOrder + (position.get(task.id) ?? 0) * 1000 };
+              return {
+                ...task,
+                status: operation.status,
+                is_done: isDone(operation.status, columns),
+                sort_order: lastOrder + (position.get(task.id) ?? 0) * 1000,
+              };
             case "assign":
               return { ...task, assignee_id: operation.assigneeId };
             case "label": {
@@ -274,11 +286,11 @@ export function WorkBoard({
     const previousSortOrder = task.sort_order;
 
     // Optimistic: the board should feel instant on drop - the sound too.
-    if (status === "done" && previousStatus !== "done") playSound("complete");
+    if (isDone(status, columns) && !isDone(previousStatus, columns)) playSound("complete");
     setState((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
-        item.id === task.id ? { ...item, status, sort_order: sortOrder } : item
+        item.id === task.id ? { ...item, status, sort_order: sortOrder, is_done: isDone(status, columns) } : item
       ),
     }));
 
@@ -294,7 +306,7 @@ export function WorkBoard({
         ...current,
         tasks: current.tasks.map((item) =>
           item.id === task.id
-            ? { ...item, status: previousStatus, sort_order: previousSortOrder }
+            ? { ...item, status: previousStatus, sort_order: previousSortOrder, is_done: task.is_done }
             : item
         ),
       }));
@@ -318,6 +330,7 @@ export function WorkBoard({
     }));
 
   return (
+    <WorkflowProvider value={{ columns, priorities }}>
     <LabelPresetsProvider value={labelPresets}>
       {/* w-full (not just mx-auto + max-w): this page is a flex item of
           <main> (app-sidebar's layout, flex-col with the default
@@ -328,8 +341,16 @@ export function WorkBoard({
           whole wrapper past the viewport, so the entire page scrolled
           horizontally (sidebar included) instead of just the board.
           min-w-0 additionally guards the same board's overflow-x-auto
-          against the flex-item min-width:auto default. */}
-      <div className="mx-auto min-w-0 w-full max-w-[1600px] p-6">
+          against the flex-item min-width:auto default.
+          From md up the page is exactly one screen below the app header
+          (h-12): the board takes what the header and filters leave and its
+          columns scroll inside, so the page itself never scrolls away under
+          the board. data-fills-viewport also hides the site footer here
+          (globals.css). */}
+      <div
+        data-fills-viewport
+        className="mx-auto min-w-0 w-full max-w-[1600px] p-6 md:flex md:h-[calc(100svh-3rem)] md:flex-col md:overflow-hidden"
+      >
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
@@ -374,6 +395,13 @@ export function WorkBoard({
           )}
 
           {canEdit && (
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" />
+              {t("importButton")}
+            </Button>
+          )}
+
+          {canEdit && (
             <Button
               size="sm"
               onClick={() => setCreateFor(columns[0]?.status ?? "todo")}
@@ -407,9 +435,9 @@ export function WorkBoard({
             onChange={(event) => setPriorityFilter(event.target.value)}
           >
             <option value="all">{t("allPriorities")}</option>
-            {TASK_PRIORITIES.map((value) => (
-              <option key={value} value={value}>
-                {t("priority", { priority: value })}
+            {priorities.map((priority) => (
+              <option key={priority.key} value={priority.key}>
+                {priority.label}
               </option>
             ))}
           </Select>
@@ -482,6 +510,7 @@ export function WorkBoard({
             projectColor={projectColor}
             selectedIds={selectedIds}
             onSelectionChange={canEdit ? setSelectedIds : undefined}
+            fillHeight
           />
         )}
       </div>
@@ -521,6 +550,18 @@ export function WorkBoard({
         />
       )}
 
+      {canEdit && (
+        <ImportTasksDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          projectId={projectId}
+          columns={columns}
+          priorities={priorities}
+          members={members}
+          onImported={(tasks) => tasks.forEach(upsertTask)}
+        />
+      )}
+
       <CreateTaskDialog
         key={createFor ?? "no-column"}
         projectId={projectId}
@@ -533,5 +574,6 @@ export function WorkBoard({
         onCreated={upsertTask}
       />
     </LabelPresetsProvider>
+    </WorkflowProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
+import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import {
   ATTEMPT_FILES_MAX,
   ATTEMPT_FILE_PATH_MAX,
@@ -15,8 +15,17 @@ import {
  * of truth for what is accepted; these mirror it.
  */
 
-export const statusEnum = z.enum(TASK_STATUSES);
-export const priorityEnum = z.enum(TASK_PRIORITIES);
+// Projects define their own columns and priorities (migration 060), so these
+// are keys rather than fixed enums: list_columns / list_priorities (GET
+// /projects/{id}/columns, /priorities) give a project's valid values.
+export const statusEnum = z
+  .string()
+  .regex(WORKFLOW_KEY_RE)
+  .describe("A column key of the task's project (list_columns). Built-in: backlog, todo, in_progress, ai_working, review, done.");
+export const priorityEnum = z
+  .string()
+  .regex(WORKFLOW_KEY_RE)
+  .describe("A priority key of the task's project (list_priorities). Built-in: low, medium, high, critical.");
 
 export const createTaskFields = {
   title: z.string().describe("Task title (required, non-empty)."),

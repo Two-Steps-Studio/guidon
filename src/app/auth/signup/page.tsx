@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { oauthSetup } from "@/lib/auth/oauth-providers";
 import { SignupForm } from "./signup-form";
 
 // See src/app/auth/login/page.tsx for why this must not be statically
@@ -11,7 +12,7 @@ export default async function SignupPage() {
   const t = await getTranslations("common");
   return (
     <Suspense fallback={<div>{t("loading")}</div>}>
-      <SignupForm local={hasDirectDatabase()} />
+      <SignupForm local={hasDirectDatabase()} oauth={oauthSetup(hasDirectDatabase())} />
     </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { oauthSetup } from "@/lib/auth/oauth-providers";
 import { LoginForm } from "./login-form";
 
 // hasDirectDatabase() reads process.env.DATABASE_URL, which Docker Compose
@@ -14,7 +15,7 @@ export default async function LoginPage() {
   const t = await getTranslations("common");
   return (
     <Suspense fallback={<div>{t("loading")}</div>}>
-      <LoginForm local={hasDirectDatabase()} />
+      <LoginForm local={hasDirectDatabase()} oauth={oauthSetup(hasDirectDatabase())} />
     </Suspense>
   );
 }
