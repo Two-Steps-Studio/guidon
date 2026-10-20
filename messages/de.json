@@ -1343,7 +1343,17 @@
     "soundsLabel": "Töne",
     "sounds_on": "An",
     "sounds_off": "Aus",
-    "soundsHelp": "Kurze, leise Töne, wenn du eine Aufgabe erledigst oder erstellst und wenn eine Benachrichtigung eintrifft. Wird auf diesem Gerät gespeichert."
+    "soundsHelp": "Kurze, leise Töne, wenn du eine Aufgabe erledigst oder erstellst und wenn eine Benachrichtigung eintrifft. Wird auf diesem Gerät gespeichert.",
+    "wallpaperLabel": "Hintergrundbild",
+    "wallpaperHelp": "Ein eigenes Bild hinter der App statt des animierten Hintergrunds. Bleibt nur auf diesem Gerät - es wird nie hochgeladen.",
+    "wallpaperChoose": "Bild wählen",
+    "wallpaperChange": "Ändern",
+    "wallpaperRemove": "Entfernen",
+    "wallpaperDimLabel": "Hintergrundbild abdunkeln",
+    "wallpaperDim": "{percent}% abgedunkelt",
+    "wallpaperTooLarge": "Das Bild ist größer als 25 MB.",
+    "wallpaperNotImage": "Diese Datei ist kein Bild, das der Browser öffnen kann.",
+    "wallpaperFailed": "Das Hintergrundbild konnte nicht gespeichert werden - der Browser blockiert womöglich Websitedaten."
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",

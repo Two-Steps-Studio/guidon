@@ -1343,7 +1343,17 @@
     "soundsLabel": "Dźwięki",
     "sounds_on": "Włączone",
     "sounds_off": "Wyłączone",
-    "soundsHelp": "Krótkie, ciche dźwięki po ukończeniu lub utworzeniu zadania i przy nowym powiadomieniu. Zapisywane na tym urządzeniu."
+    "soundsHelp": "Krótkie, ciche dźwięki po ukończeniu lub utworzeniu zadania i przy nowym powiadomieniu. Zapisywane na tym urządzeniu.",
+    "wallpaperLabel": "Tapeta",
+    "wallpaperHelp": "Własny obrazek w tle aplikacji zamiast animacji. Zostaje tylko na tym urządzeniu - nigdzie nie jest wysyłany.",
+    "wallpaperChoose": "Wybierz obrazek",
+    "wallpaperChange": "Zmień",
+    "wallpaperRemove": "Usuń",
+    "wallpaperDimLabel": "Przyciemnienie tapety",
+    "wallpaperDim": "Przyciemnienie {percent}%",
+    "wallpaperTooLarge": "Ten obrazek ma ponad 25 MB.",
+    "wallpaperNotImage": "Ten plik nie jest obrazkiem, który przeglądarka potrafi otworzyć.",
+    "wallpaperFailed": "Nie udało się zapisać tapety - przeglądarka może blokować dane stron."
   },
   "emails": {
     "passwordResetSubject": "Zresetuj hasło do Guidon",

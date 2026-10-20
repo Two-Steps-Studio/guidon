@@ -1343,7 +1343,17 @@
     "soundsLabel": "Sonidos",
     "sounds_on": "Activados",
     "sounds_off": "Desactivados",
-    "soundsHelp": "Sonidos breves y suaves al completar o crear una tarea y al llegar una notificación. Se guarda en este dispositivo."
+    "soundsHelp": "Sonidos breves y suaves al completar o crear una tarea y al llegar una notificación. Se guarda en este dispositivo.",
+    "wallpaperLabel": "Fondo de pantalla",
+    "wallpaperHelp": "Una imagen tuya detrás de la app en lugar del fondo animado. Se queda solo en este dispositivo: nunca se sube.",
+    "wallpaperChoose": "Elegir imagen",
+    "wallpaperChange": "Cambiar",
+    "wallpaperRemove": "Quitar",
+    "wallpaperDimLabel": "Oscurecer el fondo",
+    "wallpaperDim": "Oscurecido {percent}%",
+    "wallpaperTooLarge": "Esa imagen supera los 25 MB.",
+    "wallpaperNotImage": "Ese archivo no es una imagen que el navegador pueda abrir.",
+    "wallpaperFailed": "No se pudo guardar el fondo: el navegador puede estar bloqueando los datos del sitio."
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",

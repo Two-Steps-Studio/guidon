@@ -2,6 +2,7 @@
 
 import Dither from "@/components/Dither";
 import { useBackgroundMotion } from "@/lib/background-motion";
+import { useWallpaperDim, useWallpaperUrl } from "@/lib/wallpaper";
 import { useEffectiveTheme, type EffectiveTheme } from "@/lib/use-effective-theme";
 
 /**
@@ -26,6 +27,19 @@ export function DitherBackground() {
   // Profile -> Background animation; "auto" leaves the OS reduced-motion
   // setting in charge (Dither then shows a still frame).
   const motion = useBackgroundMotion();
+  // Profile -> Wallpaper (this device only) replaces the animation.
+  const wallpaper = useWallpaperUrl();
+  const dim = useWallpaperDim();
+
+  if (wallpaper) {
+    return (
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${wallpaper})` }} />
+        {/* The page colour over the picture keeps text readable in both themes. */}
+        <div className="absolute inset-0 bg-background" style={{ opacity: Number(dim) / 100 }} />
+      </div>
+    );
+  }
 
   return (
     // h-lvh, not inset-0: the large viewport height doesn't change when a

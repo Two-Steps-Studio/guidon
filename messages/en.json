@@ -1343,7 +1343,17 @@
     "soundsLabel": "Sounds",
     "sounds_on": "On",
     "sounds_off": "Off",
-    "soundsHelp": "Short, quiet sounds when you complete or create a task and when a notification arrives. Saved on this device."
+    "soundsHelp": "Short, quiet sounds when you complete or create a task and when a notification arrives. Saved on this device.",
+    "wallpaperLabel": "Wallpaper",
+    "wallpaperHelp": "A picture of your own behind the app, instead of the animated background. Stays on this device only - it's never uploaded.",
+    "wallpaperChoose": "Choose a picture",
+    "wallpaperChange": "Change",
+    "wallpaperRemove": "Remove",
+    "wallpaperDimLabel": "Dim the wallpaper",
+    "wallpaperDim": "Dimmed {percent}%",
+    "wallpaperTooLarge": "That picture is over 25 MB.",
+    "wallpaperNotImage": "That file isn't a picture this browser can open.",
+    "wallpaperFailed": "Couldn't save the wallpaper - this browser may block site storage."
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",
