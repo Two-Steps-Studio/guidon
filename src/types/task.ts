@@ -41,6 +41,8 @@ export interface Task {
   priority: TaskPriority;
   /** Kept by the database (migration 060): in "done" or a column marked as done. */
   is_done?: boolean;
+  /** Migration 061 - when the task was finished (kept by a trigger); null while open. */
+  done_at?: string | null;
   tags: string[];
   due_date: string | null;
   progress_percent: number;

@@ -15,6 +15,7 @@ import { ModulesForm } from "./modules-form";
 import { ReportWidgetCard } from "./report-widget-card";
 import { listReportWidgetKeys } from "@/app/profile/api-keys-actions";
 import { ExportProjectCard } from "./export-project-card";
+import { FinishedTasksForm } from "./finished-tasks-form";
 import { DiscordIntegrationForm } from "./discord-integration-form";
 import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
 import type { Project } from "@/types/project";
@@ -126,6 +127,11 @@ export default async function ProjectSettingsPage({
         canManage={canManageProject(access.role)}
       />
       <BoardColumnsForm projectId={projectId} overrides={workflow.columns} />
+      <FinishedTasksForm
+        projectId={projectId}
+        initialDays={project.done_cleanup_days ?? null}
+        canManage={canManageProject(access.role)}
+      />
       <PrioritiesForm projectId={projectId} overrides={workflow.priorities} />
       <LabelPresetsForm
         projectId={projectId}

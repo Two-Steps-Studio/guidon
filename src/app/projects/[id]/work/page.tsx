@@ -9,6 +9,7 @@ import { normalizeTaskStatus, resolveBoardColumns, resolvePriorities, taskCompar
 import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { getSignedUrl } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
+import { purgeFinishedTasks } from "@/lib/work/finished-cleanup";
 import { WorkBoard } from "./work-board";
 import type { TaskCardMember } from "@/components/work/task-card";
 import type { Task } from "@/types/task";
@@ -153,6 +154,10 @@ export default async function ProjectWorkPage({
   const aiAvailablePromise = aiEnabled
     ? isAIAvailableForOrg(access.project.organization_id, access.userId)
     : Promise.resolve(false);
+
+  // Before the tasks are read, so tasks past the project's "delete finished
+  // tasks after N days" setting are already gone from this render.
+  await purgeFinishedTasks(access.userId, projectId);
 
   let tasks: Task[];
   let members: TaskCardMember[];

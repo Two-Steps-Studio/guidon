@@ -2998,5 +2998,76 @@ section("47. dowolne kolumny i priorytety + edycja cudzych zadan (migracja 060)"
   });
 }
 
+section("48. usuwanie ukonczonych zadan po N dniach (migracja 061)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000061";
+  let oldDone, freshDone, openTask, oldSub, openParent, doneSubOfOpen;
+  const insert = (title, status = null, parent = null) =>
+    db.query(
+      "INSERT INTO public.tasks (project_id, title, status, parent_task_id) VALUES ($1, $2, COALESCE($3, 'todo'), $4) RETURNING id, done_at",
+      [projectId, title, status, parent]
+    );
+
+  await withUser(A, async () => {
+    const d = await insert("061 old done", "done");
+    oldDone = d.rows[0].id;
+    check("zadanie utworzone jako done dostaje done_at", d.rows[0].done_at !== null);
+    freshDone = (await insert("061 fresh done", "done")).rows[0].id;
+    openTask = (await insert("061 open")).rows[0].id;
+    const o = await insert("061 open parent");
+    openParent = o.rows[0].id;
+    check("otwarte zadanie nie ma done_at", o.rows[0].done_at === null);
+    oldSub = (await insert("061 sub", null, oldDone)).rows[0].id;
+    doneSubOfOpen = (await insert("061 done sub", "done", openParent)).rows[0].id;
+
+    const back = await db.query("UPDATE public.tasks SET done_at = now() - interval '400 days' WHERE id = $1 RETURNING done_at", [oldDone]);
+    check("klient nie moze postarzyc done_at", Date.now() - new Date(back.rows[0].done_at).getTime() < 60_000, back.rows[0].done_at);
+    const reopened = await db.query("UPDATE public.tasks SET status = 'todo' WHERE id = $1 RETURNING done_at", [freshDone]);
+    check("powrot do pracy czysci done_at", reopened.rows[0].done_at === null);
+    await db.query("UPDATE public.tasks SET status = 'done' WHERE id = $1", [freshDone]);
+
+    const off = await db.query("SELECT public.purge_finished_tasks($1) AS n", [projectId]);
+    check("wylaczone ustawienie niczego nie usuwa", off.rows[0].n === 0);
+  });
+
+  await withUser(D, async () => {
+    const res = await db.query("UPDATE public.projects SET done_cleanup_days = 1 WHERE id = $1 RETURNING id", [projectId]);
+    check("developer nie zmienia ustawienia", res.rows.length === 0);
+  });
+
+  await withUser(A, async () => {
+    check("zle ustawienie odrzucone", await throwsInSavepoint("UPDATE public.projects SET done_cleanup_days = 0 WHERE id = $1", [projectId]));
+    const set = await db.query("UPDATE public.projects SET done_cleanup_days = 30 WHERE id = $1 RETURNING done_cleanup_days", [projectId]);
+    check("owner wlacza usuwanie po 30 dniach", set.rows[0]?.done_cleanup_days === 30);
+  });
+
+  // Postarzenie z pominieciem triggera - tylko wlasciciel tabeli tak moze.
+  await db.exec("ALTER TABLE public.tasks DISABLE TRIGGER workflow_set_task_done_at");
+  await db.query("UPDATE public.tasks SET done_at = now() - interval '40 days' WHERE id = ANY($1)", [[oldDone, doneSubOfOpen]]);
+  await db.exec("ALTER TABLE public.tasks ENABLE TRIGGER workflow_set_task_done_at");
+
+  await withUser(stranger, async () => {
+    const n = await db.query("SELECT public.purge_finished_tasks($1) AS n", [projectId]);
+    check("ktos bez dostepu do projektu niczego nie usuwa", n.rows[0].n === 0);
+  });
+
+  await withUser(D, async () => {
+    const n = await db.query("SELECT public.purge_finished_tasks($1) AS n", [projectId]);
+    check("czlonek projektu uruchamia czyszczenie: 1 stare zadanie", n.rows[0].n === 1, n.rows[0].n);
+  });
+
+  await withServiceRole(async () => {
+    const left = await db.query("SELECT id FROM public.tasks WHERE id = ANY($1)", [[oldDone, oldSub, freshDone, openTask, openParent, doneSubOfOpen]]);
+    const ids = new Set(left.rows.map((r) => r.id));
+    check("stare ukonczone zadanie usuniete", !ids.has(oldDone));
+    check("razem z subtaskiem", !ids.has(oldSub));
+    check("swiezo ukonczone zostaje", ids.has(freshDone));
+    check("otwarte zostaje", ids.has(openTask) && ids.has(openParent));
+    check("stary ukonczony subtask otwartego zadania zostaje", ids.has(doneSubOfOpen));
+    await db.query("UPDATE public.projects SET done_cleanup_days = NULL WHERE id = $1", [projectId]);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
