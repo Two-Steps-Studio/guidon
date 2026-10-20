@@ -6,7 +6,7 @@ export async function SiteFooter() {
   const t = await getTranslations("landing");
 
   return (
-    <footer className="border-t border-border py-8">
+    <footer data-site-footer className="border-t border-border py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
         <span>{t("footer.copyright", { year: new Date().getFullYear() })} - Two Steps Studio</span>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">

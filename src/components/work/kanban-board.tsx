@@ -63,6 +63,14 @@ interface KanbanBoardProps {
   selectedIds?: ReadonlySet<string>;
   /** Omitted on a read-only board - no selection there. */
   onSelectionChange?: (ids: Set<string>) => void;
+  /**
+   * The board fills its parent's height (a flex column of definite height)
+   * and each column scrolls inside it, instead of capping columns at a guess
+   * of the viewport (100vh minus the header). From md up only: on a phone
+   * the page scrolls normally - a screen-tall box of nested scroll areas
+   * fights the finger there.
+   */
+  fillHeight?: boolean;
 }
 
 interface DropTarget {
@@ -120,6 +128,7 @@ export function KanbanBoard({
   projectColor,
   selectedIds,
   onSelectionChange,
+  fillHeight = false,
 }: KanbanBoardProps) {
   const t = useTranslations("work");
   const [pointerDrag, setPointerDrag] = useState<PointerDrag | null>(null);
@@ -473,7 +482,12 @@ export function KanbanBoard({
       // items-start: each column is as tall as its own cards (up to the
       // scroll cap below), instead of every column stretching to the tallest
       // one and leaving a tall empty area under a short list.
-      className="relative flex items-start gap-4 overflow-x-auto pb-4"
+      // overscroll-x-contain: reaching the last column doesn't hand the
+      // swipe on to the page (or to the browser's back gesture).
+      className={cn(
+        "relative flex items-start gap-4 overflow-x-auto overscroll-x-contain pb-4",
+        fillHeight && "md:min-h-0 md:flex-1"
+      )}
       role="list"
       aria-label={t("taskBoardAria")}
     >
@@ -489,6 +503,7 @@ export function KanbanBoard({
             aria-label={t("columnAria", { label: column.label, count: columnTasks.length })}
             className={cn(
               "flex w-72 shrink-0 flex-col rounded-xl border border-border bg-background-secondary",
+              fillHeight && "md:max-h-full",
               isTargetColumn && "border-primary/40"
             )}
             style={isTargetColumn && projectColor ? { borderColor: projectColor } : undefined}
@@ -520,7 +535,12 @@ export function KanbanBoard({
 
             <div
               data-column-scroll
-              className="flex min-h-32 max-h-[calc(100vh-16rem)] flex-1 flex-col gap-2 overflow-y-auto p-2"
+              // overscroll-y-contain: scrolling to the end of a column stops
+              // there instead of carrying on and scrolling the page under it.
+              className={cn(
+                "flex min-h-32 max-h-[calc(100vh-16rem)] flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain p-2",
+                fillHeight && "md:max-h-none"
+              )}
             >
               {columnTasks.map((task, index) => (
                 <div key={task.id}>

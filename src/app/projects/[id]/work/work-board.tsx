@@ -341,8 +341,16 @@ export function WorkBoard({
           whole wrapper past the viewport, so the entire page scrolled
           horizontally (sidebar included) instead of just the board.
           min-w-0 additionally guards the same board's overflow-x-auto
-          against the flex-item min-width:auto default. */}
-      <div className="mx-auto min-w-0 w-full max-w-[1600px] p-6">
+          against the flex-item min-width:auto default.
+          From md up the page is exactly one screen below the app header
+          (h-12): the board takes what the header and filters leave and its
+          columns scroll inside, so the page itself never scrolls away under
+          the board. data-fills-viewport also hides the site footer here
+          (globals.css). */}
+      <div
+        data-fills-viewport
+        className="mx-auto min-w-0 w-full max-w-[1600px] p-6 md:flex md:h-[calc(100svh-3rem)] md:flex-col md:overflow-hidden"
+      >
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
@@ -502,6 +510,7 @@ export function WorkBoard({
             projectColor={projectColor}
             selectedIds={selectedIds}
             onSelectionChange={canEdit ? setSelectedIds : undefined}
+            fillHeight
           />
         )}
       </div>
