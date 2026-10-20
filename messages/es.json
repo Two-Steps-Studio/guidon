@@ -465,7 +465,9 @@
       "filesMetric": "{count} archivos",
       "settingsTitle": "Ajustes",
       "settingsDescription": "Configuración del proyecto",
-      "settingsMetric": "Gestionar equipo"
+      "settingsMetric": "Gestionar equipo",
+      "pendingInsights": "{count, plural, one {La IA sugiere # cosa para recordar del trabajo terminado} other {La IA sugiere # cosas para recordar del trabajo terminado}}: nada se añade a la memoria del proyecto hasta que lo aceptes.",
+      "reviewInsights": "Revisar"
     },
     "edit": {
       "trigger": "Editar proyecto",

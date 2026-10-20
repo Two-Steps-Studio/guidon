@@ -465,7 +465,9 @@
       "filesMetric": "{count} plików",
       "settingsTitle": "Ustawienia",
       "settingsDescription": "Konfiguracja projektu",
-      "settingsMetric": "Zarządzaj zespołem"
+      "settingsMetric": "Zarządzaj zespołem",
+      "pendingInsights": "{count, plural, one {AI zaproponowało # rzecz do zapamiętania z ukończonej pracy} few {AI zaproponowało # rzeczy do zapamiętania z ukończonej pracy} many {AI zaproponowało # rzeczy do zapamiętania z ukończonej pracy} other {AI zaproponowało # rzeczy do zapamiętania z ukończonej pracy}} - nic nie trafi do pamięci projektu, dopóki tego nie zaakceptujesz.",
+      "reviewInsights": "Przejrzyj"
     },
     "edit": {
       "trigger": "Edytuj projekt",

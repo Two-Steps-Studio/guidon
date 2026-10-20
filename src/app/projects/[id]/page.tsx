@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { getProjectStats } from "@/lib/data/project-stats";
+import { dataClient } from "@/lib/data-client";
 import { EditProjectDialog } from "./edit-project-dialog";
 
 /**
@@ -45,6 +46,19 @@ export default async function ProjectPage({
   // With the task board hidden (migration 058) its counters go too - a
   // project used as a knowledge base would only ever show "0 tasks".
   const showTasks = isModuleVisible("work", project.disabled_modules);
+  // AI insights waiting for review - mostly what it learned from finished
+  // tasks (lib/ai/task-learning.ts). Only people who can accept them see it.
+  const pendingInsights =
+    canWriteProject(access.role) && project.ai_enabled && isModuleVisible("memory", project.disabled_modules)
+      ? (
+          await dataClient(access.userId)
+            .from("project_memory")
+            .eq("project_id", projectId)
+            .eq("memory_type", "ai_insight")
+            .eq("verified", false)
+            .count()
+        ).data ?? 0
+      : 0;
 
   const quickAccess = [
     {
@@ -120,6 +134,17 @@ export default async function ProjectPage({
           />
         )}
       </div>
+
+      {pendingInsights > 0 && (
+        <Link
+          href={`/projects/${projectId}/memory`}
+          className="mb-6 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm transition-colors hover:bg-primary/10"
+        >
+          <Brain className="h-4 w-4 shrink-0 text-primary" />
+          <span className="flex-1">{t("pendingInsights", { count: pendingInsights })}</span>
+          <span className="font-medium text-primary">{t("reviewInsights")} →</span>
+        </Link>
+      )}
 
       {(showTasks || showRoadmap) && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">

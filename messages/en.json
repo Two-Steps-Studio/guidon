@@ -465,7 +465,9 @@
       "filesMetric": "{count} files",
       "settingsTitle": "Settings",
       "settingsDescription": "Project configuration",
-      "settingsMetric": "Manage team"
+      "settingsMetric": "Manage team",
+      "pendingInsights": "{count, plural, one {AI suggested # thing to remember from finished work} other {AI suggested # things to remember from finished work}} - nothing is added to the project's memory until you accept it.",
+      "reviewInsights": "Review"
     },
     "edit": {
       "trigger": "Edit Project",

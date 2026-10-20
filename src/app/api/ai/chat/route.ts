@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
-import { CHAT_TOOLS, runChatTool, type FoundTask } from "@/lib/ai/chat-tools";
+import { ALL_CHAT_TOOLS, runChatTool, type FoundTask } from "@/lib/ai/chat-tools";
 import type { AIMessage } from "@/lib/ai/provider";
 import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { resolveBoardColumns, resolvePriorities } from "@/lib/work/task-board";
@@ -15,7 +15,10 @@ function buildSystemPrompt(projectName: string, workflow: string): string {
     `You are the Guidon AI Assistant for the project "${projectName}". ` +
     `You can search the project's tasks, create tasks, edit them, change their ` +
     `status, comment on them, read a task's full context, and record/list ` +
-    `attempts, using the tools ` +
+    `attempts - and keep the rest of the project current: its decisions, ` +
+    `knowledge sources, roadmap phases, memory (facts, rules, constraints) ` +
+    `and tech stack. When the user says to remember something, log a ` +
+    `decision or update the roadmap, do it with those tools. Use the tools ` +
     `available to you. Deleting a task only ever proposes the deletion - ` +
     `the user must click a confirm button themselves, so call ` +
     `propose_delete_task freely when asked to delete something; it is safe. ` +
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
       const result = await provider.complete({
         system: buildSystemPrompt(access.project.name, workflowText),
         messages,
-        tools: CHAT_TOOLS as unknown as Array<{ name: string; description: string; input_schema: object }>,
+        tools: ALL_CHAT_TOOLS as unknown as Array<{ name: string; description: string; input_schema: object }>,
         maxTokens: 1000,
       });
 

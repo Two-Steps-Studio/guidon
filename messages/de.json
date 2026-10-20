@@ -465,7 +465,9 @@
       "filesMetric": "{count} Dateien",
       "settingsTitle": "Einstellungen",
       "settingsDescription": "Projektkonfiguration",
-      "settingsMetric": "Team verwalten"
+      "settingsMetric": "Team verwalten",
+      "pendingInsights": "{count, plural, one {Die KI schlägt # Punkt aus erledigter Arbeit zum Merken vor} other {Die KI schlägt # Punkte aus erledigter Arbeit zum Merken vor}} - nichts landet im Projektgedächtnis, bevor du es annimmst.",
+      "reviewInsights": "Prüfen"
     },
     "edit": {
       "trigger": "Projekt bearbeiten",

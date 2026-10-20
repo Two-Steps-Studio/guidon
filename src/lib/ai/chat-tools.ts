@@ -8,6 +8,9 @@ import { createTask, updateTask } from "@/app/projects/[id]/work/actions";
 import { postComment } from "@/app/projects/[id]/work/comments-actions";
 import { loadAttempts, createAttempt } from "@/app/projects/[id]/work/attempts-actions";
 import { getTaskAgentContext } from "@/lib/context/agent-context";
+import { z } from "zod";
+import { PROJECT_RESOURCES, type ProjectResource } from "@/lib/api/project-resources";
+import { resourceOps } from "@/lib/api/project-resource-routes";
 import type { TaskPriority, TaskStatus } from "@/types/task";
 import type { AttemptOutcome } from "@/types/task";
 
@@ -142,6 +145,85 @@ export const CHAT_TOOLS = [
     },
   },
 ] as const;
+
+/** JSON Schema of a zod object, as the providers' tool definitions take it. */
+function jsonSchemaOf(schema: z.ZodObject<z.ZodRawShape>, extra: Record<string, unknown> = {}): Record<string, unknown> {
+  const json = z.toJSONSchema(schema) as Record<string, unknown> & { properties?: Record<string, unknown>; required?: string[] };
+  delete json.$schema;
+  return { ...json, properties: { ...extra, ...json.properties }, required: [...Object.keys(extra), ...(json.required ?? [])] };
+}
+
+/**
+ * The rest of the project - decisions, knowledge, roadmap, memory, tech
+ * stack - from the same descriptions as their API routes and MCP tools
+ * (lib/api/project-resources.ts), so "remember that...", "log the decision
+ * to...", "move the roadmap phase..." work in this chat too. List, create
+ * and update only: like tasks, nothing is deleted from here.
+ */
+export const RESOURCE_CHAT_TOOLS = PROJECT_RESOURCES.flatMap((resource) => {
+  const words = resource.noun.replace(/_/g, " ");
+  return [
+    {
+      name: `list_${resource.plural}`,
+      description: `${resource.summary}. Lists this project's ${resource.plural.replace(/_/g, " ")} (newest or roadmap order).`,
+      input_schema: { type: "object", properties: {} },
+    },
+    {
+      name: `create_${resource.noun}`,
+      description: `Add a ${words} to this project when the user asks for it (${resource.summary.charAt(0).toLowerCase()}${resource.summary.slice(1)}).`,
+      input_schema: jsonSchemaOf(resource.create),
+    },
+    {
+      name: `update_${resource.noun}`,
+      description: `Change some fields of one ${words}; get its id from list_${resource.plural} first.`,
+      input_schema: jsonSchemaOf(resource.update, { id: { type: "string", description: `The ${words}'s id.` } }),
+    },
+  ];
+});
+
+/** Every tool this chat offers. */
+export const ALL_CHAT_TOOLS = [...CHAT_TOOLS, ...RESOURCE_CHAT_TOOLS];
+
+/** One line per item for the model: id plus its name/title/content and status. */
+function describeItems(resource: ProjectResource, rows: Record<string, unknown>[]): string {
+  if (rows.length === 0) return `No ${resource.plural.replace(/_/g, " ")} yet.`;
+  return rows
+    .slice(0, 40)
+    .map((row) => {
+      const name = String(row.title ?? row.name ?? row.content ?? "").slice(0, 160);
+      const extras = ["status", "decision_type", "memory_type", "category", "version", "completion_percentage", "planned_end_date", "verified"]
+        .filter((key) => row[key] !== undefined && row[key] !== null)
+        .map((key) => `${key} ${row[key]}`)
+        .join(", ");
+      return `- ${name} (id ${row.id}${extras ? `; ${extras}` : ""})`;
+    })
+    .join("\n");
+}
+
+async function runResourceTool(name: string, args: Record<string, unknown>, projectId: string, userId: string): Promise<ChatToolResult | null> {
+  const match = name.match(/^(list|create|update)_(.+)$/);
+  if (!match) return null;
+  const [, verb, rest] = match;
+  const resource = PROJECT_RESOURCES.find((r) => (verb === "list" ? r.plural : r.noun) === rest);
+  if (!resource) return null;
+
+  const ops = resourceOps(resource, dataClient(userId), userId, projectId, "assistant");
+  const words = resource.noun.replace(/_/g, " ");
+  const titleOf = (row: Record<string, unknown>) => String(row.title ?? row.name ?? row.content ?? "").slice(0, 80);
+
+  if (verb === "list") {
+    const result = await ops.list();
+    const rows = (result.body[resource.listKey] as Record<string, unknown>[] | undefined) ?? [];
+    if (result.status !== 200) return { ok: false, summary: String(result.body.error), label: `Could not read ${resource.plural.replace(/_/g, " ")}` };
+    return { ok: true, summary: describeItems(resource, rows), label: `Read ${resource.plural.replace(/_/g, " ")}: ${rows.length}` };
+  }
+
+  const { id, ...fields } = args;
+  const result = verb === "create" ? await ops.create(fields) : await ops.update(typeof id === "string" ? id : "", fields);
+  if (result.status >= 300) return { ok: false, summary: `Could not ${verb} the ${words}: ${String(result.body.error)}` };
+  const row = result.body[resource.itemKey] as Record<string, unknown>;
+  return { ok: true, summary: `${verb === "create" ? "Added" : "Updated"} ${words}: ${titleOf(row)} (id ${row.id})` };
+}
 
 export interface FoundTask {
   id: string;
@@ -385,6 +467,6 @@ export async function runChatTool(
     }
 
     default:
-      return { ok: false, summary: `Unknown tool: ${name}` };
+      return (await runResourceTool(name, safeArgs, projectId, userId)) ?? { ok: false, summary: `Unknown tool: ${name}` };
   }
 }
