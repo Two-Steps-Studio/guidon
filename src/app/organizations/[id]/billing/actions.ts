@@ -54,6 +54,11 @@ export async function createCheckoutSession(organizationId: string, planId: stri
       customer: existingCustomerId,
       customer_email: existingCustomerId ? undefined : guard.userEmail,
       line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+      // Discounts are Stripe's own promotion codes (Dashboard -> Products ->
+      // Coupons), typed on the checkout page - Stripe then handles the
+      // discount, taxes and renewals. Guidon's own codes (migration 062)
+      // grant a plan for free instead, see promo-actions.ts.
+      allow_promotion_codes: true,
       subscription_data: {
         trial_period_days: TRIAL_PERIOD_DAYS,
         // The webhook (src/app/api/stripe/webhook/route.ts) has no other way

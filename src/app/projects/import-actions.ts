@@ -9,7 +9,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { getUniqueProjectSlug } from "@/lib/data/project-slug";
-import { getOrgPlanLimits, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { effectiveOrgProjectLimit, getOrgPlanLimits, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import {
   runGuidonImport,
   summarizeGuidonImport,
@@ -85,8 +85,9 @@ async function createProjectForImport(
 
   const { slug, siblingCount } = await getUniqueProjectSlug(orgId, userId, name);
 
-  if (isHostedProjectLimitReached(siblingCount, orgAccess.organization.project_limit)) {
-    return { projectId: null, error: hostedProjectLimitMessage(orgAccess.organization.project_limit) };
+  const projectLimit = await effectiveOrgProjectLimit(orgId, orgAccess.organization.project_limit);
+  if (isHostedProjectLimitReached(siblingCount, projectLimit)) {
+    return { projectId: null, error: hostedProjectLimitMessage(projectLimit) };
   }
 
   const { data: created, error } = await supabase

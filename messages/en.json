@@ -116,7 +116,8 @@
     "logOut": "Log out",
     "user": "User",
     "switchProject": "Switch project",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "promoCodes": "Promo codes"
   },
   "commandPalette": {
     "triggerLabel": "Search...",
@@ -420,7 +421,26 @@
       "checkoutSuccess": "Subscription updated - it may take a moment to appear below.",
       "checkoutCancelled": "Checkout cancelled - nothing was changed.",
       "membersLabel": "Members",
-      "colMembers": "Members"
+      "colMembers": "Members",
+      "currentPlanPromo": "Current plan: {plan} until {date, date, long} (promo code)",
+      "promoTitle": "Promo code",
+      "promoDescription": "Have a Guidon promo code? Redeem it here for a plan free for a while. Discount codes for a paid plan are entered at checkout instead.",
+      "promoLabel": "Promo code",
+      "promoPlaceholder": "e.g. LAUNCH30",
+      "promoRedeem": "Redeem",
+      "promoRedeemed": "Done - {plan} is active until {date}.",
+      "promoErrors": {
+        "not_found": "There's no such code - check the spelling.",
+        "inactive": "This code has been switched off.",
+        "expired": "This code has expired.",
+        "used_up": "This code has been used the maximum number of times.",
+        "already_redeemed": "This organization has already used this code.",
+        "has_better_plan": "This organization already has this plan or a better one, so the code wouldn't add anything - it hasn't been used.",
+        "too_many_attempts": "Too many attempts - try again in a few minutes.",
+        "forbidden": "Only the organization's owner or admins can redeem codes.",
+        "not_available": "Promo codes are only for Guidon Cloud.",
+        "failed": "Couldn't redeem the code. Try again."
+      }
     }
   },
   "projects": {
@@ -1286,7 +1306,39 @@
     "unlimited": "Unlimited",
     "setLimit": "Set limit",
     "save": "Save",
-    "saved": "Saved"
+    "saved": "Saved",
+    "promoTitle": "Promo codes",
+    "promoDescription": "Codes that give an organization a paid plan for free for a number of days, redeemed on its Billing page. For discounts on a paid plan, create a promotion code in the Stripe Dashboard instead - it's entered at checkout.",
+    "promoCreateTitle": "New code",
+    "promoCreateDescription": "The code is case-insensitive. Each organization can use a code once; using the same plan's code again adds the days.",
+    "promoFieldCode": "Code",
+    "promoGenerate": "Generate",
+    "promoFieldPlan": "Plan",
+    "promoFieldDays": "Days of the plan",
+    "promoFieldMaxUses": "Max uses",
+    "promoUnlimited": "Unlimited",
+    "promoFieldExpires": "Can be used until",
+    "promoFieldNote": "Note",
+    "promoNotePlaceholder": "e.g. Game jam sponsors",
+    "promoCreate": "Create code",
+    "promoCreated": "Code {code} created.",
+    "promoEmptyTitle": "No promo codes yet",
+    "promoEmptyDescription": "Create one above.",
+    "promoMigrationMissing": "Promo codes need migration 062 - run it first.",
+    "promoColCode": "Code",
+    "promoColGrants": "Gives",
+    "promoColUses": "Used",
+    "promoColValidUntil": "Valid until",
+    "promoColNote": "Note",
+    "promoColStatus": "Status",
+    "promoGrants": "{plan} for {days, plural, one {# day} other {# days}}",
+    "promoNoEnd": "No end",
+    "promoStatusActive": "Active",
+    "promoStatusOff": "Off",
+    "promoStatusExpired": "Expired",
+    "promoStatusUsedUp": "Used up",
+    "promoDisable": "Switch off",
+    "promoEnable": "Switch on"
   },
   "profile": {
     "title": "Profile",

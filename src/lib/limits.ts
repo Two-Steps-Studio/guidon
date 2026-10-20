@@ -2,6 +2,7 @@ import "server-only";
 
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { serviceDataClient } from "@/lib/data-client";
+import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "@/app/admin/organizations/constants";
 
 /**
  * Guidon Cloud (hosted - no self-managed Postgres) caps an organization's
@@ -47,6 +48,22 @@ export interface OrgPlanLimits {
   storageLimitBytes: number | null;
   /** plans.member_limit (migration 051): seats - organization_members rows, owner included. */
   memberLimit: number | null;
+  /**
+   * Set while a promo code's plan (migration 062) is what these limits come
+   * from - it beat the paid/free plan and hasn't run out yet.
+   */
+  promoUntil: string | null;
+}
+
+interface PlanLimitsRow {
+  name: string;
+  sort_order?: number | null;
+  project_limit: number | null;
+  task_limit_per_project: number | null;
+  member_limit_per_project?: number | null;
+  /** Absent before migration 051 - "*" just doesn't return it. */
+  member_limit?: number | null;
+  storage_limit_bytes: number | null;
 }
 
 /** Free's seats, also the fail-closed fallback below - keep equal to 051's value for 'free'. */
@@ -66,7 +83,9 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     // "*" rather than a column list: naming member_limit_per_project (049)
     // would make this query fail - and every organization fall back to Free
     // below - on a database where that migration hasn't run yet.
-    .select("plans (*)")
+    // "*" for the subscription too: promo_plan_id/promo_until (062) are
+    // simply absent before that migration, instead of failing the query.
+    .select("*, plans (*)")
     .eq("organization_id", organizationId)
     .single();
 
@@ -80,18 +99,23 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
       memberLimitPerProject: 5,
       storageLimitBytes: 500 * 1024 * 1024,
       memberLimit: FREE_PLAN_MEMBER_LIMIT,
+      promoUntil: null,
     };
   }
 
-  const plan = data.plans as unknown as {
-    name: string;
-    project_limit: number | null;
-    task_limit_per_project: number | null;
-    member_limit_per_project?: number | null;
-    /** Absent before migration 051 - "*" just doesn't return it. */
-    member_limit?: number | null;
-    storage_limit_bytes: number | null;
-  };
+  let plan = data.plans as unknown as PlanLimitsRow;
+  let promoUntil: string | null = null;
+
+  // A promo code's plan (062) counts until its date, when it's better than
+  // the plan the organization has anyway. Nothing to undo when it ends.
+  const promo = data as { promo_plan_id?: string | null; promo_until?: string | null };
+  if (promo.promo_plan_id && promo.promo_until && new Date(promo.promo_until).getTime() > Date.now()) {
+    const { data: promoPlan } = await supabase.from("plans").select("*").eq("id", promo.promo_plan_id).maybeSingle();
+    if (promoPlan && ((promoPlan as PlanLimitsRow).sort_order ?? 0) > (plan.sort_order ?? 0)) {
+      plan = promoPlan as PlanLimitsRow;
+      promoUntil = promo.promo_until;
+    }
+  }
 
   return {
     planName: plan.name,
@@ -100,7 +124,21 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     memberLimitPerProject: plan.member_limit_per_project ?? null,
     storageLimitBytes: plan.storage_limit_bytes,
     memberLimit: plan.member_limit ?? null,
+    promoUntil,
   };
+}
+
+/**
+ * The project cap to enforce: organizations.project_limit (014 - set from the
+ * paid plan by the Stripe webhook / admin), raised while a promo code's plan
+ * allows more. The promo isn't written into project_limit because nothing
+ * would lower it again when it ends.
+ */
+export async function effectiveOrgProjectLimit(organizationId: string, orgProjectLimit: number): Promise<number> {
+  if (hasDirectDatabase()) return orgProjectLimit;
+  const limits = await getOrgPlanLimits(organizationId);
+  if (!limits.promoUntil) return orgProjectLimit;
+  return Math.max(orgProjectLimit, limits.projectLimit ?? ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL);
 }
 
 /** Seats in use: every organization_members row, owner included. Service role - the count must not depend on what the caller can see. */

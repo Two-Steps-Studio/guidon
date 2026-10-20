@@ -116,7 +116,8 @@
     "logOut": "Wyloguj się",
     "user": "Użytkownik",
     "switchProject": "Przełącz projekt",
-    "calendar": "Kalendarz"
+    "calendar": "Kalendarz",
+    "promoCodes": "Kody promocyjne"
   },
   "commandPalette": {
     "triggerLabel": "Szukaj...",
@@ -420,7 +421,26 @@
       "checkoutSuccess": "Subskrypcja zaktualizowana - może chwilę potrwać, zanim pojawi się poniżej.",
       "checkoutCancelled": "Płatność anulowana - nic się nie zmieniło.",
       "membersLabel": "Członkowie",
-      "colMembers": "Członkowie"
+      "colMembers": "Członkowie",
+      "currentPlanPromo": "Bieżący plan: {plan} do {date, date, long} (kod promocyjny)",
+      "promoTitle": "Kod promocyjny",
+      "promoDescription": "Masz kod promocyjny Guidona? Wpisz go tutaj, żeby dostać plan za darmo na jakiś czas. Kody rabatowe na płatny plan wpisuje się przy płatności.",
+      "promoLabel": "Kod promocyjny",
+      "promoPlaceholder": "np. LAUNCH30",
+      "promoRedeem": "Użyj kodu",
+      "promoRedeemed": "Gotowe - plan {plan} jest aktywny do {date}.",
+      "promoErrors": {
+        "not_found": "Nie ma takiego kodu - sprawdź pisownię.",
+        "inactive": "Ten kod został wyłączony.",
+        "expired": "Ten kod wygasł.",
+        "used_up": "Ten kod został już wykorzystany maksymalną liczbę razy.",
+        "already_redeemed": "Ta organizacja już użyła tego kodu.",
+        "has_better_plan": "Ta organizacja ma już ten plan albo lepszy, więc kod nic by nie dał - nie został zużyty.",
+        "too_many_attempts": "Za dużo prób - spróbuj ponownie za kilka minut.",
+        "forbidden": "Kody może wpisywać tylko właściciel lub administrator organizacji.",
+        "not_available": "Kody promocyjne działają tylko w Guidon Cloud.",
+        "failed": "Nie udało się użyć kodu. Spróbuj ponownie."
+      }
     }
   },
   "projects": {
@@ -1286,7 +1306,39 @@
     "unlimited": "Bez limitu",
     "setLimit": "Ustaw limit",
     "save": "Zapisz",
-    "saved": "Zapisano"
+    "saved": "Zapisano",
+    "promoTitle": "Kody promocyjne",
+    "promoDescription": "Kody dające organizacji płatny plan za darmo na określoną liczbę dni - wpisywane na stronie Billing organizacji. Rabaty na płatny plan twórz jako kody promocyjne w panelu Stripe - wpisuje się je przy płatności.",
+    "promoCreateTitle": "Nowy kod",
+    "promoCreateDescription": "Wielkość liter nie ma znaczenia. Każda organizacja może użyć kodu raz; kolejny kod na ten sam plan dodaje dni.",
+    "promoFieldCode": "Kod",
+    "promoGenerate": "Wygeneruj",
+    "promoFieldPlan": "Plan",
+    "promoFieldDays": "Dni planu",
+    "promoFieldMaxUses": "Maks. użyć",
+    "promoUnlimited": "Bez limitu",
+    "promoFieldExpires": "Ważny do",
+    "promoFieldNote": "Notatka",
+    "promoNotePlaceholder": "np. Sponsorzy game jamu",
+    "promoCreate": "Utwórz kod",
+    "promoCreated": "Utworzono kod {code}.",
+    "promoEmptyTitle": "Brak kodów promocyjnych",
+    "promoEmptyDescription": "Utwórz pierwszy powyżej.",
+    "promoMigrationMissing": "Kody promocyjne wymagają migracji 062 - uruchom ją najpierw.",
+    "promoColCode": "Kod",
+    "promoColGrants": "Daje",
+    "promoColUses": "Użyto",
+    "promoColValidUntil": "Ważny do",
+    "promoColNote": "Notatka",
+    "promoColStatus": "Status",
+    "promoGrants": "{plan} na {days, plural, one {# dzień} other {# dni}}",
+    "promoNoEnd": "Bez końca",
+    "promoStatusActive": "Aktywny",
+    "promoStatusOff": "Wyłączony",
+    "promoStatusExpired": "Wygasł",
+    "promoStatusUsedUp": "Wykorzystany",
+    "promoDisable": "Wyłącz",
+    "promoEnable": "Włącz"
   },
   "profile": {
     "title": "Profil",

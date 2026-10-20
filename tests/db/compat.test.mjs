@@ -237,7 +237,9 @@ for (const [label, sql, expected] of [
   // 33->34 tabel, 118->122 polityk: discord_user_links (057), 4 polityki
   // 34->35 tabel, 122->124 polityk: ai_accounts (059) + profiles_select_ai_accounts
   // 35->36 tabel, 124->129 polityk: project_task_priorities (060, 4) + project_board_columns_delete
-  ["36 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 36],
+  // 36->38 tabel, polityk bez zmian: promo_codes + promo_redemptions (062) -
+  // zero polityk, pisze i czyta tylko service_role (jak stripe_webhook_events).
+  ["38 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 38],
   ["129 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 129],
 ]) {
   const { rows } = await db.query(sql);
@@ -3067,6 +3069,61 @@ section("48. usuwanie ukonczonych zadan po N dniach (migracja 061)");
     check("stary ukonczony subtask otwartego zadania zostaje", ids.has(doneSubOfOpen));
     await db.query("UPDATE public.projects SET done_cleanup_days = NULL WHERE id = $1", [projectId]);
   });
+}
+
+section("49. kody promocyjne: plan za darmo na N dni (migracja 062)");
+
+{
+  const orgs = [];
+  for (const slug of ["promo-a", "promo-b", "promo-c"]) {
+    const o = await withUser(A, () => db.query("INSERT INTO public.organizations (name, slug) VALUES ($1, $1) RETURNING id", [slug]));
+    orgs.push(o.rows[0].id);
+  }
+  const [orgA, orgB, orgC] = orgs;
+  const redeem = (code, org) =>
+    withServiceRole(async () => (await db.query("SELECT * FROM public.redeem_promo_code($1, $2, $3)", [code, org, A])).rows[0]);
+
+  await withServiceRole(async () => {
+    await db.query(
+      `INSERT INTO public.promo_codes (code, plan_id, duration_days, max_redemptions) VALUES
+         ('PRO30', 'pro', 30, 2), ('PRO10', 'pro', 10, NULL), ('TEAM5', 'team', 5, NULL)`
+    );
+    await db.query("INSERT INTO public.promo_codes (code, plan_id, duration_days, active) VALUES ('OFF1', 'pro', 30, false)");
+    await db.query("INSERT INTO public.promo_codes (code, plan_id, duration_days, expires_at) VALUES ('OLD1', 'pro', 30, now() - interval '1 day')");
+  });
+
+  await withUser(A, async () => {
+    check("uzytkownik nie widzi kodow", await throwsInSavepoint("SELECT * FROM public.promo_codes"));
+    check("ani nie realizuje kodu sam", await throwsInSavepoint("SELECT * FROM public.redeem_promo_code('PRO30', $1, $2)", [orgA, A]));
+    const own = await db.query("UPDATE public.subscriptions SET promo_plan_id = 'business', promo_until = now() + interval '1 year' WHERE organization_id = $1 RETURNING 1", [orgA]).catch(() => ({ rows: [] }));
+    check("owner nie daje sobie planu przez subscriptions", own.rows.length === 0);
+  });
+
+  const first = await redeem(" pro30 ", orgA);
+  check("kod dziala (male litery, spacje)", first.error === null && first.plan_id === "pro", JSON.stringify(first));
+  const days = (until) => Math.round((new Date(until).getTime() - Date.now()) / 86400000);
+  check("na 30 dni", days(first.granted_until) === 30, first.granted_until);
+  check("drugi raz w tej samej organizacji: already_redeemed", (await redeem("PRO30", orgA)).error === "already_redeemed");
+  const stacked = await redeem("PRO10", orgA);
+  check("drugi kod na ten sam plan dodaje dni", stacked.error === null && days(stacked.granted_until) === 40, stacked.granted_until);
+  check("kod na lepszy plan zastepuje promocje", (await redeem("TEAM5", orgA)).plan_id === "team");
+  check("inna organizacja: PRO10 i TEAM5", (await redeem("PRO10", orgB)).error === null && (await redeem("TEAM5", orgB)).error === null);
+  check("slabszy kod przy trwajacej lepszej promocji: has_better_plan", (await redeem("PRO30", orgB)).error === "has_better_plan");
+
+  check("nieznany kod", (await redeem("NOPE", orgC)).error === "not_found");
+  check("wylaczony kod", (await redeem("OFF1", orgC)).error === "inactive");
+  check("przeterminowany kod", (await redeem("OLD1", orgC)).error === "expired");
+
+  await withServiceRole(() => db.query("UPDATE public.subscriptions SET plan_id = 'business', status = 'active' WHERE organization_id = $1", [orgC]));
+  check("oplacony lepszy plan: has_better_plan i kod niezuzyty", (await redeem("PRO30", orgC)).error === "has_better_plan");
+  await withServiceRole(() => db.query("UPDATE public.subscriptions SET plan_id = 'free' WHERE organization_id = $1", [orgC]));
+  check("drugie uzycie PRO30 (limit 2)", (await redeem("PRO30", orgC)).error === null);
+  check("trzecie: used_up", (await redeem("PRO30", orgB)).error === "used_up");
+
+  const sub = await withServiceRole(async () => (await db.query("SELECT promo_plan_id FROM public.subscriptions WHERE organization_id = $1", [orgB])).rows[0]);
+  check("used_up niczego nie zmienia w subskrypcji", sub.promo_plan_id === "team");
+  const count = await withServiceRole(async () => (await db.query("SELECT redemption_count FROM public.promo_codes WHERE code = 'PRO30'")).rows[0]);
+  check("licznik uzyc = 2", count.redemption_count === 2, count.redemption_count);
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

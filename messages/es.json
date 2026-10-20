@@ -116,7 +116,8 @@
     "logOut": "Cerrar sesión",
     "user": "Usuario",
     "switchProject": "Cambiar de proyecto",
-    "calendar": "Calendario"
+    "calendar": "Calendario",
+    "promoCodes": "Códigos promocionales"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -420,7 +421,26 @@
       "checkoutSuccess": "Suscripción actualizada - puede tardar un momento en aparecer abajo.",
       "checkoutCancelled": "Pago cancelado - no se realizó ningún cambio.",
       "membersLabel": "Miembros",
-      "colMembers": "Miembros"
+      "colMembers": "Miembros",
+      "currentPlanPromo": "Plan actual: {plan} hasta el {date, date, long} (código promocional)",
+      "promoTitle": "Código promocional",
+      "promoDescription": "¿Tienes un código promocional de Guidon? Canjéalo aquí para usar un plan gratis durante un tiempo. Los códigos de descuento para un plan de pago se introducen al pagar.",
+      "promoLabel": "Código promocional",
+      "promoPlaceholder": "p. ej. LAUNCH30",
+      "promoRedeem": "Canjear",
+      "promoRedeemed": "Listo: {plan} está activo hasta el {date}.",
+      "promoErrors": {
+        "not_found": "Ese código no existe: revisa cómo está escrito.",
+        "inactive": "Este código se ha desactivado.",
+        "expired": "Este código ha caducado.",
+        "used_up": "Este código ya se ha usado el máximo de veces.",
+        "already_redeemed": "Esta organización ya ha usado este código.",
+        "has_better_plan": "Esta organización ya tiene este plan o uno mejor, así que el código no añadiría nada: no se ha gastado.",
+        "too_many_attempts": "Demasiados intentos: vuelve a probar en unos minutos.",
+        "forbidden": "Solo el propietario o los administradores de la organización pueden canjear códigos.",
+        "not_available": "Los códigos promocionales son solo para Guidon Cloud.",
+        "failed": "No se pudo canjear el código. Inténtalo de nuevo."
+      }
     }
   },
   "projects": {
@@ -1286,7 +1306,39 @@
     "unlimited": "Ilimitado",
     "setLimit": "Establecer límite",
     "save": "Guardar",
-    "saved": "Guardado"
+    "saved": "Guardado",
+    "promoTitle": "Códigos promocionales",
+    "promoDescription": "Códigos que dan a una organización un plan de pago gratis durante unos días; se canjean en su página de Facturación. Para descuentos en un plan de pago, crea un código de promoción en el panel de Stripe: se introduce al pagar.",
+    "promoCreateTitle": "Nuevo código",
+    "promoCreateDescription": "No distingue mayúsculas. Cada organización puede usar un código una vez; otro código del mismo plan suma los días.",
+    "promoFieldCode": "Código",
+    "promoGenerate": "Generar",
+    "promoFieldPlan": "Plan",
+    "promoFieldDays": "Días del plan",
+    "promoFieldMaxUses": "Usos máx.",
+    "promoUnlimited": "Ilimitado",
+    "promoFieldExpires": "Canjeable hasta",
+    "promoFieldNote": "Nota",
+    "promoNotePlaceholder": "p. ej. Patrocinadores de la game jam",
+    "promoCreate": "Crear código",
+    "promoCreated": "Código {code} creado.",
+    "promoEmptyTitle": "Aún no hay códigos",
+    "promoEmptyDescription": "Crea uno arriba.",
+    "promoMigrationMissing": "Los códigos promocionales necesitan la migración 062: ejecútala primero.",
+    "promoColCode": "Código",
+    "promoColGrants": "Da",
+    "promoColUses": "Usado",
+    "promoColValidUntil": "Válido hasta",
+    "promoColNote": "Nota",
+    "promoColStatus": "Estado",
+    "promoGrants": "{plan} durante {days, plural, one {# día} other {# días}}",
+    "promoNoEnd": "Sin fin",
+    "promoStatusActive": "Activo",
+    "promoStatusOff": "Desactivado",
+    "promoStatusExpired": "Caducado",
+    "promoStatusUsedUp": "Agotado",
+    "promoDisable": "Desactivar",
+    "promoEnable": "Activar"
   },
   "profile": {
     "title": "Perfil",

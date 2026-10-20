@@ -6,7 +6,7 @@ import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
 import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import { getUniqueProjectSlug } from "@/lib/data/project-slug";
-import { isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { effectiveOrgProjectLimit, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
@@ -87,8 +87,9 @@ export async function createProject(
   // here, not just hidden in the UI (organizations/[id]/page.tsx), because
   // this Server Action is reachable directly regardless of what the page
   // renders.
-  if (isHostedProjectLimitReached(siblingCount, access.organization.project_limit)) {
-    return { error: hostedProjectLimitMessage(access.organization.project_limit) };
+  const projectLimit = await effectiveOrgProjectLimit(orgId, access.organization.project_limit);
+  if (isHostedProjectLimitReached(siblingCount, projectLimit)) {
+    return { error: hostedProjectLimitMessage(projectLimit) };
   }
 
   const { data: project, error } = await dataClient(access.userId)

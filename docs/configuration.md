@@ -258,6 +258,19 @@ essentially never changes, so a full editor would be unused complexity.
 sold through Checkout. A plan with `stripe_price_id IS NULL` simply shows no
 Upgrade button.
 
+**Promo codes.** Two kinds, for two jobs:
+
+- *A discount on a paid plan* (e.g. 50% off for 3 months): create a coupon and
+  a promotion code in the Stripe Dashboard (Products -> Coupons). Checkout
+  shows an "Add promotion code" field, Stripe applies it. Nothing to set up in
+  Guidon.
+- *A paid plan for free for a while* (e.g. Pro for 30 days, for a game jam or
+  a partner): an instance admin creates the code at `/admin/promo-codes`
+  (needs `ADMIN_EMAILS`), the organization's owner/admin redeems it on its
+  Billing page. No card, no Stripe involved - it works even when Stripe isn't
+  configured. When the period ends the organization is back on its own plan;
+  nothing is deleted (over a limit, it just can't add more). Migration 062.
+
 ---
 
 ## INTEGRATIONS

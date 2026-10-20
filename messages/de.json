@@ -116,7 +116,8 @@
     "logOut": "Abmelden",
     "user": "Benutzer",
     "switchProject": "Projekt wechseln",
-    "calendar": "Kalender"
+    "calendar": "Kalender",
+    "promoCodes": "Promo-Codes"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -420,7 +421,26 @@
       "checkoutSuccess": "Abonnement aktualisiert - es kann einen Moment dauern, bis es unten erscheint.",
       "checkoutCancelled": "Checkout abgebrochen - es wurde nichts geändert.",
       "membersLabel": "Mitglieder",
-      "colMembers": "Mitglieder"
+      "colMembers": "Mitglieder",
+      "currentPlanPromo": "Aktueller Plan: {plan} bis {date, date, long} (Promo-Code)",
+      "promoTitle": "Promo-Code",
+      "promoDescription": "Du hast einen Guidon-Promo-Code? Löse ihn hier ein und nutze einen Plan eine Zeit lang kostenlos. Rabattcodes für einen bezahlten Plan gibst du beim Bezahlen ein.",
+      "promoLabel": "Promo-Code",
+      "promoPlaceholder": "z. B. LAUNCH30",
+      "promoRedeem": "Einlösen",
+      "promoRedeemed": "Erledigt - {plan} ist bis {date} aktiv.",
+      "promoErrors": {
+        "not_found": "Diesen Code gibt es nicht - prüfe die Schreibweise.",
+        "inactive": "Dieser Code wurde deaktiviert.",
+        "expired": "Dieser Code ist abgelaufen.",
+        "used_up": "Dieser Code wurde bereits so oft wie möglich eingelöst.",
+        "already_redeemed": "Diese Organisation hat den Code bereits eingelöst.",
+        "has_better_plan": "Diese Organisation hat diesen oder einen besseren Plan schon - der Code würde nichts bringen und wurde nicht verbraucht.",
+        "too_many_attempts": "Zu viele Versuche - versuche es in ein paar Minuten erneut.",
+        "forbidden": "Nur Inhaber oder Admins der Organisation können Codes einlösen.",
+        "not_available": "Promo-Codes gibt es nur in Guidon Cloud.",
+        "failed": "Der Code konnte nicht eingelöst werden. Versuche es erneut."
+      }
     }
   },
   "projects": {
@@ -1286,7 +1306,39 @@
     "unlimited": "Unbegrenzt",
     "setLimit": "Limit festlegen",
     "save": "Speichern",
-    "saved": "Gespeichert"
+    "saved": "Gespeichert",
+    "promoTitle": "Promo-Codes",
+    "promoDescription": "Codes, die einer Organisation einen bezahlten Plan für eine Anzahl Tage kostenlos geben - eingelöst auf ihrer Billing-Seite. Für Rabatte auf einen bezahlten Plan lege stattdessen einen Promotion-Code im Stripe-Dashboard an - er wird beim Bezahlen eingegeben.",
+    "promoCreateTitle": "Neuer Code",
+    "promoCreateDescription": "Groß-/Kleinschreibung egal. Jede Organisation kann einen Code einmal einlösen; ein weiterer Code für denselben Plan addiert die Tage.",
+    "promoFieldCode": "Code",
+    "promoGenerate": "Erzeugen",
+    "promoFieldPlan": "Plan",
+    "promoFieldDays": "Tage im Plan",
+    "promoFieldMaxUses": "Max. Einlösungen",
+    "promoUnlimited": "Unbegrenzt",
+    "promoFieldExpires": "Einlösbar bis",
+    "promoFieldNote": "Notiz",
+    "promoNotePlaceholder": "z. B. Game-Jam-Sponsoren",
+    "promoCreate": "Code erstellen",
+    "promoCreated": "Code {code} erstellt.",
+    "promoEmptyTitle": "Noch keine Promo-Codes",
+    "promoEmptyDescription": "Lege oben einen an.",
+    "promoMigrationMissing": "Promo-Codes brauchen Migration 062 - führe sie zuerst aus.",
+    "promoColCode": "Code",
+    "promoColGrants": "Gibt",
+    "promoColUses": "Eingelöst",
+    "promoColValidUntil": "Gültig bis",
+    "promoColNote": "Notiz",
+    "promoColStatus": "Status",
+    "promoGrants": "{plan} für {days, plural, one {# Tag} other {# Tage}}",
+    "promoNoEnd": "Kein Ende",
+    "promoStatusActive": "Aktiv",
+    "promoStatusOff": "Aus",
+    "promoStatusExpired": "Abgelaufen",
+    "promoStatusUsedUp": "Aufgebraucht",
+    "promoDisable": "Ausschalten",
+    "promoEnable": "Einschalten"
   },
   "profile": {
     "title": "Profil",
