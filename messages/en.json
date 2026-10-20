@@ -141,11 +141,6 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcomeBack": "Welcome back, {name}",
-    "totalProjects": "Total Projects",
-    "totalTasks": "Total Tasks",
-    "completedTasks": "Completed Tasks",
-    "decisions": "Decisions",
     "yourProjects": "Your Projects",
     "viewAll": "View all {count}",
     "newProject": "New Project",
@@ -158,7 +153,17 @@
     "createFirstProjectTitle": "Create your first project",
     "createFirstProjectDesc": "Projects live inside an organization. If you don't have one yet, you'll create it on the next step.",
     "createFirstProjectButton": "Create your first project",
-    "openProject": "Open project"
+    "greeting": "Hi, {name}",
+    "statMyOpen": "Your open tasks",
+    "statOverdue": "Overdue",
+    "statInProgress": "In progress",
+    "statDoneThisWeek": "Done this week",
+    "upcomingTitle": "Up next for you",
+    "seeAll": "See all",
+    "upcomingEmpty": "Nothing assigned to you right now.",
+    "activityTitle": "Recent activity",
+    "activityEmpty": "Nothing has happened in your projects yet.",
+    "progress": "{done} of {total} tasks done"
   },
   "landing": {
     "heroTitle": "Context-First Project Management",

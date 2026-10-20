@@ -141,11 +141,6 @@
   },
   "dashboard": {
     "title": "Panel",
-    "welcomeBack": "Bienvenido de nuevo, {name}",
-    "totalProjects": "Proyectos totales",
-    "totalTasks": "Tareas totales",
-    "completedTasks": "Tareas completadas",
-    "decisions": "Decisiones",
     "yourProjects": "Tus proyectos",
     "viewAll": "Ver los {count}",
     "newProject": "Nuevo proyecto",
@@ -158,7 +153,17 @@
     "createFirstProjectTitle": "Crea tu primer proyecto",
     "createFirstProjectDesc": "Los proyectos viven dentro de una organización. Si aún no tienes una, la crearás en el siguiente paso.",
     "createFirstProjectButton": "Crea tu primer proyecto",
-    "openProject": "Abrir proyecto"
+    "greeting": "Hola, {name}",
+    "statMyOpen": "Tus tareas abiertas",
+    "statOverdue": "Vencidas",
+    "statInProgress": "En curso",
+    "statDoneThisWeek": "Hechas esta semana",
+    "upcomingTitle": "Lo próximo para ti",
+    "seeAll": "Ver todo",
+    "upcomingEmpty": "No tienes tareas asignadas ahora mismo.",
+    "activityTitle": "Actividad reciente",
+    "activityEmpty": "Todavía no ha pasado nada en tus proyectos.",
+    "progress": "{done} de {total} tareas hechas"
   },
   "landing": {
     "heroTitle": "Gestión de proyectos centrada en el contexto",

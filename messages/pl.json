@@ -141,11 +141,6 @@
   },
   "dashboard": {
     "title": "Pulpit",
-    "welcomeBack": "Witaj ponownie, {name}",
-    "totalProjects": "Wszystkie projekty",
-    "totalTasks": "Wszystkie zadania",
-    "completedTasks": "Ukończone zadania",
-    "decisions": "Decyzje",
     "yourProjects": "Twoje projekty",
     "viewAll": "Zobacz wszystkie ({count})",
     "newProject": "Nowy projekt",
@@ -158,7 +153,17 @@
     "createFirstProjectTitle": "Utwórz swój pierwszy projekt",
     "createFirstProjectDesc": "Projekty istnieją w ramach organizacji. Jeśli jeszcze jej nie masz, utworzysz ją w kolejnym kroku.",
     "createFirstProjectButton": "Utwórz swój pierwszy projekt",
-    "openProject": "Otwórz projekt"
+    "greeting": "Cześć, {name}",
+    "statMyOpen": "Twoje otwarte zadania",
+    "statOverdue": "Po terminie",
+    "statInProgress": "W toku",
+    "statDoneThisWeek": "Ukończone w tym tygodniu",
+    "upcomingTitle": "Najbliższe dla Ciebie",
+    "seeAll": "Wszystkie",
+    "upcomingEmpty": "Nie masz teraz przypisanych zadań.",
+    "activityTitle": "Ostatnia aktywność",
+    "activityEmpty": "W Twoich projektach jeszcze nic się nie wydarzyło.",
+    "progress": "{done} z {total} zadań ukończonych"
   },
   "landing": {
     "heroTitle": "Zarządzanie projektami skupione na kontekście",

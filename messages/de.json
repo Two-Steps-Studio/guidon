@@ -141,11 +141,6 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcomeBack": "Willkommen zurück, {name}",
-    "totalProjects": "Projekte gesamt",
-    "totalTasks": "Aufgaben gesamt",
-    "completedTasks": "Erledigte Aufgaben",
-    "decisions": "Entscheidungen",
     "yourProjects": "Deine Projekte",
     "viewAll": "Alle {count} anzeigen",
     "newProject": "Neues Projekt",
@@ -158,7 +153,17 @@
     "createFirstProjectTitle": "Erstelle dein erstes Projekt",
     "createFirstProjectDesc": "Projekte gehören zu einer Organisation. Falls du noch keine hast, erstellst du sie im nächsten Schritt.",
     "createFirstProjectButton": "Erstes Projekt erstellen",
-    "openProject": "Projekt öffnen"
+    "greeting": "Hallo, {name}",
+    "statMyOpen": "Deine offenen Aufgaben",
+    "statOverdue": "Überfällig",
+    "statInProgress": "In Arbeit",
+    "statDoneThisWeek": "Diese Woche erledigt",
+    "upcomingTitle": "Als Nächstes für dich",
+    "seeAll": "Alle",
+    "upcomingEmpty": "Dir ist gerade nichts zugewiesen.",
+    "activityTitle": "Letzte Aktivität",
+    "activityEmpty": "In deinen Projekten ist noch nichts passiert.",
+    "progress": "{done} von {total} Aufgaben erledigt"
   },
   "landing": {
     "heroTitle": "Kontextorientiertes Projektmanagement",
