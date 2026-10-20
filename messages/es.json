@@ -1006,7 +1006,11 @@
     "workflowDefaultColor": "Color por defecto",
     "workflowName": "Nombre",
     "workflowNamePlaceholder": "Nombre",
-    "workflowRemove": "Quitar {label}"
+    "workflowRemove": "Quitar {label}",
+    "visibilityLabel": "Quién ve este proyecto",
+    "visibilityOrganization": "Toda la organización",
+    "visibilityPrivate": "Solo los miembros del proyecto",
+    "visibilityHint": "Los miembros de la organización que no están en el proyecto lo ven en solo lectura hasta que los añadas en Miembros. El propietario y los administradores de la organización siempre ven todos los proyectos."
   },
   "discordLink": {
     "title": "Conectar el bot de Discord de Guidon",

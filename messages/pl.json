@@ -1006,7 +1006,11 @@
     "workflowDefaultColor": "Domyślny kolor",
     "workflowName": "Nazwa",
     "workflowNamePlaceholder": "Nazwa",
-    "workflowRemove": "Usuń {label}"
+    "workflowRemove": "Usuń {label}",
+    "visibilityLabel": "Kto widzi ten projekt",
+    "visibilityOrganization": "Wszyscy w organizacji",
+    "visibilityPrivate": "Tylko członkowie projektu",
+    "visibilityHint": "Członkowie organizacji spoza projektu widzą go tylko do odczytu, dopóki nie dodasz ich na stronie Członkowie. Właściciel i administratorzy organizacji zawsze widzą wszystkie projekty."
   },
   "discordLink": {
     "title": "Połącz bota Guidon z Discorda",
