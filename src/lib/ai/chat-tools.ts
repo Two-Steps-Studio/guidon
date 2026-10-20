@@ -3,6 +3,7 @@ import "server-only";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { createClient } from "@/lib/supabase-server";
+import { dataClient } from "@/lib/data-client";
 import { createTask, updateTask } from "@/app/projects/[id]/work/actions";
 import { postComment } from "@/app/projects/[id]/work/comments-actions";
 import { loadAttempts, createAttempt } from "@/app/projects/[id]/work/attempts-actions";
@@ -24,6 +25,24 @@ import type { AttemptOutcome } from "@/types/task";
  * own comment for why, and why its handler never actually deletes anything.
  */
 export const CHAT_TOOLS = [
+  {
+    name: "search_tasks",
+    description:
+      "Find tasks in this project by words in the title or description, and/or by status, priority or assignment to the current user. " +
+      "Use it whenever the user asks about tasks without giving an exact one (\"what's left in review?\", \"find the login bug\", \"my tasks\"), " +
+      "and before update/status/comment calls when you only know a task by name. Returns ids, titles and fields; the user also sees the matches as links.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Words to look for in title or description (optional)" },
+        status: { type: "string", enum: ["backlog", "todo", "in_progress", "ai_working", "review", "done"] },
+        priority: { type: "string", enum: ["low", "medium", "high", "critical"] },
+        assigned_to_me: { type: "boolean", description: "Only tasks assigned to the user chatting" },
+        include_done: { type: "boolean", description: "Include done tasks when no status is given (default false)" },
+        limit: { type: "number", description: "Max results, default 10, at most 25" },
+      },
+    },
+  },
   {
     name: "create_task",
     description: "Create a new task in this project. Lands in the Backlog column unless a status is given.",
@@ -124,10 +143,81 @@ export const CHAT_TOOLS = [
   },
 ] as const;
 
+export interface FoundTask {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+}
+
 export interface ChatToolResult {
   ok: boolean;
+  /** What the model reads back. */
   summary: string;
+  /** What the user sees as the action line; the summary when absent. Read
+   *  tools set it - their summary (a task's whole context) is for the model. */
+  label?: string;
+  /** Matches to show as links (search_tasks). */
+  tasks?: FoundTask[];
   pendingDelete?: { taskId: string; title: string };
+}
+
+/** % and _ are LIKE wildcards; a search for "50%" means the literal text. */
+function likePattern(text: string): string {
+  return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+type TaskSearchRow = FoundTask & { due_date: string | Date | null; assignee_id: string | null; sort_order: number | null };
+
+async function searchTasks(userId: string, projectId: string, args: Record<string, unknown>): Promise<ChatToolResult> {
+  const query = typeof args.query === "string" ? args.query.trim().slice(0, 200) : "";
+  const status = typeof args.status === "string" ? args.status : "";
+  const priority = typeof args.priority === "string" ? args.priority : "";
+  const limit = Math.min(Math.max(Math.floor(Number(args.limit) || 10), 1), 25);
+
+  // Title and description matched as two queries (the data client has no
+  // OR), merged by id; RLS keeps both to what this user can see.
+  const run = (column: "title" | "description" | null) => {
+    let builder = dataClient(userId)
+      .from("tasks")
+      .select<TaskSearchRow>("id, title, status, priority, due_date, assignee_id, sort_order")
+      .eq("project_id", projectId);
+    if (column) builder = builder.ilike(column, likePattern(query));
+    if (status) builder = builder.eq("status", status);
+    else if (args.include_done !== true) builder = builder.neq("status", "done");
+    if (priority) builder = builder.eq("priority", priority);
+    if (args.assigned_to_me === true) builder = builder.eq("assignee_id", userId);
+    return builder.order("updated_at", { ascending: false }).limit(limit);
+  };
+
+  const results = query ? await Promise.all([run("title"), run("description")]) : [await run(null)];
+  const failed = results.find((result) => result.error);
+  if (failed?.error) return { ok: false, summary: `Could not search tasks: ${failed.error.message}`, label: "Task search failed" };
+
+  const seen = new Set<string>();
+  const rows = results
+    .flatMap((result) => result.data ?? [])
+    .filter((row) => !seen.has(row.id) && seen.add(row.id))
+    .slice(0, limit);
+
+  const filters = [query && `"${query}"`, status, priority, args.assigned_to_me === true && "assigned to you"].filter(Boolean).join(", ");
+  const label = `Searched tasks${filters ? ` (${filters})` : ""}: ${rows.length} found`;
+  if (rows.length === 0) return { ok: true, summary: "No matching tasks.", label, tasks: [] };
+
+  const due = (value: string | Date | null) => (value ? new Date(value).toISOString().slice(0, 10) : null);
+  return {
+    ok: true,
+    label,
+    tasks: rows.map(({ id, title, status, priority }) => ({ id, title, status, priority })),
+    summary: rows
+      .map(
+        (row) =>
+          `- ${row.title} (id ${row.id}; ${row.status}, ${row.priority}` +
+          `${due(row.due_date) ? `, due ${due(row.due_date)}` : ""}` +
+          `${row.assignee_id === userId ? ", assigned to the user" : row.assignee_id ? ", assigned to someone else" : ", unassigned"})`
+      )
+      .join("\n"),
+  };
 }
 
 /** MAX(sort_order) + 100 for a column, so a chat-created task lands after every existing card in it - same spacing CreateTaskDialog uses (work-board.tsx). */
@@ -188,6 +278,9 @@ export async function runChatTool(
   const str = (key: string): string => (typeof safeArgs[key] === "string" ? (safeArgs[key] as string) : "");
 
   switch (name) {
+    case "search_tasks":
+      return searchTasks(userId, projectId, safeArgs);
+
     case "create_task": {
       const title = str("title");
       if (!title.trim()) return { ok: false, summary: "create_task needs a title." };
@@ -242,7 +335,7 @@ export async function runChatTool(
       if (!taskId) return { ok: false, summary: "get_task_context needs a task_id." };
       const result = await getTaskAgentContext(projectId, taskId);
       if (result.error) return { ok: false, summary: `Could not read task context: ${result.error}` };
-      return { ok: true, summary: result.markdown };
+      return { ok: true, summary: result.markdown, label: "Read the task's context" };
     }
 
     case "list_attempts": {
@@ -253,6 +346,7 @@ export async function runChatTool(
       if (result.attempts.length === 0) return { ok: true, summary: "No attempts recorded yet." };
       return {
         ok: true,
+        label: `Read ${result.attempts.length} recorded attempt(s)`,
         summary: result.attempts
           .map((a) => `[${a.outcome}] ${a.problem} -> ${a.approach}`)
           .join("\n"),

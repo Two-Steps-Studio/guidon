@@ -5,13 +5,24 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import Link from "next/link";
 import { Bot, Check, Loader2, Send, Sparkles, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BOARD_COLUMNS } from "@/lib/work/task-board";
+
+interface FoundTask {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+}
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   actions?: string[];
+  /** Tasks the assistant found (search_tasks), shown as links. */
+  tasks?: FoundTask[];
   pendingDelete?: { taskId: string; title: string };
 }
 
@@ -58,6 +69,7 @@ export function AIChat({ projectId }: { projectId: string }) {
           role: "assistant",
           content: data.text || "",
           actions: data.actions?.length ? data.actions : undefined,
+          tasks: data.tasks?.length ? data.tasks : undefined,
           pendingDelete: data.pendingDelete,
         },
       ]);
@@ -147,6 +159,29 @@ export function AIChat({ projectId }: { projectId: string }) {
                     >
                       {m.content}
                     </div>
+                  )}
+                  {m.tasks && (
+                    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card text-sm">
+                      {m.tasks.map((task) => {
+                        const column = BOARD_COLUMNS.find((c) => c.status === task.status);
+                        return (
+                          <li key={task.id}>
+                            <Link
+                              href={`/projects/${projectId}/work?openTask=${task.id}`}
+                              onClick={() => setIsOpen(false)}
+                              className="flex items-center gap-2 px-3 py-2 hover:bg-accent"
+                            >
+                              <span
+                                className={cn("h-2 w-2 shrink-0 rounded-full", column?.accentClass ?? "bg-muted-foreground")}
+                                aria-hidden
+                              />
+                              <span className="min-w-0 flex-1 truncate">{task.title}</span>
+                              <span className="shrink-0 text-xs text-muted-foreground">{column?.label ?? task.status}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                   {m.pendingDelete && (
                     <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-2 text-xs">

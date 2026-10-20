@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
-import { CHAT_TOOLS, runChatTool } from "@/lib/ai/chat-tools";
+import { CHAT_TOOLS, runChatTool, type FoundTask } from "@/lib/ai/chat-tools";
 import type { AIMessage } from "@/lib/ai/provider";
 
 const MAX_TOOL_ITERATIONS = 5;
@@ -11,8 +11,9 @@ const MAX_TOOL_ITERATIONS = 5;
 function buildSystemPrompt(projectName: string): string {
   return (
     `You are the Guidon AI Assistant for the project "${projectName}". ` +
-    `You can create tasks, edit them, change their status, comment on them, ` +
-    `read a task's full context, and record/list attempts, using the tools ` +
+    `You can search the project's tasks, create tasks, edit them, change their ` +
+    `status, comment on them, read a task's full context, and record/list ` +
+    `attempts, using the tools ` +
     `available to you. Deleting a task only ever proposes the deletion - ` +
     `the user must click a confirm button themselves, so call ` +
     `propose_delete_task freely when asked to delete something; it is safe. ` +
@@ -58,6 +59,8 @@ export async function POST(request: NextRequest) {
   }));
 
   const actions: string[] = [];
+  // Every task search_tasks found this turn, shown to the user as links.
+  const tasks = new Map<string, FoundTask>();
   let pendingDelete: { taskId: string; title: string } | undefined;
 
   try {
@@ -70,19 +73,20 @@ export async function POST(request: NextRequest) {
       });
 
       if (!result.tool_calls || result.tool_calls.length === 0) {
-        return NextResponse.json({ text: result.text, actions, pendingDelete });
+        return NextResponse.json({ text: result.text, actions, tasks: [...tasks.values()], pendingDelete });
       }
 
       messages.push({ role: "assistant", content: result.text, tool_calls: result.tool_calls });
 
       for (const call of result.tool_calls) {
         const toolResult = await runChatTool(call.name, call.args, projectId, access.userId);
-        actions.push(toolResult.summary);
+        actions.push(toolResult.label ?? toolResult.summary);
+        for (const task of toolResult.tasks ?? []) tasks.set(task.id, task);
         messages.push({ role: "tool", content: toolResult.summary, tool_call_id: call.id });
 
         if (toolResult.pendingDelete) {
           pendingDelete = toolResult.pendingDelete;
-          return NextResponse.json({ text: "", actions, pendingDelete });
+          return NextResponse.json({ text: "", actions, tasks: [...tasks.values()], pendingDelete });
         }
       }
     }
@@ -90,6 +94,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       text: "I've made several changes - let me know if you'd like me to continue.",
       actions,
+      tasks: [...tasks.values()],
       pendingDelete,
     });
   } catch (error) {

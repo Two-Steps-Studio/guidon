@@ -1329,7 +1329,7 @@
   "aiChat": {
     "title": "Asystent AI Guidona",
     "emptyTitle": "Jak mogę pomóc w tym projekcie?",
-    "emptyHint": "Mogę tworzyć i edytować zadania, komentować i odpowiadać na pytania.",
+    "emptyHint": "Mogę wyszukiwać, tworzyć i edytować zadania, komentować i odpowiadać na pytania.",
     "placeholder": "Poproś AI o coś...",
     "thinking": "Myślę...",
     "confirmDelete": "Potwierdź usunięcie",

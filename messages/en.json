@@ -1329,7 +1329,7 @@
   "aiChat": {
     "title": "Guidon AI Assistant",
     "emptyTitle": "How can I help you with this project?",
-    "emptyHint": "I can create and update tasks, comment, and answer questions.",
+    "emptyHint": "I can find, create and update tasks, comment, and answer questions.",
     "placeholder": "Ask AI to do something...",
     "thinking": "Thinking...",
     "confirmDelete": "Confirm delete",

@@ -1329,7 +1329,7 @@
   "aiChat": {
     "title": "Asistente de IA de Guidon",
     "emptyTitle": "¿Cómo puedo ayudarte con este proyecto?",
-    "emptyHint": "Puedo crear y editar tareas, comentar y responder preguntas.",
+    "emptyHint": "Puedo buscar, crear y editar tareas, comentar y responder preguntas.",
     "placeholder": "Pide algo a la IA...",
     "thinking": "Pensando...",
     "confirmDelete": "Confirmar eliminación",
