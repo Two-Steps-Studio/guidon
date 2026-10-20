@@ -170,7 +170,6 @@
     "heroSubtitle": "Understand why your project exists. Track decisions, sources, and context alongside your tasks.",
     "getStarted": "Get Started",
     "signIn": "Sign In",
-    "boardPreviewTitle": "Task board preview",
     "featuresTitle": "Everything a project needs to explain itself",
     "featuresSubtitle": "Tasks alone don't tell you why a project looks the way it does. Guidon tracks the context around the work, not just the work.",
     "features": {
@@ -268,7 +267,9 @@
       "description": "The same app, on infrastructure you control: Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama). No plan limits on your own install.",
       "guide": "Self-hosting guide",
       "github": "Code on GitHub"
-    }
+    },
+    "heroShotTitle": "The Guidon dashboard",
+    "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team and AI activity, project progress"
   },
   "organizations": {
     "common": {

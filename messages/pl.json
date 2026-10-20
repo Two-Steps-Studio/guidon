@@ -170,7 +170,6 @@
     "heroSubtitle": "Zrozum, po co istnieje Twój projekt. Śledź decyzje, źródła i kontekst obok swoich zadań.",
     "getStarted": "Zacznij teraz",
     "signIn": "Zaloguj się",
-    "boardPreviewTitle": "Podgląd tablicy zadań",
     "featuresTitle": "Wszystko, czego projekt potrzebuje, by mówić sam za siebie",
     "featuresSubtitle": "Same zadania nie wyjaśniają, dlaczego projekt wygląda tak, jak wygląda. Guidon śledzi kontekst wokół pracy, nie tylko samą pracę.",
     "features": {
@@ -268,7 +267,9 @@
       "description": "Ta sama aplikacja na infrastrukturze, którą kontrolujesz: Docker Compose ze zwykłym PostgreSQL, lokalnymi plikami i opcjonalnym lokalnym AI (Ollama). Na własnej instalacji nie ma limitów planów.",
       "guide": "Instrukcja self-hostingu",
       "github": "Kod na GitHubie"
-    }
+    },
+    "heroShotTitle": "Pulpit Guidona",
+    "heroShotAlt": "Pulpit Guidona: Twoje otwarte i zaległe zadania, najbliższa praca, aktywność zespołu i AI, postęp projektów"
   },
   "organizations": {
     "common": {

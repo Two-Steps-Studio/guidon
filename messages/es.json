@@ -170,7 +170,6 @@
     "heroSubtitle": "Comprende por qué existe tu proyecto. Registra decisiones, fuentes y contexto junto con tus tareas.",
     "getStarted": "Empezar",
     "signIn": "Iniciar sesión",
-    "boardPreviewTitle": "Vista previa del tablero de tareas",
     "featuresTitle": "Todo lo que un proyecto necesita para explicarse a sí mismo",
     "featuresSubtitle": "Las tareas por sí solas no explican por qué un proyecto es como es. Guidon registra el contexto alrededor del trabajo, no solo el trabajo.",
     "features": {
@@ -268,7 +267,9 @@
       "description": "La misma app en infraestructura que tú controlas: Docker Compose con un PostgreSQL normal, almacenamiento local de archivos e IA local opcional (Ollama). Sin límites de plan en tu propia instalación.",
       "guide": "Guía de autoalojamiento",
       "github": "Código en GitHub"
-    }
+    },
+    "heroShotTitle": "El panel de Guidon",
+    "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo próximo, actividad del equipo y de la IA, progreso de proyectos"
   },
   "organizations": {
     "common": {

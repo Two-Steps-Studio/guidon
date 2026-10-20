@@ -170,7 +170,6 @@
     "heroSubtitle": "Verstehe, warum dein Projekt existiert. Verfolge Entscheidungen, Quellen und Kontext zusammen mit deinen Aufgaben.",
     "getStarted": "Loslegen",
     "signIn": "Anmelden",
-    "boardPreviewTitle": "Vorschau des Task-Boards",
     "featuresTitle": "Alles, was ein Projekt braucht, um sich selbst zu erklären",
     "featuresSubtitle": "Aufgaben allein erklären nicht, warum ein Projekt so aussieht, wie es aussieht. Guidon verfolgt den Kontext rund um die Arbeit, nicht nur die Arbeit selbst.",
     "features": {
@@ -268,7 +267,9 @@
       "description": "Dieselbe App auf Infrastruktur, die du kontrollierst: Docker Compose mit einfachem PostgreSQL, lokalem Dateispeicher und optional lokaler KI (Ollama). Auf der eigenen Installation gibt es keine Planlimits.",
       "guide": "Self-Hosting-Anleitung",
       "github": "Code auf GitHub"
-    }
+    },
+    "heroShotTitle": "Das Guidon-Dashboard",
+    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt"
   },
   "organizations": {
     "common": {

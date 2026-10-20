@@ -8,7 +8,6 @@ import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Server,
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
-import { DemoBoardPreview } from "./demo-board-preview";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 
@@ -131,26 +130,37 @@ export default async function Home() {
       </div>
     </div>
 
-    <section className="bg-gradient-to-b from-background/70 to-transparent px-4 pb-20 dark:from-background/60" aria-labelledby="board-preview-title">
-      {/* The board's column headers are <h3>s; this keeps the outline
-          sequential (h1 -> h2 -> h3) for screen readers and crawlers. */}
-      <h2 id="board-preview-title" className="sr-only">
-        {t("boardPreviewTitle")}
+    <section className="bg-gradient-to-b from-background/70 to-transparent px-4 pb-20 dark:from-background/60" aria-labelledby="hero-shot-title">
+      <h2 id="hero-shot-title" className="sr-only">
+        {t("heroShotTitle")}
       </h2>
-      <div className="container mx-auto max-w-6xl">
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
-          <div className="flex items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-danger/60" />
-            <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-            <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
-            <span className="ml-3 text-xs text-muted-foreground">useguidon.com/projects/demo/work</span>
+      {/* A laptop drawn in CSS around a real screenshot of the dashboard, one
+          per theme - regenerate with scripts/landing/capture.mjs. */}
+      <div className="mx-auto max-w-6xl">
+        <div className="relative mx-auto w-[88%] rounded-t-[1.1rem] rounded-b-sm border border-neutral-700 bg-neutral-900 p-[1.4%] pb-[1.8%] shadow-2xl dark:border-neutral-600">
+          <span className="absolute left-1/2 top-[0.55%] h-1 w-1 -translate-x-1/2 rounded-full bg-neutral-600 md:h-1.5 md:w-1.5" aria-hidden />
+          <div className="overflow-hidden rounded-[0.3rem] bg-background">
+            <Image
+              src="/landing/hero-dashboard-light.webp"
+              alt={t("heroShotAlt")}
+              width={2000}
+              height={1250}
+              priority
+              sizes="(min-width: 1152px) 1000px, 88vw"
+              className="h-auto w-full dark:hidden"
+            />
+            <Image
+              src="/landing/hero-dashboard-dark.webp"
+              alt={t("heroShotAlt")}
+              width={2000}
+              height={1250}
+              sizes="(min-width: 1152px) 1000px, 88vw"
+              className="hidden h-auto w-full dark:block"
+            />
           </div>
-          {/* Real KanbanBoard/TaskCard components with static sample data
-              (canEdit={false}) - not a screenshot, so it never drifts out of
-              sync with the actual board's look. See demo-board-data.ts. */}
-          <div className="max-h-[520px] overflow-y-auto p-4 sm:p-6">
-            <DemoBoardPreview />
-          </div>
+        </div>
+        <div className="relative mx-auto h-3 w-full rounded-b-2xl bg-gradient-to-b from-neutral-300 to-neutral-400 shadow-xl md:h-5 dark:from-neutral-600 dark:to-neutral-800" aria-hidden>
+          <div className="absolute left-1/2 top-0 h-1.5 w-[14%] -translate-x-1/2 rounded-b-lg bg-neutral-400 md:h-2 dark:bg-neutral-900/70" />
         </div>
       </div>
     </section>

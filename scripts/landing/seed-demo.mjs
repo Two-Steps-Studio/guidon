@@ -193,6 +193,56 @@ try {
     );
   }
 
+  // --- Two more projects + team activity, for the dashboard (hero shot) ---
+  const extra = [
+    ["Studio Website", "Marketing site, devlog and press kit for the next launch.", "#0ea5e9", [
+      ["Press kit page with trailer embed", "in_progress", "high", ["web"], 1, true],
+      ["Devlog #14: lighting rework", "todo", "medium", ["content"], 4, true],
+      ["Steam wishlist button on every page", "done", "medium", ["web"], null, false],
+      ["Cookie banner copy review", "done", "low", ["legal"], null, false],
+      ["Localize landing page (DE, PL)", "backlog", "medium", ["i18n"], null, false],
+    ]],
+    ["Companion App", "iOS/Android app: build planner, news and cloud saves.", "#8b5cf6", [
+      ["Cloud save sync conflicts", "review", "critical", ["backend"], -1, true],
+      ["Build planner: share link", "in_progress", "high", ["feature"], 6, false],
+      ["Push notifications for patch notes", "todo", "medium", ["feature"], null, false],
+      ["App Store screenshots", "done", "low", ["store"], null, false],
+    ]],
+  ];
+  const projectIds = { Emberfall: p };
+  for (const [name, description, color, rows] of extra) {
+    const [row] = await q(
+      "INSERT INTO public.projects (organization_id, name, description, color) VALUES ($1,$2,$3,$4) RETURNING id",
+      [org.id, name, description, color]
+    );
+    projectIds[name] = row.id;
+    for (const [i, [title, status, priority, tags, due, mine]] of rows.entries()) {
+      await q(
+        `INSERT INTO public.tasks (project_id, title, status, priority, tags, due_date, sort_order, assignee_id, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [row.id, title, status, priority, tags, due === null ? null : days(due), i, mine ? userId : null, userId]
+      );
+    }
+  }
+  // actor_label: activity by teammates and an AI agent, without real accounts.
+  const minutes = (n) => new Date(Date.now() - n * 60_000).toISOString();
+  for (const [project, actor, action, entity, ago] of [
+    ["Emberfall", "Maya Chen", "task_status_changed", "task", 12],
+    ["Companion App", "Claude (AI)", "task_ai_completed", "task", 40],
+    ["Emberfall", "Jonas Weber", "decision_approved", "decision", 120],
+    ["Studio Website", null, "task_created", "task", 180],
+    ["Emberfall", "Maya Chen", "file_uploaded", "file", 300],
+    ["Companion App", "Priya Patel", "task_updated", "task", 420],
+    ["Emberfall", "Claude (AI)", "task_ai_commented", "task", 540],
+    ["Studio Website", "Jonas Weber", "phase_created", "phase", 1500],
+  ]) {
+    await q(
+      `INSERT INTO public.activity_logs (project_id, user_id, actor_label, action, entity_type, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [projectIds[project], userId, actor, action, entity, minutes(ago)]
+    );
+  }
+
   await client.query("COMMIT");
   console.log(`Seeded demo project ${p} (org ${org.id}) for ${DEMO_USER_EMAIL}.`);
   console.log(`DEMO_PROJECT_ID=${p}`);

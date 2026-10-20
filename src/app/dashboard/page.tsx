@@ -57,6 +57,11 @@ const PROJECT_CARDS = 6;
 const UPCOMING_TASKS = 6;
 const ACTIVITY_ITEMS = 8;
 
+/** "Task created" -> "task created" after a name, keeping acronyms like "AI". */
+function lowerFirst(text: string): string {
+  return /^[A-Z][a-z]/.test(text) ? text[0].toLowerCase() + text.slice(1) : text;
+}
+
 function startOfTodayUtc(): string {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
@@ -341,7 +346,7 @@ export default async function DashboardPage() {
                               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                               <span className="min-w-0 flex-1 text-sm">
                                 <span className="font-medium">{entry.actor_label || displayName(actor, tActivity("someone"))}</span>{" "}
-                                <span className="text-muted-foreground">{tActivity("action", { action: entry.action }).toLowerCase()}</span>
+                                <span className="text-muted-foreground">{lowerFirst(tActivity("action", { action: entry.action }))}</span>
                                 <span className="block truncate text-xs text-muted-foreground">
                                   {project?.name} · {ago(entry.created_at)}
                                 </span>
