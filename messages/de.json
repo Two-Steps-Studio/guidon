@@ -66,6 +66,13 @@
       "somethingWentWrong": "Etwas ist schiefgelaufen",
       "showPassword": "Passwort anzeigen",
       "hidePassword": "Passwort verbergen"
+    },
+    "mobileLogin": {
+      "title": "Guidon-App verbinden",
+      "description": "Die Guidon-App auf deinem Handy möchte als <b>{email}</b> arbeiten: deine Projekte und Aufgaben lesen, ihren Status ändern, sie bearbeiten und kommentieren.",
+      "allow": "Erlauben",
+      "invalidTitle": "Ungültige Anfrage",
+      "invalidDescription": "Diese Seite wird von der Guidon-App geöffnet, nicht direkt aufgerufen. Wenn die App dich hierher geschickt hat, starte die Anmeldung dort neu."
     }
   },
   "errors": {

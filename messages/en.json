@@ -66,6 +66,13 @@
       "somethingWentWrong": "Something went wrong",
       "showPassword": "Show password",
       "hidePassword": "Hide password"
+    },
+    "mobileLogin": {
+      "title": "Connect the Guidon app",
+      "description": "The Guidon app on your phone wants to work as <b>{email}</b>: read your projects and tasks, change their status, edit them and comment.",
+      "allow": "Allow",
+      "invalidTitle": "Invalid request",
+      "invalidDescription": "This page is opened by the Guidon mobile app, not visited directly. If the app sent you here, start signing in again from the app."
     }
   },
   "errors": {

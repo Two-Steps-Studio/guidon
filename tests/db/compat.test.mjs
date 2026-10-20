@@ -239,7 +239,8 @@ for (const [label, sql, expected] of [
   // 35->36 tabel, 124->129 polityk: project_task_priorities (060, 4) + project_board_columns_delete
   // 36->38 tabel, polityk bez zmian: promo_codes + promo_redemptions (062) -
   // zero polityk, pisze i czyta tylko service_role (jak stripe_webhook_events).
-  ["38 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 38],
+  // 38->39 tabel, polityk bez zmian: mobile_auth_codes (068) - tylko service_role.
+  ["39 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 39],
   ["129 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 129],
 ]) {
   const { rows } = await db.query(sql);

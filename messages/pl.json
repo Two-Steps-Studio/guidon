@@ -66,6 +66,13 @@
       "somethingWentWrong": "Coś poszło nie tak",
       "showPassword": "Pokaż hasło",
       "hidePassword": "Ukryj hasło"
+    },
+    "mobileLogin": {
+      "title": "Połącz aplikację Guidon",
+      "description": "Aplikacja Guidon na Twoim telefonie chce działać jako <b>{email}</b>: czytać Twoje projekty i zadania, zmieniać ich status, edytować je i komentować.",
+      "allow": "Zezwól",
+      "invalidTitle": "Nieprawidłowe żądanie",
+      "invalidDescription": "Tę stronę otwiera aplikacja mobilna Guidon, nie wchodzi się na nią bezpośrednio. Jeśli wysłała Cię tu aplikacja, zacznij logowanie w niej od nowa."
     }
   },
   "errors": {
