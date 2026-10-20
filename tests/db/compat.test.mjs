@@ -3193,5 +3193,27 @@ section("52. przypiete projekty (migracja 065)");
   });
 }
 
+section("53. RLS wlaczone na kazdej tabeli public (migracja 066)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000066";
+  const { rows: off } = await db.query(
+    "SELECT relname FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r','p') AND NOT relrowsecurity"
+  );
+  check("po migracjach zadna tabela public nie ma wylaczonego RLS", off.length === 0, off.map((r) => r.relname).join(","));
+
+  // Odtworzenie zgloszenia: projects bez RLS -> obcy widzi cudze projekty.
+  await db.exec("ALTER TABLE public.projects DISABLE ROW LEVEL SECURITY");
+  const leaked = await withUser(stranger, async () => (await db.query("SELECT id FROM public.projects")).rows.length);
+  check("bez RLS na projects obcy widzi cudze projekty (odtworzenie bledu)", leaked > 0, leaked);
+  const tasksSeen = await withUser(stranger, async () => (await db.query("SELECT id FROM public.tasks")).rows.length);
+  check("...a ich zadania sa puste (tasks ma RLS) - jak w zgloszeniu", tasksSeen === 0, tasksSeen);
+
+  const sql066 = await readFile(path.join(DB_DIR, "migrations", "066_enforce_rls_everywhere.sql"), "utf8");
+  await db.exec(forPglite(sql066));
+  const after = await withUser(stranger, async () => (await db.query("SELECT id FROM public.projects")).rows.length);
+  check("066 wlacza RLS z powrotem - obcy nie widzi nic", after === 0, after);
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
