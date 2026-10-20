@@ -26,6 +26,7 @@ import {
 } from "../src/lib/agent-web.ts";
 import { developersLlmsTxt, developersMarkdown } from "../src/lib/developers-doc.ts";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "../src/lib/project-links.ts";
+import { PROJECT_RESOURCES } from "../src/lib/api/project-resources.ts";
 
 let pass = 0;
 let fail = 0;
@@ -123,7 +124,11 @@ const mcpRoute = readFileSync(join(root, "src/app/api/mcp/route.ts"), "utf8");
 const mcpTools = readdirSync(join(root, "src/lib/mcp"), { recursive: true })
   .filter((f) => String(f).endsWith(".ts"))
   .map((f) => readFileSync(join(root, "src/lib/mcp", String(f)), "utf8"))
-  .join("\n") + mcpRoute;
+  .join("\n") + mcpRoute +
+  // resource-tools.ts builds these names from lib/api/project-resources.ts.
+  PROJECT_RESOURCES.flatMap((r) => [`list_${r.plural}`, ...["get", "create", "update", "delete"].map((verb) => `${verb}_${r.noun}`)])
+    .map((name) => `"${name}"`)
+    .join("\n");
 const listed = [...llms.matchAll(/`([a-z_]+)`/g)].map((m) => m[1]).filter((name) => /^(list|get|create|update|delete|start|set|complete|comment|record)_/.test(name));
 check("every MCP tool named in llms.txt exists", listed.length > 0 && listed.every((name) => mcpTools.includes(`"${name}"`)), listed.filter((name) => !mcpTools.includes(`"${name}"`)).join(", "));
 

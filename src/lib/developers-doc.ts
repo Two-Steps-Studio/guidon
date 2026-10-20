@@ -13,7 +13,7 @@ const SELF_HOSTING_DOCS_URL = `${GITHUB_REPO_URL}/blob/main/docs/self-hosting.md
 export function developersMarkdown(siteUrl: string): string {
   return `# Guidon for developers and AI agents
 
-Guidon is context-first project management for development teams: a task board per project, plus the decisions, sources and project memory behind the work. Everything you can do on the board, an agent or a script can do through the **REST API** or the **MCP server** - find a task, read its full context, claim it, record what was tried, comment and hand it back for review.
+Guidon is context-first project management for development teams: a task board per project, plus the decisions, sources and project memory behind the work. Everything you can do in a project, an agent or a script can do through the **REST API** or the **MCP server** - find a task, read its full context, claim it, record what was tried, comment and hand it back for review; and keep the rest of the project current: decisions, knowledge sources, the roadmap, project memory and the tech stack.
 
 ## Authentication
 
@@ -29,6 +29,8 @@ A key acts as the user who created it - their projects, their role in each proje
 | \`tasks:status\` | Start, move and complete tasks |
 | \`comments:write\` | Comment on tasks |
 | \`attempts:write\` | Record attempts |
+| \`project:read\` | Read decisions, knowledge sources, roadmap phases, project memory and the tech stack |
+| \`project:write\` | Add, edit and delete those (memory added this way starts unverified until a person verifies it) |
 | \`reports:write\` | File bug reports only - for keys shipped inside a game or website; can't be combined with other scopes |
 
 For an agent that should work under its own name - assignable, with its own project role, signing its own comments - an organization owner or admin can create an **AI account** (Organization → AI accounts) and give it keys; it can't sign in, it only acts through those keys.
@@ -65,7 +67,7 @@ Claude Code, by hand:
 claude mcp add --transport http --scope user guidon ${siteUrl}/api/mcp --header "Authorization: Bearer guidon_..."
 \`\`\`
 
-Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`get_task\`, \`get_task_context\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\`.
+Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`get_task\`, \`get_task_context\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
 
 Recommended flow for an agent: \`get_task_context\` → \`start_task\` → do the work → \`record_attempt\` → \`comment_on_task\` → \`set_task_status\` with \`review\`.
 
@@ -87,6 +89,8 @@ Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [Op
 | GET, POST | \`/tasks/{taskId}/comment\` | Read or post comments |
 | GET, POST | \`/tasks/{taskId}/attempts\` | Read or record attempts |
 | POST | \`/projects/{projectId}/reports\` | File a bug report (multipart) |
+| GET, POST | \`/projects/{projectId}/{decisions,knowledge,roadmap,memory,technologies}\` | List or add decisions, knowledge sources, roadmap phases, memory, technologies |
+| GET, PATCH, DELETE | \`/projects/{projectId}/{...}/{id}\` | Read, edit or delete one of them |
 
 ## Errors and limits
 

@@ -5,6 +5,7 @@ import { authenticateApiKey } from "@/lib/api/api-key-auth";
 import { isRateLimited, recordRequest } from "@/lib/api/rate-limit";
 import { createDispatch } from "@/lib/mcp/http/dispatch";
 import { registerGuidonTools } from "@/lib/mcp/http/tools";
+import { registerProjectResourceTools } from "@/lib/mcp/http/resource-tools";
 
 /**
  * Guidon's MCP endpoint for external clients such as Claude Code:
@@ -94,7 +95,9 @@ async function handle(request: NextRequest): Promise<Response> {
   });
 
   try {
-    registerGuidonTools(server, createDispatch(new URL(request.url).origin, authorization));
+    const dispatch = createDispatch(new URL(request.url).origin, authorization);
+    registerGuidonTools(server, dispatch);
+    registerProjectResourceTools(server, dispatch);
     await server.connect(transport);
     return await transport.handleRequest(request);
   } finally {

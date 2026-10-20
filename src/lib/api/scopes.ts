@@ -20,6 +20,8 @@
 // required by POST /api/v1/projects/[projectId]/reports (in-game bug
 // reports) and deliberately opens nothing else: its key ships inside game
 // builds, so it must be safe to leak - give it no other scope.
+// project:read / project:write cover the rest of a project - decisions,
+// knowledge, roadmap, memory, tech stack (lib/api/project-resources.ts).
 export const API_KEY_SCOPES = [
   "tasks:read",
   "tasks:write",
@@ -27,6 +29,8 @@ export const API_KEY_SCOPES = [
   "comments:write",
   "attempts:write",
   "reports:write",
+  "project:read",
+  "project:write",
 ] as const;
 
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];

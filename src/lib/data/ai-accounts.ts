@@ -30,7 +30,15 @@ export const AI_ACCOUNT_PROJECT_ROLES = ["developer", "tester", "viewer"] as con
 export type AiAccountProjectRole = (typeof AI_ACCOUNT_PROJECT_ROLES)[number];
 
 /** What an agent needs; reports:write is for keys shipped inside games and stays out. */
-const AGENT_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"];
+const AGENT_SCOPES: ApiKeyScope[] = [
+  "tasks:read",
+  "tasks:write",
+  "tasks:status",
+  "comments:write",
+  "attempts:write",
+  "project:read",
+  "project:write",
+];
 
 export interface AiAccountKey {
   id: string;

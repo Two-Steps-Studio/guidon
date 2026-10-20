@@ -69,7 +69,7 @@ export async function createApiKey(
 // Everything the MCP endpoint's tools can call (src/lib/mcp/http/tools.ts) -
 // the Profile "Connect an AI app" card creates a key with exactly this set
 // so nobody has to know which scopes the tools need.
-const MCP_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"];
+const MCP_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write", "project:read", "project:write"];
 
 /** Names the key after the app it's for (shown under API keys); anything else is "AI app". */
 const MCP_CLIENT_NAMES = new Set(["Claude Code", "Claude Desktop", "Cursor", "VS Code", "Codex CLI", "Gemini CLI", "AI app"]);
