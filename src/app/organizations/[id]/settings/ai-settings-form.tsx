@@ -29,7 +29,7 @@ const PROVIDER_LABELS: Record<OrgAiProviderName, string> = {
 
 const initialState: AiSettingsState = { error: null, saved: false };
 
-/** Sentinel for "type a model id myself" in the model <select> below. */
+/** Sentinel for "type a model id myself" in the model <Select> below. */
 const CUSTOM_MODEL = "__custom__";
 
 function isRecommendedModel(provider: OrgAiProviderName, model: string): boolean {

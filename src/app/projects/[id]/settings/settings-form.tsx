@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, FolderKanban, Loader2, Settings, X } from "lucide-react";
 import { updateProjectSettings, type SettingsFormState } from "./actions";
 import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
+import { Select } from "@/components/ui/select";
 
 const STATUS_VALUES: ProjectStatus[] = ["active", "archived", "deleted"];
 const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
@@ -100,26 +101,24 @@ export function SettingsForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="status">{t("statusLabel")}</Label>
-            <select
+            <Select
               id="status"
               name="status"
               defaultValue={project.status}
-              className="w-full px-3 py-2 border rounded-md bg-background"
             >
               {STATUS_VALUES.map((value) => (
                 <option key={value} value={value}>
                   {tCommon("projectStatus", { status: value })}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="projectType">{t("projectTypeLabel")}</Label>
-            <select
+            <Select
               id="projectType"
               name="projectType"
               defaultValue={project.project_type ?? ""}
-              className="w-full px-3 py-2 border rounded-md bg-background"
             >
               <option value="">{t("notSet")}</option>
               {PROJECT_TYPE_VALUES.map((value) => (
@@ -127,7 +126,7 @@ export function SettingsForm({
                   {tCommon("projectType", { type: value })}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>{t("workflowLabel")}</Label>

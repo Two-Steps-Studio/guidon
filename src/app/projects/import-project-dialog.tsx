@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { importGuidonFile, previewGuidonImport, type GuidonImportPreview } from "./import-actions";
+import { Select } from "@/components/ui/select";
 
 interface ImportProjectDialogProps {
   organizations: { id: string; name: string }[];
@@ -208,18 +209,18 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                     <Label htmlFor="import-org" className="text-xs">
                       {t("organizationLabel")}
                     </Label>
-                    <select
+                    <Select
                       id="import-org"
                       value={orgId}
                       onChange={(e) => setOrgId(e.target.value)}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      
                     >
                       {organizations.map((org) => (
                         <option key={org.id} value={org.id}>
                           {org.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -227,21 +228,21 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                       <Label htmlFor="import-project" className="text-xs">
                         {t("projectToOverwriteLabel")}
                       </Label>
-                      <select
+                      <Select
                         id="import-project"
                         value={projectId}
                         onChange={(e) => {
                           setProjectId(e.target.value);
                           setConfirmName("");
                         }}
-                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        
                       >
                         {projects.map((project) => (
                           <option key={project.id} value={project.id}>
                             {project.name}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       <p className="flex items-start gap-2 text-xs text-destructive">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                         {t("overwriteWarning")}
@@ -260,7 +261,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
                           value={confirmName}
                           onChange={(e) => setConfirmName(e.target.value)}
                           autoComplete="off"
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                          
                         />
                       </div>
                     )}

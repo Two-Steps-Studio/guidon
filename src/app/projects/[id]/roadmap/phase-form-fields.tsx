@@ -4,6 +4,7 @@ import { DatePicker, toDayValue } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { STATUS_CONFIG } from "./phase-status-config";
 import type { PhaseStatus, RoadmapPhase } from "@/types/task";
+import { Select } from "@/components/ui/select";
 
 /** Shared fields for the create and edit phase dialogs, keyed by `idPrefix` so both can be on the page at once. */
 export function PhaseFormFields({
@@ -40,18 +41,17 @@ export function PhaseFormFields({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-status`}>{t("statusLabel")}</Label>
-          <select
+          <Select
             id={`${idPrefix}-status`}
             name="status"
             defaultValue={defaults?.status ?? "planned"}
-            className="w-full px-3 py-2 border rounded-md bg-background"
           >
             {(Object.keys(STATUS_CONFIG) as PhaseStatus[]).map((status) => (
               <option key={status} value={status}>
                 {t("phaseStatus", { status })}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-completion`}>{t("completionLabel")}</Label>

@@ -103,7 +103,7 @@ export function TaskSubtasksSection({
   };
 
   const handleSubtaskStatusChange = async (subtask: Task, status: TaskStatus) => {
-    // Set immediately so the (now-disabled) <select> shows the chosen value
+    // Set immediately so the (now-disabled) <Select> shows the chosen value
     // for the duration of the request instead of snapping back to the old
     // one until `onSaved` updates `subtask` from the parent.
     setSubtaskStatusDrafts((current) => ({ ...current, [subtask.id]: status }));

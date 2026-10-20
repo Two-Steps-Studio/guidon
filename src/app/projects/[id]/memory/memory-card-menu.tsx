@@ -22,6 +22,7 @@ import { AlertCircle, Edit, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { deleteMemory, updateMemory, type MemoryFormState } from "./actions";
 import { MEMORY_TYPES } from "./memory-type-config";
 import type { MemoryType } from "@/types/context";
+import { Select } from "@/components/ui/select";
 
 const initialState: MemoryFormState = { error: null };
 
@@ -147,18 +148,17 @@ function EditMemoryForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor={`editType-${memoryId}`}>{t("typeLabel")}</Label>
-        <select
+        <Select
           id={`editType-${memoryId}`}
           name="memory_type"
           defaultValue={memoryType}
-          className="w-full px-3 py-2 border rounded-md bg-background"
         >
           {MEMORY_TYPES.map((type) => (
             <option key={type} value={type}>
               {tCommon("memoryType", { type })}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       {state.error && (
         <div className="text-sm text-destructive flex items-center gap-2">

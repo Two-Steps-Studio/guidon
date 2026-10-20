@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { addMember, type MemberActionState } from "./actions";
+import { Select } from "@/components/ui/select";
 
 const initialState: MemberActionState = { error: null };
 
@@ -69,16 +70,15 @@ export function AddMemberDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">{t("roleLabel")}</Label>
-            <select
+            <Select
               id="role"
               name="role"
               defaultValue="member"
-              className="w-full px-3 py-2 border rounded-md bg-background"
             >
               <option value="member">{t("roleMemberOption")}</option>
               <option value="admin">{t("roleAdminOption")}</option>
               {isOwner && <option value="owner">{t("roleOwnerOption")}</option>}
-            </select>
+            </Select>
           </div>
           {state.error && (
             <div className="text-sm text-destructive flex items-center gap-2">
