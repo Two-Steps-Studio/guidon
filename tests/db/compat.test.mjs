@@ -236,8 +236,9 @@ for (const [label, sql, expected] of [
   // 32->33 tabel, 114->118 polityk: project_label_presets (053), 4 polityki
   // 33->34 tabel, 118->122 polityk: discord_user_links (057), 4 polityki
   // 34->35 tabel, 122->124 polityk: ai_accounts (059) + profiles_select_ai_accounts
-  ["35 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 35],
-  ["124 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 124],
+  // 35->36 tabel, 124->129 polityk: project_task_priorities (060, 4) + project_board_columns_delete
+  ["36 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 36],
+  ["129 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 129],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -1765,12 +1766,12 @@ await withUser(A, async () => {
 });
 
 await expectRejected(
-  "tasks_status_check nadal odrzuca nieznany status",
+  "nieznany status odrzucony (trigger validate_task_workflow, 060)",
   () =>
     withUser(A, () =>
       db.query("INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'zly status', 'nie_ma_takiego')", [projectId])
     ),
-  /check constraint|tasks_status_check/i
+  /check constraint|tasks_status_check|Unknown status/i
 );
 
 // ------------------------------------------------------------------
@@ -2926,6 +2927,74 @@ section("46. ai_accounts: konta AI, zapis tylko przez serwer (migracja 059)");
     check("ktos spoza organizacji nie widzi konta AI", seen.rows.length === 0);
     const profile = await db.query("SELECT 1 FROM public.profiles WHERE id = $1", [bot]);
     check("ani jego profilu", profile.rows.length === 0);
+  });
+}
+
+section("47. dowolne kolumny i priorytety + edycja cudzych zadan (migracja 060)");
+
+{
+  let taskId;
+  await withUser(A, async () => {
+    const t = await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'workflow 060') RETURNING id, is_done", [projectId]);
+    taskId = t.rows[0].id;
+    check("nowe zadanie nie jest zrobione", t.rows[0].is_done === false);
+
+    await db.query(
+      "INSERT INTO public.project_board_columns (project_id, status, label, sort_order, is_done) VALUES ($1, 'qa', 'QA', 7, false), ($1, 'shipped', 'Shipped', 8, true)",
+      [projectId]
+    );
+    const qa = await db.query("UPDATE public.tasks SET status = 'qa' WHERE id = $1 RETURNING status, is_done", [taskId]);
+    check("zadanie wchodzi do wlasnej kolumny", qa.rows[0]?.status === "qa" && qa.rows[0].is_done === false, JSON.stringify(qa.rows));
+    const shipped = await db.query("UPDATE public.tasks SET status = 'shipped' WHERE id = $1 RETURNING is_done", [taskId]);
+    check("kolumna z is_done -> zadanie zrobione", shipped.rows[0]?.is_done === true);
+    await db.query("UPDATE public.project_board_columns SET is_done = false WHERE project_id = $1 AND status = 'shipped'", [projectId]);
+    const after = await db.query("SELECT is_done FROM public.tasks WHERE id = $1", [taskId]);
+    check("zmiana is_done kolumny przelicza zadania", after.rows[0]?.is_done === false);
+    const done = await db.query("UPDATE public.tasks SET status = 'done' WHERE id = $1 RETURNING is_done", [taskId]);
+    check("wbudowane done zawsze zrobione", done.rows[0]?.is_done === true);
+
+    check(
+      "nieznany status innego projektu odrzucony",
+      await throwsInSavepoint("UPDATE public.tasks SET status = 'nie_istnieje' WHERE id = $1", [taskId])
+    );
+    await db.query("UPDATE public.tasks SET status = 'qa' WHERE id = $1", [taskId]);
+    check(
+      "nie da sie usunac kolumny z zadaniami",
+      await throwsInSavepoint("DELETE FROM public.project_board_columns WHERE project_id = $1 AND status = 'qa'", [projectId])
+    );
+    const delEmpty = await db.query("DELETE FROM public.project_board_columns WHERE project_id = $1 AND status = 'shipped'", [projectId]);
+    check("pusta wlasna kolumna sie usuwa", delEmpty.rowCount === 1);
+
+    await db.query("INSERT INTO public.project_task_priorities (project_id, key, label, color, rank) VALUES ($1, 'blocker', 'Blocker', '#ff0000', -1)", [projectId]);
+    const pr = await db.query("UPDATE public.tasks SET priority = 'blocker' WHERE id = $1 RETURNING priority", [taskId]);
+    check("wlasny priorytet dziala", pr.rows[0]?.priority === "blocker");
+    check(
+      "nieznany priorytet odrzucony",
+      await throwsInSavepoint("UPDATE public.tasks SET priority = 'whatever' WHERE id = $1", [taskId])
+    );
+    check(
+      "nie da sie usunac priorytetu w uzyciu",
+      await throwsInSavepoint("DELETE FROM public.project_task_priorities WHERE project_id = $1 AND key = 'blocker'", [projectId])
+    );
+  });
+
+  await withUser(D, async () => {
+    const moved = await db.query("UPDATE public.tasks SET status = 'todo' WHERE id = $1 RETURNING status", [taskId]);
+    check("developer przesuwa zadanie utworzone przez kogos innego (poprawka validate_task)", moved.rows[0]?.status === "todo", JSON.stringify(moved.rows));
+    check(
+      "ale nie zmienia created_by",
+      await throwsInSavepoint("UPDATE public.tasks SET created_by = $2 WHERE id = $1", [taskId, D])
+    );
+    check(
+      "developer nie dodaje kolumn (owner/admin)",
+      await throwsInSavepoint("INSERT INTO public.project_board_columns (project_id, status, label, sort_order) VALUES ($1, 'dev_col', 'X', 9)", [projectId])
+    );
+    check(
+      "ani priorytetow",
+      await throwsInSavepoint("INSERT INTO public.project_task_priorities (project_id, key, rank) VALUES ($1, 'dev_p', 9)", [projectId])
+    );
+    const seen = await db.query("SELECT label FROM public.project_task_priorities WHERE project_id = $1", [projectId]);
+    check("developer widzi priorytety projektu", seen.rows[0]?.label === "Blocker");
   });
 }
 
