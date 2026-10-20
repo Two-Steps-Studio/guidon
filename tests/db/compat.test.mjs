@@ -3126,5 +3126,136 @@ section("49. kody promocyjne: plan za darmo na N dni (migracja 062)");
   check("licznik uzyc = 2", count.redemption_count === 2, count.redemption_count);
 }
 
+section("50. zadania cykliczne (migracja 063)");
+
+{
+  await withUser(A, async () => {
+    const t = await db.query(
+      "INSERT INTO public.tasks (project_id, title, recurrence_rule, recurrence_interval) VALUES ($1, '063 weekly', 'weekly', 2) RETURNING id, recurrence_rule",
+      [projectId]
+    );
+    const taskId = t.rows[0].id;
+    check("zadanie co 2 tygodnie zapisane", t.rows[0].recurrence_rule === "weekly");
+    check("regula bez odstepu odrzucona", await throwsInSavepoint("UPDATE public.tasks SET recurrence_interval = NULL WHERE id = $1", [taskId]));
+    check("nieznana regula odrzucona", await throwsInSavepoint("UPDATE public.tasks SET recurrence_rule = 'yearly' WHERE id = $1", [taskId]));
+    check("odstep 0 odrzucony", await throwsInSavepoint("UPDATE public.tasks SET recurrence_interval = 0 WHERE id = $1", [taskId]));
+    check(
+      "subtask nie moze sie powtarzac",
+      await throwsInSavepoint(
+        "INSERT INTO public.tasks (project_id, title, parent_task_id, recurrence_rule, recurrence_interval) VALUES ($1, 'sub', $2, 'weekly', 1)",
+        [projectId, taskId]
+      )
+    );
+    const next = await db.query("INSERT INTO public.tasks (project_id, title, recurred_from) VALUES ($1, '063 next', $2) RETURNING id", [projectId, taskId]);
+    check("nastepne wystapienie z recurred_from", next.rows.length === 1);
+    check(
+      "drugie nastepne wystapienie tego samego zadania odrzucone (unikalne)",
+      await throwsInSavepoint("INSERT INTO public.tasks (project_id, title, recurred_from) VALUES ($1, '063 dup', $2)", [projectId, taskId])
+    );
+    const off = await db.query("UPDATE public.tasks SET recurrence_rule = NULL, recurrence_interval = NULL WHERE id = $1 RETURNING recurrence_rule", [taskId]);
+    check("wylaczenie powtarzania", off.rows[0].recurrence_rule === null);
+  });
+}
+
+section("51. cudze projekty niewidoczne, takze 'public' (migracja 064)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000065";
+  // 'public' itself is rejected since 067 (section 54); the widest
+  // visibility left must still keep someone outside the organization out.
+  await withServiceRole(() => db.query("UPDATE public.projects SET visibility = 'organization' WHERE id = $1", [projectId]));
+  await withUser(stranger, async () => {
+    const p = await db.query("SELECT id FROM public.projects WHERE id = $1", [projectId]);
+    check("obcy nie widzi projektu (najszersza widocznosc)", p.rows.length === 0, p.rows.length);
+    const t = await db.query("SELECT id FROM public.tasks WHERE project_id = $1", [projectId]);
+    check("ani jego zadan", t.rows.length === 0, t.rows.length);
+    const all = await db.query("SELECT id FROM public.projects");
+    check("lista projektow obcego jest pusta", all.rows.length === 0, all.rows.length);
+  });
+  await withUser(A, async () => {
+    const p = await db.query("SELECT id FROM public.projects WHERE id = $1", [projectId]);
+    check("czlonek dalej widzi swoj projekt", p.rows.length === 1);
+  });
+  await withServiceRole(() => db.query("UPDATE public.projects SET visibility = 'private' WHERE id = $1", [projectId]));
+}
+
+section("52. przypiete projekty (migracja 065)");
+
+{
+  await withUser(A, async () => {
+    const set = await db.query("UPDATE public.profiles SET pinned_project_ids = ARRAY[$2::uuid] WHERE id = $1 RETURNING pinned_project_ids", [A, projectId]);
+    check("wlasciciel profilu przypina projekt", set.rows[0]?.pinned_project_ids?.length === 1);
+    check(
+      "najwyzej 3 przypiete",
+      await throwsInSavepoint("UPDATE public.profiles SET pinned_project_ids = ARRAY[gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid()] WHERE id = $1", [A])
+    );
+    const other = await db.query("UPDATE public.profiles SET pinned_project_ids = '{}' WHERE id = $1 RETURNING id", [B]);
+    check("nie zmienia przypiec kogos innego", other.rows.length === 0);
+    await db.query("UPDATE public.profiles SET pinned_project_ids = '{}' WHERE id = $1", [A]);
+  });
+}
+
+section("53. RLS wlaczone na kazdej tabeli public (migracja 066)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000066";
+  const { rows: off } = await db.query(
+    "SELECT relname FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r','p') AND NOT relrowsecurity"
+  );
+  check("po migracjach zadna tabela public nie ma wylaczonego RLS", off.length === 0, off.map((r) => r.relname).join(","));
+
+  // Odtworzenie zgloszenia: projects bez RLS -> obcy widzi cudze projekty.
+  await db.exec("ALTER TABLE public.projects DISABLE ROW LEVEL SECURITY");
+  const leaked = await withUser(stranger, async () => (await db.query("SELECT id FROM public.projects")).rows.length);
+  check("bez RLS na projects obcy widzi cudze projekty (odtworzenie bledu)", leaked > 0, leaked);
+  const tasksSeen = await withUser(stranger, async () => (await db.query("SELECT id FROM public.tasks")).rows.length);
+  check("...a ich zadania sa puste (tasks ma RLS) - jak w zgloszeniu", tasksSeen === 0, tasksSeen);
+
+  const sql066 = await readFile(path.join(DB_DIR, "migrations", "066_enforce_rls_everywhere.sql"), "utf8");
+  await db.exec(forPglite(sql066));
+  const after = await withUser(stranger, async () => (await db.query("SELECT id FROM public.projects")).rows.length);
+  check("066 wlacza RLS z powrotem - obcy nie widzi nic", after === 0, after);
+}
+
+section("54. widocznosc projektu w organizacji (migracja 067)");
+
+{
+  const M = "eeeeeeee-0000-4000-8000-000000000067";
+  await withServiceRole(() =>
+    db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, 'm067@example.test', '{}') ON CONFLICT DO NOTHING", [M])
+  );
+  let org, shared, hidden;
+  await withUser(A, async () => {
+    org = (await db.query("INSERT INTO public.organizations (name, slug) VALUES ('Vis 067', 'vis-067') RETURNING id")).rows[0].id;
+    await db.query("INSERT INTO public.organization_members (organization_id, user_id, role) VALUES ($1, $2, 'member')", [org, M]);
+    const s = await db.query("INSERT INTO public.projects (organization_id, name, slug) VALUES ($1, 'Shared', 'shared-067') RETURNING id, visibility", [org]);
+    shared = s.rows[0].id;
+    check("nowy projekt domyslnie widoczny dla organizacji", s.rows[0].visibility === "organization", s.rows[0].visibility);
+    hidden = (
+      await db.query("INSERT INTO public.projects (organization_id, name, slug, visibility) VALUES ($1, 'Hidden', 'hidden-067', 'private') RETURNING id", [org])
+    ).rows[0].id;
+    check("'public' juz niedozwolone", await throwsInSavepoint("UPDATE public.projects SET visibility = 'public' WHERE id = $1", [shared]));
+  });
+
+  await withUser(M, async () => {
+    const seen = (await db.query("SELECT id FROM public.projects WHERE organization_id = $1", [org])).rows.map((r) => r.id);
+    check("czlonek organizacji widzi projekt 'organization'", seen.includes(shared));
+    check("ale nie 'private'", !seen.includes(hidden));
+    const upd = await db.query("UPDATE public.projects SET visibility = 'private' WHERE id = $1 RETURNING id", [shared]);
+    check("czlonek bez roli w projekcie nie zmienia widocznosci", upd.rows.length === 0);
+  });
+
+  await withUser(A, async () => {
+    const upd = await db.query("UPDATE public.projects SET visibility = 'private' WHERE id = $1 RETURNING visibility", [shared]);
+    check("owner projektu przelacza widocznosc", upd.rows[0]?.visibility === "private");
+    await db.query("UPDATE public.organization_members SET role = 'admin' WHERE organization_id = $1 AND user_id = $2", [org, M]);
+  });
+
+  await withUser(M, async () => {
+    const seen = (await db.query("SELECT id FROM public.projects WHERE organization_id = $1", [org])).rows.map((r) => r.id);
+    check("admin organizacji widzi kazdy projekt, takze 'private'", seen.includes(shared) && seen.includes(hidden));
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

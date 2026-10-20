@@ -313,6 +313,8 @@ export function WorkBoard({
       playSound("error");
       toast.error(result.error);
     }
+    // A repeating task was finished: its next occurrence joins the board.
+    result.created?.forEach(upsertTask);
   };
 
   const upsertTask = (task: Task) =>

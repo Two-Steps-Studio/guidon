@@ -145,6 +145,10 @@ export async function updateProjectSettings(
     projectType = projectTypeRaw as ProjectType;
   }
 
+  // Migration 067: who sees the project - its members only, or the whole organization.
+  const visibilityRaw = formData.get("visibility");
+  const visibility = visibilityRaw === "private" || visibilityRaw === "organization" ? visibilityRaw : null;
+
   const methodologyRaw = formData.get("methodology");
   let methodology: ProjectMethodology = "standard";
   if (typeof methodologyRaw === "string" && methodologyRaw.trim()) {
@@ -220,10 +224,11 @@ export async function updateProjectSettings(
         const result = await query(
           `UPDATE projects
            SET name = $1, description = $2, status = $3, color = $4,
-               avatar_url = COALESCE($5, avatar_url), project_type = $6, methodology = $7, ai_enabled = $8
+               avatar_url = COALESCE($5, avatar_url), project_type = $6, methodology = $7, ai_enabled = $8,
+               visibility = COALESCE($10, visibility)
            WHERE id = $9
            RETURNING id`,
-          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, aiEnabled, projectId]
+          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, aiEnabled, projectId, visibility]
         );
         if (result.rows.length === 0) return false;
 
@@ -258,6 +263,7 @@ export async function updateProjectSettings(
         project_type: projectType,
         methodology,
         ai_enabled: aiEnabled,
+        ...(visibility ? { visibility } : {}),
         ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", projectId)

@@ -43,6 +43,11 @@ export interface Task {
   is_done?: boolean;
   /** Migration 061 - when the task was finished (kept by a trigger); null while open. */
   done_at?: string | null;
+  /** Migration 063 - repeats on completion; null = doesn't repeat. */
+  recurrence_rule?: "weekly" | "monthly" | "every_n_days" | null;
+  recurrence_interval?: number | null;
+  /** The occurrence this one was created from. */
+  recurred_from?: string | null;
   tags: string[];
   due_date: string | null;
   progress_percent: number;

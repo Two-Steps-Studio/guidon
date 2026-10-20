@@ -455,7 +455,12 @@
       "createOrganization": "Create Organization",
       "createProject": "Create Project",
       "newProject": "New Project",
-      "openProject": "Open project"
+      "openProject": "Open project",
+      "pin": "Pin to top",
+      "unpin": "Unpin",
+      "pinLimit": "You can pin up to 3 projects - unpin one first.",
+      "pinFailed": "Couldn't change the pin. Try again.",
+      "pinnedCount": "{count} pinned"
     },
     "detail": {
       "noDescription": "No description",
@@ -752,7 +757,19 @@
     "importUnmatchedAssignees": "Not project members: {values} - those tasks stay unassigned.",
     "importMore": "…and {count} more",
     "importSubmit": "Import {count, plural, one {# task} other {# tasks}}",
-    "importDone": "Imported {count, plural, one {# task} other {# tasks}}"
+    "importDone": "Imported {count, plural, one {# task} other {# tasks}}",
+    "repeatLabel": "Repeat",
+    "repeatNever": "Doesn't repeat",
+    "repeatWeekly": "Weekly",
+    "repeatMonthly": "Monthly",
+    "repeatEveryNDays": "Every N days",
+    "repeatEvery": "every",
+    "repeatIntervalAria": "Repeat interval",
+    "repeatUnit_weekly": "{count, plural, one {week} other {weeks}}",
+    "repeatUnit_monthly": "{count, plural, one {month} other {months}}",
+    "repeatUnit_every_n_days": "{count, plural, one {day} other {days}}",
+    "repeatHint": "When this task is finished, the next one is created in To do with the same description, labels, assignee and subtasks, due on the next date.",
+    "repeatsAria": "Repeats"
   },
   "roadmap": {
     "title": "Roadmap",
@@ -989,7 +1006,11 @@
     "workflowDefaultColor": "Default colour",
     "workflowName": "Name",
     "workflowNamePlaceholder": "Name",
-    "workflowRemove": "Remove {label}"
+    "workflowRemove": "Remove {label}",
+    "visibilityLabel": "Who can see this project",
+    "visibilityOrganization": "Everyone in the organization",
+    "visibilityPrivate": "Only project members",
+    "visibilityHint": "Organization members who aren't on the project see it read-only until you add them on the Members page. The organization's owner and admins always see every project."
   },
   "discordLink": {
     "title": "Connect the Guidon Discord bot",

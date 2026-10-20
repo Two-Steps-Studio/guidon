@@ -455,7 +455,12 @@
       "createOrganization": "Crear organización",
       "createProject": "Crear proyecto",
       "newProject": "Nuevo proyecto",
-      "openProject": "Abrir proyecto"
+      "openProject": "Abrir proyecto",
+      "pin": "Fijar arriba",
+      "unpin": "Desfijar",
+      "pinLimit": "Puedes fijar hasta 3 proyectos: desfija uno primero.",
+      "pinFailed": "No se pudo cambiar. Inténtalo de nuevo.",
+      "pinnedCount": "{count} fijados"
     },
     "detail": {
       "noDescription": "Sin descripción",
@@ -752,7 +757,19 @@
     "importUnmatchedAssignees": "No son miembros del proyecto: {values} - esas tareas quedan sin asignar.",
     "importMore": "…y {count} más",
     "importSubmit": "Importar {count, plural, one {# tarea} other {# tareas}}",
-    "importDone": "{count, plural, one {# tarea importada} other {# tareas importadas}}"
+    "importDone": "{count, plural, one {# tarea importada} other {# tareas importadas}}",
+    "repeatLabel": "Repetir",
+    "repeatNever": "No se repite",
+    "repeatWeekly": "Cada semana",
+    "repeatMonthly": "Cada mes",
+    "repeatEveryNDays": "Cada N días",
+    "repeatEvery": "cada",
+    "repeatIntervalAria": "Intervalo de repetición",
+    "repeatUnit_weekly": "{count, plural, one {semana} other {semanas}}",
+    "repeatUnit_monthly": "{count, plural, one {mes} other {meses}}",
+    "repeatUnit_every_n_days": "{count, plural, one {día} other {días}}",
+    "repeatHint": "Al terminar esta tarea se crea la siguiente en To do, con la misma descripción, etiquetas, persona y subtareas, con fecha en la próxima ocurrencia.",
+    "repeatsAria": "Se repite"
   },
   "roadmap": {
     "title": "Hoja de ruta",
@@ -989,7 +1006,11 @@
     "workflowDefaultColor": "Color por defecto",
     "workflowName": "Nombre",
     "workflowNamePlaceholder": "Nombre",
-    "workflowRemove": "Quitar {label}"
+    "workflowRemove": "Quitar {label}",
+    "visibilityLabel": "Quién ve este proyecto",
+    "visibilityOrganization": "Toda la organización",
+    "visibilityPrivate": "Solo los miembros del proyecto",
+    "visibilityHint": "Los miembros de la organización que no están en el proyecto lo ven en solo lectura hasta que los añadas en Miembros. El propietario y los administradores de la organización siempre ven todos los proyectos."
   },
   "discordLink": {
     "title": "Conectar el bot de Discord de Guidon",

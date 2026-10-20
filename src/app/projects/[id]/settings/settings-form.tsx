@@ -114,6 +114,19 @@ export function SettingsForm({
             </select>
           </div>
           <div className="space-y-2">
+            <Label htmlFor="visibility">{t("visibilityLabel")}</Label>
+            <select
+              id="visibility"
+              name="visibility"
+              defaultValue={project.visibility === "private" ? "private" : "organization"}
+              className="w-full px-3 py-2 border rounded-md bg-background"
+            >
+              <option value="organization">{t("visibilityOrganization")}</option>
+              <option value="private">{t("visibilityPrivate")}</option>
+            </select>
+            <p className="text-xs text-muted-foreground">{t("visibilityHint")}</p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="projectType">{t("projectTypeLabel")}</Label>
             <select
               id="projectType"

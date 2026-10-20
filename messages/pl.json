@@ -455,7 +455,12 @@
       "createOrganization": "Utwórz organizację",
       "createProject": "Utwórz projekt",
       "newProject": "Nowy projekt",
-      "openProject": "Otwórz projekt"
+      "openProject": "Otwórz projekt",
+      "pin": "Przypnij na górze",
+      "unpin": "Odepnij",
+      "pinLimit": "Możesz przypiąć najwyżej 3 projekty - najpierw odepnij któryś.",
+      "pinFailed": "Nie udało się zmienić przypięcia. Spróbuj ponownie.",
+      "pinnedCount": "Przypięte: {count}"
     },
     "detail": {
       "noDescription": "Brak opisu",
@@ -752,7 +757,19 @@
     "importUnmatchedAssignees": "Nie są członkami projektu: {values} - te zadania zostaną nieprzypisane.",
     "importMore": "…i jeszcze {count}",
     "importSubmit": "Importuj {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
-    "importDone": "Zaimportowano {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}"
+    "importDone": "Zaimportowano {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
+    "repeatLabel": "Powtarzaj",
+    "repeatNever": "Nie powtarza się",
+    "repeatWeekly": "Co tydzień",
+    "repeatMonthly": "Co miesiąc",
+    "repeatEveryNDays": "Co N dni",
+    "repeatEvery": "co",
+    "repeatIntervalAria": "Odstęp powtarzania",
+    "repeatUnit_weekly": "{count, plural, one {tydzień} few {tygodnie} other {tygodni}}",
+    "repeatUnit_monthly": "{count, plural, one {miesiąc} few {miesiące} other {miesięcy}}",
+    "repeatUnit_every_n_days": "{count, plural, one {dzień} other {dni}}",
+    "repeatHint": "Po ukończeniu tego zadania w To do powstanie następne - z tym samym opisem, etykietami, osobą i subtaskami, z terminem na kolejną datę.",
+    "repeatsAria": "Powtarza się"
   },
   "roadmap": {
     "title": "Plan działań",
@@ -989,7 +1006,11 @@
     "workflowDefaultColor": "Domyślny kolor",
     "workflowName": "Nazwa",
     "workflowNamePlaceholder": "Nazwa",
-    "workflowRemove": "Usuń {label}"
+    "workflowRemove": "Usuń {label}",
+    "visibilityLabel": "Kto widzi ten projekt",
+    "visibilityOrganization": "Wszyscy w organizacji",
+    "visibilityPrivate": "Tylko członkowie projektu",
+    "visibilityHint": "Członkowie organizacji spoza projektu widzą go tylko do odczytu, dopóki nie dodasz ich na stronie Członkowie. Właściciel i administratorzy organizacji zawsze widzą wszystkie projekty."
   },
   "discordLink": {
     "title": "Połącz bota Guidon z Discorda",

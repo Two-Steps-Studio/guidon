@@ -46,6 +46,7 @@ import { type TaskCardMember } from "@/components/work/task-card";
 import { LabelChip } from "@/components/work/label-chip";
 import { useLabelPresets } from "@/components/work/label-presets-context";
 import { DescriptionToolbar, descriptionKeyDown } from "@/components/work/description-toolbar";
+import { MAX_RECURRENCE_INTERVAL, isRecurrenceRule, type RecurrenceRule } from "@/lib/work/recurrence-core";
 import { toggleTaskAtLine, type EditResult } from "@/lib/work/markdown-edit";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 import { playSound } from "@/lib/sounds";
@@ -79,6 +80,9 @@ interface TaskForm {
   assignee_id: string;
   due_date: string;
   tags: string;
+  /** "" = doesn't repeat (migration 063). */
+  recurrence_rule: "" | RecurrenceRule;
+  recurrence_interval: string;
 }
 
 function formToTask(task: Task): TaskForm {
@@ -90,6 +94,8 @@ function formToTask(task: Task): TaskForm {
     assignee_id: task.assignee_id ?? "",
     due_date: dueDateKey(task.due_date) ?? "",
     tags: (task.tags ?? []).join(", "),
+    recurrence_rule: isRecurrenceRule(task.recurrence_rule) ? task.recurrence_rule : "",
+    recurrence_interval: String(task.recurrence_interval ?? 1),
   };
 }
 
@@ -246,12 +252,21 @@ function TaskDetailDialogInner({
         description: form.description.trim() || null,
         assignee_id: form.assignee_id || null,
         due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+        // Subtasks don't repeat (063) - only sent for a top-level task.
+        ...(task.parent_task_id
+          ? {}
+          : {
+              recurrence_rule: form.recurrence_rule || null,
+              recurrence_interval: form.recurrence_rule ? Number(form.recurrence_interval) : null,
+            }),
       });
 
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToSaveTask"));
 
       if (result.task.is_done && !task.is_done) playSound("complete");
       onSaved(result.task);
+      // A repeating task finished here: its next occurrence joins the board.
+      result.created?.forEach(onSaved);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("failedToSaveTask"));
@@ -561,6 +576,45 @@ function TaskDetailDialogInner({
                 onChange={(due_date) => setForm({ ...form, due_date })}
               />
             </div>
+
+            {!task.parent_task_id && (
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="task-repeat">{t("repeatLabel")}</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select
+                    id="task-repeat"
+                    className="w-48"
+                    value={form.recurrence_rule}
+                    disabled={!canEdit}
+                    onChange={(event) =>
+                      setForm({ ...form, recurrence_rule: event.target.value as TaskForm["recurrence_rule"] })
+                    }
+                  >
+                    <option value="">{t("repeatNever")}</option>
+                    <option value="weekly">{t("repeatWeekly")}</option>
+                    <option value="monthly">{t("repeatMonthly")}</option>
+                    <option value="every_n_days">{t("repeatEveryNDays")}</option>
+                  </Select>
+                  {form.recurrence_rule && (
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      {t("repeatEvery")}
+                      <Input
+                        type="number"
+                        min={1}
+                        max={MAX_RECURRENCE_INTERVAL}
+                        className="h-9 w-20"
+                        aria-label={t("repeatIntervalAria")}
+                        value={form.recurrence_interval}
+                        disabled={!canEdit}
+                        onChange={(event) => setForm({ ...form, recurrence_interval: event.target.value })}
+                      />
+                      {t(`repeatUnit_${form.recurrence_rule}`, { count: Number(form.recurrence_interval) || 1 })}
+                    </label>
+                  )}
+                </div>
+                {form.recurrence_rule && <p className="text-xs text-muted-foreground">{t("repeatHint")}</p>}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
