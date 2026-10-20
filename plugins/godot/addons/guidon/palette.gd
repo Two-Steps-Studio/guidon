@@ -45,7 +45,10 @@ func c(name: String) -> Color:
 
 
 ## Column dot colors - BOARD_COLUMNS' accentClass in src/lib/work/task-board.ts.
-func status(status: String) -> Color:
+## A project's own colour (hex from the API) wins; unknown statuses are grey.
+func status(status: String, hex: String = "") -> Color:
+	if hex != "" and Color.html_is_valid(hex):
+		return Color.html(hex)
 	match status:
 		"todo", "ai_working": return c("info")
 		"in_progress": return c("warning")
@@ -54,7 +57,10 @@ func status(status: String) -> Color:
 		_: return c("text_muted")
 
 
-func priority(priority: String) -> Color:
+## A project's own colour (hex from the API) wins, then the built-in token, else grey.
+func priority(priority: String, hex: String = "") -> Color:
+	if hex != "" and Color.html_is_valid(hex):
+		return Color.html(hex)
 	return c("priority_" + priority) if tokens.has("priority_" + priority) else c("text_muted")
 
 

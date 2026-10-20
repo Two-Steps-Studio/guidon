@@ -16,9 +16,9 @@ bl_info = {
 }
 
 import bpy
-from bpy.props import BoolProperty, BoolVectorProperty, PointerProperty, StringProperty
+from bpy.props import BoolProperty, PointerProperty, StringProperty
 
-from . import api, jobs, moodboard, ops, panels, state
+from . import jobs, moodboard, ops, panels, state
 
 
 class GuidonPreferences(bpy.types.AddonPreferences):
@@ -49,7 +49,6 @@ class GuidonPreferences(bpy.types.AddonPreferences):
 
 
 class GuidonWindowProps(bpy.types.PropertyGroup):
-    expanded: BoolVectorProperty(size=len(api.STATUSES), default=(False, True, True, True, True, False))
     comment_text: StringProperty(name="Comment")
     menu_task_id: StringProperty(options={"HIDDEN"})  # which task GUIDON_MT_status acts on
     moodboard_filter: StringProperty(name="Filter", description="Search captions and tags")

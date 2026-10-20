@@ -39,6 +39,8 @@ FGuidonTask FGuidonTask::FromJson(const TSharedPtr<FJsonObject>& Json)
 	if (Json.IsValid())
 	{
 		Json->TryGetNumberField(TEXT("sort_order"), Task.SortOrder);
+		// Absent on older servers (and false for a JSON null) - then "done" is derived from the status.
+		Task.bHasIsDone = Json->TryGetBoolField(TEXT("is_done"), Task.bIsDone);
 
 		const TArray<TSharedPtr<FJsonValue>>* Tags = nullptr;
 		if (Json->TryGetArrayField(TEXT("tags"), Tags) && Tags)
@@ -100,7 +102,8 @@ const TArray<FString>& GuidonVocabulary::Statuses()
 
 const TArray<FString>& GuidonVocabulary::Priorities()
 {
-	static const TArray<FString> Values = {TEXT("low"), TEXT("medium"), TEXT("high"), TEXT("critical")};
+	// Most important first, like GET /priorities (task-board.ts PRIORITY_RANK) - list index = rank.
+	static const TArray<FString> Values = {TEXT("critical"), TEXT("high"), TEXT("medium"), TEXT("low")};
 	return Values;
 }
 
@@ -124,14 +127,48 @@ FText GuidonVocabulary::PriorityLabel(const FString& Priority)
 	return FText::FromString(Priority);
 }
 
+bool GuidonVocabulary::IsWorkflowKey(const FString& Key)
+{
+	if (Key.Len() < 1 || Key.Len() > 40 || !(Key[0] >= TEXT('a') && Key[0] <= TEXT('z')))
+	{
+		return false;
+	}
+	for (const TCHAR Ch : Key)
+	{
+		const bool bOk = (Ch >= TEXT('a') && Ch <= TEXT('z')) || (Ch >= TEXT('0') && Ch <= TEXT('9')) || Ch == TEXT('_');
+		if (!bOk)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 TArray<FGuidonColumn> GuidonVocabulary::DefaultColumns()
 {
 	TArray<FGuidonColumn> Columns;
 	for (const FString& Status : Statuses())
 	{
-		Columns.Add({Status, StatusLabel(Status).ToString()});
+		FGuidonColumn Column;
+		Column.Status = Status;
+		Column.Label = StatusLabel(Status).ToString();
+		Column.bIsDone = Status == TEXT("done");
+		Columns.Add(Column);
 	}
 	return Columns;
+}
+
+TArray<FGuidonPriority> GuidonVocabulary::DefaultPriorities()
+{
+	TArray<FGuidonPriority> Result;
+	for (const FString& Key : Priorities())
+	{
+		FGuidonPriority Priority;
+		Priority.Key = Key;
+		Priority.Label = PriorityLabel(Key).ToString();
+		Result.Add(Priority);
+	}
+	return Result;
 }
 
 #undef LOCTEXT_NAMESPACE

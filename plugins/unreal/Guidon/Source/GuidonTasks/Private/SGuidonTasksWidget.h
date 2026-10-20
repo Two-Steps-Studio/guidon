@@ -103,9 +103,27 @@ private:
 	void RebuildDetails() { bDetailsDirty = true; }
 	void DoRebuildBoard();
 	void DoRebuildDetails();
-	TSharedRef<SWidget> BuildColumn(const FString& Status, const FString& Label);
+	TSharedRef<SWidget> BuildColumn(const FGuidonColumn& Column);
 	FText ColumnLabel(const FString& Status) const;
 	void SetColumns(const TArray<FGuidonColumn>& NewColumns);
+	void SetPriorities(const TArray<FGuidonPriority>& NewPriorities);
+
+	// --- workflow vocabulary (project columns/priorities, migration 060)
+	/** Project column colour, else the built-in one, else grey. */
+	FLinearColor ColumnColor(const FString& Status) const;
+	FText PriorityLabel(const FString& Priority) const;
+	/** Project hex colour, else the built-in colour for that key, else grey. */
+	FLinearColor PriorityColor(const FString& Priority) const;
+	/** Index in the project's list (0 = most important); unknown/hidden keys sort after all known ones. */
+	int32 PriorityRank(const FString& Priority) const;
+	/** `done`, or a column marked is_done. */
+	bool IsDoneStatus(const FString& Status) const;
+	/** The server's is_done when it sent one, else derived from the status. */
+	bool IsTaskDone(const FGuidonTask& Task) const;
+	/** Where a ticked subtask goes: `done` if visible, else the first visible done column, else `done`. */
+	FString DoneStatus() const;
+	/** Where an unticked subtask goes: `todo` if visible, else the first visible open column, else `todo`. */
+	FString OpenStatus() const;
 	TSharedRef<SWidget> BuildCard(const FGuidonTask& Task);
 
 	// --- data
@@ -138,6 +156,8 @@ private:
 	TArray<FGuidonTask> Tasks;
 	/** The selected project's visible columns, board order. */
 	TArray<FGuidonColumn> Columns;
+	/** The selected project's visible priorities, most important first (list index = rank). */
+	TArray<FGuidonPriority> Priorities;
 	TMap<FString, TArray<FGuidonComment>> Comments;
 	FString CurrentProjectId;
 	FString SelectedTaskId;
@@ -167,6 +187,7 @@ private:
 
 	/** Status combo options - the visible columns only, so a task can't be moved into a hidden one. */
 	TArray<TSharedPtr<FString>> StatusOptions;
+	/** Priority combo options - the project's visible priorities, most important first. */
 	TArray<TSharedPtr<FString>> PriorityOptions;
 
 	TSharedPtr<SComboBox<FProjectPtr>> ProjectCombo;

@@ -79,11 +79,25 @@ due date and subtask progress (`✓ 2/5`).
 
 ## Board columns
 
-The board shows the project's own columns: the labels, order and hidden
-columns set in the web app's project settings, loaded from
-`GET /api/v1/projects/{id}/columns`. The status list offers only visible
-columns. Against an older Guidon without that endpoint, the plugin falls
-back to the six default columns.
+The board shows the project's own columns: the labels, order, colours and
+hidden columns set in the web app's project settings, plus any custom
+columns, loaded from `GET /api/v1/projects/{id}/columns`. The status list
+offers only visible columns. A column marked as a done column (`is_done`)
+counts toward subtask progress and is where a ticked subtask goes when the
+built-in Done column is hidden. Against an older Guidon without that
+endpoint, the plugin falls back to the six default columns, and against one
+that doesn't send `is_done`, only Done counts as finished.
+
+## Priorities
+
+The priority list and the card's priority dot follow the project's own
+priorities, custom ones included, loaded from
+`GET /api/v1/projects/{id}/priorities` (most important first). A priority
+without its own colour uses the plugin's built-in colour, or grey for a
+custom one. Cards with the same position are ordered by priority. Against
+an older Guidon without that endpoint, the plugin offers the four
+built-ins (Critical, High, Medium, Low). A status or priority the plugin
+doesn't know is kept as is and shown by its key, in grey.
 
 ## Auto-refresh
 

@@ -167,9 +167,10 @@ void GuidonApi::ListColumns(const FString& ProjectId, FOnColumns Done)
 				{
 					const TSharedPtr<FJsonObject>* Object = nullptr;
 					FGuidonColumn Column;
+					// Custom statuses (migration 060) are any well-formed key, not just the six built-ins.
 					if (!Value.IsValid() || !Value->TryGetObject(Object) || !Object
 						|| !(*Object)->TryGetStringField(TEXT("status"), Column.Status)
-						|| !GuidonVocabulary::Statuses().Contains(Column.Status)
+						|| !GuidonVocabulary::IsWorkflowKey(Column.Status)
 						|| Columns.ContainsByPredicate([&Column](const FGuidonColumn& C) { return C.Status == Column.Status; }))
 					{
 						continue;
@@ -179,6 +180,13 @@ void GuidonApi::ListColumns(const FString& ProjectId, FOnColumns Done)
 					{
 						Column.Label = GuidonVocabulary::StatusLabel(Column.Status).ToString();
 					}
+					// Older servers send no is_done: then only the built-in done column counts as finished.
+					if (!(*Object)->TryGetBoolField(TEXT("is_done"), Column.bIsDone))
+					{
+						Column.bIsDone = Column.Status == TEXT("done");
+					}
+					(*Object)->TryGetBoolField(TEXT("custom"), Column.bCustom);
+					(*Object)->TryGetStringField(TEXT("color"), Column.Color); // untouched (empty) for a JSON null
 					Columns.Add(Column);
 				}
 			}
@@ -187,6 +195,44 @@ void GuidonApi::ListColumns(const FString& ProjectId, FOnColumns Done)
 				Columns = GuidonVocabulary::DefaultColumns();
 			}
 			Done(bOk, Columns, Error);
+		});
+}
+
+void GuidonApi::ListPriorities(const FString& ProjectId, FOnPriorities Done)
+{
+	Send(TEXT("GET"), FString::Printf(TEXT("/api/v1/projects/%s/priorities"), *ProjectId), nullptr,
+		[Done = MoveTemp(Done)](bool bOk, TSharedPtr<FJsonObject> Body, const FString& Error)
+		{
+			TArray<FGuidonPriority> Priorities;
+			const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
+			if (bOk && Body.IsValid() && Body->TryGetArrayField(TEXT("priorities"), Values) && Values)
+			{
+				for (const TSharedPtr<FJsonValue>& Value : *Values)
+				{
+					const TSharedPtr<FJsonObject>* Object = nullptr;
+					FGuidonPriority Priority;
+					if (!Value.IsValid() || !Value->TryGetObject(Object) || !Object
+						|| !(*Object)->TryGetStringField(TEXT("key"), Priority.Key)
+						|| !GuidonVocabulary::IsWorkflowKey(Priority.Key)
+						|| Priorities.ContainsByPredicate([&Priority](const FGuidonPriority& P) { return P.Key == Priority.Key; }))
+					{
+						continue;
+					}
+					(*Object)->TryGetStringField(TEXT("label"), Priority.Label);
+					if (Priority.Label.IsEmpty())
+					{
+						Priority.Label = GuidonVocabulary::PriorityLabel(Priority.Key).ToString();
+					}
+					(*Object)->TryGetStringField(TEXT("color"), Priority.Color); // untouched (empty) for a JSON null
+					(*Object)->TryGetBoolField(TEXT("custom"), Priority.bCustom);
+					Priorities.Add(Priority);
+				}
+			}
+			if (bOk && Priorities.Num() == 0)
+			{
+				Priorities = GuidonVocabulary::DefaultPriorities();
+			}
+			Done(bOk, Priorities, Error);
 		});
 }
 

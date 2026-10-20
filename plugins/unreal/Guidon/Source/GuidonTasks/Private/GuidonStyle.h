@@ -24,9 +24,20 @@ namespace GuidonStyle
 	FLinearColor Destructive();
 	FLinearColor MutedBackground();
 
-	/** Column dot colors, from BOARD_COLUMNS' accentClass (task-board.ts). */
+	/**
+	 * Parses a server colour ("#rrggbb", also "rrggbb" / "#rgb"). False (and
+	 * OutColor untouched) for an empty or malformed value.
+	 */
+	bool TryParseHex(const FString& InHex, FLinearColor& OutColor);
+
+	/** Column dot colors for the built-in statuses, from BOARD_COLUMNS' accentClass (task-board.ts); grey for any other key. */
 	FLinearColor StatusColor(const FString& Status);
+	/** The project's hex colour when set, else StatusColor(Status). */
+	FLinearColor StatusColor(const FString& Status, const FString& HexOverride);
+	/** Built-in priority colours; grey for any other key. */
 	FLinearColor PriorityColor(const FString& Priority);
+	/** The project's hex colour when set, else PriorityColor(Priority). */
+	FLinearColor PriorityColor(const FString& Priority, const FString& HexOverride);
 
 	// Rounded brushes - statics owned by GuidonStyle, valid for the module's lifetime.
 	const FSlateBrush* WindowBrush();
@@ -34,8 +45,9 @@ namespace GuidonStyle
 	const FSlateBrush* CardBrush(bool bSelected);
 	const FSlateBrush* PillBrush();
 	const FSlateBrush* ErrorBrush();
-	const FSlateBrush* DotBrush(const FString& Status);
-	const FSlateBrush* PriorityDotBrush(const FString& Priority);
+	/** Round dots, cached per colour (project colours are arbitrary hex values, so not per key). */
+	const FSlateBrush* DotBrush(const FLinearColor& Color);
+	const FSlateBrush* PriorityDotBrush(const FLinearColor& Color);
 	const FSlateBrush* DividerBrush();
 
 	/** The site's Button variants: solid brand blue, and the red-text outline used for Delete. */

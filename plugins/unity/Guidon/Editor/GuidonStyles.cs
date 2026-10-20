@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -53,14 +54,30 @@ namespace Guidon.Tasks.Editor
         private static Color PriorityHigh => EditorGUIUtility.isProSkin ? HexColor("#fbbf24") : HexColor("#d97706");
         private static Color PriorityCritical => EditorGUIUtility.isProSkin ? HexColor("#f87171") : HexColor("#dc2626");
 
+        // A neutral grey for a priority/column with no colour of its own
+        // and no built-in token (a project's custom key without a hex set).
+        private static Color NeutralColor => EditorGUIUtility.isProSkin ? HexColor("#6b7280") : HexColor("#9ca3af");
+
+        /// <summary>A colour the server sent (project-defined hex, migration 060). False for null/empty/unparseable, so the caller uses its own fallback instead of HexColor's magenta.</summary>
+        private static bool TryServerColor(string hex, out Color color)
+        {
+            color = default(Color);
+            return !string.IsNullOrEmpty(hex) && ColorUtility.TryParseHtmlString(hex, out color);
+        }
+
+        /// <summary>The project's hex for this priority if it set one, else the built-in token colour, else grey (a custom or unknown key).</summary>
         public static Color PriorityColor(string priority)
         {
+            PriorityDto def = GuidonVocabulary.FindPriority(priority);
+            if (def != null && TryServerColor(def.color, out Color custom)) return custom;
+
             switch (priority)
             {
                 case "low": return PriorityLow;
+                case "medium": return PriorityMedium;
                 case "high": return PriorityHigh;
                 case "critical": return PriorityCritical;
-                default: return PriorityMedium;
+                default: return NeutralColor;
             }
         }
 
@@ -71,11 +88,23 @@ namespace Guidon.Tasks.Editor
         private static Color WarningColor => EditorGUIUtility.isProSkin ? HexColor("#fbbf24") : HexColor("#d97706");
         private static Color SuccessColor => EditorGUIUtility.isProSkin ? HexColor("#34d399") : HexColor("#059669");
 
-        /// <summary>Mirrors BOARD_COLUMNS' accentClass per status exactly (backlog: muted-foreground, todo/ai_working: info, in_progress: warning, review: primary, done: success) - not invented, read straight from task-board.ts.</summary>
+        /// <summary>
+        /// The project's hex for this column if it set one; otherwise
+        /// BOARD_COLUMNS' accentClass per built-in status (backlog:
+        /// muted-foreground, todo/ai_working: info, in_progress: warning,
+        /// review: primary, done: success - read straight from
+        /// task-board.ts); a custom column without a colour gets success
+        /// when it's a done column, grey otherwise.
+        /// </summary>
         public static Color ColumnAccentColor(string status)
         {
+            ColumnDto column = GuidonVocabulary.CurrentColumns.FirstOrDefault(c => c.status == status);
+            if (column != null && TryServerColor(column.color, out Color custom)) return custom;
+
             switch (status)
             {
+                case "backlog":
+                    return MutedTextColor;
                 case "todo":
                 case "ai_working":
                     return InfoColor;
@@ -85,8 +114,8 @@ namespace Guidon.Tasks.Editor
                     return AccentColor;
                 case "done":
                     return SuccessColor;
-                default: // backlog
-                    return MutedTextColor;
+                default:
+                    return GuidonVocabulary.IsDoneStatus(status) ? SuccessColor : NeutralColor;
             }
         }
 

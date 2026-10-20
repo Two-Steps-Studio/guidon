@@ -25,7 +25,14 @@ VS Code 1.85 or newer.
 - **Guidon: Open Board** (Command Palette, or click **Guidon** in the status bar).
   - The board looks like the website: its colors, light or dark following
     your VS Code theme.
-  - It shows the project's own columns: their labels, order and hidden columns.
+  - It shows the project's own columns: their labels, order and hidden columns,
+    plus its custom columns (with their colours). A column marked as done
+    counts as finished, like the built-in Done. A task whose status has no
+    visible column gets an extra column labelled with that key, so it stays
+    on the board.
+  - Priorities are the project's own (`GET /api/v1/projects/{id}/priorities`):
+    labels, colours and order of importance, in the priority picker and on the
+    cards. An older Guidon without that endpoint gets Low/Medium/High/Critical.
   - It refreshes itself every 30 seconds while it's on screen and VS Code has
     focus, and again when you come back to the window - teammates' changes
     show up without clicking **Refresh**. What you're typing in the details

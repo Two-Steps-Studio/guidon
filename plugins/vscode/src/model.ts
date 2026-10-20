@@ -17,6 +17,8 @@ export interface Task {
   sort_order: number | null;
   parent_task_id: string | null;
   created_at: string;
+  /** Whether the task's column counts as finished (servers with migration 060); absent on older servers. */
+  is_done?: boolean;
 }
 
 export interface Comment {
@@ -42,6 +44,18 @@ export interface Reference {
 export interface Column {
   status: string;
   label: string;
+  /** Tasks in this column count as finished - always true for `done`, optional for a project's own columns. */
+  is_done: boolean;
+  /** Hex colour for the column dot, or null for the built-in one. */
+  color: string | null;
+}
+
+/** A task priority (GET /api/v1/projects/{id}/priorities), most important first. */
+export interface Priority {
+  key: string;
+  label: string;
+  /** Hex colour, or null for the built-in colour of a built-in key (grey for anything else). */
+  color: string | null;
 }
 
 /** Mirrors src/lib/work/task-board.ts (BOARD_COLUMNS / TASK_PRIORITIES) - a manual-sync point, like every plugin. */
@@ -54,16 +68,57 @@ export const STATUS_LABELS: Record<string, string> = {
   review: "Review",
   done: "Done",
 };
-export const PRIORITIES = ["low", "medium", "high", "critical"] as const;
+/** Built-in priorities, most important first - what a project without its own (or an older server) has. */
+export const PRIORITIES = ["critical", "high", "medium", "low"] as const;
+export const PRIORITY_LABELS: Record<string, string> = { low: "Low", medium: "Medium", high: "High", critical: "Critical" };
 
-export const DEFAULT_COLUMNS: Column[] = STATUSES.map((status) => ({ status, label: STATUS_LABELS[status] }));
+/** What a project's own status/priority keys look like (WORKFLOW_KEY_RE, migration 060). */
+export const WORKFLOW_KEY = /^[a-z][a-z0-9_]{0,39}$/;
+/** Colours are only ever passed on as CSS, so anything but a hex colour is dropped. */
+export const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
-/** Board order within a column: sort_order, ties keep the API's newest-first order. */
-export function columnTasks(tasks: Task[], status: string): Task[] {
+export const DEFAULT_COLUMNS: Column[] = STATUSES.map((status) => ({ status, label: STATUS_LABELS[status], is_done: status === "done", color: null }));
+export const DEFAULT_PRIORITIES: Priority[] = PRIORITIES.map((key) => ({ key, label: PRIORITY_LABELS[key], color: null }));
+
+/** Whether a status counts as finished: a column marked is_done, or the built-in done. */
+export function isDoneStatus(columns: Column[], status: string): boolean {
+  return status === "done" || columns.some((column) => column.status === status && column.is_done);
+}
+
+/** The task's own is_done when the server sends it, else derived from its column. */
+export function isTaskDone(task: Pick<Task, "status" | "is_done">, columns: Column[]): boolean {
+  return typeof task.is_done === "boolean" ? task.is_done : isDoneStatus(columns, task.status);
+}
+
+/**
+ * The visible columns plus one per status a top-level task carries that none
+ * of them has (a column removed or hidden since), so no task ever drops off
+ * the board. Such a column is labelled with its key.
+ */
+export function boardColumns(columns: Column[], tasks: Task[]): Column[] {
+  const known = new Set(columns.map((column) => column.status));
+  const extra: Column[] = [];
+  for (const task of tasks) {
+    if (task.parent_task_id || !task.status || known.has(task.status)) continue;
+    known.add(task.status);
+    extra.push({ status: task.status, label: STATUS_LABELS[task.status] ?? task.status, is_done: isTaskDone(task, columns), color: null });
+  }
+  return extra.length ? [...columns, ...extra] : columns;
+}
+
+/** Importance of a priority key: its index in the project's list, unknown keys after all known ones. */
+export function priorityRank(priorities: Priority[], key: string): number {
+  const index = priorities.findIndex((priority) => priority.key === key);
+  return index >= 0 ? index : priorities.length;
+}
+
+/** Board order within a column: sort_order, then priority (when given), ties keep the API's newest-first order. */
+export function columnTasks(tasks: Task[], status: string, priorities: Priority[] = []): Task[] {
+  const rank = (task: Task) => (priorities.length ? priorityRank(priorities, task.priority) : 0);
   return tasks
     .map((task, index) => ({ task, index }))
     .filter(({ task }) => task.status === status && !task.parent_task_id)
-    .sort((a, b) => (a.task.sort_order ?? 0) - (b.task.sort_order ?? 0) || a.index - b.index)
+    .sort((a, b) => (a.task.sort_order ?? 0) - (b.task.sort_order ?? 0) || rank(a.task) - rank(b.task) || a.index - b.index)
     .map(({ task }) => task);
 }
 

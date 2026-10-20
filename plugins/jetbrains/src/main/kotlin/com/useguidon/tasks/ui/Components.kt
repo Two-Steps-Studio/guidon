@@ -44,20 +44,32 @@ object GuidonColors {
     private val warning = c(0xd97706, 0xfbbf24)
     private val success = c(0x059669, 0x34d399)
 
-    /** Column dot colors, from BOARD_COLUMNS' accentClass (task-board.ts). */
-    fun status(status: String): Color = when (status) {
+    /**
+     * Column dot colors: the project's "#rrggbb" when it set one, else
+     * BOARD_COLUMNS' accentClass (task-board.ts) for a built-in, else neutral
+     * grey for a project-defined column without a colour.
+     */
+    fun status(status: String, hex: String = ""): Color = parseHex(hex) ?: when (status) {
         "todo", "ai_working" -> info
         "in_progress" -> warning
         "review" -> accent
         "done" -> success
-        else -> muted // backlog
+        else -> muted // backlog, custom
     }
 
-    fun priority(priority: String): Color = when (priority) {
+    /** Priority dot colors: the project's "#rrggbb", else the built-in colour, else neutral grey. */
+    fun priority(priority: String, hex: String = ""): Color = parseHex(hex) ?: when (priority) {
         "medium" -> info
         "high" -> warning
         "critical" -> destructive
-        else -> muted // low
+        else -> muted // low, custom
+    }
+
+    /** "#rrggbb" -> the same colour in both themes (it's the project's own choice); null for anything else. */
+    private fun parseHex(hex: String): Color? {
+        if (hex.length != 7 || hex[0] != '#') return null
+        val rgb = hex.substring(1).toIntOrNull(16) ?: return null
+        return Color(rgb)
     }
 }
 

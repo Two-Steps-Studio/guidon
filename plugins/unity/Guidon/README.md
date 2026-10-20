@@ -39,7 +39,7 @@ carries the Guidon icon and a link back to the website in its header. Each
 column has the same colored status dot the site shows next to its
 name (Backlog grey, Todo/AI Working blue, In Progress amber, Review
 accent, Done green - copied from `BOARD_COLUMNS`' own `accentClass`, not
-invented), and a card now shows its tags as small pills and its subtask
+invented; a custom column uses its own colour, or grey), and a card now shows its tags as small pills and its subtask
 progress (e.g. "✓ 2/5") the same way the site's card does - the one thing
 the card still can't show is a comment count, since the task-list API
 doesn't return one and fetching it per card would mean one extra request
@@ -95,13 +95,25 @@ otherwise) and try again. A corporate firewall or antivirus that blocks
 local loopback listeners would also prevent this from completing; there is
 no fallback path in v1 if that's the case for your machine.
 
-## Board columns
+## Board columns and priorities
 
 The board shows the project's own columns: the labels, order and hidden
-columns set in the web app's project settings, loaded from
+columns set in the web app's project settings, plus any custom columns
+(with their colour, and whether they count as done), loaded from
 `GET /api/v1/projects/{id}/columns`. The status list offers only visible
 columns. Against an older Guidon without that endpoint, the plugin falls
-back to the six default columns.
+back to the six default columns. Subtask progress counts a subtask as
+finished when its column is a done column (`Done`, or a custom column
+marked done).
+
+Priorities work the same way: the project's own list (labels, colours,
+custom priorities, most important first) comes from
+`GET /api/v1/projects/{id}/priorities` and drives the priority dropdown,
+the card's priority dot and label, and the card order within a column
+(after its manual position). Against an older Guidon (that endpoint is a
+404) the plugin uses the four built-ins: Critical, High, Medium, Low. A
+status or priority key the plugin doesn't know is shown as-is, in grey -
+never changed to a default.
 
 ## Known limitation: status changes can 403
 

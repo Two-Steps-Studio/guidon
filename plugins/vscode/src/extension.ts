@@ -4,7 +4,7 @@ import { BoardPanel, BoardCommands } from "./board";
 import { currentRepository, gitApi } from "./git";
 import { login } from "./login";
 import { MoodboardPanel } from "./moodboard";
-import { branchName, columnTasks, gitRef, withRef } from "./model";
+import { boardColumns, branchName, columnTasks, gitRef, isTaskDone, withRef } from "./model";
 import { BoardStore } from "./store";
 
 const KEY_SECRET = "guidon.apiKey";
@@ -119,16 +119,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     },
   };
 
-  /** QuickPick over the current project's open tasks (subtasks last). */
+  /** QuickPick over the current project's open (not done) top-level tasks, in board order. */
   const pickTask = async (placeHolder: string) => {
     if (!apiKey) {
       await commands.login();
       if (!apiKey) return undefined;
     }
     if (store.projects.length === 0) await store.refresh();
-    const open = store.columns
-      .filter((column) => column.status !== "done")
-      .flatMap((column) => columnTasks(store.tasks, column.status).map((task) => ({ task, column: column.label })));
+    const open = boardColumns(store.columns, store.tasks)
+      .filter((column) => !column.is_done)
+      .flatMap((column) => columnTasks(store.tasks, column.status, store.priorities).filter((task) => !isTaskDone(task, store.columns)).map((task) => ({ task, column: column.label })));
     const picked = await vscode.window.showQuickPick(
       open.map(({ task, column }) => ({ label: task.title, description: `${gitRef(task.id)} · ${column}`, detail: task.description?.split("\n")[0] || undefined, id: task.id })),
       { placeHolder, matchOnDescription: true, matchOnDetail: true }

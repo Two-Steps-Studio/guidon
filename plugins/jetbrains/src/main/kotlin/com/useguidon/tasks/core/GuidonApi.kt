@@ -30,19 +30,50 @@ class GuidonApi(baseUrl: String, private val apiKey: String, private val http: H
 
     /**
      * The project's visible columns in board order (its label/order/hidden
-     * overrides applied server-side). Unknown statuses are dropped; an empty
-     * answer falls back to the defaults.
+     * overrides and its own columns applied server-side). Any well-formed key
+     * is kept - built-in or project-defined; an empty answer falls back to the
+     * defaults. `is_done`/`custom`/`color` are missing on older servers, where
+     * `done` is the only done column.
      */
     fun listColumns(projectId: String): ApiResult<List<BoardColumn>> =
         send("GET", "/api/v1/projects/$projectId/columns").map { body ->
             body.array("columns")
                 .mapNotNull { element ->
                     val column = element.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
-                    val status = column.str("status").takeIf { it in Vocabulary.statuses } ?: return@mapNotNull null
-                    BoardColumn(status, column.str("label").ifEmpty { Vocabulary.statusLabel(status) })
+                    val status = column.str("status").takeIf { Vocabulary.isValidKey(it) } ?: return@mapNotNull null
+                    BoardColumn(
+                        status = status,
+                        label = column.str("label").ifEmpty { Vocabulary.statusLabel(status) },
+                        isDone = column.bool("is_done") ?: (status == "done"),
+                        custom = column.bool("custom") ?: false,
+                        color = column.str("color").takeIf { isHexColor(it) }.orEmpty(),
+                    )
                 }
                 .distinctBy { it.status }
                 .ifEmpty { Vocabulary.defaultColumns }
+        }
+
+    /**
+     * The project's visible priorities, most important first (built-ins with
+     * their overrides plus the project's own). An older server answers 404 -
+     * callers fall back to Vocabulary.defaultPriorities on any Err; an empty
+     * answer falls back here.
+     */
+    fun listPriorities(projectId: String): ApiResult<List<PriorityOption>> =
+        send("GET", "/api/v1/projects/$projectId/priorities").map { body ->
+            body.array("priorities")
+                .mapNotNull { element ->
+                    val o = element.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
+                    val key = o.str("key").takeIf { Vocabulary.isValidKey(it) } ?: return@mapNotNull null
+                    PriorityOption(
+                        key = key,
+                        label = o.str("label").ifEmpty { Vocabulary.priorityLabel(key) },
+                        color = o.str("color").takeIf { isHexColor(it) }.orEmpty(),
+                        custom = o.bool("custom") ?: false,
+                    )
+                }
+                .distinctBy { it.key }
+                .ifEmpty { Vocabulary.defaultPriorities }
         }
 
     /** Empty parentTaskId creates a top-level task in [status]; a real id creates a subtask (the API ignores status/priority for those). */
@@ -199,6 +230,7 @@ class GuidonApi(baseUrl: String, private val apiKey: String, private val http: H
             createdAt = o.str("created_at"),
             tags = o.array("tags").mapNotNull { runCatching { it.asString }.getOrNull() },
             sortOrder = o.get("sort_order")?.takeUnless { it.isJsonNull }?.let { runCatching { it.asDouble }.getOrNull() } ?: 0.0,
+            isDone = o.bool("is_done"),
         )
 
         fun parseComment(o: JsonObject) = GuidonComment(
@@ -225,6 +257,18 @@ internal fun JsonObject.str(key: String): String {
     val element: JsonElement? = get(key)
     return if (element == null || element.isJsonNull || !element.isJsonPrimitive) "" else element.asString
 }
+
+/** Boolean field, null for missing, JSON null or a non-boolean (an older server that doesn't send it). */
+internal fun JsonObject.bool(key: String): Boolean? {
+    val element: JsonElement? = get(key)
+    if (element == null || !element.isJsonPrimitive || !element.asJsonPrimitive.isBoolean) return null
+    return element.asBoolean
+}
+
+private val hexColor = Regex("^#[0-9a-fA-F]{6}$")
+
+/** "#rrggbb" - the only colour form the server stores for columns and priorities. */
+internal fun isHexColor(value: String): Boolean = hexColor.matches(value)
 
 internal fun JsonObject.array(key: String): JsonArray {
     val element = get(key)

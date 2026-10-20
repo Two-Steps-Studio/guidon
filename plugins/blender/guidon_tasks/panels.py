@@ -11,7 +11,9 @@ from .ops import online_access_blocked, prefs
 
 # Blender panels can't take custom colors, but its color-tag icons can stand
 # in for the website's colored dots (src/app/globals.css): 01 red, 02 orange,
-# 03 yellow, 04 green, 05 blue, 09 gray.
+# 03 yellow, 04 green, 05 blue, 06 violet, 07 pink, 08 brown, 09 gray. A
+# project's own hex color (custom column/priority, or a recolored built-in)
+# is mapped to the nearest tag by api.color_tag.
 #
 # Blender renamed these from SEQUENCE_COLOR_XX to STRIP_COLOR_XX somewhere in
 # the 4.x cycle (part of the sequencer/VSE "strip" terminology rewrite). This
@@ -44,6 +46,24 @@ _PRIORITY_ICONS = {
     "high": _COLOR_ICON_PREFIX + "_02",
     "critical": _COLOR_ICON_PREFIX + "_01",
 }
+
+
+def _icon(color, builtin_icon):
+    """A project color wins; otherwise the built-in key's icon, or the
+    neutral gray for a custom key without a color / an unknown key."""
+    tag = api.color_tag(color)
+    if tag:
+        return _COLOR_ICON_PREFIX + "_" + tag
+    return builtin_icon or _DEFAULT_COLOR_ICON
+
+
+def _status_icon(column):
+    return _icon(column.color, _STATUS_ICONS.get(column.status))
+
+
+def _priority_icon(key):
+    priority = next((p for p in state.priorities if p.key == key), None)
+    return _icon(priority.color if priority else None, _PRIORITY_ICONS.get(key))
 
 
 def _wrapped(layout, context, text, max_lines=None):
@@ -117,21 +137,19 @@ class _BoardPanel(_GuidonPanel):
         board_tasks = [t for t in state.tasks if api.is_report(t)] if props.reports_only else state.tasks
         if props.reports_only and not board_tasks:
             _wrapped(layout, context, "No bug reports yet. Add the website widget or an engine plugin's in-game reports.")
-        for status, label in state.columns:
-            index = api.STATUSES.index(status)
+        for column in state.columns:
+            status = column.status
             tasks = api.column_tasks(board_tasks, status)
             box = layout.box()
             header = box.row(align=True)
-            header.label(text="", icon=_STATUS_ICONS.get(status, _DEFAULT_COLOR_ICON))
-            expanded = props.expanded[index]
-            header.prop(
-                props,
-                "expanded",
-                index=index,
-                text="{} ({})".format(label, len(tasks)),
+            header.label(text="", icon=_status_icon(column))
+            expanded = state.column_expanded(column)
+            header.operator(
+                "guidon.toggle_column",
+                text="{} ({})".format(column.label, len(tasks)),
                 icon="TRIA_DOWN" if expanded else "TRIA_RIGHT",
                 emboss=False,
-            )
+            ).status = status
             add = header.operator("guidon.create_task", text="", icon="ADD", emboss=False)
             add.status = status
             add.parent_task_id = ""
@@ -140,7 +158,7 @@ class _BoardPanel(_GuidonPanel):
             col = box.column(align=True)
             for task in tasks:
                 row = col.row(align=True)
-                row.label(text="", icon=_PRIORITY_ICONS.get(task.get("priority"), _DEFAULT_COLOR_ICON))
+                row.label(text="", icon=_priority_icon(task.get("priority")))
                 op = row.operator(
                     "guidon.select_task",
                     text=task.get("title") or "(untitled)",
@@ -149,7 +167,7 @@ class _BoardPanel(_GuidonPanel):
                 op.task_id = task["id"]
                 subs = api.subtasks_of(state.tasks, task["id"])
                 if subs:
-                    done = sum(1 for s in subs if s.get("status") == "done")
+                    done = sum(1 for s in subs if api.is_done(s, state.columns))
                     row.label(text="{}/{}".format(done, len(subs)), icon="CHECKMARK")
             if not tasks:
                 col.label(text="No tasks")
@@ -178,7 +196,7 @@ class _TaskPanel(_GuidonPanel):
         right.task_id, right.direction = task_id, 1
 
         info = layout.row()
-        info.label(text=(task.get("priority") or "-").capitalize(), icon=_PRIORITY_ICONS.get(task.get("priority"), _DEFAULT_COLOR_ICON))
+        info.label(text=state.priority_label(task.get("priority")), icon=_priority_icon(task.get("priority")))
         info.label(text=(task.get("due_date") or "")[:10] or "No due date", icon="TIME")
 
         row = layout.row(align=True)
@@ -206,7 +224,7 @@ class _TaskPanel(_GuidonPanel):
             add.parent_task_id = task_id
             col = layout.column(align=True)
             for sub in api.subtasks_of(state.tasks, task_id):
-                done = sub.get("status") == "done"
+                done = api.is_done(sub, state.columns)
                 r = col.row(align=True)
                 r.operator(
                     "guidon.toggle_subtask", text="", icon="CHECKBOX_HLT" if done else "CHECKBOX_DEHLT", emboss=False
@@ -257,10 +275,11 @@ class GUIDON_MT_status(bpy.types.Menu):
     def draw(self, context):
         task_id = context.window_manager.guidon.menu_task_id
         current = (state.find_task(task_id) or {}).get("status")
-        for status, label in state.columns:
-            op = self.layout.operator("guidon.set_status", text=label, icon="LAYER_ACTIVE" if status == current else "BLANK1")
+        for column in state.columns:
+            icon = "LAYER_ACTIVE" if column.status == current else "BLANK1"
+            op = self.layout.operator("guidon.set_status", text=column.label, icon=icon)
             op.task_id = task_id
-            op.status = status
+            op.status = column.status
 
 
 def _make(base, space, suffix):

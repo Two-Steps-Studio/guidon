@@ -21,6 +21,7 @@ namespace GuidonApi
 	using FOnComments = TFunction<void(bool bOk, const TArray<FGuidonComment>& Comments, const FString& Error)>;
 	using FOnComment = TFunction<void(bool bOk, const FGuidonComment& Comment, const FString& Error)>;
 	using FOnColumns = TFunction<void(bool bOk, const TArray<FGuidonColumn>& Columns, const FString& Error)>;
+	using FOnPriorities = TFunction<void(bool bOk, const TArray<FGuidonPriority>& Priorities, const FString& Error)>;
 	using FOnReferences = TFunction<void(bool bOk, const TArray<FGuidonReference>& References, const FString& Error)>;
 	using FOnBytes = TFunction<void(bool bOk, const TArray<uint8>& Bytes, const FString& Error)>;
 	using FOnString = TFunction<void(bool bOk, const FString& Value, const FString& Error)>;
@@ -28,8 +29,20 @@ namespace GuidonApi
 	void ListProjects(FOnProjects Done);
 	void ListTasks(const FString& ProjectId, FOnTasks Done);
 
-	/** The project's visible columns in board order. Unknown statuses are dropped; an empty answer means the defaults. */
+	/**
+	 * The project's visible columns in board order, custom ones included
+	 * (label, colour, is_done). Malformed or duplicate keys are skipped; an
+	 * empty answer means the defaults. An older server sends only
+	 * status/label - then `done` is the only done column.
+	 */
 	void ListColumns(const FString& ProjectId, FOnColumns Done);
+
+	/**
+	 * The project's visible priorities, most important first. bOk is false
+	 * on an older server without the endpoint (404) - callers fall back to
+	 * GuidonVocabulary::DefaultPriorities().
+	 */
+	void ListPriorities(const FString& ProjectId, FOnPriorities Done);
 
 	/** Empty ParentTaskId creates a top-level task in column Status; a real id creates a subtask (the API ignores Status/Priority for those). */
 	void CreateTask(const FString& ProjectId, const FString& Title, const FString& Description, const FString& Priority,

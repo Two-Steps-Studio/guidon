@@ -87,15 +87,28 @@ without a thumbnail. Adding images stays on the website (**Open in
 Browser**).
 
 Blender panels can't take custom colors, so the website's colored status and
-priority dots are shown with Blender's built-in color-tag icons.
+priority dots are shown with Blender's built-in color-tag icons. A color
+set in the project (custom column or priority) is mapped to the nearest of
+the nine tags. One without a color gets the neutral gray tag.
 
 ## Board columns
 
 The board shows the project's own columns: the labels, order and hidden
 columns set in the web app's project settings, loaded from
-`GET /api/v1/projects/{id}/columns`. The status list offers only visible
-columns. Against an older Guidon without that endpoint, the plugin falls
-back to the six default columns.
+`GET /api/v1/projects/{id}/columns`. That includes custom columns. The
+status list offers only visible columns. A column marked as a done column
+(`is_done`) counts its tasks as finished, which drives the subtask
+checkboxes and the `done/total` counts. Backlog and done columns start
+collapsed. Against an older Guidon without that endpoint, the plugin falls
+back to the six default columns, with `done` as the only done column.
+
+Priorities work the same way. They come from
+`GET /api/v1/projects/{id}/priorities`, including custom ones, and the
+New/Edit pickers list them most important first. A server without that
+endpoint (404) gets the four built-ins: low, medium, high and critical.
+A task whose status or priority the project no longer offers still shows,
+labeled with its raw key. Edit keeps that priority unless you pick another
+one.
 
 ## Login and storage
 

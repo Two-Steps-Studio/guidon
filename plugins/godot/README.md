@@ -28,9 +28,14 @@ using the same public API (`/api/v1`).
   other plugins: `127.0.0.1`, ports 51820-51829, `/auth/plugin-login?client=godot`.
   The key is stored in the **Editor Settings** (per user, outside the project,
   so it can't be committed) and appears on the website as **"Godot Plugin"**.
-- The board shows the project's own columns: labels, order and hidden columns
-  from the project settings. Against an older server it falls back to the six
-  default columns.
+- The board shows the project's own columns: labels, colours, order and
+  hidden columns from the project settings, including custom columns (a
+  custom column can count as done, which the subtask checkboxes follow).
+  Priorities come from the project too, most important first, with their
+  labels and colours on the cards and in the priority picker. A priority the
+  project no longer lists still shows, labelled with its key, in grey.
+  Against an older server it falls back to the six default columns and the
+  four built-in priorities.
 - Click a card to edit it on the right, **drag it onto another column** to
   change its status, and use **+** on a column to create a task there (Enter
   creates, Esc cancels). The details panel also has subtasks (checkbox =
