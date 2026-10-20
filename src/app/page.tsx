@@ -91,9 +91,11 @@ export default async function Home() {
       dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
     />
     <main>
-    <div className="relative flex min-h-screen items-center overflow-hidden bg-background/70 dark:bg-background/60">
-      <div className="container relative z-10 mx-auto px-4 py-20">
-        <div className="max-w-5xl mx-auto text-center space-y-12">
+    {/* Not full-screen: the live board mockup below starts above the fold,
+        so the first screen shows the product, not only the pitch. */}
+    <div className="relative overflow-hidden bg-background/70 dark:bg-background/60">
+      <div className="container relative z-10 mx-auto px-4 pb-12 pt-14 md:pt-20">
+        <div className="max-w-5xl mx-auto text-center space-y-8">
           <div className="space-y-6">
             <Image
               src="/assets/guidon-wordmark.png"
@@ -101,7 +103,7 @@ export default async function Home() {
               width={769}
               height={285}
               priority
-              className="mx-auto h-24 w-auto dark:invert md:h-28"
+              className="mx-auto h-16 w-auto dark:invert md:h-20"
             />
             <div className="space-y-3">
               <h1
@@ -115,7 +117,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-base px-8 py-6 h-auto" asChild>
                 <Link href="/auth/signup">{t("getStarted")}</Link>
@@ -129,7 +131,7 @@ export default async function Home() {
       </div>
     </div>
 
-    <section className="px-4 pb-20" aria-labelledby="board-preview-title">
+    <section className="bg-gradient-to-b from-background/70 to-transparent px-4 pb-20 dark:from-background/60" aria-labelledby="board-preview-title">
       {/* The board's column headers are <h3>s; this keeps the outline
           sequential (h1 -> h2 -> h3) for screen readers and crawlers. */}
       <h2 id="board-preview-title" className="sr-only">
