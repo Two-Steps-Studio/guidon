@@ -14,6 +14,8 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getOrgPlanLimits, isMemberLimitReached } from "@/lib/limits";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberActionsMenu } from "./member-actions-menu";
+import { MembersTree, type TreeProject } from "./members-tree";
+import { dataClient } from "@/lib/data-client";
 import { isAiAccountEmail } from "@/lib/ai-account-email";
 
 interface MemberRow {
@@ -35,10 +37,13 @@ interface SupabaseMemberRow {
 
 export default async function OrganizationMembersPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const { id: orgId } = await params;
+  const view = (await searchParams).view === "list" ? "list" : "tree";
   const t = await getTranslations("organizations.members");
   const tCommon = await getTranslations("organizations.common");
   const tAi = await getTranslations("aiAccounts");
@@ -95,6 +100,29 @@ export default async function OrganizationMembersPage({
   // no plans. members.length is every organization_members row the caller
   // can see, which for any member of the organization is all of them.
   const seats = hasDirectDatabase() ? null : await getOrgPlanLimits(orgId);
+
+  // The tree also shows who's on which project (only projects the viewer
+  // can see - RLS; their teams since migration 069).
+  let treeProjects: TreeProject[] = [];
+  if (view === "tree" && members.length > 0) {
+    const db = dataClient(access.userId);
+    const { data: projects } = await db
+      .from<{ id: string; name: string }>("projects")
+      .select("id, name")
+      .eq("organization_id", orgId)
+      .order("name", { ascending: true });
+    const { data: projectMembers } = projects.length
+      ? await db
+          .from<{ project_id: string; user_id: string; role: string }>("project_members")
+          .select("project_id, user_id, role")
+          .in("project_id", projects.map((project) => project.id))
+      : { data: [] as { project_id: string; user_id: string; role: string }[] };
+    treeProjects = projects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      roles: new Map(projectMembers.filter((row) => row.project_id === project.id).map((row) => [row.user_id, row.role])),
+    }));
+  }
   const seatsFull = seats !== null && isMemberLimitReached(members.length, seats.memberLimit);
 
   return (
@@ -131,7 +159,39 @@ export default async function OrganizationMembersPage({
           </Card>
         )}
 
-        {members.length === 0 ? (
+        {members.length > 0 && (
+          <div role="tablist" aria-label={t("title")} className="mb-4 inline-flex rounded-md bg-muted p-1 text-sm">
+            {(["tree", "list"] as const).map((option) => (
+              <Link
+                key={option}
+                role="tab"
+                aria-selected={view === option}
+                href={option === "tree" ? `/organizations/${orgId}/members` : `/organizations/${orgId}/members?view=list`}
+                className={
+                  view === option
+                    ? "rounded px-3 py-1 font-medium bg-background shadow-sm"
+                    : "rounded px-3 py-1 text-muted-foreground hover:text-foreground"
+                }
+              >
+                {option === "tree" ? t("viewTree") : t("viewList")}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {members.length > 0 && view === "tree" ? (
+          <MembersTree
+            orgId={orgId}
+            orgName={access.organization.name}
+            members={members.map((member) => ({
+              userId: member.user_id,
+              role: member.role,
+              name: member.profiles.full_name || member.profiles.email,
+              email: member.profiles.email,
+            }))}
+            projects={treeProjects}
+          />
+        ) : members.length === 0 ? (
           <EmptyState
             icon={Users}
             title={t("emptyTitle")}

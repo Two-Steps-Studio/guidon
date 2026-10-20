@@ -3,7 +3,7 @@
     "loading": "Loading...",
     "projectType": "{type, select, game {Game} website {Website} mobile_app {Mobile App} api {API} tool {Tool} other {Other}}",
     "projectMethodology": "{methodology, select, standard {Standard} scrum {Scrum} other {Standard}}",
-    "role": "{role, select, owner {Owner} admin {Admin} member {Member} other {Member}}",
+    "role": "{role, select, owner {Owner} admin {Admin} developer {Developer} tester {Tester} viewer {Viewer} member {Member} other {Member}}",
     "projectStatus": "{status, select, active {Active} archived {Archived} deleted {Deleted} other {Active}}",
     "entityType": "{type, select, project {Project} task {Task} phase {Roadmap phase} decision {Decision} file {File} source {Source} memory {Memory} other {Task}}",
     "relationType": "{type, select, depends_on {Depends on} blocks {Blocks} implements {Implements} references {References} decided_by {Decided by} based_on {Based on} related_to {Related to} contradicts {Contradicts} supersedes {Supersedes} part_of {Part of} contains {Contains} other {Related to}}",
@@ -341,7 +341,19 @@
       "adding": "Adding...",
       "seatsUsed": "{used} of {limit} seats used on the {plan} plan",
       "upgradeForSeats": "Upgrade for more seats",
-      "seatsFull": "This organization has used all {limit} seats on its {plan} plan. Upgrade the plan to add more people."
+      "seatsFull": "This organization has used all {limit} seats on its {plan} plan. Upgrade the plan to add more people.",
+      "viewTree": "Tree",
+      "viewList": "List",
+      "treePeople": "{count, plural, one {# person} other {# people}}",
+      "treeGroup": {
+        "owner": "Owners",
+        "admin": "Admins",
+        "member": "Members",
+        "ai": "AI accounts"
+      },
+      "treeProjects": "{count, plural, =0 {no projects} one {# project} other {# projects}}",
+      "treeHint": "Click a person to see their projects and role in each. Only projects you can see are shown.",
+      "treeAllProjects": "All projects"
     },
     "settings": {
       "title": "Organization Settings",

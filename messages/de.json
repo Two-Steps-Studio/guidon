@@ -3,7 +3,7 @@
     "loading": "Lädt...",
     "projectType": "{type, select, game {Spiel} website {Website} mobile_app {Mobile App} api {API} tool {Tool} other {Sonstiges}}",
     "projectMethodology": "{methodology, select, standard {Standard} scrum {Scrum} other {Standard}}",
-    "role": "{role, select, owner {Inhaber} admin {Admin} member {Mitglied} other {Mitglied}}",
+    "role": "{role, select, owner {Inhaber} admin {Admin} developer {Entwickler} tester {Tester} viewer {Betrachter} member {Mitglied} other {Mitglied}}",
     "projectStatus": "{status, select, active {Aktiv} archived {Archiviert} deleted {Gelöscht} other {Aktiv}}",
     "entityType": "{type, select, project {Projekt} task {Aufgabe} phase {Roadmap-Phase} decision {Entscheidung} file {Datei} source {Quelle} memory {Gedächtnis} other {Aufgabe}}",
     "relationType": "{type, select, depends_on {Hängt ab von} blocks {Blockiert} implements {Implementiert} references {Verweist auf} decided_by {Entschieden durch} based_on {Basiert auf} related_to {Verwandt mit} contradicts {Widerspricht} supersedes {Ersetzt} part_of {Teil von} contains {Enthält} other {Verwandt mit}}",
@@ -341,7 +341,19 @@
       "adding": "Wird hinzugefügt...",
       "seatsUsed": "{used} von {limit} Plätzen im {plan}-Plan belegt",
       "upgradeForSeats": "Upgrade für mehr Plätze",
-      "seatsFull": "Diese Organisation hat alle {limit} Plätze ihres {plan}-Plans belegt. Upgrade den Plan, um weitere Personen hinzuzufügen."
+      "seatsFull": "Diese Organisation hat alle {limit} Plätze ihres {plan}-Plans belegt. Upgrade den Plan, um weitere Personen hinzuzufügen.",
+      "viewTree": "Baum",
+      "viewList": "Liste",
+      "treePeople": "{count, plural, one {# Person} other {# Personen}}",
+      "treeGroup": {
+        "owner": "Inhaber",
+        "admin": "Admins",
+        "member": "Mitglieder",
+        "ai": "KI-Konten"
+      },
+      "treeProjects": "{count, plural, =0 {keine Projekte} one {# Projekt} other {# Projekte}}",
+      "treeHint": "Klick auf eine Person, um ihre Projekte und ihre Rolle darin zu sehen. Es werden nur Projekte gezeigt, die du sehen kannst.",
+      "treeAllProjects": "Alle Projekte"
     },
     "settings": {
       "title": "Organisationseinstellungen",

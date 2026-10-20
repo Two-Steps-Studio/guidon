@@ -3,7 +3,7 @@
     "loading": "Ładowanie...",
     "projectType": "{type, select, game {Gra} website {Strona internetowa} mobile_app {Aplikacja mobilna} api {API} tool {Narzędzie} other {Inne}}",
     "projectMethodology": "{methodology, select, standard {Standardowy} scrum {Scrum} other {Standardowy}}",
-    "role": "{role, select, owner {Właściciel} admin {Administrator} member {Członek} other {Członek}}",
+    "role": "{role, select, owner {Właściciel} admin {Administrator} developer {Developer} tester {Tester} viewer {Obserwator} member {Członek} other {Członek}}",
     "projectStatus": "{status, select, active {Aktywny} archived {Zarchiwizowany} deleted {Usunięty} other {Aktywny}}",
     "entityType": "{type, select, project {Projekt} task {Zadanie} phase {Faza planu} decision {Decyzja} file {Plik} source {Źródło} memory {Pamięć} other {Zadanie}}",
     "relationType": "{type, select, depends_on {Zależy od} blocks {Blokuje} implements {Implementuje} references {Odnosi się do} decided_by {Zadecydowane przez} based_on {Oparte na} related_to {Powiązane z} contradicts {Sprzeczne z} supersedes {Zastępuje} part_of {Część} contains {Zawiera} other {Powiązane z}}",
@@ -341,7 +341,19 @@
       "adding": "Dodawanie...",
       "seatsUsed": "Zajęte miejsca: {used} z {limit} (plan {plan})",
       "upgradeForSeats": "Zmień plan, by dodać osoby",
-      "seatsFull": "Organizacja wykorzystała wszystkie miejsca ({limit}) w planie {plan}. Zmień plan, aby dodać kolejne osoby."
+      "seatsFull": "Organizacja wykorzystała wszystkie miejsca ({limit}) w planie {plan}. Zmień plan, aby dodać kolejne osoby.",
+      "viewTree": "Drzewko",
+      "viewList": "Lista",
+      "treePeople": "{count, plural, one {# osoba} few {# osoby} other {# osób}}",
+      "treeGroup": {
+        "owner": "Właściciele",
+        "admin": "Administratorzy",
+        "member": "Członkowie",
+        "ai": "Konta AI"
+      },
+      "treeProjects": "{count, plural, =0 {brak projektów} one {# projekt} few {# projekty} other {# projektów}}",
+      "treeHint": "Kliknij osobę, żeby zobaczyć jej projekty i rolę w każdym. Widać tylko projekty, do których masz dostęp.",
+      "treeAllProjects": "Wszystkie projekty"
     },
     "settings": {
       "title": "Ustawienia organizacji",

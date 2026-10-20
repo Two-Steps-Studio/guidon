@@ -3,7 +3,7 @@
     "loading": "Cargando...",
     "projectType": "{type, select, game {Juego} website {Sitio web} mobile_app {Aplicación móvil} api {API} tool {Herramienta} other {Otro}}",
     "projectMethodology": "{methodology, select, standard {Estándar} scrum {Scrum} other {Estándar}}",
-    "role": "{role, select, owner {Propietario} admin {Administrador} member {Miembro} other {Miembro}}",
+    "role": "{role, select, owner {Propietario} admin {Administrador} developer {Desarrollador} tester {Tester} viewer {Observador} member {Miembro} other {Miembro}}",
     "projectStatus": "{status, select, active {Activo} archived {Archivado} deleted {Eliminado} other {Activo}}",
     "entityType": "{type, select, project {Proyecto} task {Tarea} phase {Fase de la hoja de ruta} decision {Decisión} file {Archivo} source {Fuente} memory {Memoria} other {Tarea}}",
     "relationType": "{type, select, depends_on {Depende de} blocks {Bloquea} implements {Implementa} references {Hace referencia a} decided_by {Decidido por} based_on {Basado en} related_to {Relacionado con} contradicts {Contradice} supersedes {Sustituye a} part_of {Parte de} contains {Contiene} other {Relacionado con}}",
@@ -341,7 +341,19 @@
       "adding": "Añadiendo...",
       "seatsUsed": "{used} de {limit} plazas usadas en el plan {plan}",
       "upgradeForSeats": "Mejora el plan para más plazas",
-      "seatsFull": "Esta organización ha usado las {limit} plazas de su plan {plan}. Mejora el plan para añadir más personas."
+      "seatsFull": "Esta organización ha usado las {limit} plazas de su plan {plan}. Mejora el plan para añadir más personas.",
+      "viewTree": "Árbol",
+      "viewList": "Lista",
+      "treePeople": "{count, plural, one {# persona} other {# personas}}",
+      "treeGroup": {
+        "owner": "Propietarios",
+        "admin": "Administradores",
+        "member": "Miembros",
+        "ai": "Cuentas de IA"
+      },
+      "treeProjects": "{count, plural, =0 {sin proyectos} one {# proyecto} other {# proyectos}}",
+      "treeHint": "Haz clic en una persona para ver sus proyectos y su rol en cada uno. Solo se muestran los proyectos que puedes ver.",
+      "treeAllProjects": "Todos los proyectos"
     },
     "settings": {
       "title": "Ajustes de la organización",

@@ -3258,5 +3258,31 @@ section("54. widocznosc projektu w organizacji (migracja 067)");
   });
 }
 
+section("55. zespol projektu widoczny dla kazdego, kto widzi projekt (migracja 069)");
+
+{
+  const M = "eeeeeeee-0000-4000-8000-000000000069";
+  const S = "eeeeeeee-0000-4000-8000-000000000169";
+  await withServiceRole(() =>
+    db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, 'm069@example.test', '{}'), ($2, 's069@example.test', '{}') ON CONFLICT DO NOTHING", [M, S])
+  );
+  let shared, hidden;
+  await withUser(A, async () => {
+    const org = (await db.query("INSERT INTO public.organizations (name, slug) VALUES ('Team 069', 'team-069') RETURNING id")).rows[0].id;
+    await db.query("INSERT INTO public.organization_members (organization_id, user_id, role) VALUES ($1, $2, 'member')", [org, M]);
+    shared = (await db.query("INSERT INTO public.projects (organization_id, name, slug, visibility) VALUES ($1, 'Shared 069', 'shared-069', 'organization') RETURNING id", [org])).rows[0].id;
+    hidden = (await db.query("INSERT INTO public.projects (organization_id, name, slug, visibility) VALUES ($1, 'Hidden 069', 'hidden-069', 'private') RETURNING id", [org])).rows[0].id;
+  });
+  await withUser(M, async () => {
+    const seen = (await db.query("SELECT project_id FROM public.project_members WHERE project_id = ANY($1)", [[shared, hidden]])).rows.map((r) => r.project_id);
+    check("czlonek organizacji widzi zespol projektu 'organization'", seen.includes(shared));
+    check("ale nie zespol projektu 'private'", !seen.includes(hidden));
+  });
+  await withUser(S, async () => {
+    const seen = await db.query("SELECT 1 FROM public.project_members WHERE project_id = ANY($1)", [[shared, hidden]]);
+    check("ktos spoza organizacji nie widzi zadnego zespolu", seen.rows.length === 0);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
