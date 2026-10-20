@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
 import { PROMO_CODE_RE, normalizePromoCode } from "@/lib/billing/promo-codes";
+import { tr } from "@/lib/i18n/server-errors";
 
 /**
  * Instance admins create and switch off Guidon promo codes (migration 062).
@@ -23,24 +24,24 @@ export interface PromoCodeInput {
 export async function createPromoCode(input: PromoCodeInput): Promise<{ error: string | null }> {
   const admin = await requireAdminAccess();
   const code = normalizePromoCode(input.code);
-  if (!PROMO_CODE_RE.test(code)) return { error: "Codes are 3-40 letters, digits, - or _." };
+  if (!PROMO_CODE_RE.test(code)) return { error: await tr("Codes are 3-40 letters, digits, - or _.") };
   if (!Number.isInteger(input.durationDays) || input.durationDays < 1 || input.durationDays > 3650) {
-    return { error: "Duration must be 1-3650 days." };
+    return { error: await tr("Duration must be 1-3650 days.") };
   }
   if (input.maxRedemptions !== null && (!Number.isInteger(input.maxRedemptions) || input.maxRedemptions < 1)) {
-    return { error: "Max uses must be a whole number of at least 1, or empty for unlimited." };
+    return { error: await tr("Max uses must be a whole number of at least 1, or empty for unlimited.") };
   }
   let expiresAt: string | null = null;
   if (input.expiresOn) {
     // The end of that day, UTC: "valid until 31 Dec" includes 31 Dec.
     const end = new Date(`${input.expiresOn}T23:59:59Z`);
-    if (Number.isNaN(end.getTime())) return { error: "Invalid end date." };
+    if (Number.isNaN(end.getTime())) return { error: await tr("Invalid end date.") };
     expiresAt = end.toISOString();
   }
 
   const db = serviceDataClient();
   const { data: plan } = await db.from<{ id: string }>("plans").select("id").eq("id", input.planId).maybeSingle();
-  if (!plan || plan.id === "free") return { error: "Pick a paid plan." };
+  if (!plan || plan.id === "free") return { error: await tr("Pick a paid plan.") };
 
   const { error } = await db.from("promo_codes").insert({
     code,
@@ -61,7 +62,7 @@ export async function setPromoCodeActive(id: string, active: boolean): Promise<{
   await requireAdminAccess();
   const { data, error } = await serviceDataClient().from("promo_codes").update({ active }).eq("id", id).select<{ id: string }>("id");
   if (error) return { error: error.message };
-  if (!data.length) return { error: "Code not found." };
+  if (!data.length) return { error: await tr("Code not found.") };
   revalidatePath("/admin/promo-codes");
   return { error: null };
 }

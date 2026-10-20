@@ -13,6 +13,7 @@ import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import { guessTechnologyCategory, technologySlug } from "@/types/technology";
 import type { ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
 import type { Technology } from "@/types/technology";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type SettingsFormState = {
   error: string | null;
@@ -119,7 +120,7 @@ export async function updateProjectSettings(
   const access = await getProjectAccess(projectId);
 
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to edit this project." };
+    return { error: await tr("You do not have permission to edit this project.") };
   }
 
   const name = formData.get("name");
@@ -131,16 +132,16 @@ export async function updateProjectSettings(
   const projectTypeRaw = formData.get("projectType");
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return { error: "Project name is required." };
+    return { error: await tr("Project name is required.") };
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as ProjectStatus)) {
-    return { error: "Invalid status." };
+    return { error: await tr("Invalid status.") };
   }
 
   let projectType: ProjectType | null = null;
   if (typeof projectTypeRaw === "string" && projectTypeRaw.trim()) {
     if (!VALID_PROJECT_TYPES.includes(projectTypeRaw as ProjectType)) {
-      return { error: "Invalid project type." };
+      return { error: await tr("Invalid project type.") };
     }
     projectType = projectTypeRaw as ProjectType;
   }
@@ -153,7 +154,7 @@ export async function updateProjectSettings(
   let methodology: ProjectMethodology = "standard";
   if (typeof methodologyRaw === "string" && methodologyRaw.trim()) {
     if (!VALID_METHODOLOGIES.includes(methodologyRaw as ProjectMethodology)) {
-      return { error: "Invalid workflow." };
+      return { error: await tr("Invalid workflow.") };
     }
     methodology = methodologyRaw as ProjectMethodology;
   }
@@ -168,10 +169,10 @@ export async function updateProjectSettings(
     // download, so an SVG's embedded <script> would execute on open. See
     // SAFE_INLINE_IMAGE_TYPES's own comment.
     if (!(SAFE_INLINE_IMAGE_TYPES as readonly string[]).includes(avatarFile.type)) {
-      return { error: "Project image must be a JPEG, PNG, GIF, or WebP image." };
+      return { error: await tr("Project image must be a JPEG, PNG, GIF, or WebP image.") };
     }
     if (avatarFile.size > 2 * 1024 * 1024) {
-      return { error: "Project image is too large. Maximum size: 2MB" };
+      return { error: await tr("Project image is too large. Maximum size: 2MB") };
     }
 
     const bucketResult = await ensureBucketExists("avatars", { public: true });
@@ -200,7 +201,7 @@ export async function updateProjectSettings(
       const parsed = JSON.parse(technologiesRaw);
       if (Array.isArray(parsed)) technologies = parsed.filter((v) => typeof v === "string");
     } catch {
-      return { error: "Invalid technologies payload." };
+      return { error: await tr("Invalid technologies payload.") };
     }
   }
 
@@ -214,7 +215,7 @@ export async function updateProjectSettings(
     if (colorMatch) {
       trimmedColor = colorMatch[0];
     } else {
-      return { error: "Invalid color format. Use hex format like #0f6b5a." };
+      return { error: await tr("Invalid color format. Use hex format like #0f6b5a.") };
     }
   }
 
@@ -243,7 +244,7 @@ export async function updateProjectSettings(
       // affects zero rows - without checking that, this still returned
       // { error: null } and logged an update that never happened.
       if (!updated) {
-        return { error: "This project no longer exists, or you're not allowed to edit it." };
+        return { error: await tr("This project no longer exists, or you're not allowed to edit it.") };
       }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update project." };
@@ -273,7 +274,7 @@ export async function updateProjectSettings(
       return { error: error.message };
     }
     if (!updatedRows || updatedRows.length === 0) {
-      return { error: "This project no longer exists, or you're not allowed to edit it." };
+      return { error: await tr("This project no longer exists, or you're not allowed to edit it.") };
     }
 
     try {
@@ -307,7 +308,7 @@ export async function deleteProject(projectId: string): Promise<{ error: string 
   const access = await getProjectAccess(projectId);
 
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete this project." };
+    return { error: await tr("You do not have permission to delete this project.") };
   }
 
   // canManageProject allows owner AND admin, but projects_delete (001) is
@@ -322,7 +323,7 @@ export async function deleteProject(projectId: string): Promise<{ error: string 
         query("DELETE FROM projects WHERE id = $1 RETURNING id", [projectId])
       );
       if (result.rows.length === 0) {
-        return { error: "Only the project owner can delete this project." };
+        return { error: await tr("Only the project owner can delete this project.") };
       }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to delete project." };
@@ -335,7 +336,7 @@ export async function deleteProject(projectId: string): Promise<{ error: string 
       return { error: error.message };
     }
     if (!data || data.length === 0) {
-      return { error: "Only the project owner can delete this project." };
+      return { error: await tr("Only the project owner can delete this project.") };
     }
   }
 

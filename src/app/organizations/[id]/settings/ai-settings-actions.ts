@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { canManageOrg, getOrgAccess } from "@/lib/data/org-access";
 import { deleteOrgAiSettings, upsertOrgAiSettings } from "@/lib/data/organization-ai-settings";
 import { ORG_AI_PROVIDER_NAMES, type OrgAiProviderName } from "@/lib/ai/org-ai-providers";
+import { tr } from "@/lib/i18n/server-errors";
 
 // `saved` distinguishes "just succeeded" from the initial `{error: null}`
 // state, so the form knows to collapse back to the summary view only after
@@ -29,7 +30,7 @@ export async function saveOrgAiSettings(
   // Mirrors organization_ai_settings_insert/update (024): owner/admin only.
   if (!access || !canManageOrg(access.role)) {
     return {
-      error: "You do not have permission to change AI settings for this organization.",
+      error: await tr("You do not have permission to change AI settings for this organization."),
       saved: false,
     };
   }
@@ -40,18 +41,18 @@ export async function saveOrgAiSettings(
   const hadExistingKey = formData.get("had_existing_key") === "true";
 
   if (!isOrgAiProviderName(provider)) {
-    return { error: "Choose a provider.", saved: false };
+    return { error: await tr("Choose a provider."), saved: false };
   }
   if (typeof model !== "string" || !model.trim()) {
-    return { error: "Model is required.", saved: false };
+    return { error: await tr("Model is required."), saved: false };
   }
   if (typeof apiKey !== "string") {
-    return { error: "Invalid API key.", saved: false };
+    return { error: await tr("Invalid API key."), saved: false };
   }
 
   const trimmedKey = apiKey.trim();
   if (!trimmedKey && !hadExistingKey) {
-    return { error: "API key is required.", saved: false };
+    return { error: await tr("API key is required."), saved: false };
   }
 
   try {
@@ -70,14 +71,14 @@ export async function saveOrgAiSettings(
       const { getOrgAiSettingsWithKey } = await import("@/lib/data/organization-ai-settings");
       const current = await getOrgAiSettingsWithKey(organizationId, access.userId);
       if (!current) {
-        return { error: "API key is required.", saved: false };
+        return { error: await tr("API key is required."), saved: false };
       }
       // A stored key only means anything under the provider it was issued
       // for - reusing it after switching providers would silently save
       // e.g. an OpenAI key under "groq", and every AI call would then fail
       // auth with an error that gives no hint the key belongs elsewhere.
       if (provider !== current.provider) {
-        return { error: "Enter an API key for the new provider.", saved: false };
+        return { error: await tr("Enter an API key for the new provider."), saved: false };
       }
       await upsertOrgAiSettings({
         organizationId,
@@ -102,7 +103,7 @@ export async function removeOrgAiSettings(organizationId: string): Promise<{ err
   const access = await getOrgAccess(organizationId);
   // Mirrors organization_ai_settings_delete (024): owner/admin only.
   if (!access || !canManageOrg(access.role)) {
-    return { error: "You do not have permission to change AI settings for this organization." };
+    return { error: await tr("You do not have permission to change AI settings for this organization.") };
   }
 
   try {

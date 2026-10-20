@@ -7,6 +7,7 @@ import { logActivity } from "@/lib/data/log-activity";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isInsightRateLimited, recordInsightGeneration } from "@/lib/ai/insight-rate-limit";
 import type { MemoryType } from "@/types/context";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type MemoryFormState = {
   error: string | null;
@@ -26,15 +27,15 @@ type ParsedMemoryForm =
   | { error: string; content?: undefined; memoryType?: undefined }
   | { error: null; content: string; memoryType: MemoryType };
 
-function parseMemoryForm(formData: FormData): ParsedMemoryForm {
+async function parseMemoryForm(formData: FormData): Promise<ParsedMemoryForm> {
   const content = formData.get("content");
   const memoryType = formData.get("memory_type");
 
   if (typeof content !== "string" || content.trim().length === 0) {
-    return { error: "Content is required." };
+    return { error: await tr("Content is required.") };
   }
   if (typeof memoryType !== "string" || !VALID_TYPES.includes(memoryType as MemoryType)) {
-    return { error: "Invalid memory type." };
+    return { error: await tr("Invalid memory type.") };
   }
 
   return { error: null, content: content.trim(), memoryType: memoryType as MemoryType };
@@ -49,10 +50,10 @@ export async function createMemory(
 
   // Mirrors project_memory_insert (001): owner/admin/developer only.
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to add memory entries." };
+    return { error: await tr("You do not have permission to add memory entries.") };
   }
 
-  const parsed = parseMemoryForm(formData);
+  const parsed = await parseMemoryForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   const { data, error } = await dataClient(access.userId)
@@ -129,10 +130,10 @@ export async function updateMemory(
   const access = await getProjectAccess(projectId);
 
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to edit memory entries." };
+    return { error: await tr("You do not have permission to edit memory entries.") };
   }
 
-  const parsed = parseMemoryForm(formData);
+  const parsed = await parseMemoryForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   const error = await updateMemoryRow(
@@ -164,7 +165,7 @@ export async function deleteMemory(
 
   // Mirrors project_memory_delete (001): owner/admin only.
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete memory entries." };
+    return { error: await tr("You do not have permission to delete memory entries.") };
   }
 
   const error = await deleteMemoryRow(
@@ -200,7 +201,7 @@ const INSIGHT_NOT_FOUND = "This insight does not belong to this project.";
 async function verifyInsight(projectId: string, memoryId: string, content: string | null): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to review insights." };
+    return { error: await tr("You do not have permission to review insights.") };
   }
 
   const error = await updateMemoryRow(
@@ -247,7 +248,7 @@ export async function correctAndAcceptInsight(
 ): Promise<MemoryFormState> {
   const content = formData.get("content");
   if (typeof content !== "string" || content.trim().length === 0) {
-    return { error: "Content is required." };
+    return { error: await tr("Content is required.") };
   }
   return verifyInsight(projectId, memoryId, content.trim());
 }
@@ -264,7 +265,7 @@ export async function rejectInsight(
 ): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to reject insights." };
+    return { error: await tr("You do not have permission to reject insights.") };
   }
 
   const error = await deleteMemoryRow(access.userId, projectId, memoryId, INSIGHT_NOT_FOUND);
@@ -336,29 +337,29 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
 
   // Same tier as createMemory - generating an insight is a write.
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to generate insights." };
+    return { error: await tr("You do not have permission to generate insights.") };
   }
 
   // The button is hidden when AI is switched off for the project (migration
   // 046), but a stale page or a direct action call could still get here.
   if (!access.project.ai_enabled) {
-    return { error: "AI features are turned off for this project." };
+    return { error: await tr("AI features are turned off for this project.") };
   }
 
   const provider = await resolveAIProvider(access.project.organization_id, access.userId);
   if (!provider) {
-    return { error: "No AI provider is configured for this organization." };
+    return { error: await tr("No AI provider is configured for this organization.") };
   }
 
   if (isInsightRateLimited(access.userId, projectId)) {
-    return { error: "You're generating insights too quickly - wait a few minutes and try again." };
+    return { error: await tr("You're generating insights too quickly - wait a few minutes and try again.") };
   }
 
   const { facts, constraints, decisions } = await gatherInsightContext(projectId, access.userId);
 
   if (facts.length === 0 && constraints.length === 0 && decisions.length === 0) {
     return {
-      error: "Not enough project memory yet to generate an insight - add some facts or decisions first.",
+      error: await tr("Not enough project memory yet to generate an insight - add some facts or decisions first."),
     };
   }
 
@@ -397,7 +398,7 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
   }
 
   if (!text) {
-    return { error: "The AI provider returned an empty response." };
+    return { error: await tr("The AI provider returned an empty response.") };
   }
 
   // Unverified ai_insight, same as one created by hand - goes through the

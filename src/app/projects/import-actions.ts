@@ -18,6 +18,7 @@ import {
   type ValidatedGuidonImport,
 } from "@/lib/guidon-export/import-project";
 import type { TaskBoardData } from "@/lib/guidon-export/sections/task-board";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type { GuidonImportPreview };
 
@@ -81,7 +82,7 @@ async function createProjectForImport(
 
   const supabase = await createClient();
   const orgAccess = await getOrgAccess(orgId);
-  if (!orgAccess) return { projectId: null, error: "You do not have access to this organization." };
+  if (!orgAccess) return { projectId: null, error: await tr("You do not have access to this organization.") };
 
   const { slug, siblingCount } = await getUniqueProjectSlug(orgId, userId, name);
 
@@ -157,7 +158,7 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
 
   if (input.mode === "new") {
     const orgAccess = await getOrgAccess(input.targetId);
-    if (!orgAccess) return { error: "You do not have access to this organization." };
+    if (!orgAccess) return { error: await tr("You do not have access to this organization.") };
     userId = orgAccess.userId;
 
     // Checked before creating the project so a file that's over the cap
@@ -180,7 +181,7 @@ export async function importGuidonFile(input: ImportGuidonFileInput): Promise<Im
   } else {
     const projectAccess = await getProjectAccess(input.targetId);
     if (!projectAccess || !canManageProject(projectAccess.role)) {
-      return { error: "You do not have permission to overwrite this project." };
+      return { error: await tr("You do not have permission to overwrite this project.") };
     }
     userId = projectAccess.userId;
     projectId = input.targetId;

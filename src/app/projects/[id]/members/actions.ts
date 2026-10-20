@@ -10,6 +10,7 @@ import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { hostedProjectMemberLimitError } from "@/lib/limits";
 import type { ProjectRole } from "@/types/project";
+import { tr } from "@/lib/i18n/server-errors";
 
 /**
  * Roles each actor may assign, mirroring the RLS policies exactly:
@@ -40,10 +41,10 @@ export async function addMember(
 ): Promise<AddMemberResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !assertManager(access.role)) {
-    return { member: null, error: "You do not have permission to add members." };
+    return { member: null, error: await tr("You do not have permission to add members.") };
   }
   if (!ASSIGNABLE_BY[access.role].includes(role)) {
-    return { member: null, error: "You cannot assign that role." };
+    return { member: null, error: await tr("You cannot assign that role.") };
   }
 
   // The candidate dropdown (members/page.tsx) only ever lists people who
@@ -63,7 +64,7 @@ export async function addMember(
     .maybeSingle();
 
   if (!orgMembership) {
-    return { member: null, error: "This person is not a member of this project's organization." };
+    return { member: null, error: await tr("This person is not a member of this project's organization.") };
   }
 
   // Guidon Cloud only (plans.member_limit_per_project, 049). Members
@@ -82,7 +83,7 @@ export async function addMember(
     // 026 also added its own copy of this constraint, later dropped as
     // redundant by 027).
     if (isUniqueViolation(error)) {
-      return { member: null, error: "This person is already a member of this project." };
+      return { member: null, error: await tr("This person is already a member of this project.") };
     }
     return { member: null, error: error?.message ?? "Failed to add member." };
   }
@@ -108,14 +109,14 @@ export async function changeMemberRole(
 ): Promise<MemberMutationResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !assertManager(access.role)) {
-    return { error: "You do not have permission to change roles." };
+    return { error: await tr("You do not have permission to change roles.") };
   }
   // Mirrors project_members_update_admin: an admin may not touch an owner row.
   if (access.role === "admin" && currentMemberRole === "owner") {
-    return { error: "Only an owner can change another owner's role." };
+    return { error: await tr("Only an owner can change another owner's role.") };
   }
   if (!ASSIGNABLE_BY[access.role].includes(role)) {
-    return { error: "You cannot assign that role." };
+    return { error: await tr("You cannot assign that role.") };
   }
 
   // project_id scoping plus a RETURNING/row-count check - mirrors
@@ -133,7 +134,7 @@ export async function changeMemberRole(
 
   if (error) return { error: error.message };
   if (data.length === 0) {
-    return { error: "This member does not belong to this project, or that role change isn't allowed." };
+    return { error: await tr("This member does not belong to this project, or that role change isn't allowed.") };
   }
 
   await logActivity({
@@ -156,11 +157,11 @@ export async function removeMember(
 ): Promise<MemberMutationResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !assertManager(access.role)) {
-    return { error: "You do not have permission to remove members." };
+    return { error: await tr("You do not have permission to remove members.") };
   }
   // Mirrors project_members_delete_admin: an admin may not remove an owner.
   if (access.role === "admin" && currentMemberRole === "owner") {
-    return { error: "Only an owner can remove another owner." };
+    return { error: await tr("Only an owner can remove another owner.") };
   }
 
   // Still written per mode on purpose: self-hosted removes the membership
@@ -214,7 +215,7 @@ export async function removeMember(
       });
 
       if (!removed) {
-        return { error: "This member does not belong to this project, or the removal wasn't allowed." };
+        return { error: await tr("This member does not belong to this project, or the removal wasn't allowed.") };
       }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to remove member." };
@@ -257,7 +258,7 @@ export async function removeMember(
 
   if (error) return { error: error.message };
   if (!deletedRows || deletedRows.length === 0) {
-    return { error: "This member does not belong to this project, or the removal wasn't allowed." };
+    return { error: await tr("This member does not belong to this project, or the removal wasn't allowed.") };
   }
 
   if (memberRow?.user_id) {

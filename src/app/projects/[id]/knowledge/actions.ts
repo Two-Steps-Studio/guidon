@@ -7,23 +7,24 @@ import { logActivity } from "@/lib/data/log-activity";
 import { AUTHORABLE_TYPES } from "./source-config";
 import { isSafeHttpUrl } from "@/lib/validation/url";
 import type { SourceType } from "@/types/context";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type SourceFormState = { error: string | null };
 export type DeleteSourceResult = { error: string | null };
 
 const VALID_TYPES = AUTHORABLE_TYPES.map((item) => item.value);
 
-function parseSourceForm(formData: FormData) {
+async function parseSourceForm(formData: FormData) {
   const type = formData.get("type");
   const title = formData.get("title");
   const content = formData.get("content");
   const url = formData.get("url");
 
   if (typeof type !== "string" || !VALID_TYPES.includes(type as SourceType)) {
-    return { error: "Invalid type." } as const;
+    return { error: await tr("Invalid type.") } as const;
   }
   if (typeof title !== "string" || title.trim().length === 0) {
-    return { error: "Title is required." } as const;
+    return { error: await tr("Title is required.") } as const;
   }
 
   const trimmedUrl = typeof url === "string" ? url.trim() : "";
@@ -31,7 +32,7 @@ function parseSourceForm(formData: FormData) {
   // context_sources rows) both render this straight into an <a href> for
   // every project member - see lib/validation/url.ts's own comment.
   if (trimmedUrl && !isSafeHttpUrl(trimmedUrl)) {
-    return { error: "Link must be a valid http(s) URL." } as const;
+    return { error: await tr("Link must be a valid http(s) URL.") } as const;
   }
 
   return {
@@ -59,10 +60,10 @@ export async function createSource(
 ): Promise<SourceFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to add knowledge entries." };
+    return { error: await tr("You do not have permission to add knowledge entries.") };
   }
 
-  const parsed = parseSourceForm(formData);
+  const parsed = await parseSourceForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   const { data, error } = await dataClient(access.userId)
@@ -101,10 +102,10 @@ export async function updateSource(
 ): Promise<SourceFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to edit knowledge entries." };
+    return { error: await tr("You do not have permission to edit knowledge entries.") };
   }
 
-  const parsed = parseSourceForm(formData);
+  const parsed = await parseSourceForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   // project_id scoping plus a row-count check - a sourceId from a different
@@ -138,7 +139,7 @@ export async function deleteSource(
 ): Promise<DeleteSourceResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete knowledge entries." };
+    return { error: await tr("You do not have permission to delete knowledge entries.") };
   }
 
   const { data, error } = await dataClient(access.userId)

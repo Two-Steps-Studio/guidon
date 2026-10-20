@@ -8,6 +8,7 @@ import { withUser } from "@/lib/db/session";
 import { uploadFile, ensureBucketExists } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type ProfileFormState = {
   error: string | null;
@@ -32,7 +33,7 @@ export async function updateProfile(
   const avatarFile = formData.get("avatar") as File | null;
 
   if (typeof fullName !== "string" || fullName.trim().length === 0) {
-    return { error: "Name is required." };
+    return { error: await tr("Name is required.") };
   }
 
   const trimmedName = fullName.trim();
@@ -53,12 +54,12 @@ export async function updateProfile(
       // project files - see SAFE_INLINE_IMAGE_TYPES's own comment), so an
       // SVG's embedded <script> would execute when the URL is opened.
       if (!(SAFE_INLINE_IMAGE_TYPES as readonly string[]).includes(avatarFile.type)) {
-        return { error: "Avatar must be a JPEG, PNG, GIF, or WebP image." };
+        return { error: await tr("Avatar must be a JPEG, PNG, GIF, or WebP image.") };
       }
 
       // Validate file size (max 2MB)
       if (avatarFile.size > 2 * 1024 * 1024) {
-        return { error: "Avatar file is too large. Maximum size: 2MB" };
+        return { error: await tr("Avatar file is too large. Maximum size: 2MB") };
       }
 
       // Generate safe file path

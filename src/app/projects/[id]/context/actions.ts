@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import type { ContextEntityType, RelationType } from "@/types/context";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type RelationFormState = { error: string | null };
 export type RelationMutationResult = { error: string | null };
@@ -47,7 +48,7 @@ export async function createRelation(
 ): Promise<RelationFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || (access.role !== "owner" && access.role !== "admin" && access.role !== "developer")) {
-    return { error: "You do not have permission to create relations." };
+    return { error: await tr("You do not have permission to create relations.") };
   }
 
   const sourceType = formData.get("source_type");
@@ -57,19 +58,19 @@ export async function createRelation(
   const relationType = formData.get("relation_type");
 
   if (typeof sourceType !== "string" || !ENTITY_TYPES.includes(sourceType as ContextEntityType)) {
-    return { error: "Invalid source type." };
+    return { error: await tr("Invalid source type.") };
   }
   if (typeof targetType !== "string" || !ENTITY_TYPES.includes(targetType as ContextEntityType)) {
-    return { error: "Invalid target type." };
+    return { error: await tr("Invalid target type.") };
   }
   if (typeof relationType !== "string" || !RELATION_TYPES.includes(relationType as RelationType)) {
-    return { error: "Invalid relation type." };
+    return { error: await tr("Invalid relation type.") };
   }
   if (typeof sourceId !== "string" || !sourceId.trim()) {
-    return { error: "Source is required." };
+    return { error: await tr("Source is required.") };
   }
   if (typeof targetId !== "string" || !targetId.trim()) {
-    return { error: "Target is required." };
+    return { error: await tr("Target is required.") };
   }
 
   const { error } = await dataClient(access.userId).from("context_relations").insert({
@@ -93,7 +94,7 @@ export async function deleteRelation(
 ): Promise<RelationMutationResult> {
   const access = await getProjectAccess(projectId);
   if (!access || (access.role !== "owner" && access.role !== "admin")) {
-    return { error: "You do not have permission to delete relations." };
+    return { error: await tr("You do not have permission to delete relations.") };
   }
 
   // Scoped to project_id and checks the row count, same reasoning as
@@ -109,7 +110,7 @@ export async function deleteRelation(
 
   if (error) return { error: error.message };
   if (data.length === 0) {
-    return { error: "This relation could not be found in this project." };
+    return { error: await tr("This relation could not be found in this project.") };
   }
 
   revalidatePath(`/projects/${projectId}/context`);

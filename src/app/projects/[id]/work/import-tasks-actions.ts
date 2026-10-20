@@ -9,6 +9,7 @@ import { getOrgPlanLimits } from "@/lib/limits";
 import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import { MAX_IMPORT_TASKS, type ResolvedImportTask } from "@/lib/work/task-import";
 import type { Task } from "@/types/task";
+import { tr } from "@/lib/i18n/server-errors";
 
 const SORT_STEP = 1000;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -25,14 +26,14 @@ export async function importTasks(
   tasks: ResolvedImportTask[]
 ): Promise<{ error: string | null; count: number; tasks: Task[] }> {
   const access = await getProjectAccess(projectId);
-  if (!access || !canWriteProject(access.role)) return { error: "You do not have permission to create tasks.", count: 0, tasks: [] };
-  if (!Array.isArray(tasks) || tasks.length === 0) return { error: "Nothing to import.", count: 0, tasks: [] };
+  if (!access || !canWriteProject(access.role)) return { error: await tr("You do not have permission to create tasks."), count: 0, tasks: [] };
+  if (!Array.isArray(tasks) || tasks.length === 0) return { error: await tr("Nothing to import."), count: 0, tasks: [] };
   if (tasks.length > MAX_IMPORT_TASKS) return { error: `At most ${MAX_IMPORT_TASKS} tasks per import.`, count: 0, tasks: [] };
 
   for (const task of tasks) {
-    if (typeof task.title !== "string" || !task.title.trim()) return { error: "Every task needs a title.", count: 0, tasks: [] };
-    if (!WORKFLOW_KEY_RE.test(task.status) || !WORKFLOW_KEY_RE.test(task.priority)) return { error: "Invalid status or priority.", count: 0, tasks: [] };
-    if (task.dueDate !== null && !DAY_RE.test(task.dueDate)) return { error: "Invalid due date.", count: 0, tasks: [] };
+    if (typeof task.title !== "string" || !task.title.trim()) return { error: await tr("Every task needs a title."), count: 0, tasks: [] };
+    if (!WORKFLOW_KEY_RE.test(task.status) || !WORKFLOW_KEY_RE.test(task.priority)) return { error: await tr("Invalid status or priority."), count: 0, tasks: [] };
+    if (task.dueDate !== null && !DAY_RE.test(task.dueDate)) return { error: await tr("Invalid due date."), count: 0, tasks: [] };
   }
 
   // Guidon Cloud's per-project task cap, for the whole batch at once.

@@ -4,6 +4,7 @@ import { isValidUuid } from "@/lib/api/validate-id";
 import { getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import type { Task } from "@/types/task";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type RelatedTask = {
   relationId: string;
@@ -29,9 +30,9 @@ export async function loadTaskRelatedTasks(
   taskId: string
 ): Promise<{ relations: RelatedTask[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { relations: [], error: "You do not have access to this project." };
+  if (!access) return { relations: [], error: await tr("You do not have access to this project.") };
 
-  if (!isValidUuid(taskId)) return { relations: [], error: "Invalid task id." };
+  if (!isValidUuid(taskId)) return { relations: [], error: await tr("Invalid task id.") };
 
   // A task can be on either end of a related_to relation - two indexed
   // lookups instead of one OR across both column pairs.
@@ -88,10 +89,10 @@ export async function searchProjectTasksByTitle(
   excludeIds: string[]
 ): Promise<{ tasks: { id: string; title: string }[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { tasks: [], error: "You do not have access to this project." };
+  if (!access) return { tasks: [], error: await tr("You do not have access to this project.") };
 
   if (excludeIds.some((id) => !isValidUuid(id))) {
-    return { tasks: [], error: "Invalid task id in exclusion list." };
+    return { tasks: [], error: await tr("Invalid task id in exclusion list.") };
   }
 
   const trimmed = query.trim();
@@ -125,8 +126,8 @@ export async function loadTaskById(
   taskId: string
 ): Promise<{ task: Task | null; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { task: null, error: "You do not have access to this project." };
-  if (!isValidUuid(taskId)) return { task: null, error: "Invalid task id." };
+  if (!access) return { task: null, error: await tr("You do not have access to this project.") };
+  if (!isValidUuid(taskId)) return { task: null, error: await tr("Invalid task id.") };
 
   const { data, error } = await dataClient(access.userId)
     .from<Task>("tasks")

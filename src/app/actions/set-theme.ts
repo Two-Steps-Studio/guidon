@@ -3,10 +3,11 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { isSupportedTheme, THEME_COOKIE } from "@/lib/theme";
+import { tr } from "@/lib/i18n/server-errors";
 
 export async function setTheme(theme: string): Promise<{ error: string | null }> {
   if (!isSupportedTheme(theme)) {
-    return { error: "Unsupported theme." };
+    return { error: await tr("Unsupported theme.") };
   }
 
   // Cookie-only, like NEXT_LOCALE - no profiles column, so this doesn't

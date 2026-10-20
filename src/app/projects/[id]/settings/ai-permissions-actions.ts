@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-server";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type AiPermissionsState = { error: string | null };
 
@@ -24,7 +25,7 @@ export async function updateAiPermissions(
 ): Promise<AiPermissionsState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to change AI settings for this project." };
+    return { error: await tr("You do not have permission to change AI settings for this project.") };
   }
 
   const values = PERMISSION_FIELDS.map((field) => formData.get(field) === "on");
@@ -58,7 +59,7 @@ export async function updateAiPermissions(
     // caller still got { error: null } and the Settings page shows the
     // change as saved when nothing actually changed.
     if (result.rows.length === 0) {
-      return { error: "This project no longer exists, or you're not allowed to change AI settings for it." };
+      return { error: await tr("This project no longer exists, or you're not allowed to change AI settings for it.") };
     }
   } else {
     const supabase = await createClient();
@@ -82,7 +83,7 @@ export async function updateAiPermissions(
       .select("id");
     if (projError) return { error: projError.message };
     if (!updatedRows || updatedRows.length === 0) {
-      return { error: "This project no longer exists, or you're not allowed to change AI settings for it." };
+      return { error: await tr("This project no longer exists, or you're not allowed to change AI settings for it.") };
     }
   }
 

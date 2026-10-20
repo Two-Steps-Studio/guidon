@@ -7,6 +7,7 @@ import { isUniqueViolation } from "@/lib/db/errors";
 import { logActivity } from "@/lib/data/log-activity";
 import { hostedMemberLimitError } from "@/lib/limits";
 import type { OrganizationRole } from "@/types/project";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type MemberActionState = {
   error: string | null;
@@ -22,26 +23,26 @@ export async function addMember(
   const access = await getOrgAccess(orgId);
 
   if (!access || !canManageOrg(access.role)) {
-    return { error: "You do not have permission to add members." };
+    return { error: await tr("You do not have permission to add members.") };
   }
 
   const email = formData.get("email");
   const role = formData.get("role");
 
   if (typeof email !== "string" || !email.trim()) {
-    return { error: "Email is required." };
+    return { error: await tr("Email is required.") };
   }
   // Every signup path (local-auth.ts, GoTrue) lowercases before storing, so
   // profiles.email is always lowercase - comparing against the raw,
   // as-typed input made "John@Example.com" miss "john@example.com".
   const normalizedEmail = email.trim().toLowerCase();
   if (role !== "member" && role !== "admin" && role !== "owner") {
-    return { error: "Invalid role." };
+    return { error: await tr("Invalid role.") };
   }
   // Mirrors the RLS policies (001): an admin may not grant ownership, only
   // an owner can. Checked here too so the error is readable.
   if (role === "owner" && access.role !== "owner") {
-    return { error: "Only an owner can grant ownership." };
+    return { error: await tr("Only an owner can grant ownership.") };
   }
 
   // Guidon Cloud seats (plans.member_limit, 051). Checked before the lookup
@@ -59,12 +60,12 @@ export async function addMember(
     p_organization_id: orgId,
     p_email: normalizedEmail,
   });
-  if (!userId) return { error: "User with this email not found." };
+  if (!userId) return { error: await tr("User with this email not found.") };
 
   const { error } = await db.from("organization_members").insert({ organization_id: orgId, user_id: userId, role });
   if (error) {
     // uq_organization_members_org_user (001/026).
-    if (isUniqueViolation(error)) return { error: "This person is already a member of this organization." };
+    if (isUniqueViolation(error)) return { error: await tr("This person is already a member of this organization.") };
     return { error: error.message };
   }
 
@@ -89,10 +90,10 @@ export async function updateMemberRole(
   const access = await getOrgAccess(orgId);
 
   if (!access || !canManageOrg(access.role)) {
-    return { error: "You do not have permission to change roles." };
+    return { error: await tr("You do not have permission to change roles.") };
   }
   if (role === "owner" && access.role !== "owner") {
-    return { error: "Only an owner can grant ownership." };
+    return { error: await tr("Only an owner can grant ownership.") };
   }
 
   // organization_id scoping plus a row check: a memberId from another
@@ -151,7 +152,7 @@ export async function removeMember(orgId: string, memberId: string): Promise<{ e
   const access = await getOrgAccess(orgId);
 
   if (!access || !canManageOrg(access.role)) {
-    return { error: "You do not have permission to remove members." };
+    return { error: await tr("You do not have permission to remove members.") };
   }
 
   const db = dataClient(access.userId);

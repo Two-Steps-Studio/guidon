@@ -7,6 +7,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { getStripe, isBillingConfigured } from "@/lib/billing/stripe";
 import { SITE_URL } from "@/lib/site-url";
+import { tr } from "@/lib/i18n/server-errors";
 
 /** Applied to every new paid subscription - see the brainstorm for why unconditional is fine here (self-serve upgrades never reuse an existing Checkout Session, and an org that already has one is routed to the Customer Portal instead, not back through Checkout). */
 const TRIAL_PERIOD_DAYS = 14;
@@ -15,14 +16,14 @@ type BillingGuard = { organizationId: string; userEmail: string | undefined } | 
 
 async function requireBillingManager(organizationId: string): Promise<BillingGuard> {
   if (hasDirectDatabase()) {
-    return { error: "Billing is not available for self-hosted installations." };
+    return { error: await tr("Billing is not available for self-hosted installations.") };
   }
   if (!isBillingConfigured()) {
-    return { error: "Billing is not configured on this server yet." };
+    return { error: await tr("Billing is not configured on this server yet.") };
   }
   const access = await getOrgAccess(organizationId);
   if (!access || !canManageOrg(access.role)) {
-    return { error: "You do not have permission to manage billing for this organization." };
+    return { error: await tr("You do not have permission to manage billing for this organization.") };
   }
   const user = await getCurrentUser();
   return { organizationId, userEmail: user.email };
@@ -39,9 +40,9 @@ export async function createCheckoutSession(organizationId: string, planId: stri
     supabase.from("subscriptions").select("stripe_customer_id").eq("organization_id", organizationId).maybeSingle(),
   ]);
 
-  if (!plan) return { error: "Unknown plan." };
+  if (!plan) return { error: await tr("Unknown plan.") };
   if (!plan.stripe_price_id) {
-    return { error: "This plan isn't available for self-serve checkout yet - contact us instead." };
+    return { error: await tr("This plan isn't available for self-serve checkout yet - contact us instead.") };
   }
 
   const stripe = getStripe();
@@ -76,7 +77,7 @@ export async function createCheckoutSession(organizationId: string, planId: stri
     return { error: error instanceof Error ? error.message : "Could not start checkout." };
   }
 
-  if (!checkoutUrl) return { error: "Stripe did not return a checkout URL." };
+  if (!checkoutUrl) return { error: await tr("Stripe did not return a checkout URL.") };
   redirect(checkoutUrl);
 }
 
@@ -93,7 +94,7 @@ export async function createPortalSession(organizationId: string): Promise<{ err
     .maybeSingle();
 
   if (!subscription?.stripe_customer_id) {
-    return { error: "This organization has no billing account yet - upgrade a plan first." };
+    return { error: await tr("This organization has no billing account yet - upgrade a plan first.") };
   }
 
   const stripe = getStripe();

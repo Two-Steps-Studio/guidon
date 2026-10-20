@@ -13,6 +13,7 @@ import {
 } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
 import { getOrgPlanLimits, isStorageLimitReached } from "@/lib/limits";
+import { tr } from "@/lib/i18n/server-errors";
 
 /** A moodboard image (project_references, migration 048) plus a signed URL to show it. */
 export type ProjectReference = {
@@ -65,7 +66,7 @@ export async function loadReferences(
   projectId: string
 ): Promise<{ references: ProjectReference[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { references: [], error: "You do not have access to this project." };
+  if (!access) return { references: [], error: await tr("You do not have access to this project.") };
 
   const { data: rows, error } = await dataClient(access.userId)
     .from<Row>("project_references")
@@ -84,11 +85,11 @@ export async function uploadReference(
 ): Promise<{ reference: ProjectReference | null; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canCommentOnProject(access.role)) {
-    return { reference: null, error: "You do not have permission to add images to this moodboard." };
+    return { reference: null, error: await tr("You do not have permission to add images to this moodboard.") };
   }
 
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { reference: null, error: "No image selected." };
+  if (!(file instanceof File) || file.size === 0) return { reference: null, error: await tr("No image selected.") };
 
   const caption = (formData.get("caption") as string | null)?.trim() || null;
   const tags = normalizeTags(((formData.get("tags") as string | null) ?? "").split(","));
@@ -158,13 +159,13 @@ export async function updateReference(
 ): Promise<{ reference: ProjectReference | null; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canCommentOnProject(access.role)) {
-    return { reference: null, error: "You do not have permission to edit this image." };
+    return { reference: null, error: await tr("You do not have permission to edit this image.") };
   }
 
   const caption = input.caption.trim() || null;
   const tags = normalizeTags(input.tags);
   const sourceUrl = normalizeUrl(input.sourceUrl);
-  if (input.sourceUrl.trim() && !sourceUrl) return { reference: null, error: "The source link must be an http(s) URL." };
+  if (input.sourceUrl.trim() && !sourceUrl) return { reference: null, error: await tr("The source link must be an http(s) URL.") };
 
   const { data: row, error } = await dataClient(access.userId)
     .from("project_references")
@@ -174,7 +175,7 @@ export async function updateReference(
     .select<Row>(COLUMNS)
     .maybeSingle();
   if (error) return { reference: null, error: error.message };
-  if (!row) return { reference: null, error: "Image not found, or you can only edit images you added." };
+  if (!row) return { reference: null, error: await tr("Image not found, or you can only edit images you added.") };
 
   revalidatePath(`/projects/${projectId}/references`);
   return { reference: await withUrl(row), error: null };
@@ -183,7 +184,7 @@ export async function updateReference(
 /** Storage path comes only from the deleted row itself, never from the client (same as deleteTaskAttachment). */
 export async function deleteReference(projectId: string, referenceId: string): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { error: "You do not have permission to delete this image." };
+  if (!access) return { error: await tr("You do not have permission to delete this image.") };
 
   const { data: deleted, error } = await dataClient(access.userId)
     .from("project_references")
@@ -195,7 +196,7 @@ export async function deleteReference(projectId: string, referenceId: string): P
   if (error) return { error: error.message };
   const storagePath = deleted?.storage_path ?? null;
 
-  if (!storagePath) return { error: "Image not found, or you can only delete images you added." };
+  if (!storagePath) return { error: await tr("Image not found, or you can only delete images you added.") };
 
   try {
     await deleteStoredFile(storagePath);

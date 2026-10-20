@@ -3,6 +3,7 @@
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -49,25 +50,25 @@ export async function sendTaskChatMessage(
   // Same tier as createTask/generateInsight - this is a write-adjacent
   // feature (it proposes new tasks), not a read.
   if (!access || !canWriteProject(access.role)) {
-    return { text: "", error: "You do not have permission to use the AI task assistant." };
+    return { text: "", error: await tr("You do not have permission to use the AI task assistant.") };
   }
 
   if (!access.project.ai_enabled) {
-    return { text: "", error: "AI features are turned off for this project." };
+    return { text: "", error: await tr("AI features are turned off for this project.") };
   }
 
   const provider = await resolveAIProvider(access.project.organization_id, access.userId);
   if (!provider) {
-    return { text: "", error: "No AI provider is configured for this organization." };
+    return { text: "", error: await tr("No AI provider is configured for this organization.") };
   }
 
   const last = history[history.length - 1];
   if (!last || last.role !== "user" || !last.content.trim()) {
-    return { text: "", error: "Nothing to send." };
+    return { text: "", error: await tr("Nothing to send.") };
   }
 
   if (isChatRateLimited(access.userId, projectId)) {
-    return { text: "", error: "You're sending messages too quickly - wait a few minutes and try again." };
+    return { text: "", error: await tr("You're sending messages too quickly - wait a few minutes and try again.") };
   }
   recordChatMessage(access.userId, projectId);
 

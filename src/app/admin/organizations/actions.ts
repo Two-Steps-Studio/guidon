@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
 import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "./constants";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type UpdateProjectLimitState = {
   error: string | null;
@@ -22,7 +23,7 @@ export async function updateOrganizationProjectLimit(
   await requireAdminAccess();
 
   if (!Number.isInteger(newLimit) || newLimit < 1) {
-    return { error: "Project limit must be a whole number of 1 or more." };
+    return { error: await tr("Project limit must be a whole number of 1 or more.") };
   }
 
   const { data: updated, error } = await serviceDataClient()
@@ -31,7 +32,7 @@ export async function updateOrganizationProjectLimit(
     .eq("id", orgId)
     .select("id");
   if (error) return { error: error.message };
-  if (updated.length === 0) return { error: "This organization no longer exists." };
+  if (updated.length === 0) return { error: await tr("This organization no longer exists.") };
 
   revalidatePath("/admin/organizations");
   return { error: null };
@@ -64,7 +65,7 @@ export async function updateOrganizationPlan(
 
   const validPlanIds = ["free", "pro", "team", "business", "enterprise"];
   if (!validPlanIds.includes(planId)) {
-    return { error: "Unknown plan." };
+    return { error: await tr("Unknown plan.") };
   }
 
   const db = serviceDataClient();
@@ -85,7 +86,7 @@ export async function updateOrganizationPlan(
     .eq("id", orgId)
     .select("id");
   if (orgError) return { error: orgError.message };
-  if (updatedOrgs.length === 0) return { error: "This organization no longer exists." };
+  if (updatedOrgs.length === 0) return { error: await tr("This organization no longer exists.") };
 
   // upsertRow, not a plain update: organizations created before migration
   // 015 never got a subscription row (015's trigger only covers new ones,
