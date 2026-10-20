@@ -752,7 +752,19 @@
     "importUnmatchedAssignees": "Keine Projektmitglieder: {values} - diese Aufgaben bleiben unzugewiesen.",
     "importMore": "…und {count} weitere",
     "importSubmit": "{count, plural, one {# Aufgabe} other {# Aufgaben}} importieren",
-    "importDone": "{count, plural, one {# Aufgabe} other {# Aufgaben}} importiert"
+    "importDone": "{count, plural, one {# Aufgabe} other {# Aufgaben}} importiert",
+    "repeatLabel": "Wiederholen",
+    "repeatNever": "Keine Wiederholung",
+    "repeatWeekly": "Wöchentlich",
+    "repeatMonthly": "Monatlich",
+    "repeatEveryNDays": "Alle N Tage",
+    "repeatEvery": "alle",
+    "repeatIntervalAria": "Wiederholungsabstand",
+    "repeatUnit_weekly": "{count, plural, one {Woche} other {Wochen}}",
+    "repeatUnit_monthly": "{count, plural, one {Monat} other {Monate}}",
+    "repeatUnit_every_n_days": "{count, plural, one {Tag} other {Tage}}",
+    "repeatHint": "Wenn diese Aufgabe erledigt ist, entsteht die nächste in To do - mit derselben Beschreibung, denselben Labels, derselben Person und denselben Unteraufgaben, fällig am nächsten Termin.",
+    "repeatsAria": "Wiederholt sich"
   },
   "roadmap": {
     "title": "Roadmap",

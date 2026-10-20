@@ -15,7 +15,7 @@ import {
 } from "@/lib/work/task-board";
 import type { Task, TaskStatus } from "@/types/task";
 import type { BoardColumn, SubtaskProgress } from "@/lib/work/task-board";
-import { CalendarDays, CheckCircle2, CheckSquare, ListChecks, MessageSquare, MoreVertical, Square } from "lucide-react";
+import { CalendarDays, CheckCircle2, CheckSquare, ListChecks, MessageSquare, MoreVertical, Repeat, Square } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -487,6 +487,13 @@ function TaskCardComponent({
           <span className="flex items-center gap-1">
             <MessageSquare className="h-3 w-3" aria-hidden />
             {commentCount}
+          </span>
+        )}
+
+        {task.recurrence_rule && (
+          <span className="flex items-center" title={t("repeatsAria")}>
+            <Repeat className="h-3 w-3" aria-hidden />
+            <span className="sr-only">{t("repeatsAria")}</span>
           </span>
         )}
 

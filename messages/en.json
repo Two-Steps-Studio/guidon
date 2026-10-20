@@ -752,7 +752,19 @@
     "importUnmatchedAssignees": "Not project members: {values} - those tasks stay unassigned.",
     "importMore": "…and {count} more",
     "importSubmit": "Import {count, plural, one {# task} other {# tasks}}",
-    "importDone": "Imported {count, plural, one {# task} other {# tasks}}"
+    "importDone": "Imported {count, plural, one {# task} other {# tasks}}",
+    "repeatLabel": "Repeat",
+    "repeatNever": "Doesn't repeat",
+    "repeatWeekly": "Weekly",
+    "repeatMonthly": "Monthly",
+    "repeatEveryNDays": "Every N days",
+    "repeatEvery": "every",
+    "repeatIntervalAria": "Repeat interval",
+    "repeatUnit_weekly": "{count, plural, one {week} other {weeks}}",
+    "repeatUnit_monthly": "{count, plural, one {month} other {months}}",
+    "repeatUnit_every_n_days": "{count, plural, one {day} other {days}}",
+    "repeatHint": "When this task is finished, the next one is created in To do with the same description, labels, assignee and subtasks, due on the next date.",
+    "repeatsAria": "Repeats"
   },
   "roadmap": {
     "title": "Roadmap",

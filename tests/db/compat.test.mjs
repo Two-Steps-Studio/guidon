@@ -3126,5 +3126,36 @@ section("49. kody promocyjne: plan za darmo na N dni (migracja 062)");
   check("licznik uzyc = 2", count.redemption_count === 2, count.redemption_count);
 }
 
+section("50. zadania cykliczne (migracja 063)");
+
+{
+  await withUser(A, async () => {
+    const t = await db.query(
+      "INSERT INTO public.tasks (project_id, title, recurrence_rule, recurrence_interval) VALUES ($1, '063 weekly', 'weekly', 2) RETURNING id, recurrence_rule",
+      [projectId]
+    );
+    const taskId = t.rows[0].id;
+    check("zadanie co 2 tygodnie zapisane", t.rows[0].recurrence_rule === "weekly");
+    check("regula bez odstepu odrzucona", await throwsInSavepoint("UPDATE public.tasks SET recurrence_interval = NULL WHERE id = $1", [taskId]));
+    check("nieznana regula odrzucona", await throwsInSavepoint("UPDATE public.tasks SET recurrence_rule = 'yearly' WHERE id = $1", [taskId]));
+    check("odstep 0 odrzucony", await throwsInSavepoint("UPDATE public.tasks SET recurrence_interval = 0 WHERE id = $1", [taskId]));
+    check(
+      "subtask nie moze sie powtarzac",
+      await throwsInSavepoint(
+        "INSERT INTO public.tasks (project_id, title, parent_task_id, recurrence_rule, recurrence_interval) VALUES ($1, 'sub', $2, 'weekly', 1)",
+        [projectId, taskId]
+      )
+    );
+    const next = await db.query("INSERT INTO public.tasks (project_id, title, recurred_from) VALUES ($1, '063 next', $2) RETURNING id", [projectId, taskId]);
+    check("nastepne wystapienie z recurred_from", next.rows.length === 1);
+    check(
+      "drugie nastepne wystapienie tego samego zadania odrzucone (unikalne)",
+      await throwsInSavepoint("INSERT INTO public.tasks (project_id, title, recurred_from) VALUES ($1, '063 dup', $2)", [projectId, taskId])
+    );
+    const off = await db.query("UPDATE public.tasks SET recurrence_rule = NULL, recurrence_interval = NULL WHERE id = $1 RETURNING recurrence_rule", [taskId]);
+    check("wylaczenie powtarzania", off.rows[0].recurrence_rule === null);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

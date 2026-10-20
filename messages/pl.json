@@ -752,7 +752,19 @@
     "importUnmatchedAssignees": "Nie są członkami projektu: {values} - te zadania zostaną nieprzypisane.",
     "importMore": "…i jeszcze {count}",
     "importSubmit": "Importuj {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
-    "importDone": "Zaimportowano {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}"
+    "importDone": "Zaimportowano {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}}",
+    "repeatLabel": "Powtarzaj",
+    "repeatNever": "Nie powtarza się",
+    "repeatWeekly": "Co tydzień",
+    "repeatMonthly": "Co miesiąc",
+    "repeatEveryNDays": "Co N dni",
+    "repeatEvery": "co",
+    "repeatIntervalAria": "Odstęp powtarzania",
+    "repeatUnit_weekly": "{count, plural, one {tydzień} few {tygodnie} other {tygodni}}",
+    "repeatUnit_monthly": "{count, plural, one {miesiąc} few {miesiące} other {miesięcy}}",
+    "repeatUnit_every_n_days": "{count, plural, one {dzień} other {dni}}",
+    "repeatHint": "Po ukończeniu tego zadania w To do powstanie następne - z tym samym opisem, etykietami, osobą i subtaskami, z terminem na kolejną datę.",
+    "repeatsAria": "Powtarza się"
   },
   "roadmap": {
     "title": "Plan działań",

@@ -8,10 +8,13 @@ import { createNotification } from "@/lib/data/notifications";
 import { emitTaskEvent } from "@/lib/events/task-events";
 import { hostedTaskLimitError } from "@/lib/limits";
 import { resolveColumnRenumbering } from "@/lib/work/task-board";
+import { ensureNextOccurrence } from "@/lib/work/recurrence";
+import { normalizeRecurrence } from "@/lib/work/recurrence-core";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 
-export type TaskActionResult = { task: Task | null; error: string | null };
-export type TaskMutationResult = { error: string | null };
+/** `created`: a repeating task's next occurrence (and its subtasks), made because this finished it. */
+export type TaskActionResult = { task: Task | null; error: string | null; created?: Task[] };
+export type TaskMutationResult = { error: string | null; created?: Task[] };
 
 export async function moveTask(
   projectId: string,
@@ -77,6 +80,9 @@ export async function moveTask(
     entityId: taskId,
     details: { status },
   });
+  // Here and not only in emitTaskEvent's background run, so the board gets
+  // the next occurrence of a repeating task back right away.
+  const created = moved.is_done ? await ensureNextOccurrence(db, projectId, access.userId, taskId) : [];
   emitTaskEvent(
     projectId,
     access.userId,
@@ -87,7 +93,7 @@ export async function moveTask(
   );
 
   revalidatePath(`/projects/${projectId}/work`);
-  return { error: null };
+  return { error: null, created };
 }
 
 export async function createTask(
@@ -169,6 +175,9 @@ type TaskPatch = Omit<UpdateTaskData, "id" | "description" | "assignee_id" | "du
   description?: string | null;
   assignee_id?: string | null;
   due_date?: string | null;
+  /** null = stop repeating; recurrence_interval goes with it (migration 063). */
+  recurrence_rule?: string | null;
+  recurrence_interval?: number | null;
 };
 
 /**
@@ -192,9 +201,21 @@ const TASK_PATCH_COLUMNS = [
 ] as const;
 
 function pickTaskPatch(patch: TaskPatch): Record<string, unknown> {
-  return Object.fromEntries(
+  const columns: Record<string, unknown> = Object.fromEntries(
     Object.entries(patch).filter(([key]) => (TASK_PATCH_COLUMNS as readonly string[]).includes(key))
   );
+  // Rule and interval are set together, and only to a valid pair - or both
+  // cleared (the column CHECK in 063 wants exactly that).
+  if ("recurrence_rule" in patch) {
+    Object.assign(
+      columns,
+      normalizeRecurrence(patch.recurrence_rule, patch.recurrence_interval) ?? {
+        recurrence_rule: null,
+        recurrence_interval: null,
+      }
+    );
+  }
+  return columns;
 }
 
 /**
@@ -226,7 +247,14 @@ export async function updateTask(
   const columns = pickTaskPatch(patch);
   if (Object.keys(columns).length === 0) return { task: null, error: "Nothing to update." };
 
-  const { data: task, error } = await dataClient(access.userId)
+  const db = dataClient(access.userId);
+  // Whether this edit finishes the task (or otherwise moves it) - for the
+  // same events a move on the board sends.
+  const { data: before } = "status" in columns
+    ? await db.from<{ status: string; is_done: boolean }>("tasks").select("status, is_done").eq("id", taskId).eq("project_id", projectId).maybeSingle()
+    : { data: null };
+
+  const { data: task, error } = await db
     .from<Task>("tasks")
     .update(columns)
     .eq("id", taskId)
@@ -246,8 +274,21 @@ export async function updateTask(
   });
   notifyTaskAssignment(projectId, access.userId, task, patch);
 
+  let created: Task[] = [];
+  if (before && before.status !== task.status) {
+    const finished = Boolean(task.is_done) && !before.is_done;
+    if (finished) created = await ensureNextOccurrence(db, projectId, access.userId, taskId);
+    emitTaskEvent(
+      projectId,
+      access.userId,
+      finished
+        ? { kind: "completed", taskId, title: task.title }
+        : { kind: "status_changed", taskId, title: task.title, status: task.status }
+    );
+  }
+
   revalidatePath(`/projects/${projectId}/work`);
-  return { task, error: null };
+  return { task, error: null, created };
 }
 
 export async function createSubtask(
