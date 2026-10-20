@@ -1,9 +1,9 @@
 -- ============================================================
--- GUIDON - MIGRACJA 065
+-- GUIDON - MIGRACJA 064
 -- Cudze projekty nie wyswietlaja sie nikomu spoza nich
 -- ============================================================
 --
--- Uruchomic PO 064. Bezpieczna do ponownego uruchomienia.
+-- Uruchomic PO 063. Bezpieczna do ponownego uruchomienia.
 --
 -- KONTEKST
 -- --------
