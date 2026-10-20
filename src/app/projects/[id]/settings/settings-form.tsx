@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { PROJECT_LANGUAGES, languageName } from "@/lib/project-language";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ export function SettingsForm({
   initialTechnologies: string[];
 }) {
   const t = useTranslations("settings");
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const updateWithId = updateProjectSettings.bind(null, project.id);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
@@ -112,6 +114,18 @@ export function SettingsForm({
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="language">{t("languageLabel")}</Label>
+            <Select id="language" name="language" defaultValue={project.language ?? ""}>
+              <option value="">{t("languageAuto")}</option>
+              {PROJECT_LANGUAGES.map((code) => (
+                <option key={code} value={code}>
+                  {languageName(code, locale)}
+                </option>
+              ))}
+            </Select>
+            <p className="text-xs text-muted-foreground">{t("languageHint")}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="visibility">{t("visibilityLabel")}</Label>

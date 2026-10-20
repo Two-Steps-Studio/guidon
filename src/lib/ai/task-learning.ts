@@ -5,6 +5,7 @@ import { serviceDataClient } from "@/lib/data-client";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { createRateLimitWindow } from "@/lib/ai/rate-limit-window";
 import { normalizeDisabledModules } from "@/lib/work/project-modules";
+import { languageName, normalizeProjectLanguage } from "@/lib/project-language";
 import { parseLearnedFacts, taskHasSubstance, type LearnedFact } from "@/lib/ai/task-learning-core";
 
 /**
@@ -45,6 +46,8 @@ interface ProjectRow {
   organization_id: string;
   ai_enabled: boolean;
   disabled_modules: string[] | null;
+  /** Migration 070 - absent before it. */
+  language?: string | null;
 }
 
 async function learn(projectId: string, userId: string, taskId: string): Promise<void> {
@@ -53,7 +56,8 @@ async function learn(projectId: string, userId: string, taskId: string): Promise
 
   const { data: project } = await db
     .from<ProjectRow>("projects")
-    .select("organization_id, ai_enabled, disabled_modules")
+    // "*": language (070) may not exist yet.
+    .select("*")
     .eq("id", projectId)
     .maybeSingle();
   if (!project?.ai_enabled || normalizeDisabledModules(project.disabled_modules).includes("memory")) return;
@@ -132,7 +136,9 @@ async function learn(projectId: string, userId: string, taskId: string): Promise
       "You keep a software/game project's long-term memory. From a task that was just finished, extract at most TWO " +
       "durable things future work on this project should know: a fact about the codebase or game, a rule or convention, " +
       "a constraint, or a decision and its reason. Skip anything only about this task's progress, anything obvious or " +
-      "generic, and anything already in memory. Each one sentence, specific, written in the language the task is written in. " +
+      "generic, and anything already in memory. Each one sentence, specific, written in " +
+        (normalizeProjectLanguage(project.language) ? languageName(normalizeProjectLanguage(project.language)!) : "the language the task is written in") +
+        ". " +
       'Answer with JSON only: [{"type":"fact|project_rule|constraint|decision_summary","content":"..."}] - or [] if nothing qualifies.',
     messages: [{ role: "user", content: prompt }],
     maxTokens: 400,

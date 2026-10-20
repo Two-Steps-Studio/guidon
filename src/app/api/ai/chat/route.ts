@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { getProjectAccess } from "@/lib/data/project-access";
+import { getProjectLanguage } from "@/lib/data/project-language";
+import { languageInstruction } from "@/lib/project-language";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
 import { ALL_CHAT_TOOLS, runChatTool, type FoundTask } from "@/lib/ai/chat-tools";
@@ -80,10 +82,12 @@ export async function POST(request: NextRequest) {
   const tasks = new Map<string, FoundTask>();
   let pendingDelete: { taskId: string; title: string } | undefined;
 
+  const projectLanguage = await getProjectLanguage(access.userId, projectId);
+
   try {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
       const result = await provider.complete({
-        system: buildSystemPrompt(access.project.name, workflowText),
+        system: buildSystemPrompt(access.project.name, workflowText) + languageInstruction(projectLanguage),
         messages,
         tools: ALL_CHAT_TOOLS as unknown as Array<{ name: string; description: string; input_schema: object }>,
         maxTokens: 1000,

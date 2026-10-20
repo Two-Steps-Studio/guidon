@@ -14,6 +14,7 @@ import { guessTechnologyCategory, technologySlug } from "@/types/technology";
 import type { ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
 import type { Technology } from "@/types/technology";
 import { tr } from "@/lib/i18n/server-errors";
+import { normalizeProjectLanguage } from "@/lib/project-language";
 
 export type SettingsFormState = {
   error: string | null;
@@ -149,6 +150,10 @@ export async function updateProjectSettings(
   // Migration 067: who sees the project - its members only, or the whole organization.
   const visibilityRaw = formData.get("visibility");
   const visibility = visibilityRaw === "private" || visibilityRaw === "organization" ? visibilityRaw : null;
+  // Migration 070: "" = automatic. Only sent when the form has the field.
+  const languageRaw = formData.get("language");
+  const languageSent = typeof languageRaw === "string";
+  const language = normalizeProjectLanguage(languageRaw);
 
   const methodologyRaw = formData.get("methodology");
   let methodology: ProjectMethodology = "standard";
@@ -226,10 +231,11 @@ export async function updateProjectSettings(
           `UPDATE projects
            SET name = $1, description = $2, status = $3, color = $4,
                avatar_url = COALESCE($5, avatar_url), project_type = $6, methodology = $7, ai_enabled = $8,
-               visibility = COALESCE($10, visibility)
+               visibility = COALESCE($10, visibility),
+               language = CASE WHEN $11 THEN $12 ELSE language END
            WHERE id = $9
            RETURNING id`,
-          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, aiEnabled, projectId, visibility]
+          [name.trim(), trimmedDescription, status, trimmedColor, avatarUrl ?? null, projectType, methodology, aiEnabled, projectId, visibility, languageSent, language]
         );
         if (result.rows.length === 0) return false;
 
@@ -265,6 +271,7 @@ export async function updateProjectSettings(
         methodology,
         ai_enabled: aiEnabled,
         ...(visibility ? { visibility } : {}),
+        ...(languageSent ? { language } : {}),
         ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", projectId)

@@ -3284,5 +3284,21 @@ section("55. zespol projektu widoczny dla kazdego, kto widzi projekt (migracja 0
   });
 }
 
+section("56. jezyk projektu (migracja 070)");
+
+{
+  await withUser(A, async () => {
+    const set = await db.query("UPDATE public.projects SET language = 'pt-BR' WHERE id = $1 RETURNING language", [projectId]);
+    check("owner ustawia jezyk projektu", set.rows[0]?.language === "pt-BR");
+    check("zly kod jezyka odrzucony", await throwsInSavepoint("UPDATE public.projects SET language = 'polish' WHERE id = $1", [projectId]));
+    const auto = await db.query("UPDATE public.projects SET language = NULL WHERE id = $1 RETURNING language", [projectId]);
+    check("NULL = automatycznie", auto.rows[0]?.language === null);
+  });
+  await withUser(D, async () => {
+    const res = await db.query("UPDATE public.projects SET language = 'de' WHERE id = $1 RETURNING id", [projectId]);
+    check("developer nie zmienia jezyka projektu", res.rows.length === 0);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

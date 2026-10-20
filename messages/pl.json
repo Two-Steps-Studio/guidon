@@ -1029,7 +1029,10 @@
     "visibilityLabel": "Kto widzi ten projekt",
     "visibilityOrganization": "Wszyscy w organizacji",
     "visibilityPrivate": "Tylko członkowie projektu",
-    "visibilityHint": "Członkowie organizacji spoza projektu widzą go tylko do odczytu, dopóki nie dodasz ich na stronie Członkowie. Właściciel i administratorzy organizacji zawsze widzą wszystkie projekty."
+    "visibilityHint": "Członkowie organizacji spoza projektu widzą go tylko do odczytu, dopóki nie dodasz ich na stronie Członkowie. Właściciel i administratorzy organizacji zawsze widzą wszystkie projekty.",
+    "languageLabel": "Język projektu",
+    "languageAuto": "Automatycznie",
+    "languageHint": "Język, w którym AI Guidona pisze w tym projekcie - odpowiedzi asystenta, wnioski do pamięci, nauka z ukończonych zadań. Automatycznie = w języku, w którym piszesz."
   },
   "discordLink": {
     "title": "Połącz bota Guidon z Discorda",

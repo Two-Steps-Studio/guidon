@@ -1029,7 +1029,10 @@
     "visibilityLabel": "Who can see this project",
     "visibilityOrganization": "Everyone in the organization",
     "visibilityPrivate": "Only project members",
-    "visibilityHint": "Organization members who aren't on the project see it read-only until you add them on the Members page. The organization's owner and admins always see every project."
+    "visibilityHint": "Organization members who aren't on the project see it read-only until you add them on the Members page. The organization's owner and admins always see every project.",
+    "languageLabel": "Project language",
+    "languageAuto": "Automatic",
+    "languageHint": "The language Guidon's AI writes in for this project - assistant replies, memory insights, what it learns from finished tasks. Automatic follows the language you write in."
   },
   "discordLink": {
     "title": "Connect the Guidon Discord bot",

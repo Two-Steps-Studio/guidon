@@ -8,6 +8,8 @@ import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isInsightRateLimited, recordInsightGeneration } from "@/lib/ai/insight-rate-limit";
 import type { MemoryType } from "@/types/context";
 import { tr } from "@/lib/i18n/server-errors";
+import { getProjectLanguage } from "@/lib/data/project-language";
+import { languageInstruction } from "@/lib/project-language";
 
 export type MemoryFormState = {
   error: string | null;
@@ -388,7 +390,8 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
         "You are reviewing a software project's recorded facts, constraints, and decisions. " +
         "Point out ONE specific, non-obvious risk, gap, tension, or connection worth the team's " +
         "attention. Reference the specific facts or decisions involved. Two to three sentences. " +
-        "Do not restate the facts back, and do not give generic project-management advice.",
+        "Do not restate the facts back, and do not give generic project-management advice." +
+        languageInstruction(await getProjectLanguage(access.userId, projectId)),
       messages: [{ role: "user", content: contextBlock }],
       maxTokens: 300,
     });

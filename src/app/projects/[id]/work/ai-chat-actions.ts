@@ -4,6 +4,8 @@ import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
 import { tr } from "@/lib/i18n/server-errors";
+import { getProjectLanguage } from "@/lib/data/project-language";
+import { languageInstruction } from "@/lib/project-language";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -78,7 +80,7 @@ export async function sendTaskChatMessage(
 
   try {
     const result = await provider.complete({
-      system: buildSystemPrompt(access.project.name),
+      system: buildSystemPrompt(access.project.name) + languageInstruction(await getProjectLanguage(access.userId, projectId)),
       messages: trimmedHistory,
       maxTokens: 1000,
     });
