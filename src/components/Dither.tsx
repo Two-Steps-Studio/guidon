@@ -317,6 +317,8 @@ export interface DitherProps {
   clickRipple?: boolean;
   intro?: boolean;
   disableAnimation?: boolean;
+  /** Animate even when the OS asks for reduced motion (an explicit user opt-in). */
+  ignoreReducedMotion?: boolean;
   dpr?: number;
   className?: string;
   style?: CSSProperties;
@@ -331,6 +333,7 @@ const Dither = ({
   colorNum = 4,
   pixelSize = 2,
   disableAnimation = false,
+  ignoreReducedMotion = false,
   enableMouseInteraction = true,
   mouseRadius = 1,
   ditherMode = "bayer",
@@ -359,6 +362,7 @@ const Dither = ({
     colorNum: Math.max(2, colorNum),
     pixelSize: Math.max(1, pixelSize),
     disableAnimation,
+    ignoreReducedMotion,
     enableMouseInteraction,
     mouseRadius: Math.max(0.001, mouseRadius),
     mode: MODES[ditherMode] ?? 0,
@@ -410,7 +414,14 @@ const Dither = ({
     const framebuffer = gl.createFramebuffer();
 
     const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    // Read per frame, not once at mount: the OS setting can change while the
+    // page is open, and so can the ignoreReducedMotion opt-in.
+    const reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    let reduce = false;
+    const readReduce = () => {
+      reduce = !!reducedMotionQuery?.matches && !settingsRef.current.ignoreReducedMotion;
+    };
+    readReduce();
     const cache = new Map<string, number[]>();
     const toColor = (value: DitherColor) => {
       if (Array.isArray(value)) return [0, 1, 2].map((i) => clamp(Number(value[i]) || 0, 0, 1));
@@ -536,6 +547,7 @@ const Dither = ({
       raf = 0;
       if (!visible || document.hidden) return;
       const s = settingsRef.current;
+      readReduce();
       const dt = last ? clamp((now - last) / 1000, 0.0005, 0.05) : 1 / 60;
       last = now;
       if (!s.disableAnimation && !reduce) state.time += dt;
@@ -648,6 +660,11 @@ const Dither = ({
       wake();
     };
 
+    const onReducedMotionChange = () => {
+      readReduce();
+      wake();
+    };
+
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(container);
     const intersection = new IntersectionObserver((entries) => {
@@ -664,6 +681,7 @@ const Dither = ({
     window.addEventListener("pointercancel", onPointerUp, { passive: true });
     document.documentElement.addEventListener("pointerleave", onPointerLeave);
     document.addEventListener("visibilitychange", onVisibility);
+    reducedMotionQuery?.addEventListener("change", onReducedMotionChange);
     resize();
 
     let lastDpr = settingsRef.current.dpr;
@@ -674,6 +692,7 @@ const Dither = ({
         resize();
         return;
       }
+      readReduce();
       if (!raf) render();
       wake();
     };
@@ -689,6 +708,7 @@ const Dither = ({
       window.removeEventListener("pointercancel", onPointerUp);
       document.documentElement.removeEventListener("pointerleave", onPointerLeave);
       document.removeEventListener("visibilitychange", onVisibility);
+      reducedMotionQuery?.removeEventListener("change", onReducedMotionChange);
       gl.deleteProgram(wave.program);
       gl.deleteProgram(dither.program);
       gl.deleteBuffer(buffer);

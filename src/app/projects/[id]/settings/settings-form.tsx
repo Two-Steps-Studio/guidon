@@ -1,25 +1,17 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, AlertTriangle, FolderKanban, Loader2, Settings, Trash2, X } from "lucide-react";
-import { deleteProject, updateProjectSettings, type SettingsFormState } from "./actions";
+import { AlertCircle, FolderKanban, Loader2, Settings, X } from "lucide-react";
+import { updateProjectSettings, type SettingsFormState } from "./actions";
 import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
 
 const STATUS_VALUES: ProjectStatus[] = ["active", "archived", "deleted"];
@@ -31,14 +23,9 @@ const initialState: SettingsFormState = { error: null };
 export function SettingsForm({
   project,
   initialTechnologies,
-  isOwner,
 }: {
   project: Project;
   initialTechnologies: string[];
-  /** deleteProject (RLS's projects_delete) is owner-only, unlike every
-   *  other action on this page - the Danger Zone only makes sense to show
-   *  to someone who could actually use it. */
-  isOwner: boolean;
 }) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
@@ -46,10 +33,6 @@ export function SettingsForm({
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
   const [technologies, setTechnologies] = useState<string[]>(initialTechnologies);
   const [color, setColor] = useState(project.color || "#0f6b5a");
-
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleting, startDelete] = useTransition();
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // useActionState's dispatched result is always a fresh object, never
   // reference-equal to the outer `initialState` constant - so this only
@@ -77,15 +60,8 @@ export function SettingsForm({
     setTechnologies(technologies.filter((t) => t !== tech));
   };
 
-  const handleDelete = () => {
-    startDelete(async () => {
-      const result = await deleteProject(project.id);
-      setDeleteError(result.error);
-    });
-  };
-
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-6" data-save-shortcut>
       <input type="hidden" name="technologies" value={JSON.stringify(technologies)} />
 
       <Card>
@@ -233,70 +209,6 @@ export function SettingsForm({
           </div>
         </CardContent>
       </Card>
-
-      {isOwner && (
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              {t("dangerZone")}
-            </CardTitle>
-            <CardDescription>{t("dangerZoneDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium">{t("deleteProjectTitle")}</h4>
-                <p className="text-sm text-muted-foreground">
-                  {t("deleteProjectDescription")}
-                </p>
-              </div>
-              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="destructive" type="button">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t("deleteProjectButton")}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
-                    <DialogDescription>
-                      {t("deleteDialogDescription")}
-                    </DialogDescription>
-                  </DialogHeader>
-                  {deleteError && (
-                    <div className="text-sm text-destructive flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      {deleteError}
-                    </div>
-                  )}
-                  <div className="flex justify-end gap-2 mt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowDeleteDialog(false)}
-                      disabled={deleting}
-                    >
-                      {t("cancel")}
-                    </Button>
-                    <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
-                      {deleting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {t("deleting")}
-                        </>
-                      ) : (
-                        t("deleteProjectButton")
-                      )}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {state.error && (
         <div className="p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-2 text-destructive">

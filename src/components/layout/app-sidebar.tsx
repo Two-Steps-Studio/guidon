@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GuidonMark } from "@/components/layout/guidon-mark";
 import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
@@ -25,6 +26,7 @@ import type { SwitchableProject } from "@/lib/data/project-access";
 import type { Theme } from "@/lib/theme";
 import {
   LayoutDashboard,
+  ListChecks,
   FileText,
   Building2,
   CheckSquare,
@@ -51,6 +53,7 @@ import {
 
 export const GLOBAL_NAV = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/my-tasks", labelKey: "myTasks", icon: ListChecks },
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
   { href: "/plugins", labelKey: "plugins", icon: Puzzle },
@@ -196,7 +199,8 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <Link href="/dashboard" className="flex items-center gap-2 px-2 py-1.5">
+        <Link href="/dashboard" className="flex items-center justify-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0">
+          <GuidonMark className="hidden h-7 w-7 text-sidebar-foreground group-data-[collapsible=icon]:block" />
           <Image
             src="/assets/guidon-wordmark.png"
             alt="Guidon"
@@ -347,10 +351,10 @@ export function AppSidebar({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <FeedbackMenuItem />
-            <SidebarMenuItem className="px-2">
+            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:hidden">
               <ThemeSwitcher currentTheme={currentTheme} />
             </SidebarMenuItem>
-            <SidebarMenuItem className="px-2">
+            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:hidden">
               <LanguageSwitcher />
             </SidebarMenuItem>
           </SidebarMenu>

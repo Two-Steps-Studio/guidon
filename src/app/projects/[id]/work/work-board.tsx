@@ -5,22 +5,13 @@ import type { LabelPreset } from "@/lib/work/label-presets";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { KanbanBoard } from "@/components/work/kanban-board";
+import { isTypingTarget } from "@/components/layout/keyboard-shortcuts";
 
 // TaskDetailDialog (and the attempts/why-panel sections it always imports)
 // only matter once a task is actually opened - code-split so the board's
@@ -39,9 +30,13 @@ import {
   subtaskProgress,
   type BoardColumn,
 } from "@/lib/work/task-board";
-import { createTask, moveTask } from "./actions";
+import { moveTask } from "./actions";
+import { playSound } from "@/lib/sounds";
+import { CreateTaskDialog } from "./create-task-dialog";
+import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
+import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
-import type { Task, TaskPriority, TaskStatus } from "@/types/task";
+import type { Task, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
 
 interface WorkState {
@@ -183,11 +178,103 @@ export function WorkBoard({
     });
   }, [topLevelTasks, assigneeFilter, priorityFilter, tagFilter]);
 
+  // Bulk selection (Ctrl/Cmd/Shift-click on cards). Only cards the current
+  // filters show count - a hidden card is never changed by surprise.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectedTasks = useMemo(
+    () => filteredTasks.filter((task) => selectedIds.has(task.id)),
+    [filteredTasks, selectedIds]
+  );
+  const bulkLabels = useMemo(
+    () => Array.from(new Set([...labelPresets.map((preset) => preset.name), ...availableTags])).sort(),
+    [labelPresets, availableTags]
+  );
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedIds(new Set());
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedIds.size]);
+
+  // "N" opens the new-task dialog in the first column (keyboard-shortcuts.tsx
+  // lists it) - not while typing or while another dialog is open.
+  useEffect(() => {
+    if (!canEdit) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "n" || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
+      if (isTypingTarget(event.target) || document.querySelector('[role="dialog"]')) return;
+      event.preventDefault();
+      setCreateFor(columns[0]?.status ?? "todo");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [canEdit, columns]);
+
+  const handleBulk = async (operation: BulkOperation) => {
+    // Board order (column, then position), so moved cards keep their relative order.
+    const columnIndex = new Map(columns.map((column, index) => [column.status, index]));
+    const ids = selectedTasks
+      .slice()
+      .sort(
+        (a, b) =>
+          (columnIndex.get(normalizeTaskStatus(a.status)) ?? 0) - (columnIndex.get(normalizeTaskStatus(b.status)) ?? 0) ||
+          (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      )
+      .map((task) => task.id);
+    const result = await bulkUpdateTasks(projectId, ids, operation);
+    if (result.error) {
+      playSound("error");
+      toast.error(result.error);
+      return;
+    }
+    if (operation.kind === "move" && operation.status === "done") playSound("complete");
+    const chosen = new Set(ids);
+    setState((current) => {
+      if (operation.kind === "delete") {
+        // Subtasks of a deleted card go with it (ON DELETE CASCADE).
+        return {
+          ...current,
+          tasks: current.tasks.filter((task) => !chosen.has(task.id) && !chosen.has(task.parent_task_id ?? "")),
+        };
+      }
+      const lastOrder = Math.max(0, ...current.tasks.map((task) => task.sort_order ?? 0));
+      const position = new Map(ids.map((id, index) => [id, index + 1]));
+      return {
+        ...current,
+        tasks: current.tasks.map((task) => {
+          if (!chosen.has(task.id)) return task;
+          switch (operation.kind) {
+            case "move":
+              return { ...task, status: operation.status, sort_order: lastOrder + (position.get(task.id) ?? 0) * 1000 };
+            case "assign":
+              return { ...task, assignee_id: operation.assigneeId };
+            case "label": {
+              const tags = task.tags ?? [];
+              return {
+                ...task,
+                tags: operation.add
+                  ? tags.includes(operation.label) ? tags : [...tags, operation.label]
+                  : tags.filter((tag) => tag !== operation.label),
+              };
+            }
+            default:
+              return task;
+          }
+        }),
+      };
+    });
+    toast.success(t("bulkDone", { count: result.count }));
+    if (operation.kind === "delete") setSelectedIds(new Set());
+  };
+
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
     const previousStatus = task.status;
     const previousSortOrder = task.sort_order;
 
-    // Optimistic: the board should feel instant on drop.
+    // Optimistic: the board should feel instant on drop - the sound too.
+    if (status === "done" && previousStatus !== "done") playSound("complete");
     setState((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
@@ -211,6 +298,7 @@ export function WorkBoard({
             : item
         ),
       }));
+      playSound("error");
       toast.error(result.error);
     }
   };
@@ -353,6 +441,9 @@ export function WorkBoard({
               {t("clearFilters")}
             </button>
           )}
+          {canEdit && (
+            <span className="ml-auto hidden text-xs text-muted-foreground md:inline">{t("bulkHint")}</span>
+          )}
         </div>
 
         {!canEdit && role && (
@@ -389,9 +480,23 @@ export function WorkBoard({
             onCreateTask={setCreateFor}
             onMoveTask={handleMove}
             projectColor={projectColor}
+            selectedIds={selectedIds}
+            onSelectionChange={canEdit ? setSelectedIds : undefined}
           />
         )}
       </div>
+
+      {selectedTasks.length > 0 && (
+        <BulkBar
+          selected={selectedTasks}
+          columns={columns}
+          members={members}
+          labels={bulkLabels}
+          canDelete={canDelete}
+          onRun={handleBulk}
+          onClear={() => setSelectedIds(new Set())}
+        />
+      )}
 
       {openTask && (
         <TaskDetailDialog
@@ -428,179 +533,5 @@ export function WorkBoard({
         onCreated={upsertTask}
       />
     </LabelPresetsProvider>
-  );
-}
-
-// ============================================
-// CREATE TASK
-// ============================================
-
-function CreateTaskDialog({
-  projectId,
-  status,
-  members,
-  currentUserId,
-  existingTasks,
-  columns,
-  onClose,
-  onCreated,
-}: {
-  projectId: string;
-  status: TaskStatus | null;
-  members: TaskCardMember[];
-  currentUserId: string | null;
-  existingTasks: Task[];
-  columns: readonly BoardColumn[];
-  onClose: () => void;
-  onCreated: (task: Task) => void;
-}) {
-  const t = useTranslations("work");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [assigneeId, setAssigneeId] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // The parent keys this component by target column, so opening the dialog
-  // for a different column remounts it with a clean form.
-  if (!status) return null;
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!currentUserId) return;
-
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const columnTasks = existingTasks.filter(
-        (task) => normalizeTaskStatus(task.status) === status
-      );
-      const maxOrder = columnTasks.reduce((max, task) => Math.max(max, task.sort_order ?? 0), 0);
-
-      const result = await createTask(projectId, {
-        title,
-        description,
-        status,
-        priority,
-        assigneeId,
-        dueDate,
-        sortOrder: maxOrder + 100,
-      });
-
-      if (result.error || !result.task) throw new Error(result.error ?? t("failedToCreateTask"));
-
-      onCreated(result.task);
-      onClose();
-      toast.success(t("taskCreatedToast", { title: result.task.title }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToCreateTask"));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const columnLabel = columns.find((column) => column.status === status)?.label ?? status;
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-base">{t("newTaskDialogTitle")}</DialogTitle>
-          <DialogDescription>
-            {t.rich("addedToColumn", { column: columnLabel, b: (chunks) => <strong>{chunks}</strong> })}
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="new-task-title">{t("titleLabel")}</Label>
-            <Input
-              id="new-task-title"
-              value={title}
-              required
-              autoFocus
-              placeholder={t("titlePlaceholder")}
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="new-task-description">{t("descriptionLabel")}</Label>
-            <Textarea
-              id="new-task-description"
-              rows={3}
-              value={description}
-              placeholder={t("descriptionPlaceholderTask")}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="new-task-priority">{t("priorityLabel")}</Label>
-              <Select
-                id="new-task-priority"
-                value={priority}
-                onChange={(event) => setPriority(event.target.value as TaskPriority)}
-              >
-                {TASK_PRIORITIES.map((value) => (
-                  <option key={value} value={value}>
-                    {t("priority", { priority: value })}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="new-task-assignee">{t("assigneeLabel")}</Label>
-              <Select
-                id="new-task-assignee"
-                value={assigneeId}
-                onChange={(event) => setAssigneeId(event.target.value)}
-              >
-                <option value="">{t("unassigned")}</option>
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.full_name || member.email}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="new-task-due">{t("dueDateLabel")}</Label>
-              <Input
-                id="new-task-due"
-                type="date"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p
-              role="alert"
-              className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {error}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 border-t border-border pt-4">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
-              {t("cancel")}
-            </Button>
-            <Button type="submit" size="sm" disabled={submitting || !title.trim()}>
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("createTask")}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }

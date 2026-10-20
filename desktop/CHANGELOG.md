@@ -7,7 +7,7 @@ version being released into the GitHub Release and the updater's
 
 ## 1.0.0
 
-First stable release.
+First stable release, for Windows and Linux.
 
 - **Install editor plugins into your project.** Guidon Desktop → Install
   Editor Plugins (also in the tray): pick Unity, Unreal Engine, Godot or

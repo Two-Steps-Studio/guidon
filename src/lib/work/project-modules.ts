@@ -8,9 +8,12 @@
  * data stay reachable by direct link and come back unchanged when re-enabled.
  *
  * The values are the route segments under /projects/[id]/ and must match
- * the CHECK constraint in 055 (test:db section 44 compares them).
+ * the CHECK constraint (055, widened to the task board in 058; test:db
+ * section 44 compares them). Overview, members, activity and settings are
+ * never modules.
  */
 export const PROJECT_MODULES = [
+  "work",
   "calendar",
   "roadmap",
   "files",

@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { setTheme } from "@/app/actions/set-theme";
-import { Select } from "@/components/ui/select";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { SUPPORTED_THEMES, type Theme } from "@/lib/theme";
 
 interface ThemeSwitcherProps {
@@ -16,22 +16,16 @@ export function ThemeSwitcher({ currentTheme }: ThemeSwitcherProps) {
   const t = useTranslations("profile");
 
   return (
-    <Select
+    <SelectMenu
       aria-label={t("themeLabel")}
       value={currentTheme}
       disabled={isPending}
-      onChange={(event) => {
-        const value = event.target.value;
+      options={SUPPORTED_THEMES.map((theme) => ({ value: theme, label: t(`theme_${theme}`) }))}
+      onValueChange={(value) => {
         startTransition(async () => {
           await setTheme(value);
         });
       }}
-    >
-      {SUPPORTED_THEMES.map((theme) => (
-        <option key={theme} value={theme}>
-          {t(`theme_${theme}`)}
-        </option>
-      ))}
-    </Select>
+    />
   );
 }

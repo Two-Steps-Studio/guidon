@@ -86,6 +86,7 @@
     "upgradePlan": "Upgrade plan",
     "toggleSidebar": "Toggle sidebar (Ctrl+B)",
     "dashboard": "Dashboard",
+    "myTasks": "My tasks",
     "projects": "Projects",
     "organizations": "Organizations",
     "plugins": "Plugins",
@@ -140,11 +141,6 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcomeBack": "Welcome back, {name}",
-    "totalProjects": "Total Projects",
-    "totalTasks": "Total Tasks",
-    "completedTasks": "Completed Tasks",
-    "decisions": "Decisions",
     "yourProjects": "Your Projects",
     "viewAll": "View all {count}",
     "newProject": "New Project",
@@ -157,14 +153,23 @@
     "createFirstProjectTitle": "Create your first project",
     "createFirstProjectDesc": "Projects live inside an organization. If you don't have one yet, you'll create it on the next step.",
     "createFirstProjectButton": "Create your first project",
-    "openProject": "Open project"
+    "greeting": "Hi, {name}",
+    "statMyOpen": "Your open tasks",
+    "statOverdue": "Overdue",
+    "statInProgress": "In progress",
+    "statDoneThisWeek": "Done this week",
+    "upcomingTitle": "Up next for you",
+    "seeAll": "See all",
+    "upcomingEmpty": "Nothing assigned to you right now.",
+    "activityTitle": "Recent activity",
+    "activityEmpty": "Nothing has happened in your projects yet.",
+    "progress": "{done} of {total} tasks done"
   },
   "landing": {
     "heroTitle": "Context-First Project Management",
     "heroSubtitle": "Understand why your project exists. Track decisions, sources, and context alongside your tasks.",
     "getStarted": "Get Started",
     "signIn": "Sign In",
-    "boardPreviewTitle": "Task board preview",
     "featuresTitle": "Everything a project needs to explain itself",
     "featuresSubtitle": "Tasks alone don't tell you why a project looks the way it does. Guidon tracks the context around the work, not just the work.",
     "features": {
@@ -251,10 +256,20 @@
       "membersCount": "{count, plural, one {# member} other {# members}}"
     },
     "footer": {
+      "developers": "Developers",
       "terms": "Terms of Service",
       "privacy": "Privacy Policy",
-      "copyright": "© {year} Guidon"
-    }
+      "copyright": "© {year} Guidon",
+      "selfHosting": "Self-hosting"
+    },
+    "selfHost": {
+      "title": "Run Guidon on your own server",
+      "description": "The same app, on infrastructure you control: Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama). No plan limits on your own install.",
+      "guide": "Self-hosting guide",
+      "github": "Code on GitHub"
+    },
+    "heroShotTitle": "The Guidon dashboard",
+    "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team and AI activity, project progress"
   },
   "organizations": {
     "common": {
@@ -498,7 +513,12 @@
       "aiEnabledHelp": "Enables the AI Working column, the AI task assistant, generated memory insights, AI agent permissions and agent API access. You can change this later in project settings.",
       "cancel": "Cancel",
       "creating": "Creating...",
-      "createButton": "Create"
+      "createButton": "Create",
+      "sourceLabel": "Start from",
+      "sourceBlank": "Blank project",
+      "sourceFile": "From .guidon file",
+      "fileHelp": "A project exported from Guidon (Project settings → Export). Drop it here or click to choose.",
+      "createFromFile": "Create from file"
     }
   },
   "work": {
@@ -676,7 +696,23 @@
     "failedToLoadRelatedTasks": "Failed to load related tasks.",
     "failedToLinkTask": "Failed to link the task.",
     "failedToRemoveRelation": "Failed to remove the link.",
-    "loadingRelatedTasks": "Loading related tasks..."
+    "loadingRelatedTasks": "Loading related tasks...",
+    "bulkToolbar": "Bulk actions",
+    "bulkSelected": "{count, plural, one {# selected} other {# selected}}",
+    "bulkMove": "Move",
+    "bulkAssign": "Assign",
+    "bulkLabel": "Label",
+    "bulkLabelHint": "+ adds to all, − removes from all",
+    "bulkDelete": "Delete",
+    "bulkDeleteConfirm": "{count, plural, one {Delete # task?} other {Delete # tasks?}} Their subtasks, comments and attachments are deleted too. This can't be undone.",
+    "bulkClear": "Clear selection (Esc)",
+    "bulkDone": "{count, plural, =0 {Nothing to change} one {# task updated} other {# tasks updated}}",
+    "bulkHint": "Ctrl/Cmd-click cards to select several, Shift-click for a range",
+    "cardSelected": "Selected",
+    "attachmentsLabel": "Attachments",
+    "addAttachments": "Add files",
+    "removeAttachment": "Remove {name}",
+    "createAttachmentsFailed": "{count, plural, one {# file} other {# files}} couldn't be attached - add {count, plural, one {it} other {them}} from the task."
   },
   "roadmap": {
     "title": "Roadmap",
@@ -907,6 +943,30 @@
     "invalidTitle": "This link has expired",
     "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-link in your Discord server again to get a new one.",
     "toProjects": "Go to projects"
+  },
+  "discordLogin": {
+    "title": "Sign in to the Guidon Discord bot",
+    "description": "The Discord account {discord} wants to use your Guidon account ({account}). The /task commands you run on Discord will then act as you, with your own role in each project.",
+    "unnamedAccount": "(unknown)",
+    "phishingWarning": "Only continue if you ran /guidon-login yourself in Discord. You can sign out any time with /guidon-logout, or by revoking the \"Discord\" key under Profile → API Keys.",
+    "confirm": "Sign in",
+    "done": "Done - your Discord account is signed in. You can go back to Discord.",
+    "genericError": "Could not sign in the Discord account. Please try again.",
+    "invalidTitle": "This link has expired",
+    "invalidDescription": "The link is invalid or older than 10 minutes. Run /guidon-login in Discord again to get a new one.",
+    "toDashboard": "Go to dashboard"
+  },
+  "myTasks": {
+    "title": "My tasks",
+    "subtitle": "{count, plural, =0 {Nothing assigned to you} one {# open task assigned to you} other {# open tasks assigned to you}} across all projects",
+    "group_overdue": "Overdue",
+    "group_today": "Today",
+    "group_week": "Next 7 days",
+    "group_later": "Later",
+    "group_none": "No due date",
+    "statusLabel": "Status of {task}",
+    "emptyTitle": "Nothing assigned to you",
+    "emptyDescription": "Tasks assigned to you in any project show up here."
   },
   "feedback": {
     "sendFeedback": "Send feedback",
@@ -1223,17 +1283,36 @@
     "pluginsTitle": "Plugins for your tools",
     "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code and JetBrains IDEs.",
     "pluginsButton": "Browse plugins",
-    "claudeCodeTitle": "Claude Code (MCP)",
-    "claudeCodeDescription": "Let Claude Code read your tasks, do the work and update them in Guidon. One click creates a key with the right permissions and gives you the command to paste into your terminal.",
-    "claudeCodeCreateButton": "Connect Claude Code",
-    "claudeCodeCreating": "Creating key...",
-    "claudeCodeError": "Could not create the connection key. Try again.",
-    "claudeCodeStep1": "1. Run this in your terminal (Claude Code must be installed)",
-    "claudeCodeKeyOnce": "The command contains your new key and is shown only once. Copy it now. You can revoke the key any time in API keys above.",
-    "claudeCodeStep2": "2. Check that it connected - Guidon should be listed as connected",
-    "claudeCodeStep3": "3. Start Claude Code and try this prompt",
-    "claudeCodeTryPrompt": "List my Guidon projects, show the tasks in To do, and start on the highest priority one.",
-    "claudeCodeCopy": "Copy"
+    "mcpTitle": "Connect an AI app (MCP)",
+    "mcpDescription": "Let Claude, Cursor, Copilot, Codex, Gemini or any other MCP-capable AI app read your tasks, do the work and update them in Guidon. Pick your app - one click creates a key with the right permissions and shows exactly what to paste.",
+    "mcpClientLabel": "AI app",
+    "mcpClientOther": "Other app",
+    "mcpCreateButton": "Connect {client}",
+    "mcpCreating": "Creating key...",
+    "mcpError": "Could not create the connection key. Try again.",
+    "mcpKeyOnce": "The setup below contains your new key and is shown only once. Copy it now. You can revoke the key any time in API keys above.",
+    "mcpCopy": "Copy",
+    "mcpStep_claude-code": "Run this in your terminal (Claude Code must be installed)",
+    "mcpVerify_claude-code": "Check that it connected - Guidon should be listed as connected",
+    "mcpStep_claude-desktop": "In Claude Desktop open Settings → Developer → Edit Config and add this to claude_desktop_config.json (merge with any servers already there), then restart Claude. Needs Node.js.",
+    "mcpStep_cursor": "Add this to ~/.cursor/mcp.json (or .cursor/mcp.json in a project you don't commit), merging with any servers already there",
+    "mcpStep_vscode": "In VS Code run \"MCP: Open User Configuration\" from the Command Palette and add this (merge with any servers already there); Guidon's tools then show up in Copilot agent mode",
+    "mcpStep_codex_env": "Put the key in an environment variable - add this to your shell profile (~/.bashrc, ~/.zshrc) and open a new terminal",
+    "mcpStep_codex": "Add this to ~/.codex/config.toml",
+    "mcpStep_gemini": "Run this in your terminal (Gemini CLI must be installed)",
+    "mcpStep_other_url": "Server URL (transport: Streamable HTTP)",
+    "mcpStep_other_header": "Send this HTTP header with every request",
+    "mcpTry": "Try this prompt in your AI app",
+    "mcpTryPrompt": "List my Guidon projects, show the tasks in To do, and start on the highest priority one.",
+    "backgroundMotionLabel": "Background animation",
+    "backgroundMotion_auto": "Automatic (system setting)",
+    "backgroundMotion_on": "On",
+    "backgroundMotion_off": "Off",
+    "backgroundMotionHelp": "Saved on this device. Automatic stops the animation when your system asks for reduced motion (on Windows: Settings → Accessibility → Visual effects → Animation effects).",
+    "soundsLabel": "Sounds",
+    "sounds_on": "On",
+    "sounds_off": "Off",
+    "soundsHelp": "Short, quiet sounds when you complete or create a task and when a notification arrives. Saved on this device."
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",
@@ -1256,7 +1335,7 @@
   "aiChat": {
     "title": "Guidon AI Assistant",
     "emptyTitle": "How can I help you with this project?",
-    "emptyHint": "I can create and update tasks, comment, and answer questions.",
+    "emptyHint": "I can find, create and update tasks, comment, and answer questions.",
     "placeholder": "Ask AI to do something...",
     "thinking": "Thinking...",
     "confirmDelete": "Confirm delete",
@@ -1381,5 +1460,26 @@
     "statusAria": "Status of {title}",
     "empty": "No open tasks in this project.",
     "emptyMine": "No open tasks assigned to you. Switch to All to see the rest."
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "On Mac use ⌘ instead of Ctrl.",
+    "save": "Save the form you're editing",
+    "search": "Search and jump anywhere",
+    "searchSlash": "Open search",
+    "sidebar": "Show or hide the sidebar",
+    "newTask": "New task (on the task board)",
+    "select": "Select several cards on the board (Shift-click for a range)",
+    "reorder": "Move the focused card up or down",
+    "close": "Close a dialog or clear the selection",
+    "help": "Show this list"
+  },
+  "datePicker": {
+    "placeholder": "Pick a date",
+    "clear": "Clear date",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "dialogLabel": "Choose a date"
   }
 }

@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { DatePicker, toDayValue } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { STATUS_CONFIG } from "./phase-status-config";
 import type { PhaseStatus, RoadmapPhase } from "@/types/task";
@@ -29,21 +30,11 @@ export function PhaseFormFields({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-start`}>{t("startDateLabel")}</Label>
-          <Input
-            id={`${idPrefix}-start`}
-            name="start_date"
-            type="date"
-            defaultValue={defaults?.start_date ?? ""}
-          />
+          <DatePicker id={`${idPrefix}-start`} name="start_date" defaultValue={toDayValue(defaults?.start_date)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-end`}>{t("endDateLabel")}</Label>
-          <Input
-            id={`${idPrefix}-end`}
-            name="planned_end_date"
-            type="date"
-            defaultValue={defaults?.planned_end_date ?? ""}
-          />
+          <DatePicker id={`${idPrefix}-end`} name="planned_end_date" defaultValue={toDayValue(defaults?.planned_end_date)} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">

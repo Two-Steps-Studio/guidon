@@ -495,3 +495,13 @@ button, a, [role="button"] {
   user-select: none;
   -webkit-user-select: none;
 }
+
+/* Text that sits straight on the app-wide Dither background
+   (components/layout/dither-background.tsx): a translucent page-coloured
+   panel with a blur, so body copy keeps its contrast over the wave while the
+   texture still shows around it. */
+@utility scrim {
+  background-color: color-mix(in oklab, var(--color-background) 82%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}

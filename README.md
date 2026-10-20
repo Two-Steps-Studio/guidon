@@ -1,9 +1,22 @@
 # Guidon
 
-Context-first project management for development teams. Guidon tracks not
+**Context-first project management for development teams.** Guidon tracks not
 just what a project's tasks are, but *why* — decisions, context relations,
 project memory, and the provenance behind them — for developer- and
 game-development-friendly teams.
+
+[Website](https://useguidon.com) ·
+[Self-hosting guide](./docs/self-hosting.md) ·
+[REST API & MCP for AI agents](https://useguidon.com/developers) ·
+[Plugins](https://useguidon.com/plugins)
+
+![Guidon task board](./public/landing/taskBoard-light.webp)
+
+- **Task board** per project — drag and drop, custom columns, labels, subtasks, bulk actions, *My tasks* across projects.
+- **Decisions, knowledge base, moodboard, roadmap, calendar** — the context behind the work, each module switchable per project.
+- **Built for AI agents** — REST API ([OpenAPI](https://useguidon.com/openapi.json)) and an MCP server, so Claude Code, Cursor, Codex and others can pick up, work and hand back tasks.
+- **Where you already work** — plugins for Unity, Unreal Engine, Godot, Blender, JetBrains and VS Code, a desktop app, a Discord bot and in-game bug reports.
+- **Self-hostable** — Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama).
 
 Guidon runs three ways: as a hosted Cloud product, self-hosted on your own
 infrastructure, or as a local development server. Self-hosting is a
@@ -56,7 +69,7 @@ npm run migrate:status   # optional: see what schema state your Supabase project
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:5803](http://localhost:5803).
 
 Available scripts (`package.json`):
 

@@ -1,14 +1,15 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, type LucideIcon } from "lucide-react";
+import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Server, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
-import { DemoBoardPreview } from "./demo-board-preview";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -41,6 +42,12 @@ const FEATURE_SECTIONS: FeatureSection[] = [
 // rarely, without making the whole marketing page dynamic-per-request.
 export const revalidate = 3600;
 
+// The Markdown twin agents get at the same URL (src/proxy.ts) is also
+// advertised in the head, for clients that look for it there.
+export const metadata: Metadata = {
+  alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
+};
+
 // Structured data so search engines can understand what Guidon is beyond the
 // visible copy - a SoftwareApplication listing is the schema Google expects
 // for a SaaS product page and is what backs eligibility for rich results.
@@ -53,6 +60,7 @@ const STRUCTURED_DATA = {
   description:
     "Context-first project management for development teams. Track tasks, decisions, sources, and project memory together.",
   url: "https://useguidon.com",
+  sameAs: [GITHUB_REPO_URL],
   offers: {
     "@type": "Offer",
     category: "Freemium",
@@ -82,9 +90,11 @@ export default async function Home() {
       dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
     />
     <main>
-    <div className="relative flex min-h-screen items-center overflow-hidden bg-background/55 dark:bg-background/35">
-      <div className="container relative z-10 mx-auto px-4 py-20">
-        <div className="max-w-5xl mx-auto text-center space-y-12">
+    {/* Not full-screen: the live board mockup below starts above the fold,
+        so the first screen shows the product, not only the pitch. */}
+    <div className="relative overflow-hidden bg-background/70 dark:bg-background/60">
+      <div className="container relative z-10 mx-auto px-4 pb-12 pt-14 md:pt-20">
+        <div className="max-w-5xl mx-auto text-center space-y-8">
           <div className="space-y-6">
             <Image
               src="/assets/guidon-wordmark.png"
@@ -92,7 +102,7 @@ export default async function Home() {
               width={769}
               height={285}
               priority
-              className="mx-auto h-24 w-auto dark:invert md:h-28"
+              className="mx-auto h-16 w-auto dark:invert md:h-20"
             />
             <div className="space-y-3">
               <h1
@@ -100,13 +110,13 @@ export default async function Home() {
               >
                 {t("heroTitle")}
               </h1>
-              <p className="text-xl text-text-muted dark:text-text-muted max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl text-text-secondary max-w-3xl mx-auto leading-relaxed">
                 {t("heroSubtitle")}
               </p>
             </div>
           </div>
 
-          <div className="pt-4">
+          <div>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-base px-8 py-6 h-auto" asChild>
                 <Link href="/auth/signup">{t("getStarted")}</Link>
@@ -120,37 +130,48 @@ export default async function Home() {
       </div>
     </div>
 
-    <section className="px-4 pb-20" aria-labelledby="board-preview-title">
-      {/* The board's column headers are <h3>s; this keeps the outline
-          sequential (h1 -> h2 -> h3) for screen readers and crawlers. */}
-      <h2 id="board-preview-title" className="sr-only">
-        {t("boardPreviewTitle")}
+    <section className="bg-gradient-to-b from-background/70 to-transparent px-4 pb-20 dark:from-background/60" aria-labelledby="hero-shot-title">
+      <h2 id="hero-shot-title" className="sr-only">
+        {t("heroShotTitle")}
       </h2>
-      <div className="container mx-auto max-w-6xl">
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
-          <div className="flex items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-danger/60" />
-            <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-            <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
-            <span className="ml-3 text-xs text-muted-foreground">useguidon.com/projects/demo/work</span>
+      {/* A laptop drawn in CSS around a real screenshot of the dashboard, one
+          per theme - regenerate with scripts/landing/capture.mjs. */}
+      <div className="mx-auto max-w-6xl">
+        <div className="relative mx-auto w-[88%] rounded-t-[1.1rem] rounded-b-sm border border-neutral-700 bg-neutral-900 p-[1.4%] pb-[1.8%] shadow-2xl dark:border-neutral-600">
+          <span className="absolute left-1/2 top-[0.55%] h-1 w-1 -translate-x-1/2 rounded-full bg-neutral-600 md:h-1.5 md:w-1.5" aria-hidden />
+          <div className="overflow-hidden rounded-[0.3rem] bg-background">
+            <Image
+              src="/landing/hero-dashboard-light.webp"
+              alt={t("heroShotAlt")}
+              width={2000}
+              height={1250}
+              priority
+              sizes="(min-width: 1152px) 1000px, 88vw"
+              className="h-auto w-full dark:hidden"
+            />
+            <Image
+              src="/landing/hero-dashboard-dark.webp"
+              alt={t("heroShotAlt")}
+              width={2000}
+              height={1250}
+              sizes="(min-width: 1152px) 1000px, 88vw"
+              className="hidden h-auto w-full dark:block"
+            />
           </div>
-          {/* Real KanbanBoard/TaskCard components with static sample data
-              (canEdit={false}) - not a screenshot, so it never drifts out of
-              sync with the actual board's look. See demo-board-data.ts. */}
-          <div className="max-h-[520px] overflow-y-auto p-4 sm:p-6">
-            <DemoBoardPreview />
-          </div>
+        </div>
+        <div className="relative mx-auto h-3 w-full rounded-b-2xl bg-gradient-to-b from-neutral-300 to-neutral-400 shadow-xl md:h-5 dark:from-neutral-600 dark:to-neutral-800" aria-hidden>
+          <div className="absolute left-1/2 top-0 h-1.5 w-[14%] -translate-x-1/2 rounded-b-lg bg-neutral-400 md:h-2 dark:bg-neutral-900/70" />
         </div>
       </div>
     </section>
 
     <section className="border-t border-border py-20">
       <div className="container mx-auto max-w-6xl px-4">
-        <div className="mb-16 text-center space-y-3">
+        <div className="scrim mx-auto mb-16 max-w-3xl space-y-3 rounded-2xl px-6 py-6 text-center">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>
             {t("featuresTitle")}
           </h2>
-          <p className="text-text-muted max-w-2xl mx-auto">
+          <p className="text-text-secondary max-w-2xl mx-auto">
             {t("featuresSubtitle")}
           </p>
         </div>
@@ -193,13 +214,13 @@ export default async function Home() {
                     />
                   </div>
                 </div>
-                <div className="flex-1 text-center md:text-left space-y-3">
+                <div className="scrim flex-1 space-y-3 rounded-2xl p-6 text-center md:text-left">
                   <div className="mx-auto md:mx-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="text-2xl font-semibold">{t(`features.${feature.key}.title`)}</h3>
                   <p className="text-text-secondary leading-relaxed">{t(`features.${feature.key}.description`)}</p>
-                  <ul className="inline-block text-left text-sm text-text-muted space-y-1.5 pt-1">
+                  <ul className="inline-block text-left text-sm text-text-secondary space-y-1.5 pt-1">
                     {bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2">
                         <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
@@ -216,6 +237,34 @@ export default async function Home() {
     </section>
 
     {plans.length > 0 && <PricingSection plans={plans} />}
+
+    <section className="border-t border-border py-20" aria-labelledby="self-host-title">
+      <div className="container mx-auto max-w-3xl px-4">
+        <div className="scrim space-y-4 rounded-2xl px-6 py-8 text-center">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+            <Server className="h-5 w-5 text-primary" />
+          </div>
+          <h2 id="self-host-title" className={`${displayFont.className} text-3xl md:text-4xl`}>
+            {t("selfHost.title")}
+          </h2>
+          <p className="mx-auto max-w-2xl text-text-secondary">{t("selfHost.description")}</p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <a href={SELF_HOSTING_DOCS_URL} target="_blank" rel="noopener noreferrer">
+                <Server className="mr-2 h-4 w-4" />
+                {t("selfHost.guide")}
+              </a>
+            </Button>
+            <Button variant="outline" asChild>
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                <Github className="mr-2 h-4 w-4" />
+                {t("selfHost.github")}
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
     </main>
     <SiteFooter />
     </>

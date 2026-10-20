@@ -86,6 +86,7 @@
     "upgradePlan": "Mejorar plan",
     "toggleSidebar": "Mostrar/ocultar barra lateral (Ctrl+B)",
     "dashboard": "Panel",
+    "myTasks": "Mis tareas",
     "projects": "Proyectos",
     "organizations": "Organizaciones",
     "plugins": "Plugins",
@@ -140,11 +141,6 @@
   },
   "dashboard": {
     "title": "Panel",
-    "welcomeBack": "Bienvenido de nuevo, {name}",
-    "totalProjects": "Proyectos totales",
-    "totalTasks": "Tareas totales",
-    "completedTasks": "Tareas completadas",
-    "decisions": "Decisiones",
     "yourProjects": "Tus proyectos",
     "viewAll": "Ver los {count}",
     "newProject": "Nuevo proyecto",
@@ -157,14 +153,23 @@
     "createFirstProjectTitle": "Crea tu primer proyecto",
     "createFirstProjectDesc": "Los proyectos viven dentro de una organización. Si aún no tienes una, la crearás en el siguiente paso.",
     "createFirstProjectButton": "Crea tu primer proyecto",
-    "openProject": "Abrir proyecto"
+    "greeting": "Hola, {name}",
+    "statMyOpen": "Tus tareas abiertas",
+    "statOverdue": "Vencidas",
+    "statInProgress": "En curso",
+    "statDoneThisWeek": "Hechas esta semana",
+    "upcomingTitle": "Lo próximo para ti",
+    "seeAll": "Ver todo",
+    "upcomingEmpty": "No tienes tareas asignadas ahora mismo.",
+    "activityTitle": "Actividad reciente",
+    "activityEmpty": "Todavía no ha pasado nada en tus proyectos.",
+    "progress": "{done} de {total} tareas hechas"
   },
   "landing": {
     "heroTitle": "Gestión de proyectos centrada en el contexto",
     "heroSubtitle": "Comprende por qué existe tu proyecto. Registra decisiones, fuentes y contexto junto con tus tareas.",
     "getStarted": "Empezar",
     "signIn": "Iniciar sesión",
-    "boardPreviewTitle": "Vista previa del tablero de tareas",
     "featuresTitle": "Todo lo que un proyecto necesita para explicarse a sí mismo",
     "featuresSubtitle": "Las tareas por sí solas no explican por qué un proyecto es como es. Guidon registra el contexto alrededor del trabajo, no solo el trabajo.",
     "features": {
@@ -251,10 +256,20 @@
       "membersCount": "{count, plural, one {# miembro} other {# miembros}}"
     },
     "footer": {
+      "developers": "Desarrolladores",
       "terms": "Términos del servicio",
       "privacy": "Política de privacidad",
-      "copyright": "© {year} Guidon"
-    }
+      "copyright": "© {year} Guidon",
+      "selfHosting": "Autoalojamiento"
+    },
+    "selfHost": {
+      "title": "Ejecuta Guidon en tu propio servidor",
+      "description": "La misma app en infraestructura que tú controlas: Docker Compose con un PostgreSQL normal, almacenamiento local de archivos e IA local opcional (Ollama). Sin límites de plan en tu propia instalación.",
+      "guide": "Guía de autoalojamiento",
+      "github": "Código en GitHub"
+    },
+    "heroShotTitle": "El panel de Guidon",
+    "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo próximo, actividad del equipo y de la IA, progreso de proyectos"
   },
   "organizations": {
     "common": {
@@ -498,7 +513,12 @@
       "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto, los permisos de agentes de IA y el acceso de agentes por API. Puedes cambiarlo más tarde en la configuración del proyecto.",
       "cancel": "Cancelar",
       "creating": "Creando...",
-      "createButton": "Crear"
+      "createButton": "Crear",
+      "sourceLabel": "Empezar desde",
+      "sourceBlank": "Proyecto vacío",
+      "sourceFile": "Desde archivo .guidon",
+      "fileHelp": "Un proyecto exportado desde Guidon (Ajustes del proyecto → Exportar). Suéltalo aquí o haz clic para elegirlo.",
+      "createFromFile": "Crear desde archivo"
     }
   },
   "work": {
@@ -676,7 +696,23 @@
     "failedToLoadRelatedTasks": "No se pudieron cargar las tareas relacionadas.",
     "failedToLinkTask": "No se pudo vincular la tarea.",
     "failedToRemoveRelation": "No se pudo eliminar el vínculo.",
-    "loadingRelatedTasks": "Cargando tareas relacionadas..."
+    "loadingRelatedTasks": "Cargando tareas relacionadas...",
+    "bulkToolbar": "Acciones en bloque",
+    "bulkSelected": "{count, plural, one {# seleccionada} other {# seleccionadas}}",
+    "bulkMove": "Mover",
+    "bulkAssign": "Asignar",
+    "bulkLabel": "Etiqueta",
+    "bulkLabelHint": "+ la añade a todas, − la quita de todas",
+    "bulkDelete": "Eliminar",
+    "bulkDeleteConfirm": "{count, plural, one {¿Eliminar # tarea?} other {¿Eliminar # tareas?}} También se eliminan sus subtareas, comentarios y adjuntos. No se puede deshacer.",
+    "bulkClear": "Quitar selección (Esc)",
+    "bulkDone": "{count, plural, =0 {Nada que cambiar} one {# tarea actualizada} other {# tareas actualizadas}}",
+    "bulkHint": "Ctrl/Cmd+clic para seleccionar varias tarjetas, Mayús+clic para un rango",
+    "cardSelected": "Seleccionada",
+    "attachmentsLabel": "Adjuntos",
+    "addAttachments": "Añadir archivos",
+    "removeAttachment": "Quitar {name}",
+    "createAttachmentsFailed": "{count, plural, one {No se pudo adjuntar # archivo} other {No se pudieron adjuntar # archivos}}; añádelos desde la tarea."
   },
   "roadmap": {
     "title": "Hoja de ruta",
@@ -907,6 +943,30 @@
     "invalidTitle": "Este enlace ha caducado",
     "invalidDescription": "El enlace no es válido o tiene más de 10 minutos. Ejecuta /guidon-link de nuevo en tu servidor de Discord para obtener uno nuevo.",
     "toProjects": "Ir a proyectos"
+  },
+  "discordLogin": {
+    "title": "Iniciar sesión en el bot de Discord de Guidon",
+    "description": "La cuenta de Discord {discord} quiere usar tu cuenta de Guidon ({account}). Los comandos /task que ejecutes en Discord actuarán como tú, con tu propio rol en cada proyecto.",
+    "unnamedAccount": "(desconocida)",
+    "phishingWarning": "Continúa solo si ejecutaste /guidon-login tú mismo en Discord. Puedes cerrar sesión cuando quieras con /guidon-logout o revocando la clave «Discord» en Perfil → Claves API.",
+    "confirm": "Iniciar sesión",
+    "done": "Listo: tu cuenta de Discord ha iniciado sesión. Puedes volver a Discord.",
+    "genericError": "No se pudo iniciar sesión con la cuenta de Discord. Inténtalo de nuevo.",
+    "invalidTitle": "Este enlace ha caducado",
+    "invalidDescription": "El enlace no es válido o tiene más de 10 minutos. Ejecuta /guidon-login en Discord de nuevo para obtener uno nuevo.",
+    "toDashboard": "Ir al panel"
+  },
+  "myTasks": {
+    "title": "Mis tareas",
+    "subtitle": "{count, plural, =0 {No tienes nada asignado} one {# tarea abierta asignada a ti} other {# tareas abiertas asignadas a ti}} en todos los proyectos",
+    "group_overdue": "Vencidas",
+    "group_today": "Hoy",
+    "group_week": "Próximos 7 días",
+    "group_later": "Más adelante",
+    "group_none": "Sin fecha",
+    "statusLabel": "Estado de {task}",
+    "emptyTitle": "No tienes nada asignado",
+    "emptyDescription": "Aquí aparecen las tareas que te asignen en cualquier proyecto."
   },
   "feedback": {
     "sendFeedback": "Enviar comentarios",
@@ -1223,17 +1283,36 @@
     "pluginsTitle": "Plugins para tus herramientas",
     "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code e IDE de JetBrains.",
     "pluginsButton": "Ver plugins",
-    "claudeCodeTitle": "Claude Code (MCP)",
-    "claudeCodeDescription": "Deja que Claude Code lea tus tareas, las haga y las actualice en Guidon. Un clic crea una clave con los permisos adecuados y te da el comando para pegar en tu terminal.",
-    "claudeCodeCreateButton": "Conectar Claude Code",
-    "claudeCodeCreating": "Creando clave...",
-    "claudeCodeError": "No se pudo crear la clave de conexión. Inténtalo de nuevo.",
-    "claudeCodeStep1": "1. Ejecuta esto en tu terminal (Claude Code debe estar instalado)",
-    "claudeCodeKeyOnce": "El comando contiene tu nueva clave y se muestra una sola vez. Cópialo ahora. Puedes revocar la clave en cualquier momento en Claves API, arriba.",
-    "claudeCodeStep2": "2. Comprueba que se conectó - Guidon debería aparecer como conectado",
-    "claudeCodeStep3": "3. Abre Claude Code y prueba este prompt",
-    "claudeCodeTryPrompt": "Lista mis proyectos de Guidon, muestra las tareas en To do y empieza por la de mayor prioridad.",
-    "claudeCodeCopy": "Copiar"
+    "mcpTitle": "Conectar una app de IA (MCP)",
+    "mcpDescription": "Deja que Claude, Cursor, Copilot, Codex, Gemini o cualquier otra app de IA compatible con MCP lea tus tareas, haga el trabajo y las actualice en Guidon. Elige tu app: un clic crea una clave con los permisos adecuados y te muestra exactamente qué pegar.",
+    "mcpClientLabel": "App de IA",
+    "mcpClientOther": "Otra app",
+    "mcpCreateButton": "Conectar {client}",
+    "mcpCreating": "Creando clave...",
+    "mcpError": "No se pudo crear la clave de conexión. Inténtalo de nuevo.",
+    "mcpKeyOnce": "La configuración de abajo contiene tu nueva clave y solo se muestra una vez. Cópiala ahora. Puedes revocar la clave cuando quieras en Claves API, arriba.",
+    "mcpCopy": "Copiar",
+    "mcpStep_claude-code": "Ejecuta esto en tu terminal (Claude Code debe estar instalado)",
+    "mcpVerify_claude-code": "Comprueba la conexión: Guidon debería aparecer como conectado",
+    "mcpStep_claude-desktop": "En Claude Desktop abre Ajustes → Developer → Edit Config, añade esto a claude_desktop_config.json (combínalo con los servidores que ya haya) y reinicia Claude. Requiere Node.js.",
+    "mcpStep_cursor": "Añade esto a ~/.cursor/mcp.json (o .cursor/mcp.json en un proyecto que no subas al repositorio), combinándolo con los servidores que ya haya",
+    "mcpStep_vscode": "En VS Code ejecuta \"MCP: Open User Configuration\" desde la paleta de comandos y añade esto (combínalo con los servidores que ya haya); las herramientas de Guidon aparecerán en el modo agente de Copilot",
+    "mcpStep_codex_env": "Guarda la clave en una variable de entorno: añade esto a tu perfil de shell (~/.bashrc, ~/.zshrc) y abre una terminal nueva",
+    "mcpStep_codex": "Añade esto a ~/.codex/config.toml",
+    "mcpStep_gemini": "Ejecuta esto en tu terminal (Gemini CLI debe estar instalado)",
+    "mcpStep_other_url": "URL del servidor (transporte: Streamable HTTP)",
+    "mcpStep_other_header": "Envía esta cabecera HTTP en cada petición",
+    "mcpTry": "Prueba este prompt en tu app de IA",
+    "mcpTryPrompt": "Muestra mis proyectos de Guidon, enséñame las tareas en To do y empieza por la de mayor prioridad.",
+    "backgroundMotionLabel": "Animación del fondo",
+    "backgroundMotion_auto": "Automática (ajuste del sistema)",
+    "backgroundMotion_on": "Activada",
+    "backgroundMotion_off": "Desactivada",
+    "backgroundMotionHelp": "Se guarda en este dispositivo. En automático la animación se detiene cuando el sistema pide reducir el movimiento (en Windows: Configuración → Accesibilidad → Efectos visuales → Efectos de animación).",
+    "soundsLabel": "Sonidos",
+    "sounds_on": "Activados",
+    "sounds_off": "Desactivados",
+    "soundsHelp": "Sonidos breves y suaves al completar o crear una tarea y al llegar una notificación. Se guarda en este dispositivo."
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",
@@ -1256,7 +1335,7 @@
   "aiChat": {
     "title": "Asistente de IA de Guidon",
     "emptyTitle": "¿Cómo puedo ayudarte con este proyecto?",
-    "emptyHint": "Puedo crear y editar tareas, comentar y responder preguntas.",
+    "emptyHint": "Puedo buscar, crear y editar tareas, comentar y responder preguntas.",
     "placeholder": "Pide algo a la IA...",
     "thinking": "Pensando...",
     "confirmDelete": "Confirmar eliminación",
@@ -1381,5 +1460,26 @@
     "statusAria": "Estado de {title}",
     "empty": "No hay tareas abiertas en este proyecto.",
     "emptyMine": "No tienes tareas abiertas asignadas. Cambia a Todas para ver el resto."
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "description": "En Mac usa ⌘ en lugar de Ctrl.",
+    "save": "Guardar el formulario que estás editando",
+    "search": "Buscar e ir a cualquier sitio",
+    "searchSlash": "Abrir la búsqueda",
+    "sidebar": "Mostrar u ocultar la barra lateral",
+    "newTask": "Nueva tarea (en el tablero)",
+    "select": "Seleccionar varias tarjetas del tablero (Mayús+clic: rango)",
+    "reorder": "Mover la tarjeta enfocada arriba o abajo",
+    "close": "Cerrar un diálogo o quitar la selección",
+    "help": "Mostrar esta lista"
+  },
+  "datePicker": {
+    "placeholder": "Elegir fecha",
+    "clear": "Borrar fecha",
+    "today": "Hoy",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "dialogLabel": "Elige una fecha"
   }
 }

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
-import { getLinkByGuild } from "../db.js";
+import { resolveCaller } from "../caller.js";
 import { listTasks, type GuidonTask } from "../guidon-api.js";
 
 export const data = new SlashCommandBuilder()
@@ -26,13 +26,10 @@ function formatTaskList(tasks: GuidonTask[]): string {
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   await interaction.deferReply();
 
-  const link = await getLinkByGuild(interaction.guildId!);
-  if (!link) {
-    await interaction.editReply("This server isn't linked to a Guidon project yet - ask an admin to run `/guidon-link` first.");
-    return;
-  }
+  const caller = await resolveCaller(interaction, { write: false });
+  if (!caller) return;
 
-  const result = await listTasks(link.apiKey, link.projectId);
+  const result = await listTasks(caller.apiKey, caller.link.projectId);
   if (!result.ok) {
     await interaction.editReply(`Could not load tasks: ${result.error}`);
     return;

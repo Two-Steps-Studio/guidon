@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
 import { GET as listProjects } from "@/app/api/v1/projects/route";
 import { GET as listTasks, POST as createTask } from "@/app/api/v1/projects/[projectId]/tasks/route";
 import { GET as getTask, PATCH as updateTask, DELETE as deleteTask } from "@/app/api/v1/tasks/[taskId]/route";
@@ -11,11 +10,12 @@ import { POST as commentOnTask } from "@/app/api/v1/tasks/[taskId]/comment/route
 import { GET as getTaskContext } from "@/app/api/v1/tasks/[taskId]/context/route";
 import { GET as listAttempts, POST as recordAttempt } from "@/app/api/v1/tasks/[taskId]/attempts/route";
 import {
-  ATTEMPT_FILES_MAX,
-  ATTEMPT_FILE_PATH_MAX,
-  ATTEMPT_PR_URL_MAX,
-  ATTEMPT_TEXT_MAX,
-} from "@/lib/api/attempt-limits";
+  commentFields,
+  createTaskFields,
+  recordAttemptFields,
+  setStatusFields,
+  updateTaskFields,
+} from "@/lib/api/v1-schemas";
 import type { Dispatch } from "./dispatch";
 
 /**
@@ -31,8 +31,6 @@ import type { Dispatch } from "./dispatch";
 
 const taskId = z.string().describe("The task's UUID.");
 const projectId = z.string().describe("The project's UUID (from list_projects).");
-const statusEnum = z.enum(TASK_STATUSES);
-const priorityEnum = z.enum(TASK_PRIORITIES);
 
 /** Drops keys whose value is undefined so omitted optional inputs are not sent. */
 function defined(fields: Record<string, unknown>): Record<string, unknown> {
@@ -86,15 +84,7 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
         "Create a task in a project. Only `title` is required. A top-level task defaults to the `backlog` " +
         "status and `medium` priority; when `parent_task_id` is set the new task is a subtask and always " +
         "starts as `todo`/`medium` (status and priority are ignored).",
-      inputSchema: {
-        project_id: projectId,
-        title: z.string().describe("Task title (required, non-empty)."),
-        description: z.string().optional().describe("Longer description of the task."),
-        priority: priorityEnum.optional().describe("Defaults to medium."),
-        status: statusEnum.optional().describe("Board column to create the task in. Defaults to backlog."),
-        due_date: z.string().optional().describe("Due date as an ISO 8601 date/time string."),
-        parent_task_id: z.string().optional().describe("UUID of a parent task in the same project, to create a subtask."),
-      },
+      inputSchema: { project_id: projectId, ...createTaskFields },
       annotations: { title: "Create task", ...WRITE },
     },
     ({ project_id, ...fields }) =>
@@ -112,14 +102,7 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
         "Edit a task's fields. Send only the fields to change; at least one is required. Status is not " +
         "changed here - use start_task, set_task_status or complete_task. `description` and `due_date` " +
         "can be cleared by passing null.",
-      inputSchema: {
-        task_id: taskId,
-        title: z.string().optional().describe("New title (must be non-empty)."),
-        description: z.string().nullable().optional().describe("New description; null or empty clears it."),
-        priority: priorityEnum.optional(),
-        due_date: z.string().nullable().optional().describe("ISO 8601 date/time; null or empty clears it."),
-        sort_order: z.number().optional().describe("Position of the card within its column."),
-      },
+      inputSchema: { task_id: taskId, ...updateTaskFields },
       annotations: { title: "Update task", ...WRITE, idempotentHint: true },
     },
     ({ task_id, ...fields }) =>
@@ -154,7 +137,7 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
       description:
         "Move a task to a board column. When the work is finished, set `review` so a human can check it - " +
         "prefer this over complete_task. The project may restrict which status changes AI keys are allowed to make.",
-      inputSchema: { task_id: taskId, status: statusEnum.describe("Target status.") },
+      inputSchema: { task_id: taskId, ...setStatusFields },
       annotations: { title: "Set task status", ...WRITE, idempotentHint: true },
     },
     ({ task_id, status }) =>
@@ -180,7 +163,7 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
       description:
         "Post a comment on a task (attributed to this API key). Use it to summarise what you did, link the " +
         "PR and flag anything a reviewer should look at, after record_attempt and before moving the task to review.",
-      inputSchema: { task_id: taskId, content: z.string().describe("Comment text (required, non-empty).") },
+      inputSchema: { task_id: taskId, ...commentFields },
       annotations: { title: "Comment on task", ...WRITE },
     },
     ({ task_id, content }) =>
@@ -220,21 +203,7 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
         "Record an attempt at a task so future work (human or AI) learns from it - record failed and partial " +
         "attempts too, with the reason. Call it when you finish (or give up on) an approach, then " +
         "comment_on_task and set_task_status `review`. Requires the `attempts:write` scope.",
-      inputSchema: {
-        task_id: taskId,
-        problem: z.string().max(ATTEMPT_TEXT_MAX).describe("What you were trying to solve (required)."),
-        approach: z.string().max(ATTEMPT_TEXT_MAX).describe("What you did or tried (required)."),
-        outcome: z.enum(["failed", "partial", "succeeded"]).describe("How it turned out."),
-        result: z.string().max(ATTEMPT_TEXT_MAX).optional().describe("What the result was."),
-        failure_reason: z.string().max(ATTEMPT_TEXT_MAX).optional().describe("Why it failed or only partly worked."),
-        agent: z.string().max(ATTEMPT_TEXT_MAX).optional().describe("Name of the agent/tool recording this attempt."),
-        related_pr_url: z.string().max(ATTEMPT_PR_URL_MAX).optional().describe("http(s) URL of the related pull request."),
-        files_changed: z
-          .array(z.string().max(ATTEMPT_FILE_PATH_MAX))
-          .max(ATTEMPT_FILES_MAX)
-          .optional()
-          .describe(`Paths of the files the attempt changed (at most ${ATTEMPT_FILES_MAX}).`),
-      },
+      inputSchema: { task_id: taskId, ...recordAttemptFields },
       annotations: { title: "Record attempt", ...WRITE },
     },
     ({ task_id, ...fields }) =>

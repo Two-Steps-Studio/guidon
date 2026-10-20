@@ -5,6 +5,7 @@ import { getLabelPresets } from "@/lib/data/label-presets";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { DangerZoneCard } from "./danger-zone-card";
 import { SettingsForm } from "./settings-form";
 import { AiPermissionsForm } from "./ai-permissions-form";
 import { BoardColumnsForm } from "./board-columns-form";
@@ -127,7 +128,6 @@ export default async function ProjectSettingsPage({
       <SettingsForm
         project={project}
         initialTechnologies={technologies.map((t) => t.name)}
-        isOwner={access.role === "owner"}
       />
       <ModulesForm
         projectId={projectId}
@@ -155,6 +155,7 @@ export default async function ProjectSettingsPage({
         <ReportWidgetCard projectId={projectId} siteUrl={SITE_URL} initialKeys={await listReportWidgetKeys(projectId)} />
       )}
       <ExportProjectCard projectId={projectId} />
+      {access.role === "owner" && <DangerZoneCard projectId={projectId} />}
     </div>
   );
 }

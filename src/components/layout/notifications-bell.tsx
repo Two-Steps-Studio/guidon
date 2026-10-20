@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { playSound } from "@/lib/sounds";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Bell } from "lucide-react";
@@ -40,11 +41,17 @@ export function NotificationsBell() {
   const locale = useLocale();
   const t = useTranslations("notifications");
 
+  // null until the first load, so already-unread notifications at page load
+  // don't chime - only ones that arrive while the page is open.
+  const lastUnread = useRef<number | null>(null);
+
   const refresh = useCallback(() => {
     startTransition(async () => {
       const result = await getNotifications();
       setNotifications(result.notifications);
       setUnreadCount(result.unreadCount);
+      if (lastUnread.current !== null && result.unreadCount > lastUnread.current) playSound("notify");
+      lastUnread.current = result.unreadCount;
     });
   }, []);
 

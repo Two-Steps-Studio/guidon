@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
-import { ImportProjectDialog } from "./import-project-dialog";
+import { ImportProjectDialog } from "../import-project-dialog";
 
 interface ProjectRow {
   id: string;

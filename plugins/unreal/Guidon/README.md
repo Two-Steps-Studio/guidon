@@ -58,7 +58,7 @@ due date and subtask progress (`✓ 2/5`).
    Troubleshooting below), or you build the plugin once from a C++ project
    and copy the result over.
 2. Open **Window → Guidon Tasks**. Check the **Base URL**
-   (`https://useguidon.com`, or `http://localhost:2137` for a local dev
+   (`https://useguidon.com`, or `http://localhost:5803` for a local dev
    server) and click **Log In**. Your browser opens the Guidon website. Click
    **Authorize** there and the tab picks up the key automatically.
 3. Pick a project in the toolbar. Then:

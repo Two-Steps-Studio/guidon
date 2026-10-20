@@ -5,12 +5,13 @@
  *
  *   1. node scripts/landing/seed-demo.mjs      (prints DEMO_PROJECT_ID / DEMO_TASK_ID)
  *   2. npm run build && npm run start
- *   3. BASE_URL=http://localhost:2137 DEMO_USER_EMAIL=... DEMO_USER_PASSWORD=... \
+ *   3. BASE_URL=http://localhost:5803 DEMO_USER_EMAIL=... DEMO_USER_PASSWORD=... \
  *      DEMO_PROJECT_ID=... DEMO_TASK_ID=... node scripts/landing/capture.mjs
  *
- * Re-run whenever a captured page's look changes noticeably - unlike the
- * live board preview at the top of the landing page, these are real
- * screenshots and don't follow UI changes on their own.
+ * Also captures the dashboard for the hero's laptop mockup
+ * (hero-dashboard-*.webp); the greeting uses the demo account's own name.
+ * Re-run whenever a captured page's look changes noticeably - these are
+ * real screenshots and don't follow UI changes on their own.
  *
  * Needs Playwright (not a project dependency - `npx playwright` or a global
  * install; set PLAYWRIGHT_MODULE / CHROMIUM_PATH if it isn't found) and uses
@@ -31,7 +32,7 @@ for (const key of ["DEMO_USER_EMAIL", "DEMO_USER_PASSWORD", "DEMO_PROJECT_ID", "
     process.exit(1);
   }
 }
-const BASE = env.BASE_URL ?? "http://localhost:2137";
+const BASE = env.BASE_URL ?? "http://localhost:5803";
 const P = `${BASE}/projects/${env.DEMO_PROJECT_ID}`;
 
 const { chromium } = await import(env.PLAYWRIGHT_MODULE ?? "playwright");
@@ -84,6 +85,16 @@ for (const theme of ["light", "dark"]) {
     await sharp(png).resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82 }).toFile(file);
     console.log(`  ${path.relative(process.cwd(), file)}`);
   }
+  // Hero: the whole app window (sidebar included) on the dashboard, shown
+  // inside the laptop frame at the top of the landing page.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
+  await page.addStyleTag({ content: ".fixed.bottom-6.right-6 { display: none !important; }" });
+  await page.waitForTimeout(600);
+  const hero = path.join(OUT, `hero-dashboard-${theme}.webp`);
+  await sharp(await page.screenshot()).resize({ width: 2000 }).webp({ quality: 82 }).toFile(hero);
+  console.log(`  ${path.relative(process.cwd(), hero)}`);
+
   await context.close();
 }
 

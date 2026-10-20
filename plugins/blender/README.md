@@ -27,7 +27,7 @@ you if it's off.
 
 1. In the 3D Viewport press **N** and open the **Guidon** tab. The same panels
    are also in the Text Editor's sidebar.
-2. Check the **URL** (default `https://useguidon.com`; `http://localhost:2137`
+2. Check the **URL** (default `https://useguidon.com`; `http://localhost:5803`
    for a local dev server) and click **Log In**. Your browser opens the real
    Guidon login and consent page. Click **Authorize** there and Blender picks
    up the key within a second or so.

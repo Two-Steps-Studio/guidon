@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm install
 cp .env.example .env.local   # fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, AUTH_SECRET
-npm run dev                  # dev server on :2137 (webpack, not Turbopack - see next.config.ts for why)
+npm run dev                  # dev server on :5803 (webpack, not Turbopack - see next.config.ts for why)
 npm run build                # production build
 npm run start                # start the production server (after build)
 npm run lint                 # ESLint (flat config, eslint.config.mjs)
@@ -34,7 +34,7 @@ cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin inst
 
 Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` from a `desktop-v<version>` tag - see `desktop/RELEASING.md`.
 
-`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 341) to stay the same or grow, never shrink.
+`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 357) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) — UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 

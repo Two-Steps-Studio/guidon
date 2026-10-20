@@ -100,3 +100,75 @@ export async function saveWebhookForGuild(guildId: string, webhookUrl: string): 
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
+
+/**
+ * The personal API key of a Discord user who signed in with /guidon-login
+ * (discord_user_links, migration 057), or null if they haven't. Commands run
+ * with it act as that Guidon user, with their own role in the project.
+ */
+export async function getUserApiKey(discordUserId: string): Promise<string | null> {
+  let encrypted: string | null = null;
+  if (hasDirectDatabase()) {
+    const { rows } = await pool().query(
+      "SELECT api_key_encrypted FROM discord_user_links WHERE discord_user_id = $1",
+      [discordUserId]
+    );
+    encrypted = rows[0]?.api_key_encrypted ?? null;
+  } else {
+    const { data, error } = await serviceClient()
+      .from("discord_user_links")
+      .select("api_key_encrypted")
+      .eq("discord_user_id", discordUserId)
+      .maybeSingle();
+    if (error) throw new Error(`Failed to read Discord user link: ${error.message}`);
+    encrypted = data?.api_key_encrypted ?? null;
+  }
+  return encrypted ? decryptSecret(encrypted, config.authSecret, API_KEY_INFO) : null;
+}
+
+/**
+ * /guidon-logout: revokes the personal key and removes the link. Returns
+ * whether there was one. Trusted service access (same as the reads above) -
+ * the Discord user id comes from Discord, so only the account itself can do it.
+ */
+export async function removeUserLink(discordUserId: string): Promise<boolean> {
+  if (hasDirectDatabase()) {
+    const client = await pool().connect();
+    try {
+      await client.query("BEGIN");
+      const { rows } = await client.query(
+        "DELETE FROM discord_user_links WHERE discord_user_id = $1 RETURNING api_key_id",
+        [discordUserId]
+      );
+      if (rows[0]?.api_key_id) {
+        await client.query("UPDATE api_keys SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL", [
+          rows[0].api_key_id,
+        ]);
+      }
+      await client.query("COMMIT");
+      return rows.length > 0;
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  const { data, error } = await serviceClient()
+    .from("discord_user_links")
+    .delete()
+    .eq("discord_user_id", discordUserId)
+    .select("api_key_id");
+  if (error) throw new Error(`Failed to remove Discord user link: ${error.message}`);
+  const keyId = data?.[0]?.api_key_id;
+  if (keyId) {
+    const { error: revokeError } = await serviceClient()
+      .from("api_keys")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("id", keyId)
+      .is("revoked_at", null);
+    if (revokeError) console.error(`guidon-logout: could not revoke API key ${keyId}:`, revokeError);
+  }
+  return (data?.length ?? 0) > 0;
+}

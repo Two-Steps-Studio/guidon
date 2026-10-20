@@ -13,9 +13,10 @@ export async function generateMetadata({
 
   try {
     const { project } = await requireProjectAccess(id);
-    return { title: `${project.name} - Guidon` };
+    // The root layout's title template appends " | Guidon".
+    return { title: project.name };
   } catch {
-    return { title: "Guidon" };
+    return { title: { absolute: "Guidon" } };
   }
 }
 

@@ -2,6 +2,8 @@ import { Client, Events, GatewayIntentBits, type ChatInputCommandInteraction } f
 import { config } from "./config.js";
 import * as link from "./commands/link.js";
 import * as webhook from "./commands/webhook.js";
+import * as login from "./commands/login.js";
+import * as logout from "./commands/logout.js";
 import * as taskList from "./commands/task-list.js";
 import * as taskStart from "./commands/task-start.js";
 import * as taskComplete from "./commands/task-complete.js";
@@ -10,6 +12,8 @@ import * as taskComment from "./commands/task-comment.js";
 const commands = new Map<string, { execute: (interaction: ChatInputCommandInteraction) => Promise<void> }>([
   [link.data.name, link],
   [webhook.data.name, webhook],
+  [login.data.name, login],
+  [logout.data.name, logout],
   [taskList.data.name, taskList],
   [taskStart.data.name, taskStart],
   [taskComplete.data.name, taskComplete],

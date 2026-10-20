@@ -5,13 +5,17 @@ import { getCurrentUser } from "@/lib/data/current-user";
 
 /**
  * Loading state for the top-level app pages (dashboard, projects,
- * organizations, profile). Those pages render their own AppShell, so a
+ * organizations, profile, ...). Those pages render their own AppShell, so a
  * bare skeleton would flash without the sidebar; this keeps the shell and
  * only skeletons the content. getCurrentUser() is request-cached, so the
  * page reuses the same lookup.
  */
-export async function AppPageLoading() {
+export async function AppPageLoading({ children }: { children?: React.ReactNode } = {}) {
   const [user, t] = await Promise.all([getCurrentUser(), getTranslations("common")]);
+
+  // A page-shaped skeleton (components/layout/page-skeletons.tsx) when the
+  // route passes one, else the generic block layout below.
+  if (children) return <AppShell user={user}>{children}</AppShell>;
 
   return (
     <AppShell user={user}>

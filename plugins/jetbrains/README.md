@@ -29,7 +29,7 @@ It targets 2024.3 (build 243) and newer, with no upper limit.
 
 1. Open the **Guidon** tool window (bottom bar, or **View → Tool Windows →
    Guidon**).
-2. Check the **Base URL** (`https://useguidon.com`, or `http://localhost:2137`
+2. Check the **Base URL** (`https://useguidon.com`, or `http://localhost:5803`
    for a local dev server) and click **Log In**. Your browser opens the Guidon
    website. Click **Authorize** and the tool window picks up the key
    automatically.

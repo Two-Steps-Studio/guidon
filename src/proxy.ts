@@ -2,7 +2,14 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/auth/session-cookie'
 import { assertValidSupabaseUrl } from '@/lib/supabase-env'
-import { MARKDOWN_CONTENT_TYPE, isSignedInSection, notFoundMarkdown, prefersMarkdown } from '@/lib/agent-web'
+import {
+  MARKDOWN_CONTENT_TYPE,
+  MARKDOWN_TWINS,
+  isAiAgentUserAgent,
+  isSignedInSection,
+  notFoundMarkdown,
+  prefersMarkdown,
+} from '@/lib/agent-web'
 import { SITE_URL } from '@/lib/site-url'
 import { safeRedirect } from '@/lib/auth/safe-redirect'
 
@@ -51,6 +58,14 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // guide (public/llms.txt) and the homepage as Markdown (src/app/index.md).
   '/llms.txt',
   '/index.md',
+  // Developer docs and machine-readable descriptions of the API (OpenAPI,
+  // pricing as Markdown) - public by nature: they describe the API, they
+  // grant nothing.
+  '/developers',
+  '/developers.md',
+  '/developers/llms.txt',
+  '/openapi.json',
+  '/pricing.md',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every
@@ -69,7 +84,8 @@ const EXACT_PUBLIC_ROUTES = new Set([
 // session. Signing in is still what the plugins themselves need to do anything.
 // /widget/ holds the embeddable bug-report widget (public/widget/report.js),
 // loaded by other people's websites with no Guidon session.
-const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/', '/widget/']
+// /.well-known/ holds discovery documents (RFC 9727 API catalog) for agents.
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/', '/widget/', '/.well-known/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])
@@ -80,6 +96,11 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 function redirectToLogin(request: NextRequest, pathname: string) {
+  // API callers can't follow a redirect to an HTML login form - they get a
+  // JSON 401 they can parse instead.
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
+  }
   const redirectUrl = new URL('/auth/login', request.url)
   // Keep the query string: pages like /discord/link carry a signed token in
   // it, and dropping it would send the user back to the page without it.
@@ -103,8 +124,9 @@ function redirectSignedIn(request: NextRequest) {
 /**
  * Answers that don't depend on who is asking, decided before any session
  * lookup (see src/lib/agent-web.ts):
- * - `/` with `Accept: text/markdown` is served the Markdown homepage, with
- *   `Vary: Accept`. The HTML page can't carry that header too - Next
+ * - `/` and other pages in MARKDOWN_TWINS are served their Markdown twin
+ *   for `Accept: text/markdown`, `?mode=agent` or an AI user agent, with
+ *   `Vary: Accept, User-Agent`. The HTML page can't carry that header too - Next
  *   overwrites `Vary` on every app-router page - but this runs before the
  *   page cache, so the two never share a cache entry here; browsers never
  *   ask for Markdown.
@@ -114,11 +136,19 @@ function redirectSignedIn(request: NextRequest) {
  *   get a Markdown 404 straight from here.
  */
 function agentResponse(request: NextRequest): NextResponse | null {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
   const wantsMarkdown = prefersMarkdown(request.headers.get('accept'))
 
-  if (pathname === '/') {
-    return wantsMarkdown ? NextResponse.rewrite(new URL('/index.md', request.url)) : null
+  // Pages with a Markdown twin hand it to agents: by Accept header, by
+  // `?mode=agent`, or to AI crawlers/assistants by User-Agent.
+  const twin = MARKDOWN_TWINS[pathname]
+  if (twin) {
+    const forAgent =
+      wantsMarkdown || searchParams.get('mode') === 'agent' || isAiAgentUserAgent(request.headers.get('user-agent'))
+    if (!forAgent) return null
+    const response = NextResponse.rewrite(new URL(twin, request.url))
+    response.headers.set('Vary', 'Accept, User-Agent')
+    return response
   }
   if (isPublicRoute(pathname) || isSignedInSection(pathname)) return null
 

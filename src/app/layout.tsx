@@ -59,9 +59,9 @@ export const metadata: Metadata = {
     "developer project management",
     "roadmap planning",
   ],
-  alternates: {
-    canonical: "/",
-  },
+  // No site-wide canonical: inherited by every page that doesn't set its
+  // own, it told search engines each of them was a copy of the homepage.
+  // Pages set theirs (page.tsx, legal/*, developers).
   appleWebApp: {
     capable: true,
     title: SITE_NAME,

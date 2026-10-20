@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -46,6 +47,7 @@ import { useLabelPresets } from "@/components/work/label-presets-context";
 import { DescriptionToolbar, descriptionKeyDown } from "@/components/work/description-toolbar";
 import { toggleTaskAtLine, type EditResult } from "@/lib/work/markdown-edit";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
+import { playSound } from "@/lib/sounds";
 
 interface TaskDetailDialogProps {
   projectId: string;
@@ -239,6 +241,7 @@ function TaskDetailDialogInner({
 
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToSaveTask"));
 
+      if (result.task.status === "done" && task.status !== "done") playSound("complete");
       onSaved(result.task);
       onClose();
     } catch (err) {
@@ -334,7 +337,7 @@ function TaskDetailDialogInner({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4" data-save-shortcut>
           {canEdit && (
             <div className="flex items-center gap-2">
               {canDelete && (
@@ -526,14 +529,11 @@ function TaskDetailDialogInner({
 
             <div className="space-y-2">
               <Label htmlFor="task-due">{t("dueDateLabel")}</Label>
-              <Input
+              <DatePicker
                 id="task-due"
-                type="date"
                 value={form.due_date}
                 disabled={!canEdit}
-                onChange={(event) =>
-                  setForm({ ...form, due_date: event.target.value })
-                }
+                onChange={(due_date) => setForm({ ...form, due_date })}
               />
             </div>
           </div>

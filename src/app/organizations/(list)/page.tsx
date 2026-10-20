@@ -10,7 +10,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { AppShell } from "@/components/layout/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CreateOrganizationDialog } from "./create-organization-dialog";
+import { CreateOrganizationDialog } from "../create-organization-dialog";
 
 interface OrganizationRow {
   id: string;

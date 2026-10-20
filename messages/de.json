@@ -86,6 +86,7 @@
     "upgradePlan": "Plan upgraden",
     "toggleSidebar": "Seitenleiste ein-/ausblenden (Strg+B)",
     "dashboard": "Dashboard",
+    "myTasks": "Meine Aufgaben",
     "projects": "Projekte",
     "organizations": "Organisationen",
     "plugins": "Plugins",
@@ -140,11 +141,6 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcomeBack": "Willkommen zurück, {name}",
-    "totalProjects": "Projekte gesamt",
-    "totalTasks": "Aufgaben gesamt",
-    "completedTasks": "Erledigte Aufgaben",
-    "decisions": "Entscheidungen",
     "yourProjects": "Deine Projekte",
     "viewAll": "Alle {count} anzeigen",
     "newProject": "Neues Projekt",
@@ -157,14 +153,23 @@
     "createFirstProjectTitle": "Erstelle dein erstes Projekt",
     "createFirstProjectDesc": "Projekte gehören zu einer Organisation. Falls du noch keine hast, erstellst du sie im nächsten Schritt.",
     "createFirstProjectButton": "Erstes Projekt erstellen",
-    "openProject": "Projekt öffnen"
+    "greeting": "Hallo, {name}",
+    "statMyOpen": "Deine offenen Aufgaben",
+    "statOverdue": "Überfällig",
+    "statInProgress": "In Arbeit",
+    "statDoneThisWeek": "Diese Woche erledigt",
+    "upcomingTitle": "Als Nächstes für dich",
+    "seeAll": "Alle",
+    "upcomingEmpty": "Dir ist gerade nichts zugewiesen.",
+    "activityTitle": "Letzte Aktivität",
+    "activityEmpty": "In deinen Projekten ist noch nichts passiert.",
+    "progress": "{done} von {total} Aufgaben erledigt"
   },
   "landing": {
     "heroTitle": "Kontextorientiertes Projektmanagement",
     "heroSubtitle": "Verstehe, warum dein Projekt existiert. Verfolge Entscheidungen, Quellen und Kontext zusammen mit deinen Aufgaben.",
     "getStarted": "Loslegen",
     "signIn": "Anmelden",
-    "boardPreviewTitle": "Vorschau des Task-Boards",
     "featuresTitle": "Alles, was ein Projekt braucht, um sich selbst zu erklären",
     "featuresSubtitle": "Aufgaben allein erklären nicht, warum ein Projekt so aussieht, wie es aussieht. Guidon verfolgt den Kontext rund um die Arbeit, nicht nur die Arbeit selbst.",
     "features": {
@@ -251,10 +256,20 @@
       "membersCount": "{count, plural, one {# Mitglied} other {# Mitglieder}}"
     },
     "footer": {
+      "developers": "Für Entwickler",
       "terms": "Nutzungsbedingungen",
       "privacy": "Datenschutzerklärung",
-      "copyright": "© {year} Guidon"
-    }
+      "copyright": "© {year} Guidon",
+      "selfHosting": "Self-Hosting"
+    },
+    "selfHost": {
+      "title": "Guidon auf dem eigenen Server betreiben",
+      "description": "Dieselbe App auf Infrastruktur, die du kontrollierst: Docker Compose mit einfachem PostgreSQL, lokalem Dateispeicher und optional lokaler KI (Ollama). Auf der eigenen Installation gibt es keine Planlimits.",
+      "guide": "Self-Hosting-Anleitung",
+      "github": "Code auf GitHub"
+    },
+    "heroShotTitle": "Das Guidon-Dashboard",
+    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt"
   },
   "organizations": {
     "common": {
@@ -498,7 +513,12 @@
       "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis, KI-Agentenberechtigungen und den API-Zugriff für Agenten. Du kannst das später in den Projekteinstellungen ändern.",
       "cancel": "Abbrechen",
       "creating": "Wird erstellt...",
-      "createButton": "Erstellen"
+      "createButton": "Erstellen",
+      "sourceLabel": "Beginnen mit",
+      "sourceBlank": "Leeres Projekt",
+      "sourceFile": "Aus .guidon-Datei",
+      "fileHelp": "Ein aus Guidon exportiertes Projekt (Projekteinstellungen → Export). Hier ablegen oder klicken, um es auszuwählen.",
+      "createFromFile": "Aus Datei erstellen"
     }
   },
   "work": {
@@ -676,7 +696,23 @@
     "failedToLoadRelatedTasks": "Verknüpfte Aufgaben konnten nicht geladen werden.",
     "failedToLinkTask": "Die Aufgabe konnte nicht verknüpft werden.",
     "failedToRemoveRelation": "Die Verknüpfung konnte nicht entfernt werden.",
-    "loadingRelatedTasks": "Verknüpfte Aufgaben werden geladen..."
+    "loadingRelatedTasks": "Verknüpfte Aufgaben werden geladen...",
+    "bulkToolbar": "Sammelaktionen",
+    "bulkSelected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
+    "bulkMove": "Verschieben",
+    "bulkAssign": "Zuweisen",
+    "bulkLabel": "Label",
+    "bulkLabelHint": "+ fügt allen hinzu, − entfernt bei allen",
+    "bulkDelete": "Löschen",
+    "bulkDeleteConfirm": "{count, plural, one {# Aufgabe löschen?} other {# Aufgaben löschen?}} Ihre Unteraufgaben, Kommentare und Anhänge werden ebenfalls gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "bulkClear": "Auswahl aufheben (Esc)",
+    "bulkDone": "{count, plural, =0 {Nichts zu ändern} one {# Aufgabe aktualisiert} other {# Aufgaben aktualisiert}}",
+    "bulkHint": "Strg/Cmd-Klick wählt mehrere Karten, Umschalt-Klick einen Bereich",
+    "cardSelected": "Ausgewählt",
+    "attachmentsLabel": "Anhänge",
+    "addAttachments": "Dateien hinzufügen",
+    "removeAttachment": "{name} entfernen",
+    "createAttachmentsFailed": "{count, plural, one {# Datei konnte} other {# Dateien konnten}} nicht angehängt werden - füge sie in der Aufgabe hinzu."
   },
   "roadmap": {
     "title": "Roadmap",
@@ -907,6 +943,30 @@
     "invalidTitle": "Dieser Link ist abgelaufen",
     "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-link auf deinem Discord-Server erneut aus, um einen neuen zu erhalten.",
     "toProjects": "Zu den Projekten"
+  },
+  "discordLogin": {
+    "title": "Beim Guidon-Discord-Bot anmelden",
+    "description": "Das Discord-Konto {discord} möchte dein Guidon-Konto ({account}) verwenden. Die /task-Befehle, die du auf Discord ausführst, handeln dann als du, mit deiner eigenen Rolle im jeweiligen Projekt.",
+    "unnamedAccount": "(unbekannt)",
+    "phishingWarning": "Fahre nur fort, wenn du /guidon-login selbst auf Discord ausgeführt hast. Abmelden kannst du dich jederzeit mit /guidon-logout oder indem du den Schlüssel „Discord“ unter Profil → API-Schlüssel widerrufst.",
+    "confirm": "Anmelden",
+    "done": "Fertig - dein Discord-Konto ist angemeldet. Du kannst zu Discord zurückkehren.",
+    "genericError": "Das Discord-Konto konnte nicht angemeldet werden. Bitte versuche es erneut.",
+    "invalidTitle": "Dieser Link ist abgelaufen",
+    "invalidDescription": "Der Link ist ungültig oder älter als 10 Minuten. Führe /guidon-login auf Discord erneut aus, um einen neuen zu erhalten.",
+    "toDashboard": "Zum Dashboard"
+  },
+  "myTasks": {
+    "title": "Meine Aufgaben",
+    "subtitle": "{count, plural, =0 {Dir ist nichts zugewiesen} one {# offene Aufgabe für dich} other {# offene Aufgaben für dich}} in allen Projekten",
+    "group_overdue": "Überfällig",
+    "group_today": "Heute",
+    "group_week": "Nächste 7 Tage",
+    "group_later": "Später",
+    "group_none": "Ohne Fälligkeit",
+    "statusLabel": "Status von {task}",
+    "emptyTitle": "Dir ist nichts zugewiesen",
+    "emptyDescription": "Aufgaben, die dir in einem Projekt zugewiesen sind, erscheinen hier."
   },
   "feedback": {
     "sendFeedback": "Feedback senden",
@@ -1223,17 +1283,36 @@
     "pluginsTitle": "Plugins für deine Tools",
     "pluginsDescription": "Unity, Unreal Engine, Godot, Blender, VS Code und JetBrains-IDEs.",
     "pluginsButton": "Plugins ansehen",
-    "claudeCodeTitle": "Claude Code (MCP)",
-    "claudeCodeDescription": "Lass Claude Code deine Aufgaben lesen, erledigen und in Guidon aktualisieren. Ein Klick erstellt einen Schlüssel mit den passenden Rechten und gibt dir den Befehl für dein Terminal.",
-    "claudeCodeCreateButton": "Claude Code verbinden",
-    "claudeCodeCreating": "Schlüssel wird erstellt...",
-    "claudeCodeError": "Der Verbindungsschlüssel konnte nicht erstellt werden. Versuche es erneut.",
-    "claudeCodeStep1": "1. Führe dies im Terminal aus (Claude Code muss installiert sein)",
-    "claudeCodeKeyOnce": "Der Befehl enthält deinen neuen Schlüssel und wird nur einmal angezeigt. Kopiere ihn jetzt. Du kannst den Schlüssel jederzeit oben unter API-Schlüssel widerrufen.",
-    "claudeCodeStep2": "2. Prüfe die Verbindung - Guidon sollte als verbunden aufgelistet sein",
-    "claudeCodeStep3": "3. Starte Claude Code und probiere diesen Prompt",
-    "claudeCodeTryPrompt": "Liste meine Guidon-Projekte auf, zeige die Aufgaben unter To do und beginne mit der wichtigsten.",
-    "claudeCodeCopy": "Kopieren"
+    "mcpTitle": "KI-App verbinden (MCP)",
+    "mcpDescription": "Lass Claude, Cursor, Copilot, Codex, Gemini oder jede andere MCP-fähige KI-App deine Aufgaben lesen, die Arbeit erledigen und sie in Guidon aktualisieren. Wähle deine App - ein Klick erstellt einen Schlüssel mit den passenden Rechten und zeigt genau, was du einfügen musst.",
+    "mcpClientLabel": "KI-App",
+    "mcpClientOther": "Andere App",
+    "mcpCreateButton": "{client} verbinden",
+    "mcpCreating": "Schlüssel wird erstellt...",
+    "mcpError": "Der Verbindungsschlüssel konnte nicht erstellt werden. Bitte erneut versuchen.",
+    "mcpKeyOnce": "Die Einrichtung unten enthält deinen neuen Schlüssel und wird nur einmal angezeigt. Kopiere sie jetzt. Du kannst den Schlüssel jederzeit oben unter API-Schlüssel widerrufen.",
+    "mcpCopy": "Kopieren",
+    "mcpStep_claude-code": "Führe das im Terminal aus (Claude Code muss installiert sein)",
+    "mcpVerify_claude-code": "Prüfe die Verbindung - Guidon sollte als verbunden aufgeführt sein",
+    "mcpStep_claude-desktop": "Öffne in Claude Desktop Einstellungen → Developer → Edit Config, füge das in claude_desktop_config.json ein (mit vorhandenen Servern zusammenführen) und starte Claude neu. Benötigt Node.js.",
+    "mcpStep_cursor": "Füge das in ~/.cursor/mcp.json ein (oder .cursor/mcp.json in einem Projekt, das du nicht committest) und führe es mit vorhandenen Servern zusammen",
+    "mcpStep_vscode": "Führe in VS Code über die Befehlspalette \"MCP: Open User Configuration\" aus und füge das ein (mit vorhandenen Servern zusammenführen); die Guidon-Tools erscheinen dann im Copilot-Agentenmodus",
+    "mcpStep_codex_env": "Lege den Schlüssel in einer Umgebungsvariable ab - füge das deinem Shell-Profil hinzu (~/.bashrc, ~/.zshrc) und öffne ein neues Terminal",
+    "mcpStep_codex": "Füge das in ~/.codex/config.toml ein",
+    "mcpStep_gemini": "Führe das im Terminal aus (Gemini CLI muss installiert sein)",
+    "mcpStep_other_url": "Server-URL (Transport: Streamable HTTP)",
+    "mcpStep_other_header": "Sende diesen HTTP-Header bei jeder Anfrage",
+    "mcpTry": "Probiere diesen Prompt in deiner KI-App",
+    "mcpTryPrompt": "Liste meine Guidon-Projekte auf, zeige die Aufgaben in To do und beginne mit der wichtigsten.",
+    "backgroundMotionLabel": "Hintergrundanimation",
+    "backgroundMotion_auto": "Automatisch (Systemeinstellung)",
+    "backgroundMotion_on": "An",
+    "backgroundMotion_off": "Aus",
+    "backgroundMotionHelp": "Wird auf diesem Gerät gespeichert. Automatisch hält die Animation an, wenn dein System reduzierte Bewegung verlangt (unter Windows: Einstellungen → Barrierefreiheit → Visuelle Effekte → Animationseffekte).",
+    "soundsLabel": "Töne",
+    "sounds_on": "An",
+    "sounds_off": "Aus",
+    "soundsHelp": "Kurze, leise Töne, wenn du eine Aufgabe erledigst oder erstellst und wenn eine Benachrichtigung eintrifft. Wird auf diesem Gerät gespeichert."
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",
@@ -1256,7 +1335,7 @@
   "aiChat": {
     "title": "Guidon-KI-Assistent",
     "emptyTitle": "Wie kann ich bei diesem Projekt helfen?",
-    "emptyHint": "Ich kann Aufgaben erstellen und bearbeiten, kommentieren und Fragen beantworten.",
+    "emptyHint": "Ich kann Aufgaben finden, erstellen und bearbeiten, kommentieren und Fragen beantworten.",
     "placeholder": "Bitte die KI um etwas...",
     "thinking": "Denke nach...",
     "confirmDelete": "Löschen bestätigen",
@@ -1381,5 +1460,26 @@
     "statusAria": "Status von {title}",
     "empty": "Keine offenen Aufgaben in diesem Projekt.",
     "emptyMine": "Dir sind keine offenen Aufgaben zugewiesen. Wechsle zu Alle, um den Rest zu sehen."
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "description": "Auf dem Mac ⌘ statt Strg verwenden.",
+    "save": "Das bearbeitete Formular speichern",
+    "search": "Suchen und überallhin springen",
+    "searchSlash": "Suche öffnen",
+    "sidebar": "Seitenleiste ein- oder ausblenden",
+    "newTask": "Neue Aufgabe (auf dem Board)",
+    "select": "Mehrere Karten auf dem Board auswählen (Umschalt-Klick: Bereich)",
+    "reorder": "Fokussierte Karte nach oben oder unten verschieben",
+    "close": "Dialog schließen oder Auswahl aufheben",
+    "help": "Diese Liste anzeigen"
+  },
+  "datePicker": {
+    "placeholder": "Datum wählen",
+    "clear": "Datum löschen",
+    "today": "Heute",
+    "previousMonth": "Vorheriger Monat",
+    "nextMonth": "Nächster Monat",
+    "dialogLabel": "Datum wählen"
   }
 }

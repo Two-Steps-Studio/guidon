@@ -2,6 +2,8 @@ import { REST, Routes } from "discord.js";
 import { config } from "./config.js";
 import * as link from "./commands/link.js";
 import * as webhook from "./commands/webhook.js";
+import * as login from "./commands/login.js";
+import * as logout from "./commands/logout.js";
 import * as taskList from "./commands/task-list.js";
 import * as taskStart from "./commands/task-start.js";
 import * as taskComplete from "./commands/task-complete.js";
@@ -23,6 +25,8 @@ import * as taskComment from "./commands/task-comment.js";
 const commands = [
   link.data.toJSON(),
   webhook.data.toJSON(),
+  login.data.toJSON(),
+  logout.data.toJSON(),
   taskList.data.toJSON(),
   taskStart.data.toJSON(),
   taskComplete.data.toJSON(),

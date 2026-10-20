@@ -167,12 +167,16 @@ claude mcp add --transport http guidon https://<your-guidon-host>/api/mcp \
   --header "Authorization: Bearer guidon_..."
 ```
 
-The easiest way is Profile → Integrations → **Connect Claude Code**: one click
-creates a key with the right scopes (`tasks:read tasks:write tasks:status
-comments:write attempts:write`) and shows the ready-to-paste command (it uses
-`--scope user`, so the key stays in the user's own Claude Code config instead
-of a `.mcp.json` that could be committed; `--scope project` would also make
-Claude Code ask for approval before using the server). You can also create the
+The easiest way is Profile → Integrations → **Connect an AI app (MCP)**: pick
+Claude Code, Claude Desktop, Cursor, VS Code (Copilot), Codex CLI, Gemini CLI
+or "Other app"; one click creates a key with the right scopes (`tasks:read
+tasks:write tasks:status comments:write attempts:write`), named after the app,
+and shows that app's own config with the key filled in
+(`src/app/profile/mcp-connect.tsx`). Claude Desktop only starts local servers,
+so its config runs `npx mcp-remote` as a bridge. The Claude Code command uses
+`--scope user`, so the key stays in the user's own config instead of a
+`.mcp.json` that could be committed; Codex reads the key from an environment
+variable rather than its config file. You can also create the
 key by hand under Profile → API Keys with the same scopes. Suggested workflow for the
 agent: `get_task_context` → `start_task` → work → `record_attempt` →
 `comment_on_task` → `set_task_status` to `review`; `complete_task` only works

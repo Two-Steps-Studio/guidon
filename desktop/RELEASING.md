@@ -1,8 +1,12 @@
 # Releasing Guidon Desktop
 
 Releases are built by GitHub Actions (`.github/workflows/desktop-release.yml`)
-on a Windows runner: signed NSIS/MSI installers, their `.sig` files and the
-updater's `latest.json`, attached to a **draft** GitHub Release. You review
+on a Windows and a Linux runner (one after the other): signed NSIS/MSI
+installers for Windows, AppImage/deb/rpm for Linux, their `.sig` files and the
+updater's `latest.json` (a `windows-x86_64` and a `linux-x86_64` entry),
+attached to a **draft** GitHub Release. On Linux, "Check for Updates" updates
+the AppImage; the deb/rpm are for installing through the package manager, and
+new versions of those are installed the same way. You review
 the draft and publish it; from that moment "Check for Updates" (and the
 startup check) in every installed copy offers the new version.
 

@@ -68,7 +68,7 @@ Supabase → **Authentication → URL Configuration**:
 - **Site URL** — adres produkcyjny aplikacji
 - **Redirect URLs** — dopisz oba:
   ```
-  http://localhost:3000/auth/callback
+  http://localhost:5803/auth/callback
   https://<domena-produkcyjna>/auth/callback
   ```
 
