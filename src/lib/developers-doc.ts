@@ -31,6 +31,8 @@ A key acts as the user who created it - their projects, their role in each proje
 | \`attempts:write\` | Record attempts |
 | \`reports:write\` | File bug reports only - for keys shipped inside a game or website; can't be combined with other scopes |
 
+For an agent that should work under its own name - assignable, with its own project role, signing its own comments - an organization owner or admin can create an **AI account** (Organization → AI accounts) and give it keys; it can't sign in, it only acts through those keys.
+
 Project admins decide what AI keys may do in their project (change status, complete tasks, comment); keys from Guidon's own editor plugins and the Discord bot act as a person and skip those AI limits.
 
 ## Quickstart

@@ -37,7 +37,8 @@
       "haveAccount": "Bereits ein Konto?",
       "signIn": "Anmelden",
       "confirmEmailMessage": "Bestätige dein Konto über den Link in deiner E-Mail",
-      "emailAlreadyRegistered": "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melde dich an."
+      "emailAlreadyRegistered": "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melde dich an.",
+      "invalidEmail": "Gib eine gültige E-Mail-Adresse ein."
     },
     "forgotPassword": {
       "title": "Passwort zurücksetzen",
@@ -307,7 +308,8 @@
       "noProjectsDescription": "Erstelle dein erstes Projekt, um mit der Arbeit zu beginnen",
       "createProject": "Projekt erstellen",
       "changeImage": "Organisationsbild ändern",
-      "changeImageAria": "Bild für {name} ändern"
+      "changeImageAria": "Bild für {name} ändern",
+      "aiAccounts": "KI-Konten"
     },
     "members": {
       "backToOrganization": "Zurück zur Organisation",
@@ -1078,7 +1080,7 @@
     "emptyTitle": "Noch keine Aktivität",
     "emptyDescription": "Änderungen an diesem Projekt werden hier angezeigt, sobald sie passieren.",
     "someone": "Jemand",
-    "action": "{action, select, project_created {Projekt erstellt} project_updated {Projekt aktualisiert} project_archived {Projekt archiviert} project_deleted {Projekt gelöscht} project_exported {Projekt exportiert} project_imported {Projekt importiert} task_created {Aufgabe erstellt} task_updated {Aufgabe aktualisiert} task_deleted {Aufgabe gelöscht} task_status_changed {Aufgabenstatus geändert} task_ai_started {KI hat Aufgabe gestartet} task_ai_commented {KI hat Kommentar hinzugefügt} task_ai_status_changed {KI hat Status geändert} task_ai_completed {KI hat Aufgabe abgeschlossen} phase_created {Phase erstellt} phase_updated {Phase aktualisiert} phase_deleted {Phase gelöscht} decision_created {Entscheidung erstellt} decision_updated {Entscheidung aktualisiert} decision_approved {Entscheidung genehmigt} decision_rejected {Entscheidung abgelehnt} relation_created {Beziehung erstellt} relation_deleted {Beziehung gelöscht} source_created {Quelle hinzugefügt} source_updated {Quelle aktualisiert} memory_created {Gedächtniseintrag erstellt} memory_updated {Gedächtniseintrag aktualisiert} memory_verified {Gedächtniseintrag verifiziert} file_uploaded {Datei hochgeladen} file_deleted {Datei gelöscht} github_repo_connected {GitHub-Repository verbunden} github_repo_disconnected {GitHub-Repository getrennt} github_file_committed {Datei zu GitHub committet} member_added {Mitglied hinzugefügt} member_removed {Mitglied entfernt} member_role_changed {Mitgliedsrolle geändert} invite_sent {Einladung gesendet} invite_accepted {Einladung angenommen} invite_rejected {Einladung abgelehnt} other {Aktivität}}"
+    "action": "{action, select, project_created {Projekt erstellt} project_updated {Projekt aktualisiert} project_archived {Projekt archiviert} project_deleted {Projekt gelöscht} project_exported {Projekt exportiert} project_imported {Projekt importiert} task_created {Aufgabe erstellt} task_updated {Aufgabe aktualisiert} task_deleted {Aufgabe gelöscht} task_status_changed {Aufgabenstatus geändert} task_ai_started {KI hat Aufgabe gestartet} task_ai_commented {KI hat Kommentar hinzugefügt} task_ai_status_changed {KI hat Status geändert} task_ai_completed {KI hat Aufgabe abgeschlossen} phase_created {Phase erstellt} phase_updated {Phase aktualisiert} phase_deleted {Phase gelöscht} decision_created {Entscheidung erstellt} decision_updated {Entscheidung aktualisiert} decision_approved {Entscheidung genehmigt} decision_rejected {Entscheidung abgelehnt} relation_created {Beziehung erstellt} relation_deleted {Beziehung gelöscht} source_created {Quelle hinzugefügt} source_updated {Quelle aktualisiert} memory_created {Gedächtniseintrag erstellt} memory_updated {Gedächtniseintrag aktualisiert} memory_verified {Gedächtniseintrag verifiziert} file_uploaded {Datei hochgeladen} file_deleted {Datei gelöscht} github_repo_connected {GitHub-Repository verbunden} github_repo_disconnected {GitHub-Repository getrennt} github_file_committed {Datei zu GitHub committet} member_added {Mitglied hinzugefügt} member_removed {Mitglied entfernt} member_role_changed {Mitgliedsrolle geändert} invite_sent {Einladung gesendet} invite_accepted {Einladung angenommen} invite_rejected {Einladung abgelehnt} ai_account_created {KI-Konto erstellt} ai_account_disabled {KI-Konto deaktiviert} other {Aktivität}}"
   },
   "files": {
     "title": "Dateien",
@@ -1481,5 +1483,52 @@
     "previousMonth": "Vorheriger Monat",
     "nextMonth": "Nächster Monat",
     "dialogLabel": "Datum wählen"
+  },
+  "aiAccounts": {
+    "title": "KI-Konten",
+    "subtitle": "Mitglieder für KI-Agenten in {org}: eigener Name, Projektrollen, Schlüssel und Verlauf.",
+    "managersOnly": "Nur Inhaber oder Admins der Organisation können KI-Konten verwalten.",
+    "responsibility": "Ein KI-Konto handelt selbstständig über API-/MCP-Schlüssel mit den Projektrollen, die du vergibst. Du bist verantwortlich für das, was Agenten damit tun - halte Schlüssel geheim und vergib die niedrigste ausreichende Rolle.",
+    "create": "Neues KI-Konto",
+    "emptyTitle": "Noch keine KI-Konten",
+    "emptyDescription": "Lege eines für einen Agenten an (Claude Code, Cursor, ein CI-Bot...), damit seine Arbeit seinen Namen trägt und ihm Aufgaben zugewiesen werden können.",
+    "disable": "Deaktivieren",
+    "disableConfirm": "{name} deaktivieren? Die Schlüssel funktionieren nicht mehr und es verlässt alle Projekte. Kommentare und Verlauf bleiben.",
+    "disabledToast": "KI-Konto deaktiviert",
+    "noProjects": "Noch in keinem Projekt - füge es auf der Mitglieder-Seite eines Projekts hinzu.",
+    "keys": "API-/MCP-Schlüssel",
+    "newKey": "Neuer Schlüssel",
+    "noKeys": "Noch keine Schlüssel - erstelle einen, um den Agenten zu verbinden.",
+    "lastUsed": "Zuletzt genutzt {date}",
+    "neverUsed": "Nie genutzt",
+    "revoke": "Widerrufen",
+    "disabledTitle": "Deaktiviert",
+    "createdToast": "KI-Konto erstellt",
+    "keyCreatedTitle": "Schlüssel für {name}",
+    "keyCreatedDescription": "Jetzt kopieren - er wird nicht erneut angezeigt. Der Agent handelt als dieses KI-Konto.",
+    "keyLabel": "API-Schlüssel",
+    "mcpLabel": "Claude Code (MCP)",
+    "otherClients": "Für Cursor, VS Code, Codex und andere denselben Schlüssel mit dem MCP-Server nutzen - Konfigurationen unter Profil → Integrationen und /developers.",
+    "done": "Fertig",
+    "copy": "Kopieren",
+    "defaultKeyName": "Agent-Schlüssel",
+    "failed": "Etwas ist schiefgelaufen.",
+    "createTitle": "Neues KI-Konto",
+    "createDescription": "Ein Mitglied für einen KI-Agenten. Es kann sich nicht anmelden - es arbeitet nur über die Schlüssel, die du dafür erstellst.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Claude – Backend",
+    "descriptionLabel": "Was es tut (optional)",
+    "descriptionPlaceholder": "Nimmt Backend-Bugs aus Todo und gibt sie zum Review zurück.",
+    "projectsLabel": "Projekte",
+    "noOrgProjects": "Diese Organisation hat noch keine Projekte.",
+    "projectsHelp": "Es tritt der Organisation als Mitglied bei und den gewählten Projekten mit der gewählten Rolle. Projekt-Admins können das später auf der Mitglieder-Seite ändern.",
+    "roleLabel": "Rolle in {project}",
+    "role_developer": "Entwickler",
+    "role_tester": "Tester",
+    "role_viewer": "Betrachter",
+    "acceptResponsibility": "Ich verstehe, dass dieses Konto selbstständig handelt und ich dafür verantwortlich bin.",
+    "cancel": "Abbrechen",
+    "createSubmit": "KI-Konto erstellen",
+    "aiBadge": "KI"
   }
 }

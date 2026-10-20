@@ -235,8 +235,9 @@ for (const [label, sql, expected] of [
   // (owner/admin organizacji).
   // 32->33 tabel, 114->118 polityk: project_label_presets (053), 4 polityki
   // 33->34 tabel, 118->122 polityk: discord_user_links (057), 4 polityki
-  ["34 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 34],
-  ["122 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 122],
+  // 34->35 tabel, 122->124 polityk: ai_accounts (059) + profiles_select_ai_accounts
+  ["35 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 35],
+  ["124 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 124],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -2879,6 +2880,52 @@ section("45. discord_user_links: osobiste logowanie do bota Discord (migracja 05
   await withUser(A, async () => {
     const del = await db.query("DELETE FROM public.discord_user_links WHERE discord_user_id = $1", [discordId]);
     check("uzytkownik usuwa swoj wiersz", del.rowCount === 1);
+  });
+}
+
+section("46. ai_accounts: konta AI, zapis tylko przez serwer (migracja 059)");
+
+{
+  const bot = "bbbbbbbb-0000-4000-8000-000000000059";
+  const outsider = "eeeeeeee-0000-4000-8000-000000000059";
+  await withServiceRole(async () => {
+    // Like createAiAccount: a user with no password and an .invalid address.
+    await db.query(
+      "INSERT INTO auth.users (id, email, email_confirmed_at, raw_user_meta_data) VALUES ($1, $2, now(), $3)",
+      [bot, "ai-test@agents.guidon.invalid", JSON.stringify({ full_name: "Claude - backend" })]
+    );
+    await db.query("INSERT INTO auth.users (id, email) VALUES ($1, 'outsider@example.test')", [outsider]);
+    const r = await db.query(
+      "INSERT INTO public.ai_accounts (user_id, organization_id, created_by) VALUES ($1, $2, $3) RETURNING user_id",
+      [bot, orgId, A]
+    );
+    check("serwer (service_role) zaklada konto AI", r.rows.length === 1);
+  });
+
+  await withUser(A, async () => {
+    const seen = await db.query("SELECT created_by FROM public.ai_accounts WHERE user_id = $1", [bot]);
+    check("czlonek organizacji widzi konto AI", seen.rows[0]?.created_by === A);
+    const profile = await db.query("SELECT full_name FROM public.profiles WHERE id = $1", [bot]);
+    check(
+      "profil konta AI widoczny bez czlonkostwa (historia po wylaczeniu)",
+      profile.rows[0]?.full_name === "Claude - backend",
+      JSON.stringify(profile.rows)
+    );
+    check(
+      "admin nie oznacza dowolnego profilu jako konto AI (brak INSERT)",
+      await throwsInSavepoint("INSERT INTO public.ai_accounts (user_id, organization_id) VALUES ($1, $2)", [B, orgId])
+    );
+    check(
+      "ani nie zmienia konta AI (brak UPDATE)",
+      await throwsInSavepoint("UPDATE public.ai_accounts SET created_by = $2 WHERE user_id = $1", [bot, B])
+    );
+  });
+
+  await withUser(outsider, async () => {
+    const seen = await db.query("SELECT 1 FROM public.ai_accounts WHERE user_id = $1", [bot]);
+    check("ktos spoza organizacji nie widzi konta AI", seen.rows.length === 0);
+    const profile = await db.query("SELECT 1 FROM public.profiles WHERE id = $1", [bot]);
+    check("ani jego profilu", profile.rows.length === 0);
   });
 }
 

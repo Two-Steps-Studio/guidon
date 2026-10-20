@@ -37,7 +37,8 @@
       "haveAccount": "¿Ya tienes una cuenta?",
       "signIn": "Inicia sesión",
       "confirmEmailMessage": "Revisa tu correo para confirmar tu cuenta",
-      "emailAlreadyRegistered": "Ya existe una cuenta con este correo electrónico. Inicia sesión."
+      "emailAlreadyRegistered": "Ya existe una cuenta con este correo electrónico. Inicia sesión.",
+      "invalidEmail": "Introduce un correo electrónico válido."
     },
     "forgotPassword": {
       "title": "Restablece tu contraseña",
@@ -307,7 +308,8 @@
       "noProjectsDescription": "Crea tu primer proyecto para empezar a gestionar el trabajo",
       "createProject": "Crear proyecto",
       "changeImage": "Cambiar imagen de la organización",
-      "changeImageAria": "Cambiar imagen de {name}"
+      "changeImageAria": "Cambiar imagen de {name}",
+      "aiAccounts": "Cuentas de IA"
     },
     "members": {
       "backToOrganization": "Volver a la organización",
@@ -1078,7 +1080,7 @@
     "emptyTitle": "Aún no hay actividad",
     "emptyDescription": "Los cambios en este proyecto aparecerán aquí en cuanto ocurran.",
     "someone": "Alguien",
-    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} other {Actividad}}"
+    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} ai_account_created {Cuenta de IA creada} ai_account_disabled {Cuenta de IA desactivada} other {Actividad}}"
   },
   "files": {
     "title": "Archivos",
@@ -1481,5 +1483,52 @@
     "previousMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "dialogLabel": "Elige una fecha"
+  },
+  "aiAccounts": {
+    "title": "Cuentas de IA",
+    "subtitle": "Miembros para agentes de IA en {org}: nombre propio, roles en proyectos, claves e historial.",
+    "managersOnly": "Solo el propietario o los administradores de la organización pueden gestionar cuentas de IA.",
+    "responsibility": "Una cuenta de IA actúa por sí sola mediante claves API/MCP, con los roles de proyecto que le des. Eres responsable de lo que hagan los agentes - guarda las claves en secreto y da el rol más bajo que baste.",
+    "create": "Nueva cuenta de IA",
+    "emptyTitle": "Aún no hay cuentas de IA",
+    "emptyDescription": "Crea una para un agente (Claude Code, Cursor, un bot de CI...) para que su trabajo lleve su nombre y se le puedan asignar tareas.",
+    "disable": "Desactivar",
+    "disableConfirm": "¿Desactivar {name}? Sus claves dejarán de funcionar y saldrá de todos los proyectos. Sus comentarios e historial se conservan.",
+    "disabledToast": "Cuenta de IA desactivada",
+    "noProjects": "Aún no está en ningún proyecto - añádela en la página Miembros de un proyecto.",
+    "keys": "Claves API / MCP",
+    "newKey": "Nueva clave",
+    "noKeys": "Sin claves - crea una para conectar el agente.",
+    "lastUsed": "Último uso {date}",
+    "neverUsed": "Sin usar",
+    "revoke": "Revocar",
+    "disabledTitle": "Desactivadas",
+    "createdToast": "Cuenta de IA creada",
+    "keyCreatedTitle": "Clave para {name}",
+    "keyCreatedDescription": "Cópiala ahora - no se volverá a mostrar. El agente actúa como esta cuenta de IA.",
+    "keyLabel": "Clave API",
+    "mcpLabel": "Claude Code (MCP)",
+    "otherClients": "Para Cursor, VS Code, Codex y otros usa la misma clave con el servidor MCP - configuraciones en Perfil → Integraciones y /developers.",
+    "done": "Listo",
+    "copy": "Copiar",
+    "defaultKeyName": "Clave del agente",
+    "failed": "Algo salió mal.",
+    "createTitle": "Nueva cuenta de IA",
+    "createDescription": "Un miembro para un agente de IA. No puede iniciar sesión - solo funciona con las claves que crees para él.",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Claude – backend",
+    "descriptionLabel": "Qué hace (opcional)",
+    "descriptionPlaceholder": "Toma bugs de backend de Por hacer y los devuelve a revisión.",
+    "projectsLabel": "Proyectos",
+    "noOrgProjects": "Esta organización aún no tiene proyectos.",
+    "projectsHelp": "Se une a la organización como miembro y a los proyectos elegidos con el rol que elijas. Los administradores de proyecto pueden cambiarlo después en Miembros.",
+    "roleLabel": "Rol en {project}",
+    "role_developer": "Desarrollador",
+    "role_tester": "Tester",
+    "role_viewer": "Observador",
+    "acceptResponsibility": "Entiendo que esta cuenta actúa por sí sola y que soy responsable de lo que hace.",
+    "cancel": "Cancelar",
+    "createSubmit": "Crear cuenta de IA",
+    "aiBadge": "IA"
   }
 }

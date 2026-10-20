@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, CreditCard, FolderKanban, Plus, Settings, Users } from "lucide-react";
+import { ArrowLeft, Bot, CreditCard, FolderKanban, Plus, Settings, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -80,6 +80,14 @@ export default async function OrganizationDetailPage({
                 {t("billing")}
               </Link>
             </Button>
+            {canManageOrg(access.role) && (
+              <Button variant="outline" asChild>
+                <Link href={`/organizations/${orgId}/ai-accounts`}>
+                  <Bot className="h-4 w-4 mr-2" />
+                  {t("aiAccounts")}
+                </Link>
+              </Button>
+            )}
             {canManageOrg(access.role) && (
               <Button variant="outline" asChild>
                 <Link href={`/organizations/${orgId}/settings`}>

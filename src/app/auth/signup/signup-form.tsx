@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
+import { isAiAccountEmail } from "@/lib/ai-account-email"
 
 /** `local` - see login-form.tsx's comment; same reasoning applies here. */
 export function SignupForm({ local }: { local: boolean }) {
@@ -35,6 +36,8 @@ export function SignupForm({ local }: { local: boolean }) {
     setError(null)
 
     try {
+      // Reserved for AI accounts; the Supabase path has no server step to refuse it.
+      if (isAiAccountEmail(email.trim())) throw new Error(t("invalidEmail"))
       if (local) {
         const result = await signupLocalAction(email, password, fullName)
         if ("error" in result) throw new Error(result.error)

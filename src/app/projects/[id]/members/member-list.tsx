@@ -18,6 +18,7 @@ import { type TaskCardMember } from "@/components/work/task-card";
 import { initialsFor } from "@/lib/people";
 import { addMember, changeMemberRole, removeMember, type MemberRow } from "./actions";
 import type { ProjectRole } from "@/types/project";
+import { isAiAccountEmail } from "@/lib/ai-account-email";
 
 const ASSIGNABLE_BY: Record<"owner" | "admin", ProjectRole[]> = {
   owner: ["owner", "admin", "developer", "tester", "viewer"],
@@ -73,6 +74,7 @@ export function MemberList({
   planName: string | null;
 }) {
   const t = useTranslations("members");
+  const tAi = useTranslations("aiAccounts");
   const [members, setMembers] = useState(initialMembers);
   const [candidates, setCandidates] = useState(initialCandidates);
   const [error, setError] = useState<string | null>(null);
@@ -214,11 +216,16 @@ export function MemberList({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">
                     {name}
+                    {isAiAccountEmail(member.profile?.email) && (
+                      <span className="ml-1.5 rounded border border-border px-1 py-px text-[10px] font-semibold text-muted-foreground">
+                        {tAi("aiBadge")}
+                      </span>
+                    )}
                     {member.user_id === currentUserId && (
                       <span className="ml-1.5 text-xs font-normal text-muted-foreground">{t("you")}</span>
                     )}
                   </p>
-                  {member.profile?.full_name && (
+                  {member.profile?.full_name && !isAiAccountEmail(member.profile.email) && (
                     <p className="truncate text-xs text-muted-foreground">{member.profile.email}</p>
                   )}
                 </div>

@@ -138,6 +138,8 @@ export type ActivityAction =
   | "github_repo_disconnected"
   | "github_file_committed"
   | "member_added"
+  | "ai_account_created"
+  | "ai_account_disabled"
   | "member_removed"
   | "member_role_changed"
   | "invite_sent"

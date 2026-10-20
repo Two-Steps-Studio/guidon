@@ -37,7 +37,8 @@
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
       "confirmEmailMessage": "Check your email to confirm your account",
-      "emailAlreadyRegistered": "An account with this email already exists. Log in instead."
+      "emailAlreadyRegistered": "An account with this email already exists. Log in instead.",
+      "invalidEmail": "Enter a valid email address."
     },
     "forgotPassword": {
       "title": "Reset your password",
@@ -307,7 +308,8 @@
       "noProjectsDescription": "Create your first project to start managing work",
       "createProject": "Create Project",
       "changeImage": "Change organization image",
-      "changeImageAria": "Change image for {name}"
+      "changeImageAria": "Change image for {name}",
+      "aiAccounts": "AI accounts"
     },
     "members": {
       "backToOrganization": "Back to organization",
@@ -1078,7 +1080,7 @@
     "emptyTitle": "No activity yet",
     "emptyDescription": "Changes on this project will show up here once they happen.",
     "someone": "Someone",
-    "action": "{action, select, project_created {Project created} project_updated {Project updated} project_archived {Project archived} project_deleted {Project deleted} project_exported {Project exported} project_imported {Project imported} task_created {Task created} task_updated {Task updated} task_deleted {Task deleted} task_status_changed {Task status changed} task_ai_started {AI started task} task_ai_commented {AI added comment} task_ai_status_changed {AI changed status} task_ai_completed {AI completed task} phase_created {Phase created} phase_updated {Phase updated} phase_deleted {Phase deleted} decision_created {Decision created} decision_updated {Decision updated} decision_approved {Decision approved} decision_rejected {Decision rejected} relation_created {Relation created} relation_deleted {Relation deleted} source_created {Source added} source_updated {Source updated} memory_created {Memory created} memory_updated {Memory updated} memory_verified {Memory verified} file_uploaded {File uploaded} file_deleted {File deleted} github_repo_connected {GitHub repository connected} github_repo_disconnected {GitHub repository disconnected} github_file_committed {File committed to GitHub} member_added {Member added} member_removed {Member removed} member_role_changed {Member role changed} invite_sent {Invite sent} invite_accepted {Invite accepted} invite_rejected {Invite rejected} other {Activity}}"
+    "action": "{action, select, project_created {Project created} project_updated {Project updated} project_archived {Project archived} project_deleted {Project deleted} project_exported {Project exported} project_imported {Project imported} task_created {Task created} task_updated {Task updated} task_deleted {Task deleted} task_status_changed {Task status changed} task_ai_started {AI started task} task_ai_commented {AI added comment} task_ai_status_changed {AI changed status} task_ai_completed {AI completed task} phase_created {Phase created} phase_updated {Phase updated} phase_deleted {Phase deleted} decision_created {Decision created} decision_updated {Decision updated} decision_approved {Decision approved} decision_rejected {Decision rejected} relation_created {Relation created} relation_deleted {Relation deleted} source_created {Source added} source_updated {Source updated} memory_created {Memory created} memory_updated {Memory updated} memory_verified {Memory verified} file_uploaded {File uploaded} file_deleted {File deleted} github_repo_connected {GitHub repository connected} github_repo_disconnected {GitHub repository disconnected} github_file_committed {File committed to GitHub} member_added {Member added} member_removed {Member removed} member_role_changed {Member role changed} invite_sent {Invite sent} invite_accepted {Invite accepted} invite_rejected {Invite rejected} ai_account_created {AI account created} ai_account_disabled {AI account disabled} other {Activity}}"
   },
   "files": {
     "title": "Files",
@@ -1481,5 +1483,52 @@
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "dialogLabel": "Choose a date"
+  },
+  "aiAccounts": {
+    "title": "AI accounts",
+    "subtitle": "Members for AI agents in {org}: their own name, project roles, keys and history.",
+    "managersOnly": "Only the organization's owner or admins can manage AI accounts.",
+    "responsibility": "An AI account acts on its own through API/MCP keys, with the project roles you give it. You are responsible for what agents do with them - keep keys secret and give the lowest role that does the job.",
+    "create": "New AI account",
+    "emptyTitle": "No AI accounts yet",
+    "emptyDescription": "Create one for an agent (Claude Code, Cursor, a CI bot...) so its work is signed with its own name and it can be assigned tasks.",
+    "disable": "Disable",
+    "disableConfirm": "Disable {name}? Its keys stop working and it leaves all projects. Its comments and history stay.",
+    "disabledToast": "AI account disabled",
+    "noProjects": "Not in any project yet - add it on a project's Members page.",
+    "keys": "API / MCP keys",
+    "newKey": "New key",
+    "noKeys": "No keys yet - create one to connect the agent.",
+    "lastUsed": "Last used {date}",
+    "neverUsed": "Never used",
+    "revoke": "Revoke",
+    "disabledTitle": "Disabled",
+    "createdToast": "AI account created",
+    "keyCreatedTitle": "Key for {name}",
+    "keyCreatedDescription": "Copy it now - it won't be shown again. The agent acts as this AI account.",
+    "keyLabel": "API key",
+    "mcpLabel": "Claude Code (MCP)",
+    "otherClients": "For Cursor, VS Code, Codex and others use the same key with the MCP server - see Profile → Integrations or /developers for each app's config.",
+    "done": "Done",
+    "copy": "Copy",
+    "defaultKeyName": "Agent key",
+    "failed": "Something went wrong.",
+    "createTitle": "New AI account",
+    "createDescription": "A member for an AI agent. It can't sign in - it works only through the keys you create for it.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Claude – backend",
+    "descriptionLabel": "What it does (optional)",
+    "descriptionPlaceholder": "Picks up backend bugs from Todo and hands them back for review.",
+    "projectsLabel": "Projects",
+    "noOrgProjects": "This organization has no projects yet.",
+    "projectsHelp": "It joins the organization as a member and the chosen projects with the role you pick. Project admins can change this later on the Members page.",
+    "roleLabel": "Role in {project}",
+    "role_developer": "Developer",
+    "role_tester": "Tester",
+    "role_viewer": "Viewer",
+    "acceptResponsibility": "I understand that this account acts on its own and that I'm responsible for what it does.",
+    "cancel": "Cancel",
+    "createSubmit": "Create AI account",
+    "aiBadge": "AI"
   }
 }

@@ -75,6 +75,8 @@ export const ACTION_CONFIG: Record<ActivityAction, ActionConfig> = {
   github_repo_disconnected: { label: "GitHub repository disconnected", icon: Unlink, color: "text-destructive" },
   github_file_committed: { label: "File committed to GitHub", icon: Github, color: "text-primary" },
   member_added: { label: "Member added", icon: UserPlus, color: "text-success" },
+  ai_account_created: { label: "AI account created", icon: Bot, color: "text-success" },
+  ai_account_disabled: { label: "AI account disabled", icon: Bot, color: "text-destructive" },
   member_removed: { label: "Member removed", icon: UserMinus, color: "text-destructive" },
   member_role_changed: { label: "Member role changed", icon: UserCog, color: "text-primary" },
   invite_sent: { label: "Invite sent", icon: UserPlus, color: "text-primary" },

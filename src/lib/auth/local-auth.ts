@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { withServiceRole } from "@/lib/db/session";
 import { SESSION_COOKIE_NAME, signSession, verifySessionCookie } from "@/lib/auth/session-cookie";
 import { isLockedOut, recordFailedAttempt, clearAttempts } from "@/lib/auth/rate-limit";
+import { isAiAccountEmail } from "@/lib/ai-account-email";
 
 /**
  * Self-hosted email/password authentication (TODO.md §8, §30).
@@ -77,6 +78,8 @@ export async function signUpLocal(
   const normalizedEmail = email.trim().toLowerCase();
 
   if (!EMAIL_RE.test(normalizedEmail)) return { error: "Enter a valid email address." };
+  // Reserved for AI accounts (lib/ai-account-email.ts) - lists show these as bots.
+  if (isAiAccountEmail(normalizedEmail)) return { error: "Enter a valid email address." };
   if (password.length < 6) return { error: "Password must be at least 6 characters." };
 
   return withServiceRole(async ({ query }) => {
