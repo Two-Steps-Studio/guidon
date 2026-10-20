@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Editor, { loader, type Monaco } from "@monaco-editor/react";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useEffectiveTheme } from "@/lib/use-effective-theme";
 
 /**
  * Loaded only via next/dynamic (see code-workspace.tsx), same reasoning as
@@ -36,20 +38,38 @@ interface CodeEditorProps {
 }
 
 export default function CodeEditor({ path, value, language, onChange, readOnly, onMonacoReady }: CodeEditorProps) {
-  const [dark, setDark] = useState(false);
+  // Follows the app's theme switcher live, not just the OS setting.
+  const dark = useEffectiveTheme() === "dark";
+  const [failed, setFailed] = useState(false);
 
-  // Match the editor's theme to the page, including live changes - same
-  // approach code-block.tsx uses for the read-only Prism preview.
+  // <Editor> only logs a failed load and keeps showing its spinner forever -
+  // e.g. when /monaco-editor/vs is missing from a build. Watch the same
+  // (shared, load-once) init promise so the user gets told instead.
   useEffect(() => {
-    const query = window.matchMedia("(prefers-color-scheme: dark)");
-    const explicit = document.documentElement.getAttribute("data-theme");
-
-    const resolve = () => setDark(explicit === "dark" || (explicit !== "light" && query.matches));
-
-    resolve();
-    query.addEventListener("change", resolve);
-    return () => query.removeEventListener("change", resolve);
+    const init = loader.init();
+    init.catch((error: { type?: string }) => {
+      if (error?.type !== "cancelation") setFailed(true);
+    });
+    return () => init.cancel();
   }, []);
+
+  if (failed) {
+    return (
+      <div role="alert" className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center text-sm">
+        <p className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          The code editor could not be loaded.
+        </p>
+        <p className="max-w-md text-muted-foreground">
+          Check your connection and reload. On a self-hosted server, the editor files under /monaco-editor are
+          missing - rebuild the app (npm run build copies them).
+        </p>
+        <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
+          Reload
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Editor
@@ -60,6 +80,11 @@ export default function CodeEditor({ path, value, language, onChange, readOnly, 
       theme={dark ? "vs-dark" : "vs"}
       onChange={(next) => onChange(next ?? "")}
       onMount={(_editor, monaco) => onMonacoReady?.(monaco)}
+      // Unmounting (switching to an image, a Markdown preview or a tab
+      // still loading) would otherwise dispose this tab's model and lose its
+      // undo history and cursor. code-workspace.tsx disposes models itself
+      // once their tab is closed.
+      keepCurrentModel
       options={{
         readOnly,
         minimap: { enabled: false },

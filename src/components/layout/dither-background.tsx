@@ -1,29 +1,8 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import Dither from "@/components/Dither";
 import { useBackgroundMotion } from "@/lib/background-motion";
-
-type EffectiveTheme = "light" | "dark";
-
-/** Same rule as globals.css's `@custom-variant dark`: an explicit
- *  data-theme wins, otherwise the OS preference. */
-function readTheme(): EffectiveTheme {
-  const explicit = document.documentElement.getAttribute("data-theme");
-  if (explicit === "dark" || explicit === "light") return explicit;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-function subscribeTheme(onChange: () => void) {
-  const observer = new MutationObserver(onChange);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
-  media.addEventListener("change", onChange);
-  return () => {
-    observer.disconnect();
-    media.removeEventListener("change", onChange);
-  };
-}
+import { useEffectiveTheme, type EffectiveTheme } from "@/lib/use-effective-theme";
 
 /**
  * The app-wide background: React Bits' Dither, one fixed WebGL canvas behind
@@ -33,7 +12,7 @@ function subscribeTheme(onChange: () => void) {
  * background instead of painting an opaque rectangle, so the light/dark
  * palette in globals.css still shows through. Wave colors mirror the previous
  * hand-rolled canvas (lighter blue reads on near-black, deeper blue on white)
- * and are re-read whenever the theme changes, via useSyncExternalStore -
+ * and are re-read whenever the theme changes, via useEffectiveTheme -
  * including the OS switch, which sets no data-theme attribute at all.
  *
  * Mouse interaction is off: the component listens on `window`, and a
@@ -43,7 +22,7 @@ function subscribeTheme(onChange: () => void) {
 const WAVE_COLOR: Record<EffectiveTheme, string> = { light: "#245bea", dark: "#8fb5ff" };
 
 export function DitherBackground() {
-  const theme = useSyncExternalStore<EffectiveTheme>(subscribeTheme, readTheme, () => "light");
+  const theme = useEffectiveTheme();
   // Profile -> Background animation; "auto" leaves the OS reduced-motion
   // setting in charge (Dither then shows a still frame).
   const motion = useBackgroundMotion();

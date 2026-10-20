@@ -328,6 +328,17 @@ export async function commitRepoFile(
     revalidatePath(`/projects/${projectId}/files`);
     return { error: null, sha: result.sha, commitUrl: result.commitUrl, pullRequestUrl: pr.url };
   } catch (error) {
+    // 409 "<path> does not match <sha>": the file on that branch isn't the
+    // version the editor opened - changed on GitHub since, or a different
+    // branch than the one it was loaded from.
+    if (error instanceof GithubApiError && error.status === 409) {
+      return {
+        error: `${path} on "${options.branch}" isn't the version you opened - it changed on GitHub, or differs on that branch. Copy your changes, close and reopen the file, then commit again.`,
+        sha: null,
+        commitUrl: null,
+        pullRequestUrl: null,
+      };
+    }
     return { error: apiErrorMessage(error), sha: null, commitUrl: null, pullRequestUrl: null };
   }
 }

@@ -5,7 +5,7 @@
   "scripts": {
     "predev": "node scripts/build-plugin-zips.mjs",
     "dev": "next dev --webpack -p 5803",
-    "prebuild": "node scripts/build-plugin-zips.mjs",
+    "prebuild": "node scripts/build-plugin-zips.mjs && node scripts/copy-monaco-assets.mjs",
     "build": "next build",
     "start": "next start -p 5803",
     "lint": "eslint",

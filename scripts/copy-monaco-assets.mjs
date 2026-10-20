@@ -5,7 +5,9 @@
  * self-hosted mode (docs/self-hosting.md) must work fully offline, and a
  * jsdelivr/unpkg dependency at runtime would break that.
  *
- * Run automatically via the "postinstall" npm script; safe to re-run any time
+ * Run automatically via the "postinstall" and "prebuild" npm scripts - the
+ * latter because the Docker image installs with --ignore-scripts, and without
+ * these files the editor never loads in production. Safe to re-run any time
  * (it just overwrites the destination).
  */
 
