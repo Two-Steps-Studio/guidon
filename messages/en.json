@@ -455,7 +455,12 @@
       "createOrganization": "Create Organization",
       "createProject": "Create Project",
       "newProject": "New Project",
-      "openProject": "Open project"
+      "openProject": "Open project",
+      "pin": "Pin to top",
+      "unpin": "Unpin",
+      "pinLimit": "You can pin up to 3 projects - unpin one first.",
+      "pinFailed": "Couldn't change the pin. Try again.",
+      "pinnedCount": "{count} pinned"
     },
     "detail": {
       "noDescription": "No description",

@@ -3177,5 +3177,21 @@ section("51. cudze projekty niewidoczne, takze 'public' (migracja 064)");
   await withServiceRole(() => db.query("UPDATE public.projects SET visibility = 'private' WHERE id = $1", [projectId]));
 }
 
+section("52. przypiete projekty (migracja 065)");
+
+{
+  await withUser(A, async () => {
+    const set = await db.query("UPDATE public.profiles SET pinned_project_ids = ARRAY[$2::uuid] WHERE id = $1 RETURNING pinned_project_ids", [A, projectId]);
+    check("wlasciciel profilu przypina projekt", set.rows[0]?.pinned_project_ids?.length === 1);
+    check(
+      "najwyzej 3 przypiete",
+      await throwsInSavepoint("UPDATE public.profiles SET pinned_project_ids = ARRAY[gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid()] WHERE id = $1", [A])
+    );
+    const other = await db.query("UPDATE public.profiles SET pinned_project_ids = '{}' WHERE id = $1 RETURNING id", [B]);
+    check("nie zmienia przypiec kogos innego", other.rows.length === 0);
+    await db.query("UPDATE public.profiles SET pinned_project_ids = '{}' WHERE id = $1", [A]);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

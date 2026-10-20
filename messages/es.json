@@ -455,7 +455,12 @@
       "createOrganization": "Crear organización",
       "createProject": "Crear proyecto",
       "newProject": "Nuevo proyecto",
-      "openProject": "Abrir proyecto"
+      "openProject": "Abrir proyecto",
+      "pin": "Fijar arriba",
+      "unpin": "Desfijar",
+      "pinLimit": "Puedes fijar hasta 3 proyectos: desfija uno primero.",
+      "pinFailed": "No se pudo cambiar. Inténtalo de nuevo.",
+      "pinnedCount": "{count} fijados"
     },
     "detail": {
       "noDescription": "Sin descripción",

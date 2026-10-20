@@ -455,7 +455,12 @@
       "createOrganization": "Organisation erstellen",
       "createProject": "Projekt erstellen",
       "newProject": "Neues Projekt",
-      "openProject": "Projekt öffnen"
+      "openProject": "Projekt öffnen",
+      "pin": "Oben anheften",
+      "unpin": "Lösen",
+      "pinLimit": "Du kannst höchstens 3 Projekte anheften - löse zuerst eins.",
+      "pinFailed": "Anheften fehlgeschlagen. Versuche es erneut.",
+      "pinnedCount": "{count} angeheftet"
     },
     "detail": {
       "noDescription": "Keine Beschreibung",

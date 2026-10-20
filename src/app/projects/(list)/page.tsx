@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Plus, ArrowRight, FolderKanban, Building2 } from "lucide-react";
+import { Plus, ArrowRight, FolderKanban, Building2, Pin } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -13,6 +13,8 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
 import { ImportProjectDialog } from "../import-project-dialog";
+import { PinProjectButton } from "@/components/projects/pin-project-button";
+import { getPinnedProjectIds, pinnedFirst } from "@/lib/data/pinned-projects";
 
 interface ProjectRow {
   id: string;
@@ -113,6 +115,12 @@ export default async function ProjectsPage() {
     projects = (projectResult.data ?? []) as unknown as ProjectRow[];
   }
 
+  // Up to 3 pinned projects (migration 065) lead the list, in pinning order.
+  const pinnedIds = await getPinnedProjectIds(user.id);
+  const pinnedSet = new Set(pinnedIds);
+  projects = pinnedFirst(projects, pinnedIds);
+  const pinnedCount = projects.filter((project) => pinnedSet.has(project.id)).length;
+
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
@@ -175,6 +183,12 @@ export default async function ProjectsPage() {
 
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">{t("allProjects")}</h2>
+          {pinnedCount > 0 && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Pin className="h-3.5 w-3.5" />
+              {t("pinnedCount", { count: pinnedCount })}
+            </span>
+          )}
         </div>
 
         {projects.length === 0 ? (
@@ -207,8 +221,14 @@ export default async function ProjectsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.id}`}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <Link key={project.id} href={`/projects/${project.id}`} className="group">
+                <Card
+                  className={
+                    pinnedSet.has(project.id)
+                      ? "h-full cursor-pointer border-primary/40 transition-shadow hover:shadow-lg"
+                      : "h-full cursor-pointer transition-shadow hover:shadow-lg"
+                  }
+                >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Avatar className="h-5 w-5 rounded-sm">
@@ -217,7 +237,8 @@ export default async function ProjectsPage() {
                           <FolderKanban className="h-5 w-5" />
                         </AvatarFallback>
                       </Avatar>
-                      {project.name}
+                      <span className="min-w-0 truncate">{project.name}</span>
+                      <PinProjectButton projectId={project.id} pinned={pinnedSet.has(project.id)} />
                     </CardTitle>
                     <CardDescription>{project.organizations?.name}</CardDescription>
                   </CardHeader>

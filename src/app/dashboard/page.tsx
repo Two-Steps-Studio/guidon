@@ -21,6 +21,7 @@ import {
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { dataClient } from "@/lib/data-client";
+import { getPinnedProjectIds, pinnedFirst } from "@/lib/data/pinned-projects";
 import { displayName } from "@/lib/people";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
 import { DUE_STATE_CLASSES, dueState, formatDueDate, priorityDot, resolvePriorities } from "@/lib/work/task-board";
@@ -95,7 +96,8 @@ async function loadDashboard(userId: string) {
     if (result.error) throw new Error(`Failed to load the dashboard: ${result.error.message}`);
   }
 
-  const projects = projectsRes.data;
+  // Pinned projects (migration 065) take the first cards, whatever was updated last.
+  const projects = pinnedFirst(projectsRes.data, await getPinnedProjectIds(userId));
   const projectIds = projects.map((project) => project.id);
   const cardProjects = projects.slice(0, PROJECT_CARDS);
 
