@@ -3,7 +3,8 @@
 // ============================================
 
 export type ProjectStatus = "active" | "archived" | "deleted";
-export type ProjectVisibility = "private" | "organization" | "public";
+/** Migration 067: 'public' is no longer allowed. */
+export type ProjectVisibility = "private" | "organization";
 export type ProjectType = "game" | "website" | "mobile_app" | "api" | "tool" | "other";
 
 export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
