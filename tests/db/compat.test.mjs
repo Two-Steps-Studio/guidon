@@ -3157,5 +3157,25 @@ section("50. zadania cykliczne (migracja 063)");
   });
 }
 
+section("51. cudze projekty niewidoczne, takze 'public' (migracja 065)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000065";
+  await withServiceRole(() => db.query("UPDATE public.projects SET visibility = 'public' WHERE id = $1", [projectId]));
+  await withUser(stranger, async () => {
+    const p = await db.query("SELECT id FROM public.projects WHERE id = $1", [projectId]);
+    check("obcy nie widzi projektu 'public'", p.rows.length === 0, p.rows.length);
+    const t = await db.query("SELECT id FROM public.tasks WHERE project_id = $1", [projectId]);
+    check("ani jego zadan", t.rows.length === 0, t.rows.length);
+    const all = await db.query("SELECT id FROM public.projects");
+    check("lista projektow obcego jest pusta", all.rows.length === 0, all.rows.length);
+  });
+  await withUser(A, async () => {
+    const p = await db.query("SELECT id FROM public.projects WHERE id = $1", [projectId]);
+    check("czlonek dalej widzi swoj projekt", p.rows.length === 1);
+  });
+  await withServiceRole(() => db.query("UPDATE public.projects SET visibility = 'private' WHERE id = $1", [projectId]));
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
