@@ -10,7 +10,10 @@
  * works too, because `#` isn't allowed in some branch-naming schemes.
  */
 
+/** A built-in status; tasks can also sit in a project's own columns (migration 060) - see shouldMove. */
 export type TaskStatus = "backlog" | "todo" | "in_progress" | "ai_working" | "review" | "done";
+
+const BUILTIN: readonly string[] = ["backlog", "todo", "in_progress", "ai_working", "review", "done"];
 
 export interface TaskAction {
   /** 8-char id prefix or a full uuid, lowercase. */
@@ -27,6 +30,20 @@ const REF_PATTERN = /guidon[#-]([0-9a-f]{8}(?:-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 const NOT_DONE: TaskStatus[] = ["backlog", "todo", "in_progress", "ai_working", "review"];
 const NOT_STARTED: TaskStatus[] = ["backlog", "todo"];
+
+/**
+ * Whether an action moves a task that is currently in `status`. A built-in
+ * status must be one of the action's `fromStatuses`. A project's own
+ * column counts as "not done yet" (so a merged "Closes guidon#x" still
+ * finishes a task waiting in, say, QA) unless that column is a done one -
+ * but never as "not started": an opened PR doesn't pull a task back out of
+ * a custom column.
+ */
+export function shouldMove(action: TaskAction, status: string, isDone: boolean): boolean {
+  if (!action.targetStatus || action.targetStatus === status) return false;
+  if (BUILTIN.includes(status)) return action.fromStatuses.includes(status as TaskStatus);
+  return !isDone && action.fromStatuses.includes("review");
+}
 
 /** Every task reference in the given texts, deduplicated, lowercase. */
 export function extractTaskRefs(...texts: Array<string | null | undefined>): string[] {

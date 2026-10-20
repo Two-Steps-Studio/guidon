@@ -2,6 +2,8 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { GET as listProjects } from "@/app/api/v1/projects/route";
 import { GET as listTasks, POST as createTask } from "@/app/api/v1/projects/[projectId]/tasks/route";
+import { GET as listColumns } from "@/app/api/v1/projects/[projectId]/columns/route";
+import { GET as listPriorities } from "@/app/api/v1/projects/[projectId]/priorities/route";
 import { GET as getTask, PATCH as updateTask, DELETE as deleteTask } from "@/app/api/v1/tasks/[taskId]/route";
 import { POST as startTask } from "@/app/api/v1/tasks/[taskId]/start/route";
 import { PATCH as setTaskStatus } from "@/app/api/v1/tasks/[taskId]/status/route";
@@ -63,6 +65,32 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     },
     ({ project_id }) =>
       dispatch(listTasks, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/tasks` })
+  );
+
+  server.registerTool(
+    "list_columns",
+    {
+      description:
+        "The project's board columns in order: status key, label, and is_done (tasks there count as finished). " +
+        "Projects can rename the built-in columns and add their own - use these keys for set_task_status and create_task.",
+      inputSchema: { project_id: projectId },
+      annotations: { title: "List board columns", ...READ_ONLY },
+    },
+    ({ project_id }) =>
+      dispatch(listColumns, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/columns` })
+  );
+
+  server.registerTool(
+    "list_priorities",
+    {
+      description:
+        "The project's task priorities, most important first (key and label). Projects can add their own - " +
+        "use these keys for create_task and update_task.",
+      inputSchema: { project_id: projectId },
+      annotations: { title: "List priorities", ...READ_ONLY },
+    },
+    ({ project_id }) =>
+      dispatch(listPriorities, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/priorities` })
   );
 
   server.registerTool(

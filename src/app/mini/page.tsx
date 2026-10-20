@@ -14,7 +14,8 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isValidUuid } from "@/lib/api/validate-id";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
-import { compareTasks, normalizeTaskStatus, resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
+import { normalizeTaskStatus, resolveBoardColumns, resolvePriorities, taskComparator } from "@/lib/work/task-board";
+import { getWorkflowOverrides } from "@/lib/data/workflow";
 import type { TaskCardMember } from "@/components/work/task-card";
 import type { Task } from "@/types/task";
 import { MINI_FILTER_COOKIE, MINI_PROJECT_COOKIE } from "./mini-cookies";
@@ -87,10 +88,10 @@ export default async function MiniTasksPage({ searchParams }: { searchParams: Pr
 
   let tasks: Task[];
   let members: TaskCardMember[];
-  let columnOverrides: BoardColumnOverride[];
+  const workflowPromise = getWorkflowOverrides(user.id, projectId);
 
   if (hasDirectDatabase()) {
-    const [tasksRes, membersRes, columnsRes] = await Promise.all([
+    const [tasksRes, membersRes] = await Promise.all([
       withUser(user.id, ({ query }) => query("SELECT * FROM tasks WHERE project_id = $1 LIMIT $2", [projectId, TASK_LIMIT])),
       withUser(user.id, ({ query }) =>
         query(
@@ -100,9 +101,6 @@ export default async function MiniTasksPage({ searchParams }: { searchParams: Pr
           [projectId]
         )
       ),
-      withUser(user.id, ({ query }) =>
-        query("SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1", [projectId])
-      ),
     ]);
     tasks = tasksRes.rows as Task[];
     members = membersRes.rows.map((row) => ({
@@ -111,13 +109,11 @@ export default async function MiniTasksPage({ searchParams }: { searchParams: Pr
       email: row.email ?? tWork("unknownMember"),
       avatar_url: row.avatar_url ?? null,
     }));
-    columnOverrides = columnsRes.rows as BoardColumnOverride[];
   } else {
     const supabase = await createClient();
-    const [tasksRes, membersRes, columnsRes] = await Promise.all([
+    const [tasksRes, membersRes] = await Promise.all([
       supabase.from("tasks").select("*").eq("project_id", projectId).limit(TASK_LIMIT),
       supabase.from("project_members").select("user_id, profiles ( id, full_name, email, avatar_url )").eq("project_id", projectId),
-      supabase.from("project_board_columns").select("status, label, sort_order, hidden").eq("project_id", projectId),
     ]);
     tasks = (tasksRes.data ?? []) as Task[];
     members = ((membersRes.data ?? []) as { user_id: string; profiles: ProfileRow | ProfileRow[] | null }[]).map((row) => {
@@ -129,11 +125,12 @@ export default async function MiniTasksPage({ searchParams }: { searchParams: Pr
         avatar_url: profile?.avatar_url ?? null,
       };
     });
-    columnOverrides = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
-  tasks = tasks.slice().sort(compareTasks);
-  const resolvedColumns = resolveBoardColumns(columnOverrides, (status) => ({
+  const workflow = await workflowPromise;
+  const priorities = resolvePriorities(workflow.priorities, (priority) => tWork("priority", { priority }));
+  tasks = tasks.slice().sort(taskComparator(priorities));
+  const resolvedColumns = resolveBoardColumns(workflow.columns, (status) => ({
     label: tWork("status", { status }),
     hint: tWork("statusHint", { status }),
   }));
@@ -158,6 +155,7 @@ export default async function MiniTasksPage({ searchParams }: { searchParams: Pr
       initialTasks={tasks}
       members={members}
       columns={columns}
+      priorities={priorities}
     />
   );
 }

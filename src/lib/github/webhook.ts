@@ -7,7 +7,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withServiceRole, withUser } from "@/lib/db/session";
 import { createServiceClient } from "@/lib/supabase-server";
 import { resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
-import type { TaskAction, TaskStatus } from "./task-refs";
+import { shouldMove, type TaskAction } from "./task-refs";
 
 /** Shown as the author of the comments and status changes the integration makes (actor_label, migration 036). */
 export const GITHUB_ACTOR_LABEL = "GitHub";
@@ -65,7 +65,8 @@ export async function findConnections(owner: string, name: string, installationI
 
 interface ResolvedTask {
   id: string;
-  status: TaskStatus;
+  status: string;
+  is_done: boolean;
 }
 
 /** Escapes LIKE metacharacters - `_` is legal in GitHub repository names and would otherwise match any character. */
@@ -106,12 +107,7 @@ export async function applyActions(target: GithubConnectionTarget, actions: Task
       outcome.skipped.push(`${action.ref}: ${action.eventKey} already handled`);
       continue;
     }
-    if (
-      action.targetStatus &&
-      action.targetStatus !== task.status &&
-      action.fromStatuses.includes(task.status) &&
-      visible.has(action.targetStatus)
-    ) {
+    if (action.targetStatus && shouldMove(action, task.status, task.is_done) && visible.has(action.targetStatus)) {
       const result = await setTaskStatus(target.connectedBy, task.id, action.targetStatus, {
         humanClient: true,
         botLabel: GITHUB_ACTOR_LABEL,
@@ -123,7 +119,7 @@ export async function applyActions(target: GithubConnectionTarget, actions: Task
   return outcome;
 }
 
-async function visibleStatuses(target: GithubConnectionTarget): Promise<Set<TaskStatus>> {
+async function visibleStatuses(target: GithubConnectionTarget): Promise<Set<string>> {
   let overrides: BoardColumnOverride[] = [];
   if (hasDirectDatabase()) {
     const result = await withUser(target.connectedBy, ({ query }) =>
@@ -147,8 +143,8 @@ async function resolveTask(target: GithubConnectionTarget, ref: string): Promise
     const result = await withUser(target.connectedBy, ({ query }) =>
       query(
         isFullId
-          ? "SELECT id, status FROM tasks WHERE project_id = $1 AND id = $2::uuid LIMIT 2"
-          : "SELECT id, status FROM tasks WHERE project_id = $1 AND id::text LIKE $2 LIMIT 2",
+          ? "SELECT id, status, is_done FROM tasks WHERE project_id = $1 AND id = $2::uuid LIMIT 2"
+          : "SELECT id, status, is_done FROM tasks WHERE project_id = $1 AND id::text LIKE $2 LIMIT 2",
         [target.projectId, isFullId ? ref : likePrefix(ref)]
       )
     );
@@ -156,7 +152,7 @@ async function resolveTask(target: GithubConnectionTarget, ref: string): Promise
   }
 
   const supabase = await getApiUserClient(target.connectedBy);
-  const base = supabase.from("tasks").select("id, status").eq("project_id", target.projectId).limit(2);
+  const base = supabase.from("tasks").select("id, status, is_done").eq("project_id", target.projectId).limit(2);
   // PostgREST can't LIKE a uuid column directly; the id range for a hex prefix is equivalent.
   const { data } = isFullId
     ? await base.eq("id", ref)

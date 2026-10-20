@@ -50,14 +50,12 @@ export async function getProjectStats(projectId: string): Promise<ProjectStats> 
         // Subtasks (migration 010) are plain rows in `tasks`, so counting
         // every row would silently double-count work once a task gets
         // subtasks - match the work board's convention
-        // (work-board.tsx) and count top-level tasks only. 'done'/'completed'
-        // both count as done (isDone's vocabulary, task-board.ts) - reading
-        // status = 'completed' alone would silently show 0 completed for
-        // every task created after migration 002 renamed the vocabulary.
+        // (work-board.tsx) and count top-level tasks only. Finished = is_done
+        // (migration 060): done, or a column the project marks as done.
         query(
           `SELECT
              count(*) FILTER (WHERE parent_task_id IS NULL) AS total,
-             count(*) FILTER (WHERE parent_task_id IS NULL AND status IN ('done', 'completed')) AS completed,
+             count(*) FILTER (WHERE parent_task_id IS NULL AND is_done) AS completed,
              count(*) FILTER (WHERE parent_task_id IS NULL AND status = 'in_progress') AS in_progress
            FROM tasks WHERE project_id = $1`,
           [projectId]
@@ -121,7 +119,7 @@ export async function getProjectStats(projectId: string): Promise<ProjectStats> 
       .select("id", { count: "exact", head: true })
       .eq("project_id", projectId)
       .is("parent_task_id", null)
-      .in("status", ["done", "completed"]),
+      .eq("is_done", true),
     supabase
       .from("tasks")
       .select("id", { count: "exact", head: true })

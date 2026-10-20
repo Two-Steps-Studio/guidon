@@ -9,11 +9,16 @@
 
 import { formatCalendarDate, utcDaysBetween } from "@/lib/date";
 import type {
+  BuiltinTaskPriority,
+  BuiltinTaskStatus,
   LegacyTaskStatus,
   Task,
   TaskPriority,
   TaskStatus,
 } from "@/types/task";
+
+/** Status and priority keys (migration 060's CHECK). */
+export const WORKFLOW_KEY_RE = /^[a-z][a-z0-9_]{0,39}$/;
 
 // ============================================
 // STATUS
@@ -24,8 +29,14 @@ export interface BoardColumn {
   label: string;
   /** Short helper shown when the column is empty. */
   hint: string;
-  /** Tailwind class for the column's accent dot. */
+  /** Tailwind class for the column's accent dot (built-in columns). */
   accentClass: string;
+  /** Hex colour of a custom column's dot; wins over accentClass when set. */
+  color?: string | null;
+  /** Tasks here count as finished (dashboard, progress, My tasks, API). */
+  isDone: boolean;
+  /** A column the project added (migration 060), not one of the built-in six. */
+  custom: boolean;
 }
 
 /**
@@ -35,51 +46,71 @@ export interface BoardColumn {
 export const BOARD_COLUMNS: readonly BoardColumn[] = [
   {
     status: "backlog",
+    isDone: false,
+    custom: false,
     label: "Backlog",
     hint: "Unscheduled work",
     accentClass: "bg-muted-foreground",
   },
   {
     status: "todo",
+    isDone: false,
+    custom: false,
     label: "Todo",
     hint: "Ready to pick up",
     accentClass: "bg-info",
   },
   {
     status: "in_progress",
+    isDone: false,
+    custom: false,
     label: "In Progress",
     hint: "Being worked on",
     accentClass: "bg-warning",
   },
   {
     status: "ai_working",
+    isDone: false,
+    custom: false,
     label: "AI Working",
     hint: "An AI agent is working on this",
     accentClass: "bg-info",
   },
   {
     status: "review",
+    isDone: false,
+    custom: false,
     label: "Review",
     hint: "Awaiting review",
     accentClass: "bg-primary",
   },
   {
     status: "done",
+    isDone: true,
+    custom: false,
     label: "Done",
     hint: "Shipped",
     accentClass: "bg-success",
   },
 ] as const;
 
-export const TASK_STATUSES: readonly TaskStatus[] = BOARD_COLUMNS.map(
-  (column) => column.status
+/** The built-in six - what the API's start/complete and new tasks rely on. */
+export const TASK_STATUSES: readonly BuiltinTaskStatus[] = BOARD_COLUMNS.map(
+  (column) => column.status as BuiltinTaskStatus
 );
+
+export function isBuiltinStatus(status: string): status is BuiltinTaskStatus {
+  return (TASK_STATUSES as readonly string[]).includes(status);
+}
 
 export interface BoardColumnOverride {
   status: TaskStatus;
   label: string | null;
   sort_order: number;
   hidden: boolean;
+  /** Custom columns only (migration 060); the built-in "done" is always done. */
+  is_done?: boolean;
+  color?: string | null;
 }
 
 /**
@@ -106,20 +137,48 @@ export function resolveBoardColumns(
   overrides: readonly BoardColumnOverride[],
   translate?: (status: TaskStatus) => { label: string; hint: string }
 ): BoardColumn[] {
+  return resolveAllBoardColumns(overrides, translate)
+    .filter((entry) => !entry.hidden)
+    .map((entry) => entry.column);
+}
+
+/**
+ * Every column - built-in and the project's own (migration 060), hidden
+ * ones included - in board order. The settings form edits this list;
+ * everything else wants resolveBoardColumns' visible subset.
+ */
+export function resolveAllBoardColumns(
+  overrides: readonly BoardColumnOverride[],
+  translate?: (status: TaskStatus) => { label: string; hint: string }
+): { column: BoardColumn; sortOrder: number; hidden: boolean }[] {
   const overrideByStatus = new Map(overrides.map((o) => [o.status, o]));
 
-  return BOARD_COLUMNS.map((column, index) => {
+  const builtin = BOARD_COLUMNS.map((column, index) => {
     const override = overrideByStatus.get(column.status);
     const defaults = translate ? translate(column.status) : column;
     return {
-      column: { ...column, label: override?.label ?? defaults.label, hint: defaults.hint },
+      column: { ...column, label: override?.label ?? defaults.label, hint: defaults.hint, color: override?.color ?? null },
       sortOrder: override?.sort_order ?? index,
       hidden: override?.hidden ?? false,
     };
-  })
-    .filter((entry) => !entry.hidden)
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((entry) => entry.column);
+  });
+  const custom = overrides
+    .filter((override) => !isBuiltinStatus(override.status))
+    .map((override) => ({
+      column: {
+        status: override.status,
+        label: override.label || override.status,
+        hint: "",
+        accentClass: "bg-muted-foreground",
+        color: override.color ?? null,
+        isDone: !!override.is_done,
+        custom: true,
+      } satisfies BoardColumn,
+      sortOrder: override.sort_order,
+      hidden: override.hidden,
+    }));
+
+  return [...builtin, ...custom].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 /**
@@ -131,47 +190,66 @@ const LEGACY_STATUS_MAP: Record<LegacyTaskStatus, TaskStatus> = {
   completed: "done",
 };
 
+/**
+ * A status as stored: a built-in or a custom column key passes through
+ * (the database guarantees custom keys exist in the project, migration
+ * 060); legacy values are folded; anything empty or malformed is Backlog.
+ */
 export function normalizeTaskStatus(
   status: TaskStatus | LegacyTaskStatus | string | null | undefined
 ): TaskStatus {
   if (!status) return "backlog";
-
-  if ((TASK_STATUSES as readonly string[]).includes(status)) {
-    return status as TaskStatus;
-  }
-
   const mapped = LEGACY_STATUS_MAP[status as LegacyTaskStatus];
-  return mapped ?? "backlog";
+  if (mapped) return mapped;
+  return WORKFLOW_KEY_RE.test(status) ? status : "backlog";
 }
 
 export function statusLabel(
-  status: TaskStatus | LegacyTaskStatus | string
+  status: TaskStatus | LegacyTaskStatus | string,
+  columns?: readonly BoardColumn[]
 ): string {
   const normalized = normalizeTaskStatus(status);
   return (
+    (columns ?? BOARD_COLUMNS).find((column) => column.status === normalized)?.label ??
     BOARD_COLUMNS.find((column) => column.status === normalized)?.label ??
     normalized
   );
 }
 
+/**
+ * Whether a status means "finished": the built-in done, or a custom column
+ * marked as done in `columns`. Prefer isTaskDone when the task row (with
+ * its database-kept is_done) is at hand.
+ */
 export function isDone(
-  status: TaskStatus | LegacyTaskStatus | string
+  status: TaskStatus | LegacyTaskStatus | string,
+  columns?: readonly BoardColumn[]
 ): boolean {
-  return normalizeTaskStatus(status) === "done";
+  const normalized = normalizeTaskStatus(status);
+  if (normalized === "done") return true;
+  return !!columns?.find((column) => column.status === normalized)?.isDone;
+}
+
+export function isTaskDone(task: Pick<Task, "status" | "is_done">, columns?: readonly BoardColumn[]): boolean {
+  return task.is_done ?? isDone(task.status, columns);
 }
 
 // ============================================
 // PRIORITY
 // ============================================
 
-export const TASK_PRIORITIES: readonly TaskPriority[] = [
+export const TASK_PRIORITIES: readonly BuiltinTaskPriority[] = [
   "low",
   "medium",
   "high",
   "critical",
 ] as const;
 
-export const PRIORITY_LABELS: Record<TaskPriority, string> = {
+export function isBuiltinPriority(priority: string): priority is BuiltinTaskPriority {
+  return (TASK_PRIORITIES as readonly string[]).includes(priority);
+}
+
+export const PRIORITY_LABELS: Record<BuiltinTaskPriority, string> = {
   low: "Low",
   medium: "Medium",
   high: "High",
@@ -182,51 +260,119 @@ export const PRIORITY_LABELS: Record<TaskPriority, string> = {
  * Restrained treatment: a coloured rule plus muted text, rather than a
  * saturated pill on every card. Keeps a dense board readable.
  */
-export const PRIORITY_CLASSES: Record<TaskPriority, string> = {
+export const PRIORITY_CLASSES: Record<BuiltinTaskPriority, string> = {
   low: "text-priority-low border-priority-low/30",
   medium: "text-priority-medium border-priority-medium/40",
   high: "text-priority-high border-priority-high/50",
   critical: "text-priority-critical border-priority-critical/60",
 };
 
-export const PRIORITY_DOT_CLASSES: Record<TaskPriority, string> = {
+export const PRIORITY_DOT_CLASSES: Record<BuiltinTaskPriority, string> = {
   low: "bg-priority-low",
   medium: "bg-priority-medium",
   high: "bg-priority-high",
   critical: "bg-priority-critical",
 };
 
+/** A built-in or custom priority key passes through; anything else is Medium. */
 export function normalizeTaskPriority(
   priority: string | null | undefined
 ): TaskPriority {
-  if (priority && (TASK_PRIORITIES as readonly string[]).includes(priority)) {
-    return priority as TaskPriority;
-  }
-  return "medium";
+  return priority && WORKFLOW_KEY_RE.test(priority) ? priority : "medium";
 }
 
-const PRIORITY_RANK: Record<TaskPriority, number> = {
+const PRIORITY_RANK: Record<BuiltinTaskPriority, number> = {
   critical: 0,
   high: 1,
   medium: 2,
   low: 3,
 };
 
+/** A project's priority (migration 060): built-in, possibly relabelled, or its own. */
+export interface PriorityDef {
+  key: TaskPriority;
+  label: string;
+  /** Hex colour; null = the built-in token colour (PRIORITY_DOT_CLASSES). */
+  color: string | null;
+  /** Lower = more important; orders cards and the pickers. */
+  rank: number;
+  custom: boolean;
+}
+
+export interface PriorityOverride {
+  key: TaskPriority;
+  label: string | null;
+  color: string | null;
+  rank: number;
+  hidden: boolean;
+}
+
+/**
+ * Every priority of a project in importance order (built-ins with their
+ * overrides, then custom ones by rank). Hidden ones are left out unless
+ * `includeHidden` - a task can still carry one, shown via priorityDef's
+ * fallback.
+ */
+export function resolvePriorities(
+  overrides: readonly PriorityOverride[],
+  translate?: (priority: BuiltinTaskPriority) => string,
+  includeHidden = false
+): (PriorityDef & { hidden: boolean })[] {
+  const byKey = new Map(overrides.map((o) => [o.key, o]));
+  const builtin = TASK_PRIORITIES.map((key) => {
+    const override = byKey.get(key);
+    return {
+      key,
+      label: override?.label || (translate ? translate(key) : PRIORITY_LABELS[key]),
+      color: override?.color ?? null,
+      rank: override?.rank ?? PRIORITY_RANK[key],
+      custom: false,
+      hidden: override?.hidden ?? false,
+    };
+  });
+  const custom = overrides
+    .filter((o) => !isBuiltinPriority(o.key))
+    .map((o) => ({ key: o.key, label: o.label || o.key, color: o.color, rank: o.rank, custom: true, hidden: o.hidden }));
+  return [...builtin, ...custom]
+    .filter((p) => includeHidden || !p.hidden)
+    .sort((a, b) => a.rank - b.rank);
+}
+
+/** Display data for a task's priority, also when it isn't in `defs` (hidden, or no project context). */
+export function priorityDef(priority: string | null | undefined, defs?: readonly PriorityDef[]): PriorityDef {
+  const key = normalizeTaskPriority(priority);
+  const found = defs?.find((d) => d.key === key);
+  if (found) return found;
+  if (isBuiltinPriority(key)) return { key, label: PRIORITY_LABELS[key], color: null, rank: PRIORITY_RANK[key], custom: false };
+  return { key, label: key, color: null, rank: 1.5, custom: true };
+}
+
+/** Class + inline style for a priority dot: token class for built-ins, the hex colour otherwise. */
+export function priorityDot(priority: string | null | undefined, defs?: readonly PriorityDef[]): {
+  className: string;
+  style?: { backgroundColor: string };
+} {
+  const def = priorityDef(priority, defs);
+  if (def.color) return { className: "", style: { backgroundColor: def.color } };
+  return { className: isBuiltinPriority(def.key) ? PRIORITY_DOT_CLASSES[def.key] : "bg-muted-foreground" };
+}
+
+function priorityRank(priority: string | null | undefined, defs?: readonly PriorityDef[]): number {
+  return priorityDef(priority, defs).rank;
+}
+
 // ============================================
 // GROUPING / ORDERING
 // ============================================
 
-export type TasksByStatus = Record<TaskStatus, Task[]>;
+/** Tasks per column key; every built-in key is present, custom ones when they have tasks or columns. */
+export type TasksByStatus = Record<string, Task[]>;
 
-function emptyGroups(): TasksByStatus {
-  return {
-    backlog: [],
-    todo: [],
-    in_progress: [],
-    ai_working: [],
-    review: [],
-    done: [],
-  };
+function emptyGroups(columns?: readonly BoardColumn[]): TasksByStatus {
+  const groups: TasksByStatus = {};
+  for (const status of TASK_STATUSES) groups[status] = [];
+  for (const column of columns ?? []) groups[column.status] = [];
+  return groups;
 }
 
 /**
@@ -236,33 +382,37 @@ function emptyGroups(): TasksByStatus {
  */
 export function groupTasksByStatus(
   tasks: Task[],
-  compare: (a: Task, b: Task) => number = compareTasks
+  compare: (a: Task, b: Task) => number = compareTasks,
+  columns?: readonly BoardColumn[]
 ): TasksByStatus {
-  const groups = emptyGroups();
+  const groups = emptyGroups(columns);
 
   for (const task of tasks) {
-    groups[normalizeTaskStatus(task.status)].push(task);
+    (groups[normalizeTaskStatus(task.status)] ??= []).push(task);
   }
 
-  for (const status of TASK_STATUSES) {
-    groups[status].sort(compare);
+  for (const key of Object.keys(groups)) {
+    groups[key].sort(compare);
   }
 
   return groups;
 }
 
-export function compareTasks(a: Task, b: Task): number {
-  const aOrder = a.sort_order ?? Number.MAX_SAFE_INTEGER;
-  const bOrder = b.sort_order ?? Number.MAX_SAFE_INTEGER;
-  if (aOrder !== bOrder) return aOrder - bOrder;
+/** compareTasks with a project's priority order (custom priorities, re-ranked built-ins). */
+export function taskComparator(priorities?: readonly PriorityDef[]): (a: Task, b: Task) => number {
+  return (a, b) => {
+    const aOrder = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+    if (aOrder !== bOrder) return aOrder - bOrder;
 
-  const byPriority =
-    PRIORITY_RANK[normalizeTaskPriority(a.priority)] -
-    PRIORITY_RANK[normalizeTaskPriority(b.priority)];
-  if (byPriority !== 0) return byPriority;
+    const byPriority = priorityRank(a.priority, priorities) - priorityRank(b.priority, priorities);
+    if (byPriority !== 0) return byPriority;
 
-  return timestampValue(a.created_at) - timestampValue(b.created_at);
+    return timestampValue(a.created_at) - timestampValue(b.created_at);
+  };
 }
+
+export const compareTasks = taskComparator();
 
 /**
  * Same underlying issue as dueDateKey above, for any other timestamptz
@@ -309,9 +459,9 @@ export interface BoardProgress {
   percent: number;
 }
 
-export function boardProgress(tasks: Task[]): BoardProgress {
+export function boardProgress(tasks: Task[], columns?: readonly BoardColumn[]): BoardProgress {
   const total = tasks.length;
-  const done = tasks.filter((task) => isDone(task.status)).length;
+  const done = tasks.filter((task) => isTaskDone(task, columns)).length;
   const inFlight = tasks.filter(
     (task) => normalizeTaskStatus(task.status) === "in_progress"
   ).length;
@@ -353,9 +503,9 @@ export interface SubtaskProgress {
   total: number;
 }
 
-export function subtaskProgress(subtasks: Task[]): SubtaskProgress {
+export function subtaskProgress(subtasks: Task[], columns?: readonly BoardColumn[]): SubtaskProgress {
   return {
-    done: subtasks.filter((task) => isDone(task.status)).length,
+    done: subtasks.filter((task) => isTaskDone(task, columns)).length,
     total: subtasks.length,
   };
 }
@@ -385,9 +535,11 @@ export function dueDateKey(value: string | Date | null | undefined): string | nu
 
 export function dueState(
   dueDate: string | null,
-  status: TaskStatus | LegacyTaskStatus | string
+  status: TaskStatus | LegacyTaskStatus | string,
+  /** The task's is_done (custom done columns); falls back to the status. */
+  done?: boolean
 ): DueState {
-  if (!dueDate || isDone(status)) return "none";
+  if (!dueDate || (done ?? isDone(status))) return "none";
 
   const due = new Date(dueDate).getTime();
   if (Number.isNaN(due)) return "none";

@@ -6,11 +6,11 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   DUE_STATE_CLASSES,
-  PRIORITY_DOT_CLASSES,
   dueState,
   formatDueDate,
-  isDone,
-  normalizeTaskPriority,
+  isTaskDone,
+  priorityDef,
+  priorityDot,
 } from "@/lib/work/task-board";
 import type { Task, TaskStatus } from "@/types/task";
 import type { BoardColumn, SubtaskProgress } from "@/lib/work/task-board";
@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LabelChip } from "@/components/work/label-chip";
 import { useLabelPresets } from "@/components/work/label-presets-context";
+import { usePriorities } from "@/components/work/workflow-context";
 import { findLabelPreset } from "@/lib/work/label-presets";
 
 export interface TaskCardMember {
@@ -146,10 +147,12 @@ function TaskCardComponent({
   onSelect,
 }: TaskCardProps) {
   const t = useTranslations("work");
-  const priority = normalizeTaskPriority(task.priority);
+  const priorities = usePriorities();
+  const priority = priorityDef(task.priority, priorities);
+  const priorityStyle = priorityDot(task.priority, priorities);
   const preview = descriptionPreview(task.description);
-  const done = isDone(task.status);
-  const due = dueState(task.due_date, task.status);
+  const done = isTaskDone(task);
+  const due = dueState(task.due_date, task.status, done);
   const tags = task.tags ?? [];
   const labelPresets = useLabelPresets();
 
@@ -345,7 +348,8 @@ function TaskCardComponent({
         ) : (
           <span
             aria-hidden
-            className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", PRIORITY_DOT_CLASSES[priority])}
+            className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", priorityStyle.className)}
+            style={priorityStyle.style}
           />
         )}
         <h4
@@ -411,7 +415,7 @@ function TaskCardComponent({
 
       <div className="mt-3 flex items-center gap-3 pl-3.5 text-[11px] text-muted-foreground">
         <span className="sr-only">{t("priorityScreenReader")}</span>
-        <span className="tabular-nums">{t("priority", { priority })}</span>
+        <span className="tabular-nums">{priority.label}</span>
 
         {task.due_date && due !== "none" && (
           <span className={cn("flex items-center gap-1", DUE_STATE_CLASSES[due])}>

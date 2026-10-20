@@ -35,8 +35,8 @@ export const CHAT_TOOLS = [
       type: "object",
       properties: {
         query: { type: "string", description: "Words to look for in title or description (optional)" },
-        status: { type: "string", enum: ["backlog", "todo", "in_progress", "ai_working", "review", "done"] },
-        priority: { type: "string", enum: ["low", "medium", "high", "critical"] },
+        status: { type: "string", description: "A column key from the project's columns (listed in your instructions)" },
+        priority: { type: "string", description: "A priority key from the project's priorities (listed in your instructions)" },
         assigned_to_me: { type: "boolean", description: "Only tasks assigned to the user chatting" },
         include_done: { type: "boolean", description: "Include done tasks when no status is given (default false)" },
         limit: { type: "number", description: "Max results, default 10, at most 25" },
@@ -51,8 +51,8 @@ export const CHAT_TOOLS = [
       properties: {
         title: { type: "string", description: "Short task title" },
         description: { type: "string", description: "Longer description, markdown allowed" },
-        priority: { type: "string", enum: ["low", "medium", "high", "critical"] },
-        status: { type: "string", enum: ["backlog", "todo", "in_progress", "review", "done"] },
+        priority: { type: "string", description: "A priority key from the project's priorities (listed in your instructions)" },
+        status: { type: "string", description: "A column key from the project's columns (listed in your instructions)" },
       },
       required: ["title"],
     },
@@ -66,7 +66,7 @@ export const CHAT_TOOLS = [
         task_id: { type: "string" },
         title: { type: "string" },
         description: { type: "string" },
-        priority: { type: "string", enum: ["low", "medium", "high", "critical"] },
+        priority: { type: "string", description: "A priority key from the project's priorities (listed in your instructions)" },
         due_date: { type: "string", description: "YYYY-MM-DD, or empty string to clear it" },
       },
       required: ["task_id"],
@@ -79,7 +79,7 @@ export const CHAT_TOOLS = [
       type: "object",
       properties: {
         task_id: { type: "string" },
-        status: { type: "string", enum: ["backlog", "todo", "in_progress", "review", "done"] },
+        status: { type: "string", description: "A column key from the project's columns (listed in your instructions)" },
       },
       required: ["task_id", "status"],
     },
@@ -184,7 +184,7 @@ async function searchTasks(userId: string, projectId: string, args: Record<strin
       .eq("project_id", projectId);
     if (column) builder = builder.ilike(column, likePattern(query));
     if (status) builder = builder.eq("status", status);
-    else if (args.include_done !== true) builder = builder.neq("status", "done");
+    else if (args.include_done !== true) builder = builder.eq("is_done", false);
     if (priority) builder = builder.eq("priority", priority);
     if (args.assigned_to_me === true) builder = builder.eq("assignee_id", userId);
     return builder.order("updated_at", { ascending: false }).limit(limit);

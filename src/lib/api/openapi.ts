@@ -1,5 +1,16 @@
 import { z } from "zod";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
+
+const statusSchema = {
+  type: "string",
+  pattern: "^[a-z][a-z0-9_]{0,39}$",
+  description: `A column key of the task's project (GET /projects/{projectId}/columns). Built-in: ${TASK_STATUSES.join(", ")}.`,
+};
+const prioritySchema = {
+  type: "string",
+  pattern: "^[a-z][a-z0-9_]{0,39}$",
+  description: `A priority key of the task's project (GET /projects/{projectId}/priorities). Built-in: ${TASK_PRIORITIES.join(", ")}.`,
+};
 import { REPORT_CATEGORIES, REPORT_SOURCES } from "@/lib/api/game-report";
 import {
   commentFields,
@@ -117,6 +128,10 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         parameters: [projectIdParam],
         get: op("listColumns", "The project's visible board columns, in order", "tasks:read", ok("Columns", wrap("columns", { type: "array", items: ref("Column") })), { tags: ["Projects"] }),
       },
+      "/projects/{projectId}/priorities": {
+        parameters: [projectIdParam],
+        get: op("listPriorities", "The project's task priorities, most important first", "tasks:read", ok("Priorities", wrap("priorities", { type: "array", items: ref("Priority") })), { tags: ["Projects"] }),
+      },
       "/projects/{projectId}/references": {
         parameters: [projectIdParam],
         get: op("listReferences", "The project's moodboard images, with short-lived signed URLs", "tasks:read", ok("References", wrap("references", { type: "array", items: { type: "object" } })), { tags: ["Projects"] }),
@@ -222,8 +237,9 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
             parent_task_id: { type: ["string", "null"], format: "uuid" },
             title: { type: "string" },
             description: { type: ["string", "null"] },
-            status: { type: "string", enum: [...TASK_STATUSES] },
-            priority: { type: "string", enum: [...TASK_PRIORITIES] },
+            status: statusSchema,
+            priority: prioritySchema,
+            is_done: { type: "boolean", description: "In done or a column the project marks as done." },
             tags: { type: "array", items: { type: "string" } },
             assignee_id: { type: ["string", "null"], format: "uuid" },
             due_date: { type: ["string", "null"], format: "date-time" },
@@ -234,7 +250,22 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         },
         Column: {
           type: "object",
-          properties: { status: { type: "string", enum: [...TASK_STATUSES] }, label: { type: "string" } },
+          properties: {
+            status: statusSchema,
+            label: { type: "string" },
+            is_done: { type: "boolean", description: "Tasks in this column count as finished." },
+            custom: { type: "boolean", description: "A column the project added, not a built-in one." },
+            color: { type: ["string", "null"], description: "Hex colour of a custom column." },
+          },
+        },
+        Priority: {
+          type: "object",
+          properties: {
+            key: prioritySchema,
+            label: { type: "string" },
+            custom: { type: "boolean" },
+            color: { type: ["string", "null"] },
+          },
         },
         Comment: {
           type: "object",

@@ -65,7 +65,7 @@ Claude Code, by hand:
 claude mcp add --transport http --scope user guidon ${siteUrl}/api/mcp --header "Authorization: Bearer guidon_..."
 \`\`\`
 
-Tools: \`list_projects\`, \`list_tasks\`, \`get_task\`, \`get_task_context\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\`.
+Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`get_task\`, \`get_task_context\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\`.
 
 Recommended flow for an agent: \`get_task_context\` → \`start_task\` → do the work → \`record_attempt\` → \`comment_on_task\` → \`set_task_status\` with \`review\`.
 
@@ -77,7 +77,8 @@ Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [Op
 |---|---|---|
 | GET | \`/projects\` | Projects the key's user belongs to |
 | GET, POST | \`/projects/{projectId}/tasks\` | List or create tasks |
-| GET | \`/projects/{projectId}/columns\` | The project's board columns |
+| GET | \`/projects/{projectId}/columns\` | The project's board columns - built-in and its own, with \`is_done\` |
+| GET | \`/projects/{projectId}/priorities\` | The project's priorities, most important first |
 | GET, PATCH, DELETE | \`/tasks/{taskId}\` | Read, edit or delete a task |
 | GET | \`/tasks/{taskId}/context\` | The task's full working context (Markdown) |
 | POST | \`/tasks/{taskId}/start\` | Claim a task |

@@ -11,6 +11,7 @@ import {
   BOARD_COLUMNS,
   compareTasksByDueDate,
   groupTasksByStatus,
+  taskComparator,
   normalizeTaskStatus,
   sortOrderForPosition,
   type BoardColumn,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/work/task-board";
 import { TaskCard, type TaskCardMember } from "@/components/work/task-card";
 import type { Task, TaskStatus } from "@/types/task";
+import { usePriorities } from "@/components/work/workflow-context";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -147,9 +149,11 @@ export function KanbanBoard({
   // importantly, so TaskCard's memo() below actually holds: without this,
   // `groups[status]` and `membersById.get(...)` would hand out fresh
   // objects/Maps every render even when nothing the card displays changed.
+  const priorities = usePriorities();
   const groups = useMemo(
-    () => groupTasksByStatus(tasks, sortMode === "due_date" ? compareTasksByDueDate : undefined),
-    [tasks, sortMode]
+    () =>
+      groupTasksByStatus(tasks, sortMode === "due_date" ? compareTasksByDueDate : taskComparator(priorities), columns),
+    [tasks, sortMode, priorities, columns]
   );
   const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
 
@@ -492,8 +496,8 @@ export function KanbanBoard({
             <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
               <span
                 aria-hidden
-                className={cn("h-2 w-2 rounded-full", projectColor ? "" : column.accentClass)}
-                style={projectColor ? { backgroundColor: projectColor } : undefined}
+                className={cn("h-2 w-2 rounded-full", column.color || projectColor ? "" : column.accentClass)}
+                style={column.color || projectColor ? { backgroundColor: column.color || projectColor! } : undefined}
               />
               <h3 className="text-sm font-medium text-foreground">
                 {column.label}

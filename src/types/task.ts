@@ -10,7 +10,7 @@
  * vocabulary on read by `normalizeTaskStatus`, so the board renders correctly
  * whether or not the migration has been applied yet.
  */
-export type TaskStatus =
+export type BuiltinTaskStatus =
   | "backlog"
   | "todo"
   | "in_progress"
@@ -18,9 +18,18 @@ export type TaskStatus =
   | "review"
   | "done";
 
+/**
+ * A built-in status, or the key of one of the project's own board columns
+ * (migration 060). `string & {}` keeps editor completion for the built-ins.
+ */
+export type TaskStatus = BuiltinTaskStatus | (string & {});
+
 export type LegacyTaskStatus = "testing" | "completed";
 
-export type TaskPriority = "low" | "medium" | "high" | "critical";
+export type BuiltinTaskPriority = "low" | "medium" | "high" | "critical";
+
+/** A built-in priority or one the project defined (migration 060). */
+export type TaskPriority = BuiltinTaskPriority | (string & {});
 
 export interface Task {
   id: string;
@@ -30,6 +39,8 @@ export interface Task {
   /** May still hold a legacy value if migration 002 has not been applied. */
   status: TaskStatus | LegacyTaskStatus;
   priority: TaskPriority;
+  /** Kept by the database (migration 060): in "done" or a column marked as done. */
+  is_done?: boolean;
   tags: string[];
   due_date: string | null;
   progress_percent: number;

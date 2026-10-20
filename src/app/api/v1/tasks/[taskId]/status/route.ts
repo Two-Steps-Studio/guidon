@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { setTaskStatus } from "@/lib/api/task-transitions";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
-import type { TaskStatus } from "@/types/task";
-
-const VALID_STATUSES: TaskStatus[] = ["backlog", "todo", "in_progress", "ai_working", "review", "done"];
+import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:status");
@@ -13,16 +11,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const body = await request.json().catch(() => null);
   const status = body?.status;
 
-  if (typeof status !== "string" || !VALID_STATUSES.includes(status as TaskStatus)) {
+  // Any of the project's columns (GET /projects/{id}/columns) - built-in or
+  // its own; the database rejects a key the project doesn't have.
+  if (typeof status !== "string" || !WORKFLOW_KEY_RE.test(status)) {
     return NextResponse.json(
-      { error: `status must be one of: ${VALID_STATUSES.join(", ")}` },
+      { error: "status must be one of the project's column keys - see GET /projects/{projectId}/columns." },
       { status: 400 }
     );
   }
 
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
-  const result = await setTaskStatus(guard.userId, taskId, status as TaskStatus, {
+  const result = await setTaskStatus(guard.userId, taskId, status, {
     botLabel: guard.botLabel,
     humanClient: guard.humanClient,
   });

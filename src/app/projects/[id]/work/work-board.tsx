@@ -1,6 +1,7 @@
 "use client";
 
 import { LabelPresetsProvider } from "@/components/work/label-presets-context";
+import { WorkflowProvider } from "@/components/work/workflow-context";
 import type { LabelPreset } from "@/lib/work/label-presets";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
@@ -22,13 +23,14 @@ const TaskDetailDialog = dynamic(() =>
 import type { TaskCardMember } from "@/components/work/task-card";
 import {
   BOARD_COLUMNS,
-  TASK_PRIORITIES,
   boardProgress,
   groupSubtasksByParent,
+  isDone,
   normalizeTaskPriority,
   normalizeTaskStatus,
   subtaskProgress,
   type BoardColumn,
+  type PriorityDef,
 } from "@/lib/work/task-board";
 import { moveTask } from "./actions";
 import { playSound } from "@/lib/sounds";
@@ -61,6 +63,7 @@ export function WorkBoard({
   aiAvailable = false,
   aiEnabled = true,
   labelPresets = [],
+  priorities,
 }: {
   projectId: string;
   projectName: string;
@@ -79,6 +82,8 @@ export function WorkBoard({
   aiEnabled?: boolean;
   /** Project label presets (migration 053) - coloured labels and one-tap picks in the task dialog. */
   labelPresets?: LabelPreset[];
+  /** The project's priorities in importance order (resolvePriorities). */
+  priorities: PriorityDef[];
 }) {
   const t = useTranslations("work");
   const canDelete = role === "owner" || role === "admin";
@@ -138,13 +143,13 @@ export function WorkBoard({
       Object.fromEntries(
         Object.entries(subtasksByParent).map(([taskId, subtasks]) => [
           taskId,
-          subtaskProgress(subtasks),
+          subtaskProgress(subtasks, columns),
         ])
       ),
-    [subtasksByParent]
+    [subtasksByParent, columns]
   );
 
-  const progress = useMemo(() => boardProgress(topLevelTasks), [topLevelTasks]);
+  const progress = useMemo(() => boardProgress(topLevelTasks, columns), [topLevelTasks, columns]);
 
   // Tag options come from the full unfiltered set, so the dropdown's
   // choices stay stable while assignee/priority filters are active rather
@@ -229,7 +234,7 @@ export function WorkBoard({
       toast.error(result.error);
       return;
     }
-    if (operation.kind === "move" && operation.status === "done") playSound("complete");
+    if (operation.kind === "move" && isDone(operation.status, columns)) playSound("complete");
     const chosen = new Set(ids);
     setState((current) => {
       if (operation.kind === "delete") {
@@ -247,7 +252,12 @@ export function WorkBoard({
           if (!chosen.has(task.id)) return task;
           switch (operation.kind) {
             case "move":
-              return { ...task, status: operation.status, sort_order: lastOrder + (position.get(task.id) ?? 0) * 1000 };
+              return {
+                ...task,
+                status: operation.status,
+                is_done: isDone(operation.status, columns),
+                sort_order: lastOrder + (position.get(task.id) ?? 0) * 1000,
+              };
             case "assign":
               return { ...task, assignee_id: operation.assigneeId };
             case "label": {
@@ -274,11 +284,11 @@ export function WorkBoard({
     const previousSortOrder = task.sort_order;
 
     // Optimistic: the board should feel instant on drop - the sound too.
-    if (status === "done" && previousStatus !== "done") playSound("complete");
+    if (isDone(status, columns) && !isDone(previousStatus, columns)) playSound("complete");
     setState((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
-        item.id === task.id ? { ...item, status, sort_order: sortOrder } : item
+        item.id === task.id ? { ...item, status, sort_order: sortOrder, is_done: isDone(status, columns) } : item
       ),
     }));
 
@@ -294,7 +304,7 @@ export function WorkBoard({
         ...current,
         tasks: current.tasks.map((item) =>
           item.id === task.id
-            ? { ...item, status: previousStatus, sort_order: previousSortOrder }
+            ? { ...item, status: previousStatus, sort_order: previousSortOrder, is_done: task.is_done }
             : item
         ),
       }));
@@ -318,6 +328,7 @@ export function WorkBoard({
     }));
 
   return (
+    <WorkflowProvider value={{ columns, priorities }}>
     <LabelPresetsProvider value={labelPresets}>
       {/* w-full (not just mx-auto + max-w): this page is a flex item of
           <main> (app-sidebar's layout, flex-col with the default
@@ -407,9 +418,9 @@ export function WorkBoard({
             onChange={(event) => setPriorityFilter(event.target.value)}
           >
             <option value="all">{t("allPriorities")}</option>
-            {TASK_PRIORITIES.map((value) => (
-              <option key={value} value={value}>
-                {t("priority", { priority: value })}
+            {priorities.map((priority) => (
+              <option key={priority.key} value={priority.key}>
+                {priority.label}
               </option>
             ))}
           </Select>
@@ -533,5 +544,6 @@ export function WorkBoard({
         onCreated={upsertTask}
       />
     </LabelPresetsProvider>
+    </WorkflowProvider>
   );
 }

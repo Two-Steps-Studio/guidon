@@ -1,4 +1,6 @@
 import { getTranslations } from "next-intl/server";
+import { getWorkflowOverrides } from "@/lib/data/workflow";
+import { resolveBoardColumns, resolvePriorities } from "@/lib/work/task-board";
 import {
   canCommentOnProject,
   canManageProject,
@@ -58,6 +60,7 @@ export default async function ProjectCalendarPage({
   const access = await requireProjectAccess(projectId);
   const tWork = await getTranslations("work");
   const tCalendar = await getTranslations("calendar");
+  const workflowPromise = getWorkflowOverrides(access.userId, projectId);
 
   const { year, month } = parseMonthParam(monthParam, new Date());
   const grid = buildMonthGrid(year, month);
@@ -143,6 +146,8 @@ export default async function ProjectCalendarPage({
     ({ phase, start, end, lane }) => ({ id: phase.id, name: phase.name, status: phase.status, start, end, lane })
   );
 
+  const workflow = await workflowPromise;
+
   return (
     <div className="container mx-auto max-w-7xl px-6 py-8">
       <div className="mb-6">
@@ -159,6 +164,13 @@ export default async function ProjectCalendarPage({
         canEdit={canWriteProject(access.role)}
         canDelete={canManageProject(access.role)}
         canComment={canCommentOnProject(access.role)}
+        workflow={{
+          columns: resolveBoardColumns(workflow.columns, (status) => ({
+            label: tWork("status", { status }),
+            hint: tWork("statusHint", { status }),
+          })),
+          priorities: resolvePriorities(workflow.priorities, (priority) => tWork("priority", { priority })),
+        }}
       />
     </div>
   );

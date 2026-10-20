@@ -8,18 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { TaskDetailDialog } from "@/components/work/task-detail-dialog";
+import { WorkflowProvider } from "@/components/work/workflow-context";
 import { type TaskCardMember } from "@/components/work/task-card";
 import { initialsFor } from "@/lib/people";
 import { createTask, moveTask } from "@/app/projects/[id]/work/actions";
 import { loadTaskById } from "@/app/projects/[id]/work/relations-actions";
 import {
   DUE_STATE_CLASSES,
-  PRIORITY_DOT_CLASSES,
   dueState,
   formatDueDate,
-  normalizeTaskPriority,
+  isDone,
   normalizeTaskStatus,
+  priorityDot,
   type BoardColumn,
+  type PriorityDef,
 } from "@/lib/work/task-board";
 import { cn } from "@/lib/utils";
 import type { Task, TaskStatus } from "@/types/task";
@@ -61,6 +63,7 @@ export function MiniTasks({
   initialTasks,
   members,
   columns,
+  priorities,
 }: {
   projects: MiniProject[];
   projectId: string;
@@ -73,6 +76,7 @@ export function MiniTasks({
   initialTasks: Task[];
   members: TaskCardMember[];
   columns: BoardColumn[];
+  priorities: PriorityDef[];
 }) {
   const t = useTranslations("mini");
   const router = useRouter();
@@ -115,8 +119,11 @@ export function MiniTasks({
   }, [refresh]);
 
   const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
-  const doneColumn = columns.find((column) => column.status === "done");
-  const openColumns = columns.filter((column) => column.status !== "done");
+  // Finished columns (the built-in Done and any custom done column) fold
+  // into one collapsible section at the bottom.
+  const doneColumns = columns.filter((column) => column.isDone);
+  const doneColumn = doneColumns.find((column) => column.status === "done") ?? doneColumns[0];
+  const openColumns = columns.filter((column) => !column.isDone);
   const defaultNewStatus: TaskStatus =
     openColumns.find((column) => column.status === "todo")?.status ?? openColumns[0]?.status ?? "todo";
 
@@ -166,9 +173,9 @@ export function MiniTasks({
 
   const handleMove = async (task: Task, status: TaskStatus) => {
     const previous = task;
-    if (status === "done" && task.status !== "done") playSound("complete");
+    if (isDone(status, columns) && !isDone(task.status, columns)) playSound("complete");
     const sortOrder = endOfColumnSortOrder(tasks, status, task.id);
-    upsert({ ...task, status, sort_order: sortOrder });
+    upsert({ ...task, status, sort_order: sortOrder, is_done: isDone(status, columns) });
     setError(null);
     const result = await moveTask(projectId, task.id, status, sortOrder);
     if (result.error) {
@@ -178,19 +185,20 @@ export function MiniTasks({
   };
 
   const renderTask = (task: Task) => {
-    const priority = normalizeTaskPriority(task.priority);
-    const due = dueState(task.due_date, task.status);
+    const dot = priorityDot(task.priority, priorities);
+    const done = isDone(task.status, columns);
+    const due = dueState(task.due_date, task.status, done);
     const assignee = task.assignee_id ? membersById.get(task.assignee_id) : undefined;
     const status = normalizeTaskStatus(task.status);
     return (
       <li key={task.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-surface-hover">
-        <span aria-hidden className={cn("h-1.5 w-1.5 shrink-0 rounded-full", PRIORITY_DOT_CLASSES[priority])} />
+        <span aria-hidden className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dot.className)} style={dot.style} />
         <button
           type="button"
           onClick={() => setOpenTask(task)}
           className={cn(
             "min-w-0 flex-1 truncate text-left text-sm",
-            status === "done" && "text-muted-foreground line-through"
+            done && "text-muted-foreground line-through"
           )}
           title={task.title}
         >
@@ -225,9 +233,10 @@ export function MiniTasks({
     );
   };
 
-  const doneTasks = doneColumn ? byStatus.get("done") ?? [] : [];
+  const doneTasks = doneColumns.flatMap((column) => byStatus.get(column.status) ?? []);
 
   return (
+    <WorkflowProvider value={{ columns, priorities }}>
     <div className="flex h-screen flex-col bg-background/75">
       <header className="flex shrink-0 items-center gap-2 border-b border-border p-2">
         <Select
@@ -362,5 +371,6 @@ export function MiniTasks({
         />
       )}
     </div>
+    </WorkflowProvider>
   );
 }

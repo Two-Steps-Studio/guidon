@@ -25,13 +25,14 @@
  * checkbox list, so it must stay a plain, dependency-light module.
  */
 
-import { normalizeTaskPriority } from "@/lib/work/task-board";
-import type { TaskPriority } from "@/types/task";
+import { isBuiltinPriority } from "@/lib/work/task-board";
+import type { BuiltinTaskPriority } from "@/types/task";
 
 export interface TaskProposal {
   title: string;
   description: string;
-  priority: TaskPriority;
+  /** Built-in only: a model can't know (or should invent) a project's own priorities. */
+  priority: BuiltinTaskPriority;
 }
 
 export interface ParsedChatReply {
@@ -58,9 +59,8 @@ function sanitizeProposal(raw: unknown): TaskProposal | null {
   const description =
     "description" in raw && typeof raw.description === "string" ? raw.description.trim() : "";
 
-  const priority = normalizeTaskPriority(
-    "priority" in raw && typeof raw.priority === "string" ? raw.priority : undefined
-  );
+  const rawPriority = "priority" in raw && typeof raw.priority === "string" ? raw.priority.toLowerCase() : "";
+  const priority: BuiltinTaskPriority = isBuiltinPriority(rawPriority) ? rawPriority : "medium";
 
   return { title, description, priority };
 }

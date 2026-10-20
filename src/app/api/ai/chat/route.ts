@@ -5,10 +5,12 @@ import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
 import { CHAT_TOOLS, runChatTool, type FoundTask } from "@/lib/ai/chat-tools";
 import type { AIMessage } from "@/lib/ai/provider";
+import { getWorkflowOverrides } from "@/lib/data/workflow";
+import { resolveBoardColumns, resolvePriorities } from "@/lib/work/task-board";
 
 const MAX_TOOL_ITERATIONS = 5;
 
-function buildSystemPrompt(projectName: string): string {
+function buildSystemPrompt(projectName: string, workflow: string): string {
   return (
     `You are the Guidon AI Assistant for the project "${projectName}". ` +
     `You can search the project's tasks, create tasks, edit them, change their ` +
@@ -18,7 +20,8 @@ function buildSystemPrompt(projectName: string): string {
     `the user must click a confirm button themselves, so call ` +
     `propose_delete_task freely when asked to delete something; it is safe. ` +
     `Be concise. After using tools, summarize what you did in one or two ` +
-    `sentences - the tool calls themselves are already shown to the user.`
+    `sentences - the tool calls themselves are already shown to the user.\n\n` +
+    workflow
   );
 }
 
@@ -53,6 +56,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No AI provider is configured for this organization." }, { status: 400 });
   }
 
+  // The project's own columns and priorities (migration 060) - the tools take
+  // their keys, and a model can't guess custom ones.
+  const workflow = await getWorkflowOverrides(access.userId, projectId);
+  const columns = resolveBoardColumns(workflow.columns)
+    .map((c) => `${c.status} ("${c.label}"${c.isDone ? ", counts as done" : ""})`)
+    .join(", ");
+  const priorities = resolvePriorities(workflow.priorities)
+    .map((p) => `${p.key} ("${p.label}")`)
+    .join(", ");
+  const workflowText = `Board columns, in order (status keys): ${columns}.\nPriorities, most important first (keys): ${priorities}.`;
+
   const messages: AIMessage[] = incomingMessages.map((m: { role: string; content: string }) => ({
     role: m.role === "user" ? "user" : "assistant",
     content: m.content,
@@ -66,7 +80,7 @@ export async function POST(request: NextRequest) {
   try {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
       const result = await provider.complete({
-        system: buildSystemPrompt(access.project.name),
+        system: buildSystemPrompt(access.project.name, workflowText),
         messages,
         tools: CHAT_TOOLS as unknown as Array<{ name: string; description: string; input_schema: object }>,
         maxTokens: 1000,

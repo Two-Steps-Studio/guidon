@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isAIAvailableForOrg } from "@/lib/ai/resolve-provider";
-import { compareTasks, normalizeTaskStatus, resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
+import { normalizeTaskStatus, resolveBoardColumns, resolvePriorities, taskComparator } from "@/lib/work/task-board";
+import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { getSignedUrl } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
 import { WorkBoard } from "./work-board";
@@ -148,6 +149,7 @@ export default async function ProjectWorkPage({
   // point asking the org whether a provider is configured then.
   const aiEnabled = access.project.ai_enabled;
   const labelPresetsPromise = getLabelPresets(access.userId, projectId);
+  const workflowPromise = getWorkflowOverrides(access.userId, projectId);
   const aiAvailablePromise = aiEnabled
     ? isAIAvailableForOrg(access.project.organization_id, access.userId)
     : Promise.resolve(false);
@@ -156,7 +158,6 @@ export default async function ProjectWorkPage({
   let members: TaskCardMember[];
   let commentCounts: Record<string, number>;
   let coverImages: Record<string, string>;
-  let columnOverrides: BoardColumnOverride[];
 
   // TASK_LIMIT is a safety cap, not pagination - high enough that no real
   // project's board should ever hit it today, low enough to stop an
@@ -166,7 +167,7 @@ export default async function ProjectWorkPage({
   if (hasDirectDatabase()) {
     // Each withUser() call owns its own pooled connection, so these five
     // run as genuinely concurrent queries rather than one after another.
-    const [tasksRes, membersRes, commentCountRows, coverImageRows, columnsRes] = await Promise.all([
+    const [tasksRes, membersRes, commentCountRows, coverImageRows] = await Promise.all([
       withUser(access.userId, ({ query }) =>
         query("SELECT * FROM tasks WHERE project_id = $1 LIMIT $2", [projectId, TASK_LIMIT])
       ),
@@ -181,12 +182,6 @@ export default async function ProjectWorkPage({
       ),
       loadCommentCountsLocal(access.userId, projectId),
       loadCoverImagesLocal(access.userId, projectId),
-      withUser(access.userId, ({ query }) =>
-        query(
-          "SELECT status, label, sort_order, hidden FROM project_board_columns WHERE project_id = $1",
-          [projectId]
-        )
-      ),
     ]);
 
     // profiles may be null for teammates until migration 003 is applied;
@@ -198,14 +193,13 @@ export default async function ProjectWorkPage({
       avatar_url: row.avatar_url ?? null,
     }));
 
-    tasks = tasksRes.rows.slice().sort(compareTasks);
+    tasks = tasksRes.rows;
     commentCounts = commentCountRows;
     coverImages = coverImageRows;
-    columnOverrides = columnsRes.rows as BoardColumnOverride[];
   } else {
     const supabase = await createClient();
 
-    const [tasksRes, membersRes, commentCounts_, coverImages_, columnsRes] = await Promise.all([
+    const [tasksRes, membersRes, commentCounts_, coverImages_] = await Promise.all([
       supabase.from("tasks").select("*").eq("project_id", projectId).limit(TASK_LIMIT),
       supabase
         .from("project_members")
@@ -213,10 +207,6 @@ export default async function ProjectWorkPage({
         .eq("project_id", projectId),
       loadCommentCounts(supabase, projectId),
       loadCoverImages(supabase, projectId),
-      supabase
-        .from("project_board_columns")
-        .select("status, label, sort_order, hidden")
-        .eq("project_id", projectId),
     ]);
 
     // profiles may be null for teammates until migration 003 is applied;
@@ -231,13 +221,15 @@ export default async function ProjectWorkPage({
       };
     });
 
-    tasks = ((tasksRes.data ?? []) as Task[]).slice().sort(compareTasks);
+    tasks = (tasksRes.data ?? []) as Task[];
     commentCounts = commentCounts_;
     coverImages = coverImages_;
-    columnOverrides = (columnsRes.data ?? []) as BoardColumnOverride[];
   }
 
-  const resolvedColumns = resolveBoardColumns(columnOverrides, (status) => ({
+  const workflow = await workflowPromise;
+  const priorities = resolvePriorities(workflow.priorities, (priority) => tWork("priority", { priority }));
+  tasks = tasks.slice().sort(taskComparator(priorities));
+  const resolvedColumns = resolveBoardColumns(workflow.columns, (status) => ({
     label: tWork("status", { status }),
     hint: tWork("statusHint", { status }),
   }));
@@ -271,6 +263,7 @@ export default async function ProjectWorkPage({
       aiAvailable={await aiAvailablePromise}
       aiEnabled={aiEnabled}
       labelPresets={await labelPresetsPromise}
+      priorities={priorities}
     />
   );
 }

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { TaskDetailDialog } from "@/components/work/task-detail-dialog";
 import { loadTaskById } from "@/app/projects/[id]/work/relations-actions";
 import type { TaskCardMember } from "@/components/work/task-card";
-import { PRIORITY_DOT_CLASSES, normalizeTaskPriority } from "@/lib/work/task-board";
+import { priorityDot } from "@/lib/work/task-board";
+import { WorkflowProvider, type Workflow } from "@/components/work/workflow-context";
 import { groupTasksByDay, monthKey, shiftMonth, type MonthGrid } from "@/lib/work/calendar";
 import { cn } from "@/lib/utils";
 import type { PhaseStatus, Task } from "@/types/task";
@@ -44,7 +45,10 @@ export function CalendarView({
   canEdit,
   canDelete,
   canComment,
+  workflow,
 }: {
+  /** The project's columns and priorities, for task dots and the task dialog. */
+  workflow: Workflow;
   projectId: string;
   grid: MonthGrid;
   initialTasks: Task[];
@@ -97,6 +101,7 @@ export function CalendarView({
   };
 
   return (
+    <WorkflowProvider value={workflow}>
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold capitalize">{monthLabel}</h2>
@@ -211,10 +216,8 @@ export function CalendarView({
                       >
                         <span
                           aria-hidden
-                          className={cn(
-                            "h-1.5 w-1.5 shrink-0 rounded-full",
-                            PRIORITY_DOT_CLASSES[normalizeTaskPriority(task.priority)]
-                          )}
+                          className={cn("h-1.5 w-1.5 shrink-0 rounded-full", priorityDot(task.priority, workflow.priorities).className)}
+                          style={priorityDot(task.priority, workflow.priorities).style}
                         />
                         <span className="truncate">{task.title}</span>
                       </button>
@@ -262,5 +265,6 @@ export function CalendarView({
         />
       )}
     </div>
+    </WorkflowProvider>
   );
 }
