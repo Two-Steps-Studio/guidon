@@ -21,7 +21,7 @@ node scripts/migrate.mjs --dry-run   # show what would run, changes nothing
 
 npm run test:db               # migration chain + RLS-compatibility layer + data-client SQL against PGlite (real Postgres, no Docker/Supabase)
 npm run test:ai                # AI provider factory's env-resolution logic, no live API key needed
-npm run test:auth              # local-auth compatibility tests
+npm run test:auth              # local-auth compatibility tests + self-hosted OAuth/OIDC sign-in (src/lib/auth/oauth-local-core.ts)
 npm run test:limits            # plan/limits logic tests
 npm run test:reports           # in-game report validation (src/lib/api/game-report.ts)
 npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/task-refs.ts)

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
+import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { loginLocalAction } from "./actions"
 
@@ -21,10 +22,10 @@ import { loginLocalAction } from "./actions"
  * depends on DATABASE_URL, which a client component cannot read. In local
  * mode there is no GoTrue to hand the browser a session, so login goes
  * through a Server Action (loginLocalAction) instead of the Supabase SDK's
- * client-side signInWithPassword - and OAuth is hidden entirely, since
- * self-hosted has no provider to redirect to.
+ * client-side signInWithPassword - and the OAuth buttons go through
+ * Guidon's own OAuth client (/auth/oauth/<provider>) instead of Supabase.
  */
-export function LoginForm({ local }: { local: boolean }) {
+export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup }) {
   const t = useTranslations("auth.login")
   const tCommon = useTranslations("auth.common")
   const [email, setEmail] = useState("")
@@ -138,9 +139,9 @@ export function LoginForm({ local }: { local: boolean }) {
             </Button>
           </form>
 
-          {!local && (
+          {oauth.providers.length > 0 && (
             <div className="mt-4">
-              <OAuthButtons redirectTo={redirectTarget} />
+              <OAuthButtons setup={oauth} redirectTo={redirectTarget} />
             </div>
           )}
 
