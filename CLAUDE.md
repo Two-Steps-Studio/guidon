@@ -25,8 +25,8 @@ npm run test:auth              # local-auth compatibility tests + self-hosted OA
 npm run test:limits            # plan/limits logic tests
 npm run test:reports           # in-game report validation (src/lib/api/game-report.ts)
 npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/task-refs.ts)
-npm run test:webhooks          # organization webhook URL rules, private-address block list, signature (src/lib/webhooks/security.ts)
-npm run test:agent-web         # real 404s for unknown paths, Accept: text/markdown negotiation, llms.txt (src/lib/agent-web.ts)
+npm run test:webhooks          # organization webhook URL rules, private-address block list, signature (src/lib/webhooks/security.ts); Web Bot Auth request signing + key directory (src/lib/web-bot-auth.ts)
+npm run test:agent-web         # real 404s for unknown paths, Accept: text/markdown negotiation, llms.txt (src/lib/agent-web.ts); discovery documents, MCP manifest, A2A docs agent (src/lib/{agent-discovery,a2a-core}.ts)
 npm run test:labels            # label starter sets complete in every locale, project templates consistent (src/lib/work/{label-presets,project-modules}.ts), every Server Action error passed through tr() translated in every locale (src/i18n/server-errors/)
 npm run test:import            # task import from CSV/JSON/Trello exports: parsing, dates, status/priority/assignee matching (src/lib/work/task-import.ts)
 npm run test:recurrence        # recurring tasks: next due dates (weekly/monthly/every N days, month ends, late completion), checklist reset (src/lib/work/recurrence-core.ts)
