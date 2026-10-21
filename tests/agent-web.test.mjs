@@ -82,6 +82,7 @@ const PUBLIC_SECTIONS = new Set([
   "about.md",
   "contact",
   "contact.md",
+  "auth.md",
 ]);
 function servesRoutes(dir) {
   for (const entry of readdirSync(dir)) {

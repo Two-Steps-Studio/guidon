@@ -1474,7 +1474,19 @@
     "wallpaperDim": "{percent}% abgedunkelt",
     "wallpaperTooLarge": "Das Bild ist größer als 25 MB.",
     "wallpaperNotImage": "Diese Datei ist kein Bild, das der Browser öffnen kann.",
-    "wallpaperFailed": "Das Hintergrundbild konnte nicht gespeichert werden - der Browser blockiert womöglich Websitedaten."
+    "wallpaperFailed": "Das Hintergrundbild konnte nicht gespeichert werden - der Browser blockiert womöglich Websitedaten.",
+    "connectedApps": {
+      "title": "Verbundene Apps",
+      "description": "Apps, denen du per OAuth erlaubt hast, Guidon für dich zu nutzen - Claude, ChatGPT, Cursor und andere MCP-Clients. Sie handeln als du, nur in deinen Projekten.",
+      "empty": "Keine Apps verbunden. Füge Guidon in einem MCP-Client mit der Adresse https://useguidon.com/api/mcp hinzu und bestätige es hier.",
+      "connectedOn": "Verbunden am {date}",
+      "lastUsed": "zuletzt genutzt {date}",
+      "disconnect": "Trennen",
+      "disconnected": "{app} getrennt"
+    },
+    "mcpOAuthStep_claude": "Öffne in Claude Einstellungen → Konnektoren → Eigenen Konnektor hinzufügen, nenne ihn Guidon und füge diese URL ein",
+    "mcpOAuthStep_chatgpt": "Öffne in ChatGPT Einstellungen → Apps & Konnektoren → Erstellen (Entwicklermodus), wähle OAuth und füge diese URL ein",
+    "mcpOAuthApprove": "Melde dich bei Guidon an, wenn danach gefragt wird, und klicke auf Erlauben - kein Schlüssel zum Kopieren. Die App erscheint oben unter Verbundene Apps."
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",
@@ -1753,5 +1765,28 @@
     "welcomeInvite": "Team einladen",
     "welcomeImport": "Aufgaben aus Trello, Jira oder CSV importieren",
     "welcomeDismiss": "Schließen"
+  },
+  "oauth": {
+    "title": "{app} mit Guidon verbinden",
+    "signedInAs": "Angemeldet als <b>{email}</b>.",
+    "permissionsTitle": "Die App kann dann:",
+    "limits": "Nur in den Projekten, auf die du Zugriff hast, mit deiner Rolle darin.",
+    "fromSite": "Diese App wird von {host} veröffentlicht.",
+    "unverified": "Guidon hat diese App nicht geprüft. Erlaube sie nur, wenn du diese Verbindung selbst gestartet hast.",
+    "redirectNote": "Nach deiner Entscheidung geht es zurück zu {host}.",
+    "allow": "Erlauben",
+    "deny": "Abbrechen",
+    "revokeHint": "Du kannst sie jederzeit unter Profil → Verbundene Apps trennen.",
+    "invalidTitle": "Diese Verbindungsanfrage ist ungültig",
+    "invalidDescription": "Geh zurück zur App und versuche es noch einmal.",
+    "scopes": {
+      "tasks_read": "Deine Projekte, Aufgaben, Kommentare und Versuche sehen",
+      "tasks_write": "Aufgaben erstellen, bearbeiten und löschen",
+      "tasks_status": "Aufgaben starten und zwischen Spalten verschieben",
+      "comments_write": "Aufgaben kommentieren",
+      "attempts_write": "Festhalten, was bei einer Aufgabe versucht wurde",
+      "project_read": "Entscheidungen, Wissen, Roadmap, Gedächtnis und Tech-Stack lesen",
+      "project_write": "Entscheidungen, Wissen, Roadmap, Gedächtnis und Tech-Stack ändern"
+    }
   }
 }

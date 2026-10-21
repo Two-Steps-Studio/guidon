@@ -1474,7 +1474,19 @@
     "wallpaperDim": "Przyciemnienie {percent}%",
     "wallpaperTooLarge": "Ten obrazek ma ponad 25 MB.",
     "wallpaperNotImage": "Ten plik nie jest obrazkiem, który przeglądarka potrafi otworzyć.",
-    "wallpaperFailed": "Nie udało się zapisać tapety - przeglądarka może blokować dane stron."
+    "wallpaperFailed": "Nie udało się zapisać tapety - przeglądarka może blokować dane stron.",
+    "connectedApps": {
+      "title": "Połączone aplikacje",
+      "description": "Aplikacje, którym pozwoliłeś działać w Guidonie w Twoim imieniu przez OAuth - Claude, ChatGPT, Cursor i inni klienci MCP. Działają jako Ty, tylko w Twoich projektach.",
+      "empty": "Brak połączonych aplikacji. Dodaj Guidona w kliencie MCP pod adresem https://useguidon.com/api/mcp i zatwierdź go tutaj.",
+      "connectedOn": "Połączono {date}",
+      "lastUsed": "ostatnio użyta {date}",
+      "disconnect": "Odłącz",
+      "disconnected": "Odłączono {app}"
+    },
+    "mcpOAuthStep_claude": "W Claude otwórz Ustawienia → Konektory → Dodaj własny konektor, nazwij go Guidon i wklej ten adres",
+    "mcpOAuthStep_chatgpt": "W ChatGPT otwórz Ustawienia → Aplikacje i konektory → Utwórz (tryb dewelopera), wybierz OAuth i wklej ten adres",
+    "mcpOAuthApprove": "Zaloguj się do Guidona, gdy poprosi, i kliknij Zezwól - żadnego klucza do kopiowania. Aplikacja pojawi się wyżej w Połączonych aplikacjach."
   },
   "emails": {
     "passwordResetSubject": "Zresetuj hasło do Guidon",
@@ -1753,5 +1765,28 @@
     "welcomeInvite": "Zaproś zespół",
     "welcomeImport": "Zaimportuj zadania z Trello, Jiry lub CSV",
     "welcomeDismiss": "Zamknij"
+  },
+  "oauth": {
+    "title": "Połącz {app} z Guidonem",
+    "signedInAs": "Zalogowano jako <b>{email}</b>.",
+    "permissionsTitle": "Aplikacja będzie mogła:",
+    "limits": "Tylko w projektach, do których masz dostęp, z Twoją rolą w każdym z nich.",
+    "fromSite": "Tę aplikację publikuje {host}.",
+    "unverified": "Guidon nie zweryfikował tej aplikacji. Zezwól tylko wtedy, gdy to Ty zaczynasz to połączenie.",
+    "redirectNote": "Po decyzji wrócisz do {host}.",
+    "allow": "Zezwól",
+    "deny": "Anuluj",
+    "revokeHint": "Możesz ją odłączyć w każdej chwili w Profil → Połączone aplikacje.",
+    "invalidTitle": "Ta prośba o połączenie jest nieprawidłowa",
+    "invalidDescription": "Wróć do aplikacji i spróbuj połączyć się jeszcze raz.",
+    "scopes": {
+      "tasks_read": "Widzieć Twoje projekty, zadania, komentarze i próby",
+      "tasks_write": "Tworzyć, edytować i usuwać zadania",
+      "tasks_status": "Zaczynać zadania i przenosić je między kolumnami",
+      "comments_write": "Komentować zadania",
+      "attempts_write": "Zapisywać, co zostało wypróbowane przy zadaniu",
+      "project_read": "Czytać decyzje, wiedzę, roadmapę, pamięć i stack technologiczny",
+      "project_write": "Zmieniać decyzje, wiedzę, roadmapę, pamięć i stack technologiczny"
+    }
   }
 }

@@ -6,6 +6,8 @@ import { isRateLimited, rateLimitStatus, recordRequest } from "./rate-limit";
 import { noteRateLimit } from "./api-route";
 import type { ApiKeyScope } from "./api-keys";
 import { isOriginAllowed } from "./key-origins";
+import { bearerChallenge } from "@/lib/oauth/oauth-core";
+import { SITE_URL } from "@/lib/site-url";
 
 /**
  * Runs the common checks every /api/v1 AI Task API route needs, in order:
@@ -28,7 +30,10 @@ export async function guardApiRequest(
 ): Promise<ApiKeyIdentity | NextResponse> {
   const identity = await authenticateApiKey(request.headers.get("authorization"));
   if (!identity) {
-    return NextResponse.json({ error: "Invalid or missing API key." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Invalid or missing API key." },
+      { status: 401, headers: { "WWW-Authenticate": bearerChallenge(SITE_URL, "/api/v1") } }
+    );
   }
 
   if (isRateLimited(identity.apiKeyId)) {

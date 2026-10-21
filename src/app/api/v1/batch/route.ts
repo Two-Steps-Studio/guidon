@@ -4,6 +4,8 @@ import { authenticateApiKey } from "@/lib/api/api-key-auth";
 import { matchBatchRoute, parseBatch, type BatchMethod } from "@/lib/api/batch-core";
 import { collectionRoutes, itemRoutes } from "@/lib/api/project-resource-routes";
 import { PROJECT_RESOURCES } from "@/lib/api/project-resources";
+import { bearerChallenge } from "@/lib/oauth/oauth-core";
+import { SITE_URL } from "@/lib/site-url";
 import { GET as listProjects } from "@/app/api/v1/projects/route";
 import { GET as listTasks, POST as createTask } from "@/app/api/v1/projects/[projectId]/tasks/route";
 import { GET as listColumns } from "@/app/api/v1/projects/[projectId]/columns/route";
@@ -75,7 +77,12 @@ async function readBody(response: Response): Promise<unknown> {
 async function handlePOST(request: NextRequest) {
   const authorization = request.headers.get("authorization");
   const identity = await authenticateApiKey(authorization);
-  if (!identity || !authorization) return NextResponse.json({ error: "Invalid or missing API key." }, { status: 401 });
+  if (!identity || !authorization) {
+    return NextResponse.json(
+      { error: "Invalid or missing API key." },
+      { status: 401, headers: { "WWW-Authenticate": bearerChallenge(SITE_URL, "/api/v1") } }
+    );
+  }
 
   const parsed = parseBatch(await request.json().catch(() => null));
   if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });

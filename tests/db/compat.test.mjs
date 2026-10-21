@@ -242,7 +242,8 @@ for (const [label, sql, expected] of [
   // 38->39 tabel, polityk bez zmian: mobile_auth_codes (068) - tylko service_role.
   // 39->40 tabel, 129->130 polityk: plan_prices (071) + plan_prices_select.
   // 40->41 tabel, polityk bez zmian: api_idempotency_keys (072) - tylko service_role.
-  ["41 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 41],
+  // 41->45 tabel, polityk bez zmian: oauth_clients/grants/codes/refresh_tokens (073) - tylko service_role.
+  ["45 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 45],
   ["130 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 130],
 ]) {
   const { rows } = await db.query(sql);
@@ -3393,6 +3394,73 @@ section("58. Idempotency-Key i stronicowanie zadan w SQL (migracja 072)");
   await withUser(stranger, async () => {
     const rows = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 10)", [projectId])).rows;
     check("obcy nie widzi zadan przez funkcje (RLS)", rows.length === 0, rows.length);
+  });
+}
+
+section("59. serwer autoryzacji OAuth 2.1 (migracja 073)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000073";
+  for (const table of ["oauth_clients", "oauth_grants", "oauth_codes", "oauth_refresh_tokens"]) {
+    await withUser(A, async () => {
+      check(`authenticated nie czyta ${table}`, await throwsInSavepoint(`SELECT * FROM public.${table}`));
+    });
+  }
+
+  let grantId, keyId;
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.oauth_clients (client_id, kind, client_name, redirect_uris) VALUES ('gdc_test', 'dcr', 'Test client', '{https://a.example/cb}')");
+    check(
+      "klient bez redirect_uris odrzucony",
+      await throwsInSavepoint("INSERT INTO public.oauth_clients (client_id, kind, client_name, redirect_uris) VALUES ('gdc_x', 'dcr', 'x', '{}')")
+    );
+    check(
+      "nieznany rodzaj klienta odrzucony",
+      await throwsInSavepoint("INSERT INTO public.oauth_clients (client_id, kind, client_name, redirect_uris) VALUES ('gdc_y', 'secret', 'x', '{https://a.example/cb}')")
+    );
+    grantId = (
+      await db.query("INSERT INTO public.oauth_grants (client_id, user_id, client_name, scopes) VALUES ('gdc_test', $1, 'Test client', '{tasks:read}') RETURNING id", [A])
+    ).rows[0].id;
+    check(
+      "kod z blednym code_challenge odrzucony",
+      await throwsInSavepoint(
+        "INSERT INTO public.oauth_codes (code_hash, grant_id, redirect_uri, code_challenge, expires_at) VALUES ('h', $1, 'https://a.example/cb', 'short', now())",
+        [grantId]
+      )
+    );
+    keyId = (
+      await db.query(
+        "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, oauth_grant_id, expires_at) VALUES ($1, 'Test client (OAuth)', 'guidon_test', 'hash073', '{tasks:read}', $2, now() + interval '1 hour') RETURNING id",
+        [A, grantId]
+      )
+    ).rows[0].id;
+  });
+
+  await withUser(A, async () => {
+    const own = await db.query("SELECT expires_at, oauth_grant_id FROM public.api_keys WHERE id = $1", [keyId]);
+    check("wlasciciel widzi swoj token OAuth jak klucz", own.rows.length === 1 && own.rows[0].oauth_grant_id === grantId);
+    check(
+      "ale nie przedluza mu waznosci",
+      await throwsInSavepoint("UPDATE public.api_keys SET expires_at = NULL WHERE id = $1", [keyId])
+    );
+    check(
+      "ani nie tworzy sobie klucza z cudza zgoda",
+      await throwsInSavepoint(
+        "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, oauth_grant_id) VALUES ($1, 'x', 'guidon_x', 'hash073b', '{tasks:read}', $2)",
+        [A, grantId]
+      )
+    );
+  });
+  await withUser(stranger, async () => {
+    const seen = await db.query("SELECT id FROM public.api_keys WHERE id = $1", [keyId]);
+    check("obcy nie widzi cudzego tokenu OAuth", seen.rows.length === 0);
+  });
+
+  await withServiceRole(async () => {
+    await db.query("DELETE FROM public.oauth_grants WHERE id = $1", [grantId]);
+    const left = await db.query("SELECT id FROM public.api_keys WHERE id = $1", [keyId]);
+    check("usuniecie zgody usuwa jej tokeny (ON DELETE CASCADE)", left.rows.length === 0);
+    await db.query("DELETE FROM public.oauth_clients WHERE client_id = 'gdc_test'");
   });
 }
 

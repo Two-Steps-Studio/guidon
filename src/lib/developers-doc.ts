@@ -17,6 +17,11 @@ Guidon is context-first project management for development teams: a task board p
 
 ## Authentication
 
+Two ways in, both sent as \`Authorization: Bearer ...\`:
+
+- **OAuth 2.1** - for MCP clients and apps acting for someone (Claude, ChatGPT, Cursor, VS Code...). Give the client \`${siteUrl}/api/mcp\`; it finds the authorization server from the \`401\`, registers itself, and the person approves it on Guidon's consent screen. Access tokens last an hour and refresh; the person can disconnect the app in Profile → Connected apps. Every step is in [auth.md](${siteUrl}/auth.md).
+- **An API key** - for scripts, CI and your own agents:
+
 1. Sign in and open [Profile → API keys](${siteUrl}/profile). Create a key and pick its scopes.
 2. Send it on every request: \`Authorization: Bearer guidon_...\`.
 

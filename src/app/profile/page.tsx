@@ -5,9 +5,11 @@ import { ProfileForm } from "./profile-form";
 import { ApiKeysSection } from "./api-keys";
 import { IntegrationsSection } from "./integrations-section";
 import { listApiKeys } from "./api-keys-actions";
+import { ConnectedAppsSection } from "./connected-apps";
+import { getConnectedApps } from "./connected-apps-actions";
 
 export default async function ProfilePage() {
-  const [user, apiKeys] = await Promise.all([getCurrentUser(), listApiKeys()]);
+  const [user, apiKeys, connectedApps] = await Promise.all([getCurrentUser(), listApiKeys(), getConnectedApps()]);
   const t = await getTranslations("profile");
 
   return (
@@ -20,6 +22,7 @@ export default async function ProfilePage() {
 
         <ProfileForm user={user} />
         <ApiKeysSection initialKeys={apiKeys} />
+        <ConnectedAppsSection initialApps={connectedApps} />
         <IntegrationsSection />
       </div>
     </AppShell>

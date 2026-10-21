@@ -1474,7 +1474,19 @@
     "wallpaperDim": "Oscurecido {percent}%",
     "wallpaperTooLarge": "Esa imagen supera los 25 MB.",
     "wallpaperNotImage": "Ese archivo no es una imagen que el navegador pueda abrir.",
-    "wallpaperFailed": "No se pudo guardar el fondo: el navegador puede estar bloqueando los datos del sitio."
+    "wallpaperFailed": "No se pudo guardar el fondo: el navegador puede estar bloqueando los datos del sitio.",
+    "connectedApps": {
+      "title": "Apps conectadas",
+      "description": "Apps a las que has permitido usar Guidon por ti mediante OAuth: Claude, ChatGPT, Cursor y otros clientes MCP. Actúan como tú, solo en tus proyectos.",
+      "empty": "No hay apps conectadas. Añade Guidon en un cliente MCP con la dirección https://useguidon.com/api/mcp y apruébalo aquí.",
+      "connectedOn": "Conectada el {date}",
+      "lastUsed": "último uso {date}",
+      "disconnect": "Desconectar",
+      "disconnected": "{app} desconectada"
+    },
+    "mcpOAuthStep_claude": "En Claude, abre Ajustes → Conectores → Añadir conector personalizado, llámalo Guidon y pega esta URL",
+    "mcpOAuthStep_chatgpt": "En ChatGPT, abre Ajustes → Apps y conectores → Crear (modo desarrollador), elige OAuth y pega esta URL",
+    "mcpOAuthApprove": "Inicia sesión en Guidon cuando te lo pida y pulsa Permitir: no hay clave que copiar. Aparecerá arriba en Apps conectadas."
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",
@@ -1753,5 +1765,28 @@
     "welcomeInvite": "Invita a tu equipo",
     "welcomeImport": "Importa tareas de Trello, Jira o CSV",
     "welcomeDismiss": "Cerrar"
+  },
+  "oauth": {
+    "title": "Conectar {app} con Guidon",
+    "signedInAs": "Has iniciado sesión como <b>{email}</b>.",
+    "permissionsTitle": "Podrá:",
+    "limits": "Solo en los proyectos a los que tienes acceso, con tu rol en cada uno.",
+    "fromSite": "Esta app la publica {host}.",
+    "unverified": "Guidon no ha verificado esta app. Permítela solo si has iniciado tú esta conexión.",
+    "redirectNote": "Después de decidir, volverás a {host}.",
+    "allow": "Permitir",
+    "deny": "Cancelar",
+    "revokeHint": "Puedes desconectarla cuando quieras en Perfil → Apps conectadas.",
+    "invalidTitle": "Esta solicitud de conexión no es válida",
+    "invalidDescription": "Vuelve a la app e intenta conectar de nuevo.",
+    "scopes": {
+      "tasks_read": "Ver tus proyectos, tareas, comentarios e intentos",
+      "tasks_write": "Crear, editar y borrar tareas",
+      "tasks_status": "Empezar tareas y moverlas entre columnas",
+      "comments_write": "Comentar tareas",
+      "attempts_write": "Registrar lo que se probó en una tarea",
+      "project_read": "Leer decisiones, conocimiento, roadmap, memoria y stack tecnológico",
+      "project_write": "Cambiar decisiones, conocimiento, roadmap, memoria y stack tecnológico"
+    }
   }
 }

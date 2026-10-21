@@ -15,12 +15,14 @@ export type ApiKeyRow = MintedApiKeyRow;
 export async function listApiKeys(): Promise<ApiKeyRow[]> {
   const user = await getCurrentUser();
 
-  const { data } = await dataClient(user.id)
-    .from<ApiKeyRow>("api_keys")
-    .select(API_KEY_COLUMNS)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
+  const query = () =>
+    dataClient(user.id).from<ApiKeyRow>("api_keys").select(API_KEY_COLUMNS).eq("user_id", user.id);
+  // OAuth access tokens (migration 073) are api_keys rows too, but they
+  // belong to Connected apps, not here. Before 073 the column doesn't
+  // exist - then there are none to hide.
+  const withoutOAuth = await query().is("oauth_grant_id", null).order("created_at", { ascending: false });
+  if (!withoutOAuth.error) return withoutOAuth.data;
+  const { data } = await query().order("created_at", { ascending: false });
   return data;
 }
 

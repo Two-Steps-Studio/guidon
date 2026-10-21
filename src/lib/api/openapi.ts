@@ -115,7 +115,7 @@ function op(
     description: scope
       ? `${extra.description ? `${extra.description}\n\n` : ""}Requires the \`${scope}\` scope.`
       : String(extra.description ?? ""),
-    security: [{ apiKey: scope ? [scope] : [] }],
+    security: [{ apiKey: scope ? [scope] : [] }, { oauth2: scope ? [scope] : [] }],
     ...Object.fromEntries(Object.entries(extra).filter(([key]) => key !== "description")),
     responses: { ...responses, ...COMMON_ERRORS },
   };
@@ -368,6 +368,26 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
     }),
     components: {
       securitySchemes: {
+        oauth2: {
+          type: "oauth2",
+          description: `OAuth 2.1 for apps acting for a person - public clients with PKCE (S256), refresh tokens rotate. See ${siteUrl}/auth.md.`,
+          flows: {
+            authorizationCode: {
+              authorizationUrl: `${siteUrl}/oauth/authorize`,
+              tokenUrl: `${siteUrl}/oauth/token`,
+              refreshUrl: `${siteUrl}/oauth/token`,
+              scopes: {
+                "tasks:read": "List projects and tasks, read tasks, comments, attempts and context",
+                "tasks:write": "Create, edit and delete tasks",
+                "tasks:status": "Start, move and complete tasks",
+                "comments:write": "Comment on tasks",
+                "attempts:write": "Record attempts",
+                "project:read": "Read decisions, knowledge, roadmap, memory and tech stack",
+                "project:write": "Change decisions, knowledge, roadmap, memory and tech stack",
+              },
+            },
+          },
+        },
         apiKey: {
           type: "http",
           scheme: "bearer",

@@ -35,10 +35,19 @@ function CopyBlock({ text, copyLabel, errorLabel }: { text: string; copyLabel: s
   );
 }
 
-export const MCP_CLIENTS = ["claude-code", "claude-desktop", "cursor", "vscode", "codex", "gemini", "other"] as const;
+export const MCP_CLIENTS = ["claude", "chatgpt", "claude-code", "claude-desktop", "cursor", "vscode", "codex", "gemini", "other"] as const;
 export type McpClient = (typeof MCP_CLIENTS)[number];
 
+/**
+ * Apps that connect with OAuth (src/lib/oauth): the person pastes only the
+ * server address there and approves the app on Guidon's consent screen -
+ * no key is created or shown here.
+ */
+const OAUTH_CLIENTS: ReadonlySet<McpClient> = new Set(["claude", "chatgpt"]);
+
 const CLIENT_NAMES: Record<McpClient, string> = {
+  claude: "Claude (web, desktop, mobile)",
+  chatgpt: "ChatGPT",
   "claude-code": "Claude Code",
   "claude-desktop": "Claude Desktop",
   cursor: "Cursor",
@@ -128,7 +137,10 @@ function setupSteps(client: McpClient, url: string, key: string): { hintKey: Ste
       return [
         { hintKey: "mcpStep_other_url", text: url },
         { hintKey: "mcpStep_other_header", text: `Authorization: Bearer ${key}` },
-      ];
+      ];    // Connected through OAuth instead - shown without a key (OAUTH_CLIENTS).
+    case "claude":
+    case "chatgpt":
+      return [];
   }
 }
 
@@ -145,6 +157,7 @@ export function McpConnect() {
   const [connection, setConnection] = useState<{ key: string; url: string } | null>(null);
 
   const clientName = (id: McpClient) => CLIENT_NAMES[id] || t("mcpClientOther");
+  const usesOAuth = OAUTH_CLIENTS.has(client);
 
   const handleCreate = async () => {
     setPending(true);
@@ -195,7 +208,21 @@ export function McpConnect() {
         ))}
       </div>
 
-      {!connection && (
+      {usesOAuth && (
+        <ol className="space-y-4 text-sm">
+          <li className="space-y-2">
+            <p className="font-medium">1. {t(client === "chatgpt" ? "mcpOAuthStep_chatgpt" : "mcpOAuthStep_claude")}</p>
+            <CopyBlock text={`${window.location.origin}/api/mcp`} copyLabel={t("mcpCopy")} errorLabel={t("copyKeyError")} />
+          </li>
+          <li className="font-medium">2. {t("mcpOAuthApprove")}</li>
+          <li className="space-y-2">
+            <p className="font-medium">3. {t("mcpTry")}</p>
+            <CopyBlock text={t("mcpTryPrompt")} copyLabel={t("mcpCopy")} errorLabel={t("copyKeyError")} />
+          </li>
+        </ol>
+      )}
+
+      {!usesOAuth && !connection && (
         <div className="space-y-2">
           <Button type="button" size="sm" onClick={handleCreate} disabled={pending}>
             {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
@@ -210,7 +237,7 @@ export function McpConnect() {
         </div>
       )}
 
-      {connection && (
+      {!usesOAuth && connection && (
         <div className="space-y-4 text-sm">
           <div className="rounded-md border border-warning/40 bg-warning/10 p-2 text-xs">{t("mcpKeyOnce")}</div>
           <ol className="space-y-4">

@@ -11,6 +11,7 @@ import {
   prefersMarkdown,
 } from '@/lib/agent-web'
 import { SITE_URL } from '@/lib/site-url'
+import { bearerChallenge } from '@/lib/oauth/oauth-core'
 import { safeRedirect } from '@/lib/auth/safe-redirect'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
@@ -66,6 +67,15 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/developers/llms.txt',
   '/openapi.json',
   '/pricing.md',
+  // OAuth 2.1 endpoints MCP clients call without a session (src/app/oauth):
+  // each authenticates on its own terms (PKCE code, refresh token) or is
+  // open by design (dynamic client registration). /oauth/authorize is not
+  // here - it is the consent screen and needs a signed-in person.
+  '/oauth/token',
+  '/oauth/register',
+  '/oauth/revoke',
+  // How agents get credentials, as Markdown (src/app/auth.md).
+  '/auth.md',
   // Who runs Guidon and how to reach them, plus their Markdown twins.
   '/about',
   '/about.md',
@@ -106,8 +116,12 @@ function isPublicRoute(pathname: string): boolean {
 function redirectToLogin(request: NextRequest, pathname: string) {
   // API callers can't follow a redirect to an HTML login form - they get a
   // JSON 401 they can parse instead.
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
+    // The challenge tells an agent where the OAuth metadata is (RFC 9728).
+    return NextResponse.json(
+      { error: 'Authentication required.', code: 'unauthorized' },
+      { status: 401, headers: { 'WWW-Authenticate': bearerChallenge(SITE_URL, '/api/v1') } }
+    )
   }
   const redirectUrl = new URL('/auth/login', request.url)
   // Keep the query string: pages like /discord/link carry a signed token in
