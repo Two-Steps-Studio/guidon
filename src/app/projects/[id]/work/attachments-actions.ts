@@ -13,6 +13,7 @@ import {
 } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
 import { getOrgPlanLimits, isStorageLimitReached } from "@/lib/limits";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type TaskAttachment = {
   id: string;
@@ -31,7 +32,7 @@ export async function loadTaskAttachments(
   taskId: string
 ): Promise<{ attachments: TaskAttachment[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { attachments: [], error: "You do not have access to this project." };
+  if (!access) return { attachments: [], error: await tr("You do not have access to this project.") };
 
   const { data, error } = await dataClient(access.userId)
     .from<TaskAttachment>("task_attachments")
@@ -58,12 +59,12 @@ export async function uploadTaskAttachment(
   // Mirrors task_attachments_insert (041): owner/admin/developer/tester -
   // the same tier as commenting on a task.
   if (!access || !canCommentOnProject(access.role)) {
-    return { attachment: null, error: "You do not have permission to attach files to this task." };
+    return { attachment: null, error: await tr("You do not have permission to attach files to this task.") };
   }
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return { attachment: null, error: "No file selected." };
+    return { attachment: null, error: await tr("No file selected.") };
   }
 
   if (!hasDirectDatabase()) {
@@ -128,7 +129,7 @@ export async function deleteTaskAttachment(
   attachmentId: string
 ): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { error: "You do not have permission to delete this attachment." };
+  if (!access) return { error: await tr("You do not have permission to delete this attachment.") };
 
   const { data: deleted, error: deleteError } = await dataClient(access.userId)
     .from("task_attachments")
@@ -139,7 +140,7 @@ export async function deleteTaskAttachment(
     .maybeSingle();
 
   if (deleteError) return { error: deleteError.message };
-  if (!deleted) return { error: "Attachment not found, or you do not have permission to delete it." };
+  if (!deleted) return { error: await tr("Attachment not found, or you do not have permission to delete it.") };
   const storagePath = deleted.storage_path;
 
   try {
@@ -173,7 +174,7 @@ export async function getTaskAttachmentDownloadUrl(
   attachmentId: string
 ): Promise<{ url: string | null; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { url: null, error: "You do not have access to this project." };
+  if (!access) return { url: null, error: await tr("You do not have access to this project.") };
 
   const { data: found, error: lookupError } = await dataClient(access.userId)
     .from("task_attachments")
@@ -185,7 +186,7 @@ export async function getTaskAttachmentDownloadUrl(
   if (lookupError) return { url: null, error: lookupError.message };
   const storagePath = found?.storage_path ?? null;
 
-  if (!storagePath) return { url: null, error: "Attachment not found in this task." };
+  if (!storagePath) return { url: null, error: await tr("Attachment not found in this task.") };
 
   try {
     const url = await getSignedUrl(STORAGE_BUCKETS.ATTACHMENTS, storagePath);
@@ -210,7 +211,7 @@ export async function getTaskAttachmentImageUrls(
   taskId: string
 ): Promise<{ urls: Record<string, string>; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { urls: {}, error: "You do not have access to this project." };
+  if (!access) return { urls: {}, error: await tr("You do not have access to this project.") };
 
   const { data: rows, error } = await dataClient(access.userId)
     .from("task_attachments")

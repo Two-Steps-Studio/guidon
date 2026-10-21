@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createRelation, type RelationFormState } from "./actions";
 import { ENTITY_TYPE_OPTIONS, RELATION_TYPE_OPTIONS } from "./relation-config";
+import { Select } from "@/components/ui/select";
 
 const initialState: RelationFormState = { error: null };
 
@@ -77,18 +78,17 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
     >
       <div className="space-y-2">
         <Label htmlFor="sourceType">{t("sourceTypeLabel")}</Label>
-        <select
+        <Select
           id="sourceType"
           name="source_type"
           defaultValue="decision"
-          className="w-full px-3 py-2 border rounded-md bg-background"
         >
           {ENTITY_TYPE_OPTIONS.map((type) => (
             <option key={type} value={type}>
               {tCommon("entityType", { type })}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="sourceId">{t("sourceIdLabel")}</Label>
@@ -96,18 +96,17 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
       </div>
       <div className="space-y-2">
         <Label htmlFor="targetType">{t("targetTypeLabel")}</Label>
-        <select
+        <Select
           id="targetType"
           name="target_type"
           defaultValue="task"
-          className="w-full px-3 py-2 border rounded-md bg-background"
         >
           {ENTITY_TYPE_OPTIONS.map((type) => (
             <option key={type} value={type}>
               {tCommon("entityType", { type })}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="targetId">{t("targetIdLabel")}</Label>
@@ -115,18 +114,17 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
       </div>
       <div className="space-y-2">
         <Label htmlFor="relationType">{t("relationTypeLabel")}</Label>
-        <select
+        <Select
           id="relationType"
           name="relation_type"
           defaultValue="depends_on"
-          className="w-full px-3 py-2 border rounded-md bg-background"
         >
           {RELATION_TYPE_OPTIONS.map((type) => (
             <option key={type} value={type}>
               {tCommon("relationType", { type })}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       {state.error && (
         <div className="text-sm text-destructive flex items-center gap-2">

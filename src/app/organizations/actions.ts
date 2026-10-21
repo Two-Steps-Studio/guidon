@@ -7,6 +7,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import { slugify } from "@/lib/slug";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type CreateOrganizationState = {
   error: string | null;
@@ -35,7 +36,7 @@ export async function createOrganization(
   const description = formData.get("description");
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return { error: "Organization name is required." };
+    return { error: await tr("Organization name is required.") };
   }
 
   const slug =
@@ -49,7 +50,7 @@ export async function createOrganization(
 
   if (hasDirectDatabase()) {
     const userId = await getLocalSessionUserId();
-    if (!userId) return { error: "Not authenticated." };
+    if (!userId) return { error: await tr("Not authenticated.") };
 
     try {
       orgId = await withUser(userId, async ({ query }) => {
@@ -72,7 +73,7 @@ export async function createOrganization(
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return { error: "Not authenticated." };
+      return { error: await tr("Not authenticated.") };
     }
 
     const { data: org, error } = await supabase

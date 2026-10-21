@@ -43,6 +43,8 @@ export interface Project {
   disabled_modules: string[];
   /** Migration 061 - finished tasks are deleted this many days after completion; null = never. */
   done_cleanup_days?: number | null;
+  /** Migration 070 - language Guidon's AI writes in for this project; null = automatic. */
+  language?: string | null;
   allow_ai_auto_complete: boolean;
   planned_end_date: string | null;
   created_by: string;

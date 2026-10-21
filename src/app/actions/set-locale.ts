@@ -7,12 +7,13 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import { isSupportedLocale } from "@/i18n/locales";
+import { tr } from "@/lib/i18n/server-errors";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
 
 export async function setLocale(locale: string): Promise<{ error: string | null }> {
   if (!isSupportedLocale(locale)) {
-    return { error: "Unsupported language." };
+    return { error: await tr("Unsupported language.") };
   }
 
   (await cookies()).set(LOCALE_COOKIE, locale, {

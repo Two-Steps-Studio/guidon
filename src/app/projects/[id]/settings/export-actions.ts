@@ -3,6 +3,7 @@
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { logActivity } from "@/lib/data/log-activity";
 import { exportProjectToFile } from "@/lib/guidon-export/export-project";
+import { tr } from "@/lib/i18n/server-errors";
 
 export interface ExportProjectResult {
   filename: string | null;
@@ -14,7 +15,7 @@ export interface ExportProjectResult {
 export async function exportProject(projectId: string): Promise<ExportProjectResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { filename: null, contents: null, error: "You do not have permission to export this project." };
+    return { filename: null, contents: null, error: await tr("You do not have permission to export this project.") };
   }
 
   const { filename, json } = await exportProjectToFile(projectId, access.userId, {

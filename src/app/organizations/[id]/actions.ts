@@ -11,9 +11,9 @@ import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import type { ProjectMethodology, ProjectType } from "@/types/project";
-import { getTranslations } from "next-intl/server";
 import { PROJECT_TEMPLATES, isProjectTemplate, type ProjectTemplate } from "@/lib/work/project-modules";
-import { LABEL_STARTER_SETS } from "@/lib/work/label-presets";
+import { addTemplateLabels } from "@/lib/work/template-labels";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type CreateProjectState = {
   error: string | null;
@@ -30,7 +30,7 @@ export async function createProject(
   const access = await getOrgAccess(orgId);
 
   if (!access) {
-    return { error: "You do not have access to this organization." };
+    return { error: await tr("You do not have access to this organization.") };
   }
 
   const name = formData.get("name");
@@ -38,13 +38,13 @@ export async function createProject(
   const projectTypeRaw = formData.get("projectType");
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return { error: "Project name is required." };
+    return { error: await tr("Project name is required.") };
   }
 
   let projectType: ProjectType | null = null;
   if (typeof projectTypeRaw === "string" && projectTypeRaw.trim()) {
     if (!VALID_PROJECT_TYPES.includes(projectTypeRaw as ProjectType)) {
-      return { error: "Invalid project type." };
+      return { error: await tr("Invalid project type.") };
     }
     projectType = projectTypeRaw as ProjectType;
   }
@@ -53,7 +53,7 @@ export async function createProject(
   let methodology: ProjectMethodology = "standard";
   if (typeof methodologyRaw === "string" && methodologyRaw.trim()) {
     if (!VALID_METHODOLOGIES.includes(methodologyRaw as ProjectMethodology)) {
-      return { error: "Invalid workflow." };
+      return { error: await tr("Invalid workflow.") };
     }
     methodology = methodologyRaw as ProjectMethodology;
   }
@@ -70,7 +70,7 @@ export async function createProject(
   const templateRaw = formData.get("template");
   let template: ProjectTemplate | null = null;
   if (typeof templateRaw === "string" && templateRaw) {
-    if (!isProjectTemplate(templateRaw)) return { error: "Invalid template." };
+    if (!isProjectTemplate(templateRaw)) return { error: await tr("Invalid template.") };
     template = templateRaw;
   }
 
@@ -126,28 +126,6 @@ export async function createProject(
   redirect(`/projects/${projectId}`);
 }
 
-/**
- * The template's labels, named in the creator's language. Runs after the
- * project exists (handle_new_project has made the creator owner, so the
- * owner/admin insert policy from 053 lets them in). A failure here doesn't
- * undo the project - labels are a convenience, and settings can add them.
- */
-async function addTemplateLabels(userId: string, projectId: string, template: ProjectTemplate) {
-  const t = await getTranslations("settings");
-  const db = dataClient(userId);
-  let sortOrder = 0;
-  for (const [key, color] of LABEL_STARTER_SETS[template]) {
-    const name = t(`labelStarter.${template}.${key}` as Parameters<typeof t>[0]);
-    const { error } = await db
-      .from("project_label_presets")
-      .insert({ project_id: projectId, name, color, sort_order: sortOrder++ });
-    if (error) {
-      console.error(`Template labels for project ${projectId} failed:`, error.message);
-      return;
-    }
-  }
-}
-
 export type OrgAvatarState = {
   error: string | null;
 };
@@ -160,22 +138,22 @@ export async function updateOrganizationAvatar(
   const access = await getOrgAccess(orgId);
 
   if (!access || !canManageOrg(access.role)) {
-    return { error: "You do not have permission to edit this organization." };
+    return { error: await tr("You do not have permission to edit this organization.") };
   }
 
   const avatarFile = formData.get("avatar") as File | null;
   if (!avatarFile || avatarFile.size === 0) {
-    return { error: "No image selected." };
+    return { error: await tr("No image selected.") };
   }
   // Real allowlist, not "starts with image/" (would admit image/svg+xml) -
   // this upload is always public and served inline, never a forced
   // download, so an SVG's embedded <script> would execute on open. See
   // SAFE_INLINE_IMAGE_TYPES's own comment.
   if (!(SAFE_INLINE_IMAGE_TYPES as readonly string[]).includes(avatarFile.type)) {
-    return { error: "Organization image must be a JPEG, PNG, GIF, or WebP image." };
+    return { error: await tr("Organization image must be a JPEG, PNG, GIF, or WebP image.") };
   }
   if (avatarFile.size > 2 * 1024 * 1024) {
-    return { error: "Organization image is too large. Maximum size: 2MB" };
+    return { error: await tr("Organization image is too large. Maximum size: 2MB") };
   }
 
   const bucketResult = await ensureBucketExists("avatars", { public: true });
@@ -206,7 +184,7 @@ export async function updateOrganizationAvatar(
     .eq("id", orgId)
     .select("id");
   if (error) return { error: error.message };
-  if (updated.length === 0) return { error: "You do not have permission to edit this organization." };
+  if (updated.length === 0) return { error: await tr("You do not have permission to edit this organization.") };
 
   revalidatePath(`/organizations/${orgId}`);
   revalidatePath("/organizations");

@@ -8,6 +8,7 @@ import { dataClient } from "@/lib/data-client";
 import { isSafeHttpUrl } from "@/lib/validation/url";
 import type { AttemptOutcome, TaskAttempt } from "@/types/task";
 import type { TaskMutationResult } from "./actions";
+import { tr } from "@/lib/i18n/server-errors";
 
 // ============================================================
 // PREVIOUS ATTEMPTS (TODO.md §22, migration 013)
@@ -21,7 +22,7 @@ export async function loadAttempts(
   taskId: string
 ): Promise<{ attempts: TaskAttempt[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { attempts: [], error: "You do not have access to this project." };
+  if (!access) return { attempts: [], error: await tr("You do not have access to this project.") };
 
   const { data, error } = await dataClient(access.userId)
     .from<TaskAttempt>("task_attempts")
@@ -51,10 +52,10 @@ export async function createAttempt(
   // Mirrors task_attempts_insert (013): owner/admin/developer - not tester,
   // recording an implementation attempt is developer-tier work.
   if (!access || !canWriteProject(access.role)) {
-    return { attempt: null, error: "You do not have permission to record an attempt." };
+    return { attempt: null, error: await tr("You do not have permission to record an attempt.") };
   }
   if (!input.problem.trim() || !input.approach.trim()) {
-    return { attempt: null, error: "Problem and approach are required." };
+    return { attempt: null, error: await tr("Problem and approach are required.") };
   }
 
   const trimmedPrUrl = input.related_pr_url.trim();
@@ -63,7 +64,7 @@ export async function createAttempt(
   // and later execute in a teammate's session on click. See url.ts's
   // own comment for the full reasoning.
   if (trimmedPrUrl && !isSafeHttpUrl(trimmedPrUrl)) {
-    return { attempt: null, error: "PR link must be a valid http(s) URL." };
+    return { attempt: null, error: await tr("PR link must be a valid http(s) URL.") };
   }
 
   const filesChanged = input.files_changed
@@ -102,7 +103,7 @@ export async function deleteAttempt(
   const access = await getProjectAccess(projectId);
   // Mirrors task_attempts_delete (013): owner/admin only.
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete this attempt." };
+    return { error: await tr("You do not have permission to delete this attempt.") };
   }
 
   // task_attempts has no project_id column - ownership is derived through
@@ -121,7 +122,7 @@ export async function deleteAttempt(
     ? await db.from<{ id: string }>("tasks").select("id").eq("id", attempt.task_id).eq("project_id", projectId).maybeSingle()
     : { data: null, error: null };
   if (taskError) return { error: taskError.message };
-  if (!attempt || !task) return { error: "This attempt could not be found in this project." };
+  if (!attempt || !task) return { error: await tr("This attempt could not be found in this project.") };
 
   // Row-count checked: an RLS-filtered DELETE succeeds with zero rows.
   const { data: deleted, error } = await db
@@ -132,7 +133,7 @@ export async function deleteAttempt(
     .select("id");
 
   if (error) return { error: error.message };
-  if (deleted.length === 0) return { error: "This attempt could not be found in this project." };
+  if (deleted.length === 0) return { error: await tr("This attempt could not be found in this project.") };
 
   revalidatePath(`/projects/${projectId}/work`);
   return { error: null };

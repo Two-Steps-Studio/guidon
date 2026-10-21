@@ -3,7 +3,7 @@
     "loading": "Ładowanie...",
     "projectType": "{type, select, game {Gra} website {Strona internetowa} mobile_app {Aplikacja mobilna} api {API} tool {Narzędzie} other {Inne}}",
     "projectMethodology": "{methodology, select, standard {Standardowy} scrum {Scrum} other {Standardowy}}",
-    "role": "{role, select, owner {Właściciel} admin {Administrator} member {Członek} other {Członek}}",
+    "role": "{role, select, owner {Właściciel} admin {Administrator} developer {Developer} tester {Tester} viewer {Obserwator} member {Członek} other {Członek}}",
     "projectStatus": "{status, select, active {Aktywny} archived {Zarchiwizowany} deleted {Usunięty} other {Aktywny}}",
     "entityType": "{type, select, project {Projekt} task {Zadanie} phase {Faza planu} decision {Decyzja} file {Plik} source {Źródło} memory {Pamięć} other {Zadanie}}",
     "relationType": "{type, select, depends_on {Zależy od} blocks {Blokuje} implements {Implementuje} references {Odnosi się do} decided_by {Zadecydowane przez} based_on {Oparte na} related_to {Powiązane z} contradicts {Sprzeczne z} supersedes {Zastępuje} part_of {Część} contains {Zawiera} other {Powiązane z}}",
@@ -66,6 +66,13 @@
       "somethingWentWrong": "Coś poszło nie tak",
       "showPassword": "Pokaż hasło",
       "hidePassword": "Ukryj hasło"
+    },
+    "mobileLogin": {
+      "title": "Połącz aplikację Guidon",
+      "description": "Aplikacja Guidon na Twoim telefonie chce działać jako <b>{email}</b>: czytać Twoje projekty i zadania, zmieniać ich status, edytować je i komentować.",
+      "allow": "Zezwól",
+      "invalidTitle": "Nieprawidłowe żądanie",
+      "invalidDescription": "Tę stronę otwiera aplikacja mobilna Guidon, nie wchodzi się na nią bezpośrednio. Jeśli wysłała Cię tu aplikacja, zacznij logowanie w niej od nowa."
     }
   },
   "errors": {
@@ -262,13 +269,17 @@
       "terms": "Regulamin",
       "privacy": "Polityka prywatności",
       "copyright": "© {year} Guidon",
-      "selfHosting": "Self-hosting"
+      "selfHosting": "Self-hosting",
+      "eula": "EULA",
+      "about": "O nas",
+      "contact": "Kontakt"
     },
     "selfHost": {
       "title": "Postaw Guidona na własnym serwerze",
       "description": "Ta sama aplikacja na infrastrukturze, którą kontrolujesz: Docker Compose ze zwykłym PostgreSQL, lokalnymi plikami i opcjonalnym lokalnym AI (Ollama). Na własnej instalacji nie ma limitów planów.",
       "guide": "Instrukcja self-hostingu",
-      "github": "Kod na GitHubie"
+      "github": "Kod na GitHubie",
+      "apiDocs": "Dokumentacja API i MCP"
     },
     "heroShotTitle": "Pulpit Guidona",
     "heroShotAlt": "Pulpit Guidona: Twoje otwarte i zaległe zadania, najbliższa praca, aktywność zespołu i AI, postęp projektów"
@@ -334,7 +345,19 @@
       "adding": "Dodawanie...",
       "seatsUsed": "Zajęte miejsca: {used} z {limit} (plan {plan})",
       "upgradeForSeats": "Zmień plan, by dodać osoby",
-      "seatsFull": "Organizacja wykorzystała wszystkie miejsca ({limit}) w planie {plan}. Zmień plan, aby dodać kolejne osoby."
+      "seatsFull": "Organizacja wykorzystała wszystkie miejsca ({limit}) w planie {plan}. Zmień plan, aby dodać kolejne osoby.",
+      "viewTree": "Drzewko",
+      "viewList": "Lista",
+      "treePeople": "{count, plural, one {# osoba} few {# osoby} other {# osób}}",
+      "treeGroup": {
+        "owner": "Właściciele",
+        "admin": "Administratorzy",
+        "member": "Członkowie",
+        "ai": "Konta AI"
+      },
+      "treeProjects": "{count, plural, =0 {brak projektów} one {# projekt} few {# projekty} other {# projektów}}",
+      "treeHint": "Kliknij osobę, żeby zobaczyć jej projekty i rolę w każdym. Widać tylko projekty, do których masz dostęp.",
+      "treeAllProjects": "Wszystkie projekty"
     },
     "settings": {
       "title": "Ustawienia organizacji",
@@ -414,7 +437,7 @@
       "free": "Za darmo",
       "contactUs": "Skontaktuj się z nami",
       "perMonth": "/mies.",
-      "trialNotice": "{days} dni za darmo",
+      "trialNotice": "{days} dni za darmo, bez karty",
       "upgrade": "Ulepsz",
       "manageBilling": "Zarządzaj płatnością",
       "currentPlanBadge": "Bieżący plan",
@@ -440,7 +463,16 @@
         "forbidden": "Kody może wpisywać tylko właściciel lub administrator organizacji.",
         "not_available": "Kody promocyjne działają tylko w Guidon Cloud.",
         "failed": "Nie udało się użyć kodu. Spróbuj ponownie."
-      }
+      },
+      "perInterval": "{interval, select, week {/tydz.} year {/rok} other {/mies.}}",
+      "interval": "{interval, select, week {Tygodniowo} year {Rocznie} other {Miesięcznie}}",
+      "billingPeriod": "Okres rozliczeniowy",
+      "yearlySaving": "oszczędzasz {percent}%",
+      "updatePayment": "Zmień metodę płatności",
+      "paymentGraceTitle": "Płatność nie powiodła się",
+      "paymentGraceDescription": "Nie udało się obciążyć karty za tę subskrypcję. Plan działa do {date, date, long} - zmień metodę płatności przed tym terminem.",
+      "paymentSuspendedTitle": "Subskrypcja nieopłacona - obowiązują limity planu Free",
+      "paymentSuspendedDescription": "Płatność dalej nie przeszła, więc organizacja ma limity planu Free. Nic nie zostało usunięte - po zmianie metody płatności plan wraca od razu."
     }
   },
   "projects": {
@@ -1010,7 +1042,10 @@
     "visibilityLabel": "Kto widzi ten projekt",
     "visibilityOrganization": "Wszyscy w organizacji",
     "visibilityPrivate": "Tylko członkowie projektu",
-    "visibilityHint": "Członkowie organizacji spoza projektu widzą go tylko do odczytu, dopóki nie dodasz ich na stronie Członkowie. Właściciel i administratorzy organizacji zawsze widzą wszystkie projekty."
+    "visibilityHint": "Członkowie organizacji spoza projektu widzą go tylko do odczytu, dopóki nie dodasz ich na stronie Członkowie. Właściciel i administratorzy organizacji zawsze widzą wszystkie projekty.",
+    "languageLabel": "Język projektu",
+    "languageAuto": "Automatycznie",
+    "languageHint": "Język, w którym AI Guidona pisze w tym projekcie - odpowiedzi asystenta, wnioski do pamięci, nauka z ukończonych zadań. Automatycznie = w języku, w którym piszesz."
   },
   "discordLink": {
     "title": "Połącz bota Guidon z Discorda",
@@ -1439,7 +1474,19 @@
     "wallpaperDim": "Przyciemnienie {percent}%",
     "wallpaperTooLarge": "Ten obrazek ma ponad 25 MB.",
     "wallpaperNotImage": "Ten plik nie jest obrazkiem, który przeglądarka potrafi otworzyć.",
-    "wallpaperFailed": "Nie udało się zapisać tapety - przeglądarka może blokować dane stron."
+    "wallpaperFailed": "Nie udało się zapisać tapety - przeglądarka może blokować dane stron.",
+    "connectedApps": {
+      "title": "Połączone aplikacje",
+      "description": "Aplikacje, którym pozwoliłeś działać w Guidonie w Twoim imieniu przez OAuth - Claude, ChatGPT, Cursor i inni klienci MCP. Działają jako Ty, tylko w Twoich projektach.",
+      "empty": "Brak połączonych aplikacji. Dodaj Guidona w kliencie MCP pod adresem https://useguidon.com/api/mcp i zatwierdź go tutaj.",
+      "connectedOn": "Połączono {date}",
+      "lastUsed": "ostatnio użyta {date}",
+      "disconnect": "Odłącz",
+      "disconnected": "Odłączono {app}"
+    },
+    "mcpOAuthStep_claude": "W Claude otwórz Ustawienia → Konektory → Dodaj własny konektor, nazwij go Guidon i wklej ten adres",
+    "mcpOAuthStep_chatgpt": "W ChatGPT otwórz Ustawienia → Aplikacje i konektory → Utwórz (tryb dewelopera), wybierz OAuth i wklej ten adres",
+    "mcpOAuthApprove": "Zaloguj się do Guidona, gdy poprosi, i kliknij Zezwól - żadnego klucza do kopiowania. Aplikacja pojawi się wyżej w Połączonych aplikacjach."
   },
   "emails": {
     "passwordResetSubject": "Zresetuj hasło do Guidon",
@@ -1655,5 +1702,91 @@
     "cancel": "Anuluj",
     "createSubmit": "Utwórz konto AI",
     "aiBadge": "AI"
+  },
+  "onboarding": {
+    "metaTitle": "Zaczynamy",
+    "stepOf": "Krok {step} z {total}",
+    "back": "Wstecz",
+    "continue": "Dalej",
+    "typeTitle": "Co tworzysz?",
+    "typeDescription": "Wybierz najbliższe - ustawi odpowiednie sekcje i etykiety. Wszystko zmienisz później.",
+    "nameTitle": "Jak to się nazywa?",
+    "nameDescription": "Twój projekt i studio albo zespół, do którego należy.",
+    "projectNameLabel": "Nazwa projektu",
+    "projectNamePlaceholder": "np. Emberfall",
+    "studioNameLabel": "Studio lub zespół (opcjonalnie)",
+    "studioNamePlaceholder": "np. Two Steps Studio",
+    "studioNameHint": "Twoja organizacja w Guidonie - dołączają do niej osoby, które zaprosisz.",
+    "workflowTitle": "Jak pracujesz?",
+    "workflowDescription": "Ustawienia startowe dla Twojej branży. Sekcje i etykiety zmienisz w każdej chwili.",
+    "templateHint": {
+      "gamedev": "Wszystkie sekcje i etykiety typu gameplay, grafika, audio, bug.",
+      "software": "Pod kod: decyzje, roadmapa, technologie, pamięć.",
+      "design": "Moodboardy i referencje, bez technologii.",
+      "marketing": "Kampanie i treści, mniej techniki.",
+      "support": "Tylko tablica i pliki - prosto i szybko."
+    },
+    "methodologyLabel": "Styl tablicy",
+    "methodologyHint": {
+      "standard": "Tablica kanban: przesuwasz zadania między kolumnami.",
+      "scrum": "Kanban z oznaczeniem scrum - dla zespołów pracujących w sprintach."
+    },
+    "teamTitle": "Kto nad tym pracuje?",
+    "teamDescription": "Żeby Guidon podpowiedział właściwe kolejne kroki.",
+    "team": {
+      "solo": "Tylko ja",
+      "small": "Mały zespół",
+      "studio": "Studio"
+    },
+    "teamHint": {
+      "solo": "Solo dev albo freelancer",
+      "small": "2-10 osób",
+      "studio": "Więcej osób, kilka projektów"
+    },
+    "readyTitle": "Ostatni krok: konto",
+    "readyDescription": "Załóż darmowe konto, a projekt będzie gotowy zaraz potem - z tymi ustawieniami.",
+    "readyTitleSignedIn": "Wszystko gotowe",
+    "readyDescriptionSignedIn": "Utworzymy Twoją przestrzeń z tymi ustawieniami.",
+    "summaryProject": "Projekt",
+    "summaryStudio": "Organizacja",
+    "summaryWorkflow": "Ustawienia",
+    "summaryTeam": "Zespół",
+    "studioDefault": "Zespół {project}",
+    "createAccount": "Załóż darmowe konto",
+    "createWorkspace": "Utwórz moją przestrzeń",
+    "haveAccount": "Masz już konto?",
+    "signIn": "Zaloguj się",
+    "finishing": "Przygotowuję Twoją przestrzeń...",
+    "finishFailed": "Nie udało się utworzyć przestrzeni.",
+    "skipToDashboard": "Przejdź do pulpitu",
+    "welcomeTitle": "Twój projekt jest gotowy",
+    "welcomeDescription": "Kilka szybkich rzeczy na start:",
+    "welcomeFirstTask": "Dodaj pierwsze zadanie",
+    "welcomeInvite": "Zaproś zespół",
+    "welcomeImport": "Zaimportuj zadania z Trello, Jiry lub CSV",
+    "welcomeDismiss": "Zamknij"
+  },
+  "oauth": {
+    "title": "Połącz {app} z Guidonem",
+    "signedInAs": "Zalogowano jako <b>{email}</b>.",
+    "permissionsTitle": "Aplikacja będzie mogła:",
+    "limits": "Tylko w projektach, do których masz dostęp, z Twoją rolą w każdym z nich.",
+    "fromSite": "Tę aplikację publikuje {host}.",
+    "unverified": "Guidon nie zweryfikował tej aplikacji. Zezwól tylko wtedy, gdy to Ty zaczynasz to połączenie.",
+    "redirectNote": "Po decyzji wrócisz do {host}.",
+    "allow": "Zezwól",
+    "deny": "Anuluj",
+    "revokeHint": "Możesz ją odłączyć w każdej chwili w Profil → Połączone aplikacje.",
+    "invalidTitle": "Ta prośba o połączenie jest nieprawidłowa",
+    "invalidDescription": "Wróć do aplikacji i spróbuj połączyć się jeszcze raz.",
+    "scopes": {
+      "tasks_read": "Widzieć Twoje projekty, zadania, komentarze i próby",
+      "tasks_write": "Tworzyć, edytować i usuwać zadania",
+      "tasks_status": "Zaczynać zadania i przenosić je między kolumnami",
+      "comments_write": "Komentować zadania",
+      "attempts_write": "Zapisywać, co zostało wypróbowane przy zadaniu",
+      "project_read": "Czytać decyzje, wiedzę, roadmapę, pamięć i stack technologiczny",
+      "project_write": "Zmieniać decyzje, wiedzę, roadmapę, pamięć i stack technologiczny"
+    }
   }
 }

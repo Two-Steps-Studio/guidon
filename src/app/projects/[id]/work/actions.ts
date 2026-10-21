@@ -11,6 +11,7 @@ import { resolveColumnRenumbering } from "@/lib/work/task-board";
 import { ensureNextOccurrence } from "@/lib/work/recurrence";
 import { normalizeRecurrence } from "@/lib/work/recurrence-core";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
+import { tr } from "@/lib/i18n/server-errors";
 
 /** `created`: a repeating task's next occurrence (and its subtasks), made because this finished it. */
 export type TaskActionResult = { task: Task | null; error: string | null; created?: Task[] };
@@ -24,7 +25,7 @@ export async function moveTask(
 ): Promise<TaskMutationResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to move tasks." };
+    return { error: await tr("You do not have permission to move tasks.") };
   }
 
   const db = dataClient(access.userId);
@@ -70,7 +71,7 @@ export async function moveTask(
     .select("id, title, is_done")
     .maybeSingle();
   if (error) return { error: error.message };
-  if (!moved) return { error: "This task could not be found in this project." };
+  if (!moved) return { error: await tr("This task could not be found in this project.") };
 
   await logActivity({
     userId: access.userId,
@@ -113,14 +114,14 @@ export async function createTask(
   const access = await getProjectAccess(projectId);
   // Mirrors tasks_insert (001): owner/admin/developer.
   if (!access || !canWriteProject(access.role)) {
-    return { task: null, error: "You do not have permission to create tasks." };
+    return { task: null, error: await tr("You do not have permission to create tasks.") };
   }
 
   const limitError = await hostedTaskLimitError(projectId, access.project.organization_id);
   if (limitError) return { task: null, error: limitError };
 
   if (!input.title.trim()) {
-    return { task: null, error: "Title is required." };
+    return { task: null, error: await tr("Title is required.") };
   }
 
   const description = input.description.trim() || null;
@@ -241,11 +242,11 @@ export async function updateTask(
   const access = await getProjectAccess(projectId);
   // Mirrors tasks_update (001): owner/admin/developer.
   if (!access || !canWriteProject(access.role)) {
-    return { task: null, error: "You do not have permission to edit this task." };
+    return { task: null, error: await tr("You do not have permission to edit this task.") };
   }
 
   const columns = pickTaskPatch(patch);
-  if (Object.keys(columns).length === 0) return { task: null, error: "Nothing to update." };
+  if (Object.keys(columns).length === 0) return { task: null, error: await tr("Nothing to update.") };
 
   const db = dataClient(access.userId);
   // Whether this edit finishes the task (or otherwise moves it) - for the
@@ -263,7 +264,7 @@ export async function updateTask(
     .maybeSingle();
 
   if (error) return { task: null, error: error.message };
-  if (!task) return { task: null, error: "This task could not be found in this project." };
+  if (!task) return { task: null, error: await tr("This task could not be found in this project.") };
 
   await logActivity({
     userId: access.userId,
@@ -300,14 +301,14 @@ export async function createSubtask(
   // A subtask is a plain row in `tasks`, so it is gated by the same policy
   // as any other task: tasks_insert (001), owner/admin/developer.
   if (!access || !canWriteProject(access.role)) {
-    return { task: null, error: "You do not have permission to create subtasks." };
+    return { task: null, error: await tr("You do not have permission to create subtasks.") };
   }
 
   const limitError = await hostedTaskLimitError(projectId, access.project.organization_id);
   if (limitError) return { task: null, error: limitError };
 
   if (!title.trim()) {
-    return { task: null, error: "Title is required." };
+    return { task: null, error: await tr("Title is required.") };
   }
 
   const db = dataClient(access.userId);
@@ -322,7 +323,7 @@ export async function createSubtask(
     .eq("id", parentTaskId)
     .eq("project_id", projectId)
     .maybeSingle();
-  if (!parent) return { task: null, error: "Parent task not found in this project." };
+  if (!parent) return { task: null, error: await tr("Parent task not found in this project.") };
 
   const { data: task, error } = await db
     .from<Task>("tasks")
@@ -360,7 +361,7 @@ export async function deleteTask(
   const access = await getProjectAccess(projectId);
   // Mirrors tasks_delete (001): owner/admin only.
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete this task." };
+    return { error: await tr("You do not have permission to delete this task.") };
   }
 
   // Scoped to project_id with a row check: without it a mismatched id (a
@@ -374,7 +375,7 @@ export async function deleteTask(
     .select("id");
 
   if (error) return { error: error.message };
-  if (deleted.length === 0) return { error: "This task could not be found in this project." };
+  if (deleted.length === 0) return { error: await tr("This task could not be found in this project.") };
 
   await logActivity({
     userId: access.userId,

@@ -6,6 +6,7 @@ import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type UpdateProjectState = {
   error: string | null;
@@ -26,14 +27,14 @@ export async function updateProject(
   const access = await getProjectAccess(projectId);
 
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to edit this project." };
+    return { error: await tr("You do not have permission to edit this project.") };
   }
 
   const name = formData.get("name");
   const description = formData.get("description");
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return { error: "Project name is required." };
+    return { error: await tr("Project name is required.") };
   }
 
   const trimmedDescription =
@@ -54,7 +55,7 @@ export async function updateProject(
       // that, the caller still got { error: null } and an activity_logs
       // entry for an update that never happened.
       if (result.rows.length === 0) {
-        return { error: "This project no longer exists, or you're not allowed to edit it." };
+        return { error: await tr("This project no longer exists, or you're not allowed to edit it.") };
       }
     } catch (error) {
       return { error: error instanceof Error ? error.message : "Failed to update project." };
@@ -86,7 +87,7 @@ export async function updateProject(
     return { error: error.message };
   }
   if (!updatedRows || updatedRows.length === 0) {
-    return { error: "This project no longer exists, or you're not allowed to edit it." };
+    return { error: await tr("This project no longer exists, or you're not allowed to edit it.") };
   }
 
   await logActivity({

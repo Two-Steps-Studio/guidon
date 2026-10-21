@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { PROJECT_LANGUAGES, languageName } from "@/lib/project-language";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, FolderKanban, Loader2, Settings, X } from "lucide-react";
 import { updateProjectSettings, type SettingsFormState } from "./actions";
 import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
+import { Select } from "@/components/ui/select";
 
 const STATUS_VALUES: ProjectStatus[] = ["active", "archived", "deleted"];
 const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
@@ -28,6 +30,7 @@ export function SettingsForm({
   initialTechnologies: string[];
 }) {
   const t = useTranslations("settings");
+  const locale = useLocale();
   const tCommon = useTranslations("common");
   const updateWithId = updateProjectSettings.bind(null, project.id);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
@@ -100,39 +103,48 @@ export function SettingsForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="status">{t("statusLabel")}</Label>
-            <select
+            <Select
               id="status"
               name="status"
               defaultValue={project.status}
-              className="w-full px-3 py-2 border rounded-md bg-background"
             >
               {STATUS_VALUES.map((value) => (
                 <option key={value} value={value}>
                   {tCommon("projectStatus", { status: value })}
                 </option>
               ))}
-            </select>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="language">{t("languageLabel")}</Label>
+            <Select id="language" name="language" defaultValue={project.language ?? ""}>
+              <option value="">{t("languageAuto")}</option>
+              {PROJECT_LANGUAGES.map((code) => (
+                <option key={code} value={code}>
+                  {languageName(code, locale)}
+                </option>
+              ))}
+            </Select>
+            <p className="text-xs text-muted-foreground">{t("languageHint")}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="visibility">{t("visibilityLabel")}</Label>
-            <select
+            <Select
               id="visibility"
               name="visibility"
               defaultValue={project.visibility === "private" ? "private" : "organization"}
-              className="w-full px-3 py-2 border rounded-md bg-background"
             >
               <option value="organization">{t("visibilityOrganization")}</option>
               <option value="private">{t("visibilityPrivate")}</option>
-            </select>
+            </Select>
             <p className="text-xs text-muted-foreground">{t("visibilityHint")}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="projectType">{t("projectTypeLabel")}</Label>
-            <select
+            <Select
               id="projectType"
               name="projectType"
               defaultValue={project.project_type ?? ""}
-              className="w-full px-3 py-2 border rounded-md bg-background"
             >
               <option value="">{t("notSet")}</option>
               {PROJECT_TYPE_VALUES.map((value) => (
@@ -140,7 +152,7 @@ export function SettingsForm({
                   {tCommon("projectType", { type: value })}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>{t("workflowLabel")}</Label>

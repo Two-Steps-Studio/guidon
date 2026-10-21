@@ -239,8 +239,12 @@ for (const [label, sql, expected] of [
   // 35->36 tabel, 124->129 polityk: project_task_priorities (060, 4) + project_board_columns_delete
   // 36->38 tabel, polityk bez zmian: promo_codes + promo_redemptions (062) -
   // zero polityk, pisze i czyta tylko service_role (jak stripe_webhook_events).
-  ["38 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 38],
-  ["129 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 129],
+  // 38->39 tabel, polityk bez zmian: mobile_auth_codes (068) - tylko service_role.
+  // 39->40 tabel, 129->130 polityk: plan_prices (071) + plan_prices_select.
+  // 40->41 tabel, polityk bez zmian: api_idempotency_keys (072) - tylko service_role.
+  // 41->45 tabel, polityk bez zmian: oauth_clients/grants/codes/refresh_tokens (073) - tylko service_role.
+  ["45 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 45],
+  ["130 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 130],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3254,6 +3258,209 @@ section("54. widocznosc projektu w organizacji (migracja 067)");
   await withUser(M, async () => {
     const seen = (await db.query("SELECT id FROM public.projects WHERE organization_id = $1", [org])).rows.map((r) => r.id);
     check("admin organizacji widzi kazdy projekt, takze 'private'", seen.includes(shared) && seen.includes(hidden));
+  });
+}
+
+section("55. zespol projektu widoczny dla kazdego, kto widzi projekt (migracja 069)");
+
+{
+  const M = "eeeeeeee-0000-4000-8000-000000000069";
+  const S = "eeeeeeee-0000-4000-8000-000000000169";
+  await withServiceRole(() =>
+    db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, 'm069@example.test', '{}'), ($2, 's069@example.test', '{}') ON CONFLICT DO NOTHING", [M, S])
+  );
+  let shared, hidden;
+  await withUser(A, async () => {
+    const org = (await db.query("INSERT INTO public.organizations (name, slug) VALUES ('Team 069', 'team-069') RETURNING id")).rows[0].id;
+    await db.query("INSERT INTO public.organization_members (organization_id, user_id, role) VALUES ($1, $2, 'member')", [org, M]);
+    shared = (await db.query("INSERT INTO public.projects (organization_id, name, slug, visibility) VALUES ($1, 'Shared 069', 'shared-069', 'organization') RETURNING id", [org])).rows[0].id;
+    hidden = (await db.query("INSERT INTO public.projects (organization_id, name, slug, visibility) VALUES ($1, 'Hidden 069', 'hidden-069', 'private') RETURNING id", [org])).rows[0].id;
+  });
+  await withUser(M, async () => {
+    const seen = (await db.query("SELECT project_id FROM public.project_members WHERE project_id = ANY($1)", [[shared, hidden]])).rows.map((r) => r.project_id);
+    check("czlonek organizacji widzi zespol projektu 'organization'", seen.includes(shared));
+    check("ale nie zespol projektu 'private'", !seen.includes(hidden));
+  });
+  await withUser(S, async () => {
+    const seen = await db.query("SELECT 1 FROM public.project_members WHERE project_id = ANY($1)", [[shared, hidden]]);
+    check("ktos spoza organizacji nie widzi zadnego zespolu", seen.rows.length === 0);
+  });
+}
+
+section("56. jezyk projektu (migracja 070)");
+
+{
+  await withUser(A, async () => {
+    const set = await db.query("UPDATE public.projects SET language = 'pt-BR' WHERE id = $1 RETURNING language", [projectId]);
+    check("owner ustawia jezyk projektu", set.rows[0]?.language === "pt-BR");
+    check("zly kod jezyka odrzucony", await throwsInSavepoint("UPDATE public.projects SET language = 'polish' WHERE id = $1", [projectId]));
+    const auto = await db.query("UPDATE public.projects SET language = NULL WHERE id = $1 RETURNING language", [projectId]);
+    check("NULL = automatycznie", auto.rows[0]?.language === null);
+  });
+  await withUser(D, async () => {
+    const res = await db.query("UPDATE public.projects SET language = 'de' WHERE id = $1 RETURNING id", [projectId]);
+    check("developer nie zmienia jezyka projektu", res.rows.length === 0);
+  });
+}
+
+section("57. ceny tygodniowe/miesieczne/roczne, trial raz na organizacje, karencja (migracja 071)");
+
+{
+  const sql071 = await readFile(path.join(DB_DIR, "migrations", "071_billing_intervals_trial_grace.sql"), "utf8");
+  await withServiceRole(async () => {
+    await db.query("UPDATE public.plans SET stripe_price_id = 'price_071_pro_month' WHERE id = 'pro'");
+    await db.query("UPDATE public.subscriptions SET stripe_subscription_id = 'sub_071', status = 'past_due', trial_used_at = NULL, past_due_since = NULL WHERE organization_id = $1", [orgId]);
+  });
+  await db.exec(forPglite(sql071));
+  await db.exec(forPglite(sql071));
+  const prices = await withServiceRole(() => db.query("SELECT plan_id, billing_interval FROM public.plan_prices WHERE stripe_price_id = 'price_071_pro_month'"));
+  check("071 przepisuje plans.stripe_price_id jako cene miesieczna", prices.rows.length === 1 && prices.rows[0].plan_id === "pro" && prices.rows[0].billing_interval === "month", JSON.stringify(prices.rows));
+  const sub = await withServiceRole(() => db.query("SELECT trial_used_at, past_due_since FROM public.subscriptions WHERE organization_id = $1", [orgId]));
+  check("organizacja z dawna subskrypcja ma trial juz wykorzystany", sub.rows[0].trial_used_at !== null);
+  check("zalegla platnosc dostaje date poczatku karencji", sub.rows[0].past_due_since !== null);
+
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_pro_year', 'pro', 'year', 39000)");
+    check(
+      "druga aktywna cena roczna dla planu odrzucona",
+      await throwsInSavepoint("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_pro_year2', 'pro', 'year', 35000)")
+    );
+    await db.query("UPDATE public.plan_prices SET active = false WHERE stripe_price_id = 'price_071_pro_year'");
+    await db.query("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_pro_year2', 'pro', 'year', 35000)");
+    check("po wylaczeniu starej ceny nowa wchodzi", true);
+    check("okres 'day' odrzucony", await throwsInSavepoint("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_day', 'pro', 'day', 100)"));
+    check("subscriptions.billing_interval sprawdzany", await throwsInSavepoint("UPDATE public.subscriptions SET billing_interval = 'quarter' WHERE organization_id = $1", [orgId]));
+    await db.query("UPDATE public.subscriptions SET status = 'active', stripe_subscription_id = NULL, past_due_since = NULL WHERE organization_id = $1", [orgId]);
+  });
+
+  await withUser(A, async () => {
+    const seen = await db.query("SELECT stripe_price_id FROM public.plan_prices WHERE plan_id = 'pro'");
+    check("zalogowany czyta ceny (jak plans)", seen.rows.length >= 3, seen.rows.length);
+    check("ale ich nie dopisuje", await throwsInSavepoint("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_hack', 'pro', 'week', 1)"));
+    check("ani nie oznacza sobie trialu jako niewykorzystanego", await throwsInSavepoint("UPDATE public.subscriptions SET trial_used_at = NULL WHERE organization_id = $1", [orgId]));
+  });
+}
+
+section("58. Idempotency-Key i stronicowanie zadan w SQL (migracja 072)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000072";
+  await withUser(stranger, async () => {
+    check(
+      "authenticated nie czyta zapisanych odpowiedzi",
+      await throwsInSavepoint("SELECT * FROM public.api_idempotency_keys")
+    );
+  });
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.api_idempotency_keys (scope, idempotency_key, request_hash) VALUES ('s', 'k', 'h')");
+    check(
+      "ten sam klucz w tym samym scope drugi raz odrzucony",
+      await throwsInSavepoint("INSERT INTO public.api_idempotency_keys (scope, idempotency_key, request_hash) VALUES ('s', 'k', 'h2')")
+    );
+    check("pusty klucz odrzucony", await throwsInSavepoint("INSERT INTO public.api_idempotency_keys (scope, idempotency_key, request_hash) VALUES ('s', '', 'h')"));
+    await db.query("DELETE FROM public.api_idempotency_keys WHERE scope = 's'");
+  });
+
+  let ids = [];
+  await withUser(A, async () => {
+    const created = await db.query(
+      "INSERT INTO public.tasks (project_id, title, created_at) SELECT $1, 'page ' || g, '2026-10-21 01:02:03.123456+00' FROM generate_series(1, 5) g RETURNING id",
+      [projectId]
+    );
+    ids = created.rows.map((r) => r.id);
+    const page = async (after, at) =>
+      (await db.query("SELECT id FROM public.list_project_tasks_page($1, 2, $2, $3)", [projectId, after, at])).rows.map((r) => r.id);
+    const all = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 1000)", [projectId])).rows.map((r) => r.id);
+    const seen = [];
+    let after = null;
+    for (let i = 0; i < 100; i++) {
+      const rows = await page(after, null);
+      seen.push(...rows);
+      if (rows.length < 2) break;
+      after = rows[rows.length - 1];
+    }
+    check("strony po 2 skladaja sie w pelna liste (te same znaczniki czasu)", JSON.stringify(seen) === JSON.stringify(all), `${seen.length}/${all.length}`);
+    check("wszystkie 5 zadan z ta sama mikrosekunda sa na liscie", ids.every((id) => all.includes(id)));
+
+    const cut = all.indexOf(ids[2]);
+    const at = (await db.query("SELECT created_at FROM public.tasks WHERE id = $1", [all[cut]])).rows[0].created_at;
+    const before = await page(all[cut], null);
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [all[cut]]);
+    const afterDelete = await page(all[cut], at);
+    check("kursor na usuniete zadanie dalej dziala (czas z kursora)", JSON.stringify(before) === JSON.stringify(afterDelete), `${before} vs ${afterDelete}`);
+    const capped = (await db.query("SELECT count(*)::int n FROM public.list_project_tasks_page($1, 100000)", [projectId])).rows[0].n;
+    check("limit obciety do 1001", capped <= 1001);
+  });
+  await withUser(stranger, async () => {
+    const rows = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 10)", [projectId])).rows;
+    check("obcy nie widzi zadan przez funkcje (RLS)", rows.length === 0, rows.length);
+  });
+}
+
+section("59. serwer autoryzacji OAuth 2.1 (migracja 073)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000073";
+  for (const table of ["oauth_clients", "oauth_grants", "oauth_codes", "oauth_refresh_tokens"]) {
+    await withUser(A, async () => {
+      check(`authenticated nie czyta ${table}`, await throwsInSavepoint(`SELECT * FROM public.${table}`));
+    });
+  }
+
+  let grantId, keyId;
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.oauth_clients (client_id, kind, client_name, redirect_uris) VALUES ('gdc_test', 'dcr', 'Test client', '{https://a.example/cb}')");
+    check(
+      "klient bez redirect_uris odrzucony",
+      await throwsInSavepoint("INSERT INTO public.oauth_clients (client_id, kind, client_name, redirect_uris) VALUES ('gdc_x', 'dcr', 'x', '{}')")
+    );
+    check(
+      "nieznany rodzaj klienta odrzucony",
+      await throwsInSavepoint("INSERT INTO public.oauth_clients (client_id, kind, client_name, redirect_uris) VALUES ('gdc_y', 'secret', 'x', '{https://a.example/cb}')")
+    );
+    grantId = (
+      await db.query("INSERT INTO public.oauth_grants (client_id, user_id, client_name, scopes) VALUES ('gdc_test', $1, 'Test client', '{tasks:read}') RETURNING id", [A])
+    ).rows[0].id;
+    check(
+      "kod z blednym code_challenge odrzucony",
+      await throwsInSavepoint(
+        "INSERT INTO public.oauth_codes (code_hash, grant_id, redirect_uri, code_challenge, expires_at) VALUES ('h', $1, 'https://a.example/cb', 'short', now())",
+        [grantId]
+      )
+    );
+    keyId = (
+      await db.query(
+        "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, oauth_grant_id, expires_at) VALUES ($1, 'Test client (OAuth)', 'guidon_test', 'hash073', '{tasks:read}', $2, now() + interval '1 hour') RETURNING id",
+        [A, grantId]
+      )
+    ).rows[0].id;
+  });
+
+  await withUser(A, async () => {
+    const own = await db.query("SELECT expires_at, oauth_grant_id FROM public.api_keys WHERE id = $1", [keyId]);
+    check("wlasciciel widzi swoj token OAuth jak klucz", own.rows.length === 1 && own.rows[0].oauth_grant_id === grantId);
+    check(
+      "ale nie przedluza mu waznosci",
+      await throwsInSavepoint("UPDATE public.api_keys SET expires_at = NULL WHERE id = $1", [keyId])
+    );
+    check(
+      "ani nie tworzy sobie klucza z cudza zgoda",
+      await throwsInSavepoint(
+        "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, oauth_grant_id) VALUES ($1, 'x', 'guidon_x', 'hash073b', '{tasks:read}', $2)",
+        [A, grantId]
+      )
+    );
+  });
+  await withUser(stranger, async () => {
+    const seen = await db.query("SELECT id FROM public.api_keys WHERE id = $1", [keyId]);
+    check("obcy nie widzi cudzego tokenu OAuth", seen.rows.length === 0);
+  });
+
+  await withServiceRole(async () => {
+    await db.query("DELETE FROM public.oauth_grants WHERE id = $1", [grantId]);
+    const left = await db.query("SELECT id FROM public.api_keys WHERE id = $1", [keyId]);
+    check("usuniecie zgody usuwa jej tokeny (ON DELETE CASCADE)", left.rows.length === 0);
+    await db.query("DELETE FROM public.oauth_clients WHERE client_id = 'gdc_test'");
   });
 }
 

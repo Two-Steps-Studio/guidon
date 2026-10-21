@@ -10,15 +10,29 @@ const CONTENT_TYPE = 'application/linkset+json; profile="https://www.rfc-editor.
 function catalog() {
   return {
     linkset: [
+      // RFC 9727 section 4.1: the catalog's own entry lists each API as an item.
+      {
+        anchor: `${SITE_URL}/.well-known/api-catalog`,
+        item: [
+          { href: `${SITE_URL}/api/v1`, title: "Guidon REST API v1" },
+          { href: `${SITE_URL}/api/mcp`, title: "Guidon MCP server" },
+        ],
+      },
       {
         anchor: `${SITE_URL}/api/v1`,
         "service-desc": [{ href: `${SITE_URL}/openapi.json`, type: "application/vnd.oai.openapi+json;version=3.1" }],
         "service-doc": [{ href: `${SITE_URL}/developers`, type: "text/html" }],
-        "service-meta": [{ href: `${SITE_URL}/llms.txt`, type: "text/plain" }],
+        "service-meta": [
+          { href: `${SITE_URL}/llms.txt`, type: "text/plain" },
+          { href: `${SITE_URL}/.well-known/oauth-protected-resource/api/v1`, type: "application/json" },
+        ],
+        status: [{ href: `${SITE_URL}/api/health`, type: "application/json" }],
       },
       {
         anchor: `${SITE_URL}/api/mcp`,
+        "service-desc": [{ href: `${SITE_URL}/api/mcp/server-card`, type: "application/mcp-server-card+json" }],
         "service-doc": [{ href: `${SITE_URL}/developers#mcp-server`, type: "text/html" }],
+        "service-meta": [{ href: `${SITE_URL}/.well-known/oauth-protected-resource/api/mcp`, type: "application/json" }],
       },
     ],
   };

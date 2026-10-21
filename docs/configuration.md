@@ -258,6 +258,35 @@ essentially never changes, so a full editor would be unused complexity.
 sold through Checkout. A plan with `stripe_price_id IS NULL` simply shows no
 Upgrade button.
 
+**Weekly / monthly / yearly prices** (migration 071). `plans.stripe_price_id`
+is the monthly price. For other periods create another recurring Price on the
+same Product (interval `week` or `year`, interval count 1) and register it:
+
+```sql
+INSERT INTO plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents)
+VALUES ('price_...', 'pro', 'year', 39000);
+```
+
+The billing page shows a period switcher as soon as any plan has a weekly or
+yearly price, and "save N%" on Yearly. To change a price, create a new Price
+in Stripe, set the old row's `active = false` and insert the new one - existing
+subscriptions stay on the old Price and still map to the plan.
+
+**Free trial.** An organization's first subscription gets
+`TRIAL_PERIOD_DAYS` (14, `src/lib/billing/billing-core.ts`) without a card:
+Checkout asks for one only if something is due today, and a trial that ends
+with no card on file is cancelled (back to Free). Once an organization has
+trialed (`subscriptions.trial_used_at`), later checkouts charge from day one.
+
+**Failed payments.** Stripe retries the card and emails the customer - turn on
+Smart Retries and "Send emails when card payments fail" under Settings ->
+Billing -> Subscriptions and emails, and set "If all retries fail" to cancel
+the subscription. Meanwhile the subscription is `past_due`: Guidon keeps the
+plan for `GRACE_PERIOD_DAYS` (7) after the first failure and shows a banner
+on the organization and billing pages, then applies Free's limits until a
+payment goes through (nothing is deleted). "Update payment method" opens the
+Customer Portal - enable updating payment methods there.
+
 **Promo codes.** Two kinds, for two jobs:
 
 - *A discount on a paid plan* (e.g. 50% off for 3 months): create a coupon and

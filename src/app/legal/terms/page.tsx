@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SUPPORT_EMAIL } from "@/lib/project-links";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -52,8 +53,8 @@ export default function TermsPage() {
               contract you enter into by using the Service is with the individual(s) operating Guidon, subject to
               applicable law for minors and unregistered businesses. We will update these Terms with our legal
               entity&apos;s details once incorporated. Contact:{" "}
-              <a href="mailto:support@useguidon.com" className="text-primary underline underline-offset-2">
-                support@useguidon.com
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline underline-offset-2">
+                {SUPPORT_EMAIL}
               </a>
               .
             </p>
@@ -181,8 +182,8 @@ export default function TermsPage() {
             <h2>13. Contact</h2>
             <p>
               Questions about these Terms:{" "}
-              <a href="mailto:support@useguidon.com" className="text-primary underline underline-offset-2">
-                support@useguidon.com
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline underline-offset-2">
+                {SUPPORT_EMAIL}
               </a>
               .
             </p>

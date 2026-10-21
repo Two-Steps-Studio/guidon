@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { updateOrganizationPlan } from "./actions";
+import { Select } from "@/components/ui/select";
 
 export function PlanEditor({
   orgId,
@@ -29,7 +30,7 @@ export function PlanEditor({
     startTransition(async () => {
       const result = await updateOrganizationPlan(orgId, planId);
       setError(result.error);
-      // Optimistic - the <select> already shows planId. Without reverting on
+      // Optimistic - the <Select> already shows planId. Without reverting on
       // failure, a rejected change (permission/validation error) left the
       // dropdown showing a plan that was never actually saved, with only an
       // easy-to-miss inline error as the only sign anything went wrong.
@@ -39,18 +40,18 @@ export function PlanEditor({
 
   return (
     <div className="flex items-center gap-2">
-      <select
+      <Select
         value={value}
         onChange={(e) => save(e.target.value)}
         disabled={pending}
-        className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
+        className="h-8 w-auto"
       >
         {PLAN_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
       {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   );

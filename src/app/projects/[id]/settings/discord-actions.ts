@@ -5,6 +5,7 @@ import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { getDiscordIntegrationInfo, saveDiscordWebhookUrl, clearDiscordWebhookUrl, disconnectDiscordGuild } from "@/lib/data/discord-integration";
 import { isSafeHttpUrl } from "@/lib/validation/url";
 import type { DiscordIntegrationInfo } from "@/lib/data/discord-integration";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type DiscordIntegrationState = { error: string | null };
 
@@ -49,12 +50,12 @@ function isValidDiscordWebhookUrl(url: string): boolean {
 export async function saveDiscordWebhook(projectId: string, webhookUrl: string): Promise<DiscordIntegrationState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to change this project's Discord integration." };
+    return { error: await tr("You do not have permission to change this project's Discord integration.") };
   }
 
   const trimmed = webhookUrl.trim();
   if (!isValidDiscordWebhookUrl(trimmed)) {
-    return { error: "Enter a valid Discord webhook URL (https://discord.com/api/webhooks/...)." };
+    return { error: await tr("Enter a valid Discord webhook URL (https://discord.com/api/webhooks/...).") };
   }
 
   // The form awaits this result; a thrown error would leave it with no
@@ -64,7 +65,7 @@ export async function saveDiscordWebhook(projectId: string, webhookUrl: string):
     await saveDiscordWebhookUrl(projectId, access.userId, trimmed);
   } catch (error) {
     console.error("saveDiscordWebhook failed:", error);
-    return { error: "Could not save the Discord webhook. Please try again." };
+    return { error: await tr("Could not save the Discord webhook. Please try again.") };
   }
   revalidatePath(`/projects/${projectId}/settings`);
   return { error: null };
@@ -73,14 +74,14 @@ export async function saveDiscordWebhook(projectId: string, webhookUrl: string):
 export async function removeDiscordWebhook(projectId: string): Promise<DiscordIntegrationState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to change this project's Discord integration." };
+    return { error: await tr("You do not have permission to change this project's Discord integration.") };
   }
 
   try {
     await clearDiscordWebhookUrl(projectId, access.userId);
   } catch (error) {
     console.error("removeDiscordWebhook failed:", error);
-    return { error: "Could not remove the Discord webhook. Please try again." };
+    return { error: await tr("Could not remove the Discord webhook. Please try again.") };
   }
   revalidatePath(`/projects/${projectId}/settings`);
   return { error: null };
@@ -95,7 +96,7 @@ export async function removeDiscordWebhook(projectId: string): Promise<DiscordIn
 export async function disconnectDiscordServer(projectId: string): Promise<DiscordIntegrationState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to change this project's Discord integration." };
+    return { error: await tr("You do not have permission to change this project's Discord integration.") };
   }
 
   let result: Awaited<ReturnType<typeof disconnectDiscordGuild>>;
@@ -103,7 +104,7 @@ export async function disconnectDiscordServer(projectId: string): Promise<Discor
     result = await disconnectDiscordGuild(projectId, access.userId);
   } catch (error) {
     console.error("disconnectDiscordServer failed:", error);
-    return { error: "Could not disconnect the Discord server. Please try again." };
+    return { error: await tr("Could not disconnect the Discord server. Please try again.") };
   }
   if (!result.ok) return { error: result.error };
 

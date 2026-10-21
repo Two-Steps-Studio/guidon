@@ -11,6 +11,7 @@ import {
   prefersMarkdown,
 } from '@/lib/agent-web'
 import { SITE_URL } from '@/lib/site-url'
+import { bearerChallenge } from '@/lib/oauth/oauth-core'
 import { safeRedirect } from '@/lib/auth/safe-redirect'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
@@ -38,6 +39,9 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // actual file, so the site was effectively unindexable.
   '/robots.txt',
   '/sitemap.xml',
+  // Structured-data feeds for agents (NLWeb Schema Feeds), named in robots.txt.
+  '/schemamap.xml',
+  '/feeds/site.jsonl',
   // Browsers fetch the web app manifest without cookies (no crossorigin
   // credentials), so "Add to Home Screen" got the login page instead and fell
   // back to a page screenshot as the icon.
@@ -48,6 +52,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // login redirect below would make it unreachable. Exact match: it is a
   // single POST-only route with no sub-paths.
   '/api/mcp',
+  // Its server card (public description) and the public docs MCP server.
+  '/api/mcp/server-card',
+  '/api/mcp/docs',
+  '/api/mcp/docs/server-card',
   // GitHub App webhook - GitHub never carries a session cookie; the route
   // verifies the X-Hub-Signature-256 HMAC itself and 401s without it.
   '/api/github/webhook',
@@ -66,6 +74,25 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/developers/llms.txt',
   '/openapi.json',
   '/pricing.md',
+  // OAuth 2.1 endpoints MCP clients call without a session (src/app/oauth):
+  // each authenticates on its own terms (PKCE code, refresh token) or is
+  // open by design (dynamic client registration). /oauth/authorize is not
+  // here - it is the consent screen and needs a signed-in person.
+  '/oauth/token',
+  '/oauth/register',
+  '/oauth/revoke',
+  // How agents get credentials, as Markdown (src/app/auth.md).
+  '/auth.md',
+  // NLWeb question endpoint over the public docs (src/app/ask).
+  '/ask',
+  // Who runs Guidon and how to reach them, plus their Markdown twins.
+  '/about',
+  '/about.md',
+  '/contact',
+  '/contact.md',
+  // Onboarding before the account exists (app/start) - the questions come
+  // first, signing up last. /start/finish needs a session and isn't listed.
+  '/start',
 ])
 // "Public" here means "authenticates itself, doesn't need a session cookie" -
 // /api/v1 is the AI Task API (route-guard.ts's guardApiRequest): every
@@ -98,8 +125,12 @@ function isPublicRoute(pathname: string): boolean {
 function redirectToLogin(request: NextRequest, pathname: string) {
   // API callers can't follow a redirect to an HTML login form - they get a
   // JSON 401 they can parse instead.
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
+    // The challenge tells an agent where the OAuth metadata is (RFC 9728).
+    return NextResponse.json(
+      { error: 'Authentication required.', code: 'unauthorized' },
+      { status: 401, headers: { 'WWW-Authenticate': bearerChallenge(SITE_URL, '/api/v1') } }
+    )
   }
   const redirectUrl = new URL('/auth/login', request.url)
   // Keep the query string: pages like /discord/link carry a signed token in
@@ -245,9 +276,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (!user && !isPublicRoute(pathname)) {
-    const redirectUrl = new URL('/auth/login', request.url)
-    redirectUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
-    return NextResponse.redirect(redirectUrl)
+    // Same as self-hosted: API callers get a JSON 401, not a 307 to an HTML
+    // login form they can't follow.
+    return redirectToLogin(request, pathname)
   }
 
   if (user && AUTH_ENTRY_ROUTES.has(pathname)) {

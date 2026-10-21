@@ -4,6 +4,7 @@
 
 import { canCommentOnProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type TaskComment = {
   id: string;
@@ -21,7 +22,7 @@ export async function loadComments(
   taskId: string
 ): Promise<{ comments: TaskComment[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { comments: [], error: "You do not have access to this project." };
+  if (!access) return { comments: [], error: await tr("You do not have access to this project.") };
 
   const { data, error } = await dataClient(access.userId)
     .from<TaskComment>("task_comments")
@@ -41,10 +42,10 @@ export async function postComment(
   const access = await getProjectAccess(projectId);
   // Mirrors task_comments_insert (001): owner/admin/developer/tester.
   if (!access || !canCommentOnProject(access.role)) {
-    return { comment: null, error: "You do not have permission to comment on this task." };
+    return { comment: null, error: await tr("You do not have permission to comment on this task.") };
   }
   if (!content.trim()) {
-    return { comment: null, error: "Comment cannot be empty." };
+    return { comment: null, error: await tr("Comment cannot be empty.") };
   }
 
   const { data, error } = await dataClient(access.userId)

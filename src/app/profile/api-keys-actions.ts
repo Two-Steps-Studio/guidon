@@ -8,18 +8,21 @@ import { API_KEY_COLUMNS, mintApiKey as mintApiKeyRow, type MintedApiKeyRow } fr
 import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { parseAllowedOrigins } from "@/lib/api/key-origins";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type ApiKeyRow = MintedApiKeyRow;
 
 export async function listApiKeys(): Promise<ApiKeyRow[]> {
   const user = await getCurrentUser();
 
-  const { data } = await dataClient(user.id)
-    .from<ApiKeyRow>("api_keys")
-    .select(API_KEY_COLUMNS)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
+  const query = () =>
+    dataClient(user.id).from<ApiKeyRow>("api_keys").select(API_KEY_COLUMNS).eq("user_id", user.id);
+  // OAuth access tokens (migration 073) are api_keys rows too, but they
+  // belong to Connected apps, not here. Before 073 the column doesn't
+  // exist - then there are none to hide.
+  const withoutOAuth = await query().is("oauth_grant_id", null).order("created_at", { ascending: false });
+  if (!withoutOAuth.error) return withoutOAuth.data;
+  const { data } = await query().order("created_at", { ascending: false });
   return data;
 }
 
@@ -48,16 +51,16 @@ export async function createApiKey(
 
   const name = formData.get("name");
   if (typeof name !== "string" || !name.trim()) {
-    return { error: "Name is required.", fullKey: null, row: null };
+    return { error: await tr("Name is required."), fullKey: null, row: null };
   }
 
   const selectedScopes = API_KEY_SCOPES.filter((scope) => formData.get(`scope:${scope}`) === "on");
   if (selectedScopes.length === 0) {
-    return { error: "Select at least one scope.", fullKey: null, row: null };
+    return { error: await tr("Select at least one scope."), fullKey: null, row: null };
   }
   if (reportsScopeMixedWithOthers(selectedScopes)) {
     return {
-      error: "reports:write can't be combined with other scopes - that key ships inside your game. Create a separate key for it.",
+      error: await tr("reports:write can't be combined with other scopes - that key ships inside your game. Create a separate key for it."),
       fullKey: null,
       row: null,
     };
@@ -86,7 +89,7 @@ export async function createMcpConnectionKey(
     return { error: result.error, fullKey: result.fullKey };
   } catch (error) {
     console.error("Failed to create the MCP connection key:", error);
-    return { error: "Could not create the key. Try again.", fullKey: null };
+    return { error: await tr("Could not create the key. Try again."), fullKey: null };
   }
 }
 
@@ -102,7 +105,7 @@ export async function revokeApiKey(keyId: string): Promise<{ error: string | nul
 
   if (error) return { error: error.message };
   if (updatedRows.length === 0) {
-    return { error: "This key no longer exists, or it isn't yours to revoke." };
+    return { error: await tr("This key no longer exists, or it isn't yours to revoke.") };
   }
 
   revalidatePath("/profile");
@@ -123,7 +126,7 @@ export async function createReportWidgetKey(
 ): Promise<{ error: string | null; fullKey: string | null; row: ApiKeyRow | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You need to be able to create tasks in this project to set up the widget.", fullKey: null, row: null };
+    return { error: await tr("You need to be able to create tasks in this project to set up the widget."), fullKey: null, row: null };
   }
   const origins = parseAllowedOrigins(originsInput);
   if (!origins.ok) return { error: origins.error, fullKey: null, row: null };
@@ -136,7 +139,7 @@ export async function createReportWidgetKey(
     });
   } catch (error) {
     console.error("Failed to create the report widget key:", error);
-    return { error: "Could not create the key. Try again.", fullKey: null, row: null };
+    return { error: await tr("Could not create the key. Try again."), fullKey: null, row: null };
   }
 }
 

@@ -5,6 +5,7 @@ import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import type { PhaseStatus } from "@/types/task";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type PhaseFormState = {
   error: string | null;
@@ -21,7 +22,7 @@ const VALID_STATUSES: PhaseStatus[] = ["planned", "in_progress", "completed", "b
 // tracking, not a sync gap: a phase's real-world completion is a judgment
 // call the person managing the roadmap makes, not something to compute
 // from task checkboxes.
-function parsePhaseForm(formData: FormData) {
+async function parsePhaseForm(formData: FormData) {
   const name = formData.get("name");
   const description = formData.get("description");
   const startDate = formData.get("start_date");
@@ -30,10 +31,10 @@ function parsePhaseForm(formData: FormData) {
   const completion = formData.get("completion_percentage");
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return { error: "Phase name is required." } as const;
+    return { error: await tr("Phase name is required.") } as const;
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as PhaseStatus)) {
-    return { error: "Invalid status." } as const;
+    return { error: await tr("Invalid status.") } as const;
   }
   if (
     typeof startDate === "string" &&
@@ -42,7 +43,7 @@ function parsePhaseForm(formData: FormData) {
     plannedEndDate &&
     plannedEndDate < startDate
   ) {
-    return { error: "Planned end date can't be before the start date." } as const;
+    return { error: await tr("Planned end date can't be before the start date.") } as const;
   }
 
   const completionValue = Number(completion);
@@ -72,10 +73,10 @@ export async function createPhase(
 ): Promise<PhaseFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to add roadmap phases." };
+    return { error: await tr("You do not have permission to add roadmap phases.") };
   }
 
-  const parsed = parsePhaseForm(formData);
+  const parsed = await parsePhaseForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   const db = dataClient(access.userId);
@@ -128,10 +129,10 @@ export async function updatePhase(
 ): Promise<PhaseFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to edit roadmap phases." };
+    return { error: await tr("You do not have permission to edit roadmap phases.") };
   }
 
-  const parsed = parsePhaseForm(formData);
+  const parsed = await parsePhaseForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   const { data, error } = await dataClient(access.userId)
@@ -169,7 +170,7 @@ export async function deletePhase(
 ): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete roadmap phases." };
+    return { error: await tr("You do not have permission to delete roadmap phases.") };
   }
 
   const { data, error } = await dataClient(access.userId)

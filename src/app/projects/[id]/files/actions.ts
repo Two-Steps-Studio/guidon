@@ -14,6 +14,7 @@ import {
 } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
 import { getOrgPlanLimits, isStorageLimitReached } from "@/lib/limits";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type FileActionState = {
   error: string | null;
@@ -34,12 +35,12 @@ export async function uploadFile(
 
   // Mirrors project_files_insert (001): owner/admin/developer only.
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to upload files." };
+    return { error: await tr("You do not have permission to upload files.") };
   }
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "No file selected." };
+    return { error: await tr("No file selected.") };
   }
 
   if (!hasDirectDatabase()) {
@@ -115,7 +116,7 @@ export async function deleteFile(
 
   // Mirrors project_files_delete (001): owner/admin only.
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete files." };
+    return { error: await tr("You do not have permission to delete files.") };
   }
 
   const { data: deleted, error } = await dataClient(access.userId)
@@ -127,7 +128,7 @@ export async function deleteFile(
     .maybeSingle();
 
   if (error) return { error: error.message };
-  if (!deleted) return { error: "File not found in this project." };
+  if (!deleted) return { error: await tr("File not found in this project.") };
   const storagePath = deleted.storage_path;
 
   try {
@@ -168,7 +169,7 @@ export async function getDownloadUrl(
   const access = await getProjectAccess(projectId);
 
   if (!access) {
-    return { url: null, error: "You do not have access to this project." };
+    return { url: null, error: await tr("You do not have access to this project.") };
   }
 
   const { data: found, error: lookupError } = await dataClient(access.userId)
@@ -181,7 +182,7 @@ export async function getDownloadUrl(
   if (lookupError) return { url: null, error: lookupError.message };
   const storagePath = found?.storage_path ?? null;
 
-  if (!storagePath) return { url: null, error: "File not found in this project." };
+  if (!storagePath) return { url: null, error: await tr("File not found in this project.") };
 
   try {
     const url = await getSignedUrl(STORAGE_BUCKETS.FILES, storagePath);

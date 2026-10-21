@@ -15,6 +15,7 @@ import {
 import { deliverWebhook } from "@/lib/webhooks/dispatch";
 import { isWebhookEventType } from "@/lib/webhooks/events";
 import { checkWebhookUrl } from "@/lib/webhooks/security";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type CreateWebhookState = { error: string | null; secret: string | null };
 
@@ -39,12 +40,12 @@ export async function createWebhook(
   const rawDescription = formData.get("description");
   const events = formData.getAll("events").filter(isWebhookEventType);
 
-  if (typeof rawUrl !== "string" || !rawUrl.trim()) return { error: "URL is required.", secret: null };
+  if (typeof rawUrl !== "string" || !rawUrl.trim()) return { error: await tr("URL is required."), secret: null };
   const description = typeof rawDescription === "string" && rawDescription.trim() ? rawDescription.trim() : null;
   if (description && description.length > 200) {
-    return { error: "Description can be at most 200 characters.", secret: null };
+    return { error: await tr("Description can be at most 200 characters."), secret: null };
   }
-  if (events.length === 0) return { error: "Choose at least one event.", secret: null };
+  if (events.length === 0) return { error: await tr("Choose at least one event."), secret: null };
 
   const urlCheck = await checkWebhookUrl(rawUrl.trim(), { allowPrivate: hasDirectDatabase() });
   if (!urlCheck.ok) return { error: urlCheck.reason, secret: null };
@@ -78,7 +79,7 @@ export async function setWebhookEnabled(
 
   try {
     const updated = await setOrganizationWebhookEnabled(organizationId, access.userId, webhookId, enabled);
-    if (!updated) return { error: "Webhook not found." };
+    if (!updated) return { error: await tr("Webhook not found.") };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Failed to update webhook." };
   }
@@ -92,7 +93,7 @@ export async function deleteWebhook(organizationId: string, webhookId: string): 
 
   try {
     const deleted = await deleteOrganizationWebhook(organizationId, access.userId, webhookId);
-    if (!deleted) return { error: "Webhook not found." };
+    if (!deleted) return { error: await tr("Webhook not found.") };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Failed to delete webhook." };
   }
@@ -111,7 +112,7 @@ export async function sendTestWebhook(
   // Service-role read (the secret isn't readable as a user), scoped to the
   // organization the caller was just confirmed to manage.
   const target = await getWebhookTarget(organizationId, webhookId);
-  if (!target) return { error: "Webhook not found.", status: null };
+  if (!target) return { error: await tr("Webhook not found."), status: null };
 
   const outcome = await deliverWebhook(target, "ping", {
     organization_id: organizationId,

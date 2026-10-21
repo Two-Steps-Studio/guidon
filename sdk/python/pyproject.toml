@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "guidon"
+version = "0.1.0"
+description = "Official Python SDK for the Guidon REST API (/api/v1)."
+readme = "README.md"
+requires-python = ">=3.9"
+# License: deliberately not declared yet - the Guidon repository has no
+# settled license (see the "License" section of its README). Add
+# `license = "..."` (SPDX) and a LICENSE file here before publishing.
+authors = [{ name = "Two Steps Studio" }]
+keywords = ["guidon", "project-management", "tasks", "api", "sdk"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://useguidon.com"
+Source = "https://github.com/Two-Steps-Studio/guidon"
+Documentation = "https://github.com/Two-Steps-Studio/guidon/tree/main/sdk/python#readme"
+Issues = "https://github.com/Two-Steps-Studio/guidon/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/guidon"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/guidon", "tests", "README.md", "pyproject.toml"]

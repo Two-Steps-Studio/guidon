@@ -25,7 +25,11 @@ import {
   withFrontmatter,
 } from "../src/lib/agent-web.ts";
 import { developersLlmsTxt, developersMarkdown } from "../src/lib/developers-doc.ts";
-import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "../src/lib/project-links.ts";
+import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL, SUPPORT_EMAIL } from "../src/lib/project-links.ts";
+import { aboutMarkdown, contactMarkdown, signInMarkdown, signUpMarkdown } from "../src/lib/company-pages.ts";
+import { homepageJsonLd, companyPageJsonLd } from "../src/lib/structured-data.ts";
+import { SKILL_NAME, agentSkillsIndex, ardCatalog, mcpServerCard, skillMarkdown } from "../src/lib/agent-discovery.ts";
+import { searchSections, splitSections, tokens } from "../src/lib/docs-search-core.ts";
 import { PROJECT_RESOURCES } from "../src/lib/api/project-resources.ts";
 
 let pass = 0;
@@ -66,7 +70,26 @@ for (const path of ["/", "/some-path-that-does-not-exist", "/wp-admin", "/projec
 // either a signed-in section or public in src/proxy.ts - otherwise anonymous
 // visitors would get a 404 for a page that exists instead of the login page.
 console.log("\n  every src/app section is classified");
-const PUBLIC_SECTIONS = new Set(["auth", "legal", "index.md", "developers", "developers.md", "openapi.json", "pricing.md", ".well-known"]);
+const PUBLIC_SECTIONS = new Set([
+  "auth",
+  "legal",
+  "index.md",
+  "developers",
+  "developers.md",
+  "openapi.json",
+  "pricing.md",
+  ".well-known",
+  "start",
+  "about",
+  "about.md",
+  "contact",
+  "contact.md",
+  "auth.md",
+  "ask",
+  "robots.txt",
+  "schemamap.xml",
+  "feeds",
+]);
 function servesRoutes(dir) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
@@ -150,7 +173,10 @@ console.log("\n  MARKDOWN_TWINS");
 for (const [page, twin] of Object.entries(MARKDOWN_TWINS)) {
   const routeDir = join(root, "src/app", twin.slice(1));
   check(`${page} -> ${twin} has a route`, statSync(routeDir).isDirectory() && readdirSync(routeDir).includes("route.ts"));
-  check(`${twin} is public in proxy.ts`, proxySource.includes(`'${twin}'`));
+  check(
+    `${twin} is public in proxy.ts`,
+    proxySource.includes(`'${twin}'`) || ["/auth/", "/legal/"].some((prefix) => twin.startsWith(prefix))
+  );
 }
 
 console.log("\n  pricingMarkdown");
@@ -182,6 +208,96 @@ check(
   dev.includes(`(${GITHUB_REPO_URL})`) && dev.includes(`(${SELF_HOSTING_DOCS_URL})`)
 );
 check("root llms.txt links the GitHub repository", llms.includes(GITHUB_REPO_URL));
+
+
+console.log("\n  about / contact (trust pages) and JSON-LD");
+{
+  const site = "https://useguidon.com";
+  const strip = (md) => md.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#*`]/g, "");
+  for (const [name, md] of [["about", aboutMarkdown(site)], ["contact", contactMarkdown(site)]]) {
+    check(`/${name} has at least 500 characters of text`, strip(md).length >= 500, strip(md).length);
+    check(`/${name} starts with a top-level heading`, md.startsWith("# "));
+  }
+  check("contact page gives the support email (same as lib/project-links.ts)", contactMarkdown(site).includes(`mailto:${SUPPORT_EMAIL}`));
+  check("company pages link GitHub (same URL as lib/project-links.ts)", aboutMarkdown(site).includes(GITHUB_REPO_URL));
+  check("sign-in twin points agents at API keys", signInMarkdown(site).startsWith("# ") && signInMarkdown(site).includes("Authorization: Bearer"));
+  check("sign-up twin links the terms", signUpMarkdown(site).includes("/legal/terms"));
+
+  const home = homepageJsonLd(site, [
+    { name: "Free", price_cents: 0 },
+    { name: "Pro", price_cents: 900 },
+    { name: "Enterprise", price_cents: null },
+  ]);
+  const org = home["@graph"].find((node) => node["@type"] === "Organization");
+  check("homepage JSON-LD has an Organization", !!org);
+  check(
+    "Organization has contactPoint with email + contactType",
+    org?.contactPoint?.[0]?.email === SUPPORT_EMAIL && !!org?.contactPoint?.[0]?.contactType
+  );
+  check("Organization has a PostalAddress", org?.address?.["@type"] === "PostalAddress");
+  check("Organization sameAs links GitHub", org?.sameAs?.includes(GITHUB_REPO_URL));
+  const app = home["@graph"].find((node) => node["@type"] === "SoftwareApplication");
+  check("offers skip 'contact us' plans", Array.isArray(app?.offers) && app.offers.length === 2, JSON.stringify(app?.offers));
+  check("offer price is a decimal string in EUR", app?.offers?.[1]?.price === "9.00" && app.offers[1].priceCurrency === "EUR");
+  check("WebSite and WebAPI nodes present", ["WebSite", "WebAPI"].every((type) => home["@graph"].some((node) => node["@type"] === type)));
+  const contact = companyPageJsonLd(site, "ContactPage", "/contact", "Contact Guidon");
+  check("contact page is a ContactPage about the Organization", contact["@graph"][1]["@type"] === "ContactPage" && contact["@graph"][1].about["@id"] === org["@id"]);
+  const structuredSource = readFileSync(join(root, "src/lib/structured-data.ts"), "utf8");
+  const companySource = readFileSync(join(root, "src/lib/company-pages.ts"), "utf8");
+  for (const [file, source] of [["structured-data.ts", structuredSource], ["company-pages.ts", companySource]]) {
+    check(`${file} copies the support email of lib/project-links.ts`, source.includes(`"${SUPPORT_EMAIL}"`));
+    check(`${file} copies the GitHub URL of lib/project-links.ts`, source.includes(`"${GITHUB_REPO_URL}"`));
+  }
+}
+
+
+console.log("\n  agent discovery documents");
+{
+  const site = "https://useguidon.com";
+  const shipped = readFileSync(join(root, "agent-plugin/skills/guidon-tasks/SKILL.md"), "utf8");
+  check("agent-plugin's SKILL.md is the served one (regenerate: agent-plugin/README.md)", shipped === skillMarkdown(site));
+  const front = skillMarkdown(site).split("\n---\n")[0];
+  check("SKILL.md frontmatter has name and description", front.startsWith("---\n") && front.includes(`name: ${SKILL_NAME}`) && /\ndescription: ".+"/.test(front));
+  check("skill name follows the Agent Skills rule", /^[a-z0-9]+(-[a-z0-9]+)*$/.test(SKILL_NAME) && SKILL_NAME.length <= 64);
+  const plugin = JSON.parse(readFileSync(join(root, "agent-plugin/plugin.json"), "utf8"));
+  check("plugin.json has the 1.0.0 schema and a valid name", plugin.$schema === "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json" && /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(plugin.name));
+  const mcp = JSON.parse(readFileSync(join(root, "agent-plugin/mcp.json"), "utf8"));
+  check("plugin's mcp.json carries no credentials", !JSON.stringify(mcp).includes("guidon_") && !JSON.stringify(mcp).toLowerCase().includes("authorization"));
+
+  for (const docs of [false, true]) {
+    const card = mcpServerCard(site, docs);
+    const label = docs ? "docs server card" : "server card";
+    check(`${label}: pinned $schema`, card.$schema === "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json");
+    check(`${label}: reverse-DNS name with one slash`, /^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/.test(card.name));
+    check(`${label}: description 1-100 characters`, card.description.length >= 1 && card.description.length <= 100, card.description.length);
+    check(`${label}: streamable-http remote on this site`, card.remotes[0].type === "streamable-http" && card.remotes[0].url.startsWith(`${site}/api/mcp`));
+    check(`${label}: no tools list`, !("tools" in card));
+  }
+
+  const ard = ardCatalog(site);
+  check("ARD: every identifier is a urn:air of this host", ard.entries.every((e) => /^urn:air:useguidon\.com(:[a-zA-Z0-9._-]+)+$/.test(e.identifier)));
+  check("ARD: identifiers unique", new Set(ard.entries.map((e) => e.identifier)).size === ard.entries.length);
+  check("ARD: 2-5 representative queries each", ard.entries.every((e) => e.representativeQueries.length >= 2 && e.representativeQueries.length <= 5));
+  check("ARD: each entry has exactly one of url/data", ard.entries.every((e) => ("url" in e) !== ("data" in e)));
+  const index = agentSkillsIndex(site, { skillDigest: "a".repeat(64) });
+  check("skills index digest format", /^sha256:[0-9a-f]{64}$/.test(index.skills[0].digest) && index.skills[0].type === "skill-md");
+
+  const robots = readFileSync(join(root, "src/app/robots.txt/route.ts"), "utf8");
+  check("robots.txt names the sitemap, schemamap and agentmap", ["Sitemap:", "Schemamap:", "Agentmap:"].every((d) => robots.includes(d)));
+}
+
+console.log("\n  docs search");
+{
+  const page = { id: "p", title: "Guide", url: "https://x.example/guide", markdown: "# Guide\n\nIntro text about Guidon.\n\n## Rate limits\n\n60 requests per minute. Retry-After on 429.\n\n## Pagination\n\nPass next_cursor as cursor.\n" };
+  const sections = splitSections(page);
+  check("page splits into intro + one section per heading", sections.length === 3 && sections[1].url === "https://x.example/guide#rate-limits");
+  const hits = searchSections(sections, "what is the rate limit?");
+  check("best hit is the matching section", hits[0]?.title === "Guide - Rate limits", hits[0]?.title);
+  check("snippet keeps underscores", searchSections(sections, "next cursor")[0]?.snippet.includes("next_cursor"));
+  check("no match -> empty", searchSections(sections, "kubernetes helm").length === 0);
+  check("stop words alone -> empty", searchSections(sections, "what is the").length === 0);
+  check("tokens drop punctuation", tokens("How do I use OAuth?").join(" ") === "use oauth");
+}
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

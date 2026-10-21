@@ -3,7 +3,7 @@
     "loading": "Loading...",
     "projectType": "{type, select, game {Game} website {Website} mobile_app {Mobile App} api {API} tool {Tool} other {Other}}",
     "projectMethodology": "{methodology, select, standard {Standard} scrum {Scrum} other {Standard}}",
-    "role": "{role, select, owner {Owner} admin {Admin} member {Member} other {Member}}",
+    "role": "{role, select, owner {Owner} admin {Admin} developer {Developer} tester {Tester} viewer {Viewer} member {Member} other {Member}}",
     "projectStatus": "{status, select, active {Active} archived {Archived} deleted {Deleted} other {Active}}",
     "entityType": "{type, select, project {Project} task {Task} phase {Roadmap phase} decision {Decision} file {File} source {Source} memory {Memory} other {Task}}",
     "relationType": "{type, select, depends_on {Depends on} blocks {Blocks} implements {Implements} references {References} decided_by {Decided by} based_on {Based on} related_to {Related to} contradicts {Contradicts} supersedes {Supersedes} part_of {Part of} contains {Contains} other {Related to}}",
@@ -66,6 +66,13 @@
       "somethingWentWrong": "Something went wrong",
       "showPassword": "Show password",
       "hidePassword": "Hide password"
+    },
+    "mobileLogin": {
+      "title": "Connect the Guidon app",
+      "description": "The Guidon app on your phone wants to work as <b>{email}</b>: read your projects and tasks, change their status, edit them and comment.",
+      "allow": "Allow",
+      "invalidTitle": "Invalid request",
+      "invalidDescription": "This page is opened by the Guidon mobile app, not visited directly. If the app sent you here, start signing in again from the app."
     }
   },
   "errors": {
@@ -262,13 +269,17 @@
       "terms": "Terms of Service",
       "privacy": "Privacy Policy",
       "copyright": "© {year} Guidon",
-      "selfHosting": "Self-hosting"
+      "selfHosting": "Self-hosting",
+      "eula": "EULA",
+      "about": "About",
+      "contact": "Contact"
     },
     "selfHost": {
       "title": "Run Guidon on your own server",
       "description": "The same app, on infrastructure you control: Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama). No plan limits on your own install.",
       "guide": "Self-hosting guide",
-      "github": "Code on GitHub"
+      "github": "Code on GitHub",
+      "apiDocs": "API & MCP docs"
     },
     "heroShotTitle": "The Guidon dashboard",
     "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team and AI activity, project progress"
@@ -334,7 +345,19 @@
       "adding": "Adding...",
       "seatsUsed": "{used} of {limit} seats used on the {plan} plan",
       "upgradeForSeats": "Upgrade for more seats",
-      "seatsFull": "This organization has used all {limit} seats on its {plan} plan. Upgrade the plan to add more people."
+      "seatsFull": "This organization has used all {limit} seats on its {plan} plan. Upgrade the plan to add more people.",
+      "viewTree": "Tree",
+      "viewList": "List",
+      "treePeople": "{count, plural, one {# person} other {# people}}",
+      "treeGroup": {
+        "owner": "Owners",
+        "admin": "Admins",
+        "member": "Members",
+        "ai": "AI accounts"
+      },
+      "treeProjects": "{count, plural, =0 {no projects} one {# project} other {# projects}}",
+      "treeHint": "Click a person to see their projects and role in each. Only projects you can see are shown.",
+      "treeAllProjects": "All projects"
     },
     "settings": {
       "title": "Organization Settings",
@@ -414,7 +437,7 @@
       "free": "Free",
       "contactUs": "Contact us",
       "perMonth": "/mo",
-      "trialNotice": "{days}-day free trial",
+      "trialNotice": "{days}-day free trial, no card needed",
       "upgrade": "Upgrade",
       "manageBilling": "Manage billing",
       "currentPlanBadge": "Current plan",
@@ -440,7 +463,16 @@
         "forbidden": "Only the organization's owner or admins can redeem codes.",
         "not_available": "Promo codes are only for Guidon Cloud.",
         "failed": "Couldn't redeem the code. Try again."
-      }
+      },
+      "perInterval": "{interval, select, week {/wk} year {/yr} other {/mo}}",
+      "interval": "{interval, select, week {Weekly} year {Yearly} other {Monthly}}",
+      "billingPeriod": "Billing period",
+      "yearlySaving": "save {percent}%",
+      "updatePayment": "Update payment method",
+      "paymentGraceTitle": "Payment failed",
+      "paymentGraceDescription": "We couldn't charge the card for this subscription. Your plan keeps working until {date, date, long} - update the payment method before then.",
+      "paymentSuspendedTitle": "Subscription unpaid - Free plan limits apply",
+      "paymentSuspendedDescription": "The payment still hasn't gone through, so this organization is limited to the Free plan. Nothing was deleted - update the payment method and the plan comes back right away."
     }
   },
   "projects": {
@@ -1010,7 +1042,10 @@
     "visibilityLabel": "Who can see this project",
     "visibilityOrganization": "Everyone in the organization",
     "visibilityPrivate": "Only project members",
-    "visibilityHint": "Organization members who aren't on the project see it read-only until you add them on the Members page. The organization's owner and admins always see every project."
+    "visibilityHint": "Organization members who aren't on the project see it read-only until you add them on the Members page. The organization's owner and admins always see every project.",
+    "languageLabel": "Project language",
+    "languageAuto": "Automatic",
+    "languageHint": "The language Guidon's AI writes in for this project - assistant replies, memory insights, what it learns from finished tasks. Automatic follows the language you write in."
   },
   "discordLink": {
     "title": "Connect the Guidon Discord bot",
@@ -1439,7 +1474,19 @@
     "wallpaperDim": "Dimmed {percent}%",
     "wallpaperTooLarge": "That picture is over 25 MB.",
     "wallpaperNotImage": "That file isn't a picture this browser can open.",
-    "wallpaperFailed": "Couldn't save the wallpaper - this browser may block site storage."
+    "wallpaperFailed": "Couldn't save the wallpaper - this browser may block site storage.",
+    "connectedApps": {
+      "title": "Connected apps",
+      "description": "Apps you allowed to use Guidon for you through OAuth - Claude, ChatGPT, Cursor and other MCP clients. They act as you, only in your projects.",
+      "empty": "No apps connected. Add Guidon in an MCP client with the address https://useguidon.com/api/mcp and approve it here.",
+      "connectedOn": "Connected {date}",
+      "lastUsed": "last used {date}",
+      "disconnect": "Disconnect",
+      "disconnected": "{app} disconnected"
+    },
+    "mcpOAuthStep_claude": "In Claude, open Settings → Connectors → Add custom connector, name it Guidon and paste this URL",
+    "mcpOAuthStep_chatgpt": "In ChatGPT, open Settings → Apps & Connectors → Create (developer mode), choose OAuth and paste this URL",
+    "mcpOAuthApprove": "Sign in to Guidon when it asks and click Allow - no key to copy. It appears under Connected apps above."
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",
@@ -1655,5 +1702,91 @@
     "cancel": "Cancel",
     "createSubmit": "Create AI account",
     "aiBadge": "AI"
+  },
+  "onboarding": {
+    "metaTitle": "Get started",
+    "stepOf": "Step {step} of {total}",
+    "back": "Back",
+    "continue": "Continue",
+    "typeTitle": "What are you building?",
+    "typeDescription": "Pick the closest - it sets up the right sections and labels. You can change everything later.",
+    "nameTitle": "What's it called?",
+    "nameDescription": "Your project, and the studio or team it belongs to.",
+    "projectNameLabel": "Project name",
+    "projectNamePlaceholder": "e.g. Emberfall",
+    "studioNameLabel": "Studio or team (optional)",
+    "studioNamePlaceholder": "e.g. Two Steps Studio",
+    "studioNameHint": "Your organization in Guidon - teammates you invite join it.",
+    "workflowTitle": "How do you work?",
+    "workflowDescription": "A starting setup for your field. Sections and labels can be changed any time.",
+    "templateHint": {
+      "gamedev": "Every section, plus labels like gameplay, art, audio, bug.",
+      "software": "Code-focused: decisions, roadmap, tech stack, memory.",
+      "design": "Moodboards and references, no tech stack.",
+      "marketing": "Campaigns and content, light on tech.",
+      "support": "Just the board and files - simple and quick."
+    },
+    "methodologyLabel": "Board style",
+    "methodologyHint": {
+      "standard": "A kanban board: move tasks across columns.",
+      "scrum": "Kanban plus a scrum label, for teams working in sprints."
+    },
+    "teamTitle": "Who's working on it?",
+    "teamDescription": "So Guidon can suggest the right next steps.",
+    "team": {
+      "solo": "Just me",
+      "small": "A small team",
+      "studio": "A studio"
+    },
+    "teamHint": {
+      "solo": "Solo dev or freelancer",
+      "small": "2-10 people",
+      "studio": "More people, several projects"
+    },
+    "readyTitle": "Last step: your account",
+    "readyDescription": "Create a free account and your project will be ready right after - with these settings.",
+    "readyTitleSignedIn": "All set",
+    "readyDescriptionSignedIn": "We'll create your workspace with these settings.",
+    "summaryProject": "Project",
+    "summaryStudio": "Organization",
+    "summaryWorkflow": "Setup",
+    "summaryTeam": "Team",
+    "studioDefault": "{project} team",
+    "createAccount": "Create free account",
+    "createWorkspace": "Create my workspace",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "finishing": "Setting up your workspace...",
+    "finishFailed": "Couldn't create your workspace.",
+    "skipToDashboard": "Go to the dashboard",
+    "welcomeTitle": "Your project is ready",
+    "welcomeDescription": "A few quick things to get going:",
+    "welcomeFirstTask": "Add your first task",
+    "welcomeInvite": "Invite your team",
+    "welcomeImport": "Import tasks from Trello, Jira or CSV",
+    "welcomeDismiss": "Dismiss"
+  },
+  "oauth": {
+    "title": "Connect {app} to Guidon",
+    "signedInAs": "Signed in as <b>{email}</b>.",
+    "permissionsTitle": "It will be able to:",
+    "limits": "Only in the projects you can access, with your role in each.",
+    "fromSite": "This app is published by {host}.",
+    "unverified": "Guidon hasn't verified this app. Only allow it if you started this connection yourself.",
+    "redirectNote": "After you decide, you'll be sent back to {host}.",
+    "allow": "Allow",
+    "deny": "Cancel",
+    "revokeHint": "You can disconnect it at any time in Profile → Connected apps.",
+    "invalidTitle": "This connection request isn't valid",
+    "invalidDescription": "Go back to the app and try connecting again.",
+    "scopes": {
+      "tasks_read": "See your projects, tasks, comments and attempts",
+      "tasks_write": "Create, edit and delete tasks",
+      "tasks_status": "Start tasks and move them between columns",
+      "comments_write": "Comment on tasks",
+      "attempts_write": "Record what was tried on a task",
+      "project_read": "Read decisions, knowledge, roadmap, memory and tech stack",
+      "project_write": "Change decisions, knowledge, roadmap, memory and tech stack"
+    }
   }
 }

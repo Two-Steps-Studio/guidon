@@ -135,10 +135,14 @@ async function loadCoverImagesLocal(userId: string, projectId: string): Promise<
 
 export default async function ProjectWorkPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { id: projectId } = await params;
+  // ?welcome=1: just created through onboarding (app/start/finish).
+  const { welcome } = await searchParams;
   const tWork = await getTranslations("work");
   const access = await requireProjectAccess(projectId);
 
@@ -253,6 +257,7 @@ export default async function ProjectWorkPage({
 
   return (
     <WorkBoard
+      welcome={welcome === "1"}
       projectId={projectId}
       projectName={access.project.name}
       userId={access.userId}

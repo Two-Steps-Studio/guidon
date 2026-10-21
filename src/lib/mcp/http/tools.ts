@@ -58,13 +58,22 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     "list_tasks",
     {
       description:
-        "List the tasks of one project (capped at 1000), including their status and priority. " +
+        "List the tasks of one project, newest first, including their status and priority (up to `limit`, default 1000). " +
+        "When next_cursor is not null, pass it as `cursor` for the next page. " +
         "Use it to find the task to work on, then call get_task_context with its id.",
-      inputSchema: { project_id: projectId },
+      inputSchema: {
+        project_id: projectId,
+        limit: z.number().int().min(1).max(1000).optional().describe("Tasks per page, 1-1000 (default 1000)."),
+        cursor: z.string().optional().describe("next_cursor from the previous page."),
+      },
       annotations: { title: "List tasks", ...READ_ONLY },
     },
-    ({ project_id }) =>
-      dispatch(listTasks, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/tasks` })
+    ({ project_id, limit, cursor }) =>
+      dispatch(listTasks, { projectId: project_id }, {
+        method: "GET",
+        path: `/api/v1/projects/${project_id}/tasks`,
+        query: { limit: limit === undefined ? undefined : String(limit), cursor },
+      })
   );
 
   server.registerTool(

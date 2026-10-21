@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
+import { redirect } from "next/navigation";
 import { dataClient } from "@/lib/data-client";
 import { getPinnedProjectIds, pinnedFirst } from "@/lib/data/pinned-projects";
 import { displayName } from "@/lib/people";
@@ -196,6 +197,11 @@ export default async function DashboardPage() {
     getLocale(),
     getCurrentUser(),
   ]);
+  // A brand-new account with no organization at all (e.g. signed up with
+  // Google straight from the login page) goes through onboarding first.
+  const { data: membershipCount } = await dataClient(user.id).from("organization_members").eq("user_id", user.id).count();
+  if (membershipCount === 0) redirect("/start");
+
   const data = await loadDashboard(user.id);
   const firstName = (user.full_name || "").trim().split(/\s+/)[0] || tNav("user");
   const todayLabel = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(new Date());

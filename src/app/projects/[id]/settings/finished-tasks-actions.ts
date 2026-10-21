@@ -5,6 +5,7 @@ import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import { purgeFinishedTasks } from "@/lib/work/finished-cleanup";
 import { DONE_CLEANUP_OPTIONS } from "@/lib/work/done-cleanup-options";
+import { tr } from "@/lib/i18n/server-errors";
 
 /**
  * "Delete finished tasks after N days" (migration 061). Owner/admin only -
@@ -34,9 +35,9 @@ export async function updateDoneCleanup(
 ): Promise<{ error: string | null; deleted: number }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "Only the project's owner or admins can change this.", deleted: 0 };
+    return { error: await tr("Only the project's owner or admins can change this."), deleted: 0 };
   }
-  if (!isOption(days)) return { error: "Pick one of the listed periods.", deleted: 0 };
+  if (!isOption(days)) return { error: await tr("Pick one of the listed periods."), deleted: 0 };
 
   const { data, error } = await dataClient(access.userId)
     .from("projects")
@@ -44,7 +45,7 @@ export async function updateDoneCleanup(
     .eq("id", projectId)
     .select<{ id: string }>("id");
   if (error) return { error: error.message, deleted: 0 };
-  if (data.length === 0) return { error: "Project not found.", deleted: 0 };
+  if (data.length === 0) return { error: await tr("Project not found."), deleted: 0 };
 
   // Apply it now rather than on the next board visit, so "saved" means done.
   const deleted = days === null ? 0 : await purgeFinishedTasks(access.userId, projectId, { force: true });

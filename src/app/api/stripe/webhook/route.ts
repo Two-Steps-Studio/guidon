@@ -4,6 +4,7 @@ import { getStripe, isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "@/app/admin/organizations/constants";
+import { intervalFromStripe, nextPastDueSince, nextTrialUsedAt } from "@/lib/billing/billing-core";
 
 /** Stripe's own events are small JSON - generous cap against an unsigned, unbounded body. */
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -159,6 +160,19 @@ async function syncOrgProjectLimit(
   }
 }
 
+/**
+ * The plan a Stripe Price belongs to: plan_prices (071 - weekly/monthly/
+ * yearly, inactive prices included, since existing subscriptions stay on a
+ * price after it's replaced), then plans.stripe_price_id (the original
+ * monthly price), else Free.
+ */
+async function planIdForPrice(supabase: ReturnType<typeof createServiceClient>, priceId: string): Promise<string> {
+  const { data: price } = await supabase.from("plan_prices").select("plan_id").eq("stripe_price_id", priceId).maybeSingle();
+  if (price?.plan_id) return price.plan_id;
+  const { data: plan } = await supabase.from("plans").select("id").eq("stripe_price_id", priceId).maybeSingle();
+  return plan?.id ?? "free";
+}
+
 async function syncSubscription(subscription: Stripe.Subscription): Promise<void> {
   const organizationId = subscription.metadata?.organization_id;
   if (!organizationId) {
@@ -170,24 +184,39 @@ async function syncSubscription(subscription: Stripe.Subscription): Promise<void
   const item = subscription.items.data[0];
   const priceId = item?.price?.id;
 
-  let planId = "free";
-  if (priceId) {
-    const { data: plan } = await supabase.from("plans").select("id").eq("stripe_price_id", priceId).maybeSingle();
-    if (plan) planId = plan.id;
-  }
-
+  const planId = priceId ? await planIdForPrice(supabase, priceId) : "free";
+  const status = mapStripeStatus(subscription.status);
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+
+  // "*": the 071 columns are simply absent on a database that hasn't run it
+  // yet - writing them there would fail the whole sync.
+  const { data: existing } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  const previous = (existing ?? {}) as { trial_used_at?: string | null; past_due_since?: string | null };
+  const now = new Date();
+  const billingFields =
+    existing && "trial_used_at" in existing
+      ? {
+          billing_interval: intervalFromStripe(item?.price?.recurring?.interval, item?.price?.recurring?.interval_count),
+          trial_used_at: nextTrialUsedAt(status, previous.trial_used_at ?? null, now),
+          past_due_since: nextPastDueSince(status, previous.past_due_since ?? null, now),
+        }
+      : {};
 
   const { data: updatedRows, error } = await supabase
     .from("subscriptions")
     .update({
       plan_id: planId,
-      status: mapStripeStatus(subscription.status),
+      status,
       stripe_customer_id: customerId,
       stripe_subscription_id: subscription.id,
       current_period_start: item ? new Date(item.current_period_start * 1000).toISOString() : undefined,
       current_period_end: item ? new Date(item.current_period_end * 1000).toISOString() : undefined,
       cancel_at_period_end: subscription.cancel_at_period_end,
+      ...billingFields,
     })
     .eq("organization_id", organizationId)
     .select("organization_id");

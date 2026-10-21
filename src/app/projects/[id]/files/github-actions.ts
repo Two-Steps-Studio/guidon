@@ -26,6 +26,7 @@ import {
 } from "@/lib/github/client";
 import { getPendingGithubConnection, clearPendingGithubConnection } from "@/lib/github/pending-connection";
 import { detectFileKind } from "@/types/file";
+import { tr } from "@/lib/i18n/server-errors";
 
 function apiErrorMessage(error: unknown): string {
   if (error instanceof GithubApiError) {
@@ -44,12 +45,12 @@ export async function installationsForPicker(
 ): Promise<{ installations: GithubInstallationSummary[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { installations: [], error: "You do not have permission to connect a repository." };
+    return { installations: [], error: await tr("You do not have permission to connect a repository.") };
   }
 
   const pending = await getPendingGithubConnection(projectId);
   if (!pending) {
-    return { installations: [], error: "Your GitHub sign-in expired. Start over." };
+    return { installations: [], error: await tr("Your GitHub sign-in expired. Start over.") };
   }
 
   try {
@@ -67,12 +68,12 @@ export async function reposForPicker(
 ): Promise<{ repos: GithubRepoSummary[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { repos: [], error: "You do not have permission to connect a repository." };
+    return { repos: [], error: await tr("You do not have permission to connect a repository.") };
   }
 
   const pending = await getPendingGithubConnection(projectId);
   if (!pending) {
-    return { repos: [], error: "Your GitHub sign-in expired. Start over." };
+    return { repos: [], error: await tr("Your GitHub sign-in expired. Start over.") };
   }
 
   try {
@@ -91,12 +92,12 @@ export async function connectRepo(
 ): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to connect a repository." };
+    return { error: await tr("You do not have permission to connect a repository.") };
   }
 
   const pending = await getPendingGithubConnection(projectId);
   if (!pending) {
-    return { error: "Your GitHub sign-in expired. Start over." };
+    return { error: await tr("Your GitHub sign-in expired. Start over.") };
   }
 
   try {
@@ -136,7 +137,7 @@ export async function connectRepo(
 export async function disconnectRepo(projectId: string): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to disconnect this repository." };
+    return { error: await tr("You do not have permission to disconnect this repository.") };
   }
 
   try {
@@ -165,11 +166,11 @@ export async function listRepoDirectory(
   path: string
 ): Promise<{ entries: GithubTreeEntry[]; truncated: boolean; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { entries: [], truncated: false, error: "You do not have access to this project." };
+  if (!access) return { entries: [], truncated: false, error: await tr("You do not have access to this project.") };
 
   try {
     const connection = await getProjectGithubToken(projectId, access.userId);
-    if (!connection) return { entries: [], truncated: false, error: "No repository connected." };
+    if (!connection) return { entries: [], truncated: false, error: await tr("No repository connected.") };
 
     const { entries, truncated } = await listDirectory(
       connection.token,
@@ -195,11 +196,11 @@ export async function getRepoFile(
   ref?: string
 ): Promise<{ content: string | null; sha: string | null; error: string | null }> {
   const access = await getProjectAccess(projectId);
-  if (!access) return { content: null, sha: null, error: "You do not have access to this project." };
+  if (!access) return { content: null, sha: null, error: await tr("You do not have access to this project.") };
 
   try {
     const connection = await getProjectGithubToken(projectId, access.userId);
-    if (!connection) return { content: null, sha: null, error: "No repository connected." };
+    if (!connection) return { content: null, sha: null, error: await tr("No repository connected.") };
 
     const file = await getFile(
       connection.token,
@@ -240,7 +241,7 @@ export async function commitRepoFile(
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
     return {
-      error: "You do not have permission to edit files in this project.",
+      error: await tr("You do not have permission to edit files in this project."),
       sha: null,
       commitUrl: null,
       pullRequestUrl: null,
@@ -252,7 +253,7 @@ export async function commitRepoFile(
   try {
     const connection = await getProjectGithubToken(projectId, access.userId);
     if (!connection) {
-      return { error: "No repository connected.", sha: null, commitUrl: null, pullRequestUrl: null };
+      return { error: await tr("No repository connected."), sha: null, commitUrl: null, pullRequestUrl: null };
     }
     const { repoOwner, repoName, token } = connection;
 
@@ -274,7 +275,7 @@ export async function commitRepoFile(
     const newBranchName = options.newBranchName?.trim();
     if (!newBranchName) {
       return {
-        error: "A new branch name is required to open a pull request.",
+        error: await tr("A new branch name is required to open a pull request."),
         sha: null,
         commitUrl: null,
         pullRequestUrl: null,

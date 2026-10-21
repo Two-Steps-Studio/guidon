@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
+import { tr } from "@/lib/i18n/server-errors";
 
 const MAX_MESSAGE_LENGTH = 4000;
 
@@ -23,7 +24,7 @@ export type SubmitFeedbackResult = { error: string | null };
 export async function submitFeedback(message: string, pageUrl: string | null): Promise<SubmitFeedbackResult> {
   const trimmed = message.trim();
   if (trimmed.length === 0) {
-    return { error: "Feedback can't be empty." };
+    return { error: await tr("Feedback can't be empty.") };
   }
   if (trimmed.length > MAX_MESSAGE_LENGTH) {
     return { error: `Feedback is limited to ${MAX_MESSAGE_LENGTH} characters.` };

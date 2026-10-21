@@ -8,6 +8,7 @@ import { buildReport, REPORT_LIMITS, validateReportFiles } from "@/lib/api/game-
 import { getOrgPlanLimits, hostedTaskLimitError, isStorageLimitReached } from "@/lib/limits";
 import { getOrganizationStorageUsage, uploadTaskAttachment } from "@/lib/storage/storage";
 import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
+import { apiRoute } from "@/lib/api/api-route";
 
 /** Whole request cap - checked from Content-Length before the body is read. */
 const MAX_REQUEST_BYTES = REPORT_LIMITS.files * REPORT_LIMITS.fileBytes + 1024 * 1024;
@@ -60,7 +61,7 @@ export function OPTIONS() {
   return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
 
-export async function POST(request: NextRequest, context: { params: Promise<{ projectId: string }> }) {
+async function handlePOST(request: NextRequest, context: { params: Promise<{ projectId: string }> }) {
   return withCors(await handleReport(request, context));
 }
 
@@ -214,3 +215,5 @@ async function handleReport(request: NextRequest, { params }: { params: Promise<
 
   return NextResponse.json({ task, attachments, warnings }, { status: 201 });
 }
+
+export const POST = apiRoute(handlePOST);

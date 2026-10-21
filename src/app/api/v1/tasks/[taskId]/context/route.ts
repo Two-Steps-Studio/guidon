@@ -5,6 +5,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { buildTaskAgentContext } from "@/lib/context/agent-context-builder";
+import { apiRoute } from "@/lib/api/api-route";
 
 /**
  * Agent-context package for one task, as Markdown (Content-Type
@@ -18,7 +19,7 @@ import { buildTaskAgentContext } from "@/lib/context/agent-context-builder";
  * (looked up under RLS as the key's owner), so a task the key's user cannot
  * see is a 404, and there is no way to pair a task with a foreign project id.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
@@ -56,3 +57,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     headers: { "Content-Type": "text/markdown; charset=utf-8" },
   });
 }
+
+export const GET = apiRoute(handleGET);

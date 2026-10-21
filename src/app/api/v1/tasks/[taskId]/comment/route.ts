@@ -3,6 +3,7 @@ import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { apiDataClient } from "@/lib/api/api-data-client";
 import { isPermissionDenied } from "@/lib/db/errors";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
+import { apiRoute } from "@/lib/api/api-route";
 
 const COMMENT_COLUMNS = "id, task_id, author_id, content, created_at, actor_label";
 const AI_DISABLED_ERROR = "AI features are turned off for this project.";
@@ -15,7 +16,7 @@ const AI_NOT_PERMITTED_ERROR = "AI is not permitted to comment on this project."
  * existing comment thread, only add to it blindly. Column set matches
  * loadComments in src/app/projects/[id]/work/actions.ts.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return NextResponse.json({ comments: data });
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handlePOST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "comments:write");
   if (isGuardError(guard)) return guard;
 
@@ -109,3 +110,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   return NextResponse.json({ comment });
 }
+
+export const GET = apiRoute(handleGET);
+export const POST = apiRoute(handlePOST);

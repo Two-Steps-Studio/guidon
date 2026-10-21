@@ -10,6 +10,12 @@ export async function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
         <span>{t("footer.copyright", { year: new Date().getFullYear() })} - Two Steps Studio</span>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <Link href="/about" className="hover:text-foreground">
+            {t("footer.about")}
+          </Link>
+          <Link href="/contact" className="hover:text-foreground">
+            {t("footer.contact")}
+          </Link>
           <Link href="/developers" className="hover:text-foreground">
             {t("footer.developers")}
           </Link>
@@ -24,6 +30,9 @@ export async function SiteFooter() {
           </Link>
           <Link href="/legal/privacy" className="hover:text-foreground">
             {t("footer.privacy")}
+          </Link>
+          <Link href="/legal/eula" className="hover:text-foreground">
+            {t("footer.eula")}
           </Link>
         </div>
       </div>

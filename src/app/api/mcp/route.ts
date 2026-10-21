@@ -6,6 +6,8 @@ import { isRateLimited, recordRequest } from "@/lib/api/rate-limit";
 import { createDispatch } from "@/lib/mcp/http/dispatch";
 import { registerGuidonTools } from "@/lib/mcp/http/tools";
 import { registerProjectResourceTools } from "@/lib/mcp/http/resource-tools";
+import { bearerChallenge } from "@/lib/oauth/oauth-core";
+import { SITE_URL } from "@/lib/site-url";
 
 /**
  * Guidon's MCP endpoint for external clients such as Claude Code:
@@ -65,7 +67,11 @@ async function handle(request: NextRequest): Promise<Response> {
   const authorization = request.headers.get("authorization");
   const identity = await authenticateApiKey(authorization);
   if (!identity || !authorization) {
-    return NextResponse.json({ error: "Invalid or missing API key." }, { status: 401 });
+    // RFC 9728: tells an MCP client where to start OAuth (Claude, ChatGPT...).
+    return NextResponse.json(
+      { error: "Invalid or missing API key or access token." },
+      { status: 401, headers: { "WWW-Authenticate": bearerChallenge(SITE_URL, "/api/mcp") } }
+    );
   }
 
   // Project-bound keys (migration 054) are browser/game report keys - the

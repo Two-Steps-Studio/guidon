@@ -5,6 +5,7 @@ import { isLockedOut, recordFailedAttempt } from "@/lib/auth/rate-limit";
 import { sendPasswordResetEmail } from "@/lib/email/resend";
 import { SITE_URL } from "@/lib/site-url";
 import { DEFAULT_LOCALE, isSupportedLocale } from "@/i18n/locales";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type RequestPasswordResetResult = { error: string | null };
 
@@ -31,7 +32,7 @@ export async function requestPasswordReset(
   // the outside to a real email hit 5 times.
   const rateLimitKey = `reset:${normalizedEmail}`;
   if (isLockedOut(rateLimitKey)) {
-    return { error: "Too many reset requests for this email. Try again later." };
+    return { error: await tr("Too many reset requests for this email. Try again later.") };
   }
   recordFailedAttempt(rateLimitKey);
 

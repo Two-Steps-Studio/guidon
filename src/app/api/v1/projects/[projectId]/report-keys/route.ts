@@ -3,6 +3,7 @@ import { guardApiRequest, isGuardError } from "@/lib/api/route-guard";
 import { apiDataClient } from "@/lib/api/api-data-client";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { mintApiKey } from "@/lib/api/mint-api-key";
+import { apiRoute } from "@/lib/api/api-route";
 
 /** Names the key on the website (Profile → API Keys); anything else is "Game". */
 const CLIENT_NAMES: Record<string, string> = {
@@ -25,7 +26,7 @@ const CLIENT_NAMES: Record<string, string> = {
  * RLS decides the rest: api_keys_insert needs owner/admin/developer in the
  * project for a bound key, the same roles that may create the tasks.
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+async function handlePOST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:write");
   if (isGuardError(guard)) return guard;
   if (!guard.humanClient) {
@@ -76,3 +77,5 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     { status: 201 }
   );
 }
+
+export const POST = apiRoute(handlePOST);

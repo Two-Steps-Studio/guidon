@@ -17,6 +17,11 @@ Guidon is context-first project management for development teams: a task board p
 
 ## Authentication
 
+Two ways in, both sent as \`Authorization: Bearer ...\`:
+
+- **OAuth 2.1** - for MCP clients and apps acting for someone (Claude, ChatGPT, Cursor, VS Code...). Give the client \`${siteUrl}/api/mcp\`; it finds the authorization server from the \`401\`, registers itself, and the person approves it on Guidon's consent screen. Access tokens last an hour and refresh; the person can disconnect the app in Profile → Connected apps. Every step is in [auth.md](${siteUrl}/auth.md).
+- **An API key** - for scripts, CI and your own agents:
+
 1. Sign in and open [Profile → API keys](${siteUrl}/profile). Create a key and pick its scopes.
 2. Send it on every request: \`Authorization: Bearer guidon_...\`.
 
@@ -91,13 +96,50 @@ Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [Op
 | POST | \`/projects/{projectId}/reports\` | File a bug report (multipart) |
 | GET, POST | \`/projects/{projectId}/{decisions,knowledge,roadmap,memory,technologies}\` | List or add decisions, knowledge sources, roadmap phases, memory, technologies |
 | GET, PATCH, DELETE | \`/projects/{projectId}/{...}/{id}\` | Read, edit or delete one of them |
+| POST | \`/batch\` | Up to 20 of the operations above in one request |
 
-## Errors and limits
+## Errors
 
-Errors are JSON with an HTTP status: \`{ "error": "Task not found." }\`.
+Errors are JSON with an HTTP status, a message for people and a \`code\` to branch on:
 
-- \`400\` invalid input, \`401\` missing or invalid key, \`403\` missing scope or permission, \`404\` not found (or not visible to the key's user), \`429\` too many requests for this key - wait and retry.
-- Unknown paths under \`/api\` answer a JSON \`404\` as well.
+\`\`\`json
+{ "error": "Task not found.", "code": "not_found", "hint": "Check the id. ...", "docs": "${siteUrl}/developers#errors" }
+\`\`\`
+
+| Status | \`code\` | Meaning |
+|---|---|---|
+| 400 | \`invalid_request\` | Invalid input - the message says which field |
+| 401 | \`unauthorized\` | Missing or invalid API key |
+| 403 | \`forbidden\` | The key lacks the scope, or the user the role or permission |
+| 404 | \`not_found\` | No such thing, or not visible to the key's user |
+| 409 | \`idempotency_in_progress\` | A request with the same Idempotency-Key is still running |
+| 422 | \`idempotency_key_reused\` | The Idempotency-Key was used for a different request |
+| 429 | \`rate_limited\` | Too many requests - wait \`Retry-After\` seconds |
+| 500 | \`internal_error\` | Something failed on our side - retry with the same Idempotency-Key |
+
+Unknown paths under \`/api\` answer a JSON \`404\` as well.
+
+## Rate limits
+
+60 requests per minute per API key. Every response says where you stand: \`RateLimit-Limit\`, \`RateLimit-Remaining\`, \`RateLimit-Reset\` (seconds), plus the IETF draft's \`RateLimit\` and \`RateLimit-Policy\`. A \`429\` carries \`Retry-After\`. Each operation of a batch counts as one request.
+
+## Retries and idempotency
+
+Send an \`Idempotency-Key\` header (any unique string - a UUID) on \`POST\`, \`PATCH\` and \`DELETE\`. If the network fails and you retry with the same key within 24 hours, you get the first response back (with \`Idempotent-Replayed: true\`) instead of creating a second task or comment. Use a new key for a new request; reusing one with a different body answers \`422\`.
+
+## Pagination
+
+\`GET /projects/{projectId}/tasks\` returns newest first, up to \`limit\` tasks (1-1000, default 1000), and \`next_cursor\`. While it isn't \`null\`, request the next page with \`?cursor=<next_cursor>\`. Cursors are opaque - don't build them yourself.
+
+## Batch
+
+\`POST /batch\` with \`{ "operations": [{ "method": "PATCH", "path": "/tasks/{taskId}/status", "body": { "status": "review" } }, ...] }\` runs up to 20 operations in order and answers \`{ "results": [{ "status": 200, "body": {...} }, ...] }\`. Each operation goes through the same endpoint as a direct call (same scopes and permissions); it is not a transaction - each one succeeds or fails on its own.
+
+## Versioning
+
+The version is in the path: \`/api/v1\`. Within v1, changes are additive only - new endpoints, new fields in responses, new optional parameters; write clients that ignore fields they don't know. A breaking change ships as \`/api/v2\`, side by side with v1. An endpoint scheduled for removal gets \`Deprecation\` (RFC 9745) and \`Sunset\` (RFC 8594) headers at least 6 months before it goes, and is listed here.
+
+There are no deprecated endpoints right now.
 
 ## More
 
@@ -116,7 +158,7 @@ export function developersLlmsTxt(siteUrl: string): string {
 
 ## Docs
 
-- [Developer guide](${siteUrl}/developers.md): authentication, scopes, quickstart, MCP setup, endpoint table, errors
+- [Developer guide](${siteUrl}/developers.md): authentication, scopes, quickstart, MCP setup, endpoint table, errors, rate limits, idempotency, pagination, batch, versioning
 - [OpenAPI 3.1 document](${siteUrl}/openapi.json): every /api/v1 operation with request and response schemas
 - [API catalog](${siteUrl}/.well-known/api-catalog): RFC 9727 linkset pointing at the API descriptions
 

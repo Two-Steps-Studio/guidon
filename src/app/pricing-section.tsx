@@ -105,7 +105,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
   const [currency, setCurrency] = useState<Currency>("EUR");
 
   return (
-    <section className="relative overflow-hidden border-t border-border bg-background-secondary/30 py-20">
+    <section id="pricing" className="relative scroll-mt-16 overflow-hidden border-t border-border bg-background-secondary/30 py-20">
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <div className="scrim mx-auto mb-12 max-w-3xl space-y-4 rounded-2xl px-6 py-6 text-center">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>{t("title")}</h2>
@@ -178,7 +178,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                       href={
                         price.cents
                           ? `/auth/signup?redirect=${encodeURIComponent(`/upgrade?plan=${plan.id}`)}`
-                          : "/auth/signup"
+                          : "/start"
                       }
                     >
                       {t("getStarted")}

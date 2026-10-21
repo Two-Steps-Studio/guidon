@@ -5,6 +5,7 @@ import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import { technologySlug } from "@/types/technology";
 import type { Technology, TechnologyCategory } from "@/types/technology";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type TechnologyResult = { technology: Technology | null; error: string | null };
 export type TechnologyMutationResult = { error: string | null };
@@ -24,10 +25,10 @@ export async function saveTechnology(
 ): Promise<TechnologyResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { technology: null, error: "You do not have permission to change the stack." };
+    return { technology: null, error: await tr("You do not have permission to change the stack.") };
   }
   if (!input.name.trim()) {
-    return { technology: null, error: "Name is required." };
+    return { technology: null, error: await tr("Name is required.") };
   }
 
   const payload = {
@@ -83,7 +84,7 @@ export async function saveTechnology(
   if (error) return { technology: null, error: gameEngineHint(error.message) };
   // An update scoped by `id AND project_id` that matched nothing (wrong
   // project, or RLS) must not look like success.
-  if (!data) return { technology: null, error: "This technology could not be found in this project." };
+  if (!data) return { technology: null, error: await tr("This technology could not be found in this project.") };
 
   revalidatePath(`/projects/${projectId}/technology`);
   return { technology: data, error: null };
@@ -95,7 +96,7 @@ export async function deleteTechnology(
 ): Promise<TechnologyMutationResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to change the stack." };
+    return { error: await tr("You do not have permission to change the stack.") };
   }
 
   const { data, error } = await dataClient(access.userId)
@@ -107,7 +108,7 @@ export async function deleteTechnology(
 
   if (error) return { error: error.message };
   if (data.length === 0) {
-    return { error: "This technology no longer exists, or you're not allowed to remove it." };
+    return { error: await tr("This technology no longer exists, or you're not allowed to remove it.") };
   }
 
   revalidatePath(`/projects/${projectId}/technology`);

@@ -4,8 +4,9 @@ import { apiDataClient } from "@/lib/api/api-data-client";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import type { TaskPriority } from "@/types/task";
+import { apiRoute } from "@/lib/api/api-route";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
@@ -37,7 +38,7 @@ function isValidTaskPriority(value: unknown): value is TaskPriority {
  * reason POST on the tasks-list route is (see that route's doc comment):
  * identity here comes from an API key, not a browser session.
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handlePATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:write");
   if (isGuardError(guard)) return guard;
 
@@ -119,7 +120,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 /** Mirrors deleteTask in src/app/projects/[id]/work/actions.ts - see PATCH's doc comment for why this isn't a direct call into it. */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handleDELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:write");
   if (isGuardError(guard)) return guard;
 
@@ -157,3 +158,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
   return NextResponse.json({ ok: true });
 }
+
+export const GET = apiRoute(handleGET);
+export const PATCH = apiRoute(handlePATCH);
+export const DELETE = apiRoute(handleDELETE);

@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createMemory, type MemoryFormState } from "./actions";
 import { MEMORY_TYPES } from "./memory-type-config";
+import { Select } from "@/components/ui/select";
 
 const initialState: MemoryFormState = { error: null };
 
@@ -62,18 +63,17 @@ export function CreateMemoryDialog({ projectId, trigger }: { projectId: string; 
           </div>
           <div className="space-y-2">
             <Label htmlFor="memoryType">{t("typeLabel")}</Label>
-            <select
+            <Select
               id="memoryType"
               name="memory_type"
               defaultValue="fact"
-              className="w-full px-3 py-2 border rounded-md bg-background"
             >
               {MEMORY_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {tCommon("memoryType", { type })}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           {state.error && (
             <div className="text-sm text-destructive flex items-center gap-2">

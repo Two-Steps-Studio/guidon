@@ -19,6 +19,7 @@ import { createProject, type CreateProjectState } from "./actions";
 import { importGuidonFile, previewGuidonImport, type GuidonImportPreview } from "@/app/projects/import-actions";
 import { type ProjectType, type ProjectMethodology } from "@/types/project";
 import { PROJECT_TEMPLATES, type ProjectTemplate } from "@/lib/work/project-modules";
+import { Select } from "@/components/ui/select";
 
 const initialState: CreateProjectState = { error: null };
 
@@ -121,11 +122,10 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
       </div>
       <div className="space-y-2">
         <Label htmlFor="projectType">{t("projectTypeLabel")}</Label>
-        <select
+        <Select
           id="projectType"
           name="projectType"
           defaultValue=""
-          className="w-full px-3 py-2 border rounded-md bg-background"
         >
           <option value="">{t("notSet")}</option>
           {PROJECT_TYPE_VALUES.map((value) => (
@@ -133,15 +133,14 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
               {tCommon("projectType", { type: value })}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="projectTemplate">{t("templateLabel")}</Label>
-        <select
+        <Select
           id="projectTemplate"
           name="template"
           defaultValue=""
-          className="w-full px-3 py-2 border rounded-md bg-background"
         >
           <option value="">{t("templateNone")}</option>
           {TEMPLATE_VALUES.map((value) => (
@@ -149,7 +148,7 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
               {tSettings(`labelStarter.${value}.title`)}
             </option>
           ))}
-        </select>
+        </Select>
         <p className="text-xs text-muted-foreground">{t("templateHelp")}</p>
       </div>
       <div className="space-y-2">

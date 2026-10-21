@@ -6,6 +6,7 @@ import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { getSignedUrl } from "@/lib/storage/storage";
 import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
+import { apiRoute } from "@/lib/api/api-route";
 
 const LIMIT = 500;
 const COLUMNS = "id, name, storage_path, size_bytes, mime_type, caption, tags, source_url, created_at";
@@ -31,7 +32,7 @@ interface Row {
  * `tasks:read`-gated like the columns route: read-only project content that
  * every plugin key already has. A project the key's user can't see is 404.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+async function handleGET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
@@ -85,3 +86,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   return NextResponse.json({ references });
 }
+
+export const GET = apiRoute(handleGET);

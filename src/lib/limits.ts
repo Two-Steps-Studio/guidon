@@ -3,6 +3,7 @@ import "server-only";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { serviceDataClient } from "@/lib/data-client";
 import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "@/app/admin/organizations/constants";
+import { paymentState, type PaymentState } from "@/lib/billing/billing-core";
 
 /**
  * Guidon Cloud (hosted - no self-managed Postgres) caps an organization's
@@ -53,6 +54,11 @@ export interface OrgPlanLimits {
    * from - it beat the paid/free plan and hasn't run out yet.
    */
   promoUntil: string | null;
+  /**
+   * Failed payment (migration 071): "grace" still uses the paid plan,
+   * "suspended" means these limits are Free's until a payment goes through.
+   */
+  payment: PaymentState;
 }
 
 interface PlanLimitsRow {
@@ -100,11 +106,22 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
       storageLimitBytes: 500 * 1024 * 1024,
       memberLimit: FREE_PLAN_MEMBER_LIMIT,
       promoUntil: null,
+      payment: { kind: "ok" },
     };
   }
 
   let plan = data.plans as unknown as PlanLimitsRow;
   let promoUntil: string | null = null;
+
+  // Payment failed and the grace period (071) is over: Free's limits until
+  // Stripe collects. plan_id stays as it is - the subscription still exists
+  // and comes back by itself on the next successful payment.
+  const billing = data as { status?: string | null; past_due_since?: string | null };
+  const payment = paymentState(billing.status, billing.past_due_since, new Date());
+  if (payment.kind === "suspended") {
+    const { data: freePlan } = await supabase.from("plans").select("*").eq("id", "free").maybeSingle();
+    if (freePlan) plan = freePlan as PlanLimitsRow;
+  }
 
   // A promo code's plan (062) counts until its date, when it's better than
   // the plan the organization has anyway. Nothing to undo when it ends.
@@ -125,6 +142,7 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
     storageLimitBytes: plan.storage_limit_bytes,
     memberLimit: plan.member_limit ?? null,
     promoUntil,
+    payment,
   };
 }
 
@@ -137,7 +155,12 @@ export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanL
 export async function effectiveOrgProjectLimit(organizationId: string, orgProjectLimit: number): Promise<number> {
   if (hasDirectDatabase()) return orgProjectLimit;
   const limits = await getOrgPlanLimits(organizationId);
-  if (!limits.promoUntil) return orgProjectLimit;
+  if (!limits.promoUntil) {
+    // Suspended after a failed payment: project_limit still holds the paid
+    // plan's number (the webhook only lowers it on cancellation).
+    if (limits.payment.kind === "suspended") return Math.min(orgProjectLimit, limits.projectLimit ?? orgProjectLimit);
+    return orgProjectLimit;
+  }
   return Math.max(orgProjectLimit, limits.projectLimit ?? ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL);
 }
 

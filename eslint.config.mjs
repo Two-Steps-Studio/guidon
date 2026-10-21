@@ -25,6 +25,9 @@ const eslintConfig = defineConfig([
     // thousands of generated .js files (the same class of bug .worktrees/**
     // above was added to fix), so the whole directory is excluded here
     // rather than just its build output.
+    // mobile/ (Expo app) - self-contained like desktop/ and discord-bot/,
+    // linted and type-checked with its own config.
+    "mobile/**",
     "desktop/**",
     // discord-bot/ is the same situation as desktop/ above: a self-contained
     // sibling package (own package.json, own tsconfig, own node_modules)

@@ -9,6 +9,7 @@ import { emitTaskEvent } from "@/lib/events/task-events";
 import { isValidUuid } from "@/lib/api/validate-id";
 import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import type { TaskStatus } from "@/types/task";
+import { tr } from "@/lib/i18n/server-errors";
 
 /** Far more than anyone selects by hand; keeps one request bounded. */
 const MAX_BULK_TASKS = 200;
@@ -34,13 +35,13 @@ export type BulkResult = { error: string | null; count: number };
  */
 export async function bulkUpdateTasks(projectId: string, taskIds: string[], operation: BulkOperation): Promise<BulkResult> {
   const ids = [...new Set(Array.isArray(taskIds) ? taskIds : [])].filter((id) => typeof id === "string" && isValidUuid(id));
-  if (ids.length === 0) return { error: "No tasks selected.", count: 0 };
+  if (ids.length === 0) return { error: await tr("No tasks selected."), count: 0 };
   if (ids.length > MAX_BULK_TASKS) return { error: `Select at most ${MAX_BULK_TASKS} tasks at once.`, count: 0 };
 
   const access = await getProjectAccess(projectId);
   const allowed = operation.kind === "delete" ? canManageProject : canWriteProject;
   if (!access || !allowed(access.role)) {
-    return { error: "You do not have permission to change these tasks.", count: 0 };
+    return { error: await tr("You do not have permission to change these tasks."), count: 0 };
   }
   const db = dataClient(access.userId);
 
@@ -50,7 +51,7 @@ export async function bulkUpdateTasks(projectId: string, taskIds: string[], oper
   switch (operation.kind) {
     case "move": {
       // A built-in or one of the project's own columns - the database checks it exists (060).
-      if (!WORKFLOW_KEY_RE.test(operation.status)) return { error: "Unknown status.", count: 0 };
+      if (!WORKFLOW_KEY_RE.test(operation.status)) return { error: await tr("Unknown status."), count: 0 };
       // Appended after the target column's last card, in the order selected.
       const { data: last, error: lastError } = await db
         .from<{ sort_order: number }>("tasks")
@@ -99,7 +100,7 @@ export async function bulkUpdateTasks(projectId: string, taskIds: string[], oper
 
     case "assign": {
       const assigneeId = operation.assigneeId;
-      if (assigneeId !== null && !isValidUuid(assigneeId)) return { error: "Unknown member.", count: 0 };
+      if (assigneeId !== null && !isValidUuid(assigneeId)) return { error: await tr("Unknown member."), count: 0 };
       const { data: updated, error } = await db
         .from<{ id: string }>("tasks")
         .update({ assignee_id: assigneeId })
@@ -123,7 +124,7 @@ export async function bulkUpdateTasks(projectId: string, taskIds: string[], oper
 
     case "label": {
       const label = typeof operation.label === "string" ? operation.label.trim() : "";
-      if (!label || label.length > 50) return { error: "Enter a label (up to 50 characters).", count: 0 };
+      if (!label || label.length > 50) return { error: await tr("Enter a label (up to 50 characters)."), count: 0 };
       const { data: rows, error } = await db
         .from<{ id: string; tags: string[] | null }>("tasks")
         .select("id, tags")
@@ -162,7 +163,7 @@ export async function bulkUpdateTasks(projectId: string, taskIds: string[], oper
     }
 
     default:
-      return { error: "Unknown operation.", count: 0 };
+      return { error: await tr("Unknown operation."), count: 0 };
   }
 
   if (count > 0) {

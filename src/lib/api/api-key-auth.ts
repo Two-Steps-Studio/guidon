@@ -20,6 +20,11 @@ export interface ApiKeyIdentity {
   allowedOrigins: string[] | null;
 }
 
+/** OAuth access tokens (migration 073) expire after an hour; personal keys have no expires_at. */
+function isExpired(expiresAt: Date | string | null | undefined): boolean {
+  return expiresAt !== null && expiresAt !== undefined && new Date(expiresAt).getTime() <= Date.now();
+}
+
 /**
  * Resolves a bearer token to the API key's owner, or null if it's missing,
  * malformed, unknown, or revoked. Updates last_used_at as a side effect -
@@ -43,7 +48,8 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
   if (hasDirectDatabase()) {
     const result = await withServiceRole(({ query }) =>
       query(
-        "SELECT id, user_id, scopes, bot_label, human_client, project_id, allowed_origins FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
+        // "*": expires_at (073) is simply absent on a database that hasn't run it.
+        "SELECT * FROM api_keys WHERE key_hash = $1 AND revoked_at IS NULL",
         [keyHash]
       )
     );
@@ -56,9 +62,10 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
           human_client: boolean;
           project_id: string | null;
           allowed_origins: string[] | null;
+          expires_at?: Date | string | null;
         }
       | undefined;
-    if (!key) return null;
+    if (!key || isExpired(key.expires_at)) return null;
 
     after(() =>
       withServiceRole(({ query }) =>
@@ -81,12 +88,13 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
 
   const { data: key } = await supabase
     .from("api_keys")
-    .select("id, user_id, scopes, bot_label, human_client, project_id, allowed_origins")
+    // "*" for the same reason as above.
+    .select("*")
     .eq("key_hash", keyHash)
     .is("revoked_at", null)
     .single();
 
-  if (!key) return null;
+  if (!key || isExpired((key as { expires_at?: string | null }).expires_at)) return null;
 
   after(() => supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id));
   return {

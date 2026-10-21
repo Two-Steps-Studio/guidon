@@ -8,6 +8,7 @@ import {
   isValidLabelColor,
   type LabelPreset,
 } from "@/lib/work/label-presets";
+import { tr } from "@/lib/i18n/server-errors";
 
 type Result = { preset: LabelPreset | null; error: string | null };
 
@@ -74,7 +75,7 @@ export async function updateLabelPreset(
     .select<LabelPreset>(COLUMNS)
     .maybeSingle();
   if (error) return { preset: null, error: friendlyError(error) };
-  if (!preset) return { preset: null, error: "Label not found." };
+  if (!preset) return { preset: null, error: await tr("Label not found.") };
 
   revalidate(projectId);
   return { preset, error: null };
@@ -93,7 +94,7 @@ export async function deleteLabelPreset(projectId: string, presetId: string): Pr
     .select<{ id: string }>("id")
     .maybeSingle();
   if (error) return { error: error.message };
-  if (!deleted) return { error: "Label not found." };
+  if (!deleted) return { error: await tr("Label not found.") };
 
   revalidate(projectId);
   return { error: null };
@@ -110,7 +111,7 @@ export async function addLabelPresetSet(
 ): Promise<{ added: LabelPreset[]; error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) return { added: [], error: NO_PERMISSION };
-  if (labels.length === 0 || labels.length > 20) return { added: [], error: "Invalid label set." };
+  if (labels.length === 0 || labels.length > 20) return { added: [], error: await tr("Invalid label set.") };
   for (const label of labels) {
     const invalid = validate(label.name.trim(), label.color);
     if (invalid) return { added: [], error: invalid };

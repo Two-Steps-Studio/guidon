@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import { TASK_PRIORITIES, TASK_STATUSES, WORKFLOW_KEY_RE, isBuiltinPriority, isBuiltinStatus } from "@/lib/work/task-board";
+import { tr } from "@/lib/i18n/server-errors";
 
 /**
  * Board columns and priorities are saved as a whole list (settings forms):
@@ -62,11 +63,11 @@ function validateList<T>(
 export async function updateBoardColumns(projectId: string, columns: BoardColumnInput[]): Promise<WorkflowSaveState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to change this project's board layout." };
+    return { error: await tr("You do not have permission to change this project's board layout.") };
   }
   const invalid = validateList(columns, (c) => c.status, TASK_STATUSES, (c) => c.label, (c) => c.color);
   if (invalid) return { error: invalid };
-  if (columns.every((c) => c.hidden)) return { error: "At least one column must stay visible." };
+  if (columns.every((c) => c.hidden)) return { error: await tr("At least one column must stay visible.") };
 
   const db = dataClient(access.userId);
 
@@ -119,11 +120,11 @@ export async function updateBoardColumns(projectId: string, columns: BoardColumn
 export async function updatePriorities(projectId: string, priorities: PriorityInput[]): Promise<WorkflowSaveState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to change this project's priorities." };
+    return { error: await tr("You do not have permission to change this project's priorities.") };
   }
   const invalid = validateList(priorities, (p) => p.key, TASK_PRIORITIES, (p) => p.label, (p) => p.color);
   if (invalid) return { error: invalid };
-  if (priorities.every((p) => p.hidden)) return { error: "At least one priority must stay visible." };
+  if (priorities.every((p) => p.hidden)) return { error: await tr("At least one priority must stay visible.") };
 
   const db = dataClient(access.userId);
   const { data: existing, error: existingError } = await db

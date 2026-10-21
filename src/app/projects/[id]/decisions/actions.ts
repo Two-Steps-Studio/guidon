@@ -6,6 +6,7 @@ import { dataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import type { ActivityAction } from "@/types/api";
 import type { Decision } from "@/types/context";
+import { tr } from "@/lib/i18n/server-errors";
 
 export type DecisionFormState = {
   error: string | null;
@@ -30,7 +31,7 @@ const VALID_ENTITY_TYPES: Decision["source_type"][] = [
   "memory",
 ];
 
-function parseDecisionForm(formData: FormData) {
+async function parseDecisionForm(formData: FormData) {
   const title = formData.get("title");
   const description = formData.get("description");
   const impact = formData.get("impact");
@@ -39,16 +40,16 @@ function parseDecisionForm(formData: FormData) {
   const decisionType = formData.get("decision_type");
 
   if (typeof title !== "string" || title.trim().length === 0) {
-    return { error: "Title is required." } as const;
+    return { error: await tr("Title is required.") } as const;
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as Decision["status"])) {
-    return { error: "Invalid status." } as const;
+    return { error: await tr("Invalid status.") } as const;
   }
   if (
     typeof decisionType !== "string" ||
     !VALID_TYPES.includes(decisionType as Decision["decision_type"])
   ) {
-    return { error: "Invalid decision type." } as const;
+    return { error: await tr("Invalid decision type.") } as const;
   }
 
   const alternatives =
@@ -81,10 +82,10 @@ export async function createDecision(
 ): Promise<DecisionFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to add decisions." };
+    return { error: await tr("You do not have permission to add decisions.") };
   }
 
-  const parsed = parseDecisionForm(formData);
+  const parsed = await parseDecisionForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   // Optional: "mark comment as decision" (TaskDetailDialog, work/actions.ts
@@ -170,10 +171,10 @@ export async function updateDecision(
 ): Promise<DecisionFormState> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
-    return { error: "You do not have permission to edit decisions." };
+    return { error: await tr("You do not have permission to edit decisions.") };
   }
 
-  const parsed = parseDecisionForm(formData);
+  const parsed = await parseDecisionForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   const action: ActivityAction =
@@ -204,7 +205,7 @@ export async function updateDecision(
     .select("id");
 
   if (error) return { error: error.message };
-  if (data.length === 0) return { error: "This decision does not belong to this project." };
+  if (data.length === 0) return { error: await tr("This decision does not belong to this project.") };
 
   await logActivity({
     userId: access.userId,
@@ -225,7 +226,7 @@ export async function deleteDecision(
 ): Promise<{ error: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: "You do not have permission to delete decisions." };
+    return { error: await tr("You do not have permission to delete decisions.") };
   }
 
   const { data, error } = await dataClient(access.userId)
@@ -236,7 +237,7 @@ export async function deleteDecision(
     .select("id");
 
   if (error) return { error: error.message };
-  if (data.length === 0) return { error: "This decision does not belong to this project." };
+  if (data.length === 0) return { error: await tr("This decision does not belong to this project.") };
 
   revalidateDecisionViews(projectId);
   return { error: null };
