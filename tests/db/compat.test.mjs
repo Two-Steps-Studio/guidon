@@ -1817,8 +1817,8 @@ await expectRejected(
   () =>
     withUser(B, () =>
       db.query(
-        "INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'x.txt', 'path/x.txt', $2)",
-        [attachmentTaskId, B]
+        "INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'x.txt', 'projects/' || ($3::uuid)::text || '/tasks/x.txt', $2)",
+        [attachmentTaskId, B, projectId]
       )
     ),
   /permission denied|new row violates/i
@@ -1828,9 +1828,9 @@ let attachmentId;
 await withUser(A, async () => {
   const { rows } = await db.query(
     `INSERT INTO public.task_attachments (task_id, name, storage_path, size_bytes, mime_type, uploaded_by)
-     VALUES ($1, 'plan.txt', 'projects/p/tasks/t/a/1.txt', 42, 'text/plain', $2)
+     VALUES ($1, 'plan.txt', 'projects/' || ($3::uuid)::text || '/tasks/t/a/1.txt', 42, 'text/plain', $2)
      RETURNING id, name`,
-    [attachmentTaskId, A]
+    [attachmentTaskId, A, projectId]
   );
   attachmentId = rows[0]?.id;
   check("wlasciciel projektu moze wstawic zalacznik", rows[0]?.name === "plan.txt", JSON.stringify(rows));
@@ -1862,9 +1862,9 @@ let othersAttachmentId;
 await withUser(C, async () => {
   const { rows } = await db.query(
     `INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by)
-     VALUES ($1, 'cudzy.txt', 'projects/p/tasks/t/a/2.txt', $2)
+     VALUES ($1, 'cudzy.txt', 'projects/' || ($3::uuid)::text || '/tasks/t/a/2.txt', $2)
      RETURNING id`,
-    [attachmentTaskId, C]
+    [attachmentTaskId, C, projectId]
   );
   othersAttachmentId = rows[0]?.id;
 });
@@ -1882,8 +1882,8 @@ await withUser(A, async () => {
 
 await withUser(A, async () => {
   const { rows } = await db.query(
-    "INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'cascade.txt', 'path/cascade.txt', $2) RETURNING id",
-    [attachmentTaskId, A]
+    "INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'cascade.txt', 'projects/' || ($3::uuid)::text || '/tasks/cascade.txt', $2) RETURNING id",
+    [attachmentTaskId, A, projectId]
   );
   const attId = rows[0].id;
   await db.query("DELETE FROM public.tasks WHERE id = $1", [attachmentTaskId]);
@@ -2160,7 +2160,7 @@ await withUser(A, async () => {
   await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [projectId, D]);
   const r = await db.query(
     `INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by, tags)
-     VALUES ($1, 'castle.png', 'projects/x/references/a.png', 'image/png', $2, '{env,castle}') RETURNING id, tags`,
+     VALUES ($1, 'castle.png', 'projects/' || ($1::uuid)::text || '/references/a.png', 'image/png', $2, '{env,castle}') RETURNING id, tags`,
     [projectId, A]
   );
   refA = r.rows[0]?.id;
@@ -2170,7 +2170,7 @@ await withUser(A, async () => {
   try {
     await db.query("SAVEPOINT s");
     await db.query(
-      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'doc.pdf', 'p', 'application/pdf', $2)",
+      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'doc.pdf', 'projects/' || ($1::uuid)::text || '/references/doc.pdf', 'application/pdf', $2)",
       [projectId, A]
     );
   } catch {
@@ -2182,7 +2182,7 @@ await withUser(A, async () => {
 
 await withUser(D, async () => {
   const r = await db.query(
-    "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'mood.jpg', 'p2', 'image/jpeg', $2) RETURNING id",
+    "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'mood.jpg', 'projects/' || ($1::uuid)::text || '/references/mood.jpg', 'image/jpeg', $2) RETURNING id",
     [projectId, D]
   );
   refD = r.rows[0]?.id;
@@ -2219,7 +2219,7 @@ await withUser(B, async () => {
   try {
     await db.query("SAVEPOINT s");
     await db.query(
-      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'x.png', 'p3', 'image/png', $2)",
+      "INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'x.png', 'projects/' || ($1::uuid)::text || '/references/x.png', 'image/png', $2)",
       [projectId, B]
     );
   } catch {
@@ -2255,7 +2255,7 @@ await withUser(A, async () => {
   const ins = await run(compile(spec({
     op: "insert",
     columns: ["id", "tags", "caption"],
-    values: [{ project_id: projectId, name: "dc.png", storage_path: "p/dc.png", mime_type: "image/png", uploaded_by: A }],
+    values: [{ project_id: projectId, name: "dc.png", storage_path: `projects/${projectId}/references/dc.png`, mime_type: "image/png", uploaded_by: A }],
   })));
   dcRef = ins.rows[0]?.id;
   check("insert ... RETURNING; brak klucza -> DEFAULT (tags = '{}')", Boolean(dcRef) && Array.isArray(ins.rows[0].tags) && ins.rows[0].tags.length === 0, JSON.stringify(ins.rows));
@@ -2264,8 +2264,8 @@ await withUser(A, async () => {
     op: "insert",
     columns: ["id"],
     values: [
-      { project_id: projectId, name: "m1.png", storage_path: "p/m1.png", mime_type: "image/png", uploaded_by: A, caption: "one" },
-      { project_id: projectId, name: "m2.png", storage_path: "p/m2.png", mime_type: "image/png", uploaded_by: A },
+      { project_id: projectId, name: "m1.png", storage_path: `projects/${projectId}/references/m1.png`, mime_type: "image/png", uploaded_by: A, caption: "one" },
+      { project_id: projectId, name: "m2.png", storage_path: `projects/${projectId}/references/m2.png`, mime_type: "image/png", uploaded_by: A },
     ],
   })));
   check("insert kilku wierszy z roznymi kluczami", multi.rows.length === 2, multi.rows.length);
@@ -3498,6 +3498,42 @@ section("61. zadania asynchroniczne API i sandbox (migracja 075)");
     check("nowe zadanie API: queued, 0 zrobionych", job.rows[0]?.status === "queued" && job.rows[0]?.done === 0);
     check("nieznany status odrzucony", await throwsInSavepoint("INSERT INTO public.api_jobs (user_id, kind, status) VALUES ($1, 'task_import', 'paused')", [A]));
     check("nieznany rodzaj odrzucony", await throwsInSavepoint("INSERT INTO public.api_jobs (user_id, kind) VALUES ($1, 'export')", [A]));
+  });
+}
+
+section("62. kolumny tozsamosci tylko do odczytu (migracja 076)");
+
+{
+  await withUser(A, async () => {
+    check("nie zmienia wlasnego profiles.email", await throwsInSavepoint("UPDATE public.profiles SET email = 'Admin@Example.com' WHERE id = $1", [A]));
+    check("nie zmienia wlasnego profiles.id", await throwsInSavepoint("UPDATE public.profiles SET id = gen_random_uuid() WHERE id = $1", [A]));
+    const own = await db.query("UPDATE public.profiles SET full_name = 'Nowe Imie', avatar_url = NULL, locale = 'pl' WHERE id = $1 RETURNING full_name", [A]);
+    check("zmienia imie, avatar i jezyk", own.rows[0]?.full_name === "Nowe Imie");
+    const pins = await db.query("UPDATE public.profiles SET pinned_project_ids = '{}', pinned_task_ids = '{}' WHERE id = $1 RETURNING id", [A]);
+    check("przypiecia dalej dzialaja", pins.rows.length === 1);
+    const task = await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'komentowane 076') RETURNING id", [projectId]);
+    const comment = await db.query("INSERT INTO public.task_comments (task_id, author_id, content) VALUES ($1, $2, 'tresc') RETURNING id", [task.rows[0].id, A]);
+    const cid = comment.rows[0].id;
+    check("nie przenosi komentarza do innego zadania", await throwsInSavepoint("UPDATE public.task_comments SET task_id = gen_random_uuid() WHERE id = $1", [cid]));
+    check("nie nadaje komentarzowi etykiety agenta", await throwsInSavepoint("UPDATE public.task_comments SET actor_label = 'Claude' WHERE id = $1", [cid]));
+    const edited = await db.query("UPDATE public.task_comments SET content = 'poprawiona' WHERE id = $1 RETURNING content", [cid]);
+    check("autor dalej poprawia tresc komentarza", edited.rows[0]?.content === "poprawiona");
+  });
+}
+
+section("63. sciezka pliku nalezy do projektu wiersza (migracja 077)");
+
+{
+  await withUser(A, async () => {
+    const task = await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'zalaczniki 077') RETURNING id", [projectId]);
+    const tid = task.rows[0].id;
+    const foreign = "projects/00000000-0000-0000-0000-000000000000/tasks/x/secret.pdf";
+    check("zalacznik ze sciezka innego projektu odrzucony", await throwsInSavepoint("INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 's.pdf', $2, $3)", [tid, foreign, A]));
+    check("zalacznik z '..' odrzucony", await throwsInSavepoint("INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 's.pdf', 'projects/' || $2 || '/../x/secret.pdf', $3)", [tid, projectId, A]));
+    const ok = await db.query("INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'ok.pdf', 'projects/' || $2 || '/tasks/ok.pdf', $3) RETURNING id", [tid, projectId, A]);
+    check("zalacznik z wlasna sciezka przechodzi", ok.rows.length === 1);
+    check("plik projektu ze sciezka innego projektu odrzucony", await throwsInSavepoint("INSERT INTO public.project_files (project_id, name, storage_path, uploaded_by) VALUES ($1, 'f.txt', $2, $3)", [projectId, foreign, A]));
+    check("referencja ze sciezka innego projektu odrzucona", await throwsInSavepoint("INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'r.png', $2, 'image/png', $3)", [projectId, foreign, A]));
   });
 }
 

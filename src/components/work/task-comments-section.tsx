@@ -48,7 +48,8 @@ export function TaskCommentsSection({
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [posting, setPosting] = useState(false);
+  const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
+  const [postError, setPostError] = useState<string | null>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const membersById = new Map(members.map((member) => [member.id, member]));
 
@@ -56,7 +57,7 @@ export function TaskCommentsSection({
     fieldRef: commentInputRef,
     update: setDraft,
     enabled: canComment,
-    onError: (message) => setCommentsError(message),
+    onError: (message) => setPostError(message),
   });
 
   const loadComments = useCallback(
@@ -64,7 +65,11 @@ export function TaskCommentsSection({
       try {
         const result = await loadCommentsAction(projectId, taskId);
         if (result.error) throw new Error(result.error);
-        setComments(result.comments);
+        // Keep anything posted while the thread was still loading.
+        setComments((current) => {
+          const loaded = new Set(result.comments.map((comment) => comment.id));
+          return [...result.comments, ...current.filter((comment) => !loaded.has(comment.id))];
+        });
       } catch (err) {
         setCommentsError(err instanceof Error ? err.message : t("failedToLoadComments"));
       } finally {
@@ -80,23 +85,39 @@ export function TaskCommentsSection({
     void loadComments(task.id);
   }, [task.id, loadComments]);
 
+  // Optimistic: the comment shows (dimmed) the moment it's sent and the
+  // composer is free for the next one; the server's row replaces it, or it's
+  // taken back and the text returned to the composer if the post fails.
   const handleComment = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!draft.trim() || !currentUserId) return;
+    const content = draft.trim();
+    if (!content || !currentUserId) return;
 
-    setPosting(true);
-    setCommentsError(null);
+    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const now = new Date().toISOString();
+    setComments((current) => [
+      ...current,
+      { id: pendingId, task_id: task.id, author_id: currentUserId, content, created_at: now, actor_label: null },
+    ]);
+    setPendingIds((current) => new Set(current).add(pendingId));
+    setDraft("");
+    setPostError(null);
 
     try {
-      const result = await postComment(projectId, task.id, draft.trim());
+      const result = await postComment(projectId, task.id, content);
       if (result.error || !result.comment) throw new Error(result.error ?? t("failedToPostComment"));
-
-      setComments((current) => [...current, result.comment as TaskComment]);
-      setDraft("");
+      const saved = result.comment as TaskComment;
+      setComments((current) => current.map((comment) => (comment.id === pendingId ? saved : comment)));
     } catch (err) {
-      setCommentsError(err instanceof Error ? err.message : t("failedToPostComment"));
+      setComments((current) => current.filter((comment) => comment.id !== pendingId));
+      setDraft((current) => (current ? current : content));
+      setPostError(err instanceof Error ? err.message : t("failedToPostComment"));
     } finally {
-      setPosting(false);
+      setPendingIds((current) => {
+        const next = new Set(current);
+        next.delete(pendingId);
+        return next;
+      });
     }
   };
 
@@ -135,9 +156,10 @@ export function TaskCommentsSection({
               {comments.map((comment) => {
                 const author = membersById.get(comment.author_id);
                 const isBot = Boolean(comment.actor_label);
+                const pending = pendingIds.has(comment.id);
 
                 return (
-                  <li key={comment.id} className="group flex gap-2.5">
+                  <li key={comment.id} className={cn("group flex gap-2.5", pending && "opacity-60")} aria-busy={pending || undefined}>
                     <span
                       aria-hidden
                       className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-secondary-foreground"
@@ -151,7 +173,7 @@ export function TaskCommentsSection({
                         </span>
                         {" · "}
                         {new Date(comment.created_at).toLocaleString()}
-                        {canEdit && (
+                        {canEdit && !pending && (
                           <CreateDecisionDialog
                             projectId={projectId}
                             idPrefix={`comment-decision-${comment.id}`}
@@ -186,6 +208,12 @@ export function TaskCommentsSection({
             </ul>
           )}
 
+          {postError && (
+            <p role="alert" className="text-sm text-destructive">
+              {postError}
+            </p>
+          )}
+
           {canComment && (
             <form onSubmit={handleComment} className="flex gap-2">
               <Input
@@ -193,7 +221,6 @@ export function TaskCommentsSection({
                 value={draft}
                 placeholder={t("addCommentPlaceholder")}
                 aria-label={t("addCommentAria")}
-                disabled={posting}
                 onChange={(event) => setDraft(event.target.value)}
                 onPaste={commentPaste.onPaste}
                 onDragOver={commentPaste.onDragOver}
@@ -203,14 +230,10 @@ export function TaskCommentsSection({
                 type="submit"
                 size="icon"
                 aria-label={t("postCommentAria")}
-                disabled={posting || commentPaste.uploading || !draft.trim()}
+                disabled={commentPaste.uploading || !draft.trim()}
                 className={cn("shrink-0")}
               >
-                {posting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
+                <Send className="h-4 w-4" />
               </Button>
             </form>
           )}

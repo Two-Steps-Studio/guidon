@@ -108,3 +108,80 @@ export async function checkWebhookUrl(raw: string, { allowPrivate }: { allowPriv
   }
   return parsed;
 }
+
+export interface GuardedResponse {
+  status: number;
+  contentType: string | null;
+  /** The body, cut at `maxBytes`. */
+  text: string;
+}
+
+/**
+ * One HTTP(S) request to a URL that passed checkWebhookUrl, with the address
+ * checked again at the moment of connecting: the socket's own DNS lookup
+ * refuses private addresses. checkWebhookUrl alone resolves the name once
+ * and fetch() resolves it again - a host whose DNS answer flips between the
+ * two (DNS rebinding) would otherwise reach an internal address.
+ *
+ * No redirects are followed. A timeout rejects with an Error named
+ * "TimeoutError", like AbortSignal.timeout does for fetch.
+ */
+export async function guardedRequest(
+  url: URL,
+  options: { method: "GET" | "POST"; headers: Record<string, string>; body?: string; timeoutMs: number; maxBytes: number; allowPrivate: boolean }
+): Promise<GuardedResponse> {
+  const { request } = url.protocol === "https:" ? await import("node:https") : await import("node:http");
+  const dns = await import("node:dns");
+
+  const guardedLookup = (
+    hostname: string,
+    lookupOptions: { all?: boolean },
+    callback: (error: NodeJS.ErrnoException | null, address: string | { address: string; family: number }[], family?: number) => void
+  ) => {
+    dns.lookup(hostname, { all: true, verbatim: true }, (error, addresses) => {
+      if (error) return callback(error, "");
+      if (addresses.length === 0 || (!options.allowPrivate && addresses.some(({ address }) => isPrivateAddress(address)))) {
+        const blocked = Object.assign(new Error("That address isn't reachable from Guidon Cloud."), { code: "EBLOCKED" });
+        return callback(blocked, "");
+      }
+      if (lookupOptions.all) return callback(null, addresses);
+      callback(null, addresses[0].address, addresses[0].family);
+    });
+  };
+
+  return new Promise<GuardedResponse>((resolve, reject) => {
+    const req = request(
+      url,
+      {
+        method: options.method,
+        headers: options.body === undefined ? options.headers : { ...options.headers, "Content-Length": String(Buffer.byteLength(options.body)) },
+        lookup: guardedLookup as never,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        let size = 0;
+        res.on("data", (chunk: Buffer) => {
+          if (size >= options.maxBytes) return;
+          chunks.push(chunk);
+          size += chunk.length;
+          if (size >= options.maxBytes) res.destroy();
+        });
+        const done = () =>
+          resolve({
+            status: res.statusCode ?? 0,
+            contentType: (res.headers["content-type"] as string | undefined) ?? null,
+            text: Buffer.concat(chunks).subarray(0, options.maxBytes).toString("utf8"),
+          });
+        res.on("end", done);
+        res.on("close", done);
+        res.on("error", done);
+      }
+    );
+    req.setTimeout(options.timeoutMs, () => {
+      req.destroy(Object.assign(new Error("Timed out"), { name: "TimeoutError" }));
+    });
+    req.on("error", reject);
+    if (options.body !== undefined) req.write(options.body);
+    req.end();
+  });
+}

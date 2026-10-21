@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/data/auth-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
@@ -56,9 +57,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect("/auth/login");
@@ -72,7 +71,9 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
 
   return {
     id: user.id,
-    email: profile?.email ?? user.email ?? undefined,
+    // The verified Auth address first: profiles.email is a copy (and
+    // requireAdminAccess compares this against ADMIN_EMAILS).
+    email: user.email ?? profile?.email ?? undefined,
     full_name: profile?.full_name ?? undefined,
     avatar_url: profile?.avatar_url ?? undefined,
   };

@@ -29,14 +29,13 @@ export class SupabaseStorageProvider implements StorageProvider {
 
     const { data: existing } = await client.storage.getBucket(bucket);
     if (existing) {
-      // An existing bucket keeps whatever visibility it was created with, so
-      // an "avatars" bucket made private earlier (by hand, or before the
-      // first upload asked for public) made every getPublicUrl() link 400 -
-      // organization, project and profile images never showed. A caller
-      // that needs public URLs makes it public; nothing is ever made private
-      // here.
-      if (options?.public && !existing.public) {
-        const { error } = await client.storage.updateBucket(bucket, { public: true });
+      // An existing bucket is brought to the visibility its caller asks for.
+      // Both ways matter: an "avatars" bucket made private earlier made every
+      // getPublicUrl() link 400, and the files/attachments buckets used to be
+      // created public, which let anyone holding an object path read it
+      // through /object/public/ - past signed-URL expiry and membership.
+      if (options?.public !== undefined && existing.public !== options.public) {
+        const { error } = await client.storage.updateBucket(bucket, { public: options.public });
         if (error) throw error;
       }
       return;

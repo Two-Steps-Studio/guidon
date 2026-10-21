@@ -494,6 +494,18 @@ body {
   }
 }
 
+/* Nothing may widen the page sideways: a tooltip, menu or long word that
+   pokes past the right edge would otherwise let the whole page pan
+   horizontally, and the fixed app background (dither-background.tsx), which
+   is exactly one viewport wide, would slide off with it. `clip`, not
+   `hidden`: it doesn't turn html/body into scroll containers, so sticky
+   headers and window scrolling keep working. Real horizontal scrollers
+   (the board, the filter row) scroll inside themselves as before. */
+html,
+body {
+  overflow-x: clip;
+}
+
 /* Mobile touch fixes */
 input, textarea, select {
   font-size: 16px;

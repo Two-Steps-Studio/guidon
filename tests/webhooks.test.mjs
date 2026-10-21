@@ -13,6 +13,7 @@ import { createHmac } from "node:crypto";
 import {
   checkWebhookUrl,
   generateWebhookSecret,
+  guardedRequest,
   isPrivateAddress,
   parseWebhookUrl,
   signWebhookPayload,
@@ -135,6 +136,35 @@ check("slack: ping has text", typeof formatWebhookBody("slack", { type: "ping" }
 check("receiver error: Discord JSON message", describeReceiverError(400, '{"message": "Cannot send an empty message", "code": 50006}') === "Receiver responded with HTTP 400: Cannot send an empty message");
 check("receiver error: plain text first line", describeReceiverError(400, "no_text\nmore") === "Receiver responded with HTTP 400: no_text");
 check("receiver error: empty body", describeReceiverError(502, "") === "Receiver responded with HTTP 502.");
+
+console.log("\n  guardedRequest: the address is checked again when connecting (DNS rebinding)");
+{
+  const { createServer } = await import("node:http");
+  const server = createServer((req, res) => {
+    let body = "";
+    req.on("data", (c) => (body += c));
+    req.on("end", () => {
+      res.writeHead(req.url === "/redirect" ? 302 : 200, { "Content-Type": "text/plain", Location: "http://example.com/" });
+      res.end(`${req.method} ${body}`.padEnd(5000, "x"));
+    });
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const port = server.address().port;
+  const base = { headers: {}, timeoutMs: 3000, maxBytes: 100 };
+  let blocked = null;
+  try {
+    await guardedRequest(new URL(`http://localhost:${port}/`), { ...base, method: "GET", allowPrivate: false });
+  } catch (error) {
+    blocked = error.code;
+  }
+  check("a name that resolves to loopback is refused at connect time", blocked === "EBLOCKED", blocked);
+  const ok = await guardedRequest(new URL(`http://localhost:${port}/`), { ...base, method: "POST", body: "hi", allowPrivate: true });
+  check("self-hosted (private allowed): request goes through with the body", ok.status === 200 && ok.text.startsWith("POST hi"), ok.text.slice(0, 20));
+  check("response cut at maxBytes", ok.text.length === 100, ok.text.length);
+  const redirect = await guardedRequest(new URL(`http://localhost:${port}/redirect`), { ...base, method: "GET", allowPrivate: true });
+  check("redirects are not followed", redirect.status === 302);
+  server.close();
+}
 
 console.log("\n  Web Bot Auth (src/lib/web-bot-auth.ts)");
 {

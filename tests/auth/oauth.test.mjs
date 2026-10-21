@@ -17,6 +17,7 @@ import {
   signOAuthState,
   verifyOAuthState,
 } from "../../src/lib/auth/oauth-local-core.ts";
+import { safeRedirect } from "../../src/lib/auth/safe-redirect.ts";
 
 let pass = 0;
 let fail = 0;
@@ -100,6 +101,21 @@ section("profiles - only verified emails");
   const dc = normalizeProfile("discord", { id: "42", username: "ann_", global_name: "Ann", avatar: "abc", email: "ann@x.io", verified: true });
   check("Discord: verified flag, global name, CDN avatar", dc.emailVerified && dc.name === "Ann" && dc.avatarUrl === "https://cdn.discordapp.com/avatars/42/abc.png");
   check("Discord: unverified", !normalizeProfile("discord", { id: "1", email: "a@x.io", verified: false }).emailVerified);
+}
+
+console.log("\n  safeRedirect (src/lib/auth/safe-redirect.ts)");
+for (const [value, expected] of [
+  ["/projects/abc/work?openTask=1", "/projects/abc/work?openTask=1"],
+  ["/discord/link?token=x.y", "/discord/link?token=x.y"],
+  [null, "/dashboard"],
+  ["https://evil.example", "/dashboard"],
+  ["//evil.example", "/dashboard"],
+  ["/\\evil.example", "/dashboard"],
+  ["/\t/evil.example", "/dashboard"],
+  ["/\n/evil.example", "/dashboard"],
+  ["/\r\n/evil.example", "/dashboard"],
+]) {
+  check(`safeRedirect(${JSON.stringify(value)}) -> ${expected}`, safeRedirect(value) === expected, safeRedirect(value));
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

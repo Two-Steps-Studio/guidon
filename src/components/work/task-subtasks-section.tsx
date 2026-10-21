@@ -55,10 +55,10 @@ export function TaskSubtasksSection({
 }) {
   const t = useTranslations("work");
   const [subtaskDraft, setSubtaskDraft] = useState("");
-  const [addingSubtask, setAddingSubtask] = useState(false);
+  const [pendingSubtasks, setPendingSubtasks] = useState<{ id: string; title: string }[]>([]);
+  const [hiddenSubtaskIds, setHiddenSubtaskIds] = useState<ReadonlySet<string>>(new Set());
   const [subtaskError, setSubtaskError] = useState<string | null>(null);
   const [savingSubtaskId, setSavingSubtaskId] = useState<string | null>(null);
-  const [deletingSubtaskId, setDeletingSubtaskId] = useState<string | null>(null);
   // Keyed by subtask id. Only holds an entry while that row has an
   // in-flight or not-yet-committed edit - absence means "show the row's
   // own field", so a successful or failed save both fall back to the
@@ -80,25 +80,31 @@ export function TaskSubtasksSection({
     });
   }
 
+  // Optimistic: a new subtask shows (dimmed) as soon as it's added and the
+  // input is free for the next one; a deleted one disappears at once. A
+  // failed request puts things back and says why.
   const handleAddSubtask = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!subtaskDraft.trim()) return;
+    const title = subtaskDraft.trim();
+    if (!title) return;
 
-    setAddingSubtask(true);
+    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setPendingSubtasks((current) => [...current, { id: pendingId, title }]);
+    setSubtaskDraft("");
     setSubtaskError(null);
 
     try {
-      const result = await createSubtask(projectId, task.id, subtaskDraft.trim());
+      const result = await createSubtask(projectId, task.id, title);
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToCreateSubtask"));
 
       // Subtasks are plain tasks, so the same onSaved callback that updates
       // the board's task list handles them - no separate state to sync.
       onSaved(result.task);
-      setSubtaskDraft("");
     } catch (err) {
+      setSubtaskDraft((current) => (current ? current : title));
       setSubtaskError(err instanceof Error ? err.message : t("failedToCreateSubtask"));
     } finally {
-      setAddingSubtask(false);
+      setPendingSubtasks((current) => current.filter((pending) => pending.id !== pendingId));
     }
   };
 
@@ -151,7 +157,7 @@ export function TaskSubtasksSection({
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
-    setDeletingSubtaskId(subtaskId);
+    setHiddenSubtaskIds((current) => new Set(current).add(subtaskId));
     setSubtaskError(null);
 
     try {
@@ -162,9 +168,15 @@ export function TaskSubtasksSection({
     } catch (err) {
       setSubtaskError(err instanceof Error ? err.message : t("failedToDeleteSubtask"));
     } finally {
-      setDeletingSubtaskId(null);
+      setHiddenSubtaskIds((current) => {
+        const next = new Set(current);
+        next.delete(subtaskId);
+        return next;
+      });
     }
   };
+
+  const visibleSubtasks = subtasks.filter((subtask) => !hiddenSubtaskIds.has(subtask.id));
 
   return (
         <section
@@ -173,19 +185,19 @@ export function TaskSubtasksSection({
         >
           <h3 className="text-sm font-medium text-foreground">
             {t("subtasksHeading")}
-            {subtasks.length > 0 && (
+            {visibleSubtasks.length + pendingSubtasks.length > 0 && (
               <span className="ml-1.5 text-xs font-normal tabular-nums text-muted-foreground">
-                {subtasks.filter((subtask) => isDone(subtask.status)).length}/{subtasks.length}
+                {visibleSubtasks.filter((subtask) => isDone(subtask.status)).length}/{visibleSubtasks.length + pendingSubtasks.length}
               </span>
             )}
           </h3>
 
-          {subtasks.length === 0 ? (
+          {visibleSubtasks.length + pendingSubtasks.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noSubtasksYet")}</p>
           ) : (
             <table className="w-full border-collapse text-sm">
               <tbody>
-                {subtasks.map((subtask) => {
+                {visibleSubtasks.map((subtask) => {
                   const normalizedStatus = normalizeTaskStatus(subtask.status);
                   const statusValue = subtaskStatusDrafts[subtask.id] ?? normalizedStatus;
                   const titleValue = subtaskTitleDrafts[subtask.id] ?? subtask.title;
@@ -241,21 +253,26 @@ export function TaskSubtasksSection({
                           <button
                             type="button"
                             aria-label={t("deleteSubtaskAria", { title: subtask.title })}
-                            disabled={deletingSubtaskId === subtask.id}
                             onClick={() => void handleDeleteSubtask(subtask.id)}
-                            className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100 disabled:opacity-60"
+                            className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
                           >
-                            {deletingSubtaskId === subtask.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <X className="h-3.5 w-3.5" />
-                            )}
+                            <X className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </td>
                     </tr>
                   );
                 })}
+                {pendingSubtasks.map((pending) => (
+                  <tr key={pending.id} aria-busy="true" className="opacity-60">
+                    <td className="w-full py-1 pr-2">
+                      <span className="flex h-8 items-center px-3">{pending.title}</span>
+                    </td>
+                    <td className="py-1 pr-2" colSpan={2}>
+                      <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}
@@ -272,21 +289,16 @@ export function TaskSubtasksSection({
                 value={subtaskDraft}
                 placeholder={t("addSubtaskPlaceholder")}
                 aria-label={t("addSubtaskAria")}
-                disabled={addingSubtask}
                 onChange={(event) => setSubtaskDraft(event.target.value)}
               />
               <Button
                 type="submit"
                 size="icon"
                 aria-label={t("addSubtaskButtonAria")}
-                disabled={addingSubtask || !subtaskDraft.trim()}
+                disabled={!subtaskDraft.trim()}
                 className="shrink-0"
               >
-                {addingSubtask ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
+                <Plus className="h-4 w-4" />
               </Button>
             </form>
           )}

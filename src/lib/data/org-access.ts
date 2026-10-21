@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/data/auth-user";
 import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
@@ -77,9 +78,7 @@ export const getOrgAccess = cache(async function getOrgAccess(
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return null;
 
@@ -135,11 +134,7 @@ export const requireOrgAccess = cache(async function requireOrgAccess(orgId: str
     return access;
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect(`/auth/login?redirect=${encodeURIComponent(`/organizations/${orgId}`)}`);

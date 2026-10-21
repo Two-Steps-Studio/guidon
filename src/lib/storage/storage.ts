@@ -57,9 +57,11 @@ export async function ensureBucketExists(
  */
 export async function initializeStorageBuckets(): Promise<void> {
   const buckets = [
-    { name: STORAGE_BUCKETS.FILES, public: true, fileSizeLimit: FILE_SIZE_LIMITS.DOCUMENT },
-    { name: STORAGE_BUCKETS.ATTACHMENTS, public: true, fileSizeLimit: FILE_SIZE_LIMITS.ATTACHMENT },
-    { name: STORAGE_BUCKETS.EXPORTS, public: true, fileSizeLimit: FILE_SIZE_LIMITS.EXPORT },
+    // Only avatars are public (their own bucket); everything here is read
+    // through short-lived signed URLs after a permission check.
+    { name: STORAGE_BUCKETS.FILES, public: false, fileSizeLimit: FILE_SIZE_LIMITS.DOCUMENT },
+    { name: STORAGE_BUCKETS.ATTACHMENTS, public: false, fileSizeLimit: FILE_SIZE_LIMITS.ATTACHMENT },
+    { name: STORAGE_BUCKETS.EXPORTS, public: false, fileSizeLimit: FILE_SIZE_LIMITS.EXPORT },
   ];
 
   for (const bucket of buckets) {
@@ -155,8 +157,9 @@ export async function uploadProjectFile(
   }
 
   // Ensure the files bucket exists
-  const bucketResult = await ensureBucketExists(STORAGE_BUCKETS.FILES, { 
-    public: true,
+  // Private: files are only ever served through signed URLs (getSignedUrl).
+  const bucketResult = await ensureBucketExists(STORAGE_BUCKETS.FILES, {
+    public: false,
     fileSizeLimit: FILE_SIZE_LIMITS.DOCUMENT 
   });
   if (bucketResult.error) {
@@ -198,7 +201,7 @@ export async function uploadProjectReference(projectId: string, file: File, user
   }
 
   const bucketResult = await ensureBucketExists(STORAGE_BUCKETS.FILES, {
-    public: true,
+    public: false,
     fileSizeLimit: FILE_SIZE_LIMITS.DOCUMENT,
   });
   if (bucketResult.error) {
@@ -230,8 +233,8 @@ export async function uploadTaskAttachment(
   }
 
   // Ensure the attachments bucket exists
-  const bucketResult = await ensureBucketExists(STORAGE_BUCKETS.ATTACHMENTS, { 
-    public: true,
+  const bucketResult = await ensureBucketExists(STORAGE_BUCKETS.ATTACHMENTS, {
+    public: false,
     fileSizeLimit: FILE_SIZE_LIMITS.ATTACHMENT 
   });
   if (bucketResult.error) {
