@@ -70,7 +70,7 @@ export default async function Home() {
     <>
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans)).replace(/</g, "\\u003c") }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans, FEATURE_SECTIONS.map(({ key }) => ({ title: t(`features.${key}.title`), description: t(`features.${key}.description`) })))).replace(/</g, "\\u003c") }}
     />
     <main>
     {/* Not full-screen: the live board mockup below starts above the fold,

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { docSections } from "@/lib/docs-index";
 import { searchSections, type SearchHit } from "@/lib/docs-search-core";
-import { ipRateLimited } from "@/lib/ip-rate-limit";
+import { ipRateLimit, withHeaders } from "@/lib/ip-rate-limit";
 
 /**
  * NLWeb (v0.55) /ask over Guidon's public documentation: `POST { "query":
@@ -78,12 +78,14 @@ async function readInput(request: NextRequest): Promise<AskInput> {
 }
 
 async function handle(request: NextRequest): Promise<Response> {
-  if (ipRateLimited("ask", request, 60)) return failure("RATE_LIMITED", "Too many questions. Try again in a minute.", 429);
+  const rate = ipRateLimit("ask", request, 60);
+  const respond = (response: Response) => withHeaders(response, rate.headers);
+  if (rate.limited) return respond(failure("RATE_LIMITED", "Too many questions. Try again in a minute.", 429));
   const input = await readInput(request);
-  if ("error" in input) return failure("INVALID_QUERY", input.error, 400);
+  if ("error" in input) return respond(failure("INVALID_QUERY", input.error, 400));
   const text = input.text.trim();
-  if (!text || text.length > 1000) return failure("INVALID_QUERY", "query.text must be 1-1000 characters.");
-  return answer(text, input.streaming);
+  if (!text || text.length > 1000) return respond(failure("INVALID_QUERY", "query.text must be 1-1000 characters."));
+  return respond(answer(text, input.streaming));
 }
 
 export const GET = handle;

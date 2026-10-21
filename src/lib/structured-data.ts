@@ -46,8 +46,17 @@ export interface PricedPlan {
   price_cents: number | null;
 }
 
-/** Homepage: who (Organization), the site (WebSite), the product with the prices the pricing section shows. */
-export function homepageJsonLd(siteUrl: string, plans: PricedPlan[]) {
+export interface FeatureItem {
+  title: string;
+  description: string;
+}
+
+/**
+ * Homepage: who (Organization), the site (WebSite), the product with the
+ * prices the pricing section shows and the feature sections it lists
+ * (ItemList + featureList), and the API.
+ */
+export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: FeatureItem[] = []) {
   const offers = plans
     .filter((plan) => plan.price_cents !== null)
     .map((plan) => ({
@@ -84,8 +93,24 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[]) {
         isAccessibleForFree: true,
         codeRepository: GITHUB_REPO_URL,
         sameAs: [...SAME_AS],
+        ...(features.length ? { featureList: features.map((feature) => feature.title) } : {}),
         ...(offers.length ? { offers } : { offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", category: "Freemium" } }),
       },
+      ...(features.length
+        ? [
+            {
+              "@type": "ItemList",
+              "@id": `${siteUrl}/#features`,
+              name: "Guidon features",
+              itemListElement: features.map((feature, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: feature.title,
+                description: feature.description,
+              })),
+            },
+          ]
+        : []),
       {
         "@type": "WebAPI",
         "@id": `${siteUrl}/#api`,

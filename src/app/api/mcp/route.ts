@@ -7,6 +7,7 @@ import { createDispatch } from "@/lib/mcp/http/dispatch";
 import { registerGuidonTools } from "@/lib/mcp/http/tools";
 import { registerProjectResourceTools } from "@/lib/mcp/http/resource-tools";
 import { bearerChallenge } from "@/lib/oauth/oauth-core";
+import { unknownToolError } from "@/lib/mcp/http/unknown-tool";
 import { SITE_URL } from "@/lib/site-url";
 
 /**
@@ -94,7 +95,23 @@ async function handle(request: NextRequest): Promise<Response> {
   const uncounted = messages ? messages.filter((message) => !isToolCall(message)).length : 1;
   for (let i = 0; i < uncounted; i++) recordRequest(identity.apiKeyId);
 
-  const server = new McpServer({ name: "guidon", version: "1.0.0" });
+  const server = new McpServer(
+    {
+      name: "guidon",
+      title: "Guidon",
+      version: "1.0.0",
+      description: "Guidon project management: find, claim, update and hand back tasks with full context.",
+      websiteUrl: SITE_URL,
+      icons: [{ src: `${SITE_URL}/icon.png`, mimeType: "image/png" }],
+    },
+    {
+      instructions:
+        "Guidon is a project-management board with the context behind each task. Typical flow: list_projects -> list_tasks -> " +
+        "get_task_context (read everything, including previous attempts) -> start_task -> do the work -> record_attempt -> " +
+        "comment_on_task (summary, PR link) -> set_task_status 'review'. Use complete_task only when the person asks and the " +
+        "project allows it. You act as the signed-in user, only in their projects, limited to the token's scopes.",
+    }
+  );
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -104,6 +121,8 @@ async function handle(request: NextRequest): Promise<Response> {
     const dispatch = createDispatch(new URL(request.url).origin, authorization);
     registerGuidonTools(server, dispatch);
     registerProjectResourceTools(server, dispatch);
+    const unknown = unknownToolError(server, messages);
+    if (unknown) return unknown;
     await server.connect(transport);
     return await transport.handleRequest(request);
   } finally {

@@ -1,4 +1,4 @@
-import { MARKDOWN_CONTENT_TYPE, withFrontmatter } from "@/lib/agent-web";
+import { MARKDOWN_CONTENT_TYPE } from "@/lib/agent-web";
 import { authMarkdown } from "@/lib/oauth/oauth-core";
 import { SITE_URL } from "@/lib/site-url";
 
@@ -7,10 +7,8 @@ import { SITE_URL } from "@/lib/site-url";
 export const dynamic = "force-static";
 
 export function GET() {
-  const body = withFrontmatter(authMarkdown(SITE_URL), {
-    title: "Authenticating to Guidon",
-    description: "OAuth 2.1 with PKCE for MCP clients and apps, or a personal API key.",
-    canonical: `${SITE_URL}/auth.md`,
-  });
+  // No frontmatter: auth.md readers (WorkOS spec, scanners) expect the
+  // document to open with its top-level heading.
+  const body = authMarkdown(SITE_URL);
   return new Response(body, { headers: { "Content-Type": MARKDOWN_CONTENT_TYPE, "Access-Control-Allow-Origin": "*" } });
 }
