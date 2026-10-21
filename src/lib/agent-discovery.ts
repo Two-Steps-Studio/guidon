@@ -119,12 +119,23 @@ export interface CatalogOptions {
 export function ardCatalog(siteUrl: string) {
   const host = new URL(siteUrl).hostname;
   const urn = (name: string) => `urn:air:${host}:${name}`;
+  // ARD 4.5: who stands behind each entry - the publisher's own domain (it
+  // must match the URN's), with the documents that govern its use.
+  const trustManifest = {
+    identity: `did:web:${host}`,
+    identityType: "did",
+    attestations: [
+      { type: "privacy-policy", uri: `${siteUrl}/legal/privacy`, mediaType: "text/html" },
+      { type: "terms-of-service", uri: `${siteUrl}/legal/terms`, mediaType: "text/html" },
+    ],
+  };
   return {
     specVersion: "1.0",
     host: { displayName: "Guidon", identifier: siteUrl, documentationUrl: `${siteUrl}/developers`, logoUrl: `${siteUrl}/icon.png` },
     entries: [
       {
         identifier: urn("mcp:guidon"),
+        trustManifest,
         displayName: "Guidon MCP server",
         type: SERVER_CARD_CONTENT_TYPE,
         url: `${siteUrl}/api/mcp/server-card`,
@@ -139,6 +150,7 @@ export function ardCatalog(siteUrl: string) {
       },
       {
         identifier: urn("mcp:guidon-docs"),
+        trustManifest,
         displayName: "Guidon docs MCP server",
         type: SERVER_CARD_CONTENT_TYPE,
         url: `${siteUrl}/api/mcp/docs/server-card`,
@@ -149,6 +161,7 @@ export function ardCatalog(siteUrl: string) {
       },
       {
         identifier: urn("api:rest-v1"),
+        trustManifest,
         displayName: "Guidon REST API v1",
         type: "application/vnd.oai.openapi+json",
         url: `${siteUrl}/openapi.json`,
@@ -158,6 +171,7 @@ export function ardCatalog(siteUrl: string) {
       },
       {
         identifier: urn(`skill:${SKILL_NAME}`),
+        trustManifest,
         displayName: SKILL_NAME,
         type: "application/agent-skills+md",
         url: `${siteUrl}/.well-known/agent-skills/${SKILL_NAME}/SKILL.md`,

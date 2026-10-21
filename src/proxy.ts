@@ -52,6 +52,8 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // login redirect below would make it unreachable. Exact match: it is a
   // single POST-only route with no sub-paths.
   '/api/mcp',
+  // The API's base URL describes itself (src/app/api/v1/route.ts).
+  '/api/v1',
   // Its server card (public description) and the public docs MCP server.
   '/api/mcp/server-card',
   '/api/mcp/docs',

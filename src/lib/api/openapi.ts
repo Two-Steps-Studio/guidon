@@ -46,21 +46,44 @@ const ok = (description: string, schema: JsonSchema, status = "200") => ({
 });
 const wrap = (key: string, schema: JsonSchema) => ({ type: "object", properties: { [key]: schema }, required: [key] });
 
-/** The errors every API-key route can answer, all the Error schema. */
-const COMMON_ERRORS = {
-  "400": { $ref: "#/components/responses/BadRequest" },
-  "401": { $ref: "#/components/responses/Unauthorized" },
-  "403": { $ref: "#/components/responses/Forbidden" },
-  "404": { $ref: "#/components/responses/NotFound" },
-  "429": { $ref: "#/components/responses/RateLimited" },
-  "500": { $ref: "#/components/responses/InternalError" },
-};
+
 
 /** Sent on every response of a request that got as far as the key check (src/lib/api/api-route.ts). */
 const RATE_LIMIT_HEADERS = {
   "RateLimit-Limit": { $ref: "#/components/headers/RateLimitLimit" },
   "RateLimit-Remaining": { $ref: "#/components/headers/RateLimitRemaining" },
   "RateLimit-Reset": { $ref: "#/components/headers/RateLimitReset" },
+};
+
+/**
+ * Error responses, written out in every operation rather than as
+ * $ref'd components/responses, so tools that don't resolve response refs
+ * (some agent scanners, function-calling converters) still see the typed
+ * Error body on each 4xx/5xx. Also listed under components.responses.
+ */
+const ERROR_RESPONSES = {
+    BadRequest: { description: "Invalid input", content: json(ref("Error")) },
+    Unauthorized: { description: "Missing or invalid API key", content: json(ref("Error")) },
+    Forbidden: { description: "The key lacks the scope, or the user lacks the role or project permission", content: json(ref("Error")) },
+    NotFound: { description: "No such project/task, or not visible to the key's user", content: json(ref("Error")) },
+    RateLimited: {
+      description: "Too many requests for this key",
+      headers: { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } }, ...RATE_LIMIT_HEADERS },
+      content: json(ref("Error")),
+    },
+    InternalError: { description: "Something failed on Guidon's side; safe to retry with the same Idempotency-Key", content: json(ref("Error")) },
+    IdempotencyInProgress: { description: "A request with this Idempotency-Key is still running (code idempotency_in_progress)", content: json(ref("Error")) },
+    IdempotencyKeyReused: { description: "This Idempotency-Key was used for a different request (code idempotency_key_reused)", content: json(ref("Error")) },
+};
+
+/** The errors every API-key route can answer, all the Error schema. */
+const COMMON_ERRORS = {
+  "400": ERROR_RESPONSES.BadRequest,
+  "401": ERROR_RESPONSES.Unauthorized,
+  "403": ERROR_RESPONSES.Forbidden,
+  "404": ERROR_RESPONSES.NotFound,
+  "429": ERROR_RESPONSES.RateLimited,
+  "500": ERROR_RESPONSES.InternalError,
 };
 
 const WRITE_METHODS = new Set(["post", "patch", "put", "delete"]);
@@ -71,16 +94,22 @@ const WRITE_METHODS = new Set(["post", "patch", "put", "delete"]);
  */
 function finishPaths(paths: Record<string, Record<string, unknown>>): Record<string, unknown> {
   for (const item of Object.values(paths)) {
+    // Path-level parameters are repeated on every operation (and dropped
+    // from the path item): converters that turn each operation into a
+    // function call look at the operation alone.
+    const shared = (item.parameters as unknown[] | undefined) ?? [];
+    delete item.parameters;
     for (const [method, operation] of Object.entries(item)) {
-      if (method === "parameters" || !operation || typeof operation !== "object") continue;
+      if (!operation || typeof operation !== "object") continue;
       const op = operation as { responses: Record<string, Record<string, unknown>>; parameters?: unknown[] };
+      if (shared.length) op.parameters = [...shared, ...(op.parameters ?? [])];
       for (const [status, response] of Object.entries(op.responses)) {
         if (status.startsWith("2") && !("$ref" in response)) response.headers = { ...RATE_LIMIT_HEADERS, ...(response.headers as object) };
       }
       if (WRITE_METHODS.has(method)) {
         op.parameters = [...(op.parameters ?? []), { $ref: "#/components/parameters/IdempotencyKey" }];
-        op.responses["409"] = { $ref: "#/components/responses/IdempotencyInProgress" };
-        op.responses["422"] = { $ref: "#/components/responses/IdempotencyKeyReused" };
+        op.responses["409"] = ERROR_RESPONSES.IdempotencyInProgress;
+        op.responses["422"] = ERROR_RESPONSES.IdempotencyKeyReused;
       }
     }
   }
@@ -214,7 +243,11 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
     ],
     paths: finishPaths({
       "/projects": {
-        get: op("listProjects", "List the projects the key's user belongs to", "tasks:read", ok("Projects", wrap("projects", { type: "array", items: ref("Project") })), { tags: ["Projects"] }),
+        get: op("listProjects", "List the projects the key's user belongs to", "tasks:read", ok("Projects", wrap("projects", { type: "array", items: ref("Project") })), {
+          tags: ["Projects"],
+          description: "Alphabetical by name.",
+          parameters: [{ name: "limit", in: "query", required: false, description: "At most this many projects.", schema: { type: "integer", minimum: 1, maximum: 1000, default: 1000 } }],
+        }),
       },
       "/projects/{projectId}/tasks": {
         parameters: [projectIdParam],
@@ -619,20 +652,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           properties: { id: { type: "string", format: "uuid" }, task_id: { type: "string", format: "uuid" }, content: { type: "string" }, created_at: { type: "string", format: "date-time" } },
         },
       },
-      responses: {
-        BadRequest: { description: "Invalid input", content: json(ref("Error")) },
-        Unauthorized: { description: "Missing or invalid API key", content: json(ref("Error")) },
-        Forbidden: { description: "The key lacks the scope, or the user lacks the role or project permission", content: json(ref("Error")) },
-        NotFound: { description: "No such project/task, or not visible to the key's user", content: json(ref("Error")) },
-        RateLimited: {
-          description: "Too many requests for this key",
-          headers: { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } }, ...RATE_LIMIT_HEADERS },
-          content: json(ref("Error")),
-        },
-        InternalError: { description: "Something failed on Guidon's side; safe to retry with the same Idempotency-Key", content: json(ref("Error")) },
-        IdempotencyInProgress: { description: "A request with this Idempotency-Key is still running (code idempotency_in_progress)", content: json(ref("Error")) },
-        IdempotencyKeyReused: { description: "This Idempotency-Key was used for a different request (code idempotency_key_reused)", content: json(ref("Error")) },
-      },
+      responses: ERROR_RESPONSES,
       parameters: {
         IdempotencyKey: {
           name: "Idempotency-Key",
