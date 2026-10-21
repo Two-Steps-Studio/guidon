@@ -141,7 +141,7 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     `- **REST API:** \`${siteUrl}/api/v1\` - [OpenAPI 3.1](${siteUrl}/openapi.json), JSON errors with codes, rate-limit headers, Idempotency-Key, cursor pagination, batch.`,
     `- **Authentication:** OAuth 2.1 with PKCE (MCP clients sign in on their own - [auth.md](${siteUrl}/auth.md)) or a personal API key as \`Authorization: Bearer guidon_...\`.`,
     `- **Docs for agents:** [llms.txt](${siteUrl}/llms.txt), [developer guide](${siteUrl}/developers.md), a public [docs MCP server](${siteUrl}/api/mcp/docs) and [/ask](${siteUrl}/ask).`,
-    `- **Discovery:** [ard.json](${siteUrl}/.well-known/ard.json), [MCP server card](${siteUrl}/api/mcp/server-card), [agent skill](${siteUrl}/.well-known/agent-skills/index.json), [API catalog](${siteUrl}/.well-known/api-catalog).`,
+    `- **Discovery:** [ard.json](${siteUrl}/.well-known/ard.json), [MCP server card](${siteUrl}/api/mcp/server-card), [agent skill](${siteUrl}/.well-known/agent-skills/index.json), [API catalog](${siteUrl}/.well-known/api-catalog), [MCP manifest](${siteUrl}/.well-known/mcp.json), [A2A agent card](${siteUrl}/.well-known/agent-card.json).`,
     "",
     `## ${landing.featuresTitle}`,
     "",

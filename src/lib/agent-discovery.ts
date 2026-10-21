@@ -154,6 +154,42 @@ export function mcpManifest(siteUrl: string) {
   };
 }
 
+/**
+ * A2A Agent Card for the docs agent at /api/a2a (src/app/api/a2a). Carries
+ * the v1.0 fields (supportedInterfaces) and the v0.3 ones (url,
+ * preferredTransport, protocolVersion) side by side, since clients of both
+ * versions are in use; the endpoint answers both method names.
+ */
+export function a2aAgentCard(siteUrl: string) {
+  const url = `${siteUrl}/api/a2a`;
+  return {
+    name: "Guidon docs agent",
+    description: "Answers questions about Guidon - its REST API, MCP server, authentication, pricing and the agent workflow - from the public documentation, with links to the sources. It reads docs only; it can't see or change anyone's projects.",
+    version: "1.0.0",
+    provider: { organization: "Two Steps Studio", url: siteUrl },
+    iconUrl: `${siteUrl}/icon.png`,
+    documentationUrl: `${siteUrl}/developers`,
+    supportedInterfaces: [{ url, protocolBinding: "JSONRPC", protocolVersion: "1.0" }],
+    url,
+    preferredTransport: "JSONRPC",
+    protocolVersion: "0.3.0",
+    capabilities: { streaming: false, pushNotifications: false },
+    defaultInputModes: ["text/plain"],
+    defaultOutputModes: ["text/markdown", "text/plain"],
+    skills: [
+      {
+        id: "answer-docs-question",
+        name: "Answer a question about Guidon",
+        description: "Finds the documentation sections that answer a question and returns them with links.",
+        tags: ["documentation", "api", "mcp", "oauth"],
+        examples: ["How do I authenticate to the Guidon API?", "What are the rate limits?", "How does an agent claim a task?"],
+        inputModes: ["text/plain"],
+        outputModes: ["text/markdown"],
+      },
+    ],
+  };
+}
+
 export interface CatalogOptions {
   /** sha256 hex of skillMarkdown(siteUrl), for the skills index digest. */
   skillDigest: string;
@@ -202,6 +238,16 @@ export function ardCatalog(siteUrl: string) {
         capabilities: ["search_docs", "read_doc"],
         tags: ["documentation"],
         representativeQueries: ["how do I authenticate to the Guidon API", "Guidon MCP server tools"],
+      },
+      {
+        identifier: urn("a2a:guidon-docs"),
+        trustManifest,
+        displayName: "Guidon docs agent (A2A)",
+        type: "application/a2a-agent-card+json",
+        url: `${siteUrl}/.well-known/agent-card.json`,
+        description: "A2A agent that answers questions about Guidon from its public documentation. No sign-in.",
+        tags: ["a2a", "documentation"],
+        representativeQueries: ["ask Guidon how its API authentication works", "which MCP clients can connect to Guidon"],
       },
       {
         identifier: urn("api:rest-v1"),

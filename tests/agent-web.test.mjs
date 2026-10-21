@@ -28,7 +28,8 @@ import { developersLlmsTxt, developersMarkdown } from "../src/lib/developers-doc
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL, SUPPORT_EMAIL } from "../src/lib/project-links.ts";
 import { aboutMarkdown, contactMarkdown, signInMarkdown, signUpMarkdown } from "../src/lib/company-pages.ts";
 import { homepageJsonLd, companyPageJsonLd } from "../src/lib/structured-data.ts";
-import { SKILL_NAME, agentSkillsIndex, ardCatalog, mcpServerCard, skillMarkdown } from "../src/lib/agent-discovery.ts";
+import { SKILL_NAME, a2aAgentCard, agentSkillsIndex, ardCatalog, mcpManifest, mcpServerCard, skillMarkdown } from "../src/lib/agent-discovery.ts";
+import { handleA2a } from "../src/lib/a2a-core.ts";
 import { searchSections, splitSections, tokens } from "../src/lib/docs-search-core.ts";
 import { PROJECT_RESOURCES } from "../src/lib/api/project-resources.ts";
 
@@ -299,7 +300,31 @@ console.log("\n  docs search");
   check("snippet keeps underscores", searchSections(sections, "next cursor")[0]?.snippet.includes("next_cursor"));
   check("no match -> empty", searchSections(sections, "kubernetes helm").length === 0);
   check("stop words alone -> empty", searchSections(sections, "what is the").length === 0);
+  check("authenticate finds authentication", searchSections(splitSections({ id: "x", title: "X", url: "u", markdown: "# X\n\n## Auth\n\nAuthentication with OAuth.\n" }), "How do I authenticate?").length === 1);
   check("tokens drop punctuation", tokens("How do I use OAuth?").join(" ") === "use oauth");
+}
+
+console.log("\n  A2A docs agent and MCP manifest");
+{
+  const site = "https://useguidon.com";
+  const card = a2aAgentCard(site);
+  check("agent card: v1.0 interface on /api/a2a", card.supportedInterfaces[0].url === `${site}/api/a2a` && card.supportedInterfaces[0].protocolBinding === "JSONRPC");
+  check("agent card: v0.3 fields point to the same endpoint", card.url === `${site}/api/a2a` && card.preferredTransport === "JSONRPC");
+  check("agent card: required fields", ["name", "description", "version", "capabilities", "defaultInputModes", "defaultOutputModes"].every((k) => k in card) && card.skills.every((s) => s.id && s.name && s.description && s.tags.length));
+  let n = 0;
+  const id = () => `id-${++n}`;
+  const echo = (q) => `answer to ${q}`;
+  const v1 = handleA2a({ jsonrpc: "2.0", id: 1, method: "SendMessage", params: { message: { role: "ROLE_USER", messageId: "m", parts: [{ text: "rate limits" }] } } }, echo, id);
+  check("v1 SendMessage -> { message } with ROLE_AGENT text part", v1.result.message.role === "ROLE_AGENT" && v1.result.message.parts[0].text === "answer to rate limits" && v1.id === 1);
+  const v03 = handleA2a({ jsonrpc: "2.0", id: "a", method: "message/send", params: { message: { kind: "message", role: "user", contextId: "ctx", parts: [{ kind: "text", text: "oauth" }] } } }, echo, id);
+  check("v0.3 message/send -> kind message, keeps contextId", v03.result.kind === "message" && v03.result.role === "agent" && v03.result.contextId === "ctx" && v03.result.parts[0].kind === "text");
+  check("no text part -> -32602", handleA2a({ jsonrpc: "2.0", id: 2, method: "SendMessage", params: { message: { parts: [{ file: {} }] } } }, echo, id).error.code === -32602);
+  check("unknown method -> -32601", handleA2a({ jsonrpc: "2.0", id: 3, method: "nope" }, echo, id).error.code === -32601);
+  check("GetTask -> task not found (-32001)", handleA2a({ jsonrpc: "2.0", id: 4, method: "GetTask" }, echo, id).error.code === -32001);
+  check("not JSON-RPC 2.0 -> -32600", handleA2a({ method: "SendMessage" }, echo, id).error.code === -32600);
+  const manifest = mcpManifest(site);
+  check("MCP manifest: product kind on /api/mcp, docs server listed", manifest.kind === "product" && manifest.url === `${site}/api/mcp` && manifest.servers.some((s) => s.kind === "docs"));
+  check("server cards carry their kind in _meta", mcpServerCard(site)._meta["ai.ora/kind"] === "product" && mcpServerCard(site, true)._meta["ai.ora/kind"] === "docs");
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
