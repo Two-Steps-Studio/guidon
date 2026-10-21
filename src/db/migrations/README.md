@@ -16,6 +16,7 @@ them. Prefer the runner.
 
 | File | What it does | Required for |
 |---|---|---|
+| `078_oauth_client_assertions.sql` | Service-role-only replay records for signed OAuth client assertions (`private_key_jwt`), shared across replicas. Apply before deploying signed CIMD client support. | ChatGPT and other MCP clients authenticating with signed JWTs |
 | `000_baseline_schema.sql` | Creates all 16 tables. Reproduces the schema **as it was before 002**, so the whole chain applies normally on a fresh database. | Any fresh install |
 | `001_initial_schema.sql` | RLS policies, helper functions, triggers, foreign keys, indexes, grants. Assumes the tables already exist. | Everything |
 | `002_task_status_and_project_slug.sql` | Normalises `tasks.status` to `backlog / todo / in_progress / review / done` (remapping `testing → review`, `completed → done`), pins `tasks.priority`, adds `projects.slug` unique per organization. | The Work board's Backlog and Review columns |

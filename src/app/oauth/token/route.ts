@@ -3,6 +3,7 @@ import { exchangeAuthorizationCode, refreshAccessToken } from "@/lib/oauth/oauth
 import { normalizeResource, parseScopes } from "@/lib/oauth/oauth-core";
 import { clientIdFrom, oauthJson, preflight, readParams } from "@/lib/oauth/http";
 import { SITE_URL } from "@/lib/site-url";
+import { authenticateOAuthClient } from "@/lib/oauth/client-auth";
 
 /** OAuth 2.1 token endpoint: authorization_code (with PKCE) and refresh_token. Errors per RFC 6749 5.2. */
 export async function POST(request: NextRequest) {
@@ -16,6 +17,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    if (!(await authenticateOAuthClient(clientId, params, "token"))) {
+      return oauthJson({ error: "invalid_client", error_description: "Client authentication failed." }, 401);
+    }
     let result;
     if (params.grant_type === "authorization_code") {
       result = await exchangeAuthorizationCode({

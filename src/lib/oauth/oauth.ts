@@ -64,7 +64,7 @@ export async function registerClient(client: ClientMetadata): Promise<OAuthClien
 }
 
 /** Fetches a Client ID Metadata Document - an https URL on the public internet, small JSON, no redirects. */
-async function fetchMetadataDocument(clientId: string): Promise<unknown> {
+export async function fetchMetadataDocument(clientId: string): Promise<unknown> {
   const check = await checkWebhookUrl(clientId, { allowPrivate: hasDirectDatabase() });
   if (!check.ok) throw new Error(check.reason);
   // guardedRequest re-checks the address when connecting (DNS rebinding) and

@@ -95,7 +95,17 @@ check("http is not", !isMetadataDocumentClientId("http://chatgpt.com/oauth/clien
 const doc = validateMetadataDocument(cid, { client_id: cid, client_name: "ChatGPT", redirect_uris: ["https://chatgpt.com/connector_platform_oauth_redirect"], token_endpoint_auth_method: "none" });
 check("valid document", "client" in doc && doc.client.client_name === "ChatGPT");
 check("document naming another client_id rejected", "error" in validateMetadataDocument(cid, { client_id: "https://evil.example/c.json", redirect_uris: ["https://a.example/cb"] }));
-check("confidential client rejected", "error" in validateMetadataDocument(cid, { client_id: cid, redirect_uris: ["https://a.example/cb"], token_endpoint_auth_method: "private_key_jwt" }));
+check("signed client without keys rejected", "error" in validateMetadataDocument(cid, { client_id: cid, redirect_uris: ["https://a.example/cb"], token_endpoint_auth_method: "private_key_jwt" }));
+const signedClient = { client_id: cid, redirect_uris: ["https://chatgpt.com/connector_platform_oauth_redirect"], token_endpoint_auth_method: "private_key_jwt", jwks_uri: "https://chatgpt.com/oauth/jwks.json" };
+check("signed ChatGPT metadata accepted", "client" in validateMetadataDocument(cid, signedClient));
+check("HTTP key endpoint refused", "error" in validateMetadataDocument(cid, { ...signedClient, jwks_uri: "http://chatgpt.com/jwks.json" }));
+check("key URL credentials refused", "error" in validateMetadataDocument(cid, { ...signedClient, jwks_uri: "https://user:password@chatgpt.com/jwks.json" }));
+check("ambiguous key sources refused", "error" in validateMetadataDocument(cid, { ...signedClient, jwks: { keys: [{ kty: "RSA" }] } }));
+check("shared-secret CIMD still refused", "error" in validateMetadataDocument(cid, { ...signedClient, token_endpoint_auth_method: "client_secret_post" }));
+check("inline symmetric keys refused", "error" in validateMetadataDocument(cid, { ...signedClient, jwks_uri: undefined, jwks: { keys: [{ kty: "oct", k: "secret" }] } }));
+check("inline private keys refused", "error" in validateMetadataDocument(cid, { ...signedClient, jwks_uri: undefined, jwks: { keys: [{ kty: "RSA", d: "private" }] } }));
+check("inline public key metadata accepted", "client" in validateMetadataDocument(cid, { ...signedClient, jwks_uri: undefined, jwks: { keys: [{ kty: "RSA", e: "AQAB", n: "public-modulus" }] } }));
+check("null authentication method refused", "error" in validateMetadataDocument(cid, { ...signedClient, token_endpoint_auth_method: null }));
 const nameless = validateMetadataDocument(cid, { client_id: cid, redirect_uris: ["https://a.example/cb"] });
 check("nameless document shows its host", "client" in nameless && nameless.client.client_name === "chatgpt.com");
 
@@ -104,6 +114,7 @@ const as = authorizationServerMetadata(SITE);
 check("issuer is the site", as.issuer === SITE);
 check("S256 advertised (clients refuse without it)", as.code_challenge_methods_supported.includes("S256"));
 check("public clients + CIMD advertised (Claude uses CIMD only with both)", as.token_endpoint_auth_methods_supported.includes("none") && as.client_id_metadata_document_supported === true);
+check("signed client authentication advertised", as.token_endpoint_auth_methods_supported.includes("private_key_jwt") && as.revocation_endpoint_auth_methods_supported.includes("private_key_jwt") && as.token_endpoint_auth_signing_alg_values_supported.includes("RS256"));
 check("iss parameter advertised", as.authorization_response_iss_parameter_supported === true);
 check("endpoints under the issuer", [as.authorization_endpoint, as.token_endpoint, as.registration_endpoint, as.revocation_endpoint].every((u) => u.startsWith(`${SITE}/oauth/`)));
 const prm = protectedResourceMetadata(SITE, `${SITE}/api/mcp`);

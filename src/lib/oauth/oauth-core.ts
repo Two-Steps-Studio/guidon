@@ -165,15 +165,45 @@ export function isMetadataDocumentClientId(clientId: string): boolean {
   }
 }
 
-/** The fetched metadata document must name itself and carry valid redirect URIs. */
+export type ClientAuthentication =
+  | { method: "none" }
+  | { method: "private_key_jwt"; jwksUri: string | null; jwks: { keys: Record<string, unknown>[] } | null };
+
+/** Authentication keys come only from the client's HTTPS metadata, never from a JWT header. */
+export function validateClientAuthentication(doc: Record<string, unknown>): { auth: ClientAuthentication } | { error: string } {
+  const method = doc.token_endpoint_auth_method === undefined ? "none" : doc.token_endpoint_auth_method;
+  if (method === "none") return { auth: { method } };
+  if (method !== "private_key_jwt") {
+    return { error: "Supported client authentication methods are none and private_key_jwt." };
+  }
+  if (doc.jwks_uri !== undefined && doc.jwks !== undefined) return { error: "Use either jwks_uri or jwks, not both." };
+  if (doc.jwks_uri !== undefined) {
+    try {
+      if (typeof doc.jwks_uri !== "string" || doc.jwks_uri.length > MAX_URI_LENGTH) throw new Error();
+      const uri = new URL(doc.jwks_uri);
+      if (uri.protocol !== "https:" || uri.username || uri.password || uri.hash) throw new Error();
+      return { auth: { method, jwksUri: doc.jwks_uri, jwks: null } };
+    } catch {
+      return { error: "private_key_jwt requires an HTTPS jwks_uri without credentials or a fragment." };
+    }
+  }
+  const jwks = doc.jwks as { keys?: unknown } | null;
+  if (!jwks || !Array.isArray(jwks.keys) || jwks.keys.length === 0 || jwks.keys.length > 100 ||
+      jwks.keys.some((key) => !key || typeof key !== "object" || Array.isArray(key) ||
+        !["RSA", "EC", "OKP"].includes(key.kty) ||
+        ["d", "p", "q", "dp", "dq", "qi", "oth", "k"].some((field) => field in key))) {
+    return { error: "private_key_jwt requires jwks_uri or a public JSON Web Key Set." };
+  }
+  return { auth: { method, jwksUri: null, jwks: { keys: jwks.keys } } };
+}
+
+/** The fetched metadata document must name itself and carry valid redirect URIs and authentication keys. */
 export function validateMetadataDocument(clientId: string, document: unknown): { client: ClientMetadata } | { error: string } {
   if (!document || typeof document !== "object") return { error: "The client metadata document isn't a JSON object." };
   const doc = document as Record<string, unknown>;
   if (doc.client_id !== clientId) return { error: "The client metadata document's client_id doesn't match its URL." };
-  const authMethod = doc.token_endpoint_auth_method;
-  if (authMethod !== undefined && authMethod !== "none") {
-    return { error: "Only public clients (token_endpoint_auth_method none) are supported." };
-  }
+  const authentication = validateClientAuthentication(doc);
+  if ("error" in authentication) return authentication;
   const registered = validateRegistration(doc);
   if ("error" in registered) return { error: registered.description };
   // Without a name, show where the client comes from.
@@ -213,8 +243,9 @@ export function authorizationServerMetadata(siteUrl: string) {
     response_modes_supported: ["query"],
     grant_types_supported: ["authorization_code", "refresh_token"],
     code_challenge_methods_supported: ["S256"],
-    token_endpoint_auth_methods_supported: ["none"],
-    revocation_endpoint_auth_methods_supported: ["none"],
+    token_endpoint_auth_methods_supported: ["none", "private_key_jwt"],
+    revocation_endpoint_auth_methods_supported: ["none", "private_key_jwt"],
+    token_endpoint_auth_signing_alg_values_supported: ["RS256", "PS256", "ES256", "ES384", "EdDSA"],
     client_id_metadata_document_supported: true,
     authorization_response_iss_parameter_supported: true,
     service_documentation: `${siteUrl}/auth.md`,
@@ -279,10 +310,17 @@ That document names the authorization server (\`authorization_servers: ["${siteU
 
 ## Register
 
-Public clients only - no client secret; PKCE protects the code.
+PKCE protects every authorization code. Dynamic registration creates public clients with no secret.
+Client ID Metadata Documents also support signed client authentication (\`private_key_jwt\`).
 
 - **Client ID Metadata Document** (preferred): use an https URL that serves your client metadata as your \`client_id\` (\`client_id_metadata_document_supported: true\`). It must contain \`client_id\` (that same URL), \`client_name\` and \`redirect_uris\`.
 - **Dynamic Client Registration** (RFC 7591): \`POST ${siteUrl}/oauth/register\` with JSON \`{ "client_name": "...", "redirect_uris": ["https://..."] }\` -> \`201\` with your \`client_id\`.
+
+For \`private_key_jwt\`, the metadata must include \`jwks_uri\` (HTTPS) or a public \`jwks\`.
+Send \`client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer\` and a signed
+\`client_assertion\` to the token and revocation endpoints. Its \`iss\` and \`sub\` must match
+\`client_id\`, its \`aud\` must identify this issuer or the endpoint, and it needs \`iat\`,
+\`exp\` (at most five minutes after \`iat\`) and a unique \`jti\`. Replays are rejected.
 
 Redirect URIs: \`https://\`, \`http://localhost\` / \`127.0.0.1\` (any port at run time), or your app's own scheme.
 

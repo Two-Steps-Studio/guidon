@@ -14,6 +14,12 @@ to coordinate work across tools and preserve the reasoning behind decisions.
 
 **Recommended slogan:** **Keep the why with the work.**
 
+**Alternative slogan:** **Your guide through every project.**
+
+Use this broader positioning line when introducing Guidon as a project
+companion. Keep “Keep the why with the work” for messages focused on context
+and the reasoning behind decisions.
+
 **Polish version:** **Nie gub kontekstu pracy.**
 
 **One-line description:** Guidon brings tasks, decisions, knowledge, and
