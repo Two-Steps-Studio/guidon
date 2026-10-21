@@ -1,0 +1,40 @@
+{
+  "name": "guidon-cli",
+  "version": "0.1.0",
+  "description": "Official command-line client for Guidon: list projects, create and move tasks, comment - from your terminal or CI.",
+  "keywords": ["guidon", "cli", "project-management", "tasks"],
+  "homepage": "https://useguidon.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Two-Steps-Studio/guidon.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Two-Steps-Studio/guidon/issues"
+  },
+  "license": "UNLICENSED",
+  "type": "module",
+  "bin": {
+    "guidon": "dist/bin.js"
+  },
+  "files": ["dist", "src", "README.md"],
+  "engines": {
+    "node": ">=18.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "test": "npm run build && node --test test/cli.test.mjs",
+    "prepublishOnly": "node scripts/check-publishable.mjs && npm run clean && npm test"
+  },
+  "dependencies": {
+    "@guidon/sdk": "file:../sdk-js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
