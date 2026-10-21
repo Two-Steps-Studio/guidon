@@ -71,7 +71,9 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
 
   return {
     id: user.id,
-    email: profile?.email ?? user.email ?? undefined,
+    // The verified Auth address first: profiles.email is a copy (and
+    // requireAdminAccess compares this against ADMIN_EMAILS).
+    email: user.email ?? profile?.email ?? undefined,
     full_name: profile?.full_name ?? undefined,
     avatar_url: profile?.avatar_url ?? undefined,
   };

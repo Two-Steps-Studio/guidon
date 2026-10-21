@@ -3501,5 +3501,25 @@ section("61. zadania asynchroniczne API i sandbox (migracja 075)");
   });
 }
 
+section("62. kolumny tozsamosci tylko do odczytu (migracja 076)");
+
+{
+  await withUser(A, async () => {
+    check("nie zmienia wlasnego profiles.email", await throwsInSavepoint("UPDATE public.profiles SET email = 'Admin@Example.com' WHERE id = $1", [A]));
+    check("nie zmienia wlasnego profiles.id", await throwsInSavepoint("UPDATE public.profiles SET id = gen_random_uuid() WHERE id = $1", [A]));
+    const own = await db.query("UPDATE public.profiles SET full_name = 'Nowe Imie', avatar_url = NULL, locale = 'pl' WHERE id = $1 RETURNING full_name", [A]);
+    check("zmienia imie, avatar i jezyk", own.rows[0]?.full_name === "Nowe Imie");
+    const pins = await db.query("UPDATE public.profiles SET pinned_project_ids = '{}', pinned_task_ids = '{}' WHERE id = $1 RETURNING id", [A]);
+    check("przypiecia dalej dzialaja", pins.rows.length === 1);
+    const task = await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'komentowane 076') RETURNING id", [projectId]);
+    const comment = await db.query("INSERT INTO public.task_comments (task_id, author_id, content) VALUES ($1, $2, 'tresc') RETURNING id", [task.rows[0].id, A]);
+    const cid = comment.rows[0].id;
+    check("nie przenosi komentarza do innego zadania", await throwsInSavepoint("UPDATE public.task_comments SET task_id = gen_random_uuid() WHERE id = $1", [cid]));
+    check("nie nadaje komentarzowi etykiety agenta", await throwsInSavepoint("UPDATE public.task_comments SET actor_label = 'Claude' WHERE id = $1", [cid]));
+    const edited = await db.query("UPDATE public.task_comments SET content = 'poprawiona' WHERE id = $1 RETURNING content", [cid]);
+    check("autor dalej poprawia tresc komentarza", edited.rows[0]?.content === "poprawiona");
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
