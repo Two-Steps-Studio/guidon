@@ -2,7 +2,7 @@
 
 An [Agent Plugin](https://agent-plugins.org/specification) (spec 1.0.0) that gives an agent Guidon:
 
-- `mcp.json` - Guidon's MCP server (`https://useguidon.com/api/mcp`, Streamable HTTP). No key in the file: clients sign in with OAuth 2.1 on first use (see https://useguidon.com/auth.md).
+- `mcp.json` - Guidon's product MCP server (`https://useguidon.com/api/mcp`) and public docs MCP server (`https://useguidon.com/api/mcp/docs`), both using Streamable HTTP. No key in the file: clients sign in with OAuth 2.1 on first use (see https://useguidon.com/auth.md).
 - `skills/guidon-tasks/SKILL.md` - how to work through Guidon tasks: find, read context, claim, record attempts, comment, hand back for review.
 
 `SKILL.md` is generated from `src/lib/agent-discovery.ts` (the same text is served at https://useguidon.com/.well-known/agent-skills/guidon-tasks/SKILL.md); `npm run test:agent-web` fails if the two differ. To regenerate:

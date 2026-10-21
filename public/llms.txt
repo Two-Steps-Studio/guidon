@@ -52,6 +52,10 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 ## Docs
 
 - [Developer guide](https://useguidon.com/developers.md): API keys and scopes, MCP setup for Claude, Cursor, VS Code, Codex and Gemini, endpoints, errors. Section index: [/developers/llms.txt](https://useguidon.com/developers/llms.txt).
+- [JavaScript/TypeScript SDK source](https://github.com/two-steps-studio/guidon/tree/main/packages/sdk-js): typed REST API client; npm release pending.
+- [Python SDK source](https://github.com/two-steps-studio/guidon/tree/main/sdk/python): typed Python REST API client; PyPI release pending.
+- [CLI source](https://github.com/two-steps-studio/guidon/tree/main/packages/cli): terminal and CI client; npm release pending.
+- [Agent Plugin](https://github.com/two-steps-studio/guidon/blob/main/plugin.json): portable product/docs MCP connections and agent skills.
 - Authentication section index: [/auth/llms.txt](https://useguidon.com/auth/llms.txt).
 - [Docs MCP server](https://useguidon.com/api/mcp/docs): search and read these docs over MCP, no sign-in (tools `search_docs`, `read_doc`).
 - [Ask](https://useguidon.com/ask): NLWeb endpoint - `POST {"query":{"text":"..."}}` answers from the public docs.

@@ -12,6 +12,7 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   LANDING_FEATURE_KEYS,
   MARKDOWN_TWINS,
@@ -28,6 +29,7 @@ import { developersLlmsTxt, developersMarkdown } from "../src/lib/developers-doc
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL, SUPPORT_EMAIL } from "../src/lib/project-links.ts";
 import { aboutMarkdown, contactMarkdown, signInMarkdown, signUpMarkdown } from "../src/lib/company-pages.ts";
 import { homepageJsonLd, companyPageJsonLd } from "../src/lib/structured-data.ts";
+import { DOCS_RESULTS_HTML } from "../src/lib/mcp/docs-results-app.ts";
 import { SKILL_NAME, a2aAgentCard, agentSkillsIndex, ardCatalog, mcpManifest, mcpServerCard, skillMarkdown } from "../src/lib/agent-discovery.ts";
 import { handleA2a } from "../src/lib/a2a-core.ts";
 import { searchSections, splitSections, tokens } from "../src/lib/docs-search-core.ts";
@@ -45,7 +47,7 @@ function check(label, ok, detail = "") {
   }
 }
 
-const root = new URL("..", import.meta.url).pathname;
+const root = fileURLToPath(new URL("..", import.meta.url));
 
 console.log("\n  prefersMarkdown");
 check("text/markdown alone", prefersMarkdown("text/markdown"));
@@ -144,7 +146,7 @@ check("links to signup and llms.txt", home.includes("https://useguidon.com/auth/
 
 console.log("\n  public/llms.txt");
 const llms = readFileSync(join(root, "public/llms.txt"), "utf8");
-check("starts with an H1 (llmstxt.org)", llms.startsWith("# Guidon\n"));
+check("starts with an H1 (llmstxt.org)", llms.replace(/\r\n/g, "\n").startsWith("# Guidon\n"));
 check("has a blockquote summary", /\n> \S/.test(llms));
 check("has a when-to-use section", llms.includes("## When to use Guidon"));
 const mcpRoute = readFileSync(join(root, "src/app/api/mcp/route.ts"), "utf8");
@@ -243,7 +245,7 @@ console.log("\n  about / contact (trust pages) and JSON-LD");
   const app = home["@graph"].find((node) => node["@type"] === "SoftwareApplication");
   check("offers skip 'contact us' plans", Array.isArray(app?.offers) && app.offers.length === 2, JSON.stringify(app?.offers));
   check("offer price is a decimal string in EUR", app?.offers?.[1]?.price === "9.00" && app.offers[1].priceCurrency === "EUR");
-  check("WebSite and WebAPI nodes present", ["WebSite", "WebAPI"].every((type) => home["@graph"].some((node) => node["@type"] === type)));
+  check("homepage identifies WebSite, WebPage and WebAPI", ["WebSite", "WebPage", "WebAPI"].every((type) => home["@graph"].some((node) => node["@type"] === type)));
   const contact = companyPageJsonLd(site, "ContactPage", "/contact", "Contact Guidon");
   check("contact page is a ContactPage about the Organization", contact["@graph"][1]["@type"] === "ContactPage" && contact["@graph"][1].about["@id"] === org["@id"]);
   const structuredSource = readFileSync(join(root, "src/lib/structured-data.ts"), "utf8");
@@ -259,12 +261,18 @@ console.log("\n  agent discovery documents");
 {
   const site = "https://useguidon.com";
   const shipped = readFileSync(join(root, "agent-plugin/skills/guidon-tasks/SKILL.md"), "utf8");
-  check("agent-plugin's SKILL.md is the served one (regenerate: agent-plugin/README.md)", shipped === skillMarkdown(site));
+  check("agent-plugin's SKILL.md is the served one (regenerate: agent-plugin/README.md)", shipped.replace(/\r\n/g, "\n") === skillMarkdown(site));
   const front = skillMarkdown(site).split("\n---\n")[0];
   check("SKILL.md frontmatter has name and description", front.startsWith("---\n") && front.includes(`name: ${SKILL_NAME}`) && /\ndescription: ".+"/.test(front));
   check("skill name follows the Agent Skills rule", /^[a-z0-9]+(-[a-z0-9]+)*$/.test(SKILL_NAME) && SKILL_NAME.length <= 64);
   const plugin = JSON.parse(readFileSync(join(root, "agent-plugin/plugin.json"), "utf8"));
   check("plugin.json has the 1.0.0 schema and a valid name", plugin.$schema === "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json" && /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(plugin.name));
+  const rootPlugin = JSON.parse(readFileSync(join(root, "plugin.json"), "utf8"));
+  check("repository-root plugin manifest is valid", rootPlugin.$schema === "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json" && rootPlugin.name === "guidon");
+  const rootMcp = JSON.parse(readFileSync(join(root, "mcp.json"), "utf8"));
+  check("repository-root MCP manifest lists product and docs servers without secrets", rootMcp.$schema === "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json" && rootMcp.mcpServers.guidon.url === `${site}/api/mcp` && rootMcp.mcpServers["guidon-docs"].url === `${site}/api/mcp/docs` && !JSON.stringify(rootMcp).toLowerCase().includes("authorization"));
+  check("repository-root Agent Plugin skills are discoverable", ["guidon-tasks", "guidon-api", "guidon-cli"].every((name) => readFileSync(join(root, `skills/${name}/SKILL.md`), "utf8").startsWith("---\nname:")));
+  check("MCP Apps document declares light and dark color schemes", DOCS_RESULTS_HTML.includes('<meta name="color-scheme" content="light dark">'));
   const mcp = JSON.parse(readFileSync(join(root, "agent-plugin/mcp.json"), "utf8"));
   check("plugin's mcp.json carries no credentials", !JSON.stringify(mcp).includes("guidon_") && !JSON.stringify(mcp).toLowerCase().includes("authorization"));
 

@@ -48,7 +48,7 @@ export function EditProjectDialog({ project }: { project: EditableProject }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" className="self-end sm:self-auto">
           <Settings className="h-4 w-4 mr-2" />
           {t("trigger")}
         </Button>

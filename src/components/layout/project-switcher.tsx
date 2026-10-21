@@ -25,9 +25,9 @@ export function ProjectSwitcher({ projectId, currentProjectName, projects }: Pro
   const t = useTranslations('nav');
   const router = useRouter();
 
-  // Single-project orgs still show the switcher (consistent chrome), but as
-  // plain text - a one-option select with nowhere to go isn't a control.
-  if (projects.length <= 1) {
+  // Preserve a text fallback if the current project was omitted by the
+  // caller, but keep the framed switcher visible even for a one-project org.
+  if (projects.length === 0) {
     return (
       <div className="px-3 py-2 text-sm font-medium text-foreground truncate group-data-[collapsible=icon]:hidden" title={currentProjectName}>
         {currentProjectName}

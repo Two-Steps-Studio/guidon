@@ -10,6 +10,8 @@ project knowledge (decisions, knowledge sources, roadmap, memory, tech stack).
 
 ## Install
 
+The PyPI release is pending. The command below will work after the `guidon` package is published.
+
 ```bash
 pip install guidon
 ```

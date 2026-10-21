@@ -11,6 +11,7 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
+  PanelLeft,
   Pencil,
   X,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSidebar } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { GithubFileTree, fileIconFor } from "./github-file-tree";
 import { MarkdownPreview } from "./markdown-preview";
 import { detectFileKind, fileExtension, monacoLanguage } from "@/types/file";
@@ -111,6 +113,7 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
   const [tabs, setTabs] = useState<OpenTab[]>([]);
   const [activePath, setActivePath] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
+  const [fileTreeOpen, setFileTreeOpen] = useState(false);
   const { state: sidebarState, isMobile } = useSidebar();
   // @monaco-editor/react caches one Monaco text model per distinct `path`
   // passed to <Editor> (that's what gives each tab its own undo/redo
@@ -165,6 +168,11 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
         // "Loading file..." forever instead of showing a retryable error.
         updateTab(path, { loadError: "Could not load this file." });
       });
+  };
+
+  const openFileFromMobileTree = (path: string) => {
+    openFile(path);
+    setFileTreeOpen(false);
   };
 
   const closeTab = (path: string) => {
@@ -239,12 +247,34 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
       }
       style={maximized ? { left: maximizedLeftOffset } : undefined}
     >
-      <div className="w-64 shrink-0 border-r border-border bg-background-secondary">
+      <div className="hidden w-64 shrink-0 border-r border-border bg-background-secondary md:block">
         <GithubFileTree projectId={projectId} activePath={activePath} onOpenFile={openFile} />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex shrink-0 items-center border-b border-border">
+          <div className="shrink-0 md:hidden">
+            <Sheet open={fileTreeOpen} onOpenChange={setFileTreeOpen}>
+              <SheetTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" aria-label="Browse repository files" title="Browse files">
+                  <PanelLeft className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="flex w-[85vw] max-w-sm flex-col gap-0 p-0 md:hidden">
+                <SheetHeader className="border-b border-border p-4 text-left">
+                  <SheetTitle>Repository files</SheetTitle>
+                  <SheetDescription>Select a file to open it in the editor.</SheetDescription>
+                </SheetHeader>
+                <div className="min-h-0 flex-1 overflow-hidden bg-background-secondary">
+                  <GithubFileTree
+                    projectId={projectId}
+                    activePath={activePath}
+                    onOpenFile={openFileFromMobileTree}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
           <div className="flex flex-1 overflow-x-auto">
             {tabs.map((tab) => {
               const { icon: TabIcon, colorClass } = fileIconFor(tab.path);

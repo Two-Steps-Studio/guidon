@@ -86,6 +86,17 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
         inLanguage: ["en", "pl", "de", "es"],
       },
       {
+        "@type": "WebPage",
+        "@id": `${siteUrl}/#webpage`,
+        url: siteUrl,
+        name: "Guidon - Context-First Project Management",
+        description: DESCRIPTION,
+        isPartOf: { "@id": `${siteUrl}/#website` },
+        about: { "@id": `${siteUrl}/#software` },
+        mainEntity: { "@id": `${siteUrl}/#software` },
+        inLanguage: ["en", "pl", "de", "es"],
+      },
+      {
         "@type": "SoftwareApplication",
         "@id": `${siteUrl}/#software`,
         name: "Guidon",
