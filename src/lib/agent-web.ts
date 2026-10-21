@@ -135,6 +135,11 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     landing.featuresSubtitle,
     "",
     ...features,
+    "## Company",
+    "",
+    `- [About Guidon](${siteUrl}/about)`,
+    `- [Contact](${siteUrl}/contact)`,
+    "",
     "## Legal",
     "",
     `- [Terms of Service](${siteUrl}/legal/terms)`,
@@ -181,6 +186,10 @@ export function isAiAgentUserAgent(userAgent: string | null | undefined): boolea
 export const MARKDOWN_TWINS: Readonly<Record<string, string>> = {
   "/": "/index.md",
   "/developers": "/developers.md",
+  "/about": "/about.md",
+  "/contact": "/contact.md",
+  "/auth/login": "/auth/login.md",
+  "/auth/signup": "/auth/signup.md",
 };
 
 /** Plan fields the pricing Markdown needs (the `plans` table, migration 015 and later). */

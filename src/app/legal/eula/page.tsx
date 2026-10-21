@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SUPPORT_EMAIL } from "@/lib/project-links";
 
 export const metadata: Metadata = {
   title: "End User License Agreement",
@@ -88,7 +89,7 @@ export default function EulaPage() {
             <p>
               We are solely responsible for any maintenance and support of the App, as described in this EULA or as
               required by law. Apple and Google have no obligation to provide maintenance or support for the App.
-              For help, write to <a href="mailto:support@useguidon.com" className="text-primary underline underline-offset-2">support@useguidon.com</a>.
+              For help, write to <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline underline-offset-2">{SUPPORT_EMAIL}</a>.
             </p>
           </section>
 
@@ -162,7 +163,7 @@ export default function EulaPage() {
             <p>
               This EULA is governed by the laws of Poland, without regard to conflict-of-law principles. If you are a
               consumer resident in the EU, you keep any mandatory consumer-protection rights of your country of
-              residence. Questions about this EULA: <a href="mailto:support@useguidon.com" className="text-primary underline underline-offset-2">support@useguidon.com</a>.
+              residence. Questions about this EULA: <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline underline-offset-2">{SUPPORT_EMAIL}</a>.
             </p>
           </section>
         </div>

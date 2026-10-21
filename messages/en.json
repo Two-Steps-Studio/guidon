@@ -270,13 +270,16 @@
       "privacy": "Privacy Policy",
       "copyright": "© {year} Guidon",
       "selfHosting": "Self-hosting",
-      "eula": "EULA"
+      "eula": "EULA",
+      "about": "About",
+      "contact": "Contact"
     },
     "selfHost": {
       "title": "Run Guidon on your own server",
       "description": "The same app, on infrastructure you control: Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama). No plan limits on your own install.",
       "guide": "Self-hosting guide",
-      "github": "Code on GitHub"
+      "github": "Code on GitHub",
+      "apiDocs": "API & MCP docs"
     },
     "heroShotTitle": "The Guidon dashboard",
     "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team and AI activity, project progress"

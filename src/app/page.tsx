@@ -10,6 +10,8 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
+import { homepageJsonLd } from "@/lib/structured-data";
+import { SITE_URL } from "@/lib/site-url";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -48,25 +50,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
 };
 
-// Structured data so search engines can understand what Guidon is beyond the
-// visible copy - a SoftwareApplication listing is the schema Google expects
-// for a SaaS product page and is what backs eligibility for rich results.
-const STRUCTURED_DATA = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Guidon",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  description:
-    "Context-first project management for development teams. Track tasks, decisions, sources, and project memory together.",
-  url: "https://useguidon.com",
-  sameAs: [GITHUB_REPO_URL],
-  offers: {
-    "@type": "Offer",
-    category: "Freemium",
-  },
-};
-
 export default async function Home() {
   const t = await getTranslations("landing");
   // Self-hosted installs have no billing concept at all (mirrors
@@ -87,7 +70,7 @@ export default async function Home() {
     <>
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans)).replace(/</g, "\\u003c") }}
     />
     <main>
     {/* Not full-screen: the live board mockup below starts above the fold,
@@ -260,6 +243,12 @@ export default async function Home() {
                 <Github className="mr-2 h-4 w-4" />
                 {t("selfHost.github")}
               </a>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/developers">
+                <Cpu className="mr-2 h-4 w-4" />
+                {t("selfHost.apiDocs")}
+              </Link>
             </Button>
           </div>
         </div>

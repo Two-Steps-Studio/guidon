@@ -270,13 +270,16 @@
       "privacy": "Datenschutzerklärung",
       "copyright": "© {year} Guidon",
       "selfHosting": "Self-Hosting",
-      "eula": "EULA"
+      "eula": "EULA",
+      "about": "Über uns",
+      "contact": "Kontakt"
     },
     "selfHost": {
       "title": "Guidon auf dem eigenen Server betreiben",
       "description": "Dieselbe App auf Infrastruktur, die du kontrollierst: Docker Compose mit einfachem PostgreSQL, lokalem Dateispeicher und optional lokaler KI (Ollama). Auf der eigenen Installation gibt es keine Planlimits.",
       "guide": "Self-Hosting-Anleitung",
-      "github": "Code auf GitHub"
+      "github": "Code auf GitHub",
+      "apiDocs": "API- & MCP-Doku"
     },
     "heroShotTitle": "Das Guidon-Dashboard",
     "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt"

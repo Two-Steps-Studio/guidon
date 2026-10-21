@@ -66,6 +66,11 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/developers/llms.txt',
   '/openapi.json',
   '/pricing.md',
+  // Who runs Guidon and how to reach them, plus their Markdown twins.
+  '/about',
+  '/about.md',
+  '/contact',
+  '/contact.md',
   // Onboarding before the account exists (app/start) - the questions come
   // first, signing up last. /start/finish needs a session and isn't listed.
   '/start',
@@ -248,9 +253,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (!user && !isPublicRoute(pathname)) {
-    const redirectUrl = new URL('/auth/login', request.url)
-    redirectUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
-    return NextResponse.redirect(redirectUrl)
+    // Same as self-hosted: API callers get a JSON 401, not a 307 to an HTML
+    // login form they can't follow.
+    return redirectToLogin(request, pathname)
   }
 
   if (user && AUTH_ENTRY_ROUTES.has(pathname)) {

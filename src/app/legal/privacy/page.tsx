@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SUPPORT_EMAIL } from "@/lib/project-links";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -47,8 +48,8 @@ export default function PrivacyPage() {
                 Terms of Service
               </Link>
               ). Contact for any privacy request:{" "}
-              <a href="mailto:support@useguidon.com" className="text-primary underline underline-offset-2">
-                support@useguidon.com
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline underline-offset-2">
+                {SUPPORT_EMAIL}
               </a>
               .
             </p>
@@ -162,8 +163,8 @@ export default function PrivacyPage() {
             </ul>
             <p>
               To exercise any of these, email{" "}
-              <a href="mailto:support@useguidon.com" className="text-primary underline underline-offset-2">
-                support@useguidon.com
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline underline-offset-2">
+                {SUPPORT_EMAIL}
               </a>
               . We&apos;ll respond within one month, as GDPR requires.
             </p>
@@ -210,8 +211,8 @@ export default function PrivacyPage() {
           <section>
             <h2>13. Contact</h2>
             <p>
-              <a href="mailto:support@useguidon.com" className="text-primary underline underline-offset-2">
-                support@useguidon.com
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary underline underline-offset-2">
+                {SUPPORT_EMAIL}
               </a>
             </p>
           </section>

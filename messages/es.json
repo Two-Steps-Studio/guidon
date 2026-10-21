@@ -270,13 +270,16 @@
       "privacy": "Política de privacidad",
       "copyright": "© {year} Guidon",
       "selfHosting": "Autoalojamiento",
-      "eula": "EULA"
+      "eula": "EULA",
+      "about": "Acerca de",
+      "contact": "Contacto"
     },
     "selfHost": {
       "title": "Ejecuta Guidon en tu propio servidor",
       "description": "La misma app en infraestructura que tú controlas: Docker Compose con un PostgreSQL normal, almacenamiento local de archivos e IA local opcional (Ollama). Sin límites de plan en tu propia instalación.",
       "guide": "Guía de autoalojamiento",
-      "github": "Código en GitHub"
+      "github": "Código en GitHub",
+      "apiDocs": "Docs de API y MCP"
     },
     "heroShotTitle": "El panel de Guidon",
     "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo próximo, actividad del equipo y de la IA, progreso de proyectos"

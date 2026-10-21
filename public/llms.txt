@@ -52,6 +52,8 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 
 - [Homepage](https://useguidon.com/): what Guidon is and its features. Also served as Markdown to `Accept: text/markdown` and `?mode=agent`, or at [/index.md](https://useguidon.com/index.md).
 - [Developers](https://useguidon.com/developers)
+- [About](https://useguidon.com/about): who makes Guidon ([Markdown](https://useguidon.com/about.md))
+- [Contact](https://useguidon.com/contact): support email, privacy requests, bug reports ([Markdown](https://useguidon.com/contact.md))
 - [Sign up](https://useguidon.com/auth/signup)
 - [Terms of Service](https://useguidon.com/legal/terms)
 - [Privacy Policy](https://useguidon.com/legal/privacy)
