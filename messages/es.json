@@ -269,7 +269,8 @@
       "terms": "Términos del servicio",
       "privacy": "Política de privacidad",
       "copyright": "© {year} Guidon",
-      "selfHosting": "Autoalojamiento"
+      "selfHosting": "Autoalojamiento",
+      "eula": "EULA"
     },
     "selfHost": {
       "title": "Ejecuta Guidon en tu propio servidor",

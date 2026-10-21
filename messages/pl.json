@@ -269,7 +269,8 @@
       "terms": "Regulamin",
       "privacy": "Polityka prywatności",
       "copyright": "© {year} Guidon",
-      "selfHosting": "Self-hosting"
+      "selfHosting": "Self-hosting",
+      "eula": "EULA"
     },
     "selfHost": {
       "title": "Postaw Guidona na własnym serwerze",

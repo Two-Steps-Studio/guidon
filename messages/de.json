@@ -269,7 +269,8 @@
       "terms": "Nutzungsbedingungen",
       "privacy": "Datenschutzerklärung",
       "copyright": "© {year} Guidon",
-      "selfHosting": "Self-Hosting"
+      "selfHosting": "Self-Hosting",
+      "eula": "EULA"
     },
     "selfHost": {
       "title": "Guidon auf dem eigenen Server betreiben",

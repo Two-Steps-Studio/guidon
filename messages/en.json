@@ -269,7 +269,8 @@
       "terms": "Terms of Service",
       "privacy": "Privacy Policy",
       "copyright": "© {year} Guidon",
-      "selfHosting": "Self-hosting"
+      "selfHosting": "Self-hosting",
+      "eula": "EULA"
     },
     "selfHost": {
       "title": "Run Guidon on your own server",
