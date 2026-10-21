@@ -434,7 +434,7 @@
       "free": "Free",
       "contactUs": "Contact us",
       "perMonth": "/mo",
-      "trialNotice": "{days}-day free trial",
+      "trialNotice": "{days}-day free trial, no card needed",
       "upgrade": "Upgrade",
       "manageBilling": "Manage billing",
       "currentPlanBadge": "Current plan",
@@ -460,7 +460,16 @@
         "forbidden": "Only the organization's owner or admins can redeem codes.",
         "not_available": "Promo codes are only for Guidon Cloud.",
         "failed": "Couldn't redeem the code. Try again."
-      }
+      },
+      "perInterval": "{interval, select, week {/wk} year {/yr} other {/mo}}",
+      "interval": "{interval, select, week {Weekly} year {Yearly} other {Monthly}}",
+      "billingPeriod": "Billing period",
+      "yearlySaving": "save {percent}%",
+      "updatePayment": "Update payment method",
+      "paymentGraceTitle": "Payment failed",
+      "paymentGraceDescription": "We couldn't charge the card for this subscription. Your plan keeps working until {date, date, long} - update the payment method before then.",
+      "paymentSuspendedTitle": "Subscription unpaid - Free plan limits apply",
+      "paymentSuspendedDescription": "The payment still hasn't gone through, so this organization is limited to the Free plan. Nothing was deleted - update the payment method and the plan comes back right away."
     }
   },
   "projects": {

@@ -8,9 +8,7 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { getStripe, isBillingConfigured } from "@/lib/billing/stripe";
 import { SITE_URL } from "@/lib/site-url";
 import { tr } from "@/lib/i18n/server-errors";
-
-/** Applied to every new paid subscription - see the brainstorm for why unconditional is fine here (self-serve upgrades never reuse an existing Checkout Session, and an org that already has one is routed to the Customer Portal instead, not back through Checkout). */
-const TRIAL_PERIOD_DAYS = 14;
+import { TRIAL_PERIOD_DAYS, canStartTrial, isBillingInterval, type BillingInterval } from "@/lib/billing/billing-core";
 
 type BillingGuard = { organizationId: string; userEmail: string | undefined } | { error: string };
 
@@ -30,23 +28,44 @@ async function requireBillingManager(organizationId: string): Promise<BillingGua
 }
 
 /** Redirects to Stripe Checkout on success - only ever returns on failure. */
-export async function createCheckoutSession(organizationId: string, planId: string): Promise<{ error: string | null }> {
+export async function createCheckoutSession(
+  organizationId: string,
+  planId: string,
+  interval: BillingInterval = "month"
+): Promise<{ error: string | null }> {
   const guard = await requireBillingManager(organizationId);
   if ("error" in guard) return { error: guard.error };
+  if (!isBillingInterval(interval)) return { error: await tr("Unknown billing period.") };
 
   const supabase = createServiceClient();
-  const [{ data: plan }, { data: subscription }] = await Promise.all([
+  const [{ data: plan }, { data: price }, { data: subscription }] = await Promise.all([
     supabase.from("plans").select("id, stripe_price_id").eq("id", planId).maybeSingle(),
-    supabase.from("subscriptions").select("stripe_customer_id").eq("organization_id", organizationId).maybeSingle(),
+    supabase
+      .from("plan_prices")
+      .select("stripe_price_id")
+      .eq("plan_id", planId)
+      .eq("billing_interval", interval)
+      .eq("active", true)
+      .maybeSingle(),
+    // "*": trial_used_at (071) is absent before that migration.
+    supabase.from("subscriptions").select("*").eq("organization_id", organizationId).maybeSingle(),
   ]);
 
   if (!plan) return { error: await tr("Unknown plan.") };
-  if (!plan.stripe_price_id) {
+  // plans.stripe_price_id is the monthly price from before plan_prices (071).
+  const priceId = price?.stripe_price_id ?? (interval === "month" ? plan.stripe_price_id : null);
+  if (!priceId) {
     return { error: await tr("This plan isn't available for self-serve checkout yet - contact us instead.") };
   }
 
   const stripe = getStripe();
-  const existingCustomerId = subscription?.stripe_customer_id ?? undefined;
+  const existing = (subscription ?? {}) as { stripe_customer_id?: string | null; trial_used_at?: string | null };
+  const existingCustomerId = existing.stripe_customer_id ?? undefined;
+  // One free trial per organization, without a card: Checkout only asks for
+  // one if the price needs paying today, and a trial that ends with no card
+  // on file is cancelled - the webhook then puts the organization back on
+  // Free. A second subscription (after cancelling) pays from day one.
+  const offerTrial = canStartTrial(existing.trial_used_at);
 
   let checkoutUrl: string | null;
   try {
@@ -54,14 +73,20 @@ export async function createCheckoutSession(organizationId: string, planId: stri
       mode: "subscription",
       customer: existingCustomerId,
       customer_email: existingCustomerId ? undefined : guard.userEmail,
-      line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       // Discounts are Stripe's own promotion codes (Dashboard -> Products ->
       // Coupons), typed on the checkout page - Stripe then handles the
       // discount, taxes and renewals. Guidon's own codes (migration 062)
       // grant a plan for free instead, see promo-actions.ts.
       allow_promotion_codes: true,
+      ...(offerTrial ? { payment_method_collection: "if_required" as const } : {}),
       subscription_data: {
-        trial_period_days: TRIAL_PERIOD_DAYS,
+        ...(offerTrial
+          ? {
+              trial_period_days: TRIAL_PERIOD_DAYS,
+              trial_settings: { end_behavior: { missing_payment_method: "cancel" as const } },
+            }
+          : {}),
         // The webhook (src/app/api/stripe/webhook/route.ts) has no other way
         // to know which Guidon organization a Stripe subscription belongs
         // to - this metadata travels on the subscription object itself, not

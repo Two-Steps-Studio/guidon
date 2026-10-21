@@ -434,7 +434,7 @@
       "free": "Za darmo",
       "contactUs": "Skontaktuj się z nami",
       "perMonth": "/mies.",
-      "trialNotice": "{days} dni za darmo",
+      "trialNotice": "{days} dni za darmo, bez karty",
       "upgrade": "Ulepsz",
       "manageBilling": "Zarządzaj płatnością",
       "currentPlanBadge": "Bieżący plan",
@@ -460,7 +460,16 @@
         "forbidden": "Kody może wpisywać tylko właściciel lub administrator organizacji.",
         "not_available": "Kody promocyjne działają tylko w Guidon Cloud.",
         "failed": "Nie udało się użyć kodu. Spróbuj ponownie."
-      }
+      },
+      "perInterval": "{interval, select, week {/tydz.} year {/rok} other {/mies.}}",
+      "interval": "{interval, select, week {Tygodniowo} year {Rocznie} other {Miesięcznie}}",
+      "billingPeriod": "Okres rozliczeniowy",
+      "yearlySaving": "oszczędzasz {percent}%",
+      "updatePayment": "Zmień metodę płatności",
+      "paymentGraceTitle": "Płatność nie powiodła się",
+      "paymentGraceDescription": "Nie udało się obciążyć karty za tę subskrypcję. Plan działa do {date, date, long} - zmień metodę płatności przed tym terminem.",
+      "paymentSuspendedTitle": "Subskrypcja nieopłacona - obowiązują limity planu Free",
+      "paymentSuspendedDescription": "Płatność dalej nie przeszła, więc organizacja ma limity planu Free. Nic nie zostało usunięte - po zmianie metody płatności plan wraca od razu."
     }
   },
   "projects": {

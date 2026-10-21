@@ -8,7 +8,8 @@ import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
-import { effectiveOrgProjectLimit, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { effectiveOrgProjectLimit, getOrgPlanLimits, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
+import { PaymentIssueBanner } from "@/components/billing/payment-issue-banner";
 import { AppShell } from "@/components/layout/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateProjectDialog } from "./create-project-dialog";
@@ -44,7 +45,10 @@ export default async function OrganizationDetailPage({
     projects = (projectsData ?? []) as Project[];
   }
 
-  const projectLimit = await effectiveOrgProjectLimit(orgId, organization.project_limit);
+  const [projectLimit, planLimits] = await Promise.all([
+    effectiveOrgProjectLimit(orgId, organization.project_limit),
+    hasDirectDatabase() ? null : getOrgPlanLimits(orgId),
+  ]);
   const limitReached = isHostedProjectLimitReached(projects.length, projectLimit);
 
   return (
@@ -99,6 +103,14 @@ export default async function OrganizationDetailPage({
             )}
           </div>
         </div>
+
+        {planLimits && (
+          <PaymentIssueBanner
+            payment={planLimits.payment}
+            billingHref={canManageOrg(access.role) ? `/organizations/${orgId}/billing` : undefined}
+            className="mb-6"
+          />
+        )}
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">{t("projects")}</h2>

@@ -434,7 +434,7 @@
       "free": "Kostenlos",
       "contactUs": "Kontaktieren Sie uns",
       "perMonth": "/Monat",
-      "trialNotice": "{days} Tage kostenlos testen",
+      "trialNotice": "{days} Tage kostenlos testen, ohne Karte",
       "upgrade": "Upgrade",
       "manageBilling": "Abrechnung verwalten",
       "currentPlanBadge": "Aktueller Plan",
@@ -460,7 +460,16 @@
         "forbidden": "Nur Inhaber oder Admins der Organisation können Codes einlösen.",
         "not_available": "Promo-Codes gibt es nur in Guidon Cloud.",
         "failed": "Der Code konnte nicht eingelöst werden. Versuche es erneut."
-      }
+      },
+      "perInterval": "{interval, select, week {/Woche} year {/Jahr} other {/Monat}}",
+      "interval": "{interval, select, week {Wöchentlich} year {Jährlich} other {Monatlich}}",
+      "billingPeriod": "Abrechnungszeitraum",
+      "yearlySaving": "{percent}% sparen",
+      "updatePayment": "Zahlungsmethode ändern",
+      "paymentGraceTitle": "Zahlung fehlgeschlagen",
+      "paymentGraceDescription": "Die Karte für dieses Abo konnte nicht belastet werden. Dein Plan läuft bis {date, date, long} weiter - ändere die Zahlungsmethode vorher.",
+      "paymentSuspendedTitle": "Abo unbezahlt - es gelten die Limits des Free-Plans",
+      "paymentSuspendedDescription": "Die Zahlung ist noch nicht durchgegangen, daher gelten für diese Organisation die Limits des Free-Plans. Es wurde nichts gelöscht - nach dem Ändern der Zahlungsmethode ist der Plan sofort wieder da."
     }
   },
   "projects": {

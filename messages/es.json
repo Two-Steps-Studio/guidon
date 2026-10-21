@@ -434,7 +434,7 @@
       "free": "Gratis",
       "contactUs": "Contáctanos",
       "perMonth": "/mes",
-      "trialNotice": "{days} días de prueba gratis",
+      "trialNotice": "{days} días de prueba gratis, sin tarjeta",
       "upgrade": "Mejorar plan",
       "manageBilling": "Gestionar facturación",
       "currentPlanBadge": "Plan actual",
@@ -460,7 +460,16 @@
         "forbidden": "Solo el propietario o los administradores de la organización pueden canjear códigos.",
         "not_available": "Los códigos promocionales son solo para Guidon Cloud.",
         "failed": "No se pudo canjear el código. Inténtalo de nuevo."
-      }
+      },
+      "perInterval": "{interval, select, week {/sem.} year {/año} other {/mes}}",
+      "interval": "{interval, select, week {Semanal} year {Anual} other {Mensual}}",
+      "billingPeriod": "Periodo de facturación",
+      "yearlySaving": "ahorra un {percent}%",
+      "updatePayment": "Cambiar método de pago",
+      "paymentGraceTitle": "El pago ha fallado",
+      "paymentGraceDescription": "No pudimos cobrar la tarjeta de esta suscripción. Tu plan sigue funcionando hasta el {date, date, long}: cambia el método de pago antes de esa fecha.",
+      "paymentSuspendedTitle": "Suscripción impagada: se aplican los límites del plan Free",
+      "paymentSuspendedDescription": "El pago sigue sin completarse, así que esta organización tiene los límites del plan Free. No se ha borrado nada: cambia el método de pago y el plan vuelve al instante."
     }
   },
   "projects": {

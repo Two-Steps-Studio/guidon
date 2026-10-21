@@ -240,8 +240,9 @@ for (const [label, sql, expected] of [
   // 36->38 tabel, polityk bez zmian: promo_codes + promo_redemptions (062) -
   // zero polityk, pisze i czyta tylko service_role (jak stripe_webhook_events).
   // 38->39 tabel, polityk bez zmian: mobile_auth_codes (068) - tylko service_role.
-  ["39 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 39],
-  ["129 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 129],
+  // 39->40 tabel, 129->130 polityk: plan_prices (071) + plan_prices_select.
+  ["40 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 40],
+  ["130 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 130],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3297,6 +3298,44 @@ section("56. jezyk projektu (migracja 070)");
   await withUser(D, async () => {
     const res = await db.query("UPDATE public.projects SET language = 'de' WHERE id = $1 RETURNING id", [projectId]);
     check("developer nie zmienia jezyka projektu", res.rows.length === 0);
+  });
+}
+
+section("57. ceny tygodniowe/miesieczne/roczne, trial raz na organizacje, karencja (migracja 071)");
+
+{
+  const sql071 = await readFile(path.join(DB_DIR, "migrations", "071_billing_intervals_trial_grace.sql"), "utf8");
+  await withServiceRole(async () => {
+    await db.query("UPDATE public.plans SET stripe_price_id = 'price_071_pro_month' WHERE id = 'pro'");
+    await db.query("UPDATE public.subscriptions SET stripe_subscription_id = 'sub_071', status = 'past_due', trial_used_at = NULL, past_due_since = NULL WHERE organization_id = $1", [orgId]);
+  });
+  await db.exec(forPglite(sql071));
+  await db.exec(forPglite(sql071));
+  const prices = await withServiceRole(() => db.query("SELECT plan_id, billing_interval FROM public.plan_prices WHERE stripe_price_id = 'price_071_pro_month'"));
+  check("071 przepisuje plans.stripe_price_id jako cene miesieczna", prices.rows.length === 1 && prices.rows[0].plan_id === "pro" && prices.rows[0].billing_interval === "month", JSON.stringify(prices.rows));
+  const sub = await withServiceRole(() => db.query("SELECT trial_used_at, past_due_since FROM public.subscriptions WHERE organization_id = $1", [orgId]));
+  check("organizacja z dawna subskrypcja ma trial juz wykorzystany", sub.rows[0].trial_used_at !== null);
+  check("zalegla platnosc dostaje date poczatku karencji", sub.rows[0].past_due_since !== null);
+
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_pro_year', 'pro', 'year', 39000)");
+    check(
+      "druga aktywna cena roczna dla planu odrzucona",
+      await throwsInSavepoint("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_pro_year2', 'pro', 'year', 35000)")
+    );
+    await db.query("UPDATE public.plan_prices SET active = false WHERE stripe_price_id = 'price_071_pro_year'");
+    await db.query("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_pro_year2', 'pro', 'year', 35000)");
+    check("po wylaczeniu starej ceny nowa wchodzi", true);
+    check("okres 'day' odrzucony", await throwsInSavepoint("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_071_day', 'pro', 'day', 100)"));
+    check("subscriptions.billing_interval sprawdzany", await throwsInSavepoint("UPDATE public.subscriptions SET billing_interval = 'quarter' WHERE organization_id = $1", [orgId]));
+    await db.query("UPDATE public.subscriptions SET status = 'active', stripe_subscription_id = NULL, past_due_since = NULL WHERE organization_id = $1", [orgId]);
+  });
+
+  await withUser(A, async () => {
+    const seen = await db.query("SELECT stripe_price_id FROM public.plan_prices WHERE plan_id = 'pro'");
+    check("zalogowany czyta ceny (jak plans)", seen.rows.length >= 3, seen.rows.length);
+    check("ale ich nie dopisuje", await throwsInSavepoint("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_hack', 'pro', 'week', 1)"));
+    check("ani nie oznacza sobie trialu jako niewykorzystanego", await throwsInSavepoint("UPDATE public.subscriptions SET trial_used_at = NULL WHERE organization_id = $1", [orgId]));
   });
 }
 

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import type { BillingInterval } from "@/lib/billing/billing-core";
 import { createCheckoutSession, createPortalSession } from "./actions";
 
 /**
@@ -14,10 +15,12 @@ import { createCheckoutSession, createPortalSession } from "./actions";
 export function UpgradeButton({
   organizationId,
   planId,
+  interval,
   label,
 }: {
   organizationId: string;
   planId: string;
+  interval: BillingInterval;
   label: string;
 }) {
   const [pending, startTransition] = useTransition();
@@ -31,7 +34,7 @@ export function UpgradeButton({
         onClick={() => {
           setError(null);
           startTransition(async () => {
-            const result = await createCheckoutSession(organizationId, planId);
+            const result = await createCheckoutSession(organizationId, planId, interval);
             if (result.error) setError(result.error);
           });
         }}
