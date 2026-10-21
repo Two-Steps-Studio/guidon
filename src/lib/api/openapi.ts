@@ -31,9 +31,31 @@ import { PROJECT_RESOURCES } from "@/lib/api/project-resources";
 
 type JsonSchema = Record<string, unknown>;
 
+/**
+ * zod writes an optional-or-null field as `anyOf: [X, { type: "null" }]`
+ * and a date-or-date-time as an anyOf of two strings with long patterns -
+ * unions several function-calling converters (Gemini's above all) can't
+ * take. Every nullable field also accepts an empty string for "clear" and
+ * every date field's description names its form, so the plain type
+ * describes them well enough for an agent.
+ */
+function withoutNullUnions(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(withoutNullUnions);
+  if (!schema || typeof schema !== "object") return schema;
+  const out: JsonSchema = {};
+  for (const [key, value] of Object.entries(schema)) out[key] = withoutNullUnions(value);
+  const variants = (out.anyOf as JsonSchema[] | undefined)?.filter((variant) => variant.type !== "null");
+  if (!variants) return out;
+  delete out.anyOf;
+  if (variants.length === 1) return { ...variants[0], ...out };
+  // A date-or-date-time union: one string, the description says which forms.
+  if (variants.every((variant) => variant.type === "string")) return { type: "string", ...out };
+  return { ...out, anyOf: variants };
+}
+
 /** JSON Schema for a request body built from a zod field map. */
 function body(fields: z.ZodRawShape, required?: string[]): JsonSchema {
-  const schema = z.toJSONSchema(z.object(fields), { target: "draft-2020-12" }) as JsonSchema;
+  const schema = withoutNullUnions(z.toJSONSchema(z.object(fields), { target: "draft-2020-12" })) as JsonSchema;
   delete schema.$schema;
   if (required) schema.required = required;
   return schema;
@@ -46,21 +68,44 @@ const ok = (description: string, schema: JsonSchema, status = "200") => ({
 });
 const wrap = (key: string, schema: JsonSchema) => ({ type: "object", properties: { [key]: schema }, required: [key] });
 
-/** The errors every API-key route can answer, all the Error schema. */
-const COMMON_ERRORS = {
-  "400": { $ref: "#/components/responses/BadRequest" },
-  "401": { $ref: "#/components/responses/Unauthorized" },
-  "403": { $ref: "#/components/responses/Forbidden" },
-  "404": { $ref: "#/components/responses/NotFound" },
-  "429": { $ref: "#/components/responses/RateLimited" },
-  "500": { $ref: "#/components/responses/InternalError" },
-};
+
 
 /** Sent on every response of a request that got as far as the key check (src/lib/api/api-route.ts). */
 const RATE_LIMIT_HEADERS = {
   "RateLimit-Limit": { $ref: "#/components/headers/RateLimitLimit" },
   "RateLimit-Remaining": { $ref: "#/components/headers/RateLimitRemaining" },
   "RateLimit-Reset": { $ref: "#/components/headers/RateLimitReset" },
+};
+
+/**
+ * Error responses, written out in every operation rather than as
+ * $ref'd components/responses, so tools that don't resolve response refs
+ * (some agent scanners, function-calling converters) still see the typed
+ * Error body on each 4xx/5xx. Also listed under components.responses.
+ */
+const ERROR_RESPONSES = {
+    BadRequest: { description: "Invalid input", content: json(ref("Error")) },
+    Unauthorized: { description: "Missing or invalid API key", content: json(ref("Error")) },
+    Forbidden: { description: "The key lacks the scope, or the user lacks the role or project permission", content: json(ref("Error")) },
+    NotFound: { description: "No such project/task, or not visible to the key's user", content: json(ref("Error")) },
+    RateLimited: {
+      description: "Too many requests for this key",
+      headers: { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } }, ...RATE_LIMIT_HEADERS },
+      content: json(ref("Error")),
+    },
+    InternalError: { description: "Something failed on Guidon's side; safe to retry with the same Idempotency-Key", content: json(ref("Error")) },
+    IdempotencyInProgress: { description: "A request with this Idempotency-Key is still running (code idempotency_in_progress)", content: json(ref("Error")) },
+    IdempotencyKeyReused: { description: "This Idempotency-Key was used for a different request (code idempotency_key_reused)", content: json(ref("Error")) },
+};
+
+/** The errors every API-key route can answer, all the Error schema. */
+const COMMON_ERRORS = {
+  "400": ERROR_RESPONSES.BadRequest,
+  "401": ERROR_RESPONSES.Unauthorized,
+  "403": ERROR_RESPONSES.Forbidden,
+  "404": ERROR_RESPONSES.NotFound,
+  "429": ERROR_RESPONSES.RateLimited,
+  "500": ERROR_RESPONSES.InternalError,
 };
 
 const WRITE_METHODS = new Set(["post", "patch", "put", "delete"]);
@@ -71,16 +116,22 @@ const WRITE_METHODS = new Set(["post", "patch", "put", "delete"]);
  */
 function finishPaths(paths: Record<string, Record<string, unknown>>): Record<string, unknown> {
   for (const item of Object.values(paths)) {
+    // Path-level parameters are repeated on every operation (and dropped
+    // from the path item): converters that turn each operation into a
+    // function call look at the operation alone.
+    const shared = (item.parameters as unknown[] | undefined) ?? [];
+    delete item.parameters;
     for (const [method, operation] of Object.entries(item)) {
-      if (method === "parameters" || !operation || typeof operation !== "object") continue;
+      if (!operation || typeof operation !== "object") continue;
       const op = operation as { responses: Record<string, Record<string, unknown>>; parameters?: unknown[] };
+      if (shared.length) op.parameters = [...shared, ...(op.parameters ?? [])];
       for (const [status, response] of Object.entries(op.responses)) {
         if (status.startsWith("2") && !("$ref" in response)) response.headers = { ...RATE_LIMIT_HEADERS, ...(response.headers as object) };
       }
       if (WRITE_METHODS.has(method)) {
         op.parameters = [...(op.parameters ?? []), { $ref: "#/components/parameters/IdempotencyKey" }];
-        op.responses["409"] = { $ref: "#/components/responses/IdempotencyInProgress" };
-        op.responses["422"] = { $ref: "#/components/responses/IdempotencyKeyReused" };
+        op.responses["409"] = ERROR_RESPONSES.IdempotencyInProgress;
+        op.responses["422"] = ERROR_RESPONSES.IdempotencyKeyReused;
       }
     }
   }
@@ -123,7 +174,7 @@ function op(
 
 /** JSON Schema of a whole zod object (the project-resource bodies). */
 function objectBody(schema: z.ZodObject<z.ZodRawShape>): JsonSchema {
-  const out = z.toJSONSchema(schema, { target: "draft-2020-12" }) as JsonSchema;
+  const out = withoutNullUnions(z.toJSONSchema(schema, { target: "draft-2020-12" })) as JsonSchema;
   delete out.$schema;
   return out;
 }
@@ -208,10 +259,17 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       { name: "Reports", description: "Bug reports from shipped games and websites." },
       { name: "Project knowledge", description: "Everything around the board: decisions, knowledge sources, roadmap phases, project memory and the tech stack." },
       { name: "Batch", description: "Several operations in one request." },
+      { name: "Account", description: "The token's own user: who it is, and deleting the account." },
+      { name: "Jobs", description: "Work that doesn't finish in one request: 202 Accepted, then poll the job." },
+      { name: "Sandbox", description: "A test organization and project of your own, with example data you can reset." },
     ],
     paths: finishPaths({
       "/projects": {
-        get: op("listProjects", "List the projects the key's user belongs to", "tasks:read", ok("Projects", wrap("projects", { type: "array", items: ref("Project") })), { tags: ["Projects"] }),
+        get: op("listProjects", "List the projects the key's user belongs to", "tasks:read", ok("Projects", wrap("projects", { type: "array", items: ref("Project") })), {
+          tags: ["Projects"],
+          description: "Alphabetical by name.",
+          parameters: [{ name: "limit", in: "query", required: false, description: "At most this many projects.", schema: { type: "integer", minimum: 1, maximum: 1000, default: 1000 } }],
+        }),
       },
       "/projects/{projectId}/tasks": {
         parameters: [projectIdParam],
@@ -319,6 +377,81 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           requestBody: { required: true, content: json(body(recordAttemptFields)) },
         }),
       },
+      "/projects/{projectId}/tasks/import": {
+        parameters: [projectIdParam],
+        post: op("importTasks", "Create many tasks asynchronously (up to 500)", "tasks:write", {
+          "202": {
+            description: "Accepted - the tasks are created in the background. Poll the job at the Location header (or job.status_url).",
+            headers: {
+              Location: { description: "URL of the job: GET it until status is succeeded or failed.", schema: { type: "string", format: "uri" } },
+              "Retry-After": { description: "Seconds to wait before polling.", schema: { type: "integer" } },
+            },
+            content: json({ type: "object", properties: { job: ref("Job") }, required: ["job"] }),
+          },
+        }, {
+          tags: ["Tasks"],
+          description: "Each task goes through the same checks as POST /projects/{projectId}/tasks (scopes, permissions, plan limits); the job's result lists the ids created and the ones that failed, with why.",
+          requestBody: {
+            required: true,
+            content: json({
+              type: "object",
+              required: ["tasks"],
+              properties: { tasks: { type: "array", minItems: 1, maxItems: 500, items: body(createTaskFields, ["title"]) } },
+            }),
+          },
+        }),
+      },
+      "/jobs/{jobId}": {
+        parameters: [{ name: "jobId", in: "path", required: true, description: "The job's UUID (from a 202 response).", schema: { type: "string", format: "uuid" } }],
+        get: op("getJob", "Status, progress and result of an async job", "tasks:read", ok("The job", { type: "object", properties: { job: ref("Job") }, required: ["job"] }), {
+          tags: ["Jobs"],
+          description: "While status is queued or running the response carries Retry-After; poll until succeeded or failed.",
+        }),
+      },
+      "/sandbox": {
+        get: op("getSandbox", "Where your sandbox is", "tasks:read", ok("The sandbox", { type: "object", properties: { sandbox: ref("Sandbox") }, required: ["sandbox"] }), {
+          tags: ["Sandbox"],
+          description: "404 until one exists - POST creates it.",
+        }),
+        post: op("setUpSandbox", "Create your sandbox, or reset it", "tasks:write", {
+          ...ok("The existing or reset sandbox", { type: "object", properties: { sandbox: ref("Sandbox") }, required: ["sandbox"] }),
+          ...ok("Created", { type: "object", properties: { sandbox: ref("Sandbox") }, required: ["sandbox"] }, "201"),
+        }, {
+          tags: ["Sandbox"],
+          description:
+            "A test environment of your own: a separate organization (is_sandbox) with one project of example tasks, to try the API, the MCP server or an agent " +
+            "without touching real work. { \"reset\": true } replaces its project with fresh example data.",
+          requestBody: { required: false, content: json({ type: "object", properties: { reset: { type: "boolean", default: false } } }) },
+        }),
+      },
+      "/me": {
+        get: op("getMe", "Who this token acts as", "", ok("The user and the token", {
+          type: "object",
+          properties: {
+            user: { type: "object", properties: { id: { type: "string", format: "uuid" }, email: { type: ["string", "null"] }, name: { type: ["string", "null"] } }, required: ["id"] },
+            token: { type: "object", properties: { scopes: { type: "array", items: { type: "string" } }, project_id: { type: ["string", "null"], format: "uuid" }, human_client: { type: "boolean" } } },
+          },
+          required: ["user", "token"],
+        }), { tags: ["Account"], description: "Any valid API key or OAuth token; no scope needed." }),
+      },
+      "/account": {
+        get: op("getAccountDeletionPlan", "What deleting the account would do", "", ok("The plan", {
+          type: "object",
+          properties: { plan: ref("DeletionPlan") },
+          required: ["plan"],
+        }), { tags: ["Account"], description: "Only keys a person uses directly (the mobile app, editor plugins) - never an AI or OAuth key." }),
+        delete: op("deleteAccount", "Delete the account for good", "", ok("Deleted", {
+          type: "object",
+          properties: { deleted: { type: "boolean", const: true }, deleted_organizations: { type: "integer" } },
+          required: ["deleted"],
+        }), {
+          tags: ["Account"],
+          description:
+            "Only keys a person uses directly (the mobile app, editor plugins) - never an AI or OAuth key. Organizations with nobody else in them are deleted too; " +
+            "if the person is the only owner of an organization others work in, the answer is 409 `organizations_need_owner` until it's handed over.",
+          requestBody: { required: true, content: json({ type: "object", required: ["confirm_email"], properties: { confirm_email: { type: "string", format: "email", description: "The account's email, as confirmation." } } }) },
+        }),
+      },
       "/batch": {
         post: op("batch", "Run up to 20 operations in one request", "", ok("One result per operation, in order", {
           type: "object",
@@ -355,7 +488,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
                     properties: {
                       method: { type: "string", enum: ["GET", "POST", "PATCH", "DELETE"] },
                       path: { type: "string", description: "Path relative to /api/v1, e.g. /tasks/{taskId}/status.", examples: ["/projects"] },
-                      body: { type: "object", description: "JSON body of the operation." },
+                      body: { type: "object", description: "JSON body of the operation.", additionalProperties: true },
                     },
                   },
                 },
@@ -410,6 +543,49 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           },
           required: ["error", "code"],
         },
+        DeletionPlan: {
+          type: "object",
+          properties: {
+            deleteOrganizations: { type: "array", items: { $ref: "#/components/schemas/OrgRef" }, description: "No one else in them - deleted with the account." },
+            leaveOrganizations: { type: "array", items: { $ref: "#/components/schemas/OrgRef" }, description: "The person leaves them." },
+            blockers: { type: "array", items: { $ref: "#/components/schemas/OrgRef" }, description: "Only owner while others work there - hand over first." },
+          },
+          required: ["deleteOrganizations", "leaveOrganizations", "blockers"],
+        },
+        Job: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            kind: { type: "string", enum: ["task_import"] },
+            status: { type: "string", enum: ["queued", "running", "succeeded", "failed"] },
+            progress: { type: "object", properties: { done: { type: "integer" }, total: { type: "integer" } }, required: ["done", "total"] },
+            result: {
+              type: ["object", "null"],
+              properties: {
+                created: { type: "array", items: { type: "string", format: "uuid" } },
+                failed: { type: "array", items: { type: "object", properties: { index: { type: "integer" }, status: { type: "integer" }, error: { type: "string" } } } },
+              },
+            },
+            error: { type: ["string", "null"] },
+            created_at: { type: "string", format: "date-time" },
+            updated_at: { type: "string", format: "date-time" },
+            status_url: { type: "string", format: "uri" },
+          },
+          required: ["id", "kind", "status", "progress", "status_url"],
+        },
+        Sandbox: {
+          type: "object",
+          properties: {
+            organization_id: { type: "string", format: "uuid" },
+            project_id: { type: ["string", "null"], format: "uuid" },
+            created: { type: "boolean" },
+            reset: { type: "boolean" },
+            board_url: { type: ["string", "null"], format: "uri" },
+            reset_with: { type: "object", properties: { method: { type: "string" }, url: { type: "string", format: "uri" }, body: { type: "object" } } },
+          },
+          required: ["organization_id", "project_id"],
+        },
+        OrgRef: { type: "object", properties: { id: { type: "string", format: "uuid" }, name: { type: "string" } }, required: ["id", "name"] },
         NextCursor: { type: ["string", "null"], description: "Pass as `cursor` for the next page; null on the last page." },
         Deleted: { type: "object", properties: { ok: { type: "boolean", const: true } }, required: ["ok"] },
         Attempt: {
@@ -498,20 +674,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           properties: { id: { type: "string", format: "uuid" }, task_id: { type: "string", format: "uuid" }, content: { type: "string" }, created_at: { type: "string", format: "date-time" } },
         },
       },
-      responses: {
-        BadRequest: { description: "Invalid input", content: json(ref("Error")) },
-        Unauthorized: { description: "Missing or invalid API key", content: json(ref("Error")) },
-        Forbidden: { description: "The key lacks the scope, or the user lacks the role or project permission", content: json(ref("Error")) },
-        NotFound: { description: "No such project/task, or not visible to the key's user", content: json(ref("Error")) },
-        RateLimited: {
-          description: "Too many requests for this key",
-          headers: { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } }, ...RATE_LIMIT_HEADERS },
-          content: json(ref("Error")),
-        },
-        InternalError: { description: "Something failed on Guidon's side; safe to retry with the same Idempotency-Key", content: json(ref("Error")) },
-        IdempotencyInProgress: { description: "A request with this Idempotency-Key is still running (code idempotency_in_progress)", content: json(ref("Error")) },
-        IdempotencyKeyReused: { description: "This Idempotency-Key was used for a different request (code idempotency_key_reused)", content: json(ref("Error")) },
-      },
+      responses: ERROR_RESPONSES,
       parameters: {
         IdempotencyKey: {
           name: "Idempotency-Key",

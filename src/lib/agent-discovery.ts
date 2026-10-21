@@ -79,6 +79,7 @@ export function mcpServerCard(siteUrl: string, docsServer = false) {
       title: "Guidon docs",
       description: "Search and read Guidon's public documentation: API, MCP, auth, pricing.",
       websiteUrl: `${siteUrl}/developers`,
+      _meta: { "ai.ora/kind": "docs" },
       remotes: [{ type: "streamable-http", url: `${siteUrl}/api/mcp/docs`, supportedProtocolVersions: ["2025-11-25", "2025-06-18", "2025-03-26"] }],
     };
   }
@@ -90,6 +91,7 @@ export function mcpServerCard(siteUrl: string, docsServer = false) {
     description: "Guidon project management: find, claim, update and hand back tasks with full context.",
     websiteUrl: siteUrl,
     icons: [{ src: `${siteUrl}/icon.png`, mimeType: "image/png" }],
+    _meta: { "ai.ora/kind": "product" },
     remotes: [
       {
         type: "streamable-http",
@@ -110,6 +112,84 @@ export function mcpServerCard(siteUrl: string, docsServer = false) {
   };
 }
 
+/**
+ * The site's MCP manifest - the informal convention (/.well-known/mcp.json,
+ * /.well-known/mcp/manifest.json, /mcp.json) scanners and registries read
+ * for a display name, icon and description before any server card. `kind`
+ * says which server is the product itself and which only serves docs.
+ */
+export function mcpManifest(siteUrl: string) {
+  const product = {
+    name: "Guidon",
+    kind: "product",
+    description: "Context-first project management for development teams. Agents find a task, read its full context (decisions, knowledge, memory), claim it, record attempts and hand it back for review.",
+    icon: `${siteUrl}/icon.png`,
+    url: `${siteUrl}/api/mcp`,
+    transport: "streamable-http",
+    capabilities: { tools: true, resources: true },
+    authentication: {
+      type: "oauth2",
+      protected_resource_metadata: `${siteUrl}/.well-known/oauth-protected-resource/api/mcp`,
+      alternative: "Authorization: Bearer guidon_... (API key from Profile > API keys)",
+    },
+    server_card: `${siteUrl}/api/mcp/server-card`,
+    documentation: `${siteUrl}/developers`,
+  };
+  return {
+    ...product,
+    servers: [
+      product,
+      {
+        name: "Guidon docs",
+        kind: "docs",
+        description: "Search and read Guidon's public documentation. No sign-in.",
+        icon: `${siteUrl}/icon.png`,
+        url: `${siteUrl}/api/mcp/docs`,
+        transport: "streamable-http",
+        capabilities: { tools: true },
+        authentication: { type: "none" },
+        server_card: `${siteUrl}/api/mcp/docs/server-card`,
+      },
+    ],
+  };
+}
+
+/**
+ * A2A Agent Card for the docs agent at /api/a2a (src/app/api/a2a). Carries
+ * the v1.0 fields (supportedInterfaces) and the v0.3 ones (url,
+ * preferredTransport, protocolVersion) side by side, since clients of both
+ * versions are in use; the endpoint answers both method names.
+ */
+export function a2aAgentCard(siteUrl: string) {
+  const url = `${siteUrl}/api/a2a`;
+  return {
+    name: "Guidon docs agent",
+    description: "Answers questions about Guidon - its REST API, MCP server, authentication, pricing and the agent workflow - from the public documentation, with links to the sources. It reads docs only; it can't see or change anyone's projects.",
+    version: "1.0.0",
+    provider: { organization: "Two Steps Studio", url: siteUrl },
+    iconUrl: `${siteUrl}/icon.png`,
+    documentationUrl: `${siteUrl}/developers`,
+    supportedInterfaces: [{ url, protocolBinding: "JSONRPC", protocolVersion: "1.0" }],
+    url,
+    preferredTransport: "JSONRPC",
+    protocolVersion: "0.3.0",
+    capabilities: { streaming: false, pushNotifications: false },
+    defaultInputModes: ["text/plain"],
+    defaultOutputModes: ["text/markdown", "text/plain"],
+    skills: [
+      {
+        id: "answer-docs-question",
+        name: "Answer a question about Guidon",
+        description: "Finds the documentation sections that answer a question and returns them with links.",
+        tags: ["documentation", "api", "mcp", "oauth"],
+        examples: ["How do I authenticate to the Guidon API?", "What are the rate limits?", "How does an agent claim a task?"],
+        inputModes: ["text/plain"],
+        outputModes: ["text/markdown"],
+      },
+    ],
+  };
+}
+
 export interface CatalogOptions {
   /** sha256 hex of skillMarkdown(siteUrl), for the skills index digest. */
   skillDigest: string;
@@ -119,12 +199,23 @@ export interface CatalogOptions {
 export function ardCatalog(siteUrl: string) {
   const host = new URL(siteUrl).hostname;
   const urn = (name: string) => `urn:air:${host}:${name}`;
+  // ARD 4.5: who stands behind each entry - the publisher's own domain (it
+  // must match the URN's), with the documents that govern its use.
+  const trustManifest = {
+    identity: `did:web:${host}`,
+    identityType: "did",
+    attestations: [
+      { type: "privacy-policy", uri: `${siteUrl}/legal/privacy`, mediaType: "text/html" },
+      { type: "terms-of-service", uri: `${siteUrl}/legal/terms`, mediaType: "text/html" },
+    ],
+  };
   return {
     specVersion: "1.0",
     host: { displayName: "Guidon", identifier: siteUrl, documentationUrl: `${siteUrl}/developers`, logoUrl: `${siteUrl}/icon.png` },
     entries: [
       {
         identifier: urn("mcp:guidon"),
+        trustManifest,
         displayName: "Guidon MCP server",
         type: SERVER_CARD_CONTENT_TYPE,
         url: `${siteUrl}/api/mcp/server-card`,
@@ -139,6 +230,7 @@ export function ardCatalog(siteUrl: string) {
       },
       {
         identifier: urn("mcp:guidon-docs"),
+        trustManifest,
         displayName: "Guidon docs MCP server",
         type: SERVER_CARD_CONTENT_TYPE,
         url: `${siteUrl}/api/mcp/docs/server-card`,
@@ -148,7 +240,18 @@ export function ardCatalog(siteUrl: string) {
         representativeQueries: ["how do I authenticate to the Guidon API", "Guidon MCP server tools"],
       },
       {
+        identifier: urn("a2a:guidon-docs"),
+        trustManifest,
+        displayName: "Guidon docs agent (A2A)",
+        type: "application/a2a-agent-card+json",
+        url: `${siteUrl}/.well-known/agent-card.json`,
+        description: "A2A agent that answers questions about Guidon from its public documentation. No sign-in.",
+        tags: ["a2a", "documentation"],
+        representativeQueries: ["ask Guidon how its API authentication works", "which MCP clients can connect to Guidon"],
+      },
+      {
         identifier: urn("api:rest-v1"),
+        trustManifest,
         displayName: "Guidon REST API v1",
         type: "application/vnd.oai.openapi+json",
         url: `${siteUrl}/openapi.json`,
@@ -158,6 +261,7 @@ export function ardCatalog(siteUrl: string) {
       },
       {
         identifier: urn(`skill:${SKILL_NAME}`),
+        trustManifest,
         displayName: SKILL_NAME,
         type: "application/agent-skills+md",
         url: `${siteUrl}/.well-known/agent-skills/${SKILL_NAME}/SKILL.md`,

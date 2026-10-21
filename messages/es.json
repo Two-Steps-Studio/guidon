@@ -124,7 +124,8 @@
     "user": "Usuario",
     "switchProject": "Cambiar de proyecto",
     "calendar": "Calendario",
-    "promoCodes": "Códigos promocionales"
+    "promoCodes": "Códigos promocionales",
+    "pinnedTasks": "Fijadas"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -282,7 +283,40 @@
       "apiDocs": "Docs de API y MCP"
     },
     "heroShotTitle": "El panel de Guidon",
-    "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo próximo, actividad del equipo y de la IA, progreso de proyectos"
+    "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo próximo, actividad del equipo y de la IA, progreso de proyectos",
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "items": [
+        {
+          "q": "¿Qué es Guidon?",
+          "a": "Guidon es gestión de proyectos para equipos de desarrollo centrada en el contexto. Cada proyecto tiene un tablero Kanban y, junto a él, las decisiones detrás del trabajo, las fuentes en las que se apoya el equipo, las tecnologías en uso, una hoja de ruta y una memoria del proyecto, así que quien toma una tarea, una persona o un agente de IA, recibe también el motivo por el que existe."
+        },
+        {
+          "q": "¿Guidon es gratis?",
+          "a": "Sí, hay un plan gratuito. Los planes de pago en Guidon Cloud amplían los límites de proyectos, miembros y uso de IA; se facturan mensual o anualmente y empiezan con una prueba gratuita de 14 días. Guidon autoalojado no tiene ningún límite."
+        },
+        {
+          "q": "¿Pueden los agentes de IA trabajar en mis tareas?",
+          "a": "Sí. Claude, ChatGPT, Cursor y otros clientes MCP se conectan al servidor MCP de Guidon e inician sesión con OAuth; los scripts usan la API REST con una clave de API. Un agente encuentra una tarea, lee todo su contexto, la reclama, registra lo que intentó y devuelve el trabajo a una persona para su revisión."
+        },
+        {
+          "q": "¿Puedo alojar Guidon yo mismo?",
+          "a": "Sí. Guidon es de código abierto en GitHub y funciona en tu propio servidor con PostgreSQL. La guía de autoalojamiento explica la instalación."
+        },
+        {
+          "q": "¿Cómo pruebo la API sin tocar el trabajo real?",
+          "a": "Crea un sandbox: una organización aparte con tareas de ejemplo que puedes cambiar libremente y restablecer a los datos iniciales con una petición o un clic."
+        },
+        {
+          "q": "¿Guidon funciona con motores de juegos?",
+          "a": "Sí. Hay plugins para Unity, Unreal Engine, Godot y Blender, informes de errores desde el juego que llegan al tablero y Guidon Desktop para Windows, macOS y Linux."
+        },
+        {
+          "q": "¿Puedo eliminar mi cuenta y mis datos?",
+          "a": "Sí, en cualquier momento: Perfil → Eliminar cuenta en el sitio web. La Política de privacidad explica qué se guarda y por qué."
+        }
+      ]
+    }
   },
   "organizations": {
     "common": {
@@ -801,7 +835,11 @@
     "repeatUnit_monthly": "{count, plural, one {mes} other {meses}}",
     "repeatUnit_every_n_days": "{count, plural, one {día} other {días}}",
     "repeatHint": "Al terminar esta tarea se crea la siguiente en To do, con la misma descripción, etiquetas, persona y subtareas, con fecha en la próxima ocurrencia.",
-    "repeatsAria": "Se repite"
+    "repeatsAria": "Se repite",
+    "pinTask": "Fijar",
+    "unpinTask": "Desfijar",
+    "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
+    "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo."
   },
   "roadmap": {
     "title": "Hoja de ruta",
@@ -1486,7 +1524,18 @@
     },
     "mcpOAuthStep_claude": "En Claude, abre Ajustes → Conectores → Añadir conector personalizado, llámalo Guidon y pega esta URL",
     "mcpOAuthStep_chatgpt": "En ChatGPT, abre Ajustes → Apps y conectores → Crear (modo desarrollador), elige OAuth y pega esta URL",
-    "mcpOAuthApprove": "Inicia sesión en Guidon cuando te lo pida y pulsa Permitir: no hay clave que copiar. Aparecerá arriba en Apps conectadas."
+    "mcpOAuthApprove": "Inicia sesión en Guidon cuando te lo pida y pulsa Permitir: no hay clave que copiar. Aparecerá arriba en Apps conectadas.",
+    "deleteAccount": {
+      "title": "Eliminar cuenta",
+      "description": "Elimina tu cuenta y cierra tu sesión en todas partes: tu perfil, claves API, apps conectadas, notificaciones y los comentarios e intentos que escribiste. Las tareas y documentos que creaste en proyectos compartidos se quedan con el equipo, sin tu nombre. No se puede deshacer.",
+      "orgsDeleted": "En estas organizaciones no hay nadie más y se eliminarán con todos sus proyectos:",
+      "orgsLeft": "Saldrás de estas organizaciones; seguirán para los demás:",
+      "blockedTitle": "Primero traspasa estas organizaciones",
+      "blockedDescription": "Eres el único propietario de {names} y otras personas trabajan allí. Haz propietaria a una de ellas en Organización → Miembros (o elimina a las demás) y vuelve.",
+      "confirmLabel": "Escribe {email} para confirmar",
+      "button": "Eliminar mi cuenta",
+      "deleting": "Eliminando..."
+    }
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",

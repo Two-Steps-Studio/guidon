@@ -28,6 +28,7 @@ export const SIGNED_IN_SECTIONS: ReadonlySet<string> = new Set([
   "plugins",
   "profile",
   "projects",
+  "sandbox",
   "upgrade",
 ]);
 
@@ -99,6 +100,7 @@ export interface LandingMessages {
   featuresTitle: string;
   featuresSubtitle: string;
   features: Record<string, { title: string; description: string; bullets: string[] }>;
+  faq?: { title: string; items: { q: string; a: string }[] };
 }
 
 /** Same order as FEATURE_SECTIONS in src/app/page.tsx. */
@@ -139,17 +141,19 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     `- **REST API:** \`${siteUrl}/api/v1\` - [OpenAPI 3.1](${siteUrl}/openapi.json), JSON errors with codes, rate-limit headers, Idempotency-Key, cursor pagination, batch.`,
     `- **Authentication:** OAuth 2.1 with PKCE (MCP clients sign in on their own - [auth.md](${siteUrl}/auth.md)) or a personal API key as \`Authorization: Bearer guidon_...\`.`,
     `- **Docs for agents:** [llms.txt](${siteUrl}/llms.txt), [developer guide](${siteUrl}/developers.md), a public [docs MCP server](${siteUrl}/api/mcp/docs) and [/ask](${siteUrl}/ask).`,
-    `- **Discovery:** [ard.json](${siteUrl}/.well-known/ard.json), [MCP server card](${siteUrl}/api/mcp/server-card), [agent skill](${siteUrl}/.well-known/agent-skills/index.json), [API catalog](${siteUrl}/.well-known/api-catalog).`,
+    `- **Discovery:** [ard.json](${siteUrl}/.well-known/ard.json), [MCP server card](${siteUrl}/api/mcp/server-card), [agent skill](${siteUrl}/.well-known/agent-skills/index.json), [API catalog](${siteUrl}/.well-known/api-catalog), [MCP manifest](${siteUrl}/.well-known/mcp.json), [A2A agent card](${siteUrl}/.well-known/agent-card.json).`,
     "",
     `## ${landing.featuresTitle}`,
     "",
     landing.featuresSubtitle,
     "",
     ...features,
+    ...(landing.faq ? [`## ${landing.faq.title}`, "", ...landing.faq.items.flatMap((item) => [`### ${item.q}`, "", item.a, ""])] : []),
     "## Company",
     "",
     `- [About Guidon](${siteUrl}/about)`,
     `- [Contact](${siteUrl}/contact)`,
+    `- [Sandbox for the API and agents](${siteUrl}/sandbox)`,
     "",
     "## Legal",
     "",
@@ -199,6 +203,7 @@ export const MARKDOWN_TWINS: Readonly<Record<string, string>> = {
   "/developers": "/developers.md",
   "/about": "/about.md",
   "/contact": "/contact.md",
+  "/sandbox": "/sandbox.md",
   "/auth/login": "/auth/login.md",
   "/auth/signup": "/auth/signup.md",
 };

@@ -15,6 +15,7 @@ import {
   type RateLimitStatus,
 } from "./api-route-core";
 import { RATE_LIMIT_WINDOW_SECONDS } from "./rate-limit";
+import { ipRateLimit } from "@/lib/ip-rate-limit";
 
 /**
  * Wraps every /api/v1 route handler (`export const GET = apiRoute(...)`) with
@@ -47,6 +48,18 @@ export function noteRateLimit(status: RateLimitStatus): void {
 
 const DOCS_URL = `${SITE_URL}/developers#errors`;
 
+function anonymousRate(request: NextRequest): RateLimitStatus {
+  const { headers } = ipRateLimit("api-anonymous", request, ANONYMOUS_LIMIT);
+  return {
+    limit: ANONYMOUS_LIMIT,
+    remaining: Number(headers["RateLimit-Remaining"]),
+    resetSeconds: Number(headers["RateLimit-Reset"]),
+  };
+}
+
+/** Requests per minute per address that carry no valid key. */
+const ANONYMOUS_LIMIT = 60;
+
 type Handler<C> = (request: NextRequest, context: C) => Promise<Response> | Response;
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -55,7 +68,10 @@ export function apiRoute<C>(handler: Handler<C>): (request: NextRequest, context
   return (request, context) =>
     notes.run({}, async () => {
       const response = await withIdempotency(request, (forwarded) => handler(forwarded, context));
-      return finish(response, notes.getStore()?.rate);
+      // No key got as far as the per-key limit (401, bad id): the caller's
+      // address has a window of its own, so every answer carries the headers.
+      const rate = notes.getStore()?.rate ?? anonymousRate(request);
+      return finish(response, rate);
     });
 }
 

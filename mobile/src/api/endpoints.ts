@@ -3,6 +3,7 @@ import type {
   Column,
   Comment,
   CreateTaskInput,
+  DeletionPlan,
   MobileTokenResponse,
   Priority,
   Project,
@@ -88,5 +89,15 @@ export const api = {
         body: { content },
       })
     ).comment;
+  },
+
+  /** GET /api/v1/account - what deleting the account would do (only the app's own key may ask). */
+  async getDeletionPlan(): Promise<DeletionPlan> {
+    return (await apiRequest<{ plan: DeletionPlan }>("/api/v1/account")).plan;
+  },
+
+  /** DELETE /api/v1/account - deletes the account for good; the email is the confirmation. */
+  deleteAccount(confirmEmail: string): Promise<{ deleted: true; deleted_organizations: number }> {
+    return apiRequest("/api/v1/account", { method: "DELETE", body: { confirm_email: confirmEmail } });
   },
 };

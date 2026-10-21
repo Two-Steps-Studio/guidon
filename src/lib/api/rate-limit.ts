@@ -1,5 +1,7 @@
 import "server-only";
 
+import { AsyncLocalStorage } from "node:async_hooks";
+
 /**
  * Per-API-key request rate limit. In-memory, per-process - same
  * documented limitation as src/lib/auth/rate-limit.ts (resets on restart,
@@ -52,4 +54,20 @@ export function rateLimitStatus(apiKeyId: string): { limit: number; remaining: n
     remaining: Math.max(0, MAX_REQUESTS - entry.count),
     resetSeconds: Math.max(0, (entry.windowStart + WINDOW_MS - Date.now()) / 1000),
   };
+}
+
+const exempt = new AsyncLocalStorage<true>();
+
+/**
+ * Runs `fn` with the per-key limit switched off - for work the server does
+ * on the caller's behalf after one counted request (an async import job
+ * creating its tasks through the normal handler). Only server code can
+ * enter it; nothing in a request can.
+ */
+export function withoutRateLimit<T>(fn: () => Promise<T>): Promise<T> {
+  return exempt.run(true, fn);
+}
+
+export function isRateLimitExempt(): boolean {
+  return exempt.getStore() === true;
 }

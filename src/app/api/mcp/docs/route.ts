@@ -4,7 +4,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { docPages, docSections } from "@/lib/docs-index";
 import { searchSections } from "@/lib/docs-search-core";
-import { ipRateLimited } from "@/lib/ip-rate-limit";
+import { ipRateLimit, withHeaders } from "@/lib/ip-rate-limit";
+import { unknownToolError } from "@/lib/mcp/http/unknown-tool";
+import { DOCS_RESULTS_HTML, DOCS_RESULTS_URI, MCP_APP_MIME_TYPE } from "@/lib/mcp/docs-results-app";
+import { SITE_URL } from "@/lib/site-url";
 
 /**
  * Guidon's documentation as an MCP server - the "learn" counterpart of
@@ -16,7 +19,22 @@ import { ipRateLimited } from "@/lib/ip-rate-limit";
 const READ_ONLY = { readOnlyHint: true, openWorldHint: false } as const;
 
 function buildServer(): McpServer {
-  const server = new McpServer({ name: "guidon-docs", version: "1.0.0" });
+  const server = new McpServer(
+    {
+      name: "guidon-docs",
+      title: "Guidon docs",
+      version: "1.0.0",
+      description: "Search and read Guidon's public documentation: API, MCP, auth, pricing.",
+      websiteUrl: `${SITE_URL}/developers`,
+      icons: [{ src: `${SITE_URL}/icon.png`, mimeType: "image/png" }],
+    },
+    {
+      instructions:
+        "Guidon's public documentation: the REST API, the MCP server, authentication (OAuth 2.1 and API keys), errors, rate limits, " +
+        "the agent workflow and company info. Use search_docs with a question, then read_doc for a whole page. Read-only, no sign-in. " +
+        "To act on a person's projects, use the product MCP server at /api/mcp instead.",
+    }
+  );
   const pages = docPages();
 
   server.registerTool(
@@ -27,16 +45,18 @@ function buildServer(): McpServer {
         "Returns the best-matching sections with their URL - read a whole page with read_doc.",
       inputSchema: { query: z.string().min(1).max(500).describe("What you want to know, in plain words.") },
       annotations: { title: "Search Guidon docs", ...READ_ONLY },
+      // MCP Apps: hosts that support it show the results view below; the
+      // flat key is the older spelling some hosts still read.
+      _meta: { ui: { resourceUri: DOCS_RESULTS_URI }, "ui/resourceUri": DOCS_RESULTS_URI },
     },
     ({ query }) => {
       const hits = searchSections(docSections(), query, 6);
       const text = hits.length
         ? hits.map((hit, i) => `${i + 1}. ${hit.title}\n   ${hit.url}\n   ${hit.snippet}`).join("\n\n")
         : "No matching documentation. Try other words, or read_doc with one of: " + pages.map((p) => p.id).join(", ");
-      return {
-        content: [{ type: "text", text }],
-        structuredContent: { results: hits.map(({ title, url, snippet, pageId, score }) => ({ title, url, snippet, page: pageId, score })) },
-      };
+      const items = hits.map(({ title, url, snippet, pageId, score }) => ({ title, url, snippet, page: pageId, score }));
+      // `results` is the original field; `items` is what the MCP Apps view reads.
+      return { content: [{ type: "text", text }], structuredContent: { query, results: items, items } };
     }
   );
 
@@ -61,18 +81,41 @@ function buildServer(): McpServer {
       async () => ({ contents: [{ uri: page.url, mimeType: "text/markdown", text: page.markdown }] })
     );
   }
+  server.registerResource(
+    "docs-results-view",
+    DOCS_RESULTS_URI,
+    { title: "Guidon docs results", description: "MCP Apps view for search_docs results.", mimeType: MCP_APP_MIME_TYPE },
+    async () => ({
+      contents: [
+        {
+          uri: DOCS_RESULTS_URI,
+          mimeType: MCP_APP_MIME_TYPE,
+          text: DOCS_RESULTS_HTML,
+          // Loads nothing from outside, so the strictest sandbox fits.
+          _meta: { ui: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true } },
+        },
+      ],
+    })
+  );
   return server;
 }
 
 export async function POST(request: NextRequest) {
-  if (ipRateLimited("mcp-docs", request, 120)) {
-    return NextResponse.json({ jsonrpc: "2.0", error: { code: -32000, message: "Rate limit exceeded. Try again shortly." }, id: null }, { status: 429, headers: { "Retry-After": "60" } });
+  const rate = ipRateLimit("mcp-docs", request, 120);
+  const withRateHeaders = (response: Response) => withHeaders(response, rate.headers);
+  if (rate.limited) {
+    return withRateHeaders(
+      NextResponse.json({ jsonrpc: "2.0", error: { code: -32000, message: "Rate limit exceeded. Try again shortly." }, id: null }, { status: 429 })
+    );
   }
   const server = buildServer();
+  const messages = await request.clone().json().then((body: unknown) => (Array.isArray(body) ? body : [body])).catch(() => null);
+  const unknown = unknownToolError(server, messages);
+  if (unknown) return withRateHeaders(unknown);
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   try {
     await server.connect(transport);
-    return await transport.handleRequest(request);
+    return withRateHeaders(await transport.handleRequest(request));
   } catch (error) {
     console.error("[mcp/docs]", error);
     return NextResponse.json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null }, { status: 500 });

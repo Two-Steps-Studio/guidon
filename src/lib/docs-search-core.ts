@@ -72,6 +72,15 @@ function snippetOf(text: string, terms: string[], length = 280): string {
 }
 
 /** Best sections for a question, most relevant first; empty when nothing matches. */
+/**
+ * A crude stem: long words lose their last two letters, so "authenticate"
+ * finds "authentication" and "limits" finds "limit". Short words stay whole -
+ * cutting them would match too much.
+ */
+export function stemOf(term: string): string {
+  return term.length >= 6 ? term.slice(0, -2) : term;
+}
+
 export function searchSections(sections: DocSection[], query: string, limit = 5): SearchHit[] {
   const terms = [...new Set(tokens(query))];
   if (terms.length === 0) return [];
@@ -82,8 +91,9 @@ export function searchSections(sections: DocSection[], query: string, limit = 5)
     let score = 0;
     let matched = 0;
     for (const term of terms) {
-      const inTitle = title.filter((t) => t === term || t.startsWith(term)).length;
-      const inBody = body.filter((t) => t === term || t.startsWith(term)).length;
+      const stem = stemOf(term);
+      const inTitle = title.filter((t) => t.startsWith(stem)).length;
+      const inBody = body.filter((t) => t.startsWith(stem)).length;
       if (inTitle || inBody) matched++;
       score += inTitle * 5 + Math.min(inBody, 8);
     }

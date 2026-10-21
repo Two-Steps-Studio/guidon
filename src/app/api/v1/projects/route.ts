@@ -4,6 +4,7 @@ import { getApiUserClient } from "@/lib/api/api-key-auth";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
+import { parseLimit } from "@/lib/api/api-route-core";
 import { apiRoute } from "@/lib/api/api-route";
 
 /**
@@ -22,11 +23,14 @@ async function handleGET(request: NextRequest) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
+  // ?limit= (1-1000), alphabetical; the safety cap is also the default.
+  const limit = parseLimit(request.nextUrl.searchParams.get("limit"), PROJECT_LIST_SAFETY_CAP, PROJECT_LIST_SAFETY_CAP);
+
   if (hasDirectDatabase()) {
     const result = await withUser(guard.userId, ({ query }) =>
       query(
         `SELECT id, name, organization_id FROM projects ORDER BY name ASC LIMIT $1`,
-        [PROJECT_LIST_SAFETY_CAP]
+        [limit]
       )
     );
     return NextResponse.json({ projects: result.rows });
@@ -37,7 +41,7 @@ async function handleGET(request: NextRequest) {
     .from("projects")
     .select("id, name, organization_id")
     .order("name", { ascending: true })
-    .limit(PROJECT_LIST_SAFETY_CAP);
+    .limit(limit);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ projects: data ?? [] });

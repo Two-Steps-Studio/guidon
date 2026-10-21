@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { PUBLIC_CLIENT_NAMESPACES, pickMessages } from "@/i18n/client-messages";
 import { Toaster } from "sonner";
 import { GlobalWebMcpTools } from "@/components/agent/web-mcp";
 import { DitherBackground } from "@/components/layout/dither-background";
@@ -121,7 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="relative isolate min-h-screen bg-background text-foreground">
         <DitherBackground />
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={pickMessages(messages, PUBLIC_CLIENT_NAMESPACES)}>
           <div className="relative z-20">
             {/* No <main> here: each page shell supplies exactly one - the
                 sidebar layout's SidebarInset for app pages, auth/layout.tsx,

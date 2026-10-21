@@ -210,7 +210,7 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && !submitting && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent scrollable className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-base">{t("newTaskDialogTitle")}</DialogTitle>
           <DialogDescription>

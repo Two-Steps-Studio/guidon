@@ -155,7 +155,10 @@ export default function PrivacyPage() {
             <ul>
               <li>Request a copy of your personal data (access);</li>
               <li>Correct inaccurate data (rectification);</li>
-              <li>Request deletion of your data (erasure), subject to §6&apos;s retention exceptions;</li>
+              <li>
+                Delete your account and data (erasure), subject to §6&apos;s retention exceptions - you can do this yourself
+                at any time in Profile → Delete account on the website or Settings → Delete account in the mobile app;
+              </li>
               <li>Get your data in a portable format (portability);</li>
               <li>Object to or restrict certain processing;</li>
               <li>Withdraw consent for anything based on consent, at any time, without affecting past lawful processing;</li>

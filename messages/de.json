@@ -124,7 +124,8 @@
     "user": "Benutzer",
     "switchProject": "Projekt wechseln",
     "calendar": "Kalender",
-    "promoCodes": "Promo-Codes"
+    "promoCodes": "Promo-Codes",
+    "pinnedTasks": "Angeheftet"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -282,7 +283,40 @@
       "apiDocs": "API- & MCP-Doku"
     },
     "heroShotTitle": "Das Guidon-Dashboard",
-    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt"
+    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt",
+    "faq": {
+      "title": "Häufige Fragen",
+      "items": [
+        {
+          "q": "Was ist Guidon?",
+          "a": "Guidon ist Projektmanagement für Entwicklungsteams, bei dem der Kontext im Mittelpunkt steht. Jedes Projekt hat ein Kanban-Board und daneben die Entscheidungen hinter der Arbeit, die Quellen des Teams, die eingesetzten Technologien, eine Roadmap und ein Projektgedächtnis - wer eine Aufgabe übernimmt, ob Mensch oder KI-Agent, bekommt also auch den Grund, warum es sie gibt."
+        },
+        {
+          "q": "Ist Guidon kostenlos?",
+          "a": "Ja, es gibt einen kostenlosen Plan. Bezahlpläne in Guidon Cloud erhöhen die Limits für Projekte, Mitglieder und KI-Nutzung; sie werden monatlich oder jährlich abgerechnet und beginnen mit einer 14-tägigen kostenlosen Testphase. Selbst gehostetes Guidon hat gar keine Limits."
+        },
+        {
+          "q": "Können KI-Agenten an meinen Aufgaben arbeiten?",
+          "a": "Ja. Claude, ChatGPT, Cursor und andere MCP-Clients verbinden sich mit Guidons MCP-Server und melden sich per OAuth an; Skripte nutzen die REST-API mit einem API-Schlüssel. Ein Agent findet eine Aufgabe, liest ihren vollständigen Kontext, übernimmt sie, hält fest, was er versucht hat, und gibt die Arbeit zur Prüfung an einen Menschen zurück."
+        },
+        {
+          "q": "Kann ich Guidon selbst hosten?",
+          "a": "Ja. Guidon ist Open Source auf GitHub und läuft auf Ihrem eigenen Server mit einfachem PostgreSQL. Die Self-Hosting-Anleitung führt durch die Einrichtung."
+        },
+        {
+          "q": "Wie teste ich die API, ohne echte Arbeit zu berühren?",
+          "a": "Legen Sie eine Sandbox an: eine eigene Organisation mit Beispielaufgaben, die Sie frei ändern und mit einer Anfrage oder einem Klick auf die Ausgangsdaten zurücksetzen können."
+        },
+        {
+          "q": "Funktioniert Guidon mit Spiele-Engines?",
+          "a": "Ja. Es gibt Plugins für Unity, Unreal Engine, Godot und Blender, Fehlerberichte aus dem Spiel, die auf dem Board landen, und Guidon Desktop für Windows, macOS und Linux."
+        },
+        {
+          "q": "Kann ich mein Konto und meine Daten löschen?",
+          "a": "Ja, jederzeit: Profil → Konto löschen auf der Website. Die Datenschutzerklärung erklärt, was gespeichert wird und warum."
+        }
+      ]
+    }
   },
   "organizations": {
     "common": {
@@ -801,7 +835,11 @@
     "repeatUnit_monthly": "{count, plural, one {Monat} other {Monate}}",
     "repeatUnit_every_n_days": "{count, plural, one {Tag} other {Tage}}",
     "repeatHint": "Wenn diese Aufgabe erledigt ist, entsteht die nächste in To do - mit derselben Beschreibung, denselben Labels, derselben Person und denselben Unteraufgaben, fällig am nächsten Termin.",
-    "repeatsAria": "Wiederholt sich"
+    "repeatsAria": "Wiederholt sich",
+    "pinTask": "Anheften",
+    "unpinTask": "Lösen",
+    "pinTooMany": "Du kannst bis zu 10 Aufgaben anheften. Löse zuerst eine.",
+    "pinFailed": "Das Anheften hat nicht geklappt. Versuch es noch einmal."
   },
   "roadmap": {
     "title": "Roadmap",
@@ -1486,7 +1524,18 @@
     },
     "mcpOAuthStep_claude": "Öffne in Claude Einstellungen → Konnektoren → Eigenen Konnektor hinzufügen, nenne ihn Guidon und füge diese URL ein",
     "mcpOAuthStep_chatgpt": "Öffne in ChatGPT Einstellungen → Apps & Konnektoren → Erstellen (Entwicklermodus), wähle OAuth und füge diese URL ein",
-    "mcpOAuthApprove": "Melde dich bei Guidon an, wenn danach gefragt wird, und klicke auf Erlauben - kein Schlüssel zum Kopieren. Die App erscheint oben unter Verbundene Apps."
+    "mcpOAuthApprove": "Melde dich bei Guidon an, wenn danach gefragt wird, und klicke auf Erlauben - kein Schlüssel zum Kopieren. Die App erscheint oben unter Verbundene Apps.",
+    "deleteAccount": {
+      "title": "Konto löschen",
+      "description": "Löscht dein Konto und meldet dich überall ab: Profil, API-Schlüssel, verbundene Apps, Benachrichtigungen sowie deine Kommentare und Versuche. Aufgaben und Dokumente, die du in gemeinsamen Projekten erstellt hast, bleiben dem Team erhalten, ohne deinen Namen. Das lässt sich nicht rückgängig machen.",
+      "orgsDeleted": "In diesen Organisationen ist sonst niemand - sie werden mit allen Projekten gelöscht:",
+      "orgsLeft": "Du verlässt diese Organisationen; für die anderen bleiben sie bestehen:",
+      "blockedTitle": "Übergib zuerst diese Organisationen",
+      "blockedDescription": "Du bist der einzige Eigentümer von {names}, und andere arbeiten dort. Mach eine dieser Personen unter Organisation → Mitglieder zum Eigentümer (oder entferne die anderen) und komm dann zurück.",
+      "confirmLabel": "Gib {email} zur Bestätigung ein",
+      "button": "Mein Konto löschen",
+      "deleting": "Wird gelöscht..."
+    }
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",

@@ -11,6 +11,10 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
+import { getCurrentUser } from "@/lib/data/current-user";
+import { getPinnedTasks, type PinnedTask } from "@/lib/data/pinned-tasks";
+import { PinnedTasksProvider } from "@/components/work/pinned-tasks-context";
+import { AppMessages } from "@/components/layout/app-messages";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
 
@@ -27,8 +31,18 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
   const themeCookie = cookieStore.get(THEME_COOKIE)?.value;
   const currentTheme = themeCookie && isSupportedTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
   const tNav = await getTranslations("nav");
+  // Pinned tasks (migration 074) in the sidebar on every page; a failure
+  // here (no column yet, signed out) just means an empty list.
+  let pinnedTasks: PinnedTask[] = [];
+  try {
+    pinnedTasks = await getPinnedTasks((await getCurrentUser()).id);
+  } catch {
+    pinnedTasks = [];
+  }
 
   return (
+    <AppMessages>
+    <PinnedTasksProvider initial={pinnedTasks}>
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
         {...sidebarProps}
@@ -55,5 +69,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
         <KeyboardShortcuts />
       </SidebarInset>
     </SidebarProvider>
+    </PinnedTasksProvider>
+    </AppMessages>
   );
 }

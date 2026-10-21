@@ -4,7 +4,7 @@ import { developersMarkdown } from "@/lib/developers-doc";
 import { SITE_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: "Developers - API and MCP server",
+  title: { absolute: "Guidon API and MCP server - developer docs" },
   description: "Connect AI agents and scripts to Guidon: API keys and scopes, the MCP server, REST endpoints, OpenAPI and errors.",
   alternates: { canonical: "/developers", types: { "text/markdown": "/developers.md" } },
 };

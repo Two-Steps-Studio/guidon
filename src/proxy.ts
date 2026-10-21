@@ -52,6 +52,8 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // login redirect below would make it unreachable. Exact match: it is a
   // single POST-only route with no sub-paths.
   '/api/mcp',
+  // The API's base URL describes itself (src/app/api/v1/route.ts).
+  '/api/v1',
   // Its server card (public description) and the public docs MCP server.
   '/api/mcp/server-card',
   '/api/mcp/docs',
@@ -90,6 +92,13 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/about.md',
   '/contact',
   '/contact.md',
+  // The sandbox explained (src/app/sandbox) - /sandbox/start needs a session.
+  '/sandbox',
+  '/sandbox.md',
+  // The MCP manifest, also under /.well-known/ (src/app/.well-known/mcp.json).
+  '/mcp.json',
+  // A2A docs agent (src/app/api/a2a) - public like the docs MCP server.
+  '/api/a2a',
   // Onboarding before the account exists (app/start) - the questions come
   // first, signing up last. /start/finish needs a session and isn't listed.
   '/start',

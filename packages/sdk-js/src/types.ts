@@ -345,3 +345,9 @@ export type TechnologyPatch = {
   icon_slug?: string | null;
   sort_order?: number | null;
 };
+
+/** GET /me - who the token acts as. */
+export interface Me {
+  user: { id: string; email: string | null; name: string | null };
+  token: { scopes: string[]; project_id: string | null; human_client: boolean };
+}

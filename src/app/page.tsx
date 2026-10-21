@@ -10,7 +10,7 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
-import { homepageJsonLd } from "@/lib/structured-data";
+import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
@@ -52,6 +52,8 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const t = await getTranslations("landing");
+  // Plain text on purpose: the same answers go into the FAQPage JSON-LD.
+  const faq = t.raw("faq.items") as FaqItem[];
   // Self-hosted installs have no billing concept at all (mirrors
   // organizations/[id]/billing/page.tsx) - Guidon Cloud pricing has no
   // meaning on someone's own deployment, so the section is skipped rather
@@ -70,7 +72,7 @@ export default async function Home() {
     <>
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans)).replace(/</g, "\\u003c") }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans, FEATURE_SECTIONS.map(({ key }) => ({ title: t(`features.${key}.title`), description: t(`features.${key}.description`) })), faq)).replace(/</g, "\\u003c") }}
     />
     <main>
     {/* Not full-screen: the live board mockup below starts above the fold,
@@ -220,6 +222,25 @@ export default async function Home() {
     </section>
 
     {plans.length > 0 && <PricingSection plans={plans} />}
+
+    <section className="border-t border-border py-20" aria-labelledby="faq-title" id="frequently-asked-questions">
+      <div className="container mx-auto max-w-3xl px-4">
+        <h2 id="faq-title" className={`${displayFont.className} mb-8 text-center text-3xl md:text-4xl`}>
+          {t("faq.title")}
+        </h2>
+        <div className="scrim divide-y divide-border rounded-2xl px-6">
+          {faq.map((item) => (
+            <details key={item.q} className="group py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
+                {item.q}
+                <span aria-hidden className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
+              </summary>
+              <p className="pt-3 text-text-secondary">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
 
     <section className="border-t border-border py-20" aria-labelledby="self-host-title">
       <div className="container mx-auto max-w-3xl px-4">

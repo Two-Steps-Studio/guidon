@@ -112,18 +112,18 @@ export function WorkBoard({
   // refresh doesn't reopen it and the address bar doesn't look stale.
   const router = useRouter();
   const searchParams = useSearchParams();
+  const openTaskParam = searchParams.get("openTask");
   useEffect(() => {
-    const taskId = searchParams.get("openTask");
-    if (!taskId) return;
-    const task = state.tasks.find((item) => item.id === taskId);
+    if (!openTaskParam) return;
+    const task = state.tasks.find((item) => item.id === openTaskParam);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (task) setOpenTask(task);
     router.replace(`/projects/${projectId}/work`, { scroll: false });
-    // Only ever meant to fire once, off the URL this page loaded with - not
-    // on every state.tasks update (which would refire a stale task lookup
-    // after the id has already been stripped from the URL).
+    // Fires per new ?openTask= value - also when a pinned task in the
+    // sidebar is clicked while this board is already open - but not on
+    // every state.tasks update (which would refire a stale lookup).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [openTaskParam]);
   // View-only preference, not persisted - resets to "manual" on reload/
   // navigation. See KanbanBoard's sortMode prop doc comment for why
   // dragging is disabled while sorted by due date.
@@ -453,7 +453,7 @@ export function WorkBoard({
 
           <Select
             aria-label={t("sortBy")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={sortMode}
             onChange={(event) =>
               setSortMode(event.target.value as "manual" | "due_date")
@@ -516,10 +516,11 @@ export function WorkBoard({
           </div>
         )}
 
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        {/* One swipeable row on a phone instead of three stacked full-width filters above the board. */}
+        <div className="-mx-1 mb-4 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           <Select
             aria-label={t("filterByAssignee")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={assigneeFilter}
             onChange={(event) => setAssigneeFilter(event.target.value)}
           >
@@ -533,7 +534,7 @@ export function WorkBoard({
 
           <Select
             aria-label={t("filterByPriority")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value)}
           >
@@ -547,7 +548,7 @@ export function WorkBoard({
 
           <Select
             aria-label={t("filterByTag")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={tagFilter}
             onChange={(event) => setTagFilter(event.target.value)}
           >

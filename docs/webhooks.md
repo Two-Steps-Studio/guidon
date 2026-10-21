@@ -97,6 +97,12 @@ def verify_guidon_webhook(raw_body: bytes, headers, secret: str) -> bool:
     return hmac.compare_digest(signature, expected)
 ```
 
+## Web Bot Auth signature (optional)
+
+When the server has `WEB_BOT_AUTH_PRIVATE_KEY` set, every delivery also carries an [HTTP Message Signature](https://www.rfc-editor.org/rfc/rfc9421) in the [Web Bot Auth](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/) form: `Signature-Agent`, `Signature-Input` (covering `@authority` and `signature-agent`, `tag="web-bot-auth"`, a five-minute lifetime) and `Signature` (Ed25519). The public key is at `<origin>/.well-known/http-message-signatures-directory`, looked up by the `keyid` (a JWK thumbprint).
+
+It proves the request comes from that Guidon server without sharing a secret - useful to a CDN or firewall in front of your receiver. It doesn't cover the body; `X-Guidon-Signature` still does that.
+
 ## Delivery rules
 
 - One attempt per event, sent right after the change is saved. There are no automatic retries - use **Test** to check the endpoint, and treat webhooks as notifications rather than a guaranteed log (the API at `/api/v1` is the source of truth).

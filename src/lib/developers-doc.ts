@@ -96,7 +96,11 @@ Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [Op
 | POST | \`/projects/{projectId}/reports\` | File a bug report (multipart) |
 | GET, POST | \`/projects/{projectId}/{decisions,knowledge,roadmap,memory,technologies}\` | List or add decisions, knowledge sources, roadmap phases, memory, technologies |
 | GET, PATCH, DELETE | \`/projects/{projectId}/{...}/{id}\` | Read, edit or delete one of them |
+| GET | \`/me\` | Who the token acts as (user, scopes) |
 | POST | \`/batch\` | Up to 20 of the operations above in one request |
+| POST | \`/projects/{projectId}/tasks/import\` | Create up to 500 tasks asynchronously (202 + job) |
+| GET | \`/jobs/{jobId}\` | Status of an async job |
+| GET, POST | \`/sandbox\` | Your test organization and project; reset it |
 
 ## Errors
 
@@ -135,7 +139,30 @@ Send an \`Idempotency-Key\` header (any unique string - a UUID) on \`POST\`, \`P
 
 \`POST /batch\` with \`{ "operations": [{ "method": "PATCH", "path": "/tasks/{taskId}/status", "body": { "status": "review" } }, ...] }\` runs up to 20 operations in order and answers \`{ "results": [{ "status": 200, "body": {...} }, ...] }\`. Each operation goes through the same endpoint as a direct call (same scopes and permissions); it is not a transaction - each one succeeds or fails on its own.
 
-## Versioning
+## Async jobs
+
+Work that doesn't fit in one request answers \`202 Accepted\` with a \`Location\` header and a job: \`POST /projects/{projectId}/tasks/import\` with \`{ "tasks": [{ "title": "..." }, ...] }\` (up to 500) creates the tasks in the background. Poll \`GET /jobs/{jobId}\` - it carries \`Retry-After\` while \`status\` is \`queued\` or \`running\` - until it's \`succeeded\` or \`failed\`; \`result.created\` lists the new task ids and \`result.failed\` what couldn't be created and why. The import counts as one request against the rate limit.
+
+## Sandbox
+
+Try the API, the MCP server or an agent without touching real work: \`POST /sandbox\` creates a test organization of your own with one project of example tasks and answers its \`project_id\`. Change anything there; \`POST /sandbox\` with \`{ "reset": true }\` puts the example data back. \`GET /sandbox\` tells you where it is. It's an ordinary organization otherwise - same permissions, same limits - so what works there works on your real projects.
+
+## SDKs and CLI
+
+Official clients, open source in the [Guidon repository](${GITHUB_REPO_URL}), all wrapping the same \`/api/v1\` with an API key:
+
+- **JavaScript/TypeScript SDK** \`@guidon/sdk\` - [packages/sdk-js](${GITHUB_REPO_URL}/tree/main/packages/sdk-js): typed methods for projects, tasks, comments and attempts, automatic retries for safe requests, an optional Idempotency-Key on writes.
+- **Python SDK** \`guidon\` - [sdk/python](${GITHUB_REPO_URL}/tree/main/sdk/python): the same surface for Python 3.9+.
+- **CLI** \`guidon-cli\` (command \`guidon\`) - [packages/cli](${GITHUB_REPO_URL}/tree/main/packages/cli): list projects, create and move tasks, comment, \`guidon whoami\` - from a terminal or CI.
+
+\`\`\`bash
+guidon login                      # asks for an API key
+guidon tasks list --project <project-id>
+guidon tasks create --project <project-id> --title "Fix the login timeout"
+\`\`\`
+
+Each package's README has install and build steps.
+
 
 The version is in the path: \`/api/v1\`. Within v1, changes are additive only - new endpoints, new fields in responses, new optional parameters; write clients that ignore fields they don't know. A breaking change ships as \`/api/v2\`, side by side with v1. An endpoint scheduled for removal gets \`Deprecation\` (RFC 9745) and \`Sunset\` (RFC 8594) headers at least 6 months before it goes, and is listed here.
 

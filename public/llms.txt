@@ -46,6 +46,8 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 - `GET|POST /tasks/{taskId}/comment` - read or post task comments
 - `GET|POST /tasks/{taskId}/attempts` - list or record attempts
 - `POST /batch` - up to 20 of these operations in one request
+- `POST /projects/{projectId}/tasks/import` - up to 500 tasks asynchronously: 202 + `Location` of a job to poll at `GET /jobs/{jobId}`
+- `POST /sandbox` - a test organization and project of your own with example tasks (`{"reset": true}` resets it): try things there before touching real work
 
 ## Docs
 

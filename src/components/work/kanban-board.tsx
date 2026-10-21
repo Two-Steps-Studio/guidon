@@ -486,6 +486,10 @@ export function KanbanBoard({
       // swipe on to the page (or to the browser's back gesture).
       className={cn(
         "relative flex items-start gap-4 overflow-x-auto overscroll-x-contain pb-4",
+        // On a phone a swipe lands on the next column instead of halfway
+        // between two - but not while a card is being dragged, when the
+        // board scrolls itself toward the edge.
+        !draggingTask && "max-md:snap-x max-md:snap-mandatory",
         fillHeight && "md:min-h-0 md:flex-1"
       )}
       role="list"
@@ -502,7 +506,7 @@ export function KanbanBoard({
             role="listitem"
             aria-label={t("columnAria", { label: column.label, count: columnTasks.length })}
             className={cn(
-              "flex w-72 shrink-0 flex-col rounded-xl border border-border bg-background-secondary",
+              "flex w-72 shrink-0 snap-start flex-col rounded-xl border border-border bg-background-secondary max-md:w-[min(18rem,calc(100vw-4rem))]",
               fillHeight && "md:max-h-full",
               isTargetColumn && "border-primary/40"
             )}

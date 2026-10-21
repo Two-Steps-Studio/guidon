@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Copy, Eye, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, Eye, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownPreview } from "@/components/files/markdown-preview";
 import { useTranslations } from "next-intl";
+import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { taskRef } from "@/lib/github/task-refs";
 import { deleteTask, updateTask } from "@/app/projects/[id]/work/actions";
 import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
@@ -133,6 +134,7 @@ function TaskDetailDialogInner({
   // keys this component by task id, so opening a different task remounts it
   // and re-runs these initialisers.
   const t = useTranslations("work");
+  const pinnedTasks = usePinnedTasks();
   // Columns from the caller when it has them (the board passes its visible
   // set), else the project's from WorkflowProvider; priorities always from there.
   const workflow = useWorkflow();
@@ -338,7 +340,8 @@ function TaskDetailDialogInner({
     <>
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+        scrollable
+        className="sm:max-w-2xl"
         onEscapeKeyDown={(event) => {
           const target = event.target as HTMLElement | null;
           if (target?.dataset.subtaskTitleField === "true") {
@@ -357,7 +360,7 @@ function TaskDetailDialogInner({
           </DialogDescription>
           {/* Mentioning this in a commit, PR or branch name links it via the GitHub integration (src/lib/github/task-refs.ts). */}
           <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
-            <span>{t("gitRefLabel")}</span>
+            <span className="max-sm:hidden">{t("gitRefLabel")}</span>
             <code className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-foreground">
               {taskRef(task.id)}
             </code>
@@ -372,6 +375,19 @@ function TaskDetailDialogInner({
             >
               {gitRefCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </Button>
+            {pinnedTasks && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-6 gap-1 px-2 text-xs"
+                aria-pressed={pinnedTasks.isPinned(task.id)}
+                onClick={() => void pinnedTasks.toggle({ id: task.id, title: task.title, project_id: projectId })}
+              >
+                {pinnedTasks.isPinned(task.id) ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                {pinnedTasks.isPinned(task.id) ? t("unpinTask") : t("pinTask")}
+              </Button>
+            )}
           </div>
         </DialogHeader>
 

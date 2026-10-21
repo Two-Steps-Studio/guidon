@@ -7,9 +7,16 @@ import { IntegrationsSection } from "./integrations-section";
 import { listApiKeys } from "./api-keys-actions";
 import { ConnectedAppsSection } from "./connected-apps";
 import { getConnectedApps } from "./connected-apps-actions";
+import { DeleteAccountSection } from "./delete-account";
+import { getMyDeletionPlan } from "./delete-account-actions";
 
 export default async function ProfilePage() {
-  const [user, apiKeys, connectedApps] = await Promise.all([getCurrentUser(), listApiKeys(), getConnectedApps()]);
+  const [user, apiKeys, connectedApps, deletionPlan] = await Promise.all([
+    getCurrentUser(),
+    listApiKeys(),
+    getConnectedApps(),
+    getMyDeletionPlan(),
+  ]);
   const t = await getTranslations("profile");
 
   return (
@@ -24,6 +31,7 @@ export default async function ProfilePage() {
         <ApiKeysSection initialKeys={apiKeys} />
         <ConnectedAppsSection initialApps={connectedApps} />
         <IntegrationsSection />
+        <DeleteAccountSection email={user.email ?? ""} plan={deletionPlan} />
       </div>
     </AppShell>
   );

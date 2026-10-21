@@ -17,6 +17,7 @@ import type {
   MemoryInput,
   MemoryPatch,
   Priority,
+  Me,
   Project,
   RecordAttemptInput,
   Reference,
@@ -378,6 +379,11 @@ export class Guidon {
     this.roadmap = new ProjectCollection(http, "roadmap", "phases", "phase");
     this.memory = new ProjectCollection(http, "memory", "memories", "memory");
     this.technologies = new ProjectCollection(http, "technologies", "technologies", "technology");
+  }
+
+  /** GET /me - the user this key or token acts as, and its scopes. Needs no scope. */
+  me(options?: RequestOptions): Promise<Me> {
+    return this.#http.request<Me>("GET", "/me", options);
   }
 
   /** The resolved API root, e.g. `https://useguidon.com/api/v1`. */

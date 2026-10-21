@@ -119,3 +119,10 @@ export interface UpdateTaskInput {
 export interface ApiErrorBody {
   error: string;
 }
+
+/** GET /api/v1/account - organizations deleted, left, or blocking (src/lib/account on the server). */
+export type DeletionPlan = {
+  deleteOrganizations: { id: string; name: string }[];
+  leaveOrganizations: { id: string; name: string }[];
+  blockers: { id: string; name: string }[];
+};
