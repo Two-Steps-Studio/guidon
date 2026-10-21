@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Copy, Eye, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, Eye, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownPreview } from "@/components/files/markdown-preview";
 import { useTranslations } from "next-intl";
+import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { taskRef } from "@/lib/github/task-refs";
 import { deleteTask, updateTask } from "@/app/projects/[id]/work/actions";
 import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
@@ -133,6 +134,7 @@ function TaskDetailDialogInner({
   // keys this component by task id, so opening a different task remounts it
   // and re-runs these initialisers.
   const t = useTranslations("work");
+  const pinnedTasks = usePinnedTasks();
   // Columns from the caller when it has them (the board passes its visible
   // set), else the project's from WorkflowProvider; priorities always from there.
   const workflow = useWorkflow();
@@ -373,6 +375,19 @@ function TaskDetailDialogInner({
             >
               {gitRefCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </Button>
+            {pinnedTasks && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-6 gap-1 px-2 text-xs"
+                aria-pressed={pinnedTasks.isPinned(task.id)}
+                onClick={() => void pinnedTasks.toggle({ id: task.id, title: task.title, project_id: projectId })}
+              >
+                {pinnedTasks.isPinned(task.id) ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                {pinnedTasks.isPinned(task.id) ? t("unpinTask") : t("pinTask")}
+              </Button>
+            )}
           </div>
         </DialogHeader>
 

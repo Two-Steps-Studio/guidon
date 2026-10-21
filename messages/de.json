@@ -124,7 +124,8 @@
     "user": "Benutzer",
     "switchProject": "Projekt wechseln",
     "calendar": "Kalender",
-    "promoCodes": "Promo-Codes"
+    "promoCodes": "Promo-Codes",
+    "pinnedTasks": "Angeheftet"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -801,7 +802,11 @@
     "repeatUnit_monthly": "{count, plural, one {Monat} other {Monate}}",
     "repeatUnit_every_n_days": "{count, plural, one {Tag} other {Tage}}",
     "repeatHint": "Wenn diese Aufgabe erledigt ist, entsteht die nächste in To do - mit derselben Beschreibung, denselben Labels, derselben Person und denselben Unteraufgaben, fällig am nächsten Termin.",
-    "repeatsAria": "Wiederholt sich"
+    "repeatsAria": "Wiederholt sich",
+    "pinTask": "Anheften",
+    "unpinTask": "Lösen",
+    "pinTooMany": "Du kannst bis zu 10 Aufgaben anheften. Löse zuerst eine.",
+    "pinFailed": "Das Anheften hat nicht geklappt. Versuch es noch einmal."
   },
   "roadmap": {
     "title": "Roadmap",

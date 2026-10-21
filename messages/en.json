@@ -124,7 +124,8 @@
     "user": "User",
     "switchProject": "Switch project",
     "calendar": "Calendar",
-    "promoCodes": "Promo codes"
+    "promoCodes": "Promo codes",
+    "pinnedTasks": "Pinned"
   },
   "commandPalette": {
     "triggerLabel": "Search...",
@@ -801,7 +802,11 @@
     "repeatUnit_monthly": "{count, plural, one {month} other {months}}",
     "repeatUnit_every_n_days": "{count, plural, one {day} other {days}}",
     "repeatHint": "When this task is finished, the next one is created in To do with the same description, labels, assignee and subtasks, due on the next date.",
-    "repeatsAria": "Repeats"
+    "repeatsAria": "Repeats",
+    "pinTask": "Pin",
+    "unpinTask": "Unpin",
+    "pinTooMany": "You can pin up to 10 tasks. Unpin one first.",
+    "pinFailed": "Couldn't change the pin. Try again."
   },
   "roadmap": {
     "title": "Roadmap",

@@ -124,7 +124,8 @@
     "user": "Użytkownik",
     "switchProject": "Przełącz projekt",
     "calendar": "Kalendarz",
-    "promoCodes": "Kody promocyjne"
+    "promoCodes": "Kody promocyjne",
+    "pinnedTasks": "Przypięte"
   },
   "commandPalette": {
     "triggerLabel": "Szukaj...",
@@ -801,7 +802,11 @@
     "repeatUnit_monthly": "{count, plural, one {miesiąc} few {miesiące} other {miesięcy}}",
     "repeatUnit_every_n_days": "{count, plural, one {dzień} other {dni}}",
     "repeatHint": "Po ukończeniu tego zadania w To do powstanie następne - z tym samym opisem, etykietami, osobą i subtaskami, z terminem na kolejną datę.",
-    "repeatsAria": "Powtarza się"
+    "repeatsAria": "Powtarza się",
+    "pinTask": "Przypnij",
+    "unpinTask": "Odepnij",
+    "pinTooMany": "Możesz przypiąć do 10 zadań. Najpierw odepnij któreś.",
+    "pinFailed": "Nie udało się zmienić przypięcia. Spróbuj ponownie."
   },
   "roadmap": {
     "title": "Plan działań",

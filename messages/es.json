@@ -124,7 +124,8 @@
     "user": "Usuario",
     "switchProject": "Cambiar de proyecto",
     "calendar": "Calendario",
-    "promoCodes": "Códigos promocionales"
+    "promoCodes": "Códigos promocionales",
+    "pinnedTasks": "Fijadas"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -801,7 +802,11 @@
     "repeatUnit_monthly": "{count, plural, one {mes} other {meses}}",
     "repeatUnit_every_n_days": "{count, plural, one {día} other {días}}",
     "repeatHint": "Al terminar esta tarea se crea la siguiente en To do, con la misma descripción, etiquetas, persona y subtareas, con fecha en la próxima ocurrencia.",
-    "repeatsAria": "Se repite"
+    "repeatsAria": "Se repite",
+    "pinTask": "Fijar",
+    "unpinTask": "Desfijar",
+    "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
+    "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo."
   },
   "roadmap": {
     "title": "Hoja de ruta",

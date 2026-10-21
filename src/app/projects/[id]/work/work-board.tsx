@@ -112,18 +112,18 @@ export function WorkBoard({
   // refresh doesn't reopen it and the address bar doesn't look stale.
   const router = useRouter();
   const searchParams = useSearchParams();
+  const openTaskParam = searchParams.get("openTask");
   useEffect(() => {
-    const taskId = searchParams.get("openTask");
-    if (!taskId) return;
-    const task = state.tasks.find((item) => item.id === taskId);
+    if (!openTaskParam) return;
+    const task = state.tasks.find((item) => item.id === openTaskParam);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (task) setOpenTask(task);
     router.replace(`/projects/${projectId}/work`, { scroll: false });
-    // Only ever meant to fire once, off the URL this page loaded with - not
-    // on every state.tasks update (which would refire a stale task lookup
-    // after the id has already been stripped from the URL).
+    // Fires per new ?openTask= value - also when a pinned task in the
+    // sidebar is clicked while this board is already open - but not on
+    // every state.tasks update (which would refire a stale lookup).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [openTaskParam]);
   // View-only preference, not persisted - resets to "manual" on reload/
   // navigation. See KanbanBoard's sortMode prop doc comment for why
   // dragging is disabled while sorted by due date.

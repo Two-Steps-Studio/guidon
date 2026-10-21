@@ -3464,5 +3464,23 @@ section("59. serwer autoryzacji OAuth 2.1 (migracja 073)");
   });
 }
 
+section("60. przypiete zadania (migracja 074)");
+
+{
+  await withUser(A, async () => {
+    const set = await db.query("UPDATE public.profiles SET pinned_task_ids = ARRAY[gen_random_uuid()] WHERE id = $1 RETURNING pinned_task_ids", [A]);
+    check("wlasciciel profilu przypina zadanie", set.rows[0]?.pinned_task_ids?.length === 1);
+    check(
+      "najwyzej 10 przypietych",
+      await throwsInSavepoint("UPDATE public.profiles SET pinned_task_ids = (SELECT array_agg(gen_random_uuid()) FROM generate_series(1, 11)) WHERE id = $1", [A])
+    );
+    const ten = await db.query("UPDATE public.profiles SET pinned_task_ids = (SELECT array_agg(gen_random_uuid()) FROM generate_series(1, 10)) WHERE id = $1 RETURNING id", [A]);
+    check("10 przechodzi", ten.rows.length === 1);
+    const other = await db.query("UPDATE public.profiles SET pinned_task_ids = '{}' WHERE id = $1 RETURNING id", [B]);
+    check("nie zmienia przypiec kogos innego", other.rows.length === 0);
+    await db.query("UPDATE public.profiles SET pinned_task_ids = '{}' WHERE id = $1", [A]);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import {
   Sidebar,
   SidebarContent,
@@ -50,6 +51,7 @@ import {
   Puzzle,
   Images,
   Sparkles,
+  Pin,
 } from "lucide-react";
 
 export const GLOBAL_NAV = [
@@ -168,6 +170,30 @@ export interface AppSidebarProps {
   disabledModules?: string[];
 }
 
+/** The person's pinned tasks (migration 074) - each opens its task on its board. */
+function PinnedTasksGroup() {
+  const t = useTranslations("nav");
+  const pinned = usePinnedTasks();
+  if (!pinned || pinned.tasks.length === 0) return null;
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{t("pinnedTasks")}</SidebarGroupLabel>
+      <SidebarMenu>
+        {pinned.tasks.map((task) => (
+          <SidebarMenuItem key={task.id}>
+            <SidebarMenuButton asChild tooltip={task.project_name ? `${task.project_name} · ${task.title}` : task.title}>
+              <Link href={`/projects/${task.project_id}/work?openTask=${task.id}`}>
+                <Pin />
+                <span className={task.is_done ? "text-muted-foreground line-through" : undefined}>{task.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </SidebarGroup>
+  );
+}
+
 export function AppSidebar({
   user,
   projectId,
@@ -239,6 +265,8 @@ export function AppSidebar({
             ))}
           </SidebarMenu>
         </SidebarGroup>
+
+        <PinnedTasksGroup />
 
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => {
