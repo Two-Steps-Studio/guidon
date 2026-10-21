@@ -77,6 +77,7 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 
 - [Agentic Resource Discovery catalog](https://useguidon.com/.well-known/ard.json) (also `/.well-known/ai-catalog.json`)
 - [MCP server card](https://useguidon.com/api/mcp/server-card) and the [docs server's card](https://useguidon.com/api/mcp/docs/server-card)
-- [Agent skill](https://useguidon.com/.well-known/agent-skills/index.json): `guidon-tasks` - how to work through Guidon tasks
+- [Agent skills index](https://useguidon.com/.well-known/agent-skills/index.json): `guidon-tasks` - how to work through Guidon tasks
+- [Agent skill source files](https://github.com/two-steps-studio/guidon/tree/main/skills): `guidon-tasks`, `guidon-api` and `guidon-cli`; install an individual skill with `npx skills add two-steps-studio/guidon --skill <name>`
 - [API catalog](https://useguidon.com/.well-known/api-catalog) (RFC 9727), [OpenAPI](https://useguidon.com/openapi.json)
 - [Structured data feed](https://useguidon.com/feeds/site.jsonl) (schema.org JSONL, listed in [schemamap.xml](https://useguidon.com/schemamap.xml))

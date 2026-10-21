@@ -298,7 +298,7 @@
         },
         {
           "q": "Czy agenci AI mogą pracować nad moimi zadaniami?",
-          "a": "Tak. Claude, ChatGPT, Cursor i inne klienty MCP łączą się z serwerem MCP Guidona i logują przez OAuth; skrypty korzystają z REST API z kluczem API. Agent znajduje zadanie, czyta jego pełny kontekst, przejmuje je, zapisuje, co próbował, i oddaje pracę człowiekowi do przeglądu."
+          "a": "Tak. Utwórz darmowe konto Guidon, a następnie samodzielnie wygeneruj klucz API w Profilu > Klucze API albo połącz klienta MCP przez OAuth. Guidon ma darmowy plan i sandbox z przykładowymi zadaniami, więc możesz sprawdzić integrację bez rozmowy z działem sprzedaży. Agent znajduje zadanie, czyta jego pełny kontekst, przejmuje je, zapisuje, co próbował, i oddaje pracę człowiekowi do przeglądu."
         },
         {
           "q": "Czy mogę hostować Guidona sam?",

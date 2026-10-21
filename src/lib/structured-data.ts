@@ -2,6 +2,7 @@
 
 // Same values as lib/project-links.ts (test:agent-web checks they match).
 const GITHUB_REPO_URL = "https://github.com/two-steps-studio/guidon";
+const GITHUB_ORG_URL = "https://github.com/Two-Steps-Studio";
 const SUPPORT_EMAIL = "guidon.support@gmail.com";
 
 /**
@@ -37,7 +38,7 @@ export function organizationNode(siteUrl: string) {
       },
     ],
     address: { "@type": "PostalAddress", addressCountry: "PL" },
-    sameAs: [...SAME_AS],
+    sameAs: [GITHUB_ORG_URL],
   };
 }
 
@@ -121,6 +122,18 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
         url: siteUrl,
         brand: { "@id": `${siteUrl}/#organization` },
         mainEntityOfPage: { "@id": `${siteUrl}/#webpage` },
+        isRelatedTo: { "@id": `${siteUrl}/#software` },
+        ...(offers.length ? { offers } : { offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", category: "Freemium" } }),
+      },
+      {
+        "@type": "Service",
+        "@id": `${siteUrl}/#service`,
+        name: "Guidon Cloud project management",
+        serviceType: "Project management software",
+        description: DESCRIPTION,
+        url: siteUrl,
+        provider: { "@id": `${siteUrl}/#organization` },
+        brand: { "@id": `${siteUrl}/#organization` },
         isRelatedTo: { "@id": `${siteUrl}/#software` },
         ...(offers.length ? { offers } : { offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", category: "Freemium" } }),
       },

@@ -9,7 +9,9 @@ metadata:
 
 # Use the Guidon CLI
 
-Install with `npm install -g guidon-cli`. Run `guidon login` and enter an API key created in Guidon Profile. For CI, provide `GUIDON_API_KEY` through the CI secret store.
+The npm release is pending, so `npm install -g guidon-cli` does not work yet. The CLI source is in `packages/cli/` in the official repository. Until it is published, use the REST API or MCP server documented at https://useguidon.com/developers.md.
+
+After publication, install with `npm install -g guidon-cli`, run `guidon login`, and enter an API key created in Guidon Profile. For CI, provide `GUIDON_API_KEY` through the CI secret store.
 
 Common commands:
 
