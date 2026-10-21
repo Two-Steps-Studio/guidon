@@ -338,7 +338,8 @@ function TaskDetailDialogInner({
     <>
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+        scrollable
+        className="sm:max-w-2xl"
         onEscapeKeyDown={(event) => {
           const target = event.target as HTMLElement | null;
           if (target?.dataset.subtaskTitleField === "true") {

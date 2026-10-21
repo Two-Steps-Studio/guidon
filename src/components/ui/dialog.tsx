@@ -50,9 +50,18 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  scrollable = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  /**
+   * Long content scrolls inside the dialog (capped at 90vh). The scrolling
+   * happens in an inner element, not on the dialog itself: an in-place
+   * popover (the date picker) is positioned relative to the dialog, and a
+   * dialog with its own overflow clipped it at its edge - the calendar's
+   * last days couldn't be picked on laptop screens.
+   */
+  scrollable?: boolean
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
@@ -65,7 +74,13 @@ function DialogContent({
         )}
         {...props}
       >
-        {children}
+        {scrollable ? (
+          <div data-slot="dialog-scroll" className="-m-6 grid max-h-[90vh] gap-4 overflow-y-auto p-6">
+            {children}
+          </div>
+        ) : (
+          children
+        )}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
