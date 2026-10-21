@@ -79,6 +79,7 @@ export function mcpServerCard(siteUrl: string, docsServer = false) {
       title: "Guidon docs",
       description: "Search and read Guidon's public documentation: API, MCP, auth, pricing.",
       websiteUrl: `${siteUrl}/developers`,
+      _meta: { "ai.ora/kind": "docs" },
       remotes: [{ type: "streamable-http", url: `${siteUrl}/api/mcp/docs`, supportedProtocolVersions: ["2025-11-25", "2025-06-18", "2025-03-26"] }],
     };
   }
@@ -90,6 +91,7 @@ export function mcpServerCard(siteUrl: string, docsServer = false) {
     description: "Guidon project management: find, claim, update and hand back tasks with full context.",
     websiteUrl: siteUrl,
     icons: [{ src: `${siteUrl}/icon.png`, mimeType: "image/png" }],
+    _meta: { "ai.ora/kind": "product" },
     remotes: [
       {
         type: "streamable-http",
@@ -105,6 +107,48 @@ export function mcpServerCard(siteUrl: string, docsServer = false) {
             variables: { token: { description: "Access token or API key (guidon_...)", isRequired: true, isSecret: true } },
           },
         ],
+      },
+    ],
+  };
+}
+
+/**
+ * The site's MCP manifest - the informal convention (/.well-known/mcp.json,
+ * /.well-known/mcp/manifest.json, /mcp.json) scanners and registries read
+ * for a display name, icon and description before any server card. `kind`
+ * says which server is the product itself and which only serves docs.
+ */
+export function mcpManifest(siteUrl: string) {
+  const product = {
+    name: "Guidon",
+    kind: "product",
+    description: "Context-first project management for development teams. Agents find a task, read its full context (decisions, knowledge, memory), claim it, record attempts and hand it back for review.",
+    icon: `${siteUrl}/icon.png`,
+    url: `${siteUrl}/api/mcp`,
+    transport: "streamable-http",
+    capabilities: { tools: true, resources: true },
+    authentication: {
+      type: "oauth2",
+      protected_resource_metadata: `${siteUrl}/.well-known/oauth-protected-resource/api/mcp`,
+      alternative: "Authorization: Bearer guidon_... (API key from Profile > API keys)",
+    },
+    server_card: `${siteUrl}/api/mcp/server-card`,
+    documentation: `${siteUrl}/developers`,
+  };
+  return {
+    ...product,
+    servers: [
+      product,
+      {
+        name: "Guidon docs",
+        kind: "docs",
+        description: "Search and read Guidon's public documentation. No sign-in.",
+        icon: `${siteUrl}/icon.png`,
+        url: `${siteUrl}/api/mcp/docs`,
+        transport: "streamable-http",
+        capabilities: { tools: true },
+        authentication: { type: "none" },
+        server_card: `${siteUrl}/api/mcp/docs/server-card`,
       },
     ],
   };

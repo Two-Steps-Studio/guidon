@@ -95,6 +95,8 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // The sandbox explained (src/app/sandbox) - /sandbox/start needs a session.
   '/sandbox',
   '/sandbox.md',
+  // The MCP manifest, also under /.well-known/ (src/app/.well-known/mcp.json).
+  '/mcp.json',
   // Onboarding before the account exists (app/start) - the questions come
   // first, signing up last. /start/finish needs a session and isn't listed.
   '/start',
