@@ -216,13 +216,13 @@ export default async function DashboardPage() {
 
   return (
     <AppShell user={user}>
-      <div className="container mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="container mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground first-letter:uppercase">{todayLabel}</p>
             <h1 className="text-3xl font-bold">{t("greeting", { name: firstName })}</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Button variant="outline" asChild>
               <Link href="/my-tasks">
                 <ListChecks className="mr-2 h-4 w-4" />

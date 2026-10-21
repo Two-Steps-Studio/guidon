@@ -12,12 +12,12 @@
   "bugs": {
     "url": "https://github.com/Two-Steps-Studio/guidon/issues"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "guidon": "dist/bin.js"
   },
-  "files": ["dist", "src", "README.md"],
+  "files": ["dist", "src", "README.md", "LICENSE"],
   "engines": {
     "node": ">=18.11"
   },
@@ -28,7 +28,7 @@
     "prepublishOnly": "node scripts/check-publishable.mjs && npm run clean && npm test"
   },
   "dependencies": {
-    "@guidon/sdk": "file:../sdk-js"
+    "@guidon/sdk": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.0",

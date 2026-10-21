@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Guidon — Keep the why with the work</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/music/audio-data.js"></script>
+    <style>
+      :root {
+        --ink: #0b0d10;
+        --paper: #e8eaed;
+        --blue: #1d4fd8;
+        --blue-light: #4d8dff;
+        --mono: "JetBrains Mono", monospace;
+        --display: Montserrat, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after { box-sizing: border-box; }
+
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--display);
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      .scene-wash {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 55%, rgba(29, 79, 216, 0.22) 0%, rgba(11, 13, 16, 0) 58%);
+      }
+
+      #scene-2,
+      #scene-3,
+      #scene-4,
+      #scene-5 { opacity: 0; }
+
+      .eyebrow {
+        color: var(--blue-light);
+        font: 700 22px/1.2 var(--mono);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .hook-wrap {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 44px;
+        text-align: center;
+      }
+
+      #hook-logo {
+        display: block;
+        width: 340px;
+        height: auto;
+      }
+
+      #hook-line {
+        width: 1400px;
+        margin: 0;
+        color: var(--paper);
+        font-size: 92px;
+        font-weight: 700;
+        line-height: 1.04;
+        letter-spacing: -0.045em;
+      }
+
+      .accent-rule {
+        width: 120px;
+        height: 6px;
+        background: var(--blue-light);
+        border-radius: 3px;
+      }
+
+      .screen-scene {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .screen-layout {
+        position: relative;
+        width: 1600px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 30px;
+      }
+
+      .screen-label {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .screen-label::before {
+        content: "";
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: var(--blue-light);
+      }
+
+      .screen-frame {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        border: 2px solid rgba(77, 141, 255, 0.62);
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 34px 100px rgba(0, 0, 0, 0.48);
+        transform-origin: 50% 50%;
+      }
+
+      .screen-frame img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      #dashboard-frame { width: 1536px; }
+      #decision-frame { width: 1600px; }
+      #memory-frame { width: 1600px; }
+
+      #dashboard-img,
+      #decision-img,
+      #memory-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        transform-origin: 50% 50%;
+      }
+
+      .screen-caption {
+        position: absolute;
+        right: 0;
+        bottom: -55px;
+        color: rgba(232, 234, 237, 0.7);
+        font: 600 18px/1.2 var(--mono);
+        letter-spacing: 0.04em;
+      }
+
+      .outro-wrap {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        text-align: center;
+      }
+
+      #outro-glow {
+        position: absolute;
+        width: 620px;
+        height: 230px;
+        border-radius: 50%;
+        background: rgba(29, 79, 216, 0.1);
+        filter: blur(60px);
+      }
+
+      #outro-logo {
+        position: relative;
+        display: block;
+        width: 470px;
+        height: auto;
+      }
+
+      #outro-tagline {
+        position: relative;
+        margin: 0;
+        color: var(--paper);
+        font-size: 56px;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+      }
+
+      #outro-url {
+        position: relative;
+        color: var(--blue-light);
+        font: 700 24px/1.2 var(--mono);
+        letter-spacing: 0.02em;
+      }
+
+      .music {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="20.4"
+      data-width="1920"
+      data-height="1080"
+      data-fps="30"
+    >
+      <div class="scene" id="scene-1">
+        <div class="scene-wash"></div>
+        <div id="scene-1-content" class="hook-wrap">
+          <img id="hook-logo" src="assets/images/guidon-wordmark-white.png" alt="Guidon" />
+          <div id="hook-rule" class="accent-rule"></div>
+          <h1 id="hook-line">Keep the why with the work.</h1>
+        </div>
+      </div>
+
+      <div class="scene screen-scene" id="scene-2">
+        <div id="scene-2-content" class="screen-layout">
+          <div class="screen-label eyebrow">The work</div>
+          <div id="dashboard-frame" class="screen-frame">
+            <img id="dashboard-img" src="assets/images/dashboard-focus.webp" alt="Guidon dashboard showing open tasks and project work" />
+          </div>
+          <div class="screen-caption">01 / TASK BOARD</div>
+        </div>
+      </div>
+
+      <div class="scene screen-scene" id="scene-3">
+        <div id="scene-3-content" class="screen-layout">
+          <div class="screen-label eyebrow">The reasoning</div>
+          <div id="decision-frame" class="screen-frame">
+            <img id="decision-img" src="assets/images/decisions-focus.webp" alt="Guidon project decisions with rationale, impact and alternatives" />
+          </div>
+          <div class="screen-caption">02 / DECISIONS + RATIONALE</div>
+        </div>
+      </div>
+
+      <div class="scene screen-scene" id="scene-4">
+        <div id="scene-4-content" class="screen-layout">
+          <div class="screen-label eyebrow">The context</div>
+          <div id="memory-frame" class="screen-frame">
+            <img id="memory-img" src="assets/images/memory-focus.webp" alt="Guidon project memory with a reviewable AI insight" />
+          </div>
+          <div class="screen-caption">03 / PROJECT MEMORY · REST + MCP FOR AGENTS</div>
+        </div>
+      </div>
+
+      <div class="scene" id="scene-5">
+        <div class="scene-wash"></div>
+        <div id="scene-5-content" class="outro-wrap">
+          <div id="outro-glow"></div>
+          <img id="outro-logo" src="assets/images/guidon-wordmark-white.png" alt="Guidon" />
+          <p id="outro-tagline">Keep the why with the work.</p>
+          <div id="outro-url">useguidon.com</div>
+        </div>
+      </div>
+
+      <audio
+        id="bg-music"
+        class="music"
+        data-start="0"
+        data-duration="20.4"
+        data-track-index="10"
+        data-volume="0.32"
+        data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:0},{&quot;t&quot;:0.6,&quot;v&quot;:0.32},{&quot;t&quot;:19.6,&quot;v&quot;:0.32},{&quot;t&quot;:20.4,&quot;v&quot;:0}]}]}"
+        src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"
+      ></audio>
+      <audio id="sfx-board" data-start="3.27" data-duration="0.18" data-track-index="11" data-volume="0.72" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+      <audio id="sfx-decisions" data-start="8.74" data-duration="0.15" data-track-index="12" data-volume="0.68" src="assets/sfx/impactSoft_medium_004.ogg"></audio>
+      <audio id="sfx-memory" data-start="13.11" data-duration="0.12" data-track-index="13" data-volume="0.55" src="assets/sfx/bong_001.ogg"></audio>
+      <audio id="sfx-outro" data-start="17.47" data-duration="0.15" data-track-index="14" data-volume="0.64" src="assets/sfx/impactSoft_medium_004.ogg"></audio>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Opening: brand line arrives with a restrained, deliberate push-in.
+      tl.fromTo("#hook-logo", { y: 20, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: "power3.out" }, 0.15);
+      tl.fromTo("#hook-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, 0.55);
+      tl.fromTo("#hook-line", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.72, ease: "power3.out" }, 0.72);
+      tl.to("#scene-1-content", { y: -18, opacity: 0, duration: 0.38, ease: "power2.in" }, 2.9);
+
+      // The screenshot itself is the proof; its slow camera move keeps the frame alive.
+      tl.set("#scene-2", { opacity: 1 }, 3.27);
+      tl.fromTo("#scene-2-content", { x: 46, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 3.27);
+      tl.fromTo("#dashboard-img", { scale: 1 }, { scale: 1.035, duration: 5.15, ease: "none" }, 3.55);
+      tl.to("#scene-2-content", { x: -18, opacity: 0, duration: 0.36, ease: "power2.in" }, 8.38);
+
+      tl.set("#scene-3", { opacity: 1 }, 8.74);
+      tl.fromTo("#scene-3-content", { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "power3.out" }, 8.74);
+      tl.fromTo("#decision-img", { scale: 1 }, { scale: 1.025, duration: 4.3, ease: "none" }, 8.96);
+      tl.to("#scene-3-content", { y: -16, opacity: 0, duration: 0.36, ease: "power2.in" }, 12.75);
+
+      tl.set("#scene-4", { opacity: 1 }, 13.11);
+      tl.fromTo("#scene-4-content", { x: -40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 13.11);
+      tl.fromTo("#memory-img", { scale: 1 }, { scale: 1.025, duration: 4.2, ease: "none" }, 13.32);
+      tl.to("#scene-4-content", { scale: 0.985, opacity: 0, duration: 0.38, ease: "power2.in" }, 17.09);
+
+      tl.set("#scene-5", { opacity: 1 }, 17.47);
+      tl.fromTo("#outro-logo", { y: 22, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" }, 17.47);
+      tl.fromTo("#outro-tagline", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 17.7);
+      tl.fromTo("#outro-url", { opacity: 0 }, { opacity: 1, duration: 0.42, ease: "power2.out" }, 18.04);
+
+      // The real logo's surrounding blue light follows precomputed bass energy.
+      if (window.AUDIO_DATA && Array.isArray(window.AUDIO_DATA.frames)) {
+        const glow = document.querySelector("#outro-glow");
+        const count = Math.min(window.AUDIO_DATA.totalFrames, 612);
+        for (let frame = 0; frame < count; frame += 1) {
+          const energy = window.AUDIO_DATA.frames[frame].bands[0] || 0;
+          const blur = Math.round(38 + energy * 12);
+          const alpha = (0.06 + energy * 0.08).toFixed(3);
+          tl.call(() => {
+            glow.style.boxShadow = `0 0 ${blur}px rgba(29, 79, 216, ${alpha})`;
+          }, [], frame / window.AUDIO_DATA.fps);
+        }
+      }
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

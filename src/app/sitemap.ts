@@ -73,6 +73,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // support; the site-wide agent guide also links to the machine-readable files.
   for (const path of [
     '/openapi.json',
+    '/.well-known/mcp.json',
+    '/.well-known/mcp/manifest.json',
+    '/api/mcp/server-card',
+    '/api/mcp/docs/server-card',
     '/auth.md',
     '/auth/llms.txt',
     '/developers.md',

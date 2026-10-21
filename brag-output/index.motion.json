@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "assertions": [
+    { "kind": "appearsBy", "selector": "#hook-logo", "bySec": 0.9 },
+    { "kind": "appearsBy", "selector": "#hook-line", "bySec": 1.4 },
+    { "kind": "before", "a": "#hook-logo", "b": "#hook-line" },
+    { "kind": "appearsBy", "selector": "#dashboard-frame", "bySec": 4.2 },
+    { "kind": "appearsBy", "selector": "#decision-frame", "bySec": 9.6 },
+    { "kind": "appearsBy", "selector": "#memory-frame", "bySec": 14.0 },
+    { "kind": "appearsBy", "selector": "#outro-logo", "bySec": 18.2 },
+    { "kind": "staysInFrame", "selector": "#dashboard-frame" },
+    { "kind": "staysInFrame", "selector": "#decision-frame" },
+    { "kind": "staysInFrame", "selector": "#memory-frame" },
+    { "kind": "staysInFrame", "selector": "#outro-logo" }
+  ]
+}

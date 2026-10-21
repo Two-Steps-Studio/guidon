@@ -78,10 +78,18 @@ guidon tasks list --project "$PROJECT" --status review --json | jq -r '.[].title
 ## Development
 
 ```bash
-cd packages/sdk-js && npm install && npm run build   # the CLI uses the local SDK
-cd ../cli && npm install
-npm test        # build + node:test (spawns the CLI against a local mock server)
-node dist/bin.js --help
+# From the repository root. npm workspaces link the local SDK into the CLI.
+npm install
+npm run build:sdk
+npm run build:cli
+npm run test:cli
+node packages/cli/dist/bin.js --help
 ```
 
 Links: [Homepage](https://useguidon.com) - [Source](https://github.com/Two-Steps-Studio/guidon/tree/main/packages/cli)
+
+## License
+
+This CLI is licensed under the [MIT License](./LICENSE). This license applies
+to the CLI package only, not to the Guidon application or the rest of the
+repository.

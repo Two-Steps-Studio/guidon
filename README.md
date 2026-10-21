@@ -8,6 +8,7 @@ game-development-friendly teams.
 [Website](https://useguidon.com) ·
 [Self-hosting guide](./docs/self-hosting.md) ·
 [REST API & MCP for AI agents](https://useguidon.com/developers) ·
+[Agent instructions](./AGENTS.md) ·
 [Agent Plugin](./plugin.json) |
 [MCP Registry metadata](./server.json) |
 [Plugins](https://useguidon.com/plugins)
@@ -93,6 +94,8 @@ Available scripts (`package.json`):
 |---|---|
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
+| `npm run build:sdk` / `npm run build:cli` | Build the JavaScript SDK and CLI workspaces |
+| `npm run test:sdk` / `npm run test:cli` | Run their package-level checks |
 | `npm run start` | Start the production server (after `build`) |
 | `npm run lint` | ESLint |
 | `npm run migrate` | Apply pending database migrations |
@@ -221,13 +224,12 @@ guidon/
 
 ## License
 
-**Unresolved.** This file previously stated "Proprietary - All rights
-reserved." The monorepo root `LICENSE` (at `C:\tss\LICENSE`) is GPLv3. These
-conflict, and that conflict has not been reconciled — the user was asked
-directly and chose to leave it undecided rather than pick one now. Do not
-treat either claim as authoritative until this is resolved. Nothing in this
-repository (`package.json`, a `LICENSE` file, or otherwise) currently
-asserts a license for Guidon specifically.
+**Unresolved for the Guidon application and monorepo source.** The JavaScript
+SDK, Python SDK, and CLI packages are separately licensed under MIT, as
+requested. That package license does not license the Guidon application or the
+rest of this repository. The monorepo root `LICENSE` (at `C:\tss\LICENSE`) is
+GPLv3 and has not been reconciled with a license for Guidon itself; do not
+treat it as authoritative for the application.
 
 ## Support
 

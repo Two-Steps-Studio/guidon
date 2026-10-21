@@ -13,7 +13,12 @@ export function GET() {
     "User-agent: *",
     "Allow: /",
     ...["/admin", "/api", "/dashboard", "/organizations", "/projects", "/profile"].map((path) => `Disallow: ${path}`),
-    // The public API descriptions under /api stay crawlable.
+    // These public MCP surfaces are product entry points. They require OAuth
+    // or an API key before exposing any tools or project data, but crawlers
+    // need to be able to discover them from the server cards and manifests.
+    "Allow: /api/mcp",
+    "Allow: /api/mcp/docs",
+    // Public server cards remain directly crawlable as well.
     "Allow: /api/mcp/server-card",
     "Allow: /api/mcp/docs/server-card",
     "",

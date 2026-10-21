@@ -2,11 +2,19 @@
   "name": "guidon",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/sdk-js",
+    "packages/cli"
+  ],
   "scripts": {
     "predev": "node scripts/build-plugin-zips.mjs",
     "dev": "next dev --webpack -p 5803",
     "prebuild": "node scripts/build-plugin-zips.mjs && node scripts/copy-monaco-assets.mjs",
     "build": "next build",
+    "build:sdk": "npm run build --workspace @guidon/sdk",
+    "build:cli": "npm run build --workspace guidon-cli",
+    "test:sdk": "npm test --workspace @guidon/sdk",
+    "test:cli": "npm test --workspace guidon-cli",
     "start": "next start -p 5803",
     "lint": "eslint",
     "postinstall": "node scripts/copy-monaco-assets.mjs",

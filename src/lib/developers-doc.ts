@@ -168,7 +168,7 @@ Try the API, the MCP server or an agent without touching real work: \`POST /sand
 Official client source packages in the [Guidon repository](${GITHUB_REPO_URL}) wrap the same \`/api/v1\` with an API key:
 
 - **JavaScript/TypeScript SDK** \`@guidon/sdk\` - [packages/sdk-js](${GITHUB_REPO_URL}/tree/main/packages/sdk-js): typed methods for projects, tasks, comments and attempts, automatic retries for safe requests, an optional Idempotency-Key on writes.
-- **Python SDK** \`guidon\` - [sdk/python](${GITHUB_REPO_URL}/tree/main/sdk/python): the same surface for Python 3.9+.
+- **Python SDK** distribution \`guidon-sdk\` (import \`guidon\`) - [sdk/python](${GITHUB_REPO_URL}/tree/main/sdk/python): the same surface for Python 3.9+.
 - **CLI** \`guidon-cli\` (command \`guidon\`) - [packages/cli](${GITHUB_REPO_URL}/tree/main/packages/cli): list projects, create and move tasks, comment, \`guidon whoami\` - from a terminal or CI.
 
 \`\`\`bash

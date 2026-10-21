@@ -134,10 +134,16 @@ for the knowledge collections).
 ## Development
 
 ```bash
-cd packages/sdk-js
+# From the repository root.
 npm install
-npm run build   # tsc -> dist/
-npm test        # build + node:test against a local mock server
+npm run build:sdk   # tsc -> packages/sdk-js/dist/
+npm run test:sdk    # build + node:test against a local mock server
 ```
 
 Links: [Homepage](https://useguidon.com) - [Source](https://github.com/Two-Steps-Studio/guidon/tree/main/packages/sdk-js) - API reference: `https://useguidon.com/openapi.json`
+
+## License
+
+This SDK is licensed under the [MIT License](./LICENSE). This license applies
+to the SDK package only, not to the Guidon application or the rest of the
+repository.

@@ -1,4 +1,4 @@
-# guidon - Python SDK for Guidon
+# guidon-sdk - Python SDK for Guidon
 
 Official Python client for the [Guidon](https://useguidon.com) REST API
 (`/api/v1`): projects, tasks, subtasks, comments, attempts, bug reports and
@@ -10,10 +10,11 @@ project knowledge (decisions, knowledge sources, roadmap, memory, tech stack).
 
 ## Install
 
-The PyPI release is pending. The command below will work after the `guidon` package is published.
+The PyPI release is pending. After publication, install the `guidon-sdk`
+distribution; its Python import name remains `guidon`.
 
 ```bash
-pip install guidon
+pip install guidon-sdk
 ```
 
 ## Authenticate
@@ -130,3 +131,9 @@ python -m build                           # needs `pip install build`
 ```
 
 Links: [Homepage](https://useguidon.com) - [Source](https://github.com/Two-Steps-Studio/guidon/tree/main/sdk/python) - API reference: `https://useguidon.com/openapi.json`
+
+## License
+
+This SDK is licensed under the [MIT License](./LICENSE). This license applies
+to the SDK package only, not to the Guidon application or the rest of the
+repository.
