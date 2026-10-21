@@ -3,7 +3,7 @@ import "server-only";
 import en from "../../messages/en.json";
 import { homepageMarkdown } from "@/lib/agent-web";
 import { developersMarkdown } from "@/lib/developers-doc";
-import { aboutMarkdown, contactMarkdown, signInMarkdown, signUpMarkdown } from "@/lib/company-pages";
+import { aboutMarkdown, contactMarkdown, sandboxMarkdown, signInMarkdown, signUpMarkdown } from "@/lib/company-pages";
 import { authMarkdown } from "@/lib/oauth/oauth-core";
 import { skillMarkdown } from "@/lib/agent-discovery";
 import { splitSections, type DocPage, type DocSection } from "@/lib/docs-search-core";
@@ -18,6 +18,7 @@ export function docPages(siteUrl = SITE_URL): DocPage[] {
     { id: "agent-skill", title: "Working on Guidon tasks (agent skill)", url: `${siteUrl}/.well-known/agent-skills/guidon-tasks/SKILL.md`, markdown: skillMarkdown(siteUrl) },
     { id: "about", title: "About Guidon", url: `${siteUrl}/about`, markdown: aboutMarkdown(siteUrl) },
     { id: "contact", title: "Contact", url: `${siteUrl}/contact`, markdown: contactMarkdown(siteUrl) },
+    { id: "sandbox", title: "Sandbox", url: `${siteUrl}/sandbox`, markdown: sandboxMarkdown(siteUrl) },
     { id: "sign-in", title: "Sign in", url: `${siteUrl}/auth/login`, markdown: signInMarkdown(siteUrl) },
     { id: "sign-up", title: "Sign up", url: `${siteUrl}/auth/signup`, markdown: signUpMarkdown(siteUrl) },
   ];

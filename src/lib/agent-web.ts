@@ -28,6 +28,7 @@ export const SIGNED_IN_SECTIONS: ReadonlySet<string> = new Set([
   "plugins",
   "profile",
   "projects",
+  "sandbox",
   "upgrade",
 ]);
 
@@ -150,6 +151,7 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     "",
     `- [About Guidon](${siteUrl}/about)`,
     `- [Contact](${siteUrl}/contact)`,
+    `- [Sandbox for the API and agents](${siteUrl}/sandbox)`,
     "",
     "## Legal",
     "",
@@ -199,6 +201,7 @@ export const MARKDOWN_TWINS: Readonly<Record<string, string>> = {
   "/developers": "/developers.md",
   "/about": "/about.md",
   "/contact": "/contact.md",
+  "/sandbox": "/sandbox.md",
   "/auth/login": "/auth/login.md",
   "/auth/signup": "/auth/signup.md",
 };

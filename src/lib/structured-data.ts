@@ -125,7 +125,19 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
 }
 
 /** /about and /contact: the page type plus the Organization it is about. */
-export function companyPageJsonLd(siteUrl: string, kind: "AboutPage" | "ContactPage", path: string, name: string) {
+/** Home > page, for subpages' search results. */
+export function breadcrumbNode(siteUrl: string, path: string, name: string) {
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${siteUrl}${path}#breadcrumb`,
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Guidon", item: `${siteUrl}/` },
+      { "@type": "ListItem", position: 2, name, item: `${siteUrl}${path}` },
+    ],
+  };
+}
+
+export function companyPageJsonLd(siteUrl: string, kind: "AboutPage" | "ContactPage" | "WebPage", path: string, name: string) {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -137,7 +149,9 @@ export function companyPageJsonLd(siteUrl: string, kind: "AboutPage" | "ContactP
         name,
         isPartOf: { "@type": "WebSite", "@id": `${siteUrl}/#website` },
         about: { "@id": `${siteUrl}/#organization` },
+        breadcrumb: { "@id": `${siteUrl}${path}#breadcrumb` },
       },
+      breadcrumbNode(siteUrl, path, name),
     ],
   };
 }

@@ -57,6 +57,37 @@ Guidon is operated by Two Steps Studio, Poland - more on the [About page](${site
 `;
 }
 
+/** /sandbox and /sandbox.md - the test environment for the API, MCP and agents (src/lib/api/sandbox.ts). */
+export function sandboxMarkdown(siteUrl: string): string {
+  return `# Guidon sandbox
+
+The sandbox is a test environment for the Guidon API, the MCP server and AI agents: a separate organization, flagged as a sandbox, with one project of example tasks across the board's columns. Point an agent or a script at it to try things - create, move, comment, delete - without touching real work. It is free and counts toward no paid plan.
+
+## Get one
+
+- **In the browser:** [open your sandbox](${siteUrl}/sandbox/start) (sign in or [create a free account](${siteUrl}/auth/signup) first). One click creates it; after that the page opens its board.
+- **Over the API:** with an API key or OAuth token, \`POST ${siteUrl}/api/v1/sandbox\`. The answer has \`organization_id\`, \`project_id\` and \`board_url\`; \`GET /api/v1/sandbox\` returns the same later.
+
+\`\`\`bash
+curl -X POST ${siteUrl}/api/v1/sandbox -H "Authorization: Bearer guidon_..."
+\`\`\`
+
+## Reset it
+
+\`POST /api/v1/sandbox\` with \`{"reset": true}\` replaces the sandbox project with fresh example tasks, so every test run can start from the same data. The **Reset** button on [your sandbox page](${siteUrl}/sandbox/start) does the same.
+
+## What it is for
+
+- Trying the [REST API](${siteUrl}/developers) and the [OpenAPI spec](${siteUrl}/openapi.json) with real responses.
+- Connecting an MCP client (Claude, ChatGPT, Cursor and others) to \`${siteUrl}/api/mcp\` and letting the agent claim and finish example tasks.
+- Testing async jobs (\`POST /api/v1/projects/{id}/tasks/import\` answers 202 with a \`Location\` to poll), batching, idempotency keys and webhooks.
+
+## Rules
+
+The sandbox is an ordinary organization: the same permissions, rate limits (60 requests per minute per key) and API behave exactly as in production. Only you are a member. Delete it like any organization when you no longer need it.
+`;
+}
+
 /** /auth/login.md - what the sign-in page offers, and the way in for an agent (which can't use a password form). */
 export function signInMarkdown(siteUrl: string): string {
   return `# Sign in to Guidon
