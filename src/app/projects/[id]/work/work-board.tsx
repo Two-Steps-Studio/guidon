@@ -33,7 +33,8 @@ import {
   type BoardColumn,
   type PriorityDef,
 } from "@/lib/work/task-board";
-import { moveTask } from "./actions";
+import { createTask, moveTask } from "./actions";
+import { toolResult, useWebMcpTools } from "@/components/agent/web-mcp";
 import { playSound } from "@/lib/sounds";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { ImportTasksDialog } from "./import-tasks-dialog";
@@ -330,6 +331,75 @@ export function WorkBoard({
         ? current.tasks.map((item) => (item.id === task.id ? task : item))
         : [...current.tasks, task],
     }));
+
+  // WebMCP: a browser agent working in this tab can read and change the
+  // board as the person - through the same actions (and permissions) as
+  // the UI, with the same optimistic updates.
+  useWebMcpTools([
+    {
+      name: "list_board_tasks",
+      title: "List tasks on this board",
+      description: `The tasks on the open Guidon board (${projectName}): id, title, column, priority, due date. Columns: ${columns.map((column) => column.status).join(", ")}.`,
+      annotations: { readOnlyHint: true },
+      execute: () => {
+        const tasks = state.tasks
+          .filter((task) => !task.parent_task_id)
+          .map((task) => ({ id: task.id, title: task.title, status: task.status, priority: task.priority, due_date: task.due_date ?? null }));
+        return toolResult(tasks.map((task) => `${task.id} [${task.status}] ${task.title}`).join("\n") || "The board is empty.", { tasks });
+      },
+    },
+    ...(canEdit
+      ? [
+          {
+            name: "create_board_task",
+            title: "Create a task on this board",
+            description: `Create a task on the open Guidon board (${projectName}).`,
+            inputSchema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                status: { type: "string", enum: columns.map((column) => column.status), description: "Column; defaults to the first." },
+                priority: { type: "string", enum: ["low", "medium", "high", "urgent"] },
+              },
+              required: ["title"],
+            },
+            execute: async (input: Record<string, unknown>) => {
+              const status = (columns.some((column) => column.status === input.status) ? input.status : columns[0]?.status ?? "todo") as TaskStatus;
+              const result = await createTask(projectId, {
+                title: String(input.title ?? ""),
+                description: typeof input.description === "string" ? input.description : "",
+                status,
+                priority: (["low", "medium", "high", "urgent"].includes(String(input.priority)) ? input.priority : "medium") as Task["priority"],
+                assigneeId: "",
+                dueDate: "",
+                sortOrder: Math.max(0, ...state.tasks.map((task) => task.sort_order ?? 0)) + 1000,
+              });
+              if (result.error || !result.task) return toolResult(result.error ?? "The task wasn't created.");
+              upsertTask(result.task);
+              return toolResult(`Created "${result.task.title}" (${result.task.id}) in ${status}.`, { task: result.task });
+            },
+          },
+          {
+            name: "move_board_task",
+            title: "Move a task to another column",
+            description: "Move a task on the open board to another column (to the bottom of it).",
+            inputSchema: {
+              type: "object",
+              properties: { task_id: { type: "string" }, status: { type: "string", enum: columns.map((column) => column.status) } },
+              required: ["task_id", "status"],
+            },
+            execute: async (input: Record<string, unknown>) => {
+              const task = state.tasks.find((item) => item.id === input.task_id);
+              const status = columns.find((column) => column.status === input.status)?.status;
+              if (!task || !status) return toolResult("Unknown task or column - call list_board_tasks first.");
+              await handleMove(task, status, Math.max(0, ...state.tasks.map((item) => item.sort_order ?? 0)) + 1000);
+              return toolResult(`Moved "${task.title}" to ${status}.`);
+            },
+          },
+        ]
+      : []),
+  ]);
 
   const removeTask = (taskId: string) =>
     setState((current) => ({

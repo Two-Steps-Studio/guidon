@@ -39,6 +39,9 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // actual file, so the site was effectively unindexable.
   '/robots.txt',
   '/sitemap.xml',
+  // Structured-data feeds for agents (NLWeb Schema Feeds), named in robots.txt.
+  '/schemamap.xml',
+  '/feeds/site.jsonl',
   // Browsers fetch the web app manifest without cookies (no crossorigin
   // credentials), so "Add to Home Screen" got the login page instead and fell
   // back to a page screenshot as the icon.
@@ -49,6 +52,10 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // login redirect below would make it unreachable. Exact match: it is a
   // single POST-only route with no sub-paths.
   '/api/mcp',
+  // Its server card (public description) and the public docs MCP server.
+  '/api/mcp/server-card',
+  '/api/mcp/docs',
+  '/api/mcp/docs/server-card',
   // GitHub App webhook - GitHub never carries a session cookie; the route
   // verifies the X-Hub-Signature-256 HMAC itself and 401s without it.
   '/api/github/webhook',
@@ -76,6 +83,8 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/oauth/revoke',
   // How agents get credentials, as Markdown (src/app/auth.md).
   '/auth.md',
+  // NLWeb question endpoint over the public docs (src/app/ask).
+  '/ask',
   // Who runs Guidon and how to reach them, plus their Markdown twins.
   '/about',
   '/about.md',

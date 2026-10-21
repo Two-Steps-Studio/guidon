@@ -5,6 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "sonner";
+import { GlobalWebMcpTools } from "@/components/agent/web-mcp";
 import { DitherBackground } from "@/components/layout/dither-background";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
@@ -133,6 +134,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 "dark" mirrors the user's explicit choice above so toasts don't
                 look inconsistent with the rest of the UI. */}
             <Toaster theme={theme} richColors closeButton />
+            <GlobalWebMcpTools />
           </div>
         </NextIntlClientProvider>
       </body>

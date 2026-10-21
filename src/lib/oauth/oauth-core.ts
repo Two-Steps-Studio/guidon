@@ -340,3 +340,28 @@ Leaving \`scope\` out asks for all of them.
 - API keys: revoked by the user in Profile → API keys.
 `;
 }
+
+/** /auth/llms.txt - the authentication section's own index (llmstxt.org format), linked from /llms.txt. */
+export function authLlmsTxt(siteUrl: string): string {
+  return `# Guidon authentication
+
+> How people and agents sign in to Guidon: OAuth 2.1 with PKCE for MCP clients and apps, personal API keys for scripts, and the browser sign-in for people.
+
+## Docs
+
+- [auth.md](${siteUrl}/auth.md): the whole flow for agents - discover, register, authorize, exchange, use, errors, revocation
+- [Authorization server metadata](${siteUrl}/.well-known/oauth-authorization-server): RFC 8414
+- [Protected resource metadata for the MCP server](${siteUrl}/.well-known/oauth-protected-resource/api/mcp): RFC 9728
+- [Protected resource metadata for the REST API](${siteUrl}/.well-known/oauth-protected-resource/api/v1): RFC 9728
+- [Developer guide - Authentication](${siteUrl}/developers.md): API keys and their scopes
+
+## Pages
+
+- [Sign in](${siteUrl}/auth/login.md): for people; agents use OAuth or an API key instead
+- [Create an account](${siteUrl}/auth/signup.md)
+
+## Optional
+
+- [Site-wide guide for agents](${siteUrl}/llms.txt)
+`;
+}

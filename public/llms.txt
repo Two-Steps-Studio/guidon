@@ -50,6 +50,9 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 ## Docs
 
 - [Developer guide](https://useguidon.com/developers.md): API keys and scopes, MCP setup for Claude, Cursor, VS Code, Codex and Gemini, endpoints, errors. Section index: [/developers/llms.txt](https://useguidon.com/developers/llms.txt).
+- Authentication section index: [/auth/llms.txt](https://useguidon.com/auth/llms.txt).
+- [Docs MCP server](https://useguidon.com/api/mcp/docs): search and read these docs over MCP, no sign-in (tools `search_docs`, `read_doc`).
+- [Ask](https://useguidon.com/ask): NLWeb endpoint - `POST {"query":{"text":"..."}}` answers from the public docs.
 - [Authentication](https://useguidon.com/auth.md): OAuth 2.1 for MCP clients and apps, API keys for scripts - discovery, registration, tokens, scopes, errors, revocation.
 - [Pricing](https://useguidon.com/pricing.md): Guidon Cloud plans, limits and features as Markdown.
 
@@ -63,3 +66,11 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 - [Terms of Service](https://useguidon.com/legal/terms)
 - [Privacy Policy](https://useguidon.com/legal/privacy)
 - [Sitemap](https://useguidon.com/sitemap.xml)
+
+## Discovery
+
+- [Agentic Resource Discovery catalog](https://useguidon.com/.well-known/ard.json) (also `/.well-known/ai-catalog.json`)
+- [MCP server card](https://useguidon.com/api/mcp/server-card) and the [docs server's card](https://useguidon.com/api/mcp/docs/server-card)
+- [Agent skill](https://useguidon.com/.well-known/agent-skills/index.json): `guidon-tasks` - how to work through Guidon tasks
+- [API catalog](https://useguidon.com/.well-known/api-catalog) (RFC 9727), [OpenAPI](https://useguidon.com/openapi.json)
+- [Structured data feed](https://useguidon.com/feeds/site.jsonl) (schema.org JSONL, listed in [schemamap.xml](https://useguidon.com/schemamap.xml))
