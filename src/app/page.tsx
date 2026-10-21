@@ -223,7 +223,7 @@ export default async function Home() {
 
     {plans.length > 0 && <PricingSection plans={plans} />}
 
-    <section className="border-t border-border py-20" aria-labelledby="faq-title" id="faq">
+    <section className="border-t border-border py-20" aria-labelledby="faq-title" id="frequently-asked-questions">
       <div className="container mx-auto max-w-3xl px-4">
         <h2 id="faq-title" className={`${displayFont.className} mb-8 text-center text-3xl md:text-4xl`}>
           {t("faq.title")}

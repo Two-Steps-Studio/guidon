@@ -105,7 +105,7 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
         ? [
             {
               "@type": "FAQPage",
-              "@id": `${siteUrl}/#faq`,
+              "@id": `${siteUrl}/#frequently-asked-questions`,
               mainEntity: faq.map((item) => ({
                 "@type": "Question",
                 name: item.q,
