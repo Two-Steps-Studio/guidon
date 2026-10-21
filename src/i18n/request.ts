@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
+import { getAuthUser } from "@/lib/data/auth-user";
 import { createClient } from "@/lib/supabase-server";
 import { DEFAULT_LOCALE, isSupportedLocale, type Locale } from "./locales";
 import { loadMessages } from "./load-messages";
@@ -35,9 +36,7 @@ export default getRequestConfig(async () => {
   // Supabase-shaped client, see supabase-server.ts).
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
