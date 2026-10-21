@@ -181,6 +181,8 @@
     "getStarted": "Loslegen",
     "signIn": "Anmelden",
     "trySandbox": "Kostenlose API- und Agenten-Sandbox testen",
+    "freePlan": "Kostenloser Tarif",
+    "selfServeApiKey": "API-Schlüssel selbst erstellen",
     "featuresTitle": "Alles, was ein Projekt braucht, um sich selbst zu erklären",
     "featuresSubtitle": "Aufgaben allein erklären nicht, warum ein Projekt so aussieht, wie es aussieht. Guidon verfolgt den Kontext rund um die Arbeit, nicht nur die Arbeit selbst.",
     "features": {
