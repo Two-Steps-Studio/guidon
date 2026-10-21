@@ -11,6 +11,7 @@ import {
 } from "@/lib/data/organization-webhooks";
 import type { WebhookEventType } from "./events";
 import { checkWebhookUrl, signWebhookPayload } from "./security";
+import { signRequest, signingKeyFromEnv } from "@/lib/web-bot-auth";
 import { describeReceiverError, detectWebhookFormat, formatWebhookBody, type WebhookEnvelope } from "./formats";
 
 const DELIVERY_TIMEOUT_MS = 5_000;
@@ -23,6 +24,11 @@ export type TaskEvent =
 export interface DeliveryOutcome {
   status: number | null;
   error: string | null;
+}
+
+function webBotAuthHeaders(url: URL): Record<string, string> {
+  const key = signingKeyFromEnv();
+  return key ? signRequest({ url: url.href, key, agentOrigin: SITE_URL }) : {};
 }
 
 /**
@@ -57,6 +63,9 @@ export async function deliverWebhook(
         "X-Guidon-Delivery": deliveryId,
         "X-Guidon-Timestamp": String(timestamp),
         "X-Guidon-Signature": signWebhookPayload(target.secret, timestamp, body),
+        // Web Bot Auth, when a key is configured: proves the request is Guidon's
+        // to anyone who checks the key directory, without a shared secret.
+        ...webBotAuthHeaders(urlCheck.url),
       },
       body,
     });

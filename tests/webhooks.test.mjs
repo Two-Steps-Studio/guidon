@@ -19,6 +19,8 @@ import {
 } from "../src/lib/webhooks/security.ts";
 import { isWebhookEventType } from "../src/lib/webhooks/events.ts";
 import { describeReceiverError, detectWebhookFormat, formatWebhookBody } from "../src/lib/webhooks/formats.ts";
+import { DIRECTORY_CONTENT_TYPE, directoryResponse, jwkThumbprint, parseSigningKey, signRequest } from "../src/lib/web-bot-auth.ts";
+import { createPublicKey, verify } from "node:crypto";
 
 let pass = 0;
 let fail = 0;
@@ -133,6 +135,36 @@ check("slack: ping has text", typeof formatWebhookBody("slack", { type: "ping" }
 check("receiver error: Discord JSON message", describeReceiverError(400, '{"message": "Cannot send an empty message", "code": 50006}') === "Receiver responded with HTTP 400: Cannot send an empty message");
 check("receiver error: plain text first line", describeReceiverError(400, "no_text\nmore") === "Receiver responded with HTTP 400: no_text");
 check("receiver error: empty body", describeReceiverError(502, "") === "Receiver responded with HTTP 502.");
+
+console.log("\n  Web Bot Auth (src/lib/web-bot-auth.ts)");
+{
+  // Test key and vector from draft-meunier-http-message-signatures-directory / web-bot-auth (RFC 9421 B.1.4 key).
+  const jwk = { kty: "OKP", crv: "Ed25519", d: "n4Ni-HpISpVObnQMW0wOhCKROaIKqKtW_2ZYb2p9KcU", x: "JrQLj5P_89iXES9-vFgrIy29clF9CC_oPPsw3c5D0bs" };
+  const key = parseSigningKey(JSON.stringify({ ...jwk, nbf: 1712793600, exp: 1715385600 }));
+  check("thumbprint: RFC 8037 A.3 vector", jwkThumbprint({ kty: "OKP", crv: "Ed25519", x: "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo" }) === "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k");
+  check("published key: no private part, kid + nbf + exp", key && !("d" in key.publicJwk) && key.publicJwk.kid === jwkThumbprint(jwk) && key.publicJwk.nbf === 1712793600 && key.publicJwk.exp === 1715385600);
+  const headers = signRequest({
+    url: "https://example.com/",
+    key,
+    agentOrigin: "https://signature-agent.test",
+    label: "agent2",
+    now: 1735689600,
+    ttlSeconds: 4889289600 - 1735689600,
+    nonce: "n9p433xm+NJ3ph3upfBIGmsuwHw387YV7Q/F+6BSpGCVjYCqQw6rznNA8PVVLySrAWsv0hQtFioQb6E1YsauiA==",
+  });
+  check("request signature matches the draft's test vector", headers.Signature.includes("RdNFx5Bj6au3YgAMQL/RzmUlZE8QZLIaXGRpw985hWnwPfMxT228NMk6ehRS1PSl4e8PhbNZACSanGdhEwYCCg=="), headers.Signature);
+  check("Signature-Agent is a dictionary member", headers["Signature-Agent"] === 'agent2="https://signature-agent.test"');
+  check("not a JWK / not Ed25519 / empty -> no key", parseSigningKey("nope") === null && parseSigningKey(JSON.stringify({ kty: "EC" })) === null && parseSigningKey("") === null);
+  const defaults = parseSigningKey(JSON.stringify(jwk), new Date("2026-05-01T00:00:00Z"));
+  check("no nbf/exp -> start of this year to end of next", defaults.publicJwk.nbf === Date.UTC(2026, 0, 1) / 1000 && defaults.publicJwk.exp === Date.UTC(2028, 0, 1) / 1000);
+  const dir = directoryResponse({ authority: "useguidon.com", keys: [key], now: 1735689600 });
+  check("directory: media type and keys[]", dir.headers["Content-Type"] === DIRECTORY_CONTENT_TYPE && JSON.parse(dir.body).keys.length === 1);
+  const params = dir.headers["Signature-Input"].replace(/^binding=/, "");
+  const base = `"@authority";req: useguidon.com\n"content-digest": ${dir.headers["Content-Digest"]}\n"@signature-params": ${params}`;
+  const signature = Buffer.from(dir.headers.Signature.match(/:(.*):/)[1], "base64");
+  check("directory signature verifies with the listed key", verify(null, Buffer.from(base), createPublicKey({ key: { kty: "OKP", crv: "Ed25519", x: jwk.x }, format: "jwk" }), signature));
+  check("directory signature has the directory tag", params.includes('tag="http-message-signatures-directory"'));
+}
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
