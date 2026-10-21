@@ -10,22 +10,7 @@
     <configurations />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eb2433ed-318a-4796-bbb1-8503adb9f9ef" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/agent-plugin/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/agent-plugin/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/cli/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/packages/cli/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/sdk-js/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/packages/sdk-js/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/llms.txt" beforeDir="false" afterPath="$PROJECT_DIR$/public/llms.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sdk/python/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/sdk/python/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/edit-project-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/edit-project-dialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/files/code-workspace.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/files/code-workspace.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/project-switcher.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/project-switcher.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/developers-doc.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/developers-doc.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/mcp/docs-results-app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/mcp/docs-results-app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/structured-data.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/structured-data.ts" afterDir="false" />
-    </list>
+    <list default="true" id="eb2433ed-318a-4796-bbb1-8503adb9f9ef" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -121,7 +106,7 @@
       <workItem from="1789917393291" duration="1443000" />
       <workItem from="1789921823413" duration="6227000" />
       <workItem from="1790784192293" duration="651000" />
-      <workItem from="1792603149445" duration="1062000" />
+      <workItem from="1792603149445" duration="1375000" />
     </task>
     <servers />
   </component>

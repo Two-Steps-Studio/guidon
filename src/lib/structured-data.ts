@@ -112,6 +112,18 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
         ...(features.length ? { featureList: features.map((feature) => feature.title) } : {}),
         ...(offers.length ? { offers } : { offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", category: "Freemium" } }),
       },
+      {
+        "@type": "Product",
+        "@id": `${siteUrl}/#product`,
+        name: "Guidon Project Management",
+        description: DESCRIPTION,
+        category: "Project management software",
+        url: siteUrl,
+        brand: { "@id": `${siteUrl}/#organization` },
+        mainEntityOfPage: { "@id": `${siteUrl}/#webpage` },
+        isRelatedTo: { "@id": `${siteUrl}/#software` },
+        ...(offers.length ? { offers } : { offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", category: "Freemium" } }),
+      },
       ...(faq.length
         ? [
             {

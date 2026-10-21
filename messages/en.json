@@ -180,6 +180,7 @@
     "heroSubtitle": "Understand why your project exists. Track decisions, sources, and context alongside your tasks.",
     "getStarted": "Get Started",
     "signIn": "Sign In",
+    "trySandbox": "Try the free API and agent sandbox",
     "featuresTitle": "Everything a project needs to explain itself",
     "featuresSubtitle": "Tasks alone don't tell you why a project looks the way it does. Guidon tracks the context around the work, not just the work.",
     "features": {

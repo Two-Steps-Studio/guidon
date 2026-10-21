@@ -110,6 +110,11 @@ export default async function Home() {
                 <Link href="/auth/login">{t("signIn")}</Link>
               </Button>
             </div>
+            <p className="mt-4 text-sm text-text-secondary">
+              <Link href="/sandbox" className="underline underline-offset-4 hover:text-foreground">
+                {t("trySandbox")}
+              </Link>
+            </p>
           </div>
         </div>
       </div>
