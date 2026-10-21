@@ -11,10 +11,12 @@ metadata:
 
 Use `https://useguidon.com/api/v1` for the REST API. Read the [OpenAPI document](https://useguidon.com/openapi.json) and [authentication guide](https://useguidon.com/auth.md) before implementing an integration.
 
-- JavaScript and TypeScript: `npm install @guidon/sdk`.
-- Python: install the package from `sdk/python` in the official repository.
-- Command line: `npm install -g guidon-cli`.
+- JavaScript/TypeScript SDK source: `packages/sdk-js/` in the official repository; the npm release is pending and `@guidon/sdk` is not installable yet.
+- Python SDK source: `sdk/python/` in the official repository; the PyPI release is pending and `guidon` is not installable as this SDK yet.
+- CLI source: `packages/cli/` in the official repository; the npm release is pending and `guidon-cli` is not installable yet.
 - MCP product tools: `https://useguidon.com/api/mcp` (OAuth or API key).
 - MCP documentation search: `https://useguidon.com/api/mcp/docs` (public).
+
+Until the SDK and CLI packages are published, use the REST API with the OpenAPI document or connect through MCP.
 
 Keep credentials out of source control and logs. Request only the scopes the integration needs, use idempotency keys for writes, respect rate-limit headers and pagination cursors, and use the sandbox endpoint for experiments.

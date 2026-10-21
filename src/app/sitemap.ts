@@ -68,5 +68,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
+  // These are public, canonical developer resources. Listing them explicitly
+  // helps crawlers find the API and agent setup without relying on llms.txt
+  // support; the site-wide agent guide also links to the machine-readable files.
+  for (const path of [
+    '/openapi.json',
+    '/auth.md',
+    '/auth/llms.txt',
+    '/developers.md',
+    '/developers/llms.txt',
+    '/pricing.md',
+    '/llms.txt',
+    '/plugins',
+    '/.well-known/agent-skills/index.json',
+    '/.well-known/ard.json',
+  ]) {
+    routes.push({
+      url: `${baseUrl}${path}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    })
+  }
+
   return routes
 }

@@ -76,6 +76,22 @@ Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`,
 
 Recommended flow for an agent: \`get_task_context\` → \`start_task\` → do the work → \`record_attempt\` → \`comment_on_task\` → \`set_task_status\` with \`review\`.
 
+## Agent skills
+
+Install the skill you need from Guidon's public repository with the [skills CLI](https://www.skills.sh/docs/cli):
+
+\`\`\`bash
+npx skills add two-steps-studio/guidon --skill guidon-tasks
+npx skills add two-steps-studio/guidon --skill guidon-api
+npx skills add two-steps-studio/guidon --skill guidon-cli
+\`\`\`
+
+- \`guidon-tasks\` teaches an agent to read task context, claim work, record attempts and hand a task back for review.
+- \`guidon-api\` explains the REST API, authentication and MCP integration.
+- \`guidon-cli\` explains terminal workflows. The CLI package is not yet published; the skill directs agents to REST or MCP until release.
+
+Browse the [skill source files](${GITHUB_REPO_URL}/tree/main/skills). These are agent instructions; installing them does not install the unpublished SDK or CLI packages.
+
 ## REST API
 
 Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [OpenAPI 3.1 document](${siteUrl}/openapi.json); the API catalog is at [/.well-known/api-catalog](${siteUrl}/.well-known/api-catalog).
@@ -192,6 +208,7 @@ export function developersLlmsTxt(siteUrl: string): string {
 - [Developer guide](${siteUrl}/developers.md): authentication, scopes, quickstart, MCP setup, endpoint table, errors, rate limits, idempotency, pagination, batch, versioning
 - [OpenAPI 3.1 document](${siteUrl}/openapi.json): every /api/v1 operation with request and response schemas
 - [API catalog](${siteUrl}/.well-known/api-catalog): RFC 9727 linkset pointing at the API descriptions
+- [Agent skills](${GITHUB_REPO_URL}/tree/main/skills): task workflow, API integration and CLI guidance; install individually with \`npx skills add two-steps-studio/guidon --skill <name>\`
 
 ## Optional
 

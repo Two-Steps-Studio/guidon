@@ -9,7 +9,10 @@ game-development-friendly teams.
 [Self-hosting guide](./docs/self-hosting.md) ·
 [REST API & MCP for AI agents](https://useguidon.com/developers) ·
 [Agent Plugin](./plugin.json) |
+[MCP Registry metadata](./server.json) |
 [Plugins](https://useguidon.com/plugins)
+
+[![Guidon skills on skills.sh](https://skills.sh/b/two-steps-studio/guidon)](https://skills.sh/two-steps-studio/guidon)
 
 ![Guidon task board](./public/landing/taskBoard-light.webp)
 
@@ -24,6 +27,18 @@ infrastructure, or as a local development server. Self-hosting is a
 first-class product mode here, not an afterthought — see
 [docs/self-hosting.md](./docs/self-hosting.md) for the full story, including
 what's genuinely self-hostable today and what isn't yet.
+
+## Agent skills
+
+Install Guidon's API, CLI, and task workflow skills in an AI coding agent with
+the [skills CLI](https://www.skills.sh/docs/cli):
+
+```bash
+npx skills add two-steps-studio/guidon
+```
+
+The skills are in [`skills/`](./skills/). For a connected MCP server, see the
+[agent integration guide](https://useguidon.com/developers).
 
 ## Which path do I want?
 

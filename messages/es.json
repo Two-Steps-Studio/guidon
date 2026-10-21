@@ -298,7 +298,7 @@
         },
         {
           "q": "¿Pueden los agentes de IA trabajar en mis tareas?",
-          "a": "Sí. Claude, ChatGPT, Cursor y otros clientes MCP se conectan al servidor MCP de Guidon e inician sesión con OAuth; los scripts usan la API REST con una clave de API. Un agente encuentra una tarea, lee todo su contexto, la reclama, registra lo que intentó y devuelve el trabajo a una persona para su revisión."
+          "a": "Sí. Crea una cuenta gratuita de Guidon y genera tu propia clave API en Perfil > Claves API, o conecta un cliente MCP con OAuth. Guidon ofrece un plan gratuito y un sandbox con tareas de ejemplo para que pruebes la integración sin hablar con ventas. El agente encuentra una tarea, lee todo su contexto, la reclama, registra lo que intentó y devuelve el trabajo a una persona para su revisión."
         },
         {
           "q": "¿Puedo alojar Guidon yo mismo?",

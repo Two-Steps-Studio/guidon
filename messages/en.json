@@ -298,7 +298,7 @@
         },
         {
           "q": "Can AI agents work on my tasks?",
-          "a": "Yes. Claude, ChatGPT, Cursor and other MCP clients connect to Guidon's MCP server and sign in with OAuth; scripts use the REST API with an API key. An agent finds a task, reads its full context, claims it, records what it tried and hands the work back to a person for review."
+          "a": "Yes. Create a free Guidon account, then generate an API key yourself in Profile > API keys, or connect an MCP client with OAuth. Guidon has a free plan and an example-task sandbox, so you can test the integration without a sales call. The agent finds a task, reads its full context, claims it, records what it tried and hands the work back to a person for review."
         },
         {
           "q": "Can I host Guidon myself?",
