@@ -23,7 +23,8 @@
     "test:labels": "node --experimental-strip-types tests/label-presets.test.mjs && node tests/server-errors.test.mjs",
     "test:import": "node tests/task-import.test.mjs",
     "test:recurrence": "node tests/recurrence.test.mjs",
-    "test:billing": "node tests/billing.test.mjs"
+    "test:billing": "node tests/billing.test.mjs",
+    "test:api": "node tests/api-route.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

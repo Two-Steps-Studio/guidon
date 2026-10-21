@@ -46,14 +46,46 @@ const ok = (description: string, schema: JsonSchema, status = "200") => ({
 });
 const wrap = (key: string, schema: JsonSchema) => ({ type: "object", properties: { [key]: schema }, required: [key] });
 
-/** The errors every API-key route can answer, all `{ "error": "..." }`. */
+/** The errors every API-key route can answer, all the Error schema. */
 const COMMON_ERRORS = {
   "400": { $ref: "#/components/responses/BadRequest" },
   "401": { $ref: "#/components/responses/Unauthorized" },
   "403": { $ref: "#/components/responses/Forbidden" },
   "404": { $ref: "#/components/responses/NotFound" },
   "429": { $ref: "#/components/responses/RateLimited" },
+  "500": { $ref: "#/components/responses/InternalError" },
 };
+
+/** Sent on every response of a request that got as far as the key check (src/lib/api/api-route.ts). */
+const RATE_LIMIT_HEADERS = {
+  "RateLimit-Limit": { $ref: "#/components/headers/RateLimitLimit" },
+  "RateLimit-Remaining": { $ref: "#/components/headers/RateLimitRemaining" },
+  "RateLimit-Reset": { $ref: "#/components/headers/RateLimitReset" },
+};
+
+const WRITE_METHODS = new Set(["post", "patch", "put", "delete"]);
+
+/**
+ * What every operation shares, added in one pass: rate-limit headers on
+ * success responses, and Idempotency-Key with its 409/422 on every write.
+ */
+function finishPaths(paths: Record<string, Record<string, unknown>>): Record<string, unknown> {
+  for (const item of Object.values(paths)) {
+    for (const [method, operation] of Object.entries(item)) {
+      if (method === "parameters" || !operation || typeof operation !== "object") continue;
+      const op = operation as { responses: Record<string, Record<string, unknown>>; parameters?: unknown[] };
+      for (const [status, response] of Object.entries(op.responses)) {
+        if (status.startsWith("2") && !("$ref" in response)) response.headers = { ...RATE_LIMIT_HEADERS, ...(response.headers as object) };
+      }
+      if (WRITE_METHODS.has(method)) {
+        op.parameters = [...(op.parameters ?? []), { $ref: "#/components/parameters/IdempotencyKey" }];
+        op.responses["409"] = { $ref: "#/components/responses/IdempotencyInProgress" };
+        op.responses["422"] = { $ref: "#/components/responses/IdempotencyKeyReused" };
+      }
+    }
+  }
+  return paths;
+}
 
 const projectIdParam = {
   name: "projectId",
@@ -80,8 +112,10 @@ function op(
   return {
     operationId,
     summary,
-    description: `${extra.description ? `${extra.description}\n\n` : ""}Requires the \`${scope}\` scope.`,
-    security: [{ apiKey: [scope] }],
+    description: scope
+      ? `${extra.description ? `${extra.description}\n\n` : ""}Requires the \`${scope}\` scope.`
+      : String(extra.description ?? ""),
+    security: [{ apiKey: scope ? [scope] : [] }],
     ...Object.fromEntries(Object.entries(extra).filter(([key]) => key !== "description")),
     responses: { ...responses, ...COMMON_ERRORS },
   };
@@ -102,7 +136,19 @@ function projectResourcePaths(): Record<string, unknown> {
     const id = r.noun.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
     const Id = id.charAt(0).toUpperCase() + id.slice(1);
     const Plural = r.plural.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()).replace(/^./, (c) => c.toUpperCase());
-    const itemSchema = { type: "object", description: `A row of ${r.table}.` };
+    const created = objectBody(r.create) as { properties?: Record<string, unknown> };
+    const itemSchema = {
+      type: "object",
+      description: `A row of ${r.table}.`,
+      properties: {
+        id: { type: "string", format: "uuid" },
+        project_id: { type: "string", format: "uuid" },
+        ...(created.properties ?? {}),
+        created_at: { type: "string", format: "date-time" },
+        updated_at: { type: "string", format: "date-time" },
+      },
+      required: ["id", "project_id"],
+    };
     const itemParam = { name: "itemId", in: "path", required: true, description: `The ${r.noun.replace(/_/g, " ")}'s UUID.`, schema: { type: "string", format: "uuid" } };
     paths[`/projects/{projectId}/${r.path}`] = {
       parameters: [projectIdParam],
@@ -119,7 +165,7 @@ function projectResourcePaths(): Record<string, unknown> {
         tags: [tag],
         requestBody: { required: true, content: json(objectBody(r.update)) },
       }),
-      delete: op(`delete${Id}`, `Delete a ${r.noun.replace(/_/g, " ")}`, "project:write", ok("Deleted", { type: "object", properties: { ok: { type: "boolean", const: true } } }), { tags: [tag] }),
+      delete: op(`delete${Id}`, `Delete a ${r.noun.replace(/_/g, " ")}`, "project:write", ok("Deleted", ref("Deleted")), { tags: [tag] }),
     };
   }
   return paths;
@@ -136,10 +182,21 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         "Guidon is context-first project management for development teams. This API lets an agent find a task, " +
         "read its full working context, claim it, record what it tried, comment and hand it back for review.\n\n" +
         "Authenticate with a user's API key (Profile -> API keys): `Authorization: Bearer guidon_...`. A key acts " +
-        "as that user - their projects, their role - limited to the key's scopes. Errors are JSON: `{ \"error\": \"...\" }`.\n\n" +
+        "as that user - their projects, their role - limited to the key's scopes.\n\n" +
+        "**Errors** are JSON: `{ \"error\": \"message\", \"code\": \"not_found\", \"hint\": \"...\", \"docs\": \"...\" }` - branch on `code`.\n\n" +
+        "**Rate limits**: 60 requests per minute per key. Every response carries `RateLimit-Limit`, `RateLimit-Remaining`, " +
+        "`RateLimit-Reset` (and the draft `RateLimit`/`RateLimit-Policy` fields); a 429 carries `Retry-After`.\n\n" +
+        "**Retries**: send an `Idempotency-Key` header (e.g. a UUID) on POST/PATCH/DELETE. For 24 hours a retry with the same key " +
+        "returns the first response (`Idempotent-Replayed: true`) instead of writing twice.\n\n" +
+        "**Pagination**: list endpoints that can grow large take `limit` and `cursor` and return `next_cursor` (null on the last page).\n\n" +
+        "**Bulk**: POST /batch runs up to 20 operations in order in one request.\n\n" +
+        "**Versioning**: the version is in the path (`/api/v1`). Within v1 changes are additive only - new endpoints, fields and " +
+        "optional parameters. A breaking change ships as /api/v2; a v1 endpoint scheduled for removal gets `Deprecation` " +
+        "(RFC 9745) and `Sunset` (RFC 8594) headers at least 6 months before it goes, and is announced on " + `${siteUrl}/developers#versioning.\n\n` +
         `The same operations are available as an MCP server (Streamable HTTP) at ${siteUrl}/api/mcp. ` +
         `Guide for agents: ${siteUrl}/llms.txt`,
-      contact: { name: "Guidon", url: `${siteUrl}/developers` },
+      contact: { name: "Guidon", url: `${siteUrl}/contact`, email: "guidon.support@gmail.com" },
+      termsOfService: `${siteUrl}/legal/terms`,
     },
     externalDocs: { description: "Developer guide", url: `${siteUrl}/developers` },
     servers: [{ url: `${siteUrl}/api/v1` }],
@@ -150,14 +207,23 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       { name: "Attempts", description: "What was tried on a task and how it went, so later work learns from it." },
       { name: "Reports", description: "Bug reports from shipped games and websites." },
       { name: "Project knowledge", description: "Everything around the board: decisions, knowledge sources, roadmap phases, project memory and the tech stack." },
+      { name: "Batch", description: "Several operations in one request." },
     ],
-    paths: {
+    paths: finishPaths({
       "/projects": {
         get: op("listProjects", "List the projects the key's user belongs to", "tasks:read", ok("Projects", wrap("projects", { type: "array", items: ref("Project") })), { tags: ["Projects"] }),
       },
       "/projects/{projectId}/tasks": {
         parameters: [projectIdParam],
-        get: op("listTasks", "List a project's tasks (up to 1000)", "tasks:read", ok("Tasks", wrap("tasks", { type: "array", items: ref("Task") })), { tags: ["Tasks"] }),
+        get: op("listTasks", "List a project's tasks, newest first, a page at a time", "tasks:read", ok("A page of tasks", {
+          type: "object",
+          properties: { tasks: { type: "array", items: ref("Task") }, next_cursor: ref("NextCursor") },
+          required: ["tasks", "next_cursor"],
+        }), {
+          tags: ["Tasks"],
+          description: "Pass `next_cursor` back as `cursor` until it is null.",
+          parameters: [{ $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/Cursor" }],
+        }),
         post: op("createTask", "Create a task or subtask", "tasks:write", ok("The created task", wrap("task", ref("Task"))), {
           tags: ["Tasks"],
           description: "A top-level task defaults to `backlog`/`medium`; with `parent_task_id` it is a subtask and starts as `todo`/`medium`.",
@@ -174,11 +240,11 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       },
       "/projects/{projectId}/references": {
         parameters: [projectIdParam],
-        get: op("listReferences", "The project's moodboard images, with short-lived signed URLs", "tasks:read", ok("References", wrap("references", { type: "array", items: { type: "object" } })), { tags: ["Projects"] }),
+        get: op("listReferences", "The project's moodboard images, with short-lived signed URLs", "tasks:read", ok("References", wrap("references", { type: "array", items: ref("Reference") })), { tags: ["Projects"] }),
       },
       "/projects/{projectId}/reports": {
         parameters: [projectIdParam],
-        post: op("fileReport", "File a bug report (creates a Backlog task with attachments)", "reports:write", ok("The created task", { type: "object", properties: { task: ref("Task"), attachments: { type: "array", items: { type: "object" } }, warnings: { type: "array", items: { type: "string" } } } }, "201"), {
+        post: op("fileReport", "File a bug report (creates a Backlog task with attachments)", "reports:write", ok("The created task", { type: "object", properties: { task: ref("Task"), attachments: { type: "array", items: ref("Attachment") }, warnings: { type: "array", items: { type: "string" } } } }, "201"), {
           tags: ["Reports"],
           description: "For keys that ship inside a game or website: `reports:write` can't be combined with another scope. Answers CORS for browser use.",
           requestBody: {
@@ -210,7 +276,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           tags: ["Tasks"],
           requestBody: { required: true, content: json(body(updateTaskFields)) },
         }),
-        delete: op("deleteTask", "Delete a task permanently (owner/admin of the project)", "tasks:write", ok("Deleted", { type: "object", properties: { ok: { type: "boolean", const: true } } }), { tags: ["Tasks"] }),
+        delete: op("deleteTask", "Delete a task permanently (owner/admin of the project)", "tasks:write", ok("Deleted", ref("Deleted")), { tags: ["Tasks"] }),
       },
       "/tasks/{taskId}/context": {
         parameters: [taskIdParam],
@@ -247,14 +313,59 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       },
       "/tasks/{taskId}/attempts": {
         parameters: [taskIdParam],
-        get: op("listAttempts", "List the attempts recorded on a task, newest first", "tasks:read", ok("Attempts", wrap("attempts", { type: "array", items: { type: "object" } })), { tags: ["Attempts"] }),
-        post: op("recordAttempt", "Record an attempt (including failed and partial ones)", "attempts:write", ok("The attempt", wrap("attempt", { type: "object" })), {
+        get: op("listAttempts", "List the attempts recorded on a task, newest first", "tasks:read", ok("Attempts", wrap("attempts", { type: "array", items: ref("Attempt") })), { tags: ["Attempts"] }),
+        post: op("recordAttempt", "Record an attempt (including failed and partial ones)", "attempts:write", ok("The attempt", wrap("attempt", ref("Attempt"))), {
           tags: ["Attempts"],
           requestBody: { required: true, content: json(body(recordAttemptFields)) },
         }),
       },
+      "/batch": {
+        post: op("batch", "Run up to 20 operations in one request", "", ok("One result per operation, in order", {
+          type: "object",
+          properties: {
+            results: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: { status: { type: "integer", description: "The HTTP status the operation got." }, body: { description: "Its JSON body (or text)." } },
+                required: ["status", "body"],
+              },
+            },
+          },
+          required: ["results"],
+        }), {
+          tags: ["Batch"],
+          description:
+            "Each operation runs through the same endpoint as a direct call - same scopes, permissions and rate limit (each operation counts). " +
+            "Needs no scope of its own - each operation needs its usual one. Not a transaction: operations succeed or fail on their own. Reachable paths: /projects, /projects/{id}/tasks|columns|priorities, " +
+            "the project knowledge collections and items, /tasks/{id} and its context|start|status|complete|comment|attempts.",
+          requestBody: {
+            required: true,
+            content: json({
+              type: "object",
+              required: ["operations"],
+              properties: {
+                operations: {
+                  type: "array",
+                  minItems: 1,
+                  maxItems: 20,
+                  items: {
+                    type: "object",
+                    required: ["method", "path"],
+                    properties: {
+                      method: { type: "string", enum: ["GET", "POST", "PATCH", "DELETE"] },
+                      path: { type: "string", description: "Path relative to /api/v1, e.g. /tasks/{taskId}/status.", examples: ["/projects"] },
+                      body: { type: "object", description: "JSON body of the operation." },
+                    },
+                  },
+                },
+              },
+            }),
+          },
+        }),
+      },
       ...projectResourcePaths(),
-    },
+    }),
     components: {
       securitySchemes: {
         apiKey: {
@@ -265,7 +376,61 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         },
       },
       schemas: {
-        Error: { type: "object", properties: { error: { type: "string" } }, required: ["error"] },
+        Error: {
+          type: "object",
+          properties: {
+            error: { type: "string", description: "What went wrong, for people." },
+            code: {
+              type: "string",
+              description: "Machine-readable reason - branch on this, not on `error`.",
+              examples: ["invalid_request", "unauthorized", "forbidden", "not_found", "rate_limited", "idempotency_key_reused"],
+            },
+            hint: { type: "string", description: "What to do about it." },
+            docs: { type: "string", format: "uri" },
+          },
+          required: ["error", "code"],
+        },
+        NextCursor: { type: ["string", "null"], description: "Pass as `cursor` for the next page; null on the last page." },
+        Deleted: { type: "object", properties: { ok: { type: "boolean", const: true } }, required: ["ok"] },
+        Attempt: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            task_id: { type: "string", format: "uuid" },
+            problem: { type: "string" },
+            approach: { type: "string" },
+            outcome: { type: "string", enum: ["failed", "partial", "succeeded"] },
+            result: { type: ["string", "null"] },
+            failure_reason: { type: ["string", "null"] },
+            files_changed: { type: ["array", "null"], items: { type: "string" } },
+            related_pr_url: { type: ["string", "null"], format: "uri" },
+            agent: { type: ["string", "null"], description: "Which agent made the attempt." },
+            created_by: { type: ["string", "null"], format: "uuid" },
+            created_at: { type: "string", format: "date-time" },
+          },
+          required: ["id", "task_id", "problem", "approach", "outcome"],
+        },
+        Reference: {
+          type: "object",
+          description: "A moodboard image.",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            caption: { type: ["string", "null"] },
+            tags: { type: "array", items: { type: "string" } },
+            mime_type: { type: "string" },
+            size_bytes: { type: ["integer", "null"] },
+            source_url: { type: ["string", "null"], format: "uri" },
+            image_url: { type: ["string", "null"], format: "uri", description: "Short-lived signed URL." },
+            created_at: { type: "string", format: "date-time" },
+          },
+          required: ["id", "name"],
+        },
+        Attachment: {
+          type: "object",
+          properties: { id: { type: "string", format: "uuid" }, name: { type: "string" } },
+          required: ["id", "name"],
+        },
         Project: {
           type: "object",
           properties: { id: { type: "string", format: "uuid" }, name: { type: "string" }, organization_id: { type: "string", format: "uuid" } },
@@ -318,7 +483,30 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         Unauthorized: { description: "Missing or invalid API key", content: json(ref("Error")) },
         Forbidden: { description: "The key lacks the scope, or the user lacks the role or project permission", content: json(ref("Error")) },
         NotFound: { description: "No such project/task, or not visible to the key's user", content: json(ref("Error")) },
-        RateLimited: { description: "Too many requests for this key", content: json(ref("Error")) },
+        RateLimited: {
+          description: "Too many requests for this key",
+          headers: { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } }, ...RATE_LIMIT_HEADERS },
+          content: json(ref("Error")),
+        },
+        InternalError: { description: "Something failed on Guidon's side; safe to retry with the same Idempotency-Key", content: json(ref("Error")) },
+        IdempotencyInProgress: { description: "A request with this Idempotency-Key is still running (code idempotency_in_progress)", content: json(ref("Error")) },
+        IdempotencyKeyReused: { description: "This Idempotency-Key was used for a different request (code idempotency_key_reused)", content: json(ref("Error")) },
+      },
+      parameters: {
+        IdempotencyKey: {
+          name: "Idempotency-Key",
+          in: "header",
+          required: false,
+          description: "Any unique string (a UUID works). A retry with the same key within 24 hours returns the first response instead of writing again.",
+          schema: { type: "string", minLength: 1, maxLength: 255 },
+        },
+        Limit: { name: "limit", in: "query", required: false, description: "Items per page.", schema: { type: "integer", minimum: 1, maximum: 1000, default: 1000 } },
+        Cursor: { name: "cursor", in: "query", required: false, description: "next_cursor of the previous page.", schema: { type: "string" } },
+      },
+      headers: {
+        RateLimitLimit: { description: "Requests allowed per window (60 per minute per key).", schema: { type: "integer" } },
+        RateLimitRemaining: { description: "Requests left in the current window.", schema: { type: "integer" } },
+        RateLimitReset: { description: "Seconds until the window resets.", schema: { type: "integer" } },
       },
     },
   };

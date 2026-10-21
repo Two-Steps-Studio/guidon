@@ -30,7 +30,7 @@ Don't use Guidon for general note-taking, chat, or as a code host - it tracks th
 
 ### REST API
 
-Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full description: [OpenAPI 3.1](https://useguidon.com/openapi.json); API catalog (RFC 9727): [/.well-known/api-catalog](https://useguidon.com/.well-known/api-catalog). Errors are JSON `{ "error": "..." }` with the HTTP status.
+Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full description: [OpenAPI 3.1](https://useguidon.com/openapi.json); API catalog (RFC 9727): [/.well-known/api-catalog](https://useguidon.com/.well-known/api-catalog). Errors are JSON `{ "error": "...", "code": "not_found", "hint": "..." }` with the HTTP status - branch on `code`. Rate limit 60 requests/minute per key (`RateLimit-*` headers, `Retry-After` on 429). Send `Idempotency-Key` on writes so retries never duplicate. `GET .../tasks` pages with `limit`/`cursor` -> `next_cursor`. `POST /batch` runs up to 20 operations at once.
 
 - `GET /projects` - projects the key's user belongs to
 - `GET|POST /projects/{projectId}/tasks` - list or create tasks
@@ -42,6 +42,7 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 - `POST /tasks/{taskId}/complete` - mark done (if the project allows it)
 - `GET|POST /tasks/{taskId}/comment` - read or post task comments
 - `GET|POST /tasks/{taskId}/attempts` - list or record attempts
+- `POST /batch` - up to 20 of these operations in one request
 
 ## Docs
 

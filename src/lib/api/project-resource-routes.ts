@@ -7,6 +7,7 @@ import { apiDataClient } from "@/lib/api/api-data-client";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import type { DataClient } from "@/lib/data-client";
 import { CREATE_DEFAULTS, projectResource, type ProjectResource } from "@/lib/api/project-resources";
+import { apiRoute } from "@/lib/api/api-route";
 
 /**
  * The project resources in project-resources.ts - decisions, knowledge,
@@ -175,7 +176,7 @@ export function collectionRoutes(path: string) {
     return ctx.ok ? respond(await ctx.ops.create(await request.json().catch(() => null))) : ctx.response;
   }
 
-  return { GET, POST };
+  return { GET: apiRoute(GET), POST: apiRoute(POST) };
 }
 
 /** GET, PATCH and DELETE for /api/v1/projects/{projectId}/<path>/{itemId}. */
@@ -197,5 +198,5 @@ export function itemRoutes(path: string) {
     return ctx.ok ? respond(await ctx.ops.remove(ctx.itemId)) : ctx.response;
   }
 
-  return { GET, PATCH, DELETE };
+  return { GET: apiRoute(GET), PATCH: apiRoute(PATCH), DELETE: apiRoute(DELETE) };
 }

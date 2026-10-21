@@ -4,6 +4,7 @@ import { apiDataClient } from "@/lib/api/api-data-client";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { resolveBoardColumns } from "@/lib/work/task-board";
+import { apiRoute } from "@/lib/api/api-route";
 
 /**
  * The project's board columns as the web board shows them - built-in ones
@@ -16,7 +17,7 @@ import { resolveBoardColumns } from "@/lib/work/task-board";
  * `tasks:read`-gated like the tasks list; a project the key's user can't see
  * is 404, same as there.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+async function handleGET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
@@ -38,3 +39,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }));
   return NextResponse.json({ columns });
 }
+
+export const GET = apiRoute(handleGET);

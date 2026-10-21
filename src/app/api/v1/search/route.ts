@@ -4,6 +4,7 @@ import { requireAuth, isAuthError } from '@/lib/auth/auth-helpers';
 import { hasDirectDatabase } from '@/lib/db/pool';
 import { withUser } from '@/lib/db/session';
 import { isValidUuid, invalidIdResponse } from '@/lib/api/validate-id';
+import { apiRoute } from "@/lib/api/api-route";
 
 interface SearchResult {
   type: string;
@@ -384,7 +385,7 @@ async function searchSupabase(
   return results;
 }
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const auth = await requireAuth();
   if (isAuthError(auth)) return auth;
 
@@ -432,3 +433,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export const GET = apiRoute(handleGET);

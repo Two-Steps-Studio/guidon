@@ -2,7 +2,8 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiKey, type ApiKeyIdentity } from "./api-key-auth";
-import { isRateLimited, recordRequest } from "./rate-limit";
+import { isRateLimited, rateLimitStatus, recordRequest } from "./rate-limit";
+import { noteRateLimit } from "./api-route";
 import type { ApiKeyScope } from "./api-keys";
 import { isOriginAllowed } from "./key-origins";
 
@@ -31,9 +32,11 @@ export async function guardApiRequest(
   }
 
   if (isRateLimited(identity.apiKeyId)) {
+    noteRateLimit(rateLimitStatus(identity.apiKeyId));
     return NextResponse.json({ error: "Rate limit exceeded. Try again shortly." }, { status: 429 });
   }
   recordRequest(identity.apiKeyId);
+  noteRateLimit(rateLimitStatus(identity.apiKeyId));
 
   if (!identity.scopes.includes(requiredScope)) {
     return NextResponse.json(

@@ -241,7 +241,8 @@ for (const [label, sql, expected] of [
   // zero polityk, pisze i czyta tylko service_role (jak stripe_webhook_events).
   // 38->39 tabel, polityk bez zmian: mobile_auth_codes (068) - tylko service_role.
   // 39->40 tabel, 129->130 polityk: plan_prices (071) + plan_prices_select.
-  ["40 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 40],
+  // 40->41 tabel, polityk bez zmian: api_idempotency_keys (072) - tylko service_role.
+  ["41 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 41],
   ["130 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 130],
 ]) {
   const { rows } = await db.query(sql);
@@ -3336,6 +3337,62 @@ section("57. ceny tygodniowe/miesieczne/roczne, trial raz na organizacje, karenc
     check("zalogowany czyta ceny (jak plans)", seen.rows.length >= 3, seen.rows.length);
     check("ale ich nie dopisuje", await throwsInSavepoint("INSERT INTO public.plan_prices (stripe_price_id, plan_id, billing_interval, amount_cents) VALUES ('price_hack', 'pro', 'week', 1)"));
     check("ani nie oznacza sobie trialu jako niewykorzystanego", await throwsInSavepoint("UPDATE public.subscriptions SET trial_used_at = NULL WHERE organization_id = $1", [orgId]));
+  });
+}
+
+section("58. Idempotency-Key i stronicowanie zadan w SQL (migracja 072)");
+
+{
+  const stranger = "eeeeeeee-0000-4000-8000-000000000072";
+  await withUser(stranger, async () => {
+    check(
+      "authenticated nie czyta zapisanych odpowiedzi",
+      await throwsInSavepoint("SELECT * FROM public.api_idempotency_keys")
+    );
+  });
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.api_idempotency_keys (scope, idempotency_key, request_hash) VALUES ('s', 'k', 'h')");
+    check(
+      "ten sam klucz w tym samym scope drugi raz odrzucony",
+      await throwsInSavepoint("INSERT INTO public.api_idempotency_keys (scope, idempotency_key, request_hash) VALUES ('s', 'k', 'h2')")
+    );
+    check("pusty klucz odrzucony", await throwsInSavepoint("INSERT INTO public.api_idempotency_keys (scope, idempotency_key, request_hash) VALUES ('s', '', 'h')"));
+    await db.query("DELETE FROM public.api_idempotency_keys WHERE scope = 's'");
+  });
+
+  let ids = [];
+  await withUser(A, async () => {
+    const created = await db.query(
+      "INSERT INTO public.tasks (project_id, title, created_at) SELECT $1, 'page ' || g, '2026-10-21 01:02:03.123456+00' FROM generate_series(1, 5) g RETURNING id",
+      [projectId]
+    );
+    ids = created.rows.map((r) => r.id);
+    const page = async (after, at) =>
+      (await db.query("SELECT id FROM public.list_project_tasks_page($1, 2, $2, $3)", [projectId, after, at])).rows.map((r) => r.id);
+    const all = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 1000)", [projectId])).rows.map((r) => r.id);
+    const seen = [];
+    let after = null;
+    for (let i = 0; i < 100; i++) {
+      const rows = await page(after, null);
+      seen.push(...rows);
+      if (rows.length < 2) break;
+      after = rows[rows.length - 1];
+    }
+    check("strony po 2 skladaja sie w pelna liste (te same znaczniki czasu)", JSON.stringify(seen) === JSON.stringify(all), `${seen.length}/${all.length}`);
+    check("wszystkie 5 zadan z ta sama mikrosekunda sa na liscie", ids.every((id) => all.includes(id)));
+
+    const cut = all.indexOf(ids[2]);
+    const at = (await db.query("SELECT created_at FROM public.tasks WHERE id = $1", [all[cut]])).rows[0].created_at;
+    const before = await page(all[cut], null);
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [all[cut]]);
+    const afterDelete = await page(all[cut], at);
+    check("kursor na usuniete zadanie dalej dziala (czas z kursora)", JSON.stringify(before) === JSON.stringify(afterDelete), `${before} vs ${afterDelete}`);
+    const capped = (await db.query("SELECT count(*)::int n FROM public.list_project_tasks_page($1, 100000)", [projectId])).rows[0].n;
+    check("limit obciety do 1001", capped <= 1001);
+  });
+  await withUser(stranger, async () => {
+    const rows = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 10)", [projectId])).rows;
+    check("obcy nie widzi zadan przez funkcje (RLS)", rows.length === 0, rows.length);
   });
 }
 

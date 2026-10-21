@@ -9,7 +9,8 @@ import "server-only";
  */
 
 const MAX_REQUESTS = 60;
-const WINDOW_MS = 60 * 1000;
+export const RATE_LIMIT_WINDOW_SECONDS = 60;
+const WINDOW_MS = RATE_LIMIT_WINDOW_SECONDS * 1000;
 
 type Window = { count: number; windowStart: number };
 
@@ -40,4 +41,15 @@ export function recordRequest(apiKeyId: string): void {
   }
 
   entry.count += 1;
+}
+
+/** Where this key stands in its window - for the RateLimit response headers. */
+export function rateLimitStatus(apiKeyId: string): { limit: number; remaining: number; resetSeconds: number } {
+  const entry = windows.get(apiKeyId);
+  if (!entry || isExpired(entry)) return { limit: MAX_REQUESTS, remaining: MAX_REQUESTS, resetSeconds: RATE_LIMIT_WINDOW_SECONDS };
+  return {
+    limit: MAX_REQUESTS,
+    remaining: Math.max(0, MAX_REQUESTS - entry.count),
+    resetSeconds: Math.max(0, (entry.windowStart + WINDOW_MS - Date.now()) / 1000),
+  };
 }

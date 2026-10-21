@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRateLimitWindow } from "@/lib/ai/rate-limit-window";
 import { redeemMobileAuthCode } from "@/lib/auth/mobile-login";
 import { isValidCodeVerifier } from "@/lib/auth/mobile-login-core";
+import { apiRoute } from "@/lib/api/api-route";
 
 /**
  * POST { code, code_verifier } -> { api_key, email, name }: the second half
@@ -13,7 +14,7 @@ import { isValidCodeVerifier } from "@/lib/auth/mobile-login-core";
 
 const perAddress = createRateLimitWindow(20, 10 * 60 * 1000);
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (perAddress.isLimited(address)) {
     return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
@@ -36,3 +37,5 @@ export async function POST(request: NextRequest) {
     { headers: { "Cache-Control": "no-store" } }
   );
 }
+
+export const POST = apiRoute(handlePOST);

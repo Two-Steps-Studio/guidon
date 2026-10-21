@@ -10,6 +10,7 @@ import {
   ATTEMPT_PR_URL_MAX,
   ATTEMPT_TEXT_MAX,
 } from "@/lib/api/attempt-limits";
+import { apiRoute } from "@/lib/api/api-route";
 
 // Same column set as loadAttempts/createAttempt in
 // src/app/projects/[id]/work/attempts-actions.ts (Previous Attempts, migration 013).
@@ -25,7 +26,7 @@ const FORBIDDEN_MESSAGE = "You do not have permission to record an attempt on th
  * Lists a task's recorded attempts, newest first (`tasks:read`). Mirrors
  * loadAttempts in src/app/projects/[id]/work/attempts-actions.ts.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * owner/admin/developer): a WITH CHECK violation on INSERT throws (42501)
  * rather than filtering rows, so it is mapped to 403 below.
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+async function handlePOST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "attempts:write");
   if (isGuardError(guard)) return guard;
 
@@ -166,3 +167,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   return NextResponse.json({ attempt });
 }
+
+export const GET = apiRoute(handleGET);
+export const POST = apiRoute(handlePOST);

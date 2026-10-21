@@ -4,6 +4,7 @@ import { getApiUserClient } from "@/lib/api/api-key-auth";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
+import { apiRoute } from "@/lib/api/api-route";
 
 /**
  * Lists the projects this API key's user is a member of - added so an
@@ -17,7 +18,7 @@ import { PROJECT_LIST_SAFETY_CAP } from "@/lib/limits";
  * private.is_org_member) already filters to exactly the caller's visible
  * projects via withUser()/getApiUserClient()'s scoped identity.
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
@@ -41,3 +42,5 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ projects: data ?? [] });
 }
+
+export const GET = apiRoute(handleGET);

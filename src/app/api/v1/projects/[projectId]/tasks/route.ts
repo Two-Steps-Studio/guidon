@@ -8,18 +8,23 @@ import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import { hostedTaskLimitError } from "@/lib/limits";
 import { emitTaskEvent } from "@/lib/events/task-events";
 import type { TaskPriority, TaskStatus } from "@/types/task";
+import { apiRoute } from "@/lib/api/api-route";
+import { decodeCursor, parseLimit, toPage } from "@/lib/api/api-route-core";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+async function handleGET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
   if (isGuardError(guard)) return guard;
 
   const { projectId } = await params;
   if (!isValidUuid(projectId)) return invalidIdResponse("projectId");
 
-  // Safety cap, not pagination - this endpoint has no cursor/page param yet;
-  // matches the cap applied to the human-facing task board
-  // (src/app/projects/[id]/work/page.tsx).
-  const TASK_LIMIT = 1000;
+  // Keyset pagination, newest first: `limit` (default and maximum 1000 - the
+  // cap of the human-facing board, src/app/projects/[id]/work/page.tsx) and
+  // the opaque `cursor` from the previous page's next_cursor.
+  const limit = parseLimit(request.nextUrl.searchParams.get("limit"), 1000, 1000);
+  const rawCursor = request.nextUrl.searchParams.get("cursor");
+  const cursor = decodeCursor(rawCursor);
+  if (rawCursor && !cursor) return NextResponse.json({ error: "Invalid cursor." }, { status: 400 });
 
   // A project the caller isn't a member of is invisible under RLS the same
   // way its tasks are - without checking this separately, "wrong/foreign
@@ -36,15 +41,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (projectError) return NextResponse.json({ error: projectError.message }, { status: 400 });
   if (!project) return NextResponse.json({ error: "Project not found." }, { status: 404 });
 
-  const { data, error } = await db
-    .from("tasks")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false })
-    .limit(TASK_LIMIT);
+  // Keyset in SQL (migration 072): (created_at, id) compared at full
+  // timestamp precision, which a JS Date doesn't have.
+  const { data, error } = await db.rpcRows("list_project_tasks_page", {
+    p_project_id: projectId,
+    p_limit: limit + 1,
+    p_after_id: cursor?.id ?? null,
+    p_after_at: cursor?.createdAt ?? null,
+  });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ tasks: data });
+  const page = toPage((data ?? []) as unknown as { created_at: string | Date; id: string }[], limit);
+  return NextResponse.json({ tasks: page.items, next_cursor: page.nextCursor });
 }
 
 /**
@@ -61,7 +69,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * already had their own narrower scopes; this covers the rest of task
  * mutation (create/update/delete).
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+async function handlePOST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:write");
   if (isGuardError(guard)) return guard;
 
@@ -159,3 +167,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   return NextResponse.json({ task: created });
 }
+
+export const GET = apiRoute(handleGET);
+export const POST = apiRoute(handlePOST);
