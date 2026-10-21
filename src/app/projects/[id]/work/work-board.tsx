@@ -453,7 +453,7 @@ export function WorkBoard({
 
           <Select
             aria-label={t("sortBy")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={sortMode}
             onChange={(event) =>
               setSortMode(event.target.value as "manual" | "due_date")
@@ -516,10 +516,11 @@ export function WorkBoard({
           </div>
         )}
 
-        <div className="mb-4 flex flex-wrap items-center gap-2">
+        {/* One swipeable row on a phone instead of three stacked full-width filters above the board. */}
+        <div className="-mx-1 mb-4 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           <Select
             aria-label={t("filterByAssignee")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={assigneeFilter}
             onChange={(event) => setAssigneeFilter(event.target.value)}
           >
@@ -533,7 +534,7 @@ export function WorkBoard({
 
           <Select
             aria-label={t("filterByPriority")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value)}
           >
@@ -547,7 +548,7 @@ export function WorkBoard({
 
           <Select
             aria-label={t("filterByTag")}
-            className="h-8 w-40"
+            className="h-8 w-40 shrink-0"
             value={tagFilter}
             onChange={(event) => setTagFilter(event.target.value)}
           >

@@ -14,6 +14,7 @@ import { isBillingConfigured } from "@/lib/billing/stripe";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { getPinnedTasks, type PinnedTask } from "@/lib/data/pinned-tasks";
 import { PinnedTasksProvider } from "@/components/work/pinned-tasks-context";
+import { AppMessages } from "@/components/layout/app-messages";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
 
@@ -40,6 +41,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
   }
 
   return (
+    <AppMessages>
     <PinnedTasksProvider initial={pinnedTasks}>
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
@@ -68,5 +70,6 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
       </SidebarInset>
     </SidebarProvider>
     </PinnedTasksProvider>
+    </AppMessages>
   );
 }

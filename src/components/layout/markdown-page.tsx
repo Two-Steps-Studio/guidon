@@ -33,7 +33,15 @@ export function MarkdownPage({ markdown }: { markdown: string }) {
       <main className="mx-auto max-w-3xl px-6 py-12 leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.85em] [&_h1]:mb-6 [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:mb-3 [&_h2]:mt-10 [&_h2]:scroll-mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_li]:mb-1 [&_ol]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_pre]:mb-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-border [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:text-sm [&_pre]:leading-normal [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:mb-4 [&_table]:w-full [&_table]:text-sm [&_td]:border-b [&_td]:border-border [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top [&_th]:border-b [&_th]:border-border [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          components={{ h2: ({ children }) => <h2 id={slug(children)}>{children}</h2> }}
+          components={{
+            h2: ({ children }) => <h2 id={slug(children)}>{children}</h2>,
+            // Wide tables scroll on their own instead of widening the page on a phone.
+            table: ({ children }) => (
+              <div className="mb-4 overflow-x-auto">
+                <table className="!mb-0">{children}</table>
+              </div>
+            ),
+          }}
         >
           {markdown}
         </ReactMarkdown>

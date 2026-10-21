@@ -360,7 +360,7 @@ function TaskDetailDialogInner({
           </DialogDescription>
           {/* Mentioning this in a commit, PR or branch name links it via the GitHub integration (src/lib/github/task-refs.ts). */}
           <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
-            <span>{t("gitRefLabel")}</span>
+            <span className="max-sm:hidden">{t("gitRefLabel")}</span>
             <code className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-foreground">
               {taskRef(task.id)}
             </code>

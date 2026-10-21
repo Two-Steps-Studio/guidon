@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AppMessages } from "@/components/layout/app-messages";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -142,6 +143,7 @@ export default async function MiniTasksPage({ searchParams }: { searchParams: Pr
   const columns = keepAiColumn ? resolvedColumns : resolvedColumns.filter((column) => column.status !== "ai_working");
 
   return (
+    <AppMessages>
     <MiniTasks
       key={projectId}
       projects={projects}
@@ -157,5 +159,6 @@ export default async function MiniTasksPage({ searchParams }: { searchParams: Pr
       columns={columns}
       priorities={priorities}
     />
+    </AppMessages>
   );
 }
