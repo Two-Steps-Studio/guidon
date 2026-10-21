@@ -110,11 +110,19 @@ export default async function Home() {
                 <Link href="/auth/login">{t("signIn")}</Link>
               </Button>
             </div>
-            <p className="mt-4 text-sm text-text-secondary">
+            <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1 text-sm text-text-secondary">
+              <Link href="#pricing" className="underline underline-offset-4 hover:text-foreground">
+                {t("freePlan")}
+              </Link>
+              <span aria-hidden>·</span>
+              <Link href="/developers#authentication" className="underline underline-offset-4 hover:text-foreground">
+                {t("selfServeApiKey")}
+              </Link>
+              <span aria-hidden>·</span>
               <Link href="/sandbox" className="underline underline-offset-4 hover:text-foreground">
                 {t("trySandbox")}
               </Link>
-            </p>
+            </div>
           </div>
         </div>
       </div>

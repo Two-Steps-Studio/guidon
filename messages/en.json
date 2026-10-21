@@ -181,6 +181,8 @@
     "getStarted": "Get Started",
     "signIn": "Sign In",
     "trySandbox": "Try the free API and agent sandbox",
+    "freePlan": "Free plan",
+    "selfServeApiKey": "Create your own API key",
     "featuresTitle": "Everything a project needs to explain itself",
     "featuresSubtitle": "Tasks alone don't tell you why a project looks the way it does. Guidon tracks the context around the work, not just the work.",
     "features": {
