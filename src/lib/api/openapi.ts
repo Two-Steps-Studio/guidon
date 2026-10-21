@@ -209,6 +209,8 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       { name: "Project knowledge", description: "Everything around the board: decisions, knowledge sources, roadmap phases, project memory and the tech stack." },
       { name: "Batch", description: "Several operations in one request." },
       { name: "Account", description: "The token's own user: who it is, and deleting the account." },
+      { name: "Jobs", description: "Work that doesn't finish in one request: 202 Accepted, then poll the job." },
+      { name: "Sandbox", description: "A test organization and project of your own, with example data you can reset." },
     ],
     paths: finishPaths({
       "/projects": {
@@ -318,6 +320,53 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         post: op("recordAttempt", "Record an attempt (including failed and partial ones)", "attempts:write", ok("The attempt", wrap("attempt", ref("Attempt"))), {
           tags: ["Attempts"],
           requestBody: { required: true, content: json(body(recordAttemptFields)) },
+        }),
+      },
+      "/projects/{projectId}/tasks/import": {
+        parameters: [projectIdParam],
+        post: op("importTasks", "Create many tasks asynchronously (up to 500)", "tasks:write", {
+          "202": {
+            description: "Accepted - the tasks are created in the background. Poll the job at the Location header (or job.status_url).",
+            headers: {
+              Location: { description: "URL of the job: GET it until status is succeeded or failed.", schema: { type: "string", format: "uri" } },
+              "Retry-After": { description: "Seconds to wait before polling.", schema: { type: "integer" } },
+            },
+            content: json({ type: "object", properties: { job: ref("Job") }, required: ["job"] }),
+          },
+        }, {
+          tags: ["Tasks"],
+          description: "Each task goes through the same checks as POST /projects/{projectId}/tasks (scopes, permissions, plan limits); the job's result lists the ids created and the ones that failed, with why.",
+          requestBody: {
+            required: true,
+            content: json({
+              type: "object",
+              required: ["tasks"],
+              properties: { tasks: { type: "array", minItems: 1, maxItems: 500, items: body(createTaskFields, ["title"]) } },
+            }),
+          },
+        }),
+      },
+      "/jobs/{jobId}": {
+        parameters: [{ name: "jobId", in: "path", required: true, description: "The job's UUID (from a 202 response).", schema: { type: "string", format: "uuid" } }],
+        get: op("getJob", "Status, progress and result of an async job", "tasks:read", ok("The job", { type: "object", properties: { job: ref("Job") }, required: ["job"] }), {
+          tags: ["Jobs"],
+          description: "While status is queued or running the response carries Retry-After; poll until succeeded or failed.",
+        }),
+      },
+      "/sandbox": {
+        get: op("getSandbox", "Where your sandbox is", "tasks:read", ok("The sandbox", { type: "object", properties: { sandbox: ref("Sandbox") }, required: ["sandbox"] }), {
+          tags: ["Sandbox"],
+          description: "404 until one exists - POST creates it.",
+        }),
+        post: op("setUpSandbox", "Create your sandbox, or reset it", "tasks:write", {
+          ...ok("The existing or reset sandbox", { type: "object", properties: { sandbox: ref("Sandbox") }, required: ["sandbox"] }),
+          ...ok("Created", { type: "object", properties: { sandbox: ref("Sandbox") }, required: ["sandbox"] }, "201"),
+        }, {
+          tags: ["Sandbox"],
+          description:
+            "A test environment of your own: a separate organization (is_sandbox) with one project of example tasks, to try the API, the MCP server or an agent " +
+            "without touching real work. { \"reset\": true } replaces its project with fresh example data.",
+          requestBody: { required: false, content: json({ type: "object", properties: { reset: { type: "boolean", default: false } } }) },
         }),
       },
       "/me": {
@@ -447,6 +496,39 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
             blockers: { type: "array", items: { $ref: "#/components/schemas/OrgRef" }, description: "Only owner while others work there - hand over first." },
           },
           required: ["deleteOrganizations", "leaveOrganizations", "blockers"],
+        },
+        Job: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            kind: { type: "string", enum: ["task_import"] },
+            status: { type: "string", enum: ["queued", "running", "succeeded", "failed"] },
+            progress: { type: "object", properties: { done: { type: "integer" }, total: { type: "integer" } }, required: ["done", "total"] },
+            result: {
+              type: ["object", "null"],
+              properties: {
+                created: { type: "array", items: { type: "string", format: "uuid" } },
+                failed: { type: "array", items: { type: "object", properties: { index: { type: "integer" }, status: { type: "integer" }, error: { type: "string" } } } },
+              },
+            },
+            error: { type: ["string", "null"] },
+            created_at: { type: "string", format: "date-time" },
+            updated_at: { type: "string", format: "date-time" },
+            status_url: { type: "string", format: "uri" },
+          },
+          required: ["id", "kind", "status", "progress", "status_url"],
+        },
+        Sandbox: {
+          type: "object",
+          properties: {
+            organization_id: { type: "string", format: "uuid" },
+            project_id: { type: ["string", "null"], format: "uuid" },
+            created: { type: "boolean" },
+            reset: { type: "boolean" },
+            board_url: { type: ["string", "null"], format: "uri" },
+            reset_with: { type: "object", properties: { method: { type: "string" }, url: { type: "string", format: "uri" }, body: { type: "object" } } },
+          },
+          required: ["organization_id", "project_id"],
         },
         OrgRef: { type: "object", properties: { id: { type: "string", format: "uuid" }, name: { type: "string" } }, required: ["id", "name"] },
         NextCursor: { type: ["string", "null"], description: "Pass as `cursor` for the next page; null on the last page." },

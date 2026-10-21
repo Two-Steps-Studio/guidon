@@ -243,7 +243,8 @@ for (const [label, sql, expected] of [
   // 39->40 tabel, 129->130 polityk: plan_prices (071) + plan_prices_select.
   // 40->41 tabel, polityk bez zmian: api_idempotency_keys (072) - tylko service_role.
   // 41->45 tabel, polityk bez zmian: oauth_clients/grants/codes/refresh_tokens (073) - tylko service_role.
-  ["45 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 45],
+  // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
+  ["46 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 46],
   ["130 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 130],
 ]) {
   const { rows } = await db.query(sql);
@@ -3479,6 +3480,24 @@ section("60. przypiete zadania (migracja 074)");
     const other = await db.query("UPDATE public.profiles SET pinned_task_ids = '{}' WHERE id = $1 RETURNING id", [B]);
     check("nie zmienia przypiec kogos innego", other.rows.length === 0);
     await db.query("UPDATE public.profiles SET pinned_task_ids = '{}' WHERE id = $1", [A]);
+  });
+}
+
+section("61. zadania asynchroniczne API i sandbox (migracja 075)");
+
+{
+  await withUser(A, async () => {
+    check("authenticated nie czyta api_jobs", await throwsInSavepoint("SELECT * FROM public.api_jobs"));
+    const org = await db.query("INSERT INTO public.organizations (name, slug, is_sandbox) VALUES ('Sandbox', 'sandbox-075', true) RETURNING id, is_sandbox, created_by");
+    check("uzytkownik tworzy swoja organizacje sandbox", org.rows[0]?.is_sandbox === true && org.rows[0]?.created_by === A);
+    const plain = await db.query("INSERT INTO public.organizations (name, slug) VALUES ('Plain', 'plain-075') RETURNING is_sandbox");
+    check("zwykla organizacja nie jest sandboxem", plain.rows[0]?.is_sandbox === false);
+  });
+  await withServiceRole(async () => {
+    const job = await db.query("INSERT INTO public.api_jobs (user_id, kind, total) VALUES ($1, 'task_import', 3) RETURNING status, done", [A]);
+    check("nowe zadanie API: queued, 0 zrobionych", job.rows[0]?.status === "queued" && job.rows[0]?.done === 0);
+    check("nieznany status odrzucony", await throwsInSavepoint("INSERT INTO public.api_jobs (user_id, kind, status) VALUES ($1, 'task_import', 'paused')", [A]));
+    check("nieznany rodzaj odrzucony", await throwsInSavepoint("INSERT INTO public.api_jobs (user_id, kind) VALUES ($1, 'export')", [A]));
   });
 }
 
