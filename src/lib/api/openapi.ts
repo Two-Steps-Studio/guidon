@@ -31,9 +31,31 @@ import { PROJECT_RESOURCES } from "@/lib/api/project-resources";
 
 type JsonSchema = Record<string, unknown>;
 
+/**
+ * zod writes an optional-or-null field as `anyOf: [X, { type: "null" }]`
+ * and a date-or-date-time as an anyOf of two strings with long patterns -
+ * unions several function-calling converters (Gemini's above all) can't
+ * take. Every nullable field also accepts an empty string for "clear" and
+ * every date field's description names its form, so the plain type
+ * describes them well enough for an agent.
+ */
+function withoutNullUnions(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(withoutNullUnions);
+  if (!schema || typeof schema !== "object") return schema;
+  const out: JsonSchema = {};
+  for (const [key, value] of Object.entries(schema)) out[key] = withoutNullUnions(value);
+  const variants = (out.anyOf as JsonSchema[] | undefined)?.filter((variant) => variant.type !== "null");
+  if (!variants) return out;
+  delete out.anyOf;
+  if (variants.length === 1) return { ...variants[0], ...out };
+  // A date-or-date-time union: one string, the description says which forms.
+  if (variants.every((variant) => variant.type === "string")) return { type: "string", ...out };
+  return { ...out, anyOf: variants };
+}
+
 /** JSON Schema for a request body built from a zod field map. */
 function body(fields: z.ZodRawShape, required?: string[]): JsonSchema {
-  const schema = z.toJSONSchema(z.object(fields), { target: "draft-2020-12" }) as JsonSchema;
+  const schema = withoutNullUnions(z.toJSONSchema(z.object(fields), { target: "draft-2020-12" })) as JsonSchema;
   delete schema.$schema;
   if (required) schema.required = required;
   return schema;
@@ -152,7 +174,7 @@ function op(
 
 /** JSON Schema of a whole zod object (the project-resource bodies). */
 function objectBody(schema: z.ZodObject<z.ZodRawShape>): JsonSchema {
-  const out = z.toJSONSchema(schema, { target: "draft-2020-12" }) as JsonSchema;
+  const out = withoutNullUnions(z.toJSONSchema(schema, { target: "draft-2020-12" })) as JsonSchema;
   delete out.$schema;
   return out;
 }
@@ -466,7 +488,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
                     properties: {
                       method: { type: "string", enum: ["GET", "POST", "PATCH", "DELETE"] },
                       path: { type: "string", description: "Path relative to /api/v1, e.g. /tasks/{taskId}/status.", examples: ["/projects"] },
-                      body: { type: "object", description: "JSON body of the operation." },
+                      body: { type: "object", description: "JSON body of the operation.", additionalProperties: true },
                     },
                   },
                 },
