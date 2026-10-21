@@ -5,7 +5,7 @@ import { serviceDataClient } from "@/lib/data-client";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { generateApiKey, hashApiKey, keyPrefix } from "@/lib/api/api-keys";
 import { hashAuthCode, isValidCodeVerifier, newAuthCode, verifierMatches } from "@/lib/auth/mobile-login-core";
-import { checkWebhookUrl } from "@/lib/webhooks/security";
+import { checkWebhookUrl, guardedRequest } from "@/lib/webhooks/security";
 import {
   ACCESS_TOKEN_TTL_SECONDS,
   AUTH_CODE_TTL_MS,
@@ -67,15 +67,18 @@ export async function registerClient(client: ClientMetadata): Promise<OAuthClien
 async function fetchMetadataDocument(clientId: string): Promise<unknown> {
   const check = await checkWebhookUrl(clientId, { allowPrivate: hasDirectDatabase() });
   if (!check.ok) throw new Error(check.reason);
-  const response = await fetch(check.url, {
-    redirect: "error",
-    signal: AbortSignal.timeout(CIMD_TIMEOUT_MS),
+  // guardedRequest re-checks the address when connecting (DNS rebinding) and
+  // follows no redirects.
+  const response = await guardedRequest(check.url, {
+    method: "GET",
+    timeoutMs: CIMD_TIMEOUT_MS,
+    maxBytes: CIMD_MAX_BYTES + 1,
+    allowPrivate: hasDirectDatabase(),
     headers: { Accept: "application/json", "User-Agent": "Guidon-OAuth/1.0" },
   });
-  if (!response.ok) throw new Error(`The client metadata document answered HTTP ${response.status}.`);
-  const text = await response.text();
-  if (text.length > CIMD_MAX_BYTES) throw new Error("The client metadata document is too large.");
-  return JSON.parse(text);
+  if (response.status < 200 || response.status >= 300) throw new Error(`The client metadata document answered HTTP ${response.status}.`);
+  if (response.text.length > CIMD_MAX_BYTES) throw new Error("The client metadata document is too large.");
+  return JSON.parse(response.text);
 }
 
 /**

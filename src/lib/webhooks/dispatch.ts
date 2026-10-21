@@ -10,7 +10,7 @@ import {
   type WebhookTarget,
 } from "@/lib/data/organization-webhooks";
 import type { WebhookEventType } from "./events";
-import { checkWebhookUrl, signWebhookPayload } from "./security";
+import { checkWebhookUrl, guardedRequest, signWebhookPayload } from "./security";
 import { signRequest, signingKeyFromEnv } from "@/lib/web-bot-auth";
 import { describeReceiverError, detectWebhookFormat, formatWebhookBody, type WebhookEnvelope } from "./formats";
 
@@ -52,10 +52,12 @@ export async function deliverWebhook(
   const body = JSON.stringify(formatWebhookBody(detectWebhookFormat(target.url), envelope as WebhookEnvelope));
 
   try {
-    const response = await fetch(urlCheck.url, {
+    const response = await guardedRequest(urlCheck.url, {
       method: "POST",
-      redirect: "manual",
-      signal: AbortSignal.timeout(DELIVERY_TIMEOUT_MS),
+      timeoutMs: DELIVERY_TIMEOUT_MS,
+      // Keep why the receiver refused - bounded, so a huge error page can't stall this.
+      maxBytes: 2000,
+      allowPrivate: hasDirectDatabase(),
       headers: {
         "Content-Type": "application/json",
         "User-Agent": "Guidon-Webhooks/1.0",
@@ -70,21 +72,22 @@ export async function deliverWebhook(
       body,
     });
     if (response.status >= 300 && response.status < 400) {
-      await response.body?.cancel();
       return { status: response.status, error: "Redirects are not followed - use the final URL." };
     }
-    if (response.ok) {
-      await response.body?.cancel();
+    if (response.status >= 200 && response.status < 300) {
       return { status: response.status, error: null };
     }
-    // Keep why the receiver refused - bounded, so a huge error page can't stall this.
-    const detail = await response.text().then((text) => text.slice(0, 2000)).catch(() => "");
-    return { status: response.status, error: describeReceiverError(response.status, detail) };
+    return { status: response.status, error: describeReceiverError(response.status, response.text) };
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "TimeoutError";
+    const blocked = (error as { code?: string } | null)?.code === "EBLOCKED";
     return {
       status: null,
-      error: timedOut ? `No response within ${DELIVERY_TIMEOUT_MS / 1000}s.` : "Could not connect to the receiver.",
+      error: timedOut
+        ? `No response within ${DELIVERY_TIMEOUT_MS / 1000}s.`
+        : blocked
+          ? "That address isn't reachable from Guidon Cloud."
+          : "Could not connect to the receiver.",
     };
   }
 }
