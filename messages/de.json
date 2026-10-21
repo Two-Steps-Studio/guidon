@@ -283,7 +283,40 @@
       "apiDocs": "API- & MCP-Doku"
     },
     "heroShotTitle": "Das Guidon-Dashboard",
-    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt"
+    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt",
+    "faq": {
+      "title": "Häufige Fragen",
+      "items": [
+        {
+          "q": "Was ist Guidon?",
+          "a": "Guidon ist Projektmanagement für Entwicklungsteams, bei dem der Kontext im Mittelpunkt steht. Jedes Projekt hat ein Kanban-Board und daneben die Entscheidungen hinter der Arbeit, die Quellen des Teams, die eingesetzten Technologien, eine Roadmap und ein Projektgedächtnis - wer eine Aufgabe übernimmt, ob Mensch oder KI-Agent, bekommt also auch den Grund, warum es sie gibt."
+        },
+        {
+          "q": "Ist Guidon kostenlos?",
+          "a": "Ja, es gibt einen kostenlosen Plan. Bezahlpläne in Guidon Cloud erhöhen die Limits für Projekte, Mitglieder und KI-Nutzung; sie werden monatlich oder jährlich abgerechnet und beginnen mit einer 14-tägigen kostenlosen Testphase. Selbst gehostetes Guidon hat gar keine Limits."
+        },
+        {
+          "q": "Können KI-Agenten an meinen Aufgaben arbeiten?",
+          "a": "Ja. Claude, ChatGPT, Cursor und andere MCP-Clients verbinden sich mit Guidons MCP-Server und melden sich per OAuth an; Skripte nutzen die REST-API mit einem API-Schlüssel. Ein Agent findet eine Aufgabe, liest ihren vollständigen Kontext, übernimmt sie, hält fest, was er versucht hat, und gibt die Arbeit zur Prüfung an einen Menschen zurück."
+        },
+        {
+          "q": "Kann ich Guidon selbst hosten?",
+          "a": "Ja. Guidon ist Open Source auf GitHub und läuft auf Ihrem eigenen Server mit einfachem PostgreSQL. Die Self-Hosting-Anleitung führt durch die Einrichtung."
+        },
+        {
+          "q": "Wie teste ich die API, ohne echte Arbeit zu berühren?",
+          "a": "Legen Sie eine Sandbox an: eine eigene Organisation mit Beispielaufgaben, die Sie frei ändern und mit einer Anfrage oder einem Klick auf die Ausgangsdaten zurücksetzen können."
+        },
+        {
+          "q": "Funktioniert Guidon mit Spiele-Engines?",
+          "a": "Ja. Es gibt Plugins für Unity, Unreal Engine, Godot und Blender, Fehlerberichte aus dem Spiel, die auf dem Board landen, und Guidon Desktop für Windows, macOS und Linux."
+        },
+        {
+          "q": "Kann ich mein Konto und meine Daten löschen?",
+          "a": "Ja, jederzeit: Profil → Konto löschen auf der Website. Die Datenschutzerklärung erklärt, was gespeichert wird und warum."
+        }
+      ]
+    }
   },
   "organizations": {
     "common": {

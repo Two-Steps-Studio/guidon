@@ -56,7 +56,12 @@ export interface FeatureItem {
  * prices the pricing section shows and the feature sections it lists
  * (ItemList + featureList), and the API.
  */
-export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: FeatureItem[] = []) {
+export interface FaqItem {
+  q: string;
+  a: string;
+}
+
+export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: FeatureItem[] = [], faq: FaqItem[] = []) {
   const offers = plans
     .filter((plan) => plan.price_cents !== null)
     .map((plan) => ({
@@ -96,6 +101,19 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
         ...(features.length ? { featureList: features.map((feature) => feature.title) } : {}),
         ...(offers.length ? { offers } : { offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", category: "Freemium" } }),
       },
+      ...(faq.length
+        ? [
+            {
+              "@type": "FAQPage",
+              "@id": `${siteUrl}/#faq`,
+              mainEntity: faq.map((item) => ({
+                "@type": "Question",
+                name: item.q,
+                acceptedAnswer: { "@type": "Answer", text: item.a },
+              })),
+            },
+          ]
+        : []),
       ...(features.length
         ? [
             {

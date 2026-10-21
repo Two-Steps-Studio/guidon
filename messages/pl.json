@@ -283,7 +283,40 @@
       "apiDocs": "Dokumentacja API i MCP"
     },
     "heroShotTitle": "Pulpit Guidona",
-    "heroShotAlt": "Pulpit Guidona: Twoje otwarte i zaległe zadania, najbliższa praca, aktywność zespołu i AI, postęp projektów"
+    "heroShotAlt": "Pulpit Guidona: Twoje otwarte i zaległe zadania, najbliższa praca, aktywność zespołu i AI, postęp projektów",
+    "faq": {
+      "title": "Najczęstsze pytania",
+      "items": [
+        {
+          "q": "Czym jest Guidon?",
+          "a": "Guidon to zarządzanie projektami dla zespołów deweloperskich, w którym najważniejszy jest kontekst. Każdy projekt ma tablicę Kanban, a obok niej decyzje stojące za pracą, źródła, na których opiera się zespół, używane technologie, roadmapę i pamięć projektu - więc ktokolwiek bierze zadanie, człowiek czy agent AI, dostaje też powód, dla którego ono istnieje."
+        },
+        {
+          "q": "Czy Guidon jest darmowy?",
+          "a": "Tak, jest darmowy plan. Płatne plany w Guidon Cloud podnoszą limity projektów, członków i użycia AI; rozlicza się je miesięcznie lub rocznie, a zaczynają się od 14-dniowego darmowego okresu próbnego. Guidon na własnym serwerze nie ma żadnych limitów."
+        },
+        {
+          "q": "Czy agenci AI mogą pracować nad moimi zadaniami?",
+          "a": "Tak. Claude, ChatGPT, Cursor i inne klienty MCP łączą się z serwerem MCP Guidona i logują przez OAuth; skrypty korzystają z REST API z kluczem API. Agent znajduje zadanie, czyta jego pełny kontekst, przejmuje je, zapisuje, co próbował, i oddaje pracę człowiekowi do przeglądu."
+        },
+        {
+          "q": "Czy mogę hostować Guidona sam?",
+          "a": "Tak. Guidon jest open source na GitHubie i działa na Twoim serwerze ze zwykłym PostgreSQL. Przewodnik po self-hostingu prowadzi przez instalację."
+        },
+        {
+          "q": "Jak wypróbować API bez ruszania prawdziwej pracy?",
+          "a": "Utwórz sandbox: osobną organizację z przykładowymi zadaniami, które możesz dowolnie zmieniać i przywracać do danych początkowych jednym żądaniem albo jednym kliknięciem."
+        },
+        {
+          "q": "Czy Guidon działa z silnikami gier?",
+          "a": "Tak. Są wtyczki do Unity, Unreal Engine, Godota i Blendera, zgłoszenia błędów z gry trafiające na tablicę oraz Guidon Desktop dla Windows, macOS i Linuxa."
+        },
+        {
+          "q": "Czy mogę usunąć konto i dane?",
+          "a": "Tak, w każdej chwili: Profil → Usuń konto na stronie. Polityka prywatności wyjaśnia, co przechowujemy i dlaczego."
+        }
+      ]
+    }
   },
   "organizations": {
     "common": {

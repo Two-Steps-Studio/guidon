@@ -283,7 +283,40 @@
       "apiDocs": "API & MCP docs"
     },
     "heroShotTitle": "The Guidon dashboard",
-    "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team and AI activity, project progress"
+    "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team and AI activity, project progress",
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": [
+        {
+          "q": "What is Guidon?",
+          "a": "Guidon is context-first project management for development teams. Every project has a Kanban board and, next to it, the decisions behind the work, the sources a team relies on, the technologies in use, a roadmap and a project memory - so whoever picks up a task, a person or an AI agent, also gets the reason it exists."
+        },
+        {
+          "q": "Is Guidon free?",
+          "a": "Yes, there is a free plan. Paid plans on Guidon Cloud raise the limits on projects, members and AI use; they are billed monthly or yearly and start with a 14-day free trial. Self-hosted Guidon has no limits at all."
+        },
+        {
+          "q": "Can AI agents work on my tasks?",
+          "a": "Yes. Claude, ChatGPT, Cursor and other MCP clients connect to Guidon's MCP server and sign in with OAuth; scripts use the REST API with an API key. An agent finds a task, reads its full context, claims it, records what it tried and hands the work back to a person for review."
+        },
+        {
+          "q": "Can I host Guidon myself?",
+          "a": "Yes. Guidon is open source on GitHub and runs on your own server with plain PostgreSQL. The self-hosting guide walks through the setup."
+        },
+        {
+          "q": "How can I try the API without touching real work?",
+          "a": "Create a sandbox: a separate organization with example tasks that you can change freely and reset to the starting data with one request or one click."
+        },
+        {
+          "q": "Does Guidon work with game engines?",
+          "a": "Yes. There are plugins for Unity, Unreal Engine, Godot and Blender, in-game bug reports that land on the board, and Guidon Desktop for Windows, macOS and Linux."
+        },
+        {
+          "q": "Can I delete my account and data?",
+          "a": "Yes, at any time: Profile → Delete account on the website. The Privacy Policy explains what is stored and why."
+        }
+      ]
+    }
   },
   "organizations": {
     "common": {

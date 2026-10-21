@@ -100,6 +100,7 @@ export interface LandingMessages {
   featuresTitle: string;
   featuresSubtitle: string;
   features: Record<string, { title: string; description: string; bullets: string[] }>;
+  faq?: { title: string; items: { q: string; a: string }[] };
 }
 
 /** Same order as FEATURE_SECTIONS in src/app/page.tsx. */
@@ -147,6 +148,7 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     landing.featuresSubtitle,
     "",
     ...features,
+    ...(landing.faq ? [`## ${landing.faq.title}`, "", ...landing.faq.items.flatMap((item) => [`### ${item.q}`, "", item.a, ""])] : []),
     "## Company",
     "",
     `- [About Guidon](${siteUrl}/about)`,
