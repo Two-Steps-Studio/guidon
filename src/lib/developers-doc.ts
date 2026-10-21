@@ -147,7 +147,22 @@ Work that doesn't fit in one request answers \`202 Accepted\` with a \`Location\
 
 Try the API, the MCP server or an agent without touching real work: \`POST /sandbox\` creates a test organization of your own with one project of example tasks and answers its \`project_id\`. Change anything there; \`POST /sandbox\` with \`{ "reset": true }\` puts the example data back. \`GET /sandbox\` tells you where it is. It's an ordinary organization otherwise - same permissions, same limits - so what works there works on your real projects.
 
-## Versioning
+## SDKs and CLI
+
+Official clients, open source in the [Guidon repository](${GITHUB_REPO_URL}), all wrapping the same \`/api/v1\` with an API key:
+
+- **JavaScript/TypeScript SDK** \`@guidon/sdk\` - [packages/sdk-js](${GITHUB_REPO_URL}/tree/main/packages/sdk-js): typed methods for projects, tasks, comments and attempts, automatic retries for safe requests, an optional Idempotency-Key on writes.
+- **Python SDK** \`guidon\` - [sdk/python](${GITHUB_REPO_URL}/tree/main/sdk/python): the same surface for Python 3.9+.
+- **CLI** \`guidon-cli\` (command \`guidon\`) - [packages/cli](${GITHUB_REPO_URL}/tree/main/packages/cli): list projects, create and move tasks, comment, \`guidon whoami\` - from a terminal or CI.
+
+\`\`\`bash
+guidon login                      # asks for an API key
+guidon tasks list --project <project-id>
+guidon tasks create --project <project-id> --title "Fix the login timeout"
+\`\`\`
+
+Each package's README has install and build steps.
+
 
 The version is in the path: \`/api/v1\`. Within v1, changes are additive only - new endpoints, new fields in responses, new optional parameters; write clients that ignore fields they don't know. A breaking change ships as \`/api/v2\`, side by side with v1. An endpoint scheduled for removal gets \`Deprecation\` (RFC 9745) and \`Sunset\` (RFC 8594) headers at least 6 months before it goes, and is listed here.
 
