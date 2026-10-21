@@ -1,7 +1,8 @@
 import "server-only";
 import { createTranslator } from "next-intl";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locales";
-import { loadMessages, type Messages } from "@/i18n/load-messages";
+import { loadMessages } from "@/i18n/load-messages";
+import { SUPPORT_EMAIL } from "@/lib/project-links";
 
 /** Read a required env var, or throw an error naming both it and what needs it. */
 function requireEmailEnv(name: string): string {
@@ -16,85 +17,53 @@ function requireEmailEnv(name: string): string {
   return value;
 }
 
+const escapeHtml = (value: string) =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+interface TransactionalEmail {
+  locale: Locale;
+  title: string;
+  heading: string;
+  body: string;
+  ctaLabel: string;
+  link: string;
+  linkHint: string;
+  footer: string;
+}
+
 /**
- * Same visual language as the "Confirm sign up" template shipped for
- * Supabase's dashboard in an earlier round (dark card, Guidon wordmark,
- * #1d4fd8 primary-blue button) - different copy, and a real interpolated
- * link instead of a `{{ .ConfirmationURL }}` Go-template placeholder, since
- * this is sent by our own code rather than through Supabase's template
- * engine.
+ * A plain, text-first message: white page, system font, one link, no images
+ * and no plain-text-less HTML. Gmail sorts mail that looks designed (dark
+ * hero card, logo image, big button, no text part) into Promotions; mail
+ * that reads like a note from a person lands in Primary, which is where a
+ * password reset has to be. docs/supabase-email-templates/ uses the same
+ * shape for the emails Supabase sends.
  */
-function passwordResetEmailHtml(
-  resetLink: string,
-  locale: Locale,
-  t: ReturnType<typeof createTranslator<Messages>>
-): string {
+function transactionalEmailHtml(email: TransactionalEmail): string {
+  const link = escapeHtml(email.link);
   return `<!DOCTYPE html>
-<html lang="${locale}">
+<html lang="${email.locale}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${t("emails.passwordResetSubject")}</title>
+<title>${escapeHtml(email.title)}</title>
 </head>
-<body style="margin:0; padding:0; background-color:#0b0d10; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0d10; padding:40px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%;">
-          <tr>
-            <td align="center" style="padding-bottom:32px;">
-              <img src="https://useguidon.com/assets/guidon-wordmark.png" width="140" alt="Guidon" style="display:block; filter:invert(1);">
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color:#101317; border:1px solid #23272e; border-radius:12px; padding:40px 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding-bottom:8px;">
-                    <span style="font-size:20px; font-weight:600; color:#f8fafc; line-height:1.3;">
-                      ${t("emails.passwordResetHeading")}
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-bottom:28px;">
-                    <span style="font-size:14px; color:#9aa4b2; line-height:1.6;">
-                      ${t("emails.passwordResetBody")}
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-bottom:28px;">
-                    <a href="${resetLink}"
-                       style="display:inline-block; background-color:#1d4fd8; color:#ffffff; font-size:14px; font-weight:600; text-decoration:none; padding:12px 28px; border-radius:8px;">
-                      ${t("emails.passwordResetCta")}
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center">
-                    <span style="font-size:12px; color:#64748b; line-height:1.6;">
-                      ${t("emails.passwordResetLinkHint")}<br>
-                      <a href="${resetLink}" style="color:#4d8dff; word-break:break-all;">${resetLink}</a>
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-top:28px;">
-              <span style="font-size:12px; color:#4b5563; line-height:1.6;">
-                ${t("emails.passwordResetIgnoreNotice")}
-              </span>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<body style="margin:0; padding:24px 16px; background-color:#ffffff; color:#1f2937; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.6;">
+  <div style="max-width:520px; margin:0 auto;">
+    <p style="margin:0 0 16px; font-size:17px; font-weight:600;">${escapeHtml(email.heading)}</p>
+    <p style="margin:0 0 16px;">${escapeHtml(email.body)}</p>
+    <p style="margin:0 0 24px;"><a href="${link}" style="color:#1d4fd8; font-weight:600;">${escapeHtml(email.ctaLabel)}</a></p>
+    <p style="margin:0 0 24px; font-size:13px; color:#6b7280;">${escapeHtml(email.linkHint)}<br><a href="${link}" style="color:#1d4fd8; word-break:break-all;">${link}</a></p>
+    <p style="margin:0; font-size:13px; color:#6b7280;">${escapeHtml(email.footer)}</p>
+    <p style="margin:16px 0 0; font-size:13px; color:#6b7280;">Guidon</p>
+  </div>
 </body>
 </html>`;
+}
+
+/** The same message as plain text - sent alongside the HTML. */
+function transactionalEmailText(email: TransactionalEmail): string {
+  return [email.heading, "", email.body, "", `${email.ctaLabel}: ${email.link}`, "", email.footer, "", "Guidon"].join("\n");
 }
 
 /**
@@ -114,6 +83,16 @@ export async function sendPasswordResetEmail(
 
   const messages = await loadMessages(locale);
   const t = createTranslator({ locale, messages });
+  const email: TransactionalEmail = {
+    locale,
+    title: t("emails.passwordResetSubject"),
+    heading: t("emails.passwordResetHeading"),
+    body: t("emails.passwordResetBody"),
+    ctaLabel: t("emails.passwordResetCta"),
+    link: resetLink,
+    linkHint: t("emails.passwordResetLinkHint"),
+    footer: t("emails.passwordResetIgnoreNotice"),
+  };
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -124,8 +103,11 @@ export async function sendPasswordResetEmail(
     body: JSON.stringify({
       from,
       to: [to],
-      subject: t("emails.passwordResetSubject"),
-      html: passwordResetEmailHtml(resetLink, locale, t),
+      // Replies reach a person instead of bouncing off noreply@.
+      reply_to: SUPPORT_EMAIL,
+      subject: email.title,
+      html: transactionalEmailHtml(email),
+      text: transactionalEmailText(email),
     }),
   });
 
