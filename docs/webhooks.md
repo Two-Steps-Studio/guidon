@@ -99,7 +99,7 @@ def verify_guidon_webhook(raw_body: bytes, headers, secret: str) -> bool:
 
 ## Web Bot Auth signature (optional)
 
-When the server has `WEB_BOT_AUTH_PRIVATE_KEY` set (Guidon Cloud does), every delivery also carries an [HTTP Message Signature](https://www.rfc-editor.org/rfc/rfc9421) in the [Web Bot Auth](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/) form: `Signature-Agent`, `Signature-Input` (covering `@authority` and `signature-agent`, `tag="web-bot-auth"`, a five-minute lifetime) and `Signature` (Ed25519). The public key is at `<origin>/.well-known/http-message-signatures-directory`, looked up by the `keyid` (a JWK thumbprint).
+When the server has `WEB_BOT_AUTH_PRIVATE_KEY` set, every delivery also carries an [HTTP Message Signature](https://www.rfc-editor.org/rfc/rfc9421) in the [Web Bot Auth](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/) form: `Signature-Agent`, `Signature-Input` (covering `@authority` and `signature-agent`, `tag="web-bot-auth"`, a five-minute lifetime) and `Signature` (Ed25519). The public key is at `<origin>/.well-known/http-message-signatures-directory`, looked up by the `keyid` (a JWK thumbprint).
 
 It proves the request comes from that Guidon server without sharing a secret - useful to a CDN or firewall in front of your receiver. It doesn't cover the body; `X-Guidon-Signature` still does that.
 
