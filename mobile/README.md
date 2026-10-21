@@ -187,3 +187,15 @@ The "Haptics" switch in Settings (stored in AsyncStorage) turns all of them off.
      in through the web flow.
    - iPhone-only for now (`supportsTablet: false`).
    - Export compliance is pre-answered (`usesNonExemptEncryption: false`).
+
+## App Store review checklist
+
+What Apple's reviewer checks in the first minutes, and where Guidon answers it:
+
+- **Demo account (guideline 2.1).** Sign-in goes through the browser, so the reviewer needs working credentials in App Review Information → Sign-in required. Create a dedicated account on useguidon.com (email + password, not Google/Discord), give it an organization with a project and a dozen realistic tasks across the columns, and paste the email and password there. Note in the review notes that sign-in opens Guidon's own website (ASWebAuthenticationSession) and returns to the app.
+- **Account deletion (5.1.1(v)).** Settings → Delete account, in the app: it shows what will be deleted, asks twice and deletes through `DELETE /api/v1/account`. Organizations where the person is the only owner but others work have to be handed over first; the app says so and opens the web page. Mention the path in the review notes.
+- **Payments (3.1.1 / 3.1.3).** The app sells nothing and has no links or buttons that lead to buying (no pricing, upgrade or billing screens). Plans are bought on the website only, which Apple allows as long as the app doesn't point to it. Keep it that way: never add an "Upgrade" link to the app.
+- **No placeholder content (2.1, 4.2).** Every screen is real: empty states have real text, nothing says "coming soon".
+- **Privacy.** Privacy Policy, Terms and EULA are linked in Settings → About (the EULA is at https://useguidon.com/legal/eula; choose "custom EULA" in App Store Connect and paste that link). The privacy manifest is `app.json` → `ios.privacyManifests`. App Privacy answers: contact info (email, name) and user content (tasks, comments) - linked to the user, not used for tracking.
+- **Sign in with Apple (4.8).** Not needed while the app's own sign-in has no third-party login button - the browser page offers Google/Discord, which is the website's, not the app's. If reviewers object, adding Sign in with Apple to the website's login fixes it for both.
+- **Tablet.** `supportsTablet: false` for v1 - iPhone screenshots only.

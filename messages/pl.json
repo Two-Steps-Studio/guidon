@@ -1486,7 +1486,18 @@
     },
     "mcpOAuthStep_claude": "W Claude otwórz Ustawienia → Konektory → Dodaj własny konektor, nazwij go Guidon i wklej ten adres",
     "mcpOAuthStep_chatgpt": "W ChatGPT otwórz Ustawienia → Aplikacje i konektory → Utwórz (tryb dewelopera), wybierz OAuth i wklej ten adres",
-    "mcpOAuthApprove": "Zaloguj się do Guidona, gdy poprosi, i kliknij Zezwól - żadnego klucza do kopiowania. Aplikacja pojawi się wyżej w Połączonych aplikacjach."
+    "mcpOAuthApprove": "Zaloguj się do Guidona, gdy poprosi, i kliknij Zezwól - żadnego klucza do kopiowania. Aplikacja pojawi się wyżej w Połączonych aplikacjach.",
+    "deleteAccount": {
+      "title": "Usuń konto",
+      "description": "Usuwa Twoje konto i wylogowuje Cię wszędzie: profil, klucze API, połączone aplikacje, powiadomienia oraz Twoje komentarze i próby. Zadania i dokumenty, które utworzyłeś we wspólnych projektach, zostają dla zespołu, bez Twojego nazwiska. Tego nie da się cofnąć.",
+      "orgsDeleted": "W tych organizacjach nie ma nikogo poza Tobą - zostaną usunięte razem ze wszystkimi projektami:",
+      "orgsLeft": "Opuścisz te organizacje; zostają dla pozostałych:",
+      "blockedTitle": "Najpierw przekaż te organizacje",
+      "blockedDescription": "Jesteś jedynym właścicielem: {names}, a pracują tam inni. Ustaw jedną z tych osób jako właściciela w Organizacja → Członkowie (albo usuń pozostałych) i wróć tutaj.",
+      "confirmLabel": "Wpisz {email}, aby potwierdzić",
+      "button": "Usuń moje konto",
+      "deleting": "Usuwanie..."
+    }
   },
   "emails": {
     "passwordResetSubject": "Zresetuj hasło do Guidon",

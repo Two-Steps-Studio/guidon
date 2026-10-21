@@ -376,6 +376,10 @@ class Guidon:
         self.memory = ProjectCollection(self._http, "memory", "memories", "memory")
         self.technologies = ProjectCollection(self._http, "technologies", "technologies", "technology")
 
+    def me(self) -> Dict[str, Any]:
+        """GET /me - the user this key or token acts as, and its scopes. Needs no scope."""
+        return self._http.request("GET", "/me")
+
     @property
     def base_url(self) -> str:
         """The resolved API root, e.g. ``https://useguidon.com/api/v1``."""

@@ -3,7 +3,7 @@ import * as Application from "expo-application";
 import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text } from "react-native";
-import { DEFAULT_SERVER } from "@/api";
+import { DEFAULT_SERVER, api, isApiError } from "@/api";
 import { useSession } from "@/auth/session";
 import { Row, Section } from "@/components/Rows";
 import { useI18n } from "@/i18n";
@@ -43,6 +43,50 @@ export default function SettingsScreen() {
     Alert.alert(t("settings.signOutTitle"), message, [
       { text: t("common.cancel"), style: "cancel" },
       { text: t("settings.signOut"), style: "destructive", onPress: () => void session.signOut() },
+    ]);
+  };
+
+  // App Store guideline 5.1.1(v): the account can be deleted from inside
+  // the app. Two confirmations; organizations that would lose their only
+  // owner have to be handed over on the web first.
+  const deleteAccount = async () => {
+    let plan;
+    try {
+      plan = await api.getDeletionPlan();
+    } catch (error) {
+      Alert.alert(t("settings.deleteAccountFailed"), isApiError(error) ? error.message : undefined);
+      return;
+    }
+    if (plan.blockers.length > 0) {
+      Alert.alert(t("settings.deleteAccountBlockedTitle"), t("settings.deleteAccountBlocked", { names: plan.blockers.map((o) => o.name).join(", ") }), [
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("settings.openOnWeb"), onPress: () => openPage(`${session.server}/organizations`) },
+      ]);
+      return;
+    }
+    const orgs = plan.deleteOrganizations.length
+      ? `\n\n${t("settings.deleteAccountOrgs", { names: plan.deleteOrganizations.map((o) => o.name).join(", ") })}`
+      : "";
+    const email = session.account?.email ?? "";
+    const reallyDelete = async () => {
+      try {
+        await api.deleteAccount(email);
+        await session.signOut(t("settings.accountDeleted"));
+      } catch (error) {
+        Alert.alert(t("settings.deleteAccountFailed"), isApiError(error) ? error.message : undefined);
+      }
+    };
+    Alert.alert(t("settings.deleteAccountTitle"), `${t("settings.deleteAccountMessage")}${orgs}`, [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("settings.deleteAccountContinue"),
+        style: "destructive",
+        onPress: () =>
+          Alert.alert(t("settings.deleteAccountConfirmTitle"), t("settings.deleteAccountConfirm", { email }), [
+            { text: t("common.cancel"), style: "cancel" },
+            { text: t("settings.deleteAccount"), style: "destructive", onPress: () => void reallyDelete() },
+          ]),
+      },
     ]);
   };
 
@@ -94,7 +138,8 @@ export default function SettingsScreen() {
       </Section>
 
       <Section>
-        <Row label={t("settings.signOut")} icon="log-out-outline" destructive onPress={confirmSignOut} last />
+        <Row label={t("settings.signOut")} icon="log-out-outline" destructive onPress={confirmSignOut} />
+        <Row label={t("settings.deleteAccount")} icon="trash-outline" destructive onPress={() => void deleteAccount()} last />
       </Section>
     </ScrollView>
   );

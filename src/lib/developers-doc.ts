@@ -96,6 +96,7 @@ Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [Op
 | POST | \`/projects/{projectId}/reports\` | File a bug report (multipart) |
 | GET, POST | \`/projects/{projectId}/{decisions,knowledge,roadmap,memory,technologies}\` | List or add decisions, knowledge sources, roadmap phases, memory, technologies |
 | GET, PATCH, DELETE | \`/projects/{projectId}/{...}/{id}\` | Read, edit or delete one of them |
+| GET | \`/me\` | Who the token acts as (user, scopes) |
 | POST | \`/batch\` | Up to 20 of the operations above in one request |
 
 ## Errors

@@ -69,6 +69,7 @@ const HELP = `guidon - command-line client for Guidon (https://useguidon.com)
 Usage:
   guidon login [--api-key <key>] [--base-url <url>] [--no-verify]
   guidon logout
+  guidon whoami
   guidon projects list
   guidon tasks list --project <id> [--status <status>[,<status>...]] [--top-level]
   guidon tasks get <taskId>
@@ -217,6 +218,17 @@ const COMMANDS: Record<string, Command> = {
       const path = configPath(io.env);
       const removed = await deleteConfig(path);
       ctxOut(io, values, { configPath: path, removed }, () => (removed ? `Removed ${path}.` : `Not logged in (${path} doesn't exist).`));
+    },
+  },
+
+  whoami: {
+    usage: "guidon whoami",
+    options: [],
+    async run({ client, out }) {
+      const me = await (await client()).me();
+      out(me, () =>
+        [`${me.user.name ? `${me.user.name} <${me.user.email ?? "?"}>` : me.user.email ?? me.user.id}`, `Scopes: ${me.token.scopes.join(", ") || "none"}`].join("\n")
+      );
     },
   },
 

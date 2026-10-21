@@ -21,7 +21,7 @@ node scripts/migrate.mjs --dry-run   # show what would run, changes nothing
 
 npm run test:db               # migration chain + RLS-compatibility layer + data-client SQL against PGlite (real Postgres, no Docker/Supabase)
 npm run test:ai                # AI provider factory's env-resolution logic + "learn from finished tasks" parsing (src/lib/ai/task-learning-core.ts), no live API key needed
-npm run test:auth              # local-auth compatibility tests + self-hosted OAuth/OIDC sign-in (src/lib/auth/oauth-local-core.ts) + mobile app PKCE sign-in (src/lib/auth/mobile-login-core.ts) + Guidon as an OAuth 2.1 server for MCP clients: redirect URIs, DCR/metadata documents, scopes, resource, metadata, auth.md (src/lib/oauth/oauth-core.ts)
+npm run test:auth              # local-auth compatibility tests + self-hosted OAuth/OIDC sign-in (src/lib/auth/oauth-local-core.ts) + mobile app PKCE sign-in (src/lib/auth/mobile-login-core.ts) + Guidon as an OAuth 2.1 server for MCP clients: redirect URIs, DCR/metadata documents, scopes, resource, metadata, auth.md (src/lib/oauth/oauth-core.ts) + account deletion plan and confirmation (src/lib/account/account-deletion-core.ts)
 npm run test:limits            # plan/limits logic tests
 npm run test:reports           # in-game report validation (src/lib/api/game-report.ts)
 npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/task-refs.ts)

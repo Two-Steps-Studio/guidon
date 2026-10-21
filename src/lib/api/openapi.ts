@@ -208,6 +208,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       { name: "Reports", description: "Bug reports from shipped games and websites." },
       { name: "Project knowledge", description: "Everything around the board: decisions, knowledge sources, roadmap phases, project memory and the tech stack." },
       { name: "Batch", description: "Several operations in one request." },
+      { name: "Account", description: "The token's own user: who it is, and deleting the account." },
     ],
     paths: finishPaths({
       "/projects": {
@@ -319,6 +320,34 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           requestBody: { required: true, content: json(body(recordAttemptFields)) },
         }),
       },
+      "/me": {
+        get: op("getMe", "Who this token acts as", "", ok("The user and the token", {
+          type: "object",
+          properties: {
+            user: { type: "object", properties: { id: { type: "string", format: "uuid" }, email: { type: ["string", "null"] }, name: { type: ["string", "null"] } }, required: ["id"] },
+            token: { type: "object", properties: { scopes: { type: "array", items: { type: "string" } }, project_id: { type: ["string", "null"], format: "uuid" }, human_client: { type: "boolean" } } },
+          },
+          required: ["user", "token"],
+        }), { tags: ["Account"], description: "Any valid API key or OAuth token; no scope needed." }),
+      },
+      "/account": {
+        get: op("getAccountDeletionPlan", "What deleting the account would do", "", ok("The plan", {
+          type: "object",
+          properties: { plan: ref("DeletionPlan") },
+          required: ["plan"],
+        }), { tags: ["Account"], description: "Only keys a person uses directly (the mobile app, editor plugins) - never an AI or OAuth key." }),
+        delete: op("deleteAccount", "Delete the account for good", "", ok("Deleted", {
+          type: "object",
+          properties: { deleted: { type: "boolean", const: true }, deleted_organizations: { type: "integer" } },
+          required: ["deleted"],
+        }), {
+          tags: ["Account"],
+          description:
+            "Only keys a person uses directly (the mobile app, editor plugins) - never an AI or OAuth key. Organizations with nobody else in them are deleted too; " +
+            "if the person is the only owner of an organization others work in, the answer is 409 `organizations_need_owner` until it's handed over.",
+          requestBody: { required: true, content: json({ type: "object", required: ["confirm_email"], properties: { confirm_email: { type: "string", format: "email", description: "The account's email, as confirmation." } } }) },
+        }),
+      },
       "/batch": {
         post: op("batch", "Run up to 20 operations in one request", "", ok("One result per operation, in order", {
           type: "object",
@@ -410,6 +439,16 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           },
           required: ["error", "code"],
         },
+        DeletionPlan: {
+          type: "object",
+          properties: {
+            deleteOrganizations: { type: "array", items: { $ref: "#/components/schemas/OrgRef" }, description: "No one else in them - deleted with the account." },
+            leaveOrganizations: { type: "array", items: { $ref: "#/components/schemas/OrgRef" }, description: "The person leaves them." },
+            blockers: { type: "array", items: { $ref: "#/components/schemas/OrgRef" }, description: "Only owner while others work there - hand over first." },
+          },
+          required: ["deleteOrganizations", "leaveOrganizations", "blockers"],
+        },
+        OrgRef: { type: "object", properties: { id: { type: "string", format: "uuid" }, name: { type: "string" } }, required: ["id", "name"] },
         NextCursor: { type: ["string", "null"], description: "Pass as `cursor` for the next page; null on the last page." },
         Deleted: { type: "object", properties: { ok: { type: "boolean", const: true } }, required: ["ok"] },
         Attempt: {

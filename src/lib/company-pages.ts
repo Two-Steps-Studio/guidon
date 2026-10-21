@@ -41,7 +41,7 @@ Email **[${SUPPORT_EMAIL}](mailto:${SUPPORT_EMAIL})** for help with your account
 
 ## Privacy and your data
 
-Requests about personal data - a copy of your data, a correction, or deleting your account - go to the same address. The [Privacy Policy](${siteUrl}/legal/privacy) explains what we store and why.
+You can delete your account yourself at any time: Profile → Delete account on the website, or Settings → Delete account in the mobile app. Other requests about personal data - a copy of your data or a correction - go to the same address. The [Privacy Policy](${siteUrl}/legal/privacy) explains what we store and why.
 
 ## Bugs and code
 
