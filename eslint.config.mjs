@@ -19,6 +19,9 @@ const eslintConfig = defineConfig([
     // node_modules and build output; the patterns above are anchored to the
     // repo root and don't reach nested copies under here.
     ".worktrees/**",
+    // Vendored agent skills (.claude/skills/*) - third-party helper scripts,
+    // CommonJS by design, not part of the app.
+    ".claude/**",
     // desktop/ is a self-contained sibling project (Tauri + plain JS, not
     // part of the Next.js app) with its own tooling - its src-tauri/target/
     // Rust build output alone previously ballooned this config's lint run by
