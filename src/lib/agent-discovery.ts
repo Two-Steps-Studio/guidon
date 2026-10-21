@@ -10,9 +10,9 @@
  * - the Agent Skills discovery index at /.well-known/agent-skills/index.json
  *   and the skill itself (SKILL.md), also shipped in agent-plugin/
  *
- * Deliberately not published: an A2A agent card (Guidon speaks MCP and REST,
- * not A2A - a card would have to claim a binding that doesn't exist) and a
- * Web Bot Auth key directory (that is for sites that send signed requests).
+ * A separate A2A card is published for the read-only docs agent; it does not
+ * expose project actions. The Web Bot Auth key directory is served only when
+ * outgoing webhook signing is enabled with WEB_BOT_AUTH_PRIVATE_KEY.
  */
 
 export const SKILL_NAME = "guidon-tasks";

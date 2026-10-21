@@ -113,10 +113,10 @@ export default async function ProjectPage({
 
   return (
     <div className="container mx-auto max-w-7xl px-6 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">{project.name}</h1>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="break-words text-3xl font-bold">{project.name}</h1>
             {project.project_type && (
               <Badge variant="outline">
                 {tCommon("projectType", { type: project.project_type })}

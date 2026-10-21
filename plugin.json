@@ -1,0 +1,15 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "guidon",
+  "version": "1.0.0",
+  "description": "Context-first project management for development teams, with task workflows and MCP access for AI agents.",
+  "author": {
+    "name": "Two Steps Studio",
+    "email": "guidon.support@gmail.com",
+    "url": "https://useguidon.com"
+  },
+  "homepage": "https://useguidon.com",
+  "repository": "https://github.com/two-steps-studio/guidon",
+  "license": "UNLICENSED",
+  "keywords": ["project-management", "tasks", "kanban", "mcp", "ai-agents"]
+}

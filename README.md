@@ -8,6 +8,7 @@ game-development-friendly teams.
 [Website](https://useguidon.com) ·
 [Self-hosting guide](./docs/self-hosting.md) ·
 [REST API & MCP for AI agents](https://useguidon.com/developers) ·
+[Agent Plugin](./plugin.json) |
 [Plugins](https://useguidon.com/plugins)
 
 ![Guidon task board](./public/landing/taskBoard-light.webp)
@@ -173,6 +174,12 @@ guidon/
 
 ## Deeper documentation
 
+- [docs/user-guide.md](./docs/user-guide.md) — the main web-app workflows,
+  project areas, task board, agent access and integrations.
+- [docs/brand-kit.md](./docs/brand-kit.md) — product positioning, marketing
+  copy and logo exports.
+- [docs/launch-readiness-checklist.md](./docs/launch-readiness-checklist.md) —
+  repository-backed launch checklist.
 - [docs/architecture.md](./docs/architecture.md) — how the pieces fit
   together and why (Server Components/Actions, the database layer, the
   provider abstractions, the admin panel, health checks, `/api/v1`).

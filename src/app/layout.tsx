@@ -26,9 +26,9 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_NAME = "Guidon";
-const SITE_TITLE = "Guidon - Context-First Project Management";
+const SITE_TITLE = "Guidon Project Management | Context-First Planning for Development Teams";
 const SITE_DESCRIPTION =
-  "Guidon is context-first project management for development teams: track tasks, decisions, sources, and project memory together, so the \"why\" behind your work never gets lost.";
+  "Guidon is context-first project management software for development teams. Manage tasks, decisions, sources, and project memory together, with REST API and MCP tools for AI agents.";
 
 // Next ignores `viewport`/`themeColor` inside `metadata` - they must be a
 // separate export, or the viewport-fit/interactive-widget settings never

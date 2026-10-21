@@ -16,6 +16,7 @@ export const DOCS_RESULTS_HTML = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Guidon docs</title>
 <style>
   :root { color-scheme: light dark; --fg: #1a1a1a; --muted: #666; --line: #e3e3e3; --accent: #2f5bd3; --bg: transparent; }

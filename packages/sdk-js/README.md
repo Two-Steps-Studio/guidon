@@ -10,6 +10,8 @@ and project knowledge (decisions, knowledge sources, roadmap, memory, tech stack
 
 ## Install
 
+The npm release is pending. The command below will work after `@guidon/sdk` is published.
+
 ```bash
 npm install @guidon/sdk
 ```

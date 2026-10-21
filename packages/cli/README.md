@@ -6,6 +6,8 @@ Built on [`@guidon/sdk`](../sdk-js); Node 18.11+.
 
 ## Install
 
+The npm release is pending. The command below will work after `guidon-cli` is published.
+
 ```bash
 npm install -g guidon-cli
 guidon --help
