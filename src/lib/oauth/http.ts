@@ -1,6 +1,7 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
+import { assertionClientId } from "./client-assertion";
 
 /**
  * Shared bits of the OAuth endpoints: CORS (browser-based MCP clients call
@@ -43,9 +44,9 @@ export async function readParams(request: NextRequest): Promise<Record<string, s
 }
 
 /**
- * Client credentials, if a client sends them anyway: Guidon's clients are
- * public, so a secret is never checked - but the client_id in HTTP Basic
- * counts, so such a client still works.
+ * Identify the client from the form, HTTP Basic or a JWT subject. This does
+ * not authenticate it: authenticateOAuthClient verifies signed clients
+ * against their HTTPS metadata before a token or revocation is processed.
  */
 export function clientIdFrom(request: NextRequest, params: Record<string, string>): string {
   if (params.client_id) return params.client_id;
@@ -58,7 +59,7 @@ export function clientIdFrom(request: NextRequest, params: Record<string, string
       return "";
     }
   }
-  return "";
+  return params.client_assertion ? assertionClientId(params.client_assertion) : "";
 }
 
 const registrations = new Map<string, number[]>();

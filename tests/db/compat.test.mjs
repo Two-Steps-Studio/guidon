@@ -244,7 +244,8 @@ for (const [label, sql, expected] of [
   // 40->41 tabel, polityk bez zmian: api_idempotency_keys (072) - tylko service_role.
   // 41->45 tabel, polityk bez zmian: oauth_clients/grants/codes/refresh_tokens (073) - tylko service_role.
   // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
-  ["46 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 46],
+  // 46->47: shared replay protection for signed OAuth client assertions (078).
+  ["47 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 47],
   ["130 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 130],
 ]) {
   const { rows } = await db.query(sql);
@@ -3402,7 +3403,7 @@ section("59. serwer autoryzacji OAuth 2.1 (migracja 073)");
 
 {
   const stranger = "eeeeeeee-0000-4000-8000-000000000073";
-  for (const table of ["oauth_clients", "oauth_grants", "oauth_codes", "oauth_refresh_tokens"]) {
+  for (const table of ["oauth_clients", "oauth_grants", "oauth_codes", "oauth_refresh_tokens", "oauth_client_assertions"]) {
     await withUser(A, async () => {
       check(`authenticated nie czyta ${table}`, await throwsInSavepoint(`SELECT * FROM public.${table}`));
     });
@@ -3534,6 +3535,23 @@ section("63. sciezka pliku nalezy do projektu wiersza (migracja 077)");
     check("zalacznik z wlasna sciezka przechodzi", ok.rows.length === 1);
     check("plik projektu ze sciezka innego projektu odrzucony", await throwsInSavepoint("INSERT INTO public.project_files (project_id, name, storage_path, uploaded_by) VALUES ($1, 'f.txt', $2, $3)", [projectId, foreign, A]));
     check("referencja ze sciezka innego projektu odrzucona", await throwsInSavepoint("INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'r.png', $2, 'image/png', $3)", [projectId, foreign, A]));
+  });
+}
+
+section("64. podpisane zadania klienta OAuth (migracja 078)");
+{
+  const hash = "a".repeat(64);
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.oauth_client_assertions (assertion_hash, expires_at) VALUES ($1, now() + interval '5 minutes')", [hash]);
+    check("service_role zapisuje identyfikator podpisu", (await db.query("SELECT assertion_hash FROM public.oauth_client_assertions WHERE assertion_hash=$1", [hash])).rows.length === 1);
+    check("powtorzony podpis odrzucony przez klucz glowny", await throwsInSavepoint("INSERT INTO public.oauth_client_assertions (assertion_hash, expires_at) VALUES ($1, now() + interval '5 minutes')", [hash]));
+    await db.query("DELETE FROM public.oauth_client_assertions WHERE assertion_hash=$1", [hash]);
+  });
+  await withUser(A, async () => {
+    check("uzytkownik nie zapisuje identyfikatora podpisu", await throwsInSavepoint("INSERT INTO public.oauth_client_assertions (assertion_hash, expires_at) VALUES ($1, now())", [hash]));
+  });
+  await withAnon(async () => {
+    check("anon nie czyta podpisow", await throwsInSavepoint("SELECT * FROM public.oauth_client_assertions"));
   });
 }
 

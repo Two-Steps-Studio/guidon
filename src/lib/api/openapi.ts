@@ -503,7 +503,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       securitySchemes: {
         oauth2: {
           type: "oauth2",
-          description: `OAuth 2.1 for apps acting for a person - public clients with PKCE (S256), refresh tokens rotate. See ${siteUrl}/auth.md.`,
+          description: `OAuth 2.1 for apps acting for a person - PKCE (S256) for all clients, public or signed CIMD clients (private_key_jwt), refresh tokens rotate. See ${siteUrl}/auth.md.`,
           flows: {
             authorizationCode: {
               authorizationUrl: `${siteUrl}/oauth/authorize`,
