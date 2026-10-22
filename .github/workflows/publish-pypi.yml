@@ -1,0 +1,65 @@
+name: Publish Python SDK (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to PyPI (false only validates and uploads artifacts)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: guidon-package-publishing
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install build twine
+      - name: Test SDK
+        working-directory: sdk/python
+        run: python -m unittest discover -s tests -v
+      - run: python -m build sdk/python --outdir artifacts/python
+      - run: python -m twine check --strict artifacts/python/*
+      - run: python scripts/release/validate.py python
+      - name: Test the installed wheel and sdist outside the checkout
+        shell: bash
+        run: |
+          for artifact in "$PWD"/artifacts/python/*; do
+            smoke=$(mktemp -d)
+            python -m venv "$smoke/venv"
+            "$smoke/venv/bin/pip" install "$artifact"
+            (cd "$smoke" && "$smoke/venv/bin/python" -c 'from guidon import Guidon, __version__; assert __version__')
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-packages
+          path: artifacts/python/
+          if-no-files-found: error
+  publish:
+    needs: validate
+    if: inputs.publish && github.ref == 'refs/heads/main' && github.repository == 'Two-Steps-Studio/guidon'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/guidon-sdk
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-packages
+          path: artifacts/python
+      - run: python scripts/release/validate.py python --publishing
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: artifacts/python/

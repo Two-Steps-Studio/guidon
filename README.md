@@ -219,6 +219,13 @@ guidon/
 - The local storage provider validates paths against directory traversal
   (`assertSafeStoragePath` / `assertSafeBucket`) and signs download URLs.
 
+## Package publishing
+
+Manual GitHub Actions workflows can validate and publish the SDKs and CLI without
+a local computer. See [the iPhone setup and publishing guide](docs/package-publishing.md)
+for registry trusted publishers, first npm publication, licensing prerequisites,
+and validation-only runs. No package is published automatically.
+
 ## License
 
 **Unresolved.** This file previously stated "Proprietary - All rights
