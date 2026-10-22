@@ -213,6 +213,7 @@ export interface SwitchableProject {
   id: string;
   name: string;
   slug: string | null;
+  avatar_url?: string | null;
 }
 
 /**
@@ -233,7 +234,7 @@ export async function getSwitchableProjects(
     if (!userId) return [];
 
     const result = await withUser(userId, ({ query }) =>
-      query("SELECT id, name, slug FROM projects WHERE organization_id = $1 ORDER BY name ASC", [
+      query("SELECT id, name, slug, avatar_url FROM projects WHERE organization_id = $1 ORDER BY name ASC", [
         organizationId,
       ])
     );
@@ -244,7 +245,7 @@ export async function getSwitchableProjects(
 
   const { data } = await supabase
     .from("projects")
-    .select("id, name, slug")
+    .select("id, name, slug, avatar_url")
     .eq("organization_id", organizationId)
     .order("name", { ascending: true });
 

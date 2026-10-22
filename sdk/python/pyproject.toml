@@ -3,7 +3,7 @@ requires = ["hatchling>=1.24"]
 build-backend = "hatchling.build"
 
 [project]
-name = "guidon"
+name = "guidon-sdk"
 version = "0.1.0"
 description = "Official Python SDK for the Guidon REST API (/api/v1)."
 readme = "README.md"

@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { SelectMenu } from '@/components/ui/select-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FolderKanban } from 'lucide-react';
 import type { SwitchableProject } from '@/lib/data/project-access';
 
 interface ProjectSwitcherProps {
@@ -40,7 +42,12 @@ export function ProjectSwitcher({ projectId, currentProjectName, projects }: Pro
       <SelectMenu
         aria-label={t('switchProject')}
         value={projectId}
-        options={projects.map((project) => ({ value: project.id, label: project.name }))}
+        options={projects.map((project) => ({ value: project.id, label: project.name, icon: (
+          <Avatar className="size-5 rounded-sm">
+            <AvatarImage src={project.avatar_url || undefined} alt="" className="object-cover" />
+            <AvatarFallback className="rounded-sm"><FolderKanban className="size-3.5" /></AvatarFallback>
+          </Avatar>
+        ) }))}
         onValueChange={(nextId) => router.push(`/projects/${nextId}`)}
         className="font-medium"
       />

@@ -179,7 +179,7 @@ async function handleReport(request: NextRequest, { params }: { params: Promise<
     const name = fileCheck.value[i];
     try {
       const stored = await uploadTaskAttachment(projectId, task.id, new File([file], name, { type: file.type }), guard.userId);
-      const row = { task_id: task.id, name, storage_path: stored.path, size_bytes: file.size, mime_type: file.type || "application/octet-stream", uploaded_by: guard.userId };
+      const row = { task_id: task.id, name: stored.name, storage_path: stored.path, size_bytes: stored.size_bytes, mime_type: stored.mime_type, uploaded_by: guard.userId };
       if (hasDirectDatabase()) {
         const result = await withUser(guard.userId, ({ query }) =>
           query(

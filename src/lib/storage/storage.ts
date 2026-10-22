@@ -7,6 +7,7 @@
 
 import { createServiceClient } from "@/lib/supabase-server";
 import { getStorageProvider } from "./provider";
+import { compressAttachment } from "./attachment-compression";
 import {
   STORAGE_BUCKETS,
   ALLOWED_FILE_EXTENSIONS,
@@ -241,12 +242,14 @@ export async function uploadTaskAttachment(
     throw new Error(`Storage bucket '${STORAGE_BUCKETS.ATTACHMENTS}' could not be created: ${bucketResult.error}`);
   }
 
+  const prepared = await compressAttachment(file);
   const timestamp = Date.now();
-  const extension = file.name.split('.').pop();
+  const extension = prepared.name.split('.').pop();
   const filePath = `projects/${projectId}/tasks/${taskId}/${userId}/${timestamp}.${extension}`;
 
   try {
-    return await uploadFile(STORAGE_BUCKETS.ATTACHMENTS, filePath, file);
+    const stored = await uploadFile(STORAGE_BUCKETS.ATTACHMENTS, filePath, prepared);
+    return { ...stored, name: prepared.name, size_bytes: prepared.size, mime_type: prepared.type || "application/octet-stream" };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes('Bucket not found') || message.includes('NoSuchBucket')) {

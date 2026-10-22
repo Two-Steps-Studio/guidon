@@ -3,6 +3,7 @@ import { isModuleVisible } from "@/lib/work/project-modules";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   FolderKanban,
   Settings,
@@ -116,6 +117,10 @@ export default async function ProjectPage({
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
+            <Avatar className="size-10 rounded-md">
+              <AvatarImage src={project.avatar_url || undefined} alt="" className="object-cover" />
+              <AvatarFallback className="rounded-md"><FolderKanban className="size-5" /></AvatarFallback>
+            </Avatar>
             <h1 className="break-words text-3xl font-bold">{project.name}</h1>
             {project.project_type && (
               <Badge variant="outline">

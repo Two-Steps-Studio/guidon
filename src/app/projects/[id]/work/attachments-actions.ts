@@ -79,7 +79,7 @@ export async function uploadTaskAttachment(
     }
   }
 
-  let uploaded: { path: string };
+  let uploaded: { path: string; name: string; size_bytes: number; mime_type: string };
   try {
     uploaded = await uploadStoredAttachment(projectId, taskId, file, access.userId);
   } catch (uploadError) {
@@ -90,10 +90,10 @@ export async function uploadTaskAttachment(
     .from("task_attachments")
     .insert({
       task_id: taskId,
-      name: file.name,
+      name: uploaded.name,
       storage_path: uploaded.path,
-      size_bytes: file.size,
-      mime_type: file.type || "application/octet-stream",
+      size_bytes: uploaded.size_bytes,
+      mime_type: uploaded.mime_type,
       uploaded_by: access.userId,
     })
     .select<TaskAttachment>(ATTACHMENT_COLUMNS)
@@ -109,7 +109,7 @@ export async function uploadTaskAttachment(
     projectId,
     entityType: "task",
     entityId: taskId,
-    details: { name: file.name },
+    details: { name: uploaded.name },
   });
 
   revalidatePath(`/projects/${projectId}/work`);
