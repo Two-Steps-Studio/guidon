@@ -1,0 +1,21 @@
+const {chromium}=require('playwright');
+const ts=require('typescript');
+const fs=require('fs');
+const assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+ const page=await browser.newPage();
+ await page.setContent('<div id="board" style="width:300px;overflow:auto"><section data-column-status="todo" style="width:900px"><div data-column-scroll style="height:200px;overflow:auto"><div style="height:1000px">card</div></div></section></div>');
+ const code=ts.transpileModule(fs.readFileSync('src/components/work/board-pan.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;
+ await page.addScriptTag({content:'var exports={};'+code+';window.dispose=exports.attachBoardPan(document.querySelector("#board"));'});
+ await page.mouse.move(200,150);await page.mouse.down({button:'right'});await page.mouse.move(100,60);await page.mouse.up({button:'right'});
+ const state=await page.evaluate(()=>({x:document.querySelector('#board').scrollLeft,y:document.querySelector('[data-column-scroll]').scrollTop,cursor:document.querySelector('#board').style.cursor}));
+ assert.deepEqual(state,{x:100,y:90,cursor:''});
+ await page.mouse.move(200,150);await page.mouse.down();await page.mouse.move(100,60);await page.mouse.up();
+ assert.equal(await page.locator('#board').evaluate(e=>e.scrollLeft),100);
+ await page.mouse.move(200,150);await page.mouse.down({button:'right'});await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+ assert.equal(await page.locator('#board').evaluate(e=>e.style.cursor),'');await page.mouse.up({button:'right'});
+ await page.evaluate(()=>window.dispose());
+ console.log('PASS: right drag scrolls both axes; left drag is unchanged; release and blur restore cursor; cleanup succeeds');
+ await browser.close();
+})().catch(e=>{console.error(e);process.exitCode=1});
