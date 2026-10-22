@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { createAuthorizationCode } from "@/lib/oauth/oauth";
 import { checkAuthorizeRequest, type AuthorizeParams } from "@/lib/oauth/authorize-request";
-import { withQuery } from "@/lib/oauth/oauth-core";
+import { authorizationResponseUrl } from "@/lib/oauth/oauth-core";
 import { SITE_URL } from "@/lib/site-url";
 
 const FIELDS = ["client_id", "redirect_uri", "response_type", "code_challenge", "code_challenge_method", "scope", "state", "resource"] as const;
@@ -25,7 +25,7 @@ export async function decideAuthorization(form: FormData): Promise<void> {
   if (check.kind === "redirect") redirect(check.url);
 
   if (form.get("decision") !== "allow") {
-    redirect(withQuery(check.redirectUri, { error: "access_denied", error_description: "The person declined.", state: check.state, iss: SITE_URL }));
+    redirect(authorizationResponseUrl(check.redirectUri, { error: "access_denied", error_description: "The person declined.", state: check.state }, SITE_URL));
   }
 
   const user = await getCurrentUser();
@@ -37,5 +37,5 @@ export async function decideAuthorization(form: FormData): Promise<void> {
     redirectUri: check.redirectUri,
     codeChallenge: check.codeChallenge,
   });
-  redirect(withQuery(check.redirectUri, { code, state: check.state, iss: SITE_URL }));
+  redirect(authorizationResponseUrl(check.redirectUri, { code, state: check.state }, SITE_URL));
 }

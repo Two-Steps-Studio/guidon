@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeSiteUrl } from "@/lib/oauth/oauth-core";
 
 const DEFAULT_SITE_URL = "https://useguidon.com";
 
@@ -14,8 +15,4 @@ const DEFAULT_SITE_URL = "https://useguidon.com";
  * emit a schemeless, technically-invalid sitemap/robots.txt instead of
  * either crashing or working correctly.
  */
-function normalizeSiteUrl(value: string): string {
-  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
-}
-
 export const SITE_URL = normalizeSiteUrl(process.env.APP_URL?.trim() || DEFAULT_SITE_URL);

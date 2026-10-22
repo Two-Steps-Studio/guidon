@@ -3,7 +3,7 @@ import "server-only";
 import { isValidCodeChallenge } from "@/lib/auth/mobile-login-core";
 import { SITE_URL } from "@/lib/site-url";
 import { clientAllowsRedirect, getClient, type OAuthClient } from "./oauth";
-import { normalizeResource, parseScopes, withQuery, type OAuthScope } from "./oauth-core";
+import { authorizationResponseUrl, normalizeResource, parseScopes, type OAuthScope } from "./oauth-core";
 
 export interface AuthorizeParams {
   client_id?: string;
@@ -49,7 +49,7 @@ export async function checkAuthorizeRequest(params: AuthorizeParams): Promise<Au
   const state = params.state && params.state.length <= 1000 ? params.state : undefined;
   const fail = (error: string, description: string): AuthorizeCheck => ({
     kind: "redirect",
-    url: withQuery(redirectUri, { error, error_description: description, state, iss: SITE_URL }),
+    url: authorizationResponseUrl(redirectUri, { error, error_description: description, state }, SITE_URL),
   });
 
   if (params.response_type !== "code") return fail("unsupported_response_type", "Only response_type=code is supported.");
