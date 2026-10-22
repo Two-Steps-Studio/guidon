@@ -25,6 +25,20 @@ export const AUTH_CODE_TTL_MS = 5 * 60 * 1000;
 export const MAX_REDIRECT_URIS = 10;
 export const MAX_URI_LENGTH = 2000;
 
+/**
+ * Normalize the configured public origin used as the authorization server
+ * issuer. Do not infer it from Host/Forwarded headers: reverse proxies can
+ * expose multiple hostnames for the same deployment. Guidon is served at root.
+ */
+export function normalizeSiteUrl(value: string): string {
+  const candidate = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  const url = new URL(candidate);
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+    throw new Error("APP_URL must be an HTTP(S) origin without credentials, path, query, or fragment.");
+  }
+  return url.origin;
+}
+
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const FORBIDDEN_SCHEMES = new Set(["javascript:", "data:", "file:", "vbscript:", "blob:", "about:"]);
 
@@ -217,6 +231,15 @@ export function withQuery(uri: string, params: Record<string, string | undefined
   const url = new URL(uri);
   for (const [key, value] of Object.entries(params)) if (value !== undefined) url.searchParams.set(key, value);
   return url.toString();
+}
+
+/** RFC 9207: authorization responses use the exact issuer published in discovery. */
+export function authorizationResponseUrl(
+  redirectUri: string,
+  params: Record<string, string | undefined>,
+  issuer: string,
+): string {
+  return withQuery(redirectUri, { ...params, iss: issuer });
 }
 
 /** People-readable lines for the consent screen. */

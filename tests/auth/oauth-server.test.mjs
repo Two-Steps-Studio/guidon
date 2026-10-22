@@ -7,11 +7,13 @@
 import {
   OAUTH_SCOPES,
   authMarkdown,
+  authorizationResponseUrl,
   authorizationServerMetadata,
   bearerChallenge,
   isAllowedRedirectUri,
   isMetadataDocumentClientId,
   normalizeResource,
+  normalizeSiteUrl,
   parseScopes,
   protectedResourceMetadata,
   redirectUriMatches,
@@ -110,13 +112,22 @@ const nameless = validateMetadataDocument(cid, { client_id: cid, redirect_uris: 
 check("nameless document shows its host", "client" in nameless && nameless.client.client_name === "chatgpt.com");
 
 section("metadata documents and challenge");
-const as = authorizationServerMetadata(SITE);
+const canonicalSite = normalizeSiteUrl("https://useguidon.com/");
+check("canonical issuer removes trailing slash", canonicalSite === SITE);
+check("canonical issuer ignores uppercase host and default port", normalizeSiteUrl("HTTPS://USEGUIDON.COM:443") === SITE);
+check("APP_URL rejects a path that would split issuer and endpoint URLs", (() => { try { normalizeSiteUrl("https://useguidon.com/guidon"); return false; } catch { return true; } })());
+const as = authorizationServerMetadata(canonicalSite);
 check("issuer is the site", as.issuer === SITE);
 check("S256 advertised (clients refuse without it)", as.code_challenge_methods_supported.includes("S256"));
 check("public clients + CIMD advertised (Claude uses CIMD only with both)", as.token_endpoint_auth_methods_supported.includes("none") && as.client_id_metadata_document_supported === true);
 check("signed client authentication advertised", as.token_endpoint_auth_methods_supported.includes("private_key_jwt") && as.revocation_endpoint_auth_methods_supported.includes("private_key_jwt") && as.token_endpoint_auth_signing_alg_values_supported.includes("RS256"));
 check("iss parameter advertised", as.authorization_response_iss_parameter_supported === true);
 check("endpoints under the issuer", [as.authorization_endpoint, as.token_endpoint, as.registration_endpoint, as.revocation_endpoint].every((u) => u.startsWith(`${SITE}/oauth/`)));
+check("authorization success response uses the exact discovered issuer", new URL(authorizationResponseUrl("https://client.example/cb", { code: "c", state: "s" }, as.issuer)).searchParams.get("iss") === as.issuer);
+check("authorization error response uses the exact discovered issuer", new URL(authorizationResponseUrl("https://client.example/cb", { error: "access_denied" }, as.issuer)).searchParams.get("iss") === as.issuer);
+const wrongIssuerResponse = new URL(authorizationResponseUrl("https://client.example/cb", { code: "c" }, "https://www.useguidon.com")).searchParams.get("iss");
+check("a callback from a different issuer fails exact issuer matching", wrongIssuerResponse !== as.issuer);
+check("existing callback iss is replaced with the configured issuer", new URL(authorizationResponseUrl("https://client.example/cb?iss=https%3A%2F%2Fevil.example", { code: "c" }, as.issuer)).searchParams.get("iss") === as.issuer);
 const prm = protectedResourceMetadata(SITE, `${SITE}/api/mcp`);
 check("PRM names the resource and the AS", prm.resource === `${SITE}/api/mcp` && prm.authorization_servers[0] === as.issuer);
 check("PRM: header bearer only", prm.bearer_methods_supported.join() === "header");
