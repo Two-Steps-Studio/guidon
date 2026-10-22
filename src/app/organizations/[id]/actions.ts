@@ -9,7 +9,7 @@ import { getUniqueProjectSlug } from "@/lib/data/project-slug";
 import { effectiveOrgProjectLimit, isHostedProjectLimitReached, hostedProjectLimitMessage } from "@/lib/limits";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
-import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
+import { AVATAR_EXTENSION_BY_MIME, SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import type { ProjectMethodology, ProjectType } from "@/types/project";
 import { PROJECT_TEMPLATES, isProjectTemplate, type ProjectTemplate } from "@/lib/work/project-modules";
 import { addTemplateLabels } from "@/lib/work/template-labels";
@@ -162,7 +162,7 @@ export async function updateOrganizationAvatar(
   }
 
   const timestamp = Date.now();
-  const extension = avatarFile.name.split(".").pop() || "jpg";
+  const extension = AVATAR_EXTENSION_BY_MIME[avatarFile.type];
   const filePath = assertSafeStoragePath(`organizations/${orgId}/${timestamp}.${extension}`);
 
   let avatarUrl: string;
@@ -188,5 +188,7 @@ export async function updateOrganizationAvatar(
 
   revalidatePath(`/organizations/${orgId}`);
   revalidatePath("/organizations");
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
   return { error: null };
 }

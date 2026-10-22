@@ -125,7 +125,8 @@
     "switchProject": "Przełącz projekt",
     "calendar": "Kalendarz",
     "promoCodes": "Kody promocyjne",
-    "pinnedTasks": "Przypięte"
+    "pinnedTasks": "Przypięte",
+    "customModules": "Własne moduły"
   },
   "commandPalette": {
     "triggerLabel": "Szukaj...",
@@ -1840,5 +1841,33 @@
       "project_read": "Czytać decyzje, wiedzę, roadmapę, pamięć i stack technologiczny",
       "project_write": "Zmieniać decyzje, wiedzę, roadmapę, pamięć i stack technologiczny"
     }
+  },
+  "customModules": {
+    "title": "Własne moduły",
+    "description": "Twórz sekcje projektu z tekstu, list kontrolnych i linków.",
+    "catalog": "Katalog presetów",
+    "catalogHint": "Wybierz preset lub zaimportuj moduł utworzony z AI. Zastosuj zmiany, a następnie zapisz je w projekcie. Moduły edytują właściciele i administratorzy projektu.",
+    "releasePreset": "Lista wydania",
+    "researchPreset": "Centrum badań",
+    "import": "Importuj JSON",
+    "export": "Eksportuj JSON",
+    "prompt": "Kopiuj prompt dla AI",
+    "editor": "JSON modułu",
+    "editorHint": "Wybierz preset lub wklej JSON otrzymany od AI.",
+    "apply": "Zastosuj moduł",
+    "cancel": "Anuluj edycję",
+    "save": "Zapisz w projekcie",
+    "saving": "Zapisywanie…",
+    "saved": "Moduły zapisane.",
+    "unsaved": "Masz niezapisane zmiany modułów.",
+    "empty": "Nie ma jeszcze własnych modułów.",
+    "edit": "Edytuj",
+    "remove": "Usuń",
+    "copied": "Prompt dla AI skopiowany.",
+    "copyFailed": "Nie udało się skopiować. Sprawdź dostęp do schowka.",
+    "permission": "Tylko właściciele i administratorzy projektu mogą edytować moduły.",
+    "invalid": "Nieprawidłowy JSON. Sprawdź schemat, unikalne ID, linki HTTP(S) i limity rozmiaru.",
+    "saveFailed": "Nie udało się zapisać modułów. Spróbuj ponownie.",
+    "conflict": "Moduły zmieniono w innej sesji. Wyeksportuj zmiany, a następnie odśwież stronę przed zapisem."
   }
 }

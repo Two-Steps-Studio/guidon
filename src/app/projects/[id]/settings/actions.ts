@@ -9,7 +9,7 @@ import { withUser, type DbSession } from "@/lib/db/session";
 import { logActivity } from "@/lib/data/log-activity";
 import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
-import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
+import { AVATAR_EXTENSION_BY_MIME, SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import { guessTechnologyCategory, technologySlug } from "@/types/technology";
 import type { ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
 import type { Technology } from "@/types/technology";
@@ -186,7 +186,7 @@ export async function updateProjectSettings(
     }
 
     const timestamp = Date.now();
-    const extension = avatarFile.name.split(".").pop() || "jpg";
+    const extension = AVATAR_EXTENSION_BY_MIME[avatarFile.type];
     const filePath = assertSafeStoragePath(`projects/${projectId}/${timestamp}.${extension}`);
 
     try {

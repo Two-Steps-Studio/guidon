@@ -14,6 +14,7 @@ import {
 export interface SelectMenuOption {
   value: string
   label: string
+  icon?: React.ReactNode
 }
 
 interface SelectMenuProps {
@@ -53,7 +54,7 @@ export function SelectMenu({
           className
         )}
       >
-        <span className="truncate">{current?.label ?? value}</span>
+        <span className="flex min-w-0 items-center gap-2">{current?.icon}<span className="truncate">{current?.label ?? value}</span></span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -69,7 +70,7 @@ export function SelectMenu({
             }}
             className="justify-between gap-2"
           >
-            <span className="truncate">{option.label}</span>
+            <span className="flex min-w-0 items-center gap-2">{option.icon}<span className="truncate">{option.label}</span></span>
             {option.value === value && <Check className="h-4 w-4 shrink-0" />}
           </DropdownMenuItem>
         ))}

@@ -27,6 +27,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 // The data client's SQL compiler (pure TS, no imports) - run with
 // --experimental-strip-types, see package.json's test:db.
 import { compile, compileCount, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
@@ -3552,6 +3553,35 @@ section("64. podpisane zadania klienta OAuth (migracja 078)");
   });
   await withAnon(async () => {
     check("anon nie czyta podpisow", await throwsInSavepoint("SELECT * FROM public.oauth_client_assertions"));
+  });
+}
+
+section("65. custom module isolation and concurrent saves (migration 079)");
+{
+  await withUser(A, async () => {
+    const result = await db.query("UPDATE public.projects SET custom_modules = '[{\"id\":\"notes\"}]', custom_modules_revision = 1 WHERE id = $1 AND custom_modules_revision = 0 RETURNING id", [projectId]);
+    check("owner saves project modules", result.rows.length === 1);
+    const content = [{ version: 1, id: "notes", title: "Notes", description: "", blocks: [{ type: "text", title: "Notes", text: "Content" }] }];
+    const compiled = compile({ table: "projects", op: "update", columns: ["custom_modules"], filters: [{ column: "id", op: "eq", value: projectId }], order: [], limit: null, values: [{ custom_modules: JSON.stringify(content) }] });
+    const roundtrip = await db.query(compiled.text, compiled.values);
+    check("compiled self-hosted JSONB module update round-trips", isDeepStrictEqual(roundtrip.rows[0]?.custom_modules, content));
+    const stale = await db.query("UPDATE public.projects SET custom_modules_revision = 2 WHERE id = $1 AND custom_modules_revision = 0 RETURNING id", [projectId]);
+    check("stale module revision cannot overwrite newer content", stale.rows.length === 0);
+    check("module value must be an array", await throwsInSavepoint("UPDATE public.projects SET custom_modules = '{}' WHERE id = $1", [projectId]));
+    check("module count is bounded", await throwsInSavepoint("UPDATE public.projects SET custom_modules = (SELECT jsonb_agg(i) FROM generate_series(1,21) i) WHERE id = $1", [projectId]));
+  });
+  await withUser(B, async () => {
+    const result = await db.query("UPDATE public.projects SET custom_modules = '[]' WHERE id = $1 RETURNING id", [projectId]);
+    check("another tenant cannot overwrite custom modules", result.rows.length === 0);
+  });
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [projectId, B]);
+  });
+  await withUser(B, async () => {
+    const read = await db.query("SELECT custom_modules FROM public.projects WHERE id = $1", [projectId]);
+    check("project developer can read custom modules", read.rows[0]?.custom_modules.length === 1);
+    const write = await db.query("UPDATE public.projects SET custom_modules = '[]' WHERE id = $1 RETURNING id", [projectId]);
+    check("project developer cannot change custom modules", write.rows.length === 0);
   });
 }
 

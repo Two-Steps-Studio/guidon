@@ -78,10 +78,10 @@ guidon tasks list --project "$PROJECT" --status review --json | jq -r '.[].title
 ## Development
 
 ```bash
-cd packages/sdk-js && npm install && npm run build   # the CLI uses the local SDK
-cd ../cli && npm install
-npm test        # build + node:test (spawns the CLI against a local mock server)
-node dist/bin.js --help
+npm ci                                            # from the repository root
+npm run build --workspace @guidon/sdk              # builds the linked local SDK
+npm test --workspace guidon-cli                    # build + local mock-server tests
+node packages/cli/dist/bin.js --help
 ```
 
 Links: [Homepage](https://useguidon.com) - [Source](https://github.com/Two-Steps-Studio/guidon/tree/main/packages/cli)

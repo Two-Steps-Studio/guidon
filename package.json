@@ -2,6 +2,7 @@
   "name": "guidon",
   "version": "0.1.0",
   "private": true,
+  "workspaces": ["packages/sdk-js", "packages/cli"],
   "scripts": {
     "predev": "node scripts/build-plugin-zips.mjs",
     "dev": "next dev --webpack -p 5803",
@@ -24,6 +25,8 @@
     "test:import": "node tests/task-import.test.mjs",
     "test:recurrence": "node tests/recurrence.test.mjs",
     "test:billing": "node tests/billing.test.mjs",
+    "test:modules": "node tests/custom-modules.test.mjs",
+    "test:attachments": "node tests/attachment-compression.test.mjs",
     "test:api": "node tests/api-route.test.mjs"
   },
   "dependencies": {
@@ -59,6 +62,7 @@
     "react-syntax-highlighter": "^15.6.6",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.4",
     "sonner": "^2.0.8",
     "stripe": "^22.6.2",
     "tailwind-merge": "^2.5.5",

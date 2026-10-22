@@ -88,6 +88,11 @@ export const ALLOWED_IMAGE_TYPES = [
  */
 export const SAFE_INLINE_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"] as const;
 
+/** Canonical suffixes keep public avatars inline even for .jfif or extensionless uploads. */
+export const AVATAR_EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
+  "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp",
+};
+
 /**
  * Extensions safe to serve inline (real Content-Type, no forced download)
  * regardless of whether the object is a `public: true` avatar/project image

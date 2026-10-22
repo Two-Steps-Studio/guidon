@@ -33,11 +33,10 @@ interface TransactionalEmail {
 
 /**
  * A plain, text-first message: white page, system font, one link, no images
- * and no plain-text-less HTML. Gmail sorts mail that looks designed (dark
- * hero card, logo image, big button, no text part) into Promotions; mail
- * that reads like a note from a person lands in Primary, which is where a
- * password reset has to be. docs/supabase-email-templates/ uses the same
- * shape for the emails Supabase sends.
+ * and a matching plain-text part. Avoid promotional content in account
+ * messages. Inbox placement still depends on sender authentication,
+ * reputation, and the recipient's mail provider and preferences.
+ * docs/supabase-email-templates/ uses the same shape for Supabase emails.
  */
 function transactionalEmailHtml(email: TransactionalEmail): string {
   const link = escapeHtml(email.link);
@@ -105,6 +104,10 @@ export async function sendPasswordResetEmail(
       to: [to],
       // Replies reach a person instead of bouncing off noreply@.
       reply_to: SUPPORT_EMAIL,
+      headers: {
+        "Auto-Submitted": "auto-generated",
+        "X-Auto-Response-Suppress": "All",
+      },
       subject: email.title,
       html: transactionalEmailHtml(email),
       text: transactionalEmailText(email),

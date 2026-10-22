@@ -125,7 +125,8 @@
     "switchProject": "Projekt wechseln",
     "calendar": "Kalender",
     "promoCodes": "Promo-Codes",
-    "pinnedTasks": "Angeheftet"
+    "pinnedTasks": "Angeheftet",
+    "customModules": "Custom modules"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -1840,5 +1841,33 @@
       "project_read": "Entscheidungen, Wissen, Roadmap, Gedächtnis und Tech-Stack lesen",
       "project_write": "Entscheidungen, Wissen, Roadmap, Gedächtnis und Tech-Stack ändern"
     }
+  },
+  "customModules": {
+    "title": "Custom modules",
+    "description": "Build project sections from text, checklists and links.",
+    "catalog": "Preset catalog",
+    "catalogHint": "Start with a preset or import a module made with AI. Apply edits, then save them to the project. Only project owners and admins can edit modules.",
+    "releasePreset": "Release checklist",
+    "researchPreset": "Research hub",
+    "import": "Import JSON",
+    "export": "Export JSON",
+    "prompt": "Copy AI prompt",
+    "editor": "Module JSON",
+    "editorHint": "Choose a preset, or paste the JSON returned by your AI.",
+    "apply": "Apply module",
+    "cancel": "Cancel edit",
+    "save": "Save to project",
+    "saving": "Saving…",
+    "saved": "Modules saved.",
+    "unsaved": "You have unsaved module changes.",
+    "empty": "No custom modules yet.",
+    "edit": "Edit",
+    "remove": "Remove",
+    "copied": "AI prompt copied.",
+    "copyFailed": "Could not copy. Check clipboard permissions.",
+    "permission": "Only project owners and admins can edit modules.",
+    "invalid": "Invalid module JSON. Check the schema, unique IDs, HTTP(S) links and size limits.",
+    "saveFailed": "Could not save modules. Try again.",
+    "conflict": "Modules changed in another session. Export your changes, then reload before saving."
   }
 }

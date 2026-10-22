@@ -28,7 +28,7 @@
     "prepublishOnly": "node scripts/check-publishable.mjs && npm run clean && npm test"
   },
   "dependencies": {
-    "@guidon/sdk": "file:../sdk-js"
+    "@guidon/sdk": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.0",

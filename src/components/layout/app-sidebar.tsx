@@ -118,6 +118,7 @@ export const PROJECT_NAV = [
     items: [
       { href: "memory", labelKey: "memory", icon: Brain },
       { href: "context", labelKey: "graph", icon: Network },
+      { href: "modules", labelKey: "customModules", icon: Puzzle },
     ],
   },
   {

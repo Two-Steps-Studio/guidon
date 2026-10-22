@@ -241,7 +241,7 @@ console.log("\n  about / contact (trust pages) and JSON-LD");
     org?.contactPoint?.[0]?.email === SUPPORT_EMAIL && !!org?.contactPoint?.[0]?.contactType
   );
   check("Organization has a PostalAddress", org?.address?.["@type"] === "PostalAddress");
-  check("Organization sameAs links GitHub", org?.sameAs?.includes(GITHUB_REPO_URL));
+  check("Organization sameAs links the studio GitHub profile", org?.sameAs?.includes("https://github.com/Two-Steps-Studio"));
   const app = home["@graph"].find((node) => node["@type"] === "SoftwareApplication");
   check("offers skip 'contact us' plans", Array.isArray(app?.offers) && app.offers.length === 2, JSON.stringify(app?.offers));
   check("offer price is a decimal string in EUR", app?.offers?.[1]?.price === "9.00" && app.offers[1].priceCurrency === "EUR");
