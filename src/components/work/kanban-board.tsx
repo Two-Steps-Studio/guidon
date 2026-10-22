@@ -17,6 +17,7 @@ import {
   type BoardColumn,
   type SubtaskProgress,
 } from "@/lib/work/task-board";
+import { attachBoardPan } from "@/components/work/board-pan";
 import { TaskCard, type TaskCardMember } from "@/components/work/task-card";
 import type { Task, TaskStatus } from "@/types/task";
 import { usePriorities } from "@/components/work/workflow-context";
@@ -148,6 +149,11 @@ export function KanbanBoard({
   const pendingPosRef = useRef<{ x: number; y: number } | null>(null);
   const boardScrollRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const board = boardScrollRef.current;
+    if (board) return attachBoardPan(board);
+  }, []);
 
   // Dragging is disabled while sorted by due date - see sortMode's doc
   // comment above.
