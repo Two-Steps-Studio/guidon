@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Dither from "@/components/Dither";
 import { useBackgroundMotion } from "@/lib/background-motion";
 import { useWallpaperDim, useWallpaperUrl } from "@/lib/wallpaper";
@@ -23,6 +24,7 @@ import { useEffectiveTheme, type EffectiveTheme } from "@/lib/use-effective-them
 const WAVE_COLOR: Record<EffectiveTheme, string> = { light: "#245bea", dark: "#8fb5ff" };
 
 export function DitherBackground() {
+  const pathname = usePathname();
   const theme = useEffectiveTheme();
   // Profile -> Background animation; "auto" leaves the OS reduced-motion
   // setting in charge (Dither then shows a still frame).
@@ -30,6 +32,10 @@ export function DitherBackground() {
   // Profile -> Wallpaper (this device only) replaces the animation.
   const wallpaper = useWallpaperUrl();
   const dim = useWallpaperDim();
+
+  // The public landing page owns its background. Keep device preferences
+  // intact so they still apply when navigating back into the app.
+  if (pathname === "/") return null;
 
   if (wallpaper) {
     return (
