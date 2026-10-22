@@ -22,12 +22,20 @@ working default or is optional.
 | Variable | Meaning |
 |---|---|
 | `NEXT_PUBLIC_APP_URL` | The URL the app is served from. Sent to the browser. |
+| `APP_URL` | The canonical public origin used by OAuth discovery and authorization responses. |
 | `NEXT_PUBLIC_APP_NAME` | Display name, sent to the browser. |
 | `AUTH_SECRET` | Signs local-storage download URLs (`src/lib/storage/providers/local.ts`) and, on the self-hosted path, self-hosted auth's session cookies (`src/lib/auth/session-cookie.ts`). Generate with `openssl rand -hex 32`. |
 
 `NEXT_PUBLIC_*` variables are compiled into the client bundle at **build**
 time (see `next.config.ts` / `Dockerfile`), not read at container runtime —
 that's why the Dockerfile takes them as build args.
+
+Set `APP_URL` to the HTTPS origin users use to reach this deployment, such as
+`https://useguidon.com`. A trailing slash is normalized; paths, queries, and
+fragments are rejected because Guidon is served from the origin root. Behind
+Vercel, Cloudflare, or another reverse proxy, use the stable public origin
+here. OAuth issuer values deliberately come from this setting rather than
+request `Host` or forwarded headers, which may differ between proxy hops.
 
 ---
 
