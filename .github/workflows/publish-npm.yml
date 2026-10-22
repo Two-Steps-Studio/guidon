@@ -1,0 +1,129 @@
+name: Publish npm packages (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to npm (false only validates and uploads artifacts)
+        type: boolean
+        default: false
+      target:
+        description: Packages to publish (CLI always requires the SDK on npm)
+        type: choice
+        options: [both, sdk, cli]
+        default: both
+      authentication:
+        description: Use bootstrap-token only for a package's first publication
+        type: choice
+        options: [oidc, bootstrap-token]
+        default: oidc
+permissions:
+  contents: read
+concurrency:
+  group: guidon-package-publishing
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --ignore-scripts --workspace=@guidon/sdk --workspace=guidon-cli --include-workspace-root=false
+      - run: npm run clean --workspace=@guidon/sdk && npm test --workspace=@guidon/sdk
+      - run: node packages/cli/scripts/check-publishable.mjs && npm run clean --workspace=guidon-cli && npm test --workspace=guidon-cli
+      - name: Pack the tested builds
+        run: |
+          mkdir -p artifacts/sdk-js artifacts/cli
+          npm pack --workspace=@guidon/sdk --ignore-scripts --pack-destination artifacts/sdk-js
+          npm pack --workspace=guidon-cli --ignore-scripts --pack-destination artifacts/cli
+          python scripts/release/validate.py npm
+      - name: Install and smoke test the actual tarballs outside the workspace
+        shell: bash
+        run: |
+          smoke=$(mktemp -d)
+          npm install --prefix "$smoke" --ignore-scripts --no-audit --no-fund "$PWD"/artifacts/sdk-js/*.tgz "$PWD"/artifacts/cli/*.tgz
+          (cd "$smoke" && node --input-type=module -e "import { Guidon } from '@guidon/sdk'; if (typeof Guidon !== 'function') process.exit(1)")
+          "$smoke/node_modules/.bin/guidon" --version
+          "$smoke/node_modules/.bin/guidon" --help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: artifacts/
+          if-no-files-found: error
+  sdk:
+    needs: validate
+    if: inputs.publish && inputs.target != 'cli' && github.ref == 'refs/heads/main' && github.repository == 'Two-Steps-Studio/guidon'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global npm@11.9.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-packages
+          path: artifacts
+      - run: python scripts/release/validate.py npm --publishing
+      - name: Publish SDK with trusted publishing
+        if: inputs.authentication == 'oidc'
+        run: npm publish artifacts/sdk-js/*.tgz --access public --provenance --ignore-scripts --registry=https://registry.npmjs.org
+      - name: Bootstrap SDK (first publication only)
+        if: inputs.authentication == 'bootstrap-token'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+        shell: bash
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npm-bootstrap-sdk.npmrc"
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
+          printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$NPM_CONFIG_USERCONFIG"
+          npm publish artifacts/sdk-js/*.tgz --access public --provenance --ignore-scripts --registry=https://registry.npmjs.org
+  cli:
+    needs: [validate, sdk]
+    if: always() && inputs.publish && inputs.target != 'sdk' && needs.validate.result == 'success' && (needs.sdk.result == 'success' || needs.sdk.result == 'skipped') && github.ref == 'refs/heads/main' && github.repository == 'Two-Steps-Studio/guidon'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global npm@11.9.0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-packages
+          path: artifacts
+      - run: python scripts/release/validate.py npm --publishing
+      - run: node scripts/release/check-sdk-registry.mjs
+      - name: Publish CLI with trusted publishing
+        if: inputs.authentication == 'oidc'
+        run: npm publish artifacts/cli/*.tgz --access public --provenance --ignore-scripts --registry=https://registry.npmjs.org
+      - name: Bootstrap CLI (first publication only)
+        if: inputs.authentication == 'bootstrap-token'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+        shell: bash
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npm-bootstrap-cli.npmrc"
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
+          printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$NPM_CONFIG_USERCONFIG"
+          npm publish artifacts/cli/*.tgz --access public --provenance --ignore-scripts --registry=https://registry.npmjs.org
