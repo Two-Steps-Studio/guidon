@@ -12,7 +12,18 @@
     "sourceType": "{type, select, document {Documento} comment {Comentario} commit {Commit} pull_request {Pull request} issue {Incidencia} external_url {Enlace} meeting {Nota de reunión} file {Archivo} other {Nota}}",
     "authorableSourceHint": "{type, select, document {Especificaciones, documentos de diseño, notas de incorporación} meeting {Qué se habló y acordó} external_url {Material de referencia que vive en otro lugar} other {Cualquier otra cosa que valga la pena recordar}}",
     "technologyCategory": "{category, select, frontend {Frontend} backend {Backend} game_engine {Motor de juego} database {Base de datos} devops {DevOps} ai {IA} other {Otro}}",
-    "memoryType": "{type, select, fact {Hecho} project_rule {Regla} constraint {Restricción} preference {Preferencia} decision_summary {Decisión} observation {Observación} ai_insight {Información de IA} other {Hecho}}"
+    "memoryType": "{type, select, fact {Hecho} project_rule {Regla} constraint {Restricción} preference {Preferencia} decision_summary {Decisión} observation {Observación} ai_insight {Información de IA} other {Hecho}}",
+    "imageCrop": {
+      "title": "Recortar imagen",
+      "description": "Ajusta el recorte cuadrado antes de subirla.",
+      "zoom": "Zoom",
+      "horizontal": "Posición horizontal",
+      "vertical": "Posición vertical",
+      "cancel": "Cancelar",
+      "apply": "Usar este recorte",
+      "failed": "No se pudo procesar esta imagen.",
+      "currentImage": "Imagen actual"
+    }
   },
   "auth": {
     "login": {

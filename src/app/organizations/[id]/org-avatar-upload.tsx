@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building2, Loader2 } from "lucide-react";
 import { updateOrganizationAvatar, type OrgAvatarState } from "./actions";
+import { ImageCropInput } from "@/components/ui/image-crop-input";
 
 const initialState: OrgAvatarState = { error: null };
 
@@ -22,20 +23,14 @@ export function OrgAvatarUpload({
   const t = useTranslations("organizations.detail");
   const updateWithId = updateOrganizationAvatar.bind(null, orgId);
   const [state, formAction, pending] = useActionState(updateWithId, initialState);
-  const inputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <div>
       <form ref={formRef} action={formAction}>
-        <input
-          ref={inputRef}
-          type="file"
-          name="avatar"
-          accept="image/*"
-          className="hidden"
-          onChange={() => formRef.current?.requestSubmit()}
-        />
+        <div className="sr-only">
+          <ImageCropInput name="avatar" onReady={() => formRef.current?.requestSubmit()} />
+        </div>
         <button
           type="button"
           disabled={!canEdit || pending}
@@ -46,8 +41,9 @@ export function OrgAvatarUpload({
             // onChange - otherwise the browser sees no change and nothing
             // resubmits, leaving the user stuck on the error with no way to
             // retry short of picking a different file.
-            if (inputRef.current) inputRef.current.value = "";
-            inputRef.current?.click();
+            const input = formRef.current?.querySelector<HTMLInputElement>('input[type="file"]');
+            if (input) input.value = "";
+            input?.click();
           }}
           className="relative disabled:cursor-default"
           aria-label={canEdit ? t("changeImageAria", { name }) : name}

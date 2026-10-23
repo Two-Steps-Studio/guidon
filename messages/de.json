@@ -12,7 +12,18 @@
     "sourceType": "{type, select, document {Dokument} comment {Kommentar} commit {Commit} pull_request {Pull Request} issue {Issue} external_url {Link} meeting {Besprechungsnotiz} file {Datei} other {Notiz}}",
     "authorableSourceHint": "{type, select, document {Spezifikationen, Designdokumente, Onboarding-Notizen} meeting {Was besprochen und vereinbart wurde} external_url {Referenzmaterial an anderer Stelle} other {Alles andere, das es wert ist, festgehalten zu werden}}",
     "technologyCategory": "{category, select, frontend {Frontend} backend {Backend} game_engine {Game-Engine} database {Datenbank} devops {DevOps} ai {KI} other {Sonstiges}}",
-    "memoryType": "{type, select, fact {Fakt} project_rule {Regel} constraint {Einschränkung} preference {Präferenz} decision_summary {Entscheidung} observation {Beobachtung} ai_insight {KI-Erkenntnis} other {Fakt}}"
+    "memoryType": "{type, select, fact {Fakt} project_rule {Regel} constraint {Einschränkung} preference {Präferenz} decision_summary {Entscheidung} observation {Beobachtung} ai_insight {KI-Erkenntnis} other {Fakt}}",
+    "imageCrop": {
+      "title": "Bild zuschneiden",
+      "description": "Passe den quadratischen Ausschnitt vor dem Hochladen an.",
+      "zoom": "Zoom",
+      "horizontal": "Horizontale Position",
+      "vertical": "Vertikale Position",
+      "cancel": "Abbrechen",
+      "apply": "Ausschnitt verwenden",
+      "failed": "Dieses Bild konnte nicht verarbeitet werden.",
+      "currentImage": "Aktuelles Bild"
+    }
   },
   "auth": {
     "login": {

@@ -12,7 +12,18 @@
     "sourceType": "{type, select, document {Document} comment {Comment} commit {Commit} pull_request {Pull request} issue {Issue} external_url {Link} meeting {Meeting note} file {File} other {Note}}",
     "authorableSourceHint": "{type, select, document {Specs, design docs, onboarding notes} meeting {What was discussed and agreed} external_url {Reference material living elsewhere} other {Anything else worth remembering}}",
     "technologyCategory": "{category, select, frontend {Frontend} backend {Backend} game_engine {Game engine} database {Database} devops {DevOps} ai {AI} other {Other}}",
-    "memoryType": "{type, select, fact {Fact} project_rule {Rule} constraint {Constraint} preference {Preference} decision_summary {Decision} observation {Observation} ai_insight {AI Insight} other {Fact}}"
+    "memoryType": "{type, select, fact {Fact} project_rule {Rule} constraint {Constraint} preference {Preference} decision_summary {Decision} observation {Observation} ai_insight {AI Insight} other {Fact}}",
+    "imageCrop": {
+      "title": "Crop image",
+      "description": "Adjust the square crop before uploading.",
+      "zoom": "Zoom",
+      "horizontal": "Horizontal position",
+      "vertical": "Vertical position",
+      "cancel": "Cancel",
+      "apply": "Use this crop",
+      "failed": "Could not process this image.",
+      "currentImage": "Current image"
+    }
   },
   "auth": {
     "login": {
