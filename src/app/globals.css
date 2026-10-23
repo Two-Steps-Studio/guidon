@@ -28,7 +28,8 @@
 /* ============================================
    GUIDON DESIGN TOKENS
 
-   Dark-first developer SaaS palette.
+   Dark-first developer SaaS palette. Official brand colors and their
+   intended roles are documented in docs/brand-kit.md.
    Light mode is defined on :root so that any token
    referenced by a utility always resolves; the dark
    palette overrides it under prefers-color-scheme and
@@ -41,7 +42,7 @@
 
 :root {
   /* Brand */
-  --color-primary: #1d4fd8;
+  --color-primary: var(--color-brand);
   --color-primary-hover: #1640b0;
   --color-primary-active: #0f2f85;
   --color-primary-foreground: #ffffff;
@@ -115,7 +116,7 @@
   --color-popover-foreground: #0f172a;
 
   --color-input: #e2e8f0;
-  --color-ring: #1d4fd8;
+  --color-ring: var(--color-brand);
 
   /* Priority / status accents (Kanban, badges) */
   --color-priority-low: #64748b;
@@ -150,7 +151,7 @@
 /* ---- Dark palette (system preference) ---- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-primary: #4d8dff;
+    --color-primary: var(--color-brand-accent);
     --color-primary-hover: #6ea3ff;
     --color-primary-active: #3a76e6;
     --color-primary-foreground: #05142e;
@@ -214,7 +215,7 @@
     --color-popover-foreground: #e8eaed;
 
     --color-input: #23272f;
-    --color-ring: #4d8dff;
+    --color-ring: var(--color-brand-accent);
 
     --color-priority-low: #8b93a1;
     --color-priority-medium: #60a5fa;
@@ -228,7 +229,7 @@
 
 /* ---- Dark palette (explicit opt-in, wins over system) ---- */
 :root[data-theme="dark"] {
-  --color-primary: #4d8dff;
+  --color-primary: var(--color-brand-accent);
   --color-primary-hover: #6ea3ff;
   --color-primary-active: #3a76e6;
   --color-primary-foreground: #05142e;
@@ -292,7 +293,7 @@
   --color-popover-foreground: #e8eaed;
 
   --color-input: #23272f;
-  --color-ring: #4d8dff;
+  --color-ring: var(--color-brand-accent);
 
   --color-priority-low: #8b93a1;
   --color-priority-medium: #60a5fa;

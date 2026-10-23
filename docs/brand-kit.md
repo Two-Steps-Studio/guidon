@@ -122,9 +122,30 @@ logo or place the white variant on a light background.
 ## Visual reference
 
 The current interface is the source of truth for the product's visual
-language. Its base brand blue is `#1d4fd8`, accent blue is `#4d8dff`, and the
-primary font is Geist. Use the existing design tokens rather than inventing
-new UI colors for product screenshots.
+language. The official brand palette below is the source of truth for product
+screens, social profiles, banners, and future marketing material.
+
+### Official brand palette
+
+| Color | Hex | Role and use |
+| --- | --- | --- |
+| Guidon Blue | `#1D4FD8` | Primary brand color. Use for the mark, light-mode primary actions, links, and small emphasis on light backgrounds. |
+| Electric Blue | `#4D8DFF` | Supporting brand color. Use for highlights, fine details, and dark-mode primary actions where the deeper blue would not have enough contrast. |
+| Midnight Navy | `#07142D` | Marketing background for dark banners and campaign graphics. Blue glows and gradients may vary around this base. |
+| White | `#FFFFFF` | Wordmark and foreground color on dark brand backgrounds. |
+| Ink | `#0F172A` | Body text on light backgrounds; this is a product neutral, not a logo color. |
+
+Keep these roles consistent: Guidon Blue leads, Electric Blue supports, and
+Midnight Navy is a background. Do not add another brand blue or recolor the
+logo. On dark product surfaces, use the Electric Blue variant for interactive
+elements to preserve readability. Use semantic interface tokens for states
+such as success, warning, and destructive actions; those colors are not part
+of the brand palette.
+
+The interface tokens in `src/app/globals.css` map to this palette:
+`--color-brand` is Guidon Blue, `--color-brand-accent` is Electric Blue, and
+`--color-primary` switches between them for light and dark themes. The primary
+font is Geist. Use these tokens rather than adding one-off UI colors.
 
 ## Links
 
