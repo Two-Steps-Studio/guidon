@@ -112,6 +112,28 @@ export function WorkBoard({
   // refresh doesn't reopen it and the address bar doesn't look stale.
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Keep the board current for teammates working in parallel. Refresh only
+  // while visible and idle so it never interrupts an open task/editor dialog.
+  useEffect(() => {
+    const refreshIfIdle = () => {
+      if (document.visibilityState === "visible" && !document.querySelector('[role="dialog"]')) {
+        router.refresh();
+      }
+    };
+    const interval = window.setInterval(refreshIfIdle, 60_000);
+    return () => window.clearInterval(interval);
+  }, [router]);
+  useEffect(() => {
+    // Server refreshes replace the initial props; mirror those new records
+    // into the board's optimistic client state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setState((current) => ({
+      ...current,
+      tasks: initialTasks,
+      commentCounts: initialCommentCounts,
+      coverImages: initialCoverImages ?? {},
+    }));
+  }, [initialTasks, initialCommentCounts, initialCoverImages]);
   const openTaskParam = searchParams.get("openTask");
   useEffect(() => {
     if (!openTaskParam) return;

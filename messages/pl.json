@@ -12,7 +12,18 @@
     "sourceType": "{type, select, document {Dokument} comment {Komentarz} commit {Commit} pull_request {Pull request} issue {Zgłoszenie} external_url {Link} meeting {Notatka ze spotkania} file {Plik} other {Notatka}}",
     "authorableSourceHint": "{type, select, document {Specyfikacje, dokumenty projektowe, notatki wdrożeniowe} meeting {Co omówiono i ustalono} external_url {Materiał źródłowy znajdujący się gdzie indziej} other {Cokolwiek innego, co warto zapamiętać}}",
     "technologyCategory": "{category, select, frontend {Frontend} backend {Backend} game_engine {Silnik gry} database {Baza danych} devops {DevOps} ai {AI} other {Inne}}",
-    "memoryType": "{type, select, fact {Fakt} project_rule {Zasada} constraint {Ograniczenie} preference {Preferencja} decision_summary {Decyzja} observation {Obserwacja} ai_insight {Wniosek AI} other {Fakt}}"
+    "memoryType": "{type, select, fact {Fakt} project_rule {Zasada} constraint {Ograniczenie} preference {Preferencja} decision_summary {Decyzja} observation {Obserwacja} ai_insight {Wniosek AI} other {Fakt}}",
+    "imageCrop": {
+      "title": "Kadruj zdjęcie",
+      "description": "Dopasuj kwadratowy kadr przed wysłaniem.",
+      "zoom": "Powiększenie",
+      "horizontal": "Pozycja pozioma",
+      "vertical": "Pozycja pionowa",
+      "cancel": "Anuluj",
+      "apply": "Użyj kadru",
+      "failed": "Nie udało się przetworzyć zdjęcia.",
+      "currentImage": "Aktualne zdjęcie"
+    }
   },
   "auth": {
     "login": {

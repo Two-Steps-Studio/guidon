@@ -15,6 +15,7 @@ import { AlertCircle, FolderKanban, Loader2, Settings, X } from "lucide-react";
 import { updateProjectSettings, type SettingsFormState } from "./actions";
 import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
 import { Select } from "@/components/ui/select";
+import { ImageCropInput } from "@/components/ui/image-crop-input";
 
 const STATUS_VALUES: ProjectStatus[] = ["active", "archived", "deleted"];
 const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
@@ -86,7 +87,7 @@ export function SettingsForm({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-1">
-                <Input id="avatar" name="avatar" type="file" accept="image/*" />
+                <ImageCropInput id="avatar" name="avatar" currentImage={project.avatar_url} />
                 <p className="text-xs text-muted-foreground">
                   {t("projectImageHelp")}
                 </p>
