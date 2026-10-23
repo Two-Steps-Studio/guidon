@@ -1,6 +1,6 @@
 # Guidon social profile assets
 
-- `profile-avatar.png` — 400 × 400 profile image with a circular Guidon Blue field, transparent outer corners, and extra clearance around the white symbol. Use this for social profile photos; it remains clean when a platform crops it to a circle.
+- `profile-avatar.png` — 400 × 400 transparent PNG with the Guidon Blue symbol and extra clearance for circular profile crops.
 - `profile-avatar.svg` — vector source for the profile image.
 - `x-header.png` — 1500 × 500 X profile header.
 - `linkedin-cover.png` — 1584 × 396 LinkedIn cover.
