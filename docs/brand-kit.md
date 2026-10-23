@@ -100,31 +100,70 @@ behind them. Organize work on a project board, record decisions, connect
 knowledge and references, and let authorized AI agents work through REST or
 MCP. Choose the hosted product or self-host your instance.
 
-## Logo files
+## Logo files and usage
 
-Use the transparent files in `public/brand/` for new marketing material.
-They are recolors of the existing transparent Guidon mark and wordmark.
+Use the canonical transparent files in `public/brand/`. “Symbol” means the
+shield-shaped G alone; “wordmark” means the symbol and GUIDON lettering
+together. The files previously named `guidon-mark-*.png` were full wordmarks,
+not symbol-only marks, and have been removed to avoid choosing the wrong logo.
 
 | File | Use |
 | --- | --- |
-| [guidon-mark-blue.png](../public/brand/guidon-mark-blue.png) | Primary blue mark on light backgrounds. |
-| [guidon-mark-black.png](../public/brand/guidon-mark-black.png) | Dark mark on light backgrounds. |
-| [guidon-mark-white.png](../public/brand/guidon-mark-white.png) | White mark on dark backgrounds. |
-| [guidon-wordmark-blue.png](../public/brand/guidon-wordmark-blue.png) | Primary blue wordmark on light backgrounds. |
-| [guidon-wordmark-black.png](../public/brand/guidon-wordmark-black.png) | Dark wordmark on light backgrounds. |
-| [guidon-wordmark-white.png](../public/brand/guidon-wordmark-white.png) | White wordmark on dark backgrounds. |
+| [guidon-symbol-blue.svg](../public/brand/guidon-symbol-blue.svg) | Blue symbol on light backgrounds; app icon, favicon, or compact placement. |
+| [guidon-symbol-black.svg](../public/brand/guidon-symbol-black.svg) | Dark symbol on light backgrounds when blue is not suitable. |
+| [guidon-symbol-white.svg](../public/brand/guidon-symbol-white.svg) | White symbol on dark backgrounds. |
+| [guidon-wordmark-blue.png](../public/brand/guidon-wordmark-blue.png) | Default full logo on white or light backgrounds. |
+| [guidon-wordmark-black.png](../public/brand/guidon-wordmark-black.png) | Full logo for neutral, monochrome uses on light backgrounds. |
+| [guidon-wordmark-white.png](../public/brand/guidon-wordmark-white.png) | Full logo on Guidon Blue, Midnight Navy, or another dark background. |
+| [profile-avatar.png](../public/brand/social/profile-avatar.png) | Ready-to-upload social profile image: white symbol on Guidon Blue. |
 
-The app's existing wordmark remains at `public/assets/guidon-wordmark.png`.
+### Which logo to use
+
+- **In the app:** use the symbol alone where space is tight, such as a collapsed
+  navigation rail. Use the full wordmark for sign-in or public-facing brand
+  placement. Keep the existing app asset at `public/assets/guidon-wordmark.png`
+  where the application already references it.
+- **Marketing and social profiles:** use the symbol-only `profile-avatar.png`
+  for square profile pictures. It stays legible at small sizes; the wordmark is
+  too small to read inside a circular crop.
+- **Marketing banners, website headers, launch pages, and partner materials:**
+  use the full wordmark. Choose blue on light backgrounds and white on dark or
+  brand-colored backgrounds. Use the prepared files in `public/brand/social/`
+  for the existing X, LinkedIn, and YouTube banner dimensions.
+- Keep clear space around the full logo, preserve its proportions, and do not
+  add effects, recolor it, or put the white version on a light background.
+
 The older `public/assets/Guidon*.png` files have mixed background treatments;
-prefer the transparent exports above for campaign layouts. Do not stretch the
-logo or place the white variant on a light background.
+prefer the canonical transparent exports above for new campaign layouts.
 
 ## Visual reference
 
 The current interface is the source of truth for the product's visual
-language. Its base brand blue is `#1d4fd8`, accent blue is `#4d8dff`, and the
-primary font is Geist. Use the existing design tokens rather than inventing
-new UI colors for product screenshots.
+language. The official brand palette below is the source of truth for product
+screens, social profiles, banners, and future marketing material.
+
+### Official brand palette
+
+| Color | Hex | Role and use |
+| --- | --- | --- |
+| Guidon Blue | `#1D4FD8` | Primary brand color. Use for the mark, light-mode primary actions, links, and small emphasis on light backgrounds. |
+| Electric Blue | `#4D8DFF` | Supporting brand color. Use for highlights, fine details, and dark-mode primary actions where the deeper blue would not have enough contrast. |
+| Midnight Navy | `#07142D` | Marketing background for dark banners and campaign graphics. Blue glows and gradients may vary around this base. |
+| White | `#FFFFFF` | Wordmark and foreground color on dark brand backgrounds. |
+| Ink | `#0F172A` | Body text on light backgrounds; this is a product neutral, not a logo color. |
+
+Keep these roles consistent: Guidon Blue leads, Electric Blue supports, and
+Midnight Navy is a background. Do not add another brand blue or recolor the
+logo. On dark product surfaces, use the Electric Blue variant for interactive
+elements to preserve readability. Use semantic interface tokens for states
+such as success, warning, and destructive actions; those colors are not part
+of the brand palette. Project accent colors and task-label colors may be
+customized by teams and remain user-controlled.
+
+The interface tokens in `src/app/globals.css` map to this palette:
+`--color-brand` is Guidon Blue, `--color-brand-accent` is Electric Blue, and
+`--color-primary` switches between them for light and dark themes. The primary
+font is Geist. Use these tokens rather than adding one-off UI colors.
 
 ## Links
 

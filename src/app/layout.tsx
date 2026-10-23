@@ -10,6 +10,7 @@ import { GlobalWebMcpTools } from "@/components/agent/web-mcp";
 import { DitherBackground } from "@/components/layout/dither-background";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
+import { BRAND_COLORS } from "@/lib/brand-colors";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
 import "./globals.css";
 
@@ -40,8 +41,8 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
   colorScheme: "light dark",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
+    { media: "(prefers-color-scheme: light)", color: BRAND_COLORS.blue },
+    { media: "(prefers-color-scheme: dark)", color: BRAND_COLORS.midnightNavy },
   ],
 };
 

@@ -220,7 +220,7 @@ export async function updateProjectSettings(
     if (colorMatch) {
       trimmedColor = colorMatch[0];
     } else {
-      return { error: await tr("Invalid color format. Use hex format like #0f6b5a.") };
+      return { error: await tr("Invalid color format. Use hex format like #1D4FD8.") };
     }
   }
 

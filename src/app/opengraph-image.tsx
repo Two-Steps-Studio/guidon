@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { BRAND_COLORS } from "@/lib/brand-colors";
 
 // Generated at request time by Next.js (no headless browser, no build-time
 // asset) via Satori - picked up automatically for the root route's
@@ -31,8 +32,8 @@ export default function Image() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#101317",
-          backgroundImage: "linear-gradient(135deg, #101317 0%, #16191f 100%)",
+          backgroundColor: BRAND_COLORS.midnightNavy,
+          backgroundImage: `linear-gradient(135deg, ${BRAND_COLORS.midnightNavy} 0%, #10264a 100%)`,
           fontFamily: "sans-serif",
         }}
       >
@@ -50,17 +51,17 @@ export default function Image() {
               width: 56,
               height: 56,
               borderRadius: 14,
-              backgroundColor: "#4d8dff",
+              backgroundColor: BRAND_COLORS.blue,
               alignItems: "center",
               justifyContent: "center",
               fontSize: 34,
               fontWeight: 700,
-              color: "#05142e",
+              color: BRAND_COLORS.white,
             }}
           >
             G
           </div>
-          <div style={{ display: "flex", fontSize: 40, fontWeight: 700, color: "#f5f6f7", letterSpacing: -1 }}>
+          <div style={{ display: "flex", fontSize: 40, fontWeight: 700, color: BRAND_COLORS.white, letterSpacing: -1 }}>
             GUIDON
           </div>
         </div>
@@ -69,7 +70,7 @@ export default function Image() {
             display: "flex",
             fontSize: 54,
             fontWeight: 700,
-            color: "#f5f6f7",
+            color: BRAND_COLORS.white,
             textAlign: "center",
             maxWidth: 980,
             lineHeight: 1.15,
@@ -82,7 +83,7 @@ export default function Image() {
           style={{
             display: "flex",
             fontSize: 26,
-            color: "#8b93a1",
+            color: "#B4BAC4",
             textAlign: "center",
             maxWidth: 820,
             marginTop: 22,
@@ -91,7 +92,7 @@ export default function Image() {
         >
           Track tasks, decisions, sources, and project memory together.
         </div>
-        <div style={{ display: "flex", fontSize: 22, fontWeight: 600, color: "#4d8dff", marginTop: 44 }}>
+        <div style={{ display: "flex", fontSize: 22, fontWeight: 600, color: BRAND_COLORS.electricBlue, marginTop: 44 }}>
           useguidon.com
         </div>
       </div>
