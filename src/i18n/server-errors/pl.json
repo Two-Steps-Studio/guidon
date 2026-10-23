@@ -33,7 +33,7 @@
   "Image not found, or you can only delete images you added.": "Nie znaleziono obrazu lub możesz usuwać tylko obrazy, które sam dodałeś.",
   "Image not found, or you can only edit images you added.": "Nie znaleziono obrazu lub możesz edytować tylko obrazy, które sam dodałeś.",
   "Invalid API key.": "Nieprawidłowy klucz API.",
-  "Invalid color format. Use hex format like #0f6b5a.": "Nieprawidłowy format koloru. Użyj formatu hex, np. #0f6b5a.",
+  "Invalid color format. Use hex format like #1D4FD8.": "Nieprawidłowy format koloru. Użyj formatu hex, np. #1D4FD8.",
   "Invalid decision type.": "Nieprawidłowy typ decyzji.",
   "Invalid due date.": "Nieprawidłowy termin.",
   "Invalid end date.": "Nieprawidłowa data zakończenia.",

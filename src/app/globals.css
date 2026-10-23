@@ -96,7 +96,7 @@
   --color-danger-hover: #b91c1c;
   --color-danger-foreground: #ffffff;
 
-  --color-info: #2563eb;
+  --color-info: var(--color-brand);
   --color-info-hover: #1d4ed8;
   --color-info-foreground: #ffffff;
 
@@ -120,7 +120,7 @@
 
   /* Priority / status accents (Kanban, badges) */
   --color-priority-low: #64748b;
-  --color-priority-medium: #2563eb;
+  --color-priority-medium: var(--color-brand);
   --color-priority-high: #d97706;
   --color-priority-critical: #dc2626;
 
@@ -196,7 +196,7 @@
     --color-danger-hover: #fca5a5;
     --color-danger-foreground: #1f0808;
 
-    --color-info: #60a5fa;
+    --color-info: var(--color-brand-accent);
     --color-info-hover: #93c5fd;
     --color-info-foreground: #06121f;
 
@@ -218,7 +218,7 @@
     --color-ring: var(--color-brand-accent);
 
     --color-priority-low: #8b93a1;
-    --color-priority-medium: #60a5fa;
+    --color-priority-medium: var(--color-brand-accent);
     --color-priority-high: #fbbf24;
     --color-priority-critical: #f87171;
 
@@ -274,7 +274,7 @@
   --color-danger-hover: #fca5a5;
   --color-danger-foreground: #1f0808;
 
-  --color-info: #60a5fa;
+  --color-info: var(--color-brand-accent);
   --color-info-hover: #93c5fd;
   --color-info-foreground: #06121f;
 
@@ -296,7 +296,7 @@
   --color-ring: var(--color-brand-accent);
 
   --color-priority-low: #8b93a1;
-  --color-priority-medium: #60a5fa;
+  --color-priority-medium: var(--color-brand-accent);
   --color-priority-high: #fbbf24;
   --color-priority-critical: #f87171;
 

@@ -140,7 +140,8 @@ Midnight Navy is a background. Do not add another brand blue or recolor the
 logo. On dark product surfaces, use the Electric Blue variant for interactive
 elements to preserve readability. Use semantic interface tokens for states
 such as success, warning, and destructive actions; those colors are not part
-of the brand palette.
+of the brand palette. Project accent colors and task-label colors may be
+customized by teams and remain user-controlled.
 
 The interface tokens in `src/app/globals.css` map to this palette:
 `--color-brand` is Guidon Blue, `--color-brand-accent` is Electric Blue, and

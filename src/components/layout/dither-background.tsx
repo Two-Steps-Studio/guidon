@@ -5,6 +5,7 @@ import Dither from "@/components/Dither";
 import { useBackgroundMotion } from "@/lib/background-motion";
 import { useWallpaperDim, useWallpaperUrl } from "@/lib/wallpaper";
 import { useEffectiveTheme, type EffectiveTheme } from "@/lib/use-effective-theme";
+import { BRAND_COLORS } from "@/lib/brand-colors";
 
 /**
  * The app-wide background: React Bits' Dither, one fixed WebGL canvas behind
@@ -21,7 +22,10 @@ import { useEffectiveTheme, type EffectiveTheme } from "@/lib/use-effective-them
  * cursor-reactive effect running over the whole app would compete with the
  * actual UI rather than sit behind it.
  */
-const WAVE_COLOR: Record<EffectiveTheme, string> = { light: "#245bea", dark: "#8fb5ff" };
+const WAVE_COLOR: Record<EffectiveTheme, string> = {
+  light: BRAND_COLORS.blue,
+  dark: BRAND_COLORS.electricBlue,
+};
 
 export function DitherBackground() {
   const pathname = usePathname();

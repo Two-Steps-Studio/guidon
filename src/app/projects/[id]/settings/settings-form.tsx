@@ -16,6 +16,7 @@ import { updateProjectSettings, type SettingsFormState } from "./actions";
 import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/types/project";
 import { Select } from "@/components/ui/select";
 import { ImageCropInput } from "@/components/ui/image-crop-input";
+import { BRAND_COLORS } from "@/lib/brand-colors";
 
 const STATUS_VALUES: ProjectStatus[] = ["active", "archived", "deleted"];
 const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
@@ -36,7 +37,7 @@ export function SettingsForm({
   const updateWithId = updateProjectSettings.bind(null, project.id);
   const [state, formAction, saving] = useActionState(updateWithId, initialState);
   const [technologies, setTechnologies] = useState<string[]>(initialTechnologies);
-  const [color, setColor] = useState(project.color || "#0f6b5a");
+  const [color, setColor] = useState(project.color || BRAND_COLORS.blue);
 
   // useActionState's dispatched result is always a fresh object, never
   // reference-equal to the outer `initialState` constant - so this only

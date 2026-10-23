@@ -8,6 +8,8 @@
  * Everything from the result is set with textContent, never as HTML.
  */
 
+import { BRAND_COLORS } from "@/lib/brand-colors";
+
 export const DOCS_RESULTS_URI = "ui://guidon/docs-results";
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
 
@@ -19,8 +21,8 @@ export const DOCS_RESULTS_HTML = `<!doctype html>
 <meta name="color-scheme" content="light dark">
 <title>Guidon docs</title>
 <style>
-  :root { color-scheme: light dark; --fg: #1a1a1a; --muted: #666; --line: #e3e3e3; --accent: #2f5bd3; --bg: transparent; }
-  :root[data-theme="dark"] { --fg: #ececec; --muted: #a0a0a0; --line: #333; --accent: #8fb0ff; }
+  :root { color-scheme: light dark; --fg: #1a1a1a; --muted: #666; --line: #e3e3e3; --accent: ${BRAND_COLORS.blue}; --bg: transparent; }
+  :root[data-theme="dark"] { --fg: #ececec; --muted: #a0a0a0; --line: #333; --accent: ${BRAND_COLORS.electricBlue}; }
   body { margin: 0; padding: 12px 14px; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); }
   h1 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 8px; }
   ol { list-style: none; margin: 0; padding: 0; }
