@@ -44,6 +44,15 @@ the network for dependencies, but browser tests do not contact live services.
 
 ## Current coverage
 
+Before browser scenarios, real HTTP REST and MCP checks run once against two
+tenant fixtures. Generated API keys are stored only as hashes in the disposable
+database. Checks include canonical OAuth discovery/challenge, valid own reads,
+foreign read/update/delete denial, read-scope and viewer write denial,
+revoked/expired/report-bound keys, allowed origins, legitimate REST/MCP CRUD,
+DB preservation after denied mutations, and a dedicated key's 60-request limit
+shared across REST/MCP in this process. Traffic is sequential and restricted to
+the runner's loopback app. Application logs are checked for fixture credentials.
+
 Chromium, Firefox and WebKit run sequentially against the same built app:
 
 - Anonymous protected-route redirect.
@@ -71,7 +80,7 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
 
 This is the self-hosted direct-PostgreSQL auth/data path. It does **not** certify
 Supabase Auth/PostgREST, external OAuth callbacks, reset email delivery,
-complete onboarding, complete Kanban CRUD/concurrency, API-key/MCP permissions,
+complete onboarding, complete Kanban CRUD/concurrency, exhaustive API/MCP permissions,
 Stripe, uploads, mobile, accessibility or production monitoring. Those remain
 the separate QA cards and should extend this foundation.
 
