@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ImagePlus, Loader2, Paperclip, X } from "lucide-react";
@@ -88,6 +89,7 @@ export function CreateTaskDialog({
   const [error, setError] = useState<string | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const requestClose = useGuardedClose(Boolean(title || description || tags || dueDate || assigneeId || files.length || priority !== "medium"), submitting, onClose);
 
   // The parent keys this component by target column, so opening the dialog
   // for a different column remounts it with a clean form.
@@ -209,7 +211,7 @@ export function CreateTaskDialog({
   const columnLabel = columns.find((column) => column.status === status)?.label ?? status;
 
   return (
-    <Dialog open onOpenChange={(open) => !open && !submitting && onClose()}>
+    <Dialog open onOpenChange={(open) => { if (!open) void requestClose(); }}>
       <DialogContent scrollable className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-base">{t("newTaskDialogTitle")}</DialogTitle>
@@ -380,7 +382,7 @@ export function CreateTaskDialog({
           )}
 
           <div className="flex justify-end gap-2 border-t border-border pt-4">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
+            <Button type="button" variant="outline" size="sm" onClick={() => { void requestClose(); }} disabled={submitting}>
               {t("cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={submitting || !title.trim()}>

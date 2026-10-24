@@ -17,6 +17,7 @@ import { PinnedTasksProvider } from "@/components/work/pinned-tasks-context";
 import { getPinnedProjects, type PinnedProject } from "@/lib/data/pinned-projects";
 import { PinnedProjectsProvider } from "@/components/projects/pinned-projects-context";
 import { AppMessages } from "@/components/layout/app-messages";
+import { BetaBadge } from "@/components/layout/beta-badge";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
 
@@ -66,6 +67,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
             <TooltipContent side="bottom">{tNav("toggleSidebar")}</TooltipContent>
           </Tooltip>
           <Separator orientation="vertical" className="h-4" />
+          <BetaBadge />
           <div className="flex-1" />
           <CommandPalette currentProjectId={sidebarProps.projectId} disabledModules={sidebarProps.disabledModules} />
           <NotificationsBell />

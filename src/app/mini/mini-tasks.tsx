@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Loader2, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,7 @@ export function MiniTasks({
   priorities: PriorityDef[];
 }) {
   const t = useTranslations("mini");
+  const locale = useLocale();
   const router = useRouter();
   const [refreshing, startRefresh] = useTransition();
   const [tasks, setTasks] = useState(initialTasks);
@@ -205,7 +206,7 @@ export function MiniTasks({
           {task.title}
         </button>
         {task.due_date && due !== "none" && (
-          <span className={cn("shrink-0 text-[11px] tabular-nums", DUE_STATE_CLASSES[due])}>{formatDueDate(task.due_date)}</span>
+          <span className={cn("shrink-0 text-[11px] tabular-nums", DUE_STATE_CLASSES[due])}>{formatDueDate(task.due_date, locale)}</span>
         )}
         {filter === "all" && assignee && (
           <span

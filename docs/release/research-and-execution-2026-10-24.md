@@ -22,6 +22,11 @@ remediation is an additional release blocker; retain the lockfile and rerun
 the full regression suite after upgrades. Do not use forced blanket fixes or
 call the product release-ready while this finding is unresolved.
 
+Follow-up on the same date: [patched dependency work](./patched-dependencies-2026-10-24.md)
+reduces the runtime advisory count to zero and verifies the actual browser-shipped
+Monaco sanitizer, production build and three-browser smoke. This closes that
+version finding, not the remaining integration/operations release gates.
+
 Immediate work is existing task `ab507a10-28c0-4c81-a35c-5c2d6bdd0cab`:
 real-application E2E infrastructure, isolated accounts/database, three browsers,
 failure artifacts and CI. Start with login/session and private-project negative

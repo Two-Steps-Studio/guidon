@@ -30,7 +30,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run test:dependencies
+      - run: npm run test:package
       - run: npm run test:auth
+      - run: npm run test:api
+      - run: npm run test:feedback
+      - run: node --experimental-strip-types tests/date-format.test.mjs
       - run: npm run test:db
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4

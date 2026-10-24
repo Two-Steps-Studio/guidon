@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TaskDetailDialog } from "@/components/work/task-detail-dialog";
 import { loadTaskById } from "@/app/projects/[id]/work/relations-actions";
 import type { TaskCardMember } from "@/components/work/task-card";
@@ -63,6 +64,9 @@ export function CalendarView({
   const locale = useLocale();
   const [tasks, setTasks] = useState(initialTasks);
   const [openTask, setOpenTask] = useState<Task | null>(null);
+  const [view, setView] = useState("auto");
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const formatDay = (day: string) => new Intl.DateTimeFormat(locale, { dateStyle: "full", timeZone: "UTC" }).format(new Date(day));
 
   const tasksByDay = useMemo(() => groupTasksByDay(tasks), [tasks]);
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -124,6 +128,12 @@ export function CalendarView({
         </div>
       </div>
 
+      <div className="mb-4 flex items-center gap-2 text-sm"><label htmlFor="calendar-view">{t("viewLabel")}</label><select id="calendar-view" className="rounded-md border bg-background px-3 py-2" value={view} onChange={event => setView(event.target.value)}><option value="auto">{t("automatic")}</option><option value="month">{t("monthView")}</option><option value="agenda">{t("agenda")}</option></select></div>
+      <section aria-label={t("agenda")} className={view === "month" ? "hidden" : view === "auto" ? "space-y-4 md:hidden" : "space-y-4"}>
+        {Array.from(tasksByDay.entries()).filter(([day]) => day.startsWith(thisMonth)).sort(([a],[b]) => a.localeCompare(b)).map(([day,dayTasks]) => <div key={day} className="rounded-lg border bg-card p-4"><h3 className="mb-2 font-semibold">{formatDay(day)}</h3><ul className="space-y-1">{dayTasks.map(task => <li key={task.id}><button type="button" className="min-h-11 w-full break-words rounded px-3 py-2 text-left text-sm hover:bg-accent focus-visible:outline-2" onClick={() => setOpenTask(task)}>{task.title}</button></li>)}</ul></div>)}
+        {!Array.from(tasksByDay.keys()).some(day => day.startsWith(thisMonth)) && <p className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">{t("noDatedTasks")}</p>}
+      </section>
+      <div className={view === "agenda" ? "hidden" : view === "auto" ? "hidden md:block" : "block"}>
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-border bg-border text-xs font-medium text-muted-foreground">
         {weekdayLabels.map((label) => (
           <div key={label} className="bg-background-secondary px-2 py-1.5 text-center capitalize">
@@ -225,7 +235,7 @@ export function CalendarView({
                   ))}
                   {dayTasks.length > 4 && (
                     <li className="px-1 text-[11px] text-muted-foreground">
-                      {t("moreTasks", { count: dayTasks.length - 4 })}
+                      <button type="button" className="min-h-8 rounded px-1 py-1 text-primary underline" aria-label={t("showDay", { date: formatDay(day.iso) })} onClick={() => setSelectedDay(day.iso)}>{t("moreTasks", { count: dayTasks.length - 4 })}</button>
                     </li>
                   )}
                 </ul>
@@ -235,8 +245,10 @@ export function CalendarView({
         })}
       </div>
 
+      </div>
+      <Dialog open={selectedDay !== null} onOpenChange={open => { if (!open) setSelectedDay(null); }}><DialogContent><DialogHeader><DialogTitle>{selectedDay ? t("dayTasks", { date: formatDay(selectedDay) }) : t("agenda")}</DialogTitle><DialogDescription>{t("agenda")}</DialogDescription></DialogHeader><ul className="space-y-1">{(tasksByDay.get(selectedDay ?? "") ?? []).map(task => <li key={task.id}><button type="button" className="min-h-11 w-full break-words rounded px-3 py-2 text-left hover:bg-accent" onClick={() => { setSelectedDay(null);setOpenTask(task); }}>{task.title}</button></li>)}</ul></DialogContent></Dialog>
       {openTask && (
-        <TaskDetailDialog
+      <TaskDetailDialog
           key={openTask.id}
           projectId={projectId}
           task={openTask}

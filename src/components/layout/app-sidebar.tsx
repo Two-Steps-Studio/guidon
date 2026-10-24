@@ -3,9 +3,9 @@
 import { isModuleVisible } from "@/lib/work/project-modules";
 import Link from "next/link";
 import Image from "next/image";
+import { Fragment, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { usePinnedProjects } from "@/components/projects/pinned-projects-context";
 import {
   Sidebar,
@@ -17,6 +17,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GuidonMark } from "@/components/layout/guidon-mark";
@@ -53,6 +54,9 @@ import {
   Images,
   Sparkles,
   Pin,
+  Store,
+  Boxes,
+  ChevronDown,
 } from "lucide-react";
 
 export const GLOBAL_NAV = [
@@ -60,9 +64,9 @@ export const GLOBAL_NAV = [
   { href: "/my-tasks", labelKey: "myTasks", icon: ListChecks },
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
-  { href: "/plugins", labelKey: "plugins", icon: Puzzle },
-  { href: "/marketplace", labelKey: "marketplace", icon: Puzzle },
-  { href: "/my-modules", labelKey: "myModules", icon: Puzzle },
+  { href: "/plugins", labelKey: "plugins", icon: Plug },
+  { href: "/marketplace", labelKey: "marketplace", icon: Store },
+  { href: "/my-modules", labelKey: "myModules", icon: Boxes },
 ] as const;
 
 export interface ProjectNavItem {
@@ -174,30 +178,6 @@ export interface AppSidebarProps {
   disabledModules?: string[];
 }
 
-/** The person's pinned tasks (migration 074) - each opens its task on its board. */
-function PinnedTasksGroup() {
-  const t = useTranslations("nav");
-  const pinned = usePinnedTasks();
-  if (!pinned || pinned.tasks.length === 0) return null;
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{t("pinnedTasks")}</SidebarGroupLabel>
-      <SidebarMenu>
-        {pinned.tasks.map((task) => (
-          <SidebarMenuItem key={task.id}>
-            <SidebarMenuButton asChild tooltip={task.project_name ? `${task.project_name} · ${task.title}` : task.title}>
-              <Link href={`/projects/${task.project_id}/work?openTask=${task.id}`}>
-                <Pin />
-                <span className={task.is_done ? "text-muted-foreground line-through" : undefined}>{task.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
-  );
-}
-
 /** The person's pinned projects, shown on every app page including dashboard. */
 function PinnedProjectsGroup() {
   const t = useTranslations("nav");
@@ -235,6 +215,8 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const { state: sidebarState } = useSidebar();
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const isAdmin = pathname.startsWith("/admin");
 
   const isGlobalActive = (href: string) =>
@@ -257,7 +239,7 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <Link href="/dashboard" className="flex items-center justify-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0">
-          <GuidonMark className="hidden h-7 w-7 text-sidebar-foreground group-data-[collapsible=icon]:block" />
+          <GuidonMark className="hidden h-12 w-7 text-sidebar-foreground group-data-[collapsible=icon]:block" />
           <Image
             src="/assets/guidon-wordmark.png"
             alt="Guidon"
@@ -278,7 +260,9 @@ export function AppSidebar({
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {GLOBAL_NAV.map((item) => (
+            {GLOBAL_NAV.map((item,index) => (
+              <Fragment key={item.href}>
+              {index === 4 && <SidebarMenuItem><SidebarGroupLabel>{t("extensionsGroup")}</SidebarGroupLabel></SidebarMenuItem>}
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
@@ -291,12 +275,12 @@ export function AppSidebar({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              </Fragment>
             ))}
           </SidebarMenu>
         </SidebarGroup>
 
         <PinnedProjectsGroup />
-        <PinnedTasksGroup />
 
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => {
@@ -305,9 +289,9 @@ export function AppSidebar({
             return (
             <SidebarGroup key={group.labelKey ?? `project-group-${groupIndex}`}>
               {group.labelKey && (
-                <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+                <SidebarGroupLabel asChild><button type="button" tabIndex={sidebarState === "collapsed" ? -1 : 0} aria-expanded={!collapsedGroups[group.labelKey]} aria-controls={`project-nav-group-${groupIndex}`} onClick={() => setCollapsedGroups(current => ({ ...current, [group.labelKey!]: !current[group.labelKey!] }))} className="w-full justify-between focus-visible:ring-2">{t(group.labelKey)}<ChevronDown className={`size-3 transition-transform ${collapsedGroups[group.labelKey] ? "-rotate-90" : ""}`} /></button></SidebarGroupLabel>
               )}
-              <SidebarMenu>
+              <SidebarMenu id={`project-nav-group-${groupIndex}`} className={group.labelKey && collapsedGroups[group.labelKey] ? "hidden" : undefined}>
                 {items.map((item) => {
                   const active = isProjectActive(item.href);
                   const href = `/projects/${projectId}${item.href ? `/${item.href}` : ""}`;
@@ -411,10 +395,10 @@ export function AppSidebar({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <FeedbackMenuItem />
-            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:hidden">
+            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:px-0">
               <ThemeSwitcher currentTheme={currentTheme} />
             </SidebarMenuItem>
-            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:hidden">
+            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:px-0">
               <LanguageSwitcher />
             </SidebarMenuItem>
           </SidebarMenu>

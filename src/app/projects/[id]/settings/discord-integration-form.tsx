@@ -1,5 +1,7 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -80,7 +82,7 @@ export function DiscordIntegrationForm({
 
   const handleDisconnect = async () => {
     const guild = info?.guildName ?? t("discordLinkedGuildUnnamed");
-    if (!window.confirm(t("discordDisconnectConfirm", { guild }))) return;
+    if (!await confirmAction(t("discordDisconnectConfirm", { guild }))) return;
     setPending(true);
     setError(null);
     const result = await disconnectDiscordServer(projectId);

@@ -6,6 +6,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import { createClient } from "@/lib/supabase-server";
 import { StartWizard } from "./start-wizard";
+import { BetaBadge } from "@/components/layout/beta-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +29,9 @@ export default async function StartPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between px-4 py-4 sm:px-8">
-        <Link href="/" aria-label="Guidon">
+        <div className="flex items-center gap-3"><Link href="/" aria-label="Guidon">
           <Image src="/assets/guidon-wordmark.png" alt="Guidon" width={769} height={285} priority className="h-7 w-auto dark:invert" />
-        </Link>
+        </Link><BetaBadge /></div>
       </header>
       <StartWizard signedIn={await isSignedIn()} />
     </div>

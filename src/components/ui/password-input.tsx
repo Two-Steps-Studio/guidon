@@ -20,7 +20,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
         <button
           type="button"
           disabled={props.disabled}
-          tabIndex={-1}
+          aria-pressed={visible}
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? hideLabel : showLabel}
           className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground"

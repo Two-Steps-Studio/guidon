@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { AlertCircle } from "lucide-react"
@@ -17,9 +17,15 @@ import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
 import { isAiAccountEmail } from "@/lib/ai-account-email"
+import { BetaBadge } from "@/components/layout/beta-badge"
+
+const subscribeHydration = () => () => {}
+const clientHydrated = () => true
+const serverHydrated = () => false
 
 /** `local` - see login-form.tsx's comment; same reasoning applies here. */
 export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup }) {
+  const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated)
   const t = useTranslations("auth.signup")
   const tCommon = useTranslations("auth.common")
   const [email, setEmail] = useState("")
@@ -102,14 +108,14 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background-secondary/70 to-background-tertiary/40 dark:from-background-secondary/70 dark:to-background/30 flex flex-col items-center justify-center gap-6 p-4">
-      <Image
+      <div className="flex items-center gap-3"><Image
         src="/assets/guidon-wordmark.png"
         alt="Guidon"
         width={769}
         height={285}
         priority
         className="h-8 w-auto dark:invert"
-      />
+      /><BetaBadge /></div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
@@ -128,6 +134,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 autoComplete="name"
+                disabled={!hydrated || loading}
                 autoFocus
                 required
               />
@@ -141,6 +148,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                disabled={!hydrated || loading}
                 required
               />
             </div>
@@ -152,6 +160,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
+                disabled={!hydrated || loading}
                 showLabel={tCommon("showPassword")}
                 hideLabel={tCommon("hidePassword")}
                 required
@@ -164,7 +173,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={!hydrated || loading}>
               {loading ? t("creatingAccount") : t("signUp")}
             </Button>
           </form>

@@ -176,6 +176,7 @@ export interface AdminFeedbackRow {
   id: string;
   user_id: string | null;
   message: string;
+  rating: number | null;
   page_url: string | null;
   created_at: string;
 }
@@ -187,7 +188,7 @@ export interface AdminFeedbackRow {
 export async function listFeedbackForAdmin(limit = 200): Promise<AdminFeedbackRow[]> {
   const { data } = await serviceDataClient()
     .from<AdminFeedbackRow>("feedback")
-    .select("id, user_id, message, page_url, created_at")
+    .select("id, user_id, message, rating, page_url, created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
   return data;

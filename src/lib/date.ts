@@ -35,11 +35,11 @@ export function utcDaysBetween(fromMs: number, toMs: number): number {
  * represents, independent of the viewer's or server's own timezone - so it
  * always reads back the same day the user picked.
  */
-export function formatCalendarDate(iso: string): string {
+export function formatCalendarDate(iso: string, locale = "en"): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
 
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(locale, {
     timeZone: "UTC",
     month: "short",
     day: "numeric",

@@ -77,7 +77,7 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
           </div>
 
           <div className="space-y-2">
-            <Label>{t("backgroundMotionLabel")}</Label>
+            <Label>{t("backgroundStyleLabel")}</Label>
             <BackgroundMotionSwitcher />
             <p className="text-xs text-muted-foreground">{t("backgroundMotionHelp")}</p>
           </div>

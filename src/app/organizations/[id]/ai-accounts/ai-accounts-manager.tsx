@@ -1,5 +1,7 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -102,8 +104,8 @@ export function AiAccountsManager({
                   variant="outline"
                   size="sm"
                   disabled={pending}
-                  onClick={() => {
-                    if (window.confirm(t("disableConfirm", { name: account.name }))) {
+                  onClick={async () => {
+                    if (await confirmAction(t("disableConfirm", { name: account.name }))) {
                       run(() => disableAiAccountAction(orgId, account.userId), () => toast.success(t("disabledToast")));
                     }
                   }}

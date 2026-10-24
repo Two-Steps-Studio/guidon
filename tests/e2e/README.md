@@ -23,7 +23,14 @@ non-ignored source files into a new OS temp directory, excludes `.env*`, builds
 there with an allowlisted environment and applies the real migration runner.
 It cannot be redirected to an existing database through `DATABASE_URL`.
 
-Two accounts and private projects in separate organizations are seeded only in
+Agent tooling directories (`.claude`, `.agents`, `.worktrees`) are excluded;
+their Git symlinks can represent directories on Linux rather than Windows files.
+The runner then creates explicitly non-secret packaging canaries in its own
+temporary `.env.production`, default/custom storage and diagnostic output. It
+asserts those never reach standalone output and source canaries stay intact.
+No original environment file is copied or used.
+
+Two tenant owners/private projects and a project viewer are seeded only in
 that disposable database. Passwords, DB password, AUTH_SECRET and a one-day TLS
 certificate are generated per run. HTTPS terminates at a loopback Node proxy;
 the real production Secure/HttpOnly session cookie behavior stays enabled.
@@ -35,7 +42,28 @@ NODE_OPTIONS. Its fetch guard refuses external origins; browser routing also
 blocks requests outside the local test origin. npm installation/build can use
 the network for dependencies, but browser tests do not contact live services.
 
+## Optional design evidence collection
+
+`node tests/e2e/run.mjs --design-audit` reuses the same disposable production
+environment and safety guards, but collects route screenshots and DOM observations
+instead of running the normal browser regression scenarios. It records
+`evidence-collected`, never a blanket UX pass. Check the per-browser JSON for
+navigation errors, JavaScript errors, redirect destinations and viewport sizes.
+Small target/unnamed-control heuristics require manual review; they are not an
+accessibility certification. Cloud/Stripe/device-only flows need separate fixtures.
+
+The normal command without this flag retains existing regression behavior.
+
 ## Current coverage
+
+Before browser scenarios, real HTTP REST and MCP checks run once against two
+tenant fixtures. Generated API keys are stored only as hashes in the disposable
+database. Checks include canonical OAuth discovery/challenge, valid own reads,
+foreign read/update/delete denial, read-scope and viewer write denial,
+revoked/expired/report-bound keys, allowed origins, legitimate REST/MCP CRUD,
+DB preservation after denied mutations, and a dedicated key's 60-request limit
+shared across REST/MCP in this process. Traffic is sequential and restricted to
+the runner's loopback app. Application logs are checked for fixture credentials.
 
 Chromium, Firefox and WebKit run sequentially against the same built app:
 
@@ -49,10 +77,43 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
 - Direct foreign project request discloses no project title in HTML/RSC;
   own project request succeeds.
 - Real logout and denial of the formerly authenticated protected route.
+- Validly signed but expired session, forged identity with mismatched signature,
+  and malformed cookie all denied by the application (browser expiry is future).
+- Project owner receives their module editor; viewer can read the shared project
+  without receiving the owner's editor and cannot see a foreign private project.
+- Signup controls remain disabled before hydration. The actual signup Server
+  Action rejects a weak password even when browser minlength is removed, and
+  rejects duplicate accounts with no session. Rejected weak accounts do not exist
+  in the disposable DB.
+- New signup persists exactly one DB user, creates a Secure/HttpOnly session,
+  rejects an external redirect target, and supports logout and a fresh login.
+- In direct-Postgres mode, forgot/reset-password pages redirect to login as
+  documented, instead of invoking Cloud recovery services.
+- BETA labels appear on the public site and signed-in header. Mobile feedback
+  tests native rating keyboard controls, required score, actual Server Action
+  rejection of a forged score, DB-failure retry with preserved input, persisted
+  1/3/5 scores, rated/legacy admin display and non-admin denial. Only the fixture
+  owner is allowlisted with an explicit test-only ADMIN_EMAILS value; inherited
+  admin configuration is not used. INSERT is temporarily revoked/restored only
+  in the runner's disposable database to prove the real error path.
+- Small board scroll area ends below its longest column; a 40-card column keeps
+  its own vertical scroll, horizontal board scrolling works, and the phone page
+  does not overflow. Sidebar global/project/profile rows retain vertical centers
+  when collapsing/expanding. Saved pins do not produce sidebar task links and
+  remain intact in the database; each fixture mutation is restored afterward.
+
+- Apple Design regression checks cover pointer/keyboard drag cancellation and
+  confirmed moves, failed optimistic updates, retained unsaved drafts and files,
+  dialog bounds at 320×480 with 200% text, crop feedback, image swipes and
+  cancellation, semantic tabs, all calendar tasks and mobile agenda, AI IME and
+  live log semantics, single-main landmarks, search failure/retry and response
+  races, explicit date locales, notification failure/retry, and coarse-pointer
+  target sizes. AI/search failure responses are local fixtures. These checks
+  do not substitute for real device, assistive technology or performance trials.
 
 This is the self-hosted direct-PostgreSQL auth/data path. It does **not** certify
 Supabase Auth/PostgREST, external OAuth callbacks, reset email delivery,
-signup/onboarding, complete Kanban CRUD/concurrency, API-key/MCP permissions,
+complete onboarding, complete Kanban CRUD/concurrency, exhaustive API/MCP permissions,
 Stripe, uploads, mobile, accessibility or production monitoring. Those remain
 the separate QA cards and should extend this foundation.
 

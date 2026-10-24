@@ -53,9 +53,16 @@ export function ContextTabs({
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <div className="flex gap-2 mb-6 border-b">
+      <div role="tablist" aria-label={t("title")} className="flex gap-2 mb-6 border-b overflow-x-auto" onKeyDown={event => {
+        const index = tabs.findIndex(tab => tab.key === activeTab);
+        const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1;
+        if (next < 0) return;
+        event.preventDefault();setActiveTab(tabs[next].key);
+        event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+      }}>
         {tabs.map((tab) => (
           <button
+            type="button" role="tab" id={`context-${tab.key}-tab`} aria-controls="context-panel" aria-selected={activeTab === tab.key} tabIndex={activeTab === tab.key ? 0 : -1}
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 font-medium transition-colors relative ${
@@ -72,6 +79,7 @@ export function ContextTabs({
         ))}
       </div>
 
+      <div id="context-panel" role="tabpanel" aria-labelledby={`context-${activeTab}-tab`} tabIndex={0}>
       {activeTab === "decisions" && (
         <div>
           <div className="flex justify-between items-center mb-4">
@@ -241,6 +249,7 @@ export function ContextTabs({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -2024,6 +2024,19 @@ await withServiceRole(async () => {
   check("panel admina (service_role) widzi kazdy feedback", rows.length === 1, rows.length);
 });
 
+section("32b. feedback rating: nullable legacy rows, bounded scores and unchanged RLS (084)");
+await withUser(A, async () => {
+  check("old writer still produces an unrated row",(await db.query("SELECT rating FROM public.feedback WHERE id=$1",[feedbackId])).rows[0]?.rating===null);
+  for(const rating of [1,5]){
+    const saved=await db.query("INSERT INTO public.feedback(user_id,message,rating) VALUES($1,'Rated feedback',$2) RETURNING rating",[A,rating]);
+    check(`rating ${rating} round-trips`,saved.rows[0]?.rating===rating);
+  }
+  for(const rating of [0,6,1.5])check(`invalid rating ${rating} rejected`,await throwsInSavepoint("INSERT INTO public.feedback(user_id,message,rating) VALUES($1,'Invalid rating',$2)",[A,rating]));
+  check("rating does not allow author impersonation",await throwsInSavepoint("INSERT INTO public.feedback(user_id,message,rating) VALUES($1,'Impersonated',5)",[B]));
+  check("rating cannot be used to edit feedback",await throwsInSavepoint("UPDATE public.feedback SET rating=5 WHERE id=$1",[feedbackId]));
+});
+await withUser(B,async()=>{check("rated feedback stays private to its author",(await db.query("SELECT id FROM public.feedback WHERE user_id=$1",[A])).rows.length===0);});
+
 // ------------------------------------------------------------------
 section("33. notifications: brak insert dla authenticated, kazdy widzi/oznacza/usuwa tylko swoje (migracja 045)");
 

@@ -217,6 +217,7 @@ export function WorkBoard({
   // Bulk selection (Ctrl/Cmd/Shift-click on cards). Only cards the current
   // filters show count - a hidden card is never changed by surprise.
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [moveAnnouncement, setMoveAnnouncement] = useState("");
   const selectedTasks = useMemo(
     () => filteredTasks.filter((task) => selectedIds.has(task.id)),
     [filteredTasks, selectedIds]
@@ -311,6 +312,9 @@ export function WorkBoard({
   };
 
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
+    const focused = document.activeElement;
+    const restoreFocus = focused instanceof HTMLElement && focused.closest('[data-card-id]')?.getAttribute('data-card-id') === task.id;
+    setMoveAnnouncement("");
     const previousStatus = task.status;
     const previousSortOrder = task.sort_order;
 
@@ -341,7 +345,15 @@ export function WorkBoard({
       }));
       playSound("error");
       toast.error(result.error);
+      setMoveAnnouncement(result.error);
+      return;
     }
+    const column = columns.find(column => column.status === status);
+    const position = state.tasks.filter(item => item.id !== task.id && item.status === status && (item.sort_order ?? 0) < sortOrder).length + 1;
+    setMoveAnnouncement(t("taskMovedAnnouncement", { title: task.title, column: column?.label ?? status, position }));
+    if (restoreFocus) requestAnimationFrame(() => {
+      if (document.activeElement === focused || document.activeElement === document.body) document.querySelector<HTMLElement>(`[data-card-id="${task.id}"]`)?.focus({ preventScroll: true });
+    });
     // A repeating task was finished: its next occurrence joins the board.
     result.created?.forEach(upsertTask);
   };
@@ -451,6 +463,7 @@ export function WorkBoard({
         data-fills-viewport
         className="mx-auto min-w-0 w-full max-w-[1600px] p-6 md:flex md:h-[calc(100svh-3rem)] md:flex-col md:overflow-hidden"
       >
+        <p data-slot="task-move-status" role="status" aria-live="polite" aria-atomic="true" className="sr-only">{moveAnnouncement}</p>
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>

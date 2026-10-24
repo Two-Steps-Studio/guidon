@@ -26,7 +26,7 @@ export default async function ModuleManagerPage({ params, searchParams }: {
   const error = errors.find((value) => value === query.error);
   const button = "rounded-md border px-4 py-2 text-sm";
   const hidden = <input type="hidden" name="revision" value={current.revision} />;
-  return <main className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
+  return <section className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
     <Link href={`/projects/${id}/modules#module-${moduleId}`} className="text-sm text-primary underline">{runtime("title")}</Link>
     <header><h1 className="break-words text-2xl font-semibold">{current.manifest.name}</h1><p className="text-sm text-muted-foreground">v{current.manifest.version} · {current.installed ? current.enabled ? t("enabled") : t("disabled") : t("uninstalled")}</p></header>
     {error && <p role="alert" className="text-sm text-destructive">{t(error)}</p>}{query.saved && <p role="status">{t("saved")}</p>}
@@ -44,5 +44,5 @@ export default async function ModuleManagerPage({ params, searchParams }: {
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="approve" required /><span>{runtime("consentLabel")}</span></label><button disabled={!candidate.compatible} className={`${button} bg-primary text-primary-foreground`}>{compareSemver(candidate.version, current.manifest.version) < 0 ? t("rollback") : t("update")}</button>
       </form>}
     </section>}
-  </main>;
+  </section>;
 }

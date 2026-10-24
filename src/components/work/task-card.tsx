@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useRef } from "react";
 import { initialsFor } from "@/lib/people";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   DUE_STATE_CLASSES,
@@ -67,6 +67,7 @@ interface TaskCardProps {
   onDragStart: (task: Task, element: HTMLElement, clientX: number, clientY: number) => void;
   onDragMove: (clientX: number, clientY: number) => void;
   onDragEnd: () => void;
+  onDragCancel?: () => void;
   /** Alt+Up/Alt+Down calls this - the keyboard equivalent of a within-
    * column drag, which the pointer gesture above has no keyboard path
    * for at all. Undefined (not just a no-op) when the board is read-only,
@@ -163,6 +164,7 @@ function TaskCardComponent({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onDragCancel,
   onReorder,
   canMoveUp = false,
   canMoveDown = false,
@@ -172,6 +174,7 @@ function TaskCardComponent({
   onSelect,
 }: TaskCardProps) {
   const t = useTranslations("work");
+  const locale = useLocale();
   const priorities = usePriorities();
   const priority = priorityDef(task.priority, priorities);
   const priorityStyle = priorityDot(task.priority, priorities);
@@ -298,6 +301,15 @@ function TaskCardComponent({
     [onDragEnd]
   );
 
+  const cancelGesture = useCallback(() => {
+    const gesture = gestureRef.current;
+    if (!gesture) return;
+    gestureRef.current = null;
+    clearHoldTimer(gesture);
+    if (gesture.armed) onDragCancel?.();
+    if (cardRef.current?.hasPointerCapture(gesture.pointerId)) cardRef.current.releasePointerCapture(gesture.pointerId);
+  }, [onDragCancel]);
+
   return (
     <article
       ref={cardRef}
@@ -309,7 +321,8 @@ function TaskCardComponent({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endGesture}
-      onPointerCancel={endGesture}
+      onPointerCancel={cancelGesture}
+      onLostPointerCapture={cancelGesture}
       onClick={(event) => {
         if (suppressClickRef.current) {
           suppressClickRef.current = false;
@@ -478,7 +491,7 @@ function TaskCardComponent({
         {task.due_date && due !== "none" && (
           <span className={cn("flex items-center gap-1", DUE_STATE_CLASSES[due])}>
             <CalendarDays className="h-3 w-3" aria-hidden />
-            {formatDueDate(task.due_date)}
+            {formatDueDate(task.due_date, locale)}
             {due === "overdue" && <span className="sr-only">(overdue)</span>}
           </span>
         )}

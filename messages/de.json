@@ -23,7 +23,14 @@
       "apply": "Ausschnitt verwenden",
       "failed": "Dieses Bild konnte nicht verarbeitet werden.",
       "currentImage": "Aktuelles Bild"
-    }
+    },
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "confirmActionTitle": "Aktion bestätigen",
+    "confirmActionContinue": "Bestätigen",
+    "discardChangesQuestion": "Ungespeicherte Änderungen verwerfen? Du kannst weiter bearbeiten.",
+    "discardChanges": "Änderungen verwerfen",
+    "discardFileChanges": "Ungespeicherte Änderungen an {path} verwerfen?"
   },
   "auth": {
     "login": {
@@ -140,7 +147,8 @@
     "pinnedTasks": "Angeheftet",
     "customModules": "Custom modules",
     "marketplace": "Modul-Marktplatz",
-    "myModules": "Meine Module"
+    "myModules": "Meine Module",
+    "extensionsGroup": "Erweiterungen"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -155,14 +163,19 @@
     "entityType_memory": "Erinnerung",
     "entityType_file": "Datei",
     "entityType_source": "Quelle",
-    "entityType_project": "Projekt"
+    "entityType_project": "Projekt",
+    "searching": "Suche läuft…",
+    "searchFailed": "Die Suche ist fehlgeschlagen.",
+    "retry": "Erneut versuchen"
   },
   "notifications": {
     "title": "Benachrichtigungen",
     "empty": "Noch keine Benachrichtigungen.",
     "markAllRead": "Alle als gelesen markieren",
     "bellAria": "Benachrichtigungen",
-    "bellAriaUnread": "Benachrichtigungen ({count} ungelesen)"
+    "bellAriaUnread": "Benachrichtigungen ({count} ungelesen)",
+    "loadFailed": "Benachrichtigungen konnten nicht aktualisiert werden.",
+    "retry": "Erneut versuchen"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -857,7 +870,8 @@
     "pinTask": "Anheften",
     "unpinTask": "Lösen",
     "pinTooMany": "Du kannst bis zu 10 Aufgaben anheften. Löse zuerst eine.",
-    "pinFailed": "Das Anheften hat nicht geklappt. Versuch es noch einmal."
+    "pinFailed": "Das Anheften hat nicht geklappt. Versuch es noch einmal.",
+    "taskMovedAnnouncement": "{title} nach {column} verschoben, Position {position}"
   },
   "roadmap": {
     "title": "Roadmap",
@@ -1152,7 +1166,12 @@
     "send": "Senden",
     "thanks": "Danke! Dein Feedback wurde gesendet.",
     "close": "Schließen",
-    "genericError": "Feedback konnte nicht gesendet werden. Versuche es erneut."
+    "genericError": "Feedback konnte nicht gesendet werden. Versuche es erneut.",
+    "ratingLabel": "Wie bewertest du deine Erfahrung?",
+    "ratingHint": "1 = sehr schlecht, 5 = ausgezeichnet",
+    "ratingValue": "{rating} von 5",
+    "ratingRequired": "Wähle eine Bewertung von 1 bis 5.",
+    "messageLabel": "Dein Feedback"
   },
   "context": {
     "title": "Kontextebene",
@@ -1452,7 +1471,9 @@
     "promoStatusExpired": "Abgelaufen",
     "promoStatusUsedUp": "Aufgebraucht",
     "promoDisable": "Ausschalten",
-    "promoEnable": "Einschalten"
+    "promoEnable": "Einschalten",
+    "feedbackRating": "Bewertung: {rating}/5",
+    "feedbackUnrated": "Keine Bewertung"
   },
   "profile": {
     "title": "Profil",
@@ -1554,7 +1575,10 @@
       "confirmLabel": "Gib {email} zur Bestätigung ein",
       "button": "Mein Konto löschen",
       "deleting": "Wird gelöscht..."
-    }
+    },
+    "backgroundStyleLabel": "Hintergrundstil",
+    "backgroundStyle_solid": "Einfarbig — konzentriert arbeiten",
+    "backgroundStyle_pattern": "Guidon-Muster"
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",
@@ -1572,7 +1596,14 @@
     "today": "Heute",
     "moreTasks": "+{count} weitere",
     "phaseAria": "Phase: {name}",
-    "morePhases": "{count, plural, one {+# weitere Phase} other {+# weitere Phasen}}"
+    "morePhases": "{count, plural, one {+# weitere Phase} other {+# weitere Phasen}}",
+    "agenda": "Terminliste",
+    "monthView": "Monat",
+    "dayTasks": "Aufgaben am {date}",
+    "noDatedTasks": "Keine Aufgaben mit Termin in diesem Monat",
+    "showDay": "Alle Aufgaben am {date} anzeigen",
+    "viewLabel": "Ansicht",
+    "automatic": "Automatisch"
   },
   "aiChat": {
     "title": "Guidon-KI-Assistent",
@@ -1585,7 +1616,8 @@
     "deletePrompt": "Aufgabe „{title}“ löschen?",
     "deletedConfirmation": "Aufgabe gelöscht: {title}",
     "deleteFailed": "Die Aufgabe konnte nicht gelöscht werden.",
-    "errorGeneric": "Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuche es erneut."
+    "errorGeneric": "Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+    "sendMessage": "Nachricht senden"
   },
   "plugins": {
     "title": "Plugins & Apps",

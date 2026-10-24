@@ -22,6 +22,7 @@ const PopoverContent = React.forwardRef<
 >(({ className, align = "start", sideOffset = 4, portal = true, ...props }, ref) => {
   const content = (
     <PopoverPrimitive.Content
+      data-slot="popover-content"
       ref={ref}
       align={align}
       sideOffset={sideOffset}

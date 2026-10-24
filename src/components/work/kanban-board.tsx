@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotionPreference } from "@/lib/use-reduced-motion";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -65,8 +66,9 @@ interface KanbanBoardProps {
   /** Omitted on a read-only board - no selection there. */
   onSelectionChange?: (ids: Set<string>) => void;
   /**
-   * The board fills its parent's height (a flex column of definite height)
-   * and each column scrolls inside it, instead of capping columns at a guess
+   * The board can shrink to its parent's available height (a flex column of
+   * definite height), but never grows beyond the longest column's content.
+   * Each long column scrolls inside it, instead of capping columns at a guess
    * of the viewport (100vh minus the header). From md up only: on a phone
    * the page scrolls normally - a screen-tall box of nested scroll areas
    * fights the finger there.
@@ -132,6 +134,7 @@ export function KanbanBoard({
   fillHeight = false,
 }: KanbanBoardProps) {
   const t = useTranslations("work");
+  const reduceMotion = useReducedMotionPreference();
   const [pointerDrag, setPointerDrag] = useState<PointerDrag | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const draggingTask = pointerDrag?.task ?? null;
@@ -496,7 +499,7 @@ export function KanbanBoard({
         // between two - but not while a card is being dragged, when the
         // board scrolls itself toward the edge.
         !draggingTask && "max-md:snap-x max-md:snap-mandatory",
-        fillHeight && "md:min-h-0 md:flex-1"
+        fillHeight && "md:min-h-0 md:flex-[0_1_auto]"
       )}
       role="list"
       aria-label={t("taskBoardAria")}
@@ -580,6 +583,7 @@ export function KanbanBoard({
                     onDragStart={handleDragStart}
                     onDragMove={handleDragMove}
                     onDragEnd={handleDragEnd}
+                    onDragCancel={cancelDrag}
                     onReorder={canDrag ? handleReorder : undefined}
                     canMoveUp={index > 0}
                     canMoveDown={index < columnTasks.length - 1}
@@ -615,19 +619,24 @@ export function KanbanBoard({
           <AnimatePresence>
             {pointerDrag && draggingTask && (
               <motion.div
+                data-slot="task-drag-ghost"
+                aria-hidden="true"
+                inert
                 key={draggingTask.id}
                 initial={{ scale: 1, opacity: 0.9, boxShadow: "0 1px 2px rgba(0,0,0,0.08)" }}
                 animate={{
-                  scale: 1.03,
+                  scale: reduceMotion ? 1 : 1.03,
                   opacity: 1,
                   boxShadow: "0 24px 40px -12px rgba(0,0,0,0.35)",
                 }}
-                exit={{ scale: 0.97, opacity: 0, transition: { duration: 0.15, ease: "easeOut" } }}
-                transition={{ type: "spring", damping: 30, stiffness: 420 }}
+                exit={{ scale: reduceMotion ? 1 : 0.97, opacity: 0, transition: { duration: reduceMotion ? 0 : 0.15, ease: "easeOut" } }}
+                transition={reduceMotion ? { duration: 0 } : { type: "spring", damping: 30, stiffness: 420 }}
                 style={{
                   position: "fixed",
-                  left: pointerDrag.x,
-                  top: pointerDrag.y,
+                  left: 0,
+                  top: 0,
+                  x: pointerDrag.x,
+                  y: pointerDrag.y,
                   width: pointerDrag.width,
                   zIndex: 100,
                   pointerEvents: "none",

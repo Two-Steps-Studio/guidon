@@ -23,7 +23,14 @@
       "apply": "Usar este recorte",
       "failed": "No se pudo procesar esta imagen.",
       "currentImage": "Imagen actual"
-    }
+    },
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "confirmActionTitle": "Confirmar acción",
+    "confirmActionContinue": "Confirmar",
+    "discardChangesQuestion": "¿Descartar los cambios sin guardar? Puedes seguir editando.",
+    "discardChanges": "Descartar cambios",
+    "discardFileChanges": "¿Descartar los cambios sin guardar de {path}?"
   },
   "auth": {
     "login": {
@@ -140,7 +147,8 @@
     "pinnedTasks": "Fijadas",
     "customModules": "Custom modules",
     "marketplace": "Mercado de módulos",
-    "myModules": "Mis módulos"
+    "myModules": "Mis módulos",
+    "extensionsGroup": "Extensiones"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -155,14 +163,19 @@
     "entityType_memory": "Memoria",
     "entityType_file": "Archivo",
     "entityType_source": "Fuente",
-    "entityType_project": "Proyecto"
+    "entityType_project": "Proyecto",
+    "searching": "Buscando…",
+    "searchFailed": "No se pudo completar la búsqueda.",
+    "retry": "Reintentar"
   },
   "notifications": {
     "title": "Notificaciones",
     "empty": "Aún no hay notificaciones.",
     "markAllRead": "Marcar todo como leído",
     "bellAria": "Notificaciones",
-    "bellAriaUnread": "Notificaciones ({count} sin leer)"
+    "bellAriaUnread": "Notificaciones ({count} sin leer)",
+    "loadFailed": "No se pudieron actualizar las notificaciones.",
+    "retry": "Reintentar"
   },
   "dashboard": {
     "title": "Panel",
@@ -857,7 +870,8 @@
     "pinTask": "Fijar",
     "unpinTask": "Desfijar",
     "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
-    "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo."
+    "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo.",
+    "taskMovedAnnouncement": "{title} se movió a {column}, posición {position}"
   },
   "roadmap": {
     "title": "Hoja de ruta",
@@ -1152,7 +1166,12 @@
     "send": "Enviar",
     "thanks": "¡Gracias! Tu comentario ha sido enviado.",
     "close": "Cerrar",
-    "genericError": "No se pudo enviar tu comentario. Inténtalo de nuevo."
+    "genericError": "No se pudo enviar tu comentario. Inténtalo de nuevo.",
+    "ratingLabel": "¿Cómo valoras tu experiencia?",
+    "ratingHint": "1 = muy mala, 5 = excelente",
+    "ratingValue": "{rating} de 5",
+    "ratingRequired": "Elige una valoración del 1 al 5.",
+    "messageLabel": "Tu comentario"
   },
   "context": {
     "title": "Capa de contexto",
@@ -1452,7 +1471,9 @@
     "promoStatusExpired": "Caducado",
     "promoStatusUsedUp": "Agotado",
     "promoDisable": "Desactivar",
-    "promoEnable": "Activar"
+    "promoEnable": "Activar",
+    "feedbackRating": "Valoración: {rating}/5",
+    "feedbackUnrated": "Sin valoración"
   },
   "profile": {
     "title": "Perfil",
@@ -1554,7 +1575,10 @@
       "confirmLabel": "Escribe {email} para confirmar",
       "button": "Eliminar mi cuenta",
       "deleting": "Eliminando..."
-    }
+    },
+    "backgroundStyleLabel": "Estilo del fondo",
+    "backgroundStyle_solid": "Liso — concéntrate en tu trabajo",
+    "backgroundStyle_pattern": "Patrón de Guidon"
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",
@@ -1572,7 +1596,14 @@
     "today": "Hoy",
     "moreTasks": "+{count} más",
     "phaseAria": "Fase: {name}",
-    "morePhases": "{count, plural, one {+# fase más} other {+# fases más}}"
+    "morePhases": "{count, plural, one {+# fase más} other {+# fases más}}",
+    "agenda": "Agenda",
+    "monthView": "Mes",
+    "dayTasks": "Tareas para {date}",
+    "noDatedTasks": "No hay tareas programadas para este mes",
+    "showDay": "Mostrar todas las tareas para {date}",
+    "viewLabel": "Vista",
+    "automatic": "Automática"
   },
   "aiChat": {
     "title": "Asistente de IA de Guidon",
@@ -1585,7 +1616,8 @@
     "deletePrompt": "¿Eliminar la tarea «{title}»?",
     "deletedConfirmation": "Tarea eliminada: {title}",
     "deleteFailed": "No se pudo eliminar la tarea.",
-    "errorGeneric": "Lo siento, ocurrió un error. Inténtalo de nuevo."
+    "errorGeneric": "Lo siento, ocurrió un error. Inténtalo de nuevo.",
+    "sendMessage": "Enviar mensaje"
   },
   "plugins": {
     "title": "Plugins y aplicaciones",

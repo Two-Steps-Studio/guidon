@@ -324,7 +324,7 @@ export default async function DashboardPage() {
                               </span>
                               {task.due_date && (
                                 <span className={cn("shrink-0 text-xs tabular-nums", DUE_STATE_CLASSES[due])}>
-                                  {formatDueDate(task.due_date)}
+                                  {formatDueDate(task.due_date, locale)}
                                 </span>
                               )}
                             </Link>

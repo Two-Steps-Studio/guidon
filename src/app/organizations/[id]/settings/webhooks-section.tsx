@@ -1,5 +1,7 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
 import { useActionState, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertCircle, Check, Copy, Send, Trash2, Webhook } from "lucide-react";
@@ -230,8 +232,8 @@ function WebhookRow({ organizationId, webhook }: { organizationId: string; webho
             variant="outline"
             disabled={pending}
             aria-label={t("delete")}
-            onClick={() => {
-              if (window.confirm(t("deleteConfirm"))) run(() => deleteWebhook(organizationId, webhook.id));
+            onClick={async () => {
+              if (await confirmAction(t("deleteConfirm"))) run(() => deleteWebhook(organizationId, webhook.id));
             }}
           >
             <Trash2 className="h-3.5 w-3.5" />

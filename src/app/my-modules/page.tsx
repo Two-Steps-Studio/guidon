@@ -15,12 +15,12 @@ export default async function MyModulesPage() {
   const projects = ids.length ? await db.from("projects").select<{ id: string; name: string }>("id, name").in("id", ids) : { data: [], error: null };
   if (projects.error) throw new Error("Could not load module projects");
   const byId = new Map(projects.data.map((project) => [project.id, project.name]));
-  return <AppShell user={user}><main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
+  return <AppShell user={user}><section className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
     <div className="flex flex-wrap justify-between gap-4"><h1 className="text-2xl font-semibold">{t("myModules")}</h1><Link href="/marketplace" className="text-primary underline">{t("title")}</Link></div>
     {!installed.data.length && <p className="text-muted-foreground">{t("emptyInstalled")}</p>}
     <div className="grid gap-4 md:grid-cols-2">{installed.data.map((row) => {
       const manifest = moduleManifestSchema.parse(row.manifest);
       return <article key={`${row.project_id}-${row.module_id}`} className="min-w-0 space-y-2 rounded-lg border bg-card p-5"><h2 className="break-words text-lg font-semibold">{manifest.name}</h2><p className="text-sm text-muted-foreground">v{manifest.version} · {byId.get(row.project_id)}</p><p className="text-sm">{!row.installed ? t("uninstalled") : row.enabled ? t("enabled") : t("disabled")}</p><Link href={`/projects/${row.project_id}/modules#module-${row.module_id}`} className="text-sm text-primary underline">{t("openProject")}</Link></article>;
     })}</div>
-  </main></AppShell>;
+  </section></AppShell>;
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { Monaco } from "@monaco-editor/react";
@@ -110,6 +113,7 @@ interface CodeWorkspaceProps {
  * switch tabs. Replaces the old one-file-at-a-time modal (code-editor-modal.tsx).
  */
 export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorkspaceProps) {
+  const tCommon = useTranslations("common");
   const [tabs, setTabs] = useState<OpenTab[]>([]);
   const [activePath, setActivePath] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
@@ -175,12 +179,12 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
     setFileTreeOpen(false);
   };
 
-  const closeTab = (path: string) => {
+  const closeTab = async (path: string) => {
     const tab = tabs.find((t) => t.path === path);
-    if (tab?.dirty && !window.confirm(`Discard unsaved changes to ${path}?`)) return;
+    if (tab?.dirty && !await confirmAction(tCommon("discardFileChanges", { path }))) return;
 
     const remaining = tabs.filter((t) => t.path !== path);
-    setTabs(remaining);
+    setTabs(current => current.filter(tab => tab.path !== path));
     if (activePath === path) {
       setActivePath(remaining.length > 0 ? remaining[remaining.length - 1].path : null);
     }

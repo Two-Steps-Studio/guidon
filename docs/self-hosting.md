@@ -5,6 +5,28 @@ afterthought (TODO.md §1). This is the complete walkthrough. For what each
 environment variable does, see [configuration.md](./configuration.md); this
 page is about the deployment mechanics.
 
+## Server artifact configuration
+
+Use `npm run build` for a distributable standalone build. Its postbuild guard
+removes generated root `.env*` copies (Next otherwise copies loaded `.env` and
+`.env.production` explicitly), and rejects unexpected runtime/tooling folders.
+Running `next build` directly skips this packaging guard. Source configuration
+files are never removed. Inject private configuration at runtime, for example
+with Docker's existing `--env-file` / Compose `env_file`; do not distribute a
+developer's `.next/standalone` before this guard succeeds. Public
+`NEXT_PUBLIC_*` values are still build-time inputs and visible in browser assets.
+
+Local storage is runtime data. Its root resolution is excluded from Turbopack
+filesystem tracing, while bucket/path authorization checks remain active. Tracing
+also excludes environment files, local storage, diagnostics and development
+tooling as defense in depth. `STORAGE_PATH` must not equal the repository root;
+use a dedicated persistent directory/volume. Existing Docker builds exclude
+environment files from their build context and invoke the guarded build command.
+
+`npm run test:package` covers output-path/symlink guards and source preservation.
+`npm run test:e2e` proves non-secret configuration/data canaries do not ship and
+then exercises the actual standalone application in three browsers.
+
 ## Read this first: current state
 
 Guidon's self-hosting work has shipped a real Docker deployment, a real

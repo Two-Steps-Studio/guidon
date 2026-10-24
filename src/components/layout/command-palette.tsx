@@ -69,6 +69,8 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const router = useRouter();
   const tNav = useTranslations("nav");
   const t = useTranslations("commandPalette");
@@ -102,6 +104,7 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
     setQuery("");
     setResults([]);
     setLoading(false);
+    setFailed(false);
   }
 
   // Reset on close so reopening never flashes the previous search.
@@ -114,7 +117,7 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
 
   useEffect(() => {
     const trimmed = query.trim();
-    if (trimmed.length < MIN_QUERY_LENGTH) {
+    if (!open || trimmed.length < MIN_QUERY_LENGTH) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       setLoading(false);
@@ -123,24 +126,26 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
 
     const controller = new AbortController();
     setLoading(true);
+    setFailed(false);
+    setResults([]);
     const timer = setTimeout(() => {
       const params = new URLSearchParams({ q: trimmed });
       if (currentProjectId) params.set("project_id", currentProjectId);
       fetch(`/api/v1/search?${params.toString()}`, { signal: controller.signal })
-        .then((res) => res.json())
-        .then((data: { results?: SearchResult[] }) => setResults(data.results ?? []))
+        .then((res) => { if (!res.ok) throw new Error("Search failed");return res.json(); })
+        .then((data: { results?: SearchResult[] }) => { if (!controller.signal.aborted) setResults(data.results ?? []); })
         .catch((err: unknown) => {
-          if (err instanceof DOMException && err.name === "AbortError") return;
-          setResults([]);
+          if (controller.signal.aborted || (err instanceof DOMException && err.name === "AbortError")) return;
+          setFailed(true);setResults([]);
         })
-        .finally(() => setLoading(false));
+        .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     }, SEARCH_DEBOUNCE_MS);
 
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, currentProjectId]);
+  }, [query, currentProjectId, open, retry]);
 
   function go(href: string) {
     setOpen(false);
@@ -153,12 +158,14 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
     <>
       <button
         type="button"
+        aria-label={t("triggerLabel")}
+        data-slot="button"
         onClick={() => setOpen(true)}
-        className="flex h-8 w-full max-w-64 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="flex h-8 w-11 shrink-0 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-full md:max-w-64 md:shrink"
       >
         <Search className="size-4 shrink-0" />
-        <span className="flex-1 truncate text-left">{t("triggerLabel")}</span>
-        <CommandShortcut className="ml-0">⌘K</CommandShortcut>
+        <span className="hidden flex-1 truncate text-left md:block">{t("triggerLabel")}</span>
+        <CommandShortcut className="ml-0 hidden md:inline">⌘K</CommandShortcut>
       </button>
 
       <CommandDialog
@@ -172,7 +179,9 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
         <CommandList>
           {showResults ? (
             <>
-              {!loading && results.length === 0 && <CommandEmpty>{t("noResults")}</CommandEmpty>}
+              {loading && <p role="status" className="p-4 text-sm text-muted-foreground">{t("searching")}</p>}
+              {failed && <div className="p-4 text-sm"><p role="alert">{t("searchFailed")}</p><button className="mt-2 rounded border px-3 py-2" onClick={() => setRetry(value => value + 1)}>{t("retry")}</button></div>}
+              {!loading && !failed && results.length === 0 && <CommandEmpty>{t("noResults")}</CommandEmpty>}
               {results.length > 0 && (
                 <CommandGroup heading={t("resultsGroup")}>
                   {results.map((result) => (

@@ -1,5 +1,7 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRightLeft, Loader2, Tag, Trash2, UserRound, X } from "lucide-react";
@@ -125,8 +127,8 @@ export function BulkBar({
           size="sm"
           disabled={pending}
           className="text-destructive hover:text-destructive"
-          onClick={() => {
-            if (window.confirm(t("bulkDeleteConfirm", { count: selected.length }))) run({ kind: "delete" });
+          onClick={async () => {
+            if (await confirmAction(t("bulkDeleteConfirm", { count: selected.length }))) run({ kind: "delete" });
           }}
         >
           <Trash2 className="h-4 w-4" />

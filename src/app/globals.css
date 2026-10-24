@@ -527,3 +527,41 @@ button, a, [role="button"] {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
+
+/* Touch comfort without enlarging dense pointer-operated desktop controls. */
+@media (pointer: coarse) {
+  [data-slot="button"], [data-slot="dropdown-menu-trigger"],
+  [data-slot="dialog-close"], [data-slot="sheet-close"],
+  [data-sidebar="trigger"], .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), select { min-height: 44px; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"],
+  [data-slot="popover-content"], [data-slot="dialog-content"],
+  [data-slot="sheet-content"], .scrim {
+    background-color: var(--color-popover) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  [data-slot="dialog-overlay"], [data-slot="sheet-overlay"] {
+    background-color: var(--color-background) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: #64748b !important;
+    --color-input: #64748b !important;
+    --color-muted-foreground: var(--color-foreground) !important;
+    --color-text-muted: var(--color-foreground) !important;
+  }
+  :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+}
+@media (forced-colors: active) {
+  button, input, select, textarea, [role="button"] { border: 1px solid ButtonText; }
+  :focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+}
