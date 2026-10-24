@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
+import { usePinnedProjects } from "@/components/projects/pinned-projects-context";
 import {
   Sidebar,
   SidebarContent,
@@ -195,6 +196,31 @@ function PinnedTasksGroup() {
   );
 }
 
+/** The person's pinned projects, shown on every app page including dashboard. */
+function PinnedProjectsGroup() {
+  const t = useTranslations("nav");
+  const pinned = usePinnedProjects();
+  if (!pinned || pinned.projects.length === 0) return null;
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{t("pinnedProjects")}</SidebarGroupLabel>
+      <SidebarMenu>
+        {pinned.projects.map((project) => (
+          <SidebarMenuItem key={project.id}>
+            <SidebarMenuButton asChild tooltip={project.name}>
+              <Link href={`/projects/${project.id}`}>
+                <Pin />
+                <span>{project.name}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </SidebarGroup>
+  );
+}
+
 export function AppSidebar({
   user,
   projectId,
@@ -267,6 +293,7 @@ export function AppSidebar({
           </SidebarMenu>
         </SidebarGroup>
 
+        <PinnedProjectsGroup />
         <PinnedTasksGroup />
 
         {projectId &&
