@@ -16,6 +16,7 @@ import { releaseSmoke } from "./smoke.mjs";
 import { authenticationCoverage } from "./authentication.mjs";
 import { seedApiFixture } from "./api-fixture.mjs";
 import { apiIsolation } from "./api-isolation.mjs";
+import { feedbackCoverage } from "./feedback.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
 
@@ -65,7 +66,7 @@ try{
   const connectionString=`postgresql://guidon_e2e:${dbPassword}@127.0.0.1:${dbPort}/${database}`;
   await waitFor(async()=>{const probe=new pg.Client({connectionString});try{await probe.connect();return true;}finally{await probe.end();}},"test database");
   const appPort=await port();const tlsPort=await port();const origin=`https://127.0.0.1:${tlsPort}`;
-  Object.assign(environment,{DATABASE_URL:connectionString,DATABASE_POOL_MAX:"4",AUTH_SECRET:randomBytes(32).toString("hex"),STORAGE_PROVIDER:"local",STORAGE_PATH:path.join(directory,"runtime-e2e-files"),APP_URL:origin,NEXT_PUBLIC_APP_URL:origin});
+  Object.assign(environment,{DATABASE_URL:connectionString,DATABASE_POOL_MAX:"4",AUTH_SECRET:randomBytes(32).toString("hex"),STORAGE_PROVIDER:"local",STORAGE_PATH:path.join(directory,"runtime-e2e-files"),APP_URL:origin,NEXT_PUBLIC_APP_URL:origin,ADMIN_EMAILS:"alpha@guidon.example.test"});
   // Generated non-secret canaries prove that packaging excludes configuration,
   // default/custom local storage and diagnostic output, preserving the source.
   const canaries=[".env.production","storage/package-canary.txt","runtime-e2e-files/package-canary.txt","output/package-canary.txt"];
@@ -78,6 +79,7 @@ try{
   await writeFile(path.join(artifacts,"migrations.log"),await run(process.execPath,["scripts/migrate.mjs"]));
   client=new pg.Client({connectionString});await client.connect();const fixture=await seedReleaseFixture(client);
   const api=await seedApiFixture(client,fixture);
+  await client.query("INSERT INTO public.feedback(user_id,message) VALUES($1,'Legacy E2E feedback')",[fixture.users[0].id]);
   const payload=Buffer.from(JSON.stringify({sub:fixture.users[0].id,exp:Math.floor(Date.now()/1000)-60})).toString("base64url");
   const expired=`${payload}.${createHmac("sha256",environment.AUTH_SECRET).update(payload).digest("base64url")}`;
   const forgedPayload=Buffer.from(JSON.stringify({sub:fixture.users[1].id,exp:Math.floor(Date.now()/1000)+3600})).toString("base64url");
@@ -124,6 +126,7 @@ try{
     try{
       await releaseSmoke({page,context,origin,fixture});
       await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
+      await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`weak-${name}@guidon.example.test`])).rowCount,0,"Rejected signup must not create a database user");
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`signup-${name}@guidon.example.test`])).rowCount,1,"Real signup must create exactly one user");
       results.push({browser:name,outcome:"passed",durationMs:Date.now()-started,blockedOrigins:[...new Set(blocked)]});console.log(`pass ${name}`);

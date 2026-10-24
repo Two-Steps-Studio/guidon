@@ -1152,7 +1152,12 @@
     "send": "Senden",
     "thanks": "Danke! Dein Feedback wurde gesendet.",
     "close": "Schließen",
-    "genericError": "Feedback konnte nicht gesendet werden. Versuche es erneut."
+    "genericError": "Feedback konnte nicht gesendet werden. Versuche es erneut.",
+    "ratingLabel": "Wie bewertest du deine Erfahrung?",
+    "ratingHint": "1 = sehr schlecht, 5 = ausgezeichnet",
+    "ratingValue": "{rating} von 5",
+    "ratingRequired": "Wähle eine Bewertung von 1 bis 5.",
+    "messageLabel": "Dein Feedback"
   },
   "context": {
     "title": "Kontextebene",
@@ -1452,7 +1457,9 @@
     "promoStatusExpired": "Abgelaufen",
     "promoStatusUsedUp": "Aufgebraucht",
     "promoDisable": "Ausschalten",
-    "promoEnable": "Einschalten"
+    "promoEnable": "Einschalten",
+    "feedbackRating": "Bewertung: {rating}/5",
+    "feedbackUnrated": "Keine Bewertung"
   },
   "profile": {
     "title": "Profil",

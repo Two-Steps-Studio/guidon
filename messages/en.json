@@ -1152,7 +1152,12 @@
     "send": "Send",
     "thanks": "Thanks! Your feedback has been sent.",
     "close": "Close",
-    "genericError": "Could not send your feedback. Try again."
+    "genericError": "Could not send your feedback. Try again.",
+    "ratingLabel": "How would you rate your experience?",
+    "ratingHint": "1 = very poor, 5 = excellent",
+    "ratingValue": "{rating} out of 5",
+    "ratingRequired": "Choose a rating from 1 to 5.",
+    "messageLabel": "Your feedback"
   },
   "context": {
     "title": "Context Layer",
@@ -1452,7 +1457,9 @@
     "promoStatusExpired": "Expired",
     "promoStatusUsedUp": "Used up",
     "promoDisable": "Switch off",
-    "promoEnable": "Switch on"
+    "promoEnable": "Switch on",
+    "feedbackRating": "Rating: {rating}/5",
+    "feedbackUnrated": "No rating"
   },
   "profile": {
     "title": "Profile",

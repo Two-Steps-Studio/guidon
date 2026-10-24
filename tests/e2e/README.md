@@ -77,6 +77,13 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
   rejects an external redirect target, and supports logout and a fresh login.
 - In direct-Postgres mode, forgot/reset-password pages redirect to login as
   documented, instead of invoking Cloud recovery services.
+- BETA labels appear on the public site and signed-in header. Mobile feedback
+  tests native rating keyboard controls, required score, actual Server Action
+  rejection of a forged score, DB-failure retry with preserved input, persisted
+  1/3/5 scores, rated/legacy admin display and non-admin denial. Only the fixture
+  owner is allowlisted with an explicit test-only ADMIN_EMAILS value; inherited
+  admin configuration is not used. INSERT is temporarily revoked/restored only
+  in the runner's disposable database to prove the real error path.
 
 This is the self-hosted direct-PostgreSQL auth/data path. It does **not** certify
 Supabase Auth/PostgREST, external OAuth callbacks, reset email delivery,
