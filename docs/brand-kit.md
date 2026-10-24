@@ -140,6 +140,11 @@ Web, PWA, mobile, VS Code, and Unity app icons are generated from the official
 symbol with `npm run brand:icons`. Use the blue mark on transparent or white
 surfaces; use a white mark over Guidon Blue for adaptive and maskable icons.
 
+For browser favicons only, run `node scripts/generate-brand-icons.mjs --favicon-only`.
+The browser symbol uses 94% of its canvas with transparent surroundings; the ICO
+contains 16, 32, 48, 64 and 256px frames. Installed app and social profile icons
+keep their separate safe areas for rounded and circular crops.
+
 ## Visual reference
 
 The current interface is the source of truth for the product's visual
