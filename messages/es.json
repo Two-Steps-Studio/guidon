@@ -1958,5 +1958,21 @@
     "screenshots": "Capturas de pantalla",
     "changelog": "Historial de cambios",
     "noChangelog": "No hay notas de versión publicadas."
+  },
+  "moduleInstaller": {
+    "title": "Instalar módulo",
+    "organization": "Organización",
+    "chooseOrganization": "Elige una organización",
+    "continue": "Continuar",
+    "project": "Proyecto",
+    "chooseProject": "Elige un proyecto",
+    "noProjects": "No hay proyectos elegibles donde seas propietario o administrador.",
+    "emptyData": "La instalación empieza con datos vacíos. Los registros de demostración no se copian.",
+    "permission": "No puedes instalar este módulo en el proyecto seleccionado.",
+    "unsupported": "Este módulo no es compatible con el motor actual.",
+    "consent": "Revisa y aprueba todos los permisos mostrados.",
+    "conflict": "El módulo cambió o ya hay otra versión instalada. Revisa la versión actual.",
+    "limit": "El proyecto ha alcanzado el límite de 20 módulos.",
+    "saveFailed": "La instalación falló. No se guardó ninguna instalación parcial."
   }
 }

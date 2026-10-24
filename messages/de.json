@@ -1958,5 +1958,21 @@
     "screenshots": "Screenshots",
     "changelog": "Änderungsprotokoll",
     "noChangelog": "Keine Versionshinweise veröffentlicht."
+  },
+  "moduleInstaller": {
+    "title": "Modul installieren",
+    "organization": "Organisation",
+    "chooseOrganization": "Organisation auswählen",
+    "continue": "Weiter",
+    "project": "Projekt",
+    "chooseProject": "Projekt auswählen",
+    "noProjects": "Keine berechtigten Projekte mit Eigentümer- oder Administratorrolle verfügbar.",
+    "emptyData": "Die Installation beginnt mit leeren Projektdaten. Demodatensätze werden nicht kopiert.",
+    "permission": "Keine Berechtigung zur Installation in diesem Projekt.",
+    "unsupported": "Dieses Modul wird von der aktuellen Laufzeit nicht unterstützt.",
+    "consent": "Alle angezeigten Berechtigungen prüfen und genehmigen.",
+    "conflict": "Das Modul wurde geändert oder eine andere Version ist installiert. Aktuelle Version prüfen.",
+    "limit": "Das Projekt hat das Limit von 20 Modulen erreicht.",
+    "saveFailed": "Installation fehlgeschlagen. Keine Teilinstallation gespeichert."
   }
 }

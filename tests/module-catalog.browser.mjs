@@ -12,6 +12,8 @@ import { ModuleView } from "../src/lib/work/module-view.ts";
 import { moduleManifestSchema } from "../src/lib/work/module-manifest.ts";
 import { parseModuleRecords } from "../src/lib/work/module-records.ts";
 import { isSignedInSection } from "../src/lib/agent-web.ts";
+import { ModuleInstallFields } from "../src/lib/work/module-install-fields.ts";
+import { installCatalogModule } from "../src/lib/work/module-installation.ts";
 
 const messages = JSON.parse(await readFile(new URL("../messages/en.json", import.meta.url), "utf8"));
 const labels = messages.moduleCatalog;
@@ -37,9 +39,27 @@ const safeHtml = renderToStaticMarkup(h(ModuleCatalogScreen, { items: [{ ...item
 assert.equal(safeHtml.includes("<img"), false);
 assert.match(safeHtml, /&lt;img/);
 
-const server = createServer((request, response) => {
+const installed = new Map();
+let installationWrites = 0;
+const installStore = {
+  getProject: async (id) => id === "test-project" ? { organizationId: "test-org", canManage: true } : null,
+  getEntry: async () => ({ manifest, organizationId: null, compatible: true, digest: "fixture-artifact" }),
+  getExisting: async (id) => installed.get(id) ?? null,
+  insert: async (id,definition) => { installationWrites++;installed.set(id,{ manifest:definition });return "created"; },
+};
+const server = createServer(async (request, response) => {
   const url = new URL(request.url, "http://localhost");
-  const content = url.pathname === "/preview"
+  if (request.method === "POST" && url.pathname === "/install") {
+    let body = "";
+    for await (const chunk of request) body += chunk;
+    const form = new URLSearchParams(body);
+    const result = await installCatalogModule({ projectId: form.get("projectId"),moduleId:manifest.id,version:manifest.version,permissions:form.get("approve")==="on" ? form.getAll("permissions") : null,expectedDigest:form.get("digest") },installStore);
+    response.writeHead(303,{location:`/installation-result?error=${result.error ?? ""}&existing=${result.existing ?? false}`});response.end();return;
+  }
+  const content = url.pathname === "/install"
+    ? h("form",{action:"/install",method:"post",className:"space-y-4 p-6"},h(ModuleInstallFields,{projects:[{id:"test-project",name:"Test project"}],permissions:manifest.permissions,digest:"fixture-artifact",labels:{project:"Project",chooseProject:"Choose project",consent:"I approve these permissions",install:"Install module"}}))
+    : url.pathname === "/installation-result" ? h("p",null,url.searchParams.get("error") || "Installed")
+    : url.pathname === "/preview"
     ? h("main", { className: "space-y-6 p-8" }, h("header", null, h("h1", { className: "text-3xl font-semibold" }, "Release planning"), h("p", { className: "text-muted-foreground" }, "Sample project data · Guidon")), ...manifest.views.filter((view) => ["table", "board"].includes(view.type)).map((view) => h("section", { key: view.id, className: "space-y-3 rounded-lg border bg-card p-5" }, h("h2", { className: "text-lg font-semibold" }, view.name), h(ModuleView, { manifest, view, records, labels: runtimeLabels }))))
     : h(ModuleCatalogScreen, { items, labels, filters: { q: url.searchParams.get("q") ?? "", category: url.searchParams.get("category") ?? "", compatibility: url.searchParams.get("compatibility") ?? "" } });
   response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
@@ -81,6 +101,27 @@ try {
   await mkdir(new URL("../output/playwright/", import.meta.url), { recursive: true });
   await page.screenshot({ path: new URL("../output/playwright/module-catalog-mobile.png", import.meta.url).pathname.replace(/^\/(\w:)/, "$1"), fullPage: true });
   assert.equal(await page.getByRole("link", { name: labels.details }).getAttribute("href"), "/marketplace/release-planning/1.0.0");
+
+  await page.goto(`${origin}/install`);
+  await page.getByLabel("Project",{exact:true}).selectOption("test-project");
+  await page.getByRole("button",{name:"Install module"}).click();
+  assert.equal(installationWrites,0,"Native required consent blocks submission.");
+  await page.getByRole("checkbox",{name:"I approve these permissions"}).check();
+  await page.getByRole("button",{name:"Install module"}).click();
+  await page.waitForURL(/installation-result/);
+  assert.equal(new URL(page.url()).searchParams.get("error"),"");
+  assert.equal(installationWrites,1);
+  await page.goto(`${origin}/install`);
+  await page.getByLabel("Project",{exact:true}).selectOption("test-project");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button",{name:"Install module"}).click();
+  await page.waitForURL(/installation-result/);
+  assert.equal(new URL(page.url()).searchParams.get("existing"),"true");
+  assert.equal(installationWrites,1);
+  const denied = await page.request.post(`${origin}/install`,{form:{projectId:"forbidden-project",approve:"on",digest:"fixture-artifact",permissions:"module-data:read"}});
+  assert.equal(new URL(denied.url()).searchParams.get("error"),"permission");
+  assert.equal(installationWrites,1);
+  console.log("pass fixture HTTP installation flow: required consent, project choice, idempotent retry and server-side denial");
 
   if (process.argv.includes("--update-screenshots")) {
     await page.setViewportSize({ width: 1200, height: 720 });

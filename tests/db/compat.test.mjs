@@ -28,6 +28,8 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
+import { createHash } from "node:crypto";
+import { installCatalogModule } from "../../src/lib/work/module-installation.ts";
 import { moduleManifestSchema } from "../../src/lib/work/module-manifest.ts";
 import { parseModuleRecords } from "../../src/lib/work/module-records.ts";
 // The data client's SQL compiler (pure TS, no imports) - run with
@@ -3661,6 +3663,49 @@ section("67. module registry visibility and publishing authority (081)");
     check("published global catalog entries are shared with signed-in users", (await db.query("SELECT module_id FROM public.module_catalog_entries WHERE module_id='release-planning'")).rows.length === 1);
   });
   await withAnon(async () => { check("catalog does not expose private listings anonymously", await throwsInSavepoint("SELECT manifest FROM public.module_catalog_entries")); });
+}
+
+section("68. catalog installation orchestration against real RLS");
+{
+  const storeFor = (actor) => ({
+    getProject: (id) => withUser(actor, async () => {
+      const row = (await db.query("SELECT organization_id,private.project_role(id) role FROM public.projects WHERE id=$1", [id])).rows[0];
+      return row ? { organizationId: row.organization_id, canManage: ["owner","admin"].includes(row.role) } : null;
+    }),
+    getEntry: (id,version) => withUser(actor, async () => {
+      const row = (await db.query("SELECT manifest,organization_id FROM public.module_catalog_entries WHERE module_id=$1 AND version=$2", [id,version])).rows[0];
+      if (!row) return null;
+      const manifest = moduleManifestSchema.parse(row.manifest);
+      return { manifest, organizationId: row.organization_id, compatible: true, digest: createHash("sha256").update(JSON.stringify(manifest)).digest("hex") };
+    }),
+    getExisting: (id,name) => withUser(actor, async () => {
+      const row = (await db.query("SELECT manifest FROM public.project_module_packages WHERE project_id=$1 AND module_id=$2", [id,name])).rows[0];
+      return row ? { manifest: moduleManifestSchema.parse(row.manifest) } : null;
+    }),
+    async insert(id,manifest) {
+      try {
+        await withUser(actor, () => db.query("INSERT INTO public.project_module_packages(project_id,module_id,manifest) VALUES($1,$2,$3)", [id,manifest.id,JSON.stringify(manifest)]));
+        return "created";
+      } catch(error) { return error.code === "23505" ? "duplicate" : error.code === "23514" ? "limit" : "failed"; }
+    },
+  });
+  const store = storeFor(A);
+  const entry = await store.getEntry("release-planning","1.0.0");
+  const request = { projectId: otherProjectId, moduleId: "release-planning", version: "1.0.0", permissions: entry.manifest.permissions, expectedDigest: entry.digest };
+  check("catalog installer creates a project-owned package", (await installCatalogModule(request,store)).error === null);
+  await withUser(A, async () => {
+    const row = (await db.query("SELECT records FROM public.project_module_packages WHERE project_id=$1 AND module_id='release-planning'", [otherProjectId])).rows[0];
+    check("installation does not copy preview fixture data", row.records.length === 0);
+    await db.query("UPDATE public.project_module_packages SET records=$2,revision=1 WHERE project_id=$1 AND module_id='release-planning'", [otherProjectId,JSON.stringify([{ id:"10000000-0000-4000-8000-000000000003",entity:"release",values:{name:"User data",status:"planned"}}])]);
+  });
+  check("repeated installation returns the same package", (await installCatalogModule(request,store)).existing === true);
+  check("missing consent rejects installation", (await installCatalogModule({ ...request,permissions:[] },store)).error === "consent");
+  check("changed artifact digest requires a fresh review", (await installCatalogModule({ ...request,expectedDigest:"old-artifact" },store)).error === "conflict");
+  check("foreign tenant cannot install into this project", (await installCatalogModule(request,storeFor(B))).error === "permission");
+  await withUser(A, async () => {
+    const rows = (await db.query("SELECT records,revision FROM public.project_module_packages WHERE project_id=$1 AND module_id='release-planning'", [otherProjectId])).rows;
+    check("retry/failed attempts preserve the only installation and edited records", rows.length === 1 && rows[0].revision === 1 && rows[0].records[0].values.name === "User data");
+  });
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

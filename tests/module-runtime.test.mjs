@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { moduleManifestSchema } from "../src/lib/work/module-manifest.ts";
-import { hasExactModuleConsent, parseModuleRecords, unsupportedModulePermissions } from "../src/lib/work/module-records.ts";
+import { parseModuleRecords, unsupportedModulePermissions } from "../src/lib/work/module-records.ts";
+import { hasExactModuleConsent } from "../src/lib/work/module-installation.ts";
 import { ModuleView } from "../src/lib/work/module-view.ts";
 
 const manifest = moduleManifestSchema.parse(JSON.parse(await readFile(new URL("../examples/module-manifests/release-planning.json", import.meta.url), "utf8")));

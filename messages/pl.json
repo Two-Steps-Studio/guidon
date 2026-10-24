@@ -1958,5 +1958,21 @@
     "screenshots": "Zrzuty ekranu",
     "changelog": "Historia zmian",
     "noChangelog": "Nie opublikowano informacji o zmianach."
+  },
+  "moduleInstaller": {
+    "title": "Zainstaluj moduł",
+    "organization": "Organizacja",
+    "chooseOrganization": "Wybierz organizację",
+    "continue": "Dalej",
+    "project": "Projekt",
+    "chooseProject": "Wybierz projekt",
+    "noProjects": "Nie masz projektu z rolą właściciela lub administratora, w którym można zainstalować ten moduł.",
+    "emptyData": "Moduł zacznie od pustych danych projektu. Rekordy demonstracyjne nie zostaną skopiowane.",
+    "permission": "Nie możesz zainstalować tego modułu w wybranym projekcie.",
+    "unsupported": "Ten moduł nie jest obsługiwany przez obecną wersję aplikacji.",
+    "consent": "Sprawdź i zatwierdź wszystkie pokazane uprawnienia.",
+    "conflict": "Moduł się zmienił lub inna wersja jest już zainstalowana. Sprawdź aktualne wydanie przed ponowną próbą.",
+    "limit": "W projekcie osiągnięto limit 20 modułów.",
+    "saveFailed": "Instalacja nie powiodła się. Nie zapisano częściowej instalacji."
   }
 }
