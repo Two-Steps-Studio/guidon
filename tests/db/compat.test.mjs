@@ -28,6 +28,8 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
+import { moduleManifestSchema } from "../../src/lib/work/module-manifest.ts";
+import { parseModuleRecords } from "../../src/lib/work/module-records.ts";
 // The data client's SQL compiler (pure TS, no imports) - run with
 // --experimental-strip-types, see package.json's test:db.
 import { compile, compileCount, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
@@ -247,8 +249,8 @@ for (const [label, sql, expected] of [
   // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
   // 46->47: shared replay protection for signed OAuth client assertions (078).
   // 47->48 and 130->133: project-scoped declarative module packages (080).
-  ["48 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 48],
-  ["133 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 133],
+  ["49 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 49],
+  ["134 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 134],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3633,6 +3635,32 @@ section("66. declarative module packages: tenant/role boundaries and atomic revi
   await withUser(B, async () => {
     check("revoked membership immediately loses module access", (await db.query("SELECT records FROM public.project_module_packages WHERE project_id=$1", [projectId])).rows.length === 0);
   });
+}
+
+section("67. module registry visibility and publishing authority (081)");
+{
+  await withServiceRole(async () => {
+    await db.query("DELETE FROM public.organization_members WHERE organization_id=$1 AND user_id=$2", [orgId,B]);
+    for (const [id, org, published] of [["org-module", orgId, true], ["draft-module", null, false]]) {
+      await db.query("INSERT INTO public.module_catalog_entries(module_id,version,organization_id,category,description,manifest,published) VALUES ($1,'1.0.0',$2,'research','Test listing',$3,$4)", [id,org,JSON.stringify({ manifestVersion: 1, id, version: "1.0.0" }),published]);
+    }
+  });
+  await withUser(A, async () => {
+    const seeded = (await db.query("SELECT manifest,demo_records FROM public.module_catalog_entries WHERE module_id='release-planning'")).rows[0];
+    const validated = moduleManifestSchema.parse(seeded.manifest);
+    check("signed-in user sees the real seeded catalog release", validated.views.length === 5);
+    check("seeded catalog manifest and fixtures pass runtime validation", parseModuleRecords(validated, seeded.demo_records).length === 1);
+    check("org member sees published organization listings", (await db.query("SELECT module_id FROM public.module_catalog_entries WHERE module_id='org-module'")).rows.length === 1);
+    check("draft listings stay hidden from regular readers", (await db.query("SELECT module_id FROM public.module_catalog_entries WHERE module_id='draft-module'")).rows.length === 0);
+    check("a user cannot publish their own module through the Data API", await throwsInSavepoint("UPDATE public.module_catalog_entries SET published=true WHERE module_id='draft-module'"));
+    check("a user cannot overwrite a catalog release", await throwsInSavepoint("UPDATE public.module_catalog_entries SET manifest='{}' WHERE module_id='release-planning'"));
+    check("a user cannot remove a catalog release", await throwsInSavepoint("DELETE FROM public.module_catalog_entries WHERE module_id='release-planning'"));
+  });
+  await withUser(B, async () => {
+    check("another org cannot see a private catalog listing", (await db.query("SELECT module_id FROM public.module_catalog_entries WHERE module_id='org-module'")).rows.length === 0);
+    check("published global catalog entries are shared with signed-in users", (await db.query("SELECT module_id FROM public.module_catalog_entries WHERE module_id='release-planning'")).rows.length === 1);
+  });
+  await withAnon(async () => { check("catalog does not expose private listings anonymously", await throwsInSavepoint("SELECT manifest FROM public.module_catalog_entries")); });
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

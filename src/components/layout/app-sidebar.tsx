@@ -61,6 +61,8 @@ export const GLOBAL_NAV = [
   { href: "/projects", labelKey: "projects", icon: FileText },
   { href: "/organizations", labelKey: "organizations", icon: Building2 },
   { href: "/plugins", labelKey: "plugins", icon: Puzzle },
+  { href: "/marketplace", labelKey: "marketplace", icon: Puzzle },
+  { href: "/my-modules", labelKey: "myModules", icon: Puzzle },
 ] as const;
 
 export interface ProjectNavItem {

@@ -1,0 +1,50 @@
+name: Modules and marketplace
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/work/**'
+      - 'src/lib/data/module-*.ts'
+      - 'src/app/projects/**/modules/**'
+      - 'src/app/marketplace/**'
+      - 'src/app/my-modules/**'
+      - 'src/db/**'
+      - 'tests/*module*'
+      - 'tests/db/**'
+      - 'messages/**'
+      - 'examples/module-manifests/**'
+      - 'package*.json'
+      - '.github/workflows/modules-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Build-only placeholders. These tests use isolated PGlite/fixture data.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: module-ci-placeholder
+      APP_URL: http://localhost:5803
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:db
+      - run: npm run test:modules
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:module-catalog
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: module-catalog-browser
+          path: output/playwright/
+          if-no-files-found: ignore
