@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const faviconOnly = process.argv.includes("--favicon-only");
 const colors = {
   white: "#FFFFFF",
 };
@@ -54,21 +55,27 @@ function ico(frames) {
   return Buffer.concat([header, ...frames.map(({ image }) => image)]);
 }
 
-await writePng("src/app/icon.png", 512, { foreground: blue, ratio: 0.74 });
-await writePng("src/app/apple-icon.png", 180, {
+// Browser favicons are shown uncropped, so use their canvas more fully than
+// the safe-area artwork used for installed apps and circular profile images.
+await writePng("src/app/icon.png", 512, { foreground: blue, ratio: 0.94 });
+if (!faviconOnly) await writePng("src/app/apple-icon.png", 180, {
   foreground: blue,
   background: colors.white,
   ratio: 0.7,
 });
 
 const faviconFrames = [];
-for (const size of [16, 32, 48]) {
+for (const size of [16, 32, 48, 64, 256]) {
   faviconFrames.push({
     size,
-    image: await png(size, { foreground: blue, background: colors.white, ratio: 0.78 }),
+    image: await png(size, { foreground: blue, ratio: 0.94 }),
   });
 }
 await writeFile(resolve(root, "src/app/favicon.ico"), ico(faviconFrames));
+if (faviconOnly) {
+  console.log("Generated larger, transparent browser favicons from the official Guidon symbol.");
+  process.exit(0);
+}
 
 await writePng("public/icons/icon-192.png", 192, {
   foreground: blue,
@@ -82,13 +89,13 @@ await writePng("public/icons/icon-512.png", 512, {
 });
 await writePng("public/icons/icon-maskable-512.png", 512, {
   foreground: colors.white,
-  background: colors.blue,
+  background: blue,
   ratio: 0.52,
 });
 
 await writePng("mobile/assets/icon.png", 1024, {
   foreground: colors.white,
-  background: colors.blue,
+  background: blue,
   ratio: 0.66,
 });
 await writePng("mobile/assets/android-icon-foreground.png", 432, {
