@@ -14,6 +14,8 @@ import { isBillingConfigured } from "@/lib/billing/stripe";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { getPinnedTasks, type PinnedTask } from "@/lib/data/pinned-tasks";
 import { PinnedTasksProvider } from "@/components/work/pinned-tasks-context";
+import { getPinnedProjects, type PinnedProject } from "@/lib/data/pinned-projects";
+import { PinnedProjectsProvider } from "@/components/projects/pinned-projects-context";
 import { AppMessages } from "@/components/layout/app-messages";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
@@ -34,14 +36,18 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
   // Pinned tasks (migration 074) in the sidebar on every page; a failure
   // here (no column yet, signed out) just means an empty list.
   let pinnedTasks: PinnedTask[] = [];
+  let pinnedProjects: PinnedProject[] = [];
   try {
-    pinnedTasks = await getPinnedTasks((await getCurrentUser()).id);
+    const userId = (await getCurrentUser()).id;
+    [pinnedTasks, pinnedProjects] = await Promise.all([getPinnedTasks(userId), getPinnedProjects(userId)]);
   } catch {
     pinnedTasks = [];
+    pinnedProjects = [];
   }
 
   return (
     <AppMessages>
+    <PinnedProjectsProvider initial={pinnedProjects}>
     <PinnedTasksProvider initial={pinnedTasks}>
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
@@ -70,6 +76,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
       </SidebarInset>
     </SidebarProvider>
     </PinnedTasksProvider>
+    </PinnedProjectsProvider>
     </AppMessages>
   );
 }

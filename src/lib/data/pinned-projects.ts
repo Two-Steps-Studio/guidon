@@ -6,6 +6,11 @@ import { dataClient } from "@/lib/data-client";
 /** At most this many projects pinned per person (migration 065's CHECK). */
 export const MAX_PINNED_PROJECTS = 3;
 
+export interface PinnedProject {
+  id: string;
+  name: string;
+}
+
 /**
  * The projects this person pinned to the top of the project list and the
  * dashboard, in pinning order. Ids of projects they can no longer see are
@@ -21,6 +26,22 @@ export const getPinnedProjectIds = cache(async function getPinnedProjectIds(user
   if (error || !data) return [];
   return data.pinned_project_ids ?? [];
 });
+
+/** The projects the person pinned and can still access, in pinning order. */
+export async function getPinnedProjects(userId: string): Promise<PinnedProject[]> {
+  const ids = await getPinnedProjectIds(userId);
+  if (ids.length === 0) return [];
+
+  const { data } = await dataClient(userId)
+    .from<PinnedProject>("projects")
+    .select("id, name")
+    .in("id", ids);
+  const byId = new Map((data ?? []).map((project) => [project.id, project]));
+  return ids.flatMap((id) => {
+    const project = byId.get(id);
+    return project ? [project] : [];
+  });
+}
 
 /** `items` with the pinned ones first, in pinning order; the rest keep their order. */
 export function pinnedFirst<T extends { id: string }>(items: T[], pinned: string[]): T[] {
