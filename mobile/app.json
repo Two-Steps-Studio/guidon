@@ -49,7 +49,7 @@
     "android": {
       "package": "com.twostepsstudio.guidon",
       "adaptiveIcon": {
-        "backgroundColor": "#CDF2B1",
+        "backgroundColor": "#1D4FD8",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
@@ -71,7 +71,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#CDF2B1"
+          "backgroundColor": "#1D4FD8"
         }
       ],
       "@react-native-community/datetimepicker",
