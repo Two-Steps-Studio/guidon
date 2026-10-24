@@ -102,6 +102,15 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
   when collapsing/expanding. Saved pins do not produce sidebar task links and
   remain intact in the database; each fixture mutation is restored afterward.
 
+- Apple Design regression checks cover pointer/keyboard drag cancellation and
+  confirmed moves, failed optimistic updates, retained unsaved drafts and files,
+  dialog bounds at 320×480 with 200% text, crop feedback, image swipes and
+  cancellation, semantic tabs, all calendar tasks and mobile agenda, AI IME and
+  live log semantics, single-main landmarks, search failure/retry and response
+  races, explicit date locales, notification failure/retry, and coarse-pointer
+  target sizes. AI/search failure responses are local fixtures. These checks
+  do not substitute for real device, assistive technology or performance trials.
+
 This is the self-hosted direct-PostgreSQL auth/data path. It does **not** certify
 Supabase Auth/PostgREST, external OAuth callbacks, reset email delivery,
 complete onboarding, complete Kanban CRUD/concurrency, exhaustive API/MCP permissions,

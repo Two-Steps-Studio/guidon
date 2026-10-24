@@ -12,6 +12,7 @@ export function BackgroundMotionSwitcher() {
 
   return (
     <div className="space-y-2"><SelectMenu aria-label={t("backgroundStyleLabel")} value={style} options={BACKGROUND_STYLES.map(value => ({ value, label: t(`backgroundStyle_${value}`) }))} onValueChange={value => setBackgroundStyle(value as BackgroundStyle)} />
+    <span className="block text-sm font-medium">{t("backgroundMotionLabel")}</span>
     <SelectMenu
       aria-label={t("backgroundMotionLabel")}
       value={motion}

@@ -12,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -53,13 +52,13 @@ export function NotificationsBell() {
     const version = ++refreshVersion.current;
     startTransition(async () => {
       try {
-      const result = await getNotifications();
-      if (!mounted.current || version !== refreshVersion.current) return;
-      setNotifications(result.notifications);
-      setUnreadCount(result.unreadCount);
-      setLoadError(false);
-      if (lastUnread.current !== null && result.unreadCount > lastUnread.current) playSound("notify");
-      lastUnread.current = result.unreadCount;
+        const result = await getNotifications();
+        if (!mounted.current || version !== refreshVersion.current) return;
+        setNotifications(result.notifications);
+        setUnreadCount(result.unreadCount);
+        setLoadError(false);
+        if (lastUnread.current !== null && result.unreadCount > lastUnread.current) playSound("notify");
+        lastUnread.current = result.unreadCount;
       } catch {
         // A navigation can abort the pending Server Action. If this menu
         // remains mounted, retain its cache and offer a visible retry.
@@ -77,7 +76,7 @@ export function NotificationsBell() {
     mounted.current = true;
     refresh();
     const interval = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => { mounted.current = false;refreshVersion.current++;clearInterval(interval); };
+    return () => { mounted.current = false;clearInterval(interval); };
   }, [refresh]);
 
   function handleSelect(notification: Notification) {
@@ -105,8 +104,6 @@ export function NotificationsBell() {
 
   return (
     <DropdownMenu onOpenChange={(open) => open && refresh()}>
-      <Tooltip>
-        <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -125,11 +122,6 @@ export function NotificationsBell() {
               )}
             </Button>
           </DropdownMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          {unreadCount > 0 ? t("bellAriaUnread", { count: unreadCount }) : t("title")}
-        </TooltipContent>
-      </Tooltip>
       <DropdownMenuContent
         align="end"
         collisionPadding={8}

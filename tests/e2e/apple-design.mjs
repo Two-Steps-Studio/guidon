@@ -63,6 +63,15 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
       await page.mouse.move(target.x+80,target.y+90);await frames(page);
       return Number(await card.getAttribute('data-audit-pointer'));
     };
+    await page.emulateMedia({reducedMotion:'reduce'});await frames(page);
+    const reducedPointer=await begin();
+    const ghost=page.locator('[data-slot="task-drag-ghost"]');await ghost.waitFor();
+    assert.equal(await ghost.getAttribute('aria-hidden'),'true');
+    assert.equal(await ghost.evaluate(node=>node.inert),true);
+    const scale=await ghost.evaluate(node=>new DOMMatrixReadOnly(getComputedStyle(node).transform).a);
+    assert.ok(Math.abs(scale-1)<0.001,'Reduced motion keeps the drag ghost at its real scale');
+    await card.dispatchEvent('pointercancel',{pointerId:reducedPointer,pointerType:'mouse',bubbles:true});await page.mouse.up();await frames(page);
+    await page.emulateMedia({reducedMotion:'no-preference'});await frames(page);
     for(const cancellation of ['pointercancel','lostcapture','escape']){
       const pointerId=await begin();const before=actions.length;
       if(cancellation==='escape')await page.keyboard.press('Escape');
@@ -111,7 +120,8 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.setViewportSize({width:320,height:480});
     await page.evaluate(()=>{document.documentElement.style.fontSize='200%';});
     const formDialog=page.getByRole('dialog').filter({has:page.locator('#new-task-title')});
-    const bounds=await formDialog.boundingBox();assert.ok(bounds.y>=-1 && bounds.y+bounds.height<=481);
+    await frames(page);await settled(formDialog);
+    const bounds=await formDialog.boundingBox();assert.ok(bounds.y>=-1 && bounds.y+bounds.height<=481,`Dialog must fit 320×480 at 200% text: ${JSON.stringify(bounds)}`);
     await formDialog.getByRole('button',{name:'Cancel',exact:true}).click();
     await confirm.getByRole('button',{name:'Discard changes',exact:true}).click();
     await page.evaluate(()=>{document.documentElement.style.fontSize='';});await page.setViewportSize({width:1440,height:1000});
