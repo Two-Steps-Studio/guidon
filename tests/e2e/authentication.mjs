@@ -2,8 +2,13 @@ import assert from "node:assert/strict";
 
 async function login(page,origin,email,password,destination="/dashboard"){
   await page.goto(`${origin}/auth/login`);
+  // Finish the login document's hydration/autofocus before WebKit inserts
+  // credentials; a late autofocus can otherwise redirect its text insertion.
+  await page.waitForLoadState("networkidle");
   await page.locator("#email").fill(email);
   await page.locator("#password").fill(password);
+  assert.equal(await page.locator("#email").inputValue(),email);
+  assert.equal(await page.locator("#password").inputValue(),password);
   await page.locator('button[type="submit"]').click();
   await page.waitForURL(url=>url.pathname===destination);
   await page.getByRole("heading",{level:1}).waitFor();
