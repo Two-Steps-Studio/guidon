@@ -65,6 +65,6 @@ auth/provider/audit-storage boundaries, checking access, AI disable, user/org
 limits and log redaction. They do not contact a paid model or production DB.
 
 Authenticated staging/browser E2E remains the Marketplace QA task. The
-three-pane editor, persisted drafts/history, fixture live preview, visual
-editing and author publication remain separate roadmap tasks; reloading this
-initial planner clears the unsaved draft.
+three-pane editor and persisted drafts/history are documented in
+`module-draft-editor.md`. Rich fixture live preview, visual editing and author
+publication remain separate roadmap tasks.

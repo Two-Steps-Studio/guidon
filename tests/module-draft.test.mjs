@@ -1,0 +1,32 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { register } from "node:module";
+register(`data:text/javascript,${encodeURIComponent(`
+export async function resolve(specifier,context,next){
+  if(context.parentURL?.includes('/src/lib/work/') && /^\.\\/module-[a-z-]+$/.test(specifier)) return next(specifier+'.ts',context);
+  return next(specifier,context);
+}`)}`,import.meta.url);
+const { EMPTY_MODULE_DRAFT, parseModuleDraft, changeModuleDraft, moveModuleDraft } = await import("../src/lib/work/module-draft.ts");
+const { compileModulePlan } = await import("../src/lib/work/module-builder.ts");
+let state = structuredClone(EMPTY_MODULE_DRAFT);
+state=changeModuleDraft(state,{prompt:"first",plan:null,manifest:null});
+state=changeModuleDraft(state,{prompt:"first edit",plan:null,manifest:null},true);
+assert.equal(state.past.length,1);
+const undone=moveModuleDraft(state,"undo");
+assert.equal(undone.present.prompt,"");
+assert.deepEqual(moveModuleDraft(undone,"redo"),state);
+assert.equal(changeModuleDraft(undone,{prompt:"new branch",plan:null,manifest:null}).future.length,0);
+for(let i=0;i<50;i++)state=changeModuleDraft(state,{prompt:`edit-${i}`,plan:null,manifest:null});
+assert.equal(state.past.length,20);
+assert.deepEqual(parseModuleDraft(JSON.parse(JSON.stringify(state))),state);
+const example=JSON.parse(await readFile(new URL('../examples/module-manifests/release-planning.json',import.meta.url),'utf8'));
+const plan={id:example.id,name:example.name,summary:"Plan",questions:[],entities:example.entities,views:example.views,permissions:example.permissions,relations:[]};
+const manifest=compileModulePlan(plan,true).value;
+const generated=changeModuleDraft(state,{prompt:"plan",plan,manifest});
+assert.deepEqual(parseModuleDraft(generated).present.manifest,manifest);
+assert.throws(()=>parseModuleDraft({...generated,present:{...generated.present,approved:true}}));
+assert.throws(()=>parseModuleDraft({...generated,present:{...generated.present,manifest:{...manifest,name:"unreviewed"}}}));
+assert.throws(()=>parseModuleDraft({...state,future:state.past}));
+assert.throws(()=>parseModuleDraft({...state,present:{prompt:"x".repeat(6001),plan:null,manifest:null}}));
+assert.throws(()=>parseModuleDraft({...state,extra:"script"}));
+console.log("pass draft roundtrip, grouped edits, undo/redo/branching, bounded history, strict schemas and no persisted approvals");
