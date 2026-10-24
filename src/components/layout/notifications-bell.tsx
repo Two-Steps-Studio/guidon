@@ -125,7 +125,7 @@ export function NotificationsBell() {
       <DropdownMenuContent
         align="end"
         collisionPadding={8}
-        className="flex w-[calc(100vw-1rem)] max-w-96 flex-col overflow-y-hidden max-h-[min(32rem,var(--radix-dropdown-menu-content-available-height))]"
+        className="flex w-96 max-w-[calc(100vw-1rem)] flex-col overflow-y-hidden max-h-[min(32rem,calc(100dvh-4rem))]"
       >
         <div className="flex shrink-0 items-center justify-between gap-2 px-2 py-1.5">
           <span className="text-sm font-medium">{t("title")}</span>

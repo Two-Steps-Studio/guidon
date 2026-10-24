@@ -9,6 +9,10 @@ const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getA
 export async function appleDesignCoverage({page,context,origin,fixture,client,browserName,artifacts}) {
   const owner=fixture.users[0], created=[], errors=[];
   const capture=error=>errors.push(`${new URL(page.url()).pathname}: ${error.message}`);
+  // Let prior pages finish prefetches before replacing their document. WebKit
+  // otherwise reports navigation-cancelled fetches as access-control errors.
+  const navigate=async url=>{await page.waitForLoadState('networkidle');await page.goto(url);};
+  await page.waitForLoadState('networkidle');
   page.on('pageerror',capture);
   const route=`${origin}/projects/${owner.projectId}/work`;
   const manifest=JSON.parse(await readFile(new URL('../../examples/module-manifests/release-planning.json',import.meta.url),'utf8'));
@@ -16,7 +20,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
   const image=await readFile(new URL('../../public/assets/guidon-wordmark.png',import.meta.url));
   const images=[{name:'apple-first.png',mimeType:'image/png',buffer:image},{name:'apple-second.png',mimeType:'image/png',buffer:image}];
   try{
-    await page.goto(origin+'/auth/login');
+    await navigate(origin+'/auth/login');
     await page.locator('#email').fill(owner.email);await page.locator('#password').fill(fixture.password);
     await page.locator('#password').focus();await page.keyboard.press('Tab');
     const reveal=page.getByRole('button',{name:'Show password',exact:true});
@@ -28,6 +32,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.locator('button[type="submit"]').click();await page.waitForURL(u=>u.pathname==='/dashboard');
     // Finish login navigation and its initial refresh before injecting the
     // failed response, so the notification retry is tested independently.
+    await page.waitForLoadState('networkidle');
     const initialNotifications=page.waitForResponse(response=>response.request().method()==='POST' && !!response.request().headers()['next-action']);
     await page.goto(origin+'/dashboard');await initialNotifications;
     await page.route(origin+'/dashboard',request=>request.request().method()==='POST' && request.request().headers()['next-action']?request.fulfill({status:503,contentType:'text/plain',body:'Notification refresh fixture failure'}):request.continue());
@@ -37,7 +42,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('button',{name:messages.notifications.retry,exact:true}).click();
     await page.getByRole('alert').filter({hasText:messages.notifications.loadFailed}).waitFor({state:'hidden'});await page.keyboard.press('Escape');
 
-    await page.goto(origin+'/profile');await page.getByRole('button',{name:'Background style',exact:true}).click();
+    await navigate(origin+'/profile');await page.getByRole('button',{name:'Background style',exact:true}).click();
     await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
     await frames(page);assert.equal(await page.locator('canvas').count(),0);
     await page.getByRole('button',{name:'Background style',exact:true}).click();
@@ -46,7 +51,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('button',{name:'Background style',exact:true}).click();
     await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
     assert.equal(errors.some(error=>/418|hydrat/i.test(error)),false,'Profile must hydrate with fixture API key dates');
-    await page.goto(`${origin}/projects/${owner.projectId}/settings`);
+    await navigate(`${origin}/projects/${owner.projectId}/settings`);
     await page.locator('#avatar').setInputFiles(images[0]);
     const crop=page.getByRole('dialog');await crop.getByRole('slider').first().fill('1.8');
     assert.equal(await crop.locator('img').evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
@@ -60,7 +65,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     const day=new Date().toISOString().slice(0,10);
     const inserted=await client.query("INSERT INTO public.tasks(project_id,created_by,title,status,due_date) SELECT $1,$2,'Apple '||$3::text||' '||n,CASE WHEN n=6 THEN 'backlog' ELSE 'todo' END,$4::date FROM generate_series(1,6) n RETURNING id,title,status,sort_order",[owner.projectId,owner.id,browserName,day]);
     created.push(...inserted.rows.map(row=>row.id));
-    await page.goto(route);await page.getByRole('list',{name:'Task board',exact:true}).waitFor();
+    await navigate(route);await page.getByRole('list',{name:'Task board',exact:true}).waitFor();
     const task=inserted.rows[0];const card=page.getByRole('list',{name:'Task board',exact:true}).locator(`[data-card-id="${task.id}"]`);
     const baseline=(await client.query('SELECT status,sort_order,title FROM public.tasks WHERE id=$1',[task.id])).rows[0];
     const actions=[];const watch=request=>{if(request.headers()['next-action'])actions.push(request.url());};page.on('request',watch);
@@ -168,7 +173,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await confirm.getByRole('button',{name:'Delete',exact:true}).click();await page.locator('#task-title').waitFor({state:'hidden'});
     assert.equal((await client.query('SELECT 1 FROM public.tasks WHERE id=$1',[stored.id])).rowCount,0);
 
-    await page.goto(`${origin}/projects/${owner.projectId}/context`);
+    await navigate(`${origin}/projects/${owner.projectId}/context`);
     await page.getByRole('tab',{name:/Decisions/}).focus();await page.keyboard.press('ArrowRight');
     assert.equal(await page.getByRole('tab',{name:/Relations/}).getAttribute('aria-selected'),'true');
     assert.equal(await page.getByRole('tabpanel').count(),1);
@@ -177,7 +182,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await workGroup.click();assert.equal(await sidebar.getByRole('link',{name:'Task Board',exact:true}).isVisible(),false);
     await workGroup.click();await sidebar.getByRole('link',{name:'Task Board',exact:true}).waitFor();
 
-    await page.goto(`${origin}/projects/${owner.projectId}/calendar`);
+    await navigate(`${origin}/projects/${owner.projectId}/calendar`);
     await page.getByLabel('View',{exact:true}).selectOption('month');
     await page.getByRole('button',{name:/Show all tasks for/}).click();
     const dayDialog=page.getByRole('dialog',{name:/Tasks for/});
@@ -189,11 +194,11 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
 
     await client.query('INSERT INTO public.project_module_packages(project_id,module_id,manifest) VALUES($1,$2,$3::jsonb)',[owner.projectId,manifest.id,JSON.stringify(manifest)]);
     for(const suffix of ['/my-modules',`/projects/${owner.projectId}/modules`,`/projects/${owner.projectId}/modules/${manifest.id}`]){
-      await page.goto(origin+suffix);await page.getByRole('heading',{level:1}).waitFor();
+      await navigate(origin+suffix);await page.getByRole('heading',{level:1}).waitFor();
       assert.equal(await page.locator('main').count(),1,`Single main landmark: ${suffix}`);
     }
 
-    await page.goto(route);
+    await navigate(route);
     const ai=page.getByRole('button',{name:'Guidon AI Assistant',exact:true});await ai.press('Enter');
     const chat=page.getByRole('dialog');await settled(chat);
     const chatBounds=await chat.boundingBox();assert.ok(chatBounds.x>=-1 && chatBounds.width<=376);
@@ -256,5 +261,5 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     if(created.length)await client.query('DELETE FROM public.tasks WHERE project_id=$1 AND id=ANY($2::uuid[])',[owner.projectId,created]);
     await page.setViewportSize({width:1440,height:1000});
   }
-  await page.goto(origin+'/auth/logout');await page.waitForURL(u=>u.pathname==='/');
+  await navigate(origin+'/auth/logout');await page.waitForURL(u=>u.pathname==='/');
 }
