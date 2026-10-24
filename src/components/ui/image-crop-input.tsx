@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const subscribeHydration = () => () => {};
+const clientHydrated = () => true;
+const serverHydrated = () => false;
 
 /** Square crop picker that keeps the resulting File in the parent form. */
 export function ImageCropInput({
@@ -21,6 +25,7 @@ export function ImageCropInput({
   onReady?: () => void;
 }) {
   const t = useTranslations("common.imageCrop");
+  const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated);
   const inputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [source, setSource] = useState<string | null>(null);
@@ -65,6 +70,7 @@ export function ImageCropInput({
         ref={inputRef}
         id={id}
         type="file"
+        disabled={!hydrated}
         name={name}
         accept={accept}
         className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-primary-foreground hover:file:bg-primary/90"

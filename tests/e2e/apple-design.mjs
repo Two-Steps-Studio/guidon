@@ -52,7 +52,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
     assert.equal(errors.some(error=>/418|hydrat/i.test(error)),false,'Profile must hydrate with fixture API key dates');
     await navigate(`${origin}/projects/${owner.projectId}/settings`);
-    await page.locator('#avatar').setInputFiles(images[0]);
+    await page.locator('#avatar:enabled').setInputFiles(images[0]);
     const crop=page.getByRole('dialog');await crop.getByRole('slider').first().fill('1.8');
     assert.equal(await crop.locator('img').evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
     for(const slider of await crop.getByRole('slider').all()){

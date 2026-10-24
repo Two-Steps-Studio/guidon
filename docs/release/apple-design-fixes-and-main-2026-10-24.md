@@ -22,13 +22,13 @@ Nie trzeba wykonywać nowej migracji dla zmian UI opisanych poniżej.
 | AD-04 | Podgląd hasła dostępny Tab/Space, stan aria-pressed, type=button | Hasło zachowane, zmiana typu, brak wysłania przy przełączeniu |
 | AD-05 | Wspólne ograniczenie wysokości zwykłego dialogu; zachowany wariant scrollable | 320×480 przy tekście 200%, osiągalne anulowanie; fizyczna klawiatura telefonu pozostaje osobną próbą |
 | AD-06 | Większe cele dotykowe Button/menu/close, 44px lightbox, kompaktowa wyszukiwarka telefonu | Chromium z rzeczywistym emulowanym pointer:coarse, wymiary wyszukiwania i dzwonka |
-| AD-07 | Ghost odczytuje reduced motion; bez ozdobnej skali/sprężyny; transform zamiast left/top; kopia inert/aria-hidden | Kod preferencji i dotychczasowe gesty; nie jest to pomiar wszystkich klatek na urządzeniu |
+| AD-07 | Ghost odczytuje reduced motion; bez ozdobnej skali/sprężyny; transform zamiast left/top; kopia inert/aria-hidden | Zmiana preferencji w sesji, rzeczywista skala ghost, inert/aria-hidden oraz anulowanie; nie jest to pomiar wszystkich klatek na urządzeniu |
 | AD-08 | Reduced transparency, high contrast i forced colors dla współdzielonych powierzchni | Emulacja większego kontrastu, style powierzchni i kontrola CSS; część preferencji zależy od przeglądarki |
 | AD-09 | Osobna grupa rozszerzeń, różne ikony, zwijane sekcje projektu, zachowane trasy i opcjonalne moduły | Przełączenie grupy oraz dotychczasowe testy stabilności sidebara; brak badania czasu wykonania z prawdziwymi użytkownikami |
 | AD-10 | Jednolite tło jako domyślny wariant pracy, wzór jako wybór urządzenia, osobno wybór ruchu | Przełączenie solid/pattern, montowanie/usunięcie canvas; bez twierdzenia o zmierzonym FPS/energii słabego GPU |
 | AD-11 | Pointer capture, blokada osi, śledzenie 1:1, anulowanie, projekcja prędkości i przerywalna sprężyna | Ukośny gest bez zmiany, przesunięcie przed puszczeniem, cancel i faktyczne przejście do drugiego obrazu |
-| AD-12 | Usunięte transition-transform podczas pracy suwaków crop; Cancel czyści wybór pliku | Prawdziwy crop projektu i brak czasu przejścia obrazu |
-| AD-13 | Osobne loading/empty/error/retry; anulowane zapytanie nie zmienia nowszego stanu | HTTP 500 i udane ponowienie przez lokalny fixture; nie kontaktuje się z produkcją |
+| AD-12 | Usunięte transition-transform podczas pracy suwaków crop; Cancel czyści wybór pliku; wybór pliku dopiero po hydratacji | Prawdziwy crop projektu, suwaki klawiaturą w obu kierunkach i brak czasu przejścia obrazu |
+| AD-13 | Osobne loading/empty/error/retry; anulowane zapytanie nie zmienia nowszego stanu | HTTP 500, ponowienie i celowo odwrócona kolejność odpowiedzi; starszy request nie usuwa nowszego loading/wyniku |
 | AD-14 | tablist/tab/aria-selected/panel, roving tabindex i strzałki/Home/End | Przejście klawiaturą i wybrany panel |
 | AD-15 | Aktywne „więcej” z pełną listą dnia; mobilna agenda, opcja miesiąca i auto | Sześć zadań dostępnych w dialogu dnia i mobilnej liście |
 | AD-16 | Status live z nazwą, kolumną i pozycją po odpowiedzi; błąd i rollback; ostrożne przywrócenie fokusu | Udany move i błąd zapisu w jednorazowej bazie; czytnik urządzenia do osobnej oceny |
@@ -40,10 +40,35 @@ Dodatkowo AD-20: szuflady mają równy, krótszy rytm 200ms w obu kierunkach.
 AD-21: daty kluczy API używają jawnego locale i UTC; profil nie powinien
 przełączać tekstu między renderem serwera a hydratacją. Test zbiera błędy strony
 także przy istniejących kluczach API i nie toleruje błędu #418.
+Rzeczywisty przebieg ujawnił również daty na kartach zadań zależne od locale
+hosta. `formatCalendarDate` ma teraz stabilne domyślne locale, a widoki przekazują
+locale użytkownika. Osobny test obejmuje cztery języki i trzy strefy czasowe.
+
+Odświeżanie powiadomień obsługuje odrzucony request, zachowuje cache i udostępnia
+ponowienie. Odpowiedź starego odświeżenia nie nadpisuje nowszego stanu.
+Panel ma stałą wysokość ograniczoną viewportem i przewijanie, aby zawartość
+po odświeżeniu nie powodowała skoków układu ani pętli ResizeObserver w WebKit.
 
 ## Weryfikacja
 
-Końcowe wyniki i identyfikator przebiegu zostaną dopisane po zakończeniu regresji.
+Lokalny przebieg `npm run test:e2e`, identyfikator `722f3a45b9aa`, zakończył się
+powodzeniem: 110 kontroli REST/MCP oraz cały zestaw UI w Chromium, Firefox i
+WebKit, bez zebranych błędów strony. Artefakty są ignorowane przez Git w
+`output/e2e/722f3a45b9aa/`. Testowana kopia aplikacji pochodziła z `6483874`;
+ostatnia ochrona wyboru pliku przed hydratacją jest dodatkowym follow-upem,
+który musi przejść końcowe CI dokładnej wersji PR.
+
+TypeScript i ukierunkowany ESLint zmienionych komponentów przeszły kontrolę.
+Ostateczne wyniki dwóch workflowów dla końcowego commita i linki do nich są
+w opisie [PR #64](https://github.com/Two-Steps-Studio/guidon/pull/64).
+Oba muszą być zielone przed scaleniem; wynik starszego commita nie zastępuje
+kontroli końcowego head.
+
+Przed wymuszoną zmianą dokumentu runner czeka na zakończenie pobierania danych
+przez poprzedni widok. Dzięki temu WebKit nie zgłasza anulowanych przez test
+prefetchy jako błędów dostępu. Kolektor nadal odrzuca każdy błąd strony;
+nie dodano ignorowania ResizeObserver, hydratacji ani błędów sieci.
+
 Kolektor audytu pozostaje historycznym dowodem stanu przed poprawkami, nie
 potwierdzeniem jakości zmienionego kodu.
 
