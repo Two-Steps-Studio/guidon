@@ -1958,5 +1958,21 @@
     "screenshots": "Screenshots",
     "changelog": "Changelog",
     "noChangelog": "No release notes published."
+  },
+  "moduleInstaller": {
+    "title": "Install module",
+    "organization": "Organization",
+    "chooseOrganization": "Choose an organization",
+    "continue": "Continue",
+    "project": "Project",
+    "chooseProject": "Choose a project",
+    "noProjects": "No projects where you are an owner or admin are eligible for this module.",
+    "emptyData": "Installation starts with empty project data. The demonstration records are not copied.",
+    "permission": "You cannot install this module in the selected project.",
+    "unsupported": "This module is not supported by the current runtime.",
+    "consent": "Review and approve all displayed permissions.",
+    "conflict": "The module changed or a different version is already installed. Review the current release before retrying.",
+    "limit": "This project has reached its 20-module limit.",
+    "saveFailed": "Installation failed. No partial installation was saved."
   }
 }

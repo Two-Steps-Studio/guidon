@@ -78,7 +78,7 @@ function PackagePanel({ projectId, initial, canManage }: { projectId: string; in
       } catch { setStatus(t("saveFailed")); }
     });
   }
-  return <Card className="min-w-0">
+  return <Card id={`module-${manifest.id}`} className="min-w-0 scroll-mt-20">
     <CardHeader><CardTitle className="break-words">{manifest.name}</CardTitle><CardDescription>{manifest.author.name} · v{manifest.version}</CardDescription></CardHeader>
     <CardContent className="space-y-4">
       {!canRead ? <p className="text-sm text-muted-foreground">{initial.enabled ? t("noDataPermission") : t("disabled")}</p> : <>

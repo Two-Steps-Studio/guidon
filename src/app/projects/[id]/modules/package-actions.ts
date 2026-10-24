@@ -5,7 +5,8 @@ import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { compareSemver, moduleManifestSchema } from "@/lib/work/module-manifest";
-import { MODULE_ENGINE_VERSION, MODULE_MANIFEST_BYTE_LIMIT, hasExactModuleConsent, parseModuleRecords, unsupportedModulePermissions } from "@/lib/work/module-records";
+import { MODULE_ENGINE_VERSION, MODULE_MANIFEST_BYTE_LIMIT, parseModuleRecords, unsupportedModulePermissions } from "@/lib/work/module-records";
+import { hasExactModuleConsent } from "@/lib/work/module-installation";
 import type { ModulePackageRow } from "@/lib/data/module-packages";
 
 type Failure = { error: "permission" | "invalid" | "unsupported" | "consent" | "conflict" | "saveFailed" };

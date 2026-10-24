@@ -57,12 +57,6 @@ export function unsupportedModulePermissions(manifest: ModuleManifest): string[]
   return manifest.permissions.filter((permission) => !RUNTIME_PERMISSIONS.some((allowed) => allowed === permission));
 }
 
-export function hasExactModuleConsent(manifest: ModuleManifest, permissions: unknown): boolean {
-  return Array.isArray(permissions) && permissions.length === manifest.permissions.length
-    && new Set(permissions).size === permissions.length
-    && manifest.permissions.every((permission) => permissions.includes(permission));
-}
-
 export type InstalledModule = {
   moduleId: string;
   manifest: ModuleManifest;
