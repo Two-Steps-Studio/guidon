@@ -1,5 +1,7 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
 import { useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertCircle, Bug, Check, Copy, KeyRound, Trash2 } from "lucide-react";
@@ -51,8 +53,8 @@ export function ReportWidgetCard({
     });
   };
 
-  const revoke = (key: ApiKeyRow) => {
-    if (!window.confirm(t("reportWidgetRevokeConfirm"))) return;
+  const revoke = async (key: ApiKeyRow) => {
+    if (!await confirmAction(t("reportWidgetRevokeConfirm"))) return;
     setError(null);
     startTransition(async () => {
       const result = await revokeApiKey(key.id);

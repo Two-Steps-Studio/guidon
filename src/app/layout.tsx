@@ -8,6 +8,7 @@ import { PUBLIC_CLIENT_NAMESPACES, pickMessages } from "@/i18n/client-messages";
 import { Toaster } from "sonner";
 import { GlobalWebMcpTools } from "@/components/agent/web-mcp";
 import { DitherBackground } from "@/components/layout/dither-background";
+import { ConfirmActionHost } from "@/components/ui/confirm-action";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
 import { BRAND_COLORS } from "@/lib/brand-colors";
@@ -131,6 +132,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 the landing and legal pages, /mini, error.tsx. Wrapping
                 children here too nested two main landmarks on every page. */}
             {children}
+            <ConfirmActionHost />
             {/* theme defaults to "light" and does NOT track the OS on its own
                 (ask-sonner), so it must be told explicitly - "system" follows
                 prefers-color-scheme the same way globals.css does; "light"/

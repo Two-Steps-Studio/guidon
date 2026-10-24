@@ -85,7 +85,7 @@ export function ImageCropInput({
           {source && (
             <div className="space-y-4">
               <div className="relative mx-auto aspect-square w-full max-w-[320px] overflow-hidden rounded-lg bg-muted">
-                <Image ref={imageRef} src={source} alt="" width={512} height={512} unoptimized className="h-full w-full object-cover transition-transform" style={{ transform: `scale(${zoom}) translate(${-x / 2}%, ${-y / 2}%)` }} />
+                <Image ref={imageRef} src={source} alt="" width={512} height={512} unoptimized className="h-full w-full object-cover" style={{ transform: `scale(${zoom}) translate(${-x / 2}%, ${-y / 2}%)` }} />
               </div>
               <label className="block space-y-1 text-sm">{t("zoom")}
                 <input aria-label={t("zoom")} type="range" min="1" max="3" step="0.01" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-full" />
@@ -102,7 +102,7 @@ export function ImageCropInput({
             </div>
           )}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setSource(null)}>{t("cancel")}</Button>
+            <Button type="button" variant="outline" onClick={() => { if (inputRef.current) inputRef.current.value = "";setSource(null); }}>{t("cancel")}</Button>
             <Button type="button" onClick={crop}>{t("apply")}</Button>
           </DialogFooter>
         </DialogContent>

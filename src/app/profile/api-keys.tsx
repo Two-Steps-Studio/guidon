@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,8 @@ const initialState: CreateApiKeyState = { error: null, fullKey: null, row: null 
 
 export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   const t = useTranslations("profile");
+  const locale = useLocale();
+  const formatDate = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value));
   const [keys, setKeys] = useState(initialKeys);
   const [state, formAction, creating] = useActionState(createApiKey, initialState);
   const [revoking, startRevoke] = useTransition();
@@ -129,10 +131,10 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 </div>
                 <p className="font-mono text-xs text-muted-foreground">{key.key_prefix}...</p>
                 <p className="text-xs text-muted-foreground">
-                  {t("createdOn", { date: new Date(key.created_at).toLocaleDateString() })}
+                  {t("createdOn", { date: formatDate(key.created_at) })}
                   {" · "}
                   {key.last_used_at
-                    ? t("lastUsedOn", { date: new Date(key.last_used_at).toLocaleDateString() })
+                    ? t("lastUsedOn", { date: formatDate(key.last_used_at) })
                     : t("neverUsed")}
                 </p>
               </div>

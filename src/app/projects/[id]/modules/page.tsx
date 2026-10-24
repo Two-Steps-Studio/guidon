@@ -20,10 +20,10 @@ export default async function ModulesPage({ params }: { params: Promise<{ id: st
   if (!parsed.success) throw new Error("Invalid stored project modules");
   const packages = await getModulePackages(access.userId, id);
   const draft = canManageProject(access.role) ? await getModuleDraft(access) : null;
-  return <main className="flex-1 space-y-6 p-4 sm:p-6">
+  return <section className="flex-1 space-y-6 p-4 sm:p-6">
     <div><h1 className="text-2xl font-semibold">{t("title")}</h1><p className="text-sm text-muted-foreground">{t("description")}</p></div>
     {draft && <ModuleBuilder key={`${id}-${access.userId}`} projectId={id} aiEnabled={access.project.ai_enabled} initialDraft={draft} />}
     <CustomModules projectId={id} initial={parsed.data} initialRevision={data.custom_modules_revision} canManage={canManageProject(access.role)} />
     <DeclarativeModules projectId={id} packages={packages} canManage={canManageProject(access.role)} />
-  </main>;
+  </section>;
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -109,7 +111,7 @@ export function MoodboardBoard({
   }, [canUpload]);
 
   const handleDelete = async (reference: ProjectReference) => {
-    if (!window.confirm(t("confirmDelete", { name: reference.caption || reference.name }))) return;
+    if (!await confirmAction(t("confirmDelete", { name: reference.caption || reference.name }))) return;
     const result = await deleteReference(projectId, reference.id);
     if (result.error) {
       toast.error(result.error);

@@ -110,22 +110,22 @@ export function AIChat({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-50" onClick={() => setIsOpen(true)}>
-        <Button size="icon" className="rounded-full h-12 w-12 shadow-lg hover:scale-110 transition-transform">
+      <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-40">
+        <Button aria-label={t("title")} aria-expanded={isOpen} onClick={() => setIsOpen(true)} size="icon" className="rounded-full h-12 w-12 shadow-lg">
           <Sparkles className="h-6 w-6" />
         </Button>
       </div>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px] flex flex-col p-0">
-          <SheetHeader className="p-4 border-b">
+        <SheetContent className="w-full max-w-full sm:w-[540px] flex flex-col p-0">
+          <SheetHeader className="p-4 pr-14 border-b">
             <SheetTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
               {t("title")}
             </SheetTitle>
           </SheetHeader>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div ref={scrollRef} role="log" aria-label={t("title")} aria-live="polite" aria-relevant="additions" className="min-h-0 flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground mt-10 space-y-2">
                 <Bot className="h-10 w-10 mx-auto opacity-20" />
@@ -214,21 +214,22 @@ export function AIChat({ projectId }: { projectId: string }) {
             )}
           </div>
 
-          <div className="p-4 border-t bg-background">
+          <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t bg-background">
             <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
               <Textarea
+                aria-label={t("placeholder")}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t("placeholder")}
                 className="min-h-0 h-10 resize-none py-2"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
                     e.preventDefault();
                     handleSend();
                   }
                 }}
               />
-              <Button type="submit" disabled={isLoading} size="icon" className="h-10 w-10 shrink-0">
+              <Button aria-label={t("sendMessage")} type="submit" disabled={isLoading || !input.trim()} size="icon" className="h-11 w-11 shrink-0">
                 <Send className="h-4 w-4" />
               </Button>
             </form>

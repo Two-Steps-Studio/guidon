@@ -1,5 +1,7 @@
 "use client";
 
+import { confirmAction } from "@/components/ui/confirm-action";
+
 import { useId, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -92,7 +94,7 @@ function PackagePanel({ projectId, initial, canManage }: { projectId: string; in
         </div>}
         {view && <ModuleView manifest={manifest} view={view} records={records} labels={{ empty: t("empty"), yes: t("yes"), no: t("no"), ungrouped: t("ungrouped"), unscheduled: t("unscheduled"), edit: t("edit"), remove: t("remove"), actions: t("actions"), count: t("count") }}
           onEdit={canWrite && !pending ? (record) => { setEditing(record); setShowForm(true); } : undefined}
-          onRemove={canWrite && !pending ? (record) => { if (window.confirm(t("confirmRemove"))) save(records.filter((candidate) => candidate.id !== record.id)); } : undefined} />}
+          onRemove={canWrite && !pending ? async (record) => { if (await confirmAction(t("confirmRemove"))) save(records.filter((candidate) => candidate.id !== record.id)); } : undefined} />}
         {canWrite && entity && (showForm || view?.type === "form") && <RecordForm key={`${entity.id}-${editing?.id ?? "new"}-${revision}`} entity={entity} record={editing} pending={pending}
           onSave={(record) => save(editing ? records.map((candidate) => candidate.id === editing.id ? record : candidate) : [...records, record])}
           onCancel={() => { setEditing(null); setShowForm(false); }} />}

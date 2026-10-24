@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useGuardedClose } from "@/components/ui/use-guarded-close";
+import { confirmAction } from "@/components/ui/confirm-action";
 import { Check, Copy, Eye, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { MarkdownPreview } from "@/components/files/markdown-preview";
@@ -160,6 +162,7 @@ function TaskDetailDialogInner({
     });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const requestClose = useGuardedClose(!!task && JSON.stringify(form) !== JSON.stringify(formToTask(task)), saving || deleting, onClose);
   const [error, setError] = useState<string | null>(null);
   // A written description opens rendered (links clickable, lists and
   // checklists as such) and "Edit" switches to the text; an empty one opens
@@ -279,6 +282,7 @@ function TaskDetailDialogInner({
 
   const handleDelete = async () => {
     if (!task) return;
+    if (!await confirmAction(`${task.title}\n\n${t("bulkDeleteConfirm", { count: 1 })}`, t("delete"))) return;
 
     setDeleting(true);
     setError(null);
@@ -338,7 +342,7 @@ function TaskDetailDialogInner({
 
   return (
     <>
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => { if (!open) void requestClose(); }}>
       <DialogContent
         scrollable
         className="sm:max-w-2xl"
@@ -417,7 +421,7 @@ function TaskDetailDialogInner({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={onClose}
+                  onClick={() => { void requestClose(); }}
                   disabled={saving || deleting}
                 >
                   {t("cancel")}
@@ -718,7 +722,7 @@ function TaskDetailDialogInner({
           canView={true}
           canLink={canEdit}
           canRemove={canDelete}
-          onNavigateToTask={onNavigateToTask}
+          onNavigateToTask={onNavigateToTask ? taskId => { void requestClose(() => onNavigateToTask(taskId)); } : undefined}
         />
 
         <TaskCommentsSection

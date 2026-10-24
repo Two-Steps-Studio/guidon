@@ -23,7 +23,14 @@
       "apply": "Use this crop",
       "failed": "Could not process this image.",
       "currentImage": "Current image"
-    }
+    },
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirmActionTitle": "Confirm action",
+    "confirmActionContinue": "Confirm",
+    "discardChangesQuestion": "Discard your unsaved changes? You can continue editing instead.",
+    "discardChanges": "Discard changes",
+    "discardFileChanges": "Discard unsaved changes to {path}?"
   },
   "auth": {
     "login": {
@@ -140,7 +147,8 @@
     "pinnedTasks": "Pinned",
     "customModules": "Custom modules",
     "marketplace": "Module marketplace",
-    "myModules": "My modules"
+    "myModules": "My modules",
+    "extensionsGroup": "Extensions"
   },
   "commandPalette": {
     "triggerLabel": "Search...",
@@ -155,7 +163,10 @@
     "entityType_memory": "Memory",
     "entityType_file": "File",
     "entityType_source": "Source",
-    "entityType_project": "Project"
+    "entityType_project": "Project",
+    "searching": "Searching…",
+    "searchFailed": "Search could not be completed.",
+    "retry": "Try again"
   },
   "notifications": {
     "title": "Notifications",
@@ -857,7 +868,8 @@
     "pinTask": "Pin",
     "unpinTask": "Unpin",
     "pinTooMany": "You can pin up to 10 tasks. Unpin one first.",
-    "pinFailed": "Couldn't change the pin. Try again."
+    "pinFailed": "Couldn't change the pin. Try again.",
+    "taskMovedAnnouncement": "{title} moved to {column}, position {position}"
   },
   "roadmap": {
     "title": "Roadmap",
@@ -1561,7 +1573,10 @@
       "confirmLabel": "Type {email} to confirm",
       "button": "Delete my account",
       "deleting": "Deleting..."
-    }
+    },
+    "backgroundStyleLabel": "Background style",
+    "backgroundStyle_solid": "Solid — focus on your work",
+    "backgroundStyle_pattern": "Guidon pattern"
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",
@@ -1579,7 +1594,14 @@
     "today": "Today",
     "moreTasks": "+{count} more",
     "phaseAria": "Phase: {name}",
-    "morePhases": "{count, plural, one {+# more phase} other {+# more phases}}"
+    "morePhases": "{count, plural, one {+# more phase} other {+# more phases}}",
+    "agenda": "Agenda",
+    "monthView": "Month",
+    "dayTasks": "Tasks for {date}",
+    "noDatedTasks": "No tasks scheduled for this month",
+    "showDay": "Show all tasks for {date}",
+    "viewLabel": "View",
+    "automatic": "Automatic"
   },
   "aiChat": {
     "title": "Guidon AI Assistant",
@@ -1592,7 +1614,8 @@
     "deletePrompt": "Delete task \"{title}\"?",
     "deletedConfirmation": "Deleted task: {title}",
     "deleteFailed": "Could not delete the task.",
-    "errorGeneric": "Sorry, I encountered an error. Please try again."
+    "errorGeneric": "Sorry, I encountered an error. Please try again.",
+    "sendMessage": "Send message"
   },
   "plugins": {
     "title": "Plugins & apps",

@@ -6,6 +6,7 @@ import { useBackgroundMotion } from "@/lib/background-motion";
 import { useWallpaperDim, useWallpaperUrl } from "@/lib/wallpaper";
 import { useEffectiveTheme, type EffectiveTheme } from "@/lib/use-effective-theme";
 import { BRAND_COLORS } from "@/lib/brand-colors";
+import { useBackgroundStyle } from "@/lib/background-style";
 
 /**
  * The app-wide background: React Bits' Dither, one fixed WebGL canvas behind
@@ -36,6 +37,7 @@ export function DitherBackground() {
   // Profile -> Wallpaper (this device only) replaces the animation.
   const wallpaper = useWallpaperUrl();
   const dim = useWallpaperDim();
+  const style = useBackgroundStyle();
 
   // The public landing page owns its background. Keep device preferences
   // intact so they still apply when navigating back into the app.
@@ -51,6 +53,7 @@ export function DitherBackground() {
     );
   }
 
+  if (style === "solid") return null;
   return (
     // h-lvh, not inset-0: the large viewport height doesn't change when a
     // phone's address bar slides away during scrolling, so the canvas isn't

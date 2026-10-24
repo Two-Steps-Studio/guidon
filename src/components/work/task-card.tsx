@@ -67,6 +67,7 @@ interface TaskCardProps {
   onDragStart: (task: Task, element: HTMLElement, clientX: number, clientY: number) => void;
   onDragMove: (clientX: number, clientY: number) => void;
   onDragEnd: () => void;
+  onDragCancel?: () => void;
   /** Alt+Up/Alt+Down calls this - the keyboard equivalent of a within-
    * column drag, which the pointer gesture above has no keyboard path
    * for at all. Undefined (not just a no-op) when the board is read-only,
@@ -163,6 +164,7 @@ function TaskCardComponent({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onDragCancel,
   onReorder,
   canMoveUp = false,
   canMoveDown = false,
@@ -298,6 +300,15 @@ function TaskCardComponent({
     [onDragEnd]
   );
 
+  const cancelGesture = useCallback(() => {
+    const gesture = gestureRef.current;
+    if (!gesture) return;
+    gestureRef.current = null;
+    clearHoldTimer(gesture);
+    if (gesture.armed) onDragCancel?.();
+    if (cardRef.current?.hasPointerCapture(gesture.pointerId)) cardRef.current.releasePointerCapture(gesture.pointerId);
+  }, [onDragCancel]);
+
   return (
     <article
       ref={cardRef}
@@ -309,7 +320,8 @@ function TaskCardComponent({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endGesture}
-      onPointerCancel={endGesture}
+      onPointerCancel={cancelGesture}
+      onLostPointerCapture={cancelGesture}
       onClick={(event) => {
         if (suppressClickRef.current) {
           suppressClickRef.current = false;

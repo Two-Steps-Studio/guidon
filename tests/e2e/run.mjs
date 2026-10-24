@@ -134,6 +134,8 @@ try{
       await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
+      const {appleDesignCoverage}=await import("./apple-design.mjs");
+      await appleDesignCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`weak-${name}@guidon.example.test`])).rowCount,0,"Rejected signup must not create a database user");
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`signup-${name}@guidon.example.test`])).rowCount,1,"Real signup must create exactly one user");
       }

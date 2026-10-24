@@ -23,7 +23,14 @@
       "apply": "Usar este recorte",
       "failed": "No se pudo procesar esta imagen.",
       "currentImage": "Imagen actual"
-    }
+    },
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "confirmActionTitle": "Confirmar acción",
+    "confirmActionContinue": "Confirmar",
+    "discardChangesQuestion": "¿Descartar los cambios sin guardar? Puedes seguir editando.",
+    "discardChanges": "Descartar cambios",
+    "discardFileChanges": "¿Descartar los cambios sin guardar de {path}?"
   },
   "auth": {
     "login": {
@@ -140,7 +147,8 @@
     "pinnedTasks": "Fijadas",
     "customModules": "Custom modules",
     "marketplace": "Mercado de módulos",
-    "myModules": "Mis módulos"
+    "myModules": "Mis módulos",
+    "extensionsGroup": "Extensiones"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -155,7 +163,10 @@
     "entityType_memory": "Memoria",
     "entityType_file": "Archivo",
     "entityType_source": "Fuente",
-    "entityType_project": "Proyecto"
+    "entityType_project": "Proyecto",
+    "searching": "Buscando…",
+    "searchFailed": "No se pudo completar la búsqueda.",
+    "retry": "Reintentar"
   },
   "notifications": {
     "title": "Notificaciones",
@@ -857,7 +868,8 @@
     "pinTask": "Fijar",
     "unpinTask": "Desfijar",
     "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
-    "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo."
+    "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo.",
+    "taskMovedAnnouncement": "{title} se movió a {column}, posición {position}"
   },
   "roadmap": {
     "title": "Hoja de ruta",
@@ -1561,7 +1573,10 @@
       "confirmLabel": "Escribe {email} para confirmar",
       "button": "Eliminar mi cuenta",
       "deleting": "Eliminando..."
-    }
+    },
+    "backgroundStyleLabel": "Estilo del fondo",
+    "backgroundStyle_solid": "Liso — concéntrate en tu trabajo",
+    "backgroundStyle_pattern": "Patrón de Guidon"
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",
@@ -1579,7 +1594,14 @@
     "today": "Hoy",
     "moreTasks": "+{count} más",
     "phaseAria": "Fase: {name}",
-    "morePhases": "{count, plural, one {+# fase más} other {+# fases más}}"
+    "morePhases": "{count, plural, one {+# fase más} other {+# fases más}}",
+    "agenda": "Agenda",
+    "monthView": "Mes",
+    "dayTasks": "Tareas para {date}",
+    "noDatedTasks": "No hay tareas programadas para este mes",
+    "showDay": "Mostrar todas las tareas para {date}",
+    "viewLabel": "Vista",
+    "automatic": "Automática"
   },
   "aiChat": {
     "title": "Asistente de IA de Guidon",
@@ -1592,7 +1614,8 @@
     "deletePrompt": "¿Eliminar la tarea «{title}»?",
     "deletedConfirmation": "Tarea eliminada: {title}",
     "deleteFailed": "No se pudo eliminar la tarea.",
-    "errorGeneric": "Lo siento, ocurrió un error. Inténtalo de nuevo."
+    "errorGeneric": "Lo siento, ocurrió un error. Inténtalo de nuevo.",
+    "sendMessage": "Enviar mensaje"
   },
   "plugins": {
     "title": "Plugins y aplicaciones",
