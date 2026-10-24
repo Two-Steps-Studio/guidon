@@ -42,7 +42,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await crop.getByRole('button',{name:/Cancel/i,exact:true}).click();await crop.waitFor({state:'hidden'});
 
     const day=new Date().toISOString().slice(0,10);
-    const inserted=await client.query("INSERT INTO public.tasks(project_id,created_by,title,status,due_date) SELECT $1,$2,'Apple '||$3::text||' '||n,'todo',$4::date FROM generate_series(1,6) n RETURNING id,title,status,sort_order",[owner.projectId,owner.id,browserName,day]);
+    const inserted=await client.query("INSERT INTO public.tasks(project_id,created_by,title,status,due_date) SELECT $1,$2,'Apple '||$3::text||' '||n,CASE WHEN n=6 THEN 'backlog' ELSE 'todo' END,$4::date FROM generate_series(1,6) n RETURNING id,title,status,sort_order",[owner.projectId,owner.id,browserName,day]);
     created.push(...inserted.rows.map(row=>row.id));
     await page.goto(route);await page.getByRole('list',{name:'Task board',exact:true}).waitFor();
     const task=inserted.rows[0];const card=page.getByRole('list',{name:'Task board',exact:true}).locator(`[data-card-id="${task.id}"]`);
@@ -70,6 +70,11 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('status').filter({hasText:task.title}).waitFor();
     assert.equal((await client.query('SELECT status FROM public.tasks WHERE id=$1',[task.id])).rows[0].status,'backlog');
     page.off('request',watch);
+    const order=await page.locator('[data-column-status="backlog"] [data-card-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.cardId));
+    const index=order.indexOf(task.id), position=index>0?index:index+2;
+    await card.focus();await card.press(index>0?'Alt+ArrowUp':'Alt+ArrowDown');
+    await page.getByRole('status').filter({hasText:new RegExp(`${task.title}.*position ${position}`)}).waitFor();await frames(page);
+    assert.equal(await card.evaluate(node=>node===document.activeElement),true,'Keyboard reorder retains focus');
 
     // A rejected optimistic move keeps the prior row and exposes a live error.
     await client.query('REVOKE UPDATE ON public.tasks FROM authenticated');
@@ -183,6 +188,24 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await search.fill('fixture');await page.getByRole('alert').filter({hasText:'Search could not be completed.'}).waitFor();
     await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByText('No results found.',{exact:true}).waitFor();
     await page.unroute('**/api/v1/search?**');await page.keyboard.press('Escape');
+    await page.getByRole('button',{name:'Search...',exact:true}).click();
+    let releaseSlow, releaseFast, sawSlow, sawFast;
+    const slowGate=new Promise(resolve=>{releaseSlow=resolve;}), fastGate=new Promise(resolve=>{releaseFast=resolve;});
+    const slowSeen=new Promise(resolve=>{sawSlow=resolve;}), fastSeen=new Promise(resolve=>{sawFast=resolve;});
+    await page.route('**/api/v1/search?**',async request=>{
+      const slow=new URL(request.request().url()).searchParams.get('q')==='slow-first';
+      if(slow){sawSlow();await slowGate;}else{sawFast();await fastGate;}
+      try{await request.fulfill({json:{results:[{type:'project',id:owner.projectId,title:slow?'STALE RESULT':'LATEST RESULT',metadata:{}}]}});}catch(error){if(!slow || !request.request().failure())throw error;}
+    });
+    try{
+      await page.getByRole('combobox').fill('slow-first');await slowSeen;
+      await page.getByRole('combobox').fill('fast-second');await fastSeen;await frames(page);
+      assert.equal(await page.getByRole('status').filter({hasText:'Searching…'}).isVisible(),true,'Aborted old request must not clear new loading state');
+      releaseFast();await page.getByText('LATEST RESULT',{exact:true}).waitFor();releaseSlow();await frames(page);
+      assert.equal(await page.getByText('STALE RESULT',{exact:true}).count(),0);
+      await page.getByText('LATEST RESULT',{exact:true}).waitFor();
+    }finally{releaseSlow();releaseFast();await page.unroute('**/api/v1/search?**');}
+    await page.keyboard.press('Escape');
     if(browserName==='chromium'){
       const touch=await context.browser().newContext({ignoreHTTPSErrors:true,hasTouch:true,locale:'en-US',viewport:{width:375,height:812}});
       try{
