@@ -246,8 +246,9 @@ for (const [label, sql, expected] of [
   // 41->45 tabel, polityk bez zmian: oauth_clients/grants/codes/refresh_tokens (073) - tylko service_role.
   // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
   // 46->47: shared replay protection for signed OAuth client assertions (078).
-  ["47 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 47],
-  ["130 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 130],
+  // 47->48 and 130->133: project-scoped declarative module packages (080).
+  ["48 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 48],
+  ["133 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 133],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3582,6 +3583,55 @@ section("65. custom module isolation and concurrent saves (migration 079)");
     check("project developer can read custom modules", read.rows[0]?.custom_modules.length === 1);
     const write = await db.query("UPDATE public.projects SET custom_modules = '[]' WHERE id = $1 RETURNING id", [projectId]);
     check("project developer cannot change custom modules", write.rows.length === 0);
+  });
+}
+
+section("66. declarative module packages: tenant/role boundaries and atomic revisions (080)");
+{
+  const manifest = await readFile(path.join(DB_DIR, "..", "..", "examples", "module-manifests", "release-planning.json"), "utf8");
+  const records = await readFile(path.join(DB_DIR, "..", "..", "examples", "module-manifests", "release-planning-data.json"), "utf8");
+  await withServiceRole(async () => {
+    await db.query("DELETE FROM public.project_members WHERE project_id = $1 AND user_id = $2", [projectId, B]);
+  });
+  await withUser(A, async () => {
+    const statement = compile({ table: "project_module_packages", op: "insert", columns: ["module_id", "records"], filters: [], order: [], limit: null, values: [{ project_id: projectId, module_id: "release-planning", manifest, records }] });
+    const result = await db.query(statement.text, statement.values);
+    check("owner installs manifest and fixture records atomically", result.rows[0]?.records.length === 2);
+    check("package is readable from its owning project", (await db.query("SELECT module_id FROM public.project_module_packages WHERE project_id=$1", [projectId])).rows.length === 1);
+    check("a duplicate installation is rejected", await throwsInSavepoint("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,'release-planning',$2)", [projectId, manifest]));
+    const saved = await db.query("UPDATE public.project_module_packages SET records='[]', revision=1 WHERE project_id=$1 AND module_id='release-planning' AND revision=0 RETURNING revision", [projectId]);
+    check("owner updates data with a matching revision", saved.rows[0]?.revision === 1);
+    check("stale revision cannot overwrite data", (await db.query("UPDATE public.project_module_packages SET revision=2 WHERE project_id=$1 AND revision=0 RETURNING module_id", [projectId])).rows.length === 0);
+    check("package identity cannot be moved to a different project", await throwsInSavepoint("UPDATE public.project_module_packages SET project_id=$2 WHERE project_id=$1", [projectId, otherProjectId]));
+    check("module data cannot be a JSON object", await throwsInSavepoint("UPDATE public.project_module_packages SET records='{}' WHERE project_id=$1", [projectId]));
+    check("module record count is bounded", await throwsInSavepoint("UPDATE public.project_module_packages SET records=(SELECT jsonb_agg(i) FROM generate_series(1,1001) i) WHERE project_id=$1", [projectId]));
+    check("manifest identity mismatch rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET manifest='{\"manifestVersion\":1,\"id\":\"other\"}' WHERE project_id=$1", [projectId]));
+    check("manifest without identity rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET manifest='{}' WHERE project_id=$1", [projectId]));
+    check("uninstall cannot silently delete module data", await throwsInSavepoint("DELETE FROM public.project_module_packages WHERE project_id=$1", [projectId]));
+    for (let i=0; i<19; i++) {
+      await db.query("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,$2,$3)", [projectId, `extra-${i}`, JSON.stringify({ manifestVersion: 1, id: `extra-${i}` })]);
+    }
+    check("project package cap rejects the 21st module", await throwsInSavepoint("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,'too-many','{\"manifestVersion\":1,\"id\":\"too-many\"}')", [projectId]));
+  });
+  await withUser(B, async () => {
+    check("different tenant cannot read module records", (await db.query("SELECT records FROM public.project_module_packages WHERE project_id=$1", [projectId])).rows.length === 0);
+    check("different tenant cannot overwrite module records", (await db.query("UPDATE public.project_module_packages SET records='[]' WHERE project_id=$1 RETURNING module_id", [projectId])).rows.length === 0);
+    check("different tenant cannot install a package", await throwsInSavepoint("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,'intruder','{\"manifestVersion\":1,\"id\":\"intruder\"}')", [projectId]));
+  });
+  await withServiceRole(async () => { await db.query("INSERT INTO public.project_members (project_id,user_id,role) VALUES ($1,$2,'developer')", [projectId, B]); });
+  await withUser(B, async () => {
+    check("project developer can read installed module data", (await db.query("SELECT module_id FROM public.project_module_packages WHERE project_id=$1", [projectId])).rows.length === 20);
+    check("project developer cannot change records or disable a module", (await db.query("UPDATE public.project_module_packages SET records='[]',enabled=false WHERE project_id=$1 RETURNING module_id", [projectId])).rows.length === 0);
+    check("read permission does not grant module installation", await throwsInSavepoint("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,'reader-install','{\"manifestVersion\":1,\"id\":\"reader-install\"}')", [projectId]));
+  });
+  await withAnon(async () => { check("anonymous users cannot read module packages", await throwsInSavepoint("SELECT records FROM public.project_module_packages")); });
+  await withServiceRole(async () => { await db.query("UPDATE public.project_members SET role='admin' WHERE project_id=$1 AND user_id=$2", [projectId,B]); });
+  await withUser(B, async () => {
+    check("project admin can save package data", (await db.query("UPDATE public.project_module_packages SET revision=2 WHERE project_id=$1 AND module_id='release-planning' RETURNING revision", [projectId])).rows[0]?.revision === 2);
+  });
+  await withServiceRole(async () => { await db.query("DELETE FROM public.project_members WHERE project_id=$1 AND user_id=$2", [projectId,B]); });
+  await withUser(B, async () => {
+    check("revoked membership immediately loses module access", (await db.query("SELECT records FROM public.project_module_packages WHERE project_id=$1", [projectId])).rows.length === 0);
   });
 }
 

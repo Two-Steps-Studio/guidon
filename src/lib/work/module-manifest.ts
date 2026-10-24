@@ -44,13 +44,19 @@ export const moduleEntitySchema = z.strictObject({
   fields: z.array(moduleFieldSchema).max(50),
 });
 
-const moduleViewSchema = z.strictObject({
+const viewBase = {
   id: identifier,
   name: displayName,
-  type: z.enum(["table", "board", "form"]),
   entity: identifier,
   fields: z.array(identifier).min(1).max(50),
-});
+};
+const moduleViewSchema = z.discriminatedUnion("type", [
+  z.strictObject({ ...viewBase, type: z.literal("table") }),
+  z.strictObject({ ...viewBase, type: z.literal("form") }),
+  z.strictObject({ ...viewBase, type: z.literal("board"), groupBy: identifier.optional() }),
+  z.strictObject({ ...viewBase, type: z.literal("chart"), groupBy: identifier }),
+  z.strictObject({ ...viewBase, type: z.literal("calendar"), dateField: identifier }),
+]);
 
 const migrationOperationSchema = z.discriminatedUnion("op", [
   z.strictObject({ op: z.literal("add_entity"), entity: moduleEntitySchema }),
@@ -133,6 +139,15 @@ export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((m
         ctx.addIssue({ code: "custom", path: ["views", index, "fields", fieldIndex], message: "View field must exist on its entity." });
       }
     }
+    if (view.type === "board" || view.type === "chart") {
+      const groupBy = view.groupBy ?? entity.fields.find((field) => field.type === "select" && view.fields.includes(field.id))?.id;
+      if (!groupBy || !entity.fields.some((field) => field.id === groupBy && field.type === "select") || !view.fields.includes(groupBy)) {
+        ctx.addIssue({ code: "custom", path: ["views", index], message: "Board/chart requires a select groupBy field included in the view." });
+      }
+    }
+    if (view.type === "calendar" && (!entity.fields.some((field) => field.id === view.dateField && field.type === "date") || !view.fields.includes(view.dateField))) {
+      ctx.addIssue({ code: "custom", path: ["views", index], message: "Calendar requires a dateField included in the view." });
+    }
   });
 
   if (manifest.migrations.length !== manifest.dataVersion - 1) {
@@ -188,7 +203,7 @@ function addDuplicateIssues<T>(
   }
 }
 
-function compareSemver(left: string, right: string): number {
+export function compareSemver(left: string, right: string): number {
   const a = parseSemver(left);
   const b = parseSemver(right);
   for (let index = 0; index < 3; index++) {

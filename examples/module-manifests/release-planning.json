@@ -10,12 +10,13 @@
     "minVersion": "1.0.0",
     "maxVersionExclusive": "2.0.0"
   },
-  "permissions": [],
+  "permissions": ["module-data:read", "module-data:write"],
   "entities": [
     {
       "id": "release",
       "name": "Release",
       "fields": [
+        { "id": "due", "name": "Release date", "type": "date", "required": false },
         {
           "id": "name",
           "name": "Name",
@@ -38,6 +39,10 @@
     }
   ],
   "views": [
+    { "id": "release-form", "name": "New release", "type": "form", "entity": "release", "fields": ["name", "status", "due"] },
+    { "id": "release-board", "name": "Release board", "type": "board", "entity": "release", "fields": ["name", "status", "due"], "groupBy": "status" },
+    { "id": "release-chart", "name": "Release status", "type": "chart", "entity": "release", "fields": ["name", "status"], "groupBy": "status" },
+    { "id": "release-calendar", "name": "Release calendar", "type": "calendar", "entity": "release", "fields": ["name", "due"], "dateField": "due" },
     {
       "id": "release-table",
       "name": "Releases",
