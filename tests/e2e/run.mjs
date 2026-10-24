@@ -17,6 +17,7 @@ import { authenticationCoverage } from "./authentication.mjs";
 import { seedApiFixture } from "./api-fixture.mjs";
 import { apiIsolation } from "./api-isolation.mjs";
 import { feedbackCoverage } from "./feedback.mjs";
+import { boardLayoutCoverage } from "./board-layout.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
 
@@ -127,6 +128,7 @@ try{
       await releaseSmoke({page,context,origin,fixture});
       await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`weak-${name}@guidon.example.test`])).rowCount,0,"Rejected signup must not create a database user");
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`signup-${name}@guidon.example.test`])).rowCount,1,"Real signup must create exactly one user");
       results.push({browser:name,outcome:"passed",durationMs:Date.now()-started,blockedOrigins:[...new Set(blocked)]});console.log(`pass ${name}`);

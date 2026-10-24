@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { usePinnedProjects } from "@/components/projects/pinned-projects-context";
 import {
   Sidebar,
@@ -174,30 +173,6 @@ export interface AppSidebarProps {
   disabledModules?: string[];
 }
 
-/** The person's pinned tasks (migration 074) - each opens its task on its board. */
-function PinnedTasksGroup() {
-  const t = useTranslations("nav");
-  const pinned = usePinnedTasks();
-  if (!pinned || pinned.tasks.length === 0) return null;
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{t("pinnedTasks")}</SidebarGroupLabel>
-      <SidebarMenu>
-        {pinned.tasks.map((task) => (
-          <SidebarMenuItem key={task.id}>
-            <SidebarMenuButton asChild tooltip={task.project_name ? `${task.project_name} · ${task.title}` : task.title}>
-              <Link href={`/projects/${task.project_id}/work?openTask=${task.id}`}>
-                <Pin />
-                <span className={task.is_done ? "text-muted-foreground line-through" : undefined}>{task.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
-  );
-}
-
 /** The person's pinned projects, shown on every app page including dashboard. */
 function PinnedProjectsGroup() {
   const t = useTranslations("nav");
@@ -257,7 +232,7 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <Link href="/dashboard" className="flex items-center justify-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0">
-          <GuidonMark className="hidden h-7 w-7 text-sidebar-foreground group-data-[collapsible=icon]:block" />
+          <GuidonMark className="hidden h-12 w-7 text-sidebar-foreground group-data-[collapsible=icon]:block" />
           <Image
             src="/assets/guidon-wordmark.png"
             alt="Guidon"
@@ -296,7 +271,6 @@ export function AppSidebar({
         </SidebarGroup>
 
         <PinnedProjectsGroup />
-        <PinnedTasksGroup />
 
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => {
@@ -411,10 +385,10 @@ export function AppSidebar({
               </SidebarMenuButton>
             </SidebarMenuItem>
             <FeedbackMenuItem />
-            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:hidden">
+            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:px-0">
               <ThemeSwitcher currentTheme={currentTheme} />
             </SidebarMenuItem>
-            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:hidden">
+            <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:px-0">
               <LanguageSwitcher />
             </SidebarMenuItem>
           </SidebarMenu>
