@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/lib/work/**'
+      - 'src/lib/ai/**'
       - 'src/lib/data/module-*.ts'
       - 'src/app/projects/**/modules/**'
       - 'src/app/marketplace/**'

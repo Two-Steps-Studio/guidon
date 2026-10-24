@@ -104,6 +104,11 @@ export default async function ProjectActivityPage({
                       <p className="text-xs text-muted-foreground">
                         {new Date(entry.created_at).toLocaleString()}
                       </p>
+                      {entry.action === "module_builder_attempt" && <p className="break-all text-xs text-muted-foreground">{t("moduleBuilderLog", {
+                        stage: entry.details?.stage === "compile" ? "compile" : "plan",
+                        outcome: typeof entry.details?.outcome === "string" && /^[a-zA-Z]{1,32}$/.test(entry.details.outcome) ? entry.details.outcome : "unknown",
+                        requestId: typeof entry.details?.requestId === "string" && /^[a-f0-9-]{36}$/.test(entry.details.requestId) ? entry.details.requestId : "—",
+                      })}</p>}
                     </div>
                   </li>
                 );

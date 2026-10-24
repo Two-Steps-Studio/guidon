@@ -99,6 +99,7 @@ export interface CreateInviteData {
 // ============================================
 
 export type ActivityAction =
+  | "module_builder_attempt"
   | "project_created"
   | "project_updated"
   | "project_archived"

@@ -5,6 +5,7 @@ import { customModulesSchema } from "@/lib/work/custom-modules";
 import { CustomModules } from "./custom-modules";
 import { getModulePackages } from "@/lib/data/module-packages";
 import { DeclarativeModules } from "./declarative-modules";
+import { ModuleBuilder } from "./module-builder";
 
 export default async function ModulesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +20,7 @@ export default async function ModulesPage({ params }: { params: Promise<{ id: st
   const packages = await getModulePackages(access.userId, id);
   return <main className="flex-1 space-y-6 p-4 sm:p-6">
     <div><h1 className="text-2xl font-semibold">{t("title")}</h1><p className="text-sm text-muted-foreground">{t("description")}</p></div>
+    {canManageProject(access.role) && <ModuleBuilder projectId={id} aiEnabled={access.project.ai_enabled} />}
     <CustomModules projectId={id} initial={parsed.data} initialRevision={data.custom_modules_revision} canManage={canManageProject(access.role)} />
     <DeclarativeModules projectId={id} packages={packages} canManage={canManageProject(access.role)} />
   </main>;

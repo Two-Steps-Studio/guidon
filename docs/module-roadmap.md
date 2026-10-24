@@ -5,14 +5,15 @@ The parent card is `[Feature] Custom Modules 2.0`; the older generic “Moduły�
 cards must not be treated as proof that the entire system is complete.
 
 1. Manifest, versions and permission contract — PR #48.
-2. Declarative runtime, project data isolation and five view types — current work;
+2. Declarative runtime, project data isolation and five view types — PR #50;
    PR #49 covers the previous content renderer only.
-3. Marketplace navigation, real catalog and search.
-4. Module details, demo, compatibility and visible permissions.
-5. Installation wizard with project choice, roles, limits and atomic writes.
+3. Marketplace navigation, real catalog and search — PR #51.
+4. Module details, demo, compatibility and visible permissions — PR #51.
+5. Installation wizard with project choice, roles, limits and atomic writes — PR #52.
 6. My Modules: configuration, enable/disable, permission-aware updates,
-   compatible rollback and retention/export on uninstall.
-7. AI Builder: prompt → approved plan → validated declarative manifest.
+   compatible rollback and retention/export on uninstall — PR #53.
+7. AI Builder: prompt → approved plan → validated declarative manifest;
+   see `module-ai-builder.md` for the initial planner and its boundaries.
 8. AI Builder: three-pane editor/mobile tabs, draft history and conflicts.
 9. Fixture-only live preview and pre-publication validation.
 10. Visual inspector for fields/views/forms and return to AI without lost edits.
