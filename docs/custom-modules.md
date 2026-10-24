@@ -41,6 +41,29 @@ letters, digits or hyphens. A project stores at most 64,000 JSON characters;
 import files are capped at 100,000 bytes. Links accept HTTP(S) only. Text is
 rendered as text, and modules cannot execute scripts, HTML or embedded frames.
 
+## Renderer and access boundaries
+
+The current renderer supports exactly three block types: `text` (plain React
+text), `checklist` (bounded labels and boolean state), and `links` (labels plus
+validated HTTP(S) URLs). It does not parse Markdown or HTML, create elements
+from user-provided tag names, load remote frames, or run module-supplied code.
+React escapes titles, descriptions, block text and labels during rendering.
+External links open with `noopener noreferrer`.
+
+The project page checks membership before loading module data. Project RLS
+limits reads to users with project access, and the save action separately
+requires an owner/admin role; checklist edits are disabled for read-only roles.
+Migration 079 adds only bounded JSON storage to `projects`, so it inherits the
+existing project tenant boundary instead of introducing a cross-project module
+table. The database compatibility suite covers a different tenant being unable
+to overwrite modules, a developer being able to read but not edit, and
+optimistic revision conflicts.
+
+Tables, forms, boards, charts and calendars are not enabled in this renderer.
+They need separately designed data storage and server-side project/org checks
+before being exposed; a declarative manifest is metadata and does not grant
+access. Keep package code execution disabled in the Next.js process.
+
 This first version has a curated preset catalog and portable JSON sharing.
 It does not provide public user publishing, payments, third-party executable
 plugins or marketplace moderation. Those need a separate product and runtime
