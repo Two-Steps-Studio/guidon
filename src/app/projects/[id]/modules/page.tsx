@@ -3,6 +3,8 @@ import { canManageProject, requireProjectAccess } from "@/lib/data/project-acces
 import { dataClient } from "@/lib/data-client";
 import { customModulesSchema } from "@/lib/work/custom-modules";
 import { CustomModules } from "./custom-modules";
+import { getModulePackages } from "@/lib/data/module-packages";
+import { DeclarativeModules } from "./declarative-modules";
 
 export default async function ModulesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,8 +16,10 @@ export default async function ModulesPage({ params }: { params: Promise<{ id: st
   if (error || !data) throw new Error("Could not load project modules. Apply migration 079 before deployment.");
   const parsed = customModulesSchema.safeParse(data.custom_modules);
   if (!parsed.success) throw new Error("Invalid stored project modules");
+  const packages = await getModulePackages(access.userId, id);
   return <main className="flex-1 space-y-6 p-4 sm:p-6">
     <div><h1 className="text-2xl font-semibold">{t("title")}</h1><p className="text-sm text-muted-foreground">{t("description")}</p></div>
     <CustomModules projectId={id} initial={parsed.data} initialRevision={data.custom_modules_revision} canManage={canManageProject(access.role)} />
+    <DeclarativeModules projectId={id} packages={packages} canManage={canManageProject(access.role)} />
   </main>;
 }

@@ -59,10 +59,8 @@ table. The database compatibility suite covers a different tenant being unable
 to overwrite modules, a developer being able to read but not edit, and
 optimistic revision conflicts.
 
-Tables, forms, boards, charts and calendars are not enabled in this renderer.
-They need separately designed data storage and server-side project/org checks
-before being exposed; a declarative manifest is metadata and does not grant
-access. Keep package code execution disabled in the Next.js process.
+Content blocks remain separate from installable data modules. The latter use
+the five declarative views described in [the runtime guide](module-runtime.md).
 
 This first version has a curated preset catalog and portable JSON sharing.
 It does not provide public user publishing, payments, third-party executable
@@ -85,3 +83,4 @@ Its integer `version: 1` is not SemVer. Installable package manifests use a
 separate proposed format documented in
 [`RFC 0001`](rfcs/0001-module-manifest-v1.md), with its own JSON Schema and
 validator. They are not accepted by this editor and do not execute code.
+Use the **Data modules** section below the content editor to install a manifest.

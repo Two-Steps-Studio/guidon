@@ -13,7 +13,7 @@ const example = JSON.parse(await readFile(new URL("../examples/module-manifests/
 
 test("the published example validates and defaults permissions to none", () => {
   const parsed = moduleManifestSchema.parse(example);
-  assert.deepEqual(parsed.permissions, []);
+  assert.deepEqual(parsed.permissions, ["module-data:read", "module-data:write"]);
   const withoutPermissions = { ...example };
   delete withoutPermissions.permissions;
   assert.deepEqual(moduleManifestSchema.parse(withoutPermissions).permissions, []);
