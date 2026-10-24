@@ -234,6 +234,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
         await phone.emulateMedia({contrast:'more',reducedMotion:'reduce'});
         await phone.getByRole('button',{name:messages.commandPalette.triggerLabel,exact:true}).click();
         assert.equal(await phone.getByRole('dialog').evaluate(node=>getComputedStyle(node).backdropFilter),'none');
+        assert.equal(await phone.locator('[data-slot="dialog-overlay"]').evaluate(node=>getComputedStyle(node).backdropFilter),'none');
         await phone.screenshot({path:path.join(artifacts,'apple-touch-contrast.png')});
       }finally{await touch.close();}
     }
