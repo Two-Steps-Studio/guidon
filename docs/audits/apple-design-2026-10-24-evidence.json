@@ -1,0 +1,3238 @@
+{
+  "date": "2026-10-24",
+  "baseline": "a006133bde6fa76d2f13e1c04b48292544904bf6",
+  "runId": "29fe60619d6f",
+  "collectorOutcome": "evidence-collected; not a UX pass",
+  "routeFiles": 63,
+  "routeFilesObserved": 46,
+  "pageObservations": 224,
+  "scenarioObservations": [
+    {
+      "browser": "chromium",
+      "scenario": "unsaved-task-edit-escape",
+      "closedWithoutConfirmation": true,
+      "draftLost": true
+    },
+    {
+      "browser": "chromium",
+      "scenario": "ai-chat-phone",
+      "bounds": {
+        "x": 374.0057373046875,
+        "y": 0,
+        "width": 400,
+        "height": 812
+      },
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "sendButtonLabel": null,
+      "liveRegions": 0
+    }
+  ],
+  "navigationFailures": 0,
+  "httpErrors": 0,
+  "pageErrors": [
+    {
+      "browser": "chromium",
+      "route": "/profile",
+      "mode": "desktop-light",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "browser": "chromium",
+      "route": "/profile",
+      "mode": "desktop-dark-reduce",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "browser": "chromium",
+      "route": "/profile",
+      "mode": "phone-dark-reduce",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "browser": "chromium",
+      "route": "/profile",
+      "mode": "phone-light",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "browser": "firefox",
+      "route": "/profile",
+      "mode": "desktop-light",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "browser": "firefox",
+      "route": "/profile",
+      "mode": "desktop-dark-reduce",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "browser": "firefox",
+      "route": "/profile",
+      "mode": "phone-dark-reduce",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "browser": "firefox",
+      "route": "/profile",
+      "mode": "phone-light",
+      "errors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    }
+  ],
+  "counts": [
+    {
+      "browser": "chromium",
+      "pageObservations": 162
+    },
+    {
+      "browser": "firefox",
+      "pageObservations": 31
+    },
+    {
+      "browser": "webkit",
+      "pageObservations": 31
+    }
+  ],
+  "inventory": [
+    {
+      "file": "src/app/about/page.tsx",
+      "route": "/about",
+      "sourceInventory": {
+        "lines": 27,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/about",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_about.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/about",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_about.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/about",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_about.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/about",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_about.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/admin/feedback/page.tsx",
+      "route": "/admin/feedback",
+      "sourceInventory": {
+        "lines": 71,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/admin/feedback",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_admin_feedback.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/admin/feedback",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_admin_feedback.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/admin/feedback",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_admin_feedback.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/admin/feedback",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_admin_feedback.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/admin/integrations/page.tsx",
+      "route": "/admin/integrations",
+      "sourceInventory": {
+        "lines": 128,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/admin/integrations",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_admin_integrations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/admin/integrations",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_admin_integrations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/admin/integrations",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_admin_integrations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/admin/integrations",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_admin_integrations.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/admin/logs/page.tsx",
+      "route": "/admin/logs",
+      "sourceInventory": {
+        "lines": 85,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/admin/logs",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_admin_logs.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/admin/logs",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_admin_logs.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/admin/logs",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_admin_logs.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/admin/logs",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_admin_logs.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/admin/organizations/page.tsx",
+      "route": "/admin/organizations",
+      "sourceInventory": {
+        "lines": 72,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/admin/organizations",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_admin_organizations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/admin/organizations",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_admin_organizations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/admin/organizations",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_admin_organizations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/admin/organizations",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_admin_organizations.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/admin/page.tsx",
+      "route": "/admin",
+      "sourceInventory": {
+        "lines": 226,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/admin",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_admin.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/admin",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_admin.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/admin",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_admin.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/admin",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_admin.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/admin/promo-codes/page.tsx",
+      "route": "/admin/promo-codes",
+      "sourceInventory": {
+        "lines": 113,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/admin/promo-codes",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_admin_promo-codes.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/admin/promo-codes",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_admin_promo-codes.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/admin/promo-codes",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_admin_promo-codes.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/admin/promo-codes",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_admin_promo-codes.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/admin/users/page.tsx",
+      "route": "/admin/users",
+      "sourceInventory": {
+        "lines": 54,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/admin/users",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_admin_users.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/admin/users",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_admin_users.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/admin/users",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_admin_users.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/admin/users",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_admin_users.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/auth/forgot-password/page.tsx",
+      "route": "/auth/forgot-password",
+      "sourceInventory": {
+        "lines": 20,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_auth_forgot-password.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_auth_forgot-password.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_auth_forgot-password.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_auth_forgot-password.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/auth/login/page.tsx",
+      "route": "/auth/login",
+      "sourceInventory": {
+        "lines": 22,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_auth_login.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_auth_login.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_auth_login.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_auth_login.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/auth/logout/page.tsx",
+      "route": "/auth/logout",
+      "sourceInventory": {
+        "lines": 11,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/auth/mobile-login/page.tsx",
+      "route": "/auth/mobile-login",
+      "sourceInventory": {
+        "lines": 80,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/auth/plugin-login/page.tsx",
+      "route": "/auth/plugin-login",
+      "sourceInventory": {
+        "lines": 96,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/auth/reset-password/page.tsx",
+      "route": "/auth/reset-password",
+      "sourceInventory": {
+        "lines": 32,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/auth/signup/page.tsx",
+      "route": "/auth/signup",
+      "sourceInventory": {
+        "lines": 19,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/signup",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_auth_signup.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/auth/signup",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_auth_signup.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/signup",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_auth_signup.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/signup",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_auth_signup.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/contact/page.tsx",
+      "route": "/contact",
+      "sourceInventory": {
+        "lines": 27,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/contact",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_contact.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/contact",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_contact.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/contact",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_contact.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/contact",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_contact.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/dashboard/page.tsx",
+      "route": "/dashboard",
+      "sourceInventory": {
+        "lines": 431,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_dashboard.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_dashboard.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_dashboard.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_dashboard.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_dashboard.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-dark-reduce-_dashboard.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-dark-reduce-_dashboard.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-light-_dashboard.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_dashboard.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-dark-reduce-_dashboard.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-dark-reduce-_dashboard.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/dashboard",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-light-_dashboard.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/developers/page.tsx",
+      "route": "/developers",
+      "sourceInventory": {
+        "lines": 16,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/developers",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_developers.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/developers",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_developers.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/developers",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_developers.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/developers",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_developers.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/discord/link/page.tsx",
+      "route": "/discord/link",
+      "sourceInventory": {
+        "lines": 87,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": true,
+        "usesEmptyState": true
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/discord/login/page.tsx",
+      "route": "/discord/login",
+      "sourceInventory": {
+        "lines": 66,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": true,
+        "usesEmptyState": true
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/legal/eula/page.tsx",
+      "route": "/legal/eula",
+      "sourceInventory": {
+        "lines": 175,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/eula",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_legal_eula.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/legal/eula",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_legal_eula.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/eula",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_legal_eula.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/eula",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_legal_eula.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/legal/privacy/page.tsx",
+      "route": "/legal/privacy",
+      "sourceInventory": {
+        "lines": 228,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/privacy",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_legal_privacy.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/legal/privacy",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_legal_privacy.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/privacy",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_legal_privacy.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/privacy",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_legal_privacy.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/legal/terms/page.tsx",
+      "route": "/legal/terms",
+      "sourceInventory": {
+        "lines": 197,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/terms",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_legal_terms.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/legal/terms",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_legal_terms.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/terms",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_legal_terms.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/legal/terms",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_legal_terms.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/marketplace/[moduleId]/[version]/install/page.tsx",
+      "route": "/marketplace/[moduleId]/[version]/install",
+      "sourceInventory": {
+        "lines": 44,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/marketplace/[moduleId]/[version]/page.tsx",
+      "route": "/marketplace/[moduleId]/[version]",
+      "sourceInventory": {
+        "lines": 34,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/marketplace/page.tsx",
+      "route": "/marketplace",
+      "sourceInventory": {
+        "lines": 16,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/marketplace",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_marketplace.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/marketplace",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_marketplace.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/marketplace",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_marketplace.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/marketplace",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_marketplace.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/mini/page.tsx",
+      "route": "/mini",
+      "sourceInventory": {
+        "lines": 165,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/my-modules/page.tsx",
+      "route": "/my-modules",
+      "sourceInventory": {
+        "lines": 27,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/my-modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_my-modules.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/my-modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_my-modules.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/my-modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_my-modules.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/my-modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_my-modules.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/my-tasks/page.tsx",
+      "route": "/my-tasks",
+      "sourceInventory": {
+        "lines": 72,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/my-tasks",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_my-tasks.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/my-tasks",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_my-tasks.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/my-tasks",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_my-tasks.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/my-tasks",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_my-tasks.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/oauth/authorize/page.tsx",
+      "route": "/oauth/authorize",
+      "sourceInventory": {
+        "lines": 121,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/organizations/(list)/page.tsx",
+      "route": "/organizations",
+      "sourceInventory": {
+        "lines": 125,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_organizations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_organizations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_organizations.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_organizations.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/organizations/[id]/ai-accounts/page.tsx",
+      "route": "/organizations/[id]/ai-accounts",
+      "sourceInventory": {
+        "lines": 62,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/ai-accounts",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_ai-accounts.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/ai-accounts",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_ai-accounts.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/ai-accounts",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_ai-accounts.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/ai-accounts",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_ai-accounts.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/organizations/[id]/billing/page.tsx",
+      "route": "/organizations/[id]/billing",
+      "sourceInventory": {
+        "lines": 345,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/billing",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_billing.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/organizations/[id]/members/page.tsx",
+      "route": "/organizations/[id]/members",
+      "sourceInventory": {
+        "lines": 265,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/members",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_members.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/members",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_members.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/members",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_members.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/members",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_members.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/organizations/[id]/page.tsx",
+      "route": "/organizations/[id]",
+      "sourceInventory": {
+        "lines": 183,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/organizations/[id]/settings/page.tsx",
+      "route": "/organizations/[id]/settings",
+      "sourceInventory": {
+        "lines": 69,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/settings",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_settings.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/settings",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_settings.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/settings",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_settings.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/organizations/fe3805ec-64d5-405c-84f0-31317cbd2692/settings",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_organizations_fe3805ec-64d5-405c-84f0-31317cbd2692_settings.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/page.tsx",
+      "route": "/",
+      "sourceInventory": {
+        "lines": 297,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/plugins/page.tsx",
+      "route": "/plugins",
+      "sourceInventory": {
+        "lines": 177,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_plugins.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_plugins.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_plugins.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/auth/login",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_plugins.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/profile/page.tsx",
+      "route": "/profile",
+      "sourceInventory": {
+        "lines": 39,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-chromium-desktop-light-_profile.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_profile.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-chromium-phone-dark-reduce-_profile.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-chromium-phone-light-_profile.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-firefox-desktop-light-_profile.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-firefox-desktop-dark-reduce-_profile.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-firefox-phone-dark-reduce-_profile.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [
+            "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+          ],
+          "screenshot": "audit-firefox-phone-light-_profile.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_profile.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-dark-reduce-_profile.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-dark-reduce-_profile.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/profile",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-light-_profile.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/(list)/page.tsx",
+      "route": "/projects",
+      "sourceInventory": {
+        "lines": 270,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/activity/page.tsx",
+      "route": "/projects/[id]/activity",
+      "sourceInventory": {
+        "lines": 123,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/activity",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_activity.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/activity",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_activity.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/activity",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_activity.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/activity",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_activity.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/calendar/page.tsx",
+      "route": "/projects/[id]/calendar",
+      "sourceInventory": {
+        "lines": 178,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/calendar",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_calendar.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/calendar",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_calendar.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/calendar",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_calendar.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/calendar",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_calendar.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/context/page.tsx",
+      "route": "/projects/[id]/context",
+      "sourceInventory": {
+        "lines": 107,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/context",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_context.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/context",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_context.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/context",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_context.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/context",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_context.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/decisions/page.tsx",
+      "route": "/projects/[id]/decisions",
+      "sourceInventory": {
+        "lines": 145,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/decisions",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_decisions.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/decisions",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_decisions.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/decisions",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_decisions.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/decisions",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_decisions.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/files/connect-repo/page.tsx",
+      "route": "/projects/[id]/files/connect-repo",
+      "sourceInventory": {
+        "lines": 40,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/projects/[id]/files/page.tsx",
+      "route": "/projects/[id]/files",
+      "sourceInventory": {
+        "lines": 60,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/files",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_files.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/files",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_files.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/files",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_files.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/files",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_files.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/knowledge/page.tsx",
+      "route": "/projects/[id]/knowledge",
+      "sourceInventory": {
+        "lines": 90,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/knowledge",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_knowledge.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/knowledge",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_knowledge.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/knowledge",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_knowledge.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/knowledge",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_knowledge.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/members/page.tsx",
+      "route": "/projects/[id]/members",
+      "sourceInventory": {
+        "lines": 157,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/members",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_members.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/members",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_members.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/members",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_members.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/members",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_members.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/memory/page.tsx",
+      "route": "/projects/[id]/memory",
+      "sourceInventory": {
+        "lines": 206,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/memory",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_memory.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/memory",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_memory.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/memory",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_memory.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/memory",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_memory.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/modules/[moduleId]/page.tsx",
+      "route": "/projects/[id]/modules/[moduleId]",
+      "sourceInventory": {
+        "lines": 49,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/projects/[id]/modules/page.tsx",
+      "route": "/projects/[id]/modules",
+      "sourceInventory": {
+        "lines": 30,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 1440,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/modules",
+          "viewport": 375,
+          "mainCount": 2,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_modules.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/page.tsx",
+      "route": "/projects/[id]",
+      "sourceInventory": {
+        "lines": 240,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/references/page.tsx",
+      "route": "/projects/[id]/references",
+      "sourceInventory": {
+        "lines": 27,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/references",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_references.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/references",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_references.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/references",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_references.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/references",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_references.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/roadmap/page.tsx",
+      "route": "/projects/[id]/roadmap",
+      "sourceInventory": {
+        "lines": 163,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": true
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/roadmap",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_roadmap.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/roadmap",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_roadmap.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/roadmap",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_roadmap.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/roadmap",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_roadmap.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/settings/page.tsx",
+      "route": "/projects/[id]/settings",
+      "sourceInventory": {
+        "lines": 160,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/settings",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_settings.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/settings",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_settings.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/settings",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_settings.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/settings",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_settings.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/tasks/page.tsx",
+      "route": "/projects/[id]/tasks",
+      "sourceInventory": {
+        "lines": 18,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_tasks.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_tasks.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_tasks.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_tasks.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/technology/page.tsx",
+      "route": "/projects/[id]/technology",
+      "sourceInventory": {
+        "lines": 55,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/technology",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_technology.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/technology",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_technology.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/technology",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_technology.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/technology",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_technology.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/projects/[id]/work/page.tsx",
+      "route": "/projects/[id]/work",
+      "sourceInventory": {
+        "lines": 280,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [
+        {
+          "browser": "chromium",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "chromium",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-chromium-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "firefox",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-firefox-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "desktop-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 1440,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-desktop-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-dark-reduce",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-dark-reduce-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        },
+        {
+          "browser": "webkit",
+          "mode": "phone-light",
+          "status": 200,
+          "landed": "/projects/424685cd-728c-4c0a-834b-9fae2ce9fc01/work",
+          "viewport": 375,
+          "mainCount": 1,
+          "errors": [],
+          "screenshot": "audit-webkit-phone-light-_projects_424685cd-728c-4c0a-834b-9fae2ce9fc01_work.png"
+        }
+      ],
+      "coverage": "fixture-observed; not all states"
+    },
+    {
+      "file": "src/app/sandbox/page.tsx",
+      "route": "/sandbox",
+      "sourceInventory": {
+        "lines": 29,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/sandbox/start/page.tsx",
+      "route": "/sandbox/start",
+      "sourceInventory": {
+        "lines": 45,
+        "hasMain": true,
+        "hasH1": true,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/start/finish/page.tsx",
+      "route": "/start/finish",
+      "sourceInventory": {
+        "lines": 9,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/start/page.tsx",
+      "route": "/start",
+      "sourceInventory": {
+        "lines": 40,
+        "hasMain": false,
+        "hasH1": false,
+        "usesAppShell": false,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    },
+    {
+      "file": "src/app/upgrade/page.tsx",
+      "route": "/upgrade",
+      "sourceInventory": {
+        "lines": 96,
+        "hasMain": false,
+        "hasH1": true,
+        "usesAppShell": true,
+        "usesEmptyState": false
+      },
+      "runtime": [],
+      "coverage": "source-inventory only; runtime not observed"
+    }
+  ]
+}

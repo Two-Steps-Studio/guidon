@@ -22,6 +22,7 @@ import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package
 import assert from "node:assert/strict";
 
 const root=fileURLToPath(new URL("../../",import.meta.url));
+const designAuditMode=process.argv.includes("--design-audit");
 const runId=randomBytes(6).toString("hex");
 const artifacts=path.join(root,"output/e2e",runId);
 await mkdir(artifacts,{recursive:true});
@@ -125,13 +126,18 @@ try{
     const page=await context.newPage();page.setDefaultTimeout(15000);
     const started=Date.now();
     try{
+      if(designAuditMode){
+        const {designAudit}=await import("./design-audit.mjs");
+        await designAudit({page,context,origin,fixture,browserName:name,artifacts});
+      }else{
       await releaseSmoke({page,context,origin,fixture});
       await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`weak-${name}@guidon.example.test`])).rowCount,0,"Rejected signup must not create a database user");
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`signup-${name}@guidon.example.test`])).rowCount,1,"Real signup must create exactly one user");
-      results.push({browser:name,outcome:"passed",durationMs:Date.now()-started,blockedOrigins:[...new Set(blocked)]});console.log(`pass ${name}`);
+      }
+      results.push({browser:name,outcome:designAuditMode?"evidence-collected":"passed",durationMs:Date.now()-started,blockedOrigins:[...new Set(blocked)]});console.log(`${designAuditMode?"collected":"pass"} ${name}`);
     }
     catch(error){await page.screenshot({path:path.join(artifacts,`${name}-failed.png`),fullPage:true});results.push({browser:name,outcome:"failed",error:error.message,durationMs:Date.now()-started});throw error;}
     finally{await context.tracing.stop({path:path.join(artifacts,`${name}-trace.zip`)});await context.close();await browser.close();await writeFile(path.join(artifacts,"app.log"),appLog);}
@@ -141,7 +147,7 @@ try{
 }finally{
   clearTimeout(deadline);
   await writeFile(path.join(artifacts,"app.log"),appLog);
-  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:"isolated-self-hosted-production-build",outcome:completed?"passed":"failed",phase,results},null,2));
+  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
   if(proxy)await new Promise(resolve=>proxy.close(resolve));
   if(app){app.kill();await new Promise(resolve=>{app.once("exit",resolve);setTimeout(()=>{app.kill("SIGKILL");resolve();},3000).unref();});}
   await client?.end();

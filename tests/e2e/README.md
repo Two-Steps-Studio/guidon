@@ -42,6 +42,18 @@ NODE_OPTIONS. Its fetch guard refuses external origins; browser routing also
 blocks requests outside the local test origin. npm installation/build can use
 the network for dependencies, but browser tests do not contact live services.
 
+## Optional design evidence collection
+
+`node tests/e2e/run.mjs --design-audit` reuses the same disposable production
+environment and safety guards, but collects route screenshots and DOM observations
+instead of running the normal browser regression scenarios. It records
+`evidence-collected`, never a blanket UX pass. Check the per-browser JSON for
+navigation errors, JavaScript errors, redirect destinations and viewport sizes.
+Small target/unnamed-control heuristics require manual review; they are not an
+accessibility certification. Cloud/Stripe/device-only flows need separate fixtures.
+
+The normal command without this flag retains existing regression behavior.
+
 ## Current coverage
 
 Before browser scenarios, real HTTP REST and MCP checks run once against two
