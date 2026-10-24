@@ -63,4 +63,12 @@ export type InstalledModule = {
   records: ModuleRecord[];
   revision: number;
   enabled: boolean;
+  installed: boolean;
+  settings: { defaultView?: string };
 };
+
+export function parseModuleSettings(manifest: ModuleManifest, input: unknown): InstalledModule["settings"] {
+  return z.strictObject({ defaultView: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/).optional() }).superRefine((settings, ctx) => {
+    if (settings.defaultView && !manifest.views.some((view) => view.id === settings.defaultView)) ctx.addIssue({ code: "custom", path: ["defaultView"], message: "Unknown module view." });
+  }).parse(input);
+}

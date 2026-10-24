@@ -7,7 +7,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { compareSemver, moduleManifestSchema } from "@/lib/work/module-manifest";
 import { MODULE_ENGINE_VERSION, MODULE_MANIFEST_BYTE_LIMIT, parseModuleRecords, unsupportedModulePermissions } from "@/lib/work/module-records";
 import { hasExactModuleConsent } from "@/lib/work/module-installation";
-import type { ModulePackageRow } from "@/lib/data/module-packages";
+import { MODULE_PACKAGE_COLUMNS, type ModulePackageRow } from "@/lib/data/module-packages";
 
 type Failure = { error: "permission" | "invalid" | "unsupported" | "consent" | "conflict" | "saveFailed" };
 const validRevision = (revision: number) => Number.isSafeInteger(revision) && revision >= 0 && revision < 2147483647;
@@ -40,17 +40,17 @@ export async function saveModuleRecords(projectId: string, moduleId: string, inp
   if (!access || !canManageProject(access.role)) return { error: "permission" };
   if (!validRevision(revision)) return { error: "invalid" };
   const db = dataClient(access.userId);
-  const current = await db.from("project_module_packages").select<ModulePackageRow>("module_id, manifest, records, revision, enabled").eq("project_id", projectId).eq("module_id", moduleId).maybeSingle();
+  const current = await db.from("project_module_packages").select<ModulePackageRow>(MODULE_PACKAGE_COLUMNS).eq("project_id", projectId).eq("module_id", moduleId).maybeSingle();
   if (current.error) return { error: "saveFailed" };
   if (!current.data) return { error: "permission" };
   if (current.data.revision !== revision) return { error: "conflict" };
   const manifest = moduleManifestSchema.safeParse(current.data.manifest);
   if (!manifest.success) return { error: "invalid" };
-  if (!current.data.enabled || unsupportedModulePermissions(manifest.data).length || !manifest.data.permissions.includes("module-data:write") || !manifest.data.permissions.includes("module-data:read")) return { error: "permission" };
+  if (!current.data.installed || !current.data.enabled || unsupportedModulePermissions(manifest.data).length || !manifest.data.permissions.includes("module-data:write") || !manifest.data.permissions.includes("module-data:read")) return { error: "permission" };
   let records;
   try { records = parseModuleRecords(manifest.data, input); } catch { return { error: "invalid" }; }
   const result = await db.from("project_module_packages").update({ records: hasDirectDatabase() ? JSON.stringify(records) : records, revision: revision + 1 })
-    .eq("project_id", projectId).eq("module_id", moduleId).eq("revision", revision).eq("enabled", true).select("module_id");
+    .eq("project_id", projectId).eq("module_id", moduleId).eq("revision", revision).eq("enabled", true).eq("installed", true).select("module_id");
   if (result.error) return { error: "saveFailed" };
   if (!result.data.length) return { error: "conflict" };
   revalidatePath(`/projects/${projectId}/modules`);

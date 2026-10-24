@@ -1,7 +1,9 @@
 import "server-only";
 import { dataClient } from "@/lib/data-client";
 import { moduleManifestSchema } from "@/lib/work/module-manifest";
-import { parseModuleRecords, type InstalledModule } from "@/lib/work/module-records";
+import { parseModuleRecords, parseModuleSettings, type InstalledModule } from "@/lib/work/module-records";
+
+export const MODULE_PACKAGE_COLUMNS = "module_id, manifest, records, revision, enabled, installed, settings";
 
 export type ModulePackageRow = {
   module_id: string;
@@ -9,6 +11,8 @@ export type ModulePackageRow = {
   records: unknown;
   revision: number;
   enabled: boolean;
+  installed: boolean;
+  settings: unknown;
 };
 
 export function decodeModulePackage(row: ModulePackageRow): InstalledModule {
@@ -20,13 +24,15 @@ export function decodeModulePackage(row: ModulePackageRow): InstalledModule {
     records: parseModuleRecords(manifest, row.records),
     revision: row.revision,
     enabled: row.enabled,
+    installed: row.installed,
+    settings: parseModuleSettings(manifest, row.settings),
   };
 }
 
 export async function getModulePackages(userId: string, projectId: string): Promise<InstalledModule[]> {
   const { data, error } = await dataClient(userId).from("project_module_packages")
-    .select<ModulePackageRow>("module_id, manifest, records, revision, enabled")
+    .select<ModulePackageRow>(MODULE_PACKAGE_COLUMNS)
     .eq("project_id", projectId).order("module_id").limit(20);
-  if (error) throw new Error("Could not load module packages. Apply migration 080 before deployment.");
+  if (error) throw new Error("Could not load module packages. Apply migrations 080 and 082 before deployment.");
   return data.map(decodeModulePackage);
 }

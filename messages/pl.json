@@ -1928,7 +1928,9 @@
     "consent": "Zatwierdź wszystkie wymagane uprawnienia przed instalacją.",
     "conflict": "Moduł zmieniono w innej sesji lub jest już zainstalowany. Odśwież dane przed ponowną próbą.",
     "saveFailed": "Nie udało się zapisać modułu. Spróbuj ponownie.",
-    "reload": "Odśwież zapisane dane"
+    "reload": "Odśwież zapisane dane",
+    "manage": "Konfiguracja",
+    "uninstalled": "Odinstalowany — dane zachowane"
   },
   "moduleCatalog": {
     "title": "Marketplace modułów",
@@ -1957,7 +1959,8 @@
     "report": "Zgłoś moduł",
     "screenshots": "Zrzuty ekranu",
     "changelog": "Historia zmian",
-    "noChangelog": "Nie opublikowano informacji o zmianach."
+    "noChangelog": "Nie opublikowano informacji o zmianach.",
+    "uninstalled": "Odinstalowany — dane zachowane"
   },
   "moduleInstaller": {
     "title": "Zainstaluj moduł",
@@ -1974,5 +1977,38 @@
     "conflict": "Moduł się zmienił lub inna wersja jest już zainstalowana. Sprawdź aktualne wydanie przed ponowną próbą.",
     "limit": "W projekcie osiągnięto limit 20 modułów.",
     "saveFailed": "Instalacja nie powiodła się. Nie zapisano częściowej instalacji."
+  },
+  "moduleManager": {
+    "enabled": "Włączony",
+    "disabled": "Wyłączony",
+    "uninstalled": "Odinstalowany — dane zachowane",
+    "saved": "Zapisano.",
+    "data": "Dane i przechowywanie",
+    "retainHint": "Odinstalowanie zachowuje rekordy i ustawienia. Zachowane moduły wliczają się do limitu projektu. Wyeksportuj dane przed usunięciem całego projektu.",
+    "export": "Eksportuj moduł i rekordy (JSON)",
+    "configuration": "Konfiguracja",
+    "defaultView": "Domyślny widok",
+    "automatic": "Automatycznie",
+    "saveSettings": "Zapisz ustawienia",
+    "disable": "Wyłącz",
+    "enable": "Włącz",
+    "uninstall": "Odinstaluj i zachowaj dane",
+    "restore": "Przywróć zachowany moduł",
+    "versions": "Wersje i cofanie zmian",
+    "compatibilityHint": "Zmiana wersji zachowuje obecne rekordy i zostanie odrzucona, jeśli nowy schemat ich nie obsłuży. Usunięty widok domyślny wróci do trybu automatycznego.",
+    "noVersions": "Nie ma innych dostępnych wydań w katalogu.",
+    "chooseVersion": "Wybierz wersję",
+    "review": "Sprawdź zmiany",
+    "addedScopes": "Dodane uprawnienia",
+    "removedScopes": "Usunięte uprawnienia",
+    "rollback": "Cofnij wersję",
+    "update": "Aktualizuj",
+    "permission": "Nie możesz zarządzać tym modułem.",
+    "unsupported": "Moduł nie jest obsługiwany przez obecną wersję aplikacji.",
+    "consent": "Sprawdź i zatwierdź aktualną listę uprawnień.",
+    "conflict": "Moduł zmieniono w innej sesji. Odśwież i sprawdź ponownie.",
+    "invalid": "Nieprawidłowe ustawienia lub żądanie.",
+    "incompatibleData": "Docelowa wersja nie obsługuje obecnych rekordów. Nie zmieniono danych.",
+    "saveFailed": "Nie udało się zapisać modułu."
   }
 }

@@ -1,6 +1,6 @@
 # Declarative module runtime
 
-Apply migration `080_module_packages.sql` before deploying this runtime.
+Apply migrations `080_module_packages.sql` and `082_module_lifecycle.sql` before deploying this runtime.
 Existing content modules and migration 079 stay in place. No backfill is needed.
 The project's **Custom modules → Data modules** section accepts Manifest v1;
 the legacy content editor continues to accept only its original format.
@@ -79,5 +79,6 @@ configuration. No production migration or deployment is performed here.
 
 The first storage format saves an entire bounded module document. It is suitable
 for small project tools; larger datasets require paginated per-record storage
-and a tested migration. Updates, enable/disable UI, uninstall retention/export,
-public registry, AI generation and sandbox code are separate roadmap tasks.
+and a tested migration. Updates, enable/disable and uninstall retention/export
+are documented in `module-lifecycle.md`. Author publication, AI generation and
+sandbox code are separate roadmap tasks.

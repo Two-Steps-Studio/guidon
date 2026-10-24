@@ -3708,5 +3708,36 @@ section("68. catalog installation orchestration against real RLS");
   });
 }
 
+section("69. module lifecycle retains data, gates roles and protects revisions (082)");
+{
+  const name = "release-planning";
+  await withUser(A,async () => {
+    await db.query("UPDATE public.project_module_packages SET enabled=false,revision=2 WHERE project_id=$1 AND module_id=$2 AND revision=1",[otherProjectId,name]);
+    await db.query("UPDATE public.project_module_packages SET installed=false,enabled=false,revision=3 WHERE project_id=$1 AND module_id=$2 AND revision=2",[otherProjectId,name]);
+    const row=(await db.query("SELECT installed,records,revision FROM public.project_module_packages WHERE project_id=$1 AND module_id=$2",[otherProjectId,name])).rows[0];
+    check("uninstall archives a package without changing its edited records",!row.installed && row.records[0].values.name==="User data");
+    check("an archived package cannot remain enabled",await throwsInSavepoint("UPDATE public.project_module_packages SET enabled=true WHERE project_id=$1 AND module_id=$2",[otherProjectId,name]));
+    check("uninstall does not grant deletion",await throwsInSavepoint("DELETE FROM public.project_module_packages WHERE project_id=$1",[otherProjectId]));
+    check("stale data save cannot overwrite an archived revision",(await db.query("UPDATE public.project_module_packages SET records='[]' WHERE project_id=$1 AND revision=1 RETURNING module_id",[otherProjectId])).rows.length===0);
+    await db.query("UPDATE public.project_module_packages SET installed=true,enabled=true,revision=4 WHERE project_id=$1 AND module_id=$2 AND revision=3",[otherProjectId,name]);
+    check("restore retains the same records",(await db.query("SELECT records FROM public.project_module_packages WHERE project_id=$1 AND module_id=$2",[otherProjectId,name])).rows[0].records[0].values.name==="User data");
+    await db.query("UPDATE public.project_module_packages SET settings='{\"defaultView\":\"releases\"}',revision=5 WHERE project_id=$1 AND module_id=$2",[otherProjectId,name]);
+    check("unknown settings cannot become executable configuration",await throwsInSavepoint("UPDATE public.project_module_packages SET settings='{\"script\":\"evil\"}' WHERE project_id=$1",[otherProjectId]));
+    check("settings must be an object",await throwsInSavepoint("UPDATE public.project_module_packages SET settings='[]' WHERE project_id=$1",[otherProjectId]));
+    const old=(await db.query("SELECT manifest,records FROM public.project_module_packages WHERE project_id=$1 AND module_id=$2",[otherProjectId,name])).rows[0];
+    const next=moduleManifestSchema.parse({...old.manifest,version:"1.1.0"});
+    parseModuleRecords(next,old.records);
+    await db.query("UPDATE public.project_module_packages SET manifest=$3,revision=6 WHERE project_id=$1 AND module_id=$2 AND revision=5",[otherProjectId,name,JSON.stringify(next)]);
+    parseModuleRecords(moduleManifestSchema.parse(old.manifest),old.records);
+    await db.query("UPDATE public.project_module_packages SET manifest=$3,revision=7 WHERE project_id=$1 AND module_id=$2 AND revision=6",[otherProjectId,name,JSON.stringify(old.manifest)]);
+    const after=(await db.query("SELECT manifest,records FROM public.project_module_packages WHERE project_id=$1 AND module_id=$2",[otherProjectId,name])).rows[0];
+    check("version update and compatible rollback preserve data",after.manifest.version===old.manifest.version && isDeepStrictEqual(after.records,old.records));
+  });
+  await withServiceRole(async()=>{await db.query("INSERT INTO public.project_members(project_id,user_id,role) VALUES($1,$2,'developer') ON CONFLICT DO NOTHING",[otherProjectId,B]);});
+  await withUser(B,async()=>{
+    check("readers cannot restore, disable or configure modules",(await db.query("UPDATE public.project_module_packages SET installed=false,enabled=false,settings='{}' WHERE project_id=$1 RETURNING module_id",[otherProjectId])).rows.length===0);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
