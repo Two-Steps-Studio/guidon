@@ -8,7 +8,7 @@ const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getA
 
 export async function appleDesignCoverage({page,context,origin,fixture,client,browserName,artifacts}) {
   const owner=fixture.users[0], created=[], errors=[];
-  const capture=error=>errors.push(error.message);
+  const capture=error=>errors.push(`${new URL(page.url()).pathname}: ${error.message}`);
   page.on('pageerror',capture);
   const route=`${origin}/projects/${owner.projectId}/work`;
   const manifest=JSON.parse(await readFile(new URL('../../examples/module-manifests/release-planning.json',import.meta.url),'utf8'));

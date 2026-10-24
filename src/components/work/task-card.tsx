@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useRef } from "react";
 import { initialsFor } from "@/lib/people";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   DUE_STATE_CLASSES,
@@ -174,6 +174,7 @@ function TaskCardComponent({
   onSelect,
 }: TaskCardProps) {
   const t = useTranslations("work");
+  const locale = useLocale();
   const priorities = usePriorities();
   const priority = priorityDef(task.priority, priorities);
   const priorityStyle = priorityDot(task.priority, priorities);
@@ -490,7 +491,7 @@ function TaskCardComponent({
         {task.due_date && due !== "none" && (
           <span className={cn("flex items-center gap-1", DUE_STATE_CLASSES[due])}>
             <CalendarDays className="h-3 w-3" aria-hidden />
-            {formatDueDate(task.due_date)}
+            {formatDueDate(task.due_date, locale)}
             {due === "overdue" && <span className="sr-only">(overdue)</span>}
           </span>
         )}

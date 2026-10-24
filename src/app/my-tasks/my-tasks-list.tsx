@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -68,6 +68,7 @@ export function MyTasksList({
   projects: Record<string, MyTasksProject>;
 }) {
   const t = useTranslations("myTasks");
+  const locale = useLocale();
   const [tasks, setTasks] = useState(initialTasks);
 
   const groups = useMemo(() => {
@@ -162,7 +163,7 @@ export function MyTasksList({
                   </div>
                   {task.due_date && (
                     <span className={cn("shrink-0 text-xs tabular-nums", DUE_STATE_CLASSES[due])}>
-                      {formatDueDate(task.due_date)}
+                      {formatDueDate(task.due_date, locale)}
                     </span>
                   )}
                   <SelectMenu
