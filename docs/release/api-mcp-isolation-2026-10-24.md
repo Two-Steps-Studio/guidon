@@ -6,6 +6,8 @@ Local run `bbd7dd06dc84`: clean install/migrations/production build, packaging
 canaries, 110 counted REST/MCP checks (including 60 sequential rate-limit samples),
 expanded Chromium/Firefox/WebKit auth suite, log scan and cleanup all pass.
 Targeted ESLint passes. These are not 110 distinct exploit classes or a pentest.
+The existing API core/batch suite now explicitly enables Node 22.14's TypeScript
+stripping, matching the auth command, and runs in release CI as well.
 
 ## Real integration evidence
 
