@@ -44,6 +44,7 @@ jobs:
       - run: npm run test:modules
       - run: npm run build
       - run: npx playwright install --with-deps chromium
+      - run: npm run test:dependencies
       - run: npm run test:module-catalog
       - run: npm run test:module-editor
       - uses: actions/upload-artifact@v4

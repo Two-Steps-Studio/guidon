@@ -1,7 +1,7 @@
 // Full application E2E. Always builds a clean copy and creates its own Docker DB.
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { mkdtemp, mkdir, readFile, writeFile, copyFile, symlink, rm, access } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, copyFile, cp, rm, access } from "node:fs/promises";
 import { createServer as createHttpsServer } from "node:https";
 import { request as httpRequest } from "node:http";
 import { createServer as createNetServer } from "node:net";
@@ -72,9 +72,10 @@ try{
   await writeFile(path.join(artifacts,"build.log"),await run(process.execPath,[npmCli,"run","build"]));
   const standalone=path.join(directory,".next/standalone");
   phase="server-start";
-  const linkType=process.platform==="win32"?"junction":"dir";
-  await symlink(path.join(directory,"public"),path.join(standalone,"public"),linkType);
-  await symlink(path.join(directory,".next/static"),path.join(standalone,".next/static"),linkType);
+  // Next may trace a subset of public assets into standalone. Merge the complete
+  // build assets, just as a standalone deployment does, even if directories exist.
+  await cp(path.join(directory,"public"),path.join(standalone,"public"),{recursive:true});
+  await cp(path.join(directory,".next/static"),path.join(standalone,".next/static"),{recursive:true});
   app=spawn(process.execPath,["--require",path.join(directory,"tests/e2e/network-guard.cjs"),"server.js"],{cwd:standalone,env:{...environment,NODE_ENV:"production",HOSTNAME:"127.0.0.1",PORT:String(appPort)},windowsHide:true,signal:controller.signal});
   app.stdout.on("data",chunk=>{appLog+=chunk;});app.stderr.on("data",chunk=>{appLog+=chunk;});app.on("error",()=>{});
   await waitFor(async()=>{const response=await fetch(`http://127.0.0.1:${appPort}/api/health`,{signal:AbortSignal.timeout(3000)});return response.ok;},"production server");
