@@ -1,6 +1,12 @@
 import path from "node:path";
 import os from "node:os";
 
+export function shouldCopySource(name) {
+  const parts = name.replaceAll("\\", "/").split("/");
+  return ![".claude", ".agents", ".worktrees"].includes(parts[0]) &&
+    !parts.some(part => /^\.env(?:\.|$)/.test(part));
+}
+
 export function isolatedEnvironment(input, overrides) {
   const result = {};
   for (const key of ["PATH","Path","SystemRoot","SYSTEMROOT","WINDIR","COMSPEC","PATHEXT","TEMP","TMP","HOME","USERPROFILE","APPDATA","LOCALAPPDATA","NUMBER_OF_PROCESSORS"]) {

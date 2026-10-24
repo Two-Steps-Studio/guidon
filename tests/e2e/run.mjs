@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { chromium,firefox,webkit } from "playwright";
-import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest } from "./isolation.mjs";
+import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopySource } from "./isolation.mjs";
 import { seedReleaseFixture } from "./seed.mjs";
 import { releaseSmoke } from "./smoke.mjs";
 
@@ -46,7 +46,7 @@ try{
   const tracked=spawnSync("git",["ls-files","-co","--exclude-standard","-z"],{cwd:root,encoding:"utf8",windowsHide:true});
   if(tracked.status!==0)throw new Error("Could not inventory source files");
   for(const name of new Set(tracked.stdout.split("\0").filter(Boolean))){
-    if(name.split("/").some(part=>/^\.env(?:\.|$)/.test(part)))continue;
+    if(!shouldCopySource(name))continue;
     const target=path.resolve(directory,name);
     if(!target.startsWith(directory+path.sep))throw new Error("Source path escaped test directory");
     await mkdir(path.dirname(target),{recursive:true});await copyFile(path.join(root,name),target);
