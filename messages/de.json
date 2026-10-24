@@ -1928,7 +1928,9 @@
     "consent": "Vor der Installation alle angeforderten Berechtigungen genehmigen.",
     "conflict": "Das Modul wurde in einer anderen Sitzung geändert oder ist bereits installiert. Daten neu laden.",
     "saveFailed": "Modul konnte nicht gespeichert werden. Erneut versuchen.",
-    "reload": "Gespeicherte Daten neu laden"
+    "reload": "Gespeicherte Daten neu laden",
+    "manage": "Konfiguration",
+    "uninstalled": "Deinstalliert — Daten erhalten"
   },
   "moduleCatalog": {
     "title": "Modul-Marktplatz",
@@ -1957,7 +1959,8 @@
     "report": "Modul melden",
     "screenshots": "Screenshots",
     "changelog": "Änderungsprotokoll",
-    "noChangelog": "Keine Versionshinweise veröffentlicht."
+    "noChangelog": "Keine Versionshinweise veröffentlicht.",
+    "uninstalled": "Deinstalliert — Daten erhalten"
   },
   "moduleInstaller": {
     "title": "Modul installieren",
@@ -1974,5 +1977,38 @@
     "conflict": "Das Modul wurde geändert oder eine andere Version ist installiert. Aktuelle Version prüfen.",
     "limit": "Das Projekt hat das Limit von 20 Modulen erreicht.",
     "saveFailed": "Installation fehlgeschlagen. Keine Teilinstallation gespeichert."
+  },
+  "moduleManager": {
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "uninstalled": "Deinstalliert — Daten erhalten",
+    "saved": "Gespeichert.",
+    "data": "Datenaufbewahrung",
+    "retainHint": "Die Deinstallation erhält Datensätze und Einstellungen. Aufbewahrte Module zählen zum Projektlimit. Daten vor dem Löschen des Projekts exportieren.",
+    "export": "Modul und Datensätze exportieren (JSON)",
+    "configuration": "Konfiguration",
+    "defaultView": "Standardansicht",
+    "automatic": "Automatisch",
+    "saveSettings": "Einstellungen speichern",
+    "disable": "Deaktivieren",
+    "enable": "Aktivieren",
+    "uninstall": "Deinstallieren und Daten behalten",
+    "restore": "Aufbewahrtes Modul wiederherstellen",
+    "versions": "Versionen und Rollback",
+    "compatibilityHint": "Versionswechsel behalten Daten und lehnen inkompatible Schemas ab. Entfernte Standardansichten werden automatisch zurückgesetzt.",
+    "noVersions": "Keine weiteren zugänglichen Katalogversionen verfügbar.",
+    "chooseVersion": "Version auswählen",
+    "review": "Änderungen prüfen",
+    "addedScopes": "Neue Berechtigungen",
+    "removedScopes": "Entfernte Berechtigungen",
+    "rollback": "Version zurücksetzen",
+    "update": "Aktualisieren",
+    "permission": "Keine Berechtigung zur Verwaltung.",
+    "unsupported": "Modul wird nicht unterstützt.",
+    "consent": "Aktuelle Berechtigungen prüfen und genehmigen.",
+    "conflict": "Das Modul wurde geändert. Neu laden und erneut prüfen.",
+    "invalid": "Ungültige Einstellungen oder Anfrage.",
+    "incompatibleData": "Die Zielversion kann die aktuellen Datensätze nicht abbilden. Keine Daten geändert.",
+    "saveFailed": "Modul konnte nicht gespeichert werden."
   }
 }

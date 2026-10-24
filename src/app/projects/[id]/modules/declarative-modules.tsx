@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +56,7 @@ function PackagePanel({ projectId, initial, canManage }: { projectId: string; in
   const t = useTranslations("moduleRuntime");
   const [records, setRecords] = useState(initial.records);
   const [revision, setRevision] = useState(initial.revision);
-  const [viewId, setViewId] = useState(initial.manifest.views.find((view) => view.type === "table")?.id ?? initial.manifest.views[0]?.id ?? "");
+  const [viewId, setViewId] = useState(initial.settings.defaultView ?? initial.manifest.views.find((view) => view.type === "table")?.id ?? initial.manifest.views[0]?.id ?? "");
   const [editing, setEditing] = useState<ModuleRecord | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [status, setStatus] = useState("");
@@ -65,7 +66,7 @@ function PackagePanel({ projectId, initial, canManage }: { projectId: string; in
   const view = manifest.views.find((candidate) => candidate.id === viewId);
   const entity = manifest.entities.find((candidate) => candidate.id === view?.entity);
   const supported = unsupportedModulePermissions(manifest).length === 0;
-  const canRead = supported && initial.enabled && manifest.permissions.includes("module-data:read");
+  const canRead = supported && initial.installed && initial.enabled && manifest.permissions.includes("module-data:read");
   const canWrite = canManage && canRead && manifest.permissions.includes("module-data:write");
 
   function save(next: ModuleRecord[]) {
@@ -81,7 +82,8 @@ function PackagePanel({ projectId, initial, canManage }: { projectId: string; in
   return <Card id={`module-${manifest.id}`} className="min-w-0 scroll-mt-20">
     <CardHeader><CardTitle className="break-words">{manifest.name}</CardTitle><CardDescription>{manifest.author.name} · v{manifest.version}</CardDescription></CardHeader>
     <CardContent className="space-y-4">
-      {!canRead ? <p className="text-sm text-muted-foreground">{initial.enabled ? t("noDataPermission") : t("disabled")}</p> : <>
+      {canManage && <Link href={`/projects/${projectId}/modules/${initial.moduleId}`} className="inline-block text-sm text-primary underline">{t("manage")}</Link>}
+      {!canRead ? <p className="text-sm text-muted-foreground">{!initial.installed ? t("uninstalled") : initial.enabled ? t("noDataPermission") : t("disabled")}</p> : <>
         {view && <div className="flex flex-wrap items-end gap-3"><label htmlFor={viewSelectId} className="min-w-0 flex-1 space-y-1"><span className="text-sm">{t("view")}</span>
           <select id={viewSelectId} className={inputClass} value={viewId} disabled={pending} onChange={(event) => { setViewId(event.target.value); setEditing(null); setShowForm(false); setStatus(""); }}>
             {manifest.views.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}

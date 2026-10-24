@@ -28,3 +28,9 @@ export async function getCatalogEntry(userId: string, moduleId: string, version:
   if (error) throw new Error("Could not load catalog entry");
   return data ? decode(data) : null;
 }
+
+export async function getCatalogVersions(userId: string, moduleId: string): Promise<CatalogEntry[]> {
+  const { data, error } = await dataClient(userId).from("module_catalog_entries").select<Row>("module_id, version, category, description, manifest, demo_records, changelog, screenshots, organization_id").eq("module_id", moduleId).limit(50);
+  if (error) throw new Error("Could not load module releases");
+  return data.map(decode).sort((left, right) => compareSemver(right.version, left.version));
+}

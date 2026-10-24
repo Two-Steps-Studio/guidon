@@ -1928,7 +1928,9 @@
     "consent": "Approve all requested permissions before installing.",
     "conflict": "This module was changed in another session or is already installed. Reload before trying again.",
     "saveFailed": "Could not save the module. Please try again.",
-    "reload": "Reload saved data"
+    "reload": "Reload saved data",
+    "manage": "Configuration",
+    "uninstalled": "Uninstalled — data retained"
   },
   "moduleCatalog": {
     "title": "Module marketplace",
@@ -1957,7 +1959,8 @@
     "report": "Report this module",
     "screenshots": "Screenshots",
     "changelog": "Changelog",
-    "noChangelog": "No release notes published."
+    "noChangelog": "No release notes published.",
+    "uninstalled": "Uninstalled — data retained"
   },
   "moduleInstaller": {
     "title": "Install module",
@@ -1974,5 +1977,38 @@
     "conflict": "The module changed or a different version is already installed. Review the current release before retrying.",
     "limit": "This project has reached its 20-module limit.",
     "saveFailed": "Installation failed. No partial installation was saved."
+  },
+  "moduleManager": {
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "uninstalled": "Uninstalled — data retained",
+    "saved": "Saved.",
+    "data": "Data and retention",
+    "retainHint": "Uninstall keeps all records and settings. Retained packages count toward the project limit. Export data before removing the entire project.",
+    "export": "Export module and records (JSON)",
+    "configuration": "Configuration",
+    "defaultView": "Default view",
+    "automatic": "Automatic",
+    "saveSettings": "Save settings",
+    "disable": "Disable",
+    "enable": "Enable",
+    "uninstall": "Uninstall and keep data",
+    "restore": "Restore retained module",
+    "versions": "Versions and rollback",
+    "compatibilityHint": "Version changes keep current records and are rejected if the new schema cannot represent them. A removed default view resets to automatic.",
+    "noVersions": "No other accessible catalog releases are available.",
+    "chooseVersion": "Choose a version",
+    "review": "Review changes",
+    "addedScopes": "Added permissions",
+    "removedScopes": "Removed permissions",
+    "rollback": "Roll back",
+    "update": "Update",
+    "permission": "You cannot manage this module.",
+    "unsupported": "This module is not supported by the current runtime.",
+    "consent": "Review and approve the current permission list.",
+    "conflict": "The module changed in another session. Reload and review again.",
+    "invalid": "Invalid settings or request.",
+    "incompatibleData": "The target version cannot represent current records. No data was changed.",
+    "saveFailed": "Could not save the module."
   }
 }

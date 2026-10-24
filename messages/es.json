@@ -1928,7 +1928,9 @@
     "consent": "Aprueba todos los permisos antes de instalar.",
     "conflict": "El módulo cambió en otra sesión o ya está instalado. Recarga los datos.",
     "saveFailed": "No se pudo guardar el módulo. Inténtalo de nuevo.",
-    "reload": "Recargar los datos guardados"
+    "reload": "Recargar los datos guardados",
+    "manage": "Configuración",
+    "uninstalled": "Desinstalado — datos conservados"
   },
   "moduleCatalog": {
     "title": "Mercado de módulos",
@@ -1957,7 +1959,8 @@
     "report": "Denunciar este módulo",
     "screenshots": "Capturas de pantalla",
     "changelog": "Historial de cambios",
-    "noChangelog": "No hay notas de versión publicadas."
+    "noChangelog": "No hay notas de versión publicadas.",
+    "uninstalled": "Desinstalado — datos conservados"
   },
   "moduleInstaller": {
     "title": "Instalar módulo",
@@ -1974,5 +1977,38 @@
     "conflict": "El módulo cambió o ya hay otra versión instalada. Revisa la versión actual.",
     "limit": "El proyecto ha alcanzado el límite de 20 módulos.",
     "saveFailed": "La instalación falló. No se guardó ninguna instalación parcial."
+  },
+  "moduleManager": {
+    "enabled": "Activado",
+    "disabled": "Desactivado",
+    "uninstalled": "Desinstalado — datos conservados",
+    "saved": "Guardado.",
+    "data": "Datos y conservación",
+    "retainHint": "La desinstalación conserva registros y ajustes. Los módulos conservados cuentan para el límite. Exporta los datos antes de eliminar el proyecto.",
+    "export": "Exportar módulo y registros (JSON)",
+    "configuration": "Configuración",
+    "defaultView": "Vista predeterminada",
+    "automatic": "Automática",
+    "saveSettings": "Guardar ajustes",
+    "disable": "Desactivar",
+    "enable": "Activar",
+    "uninstall": "Desinstalar y conservar datos",
+    "restore": "Restaurar módulo conservado",
+    "versions": "Versiones y reversión",
+    "compatibilityHint": "Los cambios de versión conservan los datos y rechazan esquemas incompatibles. Una vista eliminada vuelve al modo automático.",
+    "noVersions": "No hay otras versiones accesibles en el catálogo.",
+    "chooseVersion": "Elige una versión",
+    "review": "Revisar cambios",
+    "addedScopes": "Permisos añadidos",
+    "removedScopes": "Permisos eliminados",
+    "rollback": "Revertir versión",
+    "update": "Actualizar",
+    "permission": "No puedes gestionar este módulo.",
+    "unsupported": "Módulo no compatible.",
+    "consent": "Revisa y aprueba los permisos actuales.",
+    "conflict": "El módulo cambió. Recarga y revisa de nuevo.",
+    "invalid": "Ajustes o solicitud no válidos.",
+    "incompatibleData": "La versión de destino no admite los registros actuales. No se modificaron los datos.",
+    "saveFailed": "No se pudo guardar el módulo."
   }
 }

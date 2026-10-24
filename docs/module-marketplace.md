@@ -19,7 +19,9 @@ declared entities/fields and fixture-only read-only previews. Unknown scopes
 are disclosed by name and make the release incompatible. No preview save
 action is supplied. Reporting links to the existing contact channel; the
 module identifier/version is shown beside it. The project installation wizard
-is linked from compatible release details; lifecycle controls remain a follow-up.
+is linked from compatible release details. Project owners/admins can manage
+versions, settings, retained data and exports as documented in `module-lifecycle.md`;
+those controls require migration 082.
 
 ## Project installation
 
