@@ -1,0 +1,57 @@
+{
+  "manifestVersion": 1,
+  "id": "release-planning",
+  "name": "Release planning",
+  "version": "1.0.0",
+  "author": {
+    "name": "Guidon example"
+  },
+  "engine": {
+    "minVersion": "1.0.0",
+    "maxVersionExclusive": "2.0.0"
+  },
+  "permissions": [],
+  "entities": [
+    {
+      "id": "release",
+      "name": "Release",
+      "fields": [
+        {
+          "id": "name",
+          "name": "Name",
+          "type": "text",
+          "required": true,
+          "maxLength": 120
+        },
+        {
+          "id": "status",
+          "name": "Status",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "planned", "label": "Planned" },
+            { "value": "ready", "label": "Ready" },
+            { "value": "shipped", "label": "Shipped" }
+          ]
+        }
+      ]
+    }
+  ],
+  "views": [
+    {
+      "id": "release-table",
+      "name": "Releases",
+      "type": "table",
+      "entity": "release",
+      "fields": ["name", "status"]
+    }
+  ],
+  "dataVersion": 1,
+  "migrations": [],
+  "lifecycle": {
+    "install": "declarative",
+    "enable": "immediate",
+    "disable": "immediate",
+    "uninstall": "retain_data"
+  }
+}
