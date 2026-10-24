@@ -30,7 +30,7 @@ temporary `.env.production`, default/custom storage and diagnostic output. It
 asserts those never reach standalone output and source canaries stay intact.
 No original environment file is copied or used.
 
-Two accounts and private projects in separate organizations are seeded only in
+Two tenant owners/private projects and a project viewer are seeded only in
 that disposable database. Passwords, DB password, AUTH_SECRET and a one-day TLS
 certificate are generated per run. HTTPS terminates at a loopback Node proxy;
 the real production Secure/HttpOnly session cookie behavior stays enabled.
@@ -56,10 +56,22 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
 - Direct foreign project request discloses no project title in HTML/RSC;
   own project request succeeds.
 - Real logout and denial of the formerly authenticated protected route.
+- Validly signed but expired session, forged identity with mismatched signature,
+  and malformed cookie all denied by the application (browser expiry is future).
+- Project owner receives their module editor; viewer can read the shared project
+  without receiving the owner's editor and cannot see a foreign private project.
+- Signup controls remain disabled before hydration. The actual signup Server
+  Action rejects a weak password even when browser minlength is removed, and
+  rejects duplicate accounts with no session. Rejected weak accounts do not exist
+  in the disposable DB.
+- New signup persists exactly one DB user, creates a Secure/HttpOnly session,
+  rejects an external redirect target, and supports logout and a fresh login.
+- In direct-Postgres mode, forgot/reset-password pages redirect to login as
+  documented, instead of invoking Cloud recovery services.
 
 This is the self-hosted direct-PostgreSQL auth/data path. It does **not** certify
 Supabase Auth/PostgREST, external OAuth callbacks, reset email delivery,
-signup/onboarding, complete Kanban CRUD/concurrency, API-key/MCP permissions,
+complete onboarding, complete Kanban CRUD/concurrency, API-key/MCP permissions,
 Stripe, uploads, mobile, accessibility or production monitoring. Those remain
 the separate QA cards and should extend this foundation.
 

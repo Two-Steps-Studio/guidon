@@ -1,6 +1,6 @@
 // Full application E2E. Always builds a clean copy and creates its own Docker DB.
 import { spawn, spawnSync } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHmac } from "node:crypto";
 import { mkdtemp, mkdir, readFile, writeFile, copyFile, cp, rm, access } from "node:fs/promises";
 import { createServer as createHttpsServer } from "node:https";
 import { request as httpRequest } from "node:http";
@@ -13,6 +13,7 @@ import { chromium,firefox,webkit } from "playwright";
 import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopySource } from "./isolation.mjs";
 import { seedReleaseFixture } from "./seed.mjs";
 import { releaseSmoke } from "./smoke.mjs";
+import { authenticationCoverage } from "./authentication.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
 
@@ -74,6 +75,10 @@ try{
   phase="migrations";
   await writeFile(path.join(artifacts,"migrations.log"),await run(process.execPath,["scripts/migrate.mjs"]));
   client=new pg.Client({connectionString});await client.connect();const fixture=await seedReleaseFixture(client);
+  const payload=Buffer.from(JSON.stringify({sub:fixture.users[0].id,exp:Math.floor(Date.now()/1000)-60})).toString("base64url");
+  const expired=`${payload}.${createHmac("sha256",environment.AUTH_SECRET).update(payload).digest("base64url")}`;
+  const forgedPayload=Buffer.from(JSON.stringify({sub:fixture.users[1].id,exp:Math.floor(Date.now()/1000)+3600})).toString("base64url");
+  const invalidSessions=[expired,`${forgedPayload}.${expired.split(".")[1]}`,"malformed-session"];
   phase="build";
   await writeFile(path.join(artifacts,"build.log"),await run(process.execPath,[npmCli,"run","build"]));
   const standalone=path.join(directory,".next/standalone");
@@ -111,7 +116,13 @@ try{
     await context.tracing.start({screenshots:true,snapshots:true,sources:true});
     const page=await context.newPage();page.setDefaultTimeout(15000);
     const started=Date.now();
-    try{await releaseSmoke({page,context,origin,fixture});results.push({browser:name,outcome:"passed",durationMs:Date.now()-started,blockedOrigins:[...new Set(blocked)]});console.log(`pass ${name}`);}
+    try{
+      await releaseSmoke({page,context,origin,fixture});
+      await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
+      assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`weak-${name}@guidon.example.test`])).rowCount,0,"Rejected signup must not create a database user");
+      assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`signup-${name}@guidon.example.test`])).rowCount,1,"Real signup must create exactly one user");
+      results.push({browser:name,outcome:"passed",durationMs:Date.now()-started,blockedOrigins:[...new Set(blocked)]});console.log(`pass ${name}`);
+    }
     catch(error){await page.screenshot({path:path.join(artifacts,`${name}-failed.png`),fullPage:true});results.push({browser:name,outcome:"failed",error:error.message,durationMs:Date.now()-started});throw error;}
     finally{await context.tracing.stop({path:path.join(artifacts,`${name}-trace.zip`)});await context.close();await browser.close();await writeFile(path.join(artifacts,"app.log"),appLog);}
   }

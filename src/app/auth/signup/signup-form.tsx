@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { AlertCircle } from "lucide-react"
@@ -18,8 +18,13 @@ import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
 import { isAiAccountEmail } from "@/lib/ai-account-email"
 
+const subscribeHydration = () => () => {}
+const clientHydrated = () => true
+const serverHydrated = () => false
+
 /** `local` - see login-form.tsx's comment; same reasoning applies here. */
 export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup }) {
+  const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated)
   const t = useTranslations("auth.signup")
   const tCommon = useTranslations("auth.common")
   const [email, setEmail] = useState("")
@@ -128,6 +133,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 autoComplete="name"
+                disabled={!hydrated || loading}
                 autoFocus
                 required
               />
@@ -141,6 +147,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                disabled={!hydrated || loading}
                 required
               />
             </div>
@@ -152,6 +159,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
+                disabled={!hydrated || loading}
                 showLabel={tCommon("showPassword")}
                 hideLabel={tCommon("hidePassword")}
                 required
@@ -164,7 +172,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={!hydrated || loading}>
               {loading ? t("creatingAccount") : t("signUp")}
             </Button>
           </form>

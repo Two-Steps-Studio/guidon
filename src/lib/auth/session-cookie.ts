@@ -123,7 +123,7 @@ export async function verifySessionCookie(cookieValue: string | undefined | null
   }
 
   if (typeof payload.sub !== "string" || typeof payload.exp !== "number") return null;
-  if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+  if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
 
   return payload.sub;
 }
