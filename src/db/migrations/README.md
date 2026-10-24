@@ -16,6 +16,7 @@ them. Prefer the runner.
 
 | File | What it does | Required for |
 |---|---|---|
+| `083_module_drafts.sql` | Personal module drafts with revision guards, bounded history and user/project RLS. | Persistent AI builder drafts, undo/redo and conflict protection |
 | `082_module_lifecycle.sql` | Retained uninstall state, bounded default-view settings and the invariant that uninstalled packages cannot be enabled. Preserves all records and adds no DELETE grant. | Module management, restore, version changes and retained exports |
 | `081_module_catalog.sql` | Read-only published catalog releases, organization-scoped visibility, private drafts, first-party release example and demo records. Only the service role can publish; clients get SELECT under RLS. | Marketplace, module details/demo and catalog search |
 | `080_module_packages.sql` | Adds project-scoped declarative package manifests and bounded record documents, explicit grants, RLS, immutable project/module identity and serialized installation cap. Existing content modules are unchanged. | Data modules: five declarative views and revision-safe record writes |

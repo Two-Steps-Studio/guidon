@@ -251,8 +251,8 @@ for (const [label, sql, expected] of [
   // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
   // 46->47: shared replay protection for signed OAuth client assertions (078).
   // 47->48 and 130->133: project-scoped declarative module packages (080).
-  ["49 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 49],
-  ["134 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 134],
+  ["50 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 50],
+  ["137 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 137],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3737,6 +3737,36 @@ section("69. module lifecycle retains data, gates roles and protects revisions (
   await withUser(B,async()=>{
     check("readers cannot restore, disable or configure modules",(await db.query("UPDATE public.project_module_packages SET installed=false,enabled=false,settings='{}' WHERE project_id=$1 RETURNING module_id",[otherProjectId])).rows.length===0);
   });
+}
+
+section("70. personal module drafts: tenant/role boundaries and optimistic writes (083)");
+{
+  const state={version:1,past:[],present:{prompt:"private prompt",plan:null,manifest:null},future:[]};
+  await withUser(A,async()=>{
+    await db.query("INSERT INTO public.project_module_drafts(project_id,user_id,state) VALUES($1,$2,$3)",[otherProjectId,A,JSON.stringify(state)]);
+    check("manager can load their draft after saving",(await db.query("SELECT state FROM public.project_module_drafts WHERE project_id=$1",[otherProjectId])).rows[0].state.present.prompt==="private prompt");
+    check("draft revision-guarded save succeeds once",(await db.query("UPDATE public.project_module_drafts SET revision=2 WHERE project_id=$1 AND user_id=$2 AND revision=1 RETURNING revision",[otherProjectId,A])).rows.length===1);
+    check("stale draft cannot overwrite a newer save",(await db.query("UPDATE public.project_module_drafts SET state=$3 WHERE project_id=$1 AND user_id=$2 AND revision=1 RETURNING revision",[otherProjectId,A,JSON.stringify({...state,present:{prompt:"stale",plan:null,manifest:null}})])).rows.length===0);
+    check("cannot create another user's draft",await throwsInSavepoint("INSERT INTO public.project_module_drafts(project_id,user_id,state) VALUES($1,$2,$3)",[otherProjectId,B,JSON.stringify(state)]));
+    check("draft identity columns are immutable",await throwsInSavepoint("UPDATE public.project_module_drafts SET user_id=$2 WHERE project_id=$1",[otherProjectId,B]));
+    check("draft requires the bounded history shape",await throwsInSavepoint("UPDATE public.project_module_drafts SET state='{}' WHERE project_id=$1",[otherProjectId]));
+  });
+  await withUser(B,async()=>{
+    check("project reader cannot see a manager's personal draft",(await db.query("SELECT 1 FROM public.project_module_drafts WHERE project_id=$1",[otherProjectId])).rows.length===0);
+    check("project reader cannot create drafts",await throwsInSavepoint("INSERT INTO public.project_module_drafts(project_id,user_id,state) VALUES($1,$2,$3)",[otherProjectId,B,JSON.stringify(state)]));
+  });
+  await withServiceRole(async()=>{await db.query("UPDATE public.project_members SET role='admin' WHERE project_id=$1 AND user_id=$2",[otherProjectId,B]);});
+  await withUser(B,async()=>{
+    check("another admin still cannot read personal prompt/history",(await db.query("SELECT 1 FROM public.project_module_drafts WHERE project_id=$1",[otherProjectId])).rows.length===0);
+    await db.query("INSERT INTO public.project_module_drafts(project_id,user_id,state) VALUES($1,$2,$3)",[otherProjectId,B,JSON.stringify(state)]);
+    check("admins keep separate drafts in the same project",(await db.query("SELECT user_id FROM public.project_module_drafts WHERE project_id=$1",[otherProjectId])).rows[0].user_id===B);
+  });
+  await withServiceRole(async()=>{await db.query("DELETE FROM public.project_members WHERE project_id=$1 AND user_id=$2",[otherProjectId,B]);});
+  await withUser(B,async()=>{
+    check("revoked membership immediately hides their saved draft",(await db.query("SELECT 1 FROM public.project_module_drafts WHERE project_id=$1",[otherProjectId])).rows.length===0);
+    check("revoked membership cannot update its old draft",(await db.query("UPDATE public.project_module_drafts SET revision=2 WHERE project_id=$1 AND user_id=$2 RETURNING user_id",[otherProjectId,B])).rows.length===0);
+  });
+  let anonDenied=false;try{await withAnon(()=>db.query("SELECT 1 FROM public.project_module_drafts"));}catch{anonDenied=true;}check("anonymous clients cannot access drafts",anonDenied);
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
