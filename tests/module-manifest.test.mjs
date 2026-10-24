@@ -29,6 +29,8 @@ test("accepts strict SemVer and rejects malformed or ambiguous versions", () => 
 });
 
 test("rejects reversed engine ranges and accepts a valid pre-release bound", () => {
+  assert.equal(moduleManifestSchema.safeParse({ ...example, engine: { minVersion: "9007199254740992.0.0", maxVersionExclusive: "9007199254740993.0.0" } }).success, true);
+  assert.equal(moduleManifestSchema.safeParse({ ...example, engine: { minVersion: "9007199254740993.0.0", maxVersionExclusive: "9007199254740992.0.0" } }).success, false);
   assert.equal(moduleManifestSchema.safeParse({ ...example, engine: { minVersion: "2.0.0", maxVersionExclusive: "1.9.0" } }).success, false);
   assert.equal(moduleManifestSchema.safeParse({ ...example, engine: { minVersion: "1.2.3-rc.1", maxVersionExclusive: "1.2.3" } }).success, true);
   assert.equal(moduleManifestSchema.safeParse({ ...example, engine: { minVersion: "1.2.3", maxVersionExclusive: "1.2.3-rc.1" } }).success, false);

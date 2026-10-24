@@ -193,7 +193,7 @@ function compareSemver(left: string, right: string): number {
   const b = parseSemver(right);
   for (let index = 0; index < 3; index++) {
     const diff = a.core[index] - b.core[index];
-    if (diff !== 0n) return diff < 0n ? -1 : 1;
+    if (diff !== BigInt(0)) return diff < BigInt(0) ? -1 : 1;
   }
   if (a.prerelease.length === 0 || b.prerelease.length === 0) {
     if (a.prerelease.length === b.prerelease.length) return 0;
