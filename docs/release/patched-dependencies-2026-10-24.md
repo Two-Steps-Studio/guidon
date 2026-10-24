@@ -73,6 +73,10 @@ The Docker context already excludes real environment files; E2E copies no env
 files and uses disposable credentials. A dedicated packaging hardening follow-up
 must keep runtime data/configuration out of distributable standalone artifacts.
 
+The subsequent [packaging fix](./standalone-package-2026-10-24.md) closes this
+finding with the runtime tracing boundary, artifact guard and non-secret
+canary build. Remaining release evidence gates still apply.
+
 No production deploy or database mutation was performed.
 
 ## Primary advisory references

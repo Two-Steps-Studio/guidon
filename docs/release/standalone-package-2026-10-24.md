@@ -33,7 +33,8 @@ final remote artifact.
   the destination, missing output allowed only when requested by platform mode.
 - A full clean install/migration/build with generated non-secret canaries proves
   `.env.production`, default/custom storage and output do not ship; their source
-  copies are intact. Three-browser smoke exercises the resulting package.
+  copies are intact. Three-browser smoke exercises the resulting package;
+  final local run `06f3a7091cdc` passes Chromium/Firefox/WebKit and cleanup.
 - Fresh production build succeeds; postbuild removes the generated `.env` copy
   and the broad storage tracing warning is gone.
 - CI also runs the packaging unit guard and full canary build.
