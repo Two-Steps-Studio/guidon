@@ -65,8 +65,9 @@ interface KanbanBoardProps {
   /** Omitted on a read-only board - no selection there. */
   onSelectionChange?: (ids: Set<string>) => void;
   /**
-   * The board fills its parent's height (a flex column of definite height)
-   * and each column scrolls inside it, instead of capping columns at a guess
+   * The board can shrink to its parent's available height (a flex column of
+   * definite height), but never grows beyond the longest column's content.
+   * Each long column scrolls inside it, instead of capping columns at a guess
    * of the viewport (100vh minus the header). From md up only: on a phone
    * the page scrolls normally - a screen-tall box of nested scroll areas
    * fights the finger there.
@@ -496,7 +497,7 @@ export function KanbanBoard({
         // between two - but not while a card is being dragged, when the
         // board scrolls itself toward the edge.
         !draggingTask && "max-md:snap-x max-md:snap-mandatory",
-        fillHeight && "md:min-h-0 md:flex-1"
+        fillHeight && "md:min-h-0 md:flex-[0_1_auto]"
       )}
       role="list"
       aria-label={t("taskBoardAria")}

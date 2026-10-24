@@ -17,6 +17,9 @@ export interface SelectMenuOption {
   icon?: React.ReactNode
 }
 
+// Preserve trigger height while showing only its selected icon in a sidebar rail.
+export const SIDEBAR_SELECT_CLASS_NAME = "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:[&_[data-select-label]]:hidden group-data-[collapsible=icon]:[&>[data-select-chevron]]:hidden";
+
 interface SelectMenuProps {
   value: string
   options: SelectMenuOption[]
@@ -54,8 +57,8 @@ export function SelectMenu({
           className
         )}
       >
-        <span className="flex min-w-0 items-center gap-2">{current?.icon}<span className="truncate">{current?.label ?? value}</span></span>
-        <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="flex min-w-0 items-center gap-2">{current?.icon}<span data-select-label className="truncate">{current?.label ?? value}</span></span>
+        <ChevronsUpDown data-select-chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"

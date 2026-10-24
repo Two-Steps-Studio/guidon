@@ -84,6 +84,11 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
   owner is allowlisted with an explicit test-only ADMIN_EMAILS value; inherited
   admin configuration is not used. INSERT is temporarily revoked/restored only
   in the runner's disposable database to prove the real error path.
+- Small board scroll area ends below its longest column; a 40-card column keeps
+  its own vertical scroll, horizontal board scrolling works, and the phone page
+  does not overflow. Sidebar global/project/profile rows retain vertical centers
+  when collapsing/expanding. Saved pins do not produce sidebar task links and
+  remain intact in the database; each fixture mutation is restored afterward.
 
 This is the self-hosted direct-PostgreSQL auth/data path. It does **not** certify
 Supabase Auth/PostgREST, external OAuth callbacks, reset email delivery,
