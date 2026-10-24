@@ -6,6 +6,24 @@ list is written for a mobile app, so some items do not map directly to
 Guidon's web SaaS model. “Implemented” means code exists; production service
 configuration still needs to be checked in the deployment environment.
 
+## Release evidence update — 2026-10-24
+
+**Release remains on HOLD until the remaining integration/operations evidence
+and owner deployment approval.** The execution order and dated board baseline
+are in [release research](./release/research-and-execution-2026-10-24.md).
+Current implementation/evidence records:
+
+- [Patched runtime dependencies and shipped Monaco sanitizer](./release/patched-dependencies-2026-10-24.md).
+- [Standalone artifacts without runtime configuration/data](./release/standalone-package-2026-10-24.md).
+- [Actual signup/session/owner-viewer coverage and Cloud gaps](./release/authentication-coverage-2026-10-24.md).
+- [Actual REST/MCP isolation, scope and mutation checks](./release/api-mcp-isolation-2026-10-24.md).
+- [Cloud, safe email, Stripe sandbox and recovery evidence handoff](./release/staging-handoff.md).
+
+Tests use disposable databases/credentials and actual production builds. Local
+and CI success do not certify untested Cloud configuration, external providers,
+distributed limits, payment processing or backup restoration. The findings below
+remain a repository feature inventory, not a declaration of production readiness.
+
 ## Findings
 
 | # | Launch item | Status | Repository evidence and next step |

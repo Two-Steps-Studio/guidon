@@ -38,7 +38,7 @@
     "test:dependencies": "node tests/dependencies.test.mjs && node tests/monaco.browser.mjs",
     "module-manifest:schema": "node --experimental-strip-types scripts/generate-module-manifest-schema.mjs",
     "test:attachments": "node tests/attachment-compression.test.mjs",
-    "test:api": "node tests/api-route.test.mjs"
+    "test:api": "node --experimental-strip-types tests/api-route.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

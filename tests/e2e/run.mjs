@@ -14,6 +14,8 @@ import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopy
 import { seedReleaseFixture } from "./seed.mjs";
 import { releaseSmoke } from "./smoke.mjs";
 import { authenticationCoverage } from "./authentication.mjs";
+import { seedApiFixture } from "./api-fixture.mjs";
+import { apiIsolation } from "./api-isolation.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
 
@@ -75,6 +77,7 @@ try{
   phase="migrations";
   await writeFile(path.join(artifacts,"migrations.log"),await run(process.execPath,["scripts/migrate.mjs"]));
   client=new pg.Client({connectionString});await client.connect();const fixture=await seedReleaseFixture(client);
+  const api=await seedApiFixture(client,fixture);
   const payload=Buffer.from(JSON.stringify({sub:fixture.users[0].id,exp:Math.floor(Date.now()/1000)-60})).toString("base64url");
   const expired=`${payload}.${createHmac("sha256",environment.AUTH_SECRET).update(payload).digest("base64url")}`;
   const forgedPayload=Buffer.from(JSON.stringify({sub:fixture.users[1].id,exp:Math.floor(Date.now()/1000)+3600})).toString("base64url");
@@ -106,6 +109,8 @@ try{
     request.on("aborted",()=>upstream.destroy());request.pipe(upstream);
   });
   await new Promise(resolve=>proxy.listen(tlsPort,"127.0.0.1",resolve));
+  phase="api-mcp";
+  results.push(await apiIsolation({origin,fixture,api,client}));
   for(const [name,browserType] of Object.entries({chromium,firefox,webkit})){
     phase=name;
     console.log(`E2E: ${name} real login, private projects and session smoke`);
@@ -126,6 +131,7 @@ try{
     catch(error){await page.screenshot({path:path.join(artifacts,`${name}-failed.png`),fullPage:true});results.push({browser:name,outcome:"failed",error:error.message,durationMs:Date.now()-started});throw error;}
     finally{await context.tracing.stop({path:path.join(artifacts,`${name}-trace.zip`)});await context.close();await browser.close();await writeFile(path.join(artifacts,"app.log"),appLog);}
   }
+  for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
   completed=true;
 }finally{
   clearTimeout(deadline);
