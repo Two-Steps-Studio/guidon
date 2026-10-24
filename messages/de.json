@@ -1254,7 +1254,8 @@
     "emptyTitle": "Noch keine Aktivität",
     "emptyDescription": "Änderungen an diesem Projekt werden hier angezeigt, sobald sie passieren.",
     "someone": "Jemand",
-    "action": "{action, select, project_created {Projekt erstellt} project_updated {Projekt aktualisiert} project_archived {Projekt archiviert} project_deleted {Projekt gelöscht} project_exported {Projekt exportiert} project_imported {Projekt importiert} task_created {Aufgabe erstellt} task_updated {Aufgabe aktualisiert} task_deleted {Aufgabe gelöscht} task_status_changed {Aufgabenstatus geändert} task_ai_started {KI hat Aufgabe gestartet} task_ai_commented {KI hat Kommentar hinzugefügt} task_ai_status_changed {KI hat Status geändert} task_ai_completed {KI hat Aufgabe abgeschlossen} phase_created {Phase erstellt} phase_updated {Phase aktualisiert} phase_deleted {Phase gelöscht} decision_created {Entscheidung erstellt} decision_updated {Entscheidung aktualisiert} decision_approved {Entscheidung genehmigt} decision_rejected {Entscheidung abgelehnt} relation_created {Beziehung erstellt} relation_deleted {Beziehung gelöscht} source_created {Quelle hinzugefügt} source_updated {Quelle aktualisiert} memory_created {Gedächtniseintrag erstellt} memory_updated {Gedächtniseintrag aktualisiert} memory_verified {Gedächtniseintrag verifiziert} file_uploaded {Datei hochgeladen} file_deleted {Datei gelöscht} github_repo_connected {GitHub-Repository verbunden} github_repo_disconnected {GitHub-Repository getrennt} github_file_committed {Datei zu GitHub committet} member_added {Mitglied hinzugefügt} member_removed {Mitglied entfernt} member_role_changed {Mitgliedsrolle geändert} invite_sent {Einladung gesendet} invite_accepted {Einladung angenommen} invite_rejected {Einladung abgelehnt} ai_account_created {KI-Konto erstellt} ai_account_disabled {KI-Konto deaktiviert} tasks_imported {Aufgaben importiert} other {Aktivität}}"
+    "action": "{action, select, project_created {Projekt erstellt} project_updated {Projekt aktualisiert} project_archived {Projekt archiviert} project_deleted {Projekt gelöscht} project_exported {Projekt exportiert} project_imported {Projekt importiert} task_created {Aufgabe erstellt} task_updated {Aufgabe aktualisiert} task_deleted {Aufgabe gelöscht} task_status_changed {Aufgabenstatus geändert} task_ai_started {KI hat Aufgabe gestartet} task_ai_commented {KI hat Kommentar hinzugefügt} task_ai_status_changed {KI hat Status geändert} task_ai_completed {KI hat Aufgabe abgeschlossen} phase_created {Phase erstellt} phase_updated {Phase aktualisiert} phase_deleted {Phase gelöscht} decision_created {Entscheidung erstellt} decision_updated {Entscheidung aktualisiert} decision_approved {Entscheidung genehmigt} decision_rejected {Entscheidung abgelehnt} relation_created {Beziehung erstellt} relation_deleted {Beziehung gelöscht} source_created {Quelle hinzugefügt} source_updated {Quelle aktualisiert} memory_created {Gedächtniseintrag erstellt} memory_updated {Gedächtniseintrag aktualisiert} memory_verified {Gedächtniseintrag verifiziert} file_uploaded {Datei hochgeladen} file_deleted {Datei gelöscht} github_repo_connected {GitHub-Repository verbunden} github_repo_disconnected {GitHub-Repository getrennt} github_file_committed {Datei zu GitHub committet} member_added {Mitglied hinzugefügt} member_removed {Mitglied entfernt} member_role_changed {Mitgliedsrolle geändert} invite_sent {Einladung gesendet} invite_accepted {Einladung angenommen} invite_rejected {Einladung abgelehnt} ai_account_created {KI-Konto erstellt} ai_account_disabled {KI-Konto deaktiviert} tasks_imported {Aufgaben importiert} module_builder_attempt {KI-Modulversuch} other {Aktivität}}",
+    "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
     "title": "Dateien",
@@ -2010,5 +2011,37 @@
     "invalid": "Ungültige Einstellungen oder Anfrage.",
     "incompatibleData": "Die Zielversion kann die aktuellen Datensätze nicht abbilden. Keine Daten geändert.",
     "saveFailed": "Modul konnte nicht gespeichert werden."
+  },
+  "moduleBuilder": {
+    "title": "KI-Modulassistent",
+    "description": "Bedarf beschreiben, Plan prüfen und Schema vor der Installation bestätigen.",
+    "privacy": "Nur Ihre Beschreibung wird an den für die Organisation konfigurierten KI-Anbieter gesendet. Keine Geheimnisse eingeben. Projektdatensätze werden nicht angehängt.",
+    "prompt": "Was soll das Modul tun?",
+    "working": "Wird vorbereitet…",
+    "plan": "Plan vorschlagen",
+    "review": "Plan prüfen",
+    "questions": "Offene Fragen",
+    "answerHint": "Ergänzen Sie die Beschreibung oben um Ihre Antworten und lassen Sie einen neuen Plan erstellen.",
+    "entities": "Daten und Felder",
+    "views": "Ansichten",
+    "relations": "Dieser Schritt unterstützt unabhängige Moduldaten. Beziehungen zwischen Entitäten und Verbindungen zu anderen Modulen sind nicht verfügbar.",
+    "required": "erforderlich",
+    "maxLength": "max. {count} Zeichen",
+    "approval": "Ich bestätige diesen Plan und seine Berechtigungen zur Erstellung eines Manifests.",
+    "generate": "Manifest erstellen",
+    "generated": "Manifest validiert",
+    "download": "JSON herunterladen",
+    "requestId": "Versuchs-ID",
+    "logs": "Versuchsverlauf",
+    "invalidInput": "Gültige Beschreibung oder gültigen Plan eingeben (Beschreibung bis 6000 Zeichen).",
+    "invalidResponse": "Die KI hat einen ungültigen oder nicht unterstützten Plan geliefert. Beschreibung anpassen und erneut versuchen.",
+    "rateLimited": "Anfragelimit erreicht. Warten Sie einige Minuten und versuchen Sie es erneut.",
+    "timeout": "Der KI-Anbieter hat nicht rechtzeitig geantwortet. Erneut versuchen.",
+    "providerFailed": "KI nicht erreichbar. Konfiguration der Organisation prüfen oder erneut versuchen.",
+    "needsAnswers": "Beantworten Sie die Fragen, bevor Sie den Plan bestätigen.",
+    "approvalRequired": "Bestätigen Sie zuerst den Plan.",
+    "permission": "Nur Projektinhaber und Administratoren dürfen Module erstellen.",
+    "aiDisabled": "KI-Funktionen sind für dieses Projekt deaktiviert.",
+    "notConfigured": "Konfigurieren Sie einen KI-Anbieter in den Organisationseinstellungen."
   }
 }

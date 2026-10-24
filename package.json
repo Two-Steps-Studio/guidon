@@ -26,7 +26,7 @@
     "test:import": "node tests/task-import.test.mjs",
     "test:recurrence": "node tests/recurrence.test.mjs",
     "test:billing": "node tests/billing.test.mjs",
-    "test:modules": "node --experimental-strip-types tests/custom-modules.test.mjs && node --experimental-strip-types tests/module-manifest.test.mjs && node --experimental-strip-types tests/module-runtime.test.mjs && node --experimental-strip-types tests/module-installation.test.mjs && node --experimental-strip-types tests/module-lifecycle.test.mjs",
+    "test:modules": "node --experimental-strip-types tests/custom-modules.test.mjs && node --experimental-strip-types tests/module-manifest.test.mjs && node --experimental-strip-types tests/module-runtime.test.mjs && node --experimental-strip-types tests/module-installation.test.mjs && node --experimental-strip-types tests/module-lifecycle.test.mjs && node --experimental-strip-types tests/module-builder.test.mjs",
     "test:module-catalog": "node --experimental-strip-types tests/module-catalog.browser.mjs",
     "module-manifest:schema": "node --experimental-strip-types scripts/generate-module-manifest-schema.mjs",
     "test:attachments": "node tests/attachment-compression.test.mjs",

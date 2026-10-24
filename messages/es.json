@@ -1254,7 +1254,8 @@
     "emptyTitle": "Aún no hay actividad",
     "emptyDescription": "Los cambios en este proyecto aparecerán aquí en cuanto ocurran.",
     "someone": "Alguien",
-    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} ai_account_created {Cuenta de IA creada} ai_account_disabled {Cuenta de IA desactivada} tasks_imported {Tareas importadas} other {Actividad}}"
+    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} ai_account_created {Cuenta de IA creada} ai_account_disabled {Cuenta de IA desactivada} tasks_imported {Tareas importadas} module_builder_attempt {Intento del creador de módulos con IA} other {Actividad}}",
+    "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
     "title": "Archivos",
@@ -2010,5 +2011,37 @@
     "invalid": "Ajustes o solicitud no válidos.",
     "incompatibleData": "La versión de destino no admite los registros actuales. No se modificaron los datos.",
     "saveFailed": "No se pudo guardar el módulo."
+  },
+  "moduleBuilder": {
+    "title": "Creador de módulos con IA",
+    "description": "Describe tu necesidad, revisa el plan y aprueba el esquema antes de instalarlo.",
+    "privacy": "Solo se envía tu descripción al proveedor de IA configurado para la organización. No incluyas secretos. No se adjuntan registros del proyecto.",
+    "prompt": "¿Qué debe hacer el módulo?",
+    "working": "Preparando…",
+    "plan": "Proponer plan",
+    "review": "Revisar plan",
+    "questions": "Preguntas pendientes",
+    "answerHint": "Añade tus respuestas a la descripción de arriba y solicita un nuevo plan.",
+    "entities": "Datos y campos",
+    "views": "Vistas",
+    "relations": "Esta etapa admite datos independientes del módulo. Las relaciones entre entidades y conexiones con otros módulos no están disponibles.",
+    "required": "obligatorio",
+    "maxLength": "máx. {count} caracteres",
+    "approval": "Apruebo este plan y sus permisos para crear un manifiesto.",
+    "generate": "Crear manifiesto",
+    "generated": "Manifiesto validado",
+    "download": "Descargar JSON",
+    "requestId": "ID del intento",
+    "logs": "Historial de intentos",
+    "invalidInput": "Introduce una descripción o un plan válido (hasta 6000 caracteres de descripción).",
+    "invalidResponse": "La IA devolvió un plan no válido o no compatible. Ajusta la descripción e inténtalo de nuevo.",
+    "rateLimited": "Se alcanzó el límite de solicitudes. Espera unos minutos e inténtalo de nuevo.",
+    "timeout": "El proveedor de IA no respondió a tiempo. Inténtalo de nuevo.",
+    "providerFailed": "No se pudo conectar con la IA. Comprueba la configuración de la organización o inténtalo de nuevo.",
+    "needsAnswers": "Responde las preguntas antes de aprobar el plan.",
+    "approvalRequired": "Aprueba el plan primero.",
+    "permission": "Solo los propietarios y administradores del proyecto pueden crear módulos.",
+    "aiDisabled": "Las funciones de IA están desactivadas para este proyecto.",
+    "notConfigured": "Configura un proveedor de IA en los ajustes de la organización."
   }
 }

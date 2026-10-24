@@ -36,6 +36,7 @@ interface ActionConfig {
  * renders instead of crashing.
  */
 export const ACTION_CONFIG: Record<ActivityAction, ActionConfig> = {
+  module_builder_attempt: { label: "Module AI builder attempt", icon: Bot, color: "text-info" },
   project_created: { label: "Project created", icon: FolderKanban, color: "text-success" },
   project_updated: { label: "Project updated", icon: FolderKanban, color: "text-primary" },
   project_archived: { label: "Project archived", icon: FolderKanban, color: "text-muted-foreground" },

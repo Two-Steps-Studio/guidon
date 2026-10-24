@@ -1254,7 +1254,8 @@
     "emptyTitle": "No activity yet",
     "emptyDescription": "Changes on this project will show up here once they happen.",
     "someone": "Someone",
-    "action": "{action, select, project_created {Project created} project_updated {Project updated} project_archived {Project archived} project_deleted {Project deleted} project_exported {Project exported} project_imported {Project imported} task_created {Task created} task_updated {Task updated} task_deleted {Task deleted} task_status_changed {Task status changed} task_ai_started {AI started task} task_ai_commented {AI added comment} task_ai_status_changed {AI changed status} task_ai_completed {AI completed task} phase_created {Phase created} phase_updated {Phase updated} phase_deleted {Phase deleted} decision_created {Decision created} decision_updated {Decision updated} decision_approved {Decision approved} decision_rejected {Decision rejected} relation_created {Relation created} relation_deleted {Relation deleted} source_created {Source added} source_updated {Source updated} memory_created {Memory created} memory_updated {Memory updated} memory_verified {Memory verified} file_uploaded {File uploaded} file_deleted {File deleted} github_repo_connected {GitHub repository connected} github_repo_disconnected {GitHub repository disconnected} github_file_committed {File committed to GitHub} member_added {Member added} member_removed {Member removed} member_role_changed {Member role changed} invite_sent {Invite sent} invite_accepted {Invite accepted} invite_rejected {Invite rejected} ai_account_created {AI account created} ai_account_disabled {AI account disabled} tasks_imported {Tasks imported} other {Activity}}"
+    "action": "{action, select, project_created {Project created} project_updated {Project updated} project_archived {Project archived} project_deleted {Project deleted} project_exported {Project exported} project_imported {Project imported} task_created {Task created} task_updated {Task updated} task_deleted {Task deleted} task_status_changed {Task status changed} task_ai_started {AI started task} task_ai_commented {AI added comment} task_ai_status_changed {AI changed status} task_ai_completed {AI completed task} phase_created {Phase created} phase_updated {Phase updated} phase_deleted {Phase deleted} decision_created {Decision created} decision_updated {Decision updated} decision_approved {Decision approved} decision_rejected {Decision rejected} relation_created {Relation created} relation_deleted {Relation deleted} source_created {Source added} source_updated {Source updated} memory_created {Memory created} memory_updated {Memory updated} memory_verified {Memory verified} file_uploaded {File uploaded} file_deleted {File deleted} github_repo_connected {GitHub repository connected} github_repo_disconnected {GitHub repository disconnected} github_file_committed {File committed to GitHub} member_added {Member added} member_removed {Member removed} member_role_changed {Member role changed} invite_sent {Invite sent} invite_accepted {Invite accepted} invite_rejected {Invite rejected} ai_account_created {AI account created} ai_account_disabled {AI account disabled} tasks_imported {Tasks imported} module_builder_attempt {Module AI builder attempt} other {Activity}}",
+    "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
     "title": "Files",
@@ -2010,5 +2011,37 @@
     "invalid": "Invalid settings or request.",
     "incompatibleData": "The target version cannot represent current records. No data was changed.",
     "saveFailed": "Could not save the module."
+  },
+  "moduleBuilder": {
+    "title": "AI module builder",
+    "description": "Describe your need, review the plan and approve the schema before installation.",
+    "privacy": "Only your description is sent to the AI provider configured for the organization. Do not include secrets. Project records are not attached.",
+    "prompt": "What should the module do?",
+    "working": "Preparing…",
+    "plan": "Propose a plan",
+    "review": "Plan to review",
+    "questions": "Questions to answer",
+    "answerHint": "Add your answers to the description above and propose a new plan.",
+    "entities": "Data and fields",
+    "views": "Views",
+    "relations": "This stage supports independent module data. Cross-entity relations and connections to other modules are unavailable.",
+    "required": "required",
+    "maxLength": "max. {count} characters",
+    "approval": "I approve this plan and its permissions to create a manifest.",
+    "generate": "Create manifest",
+    "generated": "Manifest validated",
+    "download": "Download JSON",
+    "requestId": "Attempt ID",
+    "logs": "Attempt history",
+    "invalidInput": "Enter a valid description or plan (up to 6000 description characters).",
+    "invalidResponse": "AI returned an invalid or unsupported plan. Adjust the description and try again.",
+    "rateLimited": "The request limit was reached. Wait a few minutes and try again.",
+    "timeout": "The AI provider did not respond in time. Try again.",
+    "providerFailed": "Could not reach AI. Check the organization configuration or try again.",
+    "needsAnswers": "Answer the questions before approving the plan.",
+    "approvalRequired": "Approve the plan first.",
+    "permission": "Only project owners and admins can build modules.",
+    "aiDisabled": "AI features are disabled for this project.",
+    "notConfigured": "Configure an AI provider in organization settings."
   }
 }
