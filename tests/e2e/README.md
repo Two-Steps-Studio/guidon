@@ -23,6 +23,13 @@ non-ignored source files into a new OS temp directory, excludes `.env*`, builds
 there with an allowlisted environment and applies the real migration runner.
 It cannot be redirected to an existing database through `DATABASE_URL`.
 
+Agent tooling directories (`.claude`, `.agents`, `.worktrees`) are excluded;
+their Git symlinks can represent directories on Linux rather than Windows files.
+The runner then creates explicitly non-secret packaging canaries in its own
+temporary `.env.production`, default/custom storage and diagnostic output. It
+asserts those never reach standalone output and source canaries stay intact.
+No original environment file is copied or used.
+
 Two accounts and private projects in separate organizations are seeded only in
 that disposable database. Passwords, DB password, AUTH_SECRET and a one-day TLS
 certificate are generated per run. HTTPS terminates at a loopback Node proxy;

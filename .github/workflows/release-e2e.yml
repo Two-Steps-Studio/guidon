@@ -32,6 +32,7 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run test:dependencies
+      - run: npm run test:package
       - run: npm run test:auth
       - run: npm run test:db
       - run: npm run test:e2e

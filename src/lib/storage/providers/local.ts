@@ -29,8 +29,11 @@ export class LocalStorageProvider implements StorageProvider {
   private readonly root: string;
 
   constructor(root = process.env.STORAGE_PATH ?? "./storage") {
-    // Resolved once so every later path can be checked against it.
-    this.root = path.resolve(root);
+    // Resolved once so every later path can be checked against it. This is
+    // mutable runtime storage, not a build input: do not trace/copy its files.
+    // Next's documented build diagnostic supports this filesystem opt-out;
+    // all runtime bucket/path validation below remains active.
+    this.root = path.resolve(/* turbopackIgnore: true */ root);
   }
 
   /**
