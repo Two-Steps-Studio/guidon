@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotionPreference } from "@/lib/use-reduced-motion";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -133,7 +134,7 @@ export function KanbanBoard({
   fillHeight = false,
 }: KanbanBoardProps) {
   const t = useTranslations("work");
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionPreference();
   const [pointerDrag, setPointerDrag] = useState<PointerDrag | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const draggingTask = pointerDrag?.task ?? null;

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
+import { animate, motion, useMotionValue } from "motion/react";
+import { useReducedMotionPreference } from "@/lib/use-reduced-motion";
 import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
@@ -31,7 +32,7 @@ export function ImageLightbox({
 }) {
   const t = useTranslations("lightbox");
   const x = useMotionValue(0);
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionPreference();
   const serial = useRef(0);
   const gesture = useRef<{ id: number; startX: number; startY: number; offset: number; axis: "pending" | "x" | "y"; samples: { x: number; time: number }[] } | null>(null);
   const open = index !== null && images[index] !== undefined;
