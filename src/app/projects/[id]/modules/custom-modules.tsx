@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { CUSTOM_MODULE_AI_PROMPT, CUSTOM_MODULE_PRESETS, customModuleSchema, customModulesSchema, type CustomModule } from "@/lib/work/custom-modules";
+import { renderCustomModuleBlocks } from "@/lib/work/custom-module-renderer";
 import { saveCustomModules } from "./actions";
 
 export function CustomModules({ projectId, initial, initialRevision, canManage }: {
@@ -74,16 +75,12 @@ export function CustomModules({ projectId, initial, initialRevision, canManage }
         {canManage && <div className="flex gap-2 pt-2"><Button size="sm" variant="outline" disabled={pending} onClick={() => { setEditing(module.id); setDraft(JSON.stringify(module, null, 2)); }}>{t("edit")}</Button>
           <Button size="sm" variant="outline" disabled={pending} onClick={() => update(modules.filter((item) => item.id !== module.id))}>{t("remove")}</Button></div>}
       </CardHeader>
-      <CardContent className="space-y-5">{module.blocks.map((block, blockIndex) => <section key={blockIndex} className="space-y-2 break-words">
-        <h2 className="text-sm font-semibold">{block.title}</h2>
-        {block.type === "text" && <p className="whitespace-pre-wrap text-sm">{block.text}</p>}
-        {block.type === "links" && <ul className="space-y-1 text-sm">{block.items.map((item, i) => <li key={i}><a className="text-primary underline" href={item.url} target="_blank" rel="noopener noreferrer">{item.label}</a></li>)}</ul>}
-        {block.type === "checklist" && <ul className="space-y-2">{block.items.map((item, i) => <li key={i}><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={item.done} disabled={!canManage || pending} onChange={(event) => {
-          const next = structuredClone(modules); const target = next[moduleIndex].blocks[blockIndex];
-          if (target.type === "checklist") target.items[i].done = event.target.checked;
-          update(next);
-        }} /><span className={item.done ? "line-through text-muted-foreground" : ""}>{item.label}</span></label></li>)}</ul>}
-      </section>)}</CardContent>
+      <CardContent className="space-y-5">{renderCustomModuleBlocks(module, moduleIndex, canManage, pending, (changedModuleIndex, blockIndex, itemIndex, checked) => {
+        const next = structuredClone(modules);
+        const target = next[changedModuleIndex].blocks[blockIndex];
+        if (target.type === "checklist") target.items[itemIndex].done = checked;
+        update(next);
+      })}</CardContent>
     </Card>)}</div>
   </div>;
 }
