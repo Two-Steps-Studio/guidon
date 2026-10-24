@@ -133,7 +133,7 @@ async function verifySessionCookie(cookieValue, secret) {
   }
 
   if (typeof payload.sub !== "string" || typeof payload.exp !== "number") return null;
-  if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+  if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
 
   return payload.sub;
 }

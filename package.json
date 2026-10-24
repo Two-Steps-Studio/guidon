@@ -20,7 +20,7 @@
     "brand:icons": "node scripts/generate-brand-icons.mjs",
     "test:db": "node --experimental-strip-types tests/db/compat.test.mjs",
     "test:ai": "node --experimental-strip-types tests/ai/provider.test.mjs && node tests/ai/task-learning.test.mjs",
-    "test:auth": "node --experimental-strip-types tests/auth/local-auth.test.mjs && node --experimental-strip-types tests/auth/oauth.test.mjs && node --experimental-strip-types tests/auth/mobile-login.test.mjs && node --experimental-strip-types tests/auth/oauth-server.test.mjs && node --experimental-strip-types tests/auth/account-deletion.test.mjs && node --experimental-strip-types --test tests/auth/client-assertion.test.mjs",
+    "test:auth": "node --experimental-strip-types tests/auth/local-auth.test.mjs && node --experimental-strip-types tests/auth/oauth.test.mjs && node --experimental-strip-types tests/auth/mobile-login.test.mjs && node --experimental-strip-types tests/auth/oauth-server.test.mjs && node --experimental-strip-types tests/auth/account-deletion.test.mjs && node --experimental-strip-types --test tests/auth/client-assertion.test.mjs && node --experimental-strip-types --conditions=react-server tests/auth/session-cookie.test.mjs",
     "test:limits": "node tests/limits.test.mjs",
     "test:reports": "node --experimental-strip-types tests/game-report.test.mjs",
     "test:github": "node --experimental-strip-types tests/github-webhook.test.mjs",

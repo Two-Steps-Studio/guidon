@@ -19,6 +19,7 @@ export async function releaseSmoke({page,context,origin,fixture}) {
   await page.locator("#password").fill(fixture.password);
   await page.locator('button[type="submit"]').click();
   await page.waitForURL(url=>url.pathname==="/dashboard");
+  await page.getByRole("heading",{level:1}).waitFor();
   const session=(await context.cookies()).find(cookie=>cookie.name==="guidon-session");
   assert.ok(session?.httpOnly && session?.secure,"Production login must retain HttpOnly and Secure cookies");
   await page.goto(`${origin}/projects`);
