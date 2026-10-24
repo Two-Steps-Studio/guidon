@@ -54,3 +54,11 @@ start with an empty array and revision zero. Verify creating, reading, editing,
 exporting and importing a module with two project admins in separate sessions.
 Check that another tenant cannot access the project, and that read-only members
 see saved content but cannot change it.
+
+## Installable module packages
+
+The JSON format on this page is the existing project-content module format.
+Its integer `version: 1` is not SemVer. Installable package manifests use a
+separate proposed format documented in
+[`RFC 0001`](rfcs/0001-module-manifest-v1.md), with its own JSON Schema and
+validator. They are not accepted by this editor and do not execute code.
