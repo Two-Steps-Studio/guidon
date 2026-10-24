@@ -12,6 +12,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
+import { BetaBadge } from "@/components/layout/beta-badge";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -81,14 +82,14 @@ export default async function Home() {
       <div className="container relative z-10 mx-auto px-4 pb-12 pt-14 md:pt-20">
         <div className="max-w-5xl mx-auto text-center space-y-8">
           <div className="space-y-6">
-            <Image
+            <div className="flex flex-wrap items-center justify-center gap-3"><Image
               src="/assets/guidon-wordmark.png"
               alt="Guidon"
               width={769}
               height={285}
               priority
-              className="mx-auto h-16 w-auto dark:invert md:h-20"
-            />
+              className="h-16 w-auto dark:invert md:h-20"
+            /><BetaBadge /></div>
             <div className="space-y-3">
               <h1
                 className={`${displayFont.className} text-5xl md:text-6xl tracking-tight text-text dark:text-text`}

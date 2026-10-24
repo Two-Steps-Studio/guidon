@@ -1152,7 +1152,12 @@
     "send": "Enviar",
     "thanks": "¡Gracias! Tu comentario ha sido enviado.",
     "close": "Cerrar",
-    "genericError": "No se pudo enviar tu comentario. Inténtalo de nuevo."
+    "genericError": "No se pudo enviar tu comentario. Inténtalo de nuevo.",
+    "ratingLabel": "¿Cómo valoras tu experiencia?",
+    "ratingHint": "1 = muy mala, 5 = excelente",
+    "ratingValue": "{rating} de 5",
+    "ratingRequired": "Elige una valoración del 1 al 5.",
+    "messageLabel": "Tu comentario"
   },
   "context": {
     "title": "Capa de contexto",
@@ -1452,7 +1457,9 @@
     "promoStatusExpired": "Caducado",
     "promoStatusUsedUp": "Agotado",
     "promoDisable": "Desactivar",
-    "promoEnable": "Activar"
+    "promoEnable": "Activar",
+    "feedbackRating": "Valoración: {rating}/5",
+    "feedbackUnrated": "Sin valoración"
   },
   "profile": {
     "title": "Perfil",

@@ -188,5 +188,7 @@
   "You're generating insights too quickly - wait a few minutes and try again.": "Estás generando ideas demasiado rápido: espera unos minutos e inténtalo de nuevo.",
   "You're sending messages too quickly - wait a few minutes and try again.": "Estás enviando mensajes demasiado rápido: espera unos minutos e inténtalo de nuevo.",
   "Your GitHub sign-in expired. Start over.": "Tu inicio de sesión con GitHub ha caducado. Empieza de nuevo.",
-  "reports:write can't be combined with other scopes - that key ships inside your game. Create a separate key for it.": "reports:write no se puede combinar con otros ámbitos: esa clave va incluida en tu juego. Crea una clave aparte para ello."
+  "reports:write can't be combined with other scopes - that key ships inside your game. Create a separate key for it.": "reports:write no se puede combinar con otros ámbitos: esa clave va incluida en tu juego. Crea una clave aparte para ello.",
+  "Choose a rating from 1 to 5.": "Elige una valoración del 1 al 5.",
+  "Failed to send feedback.": "No se pudo enviar tu comentario. Inténtalo de nuevo."
 }

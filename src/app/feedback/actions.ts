@@ -5,8 +5,8 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { tr } from "@/lib/i18n/server-errors";
+import { FEEDBACK_MAX_LENGTH, isFeedbackRating } from "@/lib/feedback";
 
-const MAX_MESSAGE_LENGTH = 4000;
 
 export type SubmitFeedbackResult = { error: string | null };
 
@@ -21,29 +21,32 @@ export type SubmitFeedbackResult = { error: string | null };
  * not trusted for anything beyond display in the admin inbox - capped and
  * never interpolated into a query.
  */
-export async function submitFeedback(message: string, pageUrl: string | null): Promise<SubmitFeedbackResult> {
+export async function submitFeedback(message: string, pageUrl: string | null, rating: number | null = null): Promise<SubmitFeedbackResult> {
+  if (typeof message !== "string") return { error: await tr("Feedback can't be empty.") };
+  if (rating !== null && !isFeedbackRating(rating)) return { error: await tr("Choose a rating from 1 to 5.") };
   const trimmed = message.trim();
   if (trimmed.length === 0) {
     return { error: await tr("Feedback can't be empty.") };
   }
-  if (trimmed.length > MAX_MESSAGE_LENGTH) {
-    return { error: `Feedback is limited to ${MAX_MESSAGE_LENGTH} characters.` };
+  if (trimmed.length > FEEDBACK_MAX_LENGTH) {
+    return { error: `Feedback is limited to ${FEEDBACK_MAX_LENGTH} characters.` };
   }
 
   const user = await getCurrentUser();
-  const trimmedPageUrl = pageUrl?.trim().slice(0, 2000) || null;
+  const trimmedPageUrl = typeof pageUrl === "string" ? pageUrl.trim().slice(0, 2000) || null : null;
 
   if (hasDirectDatabase()) {
     try {
       await withUser(user.id, ({ query }) =>
-        query("INSERT INTO feedback (user_id, message, page_url) VALUES ($1, $2, $3)", [
+        query("INSERT INTO feedback (user_id, message, page_url, rating) VALUES ($1, $2, $3, $4)", [
           user.id,
           trimmed,
           trimmedPageUrl,
+          rating,
         ])
       );
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to send feedback." };
+    } catch {
+      return { error: await tr("Failed to send feedback.") };
     }
     return { error: null };
   }
@@ -51,8 +54,8 @@ export async function submitFeedback(message: string, pageUrl: string | null): P
   const supabase = await createClient();
   const { error } = await supabase
     .from("feedback")
-    .insert({ user_id: user.id, message: trimmed, page_url: trimmedPageUrl });
+    .insert({ user_id: user.id, message: trimmed, page_url: trimmedPageUrl, rating });
 
-  if (error) return { error: error.message };
+  if (error) return { error: await tr("Failed to send feedback.") };
   return { error: null };
 }

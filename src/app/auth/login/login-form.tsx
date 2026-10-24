@@ -16,6 +16,7 @@ import { OAuthButtons } from "@/components/auth/oauth-buttons"
 import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { loginLocalAction } from "./actions"
+import { BetaBadge } from "@/components/layout/beta-badge"
 
 // The server HTML is visible before React attaches controlled-input handlers.
 // Prevent early typing from being discarded when hydration initializes state.
@@ -80,14 +81,14 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background-secondary/70 to-background-tertiary/40 dark:from-background-secondary/70 dark:to-background/30 flex flex-col items-center justify-center gap-6 p-4">
-      <Image
+      <div className="flex items-center gap-3"><Image
         src="/assets/guidon-wordmark.png"
         alt="Guidon"
         width={769}
         height={285}
         priority
         className="h-8 w-auto dark:invert"
-      />
+      /><BetaBadge /></div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>

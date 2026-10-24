@@ -49,6 +49,7 @@ export default async function AdminFeedbackPage() {
                   <li key={entry.id} className="flex items-start gap-3 px-4 py-3 hover:bg-surface-hover">
                     <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1 space-y-1">
+                      <p className="text-sm font-medium text-primary">{entry.rating == null ? t("feedbackUnrated") : t("feedbackRating", { rating: entry.rating })}</p>
                       <p className="whitespace-pre-wrap text-sm">{entry.message}</p>
                       <p className="text-xs text-muted-foreground">
                         {t("feedbackFrom", { name: displayName(author, t("feedbackAnonymous")) })}
