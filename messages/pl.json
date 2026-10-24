@@ -173,7 +173,9 @@
     "empty": "Brak powiadomień.",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
     "bellAria": "Powiadomienia",
-    "bellAriaUnread": "Powiadomienia ({count} nieprzeczytanych)"
+    "bellAriaUnread": "Powiadomienia ({count} nieprzeczytanych)",
+    "loadFailed": "Nie udało się odświeżyć powiadomień.",
+    "retry": "Spróbuj ponownie"
   },
   "dashboard": {
     "title": "Pulpit",

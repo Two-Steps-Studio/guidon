@@ -173,7 +173,9 @@
     "empty": "Noch keine Benachrichtigungen.",
     "markAllRead": "Alle als gelesen markieren",
     "bellAria": "Benachrichtigungen",
-    "bellAriaUnread": "Benachrichtigungen ({count} ungelesen)"
+    "bellAriaUnread": "Benachrichtigungen ({count} ungelesen)",
+    "loadFailed": "Benachrichtigungen konnten nicht aktualisiert werden.",
+    "retry": "Erneut versuchen"
   },
   "dashboard": {
     "title": "Dashboard",

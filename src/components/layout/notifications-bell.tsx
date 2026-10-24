@@ -37,6 +37,7 @@ export function NotificationsBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const [loadError, setLoadError] = useState(false);
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("notifications");
@@ -44,14 +45,26 @@ export function NotificationsBell() {
   // null until the first load, so already-unread notifications at page load
   // don't chime - only ones that arrive while the page is open.
   const lastUnread = useRef<number | null>(null);
+  const mounted = useRef(true);
+  const refreshVersion = useRef(0);
 
   const refresh = useCallback(() => {
+    if (!mounted.current) return;
+    const version = ++refreshVersion.current;
     startTransition(async () => {
+      try {
       const result = await getNotifications();
+      if (!mounted.current || version !== refreshVersion.current) return;
       setNotifications(result.notifications);
       setUnreadCount(result.unreadCount);
+      setLoadError(false);
       if (lastUnread.current !== null && result.unreadCount > lastUnread.current) playSound("notify");
       lastUnread.current = result.unreadCount;
+      } catch {
+        // A navigation can abort the pending Server Action. If this menu
+        // remains mounted, retain its cache and offer a visible retry.
+        if (mounted.current && version === refreshVersion.current) setLoadError(true);
+      }
     });
   }, []);
 
@@ -61,9 +74,10 @@ export function NotificationsBell() {
   // a 30s badge-count lag is an acceptable tradeoff for not introducing one
   // just for this.
   useEffect(() => {
+    mounted.current = true;
     refresh();
     const interval = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => { mounted.current = false;refreshVersion.current++;clearInterval(interval); };
   }, [refresh]);
 
   function handleSelect(notification: Notification) {
@@ -73,7 +87,8 @@ export function NotificationsBell() {
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
       startTransition(async () => {
-        await markNotificationRead(notification.id);
+        try { const result = await markNotificationRead(notification.id);if (result.error) throw new Error("Read failed"); }
+        catch { if (mounted.current) { setLoadError(true);refresh(); } }
       });
     }
     router.push(notification.link);
@@ -83,7 +98,8 @@ export function NotificationsBell() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })));
     setUnreadCount(0);
     startTransition(async () => {
-      await markAllNotificationsRead();
+      try { const result = await markAllNotificationsRead();if (result.error) throw new Error("Read failed"); }
+      catch { if (mounted.current) { setLoadError(true);refresh(); } }
     });
   }
 
@@ -132,7 +148,8 @@ export function NotificationsBell() {
             </button>
           )}
         </div>
-        {notifications.length === 0 ? (
+        {loadError && <div className="space-y-2 px-2 py-3 text-sm"><p role="alert">{t("loadFailed")}</p><button type="button" className="min-h-11 rounded border px-3 py-2" disabled={isPending} onClick={refresh}>{t("retry")}</button></div>}
+        {notifications.length === 0 && !loadError ? (
           <p className="px-2 py-6 text-center text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">

@@ -173,7 +173,9 @@
     "empty": "Aún no hay notificaciones.",
     "markAllRead": "Marcar todo como leído",
     "bellAria": "Notificaciones",
-    "bellAriaUnread": "Notificaciones ({count} sin leer)"
+    "bellAriaUnread": "Notificaciones ({count} sin leer)",
+    "loadFailed": "No se pudieron actualizar las notificaciones.",
+    "retry": "Reintentar"
   },
   "dashboard": {
     "title": "Panel",

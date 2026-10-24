@@ -173,7 +173,9 @@
     "empty": "No notifications yet.",
     "markAllRead": "Mark all read",
     "bellAria": "Notifications",
-    "bellAriaUnread": "Notifications ({count} unread)"
+    "bellAriaUnread": "Notifications ({count} unread)",
+    "loadFailed": "Notifications could not be refreshed.",
+    "retry": "Try again"
   },
   "dashboard": {
     "title": "Dashboard",
