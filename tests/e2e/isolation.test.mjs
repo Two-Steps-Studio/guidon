@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import os from "node:os";
 import path from "node:path";
-import {isolatedEnvironment,assertDisposablePath,allowBrowserRequest} from "./isolation.mjs";
+import {isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopySource} from "./isolation.mjs";
 
 const env=isolatedEnvironment({PATH:"safe",DATABASE_URL:"production",AUTH_SECRET:"secret",STRIPE_SECRET_KEY:"live",SUPABASE_SERVICE_ROLE_KEY:"secret",AI_API_KEY:"secret",RESEND_API_KEY:"secret",NODE_OPTIONS:"--require unsafe"},{DATABASE_URL:"isolated",AUTH_SECRET:"ephemeral"});
 assert.equal(env.DATABASE_URL,"isolated");assert.equal(env.AUTH_SECRET,"ephemeral");
@@ -12,4 +12,6 @@ assert.throws(()=>assertDisposablePath(path.resolve(".")));
 assert.equal(allowBrowserRequest("https://127.0.0.1:1234/dashboard","https://127.0.0.1:1234"),true);
 assert.equal(allowBrowserRequest("https://useguidon.com/dashboard","https://127.0.0.1:1234"),false);
 assert.equal(allowBrowserRequest("https://example.supabase.co/rest/v1/projects","https://127.0.0.1:1234"),false);
+for(const name of [".claude/skills/animate", ".agents/skills/anything", ".worktrees/example/src/app.ts", ".env", "plugins/example/.env.local"])assert.equal(shouldCopySource(name),false);
+for(const name of ["src/app/page.tsx", "tests/e2e/smoke.mjs", "plugins/unity/package.json"])assert.equal(shouldCopySource(name),true);
 console.log("pass E2E environment, target and cleanup safety guards");
