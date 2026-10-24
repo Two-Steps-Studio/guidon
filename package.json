@@ -27,6 +27,7 @@
     "test:recurrence": "node tests/recurrence.test.mjs",
     "test:billing": "node tests/billing.test.mjs",
     "test:modules": "node --experimental-strip-types tests/custom-modules.test.mjs && node --experimental-strip-types tests/module-manifest.test.mjs && node --experimental-strip-types tests/module-runtime.test.mjs",
+    "test:module-catalog": "node --experimental-strip-types tests/module-catalog.browser.mjs",
     "module-manifest:schema": "node --experimental-strip-types scripts/generate-module-manifest-schema.mjs",
     "test:attachments": "node tests/attachment-compression.test.mjs",
     "test:api": "node tests/api-route.test.mjs"
@@ -81,6 +82,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "playwright": "1.64.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

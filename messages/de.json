@@ -138,7 +138,9 @@
     "promoCodes": "Promo-Codes",
     "pinnedProjects": "Angeheftete Projekte",
     "pinnedTasks": "Angeheftet",
-    "customModules": "Custom modules"
+    "customModules": "Custom modules",
+    "marketplace": "Modul-Marktplatz",
+    "myModules": "Meine Module"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -1927,5 +1929,34 @@
     "conflict": "Das Modul wurde in einer anderen Sitzung geändert oder ist bereits installiert. Daten neu laden.",
     "saveFailed": "Modul konnte nicht gespeichert werden. Erneut versuchen.",
     "reload": "Gespeicherte Daten neu laden"
+  },
+  "moduleCatalog": {
+    "title": "Modul-Marktplatz",
+    "description": "Projektwerkzeuge durchsuchen und Berechtigungen prüfen.",
+    "search": "Module suchen",
+    "category": "Kategorie",
+    "all": "Alle",
+    "planning": "Planung",
+    "research": "Forschung",
+    "operations": "Betrieb",
+    "compatibility": "Kompatibilität",
+    "compatible": "Kompatibel",
+    "incompatible": "Inkompatibel",
+    "empty": "Keine passenden Module.",
+    "details": "Modul ansehen",
+    "myModules": "Meine Module",
+    "emptyInstalled": "Keine installierten Module in zugänglichen Projekten.",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "openProject": "Projektmodule öffnen",
+    "engine": "Engine-Kompatibilität",
+    "preview": "Live-Demo",
+    "previewHint": "Beispieldaten sind schreibgeschützt. Die Vorschau ändert keine Projektdaten.",
+    "documentation": "Entitäten und Felder",
+    "chooseProject": "Projekt auswählen",
+    "report": "Modul melden",
+    "screenshots": "Screenshots",
+    "changelog": "Änderungsprotokoll",
+    "noChangelog": "Keine Versionshinweise veröffentlicht."
   }
 }

@@ -138,7 +138,9 @@
     "promoCodes": "Promo codes",
     "pinnedProjects": "Pinned projects",
     "pinnedTasks": "Pinned",
-    "customModules": "Custom modules"
+    "customModules": "Custom modules",
+    "marketplace": "Module marketplace",
+    "myModules": "My modules"
   },
   "commandPalette": {
     "triggerLabel": "Search...",
@@ -1927,5 +1929,34 @@
     "conflict": "This module was changed in another session or is already installed. Reload before trying again.",
     "saveFailed": "Could not save the module. Please try again.",
     "reload": "Reload saved data"
+  },
+  "moduleCatalog": {
+    "title": "Module marketplace",
+    "description": "Browse declarative project tools and review their permissions.",
+    "search": "Search modules",
+    "category": "Category",
+    "all": "All",
+    "planning": "Planning",
+    "research": "Research",
+    "operations": "Operations",
+    "compatibility": "Compatibility",
+    "compatible": "Compatible",
+    "incompatible": "Incompatible",
+    "empty": "No modules match these filters.",
+    "details": "View module",
+    "myModules": "My modules",
+    "emptyInstalled": "No modules installed in your accessible projects.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "openProject": "Open project modules",
+    "engine": "Engine compatibility",
+    "preview": "Live demo",
+    "previewHint": "Read-only sample data. This preview cannot change project data.",
+    "documentation": "Entities and fields",
+    "chooseProject": "Choose a project",
+    "report": "Report this module",
+    "screenshots": "Screenshots",
+    "changelog": "Changelog",
+    "noChangelog": "No release notes published."
   }
 }

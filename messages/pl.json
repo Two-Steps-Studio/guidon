@@ -138,7 +138,9 @@
     "promoCodes": "Kody promocyjne",
     "pinnedProjects": "Przypięte projekty",
     "pinnedTasks": "Przypięte",
-    "customModules": "Własne moduły"
+    "customModules": "Własne moduły",
+    "marketplace": "Marketplace modułów",
+    "myModules": "Moje moduły"
   },
   "commandPalette": {
     "triggerLabel": "Szukaj...",
@@ -1927,5 +1929,34 @@
     "conflict": "Moduł zmieniono w innej sesji lub jest już zainstalowany. Odśwież dane przed ponowną próbą.",
     "saveFailed": "Nie udało się zapisać modułu. Spróbuj ponownie.",
     "reload": "Odśwież zapisane dane"
+  },
+  "moduleCatalog": {
+    "title": "Marketplace modułów",
+    "description": "Przeglądaj narzędzia dla projektów i sprawdzaj ich uprawnienia.",
+    "search": "Szukaj modułów",
+    "category": "Kategoria",
+    "all": "Wszystkie",
+    "planning": "Planowanie",
+    "research": "Badania",
+    "operations": "Operacje",
+    "compatibility": "Zgodność",
+    "compatible": "Zgodny",
+    "incompatible": "Niezgodny",
+    "empty": "Żaden moduł nie pasuje do tych filtrów.",
+    "details": "Zobacz moduł",
+    "myModules": "Moje moduły",
+    "emptyInstalled": "W dostępnych projektach nie ma zainstalowanych modułów.",
+    "enabled": "Włączony",
+    "disabled": "Wyłączony",
+    "openProject": "Otwórz moduły projektu",
+    "engine": "Zgodność silnika",
+    "preview": "Podgląd demonstracyjny",
+    "previewHint": "Przykładowe dane tylko do odczytu. Podgląd nie zmienia danych projektów.",
+    "documentation": "Encje i pola",
+    "chooseProject": "Wybierz projekt",
+    "report": "Zgłoś moduł",
+    "screenshots": "Zrzuty ekranu",
+    "changelog": "Historia zmian",
+    "noChangelog": "Nie opublikowano informacji o zmianach."
   }
 }
