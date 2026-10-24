@@ -23,7 +23,8 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     assert.equal(await reveal.evaluate(node=>node===document.activeElement),true);
     await page.keyboard.press('Space');assert.equal(await page.locator('#password').getAttribute('type'),'text');
     assert.equal(await page.locator('#password').inputValue(),fixture.password);
-    await page.getByRole('button',{name:'Hide password',exact:true}).click();
+    await page.getByRole('button',{name:'Hide password',exact:true}).press('Enter');
+    assert.equal(await page.locator('#password').getAttribute('type'),'password');
     await page.locator('button[type="submit"]').click();await page.waitForURL(u=>u.pathname==='/dashboard');
     // Finish login navigation and its initial refresh before injecting a
     // transport failure. Otherwise Next's pending-navigation recovery can
@@ -50,6 +51,11 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.locator('#avatar').setInputFiles(images[0]);
     const crop=page.getByRole('dialog');await crop.getByRole('slider').first().fill('1.8');
     assert.equal(await crop.locator('img').evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
+    for(const slider of await crop.getByRole('slider').all()){
+      const before=Number(await slider.inputValue());
+      await slider.press('ArrowRight');assert.ok(Number(await slider.inputValue())>before);
+      await slider.press('ArrowLeft');assert.equal(Number(await slider.inputValue()),before);
+    }
     await crop.getByRole('button',{name:/Cancel/i,exact:true}).click();await crop.waitFor({state:'hidden'});
 
     const day=new Date().toISOString().slice(0,10);
@@ -189,7 +195,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     }
 
     await page.goto(route);
-    const ai=page.getByRole('button',{name:'Guidon AI Assistant',exact:true});await ai.click();
+    const ai=page.getByRole('button',{name:'Guidon AI Assistant',exact:true});await ai.press('Enter');
     const chat=page.getByRole('dialog');await settled(chat);
     const chatBounds=await chat.boundingBox();assert.ok(chatBounds.x>=-1 && chatBounds.width<=376);
     const input=chat.locator('textarea');await input.fill('Keep my composed text');
