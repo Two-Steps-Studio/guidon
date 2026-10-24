@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { AlertCircle } from "lucide-react"
@@ -17,6 +17,12 @@ import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { loginLocalAction } from "./actions"
 
+// The server HTML is visible before React attaches controlled-input handlers.
+// Prevent early typing from being discarded when hydration initializes state.
+const subscribeHydration = () => () => {}
+const clientHydrated = () => true
+const serverHydrated = () => false
+
 /**
  * `local` is decided server-side (hasDirectDatabase(), see page.tsx) since it
  * depends on DATABASE_URL, which a client component cannot read. In local
@@ -26,6 +32,7 @@ import { loginLocalAction } from "./actions"
  * Guidon's own OAuth client (/auth/oauth/<provider>) instead of Supabase.
  */
 export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup }) {
+  const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated)
   const t = useTranslations("auth.login")
   const tCommon = useTranslations("auth.common")
   const [email, setEmail] = useState("")
@@ -99,6 +106,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
               <Label htmlFor="email">{t("emailLabel")}</Label>
               <Input
                 id="email"
+                disabled={!hydrated || loading}
                 type="email"
                 placeholder="john@example.com"
                 value={email}
@@ -119,6 +127,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
               </div>
               <PasswordInput
                 id="password"
+                disabled={!hydrated || loading}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -134,7 +143,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={!hydrated || loading}>
               {loading ? t("signingIn") : t("signIn")}
             </Button>
           </form>

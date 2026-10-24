@@ -19,6 +19,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
         <Input type={visible ? "text" : "password"} className={cn("pr-9", className)} ref={ref} {...props} />
         <button
           type="button"
+          disabled={props.disabled}
           tabIndex={-1}
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? hideLabel : showLabel}

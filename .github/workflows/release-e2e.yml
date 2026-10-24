@@ -1,0 +1,42 @@
+name: Release application E2E
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'messages/**'
+      - 'public/**'
+      - 'tests/e2e/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - 'next.config.*'
+      - '.github/workflows/release-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:auth
+      - run: npm run test:db
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-application-e2e
+          path: output/e2e/
+          if-no-files-found: warn
+          retention-days: 7
