@@ -10,9 +10,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { chromium,firefox,webkit } from "playwright";
-import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest } from "./isolation.mjs";
+import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopySource } from "./isolation.mjs";
 import { seedReleaseFixture } from "./seed.mjs";
 import { releaseSmoke } from "./smoke.mjs";
+import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
+import assert from "node:assert/strict";
 
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const runId=randomBytes(6).toString("hex");
@@ -46,7 +48,7 @@ try{
   const tracked=spawnSync("git",["ls-files","-co","--exclude-standard","-z"],{cwd:root,encoding:"utf8",windowsHide:true});
   if(tracked.status!==0)throw new Error("Could not inventory source files");
   for(const name of new Set(tracked.stdout.split("\0").filter(Boolean))){
-    if(name.split("/").some(part=>/^\.env(?:\.|$)/.test(part)))continue;
+    if(!shouldCopySource(name))continue;
     const target=path.resolve(directory,name);
     if(!target.startsWith(directory+path.sep))throw new Error("Source path escaped test directory");
     await mkdir(path.dirname(target),{recursive:true});await copyFile(path.join(root,name),target);
@@ -60,7 +62,11 @@ try{
   const connectionString=`postgresql://guidon_e2e:${dbPassword}@127.0.0.1:${dbPort}/${database}`;
   await waitFor(async()=>{const probe=new pg.Client({connectionString});try{await probe.connect();return true;}finally{await probe.end();}},"test database");
   const appPort=await port();const tlsPort=await port();const origin=`https://127.0.0.1:${tlsPort}`;
-  Object.assign(environment,{DATABASE_URL:connectionString,DATABASE_POOL_MAX:"4",AUTH_SECRET:randomBytes(32).toString("hex"),STORAGE_PROVIDER:"local",STORAGE_PATH:path.join(directory,"storage"),APP_URL:origin,NEXT_PUBLIC_APP_URL:origin});
+  Object.assign(environment,{DATABASE_URL:connectionString,DATABASE_POOL_MAX:"4",AUTH_SECRET:randomBytes(32).toString("hex"),STORAGE_PROVIDER:"local",STORAGE_PATH:path.join(directory,"runtime-e2e-files"),APP_URL:origin,NEXT_PUBLIC_APP_URL:origin});
+  // Generated non-secret canaries prove that packaging excludes configuration,
+  // default/custom local storage and diagnostic output, preserving the source.
+  const canaries=[".env.production","storage/package-canary.txt","runtime-e2e-files/package-canary.txt","output/package-canary.txt"];
+  for(const name of canaries){await mkdir(path.dirname(path.join(directory,name)),{recursive:true});await writeFile(path.join(directory,name),"GUIDON_PACKAGE_CANARY=disposable-not-a-secret\n");}
   // No inherited provider/email/billing/production secrets, no .env files.
   console.log("E2E: clean npm ci, migrations and production build");
   phase="install";
@@ -71,6 +77,9 @@ try{
   phase="build";
   await writeFile(path.join(artifacts,"build.log"),await run(process.execPath,[npmCli,"run","build"]));
   const standalone=path.join(directory,".next/standalone");
+  for(const name of [...forbiddenStandaloneDirectories,"runtime-e2e-files",".env.production",".env"]){await assert.rejects(access(path.join(standalone,name)),{code:"ENOENT"},`Forbidden artifact shipped: ${name}`);}
+  for(const name of canaries)assert.equal(await readFile(path.join(directory,name),"utf8"),"GUIDON_PACKAGE_CANARY=disposable-not-a-secret\n");
+  console.log("E2E: configuration/data canaries absent from standalone; source intact");
   phase="server-start";
   // Next may trace a subset of public assets into standalone. Merge the complete
   // build assets, just as a standalone deployment does, even if directories exist.

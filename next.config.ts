@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs/config";
+import path from "node:path";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -74,6 +75,25 @@ function buildContentSecurityPolicy(): string {
 }
 
 const nextConfig: NextConfig = {
+  // Local storage is mutable runtime data, never a server build input. Newer
+  // filesystem tracing can otherwise include the whole repo through its root.
+  outputFileTracingExcludes: {
+    "/*": [
+      "./.env*", "./**/.env*", "./.git/**/*", "./.worktrees/**/*",
+      "./storage/**/*", "./output/**/*", "./tests/**/*", "./docs/**/*",
+      "./desktop/**/*", "./mobile/**/*", "./discord-bot/**/*",
+      "./plugins/**/*", "./agent-plugin/**/*", "./graphify-out/**/*",
+      "./skills/**/*", "./.agents/**/*", "./.claude/**/*",
+      ...(() => {
+        const relative = path.relative(__dirname, path.resolve(process.env.STORAGE_PATH ?? "./storage")).replaceAll("\\", "/");
+        if (!relative) throw new Error("STORAGE_PATH must not be the repository root");
+        // Paths outside the build root cannot be bundled from this repository.
+        if (relative === ".." || relative.startsWith("../") || path.isAbsolute(relative)) return [];
+        // Escape glob metacharacters in an operator-supplied directory name.
+        return [`./${relative.replace(/[\\*?\[\]{}()!+@]/g, "\\$&")}/**/*`];
+      })(),
+    ],
+  },
   // This fork's Turbopack DEV server silently fails to resolve next-intl's
   // dynamic message import (src/i18n/load-messages.ts's
   // `import(`../../messages/${locale}.json`)`) - "Module not found: Can't
