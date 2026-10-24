@@ -26,12 +26,11 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('button',{name:'Hide password',exact:true}).press('Enter');
     assert.equal(await page.locator('#password').getAttribute('type'),'password');
     await page.locator('button[type="submit"]').click();await page.waitForURL(u=>u.pathname==='/dashboard');
-    // Finish login navigation and its initial refresh before injecting a
-    // transport failure. Otherwise Next's pending-navigation recovery can
-    // reload the document while the test tries to use the transient menu.
+    // Finish login navigation and its initial refresh before injecting the
+    // failed response, so the notification retry is tested independently.
     const initialNotifications=page.waitForResponse(response=>response.request().method()==='POST' && !!response.request().headers()['next-action']);
     await page.goto(origin+'/dashboard');await initialNotifications;
-    await page.route(origin+'/dashboard',request=>request.request().method()==='POST' && request.request().headers()['next-action']?request.abort('failed'):request.continue());
+    await page.route(origin+'/dashboard',request=>request.request().method()==='POST' && request.request().headers()['next-action']?request.fulfill({status:503,contentType:'text/plain',body:'Notification refresh fixture failure'}):request.continue());
     await page.getByRole('button',{name:messages.notifications.bellAria,exact:true}).click();
     await page.getByRole('alert').filter({hasText:messages.notifications.loadFailed}).waitFor();
     await page.unroute(origin+'/dashboard');
