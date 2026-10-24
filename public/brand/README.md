@@ -9,3 +9,6 @@ logo selection, and marketing usage rules.
 - Marketing/web full logo on dark backgrounds: `guidon-wordmark-white.png`
 - Symbol only: `guidon-symbol-blue.svg`, `guidon-symbol-black.svg`, or
   `guidon-symbol-white.svg`, chosen for background contrast
+- App icons and favicons: generated from `guidon-symbol-blue.svg` with
+  `npm run brand:icons`; use the blue mark on light backgrounds and white on
+  Guidon Blue for maskable or adaptive icons

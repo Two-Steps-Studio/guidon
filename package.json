@@ -13,6 +13,7 @@
     "postinstall": "node scripts/copy-monaco-assets.mjs",
     "migrate": "node scripts/migrate.mjs",
     "migrate:status": "node scripts/migrate.mjs --status",
+    "brand:icons": "node scripts/generate-brand-icons.mjs",
     "test:db": "node --experimental-strip-types tests/db/compat.test.mjs",
     "test:ai": "node --experimental-strip-types tests/ai/provider.test.mjs && node tests/ai/task-learning.test.mjs",
     "test:auth": "node tests/auth/local-auth.test.mjs && node tests/auth/oauth.test.mjs && node tests/auth/mobile-login.test.mjs && node tests/auth/oauth-server.test.mjs && node tests/auth/account-deletion.test.mjs && node --test tests/auth/client-assertion.test.mjs",

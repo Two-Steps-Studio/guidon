@@ -136,6 +136,10 @@ not symbol-only marks, and have been removed to avoid choosing the wrong logo.
 The older `public/assets/Guidon*.png` files have mixed background treatments;
 prefer the canonical transparent exports above for new campaign layouts.
 
+Web, PWA, mobile, VS Code, and Unity app icons are generated from the official
+symbol with `npm run brand:icons`. Use the blue mark on transparent or white
+surfaces; use a white mark over Guidon Blue for adaptive and maskable icons.
+
 ## Visual reference
 
 The current interface is the source of truth for the product's visual
