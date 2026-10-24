@@ -1,0 +1,39 @@
+import assert from "node:assert/strict";
+
+export async function releaseSmoke({page,context,origin,fixture}) {
+  const [own,foreign]=fixture.users;
+  const staticPage=await context.newPage();
+  await staticPage.route("**/_next/static/**/*.js",route=>route.abort());
+  await staticPage.goto(`${origin}/auth/login`);
+  assert.ok(await staticPage.locator("#email").isDisabled(),"SSR controls must wait for hydration");
+  assert.ok(await staticPage.locator("#password").isDisabled());
+  assert.ok(await staticPage.locator('button[type="submit"]').isDisabled());
+  await staticPage.close();
+  await page.goto(`${origin}/dashboard`);
+  await page.waitForURL(url=>url.pathname==="/auth/login");
+  await page.locator("#email").fill(own.email);
+  await page.locator("#password").fill("wrong-password-for-fixture");
+  await page.locator('button[type="submit"]').click();
+  await page.getByRole("alert").filter({hasText:"Invalid email or password."}).waitFor();
+  assert.equal((await context.cookies()).some(cookie=>cookie.name==="guidon-session"),false);
+  await page.locator("#password").fill(fixture.password);
+  await page.locator('button[type="submit"]').click();
+  await page.waitForURL(url=>url.pathname==="/dashboard");
+  const session=(await context.cookies()).find(cookie=>cookie.name==="guidon-session");
+  assert.ok(session?.httpOnly && session?.secure,"Production login must retain HttpOnly and Secure cookies");
+  await page.goto(`${origin}/projects`);
+  await page.getByText(own.projectName,{exact:true}).first().waitFor();
+  assert.equal((await page.locator("body").innerText()).includes(foreign.projectName),false);
+  await page.reload();await page.getByText(own.projectName,{exact:true}).first().waitFor();
+  await page.goto(`${origin}/dashboard`);
+  assert.equal((await page.locator("body").innerText()).includes(foreign.projectName),false);
+  const denied=await context.request.get(`${origin}/projects/${foreign.projectId}`);
+  assert.equal((await denied.text()).includes(foreign.projectName),false,"Foreign project name must not leak in HTML/RSC");
+  const ownResponse=await context.request.get(`${origin}/projects/${own.projectId}`);
+  assert.equal(ownResponse.ok(),true);
+  assert.ok((await ownResponse.text()).includes(own.projectName));
+  await page.goto(`${origin}/auth/logout`);
+  await page.waitForURL(url=>url.pathname==="/");
+  await page.goto(`${origin}/dashboard`);await page.waitForURL(url=>url.pathname==="/auth/login");
+  assert.equal((await context.cookies()).some(cookie=>cookie.name==="guidon-session"),false);
+}
