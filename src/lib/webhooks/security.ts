@@ -123,13 +123,18 @@ export interface GuardedResponse {
  * and fetch() resolves it again - a host whose DNS answer flips between the
  * two (DNS rebinding) would otherwise reach an internal address.
  *
- * No redirects are followed. A timeout rejects with an Error named
- * "TimeoutError", like AbortSignal.timeout does for fetch.
+ * No redirects are followed. A total request deadline (including socket DNS,
+ * connection and body reads) rejects with "TimeoutError". Incoming traffic
+ * must not reset that deadline.
  */
 export async function guardedRequest(
   url: URL,
   options: { method: "GET" | "POST"; headers: Record<string, string>; body?: string; timeoutMs: number; maxBytes: number; allowPrivate: boolean }
 ): Promise<GuardedResponse> {
+  // Literal addresses bypass Node's lookup callback. Enforce the same URL
+  // rules here as at save/delivery time, before opening any socket.
+  const parsed = parseWebhookUrl(url.href, { allowPrivate: options.allowPrivate });
+  if (!parsed.ok) throw Object.assign(new Error(parsed.reason), { code: "EBLOCKED" });
   const { request } = url.protocol === "https:" ? await import("node:https") : await import("node:http");
   const dns = await import("node:dns");
 
@@ -150,6 +155,13 @@ export async function guardedRequest(
   };
 
   return new Promise<GuardedResponse>((resolve, reject) => {
+    let settled = false;
+    const fail = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      reject(error);
+    };
     const req = request(
       url,
       {
@@ -160,27 +172,43 @@ export async function guardedRequest(
       (res) => {
         const chunks: Buffer[] = [];
         let size = 0;
-        res.on("data", (chunk: Buffer) => {
-          if (size >= options.maxBytes) return;
-          chunks.push(chunk);
-          size += chunk.length;
-          if (size >= options.maxBytes) res.destroy();
-        });
-        const done = () =>
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(deadline);
           resolve({
             status: res.statusCode ?? 0,
             contentType: (res.headers["content-type"] as string | undefined) ?? null,
-            text: Buffer.concat(chunks).subarray(0, options.maxBytes).toString("utf8"),
+            text: Buffer.concat(chunks).toString("utf8"),
           });
+        };
+        res.on("data", (chunk: Buffer) => {
+          if (settled) return;
+          const bounded = chunk.subarray(0, Math.max(0, options.maxBytes - size));
+          chunks.push(bounded);
+          size += bounded.length;
+          if (size >= options.maxBytes) {
+            // Deliberate truncation is a successful bounded read, distinct
+            // from a remote disconnect or a request deadline expiring.
+            done();
+            res.destroy();
+          }
+        });
         res.on("end", done);
-        res.on("close", done);
-        res.on("error", done);
+        res.on("close", () => {
+          if (!res.complete) fail(new Error("Receiver closed the response before it completed."));
+        });
+        res.on("error", fail);
       }
     );
-    req.setTimeout(options.timeoutMs, () => {
-      req.destroy(Object.assign(new Error("Timed out"), { name: "TimeoutError" }));
-    });
-    req.on("error", reject);
+    const deadline = setTimeout(() => {
+      const error = Object.assign(new Error("Timed out"), { name: "TimeoutError" });
+      // Settle before destroying: response close/error handlers must not
+      // convert a timed-out 2xx response into a successful delivery.
+      fail(error);
+      req.destroy(error);
+    }, options.timeoutMs);
+    req.on("error", fail);
     if (options.body !== undefined) req.write(options.body);
     req.end();
   });
