@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getNow, getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { ProfileForm } from "./profile-form";
@@ -11,11 +11,12 @@ import { DeleteAccountSection } from "./delete-account";
 import { getMyDeletionPlan } from "./delete-account-actions";
 
 export default async function ProfilePage() {
-  const [user, apiKeys, connectedApps, deletionPlan] = await Promise.all([
+  const [user, apiKeys, connectedApps, deletionPlan, now] = await Promise.all([
     getCurrentUser(),
     listApiKeys(),
     getConnectedApps(),
     getMyDeletionPlan(),
+    getNow(),
   ]);
   const t = await getTranslations("profile");
 
@@ -29,7 +30,7 @@ export default async function ProfilePage() {
 
         <ProfileForm user={user} />
         <ApiKeysSection initialKeys={apiKeys} />
-        <ConnectedAppsSection initialApps={connectedApps} />
+        <ConnectedAppsSection initialApps={connectedApps} now={now} />
         <IntegrationsSection />
         <DeleteAccountSection email={user.email ?? ""} plan={deletionPlan} />
       </div>

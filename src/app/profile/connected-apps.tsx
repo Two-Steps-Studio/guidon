@@ -12,9 +12,10 @@ import { disconnectApp } from "./connected-apps-actions";
 /**
  * Apps the person allowed through OAuth (Claude, ChatGPT, Cursor...).
  * Disconnecting stops their access tokens at once and their refresh token
- * from working.
+ * from working. `now` comes from the server request so relative times share
+ * one reference during server rendering, hydration and subsequent rerenders.
  */
-export function ConnectedAppsSection({ initialApps }: { initialApps: ConnectedApp[] }) {
+export function ConnectedAppsSection({ initialApps, now }: { initialApps: ConnectedApp[]; now: Date }) {
   const t = useTranslations("profile.connectedApps");
   const format = useFormatter();
   const [apps, setApps] = useState(initialApps);
@@ -50,8 +51,8 @@ export function ConnectedAppsSection({ initialApps }: { initialApps: ConnectedAp
                 <div className="min-w-0">
                   <p className="truncate font-medium">{app.client_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t("connectedOn", { date: format.dateTime(new Date(app.created_at), { dateStyle: "medium" }) })}
-                    {app.last_used_at && ` · ${t("lastUsed", { date: format.relativeTime(new Date(app.last_used_at)) })}`}
+                    {t("connectedOn", { date: format.dateTime(new Date(app.created_at), { dateStyle: "medium", timeZone: "UTC" }) })}
+                    {app.last_used_at && ` · ${t("lastUsed", { date: format.relativeTime(new Date(app.last_used_at), now) })}`}
                   </p>
                   <p className="text-xs text-muted-foreground">{app.scopes.join(", ")}</p>
                 </div>
