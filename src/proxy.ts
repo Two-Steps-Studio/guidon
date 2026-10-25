@@ -24,6 +24,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions }
  * whole application public and the redirect below unreachable.
  */
 const EXACT_PUBLIC_ROUTES = new Set([
+  '/oauth/agent/identity',
   '/',
   // Container and load-balancer probes cannot authenticate (TODO.md §12).
   // The endpoint reports status only - no secrets, no counts.

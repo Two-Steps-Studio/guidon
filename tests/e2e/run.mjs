@@ -1,6 +1,6 @@
 // Full application E2E. Always builds a clean copy and creates its own Docker DB.
 import { spawn, spawnSync } from "node:child_process";
-import { randomBytes, createHmac } from "node:crypto";
+import { randomBytes, createHmac, generateKeyPairSync } from "node:crypto";
 import { mkdtemp, mkdir, readFile, writeFile, copyFile, cp, rm, access } from "node:fs/promises";
 import { createServer as createHttpsServer } from "node:https";
 import { request as httpRequest } from "node:http";
@@ -18,6 +18,7 @@ import { seedApiFixture } from "./api-fixture.mjs";
 import { apiIsolation } from "./api-isolation.mjs";
 import { feedbackCoverage } from "./feedback.mjs";
 import { boardLayoutCoverage } from "./board-layout.mjs";
+import { agentClaimCoverage } from "./agent-claims.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
 
@@ -30,6 +31,8 @@ const directory=await mkdtemp(path.join(os.tmpdir(),"guidon-e2e-"));
 await writeFile(path.join(directory,".guidon-e2e-run.json"),JSON.stringify({runId}));
 const container=`guidon-e2e-${runId}`;
 const environment=isolatedEnvironment(process.env,{});
+// Disposable test-only signing identity; never forwarded from the operator.
+environment.AGENT_AUTH_PRIVATE_KEY=JSON.stringify(generateKeyPairSync("ed25519").privateKey.export({format:"jwk"}));
 const controller=new AbortController();
 const deadline=setTimeout(()=>controller.abort(new Error("E2E global timeout")),12*60*1000);
 let app,proxy,client;
@@ -132,6 +135,7 @@ try{
       }else{
       await releaseSmoke({page,context,origin,fixture});
       await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
+      await agentClaimCoverage({page,context,origin,fixture,client,connectionString,browserName:name,artifacts});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       const {appleDesignCoverage}=await import("./apple-design.mjs");
@@ -144,7 +148,7 @@ try{
     catch(error){await page.screenshot({path:path.join(artifacts,`${name}-failed.png`),fullPage:true});results.push({browser:name,outcome:"failed",error:error.message,durationMs:Date.now()-started});throw error;}
     finally{await context.tracing.stop({path:path.join(artifacts,`${name}-trace.zip`)});await context.close();await browser.close();await writeFile(path.join(artifacts,"app.log"),appLog);}
   }
-  for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
+  for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,environment.AGENT_AUTH_PRIVATE_KEY,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
   completed=true;
 }finally{
   clearTimeout(deadline);

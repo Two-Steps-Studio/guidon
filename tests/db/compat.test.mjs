@@ -251,7 +251,7 @@ for (const [label, sql, expected] of [
   // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
   // 46->47: shared replay protection for signed OAuth client assertions (078).
   // 47->48 and 130->133: project-scoped declarative module packages (080).
-  ["50 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 50],
+  ["52 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 52],
   ["137 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 137],
 ]) {
   const { rows } = await db.query(sql);

@@ -2106,5 +2106,18 @@
     "backup": "Pobierz kopię szkicu",
     "reload": "Otwórz zapisany szkic",
     "retry": "Ponów zapis"
+  },
+  "agentClaim": {
+    "title": "Zatwierdź agenta",
+    "description": "Połącz agenta tylko wtedy, gdy to Ty rozpocząłeś tę prośbę.",
+    "invalid": "Prośba jest niedostępna, wygasła lub dotyczy innego konta.",
+    "account": "Jesteś zalogowany jako {email}",
+    "app": "Aplikacja prosząca o dostęp: {name}",
+    "code": "Kod wyświetlony przez agenta",
+    "codeHelp": "Wpisz sześciocyfrowy kod od agenta. Nie zatwierdzaj niespodziewanych próśb i nie udostępniaj tego kodu.",
+    "invalidCode": "Kod jest nieprawidłowy albo tej prośby nie można już zatwierdzić.",
+    "approved": "Zatwierdzono. Wróć do agenta, aby dokończyć łączenie.",
+    "denied": "Odrzucono dostęp. Ta prośba nie otrzyma danych dostępowych.",
+    "revoke": "Możesz odłączyć agenta w dowolnym momencie w Profil → Połączone aplikacje."
   }
 }

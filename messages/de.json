@@ -2106,5 +2106,18 @@
     "backup": "Sicherung herunterladen",
     "reload": "Gespeicherten Entwurf öffnen",
     "retry": "Erneut speichern"
+  },
+  "agentClaim": {
+    "title": "Agenten bestätigen",
+    "description": "Verbinde einen Agenten nur, wenn du diese Anfrage selbst gestartet hast.",
+    "invalid": "Diese Anfrage ist nicht verfügbar, abgelaufen oder gehört zu einem anderen Konto.",
+    "account": "Angemeldet als {email}",
+    "app": "Anfragende App: {name}",
+    "code": "Vom Agenten angezeigter Code",
+    "codeHelp": "Gib den sechsstelligen Code deines Agenten ein. Bestätige keine unerwarteten Anfragen und teile diesen Code nicht.",
+    "invalidCode": "Der Code ist falsch oder die Anfrage kann nicht mehr bestätigt werden.",
+    "approved": "Bestätigt. Kehre zu deinem Agenten zurück, um die Verbindung abzuschließen.",
+    "denied": "Zugriff abgelehnt. Für diese Anfrage werden keine Zugangsdaten ausgestellt.",
+    "revoke": "Du kannst den Agenten jederzeit unter Profil → Verbundene Apps trennen."
   }
 }

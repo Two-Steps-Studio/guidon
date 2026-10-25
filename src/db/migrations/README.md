@@ -172,6 +172,14 @@ The application tolerates both the old and the new task status vocabulary at
 read time (`normalizeTaskStatus` in `src/lib/work/task-board.ts`), so the Work
 board renders correctly before and after 002.
 
+## Optional agent registration (085)
+
+Migration `085_agent_claims.sql` adds optional human-approved agent registration:
+service-only RLS tables, atomic consent/issuance functions and a secret-free
+audit log. Apply it before configuring `AGENT_AUTH_PRIVATE_KEY`; otherwise this
+profile stays disabled. See [agent-claims.md](../../../docs/agent-claims.md) for
+staging verification, configuration, expiry and revocation behavior.
+
 ## Note on 003
 
 Until this is applied, every query that joins `profiles` returns null for other
