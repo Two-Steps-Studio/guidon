@@ -9,7 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
-import { chromium,firefox,webkit } from "playwright";
+import { chromium,firefox,webkit,devices } from "playwright";
 import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopySource } from "./isolation.mjs";
 import { seedReleaseFixture } from "./seed.mjs";
 import { releaseSmoke } from "./smoke.mjs";
@@ -22,6 +22,7 @@ import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
 import { taskEditingCoverage } from "./task-editing.mjs";
 import { aiChatBoundaryCoverage } from "./ai-chat.mjs";
+import { mobileCoverage } from "./mobile.mjs";
 import { onboardingCoverage } from "./onboarding.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
@@ -29,6 +30,7 @@ import assert from "node:assert/strict";
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const designAuditMode=process.argv.includes("--design-audit");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
+const mobileMode=process.argv.includes("--mobile-audit");
 const includeAccessibility=process.argv.includes("--with-accessibility");
 const runId=randomBytes(6).toString("hex");
 const artifacts=path.join(root,"output/e2e",runId);
@@ -128,14 +130,16 @@ try{
     phase=name;
     console.log(`E2E: ${name} real login, private projects and session smoke`);
     const browser=await browserType.launch();
-    const context=await browser.newContext({ignoreHTTPSErrors:true,locale:"en-US",viewport:{width:1440,height:1000},recordVideo:{dir:path.join(artifacts,name)}});
+    const context=await browser.newContext({...(mobileMode?{hasTouch:true,isMobile:name!=='firefox',deviceScaleFactor:2,userAgent:devices[name==='webkit'?'iPhone 13':'Pixel 7'].userAgent}:{}),ignoreHTTPSErrors:true,locale:"en-US",viewport:mobileMode?{width:375,height:812}:{width:1440,height:1000},recordVideo:{dir:path.join(artifacts,name)}});
     const blocked=[];
     await context.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():(blocked.push(new URL(route.request().url()).origin),route.abort()));
     await context.tracing.start({screenshots:true,snapshots:true,sources:true});
     const page=await context.newPage();page.setDefaultTimeout(15000);
     const started=Date.now();
     try{
-      if(accessibilityMode){
+      if(mobileMode){
+        await mobileCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      }else if(accessibilityMode){
         const {accessibilityCoverage}=await import("./accessibility.mjs");
         await accessibilityCoverage({page,context,origin,fixture,browserName:name,artifacts});
       }else if(designAuditMode){
@@ -170,7 +174,7 @@ try{
 }finally{
   clearTimeout(deadline);
   await writeFile(path.join(artifacts,"app.log"),appLog);
-  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
+  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:mobileMode?"mobile-isolated-self-hosted":accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
   if(proxy)await new Promise(resolve=>proxy.close(resolve));
   if(app){app.kill();await new Promise(resolve=>{app.once("exit",resolve);setTimeout(()=>{app.kill("SIGKILL");resolve();},3000).unref();});}
   await client?.end();
