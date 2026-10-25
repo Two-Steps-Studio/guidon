@@ -515,6 +515,7 @@ function TaskCardComponent({
           ) : (
             <span
               title={t("unassignedTitle")}
+              role="img"
               aria-label={t("unassignedTitle")}
               className="block h-5 w-5 rounded-full border border-dashed border-border"
             />

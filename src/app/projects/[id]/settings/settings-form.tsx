@@ -79,7 +79,7 @@ export function SettingsForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{t("projectImage")}</Label>
+            <Label htmlFor="avatar">{t("projectImage")}</Label>
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 rounded-md">
                 <AvatarImage src={project.avatar_url || undefined} className="object-cover" />

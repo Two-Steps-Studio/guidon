@@ -158,7 +158,7 @@ function ListEditor({
                   type="button"
                   disabled={index === 0}
                   onClick={() => move(index, -1)}
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30 max-sm:h-11 max-sm:w-11"
                   aria-label={t("moveUpAria", { label: row.label || row.defaultLabel })}
                 >
                   <ArrowUp className="h-3.5 w-3.5" />
@@ -167,7 +167,7 @@ function ListEditor({
                   type="button"
                   disabled={index === rows.length - 1}
                   onClick={() => move(index, 1)}
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30 max-sm:h-11 max-sm:w-11"
                   aria-label={t("moveDownAria", { label: row.label || row.defaultLabel })}
                 >
                   <ArrowDown className="h-3.5 w-3.5" />

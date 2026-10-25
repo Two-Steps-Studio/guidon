@@ -214,13 +214,13 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     assert.equal(sent,1);await page.unroute('**/api/ai/chat');
     await page.keyboard.press('Escape');await page.setViewportSize({width:1440,height:1000});
 
-    await page.getByRole('button',{name:'Search...',exact:true}).click();
+    await page.getByRole('button',{name:`${messages.commandPalette.triggerLabel} ⌘K`,exact:true}).click();
     const search=page.getByRole('combobox');let attempts=0;
     await page.route('**/api/v1/search?**',route=>{attempts++;return attempts===1?route.fulfill({status:500,json:{error:'fixture failure'}}):route.fulfill({json:{results:[]}});});
     await search.fill('fixture');await page.getByRole('alert').filter({hasText:'Search could not be completed.'}).waitFor();
     await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByText('No results found.',{exact:true}).waitFor();
     await page.unroute('**/api/v1/search?**');await page.keyboard.press('Escape');
-    await page.getByRole('button',{name:'Search...',exact:true}).click();
+    await page.getByRole('button',{name:`${messages.commandPalette.triggerLabel} ⌘K`,exact:true}).click();
     let releaseSlow, releaseFast, sawSlow, sawFast;
     const slowGate=new Promise(resolve=>{releaseSlow=resolve;}), fastGate=new Promise(resolve=>{releaseFast=resolve;});
     const slowSeen=new Promise(resolve=>{sawSlow=resolve;}), fastSeen=new Promise(resolve=>{sawFast=resolve;});
@@ -244,11 +244,11 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
         await touch.addCookies(await context.cookies());await touch.route('**/*',route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
         const phone=await touch.newPage();await phone.goto(route);
         assert.equal(await phone.evaluate(()=>matchMedia('(pointer: coarse)').matches),true);
-        for(const name of [messages.commandPalette.triggerLabel,messages.notifications.bellAria]){
+        for(const name of [`${messages.commandPalette.triggerLabel} ⌘K`,messages.notifications.bellAria]){
           const box=await phone.getByRole('button',{name,exact:true}).boundingBox();assert.ok(box.height>=44 && box.width>=44,`${name} touch bounds`);
         }
         await phone.emulateMedia({contrast:'more',reducedMotion:'reduce'});
-        await phone.getByRole('button',{name:messages.commandPalette.triggerLabel,exact:true}).click();
+        await phone.getByRole('button',{name:`${messages.commandPalette.triggerLabel} ⌘K`,exact:true}).click();
         assert.equal(await phone.getByRole('dialog').evaluate(node=>getComputedStyle(node).backdropFilter),'none');
         assert.equal(await phone.locator('[data-slot="dialog-overlay"]').evaluate(node=>getComputedStyle(node).backdropFilter),'none');
         await phone.screenshot({path:path.join(artifacts,'apple-touch-contrast.png')});

@@ -7,6 +7,7 @@ on:
       - 'messages/**'
       - 'public/**'
       - 'tests/e2e/**'
+      - 'tests/ai/**'
       - 'tests/*webhook*.mjs'
       - 'tests/agent-readiness.test.mjs'
       - 'tests/agent-web.test.mjs'

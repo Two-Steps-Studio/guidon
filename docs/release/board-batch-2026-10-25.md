@@ -12,6 +12,7 @@ No card is deleted or bulk-completed. The original inventory is preserved in
 
 Todo is ordered with release/security/billing/onboarding/board gates first,
 then other QA, delivery reliability, operations, funnel analytics and campaign.
+All 10 initial critical and 31 initial high Review cards now precede other priorities.
 Backlog is ordered by dependencies: registry and marketplace QA, GitHub/context
 foundation and memory/retrieval/Why QA, agent operations, analytics/automation,
 executable sandbox review, planning templates and finally paid marketplace.
@@ -49,7 +50,7 @@ This is an honest implementation inventory, not a claim that all cards are done.
 
 | Card | Work | State in this branch |
 |---|---|---|
-| 94dbb45e-f214-4469-b8d2-72af8ffa004e | Moduły | Implemented; browser verification before Review |
+| 94dbb45e-f214-4469-b8d2-72af8ffa004e | Moduły | Implemented; Review, awaiting human acceptance |
 | 239c8792-592c-43f1-b516-9ee9882ee205 | [Context Engine P1] Observability, backfill i koszty AI | Open — not implemented by this batch |
 | 9ddf32fc-8c1f-4c59-9442-408b7c3cd8bb | [Context Engine P0] QA: E2E, uprawnienia, regresja i quality gates | Open — not implemented by this batch |
 | 40cabe84-befa-4bcf-9cd1-cf1fba571e5c | [Context Engine P1] Agent runs: raporty zmian i przypisanie wyników | Open — not implemented by this batch |
@@ -65,12 +66,12 @@ This is an honest implementation inventory, not a claim that all cards are done.
 | d1c7c5fe-9f96-4a6f-8099-c1555c642921 | [Modules V3] Developer SDK + Monaco + sandbox runtime | Open — not implemented by this batch |
 | 24207c27-8df4-4b00-b7ed-89c2e9028217 | [Marketplace V2] Developer Dashboard i historia wydań | Open — not implemented by this batch |
 | 423650d6-fb31-4325-a6e8-8b01d8954e20 | [Marketplace V2] Registry, review i publikacja modułów | Open — not implemented by this batch |
-| 7354e24f-df38-4e1d-b9cc-ab9b7af89a55 | [Modules V1] Visual Editor pól, widoków i formularzy | Implemented; browser verification before Review |
-| 02c6dccb-028b-492f-9127-4fa53b6d24f6 | [AI Builder V1] Live Preview, walidator i testy modułu | Implemented; browser verification before Review |
+| 7354e24f-df38-4e1d-b9cc-ab9b7af89a55 | [Modules V1] Visual Editor pól, widoków i formularzy | Implemented; Review, awaiting human acceptance |
+| 02c6dccb-028b-492f-9127-4fa53b6d24f6 | [AI Builder V1] Live Preview, walidator i testy modułu | Implemented; Review, awaiting human acceptance |
 | 40e24352-0ff3-4f23-abf0-80db6439c4df | [QA][P1] Performance i regresja dużych projektów | Open — not implemented by this batch |
 | 3be4feeb-795e-491d-8909-3156cb99be52 | [QA][P1] AI: dostawcy, timeouty, budżety i bezpieczne odpowiedzi | Partial: adapter coverage; API/MCP scenarios still open |
 | ec708b24-27a0-4dd2-bd2e-5f397736ad65 | [QA][P1] Moduły: roadmap, decyzje, wiedza, pliki i custom modules | Open — not implemented by this batch |
-| 868d6605-ffe3-4507-a565-2f816a330508 | [QA][P1] Accessibility: axe, klawiatura i kontrast | Open — not implemented by this batch |
+| 868d6605-ffe3-4507-a565-2f816a330508 | [QA][P1] Accessibility: axe, klawiatura i kontrast | Automated gate implemented; Cloud checkout and manual checks remain |
 | c011cbbb-bc9a-47db-b810-6e4f116ea078 | [QA][P1] Mobile i responsywność: iPhone Safari/Android | Open — not implemented by this batch |
 | 9129015e-486d-4e2c-9e6a-1ec3d2734446 | [QA][P0] Stripe sandbox: subskrypcje, idempotencja i uprawnienia | External environment/approval required; code work may also remain |
 | d7b880f7-d561-4746-9998-1417995202fe | [QA][P0] E2E: Kanban, taski i współbieżne edycje | Open — not implemented by this batch |
@@ -107,6 +108,22 @@ replaced by browser emulation or direct-PostgreSQL tests.
 `test:modules`, `test:module-editor` and `test:ai` passed locally; TypeScript and
 focused ESLint passed. The editor test uses actual UI/hooks with only boundary
 adapters: visual edits/validation/reorder, synthetic preview, reload, fresh
-consent, autosave during edits and two-tab conflicts. Full application E2E is
-still running; add its final result before moving the implementation to Review.
+consent, autosave during edits and two-tab conflicts.
 
+Final clean-production-build run `8baed7a74447` completed successfully in
+Chromium, Firefox and WebKit, including 110 REST/MCP checks, dedicated module
+CRUD/read-only/foreign-tenant/disabled flows, existing release regressions and
+27 accessibility scans. Every scan has zero reported violations. Each browser
+retains four incomplete rule checks (contrast on login/board/dialog and
+aria-hidden-focus on the dialog); these remain manual review items, not passes.
+Artifacts are local under `output/e2e/8baed7a74447/` and are not committed.
+
+The accessibility changes restore task-dialog focus, replace nested task-card
+buttons with a native title control, preserve keyboard reorder and pointer
+dragging, include visible values in select names, connect file labels, enlarge
+workflow reorder targets, and underline the signup link. See
+[accessibility-2026-10-25.md](accessibility-2026-10-25.md) for the pending manual
+and Cloud/Stripe checkout matrix. Three module implementation cards are in
+Review with attempt evidence and this single PR link. AI QA remains Todo with
+its missing public-API matrix documented. The full backlog is not complete;
+the PR remains Draft and no production deployment was performed.

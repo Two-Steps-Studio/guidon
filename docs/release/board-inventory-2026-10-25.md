@@ -235,4 +235,3 @@ Snapshot before work: 231 cards, 50 Done, 139 Review, 17 Todo, 25 Backlog. Revie
 | addd24dc-6980-47c3-9a5d-16b6d26d9303 | Zmienić logowanie do bota przez normalne konto | review | high |
 | 6cea5f57-9ce5-4e5c-bdda-8f031c629243 | Optymalizacja | done | critical |
 | df02dc80-4ac3-47b8-9ba1-e333268599ec | Implementacja Planów płatności | done | high |
-
