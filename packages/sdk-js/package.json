@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/Two-Steps-Studio/guidon/issues"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

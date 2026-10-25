@@ -8,6 +8,10 @@ on:
       - 'public/**'
       - 'tests/e2e/**'
       - 'tests/*webhook*.mjs'
+      - 'tests/agent-readiness.test.mjs'
+      - 'tests/agent-web.test.mjs'
+      - 'tests/fixtures/*app-paths*.mjs'
+      - 'tests/web-bot-auth.test.mjs'
       - 'docs/webhooks.md'
       - 'scripts/**'
       - 'package*.json'
@@ -37,6 +41,8 @@ jobs:
       - run: npm run test:package
       - run: npm run test:auth
       - run: npm run test:webhooks
+      - run: npm run test:agent-readiness
+      - run: npm run test:agent-web
       - run: npm run test:api
       - run: npm run test:feedback
       - run: node --experimental-strip-types tests/date-format.test.mjs

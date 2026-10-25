@@ -64,11 +64,17 @@ else:
             check(entry in names, f'Wheel missing {entry}')
         metadata = email.message_from_bytes(wheel.read(next(n for n in names if n.endswith('/METADATA'))))
         check(metadata['Name'] == source['name'] and metadata['Version'] == source['version'], 'Wheel metadata mismatch')
+        if args.publishing:
+            check(metadata['License-Expression'] == source.get('license'), 'Wheel must publish the approved SPDX License-Expression.')
+            check('LICENSE' in (metadata.get_all('License-File') or []), 'Wheel must declare its LICENSE file.')
         license_check(source.get('license'), names)
     with tarfile.open(sdists[0]) as sdist:
         names = sdist.getnames()
         check(any(n.endswith('/src/guidon/py.typed') for n in names), 'sdist missing typed package')
         metadata = email.message_from_bytes(sdist.extractfile(next(n for n in names if n.endswith('/PKG-INFO'))).read())
         check(metadata['Name'] == source['name'] and metadata['Version'] == source['version'], 'sdist metadata mismatch')
+        if args.publishing:
+            check(metadata['License-Expression'] == source.get('license'), 'sdist must publish the approved SPDX License-Expression.')
+            check('LICENSE' in (metadata.get_all('License-File') or []), 'sdist must declare its LICENSE file.')
         license_check(source.get('license'), names)
     print(f'Validated guidon-sdk@{source["version"]}: wheel and sdist')

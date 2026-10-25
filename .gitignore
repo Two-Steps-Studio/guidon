@@ -14,6 +14,8 @@
 /coverage
 /output/playwright/
 /output/e2e/
+# Local release validation archives; publish through the guarded workflows.
+/artifacts/
 
 # next.js
 /.next/

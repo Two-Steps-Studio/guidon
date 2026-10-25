@@ -228,13 +228,15 @@ and validation-only runs. No package is published automatically.
 
 ## License
 
-**Unresolved.** This file previously stated "Proprietary - All rights
-reserved." The monorepo root `LICENSE` (at `C:\tss\LICENSE`) is GPLv3. These
-conflict, and that conflict has not been reconciled — the user was asked
-directly and chose to leave it undecided rather than pick one now. Do not
-treat either claim as authoritative until this is resolved. Nothing in this
-repository (`package.json`, a `LICENSE` file, or otherwise) currently
-asserts a license for Guidon specifically.
+The standalone JavaScript SDK (`packages/sdk-js`), CLI (`packages/cli`) and
+Python SDK (`sdk/python`) use MIT; each includes its own `LICENSE`. This grant
+does not cover the Guidon application, hosted service or brand.
+
+### Application licence
+
+**Unresolved.** Historical proprietary and GPL references have not been
+reconciled into an application-wide licence. The package-specific MIT grants
+above apply only to their respective SDK/CLI directories.
 
 ## Support
 

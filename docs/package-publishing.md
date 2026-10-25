@@ -11,26 +11,20 @@ GitHub and npm organizations are separate; repository access does not grant npm 
 
 | Directory | Registry name | Current version | License metadata |
 | --- | --- | --- | --- |
-| `packages/sdk-js` | npm `@guidon/sdk` | `0.1.0` | `UNLICENSED` |
-| `packages/cli` | npm `guidon-cli` | `0.1.0` | `UNLICENSED` |
-| `sdk/python` | PyPI `guidon-sdk` (import `guidon`) | `0.1.0` | absent |
+| `packages/sdk-js` | npm `@guidon/sdk` | `0.1.0` | MIT |
+| `packages/cli` | npm `guidon-cli` | `0.1.0` | MIT |
+| `sdk/python` | PyPI `guidon-sdk` (import `guidon`) | `0.1.0` | MIT |
 
-The root README explicitly leaves licensing unresolved. This change does not
-choose or grant a license. **Publishing is blocked until the owner settles it.**
-Validation-only runs still build and test the existing packages and report their
-current license metadata. Before publishing, use GitHub's web editor to make a
-reviewed PR that:
+The owner selected MIT for SDKs and CLI. Each package above includes its own
+MIT licence text and metadata. This decision applies to those standalone
+packages; it does not license the hosted service, app, brand or the rest of the
+repository. The root README distinguishes this scope from the unresolved app
+licence.
 
-1. Sets the approved license in both npm `package.json` files and adds its text
-   as `LICENSE` in each npm package directory. npm includes that file automatically.
-2. Adds a PEP 639 SPDX `license = "..."` string and `license-files = ["LICENSE"]`
-   under `[project]` in `sdk/python/pyproject.toml`, adds the approved license text
-   to `sdk/python/LICENSE`, and adds `"LICENSE"` to the sdist `include` list.
-3. Updates the root README's unresolved-license section to reflect the actual decision.
-
-Use the actual approved license, not a placeholder. Proprietary distribution
-needs an explicit approved license expression/text too. The guard rejects missing
-metadata, `UNLICENSED`, and archives without a LICENSE file.
+Publishing still requires package-name ownership and registry authentication.
+Validation-only runs build and inspect the actual archives. The publication
+guard continues to reject missing metadata, `UNLICENSED`, and archives without
+a LICENSE file; do not remove it to force a release.
 
 ## 1. GitHub setup (Safari)
 

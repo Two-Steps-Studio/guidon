@@ -1,4 +1,4 @@
-import { createHash, createPrivateKey, randomBytes, sign } from "node:crypto";
+import { createHash, createPrivateKey, createPublicKey, randomBytes, sign } from "node:crypto";
 
 /**
  * Web Bot Auth: Guidon's outgoing requests (webhooks) carry an HTTP Message
@@ -10,7 +10,8 @@ import { createHash, createPrivateKey, randomBytes, sign } from "node:crypto";
  *
  * The key is an Ed25519 private JWK (with "d" and "x"); "nbf"/"exp" in it
  * set the published lifetime. Make one with:
- *   node -e "const k=require('crypto').generateKeyPairSync('ed25519').privateKey.export({format:'jwk'});const n=Math.floor(Date.now()/1000);console.log(JSON.stringify({...k,nbf:n,exp:n+365*86400}))"
+ *   node scripts/create-web-bot-auth-key.mjs .env.web-bot-auth.private.jwk
+ * Store that file's JSON in the deployment secret; never log or commit it.
  *
  * Only node:crypto is imported, so tests/web-bot-auth.test.mjs loads this
  * file directly.
@@ -61,11 +62,25 @@ export function parseSigningKey(raw: string | undefined, now = new Date()): Sign
   } catch {
     return null;
   }
+  if (!jwk || typeof jwk !== "object" || Array.isArray(jwk)) return null;
   if (jwk.kty !== "OKP" || jwk.crv !== "Ed25519" || typeof jwk.d !== "string" || typeof jwk.x !== "string") return null;
+  // Do not publish an unusable or mismatched key and then fail with a 500
+  // while signing the directory or a webhook. Ed25519 uses 32-byte values.
+  for (const value of [jwk.d, jwk.x]) {
+    if (Buffer.from(value, "base64url").length !== 32 || Buffer.from(value, "base64url").toString("base64url") !== value) return null;
+  }
+  if ((jwk.nbf !== undefined && !Number.isSafeInteger(jwk.nbf)) || (jwk.exp !== undefined && !Number.isSafeInteger(jwk.exp))) return null;
   const year = now.getUTCFullYear();
   const nbf = typeof jwk.nbf === "number" ? jwk.nbf : Date.UTC(year, 0, 1) / 1000;
   const exp = typeof jwk.exp === "number" ? jwk.exp : Date.UTC(year + 2, 0, 1) / 1000;
+  if (nbf < 0 || exp <= nbf) return null;
   const privateJwk = { kty: "OKP", crv: "Ed25519", d: jwk.d, x: jwk.x } as PrivateJwk;
+  try {
+    const actual = createPublicKey(createPrivateKey({ key: { ...privateJwk }, format: "jwk" })).export({ format: "jwk" });
+    if (actual.x !== jwk.x) return null;
+  } catch {
+    return null;
+  }
   return {
     privateJwk,
     publicJwk: { kty: "OKP", crv: "Ed25519", x: jwk.x, kid: jwkThumbprint(privateJwk), use: "sig", nbf, exp },
@@ -145,5 +160,7 @@ let cached: { raw: string | undefined; key: SigningKey | null } | null = null;
 export function signingKeyFromEnv(): SigningKey | null {
   const raw = process.env.WEB_BOT_AUTH_PRIVATE_KEY;
   if (!cached || cached.raw !== raw) cached = { raw, key: parseSigningKey(raw) };
-  return cached.key;
+  const now = Math.floor(Date.now() / 1000);
+  const key = cached.key;
+  return key && now >= key.publicJwk.nbf && now < key.publicJwk.exp ? key : null;
 }

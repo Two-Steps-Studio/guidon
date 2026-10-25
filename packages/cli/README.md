@@ -85,3 +85,7 @@ node packages/cli/dist/bin.js --help
 ```
 
 Links: [Homepage](https://useguidon.com) - [Source](https://github.com/Two-Steps-Studio/guidon/tree/main/packages/cli)
+
+## License
+
+MIT — see [LICENSE](LICENSE). This licence covers this SDK/CLI package, not the Guidon service or the rest of the application.
