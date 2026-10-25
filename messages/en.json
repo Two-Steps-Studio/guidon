@@ -650,6 +650,8 @@
     }
   },
   "work": {
+    "downloadTaskEdits": "Download my edits",
+    "reloadTask": "Reload latest task",
     "status": "{status, select, backlog {Backlog} todo {Todo} in_progress {In Progress} ai_working {AI Working} review {Review} done {Done} other {Backlog}}",
     "statusHint": "{status, select, backlog {Unscheduled work} todo {Ready to pick up} in_progress {Being worked on} ai_working {An AI agent is working on this} review {Awaiting review} done {Shipped} other {Unscheduled work}}",
     "priority": "{priority, select, low {Low} medium {Medium} high {High} critical {Critical} other {Medium}}",

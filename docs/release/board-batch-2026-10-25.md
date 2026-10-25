@@ -74,8 +74,8 @@ This is an honest implementation inventory, not a claim that all cards are done.
 | 868d6605-ffe3-4507-a565-2f816a330508 | [QA][P1] Accessibility: axe, klawiatura i kontrast | Automated gate implemented; Cloud checkout and manual checks remain |
 | c011cbbb-bc9a-47db-b810-6e4f116ea078 | [QA][P1] Mobile i responsywność: iPhone Safari/Android | Open — not implemented by this batch |
 | 9129015e-486d-4e2c-9e6a-1ec3d2734446 | [QA][P0] Stripe sandbox: subskrypcje, idempotencja i uprawnienia | External environment/approval required; code work may also remain |
-| d7b880f7-d561-4746-9998-1417995202fe | [QA][P0] E2E: Kanban, taski i współbieżne edycje | Open — not implemented by this batch |
-| 0a88a2dd-5827-40fe-8f61-516039ad5a67 | [QA][P0] E2E: onboarding, organizacja i pierwszy projekt | Open — not implemented by this batch |
+| d7b880f7-d561-4746-9998-1417995202fe | [QA][P0] E2E: Kanban, taski i współbieżne edycje | Implemented and verified in three browsers; Review, awaiting human acceptance |
+| 0a88a2dd-5827-40fe-8f61-516039ad5a67 | [QA][P0] E2E: onboarding, organizacja i pierwszy projekt | Partial: first workspace/task and existing-account memberships; email invite/acceptance and Cloud Free cap remain |
 | 08175b12-c32c-4d97-8611-690365e866d3 | [Feature] Feedback Portal / public roadmap | Open — not implemented by this batch |
 | 946f9a27-384d-4bcd-b713-aaca481c76d5 | [Feature] Custom Modules 2.0 | Open — not implemented by this batch |
 | 39827fd1-de87-4b84-9730-dca0e71287e7 | [Feature] QA & Release Management | Open — not implemented by this batch |
@@ -97,7 +97,9 @@ This is an honest implementation inventory, not a claim that all cards are done.
 
 No production configuration, migration, payment, payout or deployment changed.
 Module pages require the existing module migrations (079–083) to be verified in
-the target environment. This branch adds no migration. Cloud Supabase/Stripe
+the target environment. This branch adds migration 086 for task edit revisions;
+apply it before the new full edit UI. It has only run against disposable test
+databases. Cloud Supabase/Stripe
 staging is not available; follow [staging-handoff.md](staging-handoff.md).
 Registry/npm/PyPI ownership steps remain separate from code delivery.
 Physical-device, screen-reader and actual Cloud authorization checks are not
@@ -110,7 +112,7 @@ focused ESLint passed. The editor test uses actual UI/hooks with only boundary
 adapters: visual edits/validation/reorder, synthetic preview, reload, fresh
 consent, autosave during edits and two-tab conflicts.
 
-Final clean-production-build run `8baed7a74447` completed successfully in
+Earlier clean-production-build run `8baed7a74447` completed successfully in
 Chromium, Firefox and WebKit, including 110 REST/MCP checks, dedicated module
 CRUD/read-only/foreign-tenant/disabled flows, existing release regressions and
 27 accessibility scans. Every scan has zero reported violations. Each browser
@@ -127,3 +129,18 @@ and Cloud/Stripe checkout matrix. Three module implementation cards are in
 Review with attempt evidence and this single PR link. AI QA remains Todo with
 its missing public-API matrix documented. The full backlog is not complete;
 the PR remains Draft and no production deployment was performed.
+
+The subsequent task-editing/onboarding batch adds server-owned task revisions,
+stale-form conflict recovery and persisted CRUD/membership browser scenarios.
+See [task-editing-onboarding-2026-10-25.md](task-editing-onboarding-2026-10-25.md)
+for migration ordering, compatibility and remaining acceptance criteria.
+
+Final subsequent run `77ed603f084c` passed a clean production build and all
+scenarios in Chromium, Firefox and WebKit: onboarding/first task, existing-account
+organization/project roles, two-session task CAS and recovery, persisted task
+CRUD/comments/subtasks/attachments/filters/assignment/status, existing module
+and Apple Design checks, 110 REST/MCP checks and 27 axe scans (zero violations;
+four incomplete checks per browser still require manual review). TypeScript,
+focused ESLint, the actual task-action regression and isolation guards passed;
+the full database suite reports 608 passes. Local artifacts are under
+`output/e2e/77ed603f084c/`. No production migration or deployment was performed.

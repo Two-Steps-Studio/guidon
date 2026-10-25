@@ -164,6 +164,10 @@ function TaskDetailDialogInner({
   const [deleting, setDeleting] = useState(false);
   const requestClose = useGuardedClose(!!task && JSON.stringify(form) !== JSON.stringify(formToTask(task)), saving || deleting, onClose);
   const [error, setError] = useState<string | null>(null);
+  // This version belongs to the form's initial snapshot, even if parent props
+  // change while the person is typing. Never advance it behind their edits.
+  const [editRevision] = useState(task?.revision ?? -1);
+  const [editConflict, setEditConflict] = useState(false);
   // A written description opens rendered (links clickable, lists and
   // checklists as such) and "Edit" switches to the text; an empty one opens
   // straight in the editor. Someone who can't edit only sees it rendered.
@@ -264,9 +268,9 @@ function TaskDetailDialogInner({
               recurrence_rule: form.recurrence_rule || null,
               recurrence_interval: form.recurrence_rule ? Number(form.recurrence_interval) : null,
             }),
-      });
+      }, editRevision);
 
-      if (result.error || !result.task) throw new Error(result.error ?? t("failedToSaveTask"));
+      if (result.error || !result.task) { setEditConflict(result.code === "conflict" || result.code === "version_unavailable"); throw new Error(result.error ?? t("failedToSaveTask")); }
 
       if (result.task.is_done && !task.is_done) playSound("complete");
       onSaved(result.task);
@@ -683,6 +687,13 @@ function TaskDetailDialogInner({
               {error}
             </p>
           )}
+          {editConflict && <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={() => {
+              const url = URL.createObjectURL(new Blob([JSON.stringify({ projectId, taskId: task.id, revision: editRevision, edits: form }, null, 2)], { type: "application/json" }));
+              const link = document.createElement("a"); link.href = url; link.download = `guidon-task-draft-${task.id}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }}>{t("downloadTaskEdits")}</Button>
+            <Button type="button" variant="outline" onClick={() => void requestClose(() => window.location.reload(), { unload: true })}>{t("reloadTask")}</Button>
+          </div>}
         </form>
 
         <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />

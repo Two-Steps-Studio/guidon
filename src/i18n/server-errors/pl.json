@@ -1,4 +1,6 @@
 {
+  "The task version is unavailable. Download your edits, then reload after the database is updated.": "Wersja zadania jest niedostępna. Pobierz zmiany, a po aktualizacji bazy odśwież stronę.",
+  "This task changed or is no longer available. Your edits were not saved. Download them before reloading.": "Zadanie zmieniło się lub nie jest już dostępne. Twoje zmiany nie zostały zapisane. Pobierz je przed odświeżeniem.",
   "A new branch name is required to open a pull request.": "Aby otworzyć pull request, podaj nazwę nowej gałęzi.",
   "AI features are turned off for this project.": "Funkcje AI są wyłączone w tym projekcie.",
   "API key is required.": "Klucz API jest wymagany.",

@@ -650,6 +650,8 @@
     }
   },
   "work": {
+    "downloadTaskEdits": "Pobierz moje zmiany",
+    "reloadTask": "Wczytaj aktualne zadanie",
     "status": "{status, select, backlog {Backlog} todo {Do zrobienia} in_progress {W toku} ai_working {AI pracuje} review {Przegląd} done {Zrobione} other {Backlog}}",
     "statusHint": "{status, select, backlog {Nieplanowana praca} todo {Gotowe do podjęcia} in_progress {W trakcie realizacji} ai_working {Agent AI nad tym pracuje} review {Oczekuje na przegląd} done {Wysłane} other {Nieplanowana praca}}",
     "priority": "{priority, select, low {Niski} medium {Średni} high {Wysoki} critical {Krytyczny} other {Średni}}",

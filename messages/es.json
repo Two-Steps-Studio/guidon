@@ -650,6 +650,8 @@
     }
   },
   "work": {
+    "downloadTaskEdits": "Descargar mis cambios",
+    "reloadTask": "Cargar tarea actual",
     "status": "{status, select, backlog {Backlog} todo {Por hacer} in_progress {En curso} ai_working {IA trabajando} review {Revisión} done {Hecho} other {Backlog}}",
     "statusHint": "{status, select, backlog {Trabajo sin programar} todo {Listo para empezar} in_progress {En proceso} ai_working {Un agente de IA está trabajando en esto} review {Pendiente de revisión} done {Entregado} other {Trabajo sin programar}}",
     "priority": "{priority, select, low {Baja} medium {Media} high {Alta} critical {Crítica} other {Media}}",

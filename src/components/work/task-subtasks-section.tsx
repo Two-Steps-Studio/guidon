@@ -61,9 +61,10 @@ export function TaskSubtasksSection({
   const [savingSubtaskId, setSavingSubtaskId] = useState<string | null>(null);
   // Keyed by subtask id. Only holds an entry while that row has an
   // in-flight or not-yet-committed edit - absence means "show the row's
-  // own field", so a successful or failed save both fall back to the
-  // latest server value once the entry is removed in `finally`.
+  // own field". Successful saves clear the entry; failures preserve the
+  // person's text and its original revision until they recover or cancel.
   const [subtaskTitleDrafts, setSubtaskTitleDrafts] = useState<Record<string, string>>({});
+  const subtaskTitleVersions = useRef(new Map<string, number>());
   const [subtaskStatusDrafts, setSubtaskStatusDrafts] = useState<Record<string, TaskStatus>>({});
   // Escape needs to suppress the blur-triggered commit that follows it
   // synchronously, before the draft-clearing setState above has landed - a
@@ -137,6 +138,7 @@ export function TaskSubtasksSection({
 
     if (!draft || draft === subtask.title) {
       clearDraft(setSubtaskTitleDrafts, subtask.id);
+      subtaskTitleVersions.current.delete(subtask.id);
       return;
     }
 
@@ -144,15 +146,17 @@ export function TaskSubtasksSection({
     setSubtaskError(null);
 
     try {
-      const result = await updateTask(projectId, subtask.id, { title: draft });
+      const result = await updateTask(projectId, subtask.id, { title: draft }, subtaskTitleVersions.current.get(subtask.id) ?? subtask.revision ?? -1);
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToRenameSubtask"));
 
       onSaved(result.task);
+      clearDraft(setSubtaskTitleDrafts, subtask.id);
+      subtaskTitleVersions.current.delete(subtask.id);
     } catch (err) {
+      // Preserve both the text and its original version after a failed save.
       setSubtaskError(err instanceof Error ? err.message : t("failedToRenameSubtask"));
     } finally {
       setSavingSubtaskId(null);
-      clearDraft(setSubtaskTitleDrafts, subtask.id);
     }
   };
 
@@ -212,6 +216,7 @@ export function TaskSubtasksSection({
                           aria-label={t("subtaskTitleAria", { title: subtask.title })}
                           disabled={!canEdit || saving}
                           className="h-8"
+                          onFocus={() => { if (!Object.hasOwn(subtaskTitleDrafts, subtask.id)) subtaskTitleVersions.current.set(subtask.id, subtask.revision ?? -1); }}
                           onChange={(event) =>
                             setSubtaskTitleDrafts((current) => ({
                               ...current,
@@ -226,6 +231,7 @@ export function TaskSubtasksSection({
                             } else if (event.key === "Escape") {
                               escapedSubtaskIds.current.add(subtask.id);
                               clearDraft(setSubtaskTitleDrafts, subtask.id);
+                              subtaskTitleVersions.current.delete(subtask.id);
                               event.currentTarget.blur();
                             }
                           }}

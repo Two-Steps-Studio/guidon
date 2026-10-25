@@ -20,6 +20,8 @@ import { feedbackCoverage } from "./feedback.mjs";
 import { boardLayoutCoverage } from "./board-layout.mjs";
 import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
+import { taskEditingCoverage } from "./task-editing.mjs";
+import { onboardingCoverage } from "./onboarding.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
 
@@ -141,10 +143,12 @@ try{
       }else{
       await releaseSmoke({page,context,origin,fixture});
       await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
+      await onboardingCoverage({page,context,origin,fixture,client,browserName:name});
       await agentClaimCoverage({page,context,origin,fixture,client,connectionString,browserName:name,artifacts});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       const {appleDesignCoverage}=await import("./apple-design.mjs");
       await appleDesignCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       if(includeAccessibility){

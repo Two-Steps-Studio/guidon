@@ -14,7 +14,7 @@ import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/tas
 import { tr } from "@/lib/i18n/server-errors";
 
 /** `created`: a repeating task's next occurrence (and its subtasks), made because this finished it. */
-export type TaskActionResult = { task: Task | null; error: string | null; created?: Task[] };
+export type TaskActionResult = { task: Task | null; error: string | null; created?: Task[]; code?: "conflict" | "version_unavailable" };
 export type TaskMutationResult = { error: string | null; created?: Task[] };
 
 export async function moveTask(
@@ -237,12 +237,16 @@ function notifyTaskAssignment(projectId: string, actorId: string, task: Task, pa
 export async function updateTask(
   projectId: string,
   taskId: string,
-  patch: TaskPatch
+  patch: TaskPatch,
+  expectedRevision?: number
 ): Promise<TaskActionResult> {
   const access = await getProjectAccess(projectId);
   // Mirrors tasks_update (001): owner/admin/developer.
   if (!access || !canWriteProject(access.role)) {
     return { task: null, error: await tr("You do not have permission to edit this task.") };
+  }
+  if (expectedRevision !== undefined && (!Number.isInteger(expectedRevision) || expectedRevision < 0 || expectedRevision >= 2147483647)) {
+    return { task: null, code: "version_unavailable", error: await tr("The task version is unavailable. Download your edits, then reload after the database is updated.") };
   }
 
   const columns = pickTaskPatch(patch);
@@ -255,15 +259,16 @@ export async function updateTask(
     ? await db.from<{ status: string; is_done: boolean }>("tasks").select("status, is_done").eq("id", taskId).eq("project_id", projectId).maybeSingle()
     : { data: null };
 
-  const { data: task, error } = await db
+  let mutation = db
     .from<Task>("tasks")
     .update(columns)
     .eq("id", taskId)
-    .eq("project_id", projectId)
-    .select("*")
-    .maybeSingle();
+    .eq("project_id", projectId);
+  if (expectedRevision !== undefined) mutation = mutation.eq("revision", expectedRevision);
+  const { data: task, error } = await mutation.select("*").maybeSingle();
 
   if (error) return { task: null, error: error.message };
+  if (!task && expectedRevision !== undefined) return { task: null, code: "conflict", error: await tr("This task changed or is no longer available. Your edits were not saved. Download them before reloading.") };
   if (!task) return { task: null, error: await tr("This task could not be found in this project.") };
 
   await logActivity({
