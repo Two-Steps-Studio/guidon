@@ -7,6 +7,8 @@ on:
       - 'messages/**'
       - 'public/**'
       - 'tests/e2e/**'
+      - 'tests/*webhook*.mjs'
+      - 'docs/webhooks.md'
       - 'scripts/**'
       - 'package*.json'
       - 'next.config.*'
@@ -34,6 +36,7 @@ jobs:
       - run: npm run test:dependencies
       - run: npm run test:package
       - run: npm run test:auth
+      - run: npm run test:webhooks
       - run: npm run test:api
       - run: npm run test:feedback
       - run: node --experimental-strip-types tests/date-format.test.mjs

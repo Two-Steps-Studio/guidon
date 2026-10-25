@@ -10,6 +10,8 @@
  */
 
 import { createHmac } from "node:crypto";
+import dnsPromises from "node:dns/promises";
+import { syncBuiltinESMExports } from "node:module";
 import {
   checkWebhookUrl,
   generateWebhookSecret,
@@ -82,13 +84,25 @@ check("ftp still refused", !parseWebhookUrl("ftp://10.0.0.5/", selfHosted).ok);
 
 console.log("\n  checkWebhookUrl (DNS)");
 {
-  const result = await checkWebhookUrl("https://localhost.localdomain.invalid/", cloud);
-  check("unresolvable host refused", !result.ok);
-}
-{
-  const result = await checkWebhookUrl("https://127.0.0.1.nip.io/hook", cloud);
-  // Resolves to 127.0.0.1 when DNS is available; refused either way.
-  check("host resolving to loopback refused", !result.ok, JSON.stringify(result));
+  const original = dnsPromises.lookup;
+  try {
+    dnsPromises.lookup = async () => { throw Object.assign(new Error("Test DNS failure"), { code: "ENOTFOUND" }); };
+    syncBuiltinESMExports();
+    const missing = await checkWebhookUrl("https://receiver.invalid/", cloud);
+    check("unresolvable host refused", !missing.ok && missing.reason.includes("doesn't resolve"));
+    for (const addresses of [[], [{ address: "127.0.0.1", family: 4 }], [{ address: "8.8.8.8", family: 4 }, { address: "::1", family: 6 }]]) {
+      dnsPromises.lookup = async () => addresses;
+      syncBuiltinESMExports();
+      const result = await checkWebhookUrl("https://receiver.invalid/hook", cloud);
+      check("empty/private/mixed DNS answers refused", !result.ok && result.reason.includes("isn't reachable"), JSON.stringify(result));
+    }
+    dnsPromises.lookup = async () => [{ address: "8.8.8.8", family: 4 }];
+    syncBuiltinESMExports();
+    check("public DNS answer accepted without contacting it", (await checkWebhookUrl("https://receiver.invalid/hook", cloud)).ok);
+  } finally {
+    dnsPromises.lookup = original;
+    syncBuiltinESMExports();
+  }
 }
 
 console.log("\n  events / secrets / signature");
@@ -137,7 +151,7 @@ check("receiver error: Discord JSON message", describeReceiverError(400, '{"mess
 check("receiver error: plain text first line", describeReceiverError(400, "no_text\nmore") === "Receiver responded with HTTP 400: no_text");
 check("receiver error: empty body", describeReceiverError(502, "") === "Receiver responded with HTTP 502.");
 
-console.log("\n  guardedRequest: the address is checked again when connecting (DNS rebinding)");
+console.log("\n  guardedRequest: Cloud URL rejection and self-hosted transport");
 {
   const { createServer } = await import("node:http");
   const server = createServer((req, res) => {
@@ -157,7 +171,7 @@ console.log("\n  guardedRequest: the address is checked again when connecting (D
   } catch (error) {
     blocked = error.code;
   }
-  check("a name that resolves to loopback is refused at connect time", blocked === "EBLOCKED", blocked);
+  check("Cloud refuses an HTTP localhost target before connecting", blocked === "EBLOCKED", blocked);
   const ok = await guardedRequest(new URL(`http://localhost:${port}/`), { ...base, method: "POST", body: "hi", allowPrivate: true });
   check("self-hosted (private allowed): request goes through with the body", ok.status === 200 && ok.text.startsWith("POST hi"), ok.text.slice(0, 20));
   check("response cut at maxBytes", ok.text.length === 100, ok.text.length);
