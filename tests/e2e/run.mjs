@@ -23,6 +23,8 @@ import { projectModuleCoverage } from "./project-modules.mjs";
 import { taskEditingCoverage } from "./task-editing.mjs";
 import { aiChatBoundaryCoverage } from "./ai-chat.mjs";
 import { mobileCoverage } from "./mobile.mjs";
+import { npmCommand } from "./npm-command.mjs";
+import { calendarEditingCoverage } from "./calendar-editing.mjs";
 import { onboardingCoverage } from "./onboarding.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
@@ -48,7 +50,7 @@ let appLog="";
 let phase="source-copy";
 let completed=false;
 const results=[];
-const npmCli=process.env.npm_execpath ?? path.resolve(path.dirname(process.execPath),"node_modules/npm/bin/npm-cli.js");
+const runNpm=(args)=>{const npm=npmCommand(args);return run(npm.command,npm.args);};
 
 function run(command,args,options={}){
   return new Promise((resolve,reject)=>{
@@ -87,7 +89,7 @@ try{
   // No inherited provider/email/billing/production secrets, no .env files.
   console.log("E2E: clean npm ci, migrations and production build");
   phase="install";
-  await writeFile(path.join(artifacts,"install.log"),await run(process.execPath,[npmCli,"ci","--no-audit","--no-fund"]));
+  await writeFile(path.join(artifacts,"install.log"),await runNpm(["ci","--no-audit","--no-fund"]));
   phase="migrations";
   await writeFile(path.join(artifacts,"migrations.log"),await run(process.execPath,["scripts/migrate.mjs"]));
   client=new pg.Client({connectionString});await client.connect();const fixture=await seedReleaseFixture(client);
@@ -98,7 +100,7 @@ try{
   const forgedPayload=Buffer.from(JSON.stringify({sub:fixture.users[1].id,exp:Math.floor(Date.now()/1000)+3600})).toString("base64url");
   const invalidSessions=[expired,`${forgedPayload}.${expired.split(".")[1]}`,"malformed-session"];
   phase="build";
-  await writeFile(path.join(artifacts,"build.log"),await run(process.execPath,[npmCli,"run","build"]));
+  await writeFile(path.join(artifacts,"build.log"),await runNpm(["run","build"]));
   const standalone=path.join(directory,".next/standalone");
   for(const name of [...forbiddenStandaloneDirectories,"runtime-e2e-files",".env.production",".env"]){await assert.rejects(access(path.join(standalone,name)),{code:"ENOENT"},`Forbidden artifact shipped: ${name}`);}
   for(const name of canaries)assert.equal(await readFile(path.join(directory,name),"utf8"),"GUIDON_PACKAGE_CANARY=disposable-not-a-secret\n");
@@ -154,6 +156,7 @@ try{
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      await calendarEditingCoverage({page,context,origin,fixture,client,browserName:name});
       await aiChatBoundaryCoverage({page,context,origin,fixture,client});
       const {appleDesignCoverage}=await import("./apple-design.mjs");
       await appleDesignCoverage({page,context,origin,fixture,client,browserName:name,artifacts});

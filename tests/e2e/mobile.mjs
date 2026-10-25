@@ -40,7 +40,9 @@ export async function mobileCoverage({page,context,origin,fixture,client,browser
    // Drag ghosts are deliberately duplicate, inert artwork outside the board.
    const card=board.locator(`[data-card-id="${task.id}"]`);await card.scrollIntoViewIfNeeded();await card.locator('[data-task-open]').tap();await page.locator('#task-title').waitFor();
    const details=page.getByRole('dialog').filter({has:page.locator('#task-title')});await settled(details);
-   await reachable(page.locator('#task-priority'));await page.locator('#task-priority').tap();
+   await reachable(page.locator('#task-priority'));
+   assert.notEqual(await page.locator('#task-priority').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(0, 0, 0, 0)','Dropdown trigger must have an opaque themed surface');
+   await page.locator('#task-priority').tap();
    const menu=page.getByRole('menu');await menu.waitFor();await settled(menu);const high=menu.getByRole('menuitem',{name:'High',exact:true});await reachable(high);await high.tap();await menu.waitFor({state:'hidden'});
    const save=details.getByRole('button',{name:'Save changes',exact:true});await reachable(save);await save.tap();await details.waitFor({state:'hidden'});
    await page.reload();assert.equal((await client.query('SELECT priority FROM tasks WHERE id=$1',[task.id])).rows[0].priority,'high');

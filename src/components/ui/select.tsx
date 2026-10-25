@@ -117,7 +117,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             disabled={disabled}
             aria-required={required || undefined}
             className={cn(
-              "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-left text-sm shadow-sm transition-colors",
+              "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1 text-left text-sm shadow-sm transition-colors",
               "hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
               "disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:bg-accent/50",
               className

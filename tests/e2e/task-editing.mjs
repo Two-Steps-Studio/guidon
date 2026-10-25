@@ -63,6 +63,9 @@ export async function taskEditingCoverage({page,context,origin,fixture,client,br
     await attachments.locator('input[type="file"]').setInputFiles({name:`proof-${browserName}.txt`,mimeType:"text/plain",buffer:Buffer.from("Disposable E2E attachment")});
     await attachments.getByText(`proof-${browserName}.txt`,{exact:true}).waitFor();
     await loser.locator("#task-priority").click();await loser.getByRole("menuitem",{name:"High",exact:true}).click();
+    // Finish Radix's close/focus restoration before opening the next menu.
+    // Otherwise WebKit can dismiss the new menu while the old one unmounts.
+    await loser.getByRole("menu").waitFor({state:"hidden"});
     await loser.locator("#task-assignee").click();await loser.getByRole("menuitem",{name:"E2E alpha",exact:true}).click();
     await loser.locator("#task-tags").fill("regression");
     await loser.getByRole("button",{name:"Save changes",exact:true}).click();await loser.locator("#task-title").waitFor({state:"hidden"});
