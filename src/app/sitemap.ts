@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site-url'
+import { legalPublicationReady } from '@/lib/legal'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = SITE_URL
@@ -91,5 +92,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })
   }
 
-  return routes
+  if (legalPublicationReady) routes.push({ url: `${baseUrl}/legal/cookies`, changeFrequency: 'yearly', priority: 0.2 })
+  return routes.filter(route => legalPublicationReady || !new URL(route.url).pathname.startsWith('/legal/'))
 }

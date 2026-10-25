@@ -83,7 +83,8 @@
     "common": {
       "somethingWentWrong": "Etwas ist schiefgelaufen",
       "showPassword": "Passwort anzeigen",
-      "hidePassword": "Passwort verbergen"
+      "hidePassword": "Passwort verbergen",
+      "signupLegalNotice": "Mit der Kontoerstellung, auch über einen Anmeldedienst, akzeptieren Sie die <terms>Nutzungsbedingungen</terms> und nehmen die <privacy>Datenschutzerklärung</privacy> zur Kenntnis. Dies ist keine Einwilligung in optionale Analysen."
     },
     "mobileLogin": {
       "title": "Guidon-App verbinden",
@@ -304,7 +305,8 @@
       "selfHosting": "Self-Hosting",
       "eula": "EULA",
       "about": "Über uns",
-      "contact": "Kontakt"
+      "contact": "Kontakt",
+      "cookies": "Cookies"
     },
     "selfHost": {
       "title": "Guidon auf dem eigenen Server betreiben",

@@ -83,7 +83,8 @@
     "common": {
       "somethingWentWrong": "Something went wrong",
       "showPassword": "Show password",
-      "hidePassword": "Hide password"
+      "hidePassword": "Hide password",
+      "signupLegalNotice": "By creating an account, including through a sign-in provider, you agree to the <terms>Terms of Service</terms> and acknowledge the <privacy>Privacy Policy</privacy>. This is not consent to optional analytics."
     },
     "mobileLogin": {
       "title": "Connect the Guidon app",
@@ -304,7 +305,8 @@
       "selfHosting": "Self-hosting",
       "eula": "EULA",
       "about": "About",
-      "contact": "Contact"
+      "contact": "Contact",
+      "cookies": "Cookies"
     },
     "selfHost": {
       "title": "Run Guidon on your own server",

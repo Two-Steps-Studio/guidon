@@ -124,6 +124,12 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!local && <p className="mb-4 text-sm text-muted-foreground">
+            {tCommon.rich("signupLegalNotice", {
+              terms: chunks => <Link href="/legal/terms" className="text-primary underline">{chunks}</Link>,
+              privacy: chunks => <Link href="/legal/privacy" className="text-primary underline">{chunks}</Link>,
+            })}
+          </p>}
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">{t("fullNameLabel")}</Label>
