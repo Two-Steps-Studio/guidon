@@ -83,7 +83,8 @@
     "common": {
       "somethingWentWrong": "Coś poszło nie tak",
       "showPassword": "Pokaż hasło",
-      "hidePassword": "Ukryj hasło"
+      "hidePassword": "Ukryj hasło",
+      "signupLegalNotice": "Tworząc konto, również przez zewnętrznego dostawcę logowania, akceptujesz <terms>Regulamin</terms> i zapoznajesz się z <privacy>Polityką prywatności</privacy>. Nie oznacza to zgody na opcjonalną analitykę."
     },
     "mobileLogin": {
       "title": "Połącz aplikację Guidon",
@@ -304,7 +305,8 @@
       "selfHosting": "Self-hosting",
       "eula": "EULA",
       "about": "O nas",
-      "contact": "Kontakt"
+      "contact": "Kontakt",
+      "cookies": "Pliki cookie"
     },
     "selfHost": {
       "title": "Postaw Guidona na własnym serwerze",

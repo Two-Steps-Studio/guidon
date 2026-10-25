@@ -3,13 +3,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SUPPORT_EMAIL } from "@/lib/project-links";
+import { LegalNotice, OperatorContact } from "@/components/legal/legal-document";
+import { LEGAL_VERSION, legalRobots } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "End User License Agreement",
   alternates: { canonical: "/legal/eula" },
+  robots: legalRobots,
 };
 
-const LAST_UPDATED = "2026-10-20";
+const LAST_UPDATED = LEGAL_VERSION;
 
 export default function EulaPage() {
   return (
@@ -26,6 +29,7 @@ export default function EulaPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-12">
+        <LegalNotice />
         <h1 className="mb-2 text-3xl font-bold">End User License Agreement</h1>
         <p className="mb-10 text-sm text-muted-foreground">Last updated: {LAST_UPDATED}</p>
 
@@ -43,6 +47,7 @@ export default function EulaPage() {
 
           <section>
             <h2>1. Parties</h2>
+            <OperatorContact />
             <p>
               This EULA is between you and the operator of Guidon (&quot;we&quot;, &quot;us&quot;) - see section 1
               of the Terms of Service. If you got the App from the Apple App Store or Google Play, Apple or Google is
@@ -53,14 +58,14 @@ export default function EulaPage() {
           <section>
             <h2>2. License</h2>
             <p>
-              We grant you a personal, non-exclusive, non-transferable, revocable license to install and use the App
+              We grant you a non-exclusive, non-transferable license to install and use the App for your personal or business work
               on devices you own or control, for as long as you comply with this EULA. If you got it from the App
               Store, you may use it on any Apple-branded device you own or control, as permitted by the App
-              Store&apos;s Usage Rules; members of your Family Sharing group may also use it as those rules allow.
+              Store&apos;s Usage Rules; Family Sharing and volume-purchasing users may also use it as those rules allow.
             </p>
             <p>
-              Parts of Guidon are published as open-source software. Where a component comes with its own
-              open-source license, that license governs that component, and nothing in this EULA limits the rights
+              Where a component is supplied under a separate licence, including an open-source licence,
+              that licence governs that component, and nothing in this EULA limits the rights
               it gives you.
             </p>
           </section>
@@ -78,8 +83,10 @@ export default function EulaPage() {
           <section>
             <h2>4. Your account and data</h2>
             <p>
-              The App signs in to a Guidon account and stores an access key and a copy of your recent data on your
-              device so it works offline. Signing out removes them. Everything you create belongs to you, as
+              Depending on the client, the App can store authentication material and cached project data on your
+              device. Offline support and sign-out cleanup differ by client; check that client&apos;s documentation
+              and revoke unwanted keys through your account controls. Do not assume that signing out erases
+              every external or cached copy. Everything you create remains yours or your licensors&apos;, as
               described in the Terms of Service.
             </p>
           </section>
@@ -144,8 +151,9 @@ export default function EulaPage() {
           <section>
             <h2>11. Termination</h2>
             <p>
-              This license ends automatically if you break this EULA, or when you delete the App. You can end it at
-              any time by uninstalling the App. Sections 6-8 and 12-13 survive termination.
+              You may stop using and uninstall the App at any time. We may terminate this licence for a material
+              breach, subject to applicable notice, remedy and consumer rights. Uninstalling does not itself
+              cancel a paid subscription or delete your hosted account. Sections 6-8 and 12-13 survive as applicable.
             </p>
           </section>
 

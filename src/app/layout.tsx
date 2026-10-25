@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { PUBLIC_CLIENT_NAMESPACES, pickMessages } from "@/i18n/client-messages";
@@ -9,13 +8,11 @@ import { Toaster } from "sonner";
 import { GlobalWebMcpTools } from "@/components/agent/web-mcp";
 import { DitherBackground } from "@/components/layout/dither-background";
 import { ConfirmActionHost } from "@/components/ui/confirm-action";
-import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
 import { BRAND_COLORS } from "@/lib/brand-colors";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
 import "./globals.css";
 
-const GA_MEASUREMENT_ID = "G-7PBQ5Y339N";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -146,7 +143,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA
           property - only load it when this is actually Guidon Cloud, same
           gating src/app/page.tsx already uses for cloud-only pricing. */}
-      {!hasDirectDatabase() && <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />}
+      {/* Optional analytics must not load until an informed opt-in mechanism
+          is implemented. Do not restore unconditional third-party tracking. */}
     </html>
   );
 }
