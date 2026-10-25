@@ -42,6 +42,7 @@ jobs:
       - run: npm run test:dependencies
       - run: npm run test:package
       - run: npm run test:auth
+      - run: npm run test:ai
       - run: npm run test:webhooks
       - run: npm run test:agent-readiness
       - run: npm run test:agent-claims
@@ -55,6 +56,28 @@ jobs:
         if: always()
         with:
           name: release-application-e2e
+          path: output/e2e/
+          if-no-files-found: warn
+          retention-days: 7
+
+  accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: node tests/e2e/run.mjs --accessibility-audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-accessibility-e2e
           path: output/e2e/
           if-no-files-found: warn
           retention-days: 7

@@ -19,11 +19,14 @@ import { apiIsolation } from "./api-isolation.mjs";
 import { feedbackCoverage } from "./feedback.mjs";
 import { boardLayoutCoverage } from "./board-layout.mjs";
 import { agentClaimCoverage } from "./agent-claims.mjs";
+import { projectModuleCoverage } from "./project-modules.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
 
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const designAuditMode=process.argv.includes("--design-audit");
+const accessibilityMode=process.argv.includes("--accessibility-audit");
+const includeAccessibility=process.argv.includes("--with-accessibility");
 const runId=randomBytes(6).toString("hex");
 const artifacts=path.join(root,"output/e2e",runId);
 await mkdir(artifacts,{recursive:true});
@@ -129,7 +132,10 @@ try{
     const page=await context.newPage();page.setDefaultTimeout(15000);
     const started=Date.now();
     try{
-      if(designAuditMode){
+      if(accessibilityMode){
+        const {accessibilityCoverage}=await import("./accessibility.mjs");
+        await accessibilityCoverage({page,context,origin,fixture,browserName:name,artifacts});
+      }else if(designAuditMode){
         const {designAudit}=await import("./design-audit.mjs");
         await designAudit({page,context,origin,fixture,browserName:name,artifacts});
       }else{
@@ -138,8 +144,13 @@ try{
       await agentClaimCoverage({page,context,origin,fixture,client,connectionString,browserName:name,artifacts});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
+      await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       const {appleDesignCoverage}=await import("./apple-design.mjs");
       await appleDesignCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      if(includeAccessibility){
+        const {accessibilityCoverage}=await import("./accessibility.mjs");
+        await accessibilityCoverage({page,context,origin,fixture,browserName:name,artifacts});
+      }
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`weak-${name}@guidon.example.test`])).rowCount,0,"Rejected signup must not create a database user");
       assert.equal((await client.query("SELECT 1 FROM auth.users WHERE email=$1",[`signup-${name}@guidon.example.test`])).rowCount,1,"Real signup must create exactly one user");
       }
@@ -153,7 +164,7 @@ try{
 }finally{
   clearTimeout(deadline);
   await writeFile(path.join(artifacts,"app.log"),appLog);
-  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
+  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
   if(proxy)await new Promise(resolve=>proxy.close(resolve));
   if(app){app.kill();await new Promise(resolve=>{app.once("exit",resolve);setTimeout(()=>{app.kill("SIGKILL");resolve();},3000).unref();});}
   await client?.end();

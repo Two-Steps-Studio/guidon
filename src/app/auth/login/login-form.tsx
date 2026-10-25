@@ -157,7 +157,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
 
           <div className="mt-4 text-center text-sm">
             {t("noAccount")}{" "}
-            <Link href="/auth/signup" className="text-primary hover:underline">
+            <Link href="/auth/signup" className="text-primary underline underline-offset-2">
               {t("signUp")}
             </Link>
           </div>

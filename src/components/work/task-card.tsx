@@ -233,7 +233,7 @@ function TaskCardComponent({
       // A modifier-click selects the card (onClick below) - never a drag.
       if (onSelect && (event.metaKey || event.ctrlKey || event.shiftKey)) return;
       // Don't hijack the "..." move-to menu's own press/click.
-      if ((event.target as HTMLElement).closest("button")) return;
+      if ((event.target as HTMLElement).closest("button:not([data-task-open])")) return;
 
       if (gestureRef.current) clearHoldTimer(gestureRef.current);
       const gesture: Gesture = {
@@ -335,26 +335,6 @@ function TaskCardComponent({
         }
         onOpen(task);
       }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen(task);
-          return;
-        }
-        if (onReorder && event.altKey && event.key === "ArrowUp" && canMoveUp) {
-          event.preventDefault();
-          onReorder(task, "up");
-          return;
-        }
-        if (onReorder && event.altKey && event.key === "ArrowDown" && canMoveDown) {
-          event.preventDefault();
-          onReorder(task, "down");
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label={t("openTaskAria", { title: task.title })}
-      aria-keyshortcuts={onReorder ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
       className={cn(
         "group select-none rounded-lg border border-border bg-card p-3 text-left",
         "shadow-sm transition-colors",
@@ -397,7 +377,13 @@ function TaskCardComponent({
             done ? "text-muted-foreground line-through decoration-muted-foreground/50" : "text-foreground"
           )}
         >
-          {task.title}
+          <button type="button" data-task-open aria-label={t("openTaskAria", { title: task.title })}
+            aria-keyshortcuts={onReorder ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
+            className="rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onKeyDown={event => {
+              if (onReorder && event.altKey && event.key === "ArrowUp" && canMoveUp) { event.preventDefault(); onReorder(task, "up"); }
+              if (onReorder && event.altKey && event.key === "ArrowDown" && canMoveDown) { event.preventDefault(); onReorder(task, "down"); }
+            }}>{task.title}</button>
           {fresh && (
             <span className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded bg-primary/10 px-1 py-px align-middle text-[10px] font-semibold uppercase leading-3 tracking-wide text-primary">
               {t("newBadge")}

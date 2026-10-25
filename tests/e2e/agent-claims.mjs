@@ -102,6 +102,9 @@ export async function agentClaimCoverage({page,context,origin,fixture,client,con
   const refresh=await exchange({grant_type:"urn:ietf:params:oauth:grant-type:jwt-bearer",assertion:tokens.identity_assertion});
   assert.equal(refresh.status(),200);
   await page.goto(`${origin}/profile`);
+  // Wait for the profile's hydration and initial notification action before
+  // clicking a client-only control (WebKit can otherwise drop the early click).
+  await page.waitForLoadState("networkidle");
   const row=page.locator("li").filter({has:page.getByText(label,{exact:true})});
   await row.getByRole("button",{name:"Disconnect",exact:true}).click();
   await row.waitFor({state:"detached"});

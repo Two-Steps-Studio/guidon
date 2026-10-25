@@ -63,6 +63,7 @@ export function CreateTaskDialog({
   columns,
   onClose,
   onCreated,
+  returnFocusRef,
 }: {
   projectId: string;
   status: TaskStatus | null;
@@ -72,6 +73,7 @@ export function CreateTaskDialog({
   columns: readonly BoardColumn[];
   onClose: () => void;
   onCreated: (task: Task) => void;
+  returnFocusRef?: { current: HTMLElement | null };
 }) {
   const t = useTranslations("work");
   const labelPresets = useLabelPresets();
@@ -212,7 +214,10 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) void requestClose(); }}>
-      <DialogContent scrollable className="sm:max-w-xl">
+      <DialogContent scrollable className="sm:max-w-xl" onCloseAutoFocus={event => {
+        const target = returnFocusRef?.current;
+        if (target?.isConnected) { event.preventDefault(); target.focus(); }
+      }}>
         <DialogHeader>
           <DialogTitle className="text-base">{t("newTaskDialogTitle")}</DialogTitle>
           <DialogDescription>

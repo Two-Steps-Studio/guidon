@@ -36,7 +36,7 @@ export async function boardLayoutCoverage({page,origin,fixture,client,browserNam
     const compact=await positions();
     for(const target of targets)assert.ok(Math.abs(expanded[target]-compact[target])<=1.5,`Sidebar row ${target} jumps vertically on collapse: ${expanded[target]} -> ${compact[target]}`);
     for(const [name,item] of [["Switch project",owner.projectName],["Theme","System"],["Language","English"]]){
-      await sidebar.getByRole("button",{name,exact:true}).click();
+      await sidebar.getByRole("button",{name:`${name}: ${item}`,exact:true}).click();
       await page.getByRole("menuitem",{name:item,exact:true}).waitFor();
       await page.keyboard.press("Escape");
     }

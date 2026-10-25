@@ -27,6 +27,7 @@ import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { FeedbackMenuItem } from "@/components/layout/feedback-dialog";
 import type { SwitchableProject } from "@/lib/data/project-access";
 import type { Theme } from "@/lib/theme";
+import type { ProjectModuleLink } from "@/lib/data/project-module-navigation";
 import {
   LayoutDashboard,
   ListChecks,
@@ -176,6 +177,7 @@ export interface AppSidebarProps {
   showUpgrade?: boolean;
   /** projects.disabled_modules (migration 055) - sections hidden from the project nav. */
   disabledModules?: string[];
+  moduleLinks?: ProjectModuleLink[];
 }
 
 /** The person's pinned projects, shown on every app page including dashboard. */
@@ -212,6 +214,7 @@ export function AppSidebar({
   currentTheme = "system",
   showUpgrade = false,
   disabledModules,
+  moduleLinks = [],
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -320,6 +323,15 @@ export function AppSidebar({
             </SidebarGroup>
             );
           })}
+
+        {projectId && moduleLinks.length > 0 && <SidebarGroup>
+          <SidebarGroupLabel>{t("customModules")}</SidebarGroupLabel>
+          <SidebarMenu>{moduleLinks.map(module => <SidebarMenuItem key={module.id}>
+            <SidebarMenuButton asChild isActive={pathname === module.href} tooltip={module.name}>
+              <Link href={module.href} aria-current={pathname === module.href ? "page" : undefined}><Puzzle /><span className="truncate">{module.name}</span></Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>)}</SidebarMenu>
+        </SidebarGroup>}
 
         {isAdmin && (
           <SidebarGroup>

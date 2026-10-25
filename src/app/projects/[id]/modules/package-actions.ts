@@ -31,7 +31,7 @@ export async function createModulePackage(projectId: string, input: unknown, con
     records: hasDirectDatabase() ? JSON.stringify(records) : records,
   });
   if (error) return { error: error.code === "23505" ? "conflict" : "saveFailed" };
-  revalidatePath(`/projects/${projectId}/modules`);
+  revalidatePath(`/projects/${projectId}`, "layout");
   return { error: null };
 }
 
@@ -54,5 +54,6 @@ export async function saveModuleRecords(projectId: string, moduleId: string, inp
   if (result.error) return { error: "saveFailed" };
   if (!result.data.length) return { error: "conflict" };
   revalidatePath(`/projects/${projectId}/modules`);
+  revalidatePath(`/projects/${projectId}/extensions/package/${moduleId}`);
   return { error: null, revision: revision + 1 };
 }

@@ -24,6 +24,6 @@ export async function manageModule(projectId: string, moduleId: string, formData
   const result = await dataClient(access.userId).from("project_module_packages").update(change.patch).eq("project_id", projectId).eq("module_id", moduleId).eq("revision", current.revision).select("module_id");
   if (result.error) fail("saveFailed");
   if (!result.data.length) fail("conflict");
-  revalidatePath(`/projects/${projectId}/modules`); revalidatePath("/my-modules"); revalidatePath(path);
+  revalidatePath(`/projects/${projectId}`, "layout"); revalidatePath("/my-modules"); revalidatePath(path);
   redirect(`${path}?saved=1`);
 }

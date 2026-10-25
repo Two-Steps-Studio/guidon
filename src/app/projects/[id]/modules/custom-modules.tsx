@@ -9,8 +9,8 @@ import { CUSTOM_MODULE_AI_PROMPT, CUSTOM_MODULE_PRESETS, customModuleSchema, cus
 import { renderCustomModuleBlocks } from "@/lib/work/custom-module-renderer";
 import { saveCustomModules } from "./actions";
 
-export function CustomModules({ projectId, initial, initialRevision, canManage }: {
-  projectId: string; initial: CustomModule[]; initialRevision: number; canManage: boolean;
+export function CustomModules({ projectId, initial, initialRevision, canManage, selectedId }: {
+  projectId: string; initial: CustomModule[]; initialRevision: number; canManage: boolean; selectedId?: string;
 }) {
   const t = useTranslations("customModules");
   const [modules, setModules] = useState(initial);
@@ -23,6 +23,11 @@ export function CustomModules({ projectId, initial, initialRevision, canManage }
   const input = useRef<HTMLInputElement>(null);
 
   function update(next: CustomModule[]) { setModules(next); setDirty(true); setStatus(""); }
+  function save() { startTransition(async () => {
+    try { const result = await saveCustomModules(projectId, modules, revision);
+      if (result.error) setStatus(t(result.error)); else { setRevision(result.revision!); setDirty(false); setStatus(t("saved")); }
+    } catch { setStatus(t("saveFailed")); }
+  }); }
   function applyDraft() {
     try {
       const parsedModule = customModuleSchema.parse(JSON.parse(draft));
@@ -38,7 +43,7 @@ export function CustomModules({ projectId, initial, initialRevision, canManage }
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
   return <div className="space-y-6">
-    {canManage && <Card>
+    {canManage && !selectedId && <Card>
       <CardHeader><CardTitle>{t("catalog")}</CardTitle><CardDescription>{t("catalogHint")}</CardDescription></CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">{CUSTOM_MODULE_PRESETS.map((preset) => <Button key={preset.id} variant="outline" disabled={pending || modules.length >= 20} onClick={() => {
@@ -60,19 +65,16 @@ export function CustomModules({ projectId, initial, initialRevision, canManage }
         </label>
         <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={!draft || pending} onClick={applyDraft}>{t("apply")}</Button>
           {editing && <Button variant="ghost" onClick={() => { setDraft(""); setEditing(null); }}>{t("cancel")}</Button>}
-          <Button disabled={!dirty || pending} onClick={() => startTransition(async () => {
-            try { const result = await saveCustomModules(projectId, modules, revision);
-              if (result.error) setStatus(t(result.error)); else { setRevision(result.revision!); setDirty(false); setStatus(t("saved")); }
-            } catch { setStatus(t("saveFailed")); }
-          })}>{pending ? t("saving") : t("save")}</Button>
+          <Button disabled={!dirty || pending} onClick={save}>{pending ? t("saving") : t("save")}</Button>
         </div>
         <p role="status" className="text-sm">{status || (dirty ? t("unsaved") : "")}</p>
       </CardContent>
     </Card>}
     {modules.length === 0 && <p className="text-sm text-muted-foreground">{t("empty")}</p>}
-    <div className="grid min-w-0 gap-4 lg:grid-cols-2">{modules.map((module, moduleIndex) => <Card key={module.id} className="min-w-0">
+    {selectedId && canManage && <div className="space-y-2"><Button disabled={!dirty || pending} onClick={save}>{pending ? t("saving") : t("save")}</Button><p role="status" className="text-sm">{status || (dirty ? t("unsaved") : "")}</p></div>}
+    <div className="grid min-w-0 gap-4">{modules.map((module, moduleIndex) => (!selectedId || selectedId === module.id) && <Card key={module.id} className="min-w-0">
       <CardHeader><CardTitle>{module.title}</CardTitle><CardDescription>{module.description}</CardDescription>
-        {canManage && <div className="flex gap-2 pt-2"><Button size="sm" variant="outline" disabled={pending} onClick={() => { setEditing(module.id); setDraft(JSON.stringify(module, null, 2)); }}>{t("edit")}</Button>
+        {canManage && !selectedId && <div className="flex gap-2 pt-2"><Button size="sm" variant="outline" disabled={pending} onClick={() => { setEditing(module.id); setDraft(JSON.stringify(module, null, 2)); }}>{t("edit")}</Button>
           <Button size="sm" variant="outline" disabled={pending} onClick={() => update(modules.filter((item) => item.id !== module.id))}>{t("remove")}</Button></div>}
       </CardHeader>
       <CardContent className="space-y-5">{renderCustomModuleBlocks(module, moduleIndex, canManage, pending, (changedModuleIndex, blockIndex, itemIndex, checked) => {

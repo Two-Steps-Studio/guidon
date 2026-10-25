@@ -42,7 +42,7 @@ export async function installFromCatalog(moduleId: string, version: string, form
     },
   });
   if (result.error) redirect(`${path}?error=${result.error}`);
-  revalidatePath(`/projects/${projectId.data}/modules`);
+  revalidatePath(`/projects/${projectId.data}`, "layout");
   revalidatePath("/my-modules");
   redirect(`/projects/${projectId.data}/modules#module-${encodeURIComponent(moduleId)}`);
 }

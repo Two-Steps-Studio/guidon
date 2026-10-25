@@ -42,13 +42,13 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('button',{name:messages.notifications.retry,exact:true}).click();
     await page.getByRole('alert').filter({hasText:messages.notifications.loadFailed}).waitFor({state:'hidden'});await page.keyboard.press('Escape');
 
-    await navigate(origin+'/profile');await page.getByRole('button',{name:'Background style',exact:true}).click();
+    await navigate(origin+'/profile');await page.getByRole('button',{name:/^Background style:/}).click();
     await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
     await frames(page);assert.equal(await page.locator('canvas').count(),0);
-    await page.getByRole('button',{name:'Background style',exact:true}).click();
+    await page.getByRole('button',{name:/^Background style:/}).click();
     await page.getByRole('menuitem',{name:'Guidon pattern',exact:true}).click();
     await page.locator('canvas').waitFor();
-    await page.getByRole('button',{name:'Background style',exact:true}).click();
+    await page.getByRole('button',{name:/^Background style:/}).click();
     await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
     assert.equal(errors.some(error=>/418|hydrat/i.test(error)),false,'Profile must hydrate with fixture API key dates');
     await navigate(`${origin}/projects/${owner.projectId}/settings`);
@@ -102,9 +102,10 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     page.off('request',watch);
     const order=await page.locator('[data-column-status="backlog"] [data-card-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.cardId));
     const index=order.indexOf(task.id), position=index>0?index:index+2;
-    await card.focus();await card.press(index>0?'Alt+ArrowUp':'Alt+ArrowDown');
+    const openTask=card.locator('[data-task-open]');
+    await openTask.focus();await openTask.press(index>0?'Alt+ArrowUp':'Alt+ArrowDown');
     await page.getByRole('status').filter({hasText:new RegExp(`${task.title}.*position ${position}`)}).waitFor();await frames(page);
-    assert.equal(await card.evaluate(node=>node===document.activeElement),true,'Keyboard reorder retains focus');
+    assert.equal(await openTask.evaluate(node=>node===document.activeElement),true,'Keyboard reorder retains focus');
 
     // A rejected optimistic move keeps the prior row and exposes a live error.
     await client.query('REVOKE UPDATE ON public.tasks FROM authenticated');

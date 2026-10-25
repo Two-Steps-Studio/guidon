@@ -165,7 +165,7 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
       >
         <Search className="size-4 shrink-0" />
         <span className="hidden flex-1 truncate text-left md:block">{t("triggerLabel")}</span>
-        <CommandShortcut className="ml-0 hidden md:inline">⌘K</CommandShortcut>
+        <CommandShortcut aria-hidden className="ml-0 hidden md:inline">⌘K</CommandShortcut>
       </button>
 
       <CommandDialog

@@ -64,6 +64,39 @@ try{
   await page.getByRole("button",{name:"Undo",exact:true}).click();assert.equal(await page.getByLabel("Module manifest (JSON)").count(),0);
   await page.getByRole("button",{name:"Redo",exact:true}).click();await page.getByLabel("Module manifest (JSON)").waitFor();
   assert.equal(await page.getByRole("checkbox",{name:"I approve these permissions for this project."}).isChecked(),false);
+  // Actual inspector -> draft history -> preview -> reload, with fresh consent.
+  await page.getByRole("textbox",{name:"Module name",exact:true}).fill("Edited releases");
+  await page.getByRole("button",{name:"Apply visual changes",exact:true}).click();
+  assert.equal(await page.getByLabel("Module manifest (JSON)").count(),0);
+  assert.equal(await page.getByRole("checkbox",{name:"I approve this plan and its permissions to create a manifest."}).isChecked(),false);
+  await page.getByRole("button",{name:"Test",exact:true}).click();
+  await page.getByRole("region",{name:"Validation report",exact:true}).waitFor();
+  await page.getByRole("checkbox",{name:"I approve this plan and its permissions to create a manifest."}).check();
+  await page.getByRole("button",{name:"Create manifest",exact:true}).click();
+  assert.equal(JSON.parse(await page.getByLabel("Module manifest (JSON)").inputValue()).name,"Edited releases");
+  await page.getByText("Draft saved",{exact:true}).waitFor();
+  await page.reload();
+  assert.equal(await page.getByRole("textbox",{name:"Module name",exact:true}).inputValue(),"Edited releases");
+  await page.getByRole("button",{name:"Add field",exact:true}).click();
+  await page.getByRole("textbox",{name:"Field name",exact:true}).last().fill("Milestone");
+  await page.getByRole("button",{name:"Move Milestone up",exact:true}).click();
+  await page.getByRole("button",{name:"Add view",exact:true}).click();
+  await page.getByRole("textbox",{name:"View name",exact:true}).last().fill("Milestones calendar");
+  await page.getByRole("combobox",{name:"View type",exact:true}).last().selectOption("calendar");
+  await page.getByRole("button",{name:"Apply visual changes",exact:true}).click();
+  await page.getByText("Draft saved",{exact:true}).waitFor();
+  assert.equal(saved.state.present.plan.entities[0].fields[2].name,"Milestone");
+  assert.equal(saved.state.present.plan.views.at(-1).type,"calendar");
+  // A date field referenced by a calendar cannot silently become text.
+  await page.getByRole("combobox",{name:"Field type",exact:true}).first().selectOption("text");
+  await page.getByRole("button",{name:"Apply visual changes",exact:true}).click();
+  await page.getByRole("alert").filter({hasText:"Check field types, references and required values."}).waitFor();
+  assert.equal(saved.state.present.plan.entities[0].fields[0].type,"date");
+  await page.getByRole("combobox",{name:"Field type",exact:true}).first().selectOption("date");
+  await page.getByRole("button",{name:"Apply visual changes",exact:true}).click();
+  await page.getByRole("checkbox",{name:"I approve this plan and its permissions to create a manifest."}).check();
+  await page.getByRole("button",{name:"Create manifest",exact:true}).click();
+  await page.getByText("Draft saved",{exact:true}).waitFor();
   await page.getByText("Draft saved",{exact:true}).waitFor();assert.ok(writes>0);
   await page.reload();await page.getByLabel("Module manifest (JSON)").waitFor();
   assert.equal(await page.getByLabel("What should the module do?").inputValue(),"Plan releases");
@@ -89,6 +122,7 @@ try{
   await page.getByLabel("What should the module do?").fill("Later edit while saving");
   await page.getByText("Draft saved",{exact:true}).waitFor();
   assert.equal(saved.state.present.prompt,"Later edit while saving");
+  assert.equal(saved.state.present.plan.name,"Edited releases","Changing AI requirements must preserve the manually edited plan");
   const second=await browser.newPage({viewport:{width:1440,height:1000}});await second.goto(url);
   await second.getByLabel("What should the module do?").waitFor();
   await page.getByLabel("What should the module do?").fill("Newer first-tab edit");
