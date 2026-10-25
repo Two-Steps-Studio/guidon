@@ -130,3 +130,7 @@ python -m build                           # needs `pip install build`
 ```
 
 Links: [Homepage](https://useguidon.com) - [Source](https://github.com/Two-Steps-Studio/guidon/tree/main/sdk/python) - API reference: `https://useguidon.com/openapi.json`
+
+## License
+
+MIT — see [LICENSE](LICENSE). This licence covers this SDK/CLI package, not the Guidon service or the rest of the application.

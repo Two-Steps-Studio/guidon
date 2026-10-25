@@ -271,7 +271,7 @@ console.log("\n  agent discovery documents");
   check("repository-root plugin manifest is valid", rootPlugin.$schema === "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json" && rootPlugin.name === "guidon");
   const rootMcp = JSON.parse(readFileSync(join(root, "mcp.json"), "utf8"));
   check("repository-root MCP manifest lists product and docs servers without secrets", rootMcp.$schema === "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json" && rootMcp.mcpServers.guidon.url === `${site}/api/mcp` && rootMcp.mcpServers["guidon-docs"].url === `${site}/api/mcp/docs` && !JSON.stringify(rootMcp).toLowerCase().includes("authorization"));
-  check("repository-root Agent Plugin skills are discoverable", ["guidon-tasks", "guidon-api", "guidon-cli"].every((name) => readFileSync(join(root, `skills/${name}/SKILL.md`), "utf8").startsWith("---\nname:")));
+  check("repository-root Agent Plugin skills are discoverable", ["guidon-tasks", "guidon-api", "guidon-cli"].every((name) => readFileSync(join(root, `skills/${name}/SKILL.md`), "utf8").replace(/\r\n/g, "\n").startsWith("---\nname:")));
   check("MCP Apps document declares light and dark color schemes", DOCS_RESULTS_HTML.includes('<meta name="color-scheme" content="light dark">'));
   const mcp = JSON.parse(readFileSync(join(root, "agent-plugin/mcp.json"), "utf8"));
   check("plugin's mcp.json carries no credentials", !JSON.stringify(mcp).includes("guidon_") && !JSON.stringify(mcp).toLowerCase().includes("authorization"));

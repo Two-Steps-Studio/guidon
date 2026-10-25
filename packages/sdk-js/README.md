@@ -141,3 +141,7 @@ npm test        # build + node:test against a local mock server
 ```
 
 Links: [Homepage](https://useguidon.com) - [Source](https://github.com/Two-Steps-Studio/guidon/tree/main/packages/sdk-js) - API reference: `https://useguidon.com/openapi.json`
+
+## License
+
+MIT — see [LICENSE](LICENSE). This licence covers this SDK/CLI package, not the Guidon service or the rest of the application.
