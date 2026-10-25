@@ -39,11 +39,11 @@ export function DitherBackground() {
   const dim = useWallpaperDim();
   const style = useBackgroundStyle();
 
-  // The public landing page owns its background. Keep device preferences
+  // The landing page always uses the branded Dither. Keep device preferences
   // intact so they still apply when navigating back into the app.
-  if (pathname === "/") return null;
+  const isLandingPage = pathname === "/";
 
-  if (wallpaper) {
+  if (!isLandingPage && wallpaper) {
     return (
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${wallpaper})` }} />
@@ -53,7 +53,7 @@ export function DitherBackground() {
     );
   }
 
-  if (style === "solid") return null;
+  if (!isLandingPage && style === "solid") return null;
   return (
     // h-lvh, not inset-0: the large viewport height doesn't change when a
     // phone's address bar slides away during scrolling, so the canvas isn't
