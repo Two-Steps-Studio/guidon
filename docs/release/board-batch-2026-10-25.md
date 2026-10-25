@@ -72,7 +72,7 @@ This is an honest implementation inventory, not a claim that all cards are done.
 | 3be4feeb-795e-491d-8909-3156cb99be52 | [QA][P1] AI: dostawcy, timeouty, budżety i bezpieczne odpowiedzi | Follow-up after PR72: chat handler/provider failure matrix, cancellation, request/tool budgets and native HTTP role/AI gates verified; Review. External MCP models and shared financial quotas remain separate gates; see ai-chat-2026-10-25.md |
 | ec708b24-27a0-4dd2-bd2e-5f397736ad65 | [QA][P1] Moduły: roadmap, decyzje, wiedza, pliki i custom modules | Open — not implemented by this batch |
 | 868d6605-ffe3-4507-a565-2f816a330508 | [QA][P1] Accessibility: axe, klawiatura i kontrast | Automated gate implemented; Cloud checkout and manual checks remain |
-| c011cbbb-bc9a-47db-b810-6e4f116ea078 | [QA][P1] Mobile i responsywność: iPhone Safari/Android | Open — not implemented by this batch |
+| c011cbbb-bc9a-47db-b810-6e4f116ea078 | [QA][P1] Mobile i responsywność: iPhone Safari/Android | Follow-up: automated matrix and mobile fixes verified; Review with physical-device checks still pending. See mobile-qa-2026-10-25.md |
 | 9129015e-486d-4e2c-9e6a-1ec3d2734446 | [QA][P0] Stripe sandbox: subskrypcje, idempotencja i uprawnienia | External environment/approval required; code work may also remain |
 | d7b880f7-d561-4746-9998-1417995202fe | [QA][P0] E2E: Kanban, taski i współbieżne edycje | Implemented and verified in three browsers; Review, awaiting human acceptance |
 | 0a88a2dd-5827-40fe-8f61-516039ad5a67 | [QA][P0] E2E: onboarding, organizacja i pierwszy projekt | Partial: first workspace/task and existing-account memberships; email invite/acceptance and Cloud Free cap remain |

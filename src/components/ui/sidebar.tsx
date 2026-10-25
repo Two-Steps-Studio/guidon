@@ -216,7 +216,14 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground"
+            onClick={(event) => {
+              // Routes within a project share this layout and keep it mounted.
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+              const link = (event.target as Element).closest("a[href]")
+              const href = link?.getAttribute("href")
+              if (href?.startsWith("/") && !href.startsWith("//") && link?.getAttribute("target") !== "_blank" && !link?.hasAttribute("download")) setOpenMobile(false)
+            }}
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,

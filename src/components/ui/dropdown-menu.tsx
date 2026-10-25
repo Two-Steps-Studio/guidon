@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils"
 // pointerup/click lands on the freshly opened layer - so the menu flickers
 // open and shut, or opens when the user only meant to scroll ("sometimes it
 // shows, sometimes it doesn't"). For touch/pen we suppress Radix's
-// pointerdown toggle and toggle on `click` instead, which the browser only
-// fires for a real tap. Mouse and keyboard keep Radix's default behaviour.
+// pointerdown toggle and toggle on a stationary `pointerup` instead. WebKit
+// can suppress the compatibility click after a cancelled touch pointerdown.
+// Movement/cancellation discards the tap; mouse and keyboard stay with Radix.
 const DropdownMenuToggleContext = React.createContext<
   ((open: boolean | ((prev: boolean) => boolean)) => void) | null
 >(null)
@@ -60,11 +61,14 @@ function DropdownMenuPortal({
 function DropdownMenuTrigger({
   className,
   onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
   onClick,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
   const setOpen = React.useContext(DropdownMenuToggleContext)
-  const lastPointerType = React.useRef<string | null>(null)
+  const tap = React.useRef<{ id: number; x: number; y: number } | null>(null)
 
   return (
     <DropdownMenuPrimitive.Trigger
@@ -72,23 +76,26 @@ function DropdownMenuTrigger({
       className={cn("touch-manipulation", className)}
       onPointerDown={(event) => {
         onPointerDown?.(event)
-        lastPointerType.current = event.pointerType
+        tap.current = null
         // preventDefault makes Radix skip its own pointerdown toggle.
-        if (setOpen && event.pointerType !== "mouse") event.preventDefault()
-      }}
-      onClick={(event) => {
-        onClick?.(event)
-        if (
-          setOpen &&
-          !event.defaultPrevented &&
-          !props.disabled &&
-          lastPointerType.current !== null &&
-          lastPointerType.current !== "mouse"
-        ) {
-          setOpen((prev) => !prev)
+        if (setOpen && !event.defaultPrevented && event.pointerType !== "mouse") {
+          tap.current = { id: event.pointerId, x: event.clientX, y: event.clientY }
+          event.preventDefault()
         }
-        lastPointerType.current = null
       }}
+      onPointerMove={(event) => {
+        onPointerMove?.(event)
+        const start = tap.current
+        if (start?.id === event.pointerId && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) tap.current = null
+      }}
+      onPointerUp={(event) => {
+        onPointerUp?.(event)
+        const start = tap.current
+        tap.current = null
+        if (setOpen && start?.id === event.pointerId && !event.defaultPrevented && !props.disabled && Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 10) setOpen(previous => !previous)
+      }}
+      onPointerCancel={(event) => { onPointerCancel?.(event); tap.current = null }}
+      onClick={onClick}
       {...props}
     />
   )

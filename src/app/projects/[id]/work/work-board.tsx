@@ -470,9 +470,9 @@ export function WorkBoard({
       >
         <p data-slot="task-move-status" role="status" aria-live="polite" aria-atomic="true" className="sr-only">{moveAnnouncement}</p>
         <header className="mb-6 flex flex-wrap items-end gap-4">
-          <div className="flex-1">
+          <div className="min-w-0 basis-full sm:flex-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="mt-0.5 break-words text-sm text-muted-foreground">
               {projectName}
               {progress.total > 0 && (
                 <>
@@ -493,7 +493,7 @@ export function WorkBoard({
 
           <Select
             aria-label={t("sortBy")}
-            className="h-8 w-40 shrink-0"
+            className="h-8 w-40 shrink-0 "
             value={sortMode}
             onChange={(event) =>
               setSortMode(event.target.value as "manual" | "due_date")
