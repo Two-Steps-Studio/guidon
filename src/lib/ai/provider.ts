@@ -59,6 +59,8 @@ export interface AIMessage {
 }
 
 export interface AICompletionInput {
+  /** Optional caller cancellation/deadline, combined with provider timeout. */
+  signal?: AbortSignal;
   system?: string;
   messages: AIMessage[];
   tools?: Array<{
@@ -88,6 +90,11 @@ export interface AIProvider {
   readonly model: string;
 
   complete(input: AICompletionInput): Promise<AICompletionResult>;
+}
+
+export function completionSignal(input: AICompletionInput): AbortSignal {
+  const timeout = AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS);
+  return input.signal ? AbortSignal.any([input.signal, timeout]) : timeout;
 }
 
 // ============================================

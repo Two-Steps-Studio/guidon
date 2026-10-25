@@ -40,7 +40,12 @@ export async function taskEditingCoverage({page,context,origin,fixture,client,br
     const confirm=loser.getByRole("dialog",{name:"Confirm action",exact:true});await confirm.waitFor();
     await confirm.getByRole("button",{name:"Cancel",exact:true}).click();assert.equal(await loser.locator("#task-title").inputValue(),localText);
     await loser.screenshot({path:path.join(artifacts,`${browserName}-task-edit-conflict.png`),fullPage:true});
-    await loser.getByRole("button",{name:"Reload latest task",exact:true}).click();await confirm.getByRole("button",{name:"Discard changes",exact:true}).click();
+    await loser.getByRole("button",{name:"Reload latest task",exact:true}).click();
+    await Promise.all([
+      loser.waitForEvent("framenavigated",{predicate:frame=>frame===loser.mainFrame()}),
+      confirm.getByRole("button",{name:"Discard changes",exact:true}).click(),
+    ]);
+    await loser.waitForLoadState("networkidle");
     await loser.locator(`[data-card-id="${task.id}"] [data-task-open]`).waitFor();
     assert.equal(unexpectedDialogs,0,"An explicitly confirmed reload must not ask again through beforeunload");
     await loser.locator(`[data-card-id="${task.id}"] [data-task-open]`).click();assert.equal(await loser.locator("#task-title").inputValue(),row.title);

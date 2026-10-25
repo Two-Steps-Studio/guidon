@@ -1610,6 +1610,8 @@
     "automatic": "Automática"
   },
   "aiChat": {
+    "stop": "Detener solicitud",
+    "stopped": "Solicitud detenida. Los cambios ya realizados siguen guardados. Actualiza el tablero antes de volver a intentarlo.",
     "title": "Asistente de IA de Guidon",
     "emptyTitle": "¿Cómo puedo ayudarte con este proyecto?",
     "emptyHint": "Puedo buscar, crear y editar tareas, comentar y responder preguntas.",

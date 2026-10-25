@@ -34,6 +34,13 @@ export function AIChat({ projectId }: { projectId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [confirmingIndex, setConfirmingIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const activeRequest = useRef<AbortController | null>(null);
+
+  useEffect(() => () => activeRequest.current?.abort(), []);
+  function changeOpen(open: boolean) {
+    if (!open) activeRequest.current?.abort();
+    setIsOpen(open);
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -49,14 +56,17 @@ export function AIChat({ projectId }: { projectId: string }) {
     setMessages(history);
     setInput("");
     setIsLoading(true);
+    const controller = new AbortController();
+    activeRequest.current = controller;
 
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           projectId,
-          messages: history.map(({ role, content }) => ({ role, content })),
+          messages: history.slice(-20).map(({ role, content }) => ({ role, content })),
         }),
       });
 
@@ -74,8 +84,9 @@ export function AIChat({ projectId }: { projectId: string }) {
         },
       ]);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: t("errorGeneric") }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: t(controller.signal.aborted ? "stopped" : "errorGeneric") }]);
     } finally {
+      if (activeRequest.current === controller) activeRequest.current = null;
       setIsLoading(false);
     }
   }
@@ -116,7 +127,7 @@ export function AIChat({ projectId }: { projectId: string }) {
         </Button>
       </div>
 
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <Sheet open={isOpen} onOpenChange={changeOpen}>
         <SheetContent className="w-full max-w-full sm:w-[540px] flex flex-col p-0">
           <SheetHeader className="p-4 pr-14 border-b">
             <SheetTitle className="flex items-center gap-2">
@@ -168,7 +179,7 @@ export function AIChat({ projectId }: { projectId: string }) {
                           <li key={task.id}>
                             <Link
                               href={`/projects/${projectId}/work?openTask=${task.id}`}
-                              onClick={() => setIsOpen(false)}
+                              onClick={() => changeOpen(false)}
                               className="flex items-center gap-2 px-3 py-2 hover:bg-accent"
                             >
                               <span
@@ -218,6 +229,7 @@ export function AIChat({ projectId }: { projectId: string }) {
             <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
               <Textarea
                 aria-label={t("placeholder")}
+                maxLength={8000}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t("placeholder")}
@@ -229,9 +241,9 @@ export function AIChat({ projectId }: { projectId: string }) {
                   }
                 }}
               />
-              <Button aria-label={t("sendMessage")} type="submit" disabled={isLoading || !input.trim()} size="icon" className="h-11 w-11 shrink-0">
+              {isLoading ? <Button type="button" variant="outline" onClick={() => activeRequest.current?.abort()} className="h-11 shrink-0">{t("stop")}</Button> : <Button aria-label={t("sendMessage")} type="submit" disabled={!input.trim()} size="icon" className="h-11 w-11 shrink-0">
                 <Send className="h-4 w-4" />
-              </Button>
+              </Button>}
             </form>
           </div>
         </SheetContent>

@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { AICompletionInput, AICompletionResult, AIProvider } from "../provider";
-import { AI_REQUEST_TIMEOUT_MS, requireEnv } from "../provider";
+import { completionSignal, requireEnv } from "../provider";
 import { fromOpenAIChoice, toOpenAIMessages, toOpenAITools, type OpenAIChoice } from "./wire-format";
 
 const DEFAULT_API_VERSION = "2024-10-21";
@@ -68,11 +68,11 @@ export class AzureOpenAIProvider implements AIProvider {
       method: "POST",
       headers,
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
+      signal: completionSignal(input),
     });
 
     if (!res.ok) {
-      throw new Error(`azure-openai request failed: ${res.status} ${(await res.text()).slice(0, 500)}`);
+      throw new Error(`azure-openai request failed: ${res.status}`);
     }
 
     const data = (await res.json()) as { choices?: OpenAIChoice[]; model?: string };

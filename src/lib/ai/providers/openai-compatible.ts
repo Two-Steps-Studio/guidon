@@ -6,7 +6,7 @@ import type {
   AIProvider,
   AIProviderName,
 } from "../provider";
-import { AI_REQUEST_TIMEOUT_MS, requireEnv, requireModel } from "../provider";
+import { completionSignal, requireEnv, requireModel } from "../provider";
 import { fromOpenAIChoice, toOpenAIMessages, toOpenAITools, type OpenAIChoice } from "./wire-format";
 
 /**
@@ -152,7 +152,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     }
 
     if (!res.ok) {
-      throw new Error(`${this.name} request failed: ${res.status} ${errorText}`);
+      throw new Error(`${this.name} request failed: ${res.status}`);
     }
 
     const data = (await res.json()) as { choices?: OpenAIChoice[]; model?: string };
@@ -170,7 +170,7 @@ export class OpenAICompatibleProvider implements AIProvider {
       method: "POST",
       headers,
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
+      signal: completionSignal(input),
     });
   }
 }

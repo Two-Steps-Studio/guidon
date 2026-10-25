@@ -6,6 +6,7 @@ import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
 import { tr } from "@/lib/i18n/server-errors";
 import { getProjectLanguage } from "@/lib/data/project-language";
 import { languageInstruction } from "@/lib/project-language";
+import { safeChatFailure } from "@/lib/ai/chat-safety";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -88,7 +89,7 @@ export async function sendTaskChatMessage(
   } catch (error) {
     return {
       text: "",
-      error: error instanceof Error ? error.message : "Failed to reach the AI provider.",
+      error: safeChatFailure(error).error,
     };
   }
 }

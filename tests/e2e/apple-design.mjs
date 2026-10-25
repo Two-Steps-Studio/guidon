@@ -212,6 +212,18 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await chat.getByRole('button',{name:'Send message',exact:true}).click();
     await chat.getByRole('log').getByText('Apple test reply',{exact:true}).waitFor();
     assert.equal(sent,1);await page.unroute('**/api/ai/chat');
+    // Browser cancellation uses a real AbortController; the handler/provider
+    // cancellation path is independently covered by chat-route.test.mjs.
+    let pendingRoute,received;const started=new Promise(resolve=>received=resolve);
+    await page.route('**/api/ai/chat',route=>{pendingRoute=route;received();});
+    await input.fill('Cancel this pending request');await chat.getByRole('button',{name:'Send message',exact:true}).click();await started;
+    await chat.getByRole('button',{name:messages.aiChat.stop,exact:true}).click();
+    await chat.getByRole('log').getByText(messages.aiChat.stopped,{exact:true}).waitFor();
+    await pendingRoute.abort().catch(()=>{});await page.unroute('**/api/ai/chat');
+    await input.fill('My next request');
+    await page.route('**/api/ai/chat',route=>route.fulfill({json:{text:'Recovered after cancellation'}}));
+    await chat.getByRole('button',{name:'Send message',exact:true}).click();
+    await chat.getByRole('log').getByText('Recovered after cancellation',{exact:true}).waitFor();await page.unroute('**/api/ai/chat');
     await page.keyboard.press('Escape');await page.setViewportSize({width:1440,height:1000});
 
     await page.getByRole('button',{name:`${messages.commandPalette.triggerLabel} ⌘K`,exact:true}).click();

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireProjectAccess, getSwitchableProjects } from "@/lib/data/project-access";
+import { canWriteProject, requireProjectAccess, getSwitchableProjects } from "@/lib/data/project-access";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { AppShell } from "@/components/layout/app-shell";
 import { AIChat } from "@/components/ai/AIChat";
@@ -49,7 +49,7 @@ export default async function ProjectLayout({
       moduleLinks={moduleLinks}
     >
       {children}
-      <AIChat projectId={id} />
+      {access.project.ai_enabled && canWriteProject(access.role) && <AIChat projectId={id} />}
     </AppShell>
   );
 }
