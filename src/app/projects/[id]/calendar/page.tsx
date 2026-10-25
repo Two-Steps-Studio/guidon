@@ -39,8 +39,10 @@ const CALENDAR_PHASE_COLUMNS = "id, name, status, start_date, planned_end_date, 
 // columns, which PostgREST filters can't express.
 const PHASE_LIMIT = 200;
 
-const CALENDAR_TASK_COLUMNS =
-  "id, project_id, title, description, status, priority, tags, due_date, progress_percent, assignee_id, estimated_hours, actual_hours, sort_order, decision_id, created_by, created_at, updated_at, parent_task_id";
+// Calendar opens the same full edit form as the board. Fetch the same complete
+// snapshot, including revision/is_done/recurrence, so saves retain their CAS
+// version and cannot silently clear fields omitted from a display projection.
+const CALENDAR_TASK_COLUMNS = "*";
 
 /**
  * Month view of every task with a due date (src/lib/work/calendar.ts builds
