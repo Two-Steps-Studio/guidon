@@ -18,6 +18,6 @@ export async function saveCustomModules(projectId: string, input: unknown, revis
     .eq("id", projectId).eq("custom_modules_revision", revision).select("id");
   if (error) return { error: "saveFailed" as const };
   if (!data.length) return { error: "conflict" as const };
-  revalidatePath(`/projects/${projectId}/modules`);
+  revalidatePath(`/projects/${projectId}`, "layout");
   return { error: null, revision: revision + 1 };
 }

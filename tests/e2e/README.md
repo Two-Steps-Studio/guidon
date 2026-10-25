@@ -133,3 +133,10 @@ temp directory after checking its identity; no broad Docker or volume prune.
 
 The GitHub Actions workflow uses no repository secrets or production service.
 Passing this suite is one release gate, not a declaration of launch readiness.
+
+`node tests/e2e/run.mjs --accessibility-audit` runs the axe/keyboard gate on the
+same isolated clean build in all three browsers. `--with-accessibility` appends
+it to the complete application regression. The gate retains violation and
+incomplete-check JSON per browser; critical/serious WCAG findings fail without
+rule/element exclusions. See `docs/release/accessibility-2026-10-25.md` for the
+exact automated scope and the separate pending manual/Cloud checks.

@@ -8,7 +8,7 @@ import { logActivity } from "@/lib/data/log-activity";
 import { classifyBuilderFailure, compileModulePlan, requestModulePlan, type BuilderReply, type BuilderResult, type ModulePlan } from "@/lib/work/module-builder";
 import type { ModuleManifest } from "@/lib/work/module-manifest";
 
-export async function planProjectModule(projectId: string, prompt: unknown): Promise<BuilderReply<ModulePlan>> {
+export async function planProjectModule(projectId: string, prompt: unknown, previousPlan?: unknown): Promise<BuilderReply<ModulePlan>> {
   const requestId = randomUUID();
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) return { error: "permission", requestId };
@@ -20,7 +20,7 @@ export async function planProjectModule(projectId: string, prompt: unknown): Pro
   else {
     try {
       const provider = await resolveAIProvider(access.project.organization_id, access.userId);
-      result = provider ? await requestModulePlan(provider, prompt) : { error: "notConfigured" };
+      result = provider ? await requestModulePlan(provider, prompt, previousPlan) : { error: "notConfigured" };
     } catch (error) { result = { error: classifyBuilderFailure(error) }; }
   }
   // No prompt, generated text, provider error bodies or credentials in logs.

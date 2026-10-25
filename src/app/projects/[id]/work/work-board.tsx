@@ -3,7 +3,7 @@
 import { LabelPresetsProvider } from "@/components/work/label-presets-context";
 import { WorkflowProvider } from "@/components/work/workflow-context";
 import type { LabelPreset } from "@/lib/work/label-presets";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Upload, X } from "lucide-react";
@@ -102,6 +102,11 @@ export function WorkBoard({
   });
   const [openTask, setOpenTask] = useState<Task | null>(null);
   const [createFor, setCreateFor] = useState<TaskStatus | null>(null);
+  const createReturnFocus = useRef<HTMLElement | null>(null);
+  const openCreate = useCallback((status: TaskStatus, trigger?: HTMLElement) => {
+    createReturnFocus.current = trigger ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    setCreateFor(status);
+  }, []);
   const [importOpen, setImportOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(welcome);
   const tOnboarding = useTranslations("onboarding");
@@ -243,11 +248,11 @@ export function WorkBoard({
       if (event.key.toLowerCase() !== "n" || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
       if (isTypingTarget(event.target) || document.querySelector('[role="dialog"]')) return;
       event.preventDefault();
-      setCreateFor(columns[0]?.status ?? "todo");
+      openCreate(columns[0]?.status ?? "todo");
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [canEdit, columns]);
+  }, [canEdit, columns, openCreate]);
 
   const handleBulk = async (operation: BulkOperation) => {
     // Board order (column, then position), so moved cards keep their relative order.
@@ -352,7 +357,7 @@ export function WorkBoard({
     const position = state.tasks.filter(item => item.id !== task.id && item.status === status && (item.sort_order ?? 0) < sortOrder).length + 1;
     setMoveAnnouncement(t("taskMovedAnnouncement", { title: task.title, column: column?.label ?? status, position }));
     if (restoreFocus) requestAnimationFrame(() => {
-      if (document.activeElement === focused || document.activeElement === document.body) document.querySelector<HTMLElement>(`[data-card-id="${task.id}"]`)?.focus({ preventScroll: true });
+      if (document.activeElement === focused || document.activeElement === document.body) document.querySelector<HTMLElement>(`[data-card-id="${task.id}"] [data-task-open]`)?.focus({ preventScroll: true });
     });
     // A repeating task was finished: its next occurrence joins the board.
     result.created?.forEach(upsertTask);
@@ -517,7 +522,7 @@ export function WorkBoard({
           {canEdit && (
             <Button
               size="sm"
-              onClick={() => setCreateFor(columns[0]?.status ?? "todo")}
+              onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}
               style={projectColor ? { backgroundColor: projectColor } : undefined}
             >
               <Plus className="h-4 w-4" />
@@ -533,7 +538,7 @@ export function WorkBoard({
               <p className="text-xs text-muted-foreground">{tOnboarding("welcomeDescription")}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" onClick={() => setCreateFor(columns[0]?.status ?? "todo")}>
+              <Button size="sm" onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}>
                 <Plus className="h-4 w-4" />
                 {tOnboarding("welcomeFirstTask")}
               </Button>
@@ -626,7 +631,7 @@ export function WorkBoard({
               {canEdit ? t("noTasksDescCanEdit") : t("noTasksDescReadOnly")}
             </p>
             {canEdit && (
-              <Button size="sm" className="mt-4" onClick={() => setCreateFor(columns[0]?.status ?? "todo")}>
+              <Button size="sm" className="mt-4" onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}>
                 <Plus className="h-4 w-4" />
                 {t("newTask")}
               </Button>
@@ -644,7 +649,7 @@ export function WorkBoard({
             sortMode={sortMode}
             filtersActive={filtersActive}
             onOpenTask={setOpenTask}
-            onCreateTask={setCreateFor}
+            onCreateTask={openCreate}
             onMoveTask={handleMove}
             projectColor={projectColor}
             selectedIds={selectedIds}
@@ -710,6 +715,7 @@ export function WorkBoard({
         existingTasks={topLevelTasks}
         columns={columns}
         onClose={() => setCreateFor(null)}
+        returnFocusRef={createReturnFocus}
         onCreated={upsertTask}
       />
     </LabelPresetsProvider>

@@ -35,13 +35,24 @@ Failures show retry/export/reload controls. Wait for Draft saved before SPA
 navigation; tab close/reload warns when there are unsaved changes, but browser
 delivery is not guaranteed if a process crashes or navigation skips the warning.
 
-The preview renders only the draft's validated structure, with empty module
-data and disabled form controls. It reads no project records, writes nothing
-and makes no module network requests. The toolbar Test checks current schema
-and permission validity; the dedicated fixture/validation task will add richer
-data, reports and pre-publication checks. Publish is visibly unavailable until
+The preview renders the validated draft using deterministic synthetic records
+and disabled form controls. It reads no project records, writes nothing
+and makes no module network requests. The toolbar Test shows a report for schema,
+field references, runtime compatibility, read/write scopes and unsupported
+capabilities. External dependencies and executable code are rejected. This local
+report does not approve publishing. Publish is visibly unavailable until
 the registry moderation task is implemented. The existing explicit installation
 action remains in Inspector.
+
+The visual inspector edits entity/field labels, types, select options, required
+flags and field order, and adds/removes/reorders table, form, board, chart and
+calendar views. Apply validates the entire plan before adding it to draft
+history; invalid edits leave the saved plan intact. A referenced field must be
+removed from its views before deletion. Applying changes invalidates the
+generated manifest and all consent. Draft changes autosave only after Apply.
+Changing the prompt keeps the previous plan, and AI refinement receives that
+validated plan as bounded untrusted context. It cannot grant permissions or
+install the result. Wait for Draft saved before leaving the editor.
 
 ## Verification
 

@@ -180,6 +180,16 @@ audit log. Apply it before configuring `AGENT_AUTH_PRIVATE_KEY`; otherwise this
 profile stays disabled. See [agent-claims.md](../../../docs/agent-claims.md) for
 staging verification, configuration, expiry and revocation behavior.
 
+## Task edit revisions (086)
+
+`086_task_edit_revision.sql` adds an integer task revision and a trigger that
+advances it on every update. Apply it before deploying the full task edit UI
+that uses conditional saves. Older partial-update clients remain compatible;
+the new UI fails closed if the revision is unavailable. Keep the additive
+column/trigger when rolling back application code. See
+[task-editing-onboarding-2026-10-25.md](../../../docs/release/task-editing-onboarding-2026-10-25.md)
+for verification and the remaining onboarding gates.
+
 ## Note on 003
 
 Until this is applied, every query that joins `profiles` returns null for other

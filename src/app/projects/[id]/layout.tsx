@@ -3,6 +3,7 @@ import { requireProjectAccess, getSwitchableProjects } from "@/lib/data/project-
 import { getCurrentUser } from "@/lib/data/current-user";
 import { AppShell } from "@/components/layout/app-shell";
 import { AIChat } from "@/components/ai/AIChat";
+import { getProjectModuleLinks } from "@/lib/data/project-module-navigation";
 
 export async function generateMetadata({
   params,
@@ -32,7 +33,10 @@ export default async function ProjectLayout({
   // alongside it instead of after - getSwitchableProjects still has to wait,
   // since it needs access.project.organization_id.
   const [access, user] = await Promise.all([requireProjectAccess(id), getCurrentUser()]);
-  const switchableProjects = await getSwitchableProjects(access.project.organization_id);
+  const [switchableProjects, moduleLinks] = await Promise.all([
+    getSwitchableProjects(access.project.organization_id),
+    getProjectModuleLinks(access.userId, id),
+  ]);
 
   return (
     <AppShell
@@ -42,6 +46,7 @@ export default async function ProjectLayout({
       projects={switchableProjects}
       projectColor={access.project.color}
       disabledModules={access.project.disabled_modules}
+      moduleLinks={moduleLinks}
     >
       {children}
       <AIChat projectId={id} />

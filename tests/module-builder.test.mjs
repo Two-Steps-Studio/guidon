@@ -30,6 +30,13 @@ assert.equal(compiled.value.lifecycle.uninstall, "retain_data");
 assert.equal(calls.length, 1, "approval compiles deterministically without another billed call");
 assert.equal((await requestModulePlan(mock('```json\n' + JSON.stringify(plan) + '\n```'), "plan")).error, null);
 console.log("pass mock LLM plan, explicit approval and deterministic validated compilation");
+const revised = {...plan,name:"Manual edit retained"};
+assert.equal((await requestModulePlan(mock(JSON.stringify(revised)),"Keep my manual fields",revised)).error,null);
+assert.match(calls.at(-1).messages[0].content,/Manual edit retained/);
+assert.equal(calls.at(-1).messages[1].content,"Keep my manual fields");
+const callCount=calls.length;
+assert.equal((await requestModulePlan(mock(JSON.stringify(plan)),"Refine",{...plan,script:"execute"})).error,"invalidInput");
+assert.equal(calls.length,callCount,"Invalid existing plans cannot invoke the provider");
 
 for (const [name, invalid] of [
   ["script", { ...plan, script: "globalThis.pwned = true" }],

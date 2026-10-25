@@ -49,7 +49,7 @@ export function SelectMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={disabled}
-        aria-label={ariaLabel}
+        aria-label={`${ariaLabel}: ${current?.label ?? value}`}
         className={cn(
           "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-left text-sm shadow-sm transition-colors",
           "hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

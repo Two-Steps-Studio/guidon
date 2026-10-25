@@ -66,6 +66,7 @@ export function WallpaperPicker() {
         <input
           ref={input}
           type="file"
+          aria-label={t("wallpaperLabel")}
           accept="image/*"
           className="sr-only"
           onChange={(event) => {

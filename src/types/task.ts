@@ -61,6 +61,8 @@ export interface Task {
   created_by: string;
   created_at: string;
   updated_at: string;
+  /** Migration 086: server-owned edit version; absent only on older schemas. */
+  revision?: number;
 }
 
 export interface CreateTaskData {

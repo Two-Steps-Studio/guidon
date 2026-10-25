@@ -18,17 +18,20 @@ import { createModulePackage, saveModuleRecords } from "./package-actions";
 
 const inputClass = "w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm";
 
-function RecordForm({ entity, record, pending, onSave, onCancel }: {
+function RecordForm({ entity, record, pending, onSave, onCancel, fields }: {
   entity: ModuleManifest["entities"][number]; record: ModuleRecord | null; pending: boolean;
-  onSave: (record: ModuleRecord) => void; onCancel: () => void;
+  onSave: (record: ModuleRecord) => void; onCancel: () => void; fields?: string[];
 }) {
   const t = useTranslations("moduleRuntime");
   const prefix = useId();
+  // Older manifests can omit required fields; keep them usable without
+  // dropping validation. Optional fields follow the form's selected layout.
+  const visibleFields = entity.fields.filter(field => !fields || fields.includes(field.id) || field.required);
   return <form className="space-y-4 rounded-lg border bg-muted/20 p-4" onSubmit={(event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const values: ModuleRecord["values"] = {};
-    for (const field of entity.fields) {
+    for (const field of visibleFields) {
       const raw = form.get(`field-${field.id}`);
       if (field.type === "boolean") values[field.id] = raw === "on";
       else if (typeof raw === "string" && raw !== "") values[field.id] = field.type === "number" ? Number(raw) : raw;
@@ -36,7 +39,7 @@ function RecordForm({ entity, record, pending, onSave, onCancel }: {
     onSave({ id: record?.id ?? crypto.randomUUID(), entity: entity.id, values });
   }}>
     <h3 className="font-medium">{record ? t("editRecord") : t("addRecord")} — {entity.name}</h3>
-    {entity.fields.map((field) => {
+    {visibleFields.map((field) => {
       const id = `${prefix}-${field.id}`;
       const value = record?.values[field.id];
       return <div key={field.id} className="space-y-1">
@@ -54,7 +57,7 @@ function RecordForm({ entity, record, pending, onSave, onCancel }: {
   </form>;
 }
 
-function PackagePanel({ projectId, initial, canManage }: { projectId: string; initial: InstalledModule; canManage: boolean }) {
+export function PackagePanel({ projectId, initial, canManage }: { projectId: string; initial: InstalledModule; canManage: boolean }) {
   const t = useTranslations("moduleRuntime");
   const [records, setRecords] = useState(initial.records);
   const [revision, setRevision] = useState(initial.revision);
@@ -95,7 +98,7 @@ function PackagePanel({ projectId, initial, canManage }: { projectId: string; in
         {view && <ModuleView manifest={manifest} view={view} records={records} labels={{ empty: t("empty"), yes: t("yes"), no: t("no"), ungrouped: t("ungrouped"), unscheduled: t("unscheduled"), edit: t("edit"), remove: t("remove"), actions: t("actions"), count: t("count") }}
           onEdit={canWrite && !pending ? (record) => { setEditing(record); setShowForm(true); } : undefined}
           onRemove={canWrite && !pending ? async (record) => { if (await confirmAction(t("confirmRemove"))) save(records.filter((candidate) => candidate.id !== record.id)); } : undefined} />}
-        {canWrite && entity && (showForm || view?.type === "form") && <RecordForm key={`${entity.id}-${editing?.id ?? "new"}-${revision}`} entity={entity} record={editing} pending={pending}
+        {canWrite && entity && (showForm || view?.type === "form") && <RecordForm key={`${entity.id}-${editing?.id ?? "new"}-${revision}`} entity={entity} record={editing} pending={pending} fields={view?.type === "form" ? view.fields : undefined}
           onSave={(record) => save(editing ? records.map((candidate) => candidate.id === editing.id ? record : candidate) : [...records, record])}
           onCancel={() => { setEditing(null); setShowForm(false); }} />}
         {!view && <p className="text-sm text-muted-foreground">{t("noViews")}</p>}

@@ -42,13 +42,13 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('button',{name:messages.notifications.retry,exact:true}).click();
     await page.getByRole('alert').filter({hasText:messages.notifications.loadFailed}).waitFor({state:'hidden'});await page.keyboard.press('Escape');
 
-    await navigate(origin+'/profile');await page.getByRole('button',{name:'Background style',exact:true}).click();
+    await navigate(origin+'/profile');await page.getByRole('button',{name:/^Background style:/}).click();
     await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
     await frames(page);assert.equal(await page.locator('canvas').count(),0);
-    await page.getByRole('button',{name:'Background style',exact:true}).click();
+    await page.getByRole('button',{name:/^Background style:/}).click();
     await page.getByRole('menuitem',{name:'Guidon pattern',exact:true}).click();
     await page.locator('canvas').waitFor();
-    await page.getByRole('button',{name:'Background style',exact:true}).click();
+    await page.getByRole('button',{name:/^Background style:/}).click();
     await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
     assert.equal(errors.some(error=>/418|hydrat/i.test(error)),false,'Profile must hydrate with fixture API key dates');
     await navigate(`${origin}/projects/${owner.projectId}/settings`);
@@ -102,9 +102,10 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     page.off('request',watch);
     const order=await page.locator('[data-column-status="backlog"] [data-card-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.cardId));
     const index=order.indexOf(task.id), position=index>0?index:index+2;
-    await card.focus();await card.press(index>0?'Alt+ArrowUp':'Alt+ArrowDown');
+    const openTask=card.locator('[data-task-open]');
+    await openTask.focus();await openTask.press(index>0?'Alt+ArrowUp':'Alt+ArrowDown');
     await page.getByRole('status').filter({hasText:new RegExp(`${task.title}.*position ${position}`)}).waitFor();await frames(page);
-    assert.equal(await card.evaluate(node=>node===document.activeElement),true,'Keyboard reorder retains focus');
+    assert.equal(await openTask.evaluate(node=>node===document.activeElement),true,'Keyboard reorder retains focus');
 
     // A rejected optimistic move keeps the prior row and exposes a live error.
     await client.query('REVOKE UPDATE ON public.tasks FROM authenticated');
@@ -213,13 +214,13 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     assert.equal(sent,1);await page.unroute('**/api/ai/chat');
     await page.keyboard.press('Escape');await page.setViewportSize({width:1440,height:1000});
 
-    await page.getByRole('button',{name:'Search...',exact:true}).click();
+    await page.getByRole('button',{name:`${messages.commandPalette.triggerLabel} ⌘K`,exact:true}).click();
     const search=page.getByRole('combobox');let attempts=0;
     await page.route('**/api/v1/search?**',route=>{attempts++;return attempts===1?route.fulfill({status:500,json:{error:'fixture failure'}}):route.fulfill({json:{results:[]}});});
     await search.fill('fixture');await page.getByRole('alert').filter({hasText:'Search could not be completed.'}).waitFor();
     await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByText('No results found.',{exact:true}).waitFor();
     await page.unroute('**/api/v1/search?**');await page.keyboard.press('Escape');
-    await page.getByRole('button',{name:'Search...',exact:true}).click();
+    await page.getByRole('button',{name:`${messages.commandPalette.triggerLabel} ⌘K`,exact:true}).click();
     let releaseSlow, releaseFast, sawSlow, sawFast;
     const slowGate=new Promise(resolve=>{releaseSlow=resolve;}), fastGate=new Promise(resolve=>{releaseFast=resolve;});
     const slowSeen=new Promise(resolve=>{sawSlow=resolve;}), fastSeen=new Promise(resolve=>{sawFast=resolve;});
@@ -243,11 +244,11 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
         await touch.addCookies(await context.cookies());await touch.route('**/*',route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
         const phone=await touch.newPage();await phone.goto(route);
         assert.equal(await phone.evaluate(()=>matchMedia('(pointer: coarse)').matches),true);
-        for(const name of [messages.commandPalette.triggerLabel,messages.notifications.bellAria]){
+        for(const name of [`${messages.commandPalette.triggerLabel} ⌘K`,messages.notifications.bellAria]){
           const box=await phone.getByRole('button',{name,exact:true}).boundingBox();assert.ok(box.height>=44 && box.width>=44,`${name} touch bounds`);
         }
         await phone.emulateMedia({contrast:'more',reducedMotion:'reduce'});
-        await phone.getByRole('button',{name:messages.commandPalette.triggerLabel,exact:true}).click();
+        await phone.getByRole('button',{name:`${messages.commandPalette.triggerLabel} ⌘K`,exact:true}).click();
         assert.equal(await phone.getByRole('dialog').evaluate(node=>getComputedStyle(node).backdropFilter),'none');
         assert.equal(await phone.locator('[data-slot="dialog-overlay"]').evaluate(node=>getComputedStyle(node).backdropFilter),'none');
         await phone.screenshot({path:path.join(artifacts,'apple-touch-contrast.png')});

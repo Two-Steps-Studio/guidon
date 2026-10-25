@@ -158,14 +158,15 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
     <>
       <button
         type="button"
-        aria-label={t("triggerLabel")}
+        aria-label={`${t("triggerLabel")} ⌘K`}
+        aria-keyshortcuts="Meta+K Control+K"
         data-slot="button"
         onClick={() => setOpen(true)}
         className="flex h-8 w-11 shrink-0 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-full md:max-w-64 md:shrink"
       >
         <Search className="size-4 shrink-0" />
         <span className="hidden flex-1 truncate text-left md:block">{t("triggerLabel")}</span>
-        <CommandShortcut className="ml-0 hidden md:inline">⌘K</CommandShortcut>
+        {" "}<CommandShortcut aria-hidden className="ml-0 hidden md:inline">⌘K</CommandShortcut>
       </button>
 
       <CommandDialog

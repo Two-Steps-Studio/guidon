@@ -124,6 +124,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             )}
             style={style}
             {...props}
+            aria-label={props["aria-label"] ? `${props["aria-label"]}: ${selected?.label ?? current}` : undefined}
           >
             <span className={cn("truncate", !selected && "text-muted-foreground")}>{selected?.label ?? current}</span>
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
