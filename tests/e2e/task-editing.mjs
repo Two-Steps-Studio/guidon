@@ -20,6 +20,22 @@ export async function taskEditingCoverage({page,context,origin,fixture,client,br
   }
   try {
     await context.clearCookies();await openTask(page);await openTask(other);
+    // The public API needs the full UUID; Git mentions keep their short ref.
+    await page.getByText(task.id,{exact:true}).waitFor();
+    if(browserName==='chromium'){
+      await context.grantPermissions(['clipboard-read','clipboard-write'],{origin});
+      await page.getByRole('button',{name:'Copy task ID',exact:true}).click();
+      assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),task.id);
+      await page.getByRole('button',{name:'Copy task reference',exact:true}).click();
+      assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),`guidon#${task.id.slice(0,8)}`);
+      // Browser-denial injection exercises error feedback, never a silent success.
+      await page.evaluate(()=>Object.defineProperty(navigator.clipboard,'writeText',{configurable:true,value:()=>Promise.reject(new DOMException('Denied by regression fixture','NotAllowedError'))}));
+      try{
+        await page.getByRole('button',{name:'Copy task ID',exact:true}).click();
+        await page.getByText('Failed to copy to clipboard',{exact:true}).waitFor();
+        await page.getByText(task.id,{exact:true}).waitFor();
+      }finally{await page.evaluate(()=>{delete navigator.clipboard.writeText;});}
+    }
     // Independent sessions loaded the same row, then submit distinct snapshots.
     await page.locator("#task-title").fill(`${title} FIRST`);
     await other.locator("#task-title").fill(`${title} SECOND`);

@@ -25,6 +25,7 @@ import { aiChatBoundaryCoverage } from "./ai-chat.mjs";
 import { mobileCoverage } from "./mobile.mjs";
 import { npmCommand } from "./npm-command.mjs";
 import { calendarEditingCoverage } from "./calendar-editing.mjs";
+import { connectedAppsCoverage } from "./profile-connected-apps.mjs";
 import { onboardingCoverage } from "./onboarding.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
@@ -157,6 +158,7 @@ try{
       await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await calendarEditingCoverage({page,context,origin,fixture,client,browserName:name});
+      await connectedAppsCoverage({page,context,origin,fixture,client,browserName:name});
       await aiChatBoundaryCoverage({page,context,origin,fixture,client});
       const {appleDesignCoverage}=await import("./apple-design.mjs");
       await appleDesignCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
@@ -173,6 +175,7 @@ try{
     finally{await context.tracing.stop({path:path.join(artifacts,`${name}-trace.zip`)});await context.close();await browser.close();await writeFile(path.join(artifacts,"app.log"),appLog);}
   }
   for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,environment.AGENT_AUTH_PRIVATE_KEY,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
+  assert.equal(appLog.includes('ENVIRONMENT_FALLBACK'),false,'Server formatting must not fall back to environment-dependent dates or relative times');
   completed=true;
 }finally{
   clearTimeout(deadline);

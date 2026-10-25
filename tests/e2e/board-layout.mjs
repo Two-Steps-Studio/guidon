@@ -5,9 +5,10 @@ async function assertBoardBounds(board){
   const dimensions=await board.evaluate(node=>{
     const bounds=node.getBoundingClientRect();
     const columns=Array.from(node.querySelectorAll("[data-column-status]")).map(column=>column.getBoundingClientRect());
-    return {gap:bounds.bottom-Math.max(...columns.map(column=>column.bottom)),allowance:parseFloat(getComputedStyle(node).paddingBottom)+node.offsetHeight-node.clientHeight+3,bottom:bounds.bottom,viewport:window.innerHeight};
+    return {gap:bounds.bottom-Math.max(...columns.map(column=>column.bottom)),allowance:parseFloat(getComputedStyle(node).paddingBottom)+node.offsetHeight-node.clientHeight+3,bottom:bounds.bottom,viewport:window.innerHeight,scrollHeight:node.scrollHeight,clientHeight:node.clientHeight};
   });
   assert.ok(dimensions.gap<=dimensions.allowance,`Board leaves ${dimensions.gap}px below its longest column (allowed ${dimensions.allowance}px)`);
+  assert.ok(dimensions.scrollHeight<=dimensions.clientHeight+1,`Board has phantom vertical overflow: ${dimensions.scrollHeight}px content in ${dimensions.clientHeight}px viewport`);
   return dimensions;
 }
 
@@ -62,6 +63,11 @@ export async function boardLayoutCoverage({page,origin,fixture,client,browserNam
     assert.ok(await column.evaluate(node=>node.scrollHeight>node.clientHeight+1),"Long task lists must retain their own vertical scroll");
     await column.evaluate(node=>{node.scrollTop=node.scrollHeight;});
     assert.ok(await column.evaluate(node=>node.scrollTop>0));
+    const end=await column.evaluate(node=>{
+      const cards=node.querySelectorAll('[data-card-id]');
+      return {gap:node.getBoundingClientRect().bottom-cards[cards.length-1].getBoundingClientRect().bottom,allowance:parseFloat(getComputedStyle(node).paddingBottom)+parseFloat(getComputedStyle(node).rowGap)+node.offsetWidth-node.clientWidth+3};
+    });
+    assert.ok(end.gap>=-1&&end.gap<=end.allowance,`Column scroll must stop at its last card: ${JSON.stringify(end)}`);
     await page.setViewportSize({width:375,height:812});
     await assertBoardBounds(board);
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),"Phone page must not overflow horizontally");

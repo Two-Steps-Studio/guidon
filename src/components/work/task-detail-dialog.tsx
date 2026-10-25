@@ -221,6 +221,16 @@ function TaskDetailDialogInner({
     }
   };
 
+  const handleCopyTaskId = async () => {
+    if (!task) return;
+    try {
+      await navigator.clipboard.writeText(task.id);
+      toast.success(t("taskIdCopied"));
+    } catch {
+      toast.error(t("failedToCopyToClipboard"));
+    }
+  };
+
   const taskId = task?.id;
 
   // "Why" context is fetched for the task this dialog was mounted for (the
@@ -366,6 +376,21 @@ function TaskDetailDialogInner({
               ? t("editDescription")
               : t("readOnlyDescription")}
           </DialogDescription>
+          <div className="flex min-w-0 items-center gap-2 pt-1 text-xs text-muted-foreground">
+            <span className="shrink-0">{t("taskIdLabel")}</span>
+            <code className="min-w-0 select-all break-all font-mono text-foreground">{task.id}</code>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={handleCopyTaskId}
+              aria-label={t("copyTaskId")}
+              title={t("copyTaskId")}
+            >
+              <Copy className="h-3.5 w-3.5" aria-hidden />
+            </Button>
+          </div>
           {/* Mentioning this in a commit, PR or branch name links it via the GitHub integration (src/lib/github/task-refs.ts). */}
           <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
             <span className="max-sm:hidden">{t("gitRefLabel")}</span>

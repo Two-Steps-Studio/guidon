@@ -336,7 +336,10 @@ function TaskCardComponent({
         onOpen(task);
       }}
       className={cn(
-        "group select-none rounded-lg border border-border bg-card p-3 text-left",
+        // Keep absolute sr-only labels inside this card's scroll/clip chain.
+        // A board-level containing block lets labels in off-screen cards
+        // escape their column and inflate the board's vertical scrollHeight.
+        "relative group select-none rounded-lg border border-border bg-card p-3 text-left",
         "shadow-sm transition-colors",
         "hover:border-border-hover hover:bg-surface-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
