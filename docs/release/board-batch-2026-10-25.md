@@ -69,7 +69,7 @@ This is an honest implementation inventory, not a claim that all cards are done.
 | 7354e24f-df38-4e1d-b9cc-ab9b7af89a55 | [Modules V1] Visual Editor pól, widoków i formularzy | Implemented; Review, awaiting human acceptance |
 | 02c6dccb-028b-492f-9127-4fa53b6d24f6 | [AI Builder V1] Live Preview, walidator i testy modułu | Implemented; Review, awaiting human acceptance |
 | 40e24352-0ff3-4f23-abf0-80db6439c4df | [QA][P1] Performance i regresja dużych projektów | Open — not implemented by this batch |
-| 3be4feeb-795e-491d-8909-3156cb99be52 | [QA][P1] AI: dostawcy, timeouty, budżety i bezpieczne odpowiedzi | Partial: adapter coverage; API/MCP scenarios still open |
+| 3be4feeb-795e-491d-8909-3156cb99be52 | [QA][P1] AI: dostawcy, timeouty, budżety i bezpieczne odpowiedzi | Follow-up after PR72: chat handler/provider failure matrix, cancellation, request/tool budgets and native HTTP role/AI gates verified; Review. External MCP models and shared financial quotas remain separate gates; see ai-chat-2026-10-25.md |
 | ec708b24-27a0-4dd2-bd2e-5f397736ad65 | [QA][P1] Moduły: roadmap, decyzje, wiedza, pliki i custom modules | Open — not implemented by this batch |
 | 868d6605-ffe3-4507-a565-2f816a330508 | [QA][P1] Accessibility: axe, klawiatura i kontrast | Automated gate implemented; Cloud checkout and manual checks remain |
 | c011cbbb-bc9a-47db-b810-6e4f116ea078 | [QA][P1] Mobile i responsywność: iPhone Safari/Android | Open — not implemented by this batch |

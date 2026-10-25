@@ -1610,6 +1610,8 @@
     "automatic": "Automatic"
   },
   "aiChat": {
+    "stop": "Stop request",
+    "stopped": "Request stopped. Changes already completed remain saved. Refresh the board before trying again.",
     "title": "Guidon AI Assistant",
     "emptyTitle": "How can I help you with this project?",
     "emptyHint": "I can find, create and update tasks, comment, and answer questions.",

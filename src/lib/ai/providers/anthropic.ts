@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { AICompletionInput, AICompletionResult, AIProvider } from "../provider";
-import { AI_REQUEST_TIMEOUT_MS, requireEnv, requireModel } from "../provider";
+import { completionSignal, requireEnv, requireModel } from "../provider";
 import { fromAnthropicContent, toAnthropicMessages, toAnthropicTools, type AnthropicResponseBlock } from "./wire-format";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -65,11 +65,11 @@ export class AnthropicProvider implements AIProvider {
       method: "POST",
       headers,
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
+      signal: completionSignal(input),
     });
 
     if (!res.ok) {
-      throw new Error(`anthropic request failed: ${res.status} ${(await res.text()).slice(0, 500)}`);
+      throw new Error(`anthropic request failed: ${res.status}`);
     }
 
     const data = (await res.json()) as {
