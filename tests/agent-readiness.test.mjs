@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { generateKeyPairSync } from "node:crypto";
 import { verifyAgentReadiness } from "../scripts/verify-agent-readiness.mjs";
 
 const origin = "https://guidon.test";
@@ -25,6 +26,7 @@ function fixture(overrides = {}) {
     }
     if (path === "/.well-known/oauth-protected-resource/api/mcp") return Response.json({ resource: `${origin}/api/mcp`, authorization_servers: [origin] });
     if (path === "/.well-known/oauth-authorization-server") return Response.json(metadata);
+    if (path === "/.well-known/agent-auth-jwks.json") return Response.json({keys:[overrides.key]});
     if (path === "/auth.md") return new Response(Object.values(metadata).join(" "));
     if (path === "/api/mcp") return Response.json({}, { status: 401, headers: { "WWW-Authenticate": `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource/api/mcp"` } });
     if (path === "/api/mcp/docs") {
@@ -46,6 +48,21 @@ await test("auth discovery, protected product and distinct public docs pass with
   assert.equal(reports.filter(report => report.status === "pass").length, 4);
   assert.equal(reports.find(report => report.name === "web-bot-auth").status, "pending");
   assert.ok(requests.every(request => request.options.method !== "POST" || request.path.startsWith("/api/mcp")));
+});
+
+await test("enabled service_auth is verified without starting a claim, and private JWKS material fails", async () => {
+  const now=Math.floor(Date.now()/1000);
+  const privateKey=generateKeyPairSync("ed25519").privateKey.export({format:"jwk"});
+  const {d,...publicKey}=privateKey;
+  assert.ok(d);
+  const metadata={agent_auth:{skill:`${origin}/auth.md`,identity_endpoint:`${origin}/oauth/agent/identity`,identity_types_supported:["service_auth"]},
+    jwks_uri:`${origin}/.well-known/agent-auth-jwks.json`,grant_types_supported:["urn:workos:agent-auth:grant-type:claim","urn:ietf:params:oauth:grant-type:jwt-bearer"]};
+  for(const [key,expected] of [[publicKey,"pass"],[privateKey,"fail"]]){
+    const {fetcher,requests}=fixture({metadata,key:{...key,kid:"test",nbf:now-60,exp:now+60}});
+    const reports=await verifyAgentReadiness(origin,fetcher);
+    assert.equal(reports.find(report=>report.name==="agent-auth-profile").status,expected);
+    assert.ok(!requests.some(request=>request.path==="/oauth/agent/identity" && request.options.method==="POST"));
+  }
 });
 
 await test("issuer mismatch fails even when the difference is only a trailing slash", async () => {

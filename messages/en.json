@@ -2106,5 +2106,18 @@
     "backup": "Download draft backup",
     "reload": "Open saved draft",
     "retry": "Retry save"
+  },
+  "agentClaim": {
+    "title": "Approve an agent",
+    "description": "Connect an agent only when you started this request.",
+    "invalid": "This request is unavailable, expired or belongs to a different account.",
+    "account": "Signed in as {email}",
+    "app": "Requesting app: {name}",
+    "code": "Code shown by your agent",
+    "codeHelp": "Enter the six-digit code from your agent. Do not approve unexpected requests or share this code.",
+    "invalidCode": "The code is incorrect or the request can no longer be approved.",
+    "approved": "Approved. Return to your agent to finish connecting.",
+    "denied": "Access denied. No credentials will be issued for this request.",
+    "revoke": "You can disconnect this agent at any time in Profile → Connected apps."
   }
 }

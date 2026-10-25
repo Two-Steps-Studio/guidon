@@ -2106,5 +2106,18 @@
     "backup": "Descargar copia del borrador",
     "reload": "Abrir borrador guardado",
     "retry": "Reintentar guardado"
+  },
+  "agentClaim": {
+    "title": "Autorizar un agente",
+    "description": "Conecta un agente solo si tú iniciaste esta solicitud.",
+    "invalid": "Esta solicitud no está disponible, ha caducado o pertenece a otra cuenta.",
+    "account": "Sesión iniciada como {email}",
+    "app": "Aplicación que solicita acceso: {name}",
+    "code": "Código mostrado por tu agente",
+    "codeHelp": "Introduce el código de seis dígitos de tu agente. No autorices solicitudes inesperadas ni compartas este código.",
+    "invalidCode": "El código es incorrecto o ya no se puede autorizar esta solicitud.",
+    "approved": "Autorizado. Vuelve a tu agente para terminar la conexión.",
+    "denied": "Acceso denegado. No se emitirán credenciales para esta solicitud.",
+    "revoke": "Puedes desconectar este agente en cualquier momento desde Perfil → Aplicaciones conectadas."
   }
 }

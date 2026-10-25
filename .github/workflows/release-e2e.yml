@@ -12,6 +12,8 @@ on:
       - 'tests/agent-web.test.mjs'
       - 'tests/fixtures/*app-paths*.mjs'
       - 'tests/web-bot-auth.test.mjs'
+      - 'tests/auth/agent-claims.test.mjs'
+      - 'tests/db/agent-claims.test.mjs'
       - 'docs/webhooks.md'
       - 'scripts/**'
       - 'package*.json'
@@ -42,6 +44,7 @@ jobs:
       - run: npm run test:auth
       - run: npm run test:webhooks
       - run: npm run test:agent-readiness
+      - run: npm run test:agent-claims
       - run: npm run test:agent-web
       - run: npm run test:api
       - run: npm run test:feedback

@@ -254,7 +254,7 @@ export const SCOPE_DESCRIPTIONS: Readonly<Record<OAuthScope, string>> = {
 };
 
 /** RFC 8414 authorization server metadata. */
-export function authorizationServerMetadata(siteUrl: string) {
+export function authorizationServerMetadata(siteUrl: string, agentAuthEnabled = false) {
   return {
     issuer: siteUrl,
     authorization_endpoint: `${siteUrl}/oauth/authorize`,
@@ -264,7 +264,11 @@ export function authorizationServerMetadata(siteUrl: string) {
     scopes_supported: [...OAUTH_SCOPES],
     response_types_supported: ["code"],
     response_modes_supported: ["query"],
-    grant_types_supported: ["authorization_code", "refresh_token"],
+    grant_types_supported: ["authorization_code", "refresh_token", ...(agentAuthEnabled ? ["urn:workos:agent-auth:grant-type:claim", "urn:ietf:params:oauth:grant-type:jwt-bearer"] : [])],
+    ...(agentAuthEnabled ? {
+      jwks_uri: `${siteUrl}/.well-known/agent-auth-jwks.json`,
+      agent_auth: { skill: `${siteUrl}/auth.md`, identity_endpoint: `${siteUrl}/oauth/agent/identity`, identity_types_supported: ["service_auth"] },
+    } : {}),
     code_challenge_methods_supported: ["S256"],
     token_endpoint_auth_methods_supported: ["none", "private_key_jwt"],
     revocation_endpoint_auth_methods_supported: ["none", "private_key_jwt"],
@@ -303,15 +307,33 @@ export function bearerChallenge(siteUrl: string, path: "/api/mcp" | "/api/v1"): 
 
 /**
  * /auth.md: how an agent gets credentials for Guidon, as Markdown
- * (github.com/workos/auth.md's sections). Guidon has no agent identity
- * assertions, so there is no agent_auth block - only standard OAuth 2.1
- * and personal API keys.
+ * (github.com/workos/auth.md's sections). Browser OAuth and personal keys
+ * always work; the optional service_auth section is enabled only with a
+ * configured service signing key and its supporting claim implementation.
  */
-export function authMarkdown(siteUrl: string): string {
+export function authMarkdown(siteUrl: string, agentAuthEnabled = false): string {
   const scopes = OAUTH_SCOPES.map((scope) => `| \`${scope}\` | ${SCOPE_DESCRIPTIONS[scope]} |`).join("\n");
+  const agent = agentAuthEnabled ? `
+## Headless agent registration (service_auth)
+
+This deployment supports the service_auth email-claim profile. It does not accept anonymous registration or external provider identity assertions. Nothing is issued until the intended person signs in and consents. Public DCR clients use this flow; signed CIMD clients continue using browser OAuth with their existing client authentication.
+
+1. Register a public client at \`${siteUrl}/oauth/register\` as above and retain its client_id. A loopback redirect URI is valid metadata; this polling flow does not call that URI.
+2. POST JSON to \`${siteUrl}/oauth/agent/identity\`:
+
+\`\`\`json
+{"type":"service_auth","client_id":"<registered-client-id>","login_hint":"<user-email>","scope":"tasks:read project:read","resource":"${siteUrl}/api/mcp"}
+\`\`\`
+
+The response has registration_id, claim_token, claim_token_expires, post_claim_scopes, and a claim object containing user_code (six digits), verification_uri, expires_in (600 seconds), and interval (5 seconds). No access token or identity_assertion is returned at registration. Present the verification URI and code to the person; never ask for their password. They must sign in to the matching Guidon account, enter the code and approve the displayed permissions. Five incorrect code attempts deny the request.
+
+3. Poll \`${siteUrl}/oauth/token\` with form fields grant_type=urn:workos:agent-auth:grant-type:claim, claim_token and the same resource. Wait at least interval seconds between polls. authorization_pending means wait; slow_down means increase the interval by five seconds; expired_token or access_denied means stop. The claim token is consumed once on successful exchange.
+4. Success returns access_token, token_type=Bearer, expires_in (up to 3600 seconds), scope, identity_assertion and assertion_expires. No refresh_token is returned by this profile. Until assertion_expires (at most 24 hours after approval), obtain another access token using grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer, assertion=<identity_assertion> and the same resource. Treat both values as secrets. The service assertion is signed by this issuer; its public key is at \`${siteUrl}/.well-known/agent-auth-jwks.json\`. Third-party assertion keys are not trusted.
+5. Use access tokens as described below. Revoking an access token via \`${siteUrl}/oauth/revoke\` ends that token. To stop future assertion exchanges as well, the person disconnects the grant in Profile → Connected apps. A new consent ceremony is required after assertion expiry or grant revocation. This flow keeps normal project roles, API scopes and AI restrictions.
+` : "";
   return `# Authenticating to Guidon
 
-Guidon's MCP server (\`${siteUrl}/api/mcp\`) and REST API (\`${siteUrl}/api/v1\`) accept a bearer token: \`Authorization: Bearer <token>\`. There are two ways to get one. Both act as a Guidon user - only in the projects that user can access, with their role, limited to the token's scopes.
+Guidon's MCP server (\`${siteUrl}/api/mcp\`) and REST API (\`${siteUrl}/api/v1\`) accept a bearer token: \`Authorization: Bearer <token>\`. The methods below act as a Guidon user - only in the projects that user can access, with their role, limited to the token's scopes.
 
 1. **OAuth 2.1** (for MCP clients and apps acting for someone): the user approves your app in their browser; you get a one-hour access token and a refresh token. Claude, ChatGPT, Cursor, VS Code and other MCP clients do this on their own once given \`${siteUrl}/api/mcp\`.
 2. **A personal API key** (for scripts, CI and the user's own agents): the user creates one in [Profile → API keys](${siteUrl}/profile) and gives it to you. It doesn't expire until revoked.
@@ -394,6 +416,7 @@ Leaving \`scope\` out asks for all of them.
 | /oauth/token | \`invalid_grant\` | Code or refresh token invalid, expired, used, or the user disconnected the app |
 | /oauth/register | \`invalid_redirect_uri\` | A redirect URI that isn't https, loopback http or an app scheme |
 
+${agent}
 ## Revocation
 
 - You: \`POST ${siteUrl}/oauth/revoke\` with \`token=<refresh or access token>\` (RFC 7009). A refresh token ends the whole authorization.
