@@ -3,7 +3,8 @@
 Start with [`../../docs/brand-kit.md`](../../docs/brand-kit.md) for the palette,
 logo selection, and marketing usage rules.
 
-- Social profile photo: `social/profile-avatar.png` (symbol only)
+- Social profile photo on a dark background: `social/profile-avatar-dark.png` (symbol only)
+- Transparent social profile photo: `social/profile-avatar.png`
 - Social banners: use the platform-sized files in `social/`
 - Marketing/web full logo on light backgrounds: `guidon-wordmark-blue.png`
 - Marketing/web full logo on dark backgrounds: `guidon-wordmark-white.png`

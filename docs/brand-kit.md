@@ -115,7 +115,8 @@ not symbol-only marks, and have been removed to avoid choosing the wrong logo.
 | [guidon-wordmark-blue.png](../public/brand/guidon-wordmark-blue.png) | Default full logo on white or light backgrounds. |
 | [guidon-wordmark-black.png](../public/brand/guidon-wordmark-black.png) | Full logo for neutral, monochrome uses on light backgrounds. |
 | [guidon-wordmark-white.png](../public/brand/guidon-wordmark-white.png) | Full logo on Guidon Blue, Midnight Navy, or another dark background. |
-| [profile-avatar.png](../public/brand/social/profile-avatar.png) | Ready-to-upload social profile image: white symbol on Guidon Blue. |
+| [profile-avatar-dark.png](../public/brand/social/profile-avatar-dark.png) | Ready-to-upload social profile image: blue symbol on dark navy. |
+| [profile-avatar.png](../public/brand/social/profile-avatar.png) | Transparent blue symbol with clearance for circular profile crops. |
 
 ### Which logo to use
 
@@ -123,7 +124,7 @@ not symbol-only marks, and have been removed to avoid choosing the wrong logo.
   navigation rail. Use the full wordmark for sign-in or public-facing brand
   placement. Keep the existing app asset at `public/assets/guidon-wordmark.png`
   where the application already references it.
-- **Marketing and social profiles:** use the symbol-only `profile-avatar.png`
+- **Marketing and social profiles:** use the symbol-only `profile-avatar-dark.png`
   for square profile pictures. It stays legible at small sizes; the wordmark is
   too small to read inside a circular crop.
 - **Marketing banners, website headers, launch pages, and partner materials:**

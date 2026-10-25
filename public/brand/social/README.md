@@ -1,5 +1,6 @@
 # Guidon social profile assets
 
+- `profile-avatar-dark.png` — ready-to-upload PNG variant with the blue symbol on a dark navy background and clearance for circular crops. Use this variant for social profile photos with a dark background.
 - `profile-avatar.png` — 400 × 400 transparent PNG with the Guidon Blue symbol and extra clearance for circular profile crops.
 - `profile-avatar.svg` — vector source for the profile image.
 - `x-header.png` — 1500 × 500 X profile header.
