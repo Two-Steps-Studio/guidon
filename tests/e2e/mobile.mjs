@@ -55,7 +55,10 @@ export async function mobileCoverage({page,context,origin,fixture,client,browser
    const task=(await client.query("INSERT INTO tasks(project_id,created_by,title,status) VALUES($1,$2,$3,'backlog') RETURNING id",[owner.projectId,owner.id,title])).rows[0];created.push(task.id);
    await page.goto(root+'/work');const board=page.getByRole('list',{name:'Task board',exact:true}),card=board.locator(`[data-card-id="${task.id}"]`);await card.scrollIntoViewIfNeeded();
    const cdp=await context.newCDPSession(page),touch=(type,points=[])=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points});
-   const start=async()=>{await board.evaluate(node=>{node.scrollLeft=0;});await frames(page);const b=await card.boundingBox();return {x:b.x+b.width/2,y:b.y+25};};
+   // A swipe leaves the board flinging: a scrollLeft written mid-fling is overwritten,
+   // so wait until it stops moving before resetting it and measuring the card.
+   const settle=async()=>{let last=null;for(let i=0;i<120;i++){const now=await board.evaluate(node=>node.scrollLeft);if(now===last)return;last=now;await frames(page);}throw new Error('Board never stopped scrolling');};
+   const start=async()=>{await settle();await board.evaluate(node=>{node.scrollLeft=0;});await frames(page);await settle();assert.equal(await board.evaluate(node=>node.scrollLeft),0);const b=await card.boundingBox();return {x:b.x+b.width/2,y:b.y+25};};
    try{
     const p=await start();await touch('touchStart',[p]);for(const x of [p.x-30,p.x-65,25])await touch('touchMove',[{x,y:p.y}]);await touch('touchEnd');
     await page.waitForFunction(()=>document.querySelector('[role="list"][aria-label="Task board"]').scrollLeft>0);assert.equal((await client.query('SELECT status FROM tasks WHERE id=$1',[task.id])).rows[0].status,'backlog');

@@ -570,15 +570,10 @@ function KanbanBoardComponent({
               )}
             >
               {columnTasks.map((task, index) => (
-                // content-visibility: the browser skips style and layout for
-                // cards scrolled out of their column. With a few hundred
-                // cards every full-document style pass (opening a dialog,
-                // focus, measuring) paid for all of them.
-                // contain-intrinsic-size "auto" remembers each card's last
-                // rendered height, so scroll height and drop targets stay right.
-                // The 3px padding (cancelled by the margin) keeps the focus and
-                // selection rings inside the box content-visibility paints.
-                <div key={task.id} className="-m-[3px] p-[3px] [content-visibility:auto] [contain-intrinsic-size:auto_7rem]">
+                // No content-visibility:auto here: cards never rendered yet get
+                // a guessed height, so a long column's scroll end and scrollbar
+                // jumped as they came into view (release E2E board-layout).
+                <div key={task.id}>
                   <DropZone
                     active={
                       isTargetColumn &&
