@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CUSTOM_MODULE_AI_PROMPT, CUSTOM_MODULE_PRESETS, customModuleSchema, customModulesSchema, type CustomModule } from "@/lib/work/custom-modules";
 import { renderCustomModuleBlocks } from "@/lib/work/custom-module-renderer";
@@ -74,6 +75,13 @@ export function CustomModules({ projectId, initial, initialRevision, canManage, 
     {selectedId && canManage && <div className="space-y-2"><Button disabled={!dirty || pending} onClick={save}>{pending ? t("saving") : t("save")}</Button><p role="status" className="text-sm">{status || (dirty ? t("unsaved") : "")}</p></div>}
     <div className="grid min-w-0 gap-4">{modules.map((module, moduleIndex) => (!selectedId || selectedId === module.id) && <Card key={module.id} className="min-w-0">
       <CardHeader><CardTitle>{module.title}</CardTitle><CardDescription>{module.description}</CardDescription>
+        {canManage && !selectedId && <label className="block max-w-xs space-y-1 pt-2"><span className="text-sm font-medium">{t("category")}</span>
+          <Input value={module.category ?? ""} maxLength={40} placeholder={t("categoryPlaceholder")} disabled={pending} onChange={(event) => {
+            const value = event.target.value;
+            update(modules.map((item) => item.id === module.id ? { ...item, category: value.trim() ? value : undefined } : item));
+          }} />
+          <span className="block text-xs text-muted-foreground">{t("categoryHint")}</span>
+        </label>}
         {canManage && !selectedId && <div className="flex gap-2 pt-2"><Button size="sm" variant="outline" disabled={pending} onClick={() => { setEditing(module.id); setDraft(JSON.stringify(module, null, 2)); }}>{t("edit")}</Button>
           <Button size="sm" variant="outline" disabled={pending} onClick={() => update(modules.filter((item) => item.id !== module.id))}>{t("remove")}</Button></div>}
       </CardHeader>

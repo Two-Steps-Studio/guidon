@@ -64,11 +64,14 @@ export type InstalledModule = {
   revision: number;
   enabled: boolean;
   installed: boolean;
-  settings: { defaultView?: string };
+  settings: { defaultView?: string; category?: string };
 };
 
+/** A module's sidebar category: shared by catalog and content modules. */
+export const moduleCategorySchema = z.string().trim().min(1).max(40);
+
 export function parseModuleSettings(manifest: ModuleManifest, input: unknown): InstalledModule["settings"] {
-  return z.strictObject({ defaultView: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/).optional() }).superRefine((settings, ctx) => {
+  return z.strictObject({ defaultView: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/).optional(), category: moduleCategorySchema.optional() }).superRefine((settings, ctx) => {
     if (settings.defaultView && !manifest.views.some((view) => view.id === settings.defaultView)) ctx.addIssue({ code: "custom", path: ["defaultView"], message: "Unknown module view." });
   }).parse(input);
 }

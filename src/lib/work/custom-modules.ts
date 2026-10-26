@@ -12,6 +12,8 @@ export const customModuleSchema = z.object({
   id: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/),
   title: label,
   description: z.string().trim().max(500).default(""),
+  /** Sidebar group the module is listed under; none = the shared "Custom modules" group. */
+  category: z.string().trim().min(1).max(40).optional(),
   blocks: z.array(z.discriminatedUnion("type", [
     z.object({ type: z.literal("text"), title: label, text }),
     z.object({ type: z.literal("checklist"), title: label, items: z.array(z.object({ label, done: z.boolean() })).min(1).max(30) }),

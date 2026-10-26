@@ -230,6 +230,10 @@ export function AppSidebar({
     return pathname === `/projects/${projectId}/${href}`;
   };
 
+  // Custom modules: one sidebar group per category the project gave them
+  // (alphabetical), the uncategorized ones first under "Custom modules".
+  const moduleGroups = groupModuleLinks(moduleLinks);
+
   const activeStyle = projectColor
     ? ({
         backgroundColor: `${projectColor}20`,
@@ -327,14 +331,14 @@ export function AppSidebar({
             );
           })}
 
-        {projectId && moduleLinks.length > 0 && <SidebarGroup>
-          <SidebarGroupLabel>{t("customModules")}</SidebarGroupLabel>
-          <SidebarMenu>{moduleLinks.map(module => <SidebarMenuItem key={module.id}>
+        {projectId && moduleGroups.map((group) => <SidebarGroup key={group.category ?? ""}>
+          <SidebarGroupLabel>{group.category ?? t("customModules")}</SidebarGroupLabel>
+          <SidebarMenu>{group.links.map(module => <SidebarMenuItem key={module.id}>
             <SidebarMenuButton asChild isActive={pathname === module.href} tooltip={module.name}>
               <Link href={module.href} aria-current={pathname === module.href ? "page" : undefined}><Puzzle /><span className="truncate">{module.name}</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>)}</SidebarMenu>
-        </SidebarGroup>}
+        </SidebarGroup>)}
 
         {isAdmin && (
           <SidebarGroup>
@@ -421,4 +425,17 @@ export function AppSidebar({
       )}
     </Sidebar>
   );
+}
+
+function groupModuleLinks(links: ProjectModuleLink[]): { category: string | null; links: ProjectModuleLink[] }[] {
+  const byCategory = new Map<string, ProjectModuleLink[]>();
+  const uncategorized: ProjectModuleLink[] = [];
+  for (const link of links) {
+    if (!link.category) uncategorized.push(link);
+    else byCategory.set(link.category, [...(byCategory.get(link.category) ?? []), link]);
+  }
+  return [
+    ...(uncategorized.length ? [{ category: null, links: uncategorized }] : []),
+    ...[...byCategory.keys()].sort((a, b) => a.localeCompare(b)).map((category) => ({ category, links: byCategory.get(category)! })),
+  ];
 }

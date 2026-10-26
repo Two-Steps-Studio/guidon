@@ -84,6 +84,7 @@ them. Prefer the runner.
 | `085_agent_claims.sql` | Optional human-approved agent registration: service-role-only `agent_registrations` and `agent_claim_events` (secret-free audit), atomic `decide_agent_claim` / `issue_agent_claim_token` functions. See the section below and `docs/agent-claims.md`. | `/oauth/agent/identity`, `/oauth/claim`, agent token grants (needs `AGENT_AUTH_PRIVATE_KEY`) |
 | `086_task_edit_revision.sql` | `tasks.revision` integer, advanced by a trigger on every update; the task edit UI saves conditionally on it and refuses ("task version is unavailable") without it. See the section below. | Editing tasks in the web app (dialog, calendar) |
 | `087_module_limit_installed_only.sql` | The 20-module cap (080) now counts installed packages only and is also checked when an archived module is reinstalled (`UPDATE installed = true`). Before, every module ever installed counted, so a project that had used 20 could never install another. Adds an index on `agent_registrations.client_id`. | Installing modules after uninstalling others |
+| `088_module_category.sql` | `project_module_packages.settings` may also hold `category` (text, 1-40 characters, no surrounding spaces) next to `defaultView`; other keys are still rejected. Content modules keep theirs in `projects.custom_modules` (validated by the app). | Sidebar groups per module category; Category field in module settings |
 
 ## The compatibility layer runs before all of this
 

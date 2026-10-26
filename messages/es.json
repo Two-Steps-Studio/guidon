@@ -146,7 +146,7 @@
     "promoCodes": "Códigos promocionales",
     "pinnedProjects": "Proyectos fijados",
     "pinnedTasks": "Fijadas",
-    "customModules": "Custom modules",
+    "customModules": "Módulos personalizados",
     "marketplace": "Mercado de módulos",
     "myModules": "Mis módulos",
     "extensionsGroup": "Extensiones"
@@ -1924,7 +1924,10 @@
     "permission": "Only project owners and admins can edit modules.",
     "invalid": "Invalid module JSON. Check the schema, unique IDs, HTTP(S) links and size limits.",
     "saveFailed": "Could not save modules. Try again.",
-    "conflict": "Modules changed in another session. Export your changes, then reload before saving."
+    "conflict": "Modules changed in another session. Export your changes, then reload before saving.",
+    "category": "Categoría",
+    "categoryPlaceholder": "p. ej., Marketing",
+    "categoryHint": "Se muestra como un grupo propio en la barra lateral del proyecto. Déjalo vacío para que aparezca en «Módulos personalizados»."
   },
   "moduleRuntime": {
     "title": "Módulos de datos",
@@ -2051,7 +2054,10 @@
     "conflict": "El módulo cambió. Recarga y revisa de nuevo.",
     "invalid": "Ajustes o solicitud no válidos.",
     "incompatibleData": "La versión de destino no admite los registros actuales. No se modificaron los datos.",
-    "saveFailed": "No se pudo guardar el módulo."
+    "saveFailed": "No se pudo guardar el módulo.",
+    "category": "Categoría",
+    "categoryPlaceholder": "p. ej., Marketing",
+    "categoryHint": "Se muestra como un grupo propio en la barra lateral del proyecto. Déjalo vacío para que aparezca en «Módulos personalizados»."
   },
   "moduleBuilder": {
     "title": "Creador de módulos con IA",

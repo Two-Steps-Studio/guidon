@@ -3803,5 +3803,23 @@ section("71. module cap counts installed packages only, reinstall included (087)
   });
 }
 
+section("72. module category in package settings (088)");
+
+{
+  await withUser(A, async () => {
+    const proj = await db.query("INSERT INTO public.projects (organization_id, name) SELECT organization_id, 'Modules 088' FROM public.projects WHERE id = $1 RETURNING id", [projectId]);
+    const pid = proj.rows[0].id;
+    await db.query("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,'cat-mod','{\"manifestVersion\":1,\"id\":\"cat-mod\"}')", [pid]);
+    const set = (settings) => db.query("UPDATE public.project_module_packages SET settings = $2 WHERE project_id = $1 AND module_id = 'cat-mod' RETURNING settings", [pid, JSON.stringify(settings)]);
+    check("category is accepted", (await set({ category: "Marketing" })).rows[0]?.settings?.category === "Marketing");
+    check("category with default view is accepted", (await set({ category: "Ops", defaultView: "table-view" })).rows.length === 1);
+    check("empty category rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = '{\"category\":\"\"}' WHERE project_id = $1", [pid]));
+    check("category over 40 characters rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = $2 WHERE project_id = $1", [pid, JSON.stringify({ category: "x".repeat(41) })]));
+    check("category with surrounding spaces rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = '{\"category\":\" Ops\"}' WHERE project_id = $1", [pid]));
+    check("non-string category rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = '{\"category\":5}' WHERE project_id = $1", [pid]));
+    check("unknown settings keys still rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = '{\"color\":\"red\"}' WHERE project_id = $1", [pid]));
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
