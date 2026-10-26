@@ -31,6 +31,8 @@ export const moduleFieldSchema = z.discriminatedUnion("type", [
   z.strictObject({ ...fieldBase, type: z.literal("number"), min: z.number().finite().optional(), max: z.number().finite().optional() }),
   z.strictObject({ ...fieldBase, type: z.literal("boolean") }),
   z.strictObject({ ...fieldBase, type: z.literal("date") }),
+  /** HTTP(S) address, shown as a link (engine 1.1). */
+  z.strictObject({ ...fieldBase, type: z.literal("url") }),
   z.strictObject({
     ...fieldBase,
     type: z.literal("select"),
@@ -50,7 +52,22 @@ const viewBase = {
   entity: identifier,
   fields: z.array(identifier).min(1).max(50),
 };
+const blockTitle = displayName;
+/**
+ * Blocks of a page view (engine 1.1). `text` is the author's fixed copy; the
+ * other blocks show the records of one entity, so everything a project writes
+ * is module data and a new version of the module never overwrites it.
+ */
+export const modulePageBlockSchema = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("text"), title: blockTitle, text: z.string().trim().min(1).max(4000) }),
+  z.strictObject({ type: z.literal("notes"), title: blockTitle, entity: identifier, field: identifier }),
+  z.strictObject({ type: z.literal("checklist"), title: blockTitle, entity: identifier, labelField: identifier, doneField: identifier }),
+  z.strictObject({ type: z.literal("links"), title: blockTitle, entity: identifier, labelField: identifier, urlField: identifier }),
+]);
+export type ModulePageBlock = z.infer<typeof modulePageBlockSchema>;
+
 const moduleViewSchema = z.discriminatedUnion("type", [
+  z.strictObject({ id: identifier, name: displayName, type: z.literal("page"), blocks: z.array(modulePageBlockSchema).min(1).max(20) }),
   z.strictObject({ ...viewBase, type: z.literal("table") }),
   z.strictObject({ ...viewBase, type: z.literal("form") }),
   z.strictObject({ ...viewBase, type: z.literal("board"), groupBy: identifier.optional() }),
@@ -93,6 +110,7 @@ export const moduleManifestStructureSchema = z.strictObject({
   manifestVersion: z.literal(1),
   id: identifier,
   name: displayName,
+  description: z.string().trim().max(500).optional(),
   version: semanticVersion,
   author: z.strictObject({ name: displayName }),
   engine: engineCompatibilitySchema,
@@ -128,6 +146,25 @@ export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((m
 
   addDuplicateIssues(manifest.views, (view) => view.id, ctx, ["views"], "View IDs must be unique.");
   manifest.views.forEach((view, index) => {
+    if (view.type === "page") {
+      view.blocks.forEach((block, blockIndex) => {
+        if (block.type === "text") return;
+        const target = entities.get(block.entity);
+        const path = ["views", index, "blocks", blockIndex];
+        if (!target) {
+          ctx.addIssue({ code: "custom", path: [...path, "entity"], message: "Block must reference a declared entity." });
+          return;
+        }
+        const fieldOf = (id: string) => target.fields.find((field) => field.id === id);
+        const expect = (id: string, types: string[], key: string) => {
+          if (!types.includes(fieldOf(id)?.type ?? "")) ctx.addIssue({ code: "custom", path: [...path, key], message: `Block field must be a ${types.join("/")} field of its entity.` });
+        };
+        if (block.type === "notes") expect(block.field, ["text"], "field");
+        if (block.type === "checklist") { expect(block.labelField, ["text"], "labelField"); expect(block.doneField, ["boolean"], "doneField"); }
+        if (block.type === "links") { expect(block.labelField, ["text"], "labelField"); expect(block.urlField, ["url"], "urlField"); }
+      });
+      return;
+    }
     const entity = entities.get(view.entity);
     if (!entity) {
       ctx.addIssue({ code: "custom", path: ["views", index, "entity"], message: "View must reference a declared entity." });
@@ -149,6 +186,11 @@ export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((m
       ctx.addIssue({ code: "custom", path: ["views", index], message: "Calendar requires a dateField included in the view." });
     }
   });
+
+  const usesEngine11 = manifest.views.some((view) => view.type === "page") || manifest.entities.some((entity) => entity.fields.some((field) => field.type === "url"));
+  if (usesEngine11 && compareSemver(manifest.engine.minVersion, "1.1.0") < 0) {
+    ctx.addIssue({ code: "custom", path: ["engine", "minVersion"], message: "Page views and url fields need engine 1.1.0 or later." });
+  }
 
   if (manifest.migrations.length !== manifest.dataVersion - 1) {
     ctx.addIssue({ code: "custom", path: ["migrations"], message: "Migrations must provide one additive step for each data-version increment." });
@@ -188,6 +230,8 @@ export const MODULE_MANIFEST_JSON_SCHEMA = {
     "engine.maxVersionExclusive must be greater than engine.minVersion",
     "permission names, entity IDs, field IDs, select option values, view IDs, and view field references are validated for uniqueness and referential integrity",
     "migrations must form an ordered additive chain from data version 1 to dataVersion",
+    "page blocks reference declared entities and fields of the right type (notes: text; checklist: text label + boolean done; links: text label + url)",
+    "page views and url fields require engine.minVersion 1.1.0 or later",
   ],
 };
 

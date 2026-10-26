@@ -20,6 +20,7 @@ import { AlertCircle, Edit, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { deletePhase, updatePhase, type PhaseFormState } from "./actions";
 import { PhaseFormFields } from "./phase-form-fields";
 import type { RoadmapPhase } from "@/types/task";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: PhaseFormState = { error: null };
 
@@ -111,10 +112,7 @@ function EditPhaseForm({
 
   return (
     <form
-      action={(formData) => {
-        submittedRef.current = true;
-        formAction(formData);
-      }}
+      onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
       className="space-y-4"
     >
       <PhaseFormFields idPrefix={`edit-phase-${phase.id}`} defaults={phase} />

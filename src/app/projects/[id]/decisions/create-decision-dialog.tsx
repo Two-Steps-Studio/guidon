@@ -15,6 +15,7 @@ import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createDecision, type DecisionFormState } from "./actions";
 import { DecisionFormFields } from "./decision-form-fields";
 import type { ContextEntityType, Decision } from "@/types/context";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: DecisionFormState = { error: null };
 
@@ -70,10 +71,7 @@ export function CreateDecisionDialog({
           <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
-          action={(formData) => {
-            submittedRef.current = true;
-            formAction(formData);
-          }}
+          onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
           className="space-y-4"
         >
           <DecisionFormFields idPrefix={idPrefix} defaults={defaults} />

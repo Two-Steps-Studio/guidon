@@ -14,6 +14,7 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { BackgroundMotionSwitcher } from "@/components/layout/background-motion-switcher";
 import { WallpaperPicker } from "@/components/layout/wallpaper-picker";
 import { SoundSwitcher } from "@/components/layout/sound-switcher";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: ProfileFormState = { error: null };
 
@@ -38,7 +39,7 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
         </div>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4" data-save-shortcut>
+        <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-4" data-save-shortcut>
           <div className="space-y-2">
             <Label htmlFor="full_name">{t("nameLabel")}</Label>
             <Input

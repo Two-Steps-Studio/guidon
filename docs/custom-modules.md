@@ -1,86 +1,62 @@
-# Custom project modules
+# Project modules
 
-Open **Project → Custom modules**. Project owners and admins can install a
-preset from the catalog, edit its JSON, and save it to the project. All people
-with project access can read the saved modules. Existing built-in sections
-remain configurable in Project settings.
+Open **Project → Modules**. A module is a project section of its own: it gets
+a tab in the project sidebar (grouped under its category, or under *Custom
+modules*), and the Modules page lists every module with **Open** and
+**Configuration**. Project owners and admins add modules; everyone with
+project access reads them.
 
-The catalog provides a release checklist and a research hub. Choose a preset,
-edit its content, select **Apply module**, then **Save to project**. Checkbox
-changes and removals also need **Save to project**. An unsaved-changes message
-stays visible until the save succeeds. Changes in another session produce a
-conflict instead of silently overwriting that session: export the local draft,
-reload, then merge and import the changes.
+There is one kind of module, a package described by a
+[Manifest v1](rfcs/0001-module-manifest-v1.md):
 
-Use **Copy AI prompt** to ask an AI to generate a module for your workflow.
-Paste the returned JSON into the editor and apply it. **Import JSON** accepts
-either one module or an array; export downloads an array you can share with
-another project. Imported IDs must be unique within the project. Imports append
-to the current draft; they do not replace existing modules.
+- **Pages** (`page` view): notes, checklists and lists of links. Checking an
+  item saves immediately; **Add item**, **Edit** and **Remove** change one
+  entry in place.
+- **Data**: entities with typed fields shown as tables, forms, boards, charts
+  and calendars ([runtime guide](module-runtime.md)).
 
-## Format
+One module can combine both. Whatever the project writes is module data
+(records), never part of the manifest, so updating a module to a new version
+keeps it.
 
-```json
-{
-  "version": 1,
-  "id": "release-notes",
-  "title": "Release notes",
-  "description": "Our release workflow",
-  "blocks": [
-    { "type": "text", "title": "Scope", "text": "Describe this release." },
-    { "type": "checklist", "title": "Review", "items": [{ "label": "Tests pass", "done": false }] },
-    { "type": "links", "title": "Resources", "items": [{ "label": "Docs", "url": "https://useguidon.com/developers" }] }
-  ]
-}
-```
+## Adding a module
 
-Limits: 20 modules per project, 20 blocks per module, 30 entries per list,
-100 characters per title/label, 500 per description and 4,000 per text block.
-Module IDs start with a lowercase letter and contain at most 64 lowercase
-letters, digits or hyphens. A project stores at most 64,000 JSON characters;
-import files are capped at 100,000 bytes. Links accept HTTP(S) only. Text is
-rendered as text, and modules cannot execute scripts, HTML or embedded frames.
+On the Modules page:
 
-## Renderer and access boundaries
+- **Templates**: *Release checklist*, *Research hub* (pages) and *Release
+  planning* (data, with two example entries). A template is a fresh copy
+  each time.
+- **Import JSON file** or paste a module: a manifest, or a module in the
+  pre-092 content format (`{"version":1,"id":...,"blocks":[...]}`, also what
+  older exports and **Copy AI prompt** produce) - converted to a page module
+  with its checklist state and texts as entries.
+- **Browse Marketplace** for published modules, or describe what you need in
+  the **AI Module Builder** below the list.
 
-The current renderer supports exactly three block types: `text` (plain React
-text), `checklist` (bounded labels and boolean state), and `links` (labels plus
-validated HTTP(S) URLs). It does not parse Markdown or HTML, create elements
-from user-provided tag names, load remote frames, or run module-supplied code.
-React escapes titles, descriptions, block text and labels during rendering.
-External links open with `noopener noreferrer`.
+Review the requested permissions, approve them and install. A module that
+can show data opens in its new tab. A project holds at most 20 installed
+modules; uninstalled ones keep their data (`module-lifecycle.md`).
 
-The project page checks membership before loading module data. Project RLS
-limits reads to users with project access, and the save action separately
-requires an owner/admin role; checklist edits are disabled for read-only roles.
-Migration 079 adds only bounded JSON storage to `projects`, so it inherits the
-existing project tenant boundary instead of introducing a cross-project module
-table. The database compatibility suite covers a different tenant being unable
-to overwrite modules, a developer being able to read but not edit, and
-optimistic revision conflicts.
+Rendering is fixed React elements only: titles, texts and labels are text
+children, links accept absolute `http:`/`https:` addresses and open with
+`noopener noreferrer`. Modules cannot run scripts, HTML or frames.
 
-Content blocks remain separate from installable data modules. The latter use
-the five declarative views described in [the runtime guide](module-runtime.md).
+## Content modules before migration 092
 
-This first version has a curated preset catalog and portable JSON sharing.
-It does not provide public user publishing, payments, third-party executable
-plugins or marketplace moderation. Those need a separate product and runtime
-design before a public marketplace launch.
+Until 092, content modules (text/checklist/links blocks) were a JSON array on
+the project (`projects.custom_modules`, migration 079) with their own editor.
+092 converts each into a package under the same id (`<id>-page` if the id was
+taken): a `page` view, one entity per block (`notes-<n>`, `checklist-<n>`,
+`links-<n>`), the texts, items and checked state as records, and the category
+in settings. The old column stays untouched as a rollback copy and is no
+longer read; old `/extensions/content/<id>` links redirect to the module's
+tab. `convertContentModule` (`src/lib/work/module-legacy.ts`) is the same
+conversion for imported files; `test:db` section 76 checks that the SQL and
+TypeScript conversions agree.
 
 ## Deployment
 
-Apply migration `079_custom_modules.sql` before deploying. The existing
-project RLS policy protects the new fields. There is no backfill: projects
-start with an empty array and revision zero. Verify creating, reading, editing,
-exporting and importing a module with two project admins in separate sessions.
-Check that another tenant cannot access the project, and that read-only members
-see saved content but cannot change it.
-
-## Installable module packages
-
-The JSON format on this page is the existing project-content module format.
-Its integer `version: 1` is not SemVer. Installable package manifests use a
-separate proposed format documented in
-[`RFC 0001`](rfcs/0001-module-manifest-v1.md), with its own JSON Schema and
-validator. They are not accepted by this editor and do not execute code.
-Use the **Data modules** section below the content editor to install a manifest.
+Apply migration `092_content_modules_as_packages.sql` after 091, then deploy.
+Running it twice is safe (already converted modules are skipped). A project
+whose content modules and packages together exceed 20 keeps all of them and
+can install another once it is under the cap again.

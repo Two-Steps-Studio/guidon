@@ -1,6 +1,6 @@
 import { createElement as h, type ReactNode } from "react";
 import type { ModuleManifest } from "./module-manifest";
-import type { ModuleRecord } from "./module-records";
+import { isModuleUrl, type ModuleRecord } from "./module-records";
 
 type Labels = { empty: string; yes: string; no: string; ungrouped: string; unscheduled: string; edit: string; remove: string; actions: string; count: string };
 type Props = {
@@ -14,8 +14,9 @@ type Props = {
 
 /** Only fixed React elements; module labels and values are always text children. */
 export function ModuleView({ manifest, view, records, labels, onEdit, onRemove }: Props): ReactNode {
+  if (view.type === "page" || view.type === "form") return null;
   const entity = manifest.entities.find((candidate) => candidate.id === view.entity);
-  if (!entity || view.type === "form") return null;
+  if (!entity) return null;
   const fields = view.fields.map((id) => entity.fields.find((field) => field.id === id)!);
   const rows = records.filter((record) => record.entity === entity.id);
   const readValue = (record: ModuleRecord, id: string) => Object.hasOwn(record.values, id) ? record.values[id] : undefined;
@@ -24,6 +25,7 @@ export function ModuleView({ manifest, view, records, labels, onEdit, onRemove }
     if (raw === undefined || raw === null || raw === "") return "—";
     if (field.type === "select") return field.options.find((option) => option.value === raw)?.label ?? "—";
     if (typeof raw === "boolean") return raw ? labels.yes : labels.no;
+    if (field.type === "url" && typeof raw === "string" && isModuleUrl(raw)) return h("a", { href: raw, target: "_blank", rel: "noopener noreferrer", className: "text-primary underline" }, raw);
     return String(raw);
   };
   const actions = (record: ModuleRecord) => h("div", { className: "flex flex-wrap gap-2" },

@@ -18,7 +18,8 @@ the legacy content editor continues to accept only its original format.
    outside the project cannot read its packages, including through the Data API.
 
 The sample manifest and fixture records are in `examples/module-manifests/`.
-The runtime engine contract is `1.0.0`; package versions have independent SemVer.
+The runtime engine contract is `1.1.0` (1.0 plus page views and url fields);
+package versions have independent SemVer.
 
 ## Component allowlist
 
@@ -29,9 +30,12 @@ The runtime engine contract is `1.0.0`; package versions have independent SemVer
 | `board` | `groupBy` select field; first visible select if omitted | Fixed columns from declared options, record cards |
 | `chart` | explicit select `groupBy` field | Record counts per declared option, numeric text equivalent |
 | `calendar` | explicit date `dateField` | Sorted date-grouped agenda plus unscheduled records |
+| `page` (engine 1.1) | `blocks`: `text`, `notes`, `checklist`, `links` | The author's fixed text plus the records of the named entities: paragraphs, checkboxes saved immediately, links. Owners/admins add, edit and remove entries in place |
 
 Field types are text, finite number with optional bounds, boolean, real ISO
-calendar date, and a selection from declared options. Titles, option labels
+calendar date, a selection from declared options, and (engine 1.1) url: an
+absolute `http:`/`https:` address of at most 2,000 characters, rendered as a
+link with `rel="noopener noreferrer"` and never as `javascript:`/`data:`. Titles, option labels
 and values are React text children. No HTML/Markdown parser, user-specified
 element names, arbitrary CSS/JS, iframe, network connector or executable hook
 is available. Board/chart group fields and calendar date fields must be present

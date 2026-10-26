@@ -20,6 +20,7 @@ import { importGuidonFile, previewGuidonImport, type GuidonImportPreview } from 
 import { type ProjectType, type ProjectMethodology } from "@/types/project";
 import { PROJECT_TEMPLATES, type ProjectTemplate } from "@/lib/work/project-modules";
 import { Select } from "@/components/ui/select";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: CreateProjectState = { error: null };
 
@@ -107,7 +108,7 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
   const [state, formAction, pending] = useActionState(createProjectWithOrg, initialState);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="projectName">{t("nameLabel")}</Label>
         <Input id="projectName" name="name" placeholder={t("namePlaceholder")} required />

@@ -24,6 +24,7 @@ import {
   type CreateWebhookState,
   type WebhookDeliveryView,
 } from "./webhook-actions";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const EVENT_LABEL_KEYS: Record<WebhookEventType, "eventCreated" | "eventStatusChanged" | "eventCompleted"> = {
   "task.created": "eventCreated",
@@ -80,7 +81,7 @@ export function WebhooksSection({
         )}
 
         {adding ? (
-          <form action={formAction} className="space-y-3 rounded-md border border-border p-3">
+          <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-3 rounded-md border border-border p-3">
             <div className="space-y-1">
               <Label htmlFor="webhook-url">{t("urlLabel")}</Label>
               <Input

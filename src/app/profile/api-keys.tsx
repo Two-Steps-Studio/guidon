@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Check, Copy, KeyRound, Trash2 } from "lucide-react";
 import { API_KEY_SCOPES } from "@/lib/api/scopes";
 import { createApiKey, revokeApiKey, type ApiKeyRow, type CreateApiKeyState } from "./api-keys-actions";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: CreateApiKeyState = { error: null, fullKey: null, row: null };
 
@@ -31,11 +32,15 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   // pattern - see the matching comment in ai-settings-form.tsx) - `state.row`
   // is null on first render, so this never fires on mount.
   const [reactedTo, setReactedTo] = useState(state);
+  // A new form (key) after a created key: the name field starts empty again;
+  // after an error it keeps what was typed (submitKeepingValues).
+  const [formVersion, setFormVersion] = useState(0);
   if (state !== reactedTo) {
     setReactedTo(state);
     if (state.row) {
       const newRow = state.row;
       setKeys((prev) => (prev.some((k) => k.id === newRow.id) ? prev : [newRow, ...prev]));
+      setFormVersion((version) => version + 1);
     }
   }
 
@@ -92,7 +97,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
           </div>
         )}
 
-        <form action={formAction} className="space-y-3">
+        <form key={formVersion} onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-3">
           <div className="space-y-1">
             <Label htmlFor="key-name">{t("keyNameLabel")}</Label>
             <Input id="key-name" name="name" placeholder={t("keyNamePlaceholder")} required />

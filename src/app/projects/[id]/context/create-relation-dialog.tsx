@@ -17,6 +17,7 @@ import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createRelation, type RelationFormState } from "./actions";
 import { ENTITY_TYPE_OPTIONS, RELATION_TYPE_OPTIONS } from "./relation-config";
 import { Select } from "@/components/ui/select";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: RelationFormState = { error: null };
 
@@ -70,10 +71,7 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
 
   return (
     <form
-      action={(formData) => {
-        submittedRef.current = true;
-        formAction(formData);
-      }}
+      onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
       className="space-y-4"
     >
       <div className="space-y-2">

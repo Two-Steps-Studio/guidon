@@ -20,6 +20,7 @@ import { AlertCircle, Edit, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { deleteDecision, updateDecision, type DecisionFormState } from "./actions";
 import { DecisionFormFields } from "./decision-form-fields";
 import type { Decision } from "@/types/context";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: DecisionFormState = { error: null };
 
@@ -126,10 +127,7 @@ function EditDecisionForm({
 
   return (
     <form
-      action={(formData) => {
-        submittedRef.current = true;
-        formAction(formData);
-      }}
+      onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
       className="space-y-4"
     >
       <DecisionFormFields idPrefix={`edit-decision-${decision.id}`} defaults={decision} />
