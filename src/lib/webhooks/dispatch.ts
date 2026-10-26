@@ -6,13 +6,13 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { SITE_URL } from "@/lib/site-url";
 import {
   getWebhookTargetsForProject,
-  recordWebhookDelivery,
   type WebhookTarget,
 } from "@/lib/data/organization-webhooks";
 import type { WebhookEventType } from "./events";
 import { checkWebhookUrl, guardedRequest, signWebhookPayload } from "./security";
 import { signRequest, signingKeyFromEnv } from "@/lib/web-bot-auth";
 import { describeReceiverError, detectWebhookFormat, formatWebhookBody, type WebhookEnvelope } from "./formats";
+import { enqueueAndDeliver, processDueDeliveries } from "./deliveries";
 
 const DELIVERY_TIMEOUT_MS = 5_000;
 
@@ -24,6 +24,8 @@ export type TaskEvent =
 export interface DeliveryOutcome {
   status: number | null;
   error: string | null;
+  /** A failure no retry can fix (refused URL, redirect) - see retry.ts. */
+  permanent?: boolean;
 }
 
 function webBotAuthHeaders(url: URL): Record<string, string> {
@@ -39,14 +41,17 @@ function webBotAuthHeaders(url: URL): Record<string, string> {
 export async function deliverWebhook(
   target: Pick<WebhookTarget, "id" | "url" | "secret">,
   type: WebhookEventType | "ping",
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  // A queued delivery (deliveries.ts) keeps its id and created_at across
+  // retries, so the receiver can tell a retry from a new event.
+  identity?: { deliveryId: string; createdAt: string }
 ): Promise<DeliveryOutcome> {
   const urlCheck = await checkWebhookUrl(target.url, { allowPrivate: hasDirectDatabase() });
-  if (!urlCheck.ok) return { status: null, error: urlCheck.reason };
+  if (!urlCheck.ok) return { status: null, error: urlCheck.reason, permanent: true };
 
-  const deliveryId = randomUUID();
+  const deliveryId = identity?.deliveryId ?? randomUUID();
   const timestamp = Math.floor(Date.now() / 1000);
-  const envelope = { id: deliveryId, type, created_at: new Date(timestamp * 1000).toISOString(), ...payload };
+  const envelope = { id: deliveryId, type, created_at: identity?.createdAt ?? new Date(timestamp * 1000).toISOString(), ...payload };
   // Discord/Slack URLs get their native message shape (see formats.ts); the
   // signature headers are sent either way and cover whichever body goes out.
   const body = JSON.stringify(formatWebhookBody(detectWebhookFormat(target.url), envelope as WebhookEnvelope));
@@ -72,7 +77,7 @@ export async function deliverWebhook(
       body,
     });
     if (response.status >= 300 && response.status < 400) {
-      return { status: response.status, error: "Redirects are not followed - use the final URL." };
+      return { status: response.status, error: "Redirects are not followed - use the final URL.", permanent: true };
     }
     if (response.status >= 200 && response.status < 300) {
       return { status: response.status, error: null };
@@ -88,6 +93,7 @@ export async function deliverWebhook(
         : blocked
           ? "That address isn't reachable from Guidon Cloud."
           : "Could not connect to the receiver.",
+      permanent: blocked,
     };
   }
 }
@@ -110,35 +116,36 @@ function eventTypeFor(event: TaskEvent, subscribed: readonly WebhookEventType[])
 /**
  * Sends a task event to every enabled webhook of the project's organization.
  * Runs in after() like notifyDiscordTaskEvent, so the task action never
- * waits on third-party servers; failures are recorded on the webhook row
- * (shown in Organization settings) and never thrown.
+ * waits on third-party servers. Each delivery is queued (migration 089) and
+ * tried at once; a failure is retried later (retry.ts) and shown in the
+ * webhook's history. Due retries of earlier events go out here too, so they
+ * don't wait only for the cron endpoint. Nothing is ever thrown.
  */
 export function notifyOrganizationWebhooks(projectId: string, userId: string, event: TaskEvent): void {
   after(async () => {
     try {
       const found = await getWebhookTargetsForProject(projectId);
-      if (!found || found.targets.length === 0) return;
-
-      const task = {
-        id: event.taskId,
-        title: event.title,
-        status: event.kind === "completed" ? "done" : event.kind === "status_changed" ? event.status : undefined,
-        url: `${SITE_URL}/projects/${projectId}/work`,
-      };
-
-      await Promise.all(
-        found.targets.map(async (target) => {
-          const type = eventTypeFor(event, target.events);
-          if (!type) return;
-          const outcome = await deliverWebhook(target, type, {
-            organization_id: found.organizationId,
-            project: { id: projectId, name: found.projectName },
-            actor_id: userId,
-            data: { task },
-          });
-          await recordWebhookDelivery(target.id, outcome);
-        })
-      );
+      if (found && found.targets.length > 0) {
+        const task = {
+          id: event.taskId,
+          title: event.title,
+          status: event.kind === "completed" ? "done" : event.kind === "status_changed" ? event.status : undefined,
+          url: `${SITE_URL}/projects/${projectId}/work`,
+        };
+        await Promise.all(
+          found.targets.map(async (target) => {
+            const type = eventTypeFor(event, target.events);
+            if (!type) return;
+            await enqueueAndDeliver(target, found.organizationId, type, {
+              organization_id: found.organizationId,
+              project: { id: projectId, name: found.projectName },
+              actor_id: userId,
+              data: { task },
+            });
+          })
+        );
+      }
+      await processDueDeliveries(10);
     } catch (error) {
       console.error(`notifyOrganizationWebhooks(${event.kind}) failed:`, error);
     }

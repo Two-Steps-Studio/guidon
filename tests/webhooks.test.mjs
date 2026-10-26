@@ -22,6 +22,7 @@ import {
 } from "../src/lib/webhooks/security.ts";
 import { isWebhookEventType } from "../src/lib/webhooks/events.ts";
 import { describeReceiverError, detectWebhookFormat, formatWebhookBody } from "../src/lib/webhooks/formats.ts";
+import { MAX_ATTEMPTS, RETRY_DELAYS_MS, isRetriable, stateAfterAttempt } from "../src/lib/webhooks/retry.ts";
 import { DIRECTORY_CONTENT_TYPE, directoryResponse, jwkThumbprint, parseSigningKey, signRequest } from "../src/lib/web-bot-auth.ts";
 import { createPublicKey, verify } from "node:crypto";
 
@@ -150,6 +151,21 @@ check("slack: ping has text", typeof formatWebhookBody("slack", { type: "ping" }
 check("receiver error: Discord JSON message", describeReceiverError(400, '{"message": "Cannot send an empty message", "code": 50006}') === "Receiver responded with HTTP 400: Cannot send an empty message");
 check("receiver error: plain text first line", describeReceiverError(400, "no_text\nmore") === "Receiver responded with HTTP 400: no_text");
 check("receiver error: empty body", describeReceiverError(502, "") === "Receiver responded with HTTP 502.");
+
+console.log("\n  Delivery retries (src/lib/webhooks/retry.ts)");
+{
+  const now = new Date("2026-10-26T12:00:00Z");
+  const after = (state) => (Date.parse(state.next_attempt_at) - now.getTime()) / 60000;
+  check("2xx -> succeeded", stateAfterAttempt(1, { status: 204, error: null }, now).status === "succeeded");
+  check("timeout -> retried after 1 min", after(stateAfterAttempt(1, { status: null, error: "No response" }, now)) === 1);
+  check("503 on 2nd attempt -> retried after 5 min", after(stateAfterAttempt(2, { status: 503, error: "x" }, now)) === 5);
+  check("429 and 408 retried", isRetriable({ status: 429, error: "x" }) && isRetriable({ status: 408, error: "x" }));
+  check("404, 401, 400 fail at once", ["404", "401", "400"].every((code) => stateAfterAttempt(1, { status: Number(code), error: "x" }, now).status === "failed"));
+  check("refused URL / redirect fail at once", stateAfterAttempt(1, { status: null, error: "blocked", permanent: true }, now).status === "failed");
+  check("last attempt failing -> failed", stateAfterAttempt(MAX_ATTEMPTS, { status: 500, error: "x" }, now).status === "failed");
+  check("schedule: 1m, 5m, 30m, 2h, 12h; six attempts", RETRY_DELAYS_MS.map((ms) => ms / 60000).join(",") === "1,5,30,120,720" && MAX_ATTEMPTS === 6);
+  check("2xx with an error message is not success", stateAfterAttempt(1, { status: 200, error: "cut short" }, now).status !== "succeeded");
+}
 
 console.log("\n  guardedRequest: Cloud URL rejection and self-hosted transport");
 {

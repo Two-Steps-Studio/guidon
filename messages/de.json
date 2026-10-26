@@ -476,7 +476,16 @@
         "deleteConfirm": "Diesen Webhook löschen? Zustellungen stoppen sofort.",
         "lastDelivery": "Letzte Zustellung {when} · HTTP {status}",
         "neverDelivered": "Noch keine Zustellungen.",
-        "nativeFormatHint": "Wird als native Nachricht für diesen Dienst gesendet statt als Guidon-JSON."
+        "nativeFormatHint": "Wird als native Nachricht für diesen Dienst gesendet statt als Guidon-JSON.",
+        "history": "Zustellverlauf",
+        "historyEmpty": "Noch keine Zustellungen.",
+        "deliverySucceeded": "Zugestellt",
+        "deliveryFailed": "Fehlgeschlagen",
+        "deliveryPending": "Wird gesendet…",
+        "deliveryRetrying": "Neuer Versuch {when}",
+        "deliveryAttempts": "{count, plural, one {# Versuch} other {# Versuche}} · HTTP {status}",
+        "retry": "Erneut senden",
+        "refreshHistory": "Aktualisieren"
       }
     },
     "billing": {

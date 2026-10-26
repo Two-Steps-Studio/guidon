@@ -25,6 +25,8 @@ function loadDispatcher(overrides = {}) {
     "./security": security,
     "./formats": formats,
     "@/lib/web-bot-auth": { signingKeyFromEnv: () => null },
+    // The queue (deliveries.ts) wraps deliverWebhook; these tests call it directly.
+    "./deliveries": {},
     ...overrides,
   };
   const exports = {};

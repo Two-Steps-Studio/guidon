@@ -476,7 +476,16 @@
         "deleteConfirm": "Usunąć ten webhook? Wysyłka zatrzyma się od razu.",
         "lastDelivery": "Ostatnia wysyłka {when} · HTTP {status}",
         "neverDelivered": "Jeszcze nic nie wysłano.",
-        "nativeFormatHint": "Wysyłane jako zwykła wiadomość w formacie tej usługi zamiast JSON-a Guidona."
+        "nativeFormatHint": "Wysyłane jako zwykła wiadomość w formacie tej usługi zamiast JSON-a Guidona.",
+        "history": "Historia dostarczeń",
+        "historyEmpty": "Jeszcze nic nie wysłano.",
+        "deliverySucceeded": "Dostarczono",
+        "deliveryFailed": "Nieudane",
+        "deliveryPending": "Wysyłanie…",
+        "deliveryRetrying": "Ponowienie {when}",
+        "deliveryAttempts": "{count, plural, one {# próba} few {# próby} many {# prób} other {# próby}} · HTTP {status}",
+        "retry": "Ponów",
+        "refreshHistory": "Odśwież"
       }
     },
     "billing": {

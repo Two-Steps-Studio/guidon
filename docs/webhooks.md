@@ -119,27 +119,22 @@ It proves the request comes from that Guidon server without sharing a secret - u
 
 ## Delivery rules
 
-- One attempt per event, sent right after the change is saved. There are no automatic retries - use **Test** to check the endpoint, and treat webhooks as notifications rather than a guaranteed log (the API at `/api/v1` is the source of truth).
-- Each HTTP request has a 5-second total deadline covering connection-time DNS, connection setup and response reads. Incoming bytes do not extend the deadline. The preliminary DNS validation happens separately before the request and is not covered by this timer. A completed `2xx` counts as delivered; a connection cut short or a deadline expiry is a failure. Response bodies are intentionally capped (2,000 bytes), so reaching that cap ends the read successfully using the received status.
+- Every event for every webhook is queued (migration `089_webhook_deliveries.sql`) and the first attempt is sent right after the change is saved.
+- **Retries.** A failure a retry can fix - no response (connection error, timeout), `408`, `429` or `5xx` - is sent again after 1 minute, 5 minutes, 30 minutes, 2 hours and 12 hours: six attempts over about 15 hours, then the delivery is marked failed. Other `4xx` answers, refused addresses and redirects fail at once, since sending the same request again won't change them. `Retry-After` is not read yet.
+- **Same id on every attempt.** `id` in the body and `X-Guidon-Delivery` stay the same across retries of one event (as does `created_at`), so a receiver can ignore a delivery it has already processed. A retry is signed again with a fresh `X-Guidon-Timestamp`.
+- **History.** Each webhook has a **Delivery history** in Organization → Settings → Webhooks: the latest 20 deliveries, their attempts, the receiver's last status or error, when the next retry is due, and **Retry** to send one again right away. Finished deliveries are kept for 30 days.
+- **When retries go out.** Due retries are sent after every new event, by **Retry**, and by `GET /api/cron/webhooks` with `Authorization: Bearer $CRON_SECRET`. Call that every few minutes so retries don't wait for the next event - Vercel Cron sends the header by itself when `CRON_SECRET` is set; on a self-hosted server use crontab. Without `CRON_SECRET` the endpoint answers 503 and retries go out only with new events and **Retry**.
+- A retry goes to the webhook as it is now: a changed URL or secret is used, and a webhook that was turned off or deleted gets nothing more.
+- Each HTTP request has a 5-second total deadline covering connection-time DNS, connection setup and response reads. Incoming bytes do not extend the deadline. A completed `2xx` counts as delivered; a connection cut short or a deadline expiry is a failure. Response bodies are capped (2,000 bytes), so reaching that cap ends the read using the received status.
 - Redirects are not followed; use the final URL.
-- The result of the latest delivery (time, HTTP status, error) is shown next to each webhook.
-- **Guidon Cloud:** the URL must be `https://` and resolve to a public address - `localhost`, private networks and cloud metadata addresses are refused, both when saving and before every delivery.
+- The result of the latest attempt (time, HTTP status, error) is also shown next to each webhook.
+- **Guidon Cloud:** the URL must be `https://` and resolve to a public address - `localhost`, private networks and cloud metadata addresses are refused, both when saving and before every attempt (and again when connecting).
 - **Self-hosted:** `http://` and internal addresses are allowed, since reaching your own network is usually the point.
 - At most 10 webhooks per organization.
 
-## Failure and retry limitations
+## Guarantees and limits
 
-`429`, `5xx`, timeout and connection failures are recorded as failures; they do
-not currently schedule a retry, even if `Retry-After` is present. A successful
-task mutation is not rolled back when a notification fails. The `after()` work
-is limited by the hosting platform's function lifetime, and only the latest
-result is stored, not a durable event/delivery history. There is no durable
-outbox, guaranteed ordering, replay endpoint or exactly-once guarantee.
-
-Durable retries and their queue/idempotency/tenant-isolation tests belong to the
-separate Reliability task. Until that is implemented, reconcile important state
-through the API and monitor the latest delivery result. The **Test** action
-sends a new ping; it does not replay a failed task event.
+Delivery is at least once: a receiver can get the same `id` more than once (a retry after a response that was lost on the way back) and should treat repeats as no-ops. There is no ordering guarantee between events - a retried older event can arrive after a newer one; use `created_at` and the API at `/api/v1` as the source of truth for current state. A task change is never rolled back because a webhook failed. **Test** sends a new `ping` straight away; it isn't queued or retried.
 
 ## Local verification
 

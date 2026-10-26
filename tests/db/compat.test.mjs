@@ -251,8 +251,8 @@ for (const [label, sql, expected] of [
   // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
   // 46->47: shared replay protection for signed OAuth client assertions (078).
   // 47->48 and 130->133: project-scoped declarative module packages (080).
-  ["52 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 52],
-  ["137 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 137],
+  ["53 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 53],
+  ["138 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 138],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3818,6 +3818,49 @@ section("72. module category in package settings (088)");
     check("category with surrounding spaces rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = '{\"category\":\" Ops\"}' WHERE project_id = $1", [pid]));
     check("non-string category rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = '{\"category\":5}' WHERE project_id = $1", [pid]));
     check("unknown settings keys still rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET settings = '{\"color\":\"red\"}' WHERE project_id = $1", [pid]));
+  });
+}
+
+section("73. webhook delivery queue (089)");
+
+{
+  let hook;
+  await withUser(A, async () => {
+    hook = (await db.query(insertWebhookSql, [orgId, ["task.created"], A])).rows[0].id;
+  });
+  let deliveryId;
+  await withServiceRole(async () => {
+    const row = await db.query(
+      "INSERT INTO public.organization_webhook_deliveries (webhook_id, organization_id, event_type, payload, next_attempt_at) VALUES ($1, $2, 'task.created', '{\"data\":{}}', now()) RETURNING id, status, attempts",
+      [hook, orgId]
+    );
+    deliveryId = row.rows[0].id;
+    check("service role queues a delivery: pending, 0 attempts", row.rows[0].status === "pending" && row.rows[0].attempts === 0);
+    check("pending needs a next attempt time", await throwsInSavepoint("INSERT INTO public.organization_webhook_deliveries (webhook_id, organization_id, event_type, payload) VALUES ($1, $2, 'task.created', '{}')", [hook, orgId]));
+    check("unknown event type rejected", await throwsInSavepoint("INSERT INTO public.organization_webhook_deliveries (webhook_id, organization_id, event_type, payload, next_attempt_at) VALUES ($1, $2, 'task.exploded', '{}', now())", [hook, orgId]));
+    check("unknown status rejected", await throwsInSavepoint("UPDATE public.organization_webhook_deliveries SET status = 'lost' WHERE id = $1", [deliveryId]));
+    const done = await db.query("UPDATE public.organization_webhook_deliveries SET status = 'succeeded', attempts = 1, next_attempt_at = NULL, last_status = 200 WHERE id = $1 RETURNING status", [deliveryId]);
+    check("service role records the outcome", done.rows[0]?.status === "succeeded");
+  });
+  await withUser(A, async () => {
+    check("org owner reads the delivery history", (await db.query("SELECT id FROM public.organization_webhook_deliveries WHERE webhook_id = $1", [hook])).rows.length === 1);
+    check("owner cannot write deliveries", await throwsInSavepoint("UPDATE public.organization_webhook_deliveries SET status = 'pending', next_attempt_at = now() WHERE id = $1", [deliveryId]));
+    check("owner cannot insert deliveries", await throwsInSavepoint("INSERT INTO public.organization_webhook_deliveries (webhook_id, organization_id, event_type, payload, next_attempt_at) VALUES ($1, $2, 'task.created', '{}', now())", [hook, orgId]));
+  });
+  await withUser(D, async () => {
+    check("plain org member does not see deliveries", (await db.query("SELECT id FROM public.organization_webhook_deliveries WHERE webhook_id = $1", [hook])).rows.length === 0);
+  });
+  await withUser(B, async () => {
+    check("other tenant does not see deliveries", (await db.query("SELECT id FROM public.organization_webhook_deliveries WHERE webhook_id = $1", [hook])).rows.length === 0);
+  });
+  let anonDenied = false;
+  try { await withAnon(() => db.query("SELECT 1 FROM public.organization_webhook_deliveries")); } catch { anonDenied = true; }
+  check("anonymous clients cannot read deliveries", anonDenied);
+  await withUser(A, async () => {
+    await db.query("DELETE FROM public.organization_webhooks WHERE id = $1", [hook]);
+  });
+  await withServiceRole(async () => {
+    check("deleting the webhook deletes its deliveries", (await db.query("SELECT 1 FROM public.organization_webhook_deliveries WHERE id = $1", [deliveryId])).rows.length === 0);
   });
 }
 

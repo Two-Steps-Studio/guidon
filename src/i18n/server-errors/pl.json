@@ -192,5 +192,9 @@
   "Your GitHub sign-in expired. Start over.": "Twoje logowanie przez GitHub wygasło. Zacznij od nowa.",
   "reports:write can't be combined with other scopes - that key ships inside your game. Create a separate key for it.": "reports:write nie może być łączony z innymi zakresami - ten klucz trafia do Twojej gry. Utwórz dla niego osobny klucz.",
   "Choose a rating from 1 to 5.": "Wybierz ocenę od 1 do 5.",
-  "Failed to send feedback.": "Nie udało się wysłać opinii. Spróbuj ponownie."
+  "Failed to send feedback.": "Nie udało się wysłać opinii. Spróbuj ponownie.",
+  "Could not load the delivery history.": "Nie udało się wczytać historii dostarczeń.",
+  "This delivery already succeeded.": "To dostarczenie już się udało.",
+  "This delivery was tried too many times.": "To dostarczenie próbowano już zbyt wiele razy.",
+  "Turn the webhook on to retry its deliveries.": "Włącz webhook, aby ponowić jego dostarczenia."
 }
