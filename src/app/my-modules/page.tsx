@@ -19,7 +19,10 @@ export default async function MyModulesPage() {
     <div className="flex flex-wrap justify-between gap-4"><h1 className="text-2xl font-semibold">{t("myModules")}</h1><Link href="/marketplace" className="text-primary underline">{t("title")}</Link></div>
     {!installed.data.length && <p className="text-muted-foreground">{t("emptyInstalled")}</p>}
     <div className="grid gap-4 md:grid-cols-2">{installed.data.map((row) => {
-      const manifest = moduleManifestSchema.parse(row.manifest);
+      // An unreadable manifest is skipped rather than failing the whole page.
+      const parsed = moduleManifestSchema.safeParse(row.manifest);
+      if (!parsed.success) return null;
+      const manifest = parsed.data;
       return <article key={`${row.project_id}-${row.module_id}`} className="min-w-0 space-y-2 rounded-lg border bg-card p-5"><h2 className="break-words text-lg font-semibold">{manifest.name}</h2><p className="text-sm text-muted-foreground">v{manifest.version} · {byId.get(row.project_id)}</p><p className="text-sm">{!row.installed ? t("uninstalled") : row.enabled ? t("enabled") : t("disabled")}</p><Link href={`/projects/${row.project_id}/modules#module-${row.module_id}`} className="text-sm text-primary underline">{t("openProject")}</Link></article>;
     })}</div>
   </section></AppShell>;

@@ -146,7 +146,7 @@
     "promoCodes": "Promo-Codes",
     "pinnedProjects": "Angeheftete Projekte",
     "pinnedTasks": "Angeheftet",
-    "customModules": "Custom modules",
+    "customModules": "Eigene Module",
     "marketplace": "Modul-Marktplatz",
     "myModules": "Meine Module",
     "extensionsGroup": "Erweiterungen"
@@ -476,7 +476,16 @@
         "deleteConfirm": "Diesen Webhook löschen? Zustellungen stoppen sofort.",
         "lastDelivery": "Letzte Zustellung {when} · HTTP {status}",
         "neverDelivered": "Noch keine Zustellungen.",
-        "nativeFormatHint": "Wird als native Nachricht für diesen Dienst gesendet statt als Guidon-JSON."
+        "nativeFormatHint": "Wird als native Nachricht für diesen Dienst gesendet statt als Guidon-JSON.",
+        "history": "Zustellverlauf",
+        "historyEmpty": "Noch keine Zustellungen.",
+        "deliverySucceeded": "Zugestellt",
+        "deliveryFailed": "Fehlgeschlagen",
+        "deliveryPending": "Wird gesendet…",
+        "deliveryRetrying": "Neuer Versuch {when}",
+        "deliveryAttempts": "{count, plural, one {# Versuch} other {# Versuche}} · HTTP {status}",
+        "retry": "Erneut senden",
+        "refreshHistory": "Aktualisieren"
       }
     },
     "billing": {
@@ -1924,7 +1933,10 @@
     "permission": "Only project owners and admins can edit modules.",
     "invalid": "Invalid module JSON. Check the schema, unique IDs, HTTP(S) links and size limits.",
     "saveFailed": "Could not save modules. Try again.",
-    "conflict": "Modules changed in another session. Export your changes, then reload before saving."
+    "conflict": "Modules changed in another session. Export your changes, then reload before saving.",
+    "category": "Kategorie",
+    "categoryPlaceholder": "z. B. Marketing",
+    "categoryHint": "Wird als eigene Gruppe in der Projekt-Seitenleiste angezeigt. Leer lassen, um es unter „Eigene Module“ aufzuführen."
   },
   "moduleRuntime": {
     "title": "Datenmodule",
@@ -2051,7 +2063,10 @@
     "conflict": "Das Modul wurde geändert. Neu laden und erneut prüfen.",
     "invalid": "Ungültige Einstellungen oder Anfrage.",
     "incompatibleData": "Die Zielversion kann die aktuellen Datensätze nicht abbilden. Keine Daten geändert.",
-    "saveFailed": "Modul konnte nicht gespeichert werden."
+    "saveFailed": "Modul konnte nicht gespeichert werden.",
+    "category": "Kategorie",
+    "categoryPlaceholder": "z. B. Marketing",
+    "categoryHint": "Wird als eigene Gruppe in der Projekt-Seitenleiste angezeigt. Leer lassen, um es unter „Eigene Module“ aufzuführen."
   },
   "moduleBuilder": {
     "title": "KI-Modulassistent",

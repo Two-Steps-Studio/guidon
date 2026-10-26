@@ -25,7 +25,7 @@ npm run test:auth              # local-auth compatibility tests + self-hosted OA
 npm run test:limits            # plan/limits logic tests
 npm run test:reports           # in-game report validation (src/lib/api/game-report.ts)
 npm run test:github            # GitHub commit/PR -> task rules (src/lib/github/task-refs.ts)
-npm run test:webhooks          # organization webhook URL rules, private-address block list, signature (src/lib/webhooks/security.ts); Web Bot Auth request signing + key directory (src/lib/web-bot-auth.ts)
+npm run test:webhooks          # organization webhook URL rules, private-address block list, signature (src/lib/webhooks/security.ts), delivery retry schedule (src/lib/webhooks/retry.ts); Web Bot Auth request signing + key directory (src/lib/web-bot-auth.ts)
 npm run test:agent-web         # real 404s for unknown paths, Accept: text/markdown negotiation, llms.txt (src/lib/agent-web.ts); discovery documents, MCP manifest, A2A docs agent (src/lib/{agent-discovery,a2a-core}.ts)
 npm run test:labels            # label starter sets complete in every locale, project templates consistent (src/lib/work/{label-presets,project-modules}.ts), every Server Action error passed through tr() translated in every locale (src/i18n/server-errors/)
 npm run test:import            # task import from CSV/JSON/Trello exports: parsing, dates, status/priority/assignee matching (src/lib/work/task-import.ts)
@@ -38,7 +38,7 @@ cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin inst
 
 Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` from a `desktop-v<version>` tag - see `desktop/RELEASING.md`.
 
-`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import`/`test:recurrence`/`test:billing`/`test:api` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 517) to stay the same or grow, never shrink.
+`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import`/`test:recurrence`/`test:billing`/`test:api` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 661) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) — UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 

@@ -50,3 +50,12 @@ test("renders module content as escaped text and keeps external links isolated",
 });
 
 console.log(`${passed} test groups passed`);
+
+{
+  const base = { version: 1, id: "notes", title: "Notes", blocks: [{ type: "text", title: "Intro", text: "Hello" }] };
+  assert.equal(customModuleSchema.parse({ ...base, category: " Marketing " }).category, "Marketing");
+  assert.equal(customModuleSchema.parse(base).category, undefined);
+  assert.equal(customModuleSchema.safeParse({ ...base, category: "" }).success, false);
+  assert.equal(customModuleSchema.safeParse({ ...base, category: "x".repeat(41) }).success, false);
+  console.log("pass content module category: optional, trimmed, 1-40 characters");
+}

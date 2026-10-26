@@ -230,10 +230,17 @@ export function AppSidebar({
     return pathname === `/projects/${projectId}/${href}`;
   };
 
+  // Custom modules: one sidebar group per category the project gave them
+  // (alphabetical), the uncategorized ones first under "Custom modules".
+  const moduleGroups = groupModuleLinks(moduleLinks);
+
   const activeStyle = projectColor
     ? ({
         backgroundColor: `${projectColor}20`,
-        color: projectColor,
+        // The label keeps the sidebar's own text colour: a project colour as
+        // text on its own tint fails contrast for most colours (Lighthouse:
+        // #0066ff on its tint was 3.9:1). The icon carries the colour instead.
+        "--project-color": projectColor,
         "--tw-ring-color": projectColor,
       } as React.CSSProperties)
     : undefined;
@@ -306,7 +313,7 @@ export function AppSidebar({
                         tooltip={t(item.labelKey)}
                         className={
                           active
-                            ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color)"
+                            ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color) [&>svg]:text-(--project-color)"
                             : undefined
                         }
                         style={active ? activeStyle : undefined}
@@ -324,14 +331,14 @@ export function AppSidebar({
             );
           })}
 
-        {projectId && moduleLinks.length > 0 && <SidebarGroup>
-          <SidebarGroupLabel>{t("customModules")}</SidebarGroupLabel>
-          <SidebarMenu>{moduleLinks.map(module => <SidebarMenuItem key={module.id}>
+        {projectId && moduleGroups.map((group) => <SidebarGroup key={group.category ?? ""}>
+          <SidebarGroupLabel>{group.category ?? t("customModules")}</SidebarGroupLabel>
+          <SidebarMenu>{group.links.map(module => <SidebarMenuItem key={module.id}>
             <SidebarMenuButton asChild isActive={pathname === module.href} tooltip={module.name}>
               <Link href={module.href} aria-current={pathname === module.href ? "page" : undefined}><Puzzle /><span className="truncate">{module.name}</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>)}</SidebarMenu>
-        </SidebarGroup>}
+        </SidebarGroup>)}
 
         {isAdmin && (
           <SidebarGroup>
@@ -418,4 +425,17 @@ export function AppSidebar({
       )}
     </Sidebar>
   );
+}
+
+function groupModuleLinks(links: ProjectModuleLink[]): { category: string | null; links: ProjectModuleLink[] }[] {
+  const byCategory = new Map<string, ProjectModuleLink[]>();
+  const uncategorized: ProjectModuleLink[] = [];
+  for (const link of links) {
+    if (!link.category) uncategorized.push(link);
+    else byCategory.set(link.category, [...(byCategory.get(link.category) ?? []), link]);
+  }
+  return [
+    ...(uncategorized.length ? [{ category: null, links: uncategorized }] : []),
+    ...[...byCategory.keys()].sort((a, b) => a.localeCompare(b)).map((category) => ({ category, links: byCategory.get(category)! })),
+  ];
 }

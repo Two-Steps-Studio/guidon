@@ -93,6 +93,11 @@ export class LocalStorageProvider implements StorageProvider {
     return new Blob([new Uint8Array(bytes)]);
   }
 
+  async exists(bucket: string, objectPath: string): Promise<boolean> {
+    const info = await stat(this.resolve(bucket, objectPath)).catch(() => null);
+    return Boolean(info?.isFile());
+  }
+
   async remove(bucket: string, paths: string[]): Promise<void> {
     for (const objectPath of paths) {
       const full = this.resolve(bucket, objectPath);

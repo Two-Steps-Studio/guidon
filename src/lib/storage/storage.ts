@@ -7,7 +7,9 @@
 
 import { createServiceClient } from "@/lib/supabase-server";
 import { getStorageProvider } from "./provider";
-import { compressAttachment } from "./attachment-compression";
+import { compressAttachment, makeCoverThumbnail, thumbnailPathFor } from "./attachment-compression";
+
+export { thumbnailPathFor };
 import {
   STORAGE_BUCKETS,
   ALLOWED_FILE_EXTENSIONS,
@@ -249,6 +251,15 @@ export async function uploadTaskAttachment(
 
   try {
     const stored = await uploadFile(STORAGE_BUCKETS.ATTACHMENTS, filePath, prepared);
+    // Best effort: without a thumbnail the card shows the original.
+    const thumbnail = await makeCoverThumbnail(prepared);
+    if (thumbnail) {
+      await uploadFile(
+        STORAGE_BUCKETS.ATTACHMENTS,
+        thumbnailPathFor(filePath),
+        new File([new Uint8Array(thumbnail)], "cover.webp", { type: "image/webp" })
+      ).catch(() => undefined);
+    }
     return { ...stored, name: prepared.name, size_bytes: prepared.size, mime_type: prepared.type || "application/octet-stream" };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -291,7 +302,26 @@ export async function deleteProjectFile(storagePath: string): Promise<boolean> {
  * Delete a task attachment
  */
 export async function deleteTaskAttachment(storagePath: string): Promise<boolean> {
+  // The cover thumbnail goes with it; removing a missing one is not an error.
+  await deleteFile(STORAGE_BUCKETS.ATTACHMENTS, thumbnailPathFor(storagePath)).catch(() => false);
   return deleteFile(STORAGE_BUCKETS.ATTACHMENTS, storagePath);
+}
+
+/**
+ * Signed URL for a card cover: the thumbnail when there is one, else the
+ * original (attachments uploaded before thumbnails existed).
+ */
+export async function getSignedCoverUrl(storagePath: string): Promise<string> {
+  const provider = await getStorageProvider();
+  const thumbnail = thumbnailPathFor(storagePath);
+  try {
+    if (!provider.exists || (await provider.exists(STORAGE_BUCKETS.ATTACHMENTS, thumbnail))) {
+      return await provider.getUrl(STORAGE_BUCKETS.ATTACHMENTS, thumbnail, { expiresInSeconds: 3600 });
+    }
+  } catch {
+    // Supabase: signing a missing object fails - fall through to the original.
+  }
+  return getSignedUrl(STORAGE_BUCKETS.ATTACHMENTS, storagePath);
 }
 
 // ============================================

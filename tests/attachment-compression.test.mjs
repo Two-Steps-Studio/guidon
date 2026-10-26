@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { gunzipSync } from "node:zlib";
 import sharp from "sharp";
-import { compressAttachment } from "../src/lib/storage/attachment-compression.ts";
+import { compressAttachment, makeCoverThumbnail, thumbnailPathFor } from "../src/lib/storage/attachment-compression.ts";
 
 const text = "A diagnostic log entry with repeated data\n".repeat(4000);
 const original = new File([text], "game.log", { type: "text/plain" });
@@ -27,3 +27,17 @@ for (const file of [new File(["short"], "short.txt"), new File([text], "data.zip
   assert.equal(await compressAttachment(file), file);
 }
 console.log("pass small, unsupported and invalid inputs remain unchanged");
+
+const cover = await makeCoverThumbnail(webp);
+const coverMeta = await sharp(cover).metadata();
+assert.equal(coverMeta.format, "webp");
+assert.equal(coverMeta.width, 640);
+assert.ok(cover.length < 60 * 1024, `cover is ${cover.length} bytes`);
+assert.equal(await makeCoverThumbnail(new File([text], "notes.txt", { type: "text/plain" })), null);
+assert.equal(await makeCoverThumbnail(new File([text], "fake.png", { type: "image/png" })), null);
+console.log("pass cover thumbnail: 640px WebP under 60 KB; non-images and broken images give none");
+
+assert.equal(thumbnailPathFor("projects/p/tasks/t/u/1.webp"), "projects/p/tasks/t/u/1.thumb.webp");
+assert.equal(thumbnailPathFor("projects/p/tasks/t/u/1"), "projects/p/tasks/t/u/1.thumb.webp");
+assert.equal(thumbnailPathFor("projects/p.x/tasks/t/u/1.png"), "projects/p.x/tasks/t/u/1.thumb.webp");
+console.log("pass thumbnail path stays next to the original, under the same project prefix");

@@ -144,6 +144,20 @@ export async function getWebhookTarget(organizationId: string, webhookId: string
   return data ? toTarget(data) : null;
 }
 
+/**
+ * Service role, for retrying a queued delivery (src/lib/webhooks/deliveries.ts):
+ * the webhook as it is now - its URL or secret may have changed since the
+ * event, and a turned-off webhook gets nothing more.
+ */
+export async function getWebhookTargetForDelivery(webhookId: string): Promise<(WebhookTarget & { enabled: boolean }) | null> {
+  const { data } = await serviceDataClient()
+    .from<TargetRow & { enabled: boolean }>("organization_webhooks")
+    .select("id, url, events, secret_encrypted, enabled")
+    .eq("id", webhookId)
+    .maybeSingle();
+  return data ? { ...toTarget(data), enabled: data.enabled } : null;
+}
+
 /** Service role: last_* aren't in 050's user GRANT UPDATE list - only delivery writes them. */
 export async function recordWebhookDelivery(
   webhookId: string,

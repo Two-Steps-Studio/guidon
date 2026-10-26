@@ -236,8 +236,10 @@ export function MiniTasks({
 
   const doneTasks = doneColumns.flatMap((column) => byStatus.get(column.status) ?? []);
 
+  const workflow = useMemo(() => ({ columns, priorities }), [columns, priorities]);
+
   return (
-    <WorkflowProvider value={{ columns, priorities }}>
+    <WorkflowProvider value={workflow}>
     <div className="flex h-screen flex-col bg-background/75">
       <header className="flex shrink-0 items-center gap-2 border-b border-border p-2">
         <Select

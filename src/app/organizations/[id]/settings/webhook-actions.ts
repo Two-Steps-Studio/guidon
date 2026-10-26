@@ -13,6 +13,8 @@ import {
   setOrganizationWebhookEnabled,
 } from "@/lib/data/organization-webhooks";
 import { deliverWebhook } from "@/lib/webhooks/dispatch";
+import { retryDelivery } from "@/lib/webhooks/deliveries";
+import { dataClient } from "@/lib/data-client";
 import { isWebhookEventType } from "@/lib/webhooks/events";
 import { checkWebhookUrl } from "@/lib/webhooks/security";
 import { tr } from "@/lib/i18n/server-errors";
@@ -122,4 +124,50 @@ export async function sendTestWebhook(
   await recordWebhookDelivery(webhookId, outcome);
   revalidatePath(`/organizations/${organizationId}/settings`);
   return outcome;
+}
+
+export interface WebhookDeliveryView {
+  id: string;
+  event_type: string;
+  status: "pending" | "succeeded" | "failed";
+  attempts: number;
+  next_attempt_at: string | null;
+  last_status: number | null;
+  last_error: string | null;
+  created_at: string;
+}
+
+/** The webhook's latest deliveries (migration 089), read under RLS: owner/admin only. */
+export async function listWebhookDeliveries(
+  organizationId: string,
+  webhookId: string
+): Promise<{ deliveries: WebhookDeliveryView[]; error: string | null }> {
+  const access = await managerAccess(organizationId);
+  if (!access) return { deliveries: [], error: NO_PERMISSION };
+  const { data, error } = await dataClient(access.userId)
+    .from<WebhookDeliveryView>("organization_webhook_deliveries")
+    .select("id, event_type, status, attempts, next_attempt_at, last_status, last_error, created_at")
+    .eq("organization_id", organizationId)
+    .eq("webhook_id", webhookId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) return { deliveries: [], error: await tr("Could not load the delivery history.") };
+  const iso = (value: unknown) => (value ? new Date(value as string).toISOString() : null);
+  return {
+    deliveries: data.map((row) => ({ ...row, created_at: iso(row.created_at)!, next_attempt_at: iso(row.next_attempt_at) })),
+    error: null,
+  };
+}
+
+/** Sends a delivery again right away ("Retry" in the history). */
+export async function retryWebhookDelivery(organizationId: string, deliveryId: string): Promise<{ error: string | null }> {
+  const access = await managerAccess(organizationId);
+  if (!access) return { error: NO_PERMISSION };
+  const result = await retryDelivery(organizationId, deliveryId);
+  if (result.error === "not_found") return { error: await tr("Webhook not found.") };
+  if (result.error === "already_delivered") return { error: await tr("This delivery already succeeded.") };
+  if (result.error === "too_many_attempts") return { error: await tr("This delivery was tried too many times.") };
+  if (result.error === "disabled") return { error: await tr("Turn the webhook on to retry its deliveries.") };
+  revalidatePath(`/organizations/${organizationId}/settings`);
+  return { error: null };
 }

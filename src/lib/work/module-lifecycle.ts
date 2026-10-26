@@ -30,7 +30,8 @@ export function prepareModuleChange(current: InstalledModule, digest: string, or
     patch.installed = true; patch.enabled = true;
   } else if (command === "settings") {
     const view = form.get("defaultView");
-    try { patch.settings = parseModuleSettings(current.manifest, view ? { defaultView: view } : {}); } catch { return { error: "invalid" }; }
+    const category = typeof form.get("category") === "string" ? (form.get("category") as string).trim() : "";
+    try { patch.settings = parseModuleSettings(current.manifest, { ...(view ? { defaultView: view } : {}), ...(category ? { category } : {}) }); } catch { return { error: "invalid" }; }
   } else if (command === "replace") {
     if (!current.installed) return { error: "conflict" };
     if (!release || release.manifest.id !== current.moduleId || (release.organizationId && release.organizationId !== organizationId)) return { error: "permission" };
@@ -40,7 +41,10 @@ export function prepareModuleChange(current: InstalledModule, digest: string, or
     if (form.get("approve") !== "on" || !hasExactModuleConsent(release.manifest, form.getAll("permissions"))) return { error: "consent" };
     try { parseModuleRecords(release.manifest, current.records); } catch { return { error: "incompatibleData" }; }
     patch.manifest = release.manifest;
-    patch.settings = release.manifest.views.some((view) => view.id === current.settings.defaultView) ? current.settings : {};
+    // The category is the project's choice and survives a version change; the
+    // default view only if the new version still has it.
+    const { category, defaultView } = current.settings;
+    patch.settings = { ...(release.manifest.views.some((view) => view.id === defaultView) ? { defaultView } : {}), ...(category ? { category } : {}) };
   } else return { error: "invalid" };
   return { error: null, patch };
 }

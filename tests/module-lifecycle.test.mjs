@@ -87,3 +87,15 @@ const withoutDefault = { ...upgraded, views: upgraded.views.filter((view) => vie
 assert.deepEqual(change(replacement(), { ...release, manifest: withoutDefault }).patch.settings, {});
 assert.equal(JSON.stringify(records), before);
 console.log("pass update/rollback enforce exact consent, reviewed artifact, source organization, runtime and data compatibility");
+
+assert.deepEqual(parseModuleSettings(manifest, { category: "Marketing" }), { category: "Marketing" });
+assert.deepEqual(parseModuleSettings(manifest, { category: "  Ops  ", defaultView }), { category: "Ops", defaultView });
+assert.throws(() => parseModuleSettings(manifest, { category: "" }));
+assert.throws(() => parseModuleSettings(manifest, { category: "x".repeat(41) }));
+const categorized = change(form("settings", { defaultView, category: " Release " }));
+assert.deepEqual(categorized.patch.settings, { defaultView, category: "Release" });
+assert.deepEqual(change(form("settings", { defaultView: "", category: "" })).patch.settings, {});
+const withCategory = { ...current, settings: { defaultView, category: "Release" } };
+assert.deepEqual(change(replacement(), release, withCategory).patch.settings, { defaultView, category: "Release" });
+assert.deepEqual(change(replacement(), { ...release, manifest: withoutDefault }, withCategory).patch.settings, { category: "Release" });
+console.log("pass module category: trimmed, 1-40 characters, saved with settings and kept across version changes");

@@ -476,7 +476,16 @@
         "deleteConfirm": "Delete this webhook? Deliveries stop immediately.",
         "lastDelivery": "Last delivery {when} · HTTP {status}",
         "neverDelivered": "No deliveries yet.",
-        "nativeFormatHint": "Sent as a native message for this service instead of Guidon's JSON."
+        "nativeFormatHint": "Sent as a native message for this service instead of Guidon's JSON.",
+        "history": "Delivery history",
+        "historyEmpty": "No deliveries yet.",
+        "deliverySucceeded": "Delivered",
+        "deliveryFailed": "Failed",
+        "deliveryPending": "Sending…",
+        "deliveryRetrying": "Retrying {when}",
+        "deliveryAttempts": "{count, plural, one {# attempt} other {# attempts}} · HTTP {status}",
+        "retry": "Retry",
+        "refreshHistory": "Refresh"
       }
     },
     "billing": {
@@ -1924,7 +1933,10 @@
     "permission": "Only project owners and admins can edit modules.",
     "invalid": "Invalid module JSON. Check the schema, unique IDs, HTTP(S) links and size limits.",
     "saveFailed": "Could not save modules. Try again.",
-    "conflict": "Modules changed in another session. Export your changes, then reload before saving."
+    "conflict": "Modules changed in another session. Export your changes, then reload before saving.",
+    "category": "Category",
+    "categoryPlaceholder": "e.g. Marketing",
+    "categoryHint": "Shown as its own group in the project sidebar. Leave empty to list it under Custom modules."
   },
   "moduleRuntime": {
     "title": "Data modules",
@@ -2051,7 +2063,10 @@
     "conflict": "The module changed in another session. Reload and review again.",
     "invalid": "Invalid settings or request.",
     "incompatibleData": "The target version cannot represent current records. No data was changed.",
-    "saveFailed": "Could not save the module."
+    "saveFailed": "Could not save the module.",
+    "category": "Category",
+    "categoryPlaceholder": "e.g. Marketing",
+    "categoryHint": "Shown as its own group in the project sidebar. Leave empty to list it under Custom modules."
   },
   "moduleBuilder": {
     "title": "AI module builder",

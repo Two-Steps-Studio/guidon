@@ -7,6 +7,32 @@ const zip = promisify(gzip);
 const TEXT_EXTENSIONS = new Set([".txt", ".md", ".log", ".json", ".csv", ".xml", ".yaml", ".yml", ".toml"]);
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 
+/**
+ * Where an attachment's cover thumbnail lives: next to it, derived from its
+ * path - so it sits under the same projects/<id>/ prefix migration 077
+ * checks, and needs no column of its own.
+ */
+export function thumbnailPathFor(storagePath: string): string {
+  return `${storagePath.replace(/\.[^./]+$/, "")}.thumb.webp`;
+}
+
+/**
+ * A small cover image for the board card (the card shows it about 260x112
+ * CSS px): 640px wide at most, WebP. null when the file isn't a still raster
+ * image or can't be read - the card then falls back to the original.
+ */
+export async function makeCoverThumbnail(file: File): Promise<Buffer | null> {
+  if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return null;
+  try {
+    const image = sharp(Buffer.from(await file.arrayBuffer()), { limitInputPixels: 40_000_000, animated: false, failOn: "error" });
+    const metadata = await image.metadata();
+    if ((metadata.pages ?? 1) > 1) return null;
+    return await image.rotate().resize({ width: 640, height: 640, fit: "inside", withoutEnlargement: true }).webp({ quality: 70 }).toBuffer();
+  } catch {
+    return null;
+  }
+}
+
 /** New attachments only. Keep the original if conversion fails or saves less than 10%. */
 export async function compressAttachment(file: File): Promise<File> {
   if (file.size < 32 * 1024) return file;

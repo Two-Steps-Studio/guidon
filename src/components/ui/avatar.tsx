@@ -23,12 +23,16 @@ function Avatar({
 
 function AvatarImage({
   className,
+  alt = "",
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+  // Decorative by default: every avatar sits next to the name it shows.
+  // object-cover keeps a non-square photo from being squashed.
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      alt={alt}
+      className={cn("aspect-square size-full object-cover", className)}
       {...props}
     />
   )

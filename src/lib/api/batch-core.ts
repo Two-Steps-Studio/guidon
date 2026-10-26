@@ -48,6 +48,7 @@ export const BATCH_ROUTES: ReadonlyArray<{ key: string; pattern: RegExp; params:
   { key: "projectTasks", pattern: new RegExp(`^/projects/(${UUID})/tasks$`), params: ["projectId"] },
   { key: "projectColumns", pattern: new RegExp(`^/projects/(${UUID})/columns$`), params: ["projectId"] },
   { key: "projectPriorities", pattern: new RegExp(`^/projects/(${UUID})/priorities$`), params: ["projectId"] },
+  { key: "projectEvents", pattern: new RegExp(`^/projects/(${UUID})/events$`), params: ["projectId"] },
   { key: "projectResource", pattern: new RegExp(`^/projects/(${UUID})/([a-z]+)$`), params: ["projectId", "resource"] },
   { key: "projectResourceItem", pattern: new RegExp(`^/projects/(${UUID})/([a-z]+)/(${UUID})$`), params: ["projectId", "resource", "itemId"] },
   { key: "task", pattern: new RegExp(`^/tasks/(${UUID})$`), params: ["taskId"] },

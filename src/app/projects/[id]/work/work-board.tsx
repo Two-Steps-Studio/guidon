@@ -50,6 +50,9 @@ interface WorkState {
   coverImages: Record<string, string>;
 }
 
+
+/** Stable default, so the label-presets context doesn't change on every render. */
+const NO_LABEL_PRESETS: LabelPreset[] = [];
 export function WorkBoard({
   projectId,
   projectName,
@@ -65,7 +68,7 @@ export function WorkBoard({
   columns = BOARD_COLUMNS,
   aiAvailable = false,
   aiEnabled = true,
-  labelPresets = [],
+  labelPresets = NO_LABEL_PRESETS,
   priorities,
   welcome = false,
 }: {
@@ -371,6 +374,17 @@ export function WorkBoard({
         : [...current.tasks, task],
     }));
 
+  // Stable identity for the board (KanbanBoard is memo()'d): always calls the
+  // latest handleMove, which closes over the current state and columns.
+  const handleMoveRef = useRef(handleMove);
+  useEffect(() => {
+    handleMoveRef.current = handleMove;
+  });
+  const moveTaskStable = useCallback(
+    (task: Task, status: TaskStatus, sortOrder: number) => handleMoveRef.current(task, status, sortOrder),
+    []
+  );
+
   // WebMCP: a browser agent working in this tab can read and change the
   // board as the person - through the same actions (and permissions) as
   // the UI, with the same optimistic updates.
@@ -446,8 +460,13 @@ export function WorkBoard({
       tasks: current.tasks.filter((item) => item.id !== taskId),
     }));
 
+  // Memoized: every TaskCard reads this context (usePriorities), so a fresh
+  // object on each render here - opening a task, selecting, filtering -
+  // re-rendered every card on the board past their memo().
+  const workflow = useMemo(() => ({ columns, priorities }), [columns, priorities]);
+
   return (
-    <WorkflowProvider value={{ columns, priorities }}>
+    <WorkflowProvider value={workflow}>
     <LabelPresetsProvider value={labelPresets}>
       {/* w-full (not just mx-auto + max-w): this page is a flex item of
           <main> (app-sidebar's layout, flex-col with the default
@@ -650,7 +669,7 @@ export function WorkBoard({
             filtersActive={filtersActive}
             onOpenTask={setOpenTask}
             onCreateTask={openCreate}
-            onMoveTask={handleMove}
+            onMoveTask={moveTaskStable}
             projectColor={projectColor}
             selectedIds={selectedIds}
             onSelectionChange={canEdit ? setSelectedIds : undefined}

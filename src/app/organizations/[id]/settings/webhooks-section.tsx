@@ -17,9 +17,12 @@ import type { OrganizationWebhook } from "@/lib/data/organization-webhooks";
 import {
   createWebhook,
   deleteWebhook,
+  listWebhookDeliveries,
+  retryWebhookDelivery,
   sendTestWebhook,
   setWebhookEnabled,
   type CreateWebhookState,
+  type WebhookDeliveryView,
 } from "./webhook-actions";
 
 const EVENT_LABEL_KEYS: Record<WebhookEventType, "eventCreated" | "eventStatusChanged" | "eventCompleted"> = {
@@ -263,6 +266,103 @@ function WebhookRow({ organizationId, webhook }: { organizationId: string; webho
           {message.text}
         </p>
       )}
+
+      <DeliveryHistory organizationId={organizationId} webhookId={webhook.id} />
     </li>
+  );
+}
+
+/**
+ * The webhook's latest deliveries (migration 089): each event, its attempts,
+ * when it's tried next, and Retry for one that failed or is waiting.
+ * Loaded when opened, not with the settings page.
+ */
+function DeliveryHistory({ organizationId, webhookId }: { organizationId: string; webhookId: string }) {
+  const t = useTranslations("organizations.settings.webhooks");
+  const locale = useLocale();
+  const [open, setOpen] = useState(false);
+  const [deliveries, setDeliveries] = useState<WebhookDeliveryView[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const when = (iso: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
+
+  const load = () =>
+    startTransition(async () => {
+      const result = await listWebhookDeliveries(organizationId, webhookId);
+      setError(result.error);
+      setDeliveries(result.deliveries);
+    });
+
+  return (
+    <details
+      className="text-xs"
+      onToggle={(event) => {
+        const isOpen = (event.currentTarget as HTMLDetailsElement).open;
+        setOpen(isOpen);
+        if (isOpen && deliveries === null) load();
+      }}
+    >
+      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t("history")}</summary>
+      {open && (
+        <div className="mt-2 space-y-2" aria-busy={pending}>
+          {error && <p role="alert" className="text-destructive">{error}</p>}
+          {deliveries?.length === 0 && <p className="text-muted-foreground">{t("historyEmpty")}</p>}
+          {deliveries && deliveries.length > 0 && (
+            <ul className="divide-y divide-border rounded-md border border-border">
+              {deliveries.map((delivery) => (
+                <li key={delivery.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1.5">
+                  <span
+                    className={cn(
+                      "inline-block h-2 w-2 shrink-0 rounded-full",
+                      delivery.status === "succeeded" ? "bg-success" : delivery.status === "failed" ? "bg-danger" : "bg-warning"
+                    )}
+                    aria-hidden
+                  />
+                  <span className="font-mono">{delivery.event_type}</span>
+                  <span className="text-muted-foreground">{when(delivery.created_at)}</span>
+                  <span>
+                    {delivery.status === "succeeded"
+                      ? t("deliverySucceeded")
+                      : delivery.status === "failed"
+                        ? t("deliveryFailed")
+                        : delivery.next_attempt_at
+                          ? t("deliveryRetrying", { when: when(delivery.next_attempt_at) })
+                          : t("deliveryPending")}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {t("deliveryAttempts", { count: delivery.attempts, status: delivery.last_status ?? "-" })}
+                  </span>
+                  {delivery.last_error && delivery.status !== "succeeded" && (
+                    <span className="w-full break-words text-destructive">{delivery.last_error}</span>
+                  )}
+                  {delivery.status !== "succeeded" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="ml-auto h-7"
+                      disabled={pending}
+                      onClick={() =>
+                        startTransition(async () => {
+                          const result = await retryWebhookDelivery(organizationId, delivery.id);
+                          if (result.error) setError(result.error);
+                          const fresh = await listWebhookDeliveries(organizationId, webhookId);
+                          setDeliveries(fresh.deliveries);
+                        })
+                      }
+                    >
+                      {t("retry")}
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button type="button" size="sm" variant="ghost" className="h-7" disabled={pending} onClick={load}>
+            {t("refreshHistory")}
+          </Button>
+        </div>
+      )}
+    </details>
   );
 }

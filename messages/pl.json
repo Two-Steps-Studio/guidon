@@ -476,7 +476,16 @@
         "deleteConfirm": "Usunąć ten webhook? Wysyłka zatrzyma się od razu.",
         "lastDelivery": "Ostatnia wysyłka {when} · HTTP {status}",
         "neverDelivered": "Jeszcze nic nie wysłano.",
-        "nativeFormatHint": "Wysyłane jako zwykła wiadomość w formacie tej usługi zamiast JSON-a Guidona."
+        "nativeFormatHint": "Wysyłane jako zwykła wiadomość w formacie tej usługi zamiast JSON-a Guidona.",
+        "history": "Historia dostarczeń",
+        "historyEmpty": "Jeszcze nic nie wysłano.",
+        "deliverySucceeded": "Dostarczono",
+        "deliveryFailed": "Nieudane",
+        "deliveryPending": "Wysyłanie…",
+        "deliveryRetrying": "Ponowienie {when}",
+        "deliveryAttempts": "{count, plural, one {# próba} few {# próby} many {# prób} other {# próby}} · HTTP {status}",
+        "retry": "Ponów",
+        "refreshHistory": "Odśwież"
       }
     },
     "billing": {
@@ -1924,7 +1933,10 @@
     "permission": "Tylko właściciele i administratorzy projektu mogą edytować moduły.",
     "invalid": "Nieprawidłowy JSON. Sprawdź schemat, unikalne ID, linki HTTP(S) i limity rozmiaru.",
     "saveFailed": "Nie udało się zapisać modułów. Spróbuj ponownie.",
-    "conflict": "Moduły zmieniono w innej sesji. Wyeksportuj zmiany, a następnie odśwież stronę przed zapisem."
+    "conflict": "Moduły zmieniono w innej sesji. Wyeksportuj zmiany, a następnie odśwież stronę przed zapisem.",
+    "category": "Kategoria",
+    "categoryPlaceholder": "np. Marketing",
+    "categoryHint": "Moduł pojawi się w osobnej grupie w pasku bocznym projektu. Zostaw puste, żeby był w grupie „Własne moduły”."
   },
   "moduleRuntime": {
     "title": "Moduły danych",
@@ -2051,7 +2063,10 @@
     "conflict": "Moduł zmieniono w innej sesji. Odśwież i sprawdź ponownie.",
     "invalid": "Nieprawidłowe ustawienia lub żądanie.",
     "incompatibleData": "Docelowa wersja nie obsługuje obecnych rekordów. Nie zmieniono danych.",
-    "saveFailed": "Nie udało się zapisać modułu."
+    "saveFailed": "Nie udało się zapisać modułu.",
+    "category": "Kategoria",
+    "categoryPlaceholder": "np. Marketing",
+    "categoryHint": "Moduł pojawi się w osobnej grupie w pasku bocznym projektu. Zostaw puste, żeby był w grupie „Własne moduły”."
   },
   "moduleBuilder": {
     "title": "Kreator modułów AI",

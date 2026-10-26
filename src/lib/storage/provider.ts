@@ -52,6 +52,12 @@ export interface StorageProvider {
 
   /** Bytes stored under a prefix, used for quota accounting. */
   usage?(bucket: string, prefix: string): Promise<number>;
+
+  /**
+   * Whether an object exists. Optional: providers whose signed URLs already
+   * fail for a missing object (Supabase) don't need it.
+   */
+  exists?(bucket: string, path: string): Promise<boolean>;
 }
 
 // ============================================

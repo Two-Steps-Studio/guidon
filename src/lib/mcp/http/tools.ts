@@ -4,6 +4,7 @@ import { GET as listProjects } from "@/app/api/v1/projects/route";
 import { GET as listTasks, POST as createTask } from "@/app/api/v1/projects/[projectId]/tasks/route";
 import { GET as listColumns } from "@/app/api/v1/projects/[projectId]/columns/route";
 import { GET as listPriorities } from "@/app/api/v1/projects/[projectId]/priorities/route";
+import { GET as listEvents } from "@/app/api/v1/projects/[projectId]/events/route";
 import { GET as getTask, PATCH as updateTask, DELETE as deleteTask } from "@/app/api/v1/tasks/[taskId]/route";
 import { POST as startTask } from "@/app/api/v1/tasks/[taskId]/start/route";
 import { PATCH as setTaskStatus } from "@/app/api/v1/tasks/[taskId]/status/route";
@@ -87,6 +88,29 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     },
     ({ project_id }) =>
       dispatch(listColumns, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/columns` })
+  );
+
+  server.registerTool(
+    "list_events",
+    {
+      description:
+        "What happened in a project, oldest first: tasks created/updated/moved/deleted, comments, decisions, knowledge sources, " +
+        "files, recorded attempts and linked GitHub commits/PRs. Each event has seq, event_type, entity_type/entity_id, actor_id, " +
+        "occurred_at and a payload of references (ids, changed field names, statuses - no content). " +
+        "Pass the returned `cursor` as `after` next time to get only newer events.",
+      inputSchema: {
+        project_id: projectId,
+        after: z.number().int().min(0).optional().describe("seq of the last event already seen (default 0 = from the start)."),
+        limit: z.number().int().min(1).max(500).optional().describe("Events per page, 1-500 (default 100)."),
+      },
+      annotations: { title: "List project events", ...READ_ONLY },
+    },
+    ({ project_id, after, limit }) =>
+      dispatch(listEvents, { projectId: project_id }, {
+        method: "GET",
+        path: `/api/v1/projects/${project_id}/events`,
+        query: { after: after === undefined ? undefined : String(after), limit: limit === undefined ? undefined : String(limit) },
+      })
   );
 
   server.registerTool(
