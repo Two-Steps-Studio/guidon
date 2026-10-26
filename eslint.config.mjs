@@ -5,6 +5,11 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // Plain-Node test scripts written as CommonJS (tests/board-pan.*.cjs).
+  {
+    files: ["tests/**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -22,6 +27,8 @@ const eslintConfig = defineConfig([
     // Vendored agent skills (.claude/skills/*) - third-party helper scripts,
     // CommonJS by design, not part of the app.
     ".claude/**",
+    // Generated test output (gitignored): Playwright fixtures and traces.
+    "output/**",
     // desktop/ is a self-contained sibling project (Tauri + plain JS, not
     // part of the Next.js app) with its own tooling - its src-tauri/target/
     // Rust build output alone previously ballooned this config's lint run by
