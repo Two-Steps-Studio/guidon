@@ -51,6 +51,7 @@ import {
   LogOut,
   MessageSquarePlus,
   Ticket,
+  CreditCard,
   Puzzle,
   Images,
   Sparkles,
@@ -159,6 +160,7 @@ const ADMIN_NAV = [
   { href: "/admin/logs", labelKey: "logs", icon: ScrollText },
   { href: "/admin/feedback", labelKey: "feedback", icon: MessageSquarePlus },
   { href: "/admin/promo-codes", labelKey: "promoCodes", icon: Ticket },
+  { href: "/admin/billing", labelKey: "billingPrices", icon: CreditCard },
 ] as const;
 
 export interface AppSidebarProps {

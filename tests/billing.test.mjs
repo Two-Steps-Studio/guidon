@@ -14,6 +14,7 @@ import {
   paymentState,
   yearlySavingsPercent,
 } from "../src/lib/billing/billing-core.ts";
+import { buildPriceSync, planForProduct, priceSyncWrites } from "../src/lib/billing/price-sync-core.ts";
 
 let pass = 0;
 let fail = 0;
@@ -78,6 +79,58 @@ check("€39/month vs €390/year -> 17%", yearlySavingsPercent(3900, 39000) ===
 check("no saving -> 0", yearlySavingsPercent(1000, 12000) === 0);
 check("more expensive yearly -> 0", yearlySavingsPercent(1000, 13000) === 0);
 check("missing price -> 0", yearlySavingsPercent(0, 1000) === 0);
+
+section("price sync from Stripe (/admin/billing)");
+{
+  const plans = [{ id: "free", name: "Free" }, { id: "pro", name: "Pro" }, { id: "team", name: "Team" }, { id: "business", name: "Business" }, { id: "enterprise", name: "Enterprise" }];
+  const product = (name, metadata = {}, active = true) => ({ id: `prod_${name}`, name, active, metadata });
+  const price = (id, prod, interval, amount, extra = {}) => ({ id, currency: "eur", unitAmount: amount, interval, intervalCount: 1, product: prod, ...extra });
+  check("product named after a plan", planForProduct(product("Pro"), plans) === "pro");
+  check("'Guidon Team' and 'Business plan' match too", planForProduct(product("Guidon Team"), plans) === "team" && planForProduct(product("Business plan"), plans) === "business");
+  check("metadata guidon_plan wins over the name", planForProduct(product("Starter", { guidon_plan: "pro" }), plans) === "pro");
+  check("unknown metadata plan is no match", planForProduct(product("Pro", { guidon_plan: "gold" }), plans) === null);
+  check("a name merely containing a plan is no match", planForProduct(product("Pro Max Bundle"), plans) === null);
+
+  const pro = product("Pro"), team = product("Team");
+  const all = buildPriceSync([
+    price("price_pw", pro, "week", 249), price("price_pm", pro, "month", 899), price("price_py", pro, "year", 8990),
+    price("price_tm", team, "month", 1999),
+  ], plans);
+  check("weekly, monthly and yearly prices matched", all.matches.length === 4 && all.errors.length === 0 && all.skipped.length === 0, JSON.stringify(all));
+  check("amount kept in cents", all.matches.find((m) => m.priceId === "price_py")?.amountCents === 8990);
+
+  const odd = buildPriceSync([
+    price("price_q", pro, "month", 2500, { intervalCount: 3 }),
+    price("price_usd", pro, "month", 999, { currency: "usd" }),
+    price("price_day", pro, "day", 100),
+    price("price_free", product("Free"), "month", 100),
+    price("price_arch", product("Pro", {}, false), "month", 899),
+    price("price_metered", pro, "month", null),
+    price("price_other", product("Consulting"), "month", 5000),
+  ], plans);
+  check("quarterly, USD, daily, Free, archived, metered and unknown products are skipped, not matched", odd.matches.length === 0 && odd.skipped.length === 7 && odd.errors.length === 0, JSON.stringify(odd));
+
+  const dup = buildPriceSync([price("price_a", pro, "month", 899), price("price_b", pro, "month", 999)], plans);
+  check("two active prices for one plan and period is an error", dup.errors.length === 1 && dup.matches.length === 1, JSON.stringify(dup));
+}
+
+section("price sync writes");
+{
+  const m = (priceId, planId, interval, amountCents) => ({ priceId, planId, interval, amountCents });
+  const row = (stripe_price_id, plan_id, billing_interval, amount_cents, active = true) => ({ stripe_price_id, plan_id, billing_interval, amount_cents, active });
+  const first = priceSyncWrites([row("price_old", "pro", "month", 899)], [m("price_pm", "pro", "month", 899), m("price_pw", "pro", "week", 249)]);
+  check("a replaced monthly price is switched off, the new ones written", JSON.stringify(first.deactivate) === '["price_old"]' && first.upsert.length === 2, JSON.stringify(first));
+  check("monthly fallback follows the new monthly price, not cleared", first.clearMonthly.length === 0 && first.monthly[0]?.priceId === "price_pm");
+  const same = priceSyncWrites([row("price_pm", "pro", "month", "899")], [m("price_pm", "pro", "month", 899)]);
+  check("nothing to write when already in sync (amount as numeric string too)", same.deactivate.length === 0 && same.upsert.length === 0, JSON.stringify(same));
+  const reprice = priceSyncWrites([row("price_pm", "pro", "month", 899)], [m("price_pm", "pro", "month", 999)]);
+  check("a changed amount is rewritten", reprice.upsert.length === 1);
+  const back = priceSyncWrites([row("price_pm", "pro", "month", 899, false)], [m("price_pm", "pro", "month", 899)]);
+  check("an inactive row Stripe sells again is re-activated", back.upsert.length === 1 && back.deactivate.length === 0);
+  const gone = priceSyncWrites([row("price_pm", "pro", "month", 899), row("price_old", "team", "week", 499, false)], []);
+  check("a monthly price no longer in Stripe is switched off and its fallback cleared; inactive rows untouched",
+    JSON.stringify(gone.deactivate) === '["price_pm"]' && gone.clearMonthly[0]?.planId === "pro", JSON.stringify(gone));
+}
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

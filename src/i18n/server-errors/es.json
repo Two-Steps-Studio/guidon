@@ -204,5 +204,6 @@
   "Could not accept the invitation. Try again.": "No se pudo aceptar la invitación. Inténtalo de nuevo.",
   "This invitation has expired. Ask for a new one.": "Esta invitación ha caducado. Pide una nueva.",
   "This invitation has already been used.": "Esta invitación ya se ha usado.",
-  "This invitation was sent to a different email address.": "Esta invitación se envió a otro correo electrónico."
+  "This invitation was sent to a different email address.": "Esta invitación se envió a otro correo electrónico.",
+  "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "No se pudieron leer los precios de Stripe. Revisa STRIPE_SECRET_KEY."
 }
