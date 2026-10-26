@@ -14,7 +14,12 @@ role, and the services enabled by its administrator.
    initial selection of modules and labels. You can adjust project settings
    later.
 4. Invite teammates from the organization's member settings, then add them
-   to projects with the roles they need.
+   to projects with the roles they need. **Add Member** adds someone who
+   already has an account right away. For an address without an account it
+   sends an invitation link instead (also shown to you, to share yourself).
+   The link works once, only for that email address, and expires after 7
+   days. Pending invitations are listed on the members page, where you can
+   cancel them; adding the person again sends a new link.
 
 The dashboard summarizes your open and overdue tasks, recent activity, and
 projects. Use **My tasks** to see work assigned to you across projects.

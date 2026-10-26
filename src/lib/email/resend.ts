@@ -5,13 +5,11 @@ import { loadMessages } from "@/i18n/load-messages";
 import { SUPPORT_EMAIL } from "@/lib/project-links";
 
 /** Read a required env var, or throw an error naming both it and what needs it. */
-function requireEmailEnv(name: string): string {
+function requireEmailEnv(name: string, purpose: string): string {
   const value = process.env[name]?.trim();
 
   if (!value) {
-    throw new Error(
-      `${name} must be set to send password reset emails. See .env.example.`
-    );
+    throw new Error(`${name} must be set to ${purpose}. See .env.example.`);
   }
 
   return value;
@@ -65,33 +63,19 @@ function transactionalEmailText(email: TransactionalEmail): string {
   return [email.heading, "", email.body, "", `${email.ctaLabel}: ${email.link}`, "", email.footer, "", "Guidon"].join("\n");
 }
 
-/**
- * Sends the password reset email through Resend's REST API directly (a
- * plain fetch, no vendor SDK dependency - same philosophy this codebase's
- * AI providers already use for the same reason). Throws on any failure;
- * the caller (requestPasswordReset in Task 2) decides how to surface that
- * without revealing whether the recipient's email has an account.
- */
-export async function sendPasswordResetEmail(
-  to: string,
-  resetLink: string,
-  locale: Locale = DEFAULT_LOCALE
-): Promise<void> {
-  const apiKey = requireEmailEnv("RESEND_API_KEY");
-  const from = requireEmailEnv("RESEND_FROM_EMAIL");
+/** True when Resend is configured, so an email can actually be sent. */
+export function isEmailConfigured(): boolean {
+  return !!process.env.RESEND_API_KEY?.trim() && !!process.env.RESEND_FROM_EMAIL?.trim();
+}
 
-  const messages = await loadMessages(locale);
-  const t = createTranslator({ locale, messages });
-  const email: TransactionalEmail = {
-    locale,
-    title: t("emails.passwordResetSubject"),
-    heading: t("emails.passwordResetHeading"),
-    body: t("emails.passwordResetBody"),
-    ctaLabel: t("emails.passwordResetCta"),
-    link: resetLink,
-    linkHint: t("emails.passwordResetLinkHint"),
-    footer: t("emails.passwordResetIgnoreNotice"),
-  };
+/**
+ * Sends one transactional email through Resend's REST API directly (a
+ * plain fetch, no vendor SDK dependency - same philosophy this codebase's
+ * AI providers already use for the same reason). Throws on any failure.
+ */
+async function sendTransactionalEmail(to: string, email: TransactionalEmail, purpose: string): Promise<void> {
+  const apiKey = requireEmailEnv("RESEND_API_KEY", purpose);
+  const from = requireEmailEnv("RESEND_FROM_EMAIL", purpose);
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -118,4 +102,50 @@ export async function sendPasswordResetEmail(
     const body = await response.text().catch(() => "");
     throw new Error(`Resend API error (${response.status}): ${body || response.statusText}`);
   }
+}
+
+/**
+ * The password reset email. Throws on any failure; the caller
+ * (requestPasswordReset) decides how to surface that without revealing
+ * whether the recipient's email has an account.
+ */
+export async function sendPasswordResetEmail(
+  to: string,
+  resetLink: string,
+  locale: Locale = DEFAULT_LOCALE
+): Promise<void> {
+  const messages = await loadMessages(locale);
+  const t = createTranslator({ locale, messages });
+  await sendTransactionalEmail(to, {
+    locale,
+    title: t("emails.passwordResetSubject"),
+    heading: t("emails.passwordResetHeading"),
+    body: t("emails.passwordResetBody"),
+    ctaLabel: t("emails.passwordResetCta"),
+    link: resetLink,
+    linkHint: t("emails.passwordResetLinkHint"),
+    footer: t("emails.passwordResetIgnoreNotice"),
+  }, "send password reset emails");
+}
+
+/** An invitation to join an organization (/invite/<token>, migration 091). Throws on any failure. */
+export async function sendInvitationEmail(
+  to: string,
+  inviteLink: string,
+  details: { organizationName: string; inviterName: string; days: number },
+  locale: Locale = DEFAULT_LOCALE
+): Promise<void> {
+  const messages = await loadMessages(locale);
+  const t = createTranslator({ locale, messages });
+  const values = { organization: details.organizationName, inviter: details.inviterName, days: details.days };
+  await sendTransactionalEmail(to, {
+    locale,
+    title: t("emails.invitationSubject", values),
+    heading: t("emails.invitationHeading", values),
+    body: t("emails.invitationBody", values),
+    ctaLabel: t("emails.invitationCta"),
+    link: inviteLink,
+    linkHint: t("emails.passwordResetLinkHint"),
+    footer: t("emails.invitationIgnoreNotice"),
+  }, "send invitation emails");
 }

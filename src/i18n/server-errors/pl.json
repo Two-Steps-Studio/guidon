@@ -129,7 +129,6 @@
   "Unknown status.": "Nieznany status.",
   "Unsupported language.": "Nieobsługiwany język.",
   "Unsupported theme.": "Nieobsługiwany motyw.",
-  "User with this email not found.": "Nie znaleziono użytkownika z tym adresem e-mail.",
   "Webhook not found.": "Nie znaleziono webhooka.",
   "You cannot assign that role.": "Nie możesz przypisać tej roli.",
   "You do not have access to this organization.": "Nie masz dostępu do tej organizacji.",
@@ -196,5 +195,14 @@
   "Could not load the delivery history.": "Nie udało się wczytać historii dostarczeń.",
   "This delivery already succeeded.": "To dostarczenie już się udało.",
   "This delivery was tried too many times.": "To dostarczenie próbowano już zbyt wiele razy.",
-  "Turn the webhook on to retry its deliveries.": "Włącz webhook, aby ponowić jego dostarczenia."
+  "Turn the webhook on to retry its deliveries.": "Włącz webhook, aby ponowić jego dostarczenia.",
+  "Enter a valid email address.": "Wpisz prawidłowy adres e-mail.",
+  "An invitation for this address is already pending.": "Zaproszenie na ten adres już czeka na przyjęcie.",
+  "Could not create the invitation. Try again.": "Nie udało się utworzyć zaproszenia. Spróbuj ponownie.",
+  "Invitation not found.": "Nie znaleziono zaproszenia.",
+  "This invitation link is not valid.": "Ten link z zaproszeniem jest nieprawidłowy.",
+  "Could not accept the invitation. Try again.": "Nie udało się przyjąć zaproszenia. Spróbuj ponownie.",
+  "This invitation has expired. Ask for a new one.": "To zaproszenie wygasło. Poproś o nowe.",
+  "This invitation has already been used.": "To zaproszenie zostało już wykorzystane.",
+  "This invitation was sent to a different email address.": "To zaproszenie wysłano na inny adres e-mail."
 }

@@ -15,6 +15,7 @@ import { getOrgPlanLimits, isMemberLimitReached } from "@/lib/limits";
 import { AddMemberDialog } from "./add-member-dialog";
 import { MemberActionsMenu } from "./member-actions-menu";
 import { MembersTree, type TreeProject } from "./members-tree";
+import { PendingInvitations, type PendingInvitation } from "./pending-invitations";
 import { dataClient } from "@/lib/data-client";
 import { isAiAccountEmail } from "@/lib/ai-account-email";
 
@@ -33,6 +34,10 @@ interface SupabaseMemberRow {
   role: string;
   joined_at: string;
   profiles: MemberRow["profiles"] | MemberRow["profiles"][] | null;
+}
+
+function isPast(value: string | Date): boolean {
+  return new Date(value).getTime() <= Date.now();
 }
 
 export default async function OrganizationMembersPage({
@@ -125,6 +130,25 @@ export default async function OrganizationMembersPage({
   }
   const seatsFull = seats !== null && isMemberLimitReached(members.length, seats.memberLimit);
 
+  // Invitations to people without an account yet (091) - RLS shows them to
+  // owners/admins only (invitations_manager_select).
+  let invitations: PendingInvitation[] = [];
+  if (canManage) {
+    const { data } = await dataClient(access.userId)
+      .from<{ id: string; email: string; role: string; expires_at: string | Date }>("invitations")
+      .select("id, email, role, expires_at")
+      .eq("organization_id", orgId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    invitations = (data ?? []).map((row) => ({
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      expiresAt: new Date(row.expires_at).toISOString(),
+      expired: isPast(row.expires_at),
+    }));
+  }
+
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-7xl px-6 py-8">
@@ -158,6 +182,8 @@ export default async function OrganizationMembersPage({
             </CardContent>
           </Card>
         )}
+
+        {canManage && <PendingInvitations orgId={orgId} invitations={invitations} />}
 
         {members.length > 0 && (
           <div role="tablist" aria-label={t("title")} className="mb-4 inline-flex rounded-md bg-muted p-1 text-sm">

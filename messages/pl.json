@@ -403,7 +403,7 @@
       "makeOwner": "Ustaw jako właściciela",
       "remove": "Usuń",
       "dialogTitle": "Dodaj członka",
-      "dialogDescription": "Zaproś użytkownika do tej organizacji",
+      "dialogDescription": "Dodaj osobę, która ma już konto w Guidon, albo zaproś nową osobę mailem.",
       "emailLabel": "E-mail",
       "roleLabel": "Rola",
       "roleMemberOption": "Członek",
@@ -424,7 +424,18 @@
       },
       "treeProjects": "{count, plural, =0 {brak projektów} one {# projekt} few {# projekty} other {# projektów}}",
       "treeHint": "Kliknij osobę, żeby zobaczyć jej projekty i rolę w każdym. Widać tylko projekty, do których masz dostęp.",
-      "treeAllProjects": "Wszystkie projekty"
+      "treeAllProjects": "Wszystkie projekty",
+      "invitedEmailSent": "{email} nie ma jeszcze konta, więc wysłaliśmy zaproszenie. Ta osoba dołączy, gdy je przyjmie.",
+      "invitedEmailNotSent": "{email} nie ma jeszcze konta. Zaproszenie zostało utworzone, ale mail nie został wysłany - przekaż ten link samodzielnie.",
+      "inviteLinkLabel": "Link z zaproszeniem",
+      "copyInviteLink": "Skopiuj link z zaproszeniem",
+      "inviteLinkHint": "Działa raz, tylko dla tego adresu e-mail, i wygasa po 7 dniach. Widać go tylko teraz.",
+      "inviteDone": "Gotowe",
+      "pendingTitle": "{count, plural, one {# oczekujące zaproszenie} few {# oczekujące zaproszenia} many {# oczekujących zaproszeń} other {# oczekującego zaproszenia}}",
+      "pendingExpires": "Wygasa {date}",
+      "pendingExpired": "Wygasło - dodaj tę osobę ponownie, żeby wysłać nowy link",
+      "cancelInvitation": "Anuluj",
+      "cancelInvitationFor": "Anuluj zaproszenie dla {email}"
     },
     "settings": {
       "title": "Ustawienia organizacji",
@@ -1602,7 +1613,12 @@
     "passwordResetBody": "Kliknij przycisk poniżej, aby ustawić nowe hasło do swojego konta Guidon. Ten link wkrótce wygaśnie i można go użyć tylko raz.",
     "passwordResetCta": "Ustaw nowe hasło",
     "passwordResetLinkHint": "Przycisk nie działa? Wklej ten link do przeglądarki:",
-    "passwordResetIgnoreNotice": "Jeśli nie prosiłeś/aś o reset hasła, możesz bezpiecznie zignorować tę wiadomość - Twoje hasło nie zostanie zmienione."
+    "passwordResetIgnoreNotice": "Jeśli nie prosiłeś/aś o reset hasła, możesz bezpiecznie zignorować tę wiadomość - Twoje hasło nie zostanie zmienione.",
+    "invitationSubject": "{inviter} zaprasza Cię do {organization} w Guidon",
+    "invitationHeading": "Dołącz do {organization} w Guidon",
+    "invitationBody": "{inviter} zaprasza Cię do organizacji {organization}. Zaloguj się albo załóż konto na ten adres e-mail, żeby przyjąć zaproszenie. Link działa raz i wygasa za {days} dni.",
+    "invitationCta": "Przyjmij zaproszenie",
+    "invitationIgnoreNotice": "Jeśli nie spodziewasz się tego zaproszenia, zignoruj tę wiadomość - nic się nie stanie, dopóki go nie przyjmiesz."
   },
   "calendar": {
     "title": "Kalendarz",
@@ -2182,5 +2198,19 @@
     "approved": "Zatwierdzono. Wróć do agenta, aby dokończyć łączenie.",
     "denied": "Odrzucono dostęp. Ta prośba nie otrzyma danych dostępowych.",
     "revoke": "Możesz odłączyć agenta w dowolnym momencie w Profil → Połączone aplikacje."
+  },
+  "invitation": {
+    "title": "Dołącz do {name}",
+    "description": "{inviter} zaprasza Cię do {name} z rolą {role}.",
+    "someone": "Ktoś",
+    "expires": "Zaproszenie wygasa {date}.",
+    "accept": "Przyjmij zaproszenie",
+    "wrongAccount": "To zaproszenie wysłano na {invited}, a jesteś zalogowany jako {current}. Wyloguj się, otwórz link ponownie i zaloguj się albo załóż konto na {invited}.",
+    "signOut": "Wyloguj się",
+    "unavailableTitle": "Zaproszenie niedostępne",
+    "invalid": "Ten link z zaproszeniem jest nieprawidłowy. Mógł zostać anulowany - poproś osobę zapraszającą o nowy.",
+    "expired": "To zaproszenie wygasło. Poproś osobę zapraszającą o nowe.",
+    "used": "To zaproszenie zostało już wykorzystane.",
+    "toDashboard": "Przejdź do pulpitu"
   }
 }

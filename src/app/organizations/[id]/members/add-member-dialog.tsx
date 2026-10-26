@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Loader2, Plus } from "lucide-react";
+import { AlertCircle, Check, Copy, Loader2, MailCheck, Plus } from "lucide-react";
 import { addMember, type MemberActionState } from "./actions";
 import { Select } from "@/components/ui/select";
 
@@ -33,17 +33,37 @@ export function AddMemberDialog({
   const [open, setOpen] = useState(false);
   const addMemberWithOrg = addMember.bind(null, orgId);
   const [state, formAction, pending] = useActionState(addMemberWithOrg, initialState);
-  const submittedRef = useRef(false);
+  // The state the current submission started from: a new successful
+  // result after it closes the dialog - unless it is an invitation, which
+  // keeps the dialog open to show its link (shown only once) until closed.
+  const [submittedFrom, setSubmittedFrom] = useState<MemberActionState | null>(null);
+  const [seenState, setSeenState] = useState<MemberActionState | null>(null);
+  const [copied, setCopied] = useState(false);
+  const succeeded = submittedFrom !== null && state !== submittedFrom && !pending && state.error === null;
+  const invited = succeeded && state !== seenState ? state.invited : undefined;
+  const isOpen = open && !(succeeded && !state.invited);
 
-  useEffect(() => {
-    if (submittedRef.current && !pending && state.error === null) {
-      setOpen(false);
-      submittedRef.current = false;
+  const onOpenChange = (next: boolean) => {
+    setOpen(next);
+    setSubmittedFrom(null);
+    if (!next) {
+      setSeenState(state);
+      setCopied(false);
     }
-  }, [pending, state]);
+  };
+
+  const copyLink = async () => {
+    if (!invited) return;
+    try {
+      await navigator.clipboard.writeText(invited.link);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
@@ -57,9 +77,36 @@ export function AddMemberDialog({
           <DialogTitle>{t("dialogTitle")}</DialogTitle>
           <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
+        {invited ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 rounded-md border border-success/30 bg-success/5 p-3 text-sm">
+              <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+              <p>
+                {invited.emailSent
+                  ? t("invitedEmailSent", { email: invited.email })
+                  : t("invitedEmailNotSent", { email: invited.email })}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-link">{t("inviteLinkLabel")}</Label>
+              <div className="flex gap-2">
+                <Input id="invite-link" readOnly value={invited.link} onFocus={(event) => event.currentTarget.select()} />
+                <Button type="button" variant="outline" onClick={copyLink} aria-label={t("copyInviteLink")}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">{t("inviteLinkHint")}</p>
+            </div>
+            <div className="flex justify-end">
+              <Button type="button" onClick={() => onOpenChange(false)}>
+                {t("inviteDone")}
+              </Button>
+            </div>
+          </div>
+        ) : (
         <form
           action={(formData) => {
-            submittedRef.current = true;
+            setSubmittedFrom(state);
             formAction(formData);
           }}
           className="space-y-4"
@@ -87,7 +134,7 @@ export function AddMemberDialog({
             </div>
           )}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
               {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
@@ -102,6 +149,7 @@ export function AddMemberDialog({
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

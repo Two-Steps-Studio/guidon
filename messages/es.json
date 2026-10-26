@@ -403,7 +403,7 @@
       "makeOwner": "Hacer propietario",
       "remove": "Eliminar",
       "dialogTitle": "Añadir miembro",
-      "dialogDescription": "Invita a un usuario a unirse a esta organización",
+      "dialogDescription": "Añade a alguien que ya tenga cuenta en Guidon o invita a una persona nueva por correo.",
       "emailLabel": "Correo electrónico",
       "roleLabel": "Rol",
       "roleMemberOption": "Miembro",
@@ -424,7 +424,18 @@
       },
       "treeProjects": "{count, plural, =0 {sin proyectos} one {# proyecto} other {# proyectos}}",
       "treeHint": "Haz clic en una persona para ver sus proyectos y su rol en cada uno. Solo se muestran los proyectos que puedes ver.",
-      "treeAllProjects": "Todos los proyectos"
+      "treeAllProjects": "Todos los proyectos",
+      "invitedEmailSent": "{email} todavía no tiene cuenta, así que le enviamos una invitación. Se unirá en cuanto la acepte.",
+      "invitedEmailNotSent": "{email} todavía no tiene cuenta. Se creó la invitación, pero no se envió ningún correo: compártele este enlace tú.",
+      "inviteLinkLabel": "Enlace de invitación",
+      "copyInviteLink": "Copiar enlace de invitación",
+      "inviteLinkHint": "Funciona una vez, solo para este correo, y caduca en 7 días. Solo se muestra ahora.",
+      "inviteDone": "Listo",
+      "pendingTitle": "{count, plural, one {# invitación pendiente} other {# invitaciones pendientes}}",
+      "pendingExpires": "Caduca el {date}",
+      "pendingExpired": "Caducada: vuelve a añadir a la persona para enviar un enlace nuevo",
+      "cancelInvitation": "Cancelar",
+      "cancelInvitationFor": "Cancelar la invitación para {email}"
     },
     "settings": {
       "title": "Ajustes de la organización",
@@ -1602,7 +1613,12 @@
     "passwordResetBody": "Haz clic en el botón de abajo para establecer una nueva contraseña para tu cuenta de Guidon. Este enlace caduca pronto y solo se puede usar una vez.",
     "passwordResetCta": "Establecer nueva contraseña",
     "passwordResetLinkHint": "¿El botón no funciona? Pega este enlace en tu navegador:",
-    "passwordResetIgnoreNotice": "Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo con tranquilidad - tu contraseña no cambiará."
+    "passwordResetIgnoreNotice": "Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo con tranquilidad - tu contraseña no cambiará.",
+    "invitationSubject": "{inviter} te ha invitado a {organization} en Guidon",
+    "invitationHeading": "Únete a {organization} en Guidon",
+    "invitationBody": "{inviter} te ha invitado a la organización {organization}. Inicia sesión o crea una cuenta con este correo para aceptar. El enlace funciona una vez y caduca en {days} días.",
+    "invitationCta": "Aceptar invitación",
+    "invitationIgnoreNotice": "Si no esperabas esta invitación, puedes ignorar este correo: no pasa nada hasta que la aceptes."
   },
   "calendar": {
     "title": "Calendario",
@@ -2182,5 +2198,19 @@
     "approved": "Autorizado. Vuelve a tu agente para terminar la conexión.",
     "denied": "Acceso denegado. No se emitirán credenciales para esta solicitud.",
     "revoke": "Puedes desconectar este agente en cualquier momento desde Perfil → Aplicaciones conectadas."
+  },
+  "invitation": {
+    "title": "Únete a {name}",
+    "description": "{inviter} te ha invitado a {name} como {role}.",
+    "someone": "Alguien",
+    "expires": "Esta invitación caduca el {date}.",
+    "accept": "Aceptar invitación",
+    "wrongAccount": "Esta invitación se envió a {invited}, pero has iniciado sesión como {current}. Cierra sesión, vuelve a abrir el enlace e inicia sesión o crea una cuenta con {invited}.",
+    "signOut": "Cerrar sesión",
+    "unavailableTitle": "Invitación no disponible",
+    "invalid": "Este enlace de invitación no es válido. Puede que se haya cancelado: pide uno nuevo a quien te invitó.",
+    "expired": "Esta invitación ha caducado. Pide una nueva a quien te invitó.",
+    "used": "Esta invitación ya se ha usado.",
+    "toDashboard": "Ir al panel"
   }
 }

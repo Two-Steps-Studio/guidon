@@ -4,7 +4,8 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
   const email=`signup-${browserName}@guidon.example.test`;
   const user=(await client.query("SELECT id FROM auth.users WHERE email=$1",[email])).rows[0];
   const name=`Onboarding project ${browserName}`,studio=`Onboarding studio ${browserName}`;
-  let orgId;
+  const invitedEmail=`invited-${browserName}@guidon.example.test`;
+  let orgId,inviteLink;
   try {
     await context.clearCookies();await page.goto(`${origin}/auth/login`);await page.waitForLoadState("networkidle");
     await page.locator("#email").fill(email);await page.locator("#password").fill(fixture.password);
@@ -34,14 +35,19 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
     await page.goto(`${origin}/start/finish`);await page.waitForURL(url=>url.pathname==="/dashboard");
     assert.equal((await client.query("SELECT count(*)::int AS n FROM organizations WHERE created_by=$1",[user.id])).rows[0].n,1,"Finishing again with cleared answers must not duplicate workspaces");
     const foreign=await context.request.get(`${origin}/projects/${fixture.users[0].projectId}/work`);assert.equal((await foreign.text()).includes(fixture.users[0].projectName),false);
-    // Current product adds existing accounts; this is not an email invitation
-    // or an acceptance-link test. That missing flow remains explicitly open.
+    // An address without an account gets an invitation link (migration 091).
     await page.goto(`${origin}/organizations/${orgId}/members`);
     await page.getByRole("button",{name:"Add Member",exact:true}).click();
     const orgDialog=page.getByRole("dialog");
-    await orgDialog.locator("#email").fill("missing-onboarding@example.test");
+    await orgDialog.locator("#email").fill(invitedEmail);
     await orgDialog.getByRole("button",{name:"Add Member",exact:true}).click();
-    await orgDialog.getByText("User with this email not found.",{exact:true}).waitFor();
+    inviteLink=await orgDialog.locator("#invite-link").inputValue();
+    assert.match(inviteLink,/\/invite\/[A-Za-z0-9_-]{43}$/);
+    const stored=(await client.query("SELECT token_hash,status,role FROM invitations WHERE organization_id=$1 AND email=$2",[orgId,invitedEmail])).rows[0];
+    assert.equal(stored.status,"pending");assert.equal(stored.role,"member");assert.ok(!inviteLink.includes(stored.token_hash),"Only the hash is stored");
+    await orgDialog.getByRole("button",{name:"Done",exact:true}).click();await orgDialog.waitFor({state:"hidden"});
+    await page.getByText(invitedEmail,{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Add Member",exact:true}).click();
     await orgDialog.locator("#email").fill(fixture.reader.email);
     await orgDialog.getByRole("button",{name:"Add Member",exact:true}).click();await orgDialog.waitFor({state:"hidden"});
     assert.equal((await client.query("SELECT role FROM organization_members WHERE organization_id=$1 AND user_id=$2",[orgId,fixture.reader.id])).rows[0].role,"member");
@@ -58,8 +64,27 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
     assert.equal(await page.getByRole("button",{name:"Add member",exact:true}).count(),0);
     await page.goto(`${origin}/projects/${projectId}/work`);await page.getByRole("button",{name:`Open task First task ${browserName}`,exact:true}).waitFor();
     assert.equal(await page.getByRole("button",{name:"New task",exact:true}).count(),0);
+    // The reader is signed in with another address: the link refuses them.
+    const invitePath=new URL(inviteLink).pathname;
+    await page.goto(`${origin}${invitePath}`);
+    await page.getByText(`This invitation was sent to ${invitedEmail}`,{exact:false}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Accept invitation",exact:true}).count(),0);
+    // Signed out: link -> sign in -> sign up keeps the link -> accept.
+    await context.clearCookies();await page.goto(`${origin}${invitePath}`);
+    await page.waitForURL(url=>url.pathname==="/auth/login"&&url.searchParams.get("redirect")===invitePath);
+    await page.getByRole("link",{name:/sign up/i}).click();
+    await page.waitForURL(url=>url.pathname==="/auth/signup"&&url.searchParams.get("redirect")===invitePath);
+    await page.locator("#fullName").fill(`Invited ${browserName}`);await page.locator("#email").fill(invitedEmail);await page.locator("#password").fill(fixture.password);
+    await page.locator('button[type="submit"]').click();await page.waitForURL(url=>url.pathname===invitePath);
+    await page.getByRole("button",{name:"Accept invitation",exact:true}).click();
+    await page.waitForURL(url=>url.pathname===`/organizations/${orgId}`);
+    const invitedId=(await client.query("SELECT id FROM auth.users WHERE email=$1",[invitedEmail])).rows[0].id;
+    assert.equal((await client.query("SELECT role FROM organization_members WHERE organization_id=$1 AND user_id=$2",[orgId,invitedId])).rows[0].role,"member");
+    assert.equal((await client.query("SELECT status FROM invitations WHERE organization_id=$1 AND email=$2",[orgId,invitedEmail])).rows[0].status,"accepted");
+    await page.goto(`${origin}${invitePath}`);await page.getByText("This invitation has already been used.",{exact:true}).waitFor();
   } finally {
     await context.clearCookies();
     if(orgId)await client.query("DELETE FROM organizations WHERE id=$1 AND created_by=$2",[orgId,user.id]);
+    await client.query("DELETE FROM auth.users WHERE email=$1",[invitedEmail]);
   }
 }

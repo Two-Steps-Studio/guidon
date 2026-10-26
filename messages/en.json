@@ -403,7 +403,7 @@
       "makeOwner": "Make Owner",
       "remove": "Remove",
       "dialogTitle": "Add Member",
-      "dialogDescription": "Invite a user to join this organization",
+      "dialogDescription": "Add someone who already has a Guidon account, or invite a new person by email.",
       "emailLabel": "Email",
       "roleLabel": "Role",
       "roleMemberOption": "Member",
@@ -424,7 +424,18 @@
       },
       "treeProjects": "{count, plural, =0 {no projects} one {# project} other {# projects}}",
       "treeHint": "Click a person to see their projects and role in each. Only projects you can see are shown.",
-      "treeAllProjects": "All projects"
+      "treeAllProjects": "All projects",
+      "invitedEmailSent": "{email} doesn't have an account yet, so we sent them an invitation. They join as soon as they accept it.",
+      "invitedEmailNotSent": "{email} doesn't have an account yet. An invitation was created, but no email went out - send them this link yourself.",
+      "inviteLinkLabel": "Invitation link",
+      "copyInviteLink": "Copy invitation link",
+      "inviteLinkHint": "Works once, only for this email address, and expires in 7 days. It is shown only now.",
+      "inviteDone": "Done",
+      "pendingTitle": "{count, plural, one {# pending invitation} other {# pending invitations}}",
+      "pendingExpires": "Expires {date}",
+      "pendingExpired": "Expired - add the person again to send a new link",
+      "cancelInvitation": "Cancel",
+      "cancelInvitationFor": "Cancel the invitation for {email}"
     },
     "settings": {
       "title": "Organization Settings",
@@ -1602,7 +1613,12 @@
     "passwordResetBody": "Click the button below to set a new password for your Guidon account. This link expires shortly and can only be used once.",
     "passwordResetCta": "Set new password",
     "passwordResetLinkHint": "Button not working? Paste this link into your browser:",
-    "passwordResetIgnoreNotice": "If you didn't request a password reset, you can safely ignore this email - your password won't change."
+    "passwordResetIgnoreNotice": "If you didn't request a password reset, you can safely ignore this email - your password won't change.",
+    "invitationSubject": "{inviter} invited you to {organization} on Guidon",
+    "invitationHeading": "Join {organization} on Guidon",
+    "invitationBody": "{inviter} invited you to the {organization} organization. Sign in or create an account with this email address to accept. The link works once and expires in {days} days.",
+    "invitationCta": "Accept invitation",
+    "invitationIgnoreNotice": "If you weren't expecting this invitation, you can ignore this email - nothing happens until you accept."
   },
   "calendar": {
     "title": "Calendar",
@@ -2182,5 +2198,19 @@
     "approved": "Approved. Return to your agent to finish connecting.",
     "denied": "Access denied. No credentials will be issued for this request.",
     "revoke": "You can disconnect this agent at any time in Profile → Connected apps."
+  },
+  "invitation": {
+    "title": "Join {name}",
+    "description": "{inviter} invited you to {name} as {role}.",
+    "someone": "Someone",
+    "expires": "This invitation expires {date}.",
+    "accept": "Accept invitation",
+    "wrongAccount": "This invitation was sent to {invited}, but you're signed in as {current}. Sign out, then open the link again and sign in or create an account with {invited}.",
+    "signOut": "Sign out",
+    "unavailableTitle": "Invitation unavailable",
+    "invalid": "This invitation link is not valid. It may have been cancelled - ask the person who invited you for a new one.",
+    "expired": "This invitation has expired. Ask the person who invited you for a new one.",
+    "used": "This invitation has already been used.",
+    "toDashboard": "Go to dashboard"
   }
 }

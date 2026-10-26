@@ -18,6 +18,8 @@ export const PUBLIC_CLIENT_NAMESPACES = [
   "onboarding",
   "errors",
   "datePicker",
+  // The accept button on /invite/<token> (outside the app shell).
+  "invitation",
   // The template names on /start's workflow step.
   "settings.labelStarter",
 ] as const;

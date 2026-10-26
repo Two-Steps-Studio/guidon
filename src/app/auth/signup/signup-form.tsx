@@ -70,7 +70,11 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
           // uses for its own redirectTo. The dashboard's Redirect URLs
           // allow-list still needs this origin added, or Supabase won't
           // honor it.
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          // ?redirect= survives the confirmation email too (auth/callback reads
+          // it), so someone signing up from an invitation link lands back on it.
+          emailRedirectTo: `${window.location.origin}/auth/callback${
+            searchParams.get("redirect") ? `?redirect=${encodeURIComponent(redirectTarget)}` : ""
+          }`,
         },
       })
 
@@ -192,7 +196,10 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
 
           <div className="mt-4 text-center text-sm">
             {t("haveAccount")}{" "}
-            <Link href="/auth/login" className="text-primary hover:underline">
+            <Link
+              href={searchParams.get("redirect") ? `/auth/login?redirect=${encodeURIComponent(redirectTarget)}` : "/auth/login"}
+              className="text-primary hover:underline"
+            >
               {t("signIn")}
             </Link>
           </div>
