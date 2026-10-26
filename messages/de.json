@@ -404,7 +404,7 @@
       "makeOwner": "Zum Inhaber machen",
       "remove": "Entfernen",
       "dialogTitle": "Mitglied hinzufügen",
-      "dialogDescription": "Lade einen Benutzer zu dieser Organisation ein",
+      "dialogDescription": "Füge jemanden mit einem Guidon-Konto hinzu oder lade eine neue Person per E-Mail ein.",
       "emailLabel": "E-Mail",
       "roleLabel": "Rolle",
       "roleMemberOption": "Mitglied",
@@ -425,7 +425,18 @@
       },
       "treeProjects": "{count, plural, =0 {keine Projekte} one {# Projekt} other {# Projekte}}",
       "treeHint": "Klick auf eine Person, um ihre Projekte und ihre Rolle darin zu sehen. Es werden nur Projekte gezeigt, die du sehen kannst.",
-      "treeAllProjects": "Alle Projekte"
+      "treeAllProjects": "Alle Projekte",
+      "invitedEmailSent": "{email} hat noch kein Konto, daher haben wir eine Einladung gesendet. Die Person tritt bei, sobald sie sie annimmt.",
+      "invitedEmailNotSent": "{email} hat noch kein Konto. Die Einladung wurde erstellt, aber keine E-Mail versendet - schick diesen Link selbst.",
+      "inviteLinkLabel": "Einladungslink",
+      "copyInviteLink": "Einladungslink kopieren",
+      "inviteLinkHint": "Funktioniert einmal, nur für diese E-Mail-Adresse, und läuft nach 7 Tagen ab. Er wird nur jetzt angezeigt.",
+      "inviteDone": "Fertig",
+      "pendingTitle": "{count, plural, one {# offene Einladung} other {# offene Einladungen}}",
+      "pendingExpires": "Läuft ab am {date}",
+      "pendingExpired": "Abgelaufen - füge die Person erneut hinzu, um einen neuen Link zu senden",
+      "cancelInvitation": "Zurückziehen",
+      "cancelInvitationFor": "Einladung für {email} zurückziehen"
     },
     "settings": {
       "title": "Organisationseinstellungen",
@@ -1629,7 +1640,12 @@
     "passwordResetBody": "Klicke auf die Schaltfläche unten, um ein neues Passwort für dein Guidon-Konto festzulegen. Dieser Link läuft bald ab und kann nur einmal verwendet werden.",
     "passwordResetCta": "Neues Passwort festlegen",
     "passwordResetLinkHint": "Schaltfläche funktioniert nicht? Füge diesen Link in deinen Browser ein:",
-    "passwordResetIgnoreNotice": "Wenn du kein Zurücksetzen des Passworts angefordert hast, kannst du diese E-Mail gefahrlos ignorieren - dein Passwort wird nicht geändert."
+    "passwordResetIgnoreNotice": "Wenn du kein Zurücksetzen des Passworts angefordert hast, kannst du diese E-Mail gefahrlos ignorieren - dein Passwort wird nicht geändert.",
+    "invitationSubject": "{inviter} hat dich zu {organization} auf Guidon eingeladen",
+    "invitationHeading": "Tritt {organization} auf Guidon bei",
+    "invitationBody": "{inviter} hat dich in die Organisation {organization} eingeladen. Melde dich mit dieser E-Mail-Adresse an oder erstelle ein Konto, um die Einladung anzunehmen. Der Link funktioniert einmal und läuft in {days} Tagen ab.",
+    "invitationCta": "Einladung annehmen",
+    "invitationIgnoreNotice": "Wenn du diese Einladung nicht erwartet hast, kannst du diese E-Mail ignorieren - ohne deine Zustimmung passiert nichts."
   },
   "calendar": {
     "title": "Kalender",
@@ -2209,5 +2225,19 @@
     "approved": "Bestätigt. Kehre zu deinem Agenten zurück, um die Verbindung abzuschließen.",
     "denied": "Zugriff abgelehnt. Für diese Anfrage werden keine Zugangsdaten ausgestellt.",
     "revoke": "Du kannst den Agenten jederzeit unter Profil → Verbundene Apps trennen."
+  },
+  "invitation": {
+    "title": "{name} beitreten",
+    "description": "{inviter} hat dich als {role} zu {name} eingeladen.",
+    "someone": "Jemand",
+    "expires": "Diese Einladung läuft am {date} ab.",
+    "accept": "Einladung annehmen",
+    "wrongAccount": "Diese Einladung ging an {invited}, du bist aber als {current} angemeldet. Melde dich ab, öffne den Link erneut und melde dich mit {invited} an oder erstelle ein Konto.",
+    "signOut": "Abmelden",
+    "unavailableTitle": "Einladung nicht verfügbar",
+    "invalid": "Dieser Einladungslink ist ungültig. Vielleicht wurde er zurückgezogen - bitte um einen neuen.",
+    "expired": "Diese Einladung ist abgelaufen. Bitte um eine neue.",
+    "used": "Diese Einladung wurde bereits verwendet.",
+    "toDashboard": "Zum Dashboard"
   }
 }

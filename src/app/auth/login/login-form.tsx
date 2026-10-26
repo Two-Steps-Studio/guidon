@@ -157,7 +157,11 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
 
           <div className="mt-4 text-center text-sm">
             {t("noAccount")}{" "}
-            <Link href="/auth/signup" className="text-primary underline underline-offset-2">
+            {/* Keeps ?redirect= so an invitation link (/invite/<token>) survives creating an account. */}
+            <Link
+              href={searchParams.get("redirect") ? `/auth/signup?redirect=${encodeURIComponent(redirectTarget)}` : "/auth/signup"}
+              className="text-primary underline underline-offset-2"
+            >
               {t("signUp")}
             </Link>
           </div>

@@ -129,7 +129,6 @@
   "Unknown status.": "Unbekannter Status.",
   "Unsupported language.": "Nicht unterstützte Sprache.",
   "Unsupported theme.": "Nicht unterstütztes Theme.",
-  "User with this email not found.": "Nutzer mit dieser E-Mail-Adresse nicht gefunden.",
   "Webhook not found.": "Webhook nicht gefunden.",
   "You cannot assign that role.": "Du kannst diese Rolle nicht vergeben.",
   "You do not have access to this organization.": "Du hast keinen Zugriff auf diese Organisation.",
@@ -197,5 +196,14 @@
   "This delivery already succeeded.": "Diese Zustellung war bereits erfolgreich.",
   "This delivery was tried too many times.": "Diese Zustellung wurde zu oft versucht.",
   "Turn the webhook on to retry its deliveries.": "Aktiviere den Webhook, um seine Zustellungen zu wiederholen.",
+  "Enter a valid email address.": "Gib eine gültige E-Mail-Adresse ein.",
+  "An invitation for this address is already pending.": "Für diese Adresse gibt es bereits eine offene Einladung.",
+  "Could not create the invitation. Try again.": "Die Einladung konnte nicht erstellt werden. Versuch es erneut.",
+  "Invitation not found.": "Einladung nicht gefunden.",
+  "This invitation link is not valid.": "Dieser Einladungslink ist ungültig.",
+  "Could not accept the invitation. Try again.": "Die Einladung konnte nicht angenommen werden. Versuch es erneut.",
+  "This invitation has expired. Ask for a new one.": "Diese Einladung ist abgelaufen. Bitte um eine neue.",
+  "This invitation has already been used.": "Diese Einladung wurde bereits verwendet.",
+  "This invitation was sent to a different email address.": "Diese Einladung wurde an eine andere E-Mail-Adresse gesendet.",
   "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "Preise konnten nicht aus Stripe gelesen werden. Prüfe STRIPE_SECRET_KEY."
 }

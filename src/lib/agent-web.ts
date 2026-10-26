@@ -21,6 +21,7 @@ export const SIGNED_IN_SECTIONS: ReadonlySet<string> = new Set([
   "api",
   "dashboard",
   "discord",
+  "invite",
   "mini",
   "marketplace",
   "my-modules",

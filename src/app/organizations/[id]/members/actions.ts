@@ -8,10 +8,20 @@ import { logActivity } from "@/lib/data/log-activity";
 import { hostedMemberLimitError } from "@/lib/limits";
 import type { OrganizationRole } from "@/types/project";
 import { tr } from "@/lib/i18n/server-errors";
+import { getLocale } from "next-intl/server";
+import { getCurrentUser } from "@/lib/data/current-user";
+import { INVITATION_TTL_DAYS, invitationExpiry, invitationLink, newInvitationToken } from "@/lib/invitations";
+import { isEmailConfigured, sendInvitationEmail } from "@/lib/email/resend";
+import { isAiAccountEmail } from "@/lib/ai-account-email";
+import type { Locale } from "@/i18n/locales";
 
 export type MemberActionState = {
   error: string | null;
+  /** Set when the address had no account and an invitation link was made instead (091). */
+  invited?: { email: string; link: string; emailSent: boolean };
 };
+
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const NOT_IN_ORG = "This member does not belong to this organization, or that change isn't allowed.";
 
@@ -60,7 +70,7 @@ export async function addMember(
     p_organization_id: orgId,
     p_email: normalizedEmail,
   });
-  if (!userId) return { error: await tr("User with this email not found.") };
+  if (!userId) return inviteByEmail(orgId, access.userId, normalizedEmail, role, access.organization.name);
 
   const { error } = await db.from("organization_members").insert({ organization_id: orgId, user_id: userId, role });
   if (error) {
@@ -78,6 +88,92 @@ export async function addMember(
     details: { role },
   });
 
+  revalidatePath(`/organizations/${orgId}/members`);
+  return { error: null };
+}
+
+/**
+ * No account with this address yet: an invitation link (migration 091)
+ * instead of an error. Any earlier pending invitation for the address is
+ * replaced, so "Add member" again is also "send a new link". The link is
+ * returned to the inviter too - the only time anyone sees it, since only
+ * its hash is stored - so it can be shared when email isn't configured or
+ * didn't arrive.
+ */
+async function inviteByEmail(
+  orgId: string,
+  userId: string,
+  email: string,
+  role: OrganizationRole,
+  organizationName: string
+): Promise<MemberActionState> {
+  if (!EMAIL_SHAPE.test(email) || email.length > 254 || isAiAccountEmail(email)) {
+    return { error: await tr("Enter a valid email address.") };
+  }
+  const db = dataClient(userId);
+  const { token, hash } = newInvitationToken();
+
+  // RLS: invitations_manager_delete / invitations_org_*_insert (001).
+  await db.from("invitations").delete().eq("organization_id", orgId).eq("email", email).eq("status", "pending");
+  const { data: created, error } = await db
+    .from<{ id: string }>("invitations")
+    .insert({
+      organization_id: orgId,
+      email,
+      role,
+      token_hash: hash,
+      invited_by: userId,
+      expires_at: invitationExpiry(),
+    })
+    .select("id");
+  if (error || !created?.length) {
+    if (error && isUniqueViolation(error)) return { error: await tr("An invitation for this address is already pending.") };
+    return { error: await tr("Could not create the invitation. Try again.") };
+  }
+
+  const link = invitationLink(token);
+  let emailSent = false;
+  if (isEmailConfigured()) {
+    const inviter = await getCurrentUser();
+    try {
+      await sendInvitationEmail(
+        email,
+        link,
+        { organizationName, inviterName: inviter.full_name || inviter.email || "Guidon", days: INVITATION_TTL_DAYS },
+        (await getLocale()) as Locale
+      );
+      emailSent = true;
+    } catch (sendError) {
+      console.error("Invitation email failed:", sendError);
+    }
+  }
+
+  await logActivity({
+    userId,
+    action: "invite_sent",
+    organizationId: orgId,
+    entityType: "invitation",
+    entityId: created[0].id,
+    details: { role, email_sent: emailSent },
+  });
+
+  revalidatePath(`/organizations/${orgId}/members`);
+  return { error: null, invited: { email, link, emailSent } };
+}
+
+/** Withdraws a pending invitation: its link stops working (accept_invitation finds nothing). */
+export async function cancelInvitation(orgId: string, invitationId: string): Promise<{ error: string | null }> {
+  const access = await getOrgAccess(orgId);
+  if (!access || !canManageOrg(access.role)) {
+    return { error: await tr("You do not have permission to add members.") };
+  }
+  const { data, error } = await dataClient(access.userId)
+    .from("invitations")
+    .delete()
+    .eq("id", invitationId)
+    .eq("organization_id", orgId)
+    .select("id");
+  if (error || !data?.length) return { error: await tr("Invitation not found.") };
   revalidatePath(`/organizations/${orgId}/members`);
   return { error: null };
 }
