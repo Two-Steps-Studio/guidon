@@ -196,5 +196,6 @@
   "Could not load the delivery history.": "Der Zustellverlauf konnte nicht geladen werden.",
   "This delivery already succeeded.": "Diese Zustellung war bereits erfolgreich.",
   "This delivery was tried too many times.": "Diese Zustellung wurde zu oft versucht.",
-  "Turn the webhook on to retry its deliveries.": "Aktiviere den Webhook, um seine Zustellungen zu wiederholen."
+  "Turn the webhook on to retry its deliveries.": "Aktiviere den Webhook, um seine Zustellungen zu wiederholen.",
+  "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "Preise konnten nicht aus Stripe gelesen werden. Prüfe STRIPE_SECRET_KEY."
 }
