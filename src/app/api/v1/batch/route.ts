@@ -10,6 +10,7 @@ import { GET as listProjects } from "@/app/api/v1/projects/route";
 import { GET as listTasks, POST as createTask } from "@/app/api/v1/projects/[projectId]/tasks/route";
 import { GET as listColumns } from "@/app/api/v1/projects/[projectId]/columns/route";
 import { GET as listPriorities } from "@/app/api/v1/projects/[projectId]/priorities/route";
+import { GET as listEvents } from "@/app/api/v1/projects/[projectId]/events/route";
 import { GET as getTask, PATCH as updateTask, DELETE as deleteTask } from "@/app/api/v1/tasks/[taskId]/route";
 import { GET as getTaskContext } from "@/app/api/v1/tasks/[taskId]/context/route";
 import { POST as startTask } from "@/app/api/v1/tasks/[taskId]/start/route";
@@ -28,6 +29,7 @@ const TABLES: Record<string, MethodTable> = {
   projectTasks: { GET: as(listTasks), POST: as(createTask) },
   projectColumns: { GET: as(listColumns) },
   projectPriorities: { GET: as(listPriorities) },
+  projectEvents: { GET: as(listEvents) },
   task: { GET: as(getTask), PATCH: as(updateTask), DELETE: as(deleteTask) },
 };
 

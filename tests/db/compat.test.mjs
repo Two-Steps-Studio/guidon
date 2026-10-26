@@ -209,6 +209,125 @@ for (const name of migrations) {
   });
 }
 
+section("74. context events: capture, dedupe, replay, isolation (090)");
+
+{
+  let eventsProject;
+  let task;
+  await withUser(A, async () => {
+    eventsProject = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Events') RETURNING id", [orgId])).rows[0].id;
+    task = (await db.query("INSERT INTO public.tasks (project_id, title, description) VALUES ($1, 'Secret plan', 'token=abc123') RETURNING id", [eventsProject])).rows[0].id;
+    const sameTx = await db.query("SELECT seq FROM public.list_context_events($1, 0, 100)", [eventsProject]);
+    check("events of a still-running transaction are not listed yet", sameTx.rows.length === 0, sameTx.rows.length);
+  });
+  const events = async (who = A, after = 0) =>
+    withUser(who, async () => (await db.query("SELECT * FROM public.list_context_events($1, $2, 500)", [eventsProject, after])).rows);
+
+  let rows = await events();
+  const created = rows.find((e) => e.event_type === "task.created" && e.entity_id === task);
+  check("task insert emits task.created with tenant ids derived from the row",
+    !!created && created.organization_id === orgId && created.project_id === eventsProject && created.actor_id === A && created.source === "guidon");
+  check("payload carries references only - no title or description", !JSON.stringify(created?.payload ?? {}).match(/Secret plan|abc123/));
+
+  await withUser(A, async () => {
+    await db.query("UPDATE public.tasks SET sort_order = 42 WHERE id = $1", [task]);
+    await db.query("UPDATE public.tasks SET status = 'in_progress' WHERE id = $1", [task]);
+    await db.query("UPDATE public.tasks SET title = 'Renamed' WHERE id = $1", [task]);
+  });
+  rows = await events();
+  const taskEvents = rows.filter((e) => e.entity_id === task).map((e) => e.event_type);
+  check("reorder only is not an event; status and edits are", JSON.stringify(taskEvents) === JSON.stringify(["task.created", "task.status_changed", "task.updated"]), taskEvents.join(","));
+  const status = rows.find((e) => e.event_type === "task.status_changed");
+  check("status change records from/to and the changed fields", status?.payload.from === "todo" && status?.payload.to === "in_progress" && status?.payload.fields.includes("status"), JSON.stringify(status?.payload));
+  check("an edit lists field names, not values", JSON.stringify(rows.at(-1).payload) === JSON.stringify({ fields: ["title"] }), JSON.stringify(rows.at(-1).payload));
+  check("seq increases in order", rows.every((e, i) => i === 0 || BigInt(e.seq) > BigInt(rows[i - 1].seq)));
+
+  // Rolled-back work leaves no event (same transaction as the change).
+  try {
+    await withUser(A, async () => {
+      await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Rolled back')", [eventsProject]);
+      throw new Error("abort");
+    });
+  } catch { /* expected */ }
+  check("a rolled-back write leaves no event", (await events()).length === rows.length);
+
+  // Comments, decisions, sources, attempts.
+  let commentId;
+  await withUser(A, async () => {
+    commentId = (await db.query("INSERT INTO public.task_comments (task_id, author_id, content) VALUES ($1, $2, 'hello') RETURNING id", [task, A])).rows[0].id;
+    await db.query("UPDATE public.task_comments SET content = 'edited' WHERE id = $1", [commentId]);
+    await db.query("INSERT INTO public.context_decisions (project_id, title, made_by) VALUES ($1, 'Use Postgres', $2)", [eventsProject, A]);
+    await db.query("INSERT INTO public.context_sources (project_id, source_type, title, content) VALUES ($1, 'document', 'Spec', 'body')", [eventsProject]);
+    await db.query("INSERT INTO public.task_attempts (task_id, problem, approach, outcome, agent, created_by) VALUES ($1, 'p', 'a', 'failed', 'claude', $2)", [task, A]);
+  });
+  rows = await events();
+  const types = rows.map((e) => e.event_type);
+  for (const type of ["comment.created", "comment.updated", "decision.created", "source.created", "attempt.recorded"]) {
+    check(`${type} captured`, types.includes(type), types.join(","));
+  }
+  const attempt = rows.find((e) => e.event_type === "attempt.recorded");
+  check("agent runs are source=agent with outcome", attempt?.source === "agent" && attempt?.payload.outcome === "failed" && attempt?.payload.task_id === task);
+
+  // GitHub redelivery: the webhook deletes its row after a failure, the
+  // retry inserts it again - still one event.
+  await withUser(A, async () => {
+    await db.query("INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'pr:7:closed')", [task]);
+  });
+  await withServiceRole(async () => {
+    await db.query("DELETE FROM public.github_task_events WHERE task_id = $1 AND event_key = 'pr:7:closed'", [task]);
+  });
+  await withUser(A, async () => {
+    await db.query("INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'pr:7:closed')", [task]);
+  });
+  rows = await events();
+  const github = rows.filter((e) => e.source === "github");
+  check("redelivered GitHub event is recorded once", github.length === 1 && github[0].event_type === "github.pull_request", github.length);
+
+  // Replay: reading after a cursor returns exactly the rest, and the dedupe
+  // key stops a second insert of the same event.
+  const middle = rows[2].seq;
+  const tail = await events(A, middle);
+  check("replay from a cursor returns only later events", tail.length === rows.length - 3 && tail[0].seq === rows[3].seq, `${tail.length}/${rows.length}`);
+  await withServiceRole(async () => {
+    const again = await db.query(
+      `INSERT INTO public.context_events (organization_id, project_id, source, entity_type, entity_id, event_type, occurred_at, dedupe_key)
+       VALUES ($1, $2, 'guidon', 'task', $3, 'task.created', now(), $4) ON CONFLICT (organization_id, dedupe_key) DO NOTHING RETURNING id`,
+      [orgId, eventsProject, task, `task:${task}:created`]
+    );
+    check("same dedupe key is not stored twice", again.rows.length === 0);
+  });
+
+  // Audit log: members read, nobody but the service role writes.
+  await withUser(A, async () => {
+    check("owner cannot edit events", await throwsInSavepoint("UPDATE public.context_events SET event_type = 'task.updated' WHERE project_id = $1", [eventsProject]));
+    check("owner cannot delete events", await throwsInSavepoint("DELETE FROM public.context_events WHERE project_id = $1", [eventsProject]));
+    check("owner cannot insert events", await throwsInSavepoint(
+      "INSERT INTO public.context_events (organization_id, project_id, source, entity_type, entity_id, event_type, occurred_at, dedupe_key) VALUES ($1, $2, 'guidon', 'task', $3, 'task.created', now(), 'forged')",
+      [orgId, eventsProject, task]));
+  });
+  check("other tenant sees no events", (await events(B)).length === 0);
+  await withUser(B, async () => {
+    check("other tenant reads nothing from the table either", (await db.query("SELECT 1 FROM public.context_events WHERE project_id = $1", [eventsProject])).rows.length === 0);
+  });
+  let anonDenied = false;
+  try { await withAnon(() => db.query("SELECT 1 FROM public.context_events")); } catch { anonDenied = true; }
+  check("anonymous clients cannot read events", anonDenied);
+
+  // Deleting a task logs task.deleted but not the comments it cascades to;
+  // deleting the project cascades its events away without errors.
+  await withUser(A, async () => {
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [task]);
+  });
+  rows = await events();
+  check("task deletion is logged once, cascaded comments are not", rows.filter((e) => e.event_type === "task.deleted").length === 1 && !rows.some((e) => e.event_type === "comment.deleted"));
+  await withUser(A, async () => {
+    await db.query("DELETE FROM public.projects WHERE id = $1", [eventsProject]);
+  });
+  await withServiceRole(async () => {
+    check("deleting the project deletes its events", (await db.query("SELECT 1 FROM public.context_events WHERE project_id = $1", [eventsProject])).rows.length === 0);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
     process.exit(1);
   }
@@ -251,8 +370,9 @@ for (const [label, sql, expected] of [
   // 45->46 tabel, polityk bez zmian: api_jobs (075) - tylko service_role.
   // 46->47: shared replay protection for signed OAuth client assertions (078).
   // 47->48 and 130->133: project-scoped declarative module packages (080).
-  ["53 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 53],
-  ["138 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 138],
+  // 53->54 and 138->139: context_events (090) + context_events_select.
+  ["54 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 54],
+  ["139 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 139],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3861,6 +3981,125 @@ section("73. webhook delivery queue (089)");
   });
   await withServiceRole(async () => {
     check("deleting the webhook deletes its deliveries", (await db.query("SELECT 1 FROM public.organization_webhook_deliveries WHERE id = $1", [deliveryId])).rows.length === 0);
+  });
+}
+
+section("74. context events: capture, dedupe, replay, isolation (090)");
+
+{
+  let eventsProject;
+  let task;
+  await withUser(A, async () => {
+    eventsProject = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Events') RETURNING id", [orgId])).rows[0].id;
+    task = (await db.query("INSERT INTO public.tasks (project_id, title, description) VALUES ($1, 'Secret plan', 'token=abc123') RETURNING id", [eventsProject])).rows[0].id;
+    const sameTx = await db.query("SELECT seq FROM public.list_context_events($1, 0, 100)", [eventsProject]);
+    check("events of a still-running transaction are not listed yet", sameTx.rows.length === 0, sameTx.rows.length);
+  });
+  const events = async (who = A, after = 0) =>
+    withUser(who, async () => (await db.query("SELECT * FROM public.list_context_events($1, $2, 500)", [eventsProject, after])).rows);
+
+  let rows = await events();
+  const created = rows.find((e) => e.event_type === "task.created" && e.entity_id === task);
+  check("task insert emits task.created with tenant ids derived from the row",
+    !!created && created.organization_id === orgId && created.project_id === eventsProject && created.actor_id === A && created.source === "guidon");
+  check("payload carries references only - no title or description", !JSON.stringify(created?.payload ?? {}).match(/Secret plan|abc123/));
+
+  await withUser(A, async () => {
+    await db.query("UPDATE public.tasks SET sort_order = 42 WHERE id = $1", [task]);
+    await db.query("UPDATE public.tasks SET status = 'in_progress' WHERE id = $1", [task]);
+    await db.query("UPDATE public.tasks SET title = 'Renamed' WHERE id = $1", [task]);
+  });
+  rows = await events();
+  const taskEvents = rows.filter((e) => e.entity_id === task).map((e) => e.event_type);
+  check("reorder only is not an event; status and edits are", JSON.stringify(taskEvents) === JSON.stringify(["task.created", "task.status_changed", "task.updated"]), taskEvents.join(","));
+  const status = rows.find((e) => e.event_type === "task.status_changed");
+  check("status change records from/to and the changed fields", status?.payload.from === "todo" && status?.payload.to === "in_progress" && status?.payload.fields.includes("status"), JSON.stringify(status?.payload));
+  check("an edit lists field names, not values", JSON.stringify(rows.at(-1).payload) === JSON.stringify({ fields: ["title"] }), JSON.stringify(rows.at(-1).payload));
+  check("seq increases in order", rows.every((e, i) => i === 0 || BigInt(e.seq) > BigInt(rows[i - 1].seq)));
+
+  // Rolled-back work leaves no event (same transaction as the change).
+  try {
+    await withUser(A, async () => {
+      await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Rolled back')", [eventsProject]);
+      throw new Error("abort");
+    });
+  } catch { /* expected */ }
+  check("a rolled-back write leaves no event", (await events()).length === rows.length);
+
+  // Comments, decisions, sources, attempts.
+  let commentId;
+  await withUser(A, async () => {
+    commentId = (await db.query("INSERT INTO public.task_comments (task_id, author_id, content) VALUES ($1, $2, 'hello') RETURNING id", [task, A])).rows[0].id;
+    await db.query("UPDATE public.task_comments SET content = 'edited' WHERE id = $1", [commentId]);
+    await db.query("INSERT INTO public.context_decisions (project_id, title, made_by) VALUES ($1, 'Use Postgres', $2)", [eventsProject, A]);
+    await db.query("INSERT INTO public.context_sources (project_id, source_type, title, content) VALUES ($1, 'document', 'Spec', 'body')", [eventsProject]);
+    await db.query("INSERT INTO public.task_attempts (task_id, problem, approach, outcome, agent, created_by) VALUES ($1, 'p', 'a', 'failed', 'claude', $2)", [task, A]);
+  });
+  rows = await events();
+  const types = rows.map((e) => e.event_type);
+  for (const type of ["comment.created", "comment.updated", "decision.created", "source.created", "attempt.recorded"]) {
+    check(`${type} captured`, types.includes(type), types.join(","));
+  }
+  const attempt = rows.find((e) => e.event_type === "attempt.recorded");
+  check("agent runs are source=agent with outcome", attempt?.source === "agent" && attempt?.payload.outcome === "failed" && attempt?.payload.task_id === task);
+
+  // GitHub redelivery: the webhook deletes its row after a failure, the
+  // retry inserts it again - still one event.
+  await withUser(A, async () => {
+    await db.query("INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'pr:7:closed')", [task]);
+  });
+  await withServiceRole(async () => {
+    await db.query("DELETE FROM public.github_task_events WHERE task_id = $1 AND event_key = 'pr:7:closed'", [task]);
+  });
+  await withUser(A, async () => {
+    await db.query("INSERT INTO public.github_task_events (task_id, event_key) VALUES ($1, 'pr:7:closed')", [task]);
+  });
+  rows = await events();
+  const github = rows.filter((e) => e.source === "github");
+  check("redelivered GitHub event is recorded once", github.length === 1 && github[0].event_type === "github.pull_request", github.length);
+
+  // Replay: reading after a cursor returns exactly the rest, and the dedupe
+  // key stops a second insert of the same event.
+  const middle = rows[2].seq;
+  const tail = await events(A, middle);
+  check("replay from a cursor returns only later events", tail.length === rows.length - 3 && tail[0].seq === rows[3].seq, `${tail.length}/${rows.length}`);
+  await withServiceRole(async () => {
+    const again = await db.query(
+      `INSERT INTO public.context_events (organization_id, project_id, source, entity_type, entity_id, event_type, occurred_at, dedupe_key)
+       VALUES ($1, $2, 'guidon', 'task', $3, 'task.created', now(), $4) ON CONFLICT (organization_id, dedupe_key) DO NOTHING RETURNING id`,
+      [orgId, eventsProject, task, `task:${task}:created`]
+    );
+    check("same dedupe key is not stored twice", again.rows.length === 0);
+  });
+
+  // Audit log: members read, nobody but the service role writes.
+  await withUser(A, async () => {
+    check("owner cannot edit events", await throwsInSavepoint("UPDATE public.context_events SET event_type = 'task.updated' WHERE project_id = $1", [eventsProject]));
+    check("owner cannot delete events", await throwsInSavepoint("DELETE FROM public.context_events WHERE project_id = $1", [eventsProject]));
+    check("owner cannot insert events", await throwsInSavepoint(
+      "INSERT INTO public.context_events (organization_id, project_id, source, entity_type, entity_id, event_type, occurred_at, dedupe_key) VALUES ($1, $2, 'guidon', 'task', $3, 'task.created', now(), 'forged')",
+      [orgId, eventsProject, task]));
+  });
+  check("other tenant sees no events", (await events(B)).length === 0);
+  await withUser(B, async () => {
+    check("other tenant reads nothing from the table either", (await db.query("SELECT 1 FROM public.context_events WHERE project_id = $1", [eventsProject])).rows.length === 0);
+  });
+  let anonDenied = false;
+  try { await withAnon(() => db.query("SELECT 1 FROM public.context_events")); } catch { anonDenied = true; }
+  check("anonymous clients cannot read events", anonDenied);
+
+  // Deleting a task logs task.deleted but not the comments it cascades to;
+  // deleting the project cascades its events away without errors.
+  await withUser(A, async () => {
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [task]);
+  });
+  rows = await events();
+  check("task deletion is logged once, cascaded comments are not", rows.filter((e) => e.event_type === "task.deleted").length === 1 && !rows.some((e) => e.event_type === "comment.deleted"));
+  await withUser(A, async () => {
+    await db.query("DELETE FROM public.projects WHERE id = $1", [eventsProject]);
+  });
+  await withServiceRole(async () => {
+    check("deleting the project deletes its events", (await db.query("SELECT 1 FROM public.context_events WHERE project_id = $1", [eventsProject])).rows.length === 0);
   });
 }
 

@@ -292,6 +292,28 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         parameters: [projectIdParam],
         get: op("listColumns", "The project's visible board columns, in order", "tasks:read", ok("Columns", wrap("columns", { type: "array", items: ref("Column") })), { tags: ["Projects"] }),
       },
+      "/projects/{projectId}/events": {
+        parameters: [projectIdParam],
+        get: op("listEvents", "The project's event log, oldest first", "project:read", ok("Events", {
+          type: "object",
+          properties: {
+            events: { type: "array", items: ref("ContextEvent") },
+            cursor: { type: "integer", description: "Pass as `after` to get only newer events (unchanged when there are none)." },
+            has_more: { type: "boolean" },
+          },
+          required: ["events", "cursor", "has_more"],
+        }), {
+          tags: ["Projects"],
+          description:
+            "Tasks, comments, decisions, knowledge sources, files, recorded attempts and GitHub events, captured in the same transaction as the change. " +
+            "Payloads hold references only (ids, changed field names, statuses). Events of transactions still running are held back until they end, " +
+            "so resuming from `cursor` never skips one. `dedupe_key` is unique per organization.",
+          parameters: [
+            { name: "after", in: "query", required: false, description: "seq of the last event already processed (default 0).", schema: { type: "integer", minimum: 0 } },
+            { name: "limit", in: "query", required: false, description: "1-500, default 100.", schema: { type: "integer", minimum: 1, maximum: 500 } },
+          ],
+        }),
+      },
       "/projects/{projectId}/priorities": {
         parameters: [projectIdParam],
         get: op("listPriorities", "The project's task priorities, most important first", "tasks:read", ok("Priorities", wrap("priorities", { type: "array", items: ref("Priority") })), { tags: ["Projects"] }),
@@ -470,7 +492,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           tags: ["Batch"],
           description:
             "Each operation runs through the same endpoint as a direct call - same scopes, permissions and rate limit (each operation counts). " +
-            "Needs no scope of its own - each operation needs its usual one. Not a transaction: operations succeed or fail on their own. Reachable paths: /projects, /projects/{id}/tasks|columns|priorities, " +
+            "Needs no scope of its own - each operation needs its usual one. Not a transaction: operations succeed or fail on their own. Reachable paths: /projects, /projects/{id}/tasks|columns|priorities|events, " +
             "the project knowledge collections and items, /tasks/{id} and its context|start|status|complete|comment|attempts.",
           requestBody: {
             required: true,
@@ -649,6 +671,25 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
             created_at: { type: "string", format: "date-time" },
             updated_at: { type: "string", format: "date-time" },
           },
+        },
+        ContextEvent: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            seq: { type: "integer" },
+            organization_id: { type: "string", format: "uuid" },
+            project_id: { type: "string", format: "uuid" },
+            source: { type: "string", enum: ["guidon", "github", "agent"] },
+            entity_type: { type: "string", enum: ["task", "comment", "decision", "source", "file", "attempt"] },
+            entity_id: { type: "string", format: "uuid" },
+            event_type: { type: "string", description: "e.g. task.created, task.status_changed, comment.created, attempt.recorded, github.pull_request" },
+            actor_id: { type: ["string", "null"], format: "uuid" },
+            occurred_at: { type: "string", format: "date-time" },
+            received_at: { type: "string", format: "date-time" },
+            dedupe_key: { type: "string" },
+            payload: { type: "object", additionalProperties: true },
+          },
+          required: ["id", "seq", "organization_id", "project_id", "source", "entity_type", "entity_id", "event_type", "occurred_at", "received_at", "dedupe_key", "payload"],
         },
         Column: {
           type: "object",
