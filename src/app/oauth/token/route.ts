@@ -26,6 +26,12 @@ export async function POST(request: NextRequest) {
       const result = await exchangeAgentClaim(params, params.grant_type === CLAIM_GRANT);
       return withHeaders(oauthJson(result, "error" in result ? 400 : 200), rate.headers);
     }
+    if (params.grant_type !== "authorization_code" && params.grant_type !== "refresh_token") {
+      return oauthJson({ error: "unsupported_grant_type", error_description: "Use authorization_code or refresh_token." }, 400);
+    }
+    // Client authentication may fetch the client's metadata document - bounded per address.
+    const rate = ipRateLimit("oauth-token", request, 60);
+    if (rate.limited) return withHeaders(oauthJson({ error: "slow_down" }, 429), rate.headers);
     if (!(await authenticateOAuthClient(clientId, params, "token"))) {
       return oauthJson({ error: "invalid_client", error_description: "Client authentication failed." }, 401);
     }

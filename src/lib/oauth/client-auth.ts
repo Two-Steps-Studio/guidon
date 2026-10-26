@@ -19,6 +19,15 @@ export async function authenticateOAuthClient(
     // DCR only registers public clients. Their code/refresh token still binds the client_id.
     return !params.client_assertion && !params.client_assertion_type;
   }
+  // Only a client someone signed in and consented to (/oauth/authorize stores
+  // it) can hold a code or token here. Checking that first keeps this public
+  // endpoint from fetching arbitrary URLs for anonymous callers.
+  const { data: known } = await serviceDataClient()
+    .from<{ client_id: string }>("oauth_clients")
+    .select("client_id")
+    .eq("client_id", clientId)
+    .maybeSingle();
+  if (!known) return false;
   try {
     // Do not use the consent screen's DB cache here: it stores presentation
     // metadata, not the authentication method or keys. A stale cached public

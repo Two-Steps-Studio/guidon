@@ -2,7 +2,7 @@ import "server-only";
 import { serviceDataClient } from "@/lib/data-client";
 import { generateApiKey, hashApiKey, keyPrefix } from "@/lib/api/api-keys";
 import { getClient } from "./oauth";
-import { normalizeResource, parseScopes } from "./oauth-core";
+import { normalizeResource, parseScopes, isMetadataDocumentClientId } from "./oauth-core";
 import { SITE_URL } from "@/lib/site-url";
 import { CLAIM_INTERVAL, CLAIM_TTL_SECONDS, DEFAULT_AGENT_SCOPES, agentSigningKey, claimEmailHash,
   createClaimSecrets, hashClaimSecret, isClaimHandle, mintAgentAssertion, verifyAgentAssertion } from "./agent-claims-core";
@@ -17,6 +17,9 @@ export async function startAgentClaim(input: Record<string, string>) {
   if (input.type !== "service_auth" || !input.login_hint || input.login_hint.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.login_hint)) {
     return { error: "invalid_request", error_description: "Use service_auth with login_hint (email) and a registered public client_id." };
   }
+  // Checked before getClient: a URL client_id would otherwise make this
+  // public endpoint fetch that URL just to reject it below.
+  if (isMetadataDocumentClientId(input.client_id ?? "")) return { error: "invalid_client" };
   const found = await getClient(input.client_id ?? "");
   // This ceremony is for public DCR clients. It must not bypass the signed
   // authentication policy of CIMD clients; they use the existing OAuth flow.
