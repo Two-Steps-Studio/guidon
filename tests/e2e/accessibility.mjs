@@ -28,7 +28,11 @@ export async function accessibilityCoverage({ page, context, origin, fixture, br
     const dialog=page.getByRole("dialog"); await dialog.waitFor(); await scan("create-task-dialog");
     for(let step=0;step<25;step++) { await page.keyboard.press("Tab"); assert.ok(await dialog.evaluate(node=>node.contains(document.activeElement)),"Focus must stay in the task dialog"); }
     await page.keyboard.press("Escape"); await dialog.waitFor({state:"hidden"});
-    assert.ok(await page.getByRole("button",{name:"New task",exact:true}).evaluate(node=>node===document.activeElement),"Closing the dialog restores focus");
+    // The dialog hands focus back from its close callback, which can land a
+    // frame after it is hidden - wait briefly, then still require it.
+    const newTask=page.getByRole("button",{name:"New task",exact:true});
+    await page.waitForFunction(node=>node===document.activeElement,await newTask.elementHandle(),{timeout:2000}).catch(()=>{});
+    assert.ok(await newTask.evaluate(node=>node===document.activeElement),"Closing the dialog restores focus");
     for(const [name,route] of [["project-settings",`/projects/${owner.projectId}/settings`],["profile","/profile"],["billing-self-hosted",`/organizations/${owner.organizationId}/billing`]]) { await page.goto(origin+route); await page.getByRole("heading",{level:1}).waitFor(); await scan(name); }
   } finally {
     await writeFile(path.join(artifacts,`${browserName}-accessibility.json`),JSON.stringify({browser:browserName,scans,manualRequired:["NVDA and VoiceOver announcements","physical mobile keyboard and touch","Cloud Stripe checkout in isolated sandbox"],checkout:"not-tested: isolated self-hosted fixture has no Stripe"},null,2));

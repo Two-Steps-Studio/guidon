@@ -196,5 +196,6 @@
   "Could not load the delivery history.": "No se pudo cargar el historial de entregas.",
   "This delivery already succeeded.": "Esta entrega ya se completó.",
   "This delivery was tried too many times.": "Esta entrega se ha intentado demasiadas veces.",
-  "Turn the webhook on to retry its deliveries.": "Activa el webhook para reintentar sus entregas."
+  "Turn the webhook on to retry its deliveries.": "Activa el webhook para reintentar sus entregas.",
+  "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "No se pudieron leer los precios de Stripe. Revisa STRIPE_SECRET_KEY."
 }
