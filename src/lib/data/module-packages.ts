@@ -34,5 +34,14 @@ export async function getModulePackages(userId: string, projectId: string): Prom
     .select<ModulePackageRow>(MODULE_PACKAGE_COLUMNS)
     .eq("project_id", projectId).order("module_id").limit(20);
   if (error) throw new Error("Could not load module packages. Apply migrations 080 and 082 before deployment.");
-  return data.map(decodeModulePackage);
+  // One unreadable row (written straight through the API, or by an older
+  // schema) must not take the whole modules page down - it is skipped.
+  return data.flatMap((row) => {
+    try {
+      return [decodeModulePackage(row)];
+    } catch {
+      console.warn("[modules] skipping unreadable package", row.module_id);
+      return [];
+    }
+  });
 }

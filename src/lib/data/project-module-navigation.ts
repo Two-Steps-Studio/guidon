@@ -13,11 +13,17 @@ export async function getProjectModuleLinks(userId: string, projectId: string): 
   ]);
   if (legacy.error || !legacy.data) throw new Error("Could not load project module navigation");
   if (packages.error) throw new Error("Could not load installed module navigation");
-  const content = customModulesSchema.parse(legacy.data.custom_modules);
-  return [
-    ...content.map(module => ({ id: `content-${module.id}`, name: module.title, href: `/projects/${projectId}/extensions/content/${module.id}` })),
-    ...packages.data.map(module => ({ ...module, manifest: moduleManifestSchema.parse(module.manifest) }))
-      .filter(module => module.manifest.permissions.includes("module-data:read"))
-      .map(module => ({ id: `package-${module.module_id}`, name: module.manifest.name, href: `/projects/${projectId}/extensions/package/${module.module_id}` })),
-  ];
+  // This feeds the layout of every project page: a module row the app can't
+  // read (written straight through the API, or from an older schema) is left
+  // out of the navigation instead of breaking the whole project.
+  const content = customModulesSchema.safeParse(legacy.data.custom_modules);
+  const links: ProjectModuleLink[] = content.success
+    ? content.data.map(module => ({ id: `content-${module.id}`, name: module.title, href: `/projects/${projectId}/extensions/content/${module.id}` }))
+    : [];
+  for (const row of packages.data) {
+    const manifest = moduleManifestSchema.safeParse(row.manifest);
+    if (!manifest.success || manifest.data.id !== row.module_id || !manifest.data.permissions.includes("module-data:read")) continue;
+    links.push({ id: `package-${row.module_id}`, name: manifest.data.name, href: `/projects/${projectId}/extensions/package/${row.module_id}` });
+  }
+  return links;
 }
