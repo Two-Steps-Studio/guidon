@@ -7,8 +7,7 @@ import { withUser } from "@/lib/db/session";
 import { isAIAvailableForOrg } from "@/lib/ai/resolve-provider";
 import { normalizeTaskStatus, resolveBoardColumns, resolvePriorities, taskComparator } from "@/lib/work/task-board";
 import { getWorkflowOverrides } from "@/lib/data/workflow";
-import { getSignedUrl } from "@/lib/storage/storage";
-import { STORAGE_BUCKETS } from "@/lib/storage/storage-constants";
+import { getSignedCoverUrl } from "@/lib/storage/storage";
 import { purgeFinishedTasks } from "@/lib/work/finished-cleanup";
 import { WorkBoard } from "./work-board";
 import type { TaskCardMember } from "@/components/work/task-card";
@@ -85,7 +84,7 @@ async function signCoverImagePaths(pathsByTask: Map<string, string>): Promise<Re
   const entries = await Promise.all(
     [...pathsByTask.entries()].map(async ([taskId, storagePath]) => {
       try {
-        const url = await getSignedUrl(STORAGE_BUCKETS.ATTACHMENTS, storagePath);
+        const url = await getSignedCoverUrl(storagePath);
         return [taskId, url] as const;
       } catch {
         return null;

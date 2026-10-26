@@ -360,6 +360,12 @@ function TaskCardComponent({
           <img
             src={coverImageUrl}
             alt=""
+            // Off-screen cards (most of a large board) don't download theirs
+            // until scrolled to.
+            loading="lazy"
+            decoding="async"
+            width={260}
+            height={112}
             className="h-28 w-full object-cover"
           />
         </div>
@@ -374,7 +380,7 @@ function TaskCardComponent({
             style={priorityStyle.style}
           />
         )}
-        <h4
+        <h3
           className={cn(
             "flex-1 text-sm font-medium leading-snug line-clamp-3",
             done ? "text-muted-foreground line-through decoration-muted-foreground/50" : "text-foreground"
@@ -392,7 +398,7 @@ function TaskCardComponent({
               {t("newBadge")}
             </span>
           )}
-        </h4>
+        </h3>
         {onMoveTo && moveTargets && moveTargets.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
