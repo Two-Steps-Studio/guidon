@@ -233,7 +233,10 @@ export function AppSidebar({
   const activeStyle = projectColor
     ? ({
         backgroundColor: `${projectColor}20`,
-        color: projectColor,
+        // The label keeps the sidebar's own text colour: a project colour as
+        // text on its own tint fails contrast for most colours (Lighthouse:
+        // #0066ff on its tint was 3.9:1). The icon carries the colour instead.
+        "--project-color": projectColor,
         "--tw-ring-color": projectColor,
       } as React.CSSProperties)
     : undefined;
@@ -306,7 +309,7 @@ export function AppSidebar({
                         tooltip={t(item.labelKey)}
                         className={
                           active
-                            ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color)"
+                            ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color) [&>svg]:text-(--project-color)"
                             : undefined
                         }
                         style={active ? activeStyle : undefined}
