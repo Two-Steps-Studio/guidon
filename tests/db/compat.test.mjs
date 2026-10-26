@@ -3782,5 +3782,26 @@ section("70. personal module drafts: tenant/role boundaries and optimistic write
   let anonDenied=false;try{await withAnon(()=>db.query("SELECT 1 FROM public.project_module_drafts"));}catch{anonDenied=true;}check("anonymous clients cannot access drafts",anonDenied);
 }
 
+section("71. module cap counts installed packages only, reinstall included (087)");
+
+{
+  await withUser(A, async () => {
+    const proj = await db.query("INSERT INTO public.projects (organization_id, name) SELECT organization_id, 'Modules 087' FROM public.projects WHERE id = $1 RETURNING id", [projectId]);
+    const pid = proj.rows[0].id;
+    const install = (id) => db.query("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,$2,$3)", [pid, id, JSON.stringify({ manifestVersion: 1, id })]);
+    for (let i = 0; i < 20; i++) await install(`m-${i}`);
+    check("21st installed module still rejected", await throwsInSavepoint("INSERT INTO public.project_module_packages (project_id,module_id,manifest) VALUES ($1,'m-20','{\"manifestVersion\":1,\"id\":\"m-20\"}')", [pid]));
+    await db.query("UPDATE public.project_module_packages SET installed = false, enabled = false WHERE project_id = $1 AND module_id = 'm-0'", [pid]);
+    await install("m-20");
+    check("after uninstalling one, a new module can be installed", (await db.query("SELECT 1 FROM public.project_module_packages WHERE project_id=$1 AND module_id='m-20' AND installed", [pid])).rows.length === 1);
+    check("reinstalling an archived module over the cap is rejected", await throwsInSavepoint("UPDATE public.project_module_packages SET installed = true WHERE project_id = $1 AND module_id = 'm-0'", [pid]));
+    await db.query("UPDATE public.project_module_packages SET installed = false, enabled = false WHERE project_id = $1 AND module_id = 'm-5'", [pid]);
+    const back = await db.query("UPDATE public.project_module_packages SET installed = true WHERE project_id = $1 AND module_id = 'm-0' RETURNING module_id", [pid]);
+    check("reinstalling an archived module under the cap works", back.rows.length === 1);
+    const settings = await db.query("UPDATE public.project_module_packages SET settings = '{}' WHERE project_id = $1 AND module_id = 'm-1' RETURNING module_id", [pid]);
+    check("other updates of an installed module are not capped", settings.rows.length === 1);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
