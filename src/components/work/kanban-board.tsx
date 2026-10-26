@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useReducedMotionPreference } from "@/lib/use-reduced-motion";
@@ -115,7 +115,7 @@ function edgeScrollDelta(distanceFromEdge: number): number {
   return Math.round(proximity * AUTO_SCROLL_MAX_SPEED_PX);
 }
 
-export function KanbanBoard({
+function KanbanBoardComponent({
   tasks,
   members,
   commentCounts = {},
@@ -174,6 +174,14 @@ export function KanbanBoard({
     [tasks, sortMode, priorities, columns]
   );
   const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
+  // One array per column, built once: passing `columns.filter(...)` inline
+  // made a new array for every card on every render, which broke TaskCard's
+  // memo() - every drag-move tick re-rendered the whole board (with a few
+  // hundred tasks, each tick blocked the main thread for 100-250 ms).
+  const moveTargetsByStatus = useMemo(
+    () => new Map(columns.map((column) => [column.status, columns.filter((other) => other.status !== column.status)])),
+    [columns]
+  );
 
   // Ctrl/Cmd-click toggles one card; Shift-click selects every card between
   // the last clicked one and this one when both are in the same column
@@ -182,9 +190,15 @@ export function KanbanBoard({
   const selectionRef = useRef<ReadonlySet<string>>(selectedIds ?? new Set());
   const anchorRef = useRef<string | null>(null);
   const groupsRef = useRef(groups);
+  // The parent's onMoveTask is a new function on each of its renders (opening
+  // a task, typing in a filter...). Read through a ref so the move handlers
+  // below stay stable and TaskCard's memo() holds - otherwise every one of
+  // those renders re-rendered every card on the board.
+  const onMoveTaskRef = useRef(onMoveTask);
   useEffect(() => {
     selectionRef.current = selectedIds ?? new Set();
     groupsRef.current = groups;
+    onMoveTaskRef.current = onMoveTask;
     if (!selectedIds?.size) anchorRef.current = null;
   });
   const handleSelect = useCallback(
@@ -212,7 +226,7 @@ export function KanbanBoard({
     async (task: Task, direction: "up" | "down") => {
       if (!canDrag) return;
       const status = normalizeTaskStatus(task.status);
-      const column = groups[status];
+      const column = groupsRef.current[status];
       const currentIndex = column.findIndex((item) => item.id === task.id);
       if (currentIndex === -1) return;
 
@@ -220,9 +234,9 @@ export function KanbanBoard({
       if (targetIndex < 0 || targetIndex >= column.length) return; // already at an edge
 
       const sortOrder = sortOrderForPosition(column, targetIndex, task.id);
-      await onMoveTask(task, status, sortOrder);
+      await onMoveTaskRef.current(task, status, sortOrder);
     },
-    [canDrag, groups, onMoveTask]
+    [canDrag]
   );
 
   // Touch-friendly alternative to dragging - a precise drag on a small
@@ -235,18 +249,18 @@ export function KanbanBoard({
   const handleMoveTo = useCallback(
     async (task: Task, status: TaskStatus) => {
       if (!canEdit || normalizeTaskStatus(task.status) === status) return;
-      const column = groups[status];
+      const column = groupsRef.current[status];
       const sortOrder = sortOrderForPosition(column, column.length, task.id);
-      await onMoveTask(task, status, sortOrder);
+      await onMoveTaskRef.current(task, status, sortOrder);
     },
-    [canEdit, groups, onMoveTask]
+    [canEdit]
   );
 
   const handleDrop = useCallback(
     async (task: Task, status: TaskStatus, index: number) => {
       if (!canDrag) return;
       const currentStatus = normalizeTaskStatus(task.status);
-      const column = groups[status];
+      const column = groupsRef.current[status];
       const currentIndex = column.findIndex((item) => item.id === task.id);
 
       // No-op: dropped exactly where it already sits.
@@ -258,9 +272,9 @@ export function KanbanBoard({
       }
 
       const sortOrder = sortOrderForPosition(column, index, task.id);
-      await onMoveTask(task, status, sortOrder);
+      await onMoveTaskRef.current(task, status, sortOrder);
     },
-    [canDrag, groups, onMoveTask]
+    [canDrag]
   );
 
   // handleDragEnd (passed to every TaskCard as a stable, empty-deps
@@ -509,7 +523,7 @@ export function KanbanBoard({
         const isTargetColumn = dropTarget?.status === column.status;
 
         return (
-          <section
+          <div
             key={column.status}
             data-column-status={column.status}
             role="listitem"
@@ -527,10 +541,10 @@ export function KanbanBoard({
                 className={cn("h-2 w-2 rounded-full", column.color || projectColor ? "" : column.accentClass)}
                 style={column.color || projectColor ? { backgroundColor: column.color || projectColor! } : undefined}
               />
-              <h3 className="text-sm font-medium text-foreground">
+              <h2 className="text-sm font-medium text-foreground">
                 {column.label}
-              </h3>
-              <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums text-muted-foreground">
+              </h2>
+              <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums text-foreground/75">
                 {columnTasks.length}
               </span>
               {canEdit && (
@@ -556,7 +570,15 @@ export function KanbanBoard({
               )}
             >
               {columnTasks.map((task, index) => (
-                <div key={task.id}>
+                // content-visibility: the browser skips style and layout for
+                // cards scrolled out of their column. With a few hundred
+                // cards every full-document style pass (opening a dialog,
+                // focus, measuring) paid for all of them.
+                // contain-intrinsic-size "auto" remembers each card's last
+                // rendered height, so scroll height and drop targets stay right.
+                // The 3px padding (cancelled by the margin) keeps the focus and
+                // selection rings inside the box content-visibility paints.
+                <div key={task.id} className="-m-[3px] p-[3px] [content-visibility:auto] [contain-intrinsic-size:auto_7rem]">
                   <DropZone
                     active={
                       isTargetColumn &&
@@ -587,7 +609,7 @@ export function KanbanBoard({
                     onReorder={canDrag ? handleReorder : undefined}
                     canMoveUp={index > 0}
                     canMoveDown={index < columnTasks.length - 1}
-                    moveTargets={canEdit ? columns.filter((c) => c.status !== column.status) : undefined}
+                    moveTargets={canEdit ? moveTargetsByStatus.get(column.status) : undefined}
                     onMoveTo={canEdit ? handleMoveTo : undefined}
                     selected={selectedIds?.has(task.id) ?? false}
                     onSelect={canEdit && onSelectionChange ? handleSelect : undefined}
@@ -610,7 +632,7 @@ export function KanbanBoard({
                 </p>
               )}
             </div>
-          </section>
+          </div>
         );
       })}
 
@@ -698,3 +720,10 @@ function DropZone({
     </div>
   );
 }
+
+/**
+ * memo(): the work page re-renders for things the board doesn't show
+ * (opening a task, the bulk bar, announcements). With a few hundred cards,
+ * rebuilding every column for those was a visible stall.
+ */
+export const KanbanBoard = memo(KanbanBoardComponent);

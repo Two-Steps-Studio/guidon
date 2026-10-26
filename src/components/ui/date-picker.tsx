@@ -29,6 +29,31 @@ function parseDay(value: string | null | undefined): { year: number; month: numb
  * A stored calendar-day value (UTC midnight, lib/date.ts) as "YYYY-MM-DD".
  * Takes a Date as well: self-hosted pg hands timestamptz back as Date objects.
  */
+const FORMAT_OPTIONS = {
+  month: { month: "long", year: "numeric", timeZone: "UTC" },
+  weekdayNarrow: { weekday: "narrow", timeZone: "UTC" },
+  weekdayLong: { weekday: "long", timeZone: "UTC" },
+  full: { dateStyle: "full", timeZone: "UTC" },
+  medium: { dateStyle: "medium", timeZone: "UTC" },
+} as const satisfies Record<string, Intl.DateTimeFormatOptions>
+
+const formatters = new Map<string, Intl.DateTimeFormat>()
+
+/**
+ * Intl.DateTimeFormat is expensive to construct, and the calendar used to
+ * build ~45 of them per render (one per day for the aria labels) - a
+ * noticeable part of opening the task dialog. One per locale and style.
+ */
+function formatter(locale: string, style: keyof typeof FORMAT_OPTIONS): Intl.DateTimeFormat {
+  const key = `${locale}|${style}`
+  let cached = formatters.get(key)
+  if (!cached) {
+    cached = new Intl.DateTimeFormat(locale, FORMAT_OPTIONS[style])
+    formatters.set(key, cached)
+  }
+  return cached
+}
+
 export function toDayValue(value: string | Date | null | undefined): DayString {
   if (!value) return ""
   const date = value instanceof Date ? value : new Date(value)
@@ -97,26 +122,26 @@ export function DatePicker({ value: controlled, defaultValue = "", onChange: onC
   ]
   while (cells.length % 7) cells.push(null)
 
-  const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(
+  const monthLabel = formatter(locale, "month").format(
     new Date(Date.UTC(view.year, view.month, 1))
   )
   const weekdayLabels = Array.from({ length: 7 }, (_, i) => {
     // 2024-01-07 was a Sunday.
     const date = new Date(Date.UTC(2024, 0, 7 + i + (sundayFirst ? 0 : 1)))
     return {
-      short: new Intl.DateTimeFormat(locale, { weekday: "narrow", timeZone: "UTC" }).format(date),
-      long: new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(date),
+      short: formatter(locale, "weekdayNarrow").format(date),
+      long: formatter(locale, "weekdayLong").format(date),
     }
   })
   const longDate = (day: DayString) => {
     const parsed = parseDay(day)!
-    return new Intl.DateTimeFormat(locale, { dateStyle: "full", timeZone: "UTC" }).format(
+    return formatter(locale, "full").format(
       new Date(Date.UTC(parsed.year, parsed.month, parsed.day))
     )
   }
   const shortDate = (day: DayString) => {
     const parsed = parseDay(day)!
-    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(
+    return formatter(locale, "medium").format(
       new Date(Date.UTC(parsed.year, parsed.month, parsed.day))
     )
   }
