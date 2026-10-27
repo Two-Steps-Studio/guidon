@@ -60,7 +60,7 @@ try{
   await page.getByRole("checkbox",{name:"I approve this plan and its permissions to create a manifest."}).check();
   await page.getByRole("button",{name:"Create manifest",exact:true}).click();
   await page.getByLabel("Module manifest (JSON)").waitFor();
-  assert.ok(await page.getByRole("button",{name:"Publish — coming soon"}).isDisabled());
+  assert.match(await page.getByRole("link",{name:"Publish",exact:true}).getAttribute("href"),/\/modules\/publish\?source=draft$/);
   await page.getByRole("button",{name:"Undo",exact:true}).click();assert.equal(await page.getByLabel("Module manifest (JSON)").count(),0);
   await page.getByRole("button",{name:"Redo",exact:true}).click();await page.getByLabel("Module manifest (JSON)").waitFor();
   assert.equal(await page.getByRole("checkbox",{name:"I approve these permissions for this project."}).isChecked(),false);
