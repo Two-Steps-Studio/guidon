@@ -1,0 +1,58 @@
+name: Large-project performance
+
+# Manual: a production build on PostgreSQL 17 with 100/1000/3000-task
+# projects, checked against tests/perf/budgets.json. Not on every PR - it
+# takes several minutes and timings vary between runners.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: guidon
+          POSTGRES_PASSWORD: perf-only
+          POSTGRES_DB: guidon
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U guidon" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://guidon:perf-only@127.0.0.1:5432/guidon
+      STORAGE_PROVIDER: local
+      STORAGE_PATH: /tmp/guidon-perf-storage
+      APP_URL: http://127.0.0.1:5803
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:5803
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: echo "AUTH_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - run: npm run migrate
+      - run: npm run build
+      - name: Start the standalone server
+        run: |
+          cp -r public .next/standalone/ && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/
+          (cd .next/standalone && NODE_ENV=production HOSTNAME=127.0.0.1 PORT=5803 node server.js > "$RUNNER_TEMP/app.log" 2>&1 &)
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:5803/api/health >/dev/null && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/app.log"; exit 1
+      - run: node tests/perf/large-project.mjs --origin http://127.0.0.1:5803 --budgets tests/perf/budgets.json --out "$RUNNER_TEMP/performance.json"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance
+          path: ${{ runner.temp }}/performance.json
+          if-no-files-found: ignore

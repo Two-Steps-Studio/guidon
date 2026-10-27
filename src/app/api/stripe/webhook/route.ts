@@ -4,7 +4,7 @@ import { getStripe, isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "@/app/admin/organizations/constants";
-import { intervalFromStripe, nextPastDueSince, nextTrialUsedAt } from "@/lib/billing/billing-core";
+import { processStripeEvent, snapshotFromStripe, type WebhookDeps } from "@/lib/billing/stripe-webhook-core";
 
 /** Stripe's own events are small JSON - generous cap against an unsigned, unbounded body. */
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -14,10 +14,11 @@ const MAX_BODY_BYTES = 1024 * 1024;
  * actually pays for through Checkout/the Customer Portal
  * (src/app/organizations/[id]/billing/actions.ts). Subscribe this endpoint
  * in the Stripe Dashboard to customer.subscription.created/updated/deleted -
- * every field this handler needs (status, price, period dates,
- * cancel_at_period_end, and this app's own organization_id via the
- * subscription's metadata, set at checkout time) travels on the
- * subscription object itself, so checkout.session.completed isn't needed.
+ * the handler re-reads the subscription from Stripe for each event (its
+ * current status, price, period dates, cancel_at_period_end and this app's
+ * organization_id metadata, set at checkout time), so delivery order doesn't
+ * matter and checkout.session.completed isn't needed. The rules live in
+ * src/lib/billing/stripe-webhook-core.ts (tests/billing-webhook.test.mjs).
  *
  * Authenticated by the endpoint's signing secret (STRIPE_WEBHOOK_SECRET,
  * Stripe-Signature header), not a session or API key - hence listed in
@@ -57,74 +58,58 @@ export async function POST(request: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Invalid signature." },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid signature." }, { status: 401 });
   }
 
-  const firstDelivery = await recordEventOnce(event.id, event.type);
-  if (!firstDelivery) {
-    return NextResponse.json({ ok: true, deduped: true });
-  }
-
-  try {
-    await handleEvent(event);
-  } catch (error) {
-    console.error("[Stripe webhook]", event.type, error);
-    return NextResponse.json({ error: "Failed to process event." }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true });
+  const outcome = await processStripeEvent(event, webhookDeps(stripe));
+  return NextResponse.json(outcome.body, { status: outcome.status });
 }
 
-/** True the first time this Stripe event id is seen - false on a redelivery. */
-async function recordEventOnce(eventId: string, eventType: string): Promise<boolean> {
+/**
+ * Supabase (service role) and the Stripe API for src/lib/billing/stripe-webhook-core.ts,
+ * which holds the rules: claim/release, current state from Stripe, no plan without payment.
+ */
+function webhookDeps(stripe: Stripe): WebhookDeps {
   const supabase = createServiceClient();
-  const { data, error } = await supabase
-    .from("stripe_webhook_events")
-    .upsert({ event_id: eventId, event_type: eventType }, { onConflict: "event_id", ignoreDuplicates: true })
-    .select("event_id");
-  if (error) throw new Error(error.message);
-  return (data ?? []).length === 1;
-}
-
-async function handleEvent(event: Stripe.Event): Promise<void> {
-  switch (event.type) {
-    case "customer.subscription.created":
-    case "customer.subscription.updated":
-      await syncSubscription(event.data.object as Stripe.Subscription);
-      return;
-    case "customer.subscription.deleted":
-      await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
-      return;
-    default:
-      // The Dashboard only sends what this endpoint is subscribed to -
-      // anything else reaching here is a configuration mismatch, not an
-      // error to surface as a failed delivery.
-      return;
-  }
-}
-
-/** Guidon's own vocabulary (015's CHECK constraint) is narrower than Stripe's. */
-function mapStripeStatus(status: Stripe.Subscription.Status): "active" | "trialing" | "past_due" | "canceled" {
-  switch (status) {
-    case "trialing":
-      return "trialing";
-    case "active":
-      return "active";
-    case "past_due":
-    case "unpaid":
-      return "past_due";
-    case "canceled":
-    case "incomplete_expired":
-      return "canceled";
-    default:
-      // incomplete/paused/anything future Stripe adds: no confirmed payment
-      // yet, or access explicitly suspended - never silently grant active
-      // access for a status this app doesn't recognize.
-      return "past_due";
-  }
+  return {
+    async claimEvent(eventId, eventType) {
+      const { data, error } = await supabase
+        .from("stripe_webhook_events")
+        .upsert({ event_id: eventId, event_type: eventType }, { onConflict: "event_id", ignoreDuplicates: true })
+        .select("event_id");
+      if (error) throw new Error(error.message);
+      return (data ?? []).length === 1;
+    },
+    async releaseEvent(eventId) {
+      const { error } = await supabase.from("stripe_webhook_events").delete().eq("event_id", eventId);
+      if (error) throw new Error(error.message);
+    },
+    async retrieveSubscription(subscriptionId) {
+      return snapshotFromStripe(await stripe.subscriptions.retrieve(subscriptionId));
+    },
+    async loadStored(organizationId) {
+      // "*": the 071 columns are simply absent on a database that hasn't run it yet.
+      const { data } = await supabase.from("subscriptions").select("*").eq("organization_id", organizationId).maybeSingle();
+      if (!data) return null;
+      const row = data as { stripe_subscription_id?: string | null; status?: string | null; trial_used_at?: string | null; past_due_since?: string | null };
+      return {
+        stripeSubscriptionId: row.stripe_subscription_id ?? null,
+        status: row.status ?? null,
+        trialUsedAt: row.trial_used_at ?? null,
+        pastDueSince: row.past_due_since ?? null,
+        hasBillingColumns: "trial_used_at" in data,
+      };
+    },
+    planIdForPrice: (priceId) => planIdForPrice(supabase, priceId),
+    async saveSubscription(organizationId, patch) {
+      const { data, error } = await supabase.from("subscriptions").update(patch).eq("organization_id", organizationId).select("organization_id");
+      if (error) throw new Error(error.message);
+      return (data ?? []).length;
+    },
+    syncProjectLimit: (organizationId, planId) => syncOrgProjectLimit(supabase, organizationId, planId),
+    log: (message, ...details) => console.error(message, ...details),
+    now: () => new Date(),
+  };
 }
 
 /**
@@ -171,91 +156,4 @@ async function planIdForPrice(supabase: ReturnType<typeof createServiceClient>, 
   if (price?.plan_id) return price.plan_id;
   const { data: plan } = await supabase.from("plans").select("id").eq("stripe_price_id", priceId).maybeSingle();
   return plan?.id ?? "free";
-}
-
-async function syncSubscription(subscription: Stripe.Subscription): Promise<void> {
-  const organizationId = subscription.metadata?.organization_id;
-  if (!organizationId) {
-    console.error("[Stripe webhook] subscription", subscription.id, "has no organization_id metadata - ignoring");
-    return;
-  }
-
-  const supabase = createServiceClient();
-  const item = subscription.items.data[0];
-  const priceId = item?.price?.id;
-
-  const planId = priceId ? await planIdForPrice(supabase, priceId) : "free";
-  const status = mapStripeStatus(subscription.status);
-  const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
-
-  // "*": the 071 columns are simply absent on a database that hasn't run it
-  // yet - writing them there would fail the whole sync.
-  const { data: existing } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("organization_id", organizationId)
-    .maybeSingle();
-  const previous = (existing ?? {}) as { trial_used_at?: string | null; past_due_since?: string | null };
-  const now = new Date();
-  const billingFields =
-    existing && "trial_used_at" in existing
-      ? {
-          billing_interval: intervalFromStripe(item?.price?.recurring?.interval, item?.price?.recurring?.interval_count),
-          trial_used_at: nextTrialUsedAt(status, previous.trial_used_at ?? null, now),
-          past_due_since: nextPastDueSince(status, previous.past_due_since ?? null, now),
-        }
-      : {};
-
-  const { data: updatedRows, error } = await supabase
-    .from("subscriptions")
-    .update({
-      plan_id: planId,
-      status,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscription.id,
-      current_period_start: item ? new Date(item.current_period_start * 1000).toISOString() : undefined,
-      current_period_end: item ? new Date(item.current_period_end * 1000).toISOString() : undefined,
-      cancel_at_period_end: subscription.cancel_at_period_end,
-      ...billingFields,
-    })
-    .eq("organization_id", organizationId)
-    .select("organization_id");
-
-  if (error) throw new Error(error.message);
-  // Service-role write, no RLS backstop - a zero-rows match means
-  // organizationId has no subscriptions row (deleted org, stale metadata),
-  // which would otherwise report { ok: true } to Stripe with nothing synced.
-  if (!updatedRows || updatedRows.length === 0) {
-    console.error("[Stripe webhook] subscriptions update matched no row for organization_id", organizationId);
-    return;
-  }
-
-  await syncOrgProjectLimit(supabase, organizationId, planId);
-}
-
-/** Canceled (not just cancel_at_period_end, the subscription is actually gone): fall back to Free. */
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
-  const organizationId = subscription.metadata?.organization_id;
-  if (!organizationId) {
-    console.error("[Stripe webhook] subscription", subscription.id, "has no organization_id metadata - ignoring");
-    return;
-  }
-
-  const supabase = createServiceClient();
-  const { data: updatedRows, error } = await supabase
-    .from("subscriptions")
-    .update({
-      plan_id: "free",
-      status: "canceled",
-      cancel_at_period_end: false,
-    })
-    .eq("organization_id", organizationId)
-    .select("organization_id");
-  if (error) throw new Error(error.message);
-  if (!updatedRows || updatedRows.length === 0) {
-    console.error("[Stripe webhook] subscriptions update matched no row for organization_id", organizationId);
-    return;
-  }
-
-  await syncOrgProjectLimit(supabase, organizationId, "free");
 }

@@ -32,7 +32,7 @@ export function LegalDocument({ copy, templateCredit = true }: { copy: LegalCopy
       <h1 className="text-3xl font-bold">{copy.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">Version / last revised: {LEGAL_VERSION}</p>
       <nav aria-label="Legal documents" className="my-6 flex flex-wrap gap-4 text-sm underline">
-        <Link href="/legal/terms">Terms</Link><Link href="/legal/privacy">Privacy</Link>
+        <Link href="/legal/terms">Terms</Link><Link href="/legal/privacy">Privacy</Link><Link href="/legal/refunds">Refunds</Link>
         <Link href="/legal/cookies">Cookies</Link><Link href="/legal/eula">App licence</Link>
       </nav>
       <p className="mb-8 leading-relaxed">{copy.introduction}</p>

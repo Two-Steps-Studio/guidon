@@ -32,6 +32,9 @@ export async function SiteFooter() {
           <Link href="/legal/privacy" className="hover:text-foreground">
             {t("footer.privacy")}
           </Link>
+          <Link href="/legal/refunds" className="hover:text-foreground">
+            {t("footer.refunds")}
+          </Link>
           <Link href="/legal/eula" className="hover:text-foreground">
             {t("footer.eula")}
           </Link>

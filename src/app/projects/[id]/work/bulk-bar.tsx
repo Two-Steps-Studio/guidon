@@ -60,7 +60,7 @@ export function BulkBar({
     <div
       role="toolbar"
       aria-label={t("bulkToolbar")}
-      className="fixed inset-x-0 bottom-4 z-40 mx-auto flex w-fit max-w-[calc(100vw-2rem)] flex-wrap items-center gap-1 rounded-xl border border-border bg-popover/95 px-2 py-1.5 shadow-lg backdrop-blur-md"
+      className="fixed inset-x-0 bottom-4 z-40 mx-auto flex w-fit max-w-[calc(100vw-2rem)] flex-wrap items-center gap-1 rounded-xl border border-border bg-popover px-2 py-1.5 shadow-lg"
     >
       <span className="px-2 text-sm font-medium tabular-nums">{t("bulkSelected", { count: selected.length })}</span>
 

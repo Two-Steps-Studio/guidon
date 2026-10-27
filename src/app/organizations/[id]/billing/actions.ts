@@ -103,6 +103,11 @@ export async function createCheckoutSession(
   }
 
   if (!checkoutUrl) return { error: await tr("Stripe did not return a checkout URL.") };
+  // First checkout of the organization, for the funnel (migration 096). Best effort:
+  // the column is absent before 096 and counting never blocks paying.
+  const { error: funnelError } = await supabase.from("subscriptions").update({ checkout_started_at: new Date().toISOString() })
+    .eq("organization_id", organizationId).is("checkout_started_at", null);
+  if (funnelError && !/checkout_started_at/.test(funnelError.message)) console.error("[funnel] checkout_started_at", funnelError.message);
   redirect(checkoutUrl);
 }
 
