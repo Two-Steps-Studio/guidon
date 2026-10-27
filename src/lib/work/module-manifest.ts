@@ -20,6 +20,7 @@ const permission = z.enum([
   "module-data:write",
   "notifications:send",
   "webhooks:send",
+  "code:run",
 ]);
 
 const fieldBase = {
@@ -54,6 +55,7 @@ const viewBase = {
   entity: identifier,
   fields: z.array(identifier).min(1).max(50),
 };
+export const MODULE_SCRIPT_MAX_CHARS = 100_000;
 const blockTitle = displayName;
 /**
  * Blocks of a page view (engine 1.1). `text` is the author's fixed copy; the
@@ -68,13 +70,21 @@ export const modulePageBlockSchema = z.discriminatedUnion("type", [
 ]);
 export type ModulePageBlock = z.infer<typeof modulePageBlockSchema>;
 
-const moduleViewSchema = z.discriminatedUnion("type", [
-  z.strictObject({ id: identifier, name: displayName, type: z.literal("page"), blocks: z.array(modulePageBlockSchema).min(1).max(20) }),
+const pageViewSchema = z.strictObject({ id: identifier, name: displayName, type: z.literal("page"), blocks: z.array(modulePageBlockSchema).min(1).max(20) });
+const dataViewSchemas = [
   z.strictObject({ ...viewBase, type: z.literal("table") }),
   z.strictObject({ ...viewBase, type: z.literal("form") }),
   z.strictObject({ ...viewBase, type: z.literal("board"), groupBy: identifier.optional() }),
   z.strictObject({ ...viewBase, type: z.literal("chart"), groupBy: identifier }),
   z.strictObject({ ...viewBase, type: z.literal("calendar"), dateField: identifier }),
+] as const;
+/** Views the AI builder and the visual inspector produce - everything except script-drawn ones. */
+export const buildableViewSchema = z.discriminatedUnion("type", [pageViewSchema, ...dataViewSchemas]);
+const moduleViewSchema = z.discriminatedUnion("type", [
+  pageViewSchema,
+  /** Drawn by the module's own script in the sandbox (engine 1.3, docs/module-sandbox.md). */
+  z.strictObject({ id: identifier, name: displayName, type: z.literal("custom") }),
+  ...dataViewSchemas,
 ]);
 
 /**
@@ -151,6 +161,8 @@ export const moduleManifestStructureSchema = z.strictObject({
   lifecycle: lifecycleSchema.default(safeLifecycle),
   // Optional, not defaulted: a manifest without automations parses exactly as before (digests and signatures stay stable).
   automations: z.array(moduleAutomationSchema).max(20).optional(),
+  /** The module's own JavaScript (engine 1.3), run only inside the browser sandbox - never on the server. */
+  script: z.strictObject({ source: z.string().min(1).max(MODULE_SCRIPT_MAX_CHARS) }).optional(),
 });
 
 export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((manifest, ctx) => {
@@ -177,6 +189,10 @@ export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((m
 
   addDuplicateIssues(manifest.views, (view) => view.id, ctx, ["views"], "View IDs must be unique.");
   manifest.views.forEach((view, index) => {
+    if (view.type === "custom") {
+      if (!manifest.script) ctx.addIssue({ code: "custom", path: ["views", index], message: "A custom view needs the module's script." });
+      return;
+    }
     if (view.type === "page") {
       view.blocks.forEach((block, blockIndex) => {
         if (block.type === "text") return;
@@ -237,6 +253,13 @@ export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((m
     ctx.addIssue({ code: "custom", path: ["engine", "minVersion"], message: "Automations need engine 1.2.0 or later." });
   }
 
+  if (manifest.script && !manifest.permissions.includes("code:run")) {
+    ctx.addIssue({ code: "custom", path: ["permissions"], message: "A module with a script needs the code:run permission." });
+  }
+  if ((manifest.script || manifest.views.some((view) => view.type === "custom")) && compareSemver(manifest.engine.minVersion, "1.3.0") < 0) {
+    ctx.addIssue({ code: "custom", path: ["engine", "minVersion"], message: "Scripts and custom views need engine 1.3.0 or later." });
+  }
+
   const usesEngine11 = manifest.views.some((view) => view.type === "page") || manifest.entities.some((entity) => entity.fields.some((field) => field.type === "url"));
   if (usesEngine11 && compareSemver(manifest.engine.minVersion, "1.1.0") < 0) {
     ctx.addIssue({ code: "custom", path: ["engine", "minVersion"], message: "Page views and url fields need engine 1.1.0 or later." });
@@ -283,6 +306,7 @@ export const MODULE_MANIFEST_JSON_SCHEMA = {
     "page blocks reference declared entities and fields of the right type (notes: text; checklist: text label + boolean done; links: text label + url)",
     "page views and url fields require engine.minVersion 1.1.0 or later",
     "automations reference a declared entity (and condition field), each action's permission is requested, and engine.minVersion is 1.2.0 or later",
+    "a script needs the code:run permission, custom views need a script, and both need engine.minVersion 1.3.0 or later",
   ],
 };
 

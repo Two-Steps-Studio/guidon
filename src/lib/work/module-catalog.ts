@@ -17,7 +17,7 @@ export type CatalogLabels = {
 };
 
 /** Automation scopes (094) get their own sentence when the caller passes one; anything else shows the raw scope. */
-export type PermissionLabels = { read: string; write: string; none: string } & Partial<Record<"tasks:write" | "notifications:send" | "webhooks:send", string>>;
+export type PermissionLabels = { read: string; write: string; none: string } & Partial<Record<"tasks:write" | "notifications:send" | "webhooks:send" | "code:run", string>>;
 export function ModulePermissionList({ permissions, labels }: { permissions: readonly string[]; labels: PermissionLabels }): ReactNode {
   const label = (permission: string) => permission === "module-data:read" ? labels.read : permission === "module-data:write" ? labels.write
     : (labels as Partial<Record<string, string>>)[permission] ?? permission;

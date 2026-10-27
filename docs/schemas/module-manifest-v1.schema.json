@@ -77,7 +77,8 @@
           "module-data:read",
           "module-data:write",
           "notifications:send",
-          "webhooks:send"
+          "webhooks:send",
+          "code:run"
         ]
       }
     },
@@ -511,6 +512,32 @@
               "name",
               "type",
               "blocks"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "type": {
+                "type": "string",
+                "const": "custom"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type"
             ],
             "additionalProperties": false
           },
@@ -1491,6 +1518,20 @@
         ],
         "additionalProperties": false
       }
+    },
+    "script": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100000
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -1510,6 +1551,7 @@
     "migrations must form an ordered additive chain from data version 1 to dataVersion",
     "page blocks reference declared entities and fields of the right type (notes: text; checklist: text label + boolean done; links: text label + url)",
     "page views and url fields require engine.minVersion 1.1.0 or later",
-    "automations reference a declared entity (and condition field), each action's permission is requested, and engine.minVersion is 1.2.0 or later"
+    "automations reference a declared entity (and condition field), each action's permission is requested, and engine.minVersion is 1.2.0 or later",
+    "a script needs the code:run permission, custom views need a script, and both need engine.minVersion 1.3.0 or later"
   ]
 }

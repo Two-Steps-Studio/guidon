@@ -37,6 +37,7 @@ interface ActionConfig {
  */
 export const ACTION_CONFIG: Record<ActivityAction, ActionConfig> = {
   module_builder_attempt: { label: "Module AI builder attempt", icon: Bot, color: "text-info" },
+  module_code_saved: { label: "Module code saved", icon: Bot, color: "text-info" },
   project_created: { label: "Project created", icon: FolderKanban, color: "text-success" },
   project_updated: { label: "Project updated", icon: FolderKanban, color: "text-primary" },
   project_archived: { label: "Project archived", icon: FolderKanban, color: "text-muted-foreground" },

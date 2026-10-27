@@ -1308,7 +1308,7 @@
     "emptyTitle": "Noch keine Aktivität",
     "emptyDescription": "Änderungen an diesem Projekt werden hier angezeigt, sobald sie passieren.",
     "someone": "Jemand",
-    "action": "{action, select, project_created {Projekt erstellt} project_updated {Projekt aktualisiert} project_archived {Projekt archiviert} project_deleted {Projekt gelöscht} project_exported {Projekt exportiert} project_imported {Projekt importiert} task_created {Aufgabe erstellt} task_updated {Aufgabe aktualisiert} task_deleted {Aufgabe gelöscht} task_status_changed {Aufgabenstatus geändert} task_ai_started {KI hat Aufgabe gestartet} task_ai_commented {KI hat Kommentar hinzugefügt} task_ai_status_changed {KI hat Status geändert} task_ai_completed {KI hat Aufgabe abgeschlossen} phase_created {Phase erstellt} phase_updated {Phase aktualisiert} phase_deleted {Phase gelöscht} decision_created {Entscheidung erstellt} decision_updated {Entscheidung aktualisiert} decision_approved {Entscheidung genehmigt} decision_rejected {Entscheidung abgelehnt} relation_created {Beziehung erstellt} relation_deleted {Beziehung gelöscht} source_created {Quelle hinzugefügt} source_updated {Quelle aktualisiert} memory_created {Gedächtniseintrag erstellt} memory_updated {Gedächtniseintrag aktualisiert} memory_verified {Gedächtniseintrag verifiziert} file_uploaded {Datei hochgeladen} file_deleted {Datei gelöscht} github_repo_connected {GitHub-Repository verbunden} github_repo_disconnected {GitHub-Repository getrennt} github_file_committed {Datei zu GitHub committet} member_added {Mitglied hinzugefügt} member_removed {Mitglied entfernt} member_role_changed {Mitgliedsrolle geändert} invite_sent {Einladung gesendet} invite_accepted {Einladung angenommen} invite_rejected {Einladung abgelehnt} ai_account_created {KI-Konto erstellt} ai_account_disabled {KI-Konto deaktiviert} tasks_imported {Aufgaben importiert} module_builder_attempt {KI-Modulversuch} other {Aktivität}}",
+    "action": "{action, select, project_created {Projekt erstellt} project_updated {Projekt aktualisiert} project_archived {Projekt archiviert} project_deleted {Projekt gelöscht} project_exported {Projekt exportiert} project_imported {Projekt importiert} task_created {Aufgabe erstellt} task_updated {Aufgabe aktualisiert} task_deleted {Aufgabe gelöscht} task_status_changed {Aufgabenstatus geändert} task_ai_started {KI hat Aufgabe gestartet} task_ai_commented {KI hat Kommentar hinzugefügt} task_ai_status_changed {KI hat Status geändert} task_ai_completed {KI hat Aufgabe abgeschlossen} phase_created {Phase erstellt} phase_updated {Phase aktualisiert} phase_deleted {Phase gelöscht} decision_created {Entscheidung erstellt} decision_updated {Entscheidung aktualisiert} decision_approved {Entscheidung genehmigt} decision_rejected {Entscheidung abgelehnt} relation_created {Beziehung erstellt} relation_deleted {Beziehung gelöscht} source_created {Quelle hinzugefügt} source_updated {Quelle aktualisiert} memory_created {Gedächtniseintrag erstellt} memory_updated {Gedächtniseintrag aktualisiert} memory_verified {Gedächtniseintrag verifiziert} file_uploaded {Datei hochgeladen} file_deleted {Datei gelöscht} github_repo_connected {GitHub-Repository verbunden} github_repo_disconnected {GitHub-Repository getrennt} github_file_committed {Datei zu GitHub committet} member_added {Mitglied hinzugefügt} member_removed {Mitglied entfernt} member_role_changed {Mitgliedsrolle geändert} invite_sent {Einladung gesendet} invite_accepted {Einladung angenommen} invite_rejected {Einladung abgelehnt} ai_account_created {KI-Konto erstellt} ai_account_disabled {KI-Konto deaktiviert} tasks_imported {Aufgaben importiert} module_builder_attempt {KI-Modulversuch} module_code_saved {Modulcode gespeichert} other {Aktivität}}",
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
@@ -2049,7 +2049,8 @@
     "moduleJson": "Modul (JSON)",
     "permissionTasks": "Aufgaben in diesem Projekt erstellen (Automatisierungen)",
     "permissionNotify": "Inhaber und Admins dieses Projekts benachrichtigen (Automatisierungen)",
-    "permissionWebhooks": "Webhooks dieser Organisation senden (Automatisierungen)"
+    "permissionWebhooks": "Webhooks dieser Organisation senden (Automatisierungen)",
+    "permissionCode": "Eigenen Code in einer Sandbox im Browser ausführen (kein Netzwerk, nur Einträge dieses Moduls)"
   },
   "moduleCatalog": {
     "title": "Modul-Marktplatz",
@@ -2132,7 +2133,8 @@
     "category": "Kategorie",
     "categoryPlaceholder": "z. B. Marketing",
     "categoryHint": "Wird als eigene Gruppe in der Projekt-Seitenleiste angezeigt. Leer lassen, um es unter „Eigene Module“ aufzuführen.",
-    "publish": "Im Marketplace veröffentlichen"
+    "publish": "Im Marketplace veröffentlichen",
+    "code": "Code"
   },
   "moduleBuilder": {
     "title": "KI-Modulassistent",
@@ -2295,7 +2297,8 @@
       "markup": "HTML- oder skriptähnlicher Text",
       "instructions": "Text, der wie Anweisungen an eine KI aussieht",
       "writeAccess": "Kann Projektdaten ändern",
-      "automationAccess": "Automatisierungen wirken außerhalb des Moduls"
+      "automationAccess": "Automatisierungen wirken außerhalb des Moduls",
+      "script": "Führt eigenen Code aus (in der Sandbox)"
     },
     "publishedNow": "Version {version} ist veröffentlicht.",
     "submittedForReview": "Version {version} wartet auf Prüfung. Du bekommst eine Benachrichtigung mit der Entscheidung.",
@@ -2444,5 +2447,35 @@
     "retry": "Erneut versuchen",
     "retryAria": "{automation} erneut versuchen",
     "retryFailed": "Konnte nicht erneut ausgeführt werden."
+  },
+  "moduleSandbox": {
+    "frameTitle": "Sandbox für Modulcode",
+    "loading": "Modul wird gestartet…",
+    "restart": "Neu starten",
+    "stopped": "Das Modul wurde neu gestartet.",
+    "notReady": "Das Modul läuft noch nicht.",
+    "timeout": "Der Modulcode hat nicht innerhalb von {seconds} s geantwortet und wurde gestoppt.",
+    "readOnlyChange": "Du kannst dieses Modul ansehen, aber seine Einträge nicht ändern.",
+    "back": "Konfiguration",
+    "title": "Code: {name}",
+    "hint": "JavaScript, das dieses Modul aus seinen Einträgen zeichnet. Er läuft in einer Sandbox im Browser jedes Betrachters: kein Netzwerk, kein Zugriff auf Guidon oder die Seite - nur die Einträge dieses Moduls; Änderungen durchlaufen dieselben Prüfungen wie die Formulare. Typen für `guidon.module` sind im Editor enthalten.",
+    "catalogReadOnly": "Dieses Modul stammt aus dem Marketplace: sein Code gehört zu einer geprüften Version und kann hier nicht geändert werden. Veröffentliche dafür eine eigene Version.",
+    "runPreview": "Vorschau ausführen",
+    "save": "Code speichern",
+    "saving": "Wird gespeichert…",
+    "saved": "Code gespeichert. Das Modul zeigt ihn allen mit Zugriff.",
+    "consent": "Diesen Code für alle ausführen, die das Modul öffnen (fügt die Berechtigung „eigenen Code in einer Sandbox ausführen“ hinzu).",
+    "preview": "Vorschau (Einträge dieses Projekts, nichts wird gespeichert)",
+    "wouldSave": "Das Skript würde {upserts} Einträge hinzufügen oder ändern und {removals} entfernen.",
+    "log": "Protokoll",
+    "logEmpty": "Ausgaben von console.log erscheinen hier.",
+    "error": {
+      "permission": "Nur Projektinhaber und Admins können Modulcode ändern.",
+      "catalog": "Marketplace-Module können hier nicht geändert werden.",
+      "consent": "Bestätige, dass dieser Code für alle laufen darf, die das Modul öffnen.",
+      "invalid": "Das Modul ist mit diesem Code nicht gültig.",
+      "conflict": "Das Modul wurde inzwischen geändert. Kopiere deinen Code, lade neu und speichere erneut.",
+      "saveFailed": "Speichern fehlgeschlagen. Versuche es erneut."
+    }
   }
 }
