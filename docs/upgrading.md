@@ -20,6 +20,8 @@ repo.** `scripts/migrate.mjs`'s own doc comment is explicit about this:
 to be undone, that's a manual operation against your database — plan
 accordingly before applying one to a production instance, e.g. with a backup
 (see [backups.md](./backups.md)).
+The release order, what to watch after a deploy and per-migration rollback
+notes are in [release-runbook.md](./release-runbook.md).
 
 ## Docker Compose
 

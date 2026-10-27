@@ -71,6 +71,7 @@ export function WorkBoard({
   labelPresets = NO_LABEL_PRESETS,
   priorities,
   welcome = false,
+  boardLimit = null,
 }: {
   projectId: string;
   projectName: string;
@@ -93,6 +94,8 @@ export function WorkBoard({
   priorities: PriorityDef[];
   /** Just created through onboarding - show the first-steps card. */
   welcome?: boolean;
+  /** Set when the project has more tasks than the board loads (page.tsx's TASK_LIMIT). */
+  boardLimit?: number | null;
 }) {
   const t = useTranslations("work");
   const canDelete = role === "owner" || role === "admin";
@@ -573,6 +576,10 @@ export function WorkBoard({
               </Button>
             </div>
           </div>
+        )}
+
+        {boardLimit !== null && (
+          <p role="status" className="mb-4 rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">{t("boardCapped", { limit: boardLimit })}</p>
         )}
 
         {/* One swipeable row on a phone instead of three stacked full-width filters above the board. */}

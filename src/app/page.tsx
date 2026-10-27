@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Server, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -13,6 +14,7 @@ import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
 import { BetaBadge } from "@/components/layout/beta-badge";
+import { CtaLink } from "@/components/landing/cta-link";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -105,7 +107,7 @@ export default async function Home() {
           <div>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-base px-8 py-6 h-auto" asChild>
-                <Link href="/start">{t("getStarted")}</Link>
+                <CtaLink cta="hero-start" href="/start">{t("getStarted")}</CtaLink>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto" asChild>
                 <Link href="/auth/login">{t("signIn")}</Link>
@@ -120,9 +122,9 @@ export default async function Home() {
                 {t("selfServeApiKey")}
               </Link>
               <span aria-hidden>·</span>
-              <Link href="/sandbox" className="underline underline-offset-4 hover:text-foreground">
+              <CtaLink cta="hero-sandbox" href="/sandbox" className="underline underline-offset-4 hover:text-foreground">
                 {t("trySandbox")}
-              </Link>
+              </CtaLink>
             </div>
           </div>
         </div>
@@ -235,7 +237,7 @@ export default async function Home() {
       </div>
     </section>
 
-    {plans.length > 0 && <PricingSection plans={plans} />}
+    {plans.length > 0 && <PricingSection plans={plans} checkoutAvailable={!hasDirectDatabase() && isBillingConfigured()} />}
 
     <section className="border-t border-border py-20" aria-labelledby="faq-title" id="frequently-asked-questions">
       <div className="container mx-auto max-w-3xl px-4">

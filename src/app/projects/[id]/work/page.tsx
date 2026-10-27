@@ -167,9 +167,10 @@ export default async function ProjectWorkPage({
   let commentCounts: Record<string, number>;
   let coverImages: Record<string, string>;
 
-  // TASK_LIMIT is a safety cap, not pagination - high enough that no real
-  // project's board should ever hit it today, low enough to stop an
-  // unbounded SELECT * from becoming a real cost as projects grow.
+  // TASK_LIMIT is a safety cap, not pagination: it stops an unbounded
+  // SELECT * as projects grow. Past it the board keeps open tasks first,
+  // most recently updated first (not an arbitrary subset), and says so -
+  // one extra row tells whether anything was left out.
   const TASK_LIMIT = 1000;
 
   if (hasDirectDatabase()) {
@@ -177,7 +178,7 @@ export default async function ProjectWorkPage({
     // run as genuinely concurrent queries rather than one after another.
     const [tasksRes, membersRes, commentCountRows, coverImageRows] = await Promise.all([
       withUser(access.userId, ({ query }) =>
-        query("SELECT * FROM tasks WHERE project_id = $1 LIMIT $2", [projectId, TASK_LIMIT])
+        query("SELECT * FROM tasks WHERE project_id = $1 ORDER BY is_done, updated_at DESC, id LIMIT $2", [projectId, TASK_LIMIT + 1])
       ),
       withUser(access.userId, ({ query }) =>
         query(
@@ -208,7 +209,8 @@ export default async function ProjectWorkPage({
     const supabase = await createClient();
 
     const [tasksRes, membersRes, commentCounts_, coverImages_] = await Promise.all([
-      supabase.from("tasks").select("*").eq("project_id", projectId).limit(TASK_LIMIT),
+      supabase.from("tasks").select("*").eq("project_id", projectId)
+        .order("is_done", { ascending: true }).order("updated_at", { ascending: false }).order("id").limit(TASK_LIMIT + 1),
       supabase
         .from("project_members")
         .select("user_id, profiles ( id, full_name, email, avatar_url )")
@@ -233,6 +235,9 @@ export default async function ProjectWorkPage({
     commentCounts = commentCounts_;
     coverImages = coverImages_;
   }
+
+  const capped = tasks.length > TASK_LIMIT;
+  if (capped) tasks = tasks.slice(0, TASK_LIMIT);
 
   const workflow = await workflowPromise;
   const priorities = resolvePriorities(workflow.priorities, (priority) => tWork("priority", { priority }));
@@ -273,6 +278,7 @@ export default async function ProjectWorkPage({
       aiEnabled={aiEnabled}
       labelPresets={await labelPresetsPromise}
       priorities={priorities}
+      boardLimit={capped ? TASK_LIMIT : null}
     />
   );
 }

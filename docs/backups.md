@@ -68,6 +68,42 @@ Same idea, run directly against whatever `DATABASE_URL` points at:
 pg_dump "$DATABASE_URL" > backup-$(date +%F).sql
 ```
 
+### Restoring onto a new server
+
+The restores above go back into the **same** server, where the roles already
+exist. A new server (the old one is gone, or you're moving) also needs the
+**roles**. The RLS policies are granted to `authenticated`, `anon` and
+`service_role`, and the schemas are owned by your login role. Without the
+roles, a plain-SQL restore through `psql` skips those statements one by one
+and finishes "successfully" with an incomplete schema. Back up the roles too,
+and restore them first:
+
+```bash
+# Backup: roles (once per server) + the database in custom format.
+# Use pg_dump/pg_dumpall of the same or newer major version as the server.
+pg_dumpall --roles-only --dbname "$ADMIN_DATABASE_URL" > roles-$(date +%F).sql
+pg_dump -Fc --dbname "$DATABASE_URL" > guidon-$(date +%F).dump
+
+# Restore onto the new server, in this order:
+psql --dbname "$NEW_ADMIN_URL" -f roles-2026-10-27.sql     # "already exists" for your login role is fine
+psql --dbname "$NEW_ADMIN_URL" -c "CREATE DATABASE guidon"
+pg_restore --exit-on-error --dbname "$NEW_DATABASE_URL" guidon-2026-10-27.dump
+DATABASE_URL="$NEW_DATABASE_URL" node scripts/migrate.mjs --status   # expect "0 pending", no checksum errors
+```
+
+`--exit-on-error` turns a missing role into a failure instead of a silent
+gap. `npm run test:restore` (`tests/ops/restore-drill.mjs`) runs exactly
+this sequence against a scratch database and a brand-new PostgreSQL 17
+container. It then checks that the restored copy has:
+
+- the same row counts and the same task contents;
+- every RLS policy and function;
+- no pending migrations;
+- tenant isolation that still holds;
+- working writes.
+
+CI runs it on every change to the app or the migrations.
+
 ## Local file storage (`STORAGE_PROVIDER=local`)
 
 Files live under `STORAGE_PATH` — in Docker Compose, the named volume
@@ -87,7 +123,9 @@ tar czf guidon-storage-$(date +%F).tar.gz -C "$STORAGE_PATH" .
 
 - No scheduled/automated backup job — set one up with cron, a systemd timer,
   or your platform's equivalent, calling the commands above.
-- No built-in restore verification. Test a restore against a scratch
-  database/volume before you need it for real.
+- No scheduled restore check against *your* backups. `npm run test:restore`
+  proves the procedure on scratch data; still restore one of your real backups
+  onto a scratch server now and then, because a backup nobody has restored
+  is only a hope.
 - No cross-region replication or off-site copy step — that's your
   infrastructure decision, not something this repo prescribes.

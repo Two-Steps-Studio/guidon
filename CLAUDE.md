@@ -31,7 +31,7 @@ npm run test:labels            # label starter sets complete in every locale, pr
 npm run test:import            # task import from CSV/JSON/Trello exports: parsing, dates, status/priority/assignee matching (src/lib/work/task-import.ts)
 npm run test:recurrence        # recurring tasks: next due dates (weekly/monthly/every N days, month ends, late completion), checklist reset (src/lib/work/recurrence-core.ts)
 npm run test:api               # what every /api/v1 response shares: error codes/hints, RateLimit headers, Idempotency-Key rules, list cursors; POST /api/v1/batch parsing and routing (src/lib/api/{api-route-core,batch-core}.ts)
-npm run test:billing           # billing rules: weekly/monthly/yearly intervals, once-per-organization trial, grace period after a failed payment (src/lib/billing/billing-core.ts)
+npm run test:billing           # billing rules: weekly/monthly/yearly intervals, once-per-organization trial, grace period after a failed payment (src/lib/billing/billing-core.ts); Stripe webhook flow: duplicates, out-of-order delivery, retry after a failure, no plan without payment, signatures offline (src/lib/billing/stripe-webhook-core.ts)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```

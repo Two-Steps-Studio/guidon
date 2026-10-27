@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +26,8 @@ export default function GlobalError({
 
   useEffect(() => {
     console.error(error);
+    // Errors caught here never reach the global handlers; a no-op unless NEXT_PUBLIC_SENTRY_DSN is set.
+    Sentry.captureException(error);
   }, [error]);
 
   return (
