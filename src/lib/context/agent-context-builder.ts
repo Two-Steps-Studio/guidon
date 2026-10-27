@@ -14,7 +14,7 @@ import "server-only";
  * stays out - the Why panel covers that in the UI.
  */
 
-import { dataClient } from "@/lib/data-client";
+import { dataClient, type DataClient } from "@/lib/data-client";
 import { buildTaskWhyContext, type SupabaseClientFactory } from "@/lib/context/task-why-builder";
 import { MEMORY_TYPE_CONFIG } from "@/app/projects/[id]/memory/memory-type-config";
 import { TYPE_LABELS as SOURCE_TYPE_LABELS } from "@/app/projects/[id]/knowledge/source-config";
@@ -45,21 +45,46 @@ export const MEMORY_COLUMNS = "id, content, memory_type, verified, confidence, c
 export const DECISION_COLUMNS = "id, title, status, decision_type, description, created_at, updated_at";
 export const ATTEMPT_COLUMNS = "id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_at";
 
+/**
+ * Which tasks each memory entry was learned from (task-learning's
+ * memory -based_on-> task relation): the evidence an agent can open with
+ * get_task_context. Read under RLS like the memory itself.
+ */
+export async function memoryEvidence(db: DataClient, projectId: string): Promise<Map<string, string[]>> {
+  const { data } = await db
+    .from<{ source_id: string; target_id: string }>("context_relations")
+    .select("source_id, target_id")
+    .eq("project_id", projectId)
+    .eq("source_type", "memory")
+    .eq("target_type", "task")
+    .eq("relation_type", "based_on")
+    .limit(1000);
+  const evidence = new Map<string, string[]>();
+  for (const row of data ?? []) evidence.set(row.source_id, [...(evidence.get(row.source_id) ?? []), row.target_id]);
+  return evidence;
+}
+
 /** Project memory as context items: constraints/rules timeless, verified facts, AI insights, the rest. */
-export function memoryItems(memory: MemoryRow[]): ContextItem[] {
+export function memoryItems(memory: MemoryRow[], evidence: Map<string, string[]> = new Map()): ContextItem[] {
   return memory.map((row): ContextItem => {
-    const updatedAt = iso(row.updated_at ?? row.created_at);
-    if (row.memory_type === "constraint" || row.memory_type === "project_rule") {
-      return { section: "constraints", id: row.id, title: row.content, tags: [MEMORY_TYPE_CONFIG[row.memory_type].label], weight: W.constraint, updatedAt, timeless: true };
-    }
-    if (row.memory_type === "fact" && row.verified) return { section: "facts", id: row.id, title: row.content, weight: W.verifiedFact, updatedAt };
-    if (row.memory_type === "ai_insight") {
-      const confidence = row.confidence === null ? "confidence unknown" : `confidence ${Math.round(row.confidence * 100)}%`;
-      return { section: "insights", id: row.id, title: row.content, tags: [confidence, row.verified ? "verified" : "unverified"], weight: W.insight + (row.verified ? 10 : 0), updatedAt };
-    }
-    const label = `${MEMORY_TYPE_CONFIG[row.memory_type].label}${row.memory_type === "fact" ? " (unverified)" : ""}`;
-    return { section: "memory", id: row.id, title: row.content, tags: [label], weight: W.memory, updatedAt };
+    const item = memoryItem(row);
+    const tasks = evidence.get(row.id);
+    return tasks?.length ? { ...item, details: [...(item.details ?? []), `Evidence: task ${tasks.join(", ")} (get_task_context)`] } : item;
   });
+}
+
+function memoryItem(row: MemoryRow): ContextItem {
+  const updatedAt = iso(row.updated_at ?? row.created_at);
+  if (row.memory_type === "constraint" || row.memory_type === "project_rule") {
+    return { section: "constraints", id: row.id, title: row.content, tags: [MEMORY_TYPE_CONFIG[row.memory_type].label], weight: W.constraint, updatedAt, timeless: true };
+  }
+  if (row.memory_type === "fact" && row.verified) return { section: "facts", id: row.id, title: row.content, weight: W.verifiedFact, updatedAt };
+  if (row.memory_type === "ai_insight") {
+    const confidence = row.confidence === null ? "confidence unknown" : `confidence ${Math.round(row.confidence * 100)}%`;
+    return { section: "insights", id: row.id, title: row.content, tags: [confidence, row.verified ? "verified" : "unverified"], weight: W.insight + (row.verified ? 10 : 0), updatedAt };
+  }
+  const label = `${MEMORY_TYPE_CONFIG[row.memory_type].label}${row.memory_type === "fact" ? " (unverified)" : ""}`;
+  return { section: "memory", id: row.id, title: row.content, tags: [label], weight: W.memory, updatedAt };
 }
 
 export function decisionItem(row: DecisionRow, weight: number, tags: string[] = []): ContextItem {
@@ -122,13 +147,14 @@ export async function buildTaskAgentContext(
   options: ContextOptions = {}
 ): Promise<TaskAgentContext> {
   const db = dataClient(userId, { supabase: getSupabase });
-  const [taskResult, why, memoryResult, attemptsResult, linksResult] = await Promise.all([
+  const [taskResult, why, memoryResult, attemptsResult, linksResult, evidence] = await Promise.all([
     db.from<{ id: string; title: string; description: string | null; status: string; priority: string; tags: string[] | null }>("tasks")
       .select("id, title, description, status, priority, tags").eq("id", taskId).eq("project_id", projectId).maybeSingle(),
     buildTaskWhyContext(userId, projectId, taskId, getSupabase),
     db.from<MemoryRow>("project_memory").select(MEMORY_COLUMNS).eq("project_id", projectId).order("created_at", { ascending: false }).limit(500),
     db.from<AttemptRow>("task_attempts").select(ATTEMPT_COLUMNS).eq("task_id", taskId).order("created_at", { ascending: false }).limit(100),
     listTaskLinks(db, projectId, taskId),
+    memoryEvidence(db, projectId),
   ]);
   if (taskResult.error) return FAIL("Could not load the task.");
   const task = taskResult.data;
@@ -146,7 +172,7 @@ export async function buildTaskAgentContext(
   ]);
 
   const items: ContextItem[] = [
-    ...memoryItems(memoryResult.data ?? []),
+    ...memoryItems(memoryResult.data ?? [], evidence),
     ...(decisions.data ?? []).map((row) => why.decision?.id === row.id ? decisionItem(row, W.linkedDecision, ["linked decision"]) : decisionItem(row, W.relatedDecision)),
     ...(attemptsResult.data ?? []).map(attemptItem),
     ...(files.data ?? []).map((row): ContextItem => ({ section: "files", id: row.id, title: row.name, tags: row.category ? [row.category] : [], details: row.file_url ? [row.file_url] : [], weight: W.file, updatedAt: iso(row.created_at) })),
