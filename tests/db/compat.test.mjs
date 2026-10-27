@@ -192,7 +192,8 @@ for (const [label, sql, expected] of [
   // 47->48 and 130->133: project-scoped declarative module packages (080).
   // 53->54 and 138->139: context_events (090) + context_events_select.
   // 139->140: invitations_manager_select (091).
-  ["54 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 54],
+  // 54->55, policies unchanged: funnel_cta_counts (096) - service_role only.
+  ["55 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 55],
   ["140 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 140],
 ]) {
   const { rows } = await db.query(sql);
@@ -4095,6 +4096,48 @@ section("77. task page keyset uses the index path, same pages as 072 (095)");
   await withUser("eeeeeeee-0000-4000-8000-000000000095", async () => {
     check("strangers still get nothing (RLS)", (await db.query("SELECT id FROM public.list_project_tasks_page($1, 10)", [projectId])).rows.length === 0);
   });
+}
+
+section("78. sign-up funnel: cohorts from existing data, anonymous CTA counts (096)");
+{
+  const [onlySignup, active, paying, tester] = [
+    "f0000000-0000-4000-8000-000000000096", "f1000000-0000-4000-8000-000000000096",
+    "f2000000-0000-4000-8000-000000000096", "f3000000-0000-4000-8000-000000000096",
+  ];
+  // One cohort three weeks back, where no other test user signed up.
+  for (const [id, email] of [[onlySignup, "one@funnel.test"], [active, "two@funnel.test"], [paying, "three@funnel.test"], [tester, "qa@funnel.example.test"]]) {
+    await db.query("INSERT INTO auth.users (id, email, created_at) VALUES ($1, $2, date_trunc('week', now()) - interval '21 days' + interval '1 day')", [id, email]);
+  }
+  for (const user of [active, paying, tester]) {
+    await withUser(user, async () => {
+      const org = (await db.query("INSERT INTO public.organizations (name, slug) VALUES ($1, $1) RETURNING id", [`funnel-${user.slice(0, 2)}`])).rows[0].id;
+      const project = (await db.query("INSERT INTO public.projects (organization_id, name, created_by) VALUES ($1, 'Funnel', $2) RETURNING id", [org, user])).rows[0].id;
+      await db.query("INSERT INTO public.tasks (project_id, title, created_by) VALUES ($1, 'First', $2)", [project, user]);
+      if (user !== active) await db.query("INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, 'k', 'guidon_fun', $2, '{tasks:read}')", [user, user.replace(/-/g, "")]);
+    });
+  }
+  await withServiceRole(async () => {
+    await db.query(`UPDATE public.subscriptions s SET checkout_started_at = now(), stripe_subscription_id = 'sub_funnel', status = 'active', plan_id = 'pro'
+      FROM public.organization_members m WHERE m.organization_id = s.organization_id AND m.user_id = $1 AND m.role = 'owner'`, [paying]);
+    const rows = (await db.query("SELECT * FROM public.admin_funnel_cohorts(8)")).rows;
+    const target = (await db.query("SELECT (date_trunc('week', now()) - interval '21 days')::date AS w")).rows[0].w;
+    const cohort = rows.find((row) => new Date(row.week).getTime() === new Date(target).getTime());
+    check("the cohort counts each step once per person, test accounts left out",
+      cohort && isDeepStrictEqual([cohort.signed_up, cohort.created_project, cohort.created_task, cohort.connected_integration, cohort.started_checkout, cohort.paid], [3, 2, 2, 1, 1, 1]),
+      JSON.stringify(cohort));
+    check("the result is counts only (no identifiers)", rows.every((row) => isDeepStrictEqual(Object.keys(row).sort(), ["connected_integration", "created_project", "created_task", "paid", "signed_up", "started_checkout", "week"])));
+    await db.query("SELECT public.record_funnel_cta('hero-start')");
+    await db.query("SELECT public.record_funnel_cta('hero-start')");
+    check("a click adds one to today's total", (await db.query("SELECT count FROM public.funnel_cta_counts WHERE cta = 'hero-start' AND day = (now() AT TIME ZONE 'utc')::date")).rows[0]?.count === 2);
+    check("a button name outside the format is refused", await throwsInSavepoint("SELECT public.record_funnel_cta('Bad Name <script>')"));
+  });
+  for (const user of [A, paying]) {
+    await withUser(user, async () => {
+      check("signed-in users can't read the funnel", await throwsInSavepoint("SELECT * FROM public.admin_funnel_cohorts(8)"));
+      check("…or the button counts", await throwsInSavepoint("SELECT * FROM public.funnel_cta_counts"));
+      check("…or add to them", await throwsInSavepoint("SELECT public.record_funnel_cta('hero-start')"));
+    });
+  }
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

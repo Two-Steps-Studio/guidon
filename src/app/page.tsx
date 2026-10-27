@@ -13,6 +13,7 @@ import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
 import { BetaBadge } from "@/components/layout/beta-badge";
+import { CtaLink } from "@/components/landing/cta-link";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
 // body font - scoped to this marketing page so the rest of the app (which
@@ -105,7 +106,7 @@ export default async function Home() {
           <div>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-base px-8 py-6 h-auto" asChild>
-                <Link href="/start">{t("getStarted")}</Link>
+                <CtaLink cta="hero-start" href="/start">{t("getStarted")}</CtaLink>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto" asChild>
                 <Link href="/auth/login">{t("signIn")}</Link>
@@ -120,9 +121,9 @@ export default async function Home() {
                 {t("selfServeApiKey")}
               </Link>
               <span aria-hidden>·</span>
-              <Link href="/sandbox" className="underline underline-offset-4 hover:text-foreground">
+              <CtaLink cta="hero-sandbox" href="/sandbox" className="underline underline-offset-4 hover:text-foreground">
                 {t("trySandbox")}
-              </Link>
+              </CtaLink>
             </div>
           </div>
         </div>

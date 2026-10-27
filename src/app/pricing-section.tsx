@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { CtaLink } from "@/components/landing/cta-link";
 import { Fraunces } from "next/font/google";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -174,7 +174,8 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                         straight there for someone already signed in - see
                         redirectSignedIn in proxy.ts), which opens the
                         organization's billing page with this plan picked. */}
-                    <Link
+                    <CtaLink
+                      cta={price.cents ? "pricing-paid" : "pricing-free"}
                       href={
                         price.cents
                           ? `/auth/signup?redirect=${encodeURIComponent(`/upgrade?plan=${plan.id}`)}`
@@ -182,7 +183,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                       }
                     >
                       {t("getStarted")}
-                    </Link>
+                    </CtaLink>
                   </Button>
                 </CardContent>
               </Card>

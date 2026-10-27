@@ -150,7 +150,8 @@
     "marketplace": "Modul-Marktplatz",
     "myModules": "Meine Module",
     "extensionsGroup": "Erweiterungen",
-    "billingPrices": "Preise"
+    "billingPrices": "Preise",
+    "funnel": "Funnel"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -1528,7 +1529,31 @@
     "pricesSkipped": "{count, plural, one {# Stripe-Preis nicht verwendet} other {# Stripe-Preise nicht verwendet}}",
     "pricesApply": "Preise aus Stripe synchronisieren",
     "pricesApplied": "{count, plural, =0 {Bereits aktuell.} one {# Preis aktualisiert.} other {# Preise aktualisiert.}}",
-    "pricesUpToDate": "Guidon verkauft genau das, was in Stripe steht."
+    "pricesUpToDate": "Guidon verkauft genau das, was in Stripe steht.",
+    "funnel": {
+      "title": "Registrierungs-Funnel",
+      "description": "Wöchentliche Registrierungs-Kohorten und wie viele jeden Schritt erreicht haben. Nur Zahlen - keine Personen, kein Tracking im Browser.",
+      "cohortsTitle": "Kohorten (letzte 8 Wochen)",
+      "empty": "Keine Registrierungen in den letzten 8 Wochen.",
+      "week": "Woche ab",
+      "signedUp": "Registriert",
+      "step": {
+        "createdProject": "Projekt",
+        "createdTask": "Erste Aufgabe",
+        "connectedIntegration": "Integration",
+        "startedCheckout": "Checkout",
+        "paid": "Zahlend"
+      },
+      "definitions": "Jeder Schritt zählt Personen aus den Registrierungen dieser Woche, die es seitdem jemals getan haben: ein Projekt erstellt; eine Aufgabe erstellt; eine Integration verbunden (API-Schlüssel, MCP/OAuth-App, GitHub, Discord oder Webhook); den Checkout für eine eigene Organisation gestartet; diese Organisation hat ein aktives bezahltes Abo. Testkonten (.example.test) sind ausgenommen.",
+      "ctaTitle": "Buttons auf der Startseite (letzte 28 Tage)",
+      "ctaDescription": "Tägliche Summen pro Button. Es werden keine Cookies, Kennungen oder IP-Adressen gespeichert.",
+      "cta": {
+        "hero-start": "Kopfbereich: Loslegen",
+        "hero-sandbox": "Kopfbereich: Sandbox testen",
+        "pricing-free": "Preise: kostenloser Plan",
+        "pricing-paid": "Preise: bezahlter Plan"
+      }
+    }
   },
   "profile": {
     "title": "Profil",

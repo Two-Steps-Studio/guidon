@@ -150,7 +150,8 @@
     "marketplace": "Module marketplace",
     "myModules": "My modules",
     "extensionsGroup": "Extensions",
-    "billingPrices": "Prices"
+    "billingPrices": "Prices",
+    "funnel": "Funnel"
   },
   "commandPalette": {
     "triggerLabel": "Search...",
@@ -1528,7 +1529,31 @@
     "pricesSkipped": "{count, plural, one {# Stripe price not used} other {# Stripe prices not used}}",
     "pricesApply": "Sync prices from Stripe",
     "pricesApplied": "{count, plural, =0 {Already up to date.} one {Updated # price.} other {Updated # prices.}}",
-    "pricesUpToDate": "Guidon already sells exactly what Stripe has."
+    "pricesUpToDate": "Guidon already sells exactly what Stripe has.",
+    "funnel": {
+      "title": "Sign-up funnel",
+      "description": "Weekly sign-up cohorts and how many reached each step. Counts only - no person is listed, nothing is tracked in the browser.",
+      "cohortsTitle": "Cohorts (last 8 weeks)",
+      "empty": "No sign-ups in the last 8 weeks.",
+      "week": "Week of",
+      "signedUp": "Signed up",
+      "step": {
+        "createdProject": "Project",
+        "createdTask": "First task",
+        "connectedIntegration": "Integration",
+        "startedCheckout": "Checkout",
+        "paid": "Paying"
+      },
+      "definitions": "Each step counts people from that week's sign-ups who did it at any time since: created a project; created a task; connected an integration (API key, MCP/OAuth app, GitHub, Discord or webhook); started checkout for an organization they own; that organization has an active paid subscription. Test accounts (.example.test) are left out.",
+      "ctaTitle": "Landing page buttons (last 28 days)",
+      "ctaDescription": "Daily totals per button. No cookie, identifier or IP address is stored.",
+      "cta": {
+        "hero-start": "Hero: Get started",
+        "hero-sandbox": "Hero: Try the sandbox",
+        "pricing-free": "Pricing: free plan",
+        "pricing-paid": "Pricing: paid plan"
+      }
+    }
   },
   "profile": {
     "title": "Profile",
