@@ -97,7 +97,7 @@ Tests:
 - `test:github`: explicit links from pushes and PRs, evidence, URL
   allowlist, false positives such as lookalike references, generic or
   single shared words and unrelated PRs, and the suggestion cap.
-- `test:db` section 77:
+- `test:db` section 81:
   - RLS for viewers, developers and other tenants;
   - the suggestion constraints;
   - immutability;

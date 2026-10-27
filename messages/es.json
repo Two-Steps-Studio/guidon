@@ -151,6 +151,7 @@
     "myModules": "Mis módulos",
     "extensionsGroup": "Extensiones",
     "billingPrices": "Precios",
+    "funnel": "Embudo",
     "moduleReview": "Revisión de módulos"
   },
   "commandPalette": {
@@ -297,7 +298,8 @@
       "auditLogs": "Registros de auditoría",
       "prioritySupport": "Soporte prioritario",
       "unlimitedMembers": "Miembros ilimitados",
-      "membersCount": "{count, plural, one {# miembro} other {# miembros}}"
+      "membersCount": "{count, plural, one {# miembro} other {# miembros}}",
+      "paidSoon": "Los planes de pago llegan pronto. Empieza gratis ahora: tus proyectos se mantienen al mejorar el plan."
     },
     "footer": {
       "developers": "Desarrolladores",
@@ -563,7 +565,8 @@
       "paymentGraceTitle": "El pago ha fallado",
       "paymentGraceDescription": "No pudimos cobrar la tarjeta de esta suscripción. Tu plan sigue funcionando hasta el {date, date, long}: cambia el método de pago antes de esa fecha.",
       "paymentSuspendedTitle": "Suscripción impagada: se aplican los límites del plan Free",
-      "paymentSuspendedDescription": "El pago sigue sin completarse, así que esta organización tiene los límites del plan Free. No se ha borrado nada: cambia el método de pago y el plan vuelve al instante."
+      "paymentSuspendedDescription": "El pago sigue sin completarse, así que esta organización tiene los límites del plan Free. No se ha borrado nada: cambia el método de pago y el plan vuelve al instante.",
+      "paidSoon": "Todavía no se pueden comprar planes de pago. Tu organización sigue en el plan Free y no se pierde nada cuando lleguen los planes de pago."
     }
   },
   "projects": {
@@ -922,7 +925,8 @@
         "merged": "fusionado",
         "closed": "cerrado"
       }
-    }
+    },
+    "boardCapped": "Este tablero muestra {limit} tareas: primero las abiertas, empezando por las modificadas más recientemente. Las demás siguen en el proyecto: encuéntralas con la búsqueda o la API."
   },
   "roadmap": {
     "title": "Hoja de ruta",
@@ -1550,7 +1554,31 @@
     "pricesSkipped": "{count, plural, one {# precio de Stripe sin usar} other {# precios de Stripe sin usar}}",
     "pricesApply": "Sincronizar precios desde Stripe",
     "pricesApplied": "{count, plural, =0 {Ya estaba al día.} one {Se actualizó # precio.} other {Se actualizaron # precios.}}",
-    "pricesUpToDate": "Guidon vende exactamente lo que hay en Stripe."
+    "pricesUpToDate": "Guidon vende exactamente lo que hay en Stripe.",
+    "funnel": {
+      "title": "Embudo de registro",
+      "description": "Cohortes semanales de registro y cuántas personas llegaron a cada paso. Solo cifras: no se lista a nadie ni se rastrea nada en el navegador.",
+      "cohortsTitle": "Cohortes (últimas 8 semanas)",
+      "empty": "No hay registros en las últimas 8 semanas.",
+      "week": "Semana del",
+      "signedUp": "Registros",
+      "step": {
+        "createdProject": "Proyecto",
+        "createdTask": "Primera tarea",
+        "connectedIntegration": "Integración",
+        "startedCheckout": "Pago iniciado",
+        "paid": "De pago"
+      },
+      "definitions": "Cada paso cuenta a las personas registradas esa semana que lo hicieron en cualquier momento posterior: crearon un proyecto; crearon una tarea; conectaron una integración (clave API, app MCP/OAuth, GitHub, Discord o webhook); iniciaron el pago de una organización de la que son propietarias; esa organización tiene una suscripción de pago activa. Se excluyen las cuentas de prueba (.example.test).",
+      "ctaTitle": "Botones de la página de inicio (últimos 28 días)",
+      "ctaDescription": "Totales diarios por botón. No se guarda ninguna cookie, identificador ni dirección IP.",
+      "cta": {
+        "hero-start": "Cabecera: Empezar",
+        "hero-sandbox": "Cabecera: Probar el sandbox",
+        "pricing-free": "Precios: plan gratuito",
+        "pricing-paid": "Precios: plan de pago"
+      }
+    }
   },
   "profile": {
     "title": "Perfil",

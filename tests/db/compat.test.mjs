@@ -194,8 +194,9 @@ for (const [label, sql, expected] of [
   // 139->140: invitations_manager_select (091).
   // 54->57 and 140->143: module_listings, module_registry_events, module_reports (093), one read policy each.
   // 57->58 and 143->144: module_automation_runs (094) + module_automation_runs_select.
-  // 58->59 and 144->148: task_links (097) + select/insert/update/delete.
-  ["59 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 59],
+  // 58->59, policies unchanged: funnel_cta_counts (096) - service_role only.
+  // 59->60 and 144->148: task_links (097) + select/insert/update/delete.
+  ["60 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 60],
   ["148 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 148],
 ]) {
   const { rows } = await db.query(sql);
@@ -4155,7 +4156,92 @@ section("78. module automation runs: manager-only log, server-only writes, dedup
   await withServiceRole(async () => { await db.query("DELETE FROM public.project_members WHERE project_id = $1 AND user_id = $2", [runProject, B]); });
 }
 
-section("79. Smart Linking: task_links provenance, review, RLS and history (097)");
+section("79. task page keyset uses the index path, same pages as 072 (095)");
+{
+  // 072's single-statement version, kept here as the reference the faster 095 must match.
+  const reference = `SELECT t.id FROM public.tasks t WHERE t.project_id = $1 AND ($3::uuid IS NULL
+      OR (EXISTS (SELECT 1 FROM public.tasks a WHERE a.id = $3 AND a.project_id = $1)
+          AND (t.created_at, t.id) < ((SELECT a.created_at FROM public.tasks a WHERE a.id = $3 AND a.project_id = $1), $3))
+      OR (NOT EXISTS (SELECT 1 FROM public.tasks a WHERE a.id = $3 AND a.project_id = $1)
+          AND (date_trunc('milliseconds', t.created_at), t.id) < (date_trunc('milliseconds', $4::timestamptz), $3)))
+    ORDER BY t.created_at DESC, t.id DESC LIMIT LEAST(GREATEST(COALESCE($2, 1000), 1), 1001)`;
+  await withUser(A, async () => {
+    // Distinct times, ties within a millisecond and identical microseconds.
+    const created = (await db.query(`INSERT INTO public.tasks (project_id, title, created_at)
+      SELECT $1, 'keyset ' || g, timestamptz '2026-10-27 10:00:00+00' + ((g / 3) * interval '1 second') + ((g % 3) * interval '100 microseconds')
+      FROM generate_series(1, 40) g RETURNING id, created_at`, [projectId])).rows;
+    const ids = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 1000)", [projectId])).rows.map((row) => row.id);
+    let same = true;
+    for (const [index, cursor] of [null, ...ids.slice(0, 45)].entries()) {
+      const at = cursor ? (await db.query("SELECT created_at FROM public.tasks WHERE id = $1", [cursor])).rows[0].created_at : null;
+      const fast = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 7, $2, $3)", [projectId, cursor, at])).rows.map((row) => row.id);
+      const slow = (await db.query(reference, [projectId, 7, cursor, at])).rows.map((row) => row.id);
+      if (!isDeepStrictEqual(fast, slow)) { same = false; check(`page after cursor #${index} equals 072`, false, `${fast} vs ${slow}`); break; }
+    }
+    check("every page (no cursor, each cursor) equals 072's result", same);
+    // A cursor id from another project is treated like a deleted task (its time from the cursor), never as an anchor.
+    const at = created[10].created_at;
+    const foreign = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 5, $2, $3)", [projectId, otherTaskId, at])).rows.map((row) => row.id);
+    const expected = (await db.query(reference, [projectId, 5, otherTaskId, at])).rows.map((row) => row.id);
+    check("a cursor on another project's task behaves as a deleted one", isDeepStrictEqual(foreign, expected) && foreign.length === 5, `${foreign}`);
+    // Deleted cursor task, millisecond-precision time as the API encodes it.
+    const victim = ids[20];
+    const victimAt = new Date((await db.query("SELECT created_at FROM public.tasks WHERE id = $1", [victim])).rows[0].created_at).toISOString();
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [victim]);
+    const afterDelete = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 6, $2, $3)", [projectId, victim, victimAt])).rows.map((row) => row.id);
+    const afterDeleteReference = (await db.query(reference, [projectId, 6, victim, victimAt])).rows.map((row) => row.id);
+    check("deleted cursor task: same page as 072", isDeepStrictEqual(afterDelete, afterDeleteReference) && afterDelete.length === 6, `${afterDelete} vs ${afterDeleteReference}`);
+    check("limit is still clamped to 1..1001", (await db.query("SELECT count(*)::int n FROM public.list_project_tasks_page($1, 0)", [projectId])).rows[0].n === 1);
+    await db.query("DELETE FROM public.tasks WHERE project_id = $1 AND title LIKE 'keyset %'", [projectId]);
+  });
+  await withUser("eeeeeeee-0000-4000-8000-000000000095", async () => {
+    check("strangers still get nothing (RLS)", (await db.query("SELECT id FROM public.list_project_tasks_page($1, 10)", [projectId])).rows.length === 0);
+  });
+}
+
+section("80. sign-up funnel: cohorts from existing data, anonymous CTA counts (096)");
+{
+  const [onlySignup, active, paying, tester] = [
+    "f0000000-0000-4000-8000-000000000096", "f1000000-0000-4000-8000-000000000096",
+    "f2000000-0000-4000-8000-000000000096", "f3000000-0000-4000-8000-000000000096",
+  ];
+  // One cohort three weeks back, where no other test user signed up.
+  for (const [id, email] of [[onlySignup, "one@funnel.test"], [active, "two@funnel.test"], [paying, "three@funnel.test"], [tester, "qa@funnel.example.test"]]) {
+    await db.query("INSERT INTO auth.users (id, email, created_at) VALUES ($1, $2, date_trunc('week', now()) - interval '21 days' + interval '1 day')", [id, email]);
+  }
+  for (const user of [active, paying, tester]) {
+    await withUser(user, async () => {
+      const org = (await db.query("INSERT INTO public.organizations (name, slug) VALUES ($1, $1) RETURNING id", [`funnel-${user.slice(0, 2)}`])).rows[0].id;
+      const project = (await db.query("INSERT INTO public.projects (organization_id, name, created_by) VALUES ($1, 'Funnel', $2) RETURNING id", [org, user])).rows[0].id;
+      await db.query("INSERT INTO public.tasks (project_id, title, created_by) VALUES ($1, 'First', $2)", [project, user]);
+      if (user !== active) await db.query("INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, 'k', 'guidon_fun', $2, '{tasks:read}')", [user, user.replace(/-/g, "")]);
+    });
+  }
+  await withServiceRole(async () => {
+    await db.query(`UPDATE public.subscriptions s SET checkout_started_at = now(), stripe_subscription_id = 'sub_funnel', status = 'active', plan_id = 'pro'
+      FROM public.organization_members m WHERE m.organization_id = s.organization_id AND m.user_id = $1 AND m.role = 'owner'`, [paying]);
+    const rows = (await db.query("SELECT * FROM public.admin_funnel_cohorts(8)")).rows;
+    const target = (await db.query("SELECT (date_trunc('week', now()) - interval '21 days')::date AS w")).rows[0].w;
+    const cohort = rows.find((row) => new Date(row.week).getTime() === new Date(target).getTime());
+    check("the cohort counts each step once per person, test accounts left out",
+      cohort && isDeepStrictEqual([cohort.signed_up, cohort.created_project, cohort.created_task, cohort.connected_integration, cohort.started_checkout, cohort.paid], [3, 2, 2, 1, 1, 1]),
+      JSON.stringify(cohort));
+    check("the result is counts only (no identifiers)", rows.every((row) => isDeepStrictEqual(Object.keys(row).sort(), ["connected_integration", "created_project", "created_task", "paid", "signed_up", "started_checkout", "week"])));
+    await db.query("SELECT public.record_funnel_cta('hero-start')");
+    await db.query("SELECT public.record_funnel_cta('hero-start')");
+    check("a click adds one to today's total", (await db.query("SELECT count FROM public.funnel_cta_counts WHERE cta = 'hero-start' AND day = (now() AT TIME ZONE 'utc')::date")).rows[0]?.count === 2);
+    check("a button name outside the format is refused", await throwsInSavepoint("SELECT public.record_funnel_cta('Bad Name <script>')"));
+  });
+  for (const user of [A, paying]) {
+    await withUser(user, async () => {
+      check("signed-in users can't read the funnel", await throwsInSavepoint("SELECT * FROM public.admin_funnel_cohorts(8)"));
+      check("…or the button counts", await throwsInSavepoint("SELECT * FROM public.funnel_cta_counts"));
+      check("…or add to them", await throwsInSavepoint("SELECT public.record_funnel_cta('hero-start')"));
+    });
+  }
+}
+
+section("81. Smart Linking: task_links provenance, review, RLS and history (097)");
 {
   let linkProject, linkTask, explicitId, suggestionId;
   const stranger = "eeeeeeee-0000-4000-8000-000000000097";

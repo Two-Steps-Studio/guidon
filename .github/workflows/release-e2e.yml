@@ -52,6 +52,14 @@ jobs:
       - run: npm run test:agent-web
       - run: npm run test:api
       - run: npm run test:feedback
+      # Pure-logic suites that had no CI step: billing + Stripe webhook flow, plan limits, reports, GitHub refs, labels/translations, import, recurrence.
+      - run: npm run test:billing
+      - run: npm run test:limits
+      - run: npm run test:reports
+      - run: npm run test:github
+      - run: npm run test:labels
+      - run: npm run test:import
+      - run: npm run test:recurrence
       - run: npm run test:context
       - run: node --experimental-strip-types tests/date-format.test.mjs
       - run: npm run test:db
@@ -64,6 +72,33 @@ jobs:
           path: output/e2e/
           if-no-files-found: warn
           retention-days: 7
+
+  restore-drill:
+    # Backup on one PostgreSQL 17 server, restore onto a brand-new one, verify (docs/backups.md).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: guidon
+          POSTGRES_PASSWORD: drill-only
+          POSTGRES_DB: guidon
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U guidon" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:restore
+        env:
+          DATABASE_URL: postgresql://guidon:drill-only@127.0.0.1:5432/guidon
 
   accessibility:
     runs-on: ubuntu-latest

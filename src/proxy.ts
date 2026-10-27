@@ -65,6 +65,9 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // Stripe webhook - same reasoning: Stripe never carries a session cookie,
   // the route verifies the Stripe-Signature header itself.
   '/api/stripe/webhook',
+  // Landing-page sign-up button counter (migration 096) - anonymous by design,
+  // only a known button name is accepted.
+  '/api/funnel/cta',
   // Machine-readable descriptions of the site for AI agents: the llms.txt
   // guide (public/llms.txt) and the homepage as Markdown (src/app/index.md).
   '/llms.txt',

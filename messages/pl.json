@@ -151,6 +151,7 @@
     "myModules": "Moje moduły",
     "extensionsGroup": "Rozszerzenia",
     "billingPrices": "Ceny",
+    "funnel": "Lejek",
     "moduleReview": "Przegląd modułów"
   },
   "commandPalette": {
@@ -297,7 +298,8 @@
       "auditLogs": "Dzienniki audytu",
       "prioritySupport": "Priorytetowe wsparcie",
       "unlimitedMembers": "Nieograniczona liczba osób",
-      "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+      "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}",
+      "paidSoon": "Płatne plany wkrótce. Zacznij za darmo - projekty zostaną po przejściu na płatny plan."
     },
     "footer": {
       "developers": "Dla deweloperów",
@@ -563,7 +565,8 @@
       "paymentGraceTitle": "Płatność nie powiodła się",
       "paymentGraceDescription": "Nie udało się obciążyć karty za tę subskrypcję. Plan działa do {date, date, long} - zmień metodę płatności przed tym terminem.",
       "paymentSuspendedTitle": "Subskrypcja nieopłacona - obowiązują limity planu Free",
-      "paymentSuspendedDescription": "Płatność dalej nie przeszła, więc organizacja ma limity planu Free. Nic nie zostało usunięte - po zmianie metody płatności plan wraca od razu."
+      "paymentSuspendedDescription": "Płatność dalej nie przeszła, więc organizacja ma limity planu Free. Nic nie zostało usunięte - po zmianie metody płatności plan wraca od razu.",
+      "paidSoon": "Płatnych planów nie da się jeszcze kupić. Organizacja zostaje na planie Free i nic nie przepadnie, gdy płatne plany się pojawią."
     }
   },
   "projects": {
@@ -922,7 +925,8 @@
         "merged": "scalony",
         "closed": "zamknięty"
       }
-    }
+    },
+    "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API."
   },
   "roadmap": {
     "title": "Plan działań",
@@ -1550,7 +1554,31 @@
     "pricesSkipped": "{count, plural, one {# cena ze Stripe nieużyta} few {# ceny ze Stripe nieużyte} many {# cen ze Stripe nieużytych} other {# ceny ze Stripe nieużytej}}",
     "pricesApply": "Synchronizuj ceny ze Stripe",
     "pricesApplied": "{count, plural, =0 {Wszystko było aktualne.} one {Zaktualizowano # cenę.} few {Zaktualizowano # ceny.} many {Zaktualizowano # cen.} other {Zaktualizowano # ceny.}}",
-    "pricesUpToDate": "Guidon sprzedaje dokładnie to, co jest w Stripe."
+    "pricesUpToDate": "Guidon sprzedaje dokładnie to, co jest w Stripe.",
+    "funnel": {
+      "title": "Lejek rejestracji",
+      "description": "Tygodniowe kohorty rejestracji i ile osób doszło do każdego kroku. Same liczby - bez listy osób i bez śledzenia w przeglądarce.",
+      "cohortsTitle": "Kohorty (ostatnie 8 tygodni)",
+      "empty": "Brak rejestracji w ostatnich 8 tygodniach.",
+      "week": "Tydzień od",
+      "signedUp": "Rejestracje",
+      "step": {
+        "createdProject": "Projekt",
+        "createdTask": "Pierwsze zadanie",
+        "connectedIntegration": "Integracja",
+        "startedCheckout": "Checkout",
+        "paid": "Płacący"
+      },
+      "definitions": "Każdy krok liczy osoby z rejestracji danego tygodnia, które zrobiły to kiedykolwiek później: utworzyły projekt; utworzyły zadanie; podłączyły integrację (klucz API, aplikację MCP/OAuth, GitHub, Discord albo webhook); rozpoczęły checkout organizacji, której są właścicielem; ta organizacja ma aktywną płatną subskrypcję. Konta testowe (.example.test) są pominięte.",
+      "ctaTitle": "Przyciski na stronie głównej (ostatnie 28 dni)",
+      "ctaDescription": "Dzienne sumy dla każdego przycisku. Bez cookies, identyfikatorów i adresów IP.",
+      "cta": {
+        "hero-start": "Nagłówek: Zacznij",
+        "hero-sandbox": "Nagłówek: Wypróbuj sandbox",
+        "pricing-free": "Cennik: plan darmowy",
+        "pricing-paid": "Cennik: plan płatny"
+      }
+    }
   },
   "profile": {
     "title": "Profil",
