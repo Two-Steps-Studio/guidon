@@ -307,7 +307,8 @@
       "eula": "EULA",
       "about": "Acerca de",
       "contact": "Contacto",
-      "cookies": "Cookies"
+      "cookies": "Cookies",
+      "refunds": "Reembolsos"
     },
     "selfHost": {
       "title": "Ejecuta Guidon en tu propio servidor",

@@ -307,7 +307,8 @@
       "eula": "EULA",
       "about": "Über uns",
       "contact": "Kontakt",
-      "cookies": "Cookies"
+      "cookies": "Cookies",
+      "refunds": "Rückerstattung"
     },
     "selfHost": {
       "title": "Guidon auf dem eigenen Server betreiben",

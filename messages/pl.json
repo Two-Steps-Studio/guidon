@@ -307,7 +307,8 @@
       "eula": "EULA",
       "about": "O nas",
       "contact": "Kontakt",
-      "cookies": "Pliki cookie"
+      "cookies": "Pliki cookie",
+      "refunds": "Zwroty"
     },
     "selfHost": {
       "title": "Postaw Guidona na własnym serwerze",
