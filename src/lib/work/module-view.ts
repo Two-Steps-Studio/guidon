@@ -14,7 +14,7 @@ type Props = {
 
 /** Only fixed React elements; module labels and values are always text children. */
 export function ModuleView({ manifest, view, records, labels, onEdit, onRemove }: Props): ReactNode {
-  if (view.type === "page" || view.type === "form") return null;
+  if (view.type === "page" || view.type === "form" || view.type === "custom") return null;
   const entity = manifest.entities.find((candidate) => candidate.id === view.entity);
   if (!entity) return null;
   const fields = view.fields.map((id) => entity.fields.find((field) => field.id === id)!);

@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { moduleManifestSchema, type ModuleManifest } from "@/lib/work/module-manifest";
 import { ModuleView } from "@/lib/work/module-view";
 import { ModulePage } from "@/lib/work/module-page";
+import { ModuleSandboxView } from "@/components/work/module-sandbox-view";
+import { applySandboxChange, type SandboxChange } from "@/lib/work/module-sandbox";
 import { MODULE_MANIFEST_BYTE_LIMIT, parseModuleRecords, unsupportedModulePermissions, type InstalledModule, type ModuleRecord } from "@/lib/work/module-records";
 import { CUSTOM_MODULE_AI_PROMPT, CUSTOM_MODULE_PRESETS } from "@/lib/work/custom-modules";
 import { convertContentModule } from "@/lib/work/module-legacy";
@@ -73,7 +75,7 @@ export function PackagePanel({ projectId, initial, canManage }: { projectId: str
   const viewSelectId = useId();
   const manifest = initial.manifest;
   const view = manifest.views.find((candidate) => candidate.id === viewId);
-  const entity = view && view.type !== "page" ? manifest.entities.find((candidate) => candidate.id === view.entity) : undefined;
+  const entity = view && view.type !== "page" && view.type !== "custom" ? manifest.entities.find((candidate) => candidate.id === view.entity) : undefined;
   // Page views edit one block at a time, in place: which block's form is open and for which record.
   const [pageForm, setPageForm] = useState<{ block: number; record: ModuleRecord | null } | null>(null);
   const supported = unsupportedModulePermissions(manifest).length === 0;
@@ -94,6 +96,18 @@ export function PackagePanel({ projectId, initial, canManage }: { projectId: str
     });
   }
   // The module's tab already has its name as the page heading.
+  /** A change the module's script asked for: same validation and Server Action as the forms. */
+  async function saveFromScript(change: SandboxChange): Promise<string | null> {
+    let next: ModuleRecord[];
+    try { next = parseModuleRecords(manifest, applySandboxChange(records, change, () => crypto.randomUUID())); } catch { return t("invalid"); }
+    try {
+      const result = await saveModuleRecords(projectId, initial.moduleId, next, revision);
+      if (result.error) return t(result.error);
+      setRecords(next); setRevision(result.revision); setStatus(t("saved"));
+      return null;
+    } catch { return t("saveFailed"); }
+  }
+
   return <Card id={`module-${manifest.id}`} className="min-w-0 scroll-mt-20">
     <CardContent className="space-y-4 pt-6">
       <p className="text-xs text-muted-foreground">{manifest.author.name} · v{manifest.version}{canManage && <> · <Link href={`/projects/${projectId}/modules/${initial.moduleId}`} className="text-primary underline">{t("manage")}</Link></>}</p>
@@ -118,7 +132,8 @@ export function PackagePanel({ projectId, initial, canManage }: { projectId: str
               onSave={(next) => save(record ? records.map((candidate) => candidate.id === record.id ? { ...next, values: { ...record.values, ...next.values } } : candidate) : [...records, next])}
               onCancel={() => setPageForm(null)} />;
           } : undefined} />}
-        {view && view.type !== "page" && <ModuleView manifest={manifest} view={view} records={records} labels={{ empty: t("empty"), yes: t("yes"), no: t("no"), ungrouped: t("ungrouped"), unscheduled: t("unscheduled"), edit: t("edit"), remove: t("remove"), actions: t("actions"), count: t("count") }}
+        {view?.type === "custom" && manifest.script && <ModuleSandboxView manifest={manifest} source={manifest.script.source} records={records} canWrite={canWrite} onChange={canWrite ? saveFromScript : undefined} />}
+        {view && view.type !== "page" && view.type !== "custom" && <ModuleView manifest={manifest} view={view} records={records} labels={{ empty: t("empty"), yes: t("yes"), no: t("no"), ungrouped: t("ungrouped"), unscheduled: t("unscheduled"), edit: t("edit"), remove: t("remove"), actions: t("actions"), count: t("count") }}
           onEdit={canWrite && !pending ? (record) => { setEditing(record); setShowForm(true); } : undefined}
           onRemove={canWrite && !pending ? async (record) => { if (await confirmAction(t("confirmRemove"))) save(records.filter((candidate) => candidate.id !== record.id)); } : undefined} />}
         {canWrite && entity && (showForm || view?.type === "form") && <RecordForm key={`${entity.id}-${editing?.id ?? "new"}-${revision}`} entity={entity} record={editing} pending={pending} fields={view?.type === "form" ? view.fields : undefined}
@@ -198,7 +213,7 @@ export function DeclarativeModules({ projectId, packages, canManage }: { project
       <label className="block space-y-1"><span className="text-sm font-medium">{t("moduleJson")}</span><Textarea value={draft} maxLength={MODULE_MANIFEST_BYTE_LIMIT} rows={8} className="font-mono text-xs" disabled={pending} placeholder={t("manifestHint")} onChange={(event) => { setDraft(event.target.value); setTemplate(null); setConsent(false); }} /></label>
       {draft && !manifest && <p role="alert" className="text-sm text-destructive">{t("invalidManifest")}</p>}
       {manifest && <div className="space-y-2 rounded-md border p-3"><p className="font-medium">{manifest.name} · v{manifest.version}</p>{manifest.description && <p className="text-sm text-muted-foreground">{manifest.description}</p>}<p className="text-sm font-medium">{t("permissions")}</p>
-        {manifest.permissions.length ? <ul className="list-inside list-disc text-sm">{manifest.permissions.map((permission) => <li key={permission}>{({ "module-data:read": t("permissionRead"), "module-data:write": t("permissionWrite"), "tasks:write": t("permissionTasks"), "notifications:send": t("permissionNotify"), "webhooks:send": t("permissionWebhooks") } as Record<string, string>)[permission] ?? permission}</li>)}</ul> : <p className="text-sm">{t("permissionNone")}</p>}
+        {manifest.permissions.length ? <ul className="list-inside list-disc text-sm">{manifest.permissions.map((permission) => <li key={permission}>{({ "module-data:read": t("permissionRead"), "module-data:write": t("permissionWrite"), "tasks:write": t("permissionTasks"), "notifications:send": t("permissionNotify"), "webhooks:send": t("permissionWebhooks"), "code:run": t("permissionCode") } as Record<string, string>)[permission] ?? permission}</li>)}</ul> : <p className="text-sm">{t("permissionNone")}</p>}
         {unsupported.length > 0 && <p role="alert" className="text-sm text-destructive">{t("unsupported")}</p>}
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={consent} disabled={pending} onChange={(event) => setConsent(event.target.checked)} /><span>{t("consentLabel")}</span></label>
         {candidate && candidate.records.length > 0 && <p className="text-sm text-muted-foreground">{t("startsWith", { count: candidate.records.length })}</p>}
