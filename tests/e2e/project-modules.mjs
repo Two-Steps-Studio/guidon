@@ -59,8 +59,11 @@ export async function projectModuleCoverage({ page, context, origin, fixture, cl
     assert.equal(exportedJson.exportVersion,1);
     assert.equal(exportedJson.records.length,2);
     // Links from before 092 still land on the module.
-    await page.goto(`${root}/extensions/content/${legacyId}`);
-    await page.waitForURL(url=>url.pathname.endsWith(`/extensions/package/${legacyId}`));
+    // Firefox reports the redirected navigation as aborted (NS_BINDING_ABORTED); the landing URL is what counts.
+    await page.goto(`${root}/extensions/content/${legacyId}`).catch(error=>{if(!/NS_BINDING_ABORTED|ERR_ABORTED|interrupted/.test(error.message))throw error;});
+    for(let i=0;i<60 && !new URL(page.url()).pathname.endsWith(`/extensions/package/${legacyId}`);i++)await page.waitForTimeout(250);
+    assert.ok(new URL(page.url()).pathname.endsWith(`/extensions/package/${legacyId}`),`Old content link redirects to the module (at ${page.url()})`);
+    await page.waitForLoadState();
     await page.setViewportSize({width:375,height:812});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
     await page.screenshot({path:path.join(artifacts,`${browserName}-module-page-mobile.png`),fullPage:true});
