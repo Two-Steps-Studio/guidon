@@ -92,7 +92,14 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     await page.getByRole("menuitem", { name: "Download", exact: true }).click();
     const signed = new URL((await navigation).url());
     await download;
-    assert.equal((await context.request.get(signed.toString())).status(), 200, "Signed link downloads the file");
+    const downloaded = await context.request.get(signed.toString());
+    assert.equal(downloaded.status(), 200, "Signed link downloads the file");
+    // Anything outside the inline allowlist (raster images, PDF) is a forced download that can't be sniffed into a document.
+    assert.equal(downloaded.headers()["content-type"], "application/octet-stream");
+    assert.equal(downloaded.headers()["x-content-type-options"], "nosniff");
+    assert.match(downloaded.headers()["content-disposition"] ?? "", /^attachment;/);
+    const asPublic = new URL(signed); asPublic.searchParams.set("public", "1");
+    assert.notEqual((await context.request.get(asPublic.toString())).status(), 200, "A private link can't be replayed as public");
     const tampered = new URL(signed); tampered.searchParams.set("path", signed.searchParams.get("path").replace(owner.projectId, foreign.projectId));
     assert.notEqual((await context.request.get(tampered.toString())).status(), 200, "A signature is bound to its path");
     const forged = new URL(signed); forged.searchParams.set("signature", "0".repeat(64));

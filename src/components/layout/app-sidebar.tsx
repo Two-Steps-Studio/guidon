@@ -58,6 +58,7 @@ import {
   Pin,
   Store,
   Boxes,
+  Blocks,
   ChevronDown,
 } from "lucide-react";
 
@@ -161,6 +162,7 @@ const ADMIN_NAV = [
   { href: "/admin/feedback", labelKey: "feedback", icon: MessageSquarePlus },
   { href: "/admin/promo-codes", labelKey: "promoCodes", icon: Ticket },
   { href: "/admin/billing", labelKey: "billingPrices", icon: CreditCard },
+  { href: "/admin/modules", labelKey: "moduleReview", icon: Blocks },
 ] as const;
 
 export interface AppSidebarProps {

@@ -29,7 +29,14 @@ export function detectWebhookFormat(url: string): WebhookFormat {
 export interface WebhookEnvelope {
   type: string;
   project?: { id: string; name: string };
-  data?: { task?: { id: string; title: string; status?: string; url: string }; webhook_id?: string };
+  data?: {
+    task?: { id: string; title: string; status?: string; url: string };
+    webhook_id?: string;
+    /** module.automation (migration 094): which automation ran, on which record, and the filled message. */
+    module?: { id: string; name: string; url: string };
+    automation?: { id: string; name: string; event: string };
+    message?: string;
+  };
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -53,6 +60,8 @@ function headline(envelope: WebhookEnvelope): { text: string; color: number } {
       return { text: "New task", color: COLORS.created };
     case "task.completed":
       return { text: "Task completed", color: COLORS.done };
+    case "module.automation":
+      return { text: "Module automation", color: COLORS.created };
     default:
       return status === "done"
         ? { text: "Task completed", color: COLORS.done }
@@ -70,6 +79,15 @@ export function formatWebhookBody(format: WebhookFormat, envelope: WebhookEnvelo
   if (format === "guidon") return envelope;
 
   const { text, color } = headline(envelope);
+  const source = envelope.data?.module;
+  if (envelope.type === "module.automation" && source) {
+    const message = envelope.data?.message ?? envelope.data?.automation?.name ?? "";
+    if (format === "discord") {
+      return { username: "Guidon", allowed_mentions: { parse: [] }, embeds: [{ author: { name: text }, title: clip(message || source.name, 256), url: source.url, color, footer: { text: envelope.project?.name ? `${source.name} · ${envelope.project.name}` : source.name } }] };
+    }
+    const escapeSlack = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return { text: `${text}: <${source.url}|${escapeSlack(source.name)}>${message ? ` - ${escapeSlack(message)}` : ""}` };
+  }
   const task = envelope.data?.task;
   const project = envelope.project?.name;
 

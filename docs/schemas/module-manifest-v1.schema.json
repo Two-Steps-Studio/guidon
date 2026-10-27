@@ -75,7 +75,9 @@
           "decisions:read",
           "knowledge:read",
           "module-data:read",
-          "module-data:write"
+          "module-data:write",
+          "notifications:send",
+          "webhooks:send"
         ]
       }
     },
@@ -1339,6 +1341,156 @@
         "uninstall"
       ],
       "additionalProperties": false
+    },
+    "automations": {
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "trigger": {
+            "type": "object",
+            "properties": {
+              "event": {
+                "type": "string",
+                "enum": [
+                  "record.created",
+                  "record.updated",
+                  "record.deleted"
+                ]
+              },
+              "entity": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "when": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9-]*$"
+                  },
+                  "equals": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "field",
+                  "equals"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "event",
+              "entity"
+            ],
+            "additionalProperties": false
+          },
+          "actions": {
+            "minItems": 1,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "create_task"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "priority": {
+                      "type": "string",
+                      "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "notify"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "webhook"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "trigger",
+          "actions"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
@@ -1357,6 +1509,7 @@
     "permission names, entity IDs, field IDs, select option values, view IDs, and view field references are validated for uniqueness and referential integrity",
     "migrations must form an ordered additive chain from data version 1 to dataVersion",
     "page blocks reference declared entities and fields of the right type (notes: text; checklist: text label + boolean done; links: text label + url)",
-    "page views and url fields require engine.minVersion 1.1.0 or later"
+    "page views and url fields require engine.minVersion 1.1.0 or later",
+    "automations reference a declared entity (and condition field), each action's permission is requested, and engine.minVersion is 1.2.0 or later"
   ]
 }

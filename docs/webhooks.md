@@ -11,6 +11,7 @@ receives events from every project in that organization.
 | `task.created` | A top-level task is created (web app, API, plugins, MCP). Subtasks don't trigger it. |
 | `task.status_changed` | A task moves to another board column. |
 | `task.completed` | A task moves to **Done**. A webhook subscribed only to `task.status_changed` receives this as a `task.status_changed` with `"status": "done"` instead, so it never misses finished tasks. |
+| `module.automation` | A module automation with a **Send webhooks** action runs ([module automations](module-automations.md)). `data.module` (`id`, `name`, `url`), `data.automation` (`id`, `name`, `event`), `data.record` (`id`, `values`) and `data.message` replace `data.task`. Discord/Slack get a one-line message. |
 | `ping` | You press **Test** next to the webhook. Always sent, whatever the subscription. |
 
 ## Request

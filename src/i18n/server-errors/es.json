@@ -206,6 +206,12 @@
   "This invitation has already been used.": "Esta invitación ya se ha usado.",
   "This invitation was sent to a different email address.": "Esta invitación se envió a otro correo electrónico.",
   "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "No se pudieron leer los precios de Stripe. Revisa STRIPE_SECRET_KEY.",
+  "Invalid request.": "Solicitud no válida.",
+  "Explain why the version is rejected - the author sees this note.": "Explica por qué se rechaza la versión: el autor verá esta nota.",
+  "You cannot review a module you submitted. Ask another admin.": "No puedes revisar un módulo que enviaste tú. Pide a otro administrador.",
+  "This version is no longer waiting for review.": "Esta versión ya no está pendiente de revisión.",
+  "This version is already withdrawn.": "Esta versión ya está retirada.",
+  "This report is already resolved.": "Esta denuncia ya está resuelta.",
   "You do not have permission to review linked code.": "No tienes permiso para revisar el código vinculado.",
   "This link no longer exists.": "Este vínculo ya no existe.",
   "Could not update the link.": "No se pudo actualizar el vínculo."

@@ -192,9 +192,11 @@ for (const [label, sql, expected] of [
   // 47->48 and 130->133: project-scoped declarative module packages (080).
   // 53->54 and 138->139: context_events (090) + context_events_select.
   // 139->140: invitations_manager_select (091).
-  // 54->55 and 140->144: task_links (097) + select/insert/update/delete.
-  ["55 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 55],
-  ["144 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 144],
+  // 54->57 and 140->143: module_listings, module_registry_events, module_reports (093), one read policy each.
+  // 57->58 and 143->144: module_automation_runs (094) + module_automation_runs_select.
+  // 58->59 and 144->148: task_links (097) + select/insert/update/delete.
+  ["59 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 59],
+  ["148 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 148],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -3599,7 +3601,9 @@ section("67. module registry visibility and publishing authority (081)");
   await withServiceRole(async () => {
     await db.query("DELETE FROM public.organization_members WHERE organization_id=$1 AND user_id=$2", [orgId,B]);
     for (const [id, org, published] of [["org-module", orgId, true], ["draft-module", null, false]]) {
-      await db.query("INSERT INTO public.module_catalog_entries(module_id,version,organization_id,category,description,manifest,published) VALUES ($1,'1.0.0',$2,'research','Test listing',$3,$4)", [id,org,JSON.stringify({ manifestVersion: 1, id, version: "1.0.0" }),published]);
+      await db.query("INSERT INTO public.module_listings(module_id,organization_id) VALUES ($1,$2)", [id,org]);
+      await db.query("INSERT INTO public.module_catalog_entries(module_id,version,organization_id,category,description,manifest,published,status,visibility) VALUES ($1,'1.0.0',$2,'research','Test listing',$3,$4,$5,$6)",
+        [id,org,JSON.stringify({ manifestVersion: 1, id, version: "1.0.0" }),published,published ? "published" : "pending_review",org ? "organization" : "public"]);
     }
   });
   await withUser(A, async () => {
@@ -4055,7 +4059,103 @@ section("76. content modules become page packages (092)");
   });
 }
 
-section("77. Smart Linking: task_links provenance, review, RLS and history (097)");
+section("77. module registry: publish, review, withdraw, report, counts (093)");
+{
+  const manifestFor = (id, version) => JSON.stringify({ manifestVersion: 1, id, name: `Registry ${id}`, version, author: { name: "A" }, engine: { minVersion: "1.0.0" }, permissions: ["module-data:read"], entities: [], views: [] });
+  const submit = (id, version, visibility, org = null) => db.query("SELECT public.submit_module_version($1,$2,$3,$4,'planning','Registry test','First','MIT',$5::jsonb) AS status", [id, version, visibility, org, manifestFor(id, version)]);
+  let registryProject;
+  // An organization A is not a member of.
+  const foreignOrg = await withUser(B, async () => (await db.query("INSERT INTO public.organizations (name, slug) VALUES ('Registry outsiders', 'registry-outsiders') RETURNING id")).rows[0].id);
+  await withUser(A, async () => {
+    check("a private version is published at once", (await submit("reg-private", "1.0.0", "private")).rows[0].status === "published");
+    check("an organization version is published at once", (await submit("reg-org", "1.0.0", "organization", orgId)).rows[0].status === "published");
+    check("a public version waits for review", (await submit("reg-public", "1.0.0", "public")).rows[0].status === "pending_review");
+    check("the author sees their pending version", (await db.query("SELECT 1 FROM public.module_catalog_entries WHERE module_id='reg-public'")).rows.length === 1);
+    check("a version cannot be published twice", await throwsInSavepoint("SELECT public.submit_module_version('reg-private','1.0.0','private',NULL,'planning','x','','MIT',$1::jsonb)", [manifestFor("reg-private", "1.0.0")]));
+    check("publishing to an organization needs membership", await throwsInSavepoint("SELECT public.submit_module_version('reg-other','1.0.0','organization',$1,'planning','x','','MIT',$2::jsonb)", [foreignOrg, manifestFor("reg-other", "1.0.0")]));
+    check("authenticated users cannot write the registry tables directly", await throwsInSavepoint("INSERT INTO public.module_listings(module_id) VALUES ('direct')"));
+    check("…nor the audit log", await throwsInSavepoint("INSERT INTO public.module_registry_events(module_id,action) VALUES ('reg-private','approved')"));
+    const digest = (await db.query("SELECT digest FROM public.module_catalog_entries WHERE module_id='reg-private'")).rows[0].digest;
+    check("every version carries the SHA-256 of its manifest", /^[0-9a-f]{64}$/.test(digest ?? ""), digest);
+    registryProject = (await db.query("INSERT INTO public.projects (organization_id, name, visibility) VALUES ($1, 'Registry installs', 'private') RETURNING id", [orgId])).rows[0].id;
+  });
+  await withUser(B, async () => {
+    const visible = (await db.query("SELECT module_id FROM public.module_catalog_entries WHERE module_id LIKE 'reg-%'")).rows.map((row) => row.module_id);
+    check("another user sees neither private, other-organization nor pending versions", visible.length === 0, visible.join(","));
+    check("only the publisher adds versions to a module id", await throwsInSavepoint("SELECT public.submit_module_version('reg-public','1.1.0','public',NULL,'planning','x','','MIT',$1::jsonb)", [manifestFor("reg-public", "1.1.0")]));
+    check("a hidden version cannot be reported", (await db.query("SELECT public.report_module_version('reg-public','1.0.0','spam','') AS r")).rows[0].r === "not_found");
+  });
+  await withServiceRole(async () => {
+    check("submitted content is immutable, even for the service role", await throwsInSavepoint("UPDATE public.module_catalog_entries SET description='changed' WHERE module_id='reg-public'"));
+    check("…its manifest too", await throwsInSavepoint("UPDATE public.module_catalog_entries SET manifest=$1::jsonb WHERE module_id='reg-public'", [manifestFor("reg-public", "1.0.0").replace("Registry", "Changed")]));
+    check("a published version cannot be deleted", await throwsInSavepoint("DELETE FROM public.module_catalog_entries WHERE module_id='reg-private'"));
+    check("the submitter cannot review their own version", (await db.query("SELECT public.review_module_version('reg-public','1.0.0',$1,'approve','') AS r", [A])).rows[0].r === "self_review");
+    check("…not even by writing the row directly", await throwsInSavepoint("UPDATE public.module_catalog_entries SET status='published', published=true, reviewed_by=$1 WHERE module_id='reg-public'", [A]));
+    check("another admin approves it", (await db.query("SELECT public.review_module_version('reg-public','1.0.0',$1,'approve','Looks good') AS r", [B])).rows[0].r === "published");
+    check("a decided version is not reviewed again", (await db.query("SELECT public.review_module_version('reg-public','1.0.0',$1,'reject','') AS r", [B])).rows[0].r === "not_pending");
+    check("the decision is in the audit log", (await db.query("SELECT action FROM public.module_registry_events WHERE module_id='reg-public' ORDER BY id")).rows.map((row) => row.action).join(",") === "submitted,approved");
+    check("the audit log is append-only", await throwsInSavepoint("UPDATE public.module_registry_events SET note='x' WHERE module_id='reg-public'"));
+    check("review notifications are a known type", (await db.query("INSERT INTO public.notifications (user_id,type,title,link) VALUES ($1,'module_review','Module approved','/my-modules') RETURNING id", [A])).rows.length === 1);
+  });
+  await withUser(B, async () => {
+    check("an approved public version is visible to everyone signed in", (await db.query("SELECT 1 FROM public.module_catalog_entries WHERE module_id='reg-public' AND status='published'")).rows.length === 1);
+    check("a visible version can be reported", (await db.query("SELECT public.report_module_version('reg-public','1.0.0','misleading','Wrong description') AS r")).rows[0].r === "reported");
+    check("one open report per person and version", (await db.query("SELECT public.report_module_version('reg-public','1.0.0','spam','') AS r")).rows[0].r === "already_reported");
+    check("the reporter sees their report", (await db.query("SELECT 1 FROM public.module_reports WHERE module_id='reg-public'")).rows.length === 1);
+    check("someone else cannot withdraw the version", (await db.query("SELECT public.withdraw_module_version('reg-public','1.0.0') AS ok")).rows[0].ok === false);
+    check("someone else gets no install counts for it", (await db.query("SELECT 1 FROM public.module_install_counts() WHERE module_id='reg-public'")).rows.length === 0);
+    check("someone else cannot read its audit log", (await db.query("SELECT 1 FROM public.module_registry_events WHERE module_id='reg-public'")).rows.length === 0);
+  });
+  await withUser(A, async () => {
+    check("the author cannot read who reported", (await db.query("SELECT 1 FROM public.module_reports WHERE module_id='reg-public'")).rows.length === 0);
+    await db.query("INSERT INTO public.project_module_packages (project_id,module_id,manifest,catalog_version) VALUES ($1,'reg-public',$2::jsonb,'1.0.0')", [registryProject, manifestFor("reg-public", "1.0.0")]);
+    check("an installation must name a real registry version", await throwsInSavepoint("INSERT INTO public.project_module_packages (project_id,module_id,manifest,catalog_version) VALUES ($1,'reg-org',$2::jsonb,'9.9.9')", [registryProject, manifestFor("reg-org", "9.9.9")]));
+    const counts = (await db.query("SELECT installs::int, open_reports::int FROM public.module_install_counts() WHERE module_id='reg-public'")).rows[0];
+    check("the author sees installs and open reports as counts", counts?.installs === 1 && counts?.open_reports === 1, JSON.stringify(counts));
+    check("the author withdraws a version", (await db.query("SELECT public.withdraw_module_version('reg-public','1.0.0') AS ok")).rows[0].ok === true);
+  });
+  await withUser(B, async () => {
+    check("a withdrawn version leaves the catalog", (await db.query("SELECT 1 FROM public.module_catalog_entries WHERE module_id='reg-public'")).rows.length === 0);
+  });
+  await withServiceRole(async () => {
+    check("a withdrawn version stays withdrawn", await throwsInSavepoint("UPDATE public.module_catalog_entries SET status='published', published=true WHERE module_id='reg-public'"));
+  });
+  await withUser(A, async () => {
+    check("existing installations keep working after a withdrawal", (await db.query("SELECT 1 FROM public.project_module_packages WHERE project_id=$1 AND module_id='reg-public' AND installed", [registryProject])).rows.length === 1);
+  });
+}
+
+section("78. module automation runs: manager-only log, server-only writes, dedupe (094)");
+{
+  let runProject;
+  const manifest = JSON.stringify({ manifestVersion: 1, id: "auto-mod", version: "1.0.0" });
+  await withUser(A, async () => {
+    runProject = (await db.query("INSERT INTO public.projects (organization_id, name, visibility) VALUES ($1, 'Automations', 'private') RETURNING id", [orgId])).rows[0].id;
+    await db.query("INSERT INTO public.project_module_packages (project_id, module_id, manifest) VALUES ($1, 'auto-mod', $2::jsonb)", [runProject, manifest]);
+    check("authenticated users cannot queue automation runs", await throwsInSavepoint("INSERT INTO public.module_automation_runs (project_id,module_id,automation_id,record_id,event,dedupe_key,next_attempt_at) VALUES ($1,'auto-mod','a',gen_random_uuid(),'record.created','x',now())", [runProject]));
+  });
+  const insertRun = "INSERT INTO public.module_automation_runs (project_id,module_id,automation_id,record_id,event,dedupe_key,triggered_by,next_attempt_at) VALUES ($1,'auto-mod','notify-me','00000000-0000-4000-8000-000000000001','record.created',$2,$3,now()) RETURNING id";
+  await withServiceRole(async () => {
+    check("the server queues a run", (await db.query(insertRun, [runProject, "auto-mod:notify-me:1:record.created:r1", A])).rows.length === 1);
+    check("the same event is one run (dedupe key)", await throwsInSavepoint(insertRun, [runProject, "auto-mod:notify-me:1:record.created:r1", A]));
+    check("a pending run needs a time", await throwsInSavepoint("UPDATE public.module_automation_runs SET next_attempt_at = NULL WHERE project_id = $1", [runProject]));
+    check("a run belongs to an installed package", await throwsInSavepoint("INSERT INTO public.module_automation_runs (project_id,module_id,automation_id,record_id,event,dedupe_key,next_attempt_at) VALUES ($1,'missing','a',gen_random_uuid(),'record.created','y',now())", [runProject]));
+    check("organization webhooks accept module.automation", (await db.query("INSERT INTO public.organization_webhooks (organization_id,url,events,secret_encrypted) VALUES ($1,'https://hooks.example.test/a',ARRAY['module.automation'],'x') RETURNING id", [orgId])).rows.length === 1);
+    check("…and nothing unknown", await throwsInSavepoint("INSERT INTO public.organization_webhooks (organization_id,url,events,secret_encrypted) VALUES ($1,'https://hooks.example.test/b',ARRAY['module.anything'],'x')", [orgId]));
+    check("automation notifications are a known type", (await db.query("INSERT INTO public.notifications (user_id,type,title,link) VALUES ($1,'module_automation','Bug filed','/x') RETURNING id", [A])).rows.length === 1);
+  });
+  await withUser(A, async () => {
+    check("the project owner reads the automation log", (await db.query("SELECT 1 FROM public.module_automation_runs WHERE project_id = $1", [runProject])).rows.length === 1);
+    check("…but cannot rewrite it", (await db.query("UPDATE public.module_automation_runs SET status = 'succeeded' WHERE project_id = $1 RETURNING id", [runProject]).catch(() => ({ rows: [] }))).rows.length === 0);
+  });
+  await withServiceRole(async () => { await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [runProject, B]); });
+  await withUser(B, async () => {
+    check("a developer does not see the automation log", (await db.query("SELECT 1 FROM public.module_automation_runs WHERE project_id = $1", [runProject])).rows.length === 0);
+  });
+  await withServiceRole(async () => { await db.query("DELETE FROM public.project_members WHERE project_id = $1 AND user_id = $2", [runProject, B]); });
+}
+
+section("79. Smart Linking: task_links provenance, review, RLS and history (097)");
 {
   let linkProject, linkTask, explicitId, suggestionId;
   const stranger = "eeeeeeee-0000-4000-8000-000000000097";
