@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUser } from "@/lib/data/current-user";
-import { getCatalogEntry } from "@/lib/data/module-catalog";
+import { getCatalogEntry, isInstallable } from "@/lib/data/module-catalog";
 import { dataClient } from "@/lib/data-client";
 import { ModulePermissionList } from "@/lib/work/module-catalog";
 import { ModuleInstallFields } from "@/lib/work/module-install-fields";
@@ -35,7 +35,7 @@ export default async function ModuleInstallPage({ params, searchParams }: {
     <Link href={path} className="text-sm text-primary underline">{entry.name}</Link><h1 className="text-2xl font-semibold">{t("title")}</h1><p>{entry.name} · v{entry.version}</p>
     {error && <p role="alert" className="text-sm text-destructive">{t(error)}</p>}
     <section className="space-y-3 rounded-lg border bg-card p-5"><h2 className="font-semibold">{runtime("permissions")}</h2><ModulePermissionList permissions={entry.manifest.permissions} labels={{ read: runtime("permissionRead"), write: runtime("permissionWrite"), none: runtime("permissionNone") }} /><p className="text-sm text-muted-foreground">{t("emptyData")}</p></section>
-    {!entry.compatible ? <p role="alert">{runtime("unsupported")}</p> : !eligible.length ? <p className="text-muted-foreground">{t("noProjects")}</p> : <>
+    {!entry.compatible || !isInstallable(entry) ? <p role="alert">{runtime("unsupported")}</p> : !eligible.length ? <p className="text-muted-foreground">{t("noProjects")}</p> : <>
       <form action={`${path}/install`} method="get" className="space-y-3 rounded-lg border bg-card p-5"><label htmlFor="install-org" className="block text-sm font-medium">{t("organization")}</label><select id="install-org" name="organization" defaultValue={selected} required className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">{t("chooseOrganization")}</option>{organizations.data.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select><button type="submit" className="rounded-md border px-4 py-2 text-sm">{t("continue")}</button></form>
       {selected && <form action={installFromCatalog.bind(null, moduleId, version)} className="rounded-lg border bg-card p-5"><ModuleInstallFields projects={eligible.filter((project) => project.organization_id === selected)} permissions={entry.manifest.permissions} digest={entry.digest} labels={{ project: t("project"), chooseProject: t("chooseProject"), consent: runtime("consentLabel"), install: runtime("install") }} /></form>}
     </>}

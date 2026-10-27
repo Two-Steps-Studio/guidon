@@ -116,6 +116,18 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
   the viewer has no create/upload controls and another tenant receives none of
   the content.
 
+- Marketplace (Chromium only - the registry rules are server-side): one tenant
+  publishes a public page module whose description carries a prompt-injection
+  attempt; while pending it is neither listed nor served to others; the admin
+  sees the finding and approves; the version is signed (a per-run
+  MODULE_SIGNING_KEY) and listed; installation is refused by the server
+  without consent and records the registry version; a report is filed; the
+  author's dashboard shows one install and one report; a manifest changed in
+  the database fails its signature and can't be installed; the admin cannot
+  review their own submission; a rejection note reaches the author; an
+  organization-only version is visible to an org member and not to another
+  tenant; withdrawal removes the version and leaves the installation running.
+
 - Apple Design regression checks cover pointer/keyboard drag cancellation and
   confirmed moves, failed optimistic updates, retained unsaved drafts and files,
   dialog bounds at 320×480 with 200% text, crop feedback, image swipes and

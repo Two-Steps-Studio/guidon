@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/data/current-user";
-import { getCatalogEntry } from "@/lib/data/module-catalog";
+import { getCatalogEntry, isInstallable } from "@/lib/data/module-catalog";
 import { canManageProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
 import { moduleManifestSchema } from "@/lib/work/module-manifest";
@@ -26,7 +26,10 @@ export async function installFromCatalog(moduleId: string, version: string, form
       const access = await getProjectAccess(id);
       return access ? { organizationId: access.project.organization_id, canManage: canManageProject(access.role) } : null;
     },
-    async getEntry(id, release) { return getCatalogEntry(user.id, id, release); },
+    async getEntry(id, release) {
+      const entry = await getCatalogEntry(user.id, id, release);
+      return entry && isInstallable(entry) ? entry : null;
+    },
     async getExisting(id, name) {
       const current = await db.from("project_module_packages").select<{ manifest: unknown }>("manifest").eq("project_id", id).eq("module_id", name).maybeSingle();
       if (current.error) throw new Error("Could not check module installation");
@@ -37,7 +40,7 @@ export async function installFromCatalog(moduleId: string, version: string, form
     async insert(id, manifest) {
       // One INSERT stores the whole installation. RLS rechecks project access
       // even if membership changed since the page/action access check.
-      const { error } = await db.from("project_module_packages").insert({ project_id: id, module_id: manifest.id, manifest });
+      const { error } = await db.from("project_module_packages").insert({ project_id: id, module_id: manifest.id, manifest, catalog_version: manifest.version });
       return !error ? "created" : error.code === "23505" ? "duplicate" : error.code === "23514" ? "limit" : "failed";
     },
   });

@@ -10,6 +10,7 @@ on:
       - 'src/app/projects/**/modules/**'
       - 'src/app/marketplace/**'
       - 'src/app/my-modules/**'
+      - 'src/app/admin/modules/**'
       - 'src/db/**'
       - 'tests/*module*'
       - 'tests/fixtures/module-editor-*'
