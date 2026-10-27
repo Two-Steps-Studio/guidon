@@ -211,5 +211,8 @@
   "You cannot review a module you submitted. Ask another admin.": "Du kannst kein Modul prüfen, das du selbst eingereicht hast. Bitte einen anderen Admin.",
   "This version is no longer waiting for review.": "Diese Version wartet nicht mehr auf Prüfung.",
   "This version is already withdrawn.": "Diese Version ist bereits zurückgezogen.",
-  "This report is already resolved.": "Diese Meldung ist bereits erledigt."
+  "This report is already resolved.": "Diese Meldung ist bereits erledigt.",
+  "You do not have permission to review linked code.": "Du hast keine Berechtigung, verknüpften Code zu prüfen.",
+  "This link no longer exists.": "Diese Verknüpfung existiert nicht mehr.",
+  "Could not update the link.": "Die Verknüpfung konnte nicht aktualisiert werden."
 }

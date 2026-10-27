@@ -906,6 +906,26 @@
     "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
     "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo.",
     "taskMovedAnnouncement": "{title} se movió a {column}, posición {position}",
+    "links": {
+      "heading": "Código vinculado",
+      "loading": "Cargando código vinculado…",
+      "empty": "Aún no hay commits, ramas ni pull requests vinculados. Menciona la referencia de esta tarea (Copiar referencia de la tarea) en un commit, nombre de rama o PR y se vinculará automáticamente.",
+      "rejectedCount": "{count, plural, one {# vínculo se marcó como no relacionado.} other {# vínculos se marcaron como no relacionados.}}",
+      "referenced": "Referenciado",
+      "confirmed": "Confirmado",
+      "suggested": "Sugerencia · {percent} %",
+      "disconnected": "Repositorio ya no conectado",
+      "confirm": "Confirmar",
+      "reject": "Rechazar",
+      "notRelated": "No relacionado",
+      "rejectLabel": "Marcar {ref} como no relacionado",
+      "state": {
+        "open": "abierto",
+        "draft": "borrador",
+        "merged": "fusionado",
+        "closed": "cerrado"
+      }
+    },
     "boardCapped": "Este tablero muestra {limit} tareas: primero las abiertas, empezando por las modificadas más recientemente. Las demás siguen en el proyecto: encuéntralas con la búsqueda o la API."
   },
   "roadmap": {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { applyActions, findConnections, verifyGithubSignature } from "@/lib/github/webhook";
+import { applyActions, applyLinks, findConnections, verifyGithubSignature } from "@/lib/github/webhook";
+import { planPullRequestLinks, planPushLinks, pullRequestTarget, repositoryName, suggestionText } from "@/lib/github/link-core";
 import { planPullRequest, planPush, type TaskAction } from "@/lib/github/task-refs";
 
 /** GitHub's own limit for webhook payloads is 25MB; anything bigger isn't from GitHub. */
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
   const installation = payload.installation as { id?: unknown } | undefined;
   const installationId = typeof installation?.id === "number" ? installation.id : null;
 
+  const repositoryFullName = repositoryName(owner, name);
   const targets = await findConnections(owner, name, installationId);
   if (targets.length === 0) return NextResponse.json({ ok: true, projects: 0 });
 
@@ -76,6 +78,10 @@ export async function POST(request: NextRequest) {
       const outcome = await applyActions(target, actions);
       applied += outcome.applied;
       skipped.push(...outcome.skipped);
+      if (repositoryFullName) {
+        if (event === "push") await applyLinks(target, repositoryFullName, planPushLinks(payload, repositoryFullName), null, null);
+        else await applyLinks(target, repositoryFullName, planPullRequestLinks(payload), suggestionText(payload), pullRequestTarget(payload));
+      }
     } catch (error) {
       console.error("[GitHub webhook] project", target.projectId, error);
       skipped.push(`project ${target.projectId}: ${error instanceof Error ? error.message : "failed"}`);

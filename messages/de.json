@@ -906,6 +906,26 @@
     "pinTooMany": "Du kannst bis zu 10 Aufgaben anheften. Löse zuerst eine.",
     "pinFailed": "Das Anheften hat nicht geklappt. Versuch es noch einmal.",
     "taskMovedAnnouncement": "{title} nach {column} verschoben, Position {position}",
+    "links": {
+      "heading": "Verknüpfter Code",
+      "loading": "Verknüpfter Code wird geladen…",
+      "empty": "Noch keine Commits, Branches oder Pull Requests verknüpft. Erwähne die Referenz dieser Aufgabe (Aufgabenverweis kopieren) in einem Commit, Branch-Namen oder PR, dann wird sie automatisch verknüpft.",
+      "rejectedCount": "{count, plural, one {# Verknüpfung wurde als nicht zugehörig markiert.} other {# Verknüpfungen wurden als nicht zugehörig markiert.}}",
+      "referenced": "Referenziert",
+      "confirmed": "Bestätigt",
+      "suggested": "Vorschlag · {percent} %",
+      "disconnected": "Repository nicht mehr verbunden",
+      "confirm": "Bestätigen",
+      "reject": "Ablehnen",
+      "notRelated": "Nicht zugehörig",
+      "rejectLabel": "{ref} als nicht zugehörig markieren",
+      "state": {
+        "open": "offen",
+        "draft": "Entwurf",
+        "merged": "gemergt",
+        "closed": "geschlossen"
+      }
+    },
     "boardCapped": "Dieses Board zeigt {limit} Aufgaben: offene zuerst, zuletzt geänderte zuerst. Die übrigen Aufgaben sind weiterhin im Projekt - finde sie über die Suche oder die API."
   },
   "roadmap": {

@@ -10,6 +10,7 @@
  */
 
 import { extractTaskRefs, planPullRequest, planPush, shouldMove, taskRef } from "../src/lib/github/task-refs.ts";
+import { distinctiveWords, planPullRequestLinks, planPushLinks, prStateOf, pullRequestTarget, repositoryName, suggestLinks, suggestionText } from "../src/lib/github/link-core.ts";
 
 let pass = 0;
 let fail = 0;
@@ -98,6 +99,45 @@ const pr = (action, extra = {}) => ({
   check("but not one already in a custom done column", !shouldMove(closes, "shipped", true));
   check("an opened PR doesn't pull a task out of a custom column", !shouldMove(opened, "qa", false));
   check("built-in rules unchanged", shouldMove(opened, "todo", false) && !shouldMove(opened, "review", false) && !shouldMove(closes, "done", true));
+}
+
+console.log("\n  Smart Linking (migration 097, src/lib/github/link-core.ts)");
+{
+  const repo = "acme/web";
+  const push = planPushLinks({ ref: "refs/heads/guidon-1a2b3c4d-login", commits: [
+    { id: "a".repeat(40), message: "Fix redirect guidon#1a2b3c4d\n\nbody", url: `https://github.com/acme/web/commit/${"a".repeat(40)}` },
+    { id: "b".repeat(40), message: "Tidy styles", url: "https://evil.example/x" },
+    { id: "not-a-sha", message: "guidon#1a2b3c4d" },
+  ] }, repo);
+  check("a push links the branch and every commit on it", eq(push.map((link) => [link.kind, link.externalRef.slice(0, 7)]), [["branch", "guidon-"], ["commit", "aaaaaaa"], ["commit", "bbbbbbb"]]), JSON.stringify(push));
+  check("evidence says why: message vs branch", push[1].evidence.startsWith("Commit message mentions") && push[2].evidence.startsWith("Commit on branch"));
+  check("only github.com URLs are kept", push[2].url === null && push[1].url.startsWith("https://github.com/"));
+  check("an invalid sha is ignored", !push.some((link) => link.externalRef === "not-a-sha"));
+  check("a push without references links nothing", planPushLinks({ ref: "refs/heads/main", commits: [{ id: "c".repeat(40), message: "Refactor login redirect" }] }, repo).length === 0);
+
+  const pr = (action, extra = {}) => ({ action, number: 42, pull_request: { title: "Login redirect guidon#1a2b3c4d", body: "Also guidon#9f8e7d6c", html_url: "https://github.com/acme/web/pull/42", head: { ref: "feature" }, ...extra } });
+  const prLinks = planPullRequestLinks(pr("opened"));
+  check("a PR links every referenced task once, with where it was mentioned", eq(prLinks.map((link) => [link.ref, link.evidence]), [["1a2b3c4d", "PR title mentions guidon#1a2b3c4d"], ["9f8e7d6c", "PR description mentions guidon#9f8e7d6c"]]));
+  check("PR state: open / draft / merged / closed", prStateOf(pr("opened")) === "open" && prStateOf(pr("opened", { draft: true })) === "draft" && prStateOf(pr("closed", { merged: true })) === "merged" && prStateOf(pr("closed")) === "closed");
+  check("a lookalike reference is not a link (false positive)", planPullRequestLinks({ action: "opened", number: 1, pull_request: { title: "guidon#1a2b3c4dx and guidon#123 and xguidon#zzzzzzzz" } }).length === 0);
+  check("repository names are validated", repositoryName("acme", "web") === "acme/web" && repositoryName("acme", "../etc") === null && repositoryName("", "web") === null);
+  check("the PR target carries number, title and state", eq(pullRequestTarget(pr("opened", { title: "T", body: "" })), { kind: "pull_request", externalRef: "42", title: "T", url: "https://github.com/acme/web/pull/42", prState: "open" }));
+  check("only opened/reopened/ready PRs suggest", suggestionText(pr("opened")) !== null && suggestionText(pr("closed")) === null && suggestionText(pr("synchronize")) === null);
+
+  const tasks = [
+    { id: "t1", title: "Login redirect loops after password reset" },
+    { id: "t2", title: "Fix bug" },
+    { id: "t3", title: "Dashboard chart colors" },
+    { id: "t4", title: "Password reset email template" },
+  ];
+  const suggestions = suggestLinks("Stop the login redirect loop after a password reset", tasks);
+  check("a matching PR suggests the task whose distinctive words it shares", suggestions[0]?.taskId === "t1", JSON.stringify(suggestions));
+  check("suggestions are never certain (confidence < 1) and explain themselves", suggestions.every((item) => item.confidence < 1 && item.confidence >= 0.4 && item.evidence.startsWith("Shares")));
+  check("generic words never match (false positive: 'Fix bug')", !suggestions.some((item) => item.taskId === "t2") && suggestLinks("Fix bug in update", tasks).length === 0);
+  check("one shared word is not enough", suggestLinks("Dashboard performance", tasks).length === 0);
+  check("unrelated PRs suggest nothing", suggestLinks("Upgrade Next.js and React", tasks).length === 0);
+  check("at most three suggestions", suggestLinks("alpha beta gamma delta", Array.from({ length: 10 }, (_, index) => ({ id: `x${index}`, title: "alpha beta gamma" }))).length === 3);
+  check("task references and numbers don't count as words", distinctiveWords("guidon#1a2b3c4d 2026 release fix").size === 0);
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

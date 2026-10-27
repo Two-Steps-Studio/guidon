@@ -906,6 +906,26 @@
     "pinTooMany": "Możesz przypiąć do 10 zadań. Najpierw odepnij któreś.",
     "pinFailed": "Nie udało się zmienić przypięcia. Spróbuj ponownie.",
     "taskMovedAnnouncement": "Przeniesiono {title} do kolumny {column}, pozycja {position}",
+    "links": {
+      "heading": "Powiązany kod",
+      "loading": "Ładowanie powiązanego kodu…",
+      "empty": "Brak powiązanych commitów, gałęzi i pull requestów. Wpisz odnośnik do tego zadania (Kopiuj odwołanie do zadania) w commicie, nazwie gałęzi lub PR, a powiązanie doda się samo.",
+      "rejectedCount": "{count, plural, one {# powiązanie oznaczono jako niezwiązane.} few {# powiązania oznaczono jako niezwiązane.} many {# powiązań oznaczono jako niezwiązane.} other {# powiązania oznaczono jako niezwiązane.}}",
+      "referenced": "Odnośnik w kodzie",
+      "confirmed": "Potwierdzone",
+      "suggested": "Sugestia · {percent}%",
+      "disconnected": "Repozytorium odłączone",
+      "confirm": "Potwierdź",
+      "reject": "Odrzuć",
+      "notRelated": "Niezwiązane",
+      "rejectLabel": "Oznacz {ref} jako niezwiązane",
+      "state": {
+        "open": "otwarty",
+        "draft": "szkic",
+        "merged": "scalony",
+        "closed": "zamknięty"
+      }
+    },
     "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API."
   },
   "roadmap": {

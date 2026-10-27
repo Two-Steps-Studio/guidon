@@ -21,6 +21,7 @@ import { boardLayoutCoverage } from "./board-layout.mjs";
 import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
 import { projectSectionCoverage } from "./project-sections.mjs";
+import { smartLinkingCoverage } from "./smart-linking.mjs";
 import { marketplaceCoverage } from "./marketplace.mjs";
 import { moduleAutomationCoverage } from "./module-automations.mjs";
 import { moduleSandboxCoverage } from "./module-sandbox.mjs";
@@ -48,6 +49,7 @@ const container=`guidon-e2e-${runId}`;
 const environment=isolatedEnvironment(process.env,{});
 // Disposable test-only signing identity; never forwarded from the operator.
 environment.AGENT_AUTH_PRIVATE_KEY=JSON.stringify(generateKeyPairSync("ed25519").privateKey.export({format:"jwk"}));
+environment.GITHUB_APP_WEBHOOK_SECRET=randomBytes(32).toString("hex");
 environment.MODULE_SIGNING_KEY=JSON.stringify(generateKeyPairSync("ed25519").privateKey.export({format:"jwk"}));
 const controller=new AbortController();
 const deadline=setTimeout(()=>controller.abort(new Error("E2E global timeout")),12*60*1000);
@@ -165,6 +167,7 @@ try{
       // Registry rules are server-side; one browser keeps the run inside its time budget.
       if(name==="chromium")await marketplaceCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       if(name==="chromium")await moduleAutomationCoverage({page,context,origin,fixture,client,browserName:name});
+      if(name==="chromium")await smartLinkingCoverage({page,context,origin,fixture,client,browserName:name,webhookSecret:environment.GITHUB_APP_WEBHOOK_SECRET});
       // Worker/iframe isolation is the browser's, so this one runs everywhere.
       await moduleSandboxCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
@@ -185,7 +188,7 @@ try{
     catch(error){await page.screenshot({path:path.join(artifacts,`${name}-failed.png`),fullPage:true});results.push({browser:name,outcome:"failed",error:error.message,durationMs:Date.now()-started});throw error;}
     finally{await context.tracing.stop({path:path.join(artifacts,`${name}-trace.zip`)});await context.close();await browser.close();await writeFile(path.join(artifacts,"app.log"),appLog);}
   }
-  for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,environment.AGENT_AUTH_PRIVATE_KEY,environment.MODULE_SIGNING_KEY,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
+  for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,environment.AGENT_AUTH_PRIVATE_KEY,environment.MODULE_SIGNING_KEY,environment.GITHUB_APP_WEBHOOK_SECRET,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
   assert.equal(appLog.includes('ENVIRONMENT_FALLBACK'),false,'Server formatting must not fall back to environment-dependent dates or relative times');
   completed=true;
 }finally{

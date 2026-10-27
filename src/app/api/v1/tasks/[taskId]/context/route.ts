@@ -6,6 +6,8 @@ import { withUser } from "@/lib/db/session";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { buildTaskAgentContext } from "@/lib/context/agent-context-builder";
 import { apiRoute } from "@/lib/api/api-route";
+import { clampBudget } from "@/lib/context/context-pack-core";
+import { contextResponse } from "@/lib/context/context-response";
 
 /**
  * Agent-context package for one task, as Markdown (Content-Type
@@ -14,6 +16,10 @@ import { apiRoute } from "@/lib/api/api-route";
  * (getTaskAgentContext, src/lib/context/agent-context.ts): task, project
  * constraints/facts/insights, related decisions/files/PRs/sources and
  * previous attempts.
+ *
+ * Ranked and packed within `max_tokens` (500-32000, default 6000), optionally
+ * biased toward `focus` words; X-Guidon-Context carries the numbers
+ * (src/lib/context/context-pack-core.ts).
  *
  * `tasks:read`-gated. The task's project is derived from the task row itself
  * (looked up under RLS as the key's owner), so a task the key's user cannot
@@ -46,16 +52,17 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ t
     getSupabase = async () => supabase;
   }
 
-  const context = await buildTaskAgentContext(guard.userId, projectId, taskId, getSupabase);
+  const search = request.nextUrl.searchParams;
+  const context = await buildTaskAgentContext(guard.userId, projectId, taskId, getSupabase, {
+    budget: clampBudget(search.get("max_tokens") ?? undefined),
+    focus: (search.get("focus") ?? "").slice(0, 500),
+  });
   if (context.error) {
     const status = context.error === "Task not found." ? 404 : 500;
     return NextResponse.json({ error: context.error }, { status });
   }
 
-  return new NextResponse(context.markdown, {
-    status: 200,
-    headers: { "Content-Type": "text/markdown; charset=utf-8" },
-  });
+  return contextResponse(context.markdown, context.stats, { kind: "task", projectId, taskId, apiKeyId: guard.apiKeyId });
 }
 
 export const GET = apiRoute(handleGET);
