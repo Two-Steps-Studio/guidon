@@ -12,6 +12,7 @@ import { taskRef } from "@/lib/github/task-refs";
 import { deleteTask, updateTask } from "@/app/projects/[id]/work/actions";
 import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
+import { TaskLinksPanel } from "@/components/work/task-links-panel";
 import { TaskAttemptsSection } from "@/components/work/task-attempts-section";
 import { TaskAttachmentsSection } from "@/components/work/task-attachments-section";
 import { TaskRelationsSection } from "@/components/work/task-relations-section";
@@ -722,6 +723,8 @@ function TaskDetailDialogInner({
         </form>
 
         <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />
+
+        <TaskLinksPanel projectId={projectId} taskId={task.id} canEdit={canEdit} />
 
         {aiEnabled && (
           <TaskAgentContextExport projectId={projectId} taskId={task.id} />

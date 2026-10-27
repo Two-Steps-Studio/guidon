@@ -192,8 +192,9 @@ for (const [label, sql, expected] of [
   // 47->48 and 130->133: project-scoped declarative module packages (080).
   // 53->54 and 138->139: context_events (090) + context_events_select.
   // 139->140: invitations_manager_select (091).
-  ["54 tabele", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 54],
-  ["140 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 140],
+  // 54->55 and 140->144: task_links (097) + select/insert/update/delete.
+  ["55 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 55],
+  ["144 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 144],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -4051,6 +4052,63 @@ section("76. content modules become page packages (092)");
   });
   await withUser(B, async () => {
     check("converted packages stay private to their project", (await db.query("SELECT 1 FROM public.project_module_packages WHERE project_id = $1", [legacyProject])).rows.length === 0);
+  });
+}
+
+section("77. Smart Linking: task_links provenance, review, RLS and history (097)");
+{
+  let linkProject, linkTask, explicitId, suggestionId;
+  const stranger = "eeeeeeee-0000-4000-8000-000000000097";
+  await withUser(A, async () => {
+    linkProject = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Links') RETURNING id", [orgId])).rows[0].id;
+    linkTask = (await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Login redirect loops') RETURNING id", [linkProject])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'viewer'), ($1, $3, 'developer') ON CONFLICT (project_id, user_id) DO UPDATE SET role = EXCLUDED.role", [linkProject, B, C]);
+  });
+  const link = (fields) => ({ kind: "pull_request", repository: "acme/web", external_ref: "42", status: "confirmed", provenance: "explicit_reference", confidence: 1, ...fields });
+  const insert = (fields) => db.query(`INSERT INTO public.task_links (task_id, project_id, kind, repository, external_ref, status, provenance, confidence, evidence)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'test') RETURNING id, project_id`, [fields.task_id, fields.project_id, fields.kind, fields.repository, fields.external_ref, fields.status, fields.provenance, fields.confidence]);
+
+  await withUser(C, async () => {
+    const created = await insert(link({ task_id: linkTask, project_id: otherProjectId }));
+    explicitId = created.rows[0].id;
+    check("a developer records a link; project_id always comes from the task", created.rows[0].project_id === linkProject);
+    suggestionId = (await insert(link({ task_id: linkTask, project_id: linkProject, external_ref: "43", status: "suggested", provenance: "suggestion", confidence: 0.7 }))).rows[0].id;
+    check("a suggestion can't claim certainty", await throwsInSavepoint(`INSERT INTO public.task_links (task_id, kind, repository, external_ref, status, provenance, confidence) VALUES ($1, 'pull_request', 'acme/web', '44', 'suggested', 'suggestion', 1)`, [linkTask]));
+    check("only suggestions wait for review", await throwsInSavepoint(`INSERT INTO public.task_links (task_id, kind, repository, external_ref, status, provenance, confidence) VALUES ($1, 'pull_request', 'acme/web', '45', 'suggested', 'explicit_reference', 1)`, [linkTask]));
+    check("the same target is linked once per task", await throwsInSavepoint(`INSERT INTO public.task_links (task_id, kind, repository, external_ref, status, provenance) VALUES ($1, 'pull_request', 'acme/web', '42', 'confirmed', 'manual')`, [linkTask]));
+    check("only github.com URLs", await throwsInSavepoint(`INSERT INTO public.task_links (task_id, kind, repository, external_ref, status, provenance, url) VALUES ($1, 'commit', 'acme/web', 'abc1234', 'confirmed', 'manual', 'javascript:alert(1)')`, [linkTask]));
+    const withUrl = await db.query(`INSERT INTO public.task_links (task_id, kind, repository, external_ref, status, provenance, url) VALUES ($1, 'commit', 'acme/web', 'abc1234', 'confirmed', 'manual', 'https://github.com/acme/web/commit/abc1234') RETURNING id`, [linkTask]);
+    check("…and a github.com URL is accepted", withUrl.rows.length === 1);
+    const removed = await db.query("DELETE FROM public.task_links WHERE id = $1 RETURNING id", [withUrl.rows[0].id]);
+    check("a developer can't delete a link (owner/admin only)", removed.rows.length === 0);
+    check("a link keeps its target and provenance", await throwsInSavepoint("UPDATE public.task_links SET external_ref = '99', provenance = 'manual' WHERE id = $1", [explicitId]));
+    const confirmed = await db.query("UPDATE public.task_links SET status = 'confirmed', decided_by = $2, decided_at = now() WHERE id = $1 AND project_id = $3 RETURNING id", [suggestionId, C, linkProject]);
+    check("a developer confirms a suggestion", confirmed.rows.length === 1);
+    await db.query("UPDATE public.task_links SET status = 'rejected', decided_by = $2, decided_at = now() WHERE id = $1", [explicitId, C]);
+  });
+  await withUser(B, async () => {
+    check("a viewer reads the links", (await db.query("SELECT id FROM public.task_links WHERE task_id = $1", [linkTask])).rows.length === 3);
+    const changed = await db.query("UPDATE public.task_links SET status = 'confirmed' WHERE id = $1 RETURNING id", [explicitId]);
+    check("…but can't confirm or reject", changed.rows.length === 0);
+    check("…or add one", await throwsInSavepoint(`INSERT INTO public.task_links (task_id, kind, repository, external_ref, status, provenance) VALUES ($1, 'commit', 'acme/web', 'abc1234', 'confirmed', 'manual')`, [linkTask]));
+  });
+  await withUser(stranger, async () => {
+    check("another tenant sees no links", (await db.query("SELECT id FROM public.task_links WHERE task_id = $1", [linkTask])).rows.length === 0);
+  });
+  await withUser(C, async () => {
+    check("a developer can't link a task of a project they're not in", await throwsInSavepoint(`INSERT INTO public.task_links (task_id, kind, repository, external_ref, status, provenance) VALUES ($1, 'commit', 'acme/web', 'abc1234', 'confirmed', 'manual')`, [otherTaskId]));
+  });
+  await withServiceRole(async () => {
+    const events = (await db.query("SELECT event_type FROM public.context_events WHERE entity_id = $1 AND event_type LIKE 'task.link_%' ORDER BY seq", [linkTask])).rows.map((row) => row.event_type);
+    check("history: created, suggested, confirmed and rejected are events", ["task.link_created", "task.link_suggested", "task.link_confirmed", "task.link_rejected"].every((type) => events.includes(type)), events.join(","));
+  });
+  await withUser(A, async () => {
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [linkTask]);
+  });
+  await withServiceRole(async () => {
+    check("a deleted task takes its links with it", (await db.query("SELECT count(*)::int n FROM public.task_links WHERE task_id = $1", [linkTask])).rows[0].n === 0);
   });
 }
 

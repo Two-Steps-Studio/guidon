@@ -19,6 +19,7 @@ import { buildTaskWhyContext, type SupabaseClientFactory } from "@/lib/context/t
 import { MEMORY_TYPE_CONFIG } from "@/app/projects/[id]/memory/memory-type-config";
 import { TYPE_LABELS as SOURCE_TYPE_LABELS } from "@/app/projects/[id]/knowledge/source-config";
 import type { MemoryType } from "@/types/context";
+import { listTaskLinks, type TaskLink } from "@/lib/data/task-links";
 import { CONTEXT_TOKEN_DEFAULT, CONTEXT_WEIGHTS as W, neutralize, packContext, type ContextItem, type ContextPackStats } from "@/lib/context/context-pack-core";
 
 export interface TaskAgentContext {
@@ -83,9 +84,26 @@ function sourceItem(row: SourceRow): ContextItem {
   return { section: isPr ? "prs" : "sources", id: row.id, title: row.title?.trim() || "Untitled", tags: [label], details: [...(row.url ? [row.url] : []), ...(row.content?.trim() ? [row.content] : [])], weight: isPr ? W.pullRequest : W.source, updatedAt: iso(row.updated_at ?? row.created_at) };
 }
 
+const LINK_LABEL = { commit: "commit", branch: "branch", pull_request: "PR" } as const;
+
+/** Linked code (migration 097): confirmed links rank with PRs; a suggestion is shown as one, below. */
+export function linkItem(link: TaskLink): ContextItem {
+  const ref = link.kind === "pull_request" ? `${link.repository}#${link.external_ref}` : link.kind === "commit" ? `${link.repository}@${link.external_ref.slice(0, 7)}` : `${link.repository}:${link.external_ref}`;
+  const suggested = link.status === "suggested";
+  return {
+    section: "prs",
+    id: link.id,
+    title: link.title ? `${ref} ${link.title}` : ref,
+    tags: [LINK_LABEL[link.kind], ...(link.pr_state ? [link.pr_state] : []), suggested ? `suggested link, not confirmed (confidence ${link.confidence})` : link.provenance === "explicit_reference" ? "referenced" : "confirmed", ...(link.repository_connected === false ? ["repository no longer connected - the link may be gone"] : [])],
+    details: [...(link.url ? [link.url] : []), ...(link.evidence ? [link.evidence] : [])],
+    weight: suggested ? W.memory : W.pullRequest + (link.kind === "pull_request" ? 5 : 0),
+    updatedAt: link.updated_at,
+  };
+}
+
 export const DRILL_DOWN = {
   constraints: "get_memory", facts: "get_memory", insights: "get_memory", memory: "get_memory",
-  decisions: "get_decision", attempts: "list_attempts", prs: "get_knowledge_source", sources: "get_knowledge_source", files: "the project's Files page",
+  decisions: "get_decision", attempts: "list_attempts", prs: "list_task_links or get_knowledge_source", sources: "get_knowledge_source", files: "the project's Files page",
 } as const;
 
 /**
@@ -104,12 +122,13 @@ export async function buildTaskAgentContext(
   options: ContextOptions = {}
 ): Promise<TaskAgentContext> {
   const db = dataClient(userId, { supabase: getSupabase });
-  const [taskResult, why, memoryResult, attemptsResult] = await Promise.all([
+  const [taskResult, why, memoryResult, attemptsResult, linksResult] = await Promise.all([
     db.from<{ id: string; title: string; description: string | null; status: string; priority: string; tags: string[] | null }>("tasks")
       .select("id, title, description, status, priority, tags").eq("id", taskId).eq("project_id", projectId).maybeSingle(),
     buildTaskWhyContext(userId, projectId, taskId, getSupabase),
     db.from<MemoryRow>("project_memory").select(MEMORY_COLUMNS).eq("project_id", projectId).order("created_at", { ascending: false }).limit(500),
     db.from<AttemptRow>("task_attempts").select(ATTEMPT_COLUMNS).eq("task_id", taskId).order("created_at", { ascending: false }).limit(100),
+    listTaskLinks(db, projectId, taskId),
   ]);
   if (taskResult.error) return FAIL("Could not load the task.");
   const task = taskResult.data;
@@ -132,6 +151,7 @@ export async function buildTaskAgentContext(
     ...(attemptsResult.data ?? []).map(attemptItem),
     ...(files.data ?? []).map((row): ContextItem => ({ section: "files", id: row.id, title: row.name, tags: row.category ? [row.category] : [], details: row.file_url ? [row.file_url] : [], weight: W.file, updatedAt: iso(row.created_at) })),
     ...(sources.data ?? []).map(sourceItem),
+    ...linksResult.links.filter((link) => link.status !== "rejected").map(linkItem),
   ];
 
   const description = task.description?.trim() ? neutralize(task.description, 4000).text : "_No description._";

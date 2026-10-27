@@ -899,7 +899,27 @@
     "unpinTask": "Unpin",
     "pinTooMany": "You can pin up to 10 tasks. Unpin one first.",
     "pinFailed": "Couldn't change the pin. Try again.",
-    "taskMovedAnnouncement": "{title} moved to {column}, position {position}"
+    "taskMovedAnnouncement": "{title} moved to {column}, position {position}",
+    "links": {
+      "heading": "Linked code",
+      "loading": "Loading linked code…",
+      "empty": "No commits, branches or pull requests linked yet. Mention this task's reference (Copy task reference) in a commit, branch name or PR and it's linked automatically.",
+      "rejectedCount": "{count, plural, one {# link was marked not related.} other {# links were marked not related.}}",
+      "referenced": "Referenced",
+      "confirmed": "Confirmed",
+      "suggested": "Suggestion · {percent}%",
+      "disconnected": "Repository no longer connected",
+      "confirm": "Confirm",
+      "reject": "Reject",
+      "notRelated": "Not related",
+      "rejectLabel": "Mark {ref} as not related",
+      "state": {
+        "open": "open",
+        "draft": "draft",
+        "merged": "merged",
+        "closed": "closed"
+      }
+    }
   },
   "roadmap": {
     "title": "Roadmap",

@@ -65,6 +65,45 @@ The task dialog's **Copy agent context** uses a budget of 16000.
   - Report-only keys (`reports:write`) get 403.
   - Nothing is cached across users.
 
+## Smart Linking (migration 097)
+
+Commits, branches and pull requests are linked to tasks as data, not only
+as comments.
+
+| Provenance | Created when | Status |
+|---|---|---|
+| `explicit_reference` | A commit message, branch name or PR title/body mentions `guidon#xxxxxxxx` (the GitHub webhook) | `confirmed` |
+| `suggestion` | A new, reopened or ready-for-review PR mentions no task, but shares at least two distinctive words with an open task's title and covers at least half of that title's words. Generic words like "fix" or "update" never count. At most 3 per PR | `suggested`, confidence 0.40–0.90, never 1, with the evidence |
+| `manual` | Reserved for a person adding a link | `confirmed` |
+
+- **Review.** People with write access, and agents through
+  `review_task_link`, confirm a suggestion or reject any link. A rejection
+  survives later GitHub events. Every creation, review and PR state change is
+  a `task.link_*` event in the project's event log (`context_events`), with
+  who and when.
+- **Disconnected repositories.** A link to a repository that is no longer
+  connected to the project stays as history and is marked "repository no
+  longer connected".
+- **The webhook writes as the person who connected the repository**, under
+  RLS. If linking fails, the comments and status moves still happen.
+- **Where links show up:**
+  - the task dialog's **Linked code** section;
+  - `GET /api/v1/tasks/{id}/links`;
+  - `get_task_context`, where confirmed links rank like PRs and suggestions
+    rank low and are labelled as unconfirmed.
+
+Tests:
+
+- `test:github`: explicit links from pushes and PRs, evidence, URL
+  allowlist, false positives such as lookalike references, generic or
+  single shared words and unrelated PRs, and the suggestion cap.
+- `test:db` section 77:
+  - RLS for viewers, developers and other tenants;
+  - the suggestion constraints;
+  - immutability;
+  - history events;
+  - cascade on task delete.
+
 ## Observability
 
 - The `X-Guidon-Context` response header carries the numbers as JSON:

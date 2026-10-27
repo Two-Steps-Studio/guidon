@@ -385,6 +385,21 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           parameters: contextParams,
         }),
       },
+      "/tasks/{taskId}/links": {
+        parameters: [taskIdParam],
+        get: op("listTaskLinks", "Commits, branches and PRs linked to the task", "tasks:read", ok("Links", wrap("links", { type: "array", items: { type: "object" } })), {
+          tags: ["Tasks"],
+          description: "Confirmed links (an explicit guidon#ref or a person's review), suggestions waiting for review (confidence < 1, with evidence) and rejected ones; provenance, PR state, timestamps and whether the repository is still connected.",
+        }),
+      },
+      "/tasks/{taskId}/links/{linkId}": {
+        parameters: [taskIdParam, { name: "linkId", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+        patch: op("reviewTaskLink", "Confirm or reject a link", "tasks:write", ok("The reviewed link", wrap("link", { type: "object" })), {
+          tags: ["Tasks"],
+          description: "Owner/admin/developer. A rejected link stays rejected when GitHub sends later events.",
+          requestBody: { required: true, content: json({ type: "object", required: ["decision"], properties: { decision: { type: "string", enum: ["confirm", "reject"] } } }) },
+        }),
+      },
       "/tasks/{taskId}/start": {
         parameters: [taskIdParam],
         post: op("startTask", "Claim a task (moves it to in progress / AI working)", "tasks:status", ok("The started task", wrap("task", ref("Task"))), { tags: ["Tasks"] }),

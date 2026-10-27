@@ -12,6 +12,8 @@ import { POST as completeTask } from "@/app/api/v1/tasks/[taskId]/complete/route
 import { POST as commentOnTask } from "@/app/api/v1/tasks/[taskId]/comment/route";
 import { GET as getTaskContext } from "@/app/api/v1/tasks/[taskId]/context/route";
 import { GET as getProjectContext } from "@/app/api/v1/projects/[projectId]/context/route";
+import { GET as listTaskLinks } from "@/app/api/v1/tasks/[taskId]/links/route";
+import { PATCH as reviewTaskLink } from "@/app/api/v1/tasks/[taskId]/links/[linkId]/route";
 import { GET as listAttempts, POST as recordAttempt } from "@/app/api/v1/tasks/[taskId]/attempts/route";
 import {
   commentFields,
@@ -254,6 +256,36 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     },
     ({ task_id, max_tokens, focus }) =>
       dispatch(getTaskContext, { taskId: task_id }, { method: "GET", path: `/api/v1/tasks/${task_id}/context`, query: contextQuery(max_tokens, focus) })
+  );
+
+  server.registerTool(
+    "list_task_links",
+    {
+      description:
+        "Commits, branches and pull requests linked to a task: confirmed links (an explicit guidon#ref or " +
+        "reviewed by a person) and suggestions waiting for review (confidence below 1, with the evidence). " +
+        "Each link has its provenance, PR state and timestamps.",
+      inputSchema: { task_id: taskId },
+      annotations: { title: "List linked code", ...READ_ONLY },
+    },
+    ({ task_id }) => dispatch(listTaskLinks, { taskId: task_id }, { method: "GET", path: `/api/v1/tasks/${task_id}/links` })
+  );
+
+  server.registerTool(
+    "review_task_link",
+    {
+      description:
+        "Confirm a suggested link between a task and a commit/branch/PR, or reject a link that isn't related. " +
+        "Only when you have checked the code - a suggestion is a guess from shared words, not a fact.",
+      inputSchema: {
+        task_id: taskId,
+        link_id: z.string().describe("The link's id (from list_task_links)."),
+        decision: z.enum(["confirm", "reject"]).describe("confirm: the link is right; reject: it isn't related."),
+      },
+      annotations: { title: "Review linked code", ...WRITE },
+    },
+    ({ task_id, link_id, decision }) =>
+      dispatch(reviewTaskLink, { taskId: task_id, linkId: link_id }, { method: "PATCH", path: `/api/v1/tasks/${task_id}/links/${link_id}`, body: { decision } })
   );
 
   server.registerTool(

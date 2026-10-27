@@ -205,5 +205,8 @@
   "This invitation has expired. Ask for a new one.": "To zaproszenie wygasło. Poproś o nowe.",
   "This invitation has already been used.": "To zaproszenie zostało już wykorzystane.",
   "This invitation was sent to a different email address.": "To zaproszenie wysłano na inny adres e-mail.",
-  "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "Nie udało się odczytać cen ze Stripe. Sprawdź STRIPE_SECRET_KEY."
+  "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "Nie udało się odczytać cen ze Stripe. Sprawdź STRIPE_SECRET_KEY.",
+  "You do not have permission to review linked code.": "Nie masz uprawnień do przeglądania powiązanego kodu.",
+  "This link no longer exists.": "To powiązanie już nie istnieje.",
+  "Could not update the link.": "Nie udało się zaktualizować powiązania."
 }

@@ -8,6 +8,8 @@ import { withServiceRole, withUser } from "@/lib/db/session";
 import { createServiceClient } from "@/lib/supabase-server";
 import { resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
 import { shouldMove, type TaskAction } from "./task-refs";
+import { suggestLinks, type LinkSpec } from "./link-core";
+import { dataClient } from "@/lib/data-client";
 
 /** Shown as the author of the comments and status changes the integration makes (actor_label, migration 036). */
 export const GITHUB_ACTOR_LABEL = "GitHub";
@@ -204,4 +206,64 @@ async function recordEvent(userId: string, taskId: string, eventKey: string, con
     throw new Error(commentError.message);
   }
   return true;
+}
+
+type TaskLinkRow = { id: string; status: string; provenance: string; pr_state: string | null; title: string | null; url: string | null };
+
+/**
+ * Smart Linking (migration 097): records the commit/branch/PR <-> task links
+ * an event carries, as the person who connected the repository (RLS). An
+ * explicit reference is a confirmed link; a PR that references no task gets
+ * at most three suggestions (link-core.ts). A link someone rejected stays
+ * rejected; later events only update a PR's state, title and URL. Never
+ * throws - links must not block the comments and status moves above.
+ */
+export async function applyLinks(target: GithubConnectionTarget, repository: string, links: LinkSpec[], suggestFrom: string | null, prLink: Omit<LinkSpec, "ref" | "evidence"> | null): Promise<{ linked: number; suggested: number }> {
+  const outcome = { linked: 0, suggested: 0 };
+  const db = dataClient(target.connectedBy, { supabase: () => getApiUserClient(target.connectedBy) });
+  try {
+    for (const link of links) {
+      const task = await resolveTask(target, link.ref);
+      if (!task) continue;
+      const existing = await db.from<TaskLinkRow>("task_links").select("id, status, provenance, pr_state, title, url")
+        .eq("task_id", task.id).eq("kind", link.kind).eq("repository", repository).eq("external_ref", link.externalRef).maybeSingle();
+      if (existing.error) throw new Error(existing.error.message);
+      if (!existing.data) {
+        const inserted = await db.from("task_links").insert({
+          task_id: task.id, project_id: target.projectId, kind: link.kind, repository, external_ref: link.externalRef, title: link.title, url: link.url,
+          pr_state: link.prState, status: "confirmed", provenance: "explicit_reference", confidence: 1, evidence: link.evidence,
+        }).select("id");
+        if (inserted.error && inserted.error.code !== "23505") throw new Error(inserted.error.message);
+        if (!inserted.error) outcome.linked++;
+        continue;
+      }
+      if (existing.data.status === "rejected") continue;
+      const patch: Record<string, unknown> = {};
+      if (link.prState && link.prState !== existing.data.pr_state) patch.pr_state = link.prState;
+      if (link.title && link.title !== existing.data.title) patch.title = link.title;
+      if (link.url && link.url !== existing.data.url) patch.url = link.url;
+      // A suggestion the code now references explicitly is confirmed by that reference.
+      if (existing.data.status === "suggested") Object.assign(patch, { status: "confirmed", evidence: link.evidence, decided_at: new Date().toISOString() });
+      if (Object.keys(patch).length) {
+        const updated = await db.from("task_links").update(patch).eq("id", existing.data.id).eq("project_id", target.projectId).select("id");
+        if (updated.error) throw new Error(updated.error.message);
+      }
+    }
+
+    if (suggestFrom && prLink && links.length === 0) {
+      const open = await db.from<{ id: string; title: string }>("tasks").select("id, title").eq("project_id", target.projectId).eq("is_done", false).is("parent_task_id", null).limit(500);
+      if (open.error) throw new Error(open.error.message);
+      for (const suggestion of suggestLinks(suggestFrom, open.data ?? [])) {
+        const inserted = await db.from("task_links").insert({
+          task_id: suggestion.taskId, project_id: target.projectId, kind: prLink.kind, repository, external_ref: prLink.externalRef, title: prLink.title, url: prLink.url,
+          pr_state: prLink.prState, status: "suggested", provenance: "suggestion", confidence: suggestion.confidence, evidence: suggestion.evidence,
+        }).select("id");
+        if (inserted.error && inserted.error.code !== "23505") throw new Error(inserted.error.message);
+        if (!inserted.error) outcome.suggested++;
+      }
+    }
+  } catch (error) {
+    console.error("[GitHub webhook] links for project", target.projectId, error instanceof Error ? error.message : error);
+  }
+  return outcome;
 }
