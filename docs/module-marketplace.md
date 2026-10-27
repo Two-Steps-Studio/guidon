@@ -43,10 +43,9 @@ races resolve to an existing matching installation; the database enforces the
 to the installed module's card in the project's Modules section.
 
 Published global entries can be read by signed-in users. Organization entries
-require membership of their own organization. Drafts remain hidden. Anonymous
-users have no table access. Authenticated clients cannot insert, edit, delete
-or publish registry releases; only the service role can currently curate them.
-The author submission/moderation workflow remains a separate V2 task.
+require membership of their own organization. Anonymous users have no table
+access. Authenticated clients cannot write registry tables directly; they
+publish through the functions described below.
 
 Screenshots are limited at the application boundary to local `/module-media/`
 assets without parent-directory paths. This avoids loading arbitrary publisher
@@ -84,3 +83,59 @@ To regenerate the first-party screenshot from the actual runtime views:
 ```sh
 npm run test:module-catalog -- --update-screenshots
 ```
+
+## Publishing, review and the author dashboard
+
+Apply migration 093 after 092. Project owners/admins publish from the AI
+builder (**Publish**) or from an installed module's Configuration page
+(**Publish to the Marketplace**): version (SemVer, higher than every earlier
+version of that id), author name, visibility, category, license (SPDX list
+in `MODULE_LICENSES`) and a description.
+
+- **Private**: only the author sees and installs it. **Organization**:
+  members of the project's organization. Both are published at once.
+- **Public**: waits in **Admin → Module review** (instance admins,
+  `ADMIN_EMAILS`). The reviewer sees permissions, views, the full manifest
+  and automatic findings - links, HTML/script-like text and text that reads
+  like instructions to an AI (module text reaches agents through task
+  context), plus write access. Approve publishes; reject requires a note the
+  author sees. Nobody reviews their own submission: the app hides the
+  buttons, `public.review_module_version` refuses, and a CHECK constraint
+  backs both. The submitter gets a notification with the decision.
+- The first publisher of a module id owns it (`module_listings`); later
+  versions come from the owner or an owner/admin of the listing's
+  organization.
+- A version is immutable from submission (trigger, service role included):
+  a fix is a new version. Published versions cannot be deleted - they are
+  **withdrawn** by the author (My modules) or an admin (from a report).
+  Withdrawn versions leave the catalog and can't be installed; projects
+  that run them keep working and can switch versions.
+- **Signatures**: with `MODULE_SIGNING_KEY` set, each published version is
+  signed (Ed25519 over the module id, version and the SHA-256 of the manifest
+  as the app reads it). A version whose signature no longer verifies - a
+  manifest changed in the database - is shown as such and cannot be
+  installed. Public key: `/.well-known/guidon-module-signing-keys.json`.
+  Without the key nothing is signed and versions install as before.
+- **SCA**: manifests are declarative; dependencies and executable code are
+  rejected by the schema, so there is nothing to scan beyond the license and
+  the review findings.
+- **Reports**: any signed-in user who can see a version reports it once
+  (reason + details). Admins resolve reports or withdraw the version; the
+  author only sees the number of open reports.
+- **Audit log**: `module_registry_events` (append-only) records submissions,
+  publications, decisions, withdrawals, reports and signatures. Authors read
+  their modules' entries; admins see the latest 50 on the review page.
+- **Author dashboard** (My modules → Published by you): every version with
+  visibility, status and review note, engine range, release channel
+  (pre-release when the version has a `-` suffix), installs and open
+  reports. Counts come from `public.module_install_counts()` - aggregates
+  for the caller's own modules only, never which projects. Installs are
+  projects whose `project_module_packages.catalog_version` names that
+  version (set by the installer and version changes, checked by a trigger).
+
+`test:db` section 77 covers publishing, visibility, ownership, immutability,
+self-review, approval, reports, counts, withdrawal and the audit log on real
+PostgreSQL. `tests/module-registry.test.mjs` (in `test:modules`) covers the
+review findings and signatures. The release E2E's Marketplace scenario
+(`tests/e2e/marketplace.mjs`, Chromium) runs the whole flow through the UI,
+including a tampered manifest being refused and organization visibility.

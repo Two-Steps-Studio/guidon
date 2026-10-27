@@ -18,6 +18,8 @@ export async function seedApiFixture(client, fixture) {
     report:{user:owner.id,scopes:["reports:write"],project:owner.projectId},
     origin:{user:owner.id,scopes:["tasks:read"],origins:["https://allowed.example.test"]},
     rate:{user:owner.id,scopes:["tasks:read","project:read"]},
+    manager:{user:owner.id,scopes:["project:read","project:write"]},
+    viewerProject:{user:fixture.reader.id,scopes:["tasks:read","project:read","project:write"]},
   };
   for(const [name,config] of Object.entries(configurations)){
     const raw=`guidon_${randomBytes(32).toString("base64url")}`;

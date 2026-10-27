@@ -150,7 +150,8 @@
     "marketplace": "Modul-Marktplatz",
     "myModules": "Meine Module",
     "extensionsGroup": "Erweiterungen",
-    "billingPrices": "Preise"
+    "billingPrices": "Preise",
+    "moduleReview": "Modulprüfung"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -497,7 +498,8 @@
         "deliveryRetrying": "Neuer Versuch {when}",
         "deliveryAttempts": "{count, plural, one {# Versuch} other {# Versuche}} · HTTP {status}",
         "retry": "Erneut senden",
-        "refreshHistory": "Aktualisieren"
+        "refreshHistory": "Aktualisieren",
+        "eventModuleAutomation": "Modul-Automatisierung"
       }
     },
     "billing": {
@@ -2015,7 +2017,10 @@
     "installedHint": "Öffne ein Modul hier oder über seinen Tab im Projektmenü.",
     "enabledState": "Aktiviert",
     "open": "Öffnen",
-    "moduleJson": "Modul (JSON)"
+    "moduleJson": "Modul (JSON)",
+    "permissionTasks": "Aufgaben in diesem Projekt erstellen (Automatisierungen)",
+    "permissionNotify": "Inhaber und Admins dieses Projekts benachrichtigen (Automatisierungen)",
+    "permissionWebhooks": "Webhooks dieser Organisation senden (Automatisierungen)"
   },
   "moduleCatalog": {
     "title": "Modul-Marktplatz",
@@ -2097,7 +2102,8 @@
     "saveFailed": "Modul konnte nicht gespeichert werden.",
     "category": "Kategorie",
     "categoryPlaceholder": "z. B. Marketing",
-    "categoryHint": "Wird als eigene Gruppe in der Projekt-Seitenleiste angezeigt. Leer lassen, um es unter „Eigene Module“ aufzuführen."
+    "categoryHint": "Wird als eigene Gruppe in der Projekt-Seitenleiste angezeigt. Leer lassen, um es unter „Eigene Module“ aufzuführen.",
+    "publish": "Im Marketplace veröffentlichen"
   },
   "moduleBuilder": {
     "title": "KI-Modulassistent",
@@ -2141,8 +2147,8 @@
     "redo": "Wiederholen",
     "test": "Prüfen",
     "testPassed": "Schema und Berechtigungen sind gültig.",
-    "publish": "Veröffentlichen — bald",
-    "publishHint": "Die Veröffentlichung benötigt die kommende Katalogmoderation.",
+    "publish": "Veröffentlichen",
+    "publishHint": "Den gespeicherten Entwurf veröffentlichen: privat, in deiner Organisation oder öffentlich nach Prüfung.",
     "history": "Änderungsverlauf",
     "emptyDraft": "Leerer Entwurf",
     "emptyInspector": "Erstellen Sie einen Plan, um Felder und Berechtigungen zu prüfen.",
@@ -2237,5 +2243,177 @@
     "expired": "Diese Einladung ist abgelaufen. Bitte um eine neue.",
     "used": "Diese Einladung wurde bereits verwendet.",
     "toDashboard": "Zum Dashboard"
+  },
+  "moduleRegistry": {
+    "publishTitle": "Veröffentlichen",
+    "noManifest": "Es gibt noch kein Modul zum Veröffentlichen. Erstelle ein Manifest im KI-Builder oder wähle ein installiertes Modul.",
+    "back": "Zurück",
+    "publishHint": "Eine veröffentlichte Version kann nicht geändert werden - Korrekturen erscheinen als neue Version. Private und Organisationsversionen sind sofort verfügbar, öffentliche werden zuerst geprüft.",
+    "moduleId": "Modul-ID",
+    "permissions": "Berechtigungen",
+    "views": "Ansichten",
+    "warningsTitle": "Bitte prüfen",
+    "finding": {
+      "schema": "Ungültiges Manifest",
+      "permissions": "Nicht unterstützte Berechtigung",
+      "engine": "Benötigt ein neueres Guidon",
+      "read": "Leseberechtigung fehlt",
+      "write": "Schreibberechtigung fehlt",
+      "entities": "Keine Entitäten",
+      "views": "Keine Ansichten",
+      "noViews": "Keine Ansichten",
+      "link": "Externer Link",
+      "markup": "HTML- oder skriptähnlicher Text",
+      "instructions": "Text, der wie Anweisungen an eine KI aussieht",
+      "writeAccess": "Kann Projektdaten ändern",
+      "automationAccess": "Automatisierungen wirken außerhalb des Moduls"
+    },
+    "publishedNow": "Version {version} ist veröffentlicht.",
+    "submittedForReview": "Version {version} wartet auf Prüfung. Du bekommst eine Benachrichtigung mit der Entscheidung.",
+    "toDashboard": "Deine veröffentlichten Module",
+    "version": "Version",
+    "versionHint": "SemVer, höher als alle früheren (z. B. 1.0.1).",
+    "author": "Autor",
+    "visibility": "Sichtbarkeit",
+    "visibilityOption": {
+      "private": "Privat",
+      "organization": "Organisation",
+      "public": "Öffentlich"
+    },
+    "visibilityHint": {
+      "private": "Nur du kannst es sehen und installieren.",
+      "organization": "Mitglieder der Organisation dieses Projekts.",
+      "public": "Alle, nach Prüfung durch einen Admin."
+    },
+    "category": "Kategorie",
+    "categoryOption": {
+      "planning": "Planung",
+      "research": "Recherche",
+      "operations": "Betrieb"
+    },
+    "license": "Lizenz",
+    "licenseLabel": "Lizenz: {license}",
+    "description": "Beschreibung",
+    "changelog": "Neuigkeiten",
+    "error": {
+      "permission": "Nur Projektinhaber und Admins dürfen veröffentlichen, und nur in ihrer eigenen Organisation.",
+      "noManifest": "Das Modul wurde nicht gefunden. Lade neu und versuche es erneut.",
+      "invalid": "Prüfe Version (SemVer), Autor, Beschreibung und Lizenz.",
+      "blocked": "Das Modul besteht die Prüfung nicht:",
+      "version": "Diese Version ist nicht höher als eine bereits veröffentlichte.",
+      "taken": "Diese Modul-ID gehört einem anderen Herausgeber. Ändere die ID im Builder.",
+      "exists": "Diese Version ist bereits veröffentlicht.",
+      "failed": "Veröffentlichen fehlgeschlagen. Versuche es erneut."
+    },
+    "publishing": "Wird veröffentlicht…",
+    "publish": "Veröffentlichen",
+    "ownSubmission": "Du hast diese Version eingereicht - ein anderer Admin muss sie prüfen.",
+    "reviewNote": "Notiz für den Autor (beim Ablehnen erforderlich)",
+    "approve": "Freigeben und veröffentlichen",
+    "reject": "Ablehnen",
+    "resolveReport": "Als erledigt markieren",
+    "withdrawVersion": "Version zurückziehen",
+    "adminTitle": "Modulprüfung",
+    "adminDescription": "Öffentliche Einreichungen, Missbrauchsmeldungen und das Registerprotokoll.",
+    "queueTitle": "Wartet auf Prüfung ({count})",
+    "queueEmpty": "Nichts wartet auf Prüfung.",
+    "reportsTitle": "Offene Meldungen ({count})",
+    "reportsEmpty": "Keine offenen Meldungen.",
+    "reason": {
+      "malicious": "Schädlich",
+      "misleading": "Irreführend",
+      "privacy": "Datenschutzproblem",
+      "copyright": "Urheberrecht",
+      "spam": "Spam",
+      "other": "Sonstiges"
+    },
+    "logTitle": "Registerprotokoll",
+    "action": {
+      "submitted": "zur Prüfung eingereicht",
+      "published": "veröffentlicht",
+      "approved": "freigegeben",
+      "rejected": "abgelehnt",
+      "withdrawn": "zurückgezogen",
+      "reported": "gemeldet",
+      "report_resolved": "Meldung erledigt",
+      "signed": "signiert"
+    },
+    "manifestJson": "Manifest (JSON)",
+    "signature": {
+      "verified": "Von Guidon signiert",
+      "unsigned": "Nicht signiert",
+      "invalid": "Signatur stimmt nicht - nicht installierbar",
+      "unknownKey": "Mit älterem Schlüssel signiert"
+    },
+    "statusNotice": {
+      "pending_review": "Wartet auf Prüfung - nur du siehst diese Version.",
+      "rejected": "Nicht freigegeben",
+      "withdrawn": "Zurückgezogen - nicht mehr installierbar."
+    },
+    "reportAbuse": "Dieses Modul melden",
+    "reportReason": "Grund",
+    "reportDetails": "Details (optional)",
+    "reportResult": {
+      "reported": "Danke - ein Admin sieht es sich an.",
+      "already_reported": "Du hast diese Version bereits gemeldet.",
+      "not_found": "Diese Version ist nicht mehr verfügbar.",
+      "invalid": "Wähle einen Grund; Details bis 2.000 Zeichen.",
+      "failed": "Senden fehlgeschlagen. Versuche es erneut."
+    },
+    "sendReport": "Meldung senden",
+    "cancel": "Abbrechen",
+    "dashboardTitle": "Von dir veröffentlicht",
+    "dashboardHint": "Deine Modulversionen, ihr Prüfstatus und wie viele Projekte sie nutzen. Installationen sind nur Zahlen - nie, welche Projekte.",
+    "dashboardEmpty": "Du hast noch kein Modul veröffentlicht. Veröffentliche eines aus dem KI-Builder oder der Konfiguration eines Moduls.",
+    "colModule": "Modul",
+    "colStatus": "Status",
+    "colInstalls": "Installationen",
+    "colReports": "Offene Meldungen",
+    "colChannel": "Kanal",
+    "colActions": "Aktionen",
+    "engineRange": "Guidon ≥ {min}",
+    "status": {
+      "pending_review": "Wartet auf Prüfung",
+      "published": "Veröffentlicht",
+      "rejected": "Nicht freigegeben",
+      "withdrawn": "Zurückgezogen"
+    },
+    "channelPrerelease": "Vorabversion",
+    "channelStable": "Stabil",
+    "withdraw": "Zurückziehen",
+    "withdrawAria": "{version} zurückziehen",
+    "withdrawConfirm": "Diese Version zurückziehen? Sie verschwindet aus dem Marketplace und kann nicht mehr installiert werden. Projekte, die sie nutzen, funktionieren weiter.",
+    "withdrawFailed": "Version konnte nicht zurückgezogen werden."
+  },
+  "moduleAutomations": {
+    "title": "Automatisierungen",
+    "hint": "Laufen, wenn ein Eintrag hinzugefügt, geändert oder entfernt wird. Sie erstellen nur Aufgaben, benachrichtigen Projektinhaber/-admins oder senden die Webhooks der Organisation - sie ändern nie Moduldaten und lösen sich daher nicht gegenseitig aus.",
+    "runsTitle": "Letzte Ausführungen",
+    "noRuns": "Noch keine Ausführungen.",
+    "colWhen": "Wann",
+    "colAutomation": "Automatisierung",
+    "colStatus": "Status",
+    "colAttempts": "Versuche",
+    "colActions": "Aktionen",
+    "event": {
+      "record": {
+        "created": "Eintrag hinzugefügt",
+        "updated": "Eintrag geändert",
+        "deleted": "Eintrag entfernt"
+      }
+    },
+    "action": {
+      "create_task": "Aufgabe erstellen",
+      "notify": "Inhaber/Admins benachrichtigen",
+      "webhook": "Webhooks senden"
+    },
+    "status": {
+      "pending": "Wartet",
+      "succeeded": "Erledigt",
+      "failed": "Fehlgeschlagen"
+    },
+    "retry": "Erneut versuchen",
+    "retryAria": "{automation} erneut versuchen",
+    "retryFailed": "Konnte nicht erneut ausgeführt werden."
   }
 }

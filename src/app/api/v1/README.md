@@ -13,6 +13,11 @@ does for the UI.
 
 ## Callers today
 
+- Agents managing project modules: `GET/POST /projects/[projectId]/modules`,
+  `GET/PATCH /projects/[projectId]/modules/[moduleId]` and `.../runs` (MCP
+  `list_modules`, `install_module`, `configure_module`, `list_module_runs`);
+  see `docs/module-automations.md`.
+
 - `discord-bot/` (slash commands) and the MCP endpoint `src/app/api/mcp`
   (agents such as Claude Code; tools dispatch in-process to these handlers).
 - The editor plugins under `plugins/` (Unity, Unreal Engine, Godot, Blender,

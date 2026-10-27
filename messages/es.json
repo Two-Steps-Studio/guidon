@@ -150,7 +150,8 @@
     "marketplace": "Mercado de módulos",
     "myModules": "Mis módulos",
     "extensionsGroup": "Extensiones",
-    "billingPrices": "Precios"
+    "billingPrices": "Precios",
+    "moduleReview": "Revisión de módulos"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -497,7 +498,8 @@
         "deliveryRetrying": "Reintento {when}",
         "deliveryAttempts": "{count, plural, one {# intento} other {# intentos}} · HTTP {status}",
         "retry": "Reintentar",
-        "refreshHistory": "Actualizar"
+        "refreshHistory": "Actualizar",
+        "eventModuleAutomation": "Automatización de módulo"
       }
     },
     "billing": {
@@ -2015,7 +2017,10 @@
     "installedHint": "Abre un módulo desde aquí o desde su pestaña en el menú del proyecto.",
     "enabledState": "Activado",
     "open": "Abrir",
-    "moduleJson": "Módulo (JSON)"
+    "moduleJson": "Módulo (JSON)",
+    "permissionTasks": "Crear tareas en este proyecto (automatizaciones)",
+    "permissionNotify": "Avisar a propietarios y administradores del proyecto (automatizaciones)",
+    "permissionWebhooks": "Enviar los webhooks de la organización (automatizaciones)"
   },
   "moduleCatalog": {
     "title": "Mercado de módulos",
@@ -2097,7 +2102,8 @@
     "saveFailed": "No se pudo guardar el módulo.",
     "category": "Categoría",
     "categoryPlaceholder": "p. ej., Marketing",
-    "categoryHint": "Se muestra como un grupo propio en la barra lateral del proyecto. Déjalo vacío para que aparezca en «Módulos personalizados»."
+    "categoryHint": "Se muestra como un grupo propio en la barra lateral del proyecto. Déjalo vacío para que aparezca en «Módulos personalizados».",
+    "publish": "Publicar en el Marketplace"
   },
   "moduleBuilder": {
     "title": "Creador de módulos con IA",
@@ -2141,8 +2147,8 @@
     "redo": "Rehacer",
     "test": "Comprobar",
     "testPassed": "El esquema y los permisos son válidos.",
-    "publish": "Publicar — próximamente",
-    "publishHint": "La publicación requiere el próximo flujo de moderación del catálogo.",
+    "publish": "Publicar",
+    "publishHint": "Publica el borrador guardado: en privado, en tu organización o públicamente tras la revisión.",
     "history": "Historial de cambios",
     "emptyDraft": "Borrador vacío",
     "emptyInspector": "Genera un plan para revisar campos y permisos.",
@@ -2237,5 +2243,177 @@
     "expired": "Esta invitación ha caducado. Pide una nueva a quien te invitó.",
     "used": "Esta invitación ya se ha usado.",
     "toDashboard": "Ir al panel"
+  },
+  "moduleRegistry": {
+    "publishTitle": "Publicar",
+    "noManifest": "Aún no hay un módulo para publicar. Crea un manifiesto en el generador de IA o elige un módulo instalado.",
+    "back": "Volver",
+    "publishHint": "Una versión publicada no se puede cambiar: las correcciones se publican como versión nueva. Las versiones privadas y de organización están disponibles al instante; las públicas se revisan antes.",
+    "moduleId": "ID del módulo",
+    "permissions": "Permisos",
+    "views": "Vistas",
+    "warningsTitle": "Conviene revisar",
+    "finding": {
+      "schema": "Manifiesto no válido",
+      "permissions": "Permiso no admitido",
+      "engine": "Requiere un Guidon más reciente",
+      "read": "Falta el permiso de lectura",
+      "write": "Falta el permiso de escritura",
+      "entities": "Sin entidades",
+      "views": "Sin vistas",
+      "noViews": "Sin vistas",
+      "link": "Enlace externo",
+      "markup": "Texto parecido a HTML o script",
+      "instructions": "Texto que parece instrucciones para una IA",
+      "writeAccess": "Puede cambiar datos del proyecto",
+      "automationAccess": "Las automatizaciones actúan fuera del módulo"
+    },
+    "publishedNow": "La versión {version} está publicada.",
+    "submittedForReview": "La versión {version} espera revisión. Recibirás una notificación con la decisión.",
+    "toDashboard": "Tus módulos publicados",
+    "version": "Versión",
+    "versionHint": "SemVer, mayor que todas las anteriores (p. ej., 1.0.1).",
+    "author": "Autor",
+    "visibility": "Visibilidad",
+    "visibilityOption": {
+      "private": "Privado",
+      "organization": "Organización",
+      "public": "Público"
+    },
+    "visibilityHint": {
+      "private": "Solo tú puedes verlo e instalarlo.",
+      "organization": "Miembros de la organización de este proyecto.",
+      "public": "Todos, tras la revisión de un administrador."
+    },
+    "category": "Categoría",
+    "categoryOption": {
+      "planning": "Planificación",
+      "research": "Investigación",
+      "operations": "Operaciones"
+    },
+    "license": "Licencia",
+    "licenseLabel": "Licencia: {license}",
+    "description": "Descripción",
+    "changelog": "Novedades",
+    "error": {
+      "permission": "Solo los propietarios y administradores del proyecto pueden publicar, y solo en su organización.",
+      "noManifest": "No se encontró el módulo. Recarga e inténtalo de nuevo.",
+      "invalid": "Revisa la versión (SemVer), el autor, la descripción y la licencia.",
+      "blocked": "El módulo no supera las comprobaciones:",
+      "version": "Esta versión no es mayor que una ya publicada.",
+      "taken": "Este ID de módulo pertenece a otro editor. Cámbialo en el generador.",
+      "exists": "Esta versión ya está publicada.",
+      "failed": "No se pudo publicar. Inténtalo de nuevo."
+    },
+    "publishing": "Publicando…",
+    "publish": "Publicar",
+    "ownSubmission": "Enviaste esta versión: debe revisarla otro administrador.",
+    "reviewNote": "Nota para el autor (obligatoria al rechazar)",
+    "approve": "Aprobar y publicar",
+    "reject": "Rechazar",
+    "resolveReport": "Marcar como resuelto",
+    "withdrawVersion": "Retirar versión",
+    "adminTitle": "Revisión de módulos",
+    "adminDescription": "Envíos públicos, denuncias y registro del catálogo.",
+    "queueTitle": "Pendientes de revisión ({count})",
+    "queueEmpty": "Nada pendiente de revisión.",
+    "reportsTitle": "Denuncias abiertas ({count})",
+    "reportsEmpty": "No hay denuncias abiertas.",
+    "reason": {
+      "malicious": "Dañino o malicioso",
+      "misleading": "Engañoso",
+      "privacy": "Problema de privacidad",
+      "copyright": "Derechos de autor",
+      "spam": "Spam",
+      "other": "Otro"
+    },
+    "logTitle": "Registro del catálogo",
+    "action": {
+      "submitted": "enviado a revisión",
+      "published": "publicado",
+      "approved": "aprobado",
+      "rejected": "rechazado",
+      "withdrawn": "retirado",
+      "reported": "denunciado",
+      "report_resolved": "denuncia resuelta",
+      "signed": "firmado"
+    },
+    "manifestJson": "Manifiesto (JSON)",
+    "signature": {
+      "verified": "Firmado por Guidon",
+      "unsigned": "Sin firmar",
+      "invalid": "La firma no coincide: no se puede instalar",
+      "unknownKey": "Firmado con una clave anterior"
+    },
+    "statusNotice": {
+      "pending_review": "Pendiente de revisión: solo tú ves esta versión.",
+      "rejected": "No aprobado",
+      "withdrawn": "Retirada: ya no se puede instalar."
+    },
+    "reportAbuse": "Denunciar este módulo",
+    "reportReason": "Motivo",
+    "reportDetails": "Detalles (opcional)",
+    "reportResult": {
+      "reported": "Gracias: un administrador lo revisará.",
+      "already_reported": "Ya denunciaste esta versión.",
+      "not_found": "Esta versión ya no está disponible.",
+      "invalid": "Elige un motivo; detalles hasta 2000 caracteres.",
+      "failed": "No se pudo enviar. Inténtalo de nuevo."
+    },
+    "sendReport": "Enviar denuncia",
+    "cancel": "Cancelar",
+    "dashboardTitle": "Publicados por ti",
+    "dashboardHint": "Las versiones de tus módulos, su estado de revisión y cuántos proyectos las usan. Las instalaciones son solo cifras, nunca qué proyectos.",
+    "dashboardEmpty": "Aún no has publicado ningún módulo. Publica uno desde el generador de IA o la configuración de un módulo.",
+    "colModule": "Módulo",
+    "colStatus": "Estado",
+    "colInstalls": "Instalaciones",
+    "colReports": "Denuncias abiertas",
+    "colChannel": "Canal",
+    "colActions": "Acciones",
+    "engineRange": "Guidon ≥ {min}",
+    "status": {
+      "pending_review": "Pendiente de revisión",
+      "published": "Publicado",
+      "rejected": "No aprobado",
+      "withdrawn": "Retirado"
+    },
+    "channelPrerelease": "Preliminar",
+    "channelStable": "Estable",
+    "withdraw": "Retirar",
+    "withdrawAria": "Retirar {version}",
+    "withdrawConfirm": "¿Retirar esta versión? Desaparece del Marketplace y no se podrá instalar. Los proyectos que ya la usan siguen funcionando.",
+    "withdrawFailed": "No se pudo retirar la versión."
+  },
+  "moduleAutomations": {
+    "title": "Automatizaciones",
+    "hint": "Se ejecutan cuando se añade, cambia o elimina una entrada. Solo crean tareas, avisan a propietarios/administradores del proyecto o envían los webhooks de la organización: nunca cambian datos del módulo, así que no se disparan entre sí.",
+    "runsTitle": "Ejecuciones recientes",
+    "noRuns": "Aún no hay ejecuciones.",
+    "colWhen": "Cuándo",
+    "colAutomation": "Automatización",
+    "colStatus": "Estado",
+    "colAttempts": "Intentos",
+    "colActions": "Acciones",
+    "event": {
+      "record": {
+        "created": "entrada añadida",
+        "updated": "entrada cambiada",
+        "deleted": "entrada eliminada"
+      }
+    },
+    "action": {
+      "create_task": "crear una tarea",
+      "notify": "avisar a propietarios/administradores",
+      "webhook": "enviar webhooks"
+    },
+    "status": {
+      "pending": "En espera",
+      "succeeded": "Hecho",
+      "failed": "Fallida"
+    },
+    "retry": "Reintentar",
+    "retryAria": "Reintentar {automation}",
+    "retryFailed": "No se pudo reintentar."
   }
 }

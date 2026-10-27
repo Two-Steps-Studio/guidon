@@ -5,6 +5,9 @@ import { GET as listTasks, POST as createTask } from "@/app/api/v1/projects/[pro
 import { GET as listColumns } from "@/app/api/v1/projects/[projectId]/columns/route";
 import { GET as listPriorities } from "@/app/api/v1/projects/[projectId]/priorities/route";
 import { GET as listEvents } from "@/app/api/v1/projects/[projectId]/events/route";
+import { GET as listModules, POST as installModule } from "@/app/api/v1/projects/[projectId]/modules/route";
+import { PATCH as configureModule } from "@/app/api/v1/projects/[projectId]/modules/[moduleId]/route";
+import { GET as listModuleRuns } from "@/app/api/v1/projects/[projectId]/modules/[moduleId]/runs/route";
 import { GET as getTask, PATCH as updateTask, DELETE as deleteTask } from "@/app/api/v1/tasks/[taskId]/route";
 import { POST as startTask } from "@/app/api/v1/tasks/[taskId]/start/route";
 import { PATCH as setTaskStatus } from "@/app/api/v1/tasks/[taskId]/status/route";
@@ -110,6 +113,83 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
         method: "GET",
         path: `/api/v1/projects/${project_id}/events`,
         query: { after: after === undefined ? undefined : String(after), limit: limit === undefined ? undefined : String(limit) },
+      })
+  );
+
+  const moduleId = z.string().regex(/^[a-z][a-z0-9-]{0,63}$/).describe("The module's id (from list_modules or the Marketplace).");
+  server.registerTool(
+    "list_modules",
+    {
+      description:
+        "The project's modules (its own sections: pages, tables, boards...): id, name, version, installed/enabled, " +
+        "permissions, views, automations and settings. Module records are not included.",
+      inputSchema: { project_id: projectId },
+      annotations: { title: "List modules", ...READ_ONLY },
+    },
+    ({ project_id }) => dispatch(listModules, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/modules` })
+  );
+
+  server.registerTool(
+    "install_module",
+    {
+      description:
+        "Install a published Marketplace module version in the project (project owner/admin). `permissions` is the approval: " +
+        "it must list exactly the permissions the version requests - show them to the person and only install with their consent. " +
+        "Installing the same version again is a no-op.",
+      inputSchema: {
+        project_id: projectId,
+        module_id: moduleId,
+        version: z.string().describe("The version to install, e.g. 1.0.0."),
+        permissions: z.array(z.string()).describe("Exactly the version's permission list, approved by the person."),
+        digest: z.string().optional().describe("SHA-256 of the manifest as shown in the Marketplace; install fails if the version changed."),
+      },
+      annotations: { title: "Install module", ...WRITE, idempotentHint: true },
+    },
+    ({ project_id, module_id, version, permissions, digest }) =>
+      dispatch(installModule, { projectId: project_id }, {
+        method: "POST",
+        path: `/api/v1/projects/${project_id}/modules`,
+        body: defined({ module_id, version, permissions, digest }),
+      })
+  );
+
+  server.registerTool(
+    "configure_module",
+    {
+      description:
+        "Enable, disable or uninstall an installed module (uninstall keeps its data), or change its settings: default view and " +
+        "sidebar category (project owner/admin). Version changes need the person's review in the app.",
+      inputSchema: {
+        project_id: projectId,
+        module_id: moduleId,
+        action: z.enum(["enable", "disable", "uninstall", "settings"]),
+        default_view: z.string().nullable().optional().describe("With action=settings: a view id of the module, or null for automatic."),
+        category: z.string().max(40).nullable().optional().describe("With action=settings: sidebar group name, or null for Custom modules."),
+      },
+      annotations: { title: "Configure module", readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+    },
+    ({ project_id, module_id, action, default_view, category }) =>
+      dispatch(configureModule, { projectId: project_id, moduleId: module_id }, {
+        method: "PATCH",
+        path: `/api/v1/projects/${project_id}/modules/${module_id}`,
+        body: defined({ action, default_view, category }),
+      })
+  );
+
+  server.registerTool(
+    "list_module_runs",
+    {
+      description:
+        "A module's automation log, newest first: automation, record event, status (pending/succeeded/failed), attempts and last error. " +
+        "Visible to project owners/admins.",
+      inputSchema: { project_id: projectId, module_id: moduleId, limit: z.number().int().min(1).max(200).optional() },
+      annotations: { title: "List module automation runs", ...READ_ONLY },
+    },
+    ({ project_id, module_id, limit }) =>
+      dispatch(listModuleRuns, { projectId: project_id, moduleId: module_id }, {
+        method: "GET",
+        path: `/api/v1/projects/${project_id}/modules/${module_id}/runs`,
+        query: { limit: limit === undefined ? undefined : String(limit) },
       })
   );
 
