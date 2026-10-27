@@ -20,6 +20,7 @@ import { AlertCircle, Edit, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { deleteSource, updateSource, type SourceFormState } from "./actions";
 import { SourceFormFields } from "./source-form-fields";
 import type { ContextSource } from "@/types/context";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: SourceFormState = { error: null };
 
@@ -126,10 +127,7 @@ function EditSourceForm({
 
   return (
     <form
-      action={(formData) => {
-        submittedRef.current = true;
-        formAction(formData);
-      }}
+      onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
       className="space-y-4"
     >
       <SourceFormFields idPrefix={`edit-source-${source.id}`} defaults={source} />

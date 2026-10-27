@@ -14,6 +14,7 @@ import {
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createSource, type SourceFormState } from "./actions";
 import { SourceFormFields } from "./source-form-fields";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: SourceFormState = { error: null };
 
@@ -47,10 +48,7 @@ export function CreateSourceDialog({ projectId, trigger, projectColor }: { proje
           <DialogDescription>{t("newEntryDialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
-          action={(formData) => {
-            submittedRef.current = true;
-            formAction(formData);
-          }}
+          onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
           className="space-y-4"
         >
           <SourceFormFields idPrefix="create-source" />

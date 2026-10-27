@@ -14,6 +14,7 @@ import {
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createPhase, type PhaseFormState } from "./actions";
 import { PhaseFormFields } from "./phase-form-fields";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: PhaseFormState = { error: null };
 
@@ -47,10 +48,7 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
           <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
         <form
-          action={(formData) => {
-            submittedRef.current = true;
-            formAction(formData);
-          }}
+          onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
           className="space-y-4"
         >
           <PhaseFormFields idPrefix="create-phase" />

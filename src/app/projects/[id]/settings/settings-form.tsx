@@ -17,6 +17,7 @@ import type { Project, ProjectStatus, ProjectType, ProjectMethodology } from "@/
 import { Select } from "@/components/ui/select";
 import { ImageCropInput } from "@/components/ui/image-crop-input";
 import { BRAND_COLORS } from "@/lib/brand-colors";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const STATUS_VALUES: ProjectStatus[] = ["active", "archived", "deleted"];
 const PROJECT_TYPE_VALUES: ProjectType[] = ["game", "website", "mobile_app", "api", "tool", "other"];
@@ -66,7 +67,7 @@ export function SettingsForm({
   };
 
   return (
-    <form action={formAction} className="space-y-6" data-save-shortcut>
+    <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-6" data-save-shortcut>
       <input type="hidden" name="technologies" value={JSON.stringify(technologies)} />
 
       <Card>

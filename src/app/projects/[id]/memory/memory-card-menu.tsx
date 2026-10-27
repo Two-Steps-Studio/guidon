@@ -23,6 +23,7 @@ import { deleteMemory, updateMemory, type MemoryFormState } from "./actions";
 import { MEMORY_TYPES } from "./memory-type-config";
 import type { MemoryType } from "@/types/context";
 import { Select } from "@/components/ui/select";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: MemoryFormState = { error: null };
 
@@ -136,10 +137,7 @@ function EditMemoryForm({
 
   return (
     <form
-      action={(formData) => {
-        submittedRef.current = true;
-        formAction(formData);
-      }}
+      onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
       className="space-y-4"
     >
       <div className="space-y-2">

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Check, Copy, Loader2, MailCheck, Plus } from "lucide-react";
 import { addMember, type MemberActionState } from "./actions";
 import { Select } from "@/components/ui/select";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: MemberActionState = { error: null };
 
@@ -105,10 +106,7 @@ export function AddMemberDialog({
           </div>
         ) : (
         <form
-          action={(formData) => {
-            setSubmittedFrom(state);
-            formAction(formData);
-          }}
+          onSubmit={(event) => { setSubmittedFrom(state); submitKeepingValues(event, formAction); }}
           className="space-y-4"
         >
           <div className="space-y-2">

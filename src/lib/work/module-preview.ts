@@ -11,9 +11,10 @@ export function validateModulePreview(input: unknown): { manifest: ModuleManifes
   const issues: ModulePreviewIssue[] = [];
   if (unsupportedModulePermissions(manifest).length) issues.push({ code: "permissions", path: "permissions" });
   if (!manifest.permissions.includes("module-data:read")) issues.push({ code: "read", path: "permissions" });
-  if (manifest.views.some(view => view.type === "form") && !manifest.permissions.includes("module-data:write")) issues.push({ code: "write", path: "permissions" });
+  if (manifest.views.some(view => view.type === "form" || (view.type === "page" && view.blocks.some(block => block.type !== "text"))) && !manifest.permissions.includes("module-data:write")) issues.push({ code: "write", path: "permissions" });
   if (compareSemver(MODULE_ENGINE_VERSION, manifest.engine.minVersion) < 0 || (manifest.engine.maxVersionExclusive && compareSemver(MODULE_ENGINE_VERSION, manifest.engine.maxVersionExclusive) >= 0)) issues.push({ code: "engine", path: "engine" });
-  if (!manifest.entities.length) issues.push({ code: "entities", path: "entities" });
+  // A page of fixed text needs no entity; every other view reads one.
+  if (!manifest.entities.length && !(manifest.views.length && manifest.views.every(view => view.type === "page"))) issues.push({ code: "entities", path: "entities" });
   if (!manifest.views.length) issues.push({ code: "views", path: "views" });
   return { manifest, issues };
 }
@@ -31,6 +32,7 @@ export function modulePreviewRecords(manifest: ModuleManifest): ModuleRecord[] {
         case "number": value = Math.min(field.max ?? Infinity, Math.max(field.min ?? -Infinity, index + 1)); break;
         case "boolean": value = index % 2 === 0; break;
         case "date": value = `2026-01-0${index + 1}`; break;
+        case "url": value = `https://example.com/${index + 1}`; break;
         case "select": value = field.options[index % field.options.length].value; break;
       }
       return [field.id, value];

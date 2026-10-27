@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { ModuleManifest } from "./module-manifest";
 
-export const MODULE_ENGINE_VERSION = "1.0.0";
+/** 1.1 adds page views and url fields; manifests without them still declare 1.0. */
+export const MODULE_ENGINE_VERSION = "1.1.0";
 export const MODULE_DATA_LIMIT = 1_000;
 export const MODULE_MANIFEST_BYTE_LIMIT = 200_000;
 export const MODULE_DATA_BYTE_LIMIT = 1_000_000;
@@ -45,12 +46,19 @@ export function parseModuleRecords(manifest: ModuleManifest, input: unknown): Mo
           case "number": valid = typeof value === "number" && (field.min === undefined || value >= field.min) && (field.max === undefined || value <= field.max); break;
           case "boolean": valid = typeof value === "boolean"; break;
           case "select": valid = typeof value === "string" && field.options.some((option) => option.value === value); break;
+          case "url": valid = typeof value === "string" && isModuleUrl(value); break;
           case "date": valid = typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)) && new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value; break;
         }
         if (!valid) ctx.addIssue({ code: "custom", path: [index, "values", field.id], message: `Invalid ${field.type} value.` });
       }
     });
   }).parse(input);
+}
+
+/** Absolute HTTP(S) address up to 2,000 characters - never javascript:, data: or relative. */
+export function isModuleUrl(value: string): boolean {
+  if (value.length > 2000) return false;
+  try { return ["http:", "https:"].includes(new URL(value).protocol); } catch { return false; }
 }
 
 export function unsupportedModulePermissions(manifest: ModuleManifest): string[] {

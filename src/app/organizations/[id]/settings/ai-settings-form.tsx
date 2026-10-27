@@ -19,6 +19,7 @@ import {
   RECOMMENDED_MODELS,
   type OrgAiProviderName,
 } from "@/lib/ai/org-ai-providers";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const PROVIDER_LABELS: Record<OrgAiProviderName, string> = {
   anthropic: "Anthropic",
@@ -147,7 +148,7 @@ export function AiSettingsForm({
         )}
 
         {canManage && editing && (
-          <form action={formAction} className="space-y-3">
+          <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-3">
             <input type="hidden" name="had_existing_key" value={configured ? "true" : "false"} />
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">

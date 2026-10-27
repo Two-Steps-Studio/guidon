@@ -102,6 +102,20 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
   when collapsing/expanding. Saved pins do not produce sidebar task links and
   remain intact in the database; each fixture mutation is restored afterward.
 
+- Modules: content modules stored before migration 092 are converted by the
+  real migration on PostgreSQL 17 and open in their own sidebar tab; a checkbox
+  saves at once, an item is added in place, both survive a reload, the sibling
+  module's data is untouched, the export holds manifest plus entries, old
+  `/extensions/content/` links redirect, the viewer reads without edit
+  controls or export, and another tenant sees nothing.
+- Project sections (roadmap, decisions, knowledge, files): created through the
+  real dialogs/upload with HTML/script payloads that stay text after reload and
+  match the database; the knowledge link refuses `javascript:` on the server
+  even with browser validation removed; a rejected save keeps what was typed;
+  the file download link is signed and a changed path or signature is refused;
+  the viewer has no create/upload controls and another tenant receives none of
+  the content.
+
 - Apple Design regression checks cover pointer/keyboard drag cancellation and
   confirmed moves, failed optimistic updates, retained unsaved drafts and files,
   dialog bounds at 320×480 with 200% text, crop feedback, image swipes and
@@ -114,7 +128,7 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
 This is the self-hosted direct-PostgreSQL auth/data path. It does **not** certify
 Supabase Auth/PostgREST, external OAuth callbacks, reset email delivery,
 complete onboarding, complete Kanban CRUD/concurrency, exhaustive API/MCP permissions,
-Stripe, uploads, mobile, accessibility or production monitoring. Those remain
+Stripe, Supabase Storage uploads, mobile, accessibility or production monitoring. Those remain
 the separate QA cards and should extend this foundation.
 
 ## Failure evidence and safety

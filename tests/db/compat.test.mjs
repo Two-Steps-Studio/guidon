@@ -32,9 +32,19 @@ import { createHash } from "node:crypto";
 import { installCatalogModule } from "../../src/lib/work/module-installation.ts";
 import { moduleManifestSchema } from "../../src/lib/work/module-manifest.ts";
 import { parseModuleRecords } from "../../src/lib/work/module-records.ts";
+import { register } from "node:module";
 // The data client's SQL compiler (pure TS, no imports) - run with
 // --experimental-strip-types, see package.json's test:db.
 import { compile, compileCount, compileRpc, parseColumns } from "../../src/lib/data-client/sql.ts";
+
+// module-legacy.ts imports its siblings without an extension (as the app's
+// bundler expects); resolve those to .ts, like tests/module-*.test.mjs do.
+register(`data:text/javascript,${encodeURIComponent(`
+export async function resolve(specifier, context, next) {
+  if (context.parentURL?.includes('/src/lib/work/') && /^\\.\\/(module|custom)-[a-z-]+$/.test(specifier)) return next(specifier + '.ts', context);
+  return next(specifier, context);
+}`)}`, import.meta.url);
+const { convertContentModule } = await import("../../src/lib/work/module-legacy.ts");
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DB_DIR = path.join(HERE, "..", "..", "src", "db");
@@ -3995,6 +4005,53 @@ section("75. organization invitations by link (091)");
     check("cancelled link is unknown", (await db.query("SELECT result FROM public.accept_invitation($1)", [cancelToken])).rows[0].result === "not_found");
   });
   await withServiceRole(() => db.query("DELETE FROM public.organization_members WHERE organization_id = $1 AND user_id = $2", [orgId, E]));
+}
+
+section("76. content modules become page packages (092)");
+{
+  const legacy = [
+    { version: 1, id: "release", title: "Release checklist", description: "Before shipping", category: "Delivery", blocks: [
+      { type: "checklist", title: "Gates", items: [{ label: "Tests pass", done: true }, { label: "Notes reviewed", done: false }] },
+      { type: "text", title: "Plan", text: "Ship on Friday\nRoll back if needed" },
+      { type: "links", title: "Docs", items: [{ label: "Guide", url: "https://useguidon.com/developers" }] },
+    ] },
+    { version: 1, id: "taken", title: "Taken id", description: "", blocks: [{ type: "text", title: "Note", text: "Body" }] },
+    { id: "broken", title: "", blocks: [] },
+  ];
+  let legacyProject;
+  await withUser(A, async () => {
+    legacyProject = (await db.query("INSERT INTO public.projects (organization_id, name, visibility) VALUES ($1, 'Legacy modules', 'private') RETURNING id", [orgId])).rows[0].id;
+    await db.query("UPDATE public.projects SET custom_modules = $2::jsonb WHERE id = $1", [legacyProject, JSON.stringify(legacy)]);
+    await db.query("INSERT INTO public.project_module_packages (project_id, module_id, manifest) VALUES ($1, 'taken', '{\"manifestVersion\":1,\"id\":\"taken\"}')", [legacyProject]);
+  });
+  const migration = forPglite(await readFile(path.join(DB_DIR, "migrations", "092_content_modules_as_packages.sql"), "utf8"));
+  await db.exec(migration);
+  const rows = async () => (await db.query("SELECT module_id, manifest, records, settings FROM public.project_module_packages WHERE project_id = $1 ORDER BY module_id", [legacyProject])).rows;
+  const converted = await rows();
+  check("valid content modules converted, invalid one left out", isDeepStrictEqual(converted.map((row) => row.module_id), ["release", "taken", "taken-page"]), converted.map((row) => row.module_id).join(","));
+  for (const row of converted.filter((row) => row.module_id !== "taken")) {
+    let manifest = null;
+    try { manifest = moduleManifestSchema.parse(row.manifest); } catch (error) { check(`${row.module_id}: manifest passes the app's schema`, false, error.message); continue; }
+    let records = null;
+    try { records = parseModuleRecords(manifest, row.records); } catch (error) { check(`${row.module_id}: records pass the app's schema`, false, error.message); continue; }
+    const source = legacy.find((module) => module.id === row.module_id || `${module.id}-page` === row.module_id);
+    let sequence = 0;
+    const expected = convertContentModule(source, row.module_id, () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, "0")}`);
+    const strip = (list) => list.map((record) => ({ ...record, id: "id" }));
+    check(`${row.module_id}: SQL conversion equals convertContentModule`, isDeepStrictEqual(manifest, expected.manifest) && isDeepStrictEqual(strip(records), strip(expected.records)) && isDeepStrictEqual(row.settings, expected.settings),
+      JSON.stringify({ manifest, settings: row.settings }));
+  }
+  const release = converted.find((row) => row.module_id === "release");
+  check("checklist state and text survive as records", release.records.some((record) => record.values.label === "Tests pass" && record.values.done === true) && release.records.some((record) => record.values.text === "Ship on Friday\nRoll back if needed"));
+  await db.exec(migration);
+  check("running 092 again converts nothing twice", (await rows()).length === 3);
+  await withUser(A, async () => {
+    for (let i = 0; i < 17; i++) await db.query("INSERT INTO public.project_module_packages (project_id, module_id, manifest) VALUES ($1, $2, $3)", [legacyProject, `fill-${i}`, JSON.stringify({ manifestVersion: 1, id: `fill-${i}` })]);
+    check("the package cap is enforced again after 092", await throwsInSavepoint("INSERT INTO public.project_module_packages (project_id, module_id, manifest) VALUES ($1, 'over', '{\"manifestVersion\":1,\"id\":\"over\"}')", [legacyProject]));
+  });
+  await withUser(B, async () => {
+    check("converted packages stay private to their project", (await db.query("SELECT 1 FROM public.project_module_packages WHERE project_id = $1", [legacyProject])).rows.length === 0);
+  });
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

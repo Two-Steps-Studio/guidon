@@ -31,6 +31,7 @@ import {
 } from "./actions";
 import { MEMORY_TYPE_CONFIG } from "./memory-type-config";
 import type { ProjectMemory } from "@/types/context";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: MemoryFormState = { error: null };
 
@@ -176,10 +177,7 @@ function CorrectInsightForm({
 
   return (
     <form
-      action={(formData) => {
-        submittedRef.current = true;
-        correctAction(formData);
-      }}
+      onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, correctAction); }}
       className="space-y-4"
     >
       <div className="space-y-2">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Bot, Check } from "lucide-react";
 import { updateAiPermissions, type AiPermissionsState } from "./ai-permissions-actions";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 interface AiPermissions {
   can_read_context: boolean;
@@ -58,7 +59,7 @@ export function AiPermissionsForm({
         <CardDescription>{t("aiPermissionsDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             {PERMISSION_KEYS.map(({ field, labelKey }) => (
               <label key={field} className="flex items-center gap-2 text-sm">

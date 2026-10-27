@@ -38,9 +38,19 @@ separately from the package, and enforce each grant on every server operation.
 Until that runtime exists, these strings provide schema vocabulary only.
 
 Entities and fields are declarative. Field types are limited to `text`,
-`number`, `boolean`, `date`, and `select`. Views are limited to `table`, `board`,
-and `form`, and must reference a declared entity and its fields. Entity, field,
-view, option, and permission identifiers must be unique in their scope.
+`number`, `boolean`, `date`, `select` and (engine 1.1) `url`. Views are `table`,
+`form`, `board`, `chart` and `calendar`, which reference a declared entity and
+its fields, and (engine 1.1) `page`: a document of up to 20 blocks - `text`
+(the author's fixed copy), `notes` (a text field of an entity, one paragraph
+per record), `checklist` (text label + boolean done fields) and `links` (text
+label + url fields). Each block names its entity and fields, which must exist
+with those types. Entity, field, view, option, and permission identifiers must
+be unique in their scope. An optional `description` (up to 500 characters) is
+shown under the module's name.
+
+A manifest that uses a page view or a url field must declare
+`engine.minVersion` 1.1.0 or later, so a 1.0 runtime never receives a view it
+cannot render. Manifests without them keep working on 1.0.
 
 `dataVersion` starts at 1. Each migration increments it by exactly one and
 contains only `add_entity` or `add_field` operations. The complete migration

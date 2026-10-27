@@ -17,7 +17,9 @@ export async function projectModuleCoverage({ page, context, origin, fixture, cl
     await page.locator('button[type="submit"]').click(); await page.waitForURL(url=>url.pathname==="/dashboard");
   }
   try {
+    // Content modules as stored before 092, converted by the real migration.
     await client.query("UPDATE projects SET custom_modules=$2::jsonb, custom_modules_revision=custom_modules_revision+1 WHERE id=$1", [owner.projectId, JSON.stringify(content)]);
+    await client.query(await readFile(new URL("../../src/db/migrations/092_content_modules_as_packages.sql", import.meta.url), "utf8"));
     await client.query("INSERT INTO project_module_packages(project_id,module_id,manifest,records) VALUES($1,$2,$3::jsonb,'[]')", [owner.projectId,manifest.id,JSON.stringify(manifest)]);
     await login(owner); await page.goto(`${root}/work`);
     const sidebar = page.locator('[data-sidebar="sidebar"]');
@@ -30,15 +32,35 @@ export async function projectModuleCoverage({ page, context, origin, fixture, cl
     await page.getByRole("button",{name:"Save record",exact:true}).click();
     await page.getByText("Saved via dedicated page",{exact:true}).waitFor();
     await page.reload(); await page.getByText("Saved via dedicated page",{exact:true}).waitFor();
+    // The converted content module is a page package with its own tab.
     await sidebar.getByRole("link",{name:content[0].title,exact:true}).click();
+    await page.waitForURL(url=>url.pathname===`/projects/${owner.projectId}/extensions/package/${legacyId}`);
     await page.getByRole("heading",{name:content[0].title,level:1,exact:true}).waitFor();
     assert.equal(await page.getByText("Preserve this content",{exact:true}).count(),0);
+    // A checkbox saves at once (Server Action POST); the panel re-renders from the saved data.
+    const toggled = page.waitForResponse(response=>response.request().method()==="POST" && response.url().includes(`/extensions/package/${legacyId}`));
     await page.getByRole("checkbox",{name:"Only this checklist",exact:true}).check();
-    await page.getByRole("button",{name:"Save to project",exact:true}).click();
-    await page.getByText("Modules saved.",{exact:true}).waitFor();
-    await page.reload(); assert.ok(await page.getByRole("checkbox",{name:"Only this checklist",exact:true}).isChecked());
-    const saved = (await client.query("SELECT custom_modules FROM projects WHERE id=$1",[owner.projectId])).rows[0].custom_modules;
-    assert.deepEqual(saved[1],content[1],"Saving one module must preserve its siblings");
+    await toggled;
+    await page.getByRole("button",{name:"Add item",exact:true}).click();
+    await page.getByRole("textbox",{name:"Item",exact:true}).fill("Added on the page");
+    await page.getByRole("button",{name:"Save record",exact:true}).click();
+    await page.getByText("Added on the page",{exact:true}).waitFor();
+    await page.reload();
+    assert.ok(await page.getByRole("checkbox",{name:"Only this checklist",exact:true}).isChecked());
+    assert.equal(await page.getByRole("checkbox",{name:"Added on the page",exact:true}).isChecked(),false);
+    const saved = (await client.query("SELECT module_id, records FROM project_module_packages WHERE project_id=$1 AND module_id = ANY($2) ORDER BY module_id",[owner.projectId,[legacyId,content[1].id]])).rows;
+    assert.equal(saved.find(row=>row.module_id===legacyId).records.length,2);
+    assert.deepEqual(saved.find(row=>row.module_id===content[1].id).records.map(record=>record.values),[{text:"Preserve this content"}],"Editing one module must leave the others alone");
+    // Export carries the manifest plus the entries (the Modules page imports this file back).
+    const exported = await context.request.get(`${root}/modules/${legacyId}/export`);
+    assert.equal(exported.status(),200);
+    assert.match(exported.headers()["content-disposition"] ?? "",/attachment/);
+    const exportedJson = await exported.json();
+    assert.equal(exportedJson.exportVersion,1);
+    assert.equal(exportedJson.records.length,2);
+    // Links from before 092 still land on the module.
+    await page.goto(`${root}/extensions/content/${legacyId}`);
+    await page.waitForURL(url=>url.pathname.endsWith(`/extensions/package/${legacyId}`));
     await page.setViewportSize({width:375,height:812});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
     await page.screenshot({path:path.join(artifacts,`${browserName}-module-page-mobile.png`),fullPage:true});
@@ -46,6 +68,10 @@ export async function projectModuleCoverage({ page, context, origin, fixture, cl
     await login(fixture.reader); await page.goto(`${root}/extensions/package/${manifest.id}`);
     await page.getByText("Saved via dedicated page",{exact:true}).waitFor();
     assert.equal(await page.getByRole("button",{name:"Add record",exact:true}).count(),0);
+    await page.goto(`${root}/extensions/package/${legacyId}`);
+    assert.ok(await page.getByRole("checkbox",{name:"Only this checklist",exact:true}).isDisabled(),"Viewers read a page module without editing it");
+    assert.equal(await page.getByRole("button",{name:"Add item",exact:true}).count(),0);
+    assert.equal((await context.request.get(`${root}/modules/${legacyId}/export`)).status(),403,"Only owners/admins export module data");
     await login(fixture.users[1]); await page.goto(`${root}/extensions/package/${manifest.id}`);
     assert.equal(await page.getByText("Saved via dedicated page",{exact:true}).count(),0);
     await login(owner);
@@ -57,7 +83,7 @@ export async function projectModuleCoverage({ page, context, origin, fixture, cl
     await page.getByRole("heading",{name:"404",exact:true}).waitFor();
     assert.equal(await page.getByText("Saved via dedicated page",{exact:true}).count(),0);
   } finally {
-    await client.query("DELETE FROM project_module_packages WHERE project_id=$1 AND module_id=$2",[owner.projectId,manifest.id]);
+    await client.query("DELETE FROM project_module_packages WHERE project_id=$1 AND module_id = ANY($2)",[owner.projectId,[manifest.id,legacyId,content[1].id]]);
     await client.query("UPDATE projects SET custom_modules=$2::jsonb, custom_modules_revision=custom_modules_revision+1 WHERE id=$1",[owner.projectId,JSON.stringify(before.custom_modules)]);
     await context.clearCookies(); await page.setViewportSize({width:1440,height:1000});
   }

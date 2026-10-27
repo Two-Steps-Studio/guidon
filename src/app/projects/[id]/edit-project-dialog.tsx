@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Settings } from "lucide-react";
 import { updateProject, type UpdateProjectState } from "./actions";
+import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
 const initialState: UpdateProjectState = { error: null };
 
@@ -82,10 +83,7 @@ function EditProjectForm({ project, onClose }: { project: EditableProject; onClo
   return (
     <form
       ref={formRef}
-      action={(formData) => {
-        submittedRef.current = true;
-        formAction(formData);
-      }}
+      onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
       className="space-y-4"
     >
       <div className="space-y-2">

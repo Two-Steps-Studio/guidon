@@ -20,6 +20,7 @@ import { feedbackCoverage } from "./feedback.mjs";
 import { boardLayoutCoverage } from "./board-layout.mjs";
 import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
+import { projectSectionCoverage } from "./project-sections.mjs";
 import { taskEditingCoverage } from "./task-editing.mjs";
 import { aiChatBoundaryCoverage } from "./ai-chat.mjs";
 import { mobileCoverage } from "./mobile.mjs";
@@ -156,6 +157,7 @@ try{
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      await projectSectionCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await calendarEditingCoverage({page,context,origin,fixture,client,browserName:name});
       await connectedAppsCoverage({page,context,origin,fixture,client,browserName:name});
