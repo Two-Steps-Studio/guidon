@@ -46,5 +46,6 @@ export async function getTaskAgentContext(projectId: string, taskId: string): Pr
   const access = await getProjectAccess(projectId);
   if (!access) return { markdown: "", error: "You do not have access to this project." };
 
-  return buildTaskAgentContext(access.userId, projectId, taskId, () => createClient());
+  // Copied by a person into an agent of their choice: a larger budget than the API default.
+  return buildTaskAgentContext(access.userId, projectId, taskId, () => createClient(), { budget: 16000 });
 }

@@ -1,107 +1,92 @@
 import "server-only";
 
 /**
- * Generic Agent Context export - TODO.md §18 ("provider-neutral context
- * package") applied to a single task. Assembles data Guidon already has into
- * a plain Markdown document that can be pasted into any external AI coding
- * agent (Claude Code, Cursor, Codex, Windsurf, OpenAI-compatible agents).
+ * Agent context for one task (Context Engine): the task plus what Guidon
+ * knows around it - project constraints and facts, the linked decision and
+ * everything reachable through context_relations, previous attempts, and the
+ * rest of the project memory - packed within a token budget by
+ * src/lib/context/context-pack-core.ts (ranking, freshness, redaction,
+ * untrusted-text handling). Used by the task dialog's "Copy agent context",
+ * GET /api/v1/tasks/{id}/context and the get_task_context MCP tool.
  *
- * Deliberately out of scope here (see TODO.md §18's own wording - "MCP
- * support should be designed as an interface, not as the core data model"):
- *   - MCP transport/server - this only produces the data package.
- *   - AI-generated summarization - everything below is assembled verbatim
- *     from rows that already exist; nothing is passed through src/lib/ai/*.
- *   - "Acceptance Criteria" as first-class data - grepped the schema, not
- *     tracked anywhere yet. Noted as a gap in the output rather than
- *     fabricated. "Previous Attempts" WAS this kind of gap until migration
- *     013 (task_attempts, TODO.md §22) - it's real data now, pulled below.
- *
- * Reuses getTaskWhyContext (src/lib/context/task-why.ts) for the task's
- * linked decision and everything reachable via context_relations, then adds
- * two things task-why.ts doesn't need for the "Why" panel:
- *   1. Project-wide project_memory rows (constraints/rules apply to the
- *      whole project, not just what happens to be relation-linked to this
- *      task - TODO.md §19's model).
- *   2. Fuller rows (untruncated content, plus columns task-why.ts's preview
- *      logic doesn't select, like context_sources.source_type and
- *      project_files.file_url/category) for the related decisions, files and
- *      sources it found - the Why panel only needs a short preview, an agent
- *      context package needs the whole thing.
- *
- * Per-item attribution (who created what) is deliberately left out of the
- * export - that's an audit-trail concern the Why panel already covers in the
- * UI, not something an external coding agent needs in its context window.
+ * Everything is assembled verbatim from rows the caller can read under RLS;
+ * nothing goes through src/lib/ai/*. Per-item attribution (who wrote what)
+ * stays out - the Why panel covers that in the UI.
  */
 
-import { hasDirectDatabase } from "@/lib/db/pool";
-import { withUser } from "@/lib/db/session";
-import { buildTaskWhyContext, type SupabaseClientFactory, type TaskWhyContext } from "@/lib/context/task-why-builder";
+import { dataClient } from "@/lib/data-client";
+import { buildTaskWhyContext, type SupabaseClientFactory } from "@/lib/context/task-why-builder";
 import { MEMORY_TYPE_CONFIG } from "@/app/projects/[id]/memory/memory-type-config";
 import { TYPE_LABELS as SOURCE_TYPE_LABELS } from "@/app/projects/[id]/knowledge/source-config";
 import type { MemoryType } from "@/types/context";
+import { CONTEXT_TOKEN_DEFAULT, CONTEXT_WEIGHTS as W, neutralize, packContext, type ContextItem, type ContextPackStats } from "@/lib/context/context-pack-core";
 
 export interface TaskAgentContext {
   markdown: string;
   error: string | null;
+  stats?: ContextPackStats;
 }
+
+export type ContextOptions = { budget?: number; focus?: string; now?: Date };
 
 const FAIL = (error: string): TaskAgentContext => ({ markdown: "", error });
 
-interface MemoryRow {
-  id: string;
-  content: string;
-  memory_type: MemoryType;
-  verified: boolean;
-  confidence: number | null;
+type Stamp = string | Date | null;
+const iso = (value: Stamp): string | null => (value ? new Date(value).toISOString() : null);
+
+export interface MemoryRow { id: string; content: string; memory_type: MemoryType; verified: boolean; confidence: number | null; created_at: Stamp; updated_at: Stamp }
+export interface DecisionRow { id: string; title: string; status: string; decision_type: string; description: string | null; created_at: Stamp; updated_at: Stamp }
+interface FileRow { id: string; name: string; category: string | null; file_url: string | null; created_at: Stamp }
+interface SourceRow { id: string; title: string | null; content: string | null; url: string | null; source_type: string; created_at: Stamp; updated_at: Stamp }
+export interface AttemptRow { id: string; problem: string; approach: string; outcome: string; result: string | null; failure_reason: string | null; files_changed: string[]; related_pr_url: string | null; agent: string | null; created_at: Stamp }
+
+export const MEMORY_COLUMNS = "id, content, memory_type, verified, confidence, created_at, updated_at";
+export const DECISION_COLUMNS = "id, title, status, decision_type, description, created_at, updated_at";
+export const ATTEMPT_COLUMNS = "id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_at";
+
+/** Project memory as context items: constraints/rules timeless, verified facts, AI insights, the rest. */
+export function memoryItems(memory: MemoryRow[]): ContextItem[] {
+  return memory.map((row): ContextItem => {
+    const updatedAt = iso(row.updated_at ?? row.created_at);
+    if (row.memory_type === "constraint" || row.memory_type === "project_rule") {
+      return { section: "constraints", id: row.id, title: row.content, tags: [MEMORY_TYPE_CONFIG[row.memory_type].label], weight: W.constraint, updatedAt, timeless: true };
+    }
+    if (row.memory_type === "fact" && row.verified) return { section: "facts", id: row.id, title: row.content, weight: W.verifiedFact, updatedAt };
+    if (row.memory_type === "ai_insight") {
+      const confidence = row.confidence === null ? "confidence unknown" : `confidence ${Math.round(row.confidence * 100)}%`;
+      return { section: "insights", id: row.id, title: row.content, tags: [confidence, row.verified ? "verified" : "unverified"], weight: W.insight + (row.verified ? 10 : 0), updatedAt };
+    }
+    const label = `${MEMORY_TYPE_CONFIG[row.memory_type].label}${row.memory_type === "fact" ? " (unverified)" : ""}`;
+    return { section: "memory", id: row.id, title: row.content, tags: [label], weight: W.memory, updatedAt };
+  });
 }
 
-interface DecisionRow {
-  id: string;
-  title: string;
-  status: string;
-  decision_type: string;
-  description: string | null;
+export function decisionItem(row: DecisionRow, weight: number, tags: string[] = []): ContextItem {
+  return { section: "decisions", id: row.id, title: row.title, tags: [row.decision_type, row.status, ...tags], details: row.description?.trim() ? [row.description] : [], weight, updatedAt: iso(row.updated_at ?? row.created_at) };
 }
 
-interface FileRow {
-  id: string;
-  name: string;
-  category: string | null;
-  file_url: string | null;
+export function attemptItem(row: AttemptRow): ContextItem {
+  const succeeded = row.outcome === "succeeded";
+  const details = [
+    `Approach: ${row.approach}`,
+    ...(row.failure_reason?.trim() ? [`Why it failed: ${row.failure_reason}`] : []),
+    ...(row.result?.trim() ? [`Result: ${row.result}`] : []),
+    ...(row.files_changed?.length ? [`Files: ${row.files_changed.join(", ")}`] : []),
+    ...(row.related_pr_url?.trim() ? [`PR: ${row.related_pr_url}`] : []),
+  ];
+  return { section: "attempts", id: row.id, title: `[${row.outcome.toUpperCase()}] ${row.problem}`, tags: row.agent ? [row.agent] : [], details, weight: succeeded ? W.succeededAttempt : W.failedAttempt, updatedAt: iso(row.created_at) };
 }
 
-interface SourceRow {
-  id: string;
-  title: string | null;
-  content: string | null;
-  url: string | null;
-  source_type: string;
+function sourceItem(row: SourceRow): ContextItem {
+  const isPr = row.source_type === "pull_request";
+  const label = SOURCE_TYPE_LABELS[row.source_type as keyof typeof SOURCE_TYPE_LABELS] ?? row.source_type;
+  return { section: isPr ? "prs" : "sources", id: row.id, title: row.title?.trim() || "Untitled", tags: [label], details: [...(row.url ? [row.url] : []), ...(row.content?.trim() ? [row.content] : [])], weight: isPr ? W.pullRequest : W.source, updatedAt: iso(row.updated_at ?? row.created_at) };
 }
 
-interface AttemptRow {
-  problem: string;
-  approach: string;
-  outcome: string;
-  result: string | null;
-  failure_reason: string | null;
-  files_changed: string[];
-  related_pr_url: string | null;
-  agent: string | null;
-  created_at: string;
-}
-
-function heading(level: number, text: string): string {
-  return `${"#".repeat(level)} ${text}`;
-}
-
-function section(title: string, body: string[]): string {
-  const content = body.length > 0 ? body.join("\n") : "_Nothing recorded._";
-  return `${heading(2, title)}\n\n${content}`;
-}
-
-function formatConfidence(confidence: number | null): string {
-  return confidence === null ? "confidence unknown" : `confidence ${Math.round(confidence * 100)}%`;
-}
+export const DRILL_DOWN = {
+  constraints: "get_memory", facts: "get_memory", insights: "get_memory", memory: "get_memory",
+  decisions: "get_decision", attempts: "list_attempts", prs: "get_knowledge_source", sources: "get_knowledge_source", files: "the project's Files page",
+} as const;
 
 /**
  * Session-free core of getTaskAgentContext (src/lib/context/agent-context.ts).
@@ -109,295 +94,68 @@ function formatConfidence(confidence: number | null): string {
  * `userId`, so exposing it as a Server Action would let any client build
  * context as another user. Callers must already have authenticated `userId`
  * (session via getProjectAccess, or API key via authenticateApiKey); every
- * query still runs under RLS as that user.
- *
- * `getSupabase` supplies the hosted-mode RLS-enforced client (cookie-scoped
- * createClient() for the UI, getApiUserClient(userId) for API keys); unused
- * in self-hosted mode.
+ * query runs under RLS as that user, and the task must belong to `projectId`.
  */
 export async function buildTaskAgentContext(
   userId: string,
   projectId: string,
   taskId: string,
-  getSupabase: SupabaseClientFactory
+  getSupabase: SupabaseClientFactory,
+  options: ContextOptions = {}
 ): Promise<TaskAgentContext> {
-  type TaskRow = {
-    id: string;
-    title: string;
-    description: string | null;
-    status: string;
-    priority: string;
-    tags: string[] | null;
-  };
+  const db = dataClient(userId, { supabase: getSupabase });
+  const [taskResult, why, memoryResult, attemptsResult] = await Promise.all([
+    db.from<{ id: string; title: string; description: string | null; status: string; priority: string; tags: string[] | null }>("tasks")
+      .select("id, title, description, status, priority, tags").eq("id", taskId).eq("project_id", projectId).maybeSingle(),
+    buildTaskWhyContext(userId, projectId, taskId, getSupabase),
+    db.from<MemoryRow>("project_memory").select(MEMORY_COLUMNS).eq("project_id", projectId).order("created_at", { ascending: false }).limit(500),
+    db.from<AttemptRow>("task_attempts").select(ATTEMPT_COLUMNS).eq("task_id", taskId).order("created_at", { ascending: false }).limit(100),
+  ]);
+  if (taskResult.error) return FAIL("Could not load the task.");
+  const task = taskResult.data;
+  if (!task) return FAIL("Task not found.");
+  if (why.error) return FAIL(why.error);
 
-  let task: TaskRow;
-  let whyContext: TaskWhyContext;
-  let memory: MemoryRow[];
-  let attempts: AttemptRow[];
-
-  if (hasDirectDatabase()) {
-    const [taskRows, why, memoryRows, attemptRows] = await Promise.all([
-      withUser(userId, ({ query }) =>
-        query("SELECT id, title, description, status, priority, tags FROM tasks WHERE id = $1", [
-          taskId,
-        ])
-      ),
-      buildTaskWhyContext(userId, projectId, taskId, getSupabase),
-      withUser(userId, ({ query }) =>
-        query(
-          "SELECT id, content, memory_type, verified, confidence FROM project_memory WHERE project_id = $1 ORDER BY created_at DESC",
-          [projectId]
-        )
-      ),
-      withUser(userId, ({ query }) =>
-        query(
-          `SELECT problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_at
-           FROM task_attempts WHERE task_id = $1 ORDER BY created_at DESC`,
-          [taskId]
-        )
-      ),
-    ]);
-
-    if (taskRows.rows.length === 0) return FAIL("Task not found.");
-    if (why.error) return FAIL(why.error);
-
-    task = taskRows.rows[0] as TaskRow;
-    whyContext = why;
-    memory = memoryRows.rows;
-    attempts = attemptRows.rows;
-  } else {
-    const supabase = await getSupabase();
-
-    const [taskRes, why, memoryRes, attemptsRes] = await Promise.all([
-      supabase
-        .from("tasks")
-        .select("id, title, description, status, priority, tags")
-        .eq("id", taskId)
-        .maybeSingle(),
-      buildTaskWhyContext(userId, projectId, taskId, getSupabase),
-      supabase
-        .from("project_memory")
-        .select("id, content, memory_type, verified, confidence")
-        .eq("project_id", projectId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("task_attempts")
-        .select("problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_at")
-        .eq("task_id", taskId)
-        .order("created_at", { ascending: false }),
-    ]);
-
-    if (taskRes.error || !taskRes.data) return FAIL(taskRes.error?.message ?? "Task not found.");
-    if (why.error) return FAIL(why.error);
-
-    task = taskRes.data as TaskRow;
-    whyContext = why;
-    memory = (memoryRes.data ?? []) as MemoryRow[];
-    attempts = (attemptsRes.data ?? []) as AttemptRow[];
-  }
-
-  // Related decisions / files / sources need fuller rows than task-why.ts's
-  // Why-panel preview carries (untruncated content, plus columns like
-  // source_type and file_url the panel has no use for) - refetched here
-  // rather than widening task-why.ts's queries for a UI that doesn't need them.
-  const relatedDecisionIds = new Set(
-    whyContext.related.filter((item) => item.entityType === "decision" && !item.missing).map((item) => item.entityId)
-  );
-  if (whyContext.decision) relatedDecisionIds.add(whyContext.decision.id);
-
-  const relatedFileIds = new Set(
-    whyContext.related.filter((item) => item.entityType === "file" && !item.missing).map((item) => item.entityId)
-  );
-
-  const relatedSourceIds = new Set(
-    whyContext.related.filter((item) => item.entityType === "source" && !item.missing).map((item) => item.entityId)
-  );
-
-  let decisions: DecisionRow[];
-  let files: FileRow[];
-  let sources: SourceRow[];
-
-  if (hasDirectDatabase()) {
-    // Three withUser() calls, not one wrapping Promise.all([...]) - each
-    // checks out its own pooled connection, so this is genuinely concurrent
-    // instead of firing multiple queries on one pg client (the deprecated
-    // shape, removed in pg@9).
-    const [decisionsRows, filesRows, sourcesRows] = await Promise.all([
-      relatedDecisionIds.size > 0
-        ? withUser(userId, ({ query }) =>
-            query(
-              "SELECT id, title, status, decision_type, description FROM context_decisions WHERE id = ANY($1::uuid[])",
-              [Array.from(relatedDecisionIds)]
-            )
-          )
-        : Promise.resolve({ rows: [] as DecisionRow[] }),
-      relatedFileIds.size > 0
-        ? withUser(userId, ({ query }) =>
-            query("SELECT id, name, category, file_url FROM project_files WHERE id = ANY($1::uuid[])", [
-              Array.from(relatedFileIds),
-            ])
-          )
-        : Promise.resolve({ rows: [] as FileRow[] }),
-      relatedSourceIds.size > 0
-        ? withUser(userId, ({ query }) =>
-            query(
-              "SELECT id, title, content, url, source_type FROM context_sources WHERE id = ANY($1::uuid[])",
-              [Array.from(relatedSourceIds)]
-            )
-          )
-        : Promise.resolve({ rows: [] as SourceRow[] }),
-    ]);
-
-    decisions = decisionsRows.rows;
-    files = filesRows.rows;
-    sources = sourcesRows.rows;
-  } else {
-    const supabase = await getSupabase();
-
-    const [decisionsRes, filesRes, sourcesRes] = await Promise.all([
-      relatedDecisionIds.size > 0
-        ? supabase
-            .from("context_decisions")
-            .select("id, title, status, decision_type, description")
-            .in("id", Array.from(relatedDecisionIds))
-        : Promise.resolve({ data: [] as DecisionRow[] }),
-      relatedFileIds.size > 0
-        ? supabase.from("project_files").select("id, name, category, file_url").in("id", Array.from(relatedFileIds))
-        : Promise.resolve({ data: [] as FileRow[] }),
-      relatedSourceIds.size > 0
-        ? supabase
-            .from("context_sources")
-            .select("id, title, content, url, source_type")
-            .in("id", Array.from(relatedSourceIds))
-        : Promise.resolve({ data: [] as SourceRow[] }),
-    ]);
-
-    decisions = (decisionsRes.data ?? []) as DecisionRow[];
-    files = (filesRes.data ?? []) as FileRow[];
-    sources = (sourcesRes.data ?? []) as SourceRow[];
-  }
-
-  // --- Task ---------------------------------------------------------------
-  const taskSection = section("Task", [
-    `**Title:** ${task.title}`,
-    `**Status:** ${task.status}`,
-    `**Priority:** ${task.priority}`,
-    ...(task.tags && task.tags.length > 0 ? [`**Labels:** ${task.tags.join(", ")}`] : []),
-    "",
-    task.description?.trim() ? task.description.trim() : "_No description._",
+  // The Why panel only carries previews; the package needs full rows.
+  const ids = (type: string) => why.related.filter((item) => item.entityType === type && !item.missing).map((item) => item.entityId);
+  const decisionIds = new Set(ids("decision"));
+  if (why.decision) decisionIds.add(why.decision.id);
+  const [decisions, files, sources] = await Promise.all([
+    decisionIds.size ? db.from<DecisionRow>("context_decisions").select(DECISION_COLUMNS).eq("project_id", projectId).in("id", [...decisionIds]) : Promise.resolve({ data: [] as DecisionRow[], error: null }),
+    ids("file").length ? db.from<FileRow>("project_files").select("id, name, category, file_url, created_at").eq("project_id", projectId).in("id", ids("file")) : Promise.resolve({ data: [] as FileRow[], error: null }),
+    ids("source").length ? db.from<SourceRow>("context_sources").select("id, title, content, url, source_type, created_at, updated_at").eq("project_id", projectId).in("id", ids("source")) : Promise.resolve({ data: [] as SourceRow[], error: null }),
   ]);
 
-  // --- Acceptance Criteria (not tracked) -----------------------------------
-  const acceptanceSection = section("Acceptance Criteria", [
-    "_Not yet tracked in Guidon as structured data - check the task description above for anything written inline._",
-  ]);
+  const items: ContextItem[] = [
+    ...memoryItems(memoryResult.data ?? []),
+    ...(decisions.data ?? []).map((row) => why.decision?.id === row.id ? decisionItem(row, W.linkedDecision, ["linked decision"]) : decisionItem(row, W.relatedDecision)),
+    ...(attemptsResult.data ?? []).map(attemptItem),
+    ...(files.data ?? []).map((row): ContextItem => ({ section: "files", id: row.id, title: row.name, tags: row.category ? [row.category] : [], details: row.file_url ? [row.file_url] : [], weight: W.file, updatedAt: iso(row.created_at) })),
+    ...(sources.data ?? []).map(sourceItem),
+  ];
 
-  // --- Project Memory, bucketed --------------------------------------------
-  const constraints = memory.filter((row) => row.memory_type === "constraint" || row.memory_type === "project_rule");
-  const verifiedFacts = memory.filter((row) => row.memory_type === "fact" && row.verified);
-  const aiInsights = memory.filter((row) => row.memory_type === "ai_insight");
-  // Everything project_memory tracks that isn't one of the three buckets
-  // above: unverified facts (not promoted to "Verified Facts" yet) and the
-  // remaining memory types (preference, decision_summary, observation).
-  const otherMemory = memory.filter(
-    (row) => !constraints.includes(row) && !verifiedFacts.includes(row) && !aiInsights.includes(row)
-  );
-
-  const constraintsSection = section(
-    "Project Constraints",
-    constraints.map((row) => `- **${MEMORY_TYPE_CONFIG[row.memory_type].label}:** ${row.content}`)
-  );
-
-  const verifiedFactsSection = section(
-    "Verified Facts",
-    verifiedFacts.map((row) => `- ${row.content}`)
-  );
-
-  const aiInsightsSection = section(
-    "AI Insights",
-    aiInsights.map(
-      (row) => `- ${row.content} _(${formatConfidence(row.confidence)}, ${row.verified ? "verified" : "unverified"})_`
-    )
-  );
-
-  // --- Related Decisions ----------------------------------------------------
-  const decisionLines = decisions.map((row) => {
-    const linked = whyContext.decision?.id === row.id ? " - linked decision" : "";
-    const description = row.description?.trim() ? `\n  ${row.description.trim()}` : "";
-    return `- **${row.title}** (${row.decision_type}, ${row.status})${linked}${description}`;
+  const description = task.description?.trim() ? neutralize(task.description, 4000).text : "_No description._";
+  const pack = packContext({
+    title: `Agent Context: ${task.title}`,
+    header: [
+      "## Task",
+      "",
+      `**Title:** ${neutralize(task.title, 300).text}`,
+      `**Status:** ${task.status}`,
+      `**Priority:** ${task.priority}`,
+      ...(task.tags?.length ? [`**Labels:** ${task.tags.map((tag) => neutralize(tag, 60).text).join(", ")}`] : []),
+      "",
+      description,
+      "",
+      "## Acceptance Criteria",
+      "",
+      "_Not yet tracked in Guidon as structured data - check the task description above for anything written inline._",
+    ],
+    items,
+    budget: options.budget ?? CONTEXT_TOKEN_DEFAULT,
+    focus: [task.title, task.description ?? "", options.focus ?? ""].join(" "),
+    now: options.now ?? new Date(),
+    drillDown: DRILL_DOWN,
   });
-  const decisionsSection = section("Related Decisions", decisionLines);
-
-  // --- Relevant Files ---------------------------------------------------------
-  const filesSection = section(
-    "Relevant Files",
-    files.map((row) => `- ${row.name}${row.category ? ` (${row.category})` : ""}${row.file_url ? ` - ${row.file_url}` : ""}`)
-  );
-
-  // --- Related PRs / Relevant Sources, split by context_sources.source_type ---
-  const prs = sources.filter((row) => row.source_type === "pull_request");
-  const otherSources = sources.filter((row) => row.source_type !== "pull_request");
-
-  const sourceLine = (row: SourceRow): string => {
-    const label = SOURCE_TYPE_LABELS[row.source_type as keyof typeof SOURCE_TYPE_LABELS] ?? row.source_type;
-    const title = row.title?.trim() || "Untitled";
-    const url = row.url ? ` - ${row.url}` : "";
-    const body = row.content?.trim() ? `\n  ${row.content.trim()}` : "";
-    return `- **${title}** (${label})${url}${body}`;
-  };
-
-  const prsSection = section("Related PRs", prs.map(sourceLine));
-
-  // --- Previous Attempts (migration 013, TODO.md §22) ------------------------
-  // Failed/partial attempts are what an agent actually needs before proposing
-  // another fix - listed first within the section, succeeded ones after, so
-  // the highest-value lines aren't buried if there are many attempts.
-  const failedOrPartial = attempts.filter((row) => row.outcome !== "succeeded");
-  const succeededAttempts = attempts.filter((row) => row.outcome === "succeeded");
-
-  const attemptLine = (row: AttemptRow): string => {
-    const lines = [
-      `- **[${row.outcome.toUpperCase()}]** ${row.problem}`,
-      `  Approach: ${row.approach}`,
-    ];
-    if (row.failure_reason?.trim()) lines.push(`  Why it failed: ${row.failure_reason.trim()}`);
-    if (row.result?.trim()) lines.push(`  Result: ${row.result.trim()}`);
-    if (row.files_changed.length > 0) lines.push(`  Files: ${row.files_changed.join(", ")}`);
-    if (row.related_pr_url?.trim()) lines.push(`  PR: ${row.related_pr_url.trim()}`);
-    if (row.agent?.trim()) lines.push(`  Agent: ${row.agent.trim()}`);
-    return lines.join("\n");
-  };
-
-  const attemptsSection = section(
-    "Previous Attempts",
-    [...failedOrPartial, ...succeededAttempts].map(attemptLine)
-  );
-
-  // --- Other Project Memory (unverified facts + preference/decision_summary/observation) ---
-  const otherMemorySection = section(
-    "Other Project Memory",
-    otherMemory.map(
-      (row) =>
-        `- **${MEMORY_TYPE_CONFIG[row.memory_type].label}${row.memory_type === "fact" ? " (unverified)" : ""}:** ${row.content}`
-    )
-  );
-
-  const sourcesSection = section("Relevant Sources", otherSources.map(sourceLine));
-
-  const markdown = [
-    heading(1, `Agent Context: ${task.title}`),
-    taskSection,
-    acceptanceSection,
-    constraintsSection,
-    verifiedFactsSection,
-    aiInsightsSection,
-    decisionsSection,
-    filesSection,
-    prsSection,
-    attemptsSection,
-    otherMemorySection,
-    sourcesSection,
-  ].join("\n\n");
-
-  return { markdown, error: null };
+  return { markdown: pack.markdown, error: null, stats: pack.stats };
 }

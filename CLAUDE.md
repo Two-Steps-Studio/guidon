@@ -32,13 +32,14 @@ npm run test:import            # task import from CSV/JSON/Trello exports: parsi
 npm run test:recurrence        # recurring tasks: next due dates (weekly/monthly/every N days, month ends, late completion), checklist reset (src/lib/work/recurrence-core.ts)
 npm run test:api               # what every /api/v1 response shares: error codes/hints, RateLimit headers, Idempotency-Key rules, list cursors; POST /api/v1/batch parsing and routing (src/lib/api/{api-route-core,batch-core}.ts)
 npm run test:billing           # billing rules: weekly/monthly/yearly intervals, once-per-organization trial, grace period after a failed payment (src/lib/billing/billing-core.ts)
+npm run test:context           # Context Engine package for agents: token budget over the whole document, ranking/relevance, freshness, secret redaction, untrusted-text neutralization and instruction flagging (src/lib/context/context-pack-core.ts, docs/context-api.md)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```
 
 Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` from a `desktop-v<version>` tag - see `desktop/RELEASING.md`.
 
-`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import`/`test:recurrence`/`test:billing`/`test:api` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 684) to stay the same or grow, never shrink.
+`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import`/`test:recurrence`/`test:billing`/`test:api`/`test:context` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 684) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) — UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 

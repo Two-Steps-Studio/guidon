@@ -72,7 +72,7 @@ Claude Code, by hand:
 claude mcp add --transport http --scope user guidon ${siteUrl}/api/mcp --header "Authorization: Bearer guidon_..."
 \`\`\`
 
-Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`list_events\`, \`get_task\`, \`get_task_context\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
+Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`list_events\`, \`get_task\`, \`get_task_context\`, \`get_project_context\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
 
 Recommended flow for an agent: \`get_task_context\` → \`start_task\` → do the work → \`record_attempt\` → \`comment_on_task\` → \`set_task_status\` with \`review\`.
 
@@ -103,7 +103,8 @@ Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [Op
 | GET | \`/projects/{projectId}/columns\` | The project's board columns - built-in and its own, with \`is_done\` |
 | GET | \`/projects/{projectId}/priorities\` | The project's priorities, most important first |
 | GET, PATCH, DELETE | \`/tasks/{taskId}\` | Read, edit or delete a task |
-| GET | \`/tasks/{taskId}/context\` | The task's full working context (Markdown) |
+| GET | \`/tasks/{taskId}/context\` | The task's working context (Markdown), ranked within \`max_tokens\` (default 6000), optional \`focus\` |
+| GET | \`/projects/{projectId}/context\` | The project's context for planning (Markdown), same parameters |
 | POST | \`/tasks/{taskId}/start\` | Claim a task |
 | PATCH | \`/tasks/{taskId}/status\` | Move a task to another column |
 | POST | \`/tasks/{taskId}/complete\` | Mark done, if the project allows it |
