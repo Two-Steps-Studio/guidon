@@ -21,6 +21,8 @@ import { boardLayoutCoverage } from "./board-layout.mjs";
 import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
 import { projectSectionCoverage } from "./project-sections.mjs";
+import { marketplaceCoverage } from "./marketplace.mjs";
+import { moduleAutomationCoverage } from "./module-automations.mjs";
 import { taskEditingCoverage } from "./task-editing.mjs";
 import { aiChatBoundaryCoverage } from "./ai-chat.mjs";
 import { mobileCoverage } from "./mobile.mjs";
@@ -45,6 +47,7 @@ const container=`guidon-e2e-${runId}`;
 const environment=isolatedEnvironment(process.env,{});
 // Disposable test-only signing identity; never forwarded from the operator.
 environment.AGENT_AUTH_PRIVATE_KEY=JSON.stringify(generateKeyPairSync("ed25519").privateKey.export({format:"jwk"}));
+environment.MODULE_SIGNING_KEY=JSON.stringify(generateKeyPairSync("ed25519").privateKey.export({format:"jwk"}));
 const controller=new AbortController();
 const deadline=setTimeout(()=>controller.abort(new Error("E2E global timeout")),12*60*1000);
 let app,proxy,client;
@@ -158,6 +161,9 @@ try{
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await projectSectionCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      // Registry rules are server-side; one browser keeps the run inside its time budget.
+      if(name==="chromium")await marketplaceCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      if(name==="chromium")await moduleAutomationCoverage({page,context,origin,fixture,client,browserName:name});
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await calendarEditingCoverage({page,context,origin,fixture,client,browserName:name});
       await connectedAppsCoverage({page,context,origin,fixture,client,browserName:name});
@@ -176,7 +182,7 @@ try{
     catch(error){await page.screenshot({path:path.join(artifacts,`${name}-failed.png`),fullPage:true});results.push({browser:name,outcome:"failed",error:error.message,durationMs:Date.now()-started});throw error;}
     finally{await context.tracing.stop({path:path.join(artifacts,`${name}-trace.zip`)});await context.close();await browser.close();await writeFile(path.join(artifacts,"app.log"),appLog);}
   }
-  for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,environment.AGENT_AUTH_PRIVATE_KEY,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
+  for(const secret of [...Object.values(api.keys),...invalidSessions,fixture.password,environment.AUTH_SECRET,environment.AGENT_AUTH_PRIVATE_KEY,environment.MODULE_SIGNING_KEY,dbPassword])assert.equal(appLog.includes(secret),false,"Application log must not contain credentials");
   assert.equal(appLog.includes('ENVIRONMENT_FALLBACK'),false,'Server formatting must not fall back to environment-dependent dates or relative times');
   completed=true;
 }finally{

@@ -151,7 +151,8 @@
     "myModules": "My modules",
     "extensionsGroup": "Extensions",
     "billingPrices": "Prices",
-    "funnel": "Funnel"
+    "funnel": "Funnel",
+    "moduleReview": "Module review"
   },
   "commandPalette": {
     "triggerLabel": "Search...",
@@ -309,7 +310,8 @@
       "eula": "EULA",
       "about": "About",
       "contact": "Contact",
-      "cookies": "Cookies"
+      "cookies": "Cookies",
+      "refunds": "Refunds"
     },
     "selfHost": {
       "title": "Run Guidon on your own server",
@@ -499,7 +501,8 @@
         "deliveryRetrying": "Retrying {when}",
         "deliveryAttempts": "{count, plural, one {# attempt} other {# attempts}} · HTTP {status}",
         "retry": "Retry",
-        "refreshHistory": "Refresh"
+        "refreshHistory": "Refresh",
+        "eventModuleAutomation": "Module automation"
       }
     },
     "billing": {
@@ -2043,7 +2046,10 @@
     "installedHint": "Open a module from here or from its tab in the project menu.",
     "enabledState": "Enabled",
     "open": "Open",
-    "moduleJson": "Module (JSON)"
+    "moduleJson": "Module (JSON)",
+    "permissionTasks": "Create tasks in this project (automations)",
+    "permissionNotify": "Notify this project's owners and admins (automations)",
+    "permissionWebhooks": "Send this organization's webhooks (automations)"
   },
   "moduleCatalog": {
     "title": "Module marketplace",
@@ -2125,7 +2131,8 @@
     "saveFailed": "Could not save the module.",
     "category": "Category",
     "categoryPlaceholder": "e.g. Marketing",
-    "categoryHint": "Shown as its own group in the project sidebar. Leave empty to list it under Custom modules."
+    "categoryHint": "Shown as its own group in the project sidebar. Leave empty to list it under Custom modules.",
+    "publish": "Publish to the Marketplace"
   },
   "moduleBuilder": {
     "title": "AI module builder",
@@ -2169,8 +2176,8 @@
     "redo": "Redo",
     "test": "Test",
     "testPassed": "Schema and permissions are valid.",
-    "publish": "Publish — coming soon",
-    "publishHint": "Module publishing requires the upcoming catalog moderation workflow.",
+    "publish": "Publish",
+    "publishHint": "Publish the saved draft: privately, to your organization, or publicly after review.",
     "history": "Change history",
     "emptyDraft": "Empty draft",
     "emptyInspector": "Generate a plan to inspect fields and permissions.",
@@ -2265,5 +2272,177 @@
     "expired": "This invitation has expired. Ask the person who invited you for a new one.",
     "used": "This invitation has already been used.",
     "toDashboard": "Go to dashboard"
+  },
+  "moduleRegistry": {
+    "publishTitle": "Publish",
+    "noManifest": "There is no module to publish yet. Create a manifest in the AI builder or pick an installed module.",
+    "back": "Back",
+    "publishHint": "A published version can't be changed - fix something by publishing a new version. Private and organization versions are available at once; public ones are reviewed first.",
+    "moduleId": "Module ID",
+    "permissions": "Permissions",
+    "views": "Views",
+    "warningsTitle": "Worth a second look",
+    "finding": {
+      "schema": "Invalid manifest",
+      "permissions": "Unsupported permission",
+      "engine": "Needs a newer Guidon",
+      "read": "Missing read permission",
+      "write": "Missing write permission",
+      "entities": "No entities",
+      "views": "No views",
+      "noViews": "No views",
+      "link": "External link",
+      "markup": "HTML or script-like text",
+      "instructions": "Text that looks like instructions for an AI",
+      "writeAccess": "Can change project data",
+      "automationAccess": "Automations act outside the module"
+    },
+    "publishedNow": "Version {version} is published.",
+    "submittedForReview": "Version {version} is waiting for review. You'll get a notification with the decision.",
+    "toDashboard": "Your published modules",
+    "version": "Version",
+    "versionHint": "SemVer, higher than every earlier version (e.g. 1.0.1).",
+    "author": "Author",
+    "visibility": "Visibility",
+    "visibilityOption": {
+      "private": "Private",
+      "organization": "Organization",
+      "public": "Public"
+    },
+    "visibilityHint": {
+      "private": "Only you can see and install it.",
+      "organization": "Members of this project's organization.",
+      "public": "Everyone, after an admin reviews it."
+    },
+    "category": "Category",
+    "categoryOption": {
+      "planning": "Planning",
+      "research": "Research",
+      "operations": "Operations"
+    },
+    "license": "License",
+    "licenseLabel": "License: {license}",
+    "description": "Description",
+    "changelog": "What's new",
+    "error": {
+      "permission": "Only project owners and admins can publish, and only to an organization they belong to.",
+      "noManifest": "The module to publish wasn't found. Reload and try again.",
+      "invalid": "Check the version (SemVer), author, description and license.",
+      "blocked": "The module doesn't pass the checks:",
+      "version": "This version isn't higher than one already in the registry.",
+      "taken": "Another publisher already owns this module ID. Change the ID in the builder.",
+      "exists": "This version is already published.",
+      "failed": "Publishing failed. Try again."
+    },
+    "publishing": "Publishing…",
+    "publish": "Publish",
+    "ownSubmission": "You submitted this version - another admin has to review it.",
+    "reviewNote": "Note for the author (required when rejecting)",
+    "approve": "Approve and publish",
+    "reject": "Reject",
+    "resolveReport": "Mark resolved",
+    "withdrawVersion": "Withdraw version",
+    "adminTitle": "Module review",
+    "adminDescription": "Public submissions, abuse reports and the registry log.",
+    "queueTitle": "Waiting for review ({count})",
+    "queueEmpty": "Nothing waiting for review.",
+    "reportsTitle": "Open reports ({count})",
+    "reportsEmpty": "No open reports.",
+    "reason": {
+      "malicious": "Harmful or malicious",
+      "misleading": "Misleading",
+      "privacy": "Privacy problem",
+      "copyright": "Copyright",
+      "spam": "Spam",
+      "other": "Other"
+    },
+    "logTitle": "Registry log",
+    "action": {
+      "submitted": "submitted for review",
+      "published": "published",
+      "approved": "approved",
+      "rejected": "rejected",
+      "withdrawn": "withdrawn",
+      "reported": "reported",
+      "report_resolved": "report resolved",
+      "signed": "signed"
+    },
+    "manifestJson": "Manifest (JSON)",
+    "signature": {
+      "verified": "Signed by Guidon",
+      "unsigned": "Not signed",
+      "invalid": "Signature does not match - not installable",
+      "unknownKey": "Signed with an older key"
+    },
+    "statusNotice": {
+      "pending_review": "Waiting for review - only you can see this version.",
+      "rejected": "Not approved",
+      "withdrawn": "Withdrawn - it can no longer be installed."
+    },
+    "reportAbuse": "Report this module",
+    "reportReason": "Reason",
+    "reportDetails": "Details (optional)",
+    "reportResult": {
+      "reported": "Thanks - an admin will look at it.",
+      "already_reported": "You've already reported this version.",
+      "not_found": "This version is no longer available.",
+      "invalid": "Choose a reason; details up to 2,000 characters.",
+      "failed": "Sending failed. Try again."
+    },
+    "sendReport": "Send report",
+    "cancel": "Cancel",
+    "dashboardTitle": "Published by you",
+    "dashboardHint": "Your module versions, their review status and how many projects use them. Installs are counts only - never which projects.",
+    "dashboardEmpty": "You haven't published a module yet. Publish one from the AI builder or a module's Configuration page.",
+    "colModule": "Module",
+    "colStatus": "Status",
+    "colInstalls": "Installs",
+    "colReports": "Open reports",
+    "colChannel": "Channel",
+    "colActions": "Actions",
+    "engineRange": "Guidon ≥ {min}",
+    "status": {
+      "pending_review": "Waiting for review",
+      "published": "Published",
+      "rejected": "Not approved",
+      "withdrawn": "Withdrawn"
+    },
+    "channelPrerelease": "Pre-release",
+    "channelStable": "Stable",
+    "withdraw": "Withdraw",
+    "withdrawAria": "Withdraw {version}",
+    "withdrawConfirm": "Withdraw this version? It disappears from the Marketplace and can't be installed any more. Projects that already use it keep working.",
+    "withdrawFailed": "Could not withdraw the version."
+  },
+  "moduleAutomations": {
+    "title": "Automations",
+    "hint": "Run when an entry is added, changed or removed. They only create tasks, notify project owners/admins or send the organization's webhooks - never change module data, so they can't trigger each other.",
+    "runsTitle": "Recent runs",
+    "noRuns": "No runs yet.",
+    "colWhen": "When",
+    "colAutomation": "Automation",
+    "colStatus": "Status",
+    "colAttempts": "Attempts",
+    "colActions": "Actions",
+    "event": {
+      "record": {
+        "created": "entry added",
+        "updated": "entry changed",
+        "deleted": "entry removed"
+      }
+    },
+    "action": {
+      "create_task": "create a task",
+      "notify": "notify owners/admins",
+      "webhook": "send webhooks"
+    },
+    "status": {
+      "pending": "Waiting",
+      "succeeded": "Done",
+      "failed": "Failed"
+    },
+    "retry": "Retry",
+    "retryAria": "Retry {automation}",
+    "retryFailed": "Could not retry this run."
   }
 }

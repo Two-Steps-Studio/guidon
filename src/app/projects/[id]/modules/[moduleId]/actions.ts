@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getManagedModule } from "@/lib/data/module-manager";
-import { getCatalogEntry } from "@/lib/data/module-catalog";
+import { getCatalogEntry, isInstallable } from "@/lib/data/module-catalog";
 import { dataClient } from "@/lib/data-client";
 import { prepareModuleChange } from "@/lib/work/module-lifecycle";
 
@@ -18,10 +18,13 @@ export async function manageModule(projectId: string, moduleId: string, formData
     const version = formData.get("targetVersion");
     if (typeof version !== "string" || version.length > 128) fail("invalid");
     candidate = await getCatalogEntry(access.userId, moduleId, version);
+    if (candidate && !isInstallable(candidate)) candidate = null;
   }
   const change = prepareModuleChange(current, context.digest, access.project.organization_id, formData, candidate);
   if (change.error) fail(change.error);
-  const result = await dataClient(access.userId).from("project_module_packages").update(change.patch).eq("project_id", projectId).eq("module_id", moduleId).eq("revision", current.revision).select("module_id");
+  // A version change records which registry version the project now runs (093).
+  const patch = change.patch.manifest ? { ...change.patch, catalog_version: change.patch.manifest.version } : change.patch;
+  const result = await dataClient(access.userId).from("project_module_packages").update(patch).eq("project_id", projectId).eq("module_id", moduleId).eq("revision", current.revision).select("module_id");
   if (result.error) fail("saveFailed");
   if (!result.data.length) fail("conflict");
   revalidatePath(`/projects/${projectId}`, "layout"); revalidatePath("/my-modules"); revalidatePath(path);

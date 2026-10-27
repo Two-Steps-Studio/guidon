@@ -58,6 +58,7 @@ import {
   Pin,
   Store,
   Boxes,
+  Blocks,
   ChevronDown,
   TrendingUp,
 } from "lucide-react";
@@ -163,6 +164,7 @@ const ADMIN_NAV = [
   { href: "/admin/funnel", labelKey: "funnel", icon: TrendingUp },
   { href: "/admin/promo-codes", labelKey: "promoCodes", icon: Ticket },
   { href: "/admin/billing", labelKey: "billingPrices", icon: CreditCard },
+  { href: "/admin/modules", labelKey: "moduleReview", icon: Blocks },
 ] as const;
 
 export interface AppSidebarProps {

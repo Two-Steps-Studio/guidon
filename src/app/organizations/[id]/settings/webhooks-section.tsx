@@ -26,10 +26,11 @@ import {
 } from "./webhook-actions";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
-const EVENT_LABEL_KEYS: Record<WebhookEventType, "eventCreated" | "eventStatusChanged" | "eventCompleted"> = {
+const EVENT_LABEL_KEYS: Record<WebhookEventType, "eventCreated" | "eventStatusChanged" | "eventCompleted" | "eventModuleAutomation"> = {
   "task.created": "eventCreated",
   "task.status_changed": "eventStatusChanged",
   "task.completed": "eventCompleted",
+  "module.automation": "eventModuleAutomation",
 };
 
 const initialState: CreateWebhookState = { error: null, secret: null };

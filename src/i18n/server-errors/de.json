@@ -205,5 +205,11 @@
   "This invitation has expired. Ask for a new one.": "Diese Einladung ist abgelaufen. Bitte um eine neue.",
   "This invitation has already been used.": "Diese Einladung wurde bereits verwendet.",
   "This invitation was sent to a different email address.": "Diese Einladung wurde an eine andere E-Mail-Adresse gesendet.",
-  "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "Preise konnten nicht aus Stripe gelesen werden. Prüfe STRIPE_SECRET_KEY."
+  "Could not read prices from Stripe. Check STRIPE_SECRET_KEY.": "Preise konnten nicht aus Stripe gelesen werden. Prüfe STRIPE_SECRET_KEY.",
+  "Invalid request.": "Ungültige Anfrage.",
+  "Explain why the version is rejected - the author sees this note.": "Erkläre, warum die Version abgelehnt wird - der Autor sieht diese Notiz.",
+  "You cannot review a module you submitted. Ask another admin.": "Du kannst kein Modul prüfen, das du selbst eingereicht hast. Bitte einen anderen Admin.",
+  "This version is no longer waiting for review.": "Diese Version wartet nicht mehr auf Prüfung.",
+  "This version is already withdrawn.": "Diese Version ist bereits zurückgezogen.",
+  "This report is already resolved.": "Diese Meldung ist bereits erledigt."
 }

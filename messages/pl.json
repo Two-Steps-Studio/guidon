@@ -151,7 +151,8 @@
     "myModules": "Moje moduły",
     "extensionsGroup": "Rozszerzenia",
     "billingPrices": "Ceny",
-    "funnel": "Lejek"
+    "funnel": "Lejek",
+    "moduleReview": "Przegląd modułów"
   },
   "commandPalette": {
     "triggerLabel": "Szukaj...",
@@ -309,7 +310,8 @@
       "eula": "EULA",
       "about": "O nas",
       "contact": "Kontakt",
-      "cookies": "Pliki cookie"
+      "cookies": "Pliki cookie",
+      "refunds": "Zwroty"
     },
     "selfHost": {
       "title": "Postaw Guidona na własnym serwerze",
@@ -499,7 +501,8 @@
         "deliveryRetrying": "Ponowienie {when}",
         "deliveryAttempts": "{count, plural, one {# próba} few {# próby} many {# prób} other {# próby}} · HTTP {status}",
         "retry": "Ponów",
-        "refreshHistory": "Odśwież"
+        "refreshHistory": "Odśwież",
+        "eventModuleAutomation": "Automatyzacja modułu"
       }
     },
     "billing": {
@@ -2043,7 +2046,10 @@
     "installedHint": "Otwórz moduł stąd albo z jego zakładki w menu projektu.",
     "enabledState": "Włączony",
     "open": "Otwórz",
-    "moduleJson": "Moduł (JSON)"
+    "moduleJson": "Moduł (JSON)",
+    "permissionTasks": "Tworzenie zadań w tym projekcie (automatyzacje)",
+    "permissionNotify": "Powiadamianie ownerów i adminów projektu (automatyzacje)",
+    "permissionWebhooks": "Wysyłanie webhooków organizacji (automatyzacje)"
   },
   "moduleCatalog": {
     "title": "Marketplace modułów",
@@ -2125,7 +2131,8 @@
     "saveFailed": "Nie udało się zapisać modułu.",
     "category": "Kategoria",
     "categoryPlaceholder": "np. Marketing",
-    "categoryHint": "Moduł pojawi się w osobnej grupie w pasku bocznym projektu. Zostaw puste, żeby był w grupie „Własne moduły”."
+    "categoryHint": "Moduł pojawi się w osobnej grupie w pasku bocznym projektu. Zostaw puste, żeby był w grupie „Własne moduły”.",
+    "publish": "Opublikuj w Marketplace"
   },
   "moduleBuilder": {
     "title": "Kreator modułów AI",
@@ -2169,8 +2176,8 @@
     "redo": "Ponów",
     "test": "Sprawdź",
     "testPassed": "Schemat i uprawnienia są poprawne.",
-    "publish": "Publikacja — wkrótce",
-    "publishHint": "Publikowanie modułów będzie dostępne po wdrożeniu moderacji katalogu.",
+    "publish": "Opublikuj",
+    "publishHint": "Opublikuj zapisany szkic: prywatnie, w organizacji albo publicznie po przeglądzie.",
     "history": "Historia zmian",
     "emptyDraft": "Pusty szkic",
     "emptyInspector": "Wygeneruj plan, aby sprawdzić pola i uprawnienia.",
@@ -2265,5 +2272,177 @@
     "expired": "To zaproszenie wygasło. Poproś osobę zapraszającą o nowe.",
     "used": "To zaproszenie zostało już wykorzystane.",
     "toDashboard": "Przejdź do pulpitu"
+  },
+  "moduleRegistry": {
+    "publishTitle": "Publikuj",
+    "noManifest": "Nie ma jeszcze modułu do opublikowania. Utwórz manifest w kreatorze AI albo wybierz zainstalowany moduł.",
+    "back": "Wróć",
+    "publishHint": "Opublikowanej wersji nie da się zmienić - poprawkę publikuje się jako nową wersję. Wersje prywatne i organizacyjne są dostępne od razu, publiczne najpierw przechodzą przegląd.",
+    "moduleId": "Identyfikator modułu",
+    "permissions": "Uprawnienia",
+    "views": "Widoki",
+    "warningsTitle": "Warto sprawdzić",
+    "finding": {
+      "schema": "Nieprawidłowy manifest",
+      "permissions": "Nieobsługiwane uprawnienie",
+      "engine": "Wymaga nowszego Guidona",
+      "read": "Brak uprawnienia do odczytu",
+      "write": "Brak uprawnienia do zapisu",
+      "entities": "Brak encji",
+      "views": "Brak widoków",
+      "noViews": "Brak widoków",
+      "link": "Link zewnętrzny",
+      "markup": "Tekst przypominający HTML lub skrypt",
+      "instructions": "Tekst wyglądający na instrukcje dla AI",
+      "writeAccess": "Może zmieniać dane projektu",
+      "automationAccess": "Automatyzacje działają poza modułem"
+    },
+    "publishedNow": "Wersja {version} jest opublikowana.",
+    "submittedForReview": "Wersja {version} czeka na przegląd. Dostaniesz powiadomienie z decyzją.",
+    "toDashboard": "Twoje opublikowane moduły",
+    "version": "Wersja",
+    "versionHint": "SemVer, wyższa od wszystkich wcześniejszych (np. 1.0.1).",
+    "author": "Autor",
+    "visibility": "Widoczność",
+    "visibilityOption": {
+      "private": "Prywatny",
+      "organization": "Organizacja",
+      "public": "Publiczny"
+    },
+    "visibilityHint": {
+      "private": "Tylko Ty go widzisz i instalujesz.",
+      "organization": "Członkowie organizacji tego projektu.",
+      "public": "Wszyscy, po przeglądzie przez admina."
+    },
+    "category": "Kategoria",
+    "categoryOption": {
+      "planning": "Planowanie",
+      "research": "Badania",
+      "operations": "Operacje"
+    },
+    "license": "Licencja",
+    "licenseLabel": "Licencja: {license}",
+    "description": "Opis",
+    "changelog": "Co nowego",
+    "error": {
+      "permission": "Publikować mogą tylko właściciele i admini projektu, i tylko w swojej organizacji.",
+      "noManifest": "Nie znaleziono modułu do opublikowania. Odśwież i spróbuj ponownie.",
+      "invalid": "Sprawdź wersję (SemVer), autora, opis i licencję.",
+      "blocked": "Moduł nie przechodzi sprawdzenia:",
+      "version": "Ta wersja nie jest wyższa od już opublikowanej.",
+      "taken": "Ten identyfikator modułu należy do innego wydawcy. Zmień identyfikator w kreatorze.",
+      "exists": "Ta wersja jest już opublikowana.",
+      "failed": "Publikacja się nie udała. Spróbuj ponownie."
+    },
+    "publishing": "Publikowanie…",
+    "publish": "Opublikuj",
+    "ownSubmission": "To Twoje zgłoszenie - przegląd musi zrobić inny admin.",
+    "reviewNote": "Notatka dla autora (wymagana przy odrzuceniu)",
+    "approve": "Zatwierdź i opublikuj",
+    "reject": "Odrzuć",
+    "resolveReport": "Oznacz jako rozwiązane",
+    "withdrawVersion": "Wycofaj wersję",
+    "adminTitle": "Przegląd modułów",
+    "adminDescription": "Zgłoszenia publiczne, raporty nadużyć i dziennik rejestru.",
+    "queueTitle": "Czeka na przegląd ({count})",
+    "queueEmpty": "Nic nie czeka na przegląd.",
+    "reportsTitle": "Otwarte zgłoszenia ({count})",
+    "reportsEmpty": "Brak otwartych zgłoszeń.",
+    "reason": {
+      "malicious": "Szkodliwy lub złośliwy",
+      "misleading": "Wprowadza w błąd",
+      "privacy": "Problem z prywatnością",
+      "copyright": "Prawa autorskie",
+      "spam": "Spam",
+      "other": "Inne"
+    },
+    "logTitle": "Dziennik rejestru",
+    "action": {
+      "submitted": "zgłoszono do przeglądu",
+      "published": "opublikowano",
+      "approved": "zatwierdzono",
+      "rejected": "odrzucono",
+      "withdrawn": "wycofano",
+      "reported": "zgłoszono nadużycie",
+      "report_resolved": "zgłoszenie rozwiązane",
+      "signed": "podpisano"
+    },
+    "manifestJson": "Manifest (JSON)",
+    "signature": {
+      "verified": "Podpisany przez Guidon",
+      "unsigned": "Bez podpisu",
+      "invalid": "Podpis się nie zgadza - nie można zainstalować",
+      "unknownKey": "Podpisany starszym kluczem"
+    },
+    "statusNotice": {
+      "pending_review": "Czeka na przegląd - tę wersję widzisz tylko Ty.",
+      "rejected": "Nie zatwierdzono",
+      "withdrawn": "Wycofano - nie można jej już zainstalować."
+    },
+    "reportAbuse": "Zgłoś ten moduł",
+    "reportReason": "Powód",
+    "reportDetails": "Szczegóły (opcjonalnie)",
+    "reportResult": {
+      "reported": "Dziękujemy - admin to sprawdzi.",
+      "already_reported": "Ta wersja jest już przez Ciebie zgłoszona.",
+      "not_found": "Ta wersja nie jest już dostępna.",
+      "invalid": "Wybierz powód; szczegóły do 2000 znaków.",
+      "failed": "Wysyłanie się nie udało. Spróbuj ponownie."
+    },
+    "sendReport": "Wyślij zgłoszenie",
+    "cancel": "Anuluj",
+    "dashboardTitle": "Opublikowane przez Ciebie",
+    "dashboardHint": "Wersje Twoich modułów, ich status przeglądu i liczba projektów, które ich używają. Instalacje to tylko liczby - nigdy nazwy projektów.",
+    "dashboardEmpty": "Nie opublikowałeś jeszcze modułu. Opublikuj go z kreatora AI albo ze strony konfiguracji modułu.",
+    "colModule": "Moduł",
+    "colStatus": "Status",
+    "colInstalls": "Instalacje",
+    "colReports": "Otwarte zgłoszenia",
+    "colChannel": "Kanał",
+    "colActions": "Akcje",
+    "engineRange": "Guidon ≥ {min}",
+    "status": {
+      "pending_review": "Czeka na przegląd",
+      "published": "Opublikowany",
+      "rejected": "Nie zatwierdzony",
+      "withdrawn": "Wycofany"
+    },
+    "channelPrerelease": "Wersja wstępna",
+    "channelStable": "Stabilny",
+    "withdraw": "Wycofaj",
+    "withdrawAria": "Wycofaj {version}",
+    "withdrawConfirm": "Wycofać tę wersję? Zniknie z Marketplace i nie da się jej zainstalować. Projekty, które jej używają, działają dalej.",
+    "withdrawFailed": "Nie udało się wycofać wersji."
+  },
+  "moduleAutomations": {
+    "title": "Automatyzacje",
+    "hint": "Uruchamiają się, gdy wpis zostanie dodany, zmieniony lub usunięty. Tylko tworzą zadania, powiadamiają ownerów/adminów projektu albo wysyłają webhooki organizacji - nigdy nie zmieniają danych modułu, więc nie wywołują się nawzajem.",
+    "runsTitle": "Ostatnie uruchomienia",
+    "noRuns": "Jeszcze nie było uruchomień.",
+    "colWhen": "Kiedy",
+    "colAutomation": "Automatyzacja",
+    "colStatus": "Status",
+    "colAttempts": "Próby",
+    "colActions": "Akcje",
+    "event": {
+      "record": {
+        "created": "dodano wpis",
+        "updated": "zmieniono wpis",
+        "deleted": "usunięto wpis"
+      }
+    },
+    "action": {
+      "create_task": "utwórz zadanie",
+      "notify": "powiadom ownerów/adminów",
+      "webhook": "wyślij webhooki"
+    },
+    "status": {
+      "pending": "Czeka",
+      "succeeded": "Gotowe",
+      "failed": "Nieudane"
+    },
+    "retry": "Ponów",
+    "retryAria": "Ponów {automation}",
+    "retryFailed": "Nie udało się ponowić uruchomienia."
   }
 }

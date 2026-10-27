@@ -165,6 +165,7 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     "",
     `- [Terms of Service](${siteUrl}/legal/terms)`,
     `- [Privacy Policy](${siteUrl}/legal/privacy)`,
+    `- [Refund Policy](${siteUrl}/legal/refunds)`,
     "",
   ].join("\n");
 }

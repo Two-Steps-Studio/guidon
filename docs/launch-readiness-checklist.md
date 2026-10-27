@@ -20,6 +20,7 @@ Current implementation/evidence records:
 - **[End-to-end path, blockers and go/no-go criteria (2026-10-27)](./release/launch-go-no-go-2026-10-27.md).**
 - [Release, monitoring and rollback runbook; restore drill](./release-runbook.md).
 - [Large-project performance baseline](./release/performance-baseline-2026-10-27.md) and [Stripe webhook QA](./release/stripe-webhook-qa-2026-10-27.md).
+- [Security and tenant isolation incl. modules, open findings](./release/security-tenant-isolation-2026-10-27.md).
 - [Cloud, safe email, Stripe sandbox and recovery evidence handoff](./release/staging-handoff.md).
 
 Tests use disposable databases/credentials and actual production builds. Local

@@ -17,12 +17,12 @@ cards must not be treated as proof that the entire system is complete.
 8. AI Builder: three-pane editor/mobile tabs, draft history and conflicts.
 9. Fixture-only live preview and pre-publication validation.
 10. Visual inspector for fields/views/forms and return to AI without lost edits.
-11. Private/org/public registry, immutable releases, moderation and audit.
-12. Author dashboard and release history using real aggregates.
+11. Private/org/public registry, immutable releases, moderation and audit — migration 093, `module-marketplace.md`.
+12. Author dashboard and release history using real aggregates — My modules → Published by you.
 13. Marketplace QA: installation/version/tenant/E2E security gates.
 14. Project module QA: CRUD/import/export/permissions/conflicts/files.
 15. SDK + Monaco + isolated executable sandbox, after its security review.
-16. Declarative automation and scoped API/MCP integration.
+16. Declarative automation and scoped API/MCP integration — migration 094, `module-automations.md`.
 17. Paid modules: billing/entitlements/tax/refunds/payout design and sandbox tests;
     production payments or author payouts require the user's separate approval.
 

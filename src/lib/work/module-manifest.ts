@@ -18,6 +18,8 @@ const permission = z.enum([
   "knowledge:read",
   "module-data:read",
   "module-data:write",
+  "notifications:send",
+  "webhooks:send",
 ]);
 
 const fieldBase = {
@@ -75,6 +77,33 @@ const moduleViewSchema = z.discriminatedUnion("type", [
   z.strictObject({ ...viewBase, type: z.literal("calendar"), dateField: identifier }),
 ]);
 
+/**
+ * Automations (engine 1.2): when a record of an entity is created, updated
+ * or deleted - optionally only when a field has a given value - run up to
+ * five actions from a fixed list. Each action needs its permission in the
+ * manifest, approved at installation. Actions never write module records,
+ * so an automation can't trigger itself or another one (no loops).
+ * `{{field}}` in a title is replaced with the record's value (as text).
+ */
+const templateText = z.string().trim().min(1).max(200);
+export const moduleAutomationActionSchema = z.discriminatedUnion("type", [
+  z.strictObject({ type: z.literal("create_task"), title: templateText, priority: z.enum(["low", "medium", "high", "critical"]).optional() }),
+  z.strictObject({ type: z.literal("notify"), title: templateText }),
+  z.strictObject({ type: z.literal("webhook") }),
+]);
+export const AUTOMATION_ACTION_PERMISSIONS = { create_task: "tasks:write", notify: "notifications:send", webhook: "webhooks:send" } as const;
+export const moduleAutomationSchema = z.strictObject({
+  id: identifier,
+  name: displayName,
+  trigger: z.strictObject({
+    event: z.enum(["record.created", "record.updated", "record.deleted"]),
+    entity: identifier,
+    when: z.strictObject({ field: identifier, equals: z.union([z.string().max(200), z.number().finite(), z.boolean()]) }).optional(),
+  }),
+  actions: z.array(moduleAutomationActionSchema).min(1).max(5),
+});
+export type ModuleAutomation = z.infer<typeof moduleAutomationSchema>;
+
 const migrationOperationSchema = z.discriminatedUnion("op", [
   z.strictObject({ op: z.literal("add_entity"), entity: moduleEntitySchema }),
   z.strictObject({ op: z.literal("add_field"), entity: identifier, field: moduleFieldSchema }),
@@ -120,6 +149,8 @@ export const moduleManifestStructureSchema = z.strictObject({
   dataVersion: z.number().int().min(1).max(1000).default(1),
   migrations: z.array(moduleMigrationSchema).max(999).default([]),
   lifecycle: lifecycleSchema.default(safeLifecycle),
+  // Optional, not defaulted: a manifest without automations parses exactly as before (digests and signatures stay stable).
+  automations: z.array(moduleAutomationSchema).max(20).optional(),
 });
 
 export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((manifest, ctx) => {
@@ -187,6 +218,25 @@ export const moduleManifestSchema = moduleManifestStructureSchema.superRefine((m
     }
   });
 
+  addDuplicateIssues(manifest.automations ?? [], (automation) => automation.id, ctx, ["automations"], "Automation IDs must be unique.");
+  (manifest.automations ?? []).forEach((automation, index) => {
+    const entity = entities.get(automation.trigger.entity);
+    if (!entity) {
+      ctx.addIssue({ code: "custom", path: ["automations", index, "trigger", "entity"], message: "Trigger must reference a declared entity." });
+    } else if (automation.trigger.when && !entity.fields.some((field) => field.id === automation.trigger.when!.field)) {
+      ctx.addIssue({ code: "custom", path: ["automations", index, "trigger", "when", "field"], message: "Condition field must exist on the trigger entity." });
+    }
+    automation.actions.forEach((action, actionIndex) => {
+      const needed = AUTOMATION_ACTION_PERMISSIONS[action.type];
+      if (!manifest.permissions.includes(needed)) {
+        ctx.addIssue({ code: "custom", path: ["automations", index, "actions", actionIndex], message: `The ${action.type} action needs the ${needed} permission.` });
+      }
+    });
+  });
+  if (manifest.automations?.length && compareSemver(manifest.engine.minVersion, "1.2.0") < 0) {
+    ctx.addIssue({ code: "custom", path: ["engine", "minVersion"], message: "Automations need engine 1.2.0 or later." });
+  }
+
   const usesEngine11 = manifest.views.some((view) => view.type === "page") || manifest.entities.some((entity) => entity.fields.some((field) => field.type === "url"));
   if (usesEngine11 && compareSemver(manifest.engine.minVersion, "1.1.0") < 0) {
     ctx.addIssue({ code: "custom", path: ["engine", "minVersion"], message: "Page views and url fields need engine 1.1.0 or later." });
@@ -232,6 +282,7 @@ export const MODULE_MANIFEST_JSON_SCHEMA = {
     "migrations must form an ordered additive chain from data version 1 to dataVersion",
     "page blocks reference declared entities and fields of the right type (notes: text; checklist: text label + boolean done; links: text label + url)",
     "page views and url fields require engine.minVersion 1.1.0 or later",
+    "automations reference a declared entity (and condition field), each action's permission is requested, and engine.minVersion is 1.2.0 or later",
   ],
 };
 

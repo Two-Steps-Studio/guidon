@@ -14,7 +14,7 @@ export const termsCopy: LegalCopy = {
       "Unless a separately agreed service level applies, we do not promise uninterrupted operation or a particular business result. We may perform necessary maintenance or security work. Material changes to a paid service require a valid reason, appropriate notice and any remedies required by law. We do not retroactively remove agreed rights by editing a web page."
     ] },
     { heading: "Subscriptions, trials and cancellation", paragraphs: [
-      "The checkout identifies the plan, included limits, price, currency, applicable taxes, billing interval, renewal and any trial before you order. Trial availability and duration are those actually offered at checkout. Payment processing is provided through Stripe or the relevant app marketplace, under the terms disclosed for that transaction.",
+      "The checkout identifies the plan, included limits, price, currency, applicable taxes, billing interval, renewal and any trial before you order. Trial availability and duration are those actually offered at checkout. Payment processing is provided through Stripe, through Paddle (which acts as the reseller and merchant of record for orders it processes, so your contract for the payment is with Paddle) or through the relevant app marketplace, under the terms disclosed for that transaction. Refunds follow the Refund Policy at /legal/refunds.",
       "A recurring subscription renews for its disclosed interval until cancelled. Use the organisation billing controls or contact support if you cannot access them. Cancellation ordinarily stops future renewals at the end of the paid period; it does not itself delete the account. Any immediate termination, refund or continued-access right required by law takes priority. A trial is separate from a statutory withdrawal period.",
       "For business customers, charges already earned are normally not refundable unless agreed otherwise. This does not restrict consumer refunds, conformity remedies, withdrawal rights or refunds for services we fail to provide. Price increases apply prospectively with advance notice and an opportunity to cancel before the new price applies."
     ] },
@@ -101,6 +101,34 @@ export const privacyCopy: LegalCopy = {
     ] },
     { heading: "Updates", paragraphs: [
       "We date revisions and provide appropriate notice of material changes. A new notice does not retroactively supply consent or another legal basis for earlier processing. Changes to the actual service, recipients or retention arrangements must be reflected here."
+    ] },
+  ],
+};
+
+export const refundsCopy: LegalCopy = {
+  title: "Refund Policy",
+  introduction: "This policy explains when you can get your money back for a Guidon Cloud subscription and how to ask. It adds to - and never limits - the rights you have under consumer law and the Terms of Service.",
+  sections: [
+    { heading: "New subscriptions: 14-day money-back", paragraphs: [
+      "If you are not satisfied, you can ask for a full refund of the first payment of a new paid subscription within 14 days of that payment, for any reason. This applies to every billing interval (weekly, monthly and yearly) and to consumers and business customers alike. After the refund, the subscription ends and the organisation returns to the Free plan; your projects and data stay in the account within the Free plan's limits.",
+      "A paid plan that follows a free trial counts as new from its first payment. The money-back offer applies once per organisation and plan, not to repeated cancel-and-resubscribe cycles."
+    ] },
+    { heading: "Renewals and cancellation", paragraphs: [
+      "You can cancel at any time in the organisation's billing settings. Cancellation stops the next renewal; the plan stays active until the end of the period already paid for. Renewal payments are not refunded in part or in full for unused time, except as described below or where the law requires it.",
+      "If we raise a price, the new price applies only from a later renewal after advance notice, and you can cancel before it applies."
+    ] },
+    { heading: "When we always refund", items: [
+      "You were charged twice for the same period, or charged after a cancellation that had taken effect.",
+      "The service was not provided as agreed - for example a prolonged outage or a paid feature that did not work - and we could not fix it within a reasonable time; the refund then covers the affected period.",
+      "A consumer withdraws within the statutory 14-day period, or another mandatory consumer right (such as remedies for a non-conforming digital service) applies. See the Terms of Service for how withdrawal works.",
+    ] },
+    { heading: "How to ask for a refund", paragraphs: [
+      `Email ${contact} from the account's email address with the organisation name, the date and amount of the payment and the reason (optional for the 14-day money-back). We answer within 5 business days. Do not send passwords or full card details.`,
+      "Orders processed by Paddle can also be refunded through Paddle: use the link in your Paddle receipt or contact Paddle's buyer support. Purchases made in the App Store or Google Play are refunded by Apple or Google under their own rules; request them there.",
+      "Approved refunds go back to the original payment method, normally within 5-10 business days depending on the payment provider and your bank. Taxes are refunded together with the price they were charged on."
+    ] },
+    { heading: "Changes to this policy", paragraphs: [
+      "We date revisions. A change applies to payments made after it is published and never reduces a refund you were already entitled to."
     ] },
   ],
 };
