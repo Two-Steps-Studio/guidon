@@ -1,12 +1,13 @@
 import { z } from "zod";
 import type { ModuleManifest } from "./module-manifest";
 
-/** 1.1 adds page views and url fields; manifests without them still declare 1.0. */
-export const MODULE_ENGINE_VERSION = "1.1.0";
+/** 1.1 adds page views and url fields, 1.2 automations; manifests without them still declare 1.0. */
+export const MODULE_ENGINE_VERSION = "1.2.0";
 export const MODULE_DATA_LIMIT = 1_000;
 export const MODULE_MANIFEST_BYTE_LIMIT = 200_000;
 export const MODULE_DATA_BYTE_LIMIT = 1_000_000;
-export const RUNTIME_PERMISSIONS = ["module-data:read", "module-data:write"] as const;
+/** Permissions the runtime enforces. tasks:write, notifications:send and webhooks:send are used only by automations. */
+export const RUNTIME_PERMISSIONS = ["module-data:read", "module-data:write", "tasks:write", "notifications:send", "webhooks:send"] as const;
 
 const recordSchema = z.strictObject({
   id: z.uuid(),

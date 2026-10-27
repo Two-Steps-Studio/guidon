@@ -22,6 +22,7 @@ import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
 import { projectSectionCoverage } from "./project-sections.mjs";
 import { marketplaceCoverage } from "./marketplace.mjs";
+import { moduleAutomationCoverage } from "./module-automations.mjs";
 import { taskEditingCoverage } from "./task-editing.mjs";
 import { aiChatBoundaryCoverage } from "./ai-chat.mjs";
 import { mobileCoverage } from "./mobile.mjs";
@@ -162,6 +163,7 @@ try{
       await projectSectionCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       // Registry rules are server-side; one browser keeps the run inside its time budget.
       if(name==="chromium")await marketplaceCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      if(name==="chromium")await moduleAutomationCoverage({page,context,origin,fixture,client,browserName:name});
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await calendarEditingCoverage({page,context,origin,fixture,client,browserName:name});
       await connectedAppsCoverage({page,context,origin,fixture,client,browserName:name});

@@ -128,6 +128,14 @@ Chromium, Firefox and WebKit run sequentially against the same built app:
   organization-only version is visible to an org member and not to another
   tenant; withdrawal removes the version and leaves the installation running.
 
+- Module automations (Chromium): two entries added in the UI - only the
+  matching one starts a run, which creates exactly one task (title from the
+  entry, priority, author) and one notification; the Configuration log shows
+  it and retries a failed run; REST lists modules without their records,
+  refuses configuration and installation to the viewer and a partial
+  permission approval, disables/configures a module and installs a catalog
+  version (recording its registry version); MCP `list_modules` answers.
+
 - Apple Design regression checks cover pointer/keyboard drag cancellation and
   confirmed moves, failed optimistic updates, retained unsaved drafts and files,
   dialog bounds at 320×480 with 200% text, crop feedback, image swipes and

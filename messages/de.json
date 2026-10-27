@@ -498,7 +498,8 @@
         "deliveryRetrying": "Neuer Versuch {when}",
         "deliveryAttempts": "{count, plural, one {# Versuch} other {# Versuche}} · HTTP {status}",
         "retry": "Erneut senden",
-        "refreshHistory": "Aktualisieren"
+        "refreshHistory": "Aktualisieren",
+        "eventModuleAutomation": "Modul-Automatisierung"
       }
     },
     "billing": {
@@ -2016,7 +2017,10 @@
     "installedHint": "Öffne ein Modul hier oder über seinen Tab im Projektmenü.",
     "enabledState": "Aktiviert",
     "open": "Öffnen",
-    "moduleJson": "Modul (JSON)"
+    "moduleJson": "Modul (JSON)",
+    "permissionTasks": "Aufgaben in diesem Projekt erstellen (Automatisierungen)",
+    "permissionNotify": "Inhaber und Admins dieses Projekts benachrichtigen (Automatisierungen)",
+    "permissionWebhooks": "Webhooks dieser Organisation senden (Automatisierungen)"
   },
   "moduleCatalog": {
     "title": "Modul-Marktplatz",
@@ -2261,7 +2265,8 @@
       "link": "Externer Link",
       "markup": "HTML- oder skriptähnlicher Text",
       "instructions": "Text, der wie Anweisungen an eine KI aussieht",
-      "writeAccess": "Kann Projektdaten ändern"
+      "writeAccess": "Kann Projektdaten ändern",
+      "automationAccess": "Automatisierungen wirken außerhalb des Moduls"
     },
     "publishedNow": "Version {version} ist veröffentlicht.",
     "submittedForReview": "Version {version} wartet auf Prüfung. Du bekommst eine Benachrichtigung mit der Entscheidung.",
@@ -2379,5 +2384,36 @@
     "withdrawAria": "{version} zurückziehen",
     "withdrawConfirm": "Diese Version zurückziehen? Sie verschwindet aus dem Marketplace und kann nicht mehr installiert werden. Projekte, die sie nutzen, funktionieren weiter.",
     "withdrawFailed": "Version konnte nicht zurückgezogen werden."
+  },
+  "moduleAutomations": {
+    "title": "Automatisierungen",
+    "hint": "Laufen, wenn ein Eintrag hinzugefügt, geändert oder entfernt wird. Sie erstellen nur Aufgaben, benachrichtigen Projektinhaber/-admins oder senden die Webhooks der Organisation - sie ändern nie Moduldaten und lösen sich daher nicht gegenseitig aus.",
+    "runsTitle": "Letzte Ausführungen",
+    "noRuns": "Noch keine Ausführungen.",
+    "colWhen": "Wann",
+    "colAutomation": "Automatisierung",
+    "colStatus": "Status",
+    "colAttempts": "Versuche",
+    "colActions": "Aktionen",
+    "event": {
+      "record": {
+        "created": "Eintrag hinzugefügt",
+        "updated": "Eintrag geändert",
+        "deleted": "Eintrag entfernt"
+      }
+    },
+    "action": {
+      "create_task": "Aufgabe erstellen",
+      "notify": "Inhaber/Admins benachrichtigen",
+      "webhook": "Webhooks senden"
+    },
+    "status": {
+      "pending": "Wartet",
+      "succeeded": "Erledigt",
+      "failed": "Fehlgeschlagen"
+    },
+    "retry": "Erneut versuchen",
+    "retryAria": "{automation} erneut versuchen",
+    "retryFailed": "Konnte nicht erneut ausgeführt werden."
   }
 }

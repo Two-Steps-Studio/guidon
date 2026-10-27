@@ -193,8 +193,9 @@ for (const [label, sql, expected] of [
   // 53->54 and 138->139: context_events (090) + context_events_select.
   // 139->140: invitations_manager_select (091).
   // 54->57 and 140->143: module_listings, module_registry_events, module_reports (093), one read policy each.
-  ["57 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 57],
-  ["143 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 143],
+  // 57->58 and 143->144: module_automation_runs (094) + module_automation_runs_select.
+  ["58 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 58],
+  ["144 polityki RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 144],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -4121,6 +4122,36 @@ section("77. module registry: publish, review, withdraw, report, counts (093)");
   await withUser(A, async () => {
     check("existing installations keep working after a withdrawal", (await db.query("SELECT 1 FROM public.project_module_packages WHERE project_id=$1 AND module_id='reg-public' AND installed", [registryProject])).rows.length === 1);
   });
+}
+
+section("78. module automation runs: manager-only log, server-only writes, dedupe (094)");
+{
+  let runProject;
+  const manifest = JSON.stringify({ manifestVersion: 1, id: "auto-mod", version: "1.0.0" });
+  await withUser(A, async () => {
+    runProject = (await db.query("INSERT INTO public.projects (organization_id, name, visibility) VALUES ($1, 'Automations', 'private') RETURNING id", [orgId])).rows[0].id;
+    await db.query("INSERT INTO public.project_module_packages (project_id, module_id, manifest) VALUES ($1, 'auto-mod', $2::jsonb)", [runProject, manifest]);
+    check("authenticated users cannot queue automation runs", await throwsInSavepoint("INSERT INTO public.module_automation_runs (project_id,module_id,automation_id,record_id,event,dedupe_key,next_attempt_at) VALUES ($1,'auto-mod','a',gen_random_uuid(),'record.created','x',now())", [runProject]));
+  });
+  const insertRun = "INSERT INTO public.module_automation_runs (project_id,module_id,automation_id,record_id,event,dedupe_key,triggered_by,next_attempt_at) VALUES ($1,'auto-mod','notify-me','00000000-0000-4000-8000-000000000001','record.created',$2,$3,now()) RETURNING id";
+  await withServiceRole(async () => {
+    check("the server queues a run", (await db.query(insertRun, [runProject, "auto-mod:notify-me:1:record.created:r1", A])).rows.length === 1);
+    check("the same event is one run (dedupe key)", await throwsInSavepoint(insertRun, [runProject, "auto-mod:notify-me:1:record.created:r1", A]));
+    check("a pending run needs a time", await throwsInSavepoint("UPDATE public.module_automation_runs SET next_attempt_at = NULL WHERE project_id = $1", [runProject]));
+    check("a run belongs to an installed package", await throwsInSavepoint("INSERT INTO public.module_automation_runs (project_id,module_id,automation_id,record_id,event,dedupe_key,next_attempt_at) VALUES ($1,'missing','a',gen_random_uuid(),'record.created','y',now())", [runProject]));
+    check("organization webhooks accept module.automation", (await db.query("INSERT INTO public.organization_webhooks (organization_id,url,events,secret_encrypted) VALUES ($1,'https://hooks.example.test/a',ARRAY['module.automation'],'x') RETURNING id", [orgId])).rows.length === 1);
+    check("…and nothing unknown", await throwsInSavepoint("INSERT INTO public.organization_webhooks (organization_id,url,events,secret_encrypted) VALUES ($1,'https://hooks.example.test/b',ARRAY['module.anything'],'x')", [orgId]));
+    check("automation notifications are a known type", (await db.query("INSERT INTO public.notifications (user_id,type,title,link) VALUES ($1,'module_automation','Bug filed','/x') RETURNING id", [A])).rows.length === 1);
+  });
+  await withUser(A, async () => {
+    check("the project owner reads the automation log", (await db.query("SELECT 1 FROM public.module_automation_runs WHERE project_id = $1", [runProject])).rows.length === 1);
+    check("…but cannot rewrite it", (await db.query("UPDATE public.module_automation_runs SET status = 'succeeded' WHERE project_id = $1 RETURNING id", [runProject]).catch(() => ({ rows: [] }))).rows.length === 0);
+  });
+  await withServiceRole(async () => { await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [runProject, B]); });
+  await withUser(B, async () => {
+    check("a developer does not see the automation log", (await db.query("SELECT 1 FROM public.module_automation_runs WHERE project_id = $1", [runProject])).rows.length === 0);
+  });
+  await withServiceRole(async () => { await db.query("DELETE FROM public.project_members WHERE project_id = $1 AND user_id = $2", [runProject, B]); });
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

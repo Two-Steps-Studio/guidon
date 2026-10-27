@@ -498,7 +498,8 @@
         "deliveryRetrying": "Retrying {when}",
         "deliveryAttempts": "{count, plural, one {# attempt} other {# attempts}} · HTTP {status}",
         "retry": "Retry",
-        "refreshHistory": "Refresh"
+        "refreshHistory": "Refresh",
+        "eventModuleAutomation": "Module automation"
       }
     },
     "billing": {
@@ -2016,7 +2017,10 @@
     "installedHint": "Open a module from here or from its tab in the project menu.",
     "enabledState": "Enabled",
     "open": "Open",
-    "moduleJson": "Module (JSON)"
+    "moduleJson": "Module (JSON)",
+    "permissionTasks": "Create tasks in this project (automations)",
+    "permissionNotify": "Notify this project's owners and admins (automations)",
+    "permissionWebhooks": "Send this organization's webhooks (automations)"
   },
   "moduleCatalog": {
     "title": "Module marketplace",
@@ -2261,7 +2265,8 @@
       "link": "External link",
       "markup": "HTML or script-like text",
       "instructions": "Text that looks like instructions for an AI",
-      "writeAccess": "Can change project data"
+      "writeAccess": "Can change project data",
+      "automationAccess": "Automations act outside the module"
     },
     "publishedNow": "Version {version} is published.",
     "submittedForReview": "Version {version} is waiting for review. You'll get a notification with the decision.",
@@ -2379,5 +2384,36 @@
     "withdrawAria": "Withdraw {version}",
     "withdrawConfirm": "Withdraw this version? It disappears from the Marketplace and can't be installed any more. Projects that already use it keep working.",
     "withdrawFailed": "Could not withdraw the version."
+  },
+  "moduleAutomations": {
+    "title": "Automations",
+    "hint": "Run when an entry is added, changed or removed. They only create tasks, notify project owners/admins or send the organization's webhooks - never change module data, so they can't trigger each other.",
+    "runsTitle": "Recent runs",
+    "noRuns": "No runs yet.",
+    "colWhen": "When",
+    "colAutomation": "Automation",
+    "colStatus": "Status",
+    "colAttempts": "Attempts",
+    "colActions": "Actions",
+    "event": {
+      "record": {
+        "created": "entry added",
+        "updated": "entry changed",
+        "deleted": "entry removed"
+      }
+    },
+    "action": {
+      "create_task": "create a task",
+      "notify": "notify owners/admins",
+      "webhook": "send webhooks"
+    },
+    "status": {
+      "pending": "Waiting",
+      "succeeded": "Done",
+      "failed": "Failed"
+    },
+    "retry": "Retry",
+    "retryAria": "Retry {automation}",
+    "retryFailed": "Could not retry this run."
   }
 }

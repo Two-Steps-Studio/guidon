@@ -22,7 +22,7 @@ cards must not be treated as proof that the entire system is complete.
 13. Marketplace QA: installation/version/tenant/E2E security gates.
 14. Project module QA: CRUD/import/export/permissions/conflicts/files.
 15. SDK + Monaco + isolated executable sandbox, after its security review.
-16. Declarative automation and scoped API/MCP integration.
+16. Declarative automation and scoped API/MCP integration — migration 094, `module-automations.md`.
 17. Paid modules: billing/entitlements/tax/refunds/payout design and sandbox tests;
     production payments or author payouts require the user's separate approval.
 

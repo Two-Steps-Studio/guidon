@@ -16,8 +16,12 @@ export type CatalogLabels = {
   compatible: string; incompatible: string; empty: string; details: string; myModules: string;
 };
 
-export function ModulePermissionList({ permissions, labels }: { permissions: readonly string[]; labels: { read: string; write: string; none: string } }): ReactNode {
-  return permissions.length ? h("ul", { className: "list-inside list-disc text-sm" }, ...permissions.map((permission) => h("li", { key: permission }, permission === "module-data:read" ? labels.read : permission === "module-data:write" ? labels.write : permission))) : h("p", null, labels.none);
+/** Automation scopes (094) get their own sentence when the caller passes one; anything else shows the raw scope. */
+export type PermissionLabels = { read: string; write: string; none: string } & Partial<Record<"tasks:write" | "notifications:send" | "webhooks:send", string>>;
+export function ModulePermissionList({ permissions, labels }: { permissions: readonly string[]; labels: PermissionLabels }): ReactNode {
+  const label = (permission: string) => permission === "module-data:read" ? labels.read : permission === "module-data:write" ? labels.write
+    : (labels as Partial<Record<string, string>>)[permission] ?? permission;
+  return permissions.length ? h("ul", { className: "list-inside list-disc text-sm" }, ...permissions.map((permission) => h("li", { key: permission }, label(permission)))) : h("p", null, labels.none);
 }
 
 export function filterModuleCatalog(items: CatalogCard[], filters: CatalogFilters): CatalogCard[] {

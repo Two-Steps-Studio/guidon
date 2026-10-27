@@ -24,7 +24,7 @@ for (const change of [
 assert.throws(() => parseModuleRecords(manifest, [records[0], records[0]]));
 assert.throws(() => parseModuleRecords(manifest, Array.from({ length: 1001 }, () => records[0])));
 assert.deepEqual(unsupportedModulePermissions(manifest), []);
-assert.deepEqual(unsupportedModulePermissions({ ...manifest, permissions: ["tasks:write"] }), ["tasks:write"]);
+assert.deepEqual(unsupportedModulePermissions({ ...manifest, permissions: ["knowledge:read"] }), ["knowledge:read"]);
 console.log("pass runtime rejects invalid fields, dates, entities, duplicate IDs, excess rows and unsupported capabilities");
 assert.equal(hasExactModuleConsent(manifest, [...manifest.permissions].reverse()), true);
 for (const consent of [[], ["module-data:read"], ["module-data:read", "module-data:read"], [...manifest.permissions, "tasks:write"], null]) {

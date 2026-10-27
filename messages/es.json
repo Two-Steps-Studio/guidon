@@ -498,7 +498,8 @@
         "deliveryRetrying": "Reintento {when}",
         "deliveryAttempts": "{count, plural, one {# intento} other {# intentos}} · HTTP {status}",
         "retry": "Reintentar",
-        "refreshHistory": "Actualizar"
+        "refreshHistory": "Actualizar",
+        "eventModuleAutomation": "Automatización de módulo"
       }
     },
     "billing": {
@@ -2016,7 +2017,10 @@
     "installedHint": "Abre un módulo desde aquí o desde su pestaña en el menú del proyecto.",
     "enabledState": "Activado",
     "open": "Abrir",
-    "moduleJson": "Módulo (JSON)"
+    "moduleJson": "Módulo (JSON)",
+    "permissionTasks": "Crear tareas en este proyecto (automatizaciones)",
+    "permissionNotify": "Avisar a propietarios y administradores del proyecto (automatizaciones)",
+    "permissionWebhooks": "Enviar los webhooks de la organización (automatizaciones)"
   },
   "moduleCatalog": {
     "title": "Mercado de módulos",
@@ -2261,7 +2265,8 @@
       "link": "Enlace externo",
       "markup": "Texto parecido a HTML o script",
       "instructions": "Texto que parece instrucciones para una IA",
-      "writeAccess": "Puede cambiar datos del proyecto"
+      "writeAccess": "Puede cambiar datos del proyecto",
+      "automationAccess": "Las automatizaciones actúan fuera del módulo"
     },
     "publishedNow": "La versión {version} está publicada.",
     "submittedForReview": "La versión {version} espera revisión. Recibirás una notificación con la decisión.",
@@ -2379,5 +2384,36 @@
     "withdrawAria": "Retirar {version}",
     "withdrawConfirm": "¿Retirar esta versión? Desaparece del Marketplace y no se podrá instalar. Los proyectos que ya la usan siguen funcionando.",
     "withdrawFailed": "No se pudo retirar la versión."
+  },
+  "moduleAutomations": {
+    "title": "Automatizaciones",
+    "hint": "Se ejecutan cuando se añade, cambia o elimina una entrada. Solo crean tareas, avisan a propietarios/administradores del proyecto o envían los webhooks de la organización: nunca cambian datos del módulo, así que no se disparan entre sí.",
+    "runsTitle": "Ejecuciones recientes",
+    "noRuns": "Aún no hay ejecuciones.",
+    "colWhen": "Cuándo",
+    "colAutomation": "Automatización",
+    "colStatus": "Estado",
+    "colAttempts": "Intentos",
+    "colActions": "Acciones",
+    "event": {
+      "record": {
+        "created": "entrada añadida",
+        "updated": "entrada cambiada",
+        "deleted": "entrada eliminada"
+      }
+    },
+    "action": {
+      "create_task": "crear una tarea",
+      "notify": "avisar a propietarios/administradores",
+      "webhook": "enviar webhooks"
+    },
+    "status": {
+      "pending": "En espera",
+      "succeeded": "Hecho",
+      "failed": "Fallida"
+    },
+    "retry": "Reintentar",
+    "retryAria": "Reintentar {automation}",
+    "retryFailed": "No se pudo reintentar."
   }
 }

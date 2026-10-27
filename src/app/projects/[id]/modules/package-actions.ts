@@ -8,6 +8,7 @@ import { compareSemver, moduleManifestSchema } from "@/lib/work/module-manifest"
 import { MODULE_ENGINE_VERSION, MODULE_MANIFEST_BYTE_LIMIT, parseModuleRecords, unsupportedModulePermissions } from "@/lib/work/module-records";
 import { hasExactModuleConsent } from "@/lib/work/module-installation";
 import { MODULE_PACKAGE_COLUMNS, type ModulePackageRow } from "@/lib/data/module-packages";
+import { enqueueAutomationRuns } from "@/lib/data/module-automations";
 
 type Failure = { error: "permission" | "invalid" | "unsupported" | "consent" | "conflict" | "saveFailed" };
 const validRevision = (revision: number) => Number.isSafeInteger(revision) && revision >= 0 && revision < 2147483647;
@@ -53,6 +54,10 @@ export async function saveModuleRecords(projectId: string, moduleId: string, inp
     .eq("project_id", projectId).eq("module_id", moduleId).eq("revision", revision).eq("enabled", true).eq("installed", true).select("module_id");
   if (result.error) return { error: "saveFailed" };
   if (!result.data.length) return { error: "conflict" };
+  // Automations (094) compare the saved records with the ones this save replaced.
+  let before: ReturnType<typeof parseModuleRecords> = [];
+  try { before = parseModuleRecords(manifest.data, current.data.records); } catch { before = []; }
+  await enqueueAutomationRuns({ projectId, manifest: manifest.data, before, after: records, revision: revision + 1, userId: access.userId });
   revalidatePath(`/projects/${projectId}/modules`);
   revalidatePath(`/projects/${projectId}/extensions/package/${moduleId}`);
   return { error: null, revision: revision + 1 };

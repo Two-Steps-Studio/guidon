@@ -19,7 +19,7 @@ test("a clean module passes with no blocking findings; write access is flagged f
 test("invalid manifests and manifests without views are blocked", () => {
   assert.ok(reviewModuleSubmission({ ...example, views: "nope" }, { description: "x", changelog: "" }).blocking.some((f) => f.code === "schema"));
   assert.ok(reviewModuleSubmission({ ...example, views: [] }, { description: "x", changelog: "" }).blocking.some((f) => f.code === "noViews"));
-  assert.ok(reviewModuleSubmission({ ...example, permissions: ["tasks:write", "module-data:read"] }, { description: "x", changelog: "" }).blocking.some((f) => f.code === "permissions"));
+  assert.ok(reviewModuleSubmission({ ...example, permissions: ["knowledge:read", "module-data:read"] }, { description: "x", changelog: "" }).blocking.some((f) => f.code === "permissions"));
 });
 
 test("prompt injection, markup and links anywhere in the text are surfaced with an excerpt", () => {

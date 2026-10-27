@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { dataClient } from "@/lib/data-client";
+import { dataClient, type DataClient } from "@/lib/data-client";
 import { compareSemver, moduleManifestSchema, type ModuleManifest } from "@/lib/work/module-manifest";
 import { MODULE_ENGINE_VERSION, parseModuleRecords, unsupportedModulePermissions, type ModuleRecord } from "@/lib/work/module-records";
 import type { CatalogCard } from "@/lib/work/module-catalog";
@@ -53,8 +53,8 @@ export async function getModuleCatalog(userId: string): Promise<CatalogEntry[]> 
 }
 
 /** One version, any status the caller may see (authors see their pending/rejected ones). */
-export async function getCatalogEntry(userId: string, moduleId: string, version: string): Promise<CatalogEntry | null> {
-  const { data, error } = await dataClient(userId).from("module_catalog_entries").select<CatalogRow>(CATALOG_COLUMNS).eq("module_id", moduleId).eq("version", version).maybeSingle();
+export async function getCatalogEntry(userId: string, moduleId: string, version: string, db: DataClient = dataClient(userId)): Promise<CatalogEntry | null> {
+  const { data, error } = await db.from("module_catalog_entries").select<CatalogRow>(CATALOG_COLUMNS).eq("module_id", moduleId).eq("version", version).maybeSingle();
   if (error) throw new Error("Could not load catalog entry");
   return data ? decodeAll([data])[0] ?? null : null;
 }
