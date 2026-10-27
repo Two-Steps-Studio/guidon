@@ -1328,7 +1328,7 @@
     "emptyTitle": "Aún no hay actividad",
     "emptyDescription": "Los cambios en este proyecto aparecerán aquí en cuanto ocurran.",
     "someone": "Alguien",
-    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} ai_account_created {Cuenta de IA creada} ai_account_disabled {Cuenta de IA desactivada} tasks_imported {Tareas importadas} module_builder_attempt {Intento del creador de módulos con IA} other {Actividad}}",
+    "action": "{action, select, project_created {Proyecto creado} project_updated {Proyecto actualizado} project_archived {Proyecto archivado} project_deleted {Proyecto eliminado} project_exported {Proyecto exportado} project_imported {Proyecto importado} task_created {Tarea creada} task_updated {Tarea actualizada} task_deleted {Tarea eliminada} task_status_changed {Estado de la tarea cambiado} task_ai_started {La IA inició la tarea} task_ai_commented {La IA añadió un comentario} task_ai_status_changed {La IA cambió el estado} task_ai_completed {La IA completó la tarea} phase_created {Fase creada} phase_updated {Fase actualizada} phase_deleted {Fase eliminada} decision_created {Decisión creada} decision_updated {Decisión actualizada} decision_approved {Decisión aprobada} decision_rejected {Decisión rechazada} relation_created {Relación creada} relation_deleted {Relación eliminada} source_created {Fuente añadida} source_updated {Fuente actualizada} memory_created {Memoria creada} memory_updated {Memoria actualizada} memory_verified {Memoria verificada} file_uploaded {Archivo subido} file_deleted {Archivo eliminado} github_repo_connected {Repositorio de GitHub conectado} github_repo_disconnected {Repositorio de GitHub desconectado} github_file_committed {Archivo confirmado en GitHub} member_added {Miembro añadido} member_removed {Miembro eliminado} member_role_changed {Rol del miembro cambiado} invite_sent {Invitación enviada} invite_accepted {Invitación aceptada} invite_rejected {Invitación rechazada} ai_account_created {Cuenta de IA creada} ai_account_disabled {Cuenta de IA desactivada} tasks_imported {Tareas importadas} module_builder_attempt {Intento del creador de módulos con IA} module_code_saved {Código del módulo guardado} other {Actividad}}",
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
@@ -2069,7 +2069,8 @@
     "moduleJson": "Módulo (JSON)",
     "permissionTasks": "Crear tareas en este proyecto (automatizaciones)",
     "permissionNotify": "Avisar a propietarios y administradores del proyecto (automatizaciones)",
-    "permissionWebhooks": "Enviar los webhooks de la organización (automatizaciones)"
+    "permissionWebhooks": "Enviar los webhooks de la organización (automatizaciones)",
+    "permissionCode": "Ejecutar su propio código aislado en el navegador (sin red, solo las entradas de este módulo)"
   },
   "moduleCatalog": {
     "title": "Mercado de módulos",
@@ -2152,7 +2153,8 @@
     "category": "Categoría",
     "categoryPlaceholder": "p. ej., Marketing",
     "categoryHint": "Se muestra como un grupo propio en la barra lateral del proyecto. Déjalo vacío para que aparezca en «Módulos personalizados».",
-    "publish": "Publicar en el Marketplace"
+    "publish": "Publicar en el Marketplace",
+    "code": "Código"
   },
   "moduleBuilder": {
     "title": "Creador de módulos con IA",
@@ -2315,7 +2317,8 @@
       "markup": "Texto parecido a HTML o script",
       "instructions": "Texto que parece instrucciones para una IA",
       "writeAccess": "Puede cambiar datos del proyecto",
-      "automationAccess": "Las automatizaciones actúan fuera del módulo"
+      "automationAccess": "Las automatizaciones actúan fuera del módulo",
+      "script": "Ejecuta su propio código (aislado)"
     },
     "publishedNow": "La versión {version} está publicada.",
     "submittedForReview": "La versión {version} espera revisión. Recibirás una notificación con la decisión.",
@@ -2464,5 +2467,35 @@
     "retry": "Reintentar",
     "retryAria": "Reintentar {automation}",
     "retryFailed": "No se pudo reintentar."
+  },
+  "moduleSandbox": {
+    "frameTitle": "Entorno aislado del código del módulo",
+    "loading": "Iniciando el módulo…",
+    "restart": "Reiniciar",
+    "stopped": "El módulo se reinició.",
+    "notReady": "El módulo aún no se está ejecutando.",
+    "timeout": "El código del módulo no respondió en {seconds} s y se detuvo.",
+    "readOnlyChange": "Puedes ver este módulo, pero no cambiar sus entradas.",
+    "back": "Configuración",
+    "title": "Código: {name}",
+    "hint": "JavaScript que dibuja este módulo a partir de sus entradas. Se ejecuta aislado en el navegador de cada persona: sin red ni acceso a Guidon o la página, solo a las entradas de este módulo; los cambios pasan las mismas comprobaciones que los formularios. Los tipos de `guidon.module` vienen en el editor.",
+    "catalogReadOnly": "Este módulo viene del Marketplace: su código forma parte de una versión revisada y no se puede cambiar aquí. Para cambiarlo, publica tu propia versión.",
+    "runPreview": "Ejecutar vista previa",
+    "save": "Guardar código",
+    "saving": "Guardando…",
+    "saved": "Código guardado. El módulo lo muestra a todos los que tienen acceso.",
+    "consent": "Ejecutar este código para todos los que abran el módulo (añade el permiso \"ejecutar su propio código aislado\").",
+    "preview": "Vista previa (entradas de este proyecto, no se guarda nada)",
+    "wouldSave": "El script añadiría o cambiaría {upserts} entradas y eliminaría {removals}.",
+    "log": "Registro",
+    "logEmpty": "La salida de console.log aparece aquí.",
+    "error": {
+      "permission": "Solo los propietarios y administradores del proyecto pueden cambiar el código.",
+      "catalog": "Los módulos del Marketplace no se pueden cambiar aquí.",
+      "consent": "Confirma que este código puede ejecutarse para todos los que abran el módulo.",
+      "invalid": "El módulo no es válido con este código.",
+      "conflict": "El módulo cambió mientras tanto. Copia tu código, recarga y guarda de nuevo.",
+      "saveFailed": "No se pudo guardar. Inténtalo de nuevo."
+    }
   }
 }

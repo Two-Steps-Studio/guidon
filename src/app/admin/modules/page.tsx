@@ -32,7 +32,7 @@ export default async function AdminModulesPage() {
     const { data } = await db.from("profiles").select<{ id: string; email: string | null; full_name: string | null }>("id, email, full_name").in("id", ids);
     for (const profile of data ?? []) submitters.set(profile.id, profile.full_name || profile.email || profile.id);
   }
-  const labels = { read: runtime("permissionRead"), write: runtime("permissionWrite"), none: runtime("permissionNone"), "tasks:write": runtime("permissionTasks"), "notifications:send": runtime("permissionNotify"), "webhooks:send": runtime("permissionWebhooks") };
+  const labels = { read: runtime("permissionRead"), write: runtime("permissionWrite"), none: runtime("permissionNone"), "tasks:write": runtime("permissionTasks"), "notifications:send": runtime("permissionNotify"), "webhooks:send": runtime("permissionWebhooks"), "code:run": runtime("permissionCode") };
   return <div className="container mx-auto max-w-5xl space-y-8 px-6 py-8">
     <div><h2 className="text-2xl font-bold">{t("adminTitle")}</h2><p className="text-muted-foreground">{t("adminDescription")}</p></div>
     <section className="space-y-4" aria-labelledby="review-queue">

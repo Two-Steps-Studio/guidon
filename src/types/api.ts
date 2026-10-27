@@ -100,6 +100,7 @@ export interface CreateInviteData {
 
 export type ActivityAction =
   | "module_builder_attempt"
+  | "module_code_saved"
   | "project_created"
   | "project_updated"
   | "project_archived"

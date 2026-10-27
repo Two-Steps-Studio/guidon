@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { AIProvider } from "../ai/provider";
-import { moduleManifestSchema, moduleManifestStructureSchema, type ModuleManifest } from "./module-manifest";
+import { buildableViewSchema, moduleManifestSchema, moduleManifestStructureSchema, type ModuleManifest } from "./module-manifest";
 import { MODULE_ENGINE_VERSION, unsupportedModulePermissions } from "./module-records";
 
 const shape = moduleManifestStructureSchema.shape;
@@ -9,7 +9,7 @@ const planStructure = z.strictObject({
   summary: z.string().trim().min(1).max(2000),
   questions: z.array(z.string().trim().min(1).max(500)).max(5),
   entities: shape.entities.unwrap().min(1).max(10),
-  views: shape.views.unwrap().min(1).max(10),
+  views: z.array(buildableViewSchema).min(1).max(10),
   permissions: z.array(z.enum(["module-data:read", "module-data:write"])).max(2),
   // Cross-entity relations have no runtime adapter in v1. Never pretend a
   // proposed relation works: the planner must ask to simplify the request.

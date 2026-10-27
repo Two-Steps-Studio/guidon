@@ -18,7 +18,8 @@ the legacy content editor continues to accept only its original format.
    outside the project cannot read its packages, including through the Data API.
 
 The sample manifest and fixture records are in `examples/module-manifests/`.
-The runtime engine contract is `1.1.0` (1.0 plus page views and url fields);
+The runtime engine contract is `1.3.0` (1.1 added page views and url fields,
+1.2 automations - `module-automations.md`, 1.3 module code - `module-sandbox.md`);
 package versions have independent SemVer.
 
 ## Component allowlist
@@ -66,9 +67,10 @@ manifest for a save. The update predicate includes project, module, enabled
 state and revision, so a stale session cannot overwrite a concurrent change.
 
 Permission requests are not implicit grants. Installation requires an exact
-consent list and engine compatibility. This release implements only
-`module-data:read` and `module-data:write`; requests for task/project/knowledge
-adapters are rejected. Modules receive no database credentials or host API.
+consent list and engine compatibility. The runtime implements
+`module-data:read`/`module-data:write`, the automation scopes `tasks:write`,
+`notifications:send`, `webhooks:send` (engine 1.2) and `code:run` (engine 1.3,
+browser sandbox only); other requests, such as knowledge/project adapters, are rejected. Modules receive no database credentials or host API.
 Read/write permissions describe module capabilities; user roles and RLS remain
 the independent boundary for the human's access to project data.
 

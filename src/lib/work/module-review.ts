@@ -14,7 +14,7 @@ export const MODULE_LICENSES = [
 ] as const;
 export type ModuleLicense = (typeof MODULE_LICENSES)[number];
 
-export type ReviewFinding = { code: "schema" | "permissions" | "engine" | "read" | "write" | "entities" | "views" | "link" | "markup" | "instructions" | "writeAccess" | "automationAccess" | "noViews"; path: string; excerpt?: string };
+export type ReviewFinding = { code: "schema" | "permissions" | "engine" | "read" | "write" | "entities" | "views" | "link" | "markup" | "instructions" | "writeAccess" | "automationAccess" | "script" | "noViews"; path: string; excerpt?: string };
 
 const LINK = /\bhttps?:\/\/[^\s"'<>]+/i;
 const MARKUP = /<\s*(script|iframe|object|embed|img|svg|style|link|meta|form)\b|javascript:|data:text\/html|on[a-z]+\s*=/i;
@@ -62,6 +62,7 @@ export function reviewModuleSubmission(input: unknown, listing: { description: s
     }
   }
   if (manifest.permissions.includes("module-data:write")) warnings.push({ code: "writeAccess", path: "permissions" });
+  if (manifest.script) warnings.push({ code: "script", path: "script", excerpt: `${manifest.script.source.length} characters - read it in the manifest below` });
   for (const scope of ["tasks:write", "notifications:send", "webhooks:send"] as const) {
     if (manifest.permissions.includes(scope)) warnings.push({ code: "automationAccess", path: "permissions", excerpt: scope });
   }
