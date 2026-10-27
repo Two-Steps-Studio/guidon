@@ -1958,7 +1958,7 @@
     "title": "Datenmodule",
     "description": "Projektdaten als Tabellen, Formulare, Boards, Diagramme und Kalender.",
     "example": "Release-Planung (Daten)",
-    "manifest": "Modul (JSON)",
+    "manifest": "Modulmanifest (JSON)",
     "invalidManifest": "Das ist kein gültiges Modul. Prüfe Schema, Feldverweise und Ansichtseinstellungen.",
     "permissions": "Angeforderte Berechtigungen",
     "permissionRead": "Daten dieses Moduls in diesem Projekt lesen",
@@ -2014,7 +2014,8 @@
     "installedTitle": "Projektmodule",
     "installedHint": "Öffne ein Modul hier oder über seinen Tab im Projektmenü.",
     "enabledState": "Aktiviert",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "moduleJson": "Modul (JSON)"
   },
   "moduleCatalog": {
     "title": "Modul-Marktplatz",

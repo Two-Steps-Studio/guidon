@@ -1958,7 +1958,7 @@
     "title": "Módulos de datos",
     "description": "Datos del proyecto en tablas, formularios, tableros, gráficos y calendarios.",
     "example": "Planificación de lanzamientos (datos)",
-    "manifest": "Módulo (JSON)",
+    "manifest": "Manifiesto del módulo (JSON)",
     "invalidManifest": "No es un módulo válido. Revisa el esquema, las referencias de campos y la configuración de vistas.",
     "permissions": "Permisos solicitados",
     "permissionRead": "Leer los datos de este módulo en este proyecto",
@@ -2014,7 +2014,8 @@
     "installedTitle": "Módulos del proyecto",
     "installedHint": "Abre un módulo desde aquí o desde su pestaña en el menú del proyecto.",
     "enabledState": "Activado",
-    "open": "Abrir"
+    "open": "Abrir",
+    "moduleJson": "Módulo (JSON)"
   },
   "moduleCatalog": {
     "title": "Mercado de módulos",

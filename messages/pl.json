@@ -1958,7 +1958,7 @@
     "title": "Moduły danych",
     "description": "Dane projektu w tabelach, formularzach, tablicach, wykresach i kalendarzach.",
     "example": "Planowanie wydań (dane)",
-    "manifest": "Moduł (JSON)",
+    "manifest": "Manifest modułu (JSON)",
     "invalidManifest": "To nie jest prawidłowy moduł. Sprawdź schemat, odwołania do pól i ustawienia widoków.",
     "permissions": "Wymagane uprawnienia",
     "permissionRead": "Odczyt danych tego modułu w tym projekcie",
@@ -2014,7 +2014,8 @@
     "installedTitle": "Moduły projektu",
     "installedHint": "Otwórz moduł stąd albo z jego zakładki w menu projektu.",
     "enabledState": "Włączony",
-    "open": "Otwórz"
+    "open": "Otwórz",
+    "moduleJson": "Moduł (JSON)"
   },
   "moduleCatalog": {
     "title": "Marketplace modułów",

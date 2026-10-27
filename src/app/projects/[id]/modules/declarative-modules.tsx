@@ -195,7 +195,7 @@ export function DeclarativeModules({ projectId, packages, canManage }: { project
         if (chosen.size > MODULE_MANIFEST_BYTE_LIMIT) { setStatus(t("invalidManifest")); return; }
         setTemplate(null); setDraft(await chosen.text()); setConsent(false); setStatus("");
       }} />
-      <label className="block space-y-1"><span className="text-sm font-medium">{t("manifest")}</span><Textarea value={draft} maxLength={MODULE_MANIFEST_BYTE_LIMIT} rows={8} className="font-mono text-xs" disabled={pending} placeholder={t("manifestHint")} onChange={(event) => { setDraft(event.target.value); setTemplate(null); setConsent(false); }} /></label>
+      <label className="block space-y-1"><span className="text-sm font-medium">{t("moduleJson")}</span><Textarea value={draft} maxLength={MODULE_MANIFEST_BYTE_LIMIT} rows={8} className="font-mono text-xs" disabled={pending} placeholder={t("manifestHint")} onChange={(event) => { setDraft(event.target.value); setTemplate(null); setConsent(false); }} /></label>
       {draft && !manifest && <p role="alert" className="text-sm text-destructive">{t("invalidManifest")}</p>}
       {manifest && <div className="space-y-2 rounded-md border p-3"><p className="font-medium">{manifest.name} · v{manifest.version}</p>{manifest.description && <p className="text-sm text-muted-foreground">{manifest.description}</p>}<p className="text-sm font-medium">{t("permissions")}</p>
         {manifest.permissions.length ? <ul className="list-inside list-disc text-sm">{manifest.permissions.map((permission) => <li key={permission}>{permission === "module-data:read" ? t("permissionRead") : permission === "module-data:write" ? t("permissionWrite") : permission}</li>)}</ul> : <p className="text-sm">{t("permissionNone")}</p>}

@@ -1958,7 +1958,7 @@
     "title": "Data modules",
     "description": "Project data with tables, forms, boards, charts and calendars.",
     "example": "Release planning (data)",
-    "manifest": "Module (JSON)",
+    "manifest": "Module manifest (JSON)",
     "invalidManifest": "This is not a valid module. Check the schema, field references and view settings.",
     "permissions": "Requested permissions",
     "permissionRead": "Read this module’s data in this project",
@@ -2014,7 +2014,8 @@
     "installedTitle": "Project modules",
     "installedHint": "Open a module from here or from its tab in the project menu.",
     "enabledState": "Enabled",
-    "open": "Open"
+    "open": "Open",
+    "moduleJson": "Module (JSON)"
   },
   "moduleCatalog": {
     "title": "Module marketplace",
