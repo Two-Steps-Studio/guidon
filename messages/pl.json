@@ -899,7 +899,8 @@
     "unpinTask": "Odepnij",
     "pinTooMany": "Możesz przypiąć do 10 zadań. Najpierw odepnij któreś.",
     "pinFailed": "Nie udało się zmienić przypięcia. Spróbuj ponownie.",
-    "taskMovedAnnouncement": "Przeniesiono {title} do kolumny {column}, pozycja {position}"
+    "taskMovedAnnouncement": "Przeniesiono {title} do kolumny {column}, pozycja {position}",
+    "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API."
   },
   "roadmap": {
     "title": "Plan działań",

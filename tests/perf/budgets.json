@@ -1,0 +1,6 @@
+{
+  "_comment": "p95 budgets in ms = 2x the p95 measured on 2026-10-27 (docs/release/performance-baseline-2026-10-27.md), rounded up; CI runners are slower than the measuring machine. Raise a budget only with a new measurement.",
+  "100": { "boardLoadMs": 2000, "boardServerMs": 700, "apiFirstPageMs": 200, "searchMs": 200, "parallelWritesMs": 800 },
+  "1000": { "boardLoadMs": 4200, "boardServerMs": 2200, "apiFirstPageMs": 200, "apiWalkAllMs": 1200, "searchMs": 600, "parallelWritesMs": 800 },
+  "3000": { "boardLoadMs": 4700, "boardServerMs": 2800, "apiFirstPageMs": 200, "apiWalkAllMs": 3000, "searchMs": 600, "parallelWritesMs": 800 }
+}

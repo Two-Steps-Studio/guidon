@@ -899,7 +899,8 @@
     "unpinTask": "Lösen",
     "pinTooMany": "Du kannst bis zu 10 Aufgaben anheften. Löse zuerst eine.",
     "pinFailed": "Das Anheften hat nicht geklappt. Versuch es noch einmal.",
-    "taskMovedAnnouncement": "{title} nach {column} verschoben, Position {position}"
+    "taskMovedAnnouncement": "{title} nach {column} verschoben, Position {position}",
+    "boardCapped": "Dieses Board zeigt {limit} Aufgaben: offene zuerst, zuletzt geänderte zuerst. Die übrigen Aufgaben sind weiterhin im Projekt - finde sie über die Suche oder die API."
   },
   "roadmap": {
     "title": "Roadmap",

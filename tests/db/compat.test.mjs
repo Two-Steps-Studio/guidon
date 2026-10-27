@@ -4054,5 +4054,48 @@ section("76. content modules become page packages (092)");
   });
 }
 
+section("77. task page keyset uses the index path, same pages as 072 (095)");
+{
+  // 072's single-statement version, kept here as the reference the faster 095 must match.
+  const reference = `SELECT t.id FROM public.tasks t WHERE t.project_id = $1 AND ($3::uuid IS NULL
+      OR (EXISTS (SELECT 1 FROM public.tasks a WHERE a.id = $3 AND a.project_id = $1)
+          AND (t.created_at, t.id) < ((SELECT a.created_at FROM public.tasks a WHERE a.id = $3 AND a.project_id = $1), $3))
+      OR (NOT EXISTS (SELECT 1 FROM public.tasks a WHERE a.id = $3 AND a.project_id = $1)
+          AND (date_trunc('milliseconds', t.created_at), t.id) < (date_trunc('milliseconds', $4::timestamptz), $3)))
+    ORDER BY t.created_at DESC, t.id DESC LIMIT LEAST(GREATEST(COALESCE($2, 1000), 1), 1001)`;
+  await withUser(A, async () => {
+    // Distinct times, ties within a millisecond and identical microseconds.
+    const created = (await db.query(`INSERT INTO public.tasks (project_id, title, created_at)
+      SELECT $1, 'keyset ' || g, timestamptz '2026-10-27 10:00:00+00' + ((g / 3) * interval '1 second') + ((g % 3) * interval '100 microseconds')
+      FROM generate_series(1, 40) g RETURNING id, created_at`, [projectId])).rows;
+    const ids = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 1000)", [projectId])).rows.map((row) => row.id);
+    let same = true;
+    for (const [index, cursor] of [null, ...ids.slice(0, 45)].entries()) {
+      const at = cursor ? (await db.query("SELECT created_at FROM public.tasks WHERE id = $1", [cursor])).rows[0].created_at : null;
+      const fast = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 7, $2, $3)", [projectId, cursor, at])).rows.map((row) => row.id);
+      const slow = (await db.query(reference, [projectId, 7, cursor, at])).rows.map((row) => row.id);
+      if (!isDeepStrictEqual(fast, slow)) { same = false; check(`page after cursor #${index} equals 072`, false, `${fast} vs ${slow}`); break; }
+    }
+    check("every page (no cursor, each cursor) equals 072's result", same);
+    // A cursor id from another project is treated like a deleted task (its time from the cursor), never as an anchor.
+    const at = created[10].created_at;
+    const foreign = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 5, $2, $3)", [projectId, otherTaskId, at])).rows.map((row) => row.id);
+    const expected = (await db.query(reference, [projectId, 5, otherTaskId, at])).rows.map((row) => row.id);
+    check("a cursor on another project's task behaves as a deleted one", isDeepStrictEqual(foreign, expected) && foreign.length === 5, `${foreign}`);
+    // Deleted cursor task, millisecond-precision time as the API encodes it.
+    const victim = ids[20];
+    const victimAt = new Date((await db.query("SELECT created_at FROM public.tasks WHERE id = $1", [victim])).rows[0].created_at).toISOString();
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [victim]);
+    const afterDelete = (await db.query("SELECT id FROM public.list_project_tasks_page($1, 6, $2, $3)", [projectId, victim, victimAt])).rows.map((row) => row.id);
+    const afterDeleteReference = (await db.query(reference, [projectId, 6, victim, victimAt])).rows.map((row) => row.id);
+    check("deleted cursor task: same page as 072", isDeepStrictEqual(afterDelete, afterDeleteReference) && afterDelete.length === 6, `${afterDelete} vs ${afterDeleteReference}`);
+    check("limit is still clamped to 1..1001", (await db.query("SELECT count(*)::int n FROM public.list_project_tasks_page($1, 0)", [projectId])).rows[0].n === 1);
+    await db.query("DELETE FROM public.tasks WHERE project_id = $1 AND title LIKE 'keyset %'", [projectId]);
+  });
+  await withUser("eeeeeeee-0000-4000-8000-000000000095", async () => {
+    check("strangers still get nothing (RLS)", (await db.query("SELECT id FROM public.list_project_tasks_page($1, 10)", [projectId])).rows.length === 0);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

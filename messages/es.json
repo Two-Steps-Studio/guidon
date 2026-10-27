@@ -899,7 +899,8 @@
     "unpinTask": "Desfijar",
     "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
     "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo.",
-    "taskMovedAnnouncement": "{title} se movió a {column}, posición {position}"
+    "taskMovedAnnouncement": "{title} se movió a {column}, posición {position}",
+    "boardCapped": "Este tablero muestra {limit} tareas: primero las abiertas, empezando por las modificadas más recientemente. Las demás siguen en el proyecto: encuéntralas con la búsqueda o la API."
   },
   "roadmap": {
     "title": "Hoja de ruta",

@@ -899,7 +899,8 @@
     "unpinTask": "Unpin",
     "pinTooMany": "You can pin up to 10 tasks. Unpin one first.",
     "pinFailed": "Couldn't change the pin. Try again.",
-    "taskMovedAnnouncement": "{title} moved to {column}, position {position}"
+    "taskMovedAnnouncement": "{title} moved to {column}, position {position}",
+    "boardCapped": "This board shows {limit} tasks: open ones first, most recently updated first. The other tasks are still in the project - find them with search or the API."
   },
   "roadmap": {
     "title": "Roadmap",
