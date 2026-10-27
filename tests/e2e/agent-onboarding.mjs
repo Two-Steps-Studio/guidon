@@ -12,7 +12,8 @@ export async function agentOnboardingCoverage({page,context,origin,fixture,clien
  const name=`Agent onboarding ${browserName}`;
  let projectId=null;
  const started=new Date();
- const mcp=key=>fetch(`${origin}/api/mcp`,{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'})}).then(response=>response.status);
+ // Through the browser context's request API: it trusts the run's self-signed HTTPS origin.
+ const mcp=key=>context.request.post(`${origin}/api/mcp`,{headers:{Authorization:`Bearer ${key}`,Accept:'application/json, text/event-stream'},data:{jsonrpc:'2.0',id:1,method:'tools/list'}}).then(response=>response.status());
  const signIn=async user=>{await context.clearCookies();await page.goto(origin+'/auth/login');await page.waitForLoadState('networkidle');await page.locator('#email').fill(user.email);await page.locator('#password').fill(fixture.password);await page.locator('button[type="submit"]').click();await page.waitForURL(url=>url.pathname==='/dashboard');};
  await client.query('BEGIN');
  try{
