@@ -17,6 +17,7 @@ Current implementation/evidence records:
 - [Standalone artifacts without runtime configuration/data](./release/standalone-package-2026-10-24.md).
 - [Actual signup/session/owner-viewer coverage and Cloud gaps](./release/authentication-coverage-2026-10-24.md).
 - [Actual REST/MCP isolation, scope and mutation checks](./release/api-mcp-isolation-2026-10-24.md).
+- [Security and tenant isolation incl. modules, open findings](./release/security-tenant-isolation-2026-10-27.md).
 - [Cloud, safe email, Stripe sandbox and recovery evidence handoff](./release/staging-handoff.md).
 
 Tests use disposable databases/credentials and actual production builds. Local

@@ -66,7 +66,7 @@ async function handlePATCH(request: NextRequest, { params }: Params) {
   const change = prepareModuleChange(current, digest, project?.organization_id ?? "", form);
   if (change.error) return NextResponse.json({ error: `The change was refused: ${change.error}.`, code: change.error }, { status: change.error === "conflict" ? 409 : 422 });
   const result = await db.from("project_module_packages").update(change.patch).eq("project_id", projectId).eq("module_id", moduleId).eq("revision", current.revision).select("module_id");
-  if (result.error) return NextResponse.json({ error: result.error.message }, { status: 400 });
+  if (result.error) return NextResponse.json({ error: "Could not save the module." }, { status: 500 });
   if (!result.data.length) return NextResponse.json({ error: "The module changed meanwhile. Read it again.", code: "conflict" }, { status: 409 });
   const updated = (await getModulePackages(guard.userId, projectId, db)).find((entry) => entry.moduleId === moduleId);
   return NextResponse.json({ module: updated ? presentModule(updated) : null });
