@@ -106,6 +106,8 @@ export async function moduleAutomationCoverage({ page, context, origin, fixture,
     await client.query("DELETE FROM module_automation_runs WHERE project_id=$1 AND module_id=$2", [owner.projectId, moduleId]);
     await client.query("DELETE FROM project_module_packages WHERE project_id=$1 AND module_id = ANY($2)", [owner.projectId, [moduleId, "release-planning"]]).catch(() => {});
     await client.query("DELETE FROM tasks WHERE project_id=$1 AND title='Fix: Crash on save'", [owner.projectId]);
+    // Later suites find the bell by its plain label, which changes with unread notifications.
+    await client.query("DELETE FROM notifications WHERE user_id=$1 AND type='module_automation'", [owner.id]);
     await context.clearCookies();
   }
 }

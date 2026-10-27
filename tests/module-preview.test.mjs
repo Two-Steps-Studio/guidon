@@ -16,7 +16,7 @@ assert.equal(records.length, 3);
 assert.deepEqual(modulePreviewRecords(result.manifest), records);
 assert.equal(JSON.stringify(example), original);
 assert.deepEqual(validateModulePreview({ ...example, engine: { minVersion: "2.0.0" } }).issues.map(i=>i.code), ["engine"]);
-assert.ok(validateModulePreview({ ...example, permissions: ["tasks:write"] }).issues.some(i=>i.code==="permissions"));
+assert.ok(validateModulePreview({ ...example, permissions: ["knowledge:read"] }).issues.some(i=>i.code==="permissions"));
 assert.ok(validateModulePreview({ ...example, permissions: ["module-data:read"] }).issues.some(i=>i.code==="write"));
 assert.ok(validateModulePreview({ ...example, views: [{ ...example.views[0], fields: ["missing"] }] }).issues.some(i=>i.code==="schema"));
 assert.equal(validateModulePreview({ ...example, dependencies: ["remote-api"] }).manifest, null);
