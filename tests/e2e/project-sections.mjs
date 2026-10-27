@@ -67,6 +67,8 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
 
     // Files: upload, then reload shows it.
     await page.goto(`${root}/files`);
+    // The input is server-rendered; a file set before React attaches its onChange is lost.
+    await page.waitForFunction(() => { const input = document.querySelector('input[type="file"]'); return !!input && Object.keys(input).some(key => key.startsWith("__reactProps")); });
     await page.locator('input[type="file"]').setInputFiles({ name: fileName, mimeType: "text/plain", buffer: Buffer.from(`QA ${marker}\n`) });
     await page.getByText(fileName, { exact: true }).first().waitFor();
     await page.reload(); await page.getByText(fileName, { exact: true }).first().waitFor();

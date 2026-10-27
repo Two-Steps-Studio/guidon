@@ -14,7 +14,7 @@ export function validateModulePreview(input: unknown): { manifest: ModuleManifes
   if (manifest.views.some(view => view.type === "form" || (view.type === "page" && view.blocks.some(block => block.type !== "text"))) && !manifest.permissions.includes("module-data:write")) issues.push({ code: "write", path: "permissions" });
   if (compareSemver(MODULE_ENGINE_VERSION, manifest.engine.minVersion) < 0 || (manifest.engine.maxVersionExclusive && compareSemver(MODULE_ENGINE_VERSION, manifest.engine.maxVersionExclusive) >= 0)) issues.push({ code: "engine", path: "engine" });
   // A page of fixed text needs no entity; every other view reads one.
-  if (!manifest.entities.length && !manifest.views.every(view => view.type === "page")) issues.push({ code: "entities", path: "entities" });
+  if (!manifest.entities.length && !(manifest.views.length && manifest.views.every(view => view.type === "page"))) issues.push({ code: "entities", path: "entities" });
   if (!manifest.views.length) issues.push({ code: "views", path: "views" });
   return { manifest, issues };
 }
