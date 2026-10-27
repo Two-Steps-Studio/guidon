@@ -208,15 +208,32 @@
     "progress": "{done} von {total} Aufgaben erledigt"
   },
   "landing": {
-    "heroTitle": "Kontextorientiertes Projektmanagement",
-    "heroSubtitle": "Verstehe, warum dein Projekt existiert. Verfolge Entscheidungen, Quellen und Kontext zusammen mit deinen Aufgaben.",
-    "getStarted": "Loslegen",
+    "heroTitle": "Gib die Aufgabe deinem KI-Agenten. Er kennt das Projekt schon.",
+    "heroSubtitle": "Verbinde Claude Code, Codex oder Cursor in zwei Minuten. Dein Agent nimmt eine Aufgabe vom Board, liest die Entscheidungen, das Projektgedächtnis und frühere Versuche dahinter und gibt die Arbeit zur Prüfung an dich zurück.",
+    "howItWorks": {
+      "title": "So funktioniert es",
+      "steps": [
+        {
+          "title": "Agent verbinden",
+          "description": "Wähle Claude Code, Codex, Cursor oder eine andere MCP-App und füge die Einrichtung ein, die Guidon dir zeigt - für Claude Code eine Zeile. Guidon sagt dir, sobald der Agent verbunden ist."
+        },
+        {
+          "title": "Er nimmt eine Aufgabe, mit Kontext",
+          "description": "Dein Agent nimmt die nächste Aufgabe aus To do und liest, was dafür zählt: Entscheidungen, Projektregeln, Gedächtnis und was schon versucht wurde und gescheitert ist."
+        },
+        {
+          "title": "Du prüfst die Arbeit",
+          "description": "Fertige Aufgaben landen in Review, mit Zusammenfassung, geänderten Dateien und den Versuchen des Agenten. Du entscheidest, was fertig ist."
+        }
+      ]
+    },
+    "getStarted": "Kostenlos starten - Agent verbinden",
     "signIn": "Anmelden",
     "trySandbox": "Kostenlose API- und Agenten-Sandbox testen",
     "freePlan": "Kostenloser Tarif",
     "selfServeApiKey": "API-Schlüssel selbst erstellen",
-    "featuresTitle": "Alles, was ein Projekt braucht, um sich selbst zu erklären",
-    "featuresSubtitle": "Aufgaben allein erklären nicht, warum ein Projekt so aussieht, wie es aussieht. Guidon verfolgt den Kontext rund um die Arbeit, nicht nur die Arbeit selbst.",
+    "featuresTitle": "Der Kontext, mit dem dein Agent arbeitet",
+    "featuresSubtitle": "Jede Aufgabe bringt die Entscheidungen, Quellen und das Gedächtnis dahinter mit - für dich und für jeden Agenten, den du verbindest.",
     "features": {
       "taskBoard": {
         "title": "Aufgabenboard",
@@ -701,6 +718,8 @@
     "readOnlyAccess": "Du hast Zugriff als <b>{role}</b> - das Board ist schreibgeschützt.",
     "noTasksTitle": "Noch keine Aufgaben",
     "noTasksDescCanEdit": "Erstelle die erste Aufgabe, um die Arbeit an diesem Projekt zu verfolgen.",
+    "noTasksAgentHint": "Oder verbinde deinen KI-Agenten und lass ihn die erste Aufgabe übernehmen.",
+    "starterFailed": "Die Startaufgaben konnten nicht hinzugefügt werden. Versuche es erneut.",
     "noTasksDescReadOnly": "Für dieses Projekt wurde noch nichts geplant.",
     "progressDone": "{done}/{total} erledigt ({percent}%)",
     "progressInFlight": "{count} in Bearbeitung",
@@ -875,6 +894,9 @@
     "removeAttachment": "{name} entfernen",
     "createAttachmentsFailed": "{count, plural, one {# Datei konnte} other {# Dateien konnten}} nicht angehängt werden - füge sie in der Aufgabe hinzu.",
     "importButton": "Importieren",
+    "connectAgent": "Agent verbinden",
+    "connectAgentTitle": "Deinen KI-Agenten verbinden",
+    "connectAgentDescription": "Claude Code, Codex, Cursor oder jede MCP-App nimmt Aufgaben von diesem Board, liest ihren Kontext (Entscheidungen, Gedächtnis, frühere Versuche) und gibt sie zur Prüfung zurück. Wähle deine App und füge die Einrichtung unten ein.",
     "importTitle": "Aufgaben importieren",
     "importDescription": "Übernimm Aufgaben aus Jira, Trello, GitHub, Linear, Asana, Notion oder einer Tabelle - als CSV- oder JSON-Export. Sie werden diesem Board hinzugefügt; Bestehendes bleibt unverändert.",
     "importChooseFile": "CSV- oder JSON-Datei wählen oder hier ablegen",
@@ -1575,6 +1597,7 @@
       "cta": {
         "hero-start": "Kopfbereich: Loslegen",
         "hero-sandbox": "Kopfbereich: Sandbox testen",
+        "how-start": "So funktioniert es: Kostenlos starten",
         "pricing-free": "Preise: kostenloser Plan",
         "pricing-paid": "Preise: bezahlter Plan"
       }
@@ -1625,7 +1648,7 @@
     "mcpCreateButton": "{client} verbinden",
     "mcpCreating": "Schlüssel wird erstellt...",
     "mcpError": "Der Verbindungsschlüssel konnte nicht erstellt werden. Bitte erneut versuchen.",
-    "mcpKeyOnce": "Die Einrichtung unten enthält deinen neuen Schlüssel und wird nur einmal angezeigt. Kopiere sie jetzt. Du kannst den Schlüssel jederzeit oben unter API-Schlüssel widerrufen.",
+    "mcpKeyOnce": "Die Einrichtung unten enthält deinen neuen Schlüssel und wird nur einmal angezeigt. Kopiere sie jetzt. Du kannst den Schlüssel unten oder später unter Profil → API-Schlüssel widerrufen.",
     "mcpCopy": "Kopieren",
     "mcpStep_claude-code": "Führe das im Terminal aus (Claude Code muss installiert sein)",
     "mcpVerify_claude-code": "Prüfe die Verbindung - Guidon sollte als verbunden aufgeführt sein",
@@ -1639,6 +1662,7 @@
     "mcpStep_other_header": "Sende diesen HTTP-Header bei jeder Anfrage",
     "mcpTry": "Probiere diesen Prompt in deiner KI-App",
     "mcpTryPrompt": "Liste meine Guidon-Projekte auf, zeige die Aufgaben in To do und beginne mit der wichtigsten.",
+    "mcpTryPromptProject": "Nimm in meinem Guidon-Projekt \"{project}\" die wichtigste Aufgabe aus To do: lies ihren Kontext mit get_task_context, erledige die Arbeit, halte fest, was du versucht hast, und verschiebe sie nach Review.",
     "backgroundMotionLabel": "Hintergrundanimation",
     "backgroundMotion_auto": "Automatisch (Systemeinstellung)",
     "backgroundMotion_on": "An",
@@ -1670,6 +1694,10 @@
     "mcpOAuthStep_claude": "Öffne in Claude Einstellungen → Konnektoren → Eigenen Konnektor hinzufügen, nenne ihn Guidon und füge diese URL ein",
     "mcpOAuthStep_chatgpt": "Öffne in ChatGPT Einstellungen → Apps & Konnektoren → Erstellen (Entwicklermodus), wähle OAuth und füge diese URL ein",
     "mcpOAuthApprove": "Melde dich bei Guidon an, wenn danach gefragt wird, und klicke auf Erlauben - kein Schlüssel zum Kopieren. Die App erscheint oben unter Verbundene Apps.",
+    "mcpWaiting": "Warte auf deinen Agenten… Führe den Prompt oben aus - dieser Status ändert sich, sobald er Guidon erreicht.",
+    "mcpConnected": "Verbunden - dein Agent hat Guidon um {time} erreicht.",
+    "mcpRevoke": "Diesen Schlüssel widerrufen",
+    "mcpRevoked": "Schlüssel widerrufen. Dein Agent kann Guidon damit nicht mehr erreichen.",
     "deleteAccount": {
       "title": "Konto löschen",
       "description": "Löscht dein Konto und meldet dich überall ab: Profil, API-Schlüssel, verbundene Apps, Benachrichtigungen sowie deine Kommentare und Versuche. Aufgaben und Dokumente, die du in gemeinsamen Projekten erstellt hast, bleiben dem Team erhalten, ohne deinen Namen. Das lässt sich nicht rückgängig machen.",
@@ -1976,6 +2004,16 @@
     "welcomeFirstTask": "Erste Aufgabe anlegen",
     "welcomeInvite": "Team einladen",
     "welcomeImport": "Aufgaben aus Trello, Jira oder CSV importieren",
+    "welcomeConnectAgent": "Agent verbinden",
+    "welcomeStarterTasks": "Startaufgaben für deinen Agenten hinzufügen",
+    "starterAdded": "3 Startaufgaben zu To do hinzugefügt. Verbinde deinen Agenten und bitte ihn, die erste zu übernehmen.",
+    "starterTask_memory_title": "Agent: halte fest, was dieses Projekt ist",
+    "starterTask_memory_description": "Lies das Repository (README, Hauptordner, Konfigurationsdateien) und speichere mit create_memory 3-5 Fakten über das Projekt im Projektgedächtnis von Guidon: was es ist, der Stack, wie man es startet und testet. Dann record_attempt und diese Aufgabe nach Review verschieben.",
+    "starterTask_plan_title": "Agent: schlage die nächsten 5 Aufgaben vor",
+    "starterTask_plan_description": "Sieh dir den Code und die offenen Aufgaben auf diesem Board an. Lege mit create_task bis zu 5 konkrete Aufgaben in To do an, jede mit kurzer Beschreibung und klarem „fertig, wenn“. Fang sie nicht an - was als Nächstes kommt, entscheidet ein Mensch. Dann diese Aufgabe nach Review verschieben.",
+    "starterTask_improve_title": "Agent: mach eine kleine, sichere Verbesserung",
+    "starterTask_improve_description": "Wähle eine kleine Verbesserung, die in ein paar Minuten fertig ist (ein Tippfehler, ein fehlender README-Abschnitt, eine unklare Fehlermeldung). Setze sie in einem neuen Branch um, halte sie mit record_attempt samt geänderten Dateien fest, fasse sie mit comment_on_task zusammen und verschiebe diese Aufgabe nach Review.",
+    "starterRule": "Agenten verschieben fertige Aufgaben nach Review, nie direkt nach Done - ein Mensch prüft die Arbeit zuerst.",
     "welcomeDismiss": "Schließen"
   },
   "oauth": {

@@ -208,15 +208,32 @@
     "progress": "{done} z {total} zadań ukończonych"
   },
   "landing": {
-    "heroTitle": "Zarządzanie projektami skupione na kontekście",
-    "heroSubtitle": "Zrozum, po co istnieje Twój projekt. Śledź decyzje, źródła i kontekst obok swoich zadań.",
-    "getStarted": "Zacznij teraz",
+    "heroTitle": "Przekaż zadanie agentowi AI. On już zna projekt.",
+    "heroSubtitle": "Podłącz Claude Code, Codex albo Cursor w dwie minuty. Agent bierze zadanie z tablicy, czyta stojące za nim decyzje, pamięć projektu i wcześniejsze próby, a potem oddaje pracę do Twojego review.",
+    "howItWorks": {
+      "title": "Jak to działa",
+      "steps": [
+        {
+          "title": "Podłącz agenta",
+          "description": "Wybierz Claude Code, Codex, Cursor albo dowolną aplikację MCP i wklej konfigurację, którą pokaże Guidon - dla Claude Code to jedna linijka. Guidon da znać, kiedy agent się połączy."
+        },
+        {
+          "title": "Agent bierze zadanie z kontekstem",
+          "description": "Agent bierze kolejne zadanie z To do i czyta to, co jest dla niego ważne: decyzje, zasady projektu, pamięć i to, co już próbowano i się nie udało."
+        },
+        {
+          "title": "Ty robisz review",
+          "description": "Skończone zadania trafiają do Review z podsumowaniem, zmienionymi plikami i opisem prób agenta. To Ty decydujesz, co jest gotowe."
+        }
+      ]
+    },
+    "getStarted": "Zacznij za darmo - podłącz agenta",
     "signIn": "Zaloguj się",
     "trySandbox": "Wypróbuj bezpłatny sandbox API i agentów",
     "freePlan": "Darmowy plan",
     "selfServeApiKey": "Samodzielnie utwórz klucz API",
-    "featuresTitle": "Wszystko, czego projekt potrzebuje, by mówić sam za siebie",
-    "featuresSubtitle": "Same zadania nie wyjaśniają, dlaczego projekt wygląda tak, jak wygląda. Guidon śledzi kontekst wokół pracy, nie tylko samą pracę.",
+    "featuresTitle": "Kontekst, z którego korzysta Twój agent",
+    "featuresSubtitle": "Każde zadanie ma przy sobie decyzje, źródła i pamięć, które za nim stoją - dla Ciebie i dla każdego agenta, którego podłączysz.",
     "features": {
       "taskBoard": {
         "title": "Tablica zadań",
@@ -701,6 +718,8 @@
     "readOnlyAccess": "Masz dostęp <b>{role}</b> - tablica jest tylko do odczytu.",
     "noTasksTitle": "Brak zadań",
     "noTasksDescCanEdit": "Utwórz pierwsze zadanie, aby zacząć śledzić pracę nad tym projektem.",
+    "noTasksAgentHint": "Albo podłącz agenta AI i pozwól mu wziąć pierwsze zadanie.",
+    "starterFailed": "Nie udało się dodać zadań startowych. Spróbuj ponownie.",
     "noTasksDescReadOnly": "Nic jeszcze nie zaplanowano dla tego projektu.",
     "progressDone": "{done}/{total} zrobione ({percent}%)",
     "progressInFlight": "{count} w toku",
@@ -875,6 +894,9 @@
     "removeAttachment": "Usuń {name}",
     "createAttachmentsFailed": "{count, plural, one {Nie udało się dołączyć # pliku} few {Nie udało się dołączyć # plików} other {Nie udało się dołączyć # plików}} - dodaj je z poziomu zadania.",
     "importButton": "Importuj",
+    "connectAgent": "Podłącz agenta",
+    "connectAgentTitle": "Podłącz swojego agenta AI",
+    "connectAgentDescription": "Claude Code, Codex, Cursor albo dowolna aplikacja MCP bierze zadania z tej tablicy, czyta ich kontekst (decyzje, pamięć, wcześniejsze próby) i oddaje je do review. Wybierz aplikację i wklej konfigurację poniżej.",
     "importTitle": "Import zadań",
     "importDescription": "Przenieś zadania z Jiry, Trello, GitHuba, Lineara, Asany, Notion albo arkusza - eksport CSV lub JSON. Zostaną dodane do tej tablicy; nic istniejącego się nie zmieni.",
     "importChooseFile": "Wybierz plik CSV lub JSON albo upuść go tutaj",
@@ -1575,6 +1597,7 @@
       "cta": {
         "hero-start": "Nagłówek: Zacznij",
         "hero-sandbox": "Nagłówek: Wypróbuj sandbox",
+        "how-start": "Jak to działa: Zacznij za darmo",
         "pricing-free": "Cennik: plan darmowy",
         "pricing-paid": "Cennik: plan płatny"
       }
@@ -1625,7 +1648,7 @@
     "mcpCreateButton": "Połącz {client}",
     "mcpCreating": "Tworzenie klucza...",
     "mcpError": "Nie udało się utworzyć klucza połączenia. Spróbuj ponownie.",
-    "mcpKeyOnce": "Poniższa konfiguracja zawiera Twój nowy klucz i jest pokazywana tylko raz. Skopiuj ją teraz. Klucz możesz w każdej chwili unieważnić w sekcji Klucze API powyżej.",
+    "mcpKeyOnce": "Poniższa konfiguracja zawiera Twój nowy klucz i jest pokazywana tylko raz. Skopiuj ją teraz. Klucz możesz unieważnić poniżej albo później w Profil → Klucze API.",
     "mcpCopy": "Kopiuj",
     "mcpStep_claude-code": "Uruchom to w terminalu (Claude Code musi być zainstalowany)",
     "mcpVerify_claude-code": "Sprawdź połączenie - Guidon powinien być na liście jako połączony",
@@ -1639,6 +1662,7 @@
     "mcpStep_other_header": "Wysyłaj ten nagłówek HTTP z każdym zapytaniem",
     "mcpTry": "Wypróbuj ten prompt w swojej aplikacji AI",
     "mcpTryPrompt": "Wypisz moje projekty w Guidon, pokaż zadania w To do i zacznij od tego o najwyższym priorytecie.",
+    "mcpTryPromptProject": "W moim projekcie Guidon \"{project}\" weź zadanie o najwyższym priorytecie z To do: przeczytaj jego kontekst przez get_task_context, wykonaj pracę, zapisz, co próbowałeś, i przenieś je do Review.",
     "backgroundMotionLabel": "Animacja tła",
     "backgroundMotion_auto": "Automatycznie (ustawienie systemu)",
     "backgroundMotion_on": "Włączona",
@@ -1670,6 +1694,10 @@
     "mcpOAuthStep_claude": "W Claude otwórz Ustawienia → Konektory → Dodaj własny konektor, nazwij go Guidon i wklej ten adres",
     "mcpOAuthStep_chatgpt": "W ChatGPT otwórz Ustawienia → Aplikacje i konektory → Utwórz (tryb dewelopera), wybierz OAuth i wklej ten adres",
     "mcpOAuthApprove": "Zaloguj się do Guidona, gdy poprosi, i kliknij Zezwól - żadnego klucza do kopiowania. Aplikacja pojawi się wyżej w Połączonych aplikacjach.",
+    "mcpWaiting": "Czekam na Twojego agenta… Uruchom prompt powyżej - ten status zmieni się, gdy tylko agent połączy się z Guidonem.",
+    "mcpConnected": "Połączono - Twój agent połączył się z Guidonem o {time}.",
+    "mcpRevoke": "Unieważnij ten klucz",
+    "mcpRevoked": "Klucz unieważniony. Agent nie połączy się już nim z Guidonem.",
     "deleteAccount": {
       "title": "Usuń konto",
       "description": "Usuwa Twoje konto i wylogowuje Cię wszędzie: profil, klucze API, połączone aplikacje, powiadomienia oraz Twoje komentarze i próby. Zadania i dokumenty, które utworzyłeś we wspólnych projektach, zostają dla zespołu, bez Twojego nazwiska. Tego nie da się cofnąć.",
@@ -1976,6 +2004,16 @@
     "welcomeFirstTask": "Dodaj pierwsze zadanie",
     "welcomeInvite": "Zaproś zespół",
     "welcomeImport": "Zaimportuj zadania z Trello, Jiry lub CSV",
+    "welcomeConnectAgent": "Podłącz agenta",
+    "welcomeStarterTasks": "Dodaj zadania startowe dla agenta",
+    "starterAdded": "Dodano 3 zadania startowe do To do. Podłącz agenta i poproś go o pierwsze.",
+    "starterTask_memory_title": "Agent: opisz, czym jest ten projekt",
+    "starterTask_memory_description": "Przeczytaj repozytorium (README, główne foldery, pliki konfiguracyjne) i zapisz 3-5 faktów o projekcie w pamięci projektu Guidona przez create_memory: czym jest, jaki ma stack, jak go uruchomić i jak testować. Potem record_attempt i przenieś to zadanie do Review.",
+    "starterTask_plan_title": "Agent: zaproponuj 5 kolejnych zadań",
+    "starterTask_plan_description": "Przejrzyj kod i otwarte zadania na tej tablicy. Utwórz przez create_task do 5 konkretnych zadań w To do, każde z krótkim opisem i jasnym „gotowe, gdy”. Nie zaczynaj ich - co dalej, wybiera człowiek. Potem przenieś to zadanie do Review.",
+    "starterTask_improve_title": "Agent: zrób jedną małą, bezpieczną poprawkę",
+    "starterTask_improve_description": "Wybierz jedną małą poprawkę na kilka minut (literówka, brakująca sekcja README, niejasny komunikat błędu). Zrób ją na nowej gałęzi, zapisz record_attempt ze zmienionymi plikami, dodaj podsumowanie przez comment_on_task i przenieś to zadanie do Review.",
+    "starterRule": "Agenci przenoszą skończone zadania do Review, nigdy prosto do Done - najpierw pracę sprawdza człowiek.",
     "welcomeDismiss": "Zamknij"
   },
   "oauth": {

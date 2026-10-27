@@ -208,15 +208,32 @@
     "progress": "{done} of {total} tasks done"
   },
   "landing": {
-    "heroTitle": "Context-First Project Management",
-    "heroSubtitle": "Understand why your project exists. Track decisions, sources, and context alongside your tasks.",
-    "getStarted": "Get Started",
+    "heroTitle": "Hand the task to your AI agent. It already knows the project.",
+    "heroSubtitle": "Connect Claude Code, Codex or Cursor in two minutes. Your agent takes a task from the board, reads the decisions, project memory and earlier attempts behind it, and hands the work back for your review.",
+    "howItWorks": {
+      "title": "How it works",
+      "steps": [
+        {
+          "title": "Connect your agent",
+          "description": "Pick Claude Code, Codex, Cursor or any MCP app and paste the setup Guidon shows you - one line for Claude Code. Guidon tells you when the agent has connected."
+        },
+        {
+          "title": "It takes a task, with context",
+          "description": "Your agent picks the next task from To do and reads what matters for it: decisions, project rules, memory and what was already tried and failed."
+        },
+        {
+          "title": "You review the work",
+          "description": "Finished tasks land in Review with a summary, the files changed and what the agent tried. You decide what's done."
+        }
+      ]
+    },
+    "getStarted": "Start free - connect your agent",
     "signIn": "Sign In",
     "trySandbox": "Try the free API and agent sandbox",
     "freePlan": "Free plan",
     "selfServeApiKey": "Create your own API key",
-    "featuresTitle": "Everything a project needs to explain itself",
-    "featuresSubtitle": "Tasks alone don't tell you why a project looks the way it does. Guidon tracks the context around the work, not just the work.",
+    "featuresTitle": "The context your agent works from",
+    "featuresSubtitle": "Every task comes with the decisions, sources and memory behind it - for you and for every agent you connect.",
     "features": {
       "taskBoard": {
         "title": "Task Board",
@@ -701,6 +718,8 @@
     "readOnlyAccess": "You have <b>{role}</b> access - the board is read-only.",
     "noTasksTitle": "No tasks yet",
     "noTasksDescCanEdit": "Create the first task to start tracking work on this project.",
+    "noTasksAgentHint": "Or connect your AI agent and let it pick up the first task.",
+    "starterFailed": "Could not add the starter tasks. Try again.",
     "noTasksDescReadOnly": "Nothing has been planned for this project yet.",
     "progressDone": "{done}/{total} done ({percent}%)",
     "progressInFlight": "{count} in progress",
@@ -875,6 +894,9 @@
     "removeAttachment": "Remove {name}",
     "createAttachmentsFailed": "{count, plural, one {# file} other {# files}} couldn't be attached - add {count, plural, one {it} other {them}} from the task.",
     "importButton": "Import",
+    "connectAgent": "Connect your agent",
+    "connectAgentTitle": "Connect your AI agent",
+    "connectAgentDescription": "Claude Code, Codex, Cursor or any MCP app takes tasks from this board, reads their context (decisions, memory, earlier attempts) and hands them back for review. Pick your app and paste the setup below.",
     "importTitle": "Import tasks",
     "importDescription": "Bring tasks over from Jira, Trello, GitHub, Linear, Asana, Notion or a spreadsheet - a CSV or JSON export. They're added to this board; nothing existing changes.",
     "importChooseFile": "Choose a CSV or JSON file, or drop it here",
@@ -1575,6 +1597,7 @@
       "cta": {
         "hero-start": "Hero: Get started",
         "hero-sandbox": "Hero: Try the sandbox",
+        "how-start": "How it works: Start free",
         "pricing-free": "Pricing: free plan",
         "pricing-paid": "Pricing: paid plan"
       }
@@ -1625,7 +1648,7 @@
     "mcpCreateButton": "Connect {client}",
     "mcpCreating": "Creating key...",
     "mcpError": "Could not create the connection key. Try again.",
-    "mcpKeyOnce": "The setup below contains your new key and is shown only once. Copy it now. You can revoke the key any time in API keys above.",
+    "mcpKeyOnce": "The setup below contains your new key and is shown only once. Copy it now. You can revoke it below, or any time later in Profile → API keys.",
     "mcpCopy": "Copy",
     "mcpStep_claude-code": "Run this in your terminal (Claude Code must be installed)",
     "mcpVerify_claude-code": "Check that it connected - Guidon should be listed as connected",
@@ -1639,6 +1662,7 @@
     "mcpStep_other_header": "Send this HTTP header with every request",
     "mcpTry": "Try this prompt in your AI app",
     "mcpTryPrompt": "List my Guidon projects, show the tasks in To do, and start on the highest priority one.",
+    "mcpTryPromptProject": "In my Guidon project \"{project}\", take the highest-priority task from To do: read its context with get_task_context, do the work, record what you tried and move it to Review.",
     "backgroundMotionLabel": "Background animation",
     "backgroundMotion_auto": "Automatic (system setting)",
     "backgroundMotion_on": "On",
@@ -1670,6 +1694,10 @@
     "mcpOAuthStep_claude": "In Claude, open Settings → Connectors → Add custom connector, name it Guidon and paste this URL",
     "mcpOAuthStep_chatgpt": "In ChatGPT, open Settings → Apps & Connectors → Create (developer mode), choose OAuth and paste this URL",
     "mcpOAuthApprove": "Sign in to Guidon when it asks and click Allow - no key to copy. It appears under Connected apps above.",
+    "mcpWaiting": "Waiting for your agent… Run the prompt above - this updates as soon as it reaches Guidon.",
+    "mcpConnected": "Connected - your agent reached Guidon at {time}.",
+    "mcpRevoke": "Revoke this key",
+    "mcpRevoked": "Key revoked. Your agent can no longer reach Guidon with it.",
     "deleteAccount": {
       "title": "Delete account",
       "description": "Deletes your account and signs you out everywhere: your profile, API keys, connected apps, notifications, and the comments and attempts you wrote. Tasks and documents you created in shared projects stay with the team, without your name. This can't be undone.",
@@ -1976,6 +2004,16 @@
     "welcomeFirstTask": "Add your first task",
     "welcomeInvite": "Invite your team",
     "welcomeImport": "Import tasks from Trello, Jira or CSV",
+    "welcomeConnectAgent": "Connect your agent",
+    "welcomeStarterTasks": "Add starter tasks for your agent",
+    "starterAdded": "3 starter tasks added to To do. Connect your agent and ask it to take the first one.",
+    "starterTask_memory_title": "Agent: write down what this project is",
+    "starterTask_memory_description": "Read the repository (README, main folders, config files) and save 3-5 facts about this project in Guidon's project memory with create_memory: what it is, the stack, how to run it and how to test it. Then record_attempt and move this task to Review.",
+    "starterTask_plan_title": "Agent: suggest the next 5 tasks",
+    "starterTask_plan_description": "Look at the code and the open tasks on this board. Create up to 5 concrete tasks in To do with create_task, each with a short description and a clear \"done when\". Don't start them - a person picks what comes next. Then move this task to Review.",
+    "starterTask_improve_title": "Agent: make one small, safe improvement",
+    "starterTask_improve_description": "Pick one small improvement you can finish in a few minutes (a typo, a missing README section, an unclear error message). Do it on a new branch, record_attempt with the files you changed, summarize it with comment_on_task and move this task to Review.",
+    "starterRule": "Agents move finished tasks to Review, never straight to Done - a person checks the work first.",
     "welcomeDismiss": "Dismiss"
   },
   "oauth": {

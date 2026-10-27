@@ -102,6 +102,7 @@ export interface LandingMessages {
   heroSubtitle: string;
   featuresTitle: string;
   featuresSubtitle: string;
+  howItWorks?: { title: string; steps: { title: string; description: string }[] };
   features: Record<string, { title: string; description: string; bullets: string[] }>;
   faq?: { title: string; items: { q: string; a: string }[] };
 }
@@ -139,6 +140,9 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     `- [Try the API and agent sandbox](${siteUrl}/sandbox)`,
     `- [Guide for AI agents (llms.txt)](${siteUrl}/llms.txt)`,
     "",
+    ...(landing.howItWorks
+      ? [`## ${landing.howItWorks.title}`, "", ...landing.howItWorks.steps.map((step, index) => `${index + 1}. **${step.title}** - ${step.description}`), ""]
+      : []),
     "## For AI agents",
     "",
     "Guidon is built to be used by agents as well as people. Everything below acts as a Guidon user, in the projects they can access.",

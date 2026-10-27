@@ -31,6 +31,7 @@ import { mobileCoverage } from "./mobile.mjs";
 import { npmCommand } from "./npm-command.mjs";
 import { calendarEditingCoverage } from "./calendar-editing.mjs";
 import { connectedAppsCoverage } from "./profile-connected-apps.mjs";
+import { agentOnboardingCoverage } from "./agent-onboarding.mjs";
 import { onboardingCoverage } from "./onboarding.mjs";
 import { forbiddenStandaloneDirectories } from "../../scripts/standalone-package.mjs";
 import assert from "node:assert/strict";
@@ -173,6 +174,8 @@ try{
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await calendarEditingCoverage({page,context,origin,fixture,client,browserName:name});
       await connectedAppsCoverage({page,context,origin,fixture,client,browserName:name});
+      // Key status and starter tasks are server-side; one browser covers the dialog.
+      if(name==="chromium")await agentOnboardingCoverage({page,context,origin,fixture,client,browserName:name});
       await aiChatBoundaryCoverage({page,context,origin,fixture,client});
       const {appleDesignCoverage}=await import("./apple-design.mjs");
       await appleDesignCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
