@@ -297,7 +297,8 @@
       "auditLogs": "Audit-Protokolle",
       "prioritySupport": "Prioritäts-Support",
       "unlimitedMembers": "Unbegrenzte Mitglieder",
-      "membersCount": "{count, plural, one {# Mitglied} other {# Mitglieder}}"
+      "membersCount": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
+      "paidSoon": "Bezahlte Pläne starten bald. Fang jetzt kostenlos an - deine Projekte bleiben beim Upgrade erhalten."
     },
     "footer": {
       "developers": "Für Entwickler",
@@ -561,7 +562,8 @@
       "paymentGraceTitle": "Zahlung fehlgeschlagen",
       "paymentGraceDescription": "Die Karte für dieses Abo konnte nicht belastet werden. Dein Plan läuft bis {date, date, long} weiter - ändere die Zahlungsmethode vorher.",
       "paymentSuspendedTitle": "Abo unbezahlt - es gelten die Limits des Free-Plans",
-      "paymentSuspendedDescription": "Die Zahlung ist noch nicht durchgegangen, daher gelten für diese Organisation die Limits des Free-Plans. Es wurde nichts gelöscht - nach dem Ändern der Zahlungsmethode ist der Plan sofort wieder da."
+      "paymentSuspendedDescription": "Die Zahlung ist noch nicht durchgegangen, daher gelten für diese Organisation die Limits des Free-Plans. Es wurde nichts gelöscht - nach dem Ändern der Zahlungsmethode ist der Plan sofort wieder da.",
+      "paidSoon": "Bezahlte Pläne können noch nicht gekauft werden. Deine Organisation bleibt im Free-Plan, und nichts geht verloren, wenn bezahlte Pläne starten."
     }
   },
   "projects": {

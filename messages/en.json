@@ -297,7 +297,8 @@
       "auditLogs": "Audit logs",
       "prioritySupport": "Priority support",
       "unlimitedMembers": "Unlimited members",
-      "membersCount": "{count, plural, one {# member} other {# members}}"
+      "membersCount": "{count, plural, one {# member} other {# members}}",
+      "paidSoon": "Paid plans open soon. Start free now - your projects stay when you upgrade."
     },
     "footer": {
       "developers": "Developers",
@@ -561,7 +562,8 @@
       "paymentGraceTitle": "Payment failed",
       "paymentGraceDescription": "We couldn't charge the card for this subscription. Your plan keeps working until {date, date, long} - update the payment method before then.",
       "paymentSuspendedTitle": "Subscription unpaid - Free plan limits apply",
-      "paymentSuspendedDescription": "The payment still hasn't gone through, so this organization is limited to the Free plan. Nothing was deleted - update the payment method and the plan comes back right away."
+      "paymentSuspendedDescription": "The payment still hasn't gone through, so this organization is limited to the Free plan. Nothing was deleted - update the payment method and the plan comes back right away.",
+      "paidSoon": "Paid plans aren't available to buy yet. Your organization keeps the Free plan, and nothing is lost when paid plans open."
     }
   },
   "projects": {

@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Server, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
+import { isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -236,7 +237,7 @@ export default async function Home() {
       </div>
     </section>
 
-    {plans.length > 0 && <PricingSection plans={plans} />}
+    {plans.length > 0 && <PricingSection plans={plans} checkoutAvailable={!hasDirectDatabase() && isBillingConfigured()} />}
 
     <section className="border-t border-border py-20" aria-labelledby="faq-title" id="frequently-asked-questions">
       <div className="container mx-auto max-w-3xl px-4">

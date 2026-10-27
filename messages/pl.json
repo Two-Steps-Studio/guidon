@@ -297,7 +297,8 @@
       "auditLogs": "Dzienniki audytu",
       "prioritySupport": "Priorytetowe wsparcie",
       "unlimitedMembers": "Nieograniczona liczba osób",
-      "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}"
+      "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}",
+      "paidSoon": "Płatne plany wkrótce. Zacznij za darmo - projekty zostaną po przejściu na płatny plan."
     },
     "footer": {
       "developers": "Dla deweloperów",
@@ -561,7 +562,8 @@
       "paymentGraceTitle": "Płatność nie powiodła się",
       "paymentGraceDescription": "Nie udało się obciążyć karty za tę subskrypcję. Plan działa do {date, date, long} - zmień metodę płatności przed tym terminem.",
       "paymentSuspendedTitle": "Subskrypcja nieopłacona - obowiązują limity planu Free",
-      "paymentSuspendedDescription": "Płatność dalej nie przeszła, więc organizacja ma limity planu Free. Nic nie zostało usunięte - po zmianie metody płatności plan wraca od razu."
+      "paymentSuspendedDescription": "Płatność dalej nie przeszła, więc organizacja ma limity planu Free. Nic nie zostało usunięte - po zmianie metody płatności plan wraca od razu.",
+      "paidSoon": "Płatnych planów nie da się jeszcze kupić. Organizacja zostaje na planie Free i nic nie przepadnie, gdy płatne plany się pojawią."
     }
   },
   "projects": {

@@ -100,7 +100,8 @@ function planFeatures(plan: PlanRow, t: PricingTranslator): string[] {
 
 const CURRENCIES: Currency[] = ["EUR", "PLN"];
 
-export function PricingSection({ plans }: { plans: PlanRow[] }) {
+/** `checkoutAvailable` false (Stripe not configured yet): paid plans start free instead of ending at a checkout error. */
+export function PricingSection({ plans, checkoutAvailable = true }: { plans: PlanRow[]; checkoutAvailable?: boolean }) {
   const t = useTranslations("landing.pricing");
   const [currency, setCurrency] = useState<Currency>("EUR");
 
@@ -110,6 +111,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
         <div className="scrim mx-auto mb-12 max-w-3xl space-y-4 rounded-2xl px-6 py-6 text-center">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>{t("title")}</h2>
           <p className="text-text-secondary">{t("subtitle")}</p>
+          {!checkoutAvailable && <p className="text-sm text-text-secondary" role="note">{t("paidSoon")}</p>}
 
           <div
             role="group"
@@ -177,7 +179,7 @@ export function PricingSection({ plans }: { plans: PlanRow[] }) {
                     <CtaLink
                       cta={price.cents ? "pricing-paid" : "pricing-free"}
                       href={
-                        price.cents
+                        price.cents && checkoutAvailable
                           ? `/auth/signup?redirect=${encodeURIComponent(`/upgrade?plan=${plan.id}`)}`
                           : "/start"
                       }

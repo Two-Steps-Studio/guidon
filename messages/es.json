@@ -297,7 +297,8 @@
       "auditLogs": "Registros de auditoría",
       "prioritySupport": "Soporte prioritario",
       "unlimitedMembers": "Miembros ilimitados",
-      "membersCount": "{count, plural, one {# miembro} other {# miembros}}"
+      "membersCount": "{count, plural, one {# miembro} other {# miembros}}",
+      "paidSoon": "Los planes de pago llegan pronto. Empieza gratis ahora: tus proyectos se mantienen al mejorar el plan."
     },
     "footer": {
       "developers": "Desarrolladores",
@@ -561,7 +562,8 @@
       "paymentGraceTitle": "El pago ha fallado",
       "paymentGraceDescription": "No pudimos cobrar la tarjeta de esta suscripción. Tu plan sigue funcionando hasta el {date, date, long}: cambia el método de pago antes de esa fecha.",
       "paymentSuspendedTitle": "Suscripción impagada: se aplican los límites del plan Free",
-      "paymentSuspendedDescription": "El pago sigue sin completarse, así que esta organización tiene los límites del plan Free. No se ha borrado nada: cambia el método de pago y el plan vuelve al instante."
+      "paymentSuspendedDescription": "El pago sigue sin completarse, así que esta organización tiene los límites del plan Free. No se ha borrado nada: cambia el método de pago y el plan vuelve al instante.",
+      "paidSoon": "Todavía no se pueden comprar planes de pago. Tu organización sigue en el plan Free y no se pierde nada cuando lleguen los planes de pago."
     }
   },
   "projects": {

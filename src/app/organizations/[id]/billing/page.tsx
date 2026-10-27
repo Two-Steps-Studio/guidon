@@ -199,6 +199,12 @@ export default async function BillingPage({
           )}
         </div>
 
+        {canManageOrg(access.role) && !isBillingConfigured() && (
+          <Card className="mb-6 border-dashed">
+            <CardContent className="py-4 text-sm text-muted-foreground" role="note">{t("paidSoon")}</CardContent>
+          </Card>
+        )}
+
         <PaymentIssueBanner
           payment={planLimits.payment}
           className="mb-6"
