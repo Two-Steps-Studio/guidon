@@ -152,7 +152,8 @@
     "extensionsGroup": "Rozszerzenia",
     "billingPrices": "Ceny",
     "funnel": "Lejek",
-    "moduleReview": "Przegląd modułów"
+    "moduleReview": "Przegląd modułów",
+    "agentBrief": "Brief dla agentów"
   },
   "commandPalette": {
     "triggerLabel": "Szukaj...",
@@ -2623,5 +2624,27 @@
       "conflict": "Moduł zmienił się w międzyczasie. Skopiuj kod, odśwież i zapisz ponownie.",
       "saveFailed": "Zapis się nie udał. Spróbuj ponownie."
     }
+  },
+  "agentBrief": {
+    "title": "Brief dla agentów",
+    "subtitle": "Krótki opis projektu dla agentów AI - cel, stack, konwencje, ograniczenia i to, co mogą robić. Generowany z danych projektu, sprawdzany i zatwierdzany przez ludzi.",
+    "generate": "Wygeneruj z projektu",
+    "regenerate": "Wygeneruj ponownie z projektu",
+    "confirmRegenerate": "Zastąpić Twoje zmiany nowym szkicem z danych projektu?",
+    "approve": "Zatwierdź jako v{version}",
+    "approved": "Zatwierdzono jako v{version}. Agenci czytają teraz tę wersję.",
+    "editorLabel": "Brief dla agentów (Markdown)",
+    "emptyDraft": "Wygeneruj szkic z projektu, a potem go popraw.",
+    "stats": "{claims} linii · {unsourced} bez źródła · {unverified} niezweryfikowanych",
+    "noneYet": "Nie ma jeszcze zatwierdzonego briefu. Właściciel lub admin projektu może go zatwierdzić tutaj.",
+    "howAgentsRead": "Agenci czytają najnowszą zatwierdzoną wersję narzędziem MCP get_agent_brief albo przez GET /api/v1/projects/{projectId}/brief (?version=N dla starszej). Linie dopisane bez źródła są oznaczane jako dodane ręcznie.",
+    "history": "Wersje",
+    "noVersions": "Nic jeszcze nie zatwierdzono.",
+    "versionLabel": "v{version}",
+    "current": "aktualna",
+    "download": "Pobierz v{version} jako Markdown",
+    "approvedBy": "{person}, {date}",
+    "unknown": "Nieznany",
+    "failed": "Coś poszło nie tak. Spróbuj ponownie."
   }
 }

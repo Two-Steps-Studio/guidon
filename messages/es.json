@@ -152,7 +152,8 @@
     "extensionsGroup": "Extensiones",
     "billingPrices": "Precios",
     "funnel": "Embudo",
-    "moduleReview": "Revisión de módulos"
+    "moduleReview": "Revisión de módulos",
+    "agentBrief": "Resumen para agentes"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -2623,5 +2624,27 @@
       "conflict": "El módulo cambió mientras tanto. Copia tu código, recarga y guarda de nuevo.",
       "saveFailed": "No se pudo guardar. Inténtalo de nuevo."
     }
+  },
+  "agentBrief": {
+    "title": "Resumen para agentes",
+    "subtitle": "Una descripción breve del proyecto para agentes de IA: propósito, stack, convenciones, restricciones y lo que pueden hacer. Generado a partir de los datos del proyecto, revisado y aprobado por personas.",
+    "generate": "Generar desde el proyecto",
+    "regenerate": "Regenerar desde el proyecto",
+    "confirmRegenerate": "¿Reemplazar tus cambios con un borrador nuevo a partir de los datos del proyecto?",
+    "approve": "Aprobar como v{version}",
+    "approved": "Aprobado como v{version}. Los agentes leen ahora esta versión.",
+    "editorLabel": "Resumen para agentes (Markdown)",
+    "emptyDraft": "Genera un borrador desde el proyecto y luego edítalo.",
+    "stats": "{claims} líneas · {unsourced} sin fuente · {unverified} sin verificar",
+    "noneYet": "Aún no hay un resumen aprobado. Un propietario o administrador del proyecto puede aprobarlo aquí.",
+    "howAgentsRead": "Los agentes leen la última versión aprobada con la herramienta MCP get_agent_brief o con GET /api/v1/projects/{projectId}/brief (?version=N para una anterior). Las líneas añadidas sin fuente se marcan como añadidas a mano.",
+    "history": "Versiones",
+    "noVersions": "Aún no hay nada aprobado.",
+    "versionLabel": "v{version}",
+    "current": "actual",
+    "download": "Descargar v{version} en Markdown",
+    "approvedBy": "{person}, {date}",
+    "unknown": "Desconocido",
+    "failed": "Algo salió mal. Inténtalo de nuevo."
   }
 }

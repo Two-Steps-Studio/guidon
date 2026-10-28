@@ -197,8 +197,9 @@ for (const [label, sql, expected] of [
   // 57->58 and 143->144: module_automation_runs (094) + module_automation_runs_select.
   // 58->59, policies unchanged: funnel_cta_counts (096) - service_role only.
   // 59->60 and 144->148: task_links (097) + select/insert/update/delete.
-  ["60 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 60],
-  ["148 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 148],
+  // 60->61 and 148->149: agent_briefs (103) + agent_briefs_select.
+  ["61 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 61],
+  ["149 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 149],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -4410,5 +4411,35 @@ section("84. Each project role can do exactly what the Members page says (src/li
   }
 }
 
+
+section("88. Agent brief versions: owners/admins approve, members read (103)");
+{
+  const dev = "88000000-0000-4000-8000-000000000001";
+  let project;
+  await withUser(A, async () => {
+    project = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Brief') RETURNING id", [orgId])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, 'brief-dev@example.test', '{}') ON CONFLICT DO NOTHING", [dev]);
+    await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [project, dev]);
+  });
+  await withUser(A, async () => {
+    const first = (await db.query("SELECT * FROM public.save_agent_brief($1, '# Brief v1')", [project])).rows[0];
+    const second = (await db.query("SELECT * FROM public.save_agent_brief($1, '# Brief v2')", [project])).rows[0];
+    check("the owner saves numbered versions", first.version === 1 && second.version === 2 && second.approved_by === A);
+    check("versions can't be rewritten", await throwsInSavepoint("UPDATE public.agent_briefs SET content = 'changed' WHERE id = $1", [first.id]));
+    check("no direct inserts", await throwsInSavepoint("INSERT INTO public.agent_briefs (project_id, version, content) VALUES ($1, 9, 'x')", [project]));
+    check("an empty brief is refused", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '')", [project]));
+  });
+  await withUser(dev, async () => {
+    const rows = (await db.query("SELECT version, content FROM public.agent_briefs WHERE project_id = $1 ORDER BY version", [project])).rows;
+    check("a developer reads every version exactly as approved", rows.length === 2 && rows[0].content === "# Brief v1");
+    check("…but can't approve one", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '# mine')", [project]));
+  });
+  await withUser(B, async () => {
+    check("someone outside the project reads nothing", (await db.query("SELECT 1 FROM public.agent_briefs WHERE project_id = $1", [project])).rows.length === 0);
+    check("…and can't save one", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '# theirs')", [project]));
+  });
+}
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

@@ -72,7 +72,9 @@ Claude Code, by hand:
 claude mcp add --transport http --scope user guidon ${siteUrl}/api/mcp --header "Authorization: Bearer guidon_..."
 \`\`\`
 
-Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`list_events\`, \`list_modules\`, \`install_module\`, \`configure_module\`, \`list_module_runs\`, \`get_task\`, \`get_task_context\`, \`get_project_context\`, \`list_task_links\`, \`review_task_link\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
+Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`list_events\`, \`list_modules\`, \`install_module\`, \`configure_module\`, \`list_module_runs\`, \`get_task\`, \`get_task_context\`, \`get_project_context\`, \`get_agent_brief\`, \`list_task_links\`, \`review_task_link\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
+
+When starting on a project, read \`get_agent_brief\` (\`GET /api/v1/projects/{id}/brief\`): a short Markdown brief the project's owners/admins approved - purpose, stack, conventions, constraints and allowed actions - with each line's source in \`_[...]_\`; \`?version=N\` returns an earlier version exactly as approved, and a 404 means none was approved yet.
 
 Recommended flow for an agent: \`get_task_context\` → \`start_task\` → do the work → \`record_attempt\` → \`comment_on_task\` → \`set_task_status\` with \`review\`.
 

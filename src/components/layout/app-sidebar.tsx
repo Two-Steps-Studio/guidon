@@ -128,6 +128,7 @@ export const PROJECT_NAV = [
     labelKey: "contextGroup",
     items: [
       { href: "memory", labelKey: "memory", icon: Brain },
+      { href: "brief", labelKey: "agentBrief", icon: ScrollText },
       { href: "context", labelKey: "graph", icon: Network },
       { href: "modules", labelKey: "customModules", icon: Puzzle },
     ],
