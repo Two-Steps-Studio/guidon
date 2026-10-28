@@ -8,7 +8,11 @@ const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getA
 
 export async function appleDesignCoverage({page,context,origin,fixture,client,browserName,artifacts}) {
   const owner=fixture.users[0], created=[], errors=[];
-  const capture=error=>errors.push(`${new URL(page.url()).pathname}: ${error.message}`);
+  // WebKit reports a same-origin fetch that a navigation cancelled (a router
+  // refresh, a server action, a poll) as "...due to access control checks";
+  // that is the browser's wording for "cancelled", not an app error.
+  const cancelledByNavigation=error=>browserName==='webkit' && /due to access control checks/.test(error.message) && error.message.includes(new URL(origin).host);
+  const capture=error=>{if(!cancelledByNavigation(error))errors.push(`${new URL(page.url()).pathname}: ${error.message}`);};
   // Let prior pages finish prefetches before replacing their document. WebKit
   // otherwise reports navigation-cancelled fetches as access-control errors.
   const navigate=async url=>{await page.waitForLoadState('networkidle');await page.goto(url);};

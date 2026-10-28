@@ -1054,6 +1054,19 @@
     "roleHintDeveloper": "Create and edit tasks, decisions and knowledge",
     "roleHintTester": "Comment on tasks; read everything else",
     "roleHintViewer": "Read-only access",
+    "matrix": {
+      "title": "What each role can do",
+      "action": "Action",
+      "view": "See tasks, decisions, notes, roadmap and files",
+      "comment": "Comment on tasks and attach files",
+      "edit": "Create, edit and move tasks; write decisions and notes",
+      "delete": "Delete tasks, decisions, notes and files",
+      "manage": "Manage members, settings, roadmap and integrations",
+      "own": "Change or remove owners, delete the project",
+      "yes": "Allowed",
+      "no": "Not allowed",
+      "note": "API keys and connected AI apps act as the person who connected them, so they never get more than that person's role. An AI account on this list has its own role. A project shared with the whole organization can also be read by members who aren't listed here."
+    },
     "memberLimitReached": "Your {plan} plan allows {limit} members per project. <link>Upgrade the plan</link> to add more people."
   },
   "settings": {
