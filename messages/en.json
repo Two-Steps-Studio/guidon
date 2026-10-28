@@ -1273,7 +1273,15 @@
     "group_none": "No due date",
     "statusLabel": "Status of {task}",
     "emptyTitle": "Nothing assigned to you",
-    "emptyDescription": "Tasks assigned to you in any project show up here."
+    "emptyDescription": "Tasks assigned to you in any project show up here.",
+    "quickAdd": "Quick add",
+    "quickAddDescription": "Title first - the rest is optional. It's assigned to you and goes to the project's To do.",
+    "quickAddPlaceholder": "What needs doing?",
+    "quickAddProject": "Project",
+    "quickAddDueToday": "Due today",
+    "quickAddSubmit": "Add task",
+    "quickAdded": "Added \"{title}\" to {project}",
+    "openBoard": "Open board"
   },
   "feedback": {
     "sendFeedback": "Send feedback",
