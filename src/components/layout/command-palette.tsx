@@ -183,6 +183,9 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
               {loading && <p role="status" className="p-4 text-sm text-muted-foreground">{t("searching")}</p>}
               {failed && <div className="p-4 text-sm"><p role="alert">{t("searchFailed")}</p><button className="mt-2 rounded border px-3 py-2" onClick={() => setRetry(value => value + 1)}>{t("retry")}</button></div>}
               {!loading && !failed && results.length === 0 && <CommandEmpty>{t("noResults")}</CommandEmpty>}
+              {results.length > 0 && results.every((result) => result.metadata.match === "fuzzy") && (
+                <p role="status" className="px-4 pt-3 text-xs text-muted-foreground">{t("closestMatches")}</p>
+              )}
               {results.length > 0 && (
                 <CommandGroup heading={t("resultsGroup")}>
                   {results.map((result) => (

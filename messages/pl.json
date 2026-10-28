@@ -170,7 +170,8 @@
     "entityType_project": "Projekt",
     "searching": "Wyszukiwanie…",
     "searchFailed": "Nie udało się wyszukać.",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "closestMatches": "Brak dokładnych wyników – oto najbliższe."
   },
   "notifications": {
     "title": "Powiadomienia",
@@ -1273,7 +1274,15 @@
     "group_none": "Bez terminu",
     "statusLabel": "Status zadania {task}",
     "emptyTitle": "Nic nie jest do Ciebie przypisane",
-    "emptyDescription": "Tutaj pojawią się zadania przypisane do Ciebie w dowolnym projekcie."
+    "emptyDescription": "Tutaj pojawią się zadania przypisane do Ciebie w dowolnym projekcie.",
+    "quickAdd": "Szybkie dodawanie",
+    "quickAddDescription": "Najpierw tytuł – reszta jest opcjonalna. Zadanie jest przypisane do Ciebie i trafia do To do projektu.",
+    "quickAddPlaceholder": "Co jest do zrobienia?",
+    "quickAddProject": "Projekt",
+    "quickAddDueToday": "Termin dziś",
+    "quickAddSubmit": "Dodaj zadanie",
+    "quickAdded": "Dodano „{title}” do {project}",
+    "openBoard": "Otwórz tablicę"
   },
   "feedback": {
     "sendFeedback": "Wyślij opinię",

@@ -170,7 +170,8 @@
     "entityType_project": "Proyecto",
     "searching": "Buscando…",
     "searchFailed": "No se pudo completar la búsqueda.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "closestMatches": "No hay coincidencias exactas; estas son las más parecidas."
   },
   "notifications": {
     "title": "Notificaciones",
@@ -1273,7 +1274,15 @@
     "group_none": "Sin fecha",
     "statusLabel": "Estado de {task}",
     "emptyTitle": "No tienes nada asignado",
-    "emptyDescription": "Aquí aparecen las tareas que te asignen en cualquier proyecto."
+    "emptyDescription": "Aquí aparecen las tareas que te asignen en cualquier proyecto.",
+    "quickAdd": "Añadir rápido",
+    "quickAddDescription": "Primero el título; lo demás es opcional. Se te asigna a ti y va a Por hacer del proyecto.",
+    "quickAddPlaceholder": "¿Qué hay que hacer?",
+    "quickAddProject": "Proyecto",
+    "quickAddDueToday": "Vence hoy",
+    "quickAddSubmit": "Añadir tarea",
+    "quickAdded": "Se añadió «{title}» a {project}",
+    "openBoard": "Abrir tablero"
   },
   "feedback": {
     "sendFeedback": "Enviar comentarios",
