@@ -170,8 +170,7 @@
     "entityType_project": "Project",
     "searching": "Searching…",
     "searchFailed": "Search could not be completed.",
-    "retry": "Try again",
-    "closestMatches": "No exact matches - these are the closest."
+    "retry": "Try again"
   },
   "notifications": {
     "title": "Notifications",
@@ -209,67 +208,32 @@
     "progress": "{done} of {total} tasks done"
   },
   "landing": {
-    "heroTitle": "One board for your team's work. Your AI can help too.",
-    "heroSubtitle": "Plan, assign and finish tasks together, with the decisions and history behind each one kept right next to it. When you want help, connect Claude, ChatGPT, Cursor, Codex or any MCP app: it works from the same tasks, and you review what it does.",
+    "heroTitle": "Hand the task to your AI agent. It already knows the project.",
+    "heroSubtitle": "Connect Claude Code, Codex or Cursor in two minutes. Your agent takes a task from the board, reads the decisions, project memory and earlier attempts behind it, and hands the work back for your review.",
     "howItWorks": {
       "title": "How it works",
       "steps": [
         {
-          "title": "Plan the work together",
-          "description": "A board for every project: tasks, owners, due dates, labels, comments and subtasks. Works on your phone, and the columns follow how your team works."
+          "title": "Connect your agent",
+          "description": "Pick Claude Code, Codex, Cursor or any MCP app and paste the setup Guidon shows you - one line for Claude Code. Guidon tells you when the agent has connected."
         },
         {
-          "title": "Keep the why next to the task",
-          "description": "Decisions, sources and notes live beside the work they explain, so nobody has to ask twice and new people catch up on their own."
+          "title": "It takes a task, with context",
+          "description": "Your agent picks the next task from To do and reads what matters for it: decisions, project rules, memory and what was already tried and failed."
         },
         {
-          "title": "Bring in AI when you want it",
-          "description": "Connect the AI app you already use. It takes a task, reads its context and hands the work back to Review - a person decides what's done. Guidon works fully without AI, too."
+          "title": "You review the work",
+          "description": "Finished tasks land in Review with a summary, the files changed and what the agent tried. You decide what's done."
         }
       ]
     },
-    "aiOptions": {
-      "title": "Works with the AI you already use",
-      "subtitle": "Optional, and on your terms: an AI app only reaches the projects you can, with the permissions you give it, and you can disconnect it in one click.",
-      "appsTitle": "AI apps",
-      "apps": [
-        "Claude (web, desktop, mobile)",
-        "ChatGPT",
-        "Claude Code",
-        "Claude Desktop",
-        "Cursor",
-        "VS Code",
-        "Codex CLI",
-        "Gemini CLI",
-        "Any MCP app"
-      ],
-      "moreTitle": "Other ways in",
-      "more": [
-        {
-          "title": "REST API and webhooks",
-          "description": "Your own scripts and services read and change tasks; webhooks tell them when something happens."
-        },
-        {
-          "title": "GitHub",
-          "description": "Commits and pull requests that mention a task are linked to it and can move it along."
-        },
-        {
-          "title": "Agents in the browser",
-          "description": "A browser agent working in your Guidon tab uses the board through WebMCP, as you."
-        },
-        {
-          "title": "Built-in AI chat",
-          "description": "Ask about a task with your own key: Anthropic, OpenAI, OpenRouter or Groq, or Ollama when you host Guidon yourself."
-        }
-      ]
-    },
-    "getStarted": "Start free",
+    "getStarted": "Start free - connect your agent",
     "signIn": "Sign In",
     "trySandbox": "Try the free API and agent sandbox",
     "freePlan": "Free plan",
     "selfServeApiKey": "Create your own API key",
-    "featuresTitle": "Everything about the work, in one place",
-    "featuresSubtitle": "Made for people first. Every task keeps the decisions, sources and memory behind it - for your team, and for any AI you connect.",
+    "featuresTitle": "The context your agent works from",
+    "featuresSubtitle": "Every task comes with the decisions, sources and memory behind it - for you and for every agent you connect.",
     "features": {
       "taskBoard": {
         "title": "Task Board",
@@ -374,13 +338,13 @@
       "apiDocs": "API & MCP docs"
     },
     "heroShotTitle": "The Guidon dashboard",
-    "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team activity and project progress",
+    "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team and AI activity, project progress",
     "faq": {
       "title": "Frequently asked questions",
       "items": [
         {
           "q": "What is Guidon?",
-          "a": "Guidon is a project board for teams. Every project has a Kanban board and, next to it, the decisions behind the work, the sources and technologies it relies on, a roadmap and a project memory - so whoever picks up a task also gets the reason it exists. AI is optional: you can connect Claude, ChatGPT, Cursor, Codex and other apps, and they work from the same tasks under your review."
+          "a": "Guidon is context-first project management for development teams. Every project has a Kanban board and, next to it, the decisions behind the work, the sources a team relies on, the technologies in use, a roadmap and a project memory - so whoever picks up a task, a person or an AI agent, also gets the reason it exists."
         },
         {
           "q": "Is Guidon free?",
@@ -984,12 +948,7 @@
         "closed": "closed"
       }
     },
-    "boardCapped": "This board shows {limit} tasks: open ones first, most recently updated first. The other tasks are still in the project - find them with search or the API.",
-    "networkError": "Couldn't reach Guidon, so nothing was saved. Your text is still here - check the connection and try again.",
-    "moveNotSaved": "Couldn't reach Guidon. \"{title}\" is back where it was.",
-    "retryMove": "Retry",
-    "draftRestored": "Restored unsaved changes from {time}. They are not saved yet.",
-    "discardDraft": "Discard them"
+    "boardCapped": "This board shows {limit} tasks: open ones first, most recently updated first. The other tasks are still in the project - find them with search or the API."
   },
   "roadmap": {
     "title": "Roadmap",
@@ -1274,15 +1233,7 @@
     "group_none": "No due date",
     "statusLabel": "Status of {task}",
     "emptyTitle": "Nothing assigned to you",
-    "emptyDescription": "Tasks assigned to you in any project show up here.",
-    "quickAdd": "Quick add",
-    "quickAddDescription": "Title first - the rest is optional. It's assigned to you and goes to the project's To do.",
-    "quickAddPlaceholder": "What needs doing?",
-    "quickAddProject": "Project",
-    "quickAddDueToday": "Due today",
-    "quickAddSubmit": "Add task",
-    "quickAdded": "Added \"{title}\" to {project}",
-    "openBoard": "Open board"
+    "emptyDescription": "Tasks assigned to you in any project show up here."
   },
   "feedback": {
     "sendFeedback": "Send feedback",
@@ -1999,8 +1950,8 @@
     "continue": "Continue",
     "typeTitle": "What are you building?",
     "typeDescription": "Pick the closest - it sets up the right sections and labels. You can change everything later.",
-    "nameTitle": "What are you working on?",
-    "nameDescription": "Name your project. That's all you need - the next questions are optional and you can change everything later.",
+    "nameTitle": "What's it called?",
+    "nameDescription": "Your project, and the studio or team it belongs to.",
     "projectNameLabel": "Project name",
     "projectNamePlaceholder": "e.g. Emberfall",
     "studioNameLabel": "Studio or team (optional)",
@@ -2063,8 +2014,7 @@
     "starterTask_improve_title": "Agent: make one small, safe improvement",
     "starterTask_improve_description": "Pick one small improvement you can finish in a few minutes (a typo, a missing README section, an unclear error message). Do it on a new branch, record_attempt with the files you changed, summarize it with comment_on_task and move this task to Review.",
     "starterRule": "Agents move finished tasks to Review, never straight to Done - a person checks the work first.",
-    "welcomeDismiss": "Dismiss",
-    "skipSetup": "Skip - set up later"
+    "welcomeDismiss": "Dismiss"
   },
   "oauth": {
     "title": "Connect {app} to Guidon",

@@ -25,9 +25,9 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_NAME = "Guidon";
-const SITE_TITLE = "Guidon | One board for your team's work - with the AI you already use";
+const SITE_TITLE = "Guidon | Hand tasks to your AI agent, with the whole project context";
 const SITE_DESCRIPTION =
-  "Guidon is a project board for teams: plan, assign and finish tasks together, with the decisions and history behind each one kept next to it. AI is optional - connect Claude, ChatGPT, Cursor, Codex or any MCP app, and it works from the same tasks under your review.";
+  "Guidon is a task board your AI agent works from. Connect Claude Code, Codex or Cursor over MCP in two minutes: the agent takes a task, reads the decisions, project memory and earlier attempts behind it, and hands the work back for review.";
 
 // Next ignores `viewport`/`themeColor` inside `metadata` - they must be a
 // separate export, or the viewport-fit/interactive-widget settings never

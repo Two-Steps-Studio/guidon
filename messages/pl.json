@@ -170,8 +170,7 @@
     "entityType_project": "Projekt",
     "searching": "Wyszukiwanie…",
     "searchFailed": "Nie udało się wyszukać.",
-    "retry": "Spróbuj ponownie",
-    "closestMatches": "Brak dokładnych wyników – oto najbliższe."
+    "retry": "Spróbuj ponownie"
   },
   "notifications": {
     "title": "Powiadomienia",
@@ -209,67 +208,32 @@
     "progress": "{done} z {total} zadań ukończonych"
   },
   "landing": {
-    "heroTitle": "Jedna tablica na pracę zespołu. AI może pomóc.",
-    "heroSubtitle": "Planujcie, przydzielajcie i kończcie zadania razem, a decyzje i historia każdego zadania są tuż obok niego. Kiedy chcesz pomocy, podłącz Claude, ChatGPT, Cursor, Codex albo dowolną aplikację MCP: pracuje na tych samych zadaniach, a Ty sprawdzasz, co zrobiła.",
+    "heroTitle": "Przekaż zadanie agentowi AI. On już zna projekt.",
+    "heroSubtitle": "Podłącz Claude Code, Codex albo Cursor w dwie minuty. Agent bierze zadanie z tablicy, czyta stojące za nim decyzje, pamięć projektu i wcześniejsze próby, a potem oddaje pracę do Twojego review.",
     "howItWorks": {
       "title": "Jak to działa",
       "steps": [
         {
-          "title": "Planujcie pracę razem",
-          "description": "Tablica dla każdego projektu: zadania, osoby, terminy, etykiety, komentarze i podzadania. Działa na telefonie, a kolumny dopasujesz do tego, jak pracuje Twój zespół."
+          "title": "Podłącz agenta",
+          "description": "Wybierz Claude Code, Codex, Cursor albo dowolną aplikację MCP i wklej konfigurację, którą pokaże Guidon - dla Claude Code to jedna linijka. Guidon da znać, kiedy agent się połączy."
         },
         {
-          "title": "Powód zadania obok zadania",
-          "description": "Decyzje, źródła i notatki są przy pracy, której dotyczą. Nikt nie musi pytać dwa razy, a nowe osoby wdrażają się same."
+          "title": "Agent bierze zadanie z kontekstem",
+          "description": "Agent bierze kolejne zadanie z To do i czyta to, co jest dla niego ważne: decyzje, zasady projektu, pamięć i to, co już próbowano i się nie udało."
         },
         {
-          "title": "Dołącz AI, kiedy chcesz",
-          "description": "Podłącz aplikację AI, której już używasz. Bierze zadanie, czyta jego kontekst i oddaje pracę do Review – o tym, co jest gotowe, decyduje człowiek. Guidon w pełni działa też bez AI."
+          "title": "Ty robisz review",
+          "description": "Skończone zadania trafiają do Review z podsumowaniem, zmienionymi plikami i opisem prób agenta. To Ty decydujesz, co jest gotowe."
         }
       ]
     },
-    "aiOptions": {
-      "title": "Działa z AI, którego już używasz",
-      "subtitle": "Opcjonalnie i na Twoich zasadach: aplikacja AI widzi tylko projekty, do których Ty masz dostęp, z uprawnieniami, które jej dasz, i odłączysz ją jednym kliknięciem.",
-      "appsTitle": "Aplikacje AI",
-      "apps": [
-        "Claude (web, desktop, telefon)",
-        "ChatGPT",
-        "Claude Code",
-        "Claude Desktop",
-        "Cursor",
-        "VS Code",
-        "Codex CLI",
-        "Gemini CLI",
-        "Dowolna aplikacja MCP"
-      ],
-      "moreTitle": "Inne sposoby",
-      "more": [
-        {
-          "title": "REST API i webhooki",
-          "description": "Twoje skrypty i usługi czytają i zmieniają zadania, a webhooki informują je, gdy coś się dzieje."
-        },
-        {
-          "title": "GitHub",
-          "description": "Commity i pull requesty, które wspominają zadanie, są z nim łączone i mogą je przesuwać."
-        },
-        {
-          "title": "Agenci w przeglądarce",
-          "description": "Agent przeglądarkowy w Twojej karcie Guidona korzysta z tablicy przez WebMCP, jako Ty."
-        },
-        {
-          "title": "Wbudowany czat AI",
-          "description": "Pytaj o zadanie z własnym kluczem: Anthropic, OpenAI, OpenRouter lub Groq, albo Ollama, gdy hostujesz Guidona sam."
-        }
-      ]
-    },
-    "getStarted": "Zacznij za darmo",
+    "getStarted": "Zacznij za darmo - podłącz agenta",
     "signIn": "Zaloguj się",
     "trySandbox": "Wypróbuj bezpłatny sandbox API i agentów",
     "freePlan": "Darmowy plan",
     "selfServeApiKey": "Samodzielnie utwórz klucz API",
-    "featuresTitle": "Wszystko o pracy w jednym miejscu",
-    "featuresSubtitle": "Przede wszystkim dla ludzi. Każde zadanie ma przy sobie decyzje, źródła i pamięć projektu – dla Twojego zespołu i dla każdego AI, które podłączysz.",
+    "featuresTitle": "Kontekst, z którego korzysta Twój agent",
+    "featuresSubtitle": "Każde zadanie ma przy sobie decyzje, źródła i pamięć, które za nim stoją - dla Ciebie i dla każdego agenta, którego podłączysz.",
     "features": {
       "taskBoard": {
         "title": "Tablica zadań",
@@ -374,13 +338,13 @@
       "apiDocs": "Dokumentacja API i MCP"
     },
     "heroShotTitle": "Pulpit Guidona",
-    "heroShotAlt": "Pulpit Guidona: Twoje otwarte i zaległe zadania, co dalej, ostatnia aktywność zespołu i postęp projektów",
+    "heroShotAlt": "Pulpit Guidona: Twoje otwarte i zaległe zadania, najbliższa praca, aktywność zespołu i AI, postęp projektów",
     "faq": {
       "title": "Najczęstsze pytania",
       "items": [
         {
           "q": "Czym jest Guidon?",
-          "a": "Guidon to tablica projektów dla zespołów. Każdy projekt ma tablicę Kanban, a obok niej decyzje stojące za pracą, źródła i technologie, z których korzysta, roadmapę i pamięć projektu – więc kto bierze zadanie, dostaje też powód, dla którego ono istnieje. AI jest opcjonalne: możesz podłączyć Claude, ChatGPT, Cursor, Codex i inne aplikacje, a one pracują na tych samych zadaniach pod Twoim nadzorem."
+          "a": "Guidon to zarządzanie projektami dla zespołów deweloperskich, w którym najważniejszy jest kontekst. Każdy projekt ma tablicę Kanban, a obok niej decyzje stojące za pracą, źródła, na których opiera się zespół, używane technologie, roadmapę i pamięć projektu - więc ktokolwiek bierze zadanie, człowiek czy agent AI, dostaje też powód, dla którego ono istnieje."
         },
         {
           "q": "Czy Guidon jest darmowy?",
@@ -984,12 +948,7 @@
         "closed": "zamknięty"
       }
     },
-    "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API.",
-    "networkError": "Brak połączenia z Guidonem, więc nic nie zostało zapisane. Twój tekst jest nadal tutaj – sprawdź połączenie i spróbuj ponownie.",
-    "moveNotSaved": "Brak połączenia z Guidonem. „{title}” wróciło na swoje miejsce.",
-    "retryMove": "Ponów",
-    "draftRestored": "Przywrócono niezapisane zmiany z {time}. Nie są jeszcze zapisane.",
-    "discardDraft": "Odrzuć je"
+    "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API."
   },
   "roadmap": {
     "title": "Plan działań",
@@ -1274,15 +1233,7 @@
     "group_none": "Bez terminu",
     "statusLabel": "Status zadania {task}",
     "emptyTitle": "Nic nie jest do Ciebie przypisane",
-    "emptyDescription": "Tutaj pojawią się zadania przypisane do Ciebie w dowolnym projekcie.",
-    "quickAdd": "Szybkie dodawanie",
-    "quickAddDescription": "Najpierw tytuł – reszta jest opcjonalna. Zadanie jest przypisane do Ciebie i trafia do To do projektu.",
-    "quickAddPlaceholder": "Co jest do zrobienia?",
-    "quickAddProject": "Projekt",
-    "quickAddDueToday": "Termin dziś",
-    "quickAddSubmit": "Dodaj zadanie",
-    "quickAdded": "Dodano „{title}” do {project}",
-    "openBoard": "Otwórz tablicę"
+    "emptyDescription": "Tutaj pojawią się zadania przypisane do Ciebie w dowolnym projekcie."
   },
   "feedback": {
     "sendFeedback": "Wyślij opinię",
@@ -1999,8 +1950,8 @@
     "continue": "Dalej",
     "typeTitle": "Co tworzysz?",
     "typeDescription": "Wybierz najbliższe - ustawi odpowiednie sekcje i etykiety. Wszystko zmienisz później.",
-    "nameTitle": "Nad czym pracujesz?",
-    "nameDescription": "Nazwij projekt. Tylko tyle jest potrzebne – kolejne pytania są opcjonalne i wszystko zmienisz później.",
+    "nameTitle": "Jak to się nazywa?",
+    "nameDescription": "Twój projekt i studio albo zespół, do którego należy.",
     "projectNameLabel": "Nazwa projektu",
     "projectNamePlaceholder": "np. Emberfall",
     "studioNameLabel": "Studio lub zespół (opcjonalnie)",
@@ -2063,8 +2014,7 @@
     "starterTask_improve_title": "Agent: zrób jedną małą, bezpieczną poprawkę",
     "starterTask_improve_description": "Wybierz jedną małą poprawkę na kilka minut (literówka, brakująca sekcja README, niejasny komunikat błędu). Zrób ją na nowej gałęzi, zapisz record_attempt ze zmienionymi plikami, dodaj podsumowanie przez comment_on_task i przenieś to zadanie do Review.",
     "starterRule": "Agenci przenoszą skończone zadania do Review, nigdy prosto do Done - najpierw pracę sprawdza człowiek.",
-    "welcomeDismiss": "Zamknij",
-    "skipSetup": "Pomiń – ustawię później"
+    "welcomeDismiss": "Zamknij"
   },
   "oauth": {
     "title": "Połącz {app} z Guidonem",

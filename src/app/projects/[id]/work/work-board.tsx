@@ -18,24 +18,9 @@ import { isTypingTarget } from "@/components/layout/keyboard-shortcuts";
 // TaskDetailDialog (and the attempts/why-panel sections it always imports)
 // only matter once a task is actually opened - code-split so the board's
 // initial load doesn't pay for a dialog nobody may click into this visit.
-const loadTaskDetailDialog = () => import("@/components/work/task-detail-dialog");
-const TaskDetailDialog = dynamic(() => loadTaskDetailDialog().then((mod) => mod.TaskDetailDialog));
-
-// ...but fetched once the board is idle, so the first task someone opens
-// doesn't wait for the chunk on a slow phone (tests/perf: the first open was
-// the p95 on a throttled 4G mid-range profile).
-function usePreloadTaskDialog() {
-  useEffect(() => {
-    const preload = () => void loadTaskDetailDialog().catch(() => {});
-    if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(preload, { timeout: 3000 });
-      return () => window.cancelIdleCallback(id);
-    }
-    // Safari has no requestIdleCallback.
-    const timer = window.setTimeout(preload, 1500);
-    return () => window.clearTimeout(timer);
-  }, []);
-}
+const TaskDetailDialog = dynamic(() =>
+  import("@/components/work/task-detail-dialog").then((mod) => mod.TaskDetailDialog)
+);
 import type { TaskCardMember } from "@/components/work/task-card";
 import {
   BOARD_COLUMNS,
@@ -58,8 +43,6 @@ import { addAgentStarterTasks } from "./starter-actions";
 import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
 import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
-import { isNetworkError } from "@/lib/work/task-drafts";
-import { timeAction } from "@/lib/perf/action-timing";
 import type { Task, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
 
@@ -117,7 +100,6 @@ export function WorkBoard({
   boardLimit?: number | null;
 }) {
   const t = useTranslations("work");
-  usePreloadTaskDialog();
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
 
@@ -293,10 +275,7 @@ export function WorkBoard({
           (a.sort_order ?? 0) - (b.sort_order ?? 0)
       )
       .map((task) => task.id);
-    const result = await bulkUpdateTasks(projectId, ids, operation).catch((error: unknown) => ({
-      error: isNetworkError(error) ? t("networkError") : t("failedToSaveTask"),
-      count: 0,
-    }));
+    const result = await bulkUpdateTasks(projectId, ids, operation);
     if (result.error) {
       playSound("error");
       toast.error(result.error);
@@ -363,13 +342,7 @@ export function WorkBoard({
       ),
     }));
 
-    // A request that never reached the server rejects instead of returning
-    // an error; it must roll back too, never leave the card looking moved.
-    const result = await timeAction("task.move", () => moveTask(projectId, task.id, status, sortOrder)).catch((error: unknown) => ({
-      error: isNetworkError(error) ? t("moveNotSaved", { title: task.title }) : t("failedToSaveTask"),
-      offline: true,
-      created: undefined,
-    }));
+    const result = await moveTask(projectId, task.id, status, sortOrder);
     if (result.error) {
       // Roll back only this task's fields, not the whole tasks array as a
       // snapshot taken at the start of this call - restoring the full
@@ -386,9 +359,7 @@ export function WorkBoard({
         ),
       }));
       playSound("error");
-      toast.error(result.error, "offline" in result ? {
-        action: { label: t("retryMove"), onClick: () => void handleMoveRef.current({ ...task, status: previousStatus, sort_order: previousSortOrder }, status, sortOrder) },
-      } : undefined);
+      toast.error(result.error);
       setMoveAnnouncement(result.error);
       return;
     }

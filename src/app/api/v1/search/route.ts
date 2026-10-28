@@ -5,8 +5,6 @@ import { hasDirectDatabase } from '@/lib/db/pool';
 import { withUser } from '@/lib/db/session';
 import { isValidUuid, invalidIdResponse } from '@/lib/api/validate-id';
 import { apiRoute } from "@/lib/api/api-route";
-import { dataClient } from "@/lib/data-client";
-import { likePattern, rankTasks, taskRefPrefix, type TaskMatch } from "@/lib/search/task-search-core";
 
 interface SearchResult {
   type: string;
@@ -20,6 +18,14 @@ interface SearchResult {
 // createClient() has no generated Database generic wired up) - just enough
 // of each table's columns to annotate the .map() calls below without an
 // explicit `any`, matching exactly what each .select(...) call actually asks for.
+interface TaskSearchRow {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  project_id: string;
+}
 interface DecisionSearchRow {
   id: string;
   title: string;
@@ -94,6 +100,24 @@ async function searchLocal(
 
   return withUser(userId, async ({ query: sql }) => {
     const results: SearchResult[] = [];
+
+    if (types.includes('task') && projectId) {
+      const { rows } = await sql(
+        `SELECT id, title, description, status, priority, project_id FROM tasks
+         WHERE project_id = $1 AND (title ILIKE $2 OR description ILIKE $2)
+         LIMIT 10`,
+        [projectId, pattern]
+      );
+      results.push(
+        ...rows.map((task) => ({
+          type: 'task',
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          metadata: { status: task.status, priority: task.priority, project_id: task.project_id },
+        }))
+      );
+    }
 
     if (types.includes('decision') && projectId) {
       const { rows } = await sql(
@@ -213,6 +237,34 @@ async function searchSupabase(
   // just breaking) the query. RLS still scopes every result regardless, so
   // this was a functional/robustness bug more than a data-exposure one, but
   // it's still string-splicing user input into a filter language.
+  if (types.includes('task') && projectId) {
+    const [byTitle, byDescription] = await Promise.all([
+      supabase
+        .from('tasks')
+        .select('id, title, description, status, priority, project_id')
+        .eq('project_id', projectId)
+        .ilike('title', pattern)
+        .limit(10),
+      supabase
+        .from('tasks')
+        .select('id, title, description, status, priority, project_id')
+        .eq('project_id', projectId)
+        .ilike('description', pattern)
+        .limit(10),
+    ]);
+    const tasks = dedupeAndCap([byTitle.data, byDescription.data], 10);
+
+    if (tasks) {
+      results.push(...tasks.map((task: TaskSearchRow) => ({
+        type: 'task',
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        metadata: { status: task.status, priority: task.priority, project_id: task.project_id },
+      })));
+    }
+  }
+
   // Search decisions
   if (types.includes('decision') && projectId) {
     const [byTitle, byDescription] = await Promise.all([
@@ -333,55 +385,6 @@ async function searchSupabase(
   return results;
 }
 
-interface TaskCandidate {
-  id: string;
-  title: string;
-  description?: string | null;
-  status: string;
-  priority: string;
-  project_id: string;
-  updated_at: string;
-}
-
-/** Recent titles ranked in memory; enough for a typo or a reference to find any active task. */
-const TASK_CANDIDATES = 2000;
-
-/**
- * Tasks, ranked by src/lib/search/task-search-core.ts: the newest
- * TASK_CANDIDATES titles in scope (for typos, diacritics and short ids) plus
- * literal title/description matches from any age, both through the data
- * client under RLS - one project, or every project the caller can see.
- */
-async function searchTasks(userId: string, query: string, projectId: string | null): Promise<SearchResult[]> {
-  const db = dataClient(userId);
-  const scoped = (columns: string) => {
-    const builder = db.from<TaskCandidate>("tasks").select(columns);
-    return projectId ? builder.eq("project_id", projectId) : builder;
-  };
-  const pattern = likePattern(query);
-  const ref = taskRefPrefix(query);
-  const [recent, byTitle, byDescription, byId] = await Promise.all([
-    scoped("id, title, status, priority, project_id, updated_at").order("updated_at", { ascending: false }).limit(TASK_CANDIDATES),
-    scoped("id, title, status, priority, project_id, updated_at").ilike("title", pattern).limit(50),
-    scoped("id, title, description, status, priority, project_id, updated_at").ilike("description", pattern).limit(50),
-    ref?.length === 32 ? scoped("id, title, status, priority, project_id, updated_at").eq("id", query.trim().replace(/^guidon#/i, "")).limit(1) : Promise.resolve({ data: [], error: null }),
-  ]);
-  const error = recent.error ?? byTitle.error ?? byDescription.error ?? byId.error;
-  if (error) throw new Error(error.message);
-  // One row per task, keeping the description when a query fetched it.
-  const merged = new Map<string, TaskCandidate>();
-  for (const row of [...(byDescription.data ?? []), ...(byId.data ?? []), ...(byTitle.data ?? []), ...(recent.data ?? [])]) {
-    if (!merged.has(row.id)) merged.set(row.id, row);
-  }
-  return rankTasks(query, [...merged.values()], 10).map(({ task, match }: { task: TaskCandidate; match: TaskMatch }) => ({
-    type: "task",
-    id: task.id,
-    title: task.title,
-    description: task.description ?? null,
-    metadata: { status: task.status, priority: task.priority, project_id: task.project_id, match },
-  }));
-}
-
 async function handleGET(request: NextRequest) {
   const auth = await requireAuth();
   if (isAuthError(auth)) return auth;
@@ -414,21 +417,15 @@ async function handleGET(request: NextRequest) {
     // can ever match without a project_id, and 'project' - the one type
     // that runs without one - was never in that default. The call
     // silently returned zero results no matter the query.
-    // Without a project, tasks come from every project the caller can see,
-    // ranked first: they are what people look for most.
     const types = entityTypes
       ? entityTypes.split(',')
       : projectId
         ? ['task', 'decision', 'memory', 'file', 'source']
-        : ['task', 'project'];
+        : ['project'];
 
-    const [tasks, others] = await Promise.all([
-      types.includes('task') ? searchTasks(auth.userId, query, projectId) : Promise.resolve([]),
-      hasDirectDatabase()
-        ? searchLocal(auth.userId, query, projectId, types)
-        : searchSupabase(query, projectId, types),
-    ]);
-    const results = [...tasks, ...others];
+    const results = hasDirectDatabase()
+      ? await searchLocal(auth.userId, query, projectId, types)
+      : await searchSupabase(query, projectId, types);
 
     return NextResponse.json({ results });
   } catch (error) {

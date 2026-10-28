@@ -7,7 +7,6 @@ import { resolveBoardColumns, resolvePriorities } from "@/lib/work/task-board";
 import { getWorkflowOverridesFor } from "@/lib/data/workflow";
 import type { Task } from "@/types/task";
 import { MyTasksList, type MyTasksProject } from "./my-tasks-list";
-import { QuickAdd, type QuickAddProject } from "./quick-add";
 
 export const metadata: Metadata = { title: "My tasks" };
 
@@ -31,24 +30,6 @@ export default async function MyTasksPage() {
     .order("due_date", { ascending: true })
     .limit(TASK_LIMIT);
   if (error) throw new Error(`Failed to load your tasks: ${error.message}`);
-
-  // Quick add offers every active project the user can create tasks in
-  // (owner/admin/developer, as tasks_insert); createTask checks it again.
-  const { data: memberships } = await db
-    .from<{ project_id: string }>("project_members")
-    .select("project_id")
-    .eq("user_id", user.id)
-    .in("role", ["owner", "admin", "developer"]);
-  const writableIds = (memberships ?? []).map((row) => row.project_id);
-  const { data: writable } = writableIds.length
-    ? await db
-        .from<QuickAddProject & { status: string }>("projects")
-        .select("id, name, color, status")
-        .in("id", writableIds)
-        .eq("status", "active")
-        .order("name", { ascending: true })
-    : { data: [] as (QuickAddProject & { status: string })[] };
-  const quickAddProjects = (writable ?? []).map(({ id, name, color }) => ({ id, name, color }));
 
   const projectIds = [...new Set(tasks.map((task) => task.project_id))];
   const [projectsResult, workflows] = await Promise.all([
@@ -79,20 +60,11 @@ export default async function MyTasksPage() {
   return (
     <AppShell user={user}>
       <div className="container mx-auto max-w-4xl px-6 py-8">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-            <p className="text-sm text-muted-foreground">{t("subtitle", { count: tasks.length })}</p>
-          </div>
-          <QuickAdd userId={user.id} projects={quickAddProjects} />
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle", { count: tasks.length })}</p>
         </div>
-        {/* Keyed by the task set: the list keeps its tasks in state, so a task
-            added by Quick add (router.refresh) needs a fresh mount to appear. */}
-        <MyTasksList
-          key={tasks.map((task) => task.id).join(",")}
-          initialTasks={tasks.filter((task) => projects[task.project_id])}
-          projects={projects}
-        />
+        <MyTasksList initialTasks={tasks.filter((task) => projects[task.project_id])} projects={projects} />
       </div>
     </AppShell>
   );
