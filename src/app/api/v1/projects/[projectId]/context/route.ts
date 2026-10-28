@@ -6,6 +6,8 @@ import { apiRoute } from "@/lib/api/api-route";
 import { buildProjectAgentContext } from "@/lib/context/project-context-builder";
 import { clampBudget } from "@/lib/context/context-pack-core";
 import { contextResponse } from "@/lib/context/context-response";
+import { agentGate } from "@/lib/api/agent-gate";
+import { apiDataClient } from "@/lib/api/api-data-client";
 
 /**
  * Project context package as Markdown (Context Engine): constraints, facts,
@@ -18,6 +20,8 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ p
   if (!isValidUuid(projectId)) return invalidIdResponse("projectId");
   const guard = await guardApiRequest(request, "tasks:read", { projectId });
   if (isGuardError(guard)) return guard;
+  const blocked = await agentGate(apiDataClient(guard.userId), guard, projectId, "can_read_context");
+  if (blocked) return blocked;
   const search = request.nextUrl.searchParams;
   const context = await buildProjectAgentContext(guard.userId, projectId, () => getApiUserClient(guard.userId), {
     budget: clampBudget(search.get("max_tokens") ?? undefined),

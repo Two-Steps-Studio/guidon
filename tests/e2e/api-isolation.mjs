@@ -66,6 +66,30 @@ export async function apiIsolation({origin,fixture,api,client}){
     await status(await rest("PATCH",`/api/v1/tasks/${createdId}`,api.keys.owner,{data:{title:"Allowed E2E update"}}),200);
     await status(await rest("DELETE",`/api/v1/tasks/${createdId}`,api.keys.owner),200);
     assert.equal((await client.query("SELECT 1 FROM public.tasks WHERE id=$1",[createdId])).rowCount,0);
+    // Settings -> AI Permissions apply to an agent's key, REST and MCP alike.
+    const perms=(values)=>client.query(`INSERT INTO public.project_ai_permissions(project_id,can_read_context,can_delete_tasks,can_modify_settings) VALUES($1,$2,$3,$4)
+      ON CONFLICT (project_id) DO UPDATE SET can_read_context=EXCLUDED.can_read_context,can_delete_tasks=EXCLUDED.can_delete_tasks,can_modify_settings=EXCLUDED.can_modify_settings`,[owner.projectId,values.read??true,values.delete??false,values.settings??false]);
+    const agentTask=(await (await status(await rest("POST",`/api/v1/projects/${owner.projectId}/tasks`,api.keys.agent,{data:{title:"Agent permission task"}}),200)).json()).task.id;
+    try{
+      await perms({});
+      await status(await rest("DELETE",`/api/v1/tasks/${agentTask}`,api.keys.agent),403);
+      await tool(api.keys.agent,"delete_task",{task_id:agentTask},true);
+      assert.equal((await client.query("SELECT 1 FROM public.tasks WHERE id=$1",[agentTask])).rowCount,1,"Deleting is off by default for agents");
+      await status(await rest("GET",`/api/v1/tasks/${agentTask}/context`,api.keys.agent),200);
+      await perms({read:false});
+      await status(await rest("GET",`/api/v1/tasks/${agentTask}/context`,api.keys.agent),403);
+      await tool(api.keys.agent,"get_task_context",{task_id:agentTask},true);
+      await status(await rest("GET",`/api/v1/projects/${owner.projectId}/memory`,api.keys.agent),403);
+      await status(await rest("GET",`/api/v1/projects/${owner.projectId}/decisions`,api.keys.agent),403);
+      await status(await rest("GET",`/api/v1/tasks/${agentTask}/attempts`,api.keys.agent),403);
+      // A human-operated client (the fixture's other keys) is not an agent.
+      await status(await rest("GET",`/api/v1/tasks/${agentTask}/context`,api.keys.owner),200);
+      await perms({delete:true});
+      await status(await rest("DELETE",`/api/v1/tasks/${agentTask}`,api.keys.agent),200);
+    }finally{
+      await client.query("DELETE FROM public.project_ai_permissions WHERE project_id=$1",[owner.projectId]);
+      await client.query("DELETE FROM public.tasks WHERE id=$1",[agentTask]);
+    }
     const mcpCreated=await tool(api.keys.owner,"create_task",{project_id:owner.projectId,title:"Allowed MCP task"});
     const mcpCreatedId=JSON.parse(mcpCreated.content.find(item=>item.type==="text").text).task.id;
     await tool(api.keys.owner,"update_task",{task_id:mcpCreatedId,title:"Allowed MCP update"});

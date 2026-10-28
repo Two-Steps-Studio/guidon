@@ -278,5 +278,6 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     if(created.length)await client.query('DELETE FROM public.tasks WHERE project_id=$1 AND id=ANY($2::uuid[])',[owner.projectId,created]);
     await page.setViewportSize({width:1440,height:1000});
   }
-  await navigate(origin+'/auth/logout');await page.waitForURL(u=>u.pathname==='/');
+  // WebKit can miss the load event of the redirect after logout; the URL change is what matters.
+  await page.waitForLoadState('networkidle');await page.goto(origin+'/auth/logout',{waitUntil:'commit'});await page.waitForURL(u=>u.pathname==='/',{waitUntil:'commit'});
 }

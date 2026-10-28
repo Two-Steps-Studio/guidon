@@ -223,5 +223,6 @@
   "Only project owners and admins can approve the agent brief.": "Solo los propietarios y administradores del proyecto pueden aprobar el resumen para agentes.",
   "The brief is empty.": "El resumen está vacío.",
   "The brief is too long.": "El resumen es demasiado largo.",
-  "The brief could not be saved.": "No se pudo guardar el resumen."
+  "The brief could not be saved.": "No se pudo guardar el resumen.",
+  "Only project owners and admins can undo an import.": "Solo los propietarios y administradores del proyecto pueden deshacer una importación."
 }

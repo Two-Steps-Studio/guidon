@@ -8,6 +8,7 @@ import { apiRoute } from "@/lib/api/api-route";
 import { getModulePackages } from "@/lib/data/module-packages";
 import { prepareModuleChange } from "@/lib/work/module-lifecycle";
 import { managersOnly, presentModule, projectRole } from "@/lib/api/module-api";
+import { agentGate } from "@/lib/api/agent-gate";
 
 /**
  * One installed module. GET (`project:read`). PATCH (`project:write`, owner/
@@ -18,7 +19,7 @@ import { managersOnly, presentModule, projectRole } from "@/lib/api/module-api";
  */
 type Params = { params: Promise<{ projectId: string; moduleId: string }> };
 
-type Loaded = { response: NextResponse } | { response?: undefined; projectId: string; moduleId: string; guard: { userId: string }; db: ReturnType<typeof apiDataClient>; current: Awaited<ReturnType<typeof getModulePackages>>[number] };
+type Loaded = { response: NextResponse } | { response?: undefined; projectId: string; moduleId: string; guard: { userId: string; humanClient: boolean }; db: ReturnType<typeof apiDataClient>; current: Awaited<ReturnType<typeof getModulePackages>>[number] };
 
 async function load(request: NextRequest, params: Params["params"], scope: "project:read" | "project:write"): Promise<Loaded> {
   const { projectId, moduleId } = await params;
@@ -48,6 +49,8 @@ async function handlePATCH(request: NextRequest, { params }: Params) {
   const loaded = await load(request, params, "project:write");
   if (loaded.response) return loaded.response;
   const { projectId, moduleId, guard, db, current } = loaded;
+  const blocked = await agentGate(db, guard, projectId, "can_modify_settings");
+  if (blocked) return blocked;
   let body;
   try { body = patchBody.parse(await request.json()); } catch { return NextResponse.json({ error: "Send action: enable, disable, uninstall or settings (with default_view/category)." }, { status: 400 }); }
   const role = await projectRole(db, projectId, guard.userId);

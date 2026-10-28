@@ -93,7 +93,7 @@ export default async function ProjectDecisionsPage({
             const StatusIcon = statusConfig.icon;
 
             return (
-              <Card key={decision.id}>
+              <Card key={decision.id} id={`decision-${decision.id}`} className="scroll-mt-24 target:ring-2 target:ring-primary">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">

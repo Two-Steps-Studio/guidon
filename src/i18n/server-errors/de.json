@@ -223,5 +223,6 @@
   "Only project owners and admins can approve the agent brief.": "Nur Projektinhaber und Admins können das Agenten-Briefing freigeben.",
   "The brief is empty.": "Das Briefing ist leer.",
   "The brief is too long.": "Das Briefing ist zu lang.",
-  "The brief could not be saved.": "Das Briefing konnte nicht gespeichert werden."
+  "The brief could not be saved.": "Das Briefing konnte nicht gespeichert werden.",
+  "Only project owners and admins can undo an import.": "Nur Eigentümer und Admins des Projekts können einen Import rückgängig machen."
 }
