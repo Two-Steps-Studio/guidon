@@ -22,6 +22,7 @@ import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
 import { projectSectionCoverage } from "./project-sections.mjs";
 import { smartLinkingCoverage } from "./smart-linking.mjs";
+import { agentLoopCoverage } from "./agent-loop.mjs";
 import { marketplaceCoverage } from "./marketplace.mjs";
 import { moduleAutomationCoverage } from "./module-automations.mjs";
 import { moduleSandboxCoverage } from "./module-sandbox.mjs";
@@ -169,6 +170,8 @@ try{
       if(name==="chromium")await marketplaceCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       if(name==="chromium")await moduleAutomationCoverage({page,context,origin,fixture,client,browserName:name});
       if(name==="chromium")await smartLinkingCoverage({page,context,origin,fixture,client,browserName:name,webhookSecret:environment.GITHUB_APP_WEBHOOK_SECRET});
+      // The whole agent loop over MCP, webhook and dialog; server-side rules, one browser.
+      if(name==="chromium")await agentLoopCoverage({page,context,origin,fixture,client,browserName:name,webhookSecret:environment.GITHUB_APP_WEBHOOK_SECRET});
       // Worker/iframe isolation is the browser's, so this one runs everywhere.
       await moduleSandboxCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});

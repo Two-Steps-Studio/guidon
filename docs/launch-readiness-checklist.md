@@ -19,6 +19,7 @@ Current implementation/evidence records:
 - [Actual REST/MCP isolation, scope and mutation checks](./release/api-mcp-isolation-2026-10-24.md).
 - **[End-to-end path, blockers and go/no-go criteria (2026-10-27)](./release/launch-go-no-go-2026-10-27.md).**
 - [Free beta launch plan: one promise, channels, calendar, targets, post drafts](./launch/launch-plan.md).
+- [Context Engine QA: agent loop end to end, criteria and evidence (2026-10-28)](./release/context-engine-qa-2026-10-28.md).
 - [Release, monitoring and rollback runbook; restore drill](./release-runbook.md).
 - [Large-project performance baseline](./release/performance-baseline-2026-10-27.md) and [Stripe webhook QA](./release/stripe-webhook-qa-2026-10-27.md).
 - [Security and tenant isolation incl. modules, open findings](./release/security-tenant-isolation-2026-10-27.md).

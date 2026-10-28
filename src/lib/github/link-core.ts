@@ -22,6 +22,8 @@ export interface LinkSpec {
   title: string | null;
   url: string | null;
   prState: PrState | null;
+  /** The pull_request action that produced prState ("opened", "closed", "reopened"...), for nextPrState. */
+  prAction?: string | null;
   evidence: string;
 }
 
@@ -62,6 +64,20 @@ export function prStateOf(payload: PullRequestPayload): PrState | null {
   return pr.draft ? "draft" : "open";
 }
 
+/**
+ * The PR state to store when an event arrives. GitHub doesn't guarantee
+ * delivery order, so a late "synchronize" or "opened" can arrive after the
+ * PR was closed: a merged PR stays merged (merging is final), and a closed
+ * one only opens again through an explicit "reopened". Draft <-> open and
+ * open -> closed/merged follow the event.
+ */
+export function nextPrState(current: PrState | null, incoming: PrState | null, action?: string | null): PrState | null {
+  if (!incoming) return current;
+  if (current === "merged") return "merged";
+  if (current === "closed" && (incoming === "open" || incoming === "draft") && action !== "reopened") return "closed";
+  return incoming;
+}
+
 export function planPushLinks(payload: PushPayload, repository: string): LinkSpec[] {
   const branch = (payload.ref ?? "").replace(/^refs\/heads\//, "");
   const branchRefs = refsIn(branch);
@@ -88,7 +104,7 @@ export function planPullRequestLinks(payload: PullRequestPayload): LinkSpec[] {
   if (!pr || typeof payload.number !== "number") return [];
   const where = (ref: string) => [refsIn(pr.title).includes(ref) && "title", refsIn(pr.body).includes(ref) && "description", refsIn(pr.head?.ref).includes(ref) && "branch"].filter(Boolean).join(", ");
   return [...new Set([...refsIn(pr.title), ...refsIn(pr.body), ...refsIn(pr.head?.ref)])].map((ref) => ({
-    ref, kind: "pull_request" as const, externalRef: String(payload.number), title: firstLine(pr.title) || null, url: githubUrl(pr.html_url), prState: prStateOf(payload),
+    ref, kind: "pull_request" as const, externalRef: String(payload.number), title: firstLine(pr.title) || null, url: githubUrl(pr.html_url), prState: prStateOf(payload), prAction: payload.action ?? null,
     evidence: `PR ${where(ref)} mentions guidon#${ref.slice(0, 8)}`,
   }));
 }

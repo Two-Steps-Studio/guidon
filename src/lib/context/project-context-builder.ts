@@ -31,8 +31,8 @@ export async function buildProjectAgentContext(userId: string, projectId: string
 
   const items: ContextItem[] = [
     ...memoryItems(memory.data ?? [], evidence),
-    // Accepted decisions are the ones that bind the work; others are history.
-    ...(decisions.data ?? []).map((row) => decisionItem(row, row.status === "accepted" ? W.relatedDecision : W.recentDecision)),
+    // Approved decisions are the ones that bind the work; others are history.
+    ...(decisions.data ?? []).map((row) => decisionItem(row, row.status === "approved" ? W.relatedDecision : W.recentDecision)),
     ...(sources.data ?? []).map((row): ContextItem => ({
       section: row.source_type === "pull_request" ? "prs" : "sources",
       id: row.id,

@@ -8,7 +8,7 @@ import { withServiceRole, withUser } from "@/lib/db/session";
 import { createServiceClient } from "@/lib/supabase-server";
 import { resolveBoardColumns, type BoardColumnOverride } from "@/lib/work/task-board";
 import { shouldMove, type TaskAction } from "./task-refs";
-import { suggestLinks, type LinkSpec } from "./link-core";
+import { nextPrState, suggestLinks, type LinkSpec, type PrState } from "./link-core";
 import { dataClient } from "@/lib/data-client";
 
 /** Shown as the author of the comments and status changes the integration makes (actor_label, migration 036). */
@@ -208,7 +208,7 @@ async function recordEvent(userId: string, taskId: string, eventKey: string, con
   return true;
 }
 
-type TaskLinkRow = { id: string; status: string; provenance: string; pr_state: string | null; title: string | null; url: string | null };
+type TaskLinkRow = { id: string; status: string; provenance: string; pr_state: PrState | null; title: string | null; url: string | null };
 
 /**
  * Smart Linking (migration 097): records the commit/branch/PR <-> task links
@@ -239,7 +239,9 @@ export async function applyLinks(target: GithubConnectionTarget, repository: str
       }
       if (existing.data.status === "rejected") continue;
       const patch: Record<string, unknown> = {};
-      if (link.prState && link.prState !== existing.data.pr_state) patch.pr_state = link.prState;
+      // Events can arrive out of order: a late "opened" never un-merges a PR.
+      const prState = nextPrState(existing.data.pr_state, link.prState, link.prAction);
+      if (prState !== existing.data.pr_state) patch.pr_state = prState;
       if (link.title && link.title !== existing.data.title) patch.title = link.title;
       if (link.url && link.url !== existing.data.url) patch.url = link.url;
       // A suggestion the code now references explicitly is confirmed by that reference.

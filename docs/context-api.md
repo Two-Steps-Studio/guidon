@@ -7,7 +7,7 @@ safe to put into a prompt.
 | REST (`tasks:read`) | MCP tool | What |
 |---|---|---|
 | `GET /api/v1/tasks/{taskId}/context` | `get_task_context` | The task, then project constraints, verified facts, the linked and related decisions, previous attempts (failed ones first), related PRs/files/sources, AI insights and other memory |
-| `GET /api/v1/projects/{projectId}/context` | `get_project_context` | For planning: constraints, facts, decisions (accepted ones first), knowledge sources and memory |
+| `GET /api/v1/projects/{projectId}/context` | `get_project_context` | For planning: constraints, facts, decisions (approved ones first), knowledge sources and memory |
 
 Both accept these parameters:
 

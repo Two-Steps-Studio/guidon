@@ -10,7 +10,7 @@
  */
 
 import { extractTaskRefs, planPullRequest, planPush, shouldMove, taskRef } from "../src/lib/github/task-refs.ts";
-import { distinctiveWords, planPullRequestLinks, planPushLinks, prStateOf, pullRequestTarget, repositoryName, suggestLinks, suggestionText } from "../src/lib/github/link-core.ts";
+import { distinctiveWords, nextPrState, planPullRequestLinks, planPushLinks, prStateOf, pullRequestTarget, repositoryName, suggestLinks, suggestionText } from "../src/lib/github/link-core.ts";
 
 let pass = 0;
 let fail = 0;
@@ -138,6 +138,14 @@ console.log("\n  Smart Linking (migration 097, src/lib/github/link-core.ts)");
   check("unrelated PRs suggest nothing", suggestLinks("Upgrade Next.js and React", tasks).length === 0);
   check("at most three suggestions", suggestLinks("alpha beta gamma delta", Array.from({ length: 10 }, (_, index) => ({ id: `x${index}`, title: "alpha beta gamma" }))).length === 3);
   check("task references and numbers don't count as words", distinctiveWords("guidon#1a2b3c4d 2026 release fix").size === 0);
+
+  // GitHub doesn't guarantee delivery order.
+  check("a late 'opened' never un-merges a PR", nextPrState("merged", "open", "opened") === "merged" && nextPrState("merged", "open", "reopened") === "merged");
+  check("a late 'synchronize' doesn't reopen a closed PR", nextPrState("closed", "open", "synchronize") === "closed" && nextPrState("closed", "draft", "converted_to_draft") === "closed");
+  check("an explicit 'reopened' does", nextPrState("closed", "open", "reopened") === "open");
+  check("open -> merged/closed and draft <-> open follow the event", nextPrState("open", "merged", "closed") === "merged" && nextPrState("open", "closed", "closed") === "closed" && nextPrState("draft", "open", "ready_for_review") === "open" && nextPrState("open", "draft", "converted_to_draft") === "draft");
+  check("no state in the event keeps the stored one", nextPrState("open", null, null) === "open" && nextPrState(null, "open", "opened") === "open");
+  check("PR links carry the action that produced their state", planPullRequestLinks(pr("reopened", { title: "guidon#1a2b3c4d" }))[0]?.prAction === "reopened");
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
