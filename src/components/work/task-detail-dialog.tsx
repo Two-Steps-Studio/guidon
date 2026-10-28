@@ -771,7 +771,7 @@ function TaskDetailDialogInner({
           </div>}
         </form>
 
-        <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />
+        <TaskWhyPanel projectId={projectId} why={whyContext} loading={whyLoading} error={whyError} members={members} />
 
         <TaskLinksPanel projectId={projectId} taskId={task.id} canEdit={canEdit} />
 

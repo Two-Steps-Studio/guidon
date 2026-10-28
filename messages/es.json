@@ -846,6 +846,7 @@
     "whyHeading": "Por qué",
     "loadingContext": "Cargando contexto...",
     "noContextLinked": "Aún no hay contexto vinculado.",
+    "whyUnconfirmedAi": "Sugerencia de IA, aún sin confirmar por una persona",
     "decisionBadge": "Decisión",
     "aiTaskAssistant": "Asistente de tareas con IA",
     "aiTaskAssistantDescription": "Describe el trabajo para {projectName} y revisa las tareas propuestas antes de añadirlas.",

@@ -846,6 +846,7 @@
     "whyHeading": "Why",
     "loadingContext": "Loading context...",
     "noContextLinked": "No context linked yet.",
+    "whyUnconfirmedAi": "AI suggestion, not confirmed by a person yet",
     "decisionBadge": "Decision",
     "aiTaskAssistant": "AI Task Assistant",
     "aiTaskAssistantDescription": "Describe work for {projectName} and review proposed tasks before adding them.",

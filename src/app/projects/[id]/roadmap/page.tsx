@@ -93,7 +93,7 @@ export default async function ProjectRoadmapPage({
             const statusLabel = t("phaseStatus", { status: phase.status });
 
             return (
-              <Card key={phase.id} className="relative">
+              <Card key={phase.id} id={`phase-${phase.id}`} className="relative scroll-mt-24 target:ring-2 target:ring-primary">
                 <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
                 <div 
                   className="absolute left-4 top-6 w-4 h-4 rounded-full bg-primary border-4 border-background z-10"
