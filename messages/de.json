@@ -1955,8 +1955,8 @@
     "continue": "Weiter",
     "typeTitle": "Was baust du?",
     "typeDescription": "Wähle das Passendste - es richtet die richtigen Bereiche und Labels ein. Alles lässt sich später ändern.",
-    "nameTitle": "Wie heißt es?",
-    "nameDescription": "Dein Projekt und das Studio oder Team, zu dem es gehört.",
+    "nameTitle": "Woran arbeitest du?",
+    "nameDescription": "Gib deinem Projekt einen Namen. Mehr brauchst du nicht – die nächsten Fragen sind optional, und du kannst alles später ändern.",
     "projectNameLabel": "Projektname",
     "projectNamePlaceholder": "z. B. Emberfall",
     "studioNameLabel": "Studio oder Team (optional)",
@@ -2019,7 +2019,8 @@
     "starterTask_improve_title": "Agent: mach eine kleine, sichere Verbesserung",
     "starterTask_improve_description": "Wähle eine kleine Verbesserung, die in ein paar Minuten fertig ist (ein Tippfehler, ein fehlender README-Abschnitt, eine unklare Fehlermeldung). Setze sie in einem neuen Branch um, halte sie mit record_attempt samt geänderten Dateien fest, fasse sie mit comment_on_task zusammen und verschiebe diese Aufgabe nach Review.",
     "starterRule": "Agenten verschieben fertige Aufgaben nach Review, nie direkt nach Done - ein Mensch prüft die Arbeit zuerst.",
-    "welcomeDismiss": "Schließen"
+    "welcomeDismiss": "Schließen",
+    "skipSetup": "Überspringen – später einrichten"
   },
   "oauth": {
     "title": "{app} mit Guidon verbinden",
