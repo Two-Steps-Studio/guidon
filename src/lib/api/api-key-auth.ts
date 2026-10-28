@@ -12,6 +12,8 @@ export interface ApiKeyIdentity {
   apiKeyId: string;
   scopes: string[];
   botLabel: string | null;
+  /** The key's own name ("Claude Code", "Cursor", an OAuth client's name) - shown next to what the app changed. */
+  keyName: string | null;
   /** Key issued to a human-operated client (Unity plugin, migration 039) - skips the AI-agent gates. */
   humanClient: boolean;
   /** Set for a key bound to one project (migration 054) - guardApiRequest enforces it. */
@@ -58,6 +60,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
           id: string;
           user_id: string;
           scopes: string[];
+          name: string | null;
           bot_label: string | null;
           human_client: boolean;
           project_id: string | null;
@@ -77,6 +80,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
       apiKeyId: key.id,
       scopes: key.scopes,
       botLabel: key.bot_label,
+      keyName: key.name ?? null,
       humanClient: key.human_client === true,
       projectId: key.project_id ?? null,
       allowedOrigins: key.allowed_origins ?? null,
@@ -102,6 +106,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
     apiKeyId: key.id,
     scopes: key.scopes,
     botLabel: key.bot_label,
+    keyName: key.name ?? null,
     humanClient: key.human_client === true,
     projectId: key.project_id ?? null,
     allowedOrigins: key.allowed_origins ?? null,

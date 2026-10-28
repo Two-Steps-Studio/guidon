@@ -217,5 +217,7 @@
   "Could not update the link.": "Nie udało się zaktualizować powiązania.",
   "The starter tasks are already on this board.": "Zadania startowe są już na tej tablicy.",
   "Could not create the starter tasks. Try again.": "Nie udało się utworzyć zadań startowych. Spróbuj ponownie.",
-  "Could not save the setting.": "Nie udało się zapisać ustawienia."
+  "Could not save the setting.": "Nie udało się zapisać ustawienia.",
+  "This change was already undone or no longer exists.": "Ta zmiana została już cofnięta albo już nie istnieje.",
+  "Someone changed this since, so there is nothing to undo.": "Ktoś zmienił to w międzyczasie, więc nie ma czego cofać."
 }

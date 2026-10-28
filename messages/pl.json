@@ -989,7 +989,27 @@
     "moveNotSaved": "Brak połączenia z Guidonem. „{title}” wróciło na swoje miejsce.",
     "retryMove": "Ponów",
     "draftRestored": "Przywrócono niezapisane zmiany z {time}. Nie są jeszcze zapisane.",
-    "discardDraft": "Odrzuć je"
+    "discardDraft": "Odrzuć je",
+    "appChanges": {
+      "title": "Zmiany z aplikacji",
+      "hint": "Co aplikacje AI, agenci i integracje zmienili w tym zadaniu. Sprawdź to i cofnij wszystko, co nie powinno się wydarzyć.",
+      "unknownApp": "Aplikacja",
+      "onBehalfOf": "w imieniu: {person}",
+      "empty": "(puste)",
+      "changedTo": "zmieniono na",
+      "undo": "Cofnij",
+      "undone": "Cofnięto",
+      "undoFailed": "Nie udało się cofnąć zmiany. Sprawdź połączenie i spróbuj ponownie.",
+      "loadFailed": "Nie udało się wczytać zmian z aplikacji.",
+      "changedSince": "Zostawione bez zmian, bo ktoś je w międzyczasie zmienił: {fields}.",
+      "field": {
+        "title": "Tytuł",
+        "description": "Opis",
+        "status": "Kolumna",
+        "priority": "Priorytet",
+        "due_date": "Termin"
+      }
+    }
   },
   "roadmap": {
     "title": "Plan działań",

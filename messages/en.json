@@ -989,7 +989,27 @@
     "moveNotSaved": "Couldn't reach Guidon. \"{title}\" is back where it was.",
     "retryMove": "Retry",
     "draftRestored": "Restored unsaved changes from {time}. They are not saved yet.",
-    "discardDraft": "Discard them"
+    "discardDraft": "Discard them",
+    "appChanges": {
+      "title": "Changes by apps",
+      "hint": "What AI apps, agents and integrations changed on this task. Check it, and undo anything that shouldn't have happened.",
+      "unknownApp": "An app",
+      "onBehalfOf": "for {person}",
+      "empty": "(empty)",
+      "changedTo": "changed to",
+      "undo": "Undo",
+      "undone": "Undone",
+      "undoFailed": "Couldn't undo the change. Check the connection and try again.",
+      "loadFailed": "Couldn't load the changes made by apps.",
+      "changedSince": "Left as they are because someone changed them since: {fields}.",
+      "field": {
+        "title": "Title",
+        "description": "Description",
+        "status": "Column",
+        "priority": "Priority",
+        "due_date": "Due date"
+      }
+    }
   },
   "roadmap": {
     "title": "Roadmap",

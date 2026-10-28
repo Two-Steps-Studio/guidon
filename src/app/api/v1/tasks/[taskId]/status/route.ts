@@ -25,6 +25,7 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
   const result = await setTaskStatus(guard.userId, taskId, status, {
     botLabel: guard.botLabel,
+    keyName: guard.keyName,
     humanClient: guard.humanClient,
   });
 

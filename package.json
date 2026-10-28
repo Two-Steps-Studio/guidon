@@ -36,6 +36,7 @@
     "test:recurrence": "node tests/recurrence.test.mjs",
     "test:context": "node --experimental-strip-types tests/context-pack.test.mjs",
     "test:search": "node --experimental-strip-types tests/search.test.mjs",
+    "test:app-changes": "node --experimental-strip-types tests/app-changes.test.mjs",
     "test:restore": "node tests/ops/restore-drill.mjs",
     "perf:large": "node tests/perf/large-project.mjs --budgets tests/perf/budgets.json",
     "test:billing": "node tests/billing.test.mjs && node --experimental-strip-types --import ./tests/fixtures/work-resolver.mjs tests/billing-webhook.test.mjs",

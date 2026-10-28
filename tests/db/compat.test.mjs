@@ -4394,10 +4394,10 @@ section("84. Each project role can do exactly what the Members page says (src/li
   const attempts = {
     view: (user, task) => went("SELECT id FROM public.tasks WHERE id = $1", [task]),
     comment: (user, task) => went("INSERT INTO public.task_comments (task_id, author_id, content) VALUES ($1, $2, 'ok') RETURNING id", [task, user]),
-    edit: (user) => went("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Written by a member') RETURNING id", [matrixProject]),
+    edit: () => went("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Written by a member') RETURNING id", [matrixProject]),
     delete: (user, task) => went("DELETE FROM public.tasks WHERE id = $1 AND project_id = $2 RETURNING id", [task, matrixProject]),
-    manage: (user) => went("UPDATE public.projects SET description = 'changed' WHERE id = $1 RETURNING id", [matrixProject]),
-    own: (user) => went("DELETE FROM public.projects WHERE id = $1 RETURNING id", [matrixProject]),
+    manage: () => went("UPDATE public.projects SET description = 'changed' WHERE id = $1 RETURNING id", [matrixProject]),
+    own: () => went("DELETE FROM public.projects WHERE id = $1 RETURNING id", [matrixProject]),
   };
   // The owner goes last: "own" deletes the project.
   for (const [role, user] of [...Object.entries(people), ["owner", A]]) {

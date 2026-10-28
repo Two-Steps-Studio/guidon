@@ -34,13 +34,14 @@ npm run test:api               # what every /api/v1 response shares: error codes
 npm run test:billing           # billing rules: weekly/monthly/yearly intervals, once-per-organization trial, grace period after a failed payment (src/lib/billing/billing-core.ts); Stripe webhook flow: duplicates, out-of-order delivery, retry after a failure, no plan without payment, signatures offline (src/lib/billing/stripe-webhook-core.ts)
 npm run test:context           # Context Engine package for agents: token budget over the whole document, ranking/relevance, freshness, secret redaction, untrusted-text neutralization and instruction flagging (src/lib/context/context-pack-core.ts, docs/context-api.md)
 npm run test:search            # task search ranking: diacritics, task ids/guidon#refs, typos, ordering, 30 realistic queries over 1200 tasks with the wanted one in the top 5 (src/lib/search/task-search-core.ts)
+npm run test:app-changes       # what an app (API key/MCP/GitHub) changed on a task and undoing it: diffs, stored rows, undo that never overwrites a later edit (src/lib/work/app-changes-core.ts)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```
 
 Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` from a `desktop-v<version>` tag - see `desktop/RELEASING.md`.
 
-`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import`/`test:recurrence`/`test:billing`/`test:api`/`test:context`/`test:search` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 684) to stay the same or grow, never shrink.
+`test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import`/`test:recurrence`/`test:billing`/`test:api`/`test:context`/`test:search`/`test:app-changes` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework — there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) — run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 684) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) — UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 
