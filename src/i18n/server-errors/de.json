@@ -219,5 +219,6 @@
   "Could not create the starter tasks. Try again.": "Die Startaufgaben konnten nicht angelegt werden. Versuche es erneut.",
   "Could not save the setting.": "Die Einstellung konnte nicht gespeichert werden.",
   "This change was already undone or no longer exists.": "Diese Änderung wurde schon rückgängig gemacht oder existiert nicht mehr.",
-  "Someone changed this since, so there is nothing to undo.": "Jemand hat das inzwischen geändert, daher gibt es nichts rückgängig zu machen."
+  "Someone changed this since, so there is nothing to undo.": "Jemand hat das inzwischen geändert, daher gibt es nichts rückgängig zu machen.",
+  "Only project owners and admins can undo an import.": "Nur Eigentümer und Admins des Projekts können einen Import rückgängig machen."
 }

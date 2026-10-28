@@ -149,7 +149,9 @@ try{
     const blocked=[];
     await context.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():(blocked.push(new URL(route.request().url()).origin),route.abort()));
     await context.tracing.start({screenshots:true,snapshots:true,sources:true});
-    const page=await context.newPage();page.setDefaultTimeout(15000);
+    // WebKit on the CI runner sometimes takes over 15 s to fire a page's load event (a
+    // different page each run, also in code a change doesn't touch); it gets 30 s.
+    const page=await context.newPage();page.setDefaultTimeout(name==='webkit'?30000:15000);
     const started=Date.now();
     try{
       if(mobileMode){
