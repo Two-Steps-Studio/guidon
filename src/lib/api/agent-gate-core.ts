@@ -49,5 +49,8 @@ export function agentDecision(input: {
 export const AGENT_GATE_ERRORS: Record<Exclude<AgentDecision, "allowed">, (permission: AgentPermission) => string> = {
   ai_disabled: () => "AI features are turned off for this project. Ask a project admin to enable them in Settings.",
   not_permitted: (permission) =>
-    `This project's AI permissions don't allow this (${permission}). A project admin can change it in Settings -> AI Permissions.`,
+    `This project's AI permissions don't allow this (${permission}). A project admin can change it in Settings -> AI Permissions.` +
+    (permission === "can_delete_tasks"
+      ? ' Or ask a person to approve it: POST /api/v1/tasks/{id}/approval-requests {"action":"delete_task"} (MCP: request_approval).'
+      : ""),
 };

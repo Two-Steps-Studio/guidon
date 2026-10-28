@@ -3,7 +3,7 @@
  * POST /api/v1/batch's parsing and routing (src/lib/api/batch-core.ts).
  * Both files have no imports, so Node's built-in type stripping runs them.
  */
-import { AGENT_PERMISSION_DEFAULTS, agentDecision } from "../src/lib/api/agent-gate-core.ts";
+import { AGENT_GATE_ERRORS, AGENT_PERMISSION_DEFAULTS, agentDecision } from "../src/lib/api/agent-gate-core.ts";
 import {
   decodeCursor,
   encodeCursor,
@@ -101,6 +101,7 @@ const decide = (over) => agentDecision({ humanClient: false, aiEnabled: true, pe
 check("an agent reads context by default", decide({}) === "allowed");
 check("turning reading off blocks it", decide({ permissions: { can_read_context: false } }) === "not_permitted");
 check("deleting is off by default", decide({ permission: "can_delete_tasks" }) === "not_permitted");
+check("a refused delete points the agent to asking for approval", AGENT_GATE_ERRORS.not_permitted("can_delete_tasks").includes("approval-requests") && !AGENT_GATE_ERRORS.not_permitted("can_read_context").includes("approval"));
 check("an admin can allow deleting", decide({ permission: "can_delete_tasks", permissions: { can_delete_tasks: true } }) === "allowed");
 check("settings changes are off by default", decide({ permission: "can_modify_settings" }) === "not_permitted");
 check("AI turned off for the project wins over every permission", decide({ aiEnabled: false, permissions: { can_read_context: true } }) === "ai_disabled");

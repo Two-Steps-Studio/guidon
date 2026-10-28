@@ -34,7 +34,7 @@ npm run test:api               # what every /api/v1 response shares: error codes
 npm run test:billing           # billing rules: weekly/monthly/yearly intervals, once-per-organization trial, grace period after a failed payment (src/lib/billing/billing-core.ts); Stripe webhook flow: duplicates, out-of-order delivery, retry after a failure, no plan without payment, signatures offline (src/lib/billing/stripe-webhook-core.ts)
 npm run test:context           # Context Engine package for agents: token budget over the whole document, ranking/relevance, freshness, secret redaction, untrusted-text neutralization and instruction flagging (src/lib/context/context-pack-core.ts, docs/context-api.md)
 npm run test:search            # task search ranking: diacritics, task ids/guidon#refs, typos, ordering, 30 realistic queries over 1200 tasks with the wanted one in the top 5 (src/lib/search/task-search-core.ts)
-npm run test:app-changes       # what an app (API key/MCP/GitHub) changed on a task and undoing it: diffs, stored rows, undo that never overwrites a later edit (src/lib/work/app-changes-core.ts)
+npm run test:app-changes       # what an app (API key/MCP/GitHub) changed on a task and undoing it: diffs, stored rows, undo that never overwrites a later edit (src/lib/work/app-changes-core.ts); agents asking for approval: request bodies, expiry, inbox order (src/lib/work/agent-approvals-core.ts)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```

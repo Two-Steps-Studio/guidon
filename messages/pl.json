@@ -153,7 +153,8 @@
     "billingPrices": "Ceny",
     "funnel": "Lejek",
     "moduleReview": "Przegląd modułów",
-    "agentBrief": "Brief dla agentów"
+    "agentBrief": "Brief dla agentów",
+    "approvals": "Akceptacje"
   },
   "commandPalette": {
     "triggerLabel": "Szukaj...",
@@ -1817,7 +1818,15 @@
     "aiPreferenceDescription": "Guidon w pełni działa bez AI. Wyłącz, żeby ukryć przyciski i widżety AI we wszystkich projektach – tylko u siebie.",
     "aiPreferenceToggle": "Pokazuj funkcje AI",
     "aiPreferenceHint": "Ukrywa czat AI, „Connect your agent”, zadania startowe dla agentów i kopiowanie kontekstu dla agenta. Podłączone już agenty dalej działają – usuniesz je w Kluczach API albo Połączonych aplikacjach.",
-    "aiPreferenceFailed": "Nie udało się zapisać ustawienia."
+    "aiPreferenceFailed": "Nie udało się zapisać ustawienia.",
+    "keyExpiresLabel": "Ważny",
+    "keyExpiresDays": "{days} dni",
+    "keyExpiresYear": "Rok",
+    "keyExpiresNever": "Bez końca",
+    "keyExpiresHint": "Klucz dla aplikacji AI powinien sam wygasnąć. Możesz go też w każdej chwili unieważnić.",
+    "expiresOn": "wygasa {date}",
+    "neverExpires": "nie wygasa",
+    "expiredBadge": "Wygasł"
   },
   "emails": {
     "passwordResetSubject": "Zresetuj hasło do Guidon",
@@ -2663,6 +2672,45 @@
     "download": "Pobierz v{version} jako Markdown",
     "approvedBy": "{person}, {date}",
     "unknown": "Nieznany",
+    "failed": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "approvals": {
+    "title": "Akceptacje",
+    "subtitle": "O co poprosiły podłączone aplikacje i agenci, czego nie mogą zrobić sami. Nic się nie dzieje, dopóki właściciel lub admin nie zaakceptuje; akcja wykonuje się wtedy w jego imieniu.",
+    "emptyTitle": "Na razie brak próśb",
+    "emptyDescription": "Gdy agent nie może sam ukończyć ani usunąć zadania, może poprosić o zgodę tutaj.",
+    "filter": "Pokaż",
+    "filterPending": "Oczekujące ({count})",
+    "filterAll": "Wszystkie",
+    "nothingWaiting": "Nic nie czeka na decyzję.",
+    "untitled": "Zadanie bez tytułu",
+    "unknownApp": "Aplikacja",
+    "onBehalfOf": "dla: {person}",
+    "taskGone": "usunięte",
+    "action": {
+      "complete_task": "Ukończ",
+      "delete_task": "Usuń"
+    },
+    "status": {
+      "pending": "Oczekuje",
+      "approved": "Zaakceptowane",
+      "rejected": "Odrzucone",
+      "expired": "Wygasło",
+      "failed": "Nie udało się"
+    },
+    "statusChange": "Status",
+    "changesTo": "zmienia się na",
+    "deleteEffect": "Zadanie, jego podzadania, komentarze i załączniki zostaną trwale usunięte.",
+    "reason": "Powód",
+    "expires": "Wygasa {date}",
+    "comment": "Komentarz",
+    "commentPlaceholder": "Opcjonalny komentarz, który zobaczy agent",
+    "approveComplete": "Akceptuj i ukończ",
+    "approveDelete": "Akceptuj i usuń",
+    "reject": "Odrzuć",
+    "confirmDelete": "Trwale usunąć „{title}”? Poprosił o to agent; tego nie da się cofnąć.",
+    "onlyManagers": "Decydować mogą tylko właściciele i admini projektu.",
+    "decidedBy": "{person}, {date}",
     "failed": "Coś poszło nie tak. Spróbuj ponownie."
   }
 }

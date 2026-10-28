@@ -197,9 +197,11 @@ for (const [label, sql, expected] of [
   // 57->58 and 143->144: module_automation_runs (094) + module_automation_runs_select.
   // 58->59, policies unchanged: funnel_cta_counts (096) - service_role only.
   // 59->60 and 144->148: task_links (097) + select/insert/update/delete.
-  // 60->61 and 148->149: agent_briefs (103) + agent_briefs_select.
-  ["61 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 61],
-  ["149 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 149],
+  // 60->61 and 148->149: task_claims (100) + task_claims_select.
+  // 61->62 and 149->150: agent_approval_requests (102) + agent_approval_requests_select.
+  // 62->63 and 150->151: agent_briefs (103) + agent_briefs_select.
+  ["63 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 63],
+  ["151 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 151],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -4411,6 +4413,145 @@ section("84. Each project role can do exactly what the Members page says (src/li
   }
 }
 
+section("85. Agents claim a task with a lease: one at a time, expired leases are taken over (100)");
+{
+  let claimProject, claimTask;
+  const key1 = "85000000-0000-4000-8000-000000000001";
+  const key2 = "85000000-0000-4000-8000-000000000002";
+  const foreignKey = "85000000-0000-4000-8000-000000000003";
+  await withUser(A, async () => {
+    claimProject = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Claims') RETURNING id", [orgId])).rows[0].id;
+    claimTask = (await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Shared task') RETURNING id", [claimProject])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    for (const [id, user] of [[key1, A], [key2, A], [foreignKey, B]]) {
+      await db.query("INSERT INTO public.api_keys (id, user_id, name, key_prefix, key_hash, scopes) VALUES ($1, $2, $3, 'guidon_test', $4, '{tasks:write}')", [id, user, `agent ${id.slice(-1)}`, `hash-${id}`]);
+    }
+    await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'viewer') ON CONFLICT (project_id, user_id) DO UPDATE SET role = 'viewer'", [claimProject, B]);
+  });
+  const claim = (key, lease = 3600) => db.query("SELECT * FROM public.claim_task($1, $2, $3, $4)", [claimTask, key, `agent ${key.slice(-1)}`, lease]).then((r) => r.rows[0]);
+
+  await withUser(A, async () => {
+    const first = await claim(key1);
+    check("the first agent claims the task", first.claimed === true && first.holder_key_id === key1);
+    const second = await claim(key2);
+    check("a second agent is refused while the lease runs", second.claimed === false && second.holder_key_id === key1);
+    const renewed = await claim(key1, 7200);
+    check("the holder renews its lease", renewed.claimed === true && new Date(renewed.expires_at) > new Date(first.expires_at));
+    check("renewing keeps when the work started", new Date(renewed.claimed_at).getTime() === new Date(first.claimed_at).getTime());
+    check("people in the project see who holds it", (await db.query("SELECT holder_label FROM public.task_claims WHERE task_id = $1", [claimTask])).rows[0]?.holder_label === "agent 1");
+    check("nobody writes claims directly", await throwsInSavepoint("UPDATE public.task_claims SET holder_key_id = $2 WHERE task_id = $1", [claimTask, key2]));
+  });
+  await withServiceRole(() => db.query("UPDATE public.task_claims SET claimed_at = now() - interval '3 hours', expires_at = now() - interval '1 second' WHERE task_id = $1", [claimTask]));
+  await withUser(A, async () => {
+    const takeover = await claim(key2);
+    check("an expired lease is taken over by the next agent", takeover.claimed === true && takeover.holder_key_id === key2);
+    check("the lease is bounded (at most a day)", new Date((await claim(key2, 10 ** 7)).expires_at) - Date.now() <= 86400 * 1000 + 5000);
+    await db.query("UPDATE public.tasks SET status = 'ai_working' WHERE id = $1", [claimTask]);
+    check("working on it keeps the claim", (await db.query("SELECT 1 FROM public.task_claims WHERE task_id = $1", [claimTask])).rowCount === 1);
+    await db.query("UPDATE public.tasks SET status = 'review' WHERE id = $1", [claimTask]);
+    check("handing it to review releases the claim", (await db.query("SELECT 1 FROM public.task_claims WHERE task_id = $1", [claimTask])).rowCount === 0);
+    check("someone else's key can't be used", await throwsInSavepoint("SELECT * FROM public.claim_task($1, $2, 'x', 60)", [claimTask, foreignKey]));
+  });
+  await withUser(B, async () => {
+    check("a viewer can't claim", await throwsInSavepoint("SELECT * FROM public.claim_task($1, $2, 'x', 60)", [claimTask, foreignKey]));
+  });
+  await withServiceRole(() => db.query("UPDATE public.api_keys SET revoked_at = now() WHERE id = $1", [key1]));
+  await withUser(A, async () => {
+    check("a revoked key can't claim", await throwsInSavepoint("SELECT * FROM public.claim_task($1, $2, 'x', 60)", [claimTask, key1]));
+  });
+}
+
+section("86. A personal API key can expire; the server-only columns stay server-only (101)");
+{
+  const insertKey = (extra) => db.query(
+    `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes${extra.columns}) VALUES ($1, 'Expiring', 'guidon_exp', $2, '{tasks:read}'${extra.values}) RETURNING id, expires_at`,
+    [A, `hash-exp-${Math.random()}`, ...extra.params]
+  );
+  await withUser(A, async () => {
+    const created = await insertKey({ columns: ", expires_at", values: ", $3", params: [new Date(Date.now() + 90 * 86400000).toISOString()] });
+    check("the owner creates a key that expires", created.rows[0]?.expires_at !== null);
+    check("…but can't mark it as a human-operated client (039)", await throwsInSavepoint(
+      "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, human_client) VALUES ($1, 'x', 'guidon_x', 'hash-hc', '{tasks:read}', true)", [A]));
+    check("…nor tie it to an OAuth grant (073)", await throwsInSavepoint(
+      "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, oauth_grant_id) VALUES ($1, 'x', 'guidon_x', 'hash-og', '{tasks:read}', gen_random_uuid())", [A]));
+    check("…nor change the expiry afterwards (only revoked_at is updatable)", await throwsInSavepoint(
+      "UPDATE public.api_keys SET expires_at = NULL WHERE id = $1", [created.rows[0].id]));
+  });
+}
+
+section("87. Agents ask for approval; owners/admins decide (102)");
+{
+  const dev = "87000000-0000-4000-8000-000000000001";
+  const viewer = "87000000-0000-4000-8000-000000000002";
+  let project, task, key, otherKey;
+  await withUser(A, async () => {
+    project = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Approvals') RETURNING id", [orgId])).rows[0].id;
+    task = (await db.query("INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'Ship the save system', 'review') RETURNING id", [project])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    for (const [id, role] of [[dev, "developer"], [viewer, "viewer"]]) {
+      await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, $2, '{}') ON CONFLICT DO NOTHING", [id, `approvals-${role}@example.test`]);
+      await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, $3)", [project, id, role]);
+    }
+    key = (await db.query("INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, 'Claude Code', 'guidon_appr', 'appr1', ARRAY['tasks:write']) RETURNING id", [dev])).rows[0].id;
+    otherKey = (await db.query("INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, 'Not yours', 'guidon_appx', 'appr2', ARRAY['tasks:write']) RETURNING id", [A])).rows[0].id;
+  });
+  const ask = (action, keyId = key) =>
+    db.query("SELECT * FROM public.request_agent_approval($1, $2, 'Tests pass on CI', $3, 'Claude Code')", [task, action, keyId]);
+
+  let first;
+  await withUser(dev, async () => {
+    first = (await ask("complete_task")).rows[0];
+    check("a developer's agent asks to complete a task", first?.created === true);
+    const again = (await ask("complete_task")).rows[0];
+    check("asking again returns the same pending request, not a new one", again.id === first.id && again.created === false);
+    check("…a different action is its own request", (await ask("delete_task")).rows[0].created === true);
+    check("only through someone's own key", await throwsInSavepoint("SELECT * FROM public.request_agent_approval($1, 'complete_task', null, $2, null)", [task, otherKey]));
+    check("unknown actions are refused", await throwsInSavepoint("SELECT * FROM public.request_agent_approval($1, 'drop_project', null, $2, null)", [task, key]));
+    check("no direct inserts", await throwsInSavepoint("INSERT INTO public.agent_approval_requests (project_id, task_id, action, requested_by) VALUES ($1, $2, 'complete_task', $3)", [project, task, dev]));
+    check("the requester can't decide their own request", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [first.id]));
+    const row = (await db.query("SELECT snapshot, app_name, status FROM public.agent_approval_requests WHERE id = $1", [first.id])).rows[0];
+    check("the request keeps what the task looked like", row.snapshot.title === "Ship the save system" && row.snapshot.status === "review" && row.app_name === "Claude Code" && row.status === "pending");
+  });
+  await withUser(viewer, async () => {
+    check("a viewer sees the requests", (await db.query("SELECT id FROM public.agent_approval_requests WHERE project_id = $1", [project])).rows.length === 2);
+    check("…but can't ask", await throwsInSavepoint("SELECT * FROM public.request_agent_approval($1, 'complete_task', null, null, null)", [task]));
+    check("…or decide", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [first.id]));
+  });
+  await withUser(B, async () => {
+    check("someone outside the project sees nothing", (await db.query("SELECT id FROM public.agent_approval_requests WHERE project_id = $1", [project])).rows.length === 0);
+  });
+  await withUser(A, async () => {
+    const decided = (await db.query("SELECT * FROM public.decide_agent_approval($1, false, 'Not before the playtest')", [first.id])).rows[0];
+    check("the owner rejects it with a comment", decided.status === "rejected" && decided.decided_by === A && decided.decision_comment === "Not before the playtest");
+    check("rejecting changes nothing on the task", (await db.query("SELECT status FROM public.tasks WHERE id = $1", [task])).rows[0].status === "review");
+    check("a decided request can't be decided again", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [first.id]));
+    check("no direct updates", await throwsInSavepoint("UPDATE public.agent_approval_requests SET status = 'approved' WHERE id = $1", [first.id]));
+  });
+  await withUser(dev, async () => {
+    check("after a decision the agent may ask again", (await ask("complete_task")).rows[0].created === true);
+  });
+  await withServiceRole(async () => {
+    await db.query("UPDATE public.agent_approval_requests SET expires_at = now() - interval '1 minute' WHERE task_id = $1 AND action = 'complete_task' AND status = 'pending'", [task]);
+  });
+  await withUser(A, async () => {
+    const expired = (await db.query("SELECT id FROM public.agent_approval_requests WHERE task_id = $1 AND action = 'complete_task' AND status = 'pending'", [task])).rows[0].id;
+    check("an expired request can't be approved", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [expired]));
+    const del = (await db.query("SELECT id FROM public.agent_approval_requests WHERE task_id = $1 AND action = 'delete_task'", [task])).rows[0].id;
+    const approved = (await db.query("SELECT * FROM public.decide_agent_approval($1, true, null)", [del])).rows[0];
+    check("the owner approves", approved.status === "approved");
+    await db.query("SELECT public.mark_agent_approval_failed($1, 'boom')", [del]);
+    check("…and can record that running it failed", (await db.query("SELECT status FROM public.agent_approval_requests WHERE id = $1", [del])).rows[0].status === "failed");
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [task]);
+    check("the history stays after the task is deleted", (await db.query("SELECT count(*)::int n FROM public.agent_approval_requests WHERE project_id = $1 AND task_id IS NULL", [project])).rows[0].n >= 2);
+  });
+  await withUser(dev, async () => {
+    const del = (await db.query("SELECT id FROM public.agent_approval_requests WHERE project_id = $1 AND action = 'delete_task'", [project])).rows[0].id;
+    await db.query("SELECT public.mark_agent_approval_failed($1, 'not mine')", [del]);
+    check("only the decider can mark a failure", (await db.query("SELECT decision_comment FROM public.agent_approval_requests WHERE id = $1", [del])).rows[0].decision_comment === "boom");
+  });
+}
 
 section("88. Agent brief versions: owners/admins approve, members read (103)");
 {
@@ -4441,5 +4582,6 @@ section("88. Agent brief versions: owners/admins approve, members read (103)");
     check("…and can't save one", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '# theirs')", [project]));
   });
 }
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

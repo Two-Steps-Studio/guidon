@@ -19,6 +19,7 @@ import { GET as getAgentBrief } from "@/app/api/v1/projects/[projectId]/brief/ro
 import { GET as listTaskLinks } from "@/app/api/v1/tasks/[taskId]/links/route";
 import { PATCH as reviewTaskLink } from "@/app/api/v1/tasks/[taskId]/links/[linkId]/route";
 import { GET as listAttempts, POST as recordAttempt } from "@/app/api/v1/tasks/[taskId]/attempts/route";
+import { GET as listApprovalRequests, POST as requestApproval } from "@/app/api/v1/tasks/[taskId]/approval-requests/route";
 import {
   commentFields,
   createTaskFields,
@@ -276,7 +277,10 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     {
       description:
         "Mark a task as being worked on (moves it to the in-progress/AI-working column and records who started it). " +
-        "Call it after get_task_context and before doing the work.",
+        "Call it after get_task_context and before doing the work. It claims the task for this connection for 2 hours " +
+        "(the result's claim.expires_at): while the claim runs, other agents can't start or change the task. Call it " +
+        "again to renew a long job; moving the task to review or done releases it. If another agent holds the task " +
+        "it fails - pick another task.",
       inputSchema: { task_id: taskId },
       annotations: { title: "Start task", ...WRITE, idempotentHint: true },
     },
@@ -301,8 +305,8 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     {
       description:
         "Mark a task as done. This only works if the project has enabled AI auto-complete and granted this " +
-        "key permission to complete tasks; otherwise it fails. Prefer set_task_status with `review` so a " +
-        "human confirms the result.",
+        "key permission to complete tasks; otherwise it fails - then ask with request_approval instead. Prefer " +
+        "set_task_status with `review` so a human confirms the result.",
       inputSchema: { task_id: taskId },
       annotations: { title: "Complete task", ...WRITE, idempotentHint: true },
     },
@@ -426,5 +430,38 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     },
     ({ project_id, version }) =>
       dispatch(getAgentBrief, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/brief`, query: { version: version === undefined ? undefined : String(version) } })
+  );
+
+  server.registerTool(
+    "request_approval",
+    {
+      description:
+        "Ask the project's owners/admins to approve an action this key may not take itself: `complete_task` " +
+        "(mark the task done) or `delete_task`. Nothing changes until a person approves it in the project's " +
+        "Approvals inbox - the action then runs as them; a rejection changes nothing. Asking again while a " +
+        "request is waiting returns the same request. Check the outcome with list_approval_requests; requests " +
+        "expire after 7 days. Give a short reason a person can check.",
+      inputSchema: {
+        task_id: taskId,
+        action: z.enum(["complete_task", "delete_task"]).describe("What you want a person to approve."),
+        reason: z.string().max(2000).optional().describe("Why - e.g. what was verified. Shown to the person deciding."),
+      },
+      annotations: { title: "Request approval", ...WRITE, idempotentHint: true },
+    },
+    ({ task_id, action, reason }) =>
+      dispatch(requestApproval, { taskId: task_id }, { method: "POST", path: `/api/v1/tasks/${task_id}/approval-requests`, body: defined({ action, reason }) })
+  );
+
+  server.registerTool(
+    "list_approval_requests",
+    {
+      description:
+        "A task's approval requests, newest first: pending, approved, rejected (with the person's comment), " +
+        "expired or failed.",
+      inputSchema: { task_id: taskId },
+      annotations: { title: "List approval requests", ...READ_ONLY },
+    },
+    ({ task_id }) =>
+      dispatch(listApprovalRequests, { taskId: task_id }, { method: "GET", path: `/api/v1/tasks/${task_id}/approval-requests` })
   );
 }

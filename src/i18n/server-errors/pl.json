@@ -224,5 +224,11 @@
   "The brief is empty.": "Brief jest pusty.",
   "The brief is too long.": "Brief jest za długi.",
   "The brief could not be saved.": "Nie udało się zapisać briefu.",
-  "Only project owners and admins can undo an import.": "Tylko właściciele i administratorzy projektu mogą cofnąć import."
+  "Only project owners and admins can undo an import.": "Tylko właściciele i administratorzy projektu mogą cofnąć import.",
+  "Only project owners and admins can approve or reject requests.": "Tylko właściciele i administratorzy projektu mogą akceptować lub odrzucać prośby.",
+  "This request could not be decided.": "Nie udało się rozpatrzyć tej prośby.",
+  "The comment is too long.": "Komentarz jest za długi.",
+  "Someone already decided this request.": "Ktoś już rozpatrzył tę prośbę.",
+  "This request expired. The agent can ask again.": "Ta prośba wygasła. Agent może poprosić ponownie.",
+  "The task no longer exists, so there is nothing to approve.": "To zadanie już nie istnieje, więc nie ma czego akceptować."
 }

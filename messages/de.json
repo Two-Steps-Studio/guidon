@@ -153,7 +153,8 @@
     "billingPrices": "Preise",
     "funnel": "Funnel",
     "moduleReview": "Modulprüfung",
-    "agentBrief": "Agenten-Briefing"
+    "agentBrief": "Agenten-Briefing",
+    "approvals": "Freigaben"
   },
   "commandPalette": {
     "triggerLabel": "Suchen...",
@@ -1817,7 +1818,15 @@
     "aiPreferenceDescription": "Guidon funktioniert komplett ohne KI. Schalte das aus, um KI-Schaltflächen und -Widgets in allen Projekten auszublenden – nur für dich.",
     "aiPreferenceToggle": "KI-Funktionen anzeigen",
     "aiPreferenceHint": "Blendet den KI-Chat, „Connect your agent“, Startaufgaben für Agenten und das Kopieren von Kontext für einen Agenten aus. Bereits verbundene Agenten arbeiten weiter – entferne sie unter API-Schlüssel oder Verbundene Apps.",
-    "aiPreferenceFailed": "Die Einstellung konnte nicht gespeichert werden."
+    "aiPreferenceFailed": "Die Einstellung konnte nicht gespeichert werden.",
+    "keyExpiresLabel": "Gültig",
+    "keyExpiresDays": "{days} Tage",
+    "keyExpiresYear": "Ein Jahr",
+    "keyExpiresNever": "Unbegrenzt",
+    "keyExpiresHint": "Ein Schlüssel für eine KI-App sollte von selbst ablaufen. Du kannst ihn jederzeit widerrufen.",
+    "expiresOn": "läuft ab am {date}",
+    "neverExpires": "läuft nicht ab",
+    "expiredBadge": "Abgelaufen"
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",
@@ -2663,6 +2672,45 @@
     "download": "v{version} als Markdown herunterladen",
     "approvedBy": "{person}, {date}",
     "unknown": "Unbekannt",
+    "failed": "Etwas ist schiefgelaufen. Versuche es erneut."
+  },
+  "approvals": {
+    "title": "Freigaben",
+    "subtitle": "Was verbundene Apps und Agenten tun wollten, aber nicht selbst tun dürfen. Nichts passiert, bis ein Inhaber oder Admin zustimmt; die Aktion läuft dann in dessen Namen.",
+    "emptyTitle": "Noch keine Anfragen",
+    "emptyDescription": "Darf ein Agent eine Aufgabe nicht abschließen oder löschen, kann er hier stattdessen fragen.",
+    "filter": "Anzeigen",
+    "filterPending": "Offen ({count})",
+    "filterAll": "Alle",
+    "nothingWaiting": "Nichts wartet auf eine Entscheidung.",
+    "untitled": "Aufgabe ohne Titel",
+    "unknownApp": "Eine App",
+    "onBehalfOf": "für {person}",
+    "taskGone": "gelöscht",
+    "action": {
+      "complete_task": "Abschließen",
+      "delete_task": "Löschen"
+    },
+    "status": {
+      "pending": "Offen",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt",
+      "expired": "Abgelaufen",
+      "failed": "Fehlgeschlagen"
+    },
+    "statusChange": "Status",
+    "changesTo": "ändert sich zu",
+    "deleteEffect": "Die Aufgabe, ihre Unteraufgaben, Kommentare und Anhänge werden endgültig gelöscht.",
+    "reason": "Begründung",
+    "expires": "Läuft ab {date}",
+    "comment": "Kommentar",
+    "commentPlaceholder": "Optionaler Kommentar, den der Agent sieht",
+    "approveComplete": "Genehmigen und abschließen",
+    "approveDelete": "Genehmigen und löschen",
+    "reject": "Ablehnen",
+    "confirmDelete": "„{title}“ endgültig löschen? Der Agent hat darum gebeten; das lässt sich nicht rückgängig machen.",
+    "onlyManagers": "Nur Projektinhaber und Admins können entscheiden.",
+    "decidedBy": "{person}, {date}",
     "failed": "Etwas ist schiefgelaufen. Versuche es erneut."
   }
 }

@@ -26,6 +26,7 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
   const result = await setTaskStatus(guard.userId, taskId, status, {
     botLabel: guard.botLabel,
     keyName: guard.keyName,
+    apiKeyId: guard.apiKeyId,
     humanClient: guard.humanClient,
   });
 
