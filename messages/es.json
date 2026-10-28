@@ -1990,8 +1990,8 @@
     "continue": "Continuar",
     "typeTitle": "¿Qué estás creando?",
     "typeDescription": "Elige lo más parecido: prepara las secciones y etiquetas adecuadas. Puedes cambiarlo todo después.",
-    "nameTitle": "¿Cómo se llama?",
-    "nameDescription": "Tu proyecto y el estudio o equipo al que pertenece.",
+    "nameTitle": "¿En qué estás trabajando?",
+    "nameDescription": "Ponle nombre a tu proyecto. Es todo lo que necesitas: las siguientes preguntas son opcionales y puedes cambiarlo todo después.",
     "projectNameLabel": "Nombre del proyecto",
     "projectNamePlaceholder": "p. ej. Emberfall",
     "studioNameLabel": "Estudio o equipo (opcional)",
@@ -2054,7 +2054,8 @@
     "starterTask_improve_title": "Agente: haz una mejora pequeña y segura",
     "starterTask_improve_description": "Elige una mejora pequeña que puedas terminar en unos minutos (una errata, una sección del README que falta, un mensaje de error poco claro). Hazla en una rama nueva, regístrala con record_attempt y los archivos cambiados, resúmela con comment_on_task y mueve esta tarea a Review.",
     "starterRule": "Los agentes mueven las tareas terminadas a Review, nunca directamente a Done: primero una persona revisa el trabajo.",
-    "welcomeDismiss": "Cerrar"
+    "welcomeDismiss": "Cerrar",
+    "skipSetup": "Omitir: lo configuro después"
   },
   "oauth": {
     "title": "Conectar {app} con Guidon",

@@ -10,12 +10,15 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
     await context.clearCookies();await page.goto(`${origin}/auth/login`);await page.waitForLoadState("networkidle");
     await page.locator("#email").fill(email);await page.locator("#password").fill(fixture.password);
     await page.locator('button[type="submit"]').click();await page.waitForURL(url=>url.pathname==="/start");
-    await page.getByRole("button",{name:/Website/}).click();
+    // Only the name is required; the rest is skippable (competitive task a5b26251:
+    // a first task within 60 s, no workflow setup forced on anyone).
+    const started=Date.now();
     assert.ok(await page.getByRole("button",{name:"Continue",exact:true}).isDisabled());
     await page.locator("#onboarding-project").fill(name);await page.locator("#onboarding-studio").fill(studio);
     await page.getByRole("button",{name:"Continue",exact:true}).click();
-    await page.getByRole("button",{name:"Continue",exact:true}).click();
-    await page.getByRole("button",{name:/^Just me/}).click();
+    await page.getByRole("button",{name:/Website/}).click();
+    await page.getByRole("button",{name:"Skip - set up later",exact:true}).click();
+    await page.getByText("A small team",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Create my workspace",exact:true}).click();
     await page.waitForURL(url=>/^\/projects\/[^/]+\/work$/.test(url.pathname));
     await page.getByRole("heading",{name:"Task board",exact:true}).waitFor();
@@ -30,6 +33,7 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
     await page.getByRole("button",{name:"Create task",exact:true}).click();
     await page.locator("#new-task-title").waitFor({state:"hidden"});
     await page.getByRole("button",{name:`Open task First task ${browserName}`,exact:true}).waitFor();
+    assert.ok(Date.now()-started<60000,`From /start to the first task took ${Date.now()-started} ms`);
     await page.reload();await page.getByRole("button",{name:`Open task First task ${browserName}`,exact:true}).waitFor();
     assert.equal((await client.query("SELECT count(*)::int AS n FROM tasks WHERE project_id=$1",[projectId])).rows[0].n,1);
     await page.goto(`${origin}/start/finish`);await page.waitForURL(url=>url.pathname==="/dashboard");

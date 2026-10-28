@@ -1990,8 +1990,8 @@
     "continue": "Continue",
     "typeTitle": "What are you building?",
     "typeDescription": "Pick the closest - it sets up the right sections and labels. You can change everything later.",
-    "nameTitle": "What's it called?",
-    "nameDescription": "Your project, and the studio or team it belongs to.",
+    "nameTitle": "What are you working on?",
+    "nameDescription": "Name your project. That's all you need - the next questions are optional and you can change everything later.",
     "projectNameLabel": "Project name",
     "projectNamePlaceholder": "e.g. Emberfall",
     "studioNameLabel": "Studio or team (optional)",
@@ -2054,7 +2054,8 @@
     "starterTask_improve_title": "Agent: make one small, safe improvement",
     "starterTask_improve_description": "Pick one small improvement you can finish in a few minutes (a typo, a missing README section, an unclear error message). Do it on a new branch, record_attempt with the files you changed, summarize it with comment_on_task and move this task to Review.",
     "starterRule": "Agents move finished tasks to Review, never straight to Done - a person checks the work first.",
-    "welcomeDismiss": "Dismiss"
+    "welcomeDismiss": "Dismiss",
+    "skipSetup": "Skip - set up later"
   },
   "oauth": {
     "title": "Connect {app} to Guidon",

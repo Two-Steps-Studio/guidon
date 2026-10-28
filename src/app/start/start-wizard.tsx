@@ -47,11 +47,13 @@ const TYPE_ICONS: Record<ProjectType, LucideIcon> = {
 const TEAM_ICONS: Record<OnboardingTeamSize, LucideIcon> = { solo: User, small: Users, studio: Building2 };
 
 const TEMPLATES = Object.keys(PROJECT_TEMPLATES) as ProjectTemplate[];
-const STEPS = ["type", "name", "workflow", "team", "account"] as const;
+// Only the name is needed; type, workflow and team can be skipped with
+// sensible defaults and changed later in the project's settings.
+const STEPS = ["name", "type", "workflow", "team", "account"] as const;
 
 /**
- * /start: what you're making, what it's called, how you work, who's on it -
- * then the account, last. Every answer is kept in this browser as it's
+ * /start: what it's called, then (each skippable) what you're making, how you
+ * work and who's on it - then the account, last. Every answer is kept in this browser as it's
  * given, so signing up (or an OAuth round trip) doesn't lose anything, and
  * coming back later resumes where you were.
  */
@@ -94,7 +96,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
     if (serialized) storeOnboarding(JSON.parse(serialized) as OnboardingAnswers);
   }, [serialized]);
 
-  const canContinue = [Boolean(projectType), Boolean(projectName.trim()), Boolean(template), Boolean(teamSize), true][step];
+  const canContinue = [Boolean(projectName.trim()), Boolean(projectType), Boolean(template), Boolean(teamSize), true][step];
   const next = () => canContinue && setStep((current) => Math.min(current + 1, STEPS.length - 1));
   const back = () => setStep((current) => Math.max(current - 1, 0));
 
@@ -102,7 +104,16 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
     setProjectType(type);
     // The template follows what's being built until it's picked by hand.
     setTemplate((current) => current ?? defaultTemplateFor(type));
-    setStep(1);
+    setStep(2);
+  };
+
+  // No setup questions forced on anyone: the defaults give a plain board.
+  const skipToAccount = () => {
+    const type = projectType ?? "other";
+    setProjectType(type);
+    setTemplate((current) => current ?? defaultTemplateFor(type));
+    setTeamSize((current) => current ?? "small");
+    setStep(STEPS.length - 1);
   };
 
   const finishHref = "/start/finish";
@@ -128,7 +139,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
         }}
         className="space-y-6"
       >
-        {step === 0 && (
+        {step === 1 && (
           <section className="space-y-5">
             <Heading title={t("typeTitle")} description={t("typeDescription")} />
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -145,7 +156,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
           </section>
         )}
 
-        {step === 1 && (
+        {step === 0 && (
           <section className="space-y-5">
             <Heading title={t("nameTitle")} description={t("nameDescription")} />
             <div className="space-y-2">
@@ -271,12 +282,19 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
           ) : (
             <span />
           )}
-          {step < STEPS.length - 1 && step !== 0 && step !== 3 && (
-            <Button type="submit" disabled={!canContinue}>
-              {t("continue")}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {step > 0 && step < STEPS.length - 1 && (
+              <Button type="button" variant="ghost" onClick={skipToAccount}>
+                {t("skipSetup")}
+              </Button>
+            )}
+            {step < STEPS.length - 1 && step !== 1 && step !== 3 && (
+              <Button type="submit" disabled={!canContinue}>
+                {t("continue")}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </form>
     </div>
