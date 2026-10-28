@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { Bot, CheckCircle2, CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, ListChecks, Server, type LucideIcon } from "lucide-react";
+import { Bot, CheckCircle2, CheckSquare, Code2, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Globe, MessageSquare, Server, Users, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
@@ -29,18 +29,22 @@ interface FeatureSection {
 // Mirrors the in-app nav (src/components/layout/app-sidebar.tsx) so a visitor
 // who signs up finds the same icons and names they just read here. Copy
 // (title/description/bullets) lives in messages/*.json under
-// landing.features.<key>, resolved via getTranslations below.
+// landing.features.<key>, resolved via getTranslations below. People first:
+// what a team uses every day, then what an AI app adds.
 const FEATURE_SECTIONS: FeatureSection[] = [
   { icon: CheckSquare, key: "taskBoard" },
-  { icon: Cpu, key: "aiTaskApi" },
   { icon: FileText, key: "decisions" },
   { icon: BookOpen, key: "knowledgeBase" },
   { icon: Brain, key: "memoryContext" },
   { icon: GitBranch, key: "roadmap" },
+  { icon: Cpu, key: "aiTaskApi" },
 ];
 
-// Connect -> takes a task with context -> you review (landing.howItWorks.steps).
-const HOW_IT_WORKS_ICONS: LucideIcon[] = [Bot, ListChecks, CheckCircle2];
+// Plan together -> the why next to the task -> AI when you want it (landing.howItWorks.steps).
+const HOW_IT_WORKS_ICONS: LucideIcon[] = [Users, FileText, Bot];
+
+// landing.aiOptions.more, in order: API/webhooks, GitHub, browser agents, built-in chat.
+const AI_OPTION_ICONS: LucideIcon[] = [Code2, Github, Globe, MessageSquare];
 
 // This page has no cookies()/headers() calls, so Next statically prerenders
 // it - without this, the pricing section's plan data would be baked in at
@@ -169,8 +173,8 @@ export default async function Home() {
       </div>
     </section>
 
-    {/* The one promise, in three steps - before the feature tour, which is
-        the context the agent works from rather than a list of reasons. */}
+    {/* The promise in three steps - a board for people, the why beside
+        each task, AI only when wanted - before the AI options and the tour. */}
     <section className="border-t border-border py-20" aria-labelledby="how-it-works-title">
       <div className="container mx-auto max-w-5xl px-4">
         <h2 id="how-it-works-title" className={`${displayFont.className} mb-12 text-center text-3xl md:text-4xl`}>
@@ -198,6 +202,42 @@ export default async function Home() {
             <CtaLink cta="how-start" href="/start">{t("getStarted")}</CtaLink>
           </Button>
         </div>
+      </div>
+    </section>
+
+    {/* Every way to bring AI in, all optional. Only what exists today: the
+        apps match the Connect dialog (src/app/profile/mcp-connect.tsx). */}
+    <section className="border-t border-border py-20" aria-labelledby="ai-options-title">
+      <div className="container mx-auto max-w-5xl px-4">
+        <div className="scrim mx-auto mb-10 max-w-3xl space-y-3 rounded-2xl px-6 py-6 text-center">
+          <h2 id="ai-options-title" className={`${displayFont.className} text-3xl md:text-4xl`}>
+            {t("aiOptions.title")}
+          </h2>
+          <p className="text-text-secondary">{t("aiOptions.subtitle")}</p>
+        </div>
+        <h3 className="scrim mx-auto mb-4 w-fit rounded-full px-3 py-1 text-center text-sm font-medium uppercase tracking-wide text-text-secondary">{t("aiOptions.appsTitle")}</h3>
+        <ul className="mb-12 flex flex-wrap justify-center gap-2">
+          {(t.raw("aiOptions.apps") as string[]).map((app) => (
+            <li key={app} className="scrim rounded-full border border-border px-4 py-2 text-sm font-medium">{app}</li>
+          ))}
+        </ul>
+        <h3 className="scrim mx-auto mb-4 w-fit rounded-full px-3 py-1 text-center text-sm font-medium uppercase tracking-wide text-text-secondary">{t("aiOptions.moreTitle")}</h3>
+        <ul className="grid gap-4 sm:grid-cols-2">
+          {(t.raw("aiOptions.more") as { title: string; description: string }[]).map((option, index) => {
+            const Icon = AI_OPTION_ICONS[index] ?? Bot;
+            return (
+              <li key={option.title} className="scrim flex gap-4 rounded-2xl border border-border p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Icon className="h-5 w-5 text-primary" aria-hidden />
+                </span>
+                <div className="space-y-1">
+                  <h4 className="font-semibold">{option.title}</h4>
+                  <p className="text-sm leading-relaxed text-text-secondary">{option.description}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
 

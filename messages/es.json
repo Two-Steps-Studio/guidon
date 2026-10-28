@@ -208,32 +208,67 @@
     "progress": "{done} de {total} tareas hechas"
   },
   "landing": {
-    "heroTitle": "Pásale la tarea a tu agente de IA. Ya conoce el proyecto.",
-    "heroSubtitle": "Conecta Claude Code, Codex o Cursor en dos minutos. Tu agente toma una tarea del tablero, lee las decisiones, la memoria del proyecto y los intentos anteriores que hay detrás, y te devuelve el trabajo para que lo revises.",
+    "heroTitle": "Un tablero para el trabajo de tu equipo. Tu IA también puede ayudar.",
+    "heroSubtitle": "Planificad, asignad y terminad tareas juntos, con las decisiones y el historial de cada una justo al lado. Cuando quieras ayuda, conecta Claude, ChatGPT, Cursor, Codex o cualquier app MCP: trabaja con las mismas tareas y tú revisas lo que hace.",
     "howItWorks": {
       "title": "Cómo funciona",
       "steps": [
         {
-          "title": "Conecta tu agente",
-          "description": "Elige Claude Code, Codex, Cursor o cualquier app MCP y pega la configuración que te muestra Guidon: una línea para Claude Code. Guidon te avisa cuando el agente se conecta."
+          "title": "Planificad juntos",
+          "description": "Un tablero por proyecto: tareas, responsables, fechas, etiquetas, comentarios y subtareas. Funciona en el móvil y las columnas siguen la forma de trabajar de tu equipo."
         },
         {
-          "title": "Toma una tarea, con contexto",
-          "description": "Tu agente toma la siguiente tarea de To do y lee lo que importa para ella: decisiones, reglas del proyecto, memoria y lo que ya se intentó sin éxito."
+          "title": "El porqué junto a la tarea",
+          "description": "Decisiones, fuentes y notas viven junto al trabajo que explican: nadie tiene que preguntar dos veces y quien llega nuevo se pone al día solo."
         },
         {
-          "title": "Tú revisas el trabajo",
-          "description": "Las tareas terminadas llegan a Review con un resumen, los archivos cambiados y lo que intentó el agente. Tú decides qué está hecho."
+          "title": "Suma IA cuando quieras",
+          "description": "Conecta la app de IA que ya usas. Toma una tarea, lee su contexto y devuelve el trabajo a Review: una persona decide qué está terminado. Guidon también funciona por completo sin IA."
         }
       ]
     },
-    "getStarted": "Empieza gratis - conecta tu agente",
+    "aiOptions": {
+      "title": "Funciona con la IA que ya usas",
+      "subtitle": "Opcional y a tu manera: una app de IA solo llega a los proyectos a los que tú llegas, con los permisos que le des, y la desconectas con un clic.",
+      "appsTitle": "Apps de IA",
+      "apps": [
+        "Claude (web, escritorio, móvil)",
+        "ChatGPT",
+        "Claude Code",
+        "Claude Desktop",
+        "Cursor",
+        "VS Code",
+        "Codex CLI",
+        "Gemini CLI",
+        "Cualquier app MCP"
+      ],
+      "moreTitle": "Otras formas",
+      "more": [
+        {
+          "title": "API REST y webhooks",
+          "description": "Tus scripts y servicios leen y cambian tareas; los webhooks les avisan cuando pasa algo."
+        },
+        {
+          "title": "GitHub",
+          "description": "Los commits y pull requests que mencionan una tarea se enlazan con ella y pueden moverla."
+        },
+        {
+          "title": "Agentes en el navegador",
+          "description": "Un agente de navegador en tu pestaña de Guidon usa el tablero mediante WebMCP, como tú."
+        },
+        {
+          "title": "Chat de IA integrado",
+          "description": "Pregunta sobre una tarea con tu propia clave: Anthropic, OpenAI, OpenRouter o Groq, u Ollama si alojas Guidon tú mismo."
+        }
+      ]
+    },
+    "getStarted": "Empieza gratis",
     "signIn": "Iniciar sesión",
     "trySandbox": "Prueba gratis el sandbox de API y agentes",
     "freePlan": "Plan gratuito",
     "selfServeApiKey": "Crea tu propia clave de API",
-    "featuresTitle": "El contexto con el que trabaja tu agente",
-    "featuresSubtitle": "Cada tarea llega con las decisiones, fuentes y memoria que hay detrás, para ti y para cada agente que conectes.",
+    "featuresTitle": "Todo sobre el trabajo, en un solo lugar",
+    "featuresSubtitle": "Hecho primero para personas. Cada tarea conserva las decisiones, fuentes y memoria que hay detrás, para tu equipo y para cualquier IA que conectes.",
     "features": {
       "taskBoard": {
         "title": "Tablero de tareas",
@@ -338,13 +373,13 @@
       "apiDocs": "Docs de API y MCP"
     },
     "heroShotTitle": "El panel de Guidon",
-    "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo próximo, actividad del equipo y de la IA, progreso de proyectos",
+    "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo siguiente, la actividad reciente del equipo y el progreso de los proyectos",
     "faq": {
       "title": "Preguntas frecuentes",
       "items": [
         {
           "q": "¿Qué es Guidon?",
-          "a": "Guidon es gestión de proyectos para equipos de desarrollo centrada en el contexto. Cada proyecto tiene un tablero Kanban y, junto a él, las decisiones detrás del trabajo, las fuentes en las que se apoya el equipo, las tecnologías en uso, una hoja de ruta y una memoria del proyecto, así que quien toma una tarea, una persona o un agente de IA, recibe también el motivo por el que existe."
+          "a": "Guidon es un tablero de proyectos para equipos. Cada proyecto tiene un tablero Kanban y, junto a él, las decisiones detrás del trabajo, las fuentes y tecnologías que usa, una hoja de ruta y una memoria del proyecto, así que quien toma una tarea también recibe el motivo por el que existe. La IA es opcional: puedes conectar Claude, ChatGPT, Cursor, Codex y otras apps, y trabajan con las mismas tareas bajo tu revisión."
         },
         {
           "q": "¿Guidon es gratis?",

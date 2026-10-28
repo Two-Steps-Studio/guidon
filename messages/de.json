@@ -208,32 +208,67 @@
     "progress": "{done} von {total} Aufgaben erledigt"
   },
   "landing": {
-    "heroTitle": "Gib die Aufgabe deinem KI-Agenten. Er kennt das Projekt schon.",
-    "heroSubtitle": "Verbinde Claude Code, Codex oder Cursor in zwei Minuten. Dein Agent nimmt eine Aufgabe vom Board, liest die Entscheidungen, das Projektgedächtnis und frühere Versuche dahinter und gibt die Arbeit zur Prüfung an dich zurück.",
+    "heroTitle": "Ein Board für die Arbeit deines Teams. Deine KI kann mithelfen.",
+    "heroSubtitle": "Plant, verteilt und erledigt Aufgaben gemeinsam – Entscheidungen und Verlauf jeder Aufgabe liegen direkt daneben. Wenn du Hilfe willst, verbinde Claude, ChatGPT, Cursor, Codex oder jede MCP-App: Sie arbeitet mit denselben Aufgaben, und du prüfst, was sie tut.",
     "howItWorks": {
-      "title": "So funktioniert es",
+      "title": "So funktioniert's",
       "steps": [
         {
-          "title": "Agent verbinden",
-          "description": "Wähle Claude Code, Codex, Cursor oder eine andere MCP-App und füge die Einrichtung ein, die Guidon dir zeigt - für Claude Code eine Zeile. Guidon sagt dir, sobald der Agent verbunden ist."
+          "title": "Gemeinsam planen",
+          "description": "Ein Board pro Projekt: Aufgaben, Zuständige, Fälligkeiten, Labels, Kommentare und Unteraufgaben. Funktioniert auf dem Handy, und die Spalten folgen eurer Arbeitsweise."
         },
         {
-          "title": "Er nimmt eine Aufgabe, mit Kontext",
-          "description": "Dein Agent nimmt die nächste Aufgabe aus To do und liest, was dafür zählt: Entscheidungen, Projektregeln, Gedächtnis und was schon versucht wurde und gescheitert ist."
+          "title": "Das Warum neben der Aufgabe",
+          "description": "Entscheidungen, Quellen und Notizen liegen bei der Arbeit, die sie erklären – niemand muss zweimal fragen, und Neue arbeiten sich selbst ein."
         },
         {
-          "title": "Du prüfst die Arbeit",
-          "description": "Fertige Aufgaben landen in Review, mit Zusammenfassung, geänderten Dateien und den Versuchen des Agenten. Du entscheidest, was fertig ist."
+          "title": "KI dazuholen, wenn du willst",
+          "description": "Verbinde die KI-App, die du schon nutzt. Sie nimmt eine Aufgabe, liest ihren Kontext und gibt die Arbeit ins Review – ein Mensch entscheidet, was fertig ist. Guidon funktioniert auch komplett ohne KI."
         }
       ]
     },
-    "getStarted": "Kostenlos starten - Agent verbinden",
+    "aiOptions": {
+      "title": "Funktioniert mit der KI, die du schon nutzt",
+      "subtitle": "Optional und zu deinen Bedingungen: Eine KI-App erreicht nur die Projekte, die du erreichst, mit den Rechten, die du ihr gibst, und du trennst sie mit einem Klick.",
+      "appsTitle": "KI-Apps",
+      "apps": [
+        "Claude (Web, Desktop, Mobil)",
+        "ChatGPT",
+        "Claude Code",
+        "Claude Desktop",
+        "Cursor",
+        "VS Code",
+        "Codex CLI",
+        "Gemini CLI",
+        "Jede MCP-App"
+      ],
+      "moreTitle": "Weitere Wege",
+      "more": [
+        {
+          "title": "REST-API und Webhooks",
+          "description": "Eigene Skripte und Dienste lesen und ändern Aufgaben; Webhooks melden ihnen, wenn etwas passiert."
+        },
+        {
+          "title": "GitHub",
+          "description": "Commits und Pull Requests, die eine Aufgabe erwähnen, werden mit ihr verknüpft und können sie weiterschieben."
+        },
+        {
+          "title": "Agenten im Browser",
+          "description": "Ein Browser-Agent in deinem Guidon-Tab nutzt das Board über WebMCP, als du."
+        },
+        {
+          "title": "Eingebauter KI-Chat",
+          "description": "Frag zu einer Aufgabe mit deinem eigenen Schlüssel: Anthropic, OpenAI, OpenRouter oder Groq, oder Ollama, wenn du Guidon selbst hostest."
+        }
+      ]
+    },
+    "getStarted": "Kostenlos starten",
     "signIn": "Anmelden",
     "trySandbox": "Kostenlose API- und Agenten-Sandbox testen",
     "freePlan": "Kostenloser Tarif",
     "selfServeApiKey": "API-Schlüssel selbst erstellen",
-    "featuresTitle": "Der Kontext, mit dem dein Agent arbeitet",
-    "featuresSubtitle": "Jede Aufgabe bringt die Entscheidungen, Quellen und das Gedächtnis dahinter mit - für dich und für jeden Agenten, den du verbindest.",
+    "featuresTitle": "Alles zur Arbeit an einem Ort",
+    "featuresSubtitle": "Zuerst für Menschen gemacht. Jede Aufgabe behält die Entscheidungen, Quellen und das Gedächtnis dahinter – für dein Team und für jede KI, die du verbindest.",
     "features": {
       "taskBoard": {
         "title": "Aufgabenboard",
@@ -338,13 +373,13 @@
       "apiDocs": "API- & MCP-Doku"
     },
     "heroShotTitle": "Das Guidon-Dashboard",
-    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, Team- und KI-Aktivität, Projektfortschritt",
+    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, letzte Team-Aktivität und Projektfortschritt",
     "faq": {
       "title": "Häufige Fragen",
       "items": [
         {
           "q": "Was ist Guidon?",
-          "a": "Guidon ist Projektmanagement für Entwicklungsteams, bei dem der Kontext im Mittelpunkt steht. Jedes Projekt hat ein Kanban-Board und daneben die Entscheidungen hinter der Arbeit, die Quellen des Teams, die eingesetzten Technologien, eine Roadmap und ein Projektgedächtnis - wer eine Aufgabe übernimmt, ob Mensch oder KI-Agent, bekommt also auch den Grund, warum es sie gibt."
+          "a": "Guidon ist ein Projekt-Board für Teams. Jedes Projekt hat ein Kanban-Board und daneben die Entscheidungen hinter der Arbeit, genutzte Quellen und Technologien, eine Roadmap und ein Projektgedächtnis – wer eine Aufgabe übernimmt, bekommt auch den Grund dafür. KI ist optional: Du kannst Claude, ChatGPT, Cursor, Codex und andere Apps verbinden, und sie arbeiten mit denselben Aufgaben unter deiner Prüfung."
         },
         {
           "q": "Ist Guidon kostenlos?",

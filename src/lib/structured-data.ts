@@ -13,7 +13,7 @@ const SUPPORT_EMAIL = "guidon.support@gmail.com";
  */
 
 export const DESCRIPTION =
-  "A task board your AI agent works from: connect Claude Code, Codex or Cursor over MCP, and the agent takes tasks with the decisions, project memory and earlier attempts behind them, then hands the work back for review. Project management for small development teams, with a REST API.";
+  "A project board for teams: plan, assign and finish tasks together, with the decisions and history behind each one kept next to it. Optional AI: connect Claude, ChatGPT, Cursor, Codex or any MCP app, plus a REST API, webhooks and GitHub, and it works from the same tasks under your review.";
 
 /** Profiles that are the same entity, for disambiguation - add LinkedIn/X/Wikidata here once they exist. */
 export const SAME_AS: readonly string[] = [GITHUB_REPO_URL];
@@ -90,7 +90,7 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
         "@type": "WebPage",
         "@id": `${siteUrl}/#webpage`,
         url: siteUrl,
-        name: "Guidon - Hand the task to your AI agent. It already knows the project.",
+        name: "Guidon - One board for your team's work. Your AI can help too.",
         description: DESCRIPTION,
         isPartOf: { "@id": `${siteUrl}/#website` },
         about: { "@id": `${siteUrl}/#software` },

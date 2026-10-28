@@ -36,7 +36,7 @@ minuty, zapisz gdzie i dopiero wtedy pomóż. Notuj czasy od startu sesji.
 
 | # | Zadanie dla testera (powiedz dokładnie tak) | Sukces, gdy | Zapisz |
 |---|---|---|---|
-| 1 | „Otwórz useguidon.com. Masz 10 sekund. Co to jest i dla kogo?” | Mówi własnymi słowami coś w stylu „agent AI bierze zadania z tablicy i zna projekt” | Dokładne słowa testera |
+| 1 | „Otwórz useguidon.com. Masz 10 sekund. Co to jest i dla kogo?” | Mówi własnymi słowami coś w stylu „tablica zadań dla zespołu, do której można podpiąć AI” | Dokładne słowa testera |
 | 2 | „Załóż konto i projekt, w którym chciałbyś, żeby Twój agent coś zrobił.” | Jest na tablicy projektu | Czas; gdzie się zatrzymał |
 | 3 | „Podłącz swojego agenta.” | Okno pokazuje „Connected” | Czas; którą aplikację wybrał; czy instrukcja zadziałała za pierwszym razem |
 | 4 | „Daj agentowi pierwsze zadanie i poczekaj, aż skończy.” | Zadanie jest w Review z komentarzem agenta | Czas od rejestracji; czy użył zadań startowych; czy agent zajrzał do kontekstu |

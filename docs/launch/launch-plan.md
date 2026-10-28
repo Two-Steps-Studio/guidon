@@ -1,16 +1,26 @@
 # Plan premiery darmowej bety
 
 Guidon task `5020258d`. Wynika z decyzji „Zasada fokusu: jak coś jest do
-wszystkiego, to jest do niczego” (Guidon → Decyzje). Mówimy jedną rzecz:
+wszystkiego, to jest do niczego” (Guidon → Decyzje), doprecyzowanej
+2026-10-28: Guidon jest **przede wszystkim dla ludzi**, a AI to opcja z wieloma
+sposobami podpięcia. Mówimy jedną rzecz:
 
-> **Hand the task to your AI agent. It already knows the project.**
-> Connect Claude Code, Codex or Cursor in two minutes. Your agent takes a task
-> from the board, reads the decisions, project memory and earlier attempts
-> behind it, and hands the work back for your review.
+> **One board for your team's work. Your AI can help too.**
+> Plan, assign and finish tasks together, with the decisions and history
+> behind each one kept right next to it. When you want help, connect Claude,
+> ChatGPT, Cursor, Codex or any MCP app: it works from the same tasks, and
+> you review what it does.
 
-Nie reklamujemy modułów, marketplace'u, sandboxa, roadmapy ani AI chatu.
-Istnieją, ale nie są powodem rejestracji. Kto o nie zapyta, dostaje
-odpowiedź w komentarzu.
+Na stronie głównej AI ma własną sekcję „Works with the AI you already use”
+(aplikacje MCP, REST API i webhooki, GitHub, agenci w przeglądarce, czat z
+własnym kluczem), ale nie jest obietnicą z nagłówka.
+
+W miejscach dla ludzi pracujących z AI (r/ClaudeAI, Discordy Claude
+Code/Cursor, Show HN) posty niżej nadal zaczynają od agenta, bo tam to jest
+powód kliknięcia. Na landingu i w ogólnych miejscach zaczynamy od zespołu.
+
+Nie reklamujemy modułów, marketplace'u ani sandboxa. Istnieją, ale nie są
+powodem rejestracji. Kto o nie zapyta, dostaje odpowiedź w komentarzu.
 
 ## Warunki startu (wszystkie muszą być spełnione)
 
