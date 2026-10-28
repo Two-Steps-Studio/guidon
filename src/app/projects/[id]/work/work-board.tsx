@@ -43,6 +43,7 @@ import { addAgentStarterTasks } from "./starter-actions";
 import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
 import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
+import { isNetworkError } from "@/lib/work/task-drafts";
 import type { Task, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
 
@@ -275,7 +276,10 @@ export function WorkBoard({
           (a.sort_order ?? 0) - (b.sort_order ?? 0)
       )
       .map((task) => task.id);
-    const result = await bulkUpdateTasks(projectId, ids, operation);
+    const result = await bulkUpdateTasks(projectId, ids, operation).catch((error: unknown) => ({
+      error: isNetworkError(error) ? t("networkError") : t("failedToSaveTask"),
+      count: 0,
+    }));
     if (result.error) {
       playSound("error");
       toast.error(result.error);
@@ -342,7 +346,13 @@ export function WorkBoard({
       ),
     }));
 
-    const result = await moveTask(projectId, task.id, status, sortOrder);
+    // A request that never reached the server rejects instead of returning
+    // an error; it must roll back too, never leave the card looking moved.
+    const result = await moveTask(projectId, task.id, status, sortOrder).catch((error: unknown) => ({
+      error: isNetworkError(error) ? t("moveNotSaved", { title: task.title }) : t("failedToSaveTask"),
+      offline: true,
+      created: undefined,
+    }));
     if (result.error) {
       // Roll back only this task's fields, not the whole tasks array as a
       // snapshot taken at the start of this call - restoring the full
@@ -359,7 +369,9 @@ export function WorkBoard({
         ),
       }));
       playSound("error");
-      toast.error(result.error);
+      toast.error(result.error, "offline" in result ? {
+        action: { label: t("retryMove"), onClick: () => void handleMoveRef.current({ ...task, status: previousStatus, sort_order: previousSortOrder }, status, sortOrder) },
+      } : undefined);
       setMoveAnnouncement(result.error);
       return;
     }

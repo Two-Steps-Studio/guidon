@@ -12,6 +12,7 @@ import { ensureNextOccurrence } from "@/lib/work/recurrence";
 import { normalizeRecurrence } from "@/lib/work/recurrence-core";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
 import { tr } from "@/lib/i18n/server-errors";
+import { isValidUuid } from "@/lib/api/validate-id";
 
 /** `created`: a repeating task's next occurrence (and its subtasks), made because this finished it. */
 export type TaskActionResult = { task: Task | null; error: string | null; created?: Task[]; code?: "conflict" | "version_unavailable" };
@@ -109,6 +110,12 @@ export async function createTask(
     sortOrder: number;
     /** Labels, as typed or picked from the project's presets. */
     tags?: string[];
+    /**
+     * The new task's id, chosen by the form once. Retrying after a response
+     * that never arrived (the insert may have committed) returns the task
+     * already made instead of a second copy.
+     */
+    clientId?: string;
   }
 ): Promise<TaskActionResult> {
   const access = await getProjectAccess(projectId);
@@ -116,6 +123,23 @@ export async function createTask(
   if (!access || !canWriteProject(access.role)) {
     return { task: null, error: await tr("You do not have permission to create tasks.") };
   }
+
+  const clientId = typeof input.clientId === "string" && isValidUuid(input.clientId) ? input.clientId : undefined;
+  // Only this user's own task in this project counts as "already created";
+  // any other row with that id stays invisible and the insert below fails.
+  const alreadyCreated = async () => {
+    if (!clientId) return null;
+    const { data } = await dataClient(access.userId)
+      .from<Task>("tasks")
+      .select("*")
+      .eq("id", clientId)
+      .eq("project_id", projectId)
+      .eq("created_by", access.userId)
+      .maybeSingle();
+    return data ?? null;
+  };
+  const existing = await alreadyCreated();
+  if (existing) return { task: existing, error: null };
 
   const limitError = await hostedTaskLimitError(projectId, access.project.organization_id);
   if (limitError) return { task: null, error: limitError };
@@ -137,6 +161,7 @@ export async function createTask(
   const { data: task, error } = await dataClient(access.userId)
     .from<Task>("tasks")
     .insert({
+      ...(clientId ? { id: clientId } : {}),
       project_id: projectId,
       title: input.title.trim(),
       description,
@@ -151,6 +176,11 @@ export async function createTask(
     .select("*")
     .single();
 
+  if (error?.code === "23505") {
+    // Two retries raced: the other one inserted it.
+    const raced = await alreadyCreated();
+    if (raced) return { task: raced, error: null };
+  }
   if (error || !task) return { task: null, error: error?.message ?? "Failed to create task." };
 
   await logActivity({

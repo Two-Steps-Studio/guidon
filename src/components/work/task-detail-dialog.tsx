@@ -5,6 +5,7 @@ import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { confirmAction } from "@/components/ui/confirm-action";
 import { Check, Copy, Eye, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
+import { clearTaskDraft, isNetworkError, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
 import { MarkdownPreview } from "@/components/files/markdown-preview";
 import { useTranslations } from "next-intl";
 import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
@@ -163,11 +164,19 @@ function TaskDetailDialogInner({
     });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const requestClose = useGuardedClose(!!task && JSON.stringify(form) !== JSON.stringify(formToTask(task)), saving || deleting, onClose);
+  const dirty = !!task && JSON.stringify(form) !== JSON.stringify(formToTask(task));
+  // Unsaved edits also live in this browser (lib/work/task-drafts.ts) until
+  // they are saved or deliberately discarded, so a crash or a killed mobile
+  // tab doesn't lose them.
+  const draftKey = task && canEdit && currentUserId ? taskDraftKey(currentUserId, task.id) : null;
+  const discardDraft = () => { if (draftKey) clearTaskDraft(draftKey); };
+  const requestClose = useGuardedClose(dirty, saving || deleting, () => { discardDraft(); onClose(); });
   const [error, setError] = useState<string | null>(null);
   // This version belongs to the form's initial snapshot, even if parent props
-  // change while the person is typing. Never advance it behind their edits.
-  const [editRevision] = useState(task?.revision ?? -1);
+  // change while the person is typing. Never advance it behind their edits -
+  // a restored draft keeps the version it was written against.
+  const [editRevision, setEditRevision] = useState(task?.revision ?? -1);
+  const [draftRestoredAt, setDraftRestoredAt] = useState<number | null>(null);
   const [editConflict, setEditConflict] = useState(false);
   // A written description opens rendered (links clickable, lists and
   // checklists as such) and "Edit" switches to the text; an empty one opens
@@ -243,6 +252,28 @@ function TaskDetailDialogInner({
     void loadWhy(taskId);
   }, [taskId, loadWhy]);
 
+  // Restored after mount, not in the state initialisers: the dialog can be
+  // server-rendered (?openTask=), and the server has no drafts.
+  const restoreChecked = useRef(false);
+  useEffect(() => {
+    if (restoreChecked.current || !draftKey || !task || !currentUserId) return;
+    restoreChecked.current = true;
+    const draft = readTaskDraft<TaskForm>(draftKey, currentUserId);
+    if (!draft) return;
+    const current = formToTask(task);
+    const restored = { ...current, ...draft.form };
+    if (JSON.stringify(restored) === JSON.stringify(current)) return clearTaskDraft(draftKey);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm(restored);
+    setEditRevision(draft.revision);
+    setDraftRestoredAt(draft.savedAt);
+  }, [draftKey, task, currentUserId]);
+  useEffect(() => {
+    if (!draftKey || !currentUserId || !dirty || !restoreChecked.current) return;
+    const timer = window.setTimeout(() => writeTaskDraft(draftKey, { userId: currentUserId, revision: editRevision, form }), 300);
+    return () => window.clearTimeout(timer);
+  }, [draftKey, currentUserId, dirty, editRevision, form]);
+
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!task || !form) return;
@@ -284,12 +315,13 @@ function TaskDetailDialogInner({
       if (result.error || !result.task) { setEditConflict(result.code === "conflict" || result.code === "version_unavailable"); throw new Error(result.error ?? t("failedToSaveTask")); }
 
       if (result.task.is_done && !task.is_done) playSound("complete");
+      discardDraft();
       onSaved(result.task);
       // A repeating task finished here: its next occurrence joins the board.
       result.created?.forEach(onSaved);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToSaveTask"));
+      setError(isNetworkError(err) ? t("networkError") : err instanceof Error ? err.message : t("failedToSaveTask"));
     } finally {
       setSaving(false);
     }
@@ -306,11 +338,12 @@ function TaskDetailDialogInner({
       const result = await deleteTask(projectId, task.id);
       if (result.error) throw new Error(result.error);
 
+      discardDraft();
       onDeleted(task.id);
       onClose();
       toast.success(t("taskDeletedToast", { title: task.title }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToDeleteTask"));
+      setError(isNetworkError(err) ? t("networkError") : err instanceof Error ? err.message : t("failedToDeleteTask"));
     } finally {
       setDeleting(false);
     }
@@ -705,6 +738,17 @@ function TaskDetailDialogInner({
             </p>
           </div>
 
+          {draftRestoredAt !== null && (
+            <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
+              <span>{t("draftRestored", { time: new Date(draftRestoredAt).toLocaleString() })}</span>
+              <Button type="button" size="sm" variant="ghost" onClick={() => {
+                discardDraft();
+                setForm(formToTask(task));
+                setEditRevision(task.revision ?? -1);
+                setDraftRestoredAt(null);
+              }}>{t("discardDraft")}</Button>
+            </div>
+          )}
           {error && (
             <p
               role="alert"
@@ -718,7 +762,7 @@ function TaskDetailDialogInner({
               const url = URL.createObjectURL(new Blob([JSON.stringify({ projectId, taskId: task.id, revision: editRevision, edits: form }, null, 2)], { type: "application/json" }));
               const link = document.createElement("a"); link.href = url; link.download = `guidon-task-draft-${task.id}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
             }}>{t("downloadTaskEdits")}</Button>
-            <Button type="button" variant="outline" onClick={() => void requestClose(() => window.location.reload(), { unload: true })}>{t("reloadTask")}</Button>
+            <Button type="button" variant="outline" onClick={() => void requestClose(() => { discardDraft(); window.location.reload(); }, { unload: true })}>{t("reloadTask")}</Button>
           </div>}
         </form>
 

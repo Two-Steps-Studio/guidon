@@ -948,7 +948,12 @@
         "closed": "zamknięty"
       }
     },
-    "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API."
+    "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API.",
+    "networkError": "Brak połączenia z Guidonem, więc nic nie zostało zapisane. Twój tekst jest nadal tutaj – sprawdź połączenie i spróbuj ponownie.",
+    "moveNotSaved": "Brak połączenia z Guidonem. „{title}” wróciło na swoje miejsce.",
+    "retryMove": "Ponów",
+    "draftRestored": "Przywrócono niezapisane zmiany z {time}. Nie są jeszcze zapisane.",
+    "discardDraft": "Odrzuć je"
   },
   "roadmap": {
     "title": "Plan działań",
