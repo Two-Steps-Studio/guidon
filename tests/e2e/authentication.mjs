@@ -9,7 +9,10 @@ async function login(page,origin,email,password,destination="/dashboard"){
   await page.locator("#password").fill(password);
   assert.equal(await page.locator("#email").inputValue(),email);
   assert.equal(await page.locator("#password").inputValue(),password);
-  await page.locator('button[type="submit"]').click();
+  // Enter submits like a person does, and doesn't wait for WebKit to report
+  // the button "stable" (it can stop painting a page it keeps running).
+  await page.locator('button[type="submit"]').waitFor();
+  await page.locator("#password").press("Enter");
   await page.waitForURL(url=>url.pathname===destination);
   await page.getByRole("heading",{level:1}).waitFor();
 }
