@@ -32,9 +32,10 @@ async function mintApiKey(
   userId: string,
   name: string,
   scopes: string[],
-  binding: { projectId: string; allowedOrigins: string[] | null } | null = null
+  binding: { projectId: string; allowedOrigins: string[] | null } | null = null,
+  expiresAt: Date | null = null
 ): Promise<CreateApiKeyState> {
-  const result = await mintApiKeyRow(dataClient(userId), userId, name, scopes, binding);
+  const result = await mintApiKeyRow(dataClient(userId), userId, name, scopes, binding, expiresAt);
   // The row is returned to the caller (not just revalidatePath'd) so the
   // client component can append the new key to its list immediately - it
   // holds `keys` in useState seeded from the initial server render, which
@@ -66,7 +67,13 @@ export async function createApiKey(
     };
   }
 
-  return mintApiKey(user.id, name.trim(), selectedScopes);
+  // "30" / "90" / "365" days, or "never". A key given to an agent should end
+  // on its own; the form's default is 90 days.
+  const expires = formData.get("expires");
+  const days = expires === "never" ? null : [30, 90, 365].includes(Number(expires)) ? Number(expires) : 90;
+  const expiresAt = days === null ? null : new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+  return mintApiKey(user.id, name.trim(), selectedScopes, null, expiresAt);
 }
 
 // Everything the MCP endpoint's tools can call (src/lib/mcp/http/tools.ts) -

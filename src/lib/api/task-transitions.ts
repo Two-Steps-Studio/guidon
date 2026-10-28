@@ -8,9 +8,10 @@ import { apiDataClient } from "./api-data-client";
 import type { TaskStatus } from "@/types/task";
 import type { ActivityAction } from "@/types/api";
 import { appChangeDetails } from "@/lib/work/app-changes-core";
+import { claimTask, claimedElsewhereMessage, foreignClaim, type TaskClaim } from "./task-claims";
 
 export type TransitionResult =
-  | { ok: true; task: Record<string, unknown> }
+  | { ok: true; task: Record<string, unknown>; claim?: TaskClaim }
   | { ok: false; error: string; status: number };
 
 interface ProjectAiPermissions {
@@ -194,6 +195,8 @@ export interface TransitionActor {
   botLabel?: string | null;
   /** The API key's name, stored with the change ("Changes by apps" in the task dialog). */
   keyName?: string | null;
+  /** The calling API key - an agent's claim on a task is held by its key (task-claims.ts). */
+  apiKeyId?: string | null;
   humanClient?: boolean;
 }
 
@@ -212,7 +215,16 @@ export async function startTask(userId: string, taskId: string, actor: Transitio
       return { ok: false, error: "AI is not permitted to change task status on this project.", status: 403 };
     }
   }
-  return setStatusAndLog(
+  // An agent claims the task first: if another agent's lease is running, it
+  // gets a 409 instead of both working on the same task.
+  let claim: TaskClaim | undefined;
+  if (!actor.humanClient && actor.apiKeyId) {
+    const result = await claimTask(apiDataClient(userId), taskId, actor.apiKeyId, actor.botLabel ?? actor.keyName ?? null);
+    if (result.error || !result.claim) return { ok: false, error: result.error ?? "Could not claim this task.", status: 403 };
+    if (!result.claim.claimed) return { ok: false, error: claimedElsewhereMessage(result.claim), status: 409 };
+    claim = result.claim;
+  }
+  const started = await setStatusAndLog(
     userId,
     taskId,
     ctx.projectId,
@@ -224,6 +236,14 @@ export async function startTask(userId: string, taskId: string, actor: Transitio
     actor,
     ctx.status
   );
+  return started.ok && claim ? { ...started, claim } : started;
+}
+
+/** 409 when another agent's lease on the task is running; agents only. */
+async function claimConflict(userId: string, taskId: string, actor: TransitionActor): Promise<TransitionResult | null> {
+  if (actor.humanClient || !actor.apiKeyId) return null;
+  const other = await foreignClaim(apiDataClient(userId), taskId, actor.apiKeyId);
+  return other ? { ok: false, error: claimedElsewhereMessage(other), status: 409 } : null;
 }
 
 export async function completeTask(userId: string, taskId: string, actor: TransitionActor = {}): Promise<TransitionResult> {
@@ -242,6 +262,8 @@ export async function completeTask(userId: string, taskId: string, actor: Transi
       return { ok: false, error: "This API key's AI permissions do not include completing tasks. Or ask a person to approve it: POST /api/v1/tasks/{id}/approval-requests {\"action\":\"complete_task\"} (MCP: request_approval), or move the task to review.", status: 403 };
     }
   }
+  const conflict = await claimConflict(userId, taskId, actor);
+  if (conflict) return conflict;
   return setStatusAndLog(
     userId,
     taskId,
@@ -293,6 +315,8 @@ export async function setTaskStatus(
       };
     }
   }
+  const conflict = await claimConflict(userId, taskId, actor);
+  if (conflict) return conflict;
   return setStatusAndLog(
     userId,
     taskId,
