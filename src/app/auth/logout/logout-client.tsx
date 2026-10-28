@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
-import { clearAllTaskDrafts } from '@/lib/work/task-drafts';
 import { logoutLocalAction } from './actions';
 
 export function LogoutClient({ local }: { local: boolean }) {
@@ -14,8 +13,6 @@ export function LogoutClient({ local }: { local: boolean }) {
 
   useEffect(() => {
     const logout = async () => {
-      // Unsaved task edits stay on this device only for the person who wrote them.
-      clearAllTaskDrafts();
       try {
         if (local) {
           await logoutLocalAction();
