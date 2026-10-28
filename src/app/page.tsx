@@ -206,7 +206,9 @@ export default async function Home() {
     </section>
 
     {/* Every way to bring AI in, all optional. Only what exists today: the
-        apps match the Connect dialog (src/app/profile/mcp-connect.tsx). */}
+        apps match the Connect dialog (src/app/profile/mcp-connect.tsx). The
+        pills and cards are opaque (bg-card), not scrim: thirteen more blurred
+        panels over the animated Dither kept WebKit from painting at all. */}
     <section className="border-t border-border py-20" aria-labelledby="ai-options-title">
       <div className="container mx-auto max-w-5xl px-4">
         <div className="scrim mx-auto mb-10 max-w-3xl space-y-3 rounded-2xl px-6 py-6 text-center">
@@ -218,7 +220,7 @@ export default async function Home() {
         <h3 className="scrim mx-auto mb-4 w-fit rounded-full px-3 py-1 text-center text-sm font-medium uppercase tracking-wide text-text-secondary">{t("aiOptions.appsTitle")}</h3>
         <ul className="mb-12 flex flex-wrap justify-center gap-2">
           {(t.raw("aiOptions.apps") as string[]).map((app) => (
-            <li key={app} className="scrim rounded-full border border-border px-4 py-2 text-sm font-medium">{app}</li>
+            <li key={app} className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium">{app}</li>
           ))}
         </ul>
         <h3 className="scrim mx-auto mb-4 w-fit rounded-full px-3 py-1 text-center text-sm font-medium uppercase tracking-wide text-text-secondary">{t("aiOptions.moreTitle")}</h3>
@@ -226,7 +228,7 @@ export default async function Home() {
           {(t.raw("aiOptions.more") as { title: string; description: string }[]).map((option, index) => {
             const Icon = AI_OPTION_ICONS[index] ?? Bot;
             return (
-              <li key={option.title} className="scrim flex gap-4 rounded-2xl border border-border p-5">
+              <li key={option.title} className="flex gap-4 rounded-2xl border border-border bg-card p-5">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                   <Icon className="h-5 w-5 text-primary" aria-hidden />
                 </span>

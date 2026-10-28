@@ -7,7 +7,7 @@
     "searchMs": 200,
     "parallelWritesMs": 800,
     "openTaskMs": 1000,
-    "saveTaskMs": 200,
+    "saveTaskMs": 500,
     "moveTaskMs": 300,
     "createTaskMs": 200
   },
