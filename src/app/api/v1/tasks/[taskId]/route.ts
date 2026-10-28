@@ -5,6 +5,7 @@ import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import type { TaskPriority } from "@/types/task";
 import { apiRoute } from "@/lib/api/api-route";
+import { TRACKED_TASK_FIELDS, appChangeDetails, diffTaskFields } from "@/lib/work/app-changes-core";
 
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
@@ -88,13 +89,15 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
   const db = apiDataClient(guard.userId);
 
   const { data: existing } = await db
-    .from<{ id: string; project_id: string }>("tasks")
-    .select("id, project_id")
+    .from<{ id: string; project_id: string } & Record<string, unknown>>("tasks")
+    // The fields an app can change, read first so the task dialog can show
+    // what changed and put it back ("Changes by apps").
+    .select(`id, project_id, ${TRACKED_TASK_FIELDS.join(", ")}`)
     .eq("id", taskId)
     .maybeSingle();
   if (!existing) return NextResponse.json({ error: "Task not found." }, { status: 404 });
 
-  const { data, error } = await db.from("tasks").update(patch).eq("id", taskId).select("*").maybeSingle();
+  const { data, error } = await db.from("tasks").update(patch).eq("id", taskId).eq("project_id", existing.project_id).select("*").maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   if (!data) {
@@ -114,6 +117,8 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
     action: "task_updated",
     entity_type: "task",
     entity_id: taskId,
+    actor_label: guard.botLabel,
+    details: appChangeDetails(guard.keyName, diffTaskFields(existing, data as Record<string, unknown>)),
   });
 
   return NextResponse.json({ task: data });

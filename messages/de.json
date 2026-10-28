@@ -989,7 +989,27 @@
     "moveNotSaved": "Guidon war nicht erreichbar. „{title}“ ist wieder an seinem Platz.",
     "retryMove": "Erneut versuchen",
     "draftRestored": "Ungespeicherte Änderungen von {time} wiederhergestellt. Sie sind noch nicht gespeichert.",
-    "discardDraft": "Verwerfen"
+    "discardDraft": "Verwerfen",
+    "appChanges": {
+      "title": "Änderungen durch Apps",
+      "hint": "Was KI-Apps, Agenten und Integrationen an dieser Aufgabe geändert haben. Prüfe es und mache rückgängig, was nicht hätte passieren sollen.",
+      "unknownApp": "Eine App",
+      "onBehalfOf": "für {person}",
+      "empty": "(leer)",
+      "changedTo": "geändert in",
+      "undo": "Rückgängig",
+      "undone": "Rückgängig gemacht",
+      "undoFailed": "Die Änderung konnte nicht rückgängig gemacht werden. Prüfe die Verbindung und versuche es erneut.",
+      "loadFailed": "Die Änderungen durch Apps konnten nicht geladen werden.",
+      "changedSince": "Unverändert gelassen, weil jemand sie inzwischen geändert hat: {fields}.",
+      "field": {
+        "title": "Titel",
+        "description": "Beschreibung",
+        "status": "Spalte",
+        "priority": "Priorität",
+        "due_date": "Fälligkeit"
+      }
+    }
   },
   "roadmap": {
     "title": "Roadmap",

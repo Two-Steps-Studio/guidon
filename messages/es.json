@@ -989,7 +989,27 @@
     "moveNotSaved": "No se pudo conectar con Guidon. «{title}» volvió a su sitio.",
     "retryMove": "Reintentar",
     "draftRestored": "Se restauraron cambios sin guardar de {time}. Aún no están guardados.",
-    "discardDraft": "Descartarlos"
+    "discardDraft": "Descartarlos",
+    "appChanges": {
+      "title": "Cambios hechos por apps",
+      "hint": "Lo que las apps de IA, los agentes y las integraciones cambiaron en esta tarea. Revísalo y deshaz lo que no debería haber pasado.",
+      "unknownApp": "Una app",
+      "onBehalfOf": "para {person}",
+      "empty": "(vacío)",
+      "changedTo": "cambiado a",
+      "undo": "Deshacer",
+      "undone": "Deshecho",
+      "undoFailed": "No se pudo deshacer el cambio. Revisa la conexión y vuelve a intentarlo.",
+      "loadFailed": "No se pudieron cargar los cambios hechos por apps.",
+      "changedSince": "Se dejaron como están porque alguien los cambió después: {fields}.",
+      "field": {
+        "title": "Título",
+        "description": "Descripción",
+        "status": "Columna",
+        "priority": "Prioridad",
+        "due_date": "Fecha límite"
+      }
+    }
   },
   "roadmap": {
     "title": "Hoja de ruta",

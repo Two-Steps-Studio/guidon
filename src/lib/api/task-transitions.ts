@@ -7,6 +7,7 @@ import { emitTaskEvent } from "@/lib/events/task-events";
 import { apiDataClient } from "./api-data-client";
 import type { TaskStatus } from "@/types/task";
 import type { ActivityAction } from "@/types/api";
+import { appChangeDetails } from "@/lib/work/app-changes-core";
 
 export type TransitionResult =
   | { ok: true; task: Record<string, unknown> }
@@ -22,13 +23,15 @@ async function loadProjectContext(
   taskId: string
 ): Promise<{
   projectId: string;
+  /** Before the change - kept with the change so the task dialog can put it back. */
+  status: string;
   aiEnabled: boolean;
   allowAutoComplete: boolean;
   permissions: ProjectAiPermissions;
 } | null> {
   if (hasDirectDatabase()) {
     const task = await withUser(userId, ({ query }) =>
-      query("SELECT project_id FROM tasks WHERE id = $1", [taskId])
+      query("SELECT project_id, status FROM tasks WHERE id = $1", [taskId])
     );
     if (task.rows.length === 0) return null;
     const projectId = task.rows[0].project_id as string;
@@ -51,6 +54,7 @@ async function loadProjectContext(
 
     return {
       projectId,
+      status: task.rows[0].status as string,
       aiEnabled: project.rows[0]?.ai_enabled ?? true,
       allowAutoComplete: project.rows[0]?.allow_ai_auto_complete ?? false,
       permissions: perms.rows[0] ?? { can_change_status: true, can_complete_tasks: false },
@@ -59,7 +63,7 @@ async function loadProjectContext(
 
   const supabase = await getApiUserClient(userId);
 
-  const { data: task } = await supabase.from("tasks").select("project_id").eq("id", taskId).maybeSingle();
+  const { data: task } = await supabase.from("tasks").select("project_id, status").eq("id", taskId).maybeSingle();
   if (!task) return null;
 
   const [{ data: project }, { data: perms }] = await Promise.all([
@@ -73,6 +77,7 @@ async function loadProjectContext(
 
   return {
     projectId: task.project_id,
+    status: task.status,
     aiEnabled: project?.ai_enabled ?? true,
     allowAutoComplete: project?.allow_ai_auto_complete ?? false,
     permissions: perms ?? { can_change_status: true, can_complete_tasks: false },
@@ -85,8 +90,14 @@ async function setStatusAndLog(
   projectId: string,
   newStatus: TaskStatus,
   action: ActivityAction,
-  botLabel: string | null
+  actor: TransitionActor,
+  previousStatus: string
 ): Promise<TransitionResult> {
+  const botLabel = actor.botLabel ?? null;
+  const details = appChangeDetails(
+    actor.keyName ?? null,
+    previousStatus === newStatus ? {} : { status: { from: previousStatus, to: newStatus } }
+  );
   if (hasDirectDatabase()) {
     return withUser(userId, async ({ query }) => {
       let result;
@@ -115,9 +126,9 @@ async function setStatusAndLog(
         };
       }
       await query(
-        `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id, actor_label)
-         VALUES ($1, $2, $3, 'task', $4, $5)`,
-        [projectId, userId, action, taskId, botLabel]
+        `INSERT INTO activity_logs (project_id, user_id, action, entity_type, entity_id, actor_label, details)
+         VALUES ($1, $2, $3, 'task', $4, $5, $6)`,
+        [projectId, userId, action, taskId, botLabel, JSON.stringify(details)]
       );
       const title = (result.rows[0].title as string) ?? "";
       emitTaskEvent(
@@ -156,7 +167,7 @@ async function setStatusAndLog(
 
   await supabase
     .from("activity_logs")
-    .insert({ project_id: projectId, user_id: userId, action, entity_type: "task", entity_id: taskId, actor_label: botLabel });
+    .insert({ project_id: projectId, user_id: userId, action, entity_type: "task", entity_id: taskId, actor_label: botLabel, details });
 
   const title = (data as { title?: string }).title ?? "";
   emitTaskEvent(
@@ -181,6 +192,8 @@ async function setStatusAndLog(
  */
 export interface TransitionActor {
   botLabel?: string | null;
+  /** The API key's name, stored with the change ("Changes by apps" in the task dialog). */
+  keyName?: string | null;
   humanClient?: boolean;
 }
 
@@ -208,7 +221,8 @@ export async function startTask(userId: string, taskId: string, actor: Transitio
     // plain in-progress work.
     ctx.aiEnabled ? "ai_working" : "in_progress",
     actor.humanClient ? "task_status_changed" : "task_ai_started",
-    actor.botLabel ?? null
+    actor,
+    ctx.status
   );
 }
 
@@ -234,7 +248,8 @@ export async function completeTask(userId: string, taskId: string, actor: Transi
     ctx.projectId,
     "done",
     actor.humanClient ? "task_status_changed" : "task_ai_completed",
-    actor.botLabel ?? null
+    actor,
+    ctx.status
   );
 }
 
@@ -284,6 +299,7 @@ export async function setTaskStatus(
     ctx.projectId,
     newStatus,
     actor.humanClient ? "task_status_changed" : "task_ai_status_changed",
-    actor.botLabel ?? null
+    actor,
+    ctx.status
   );
 }

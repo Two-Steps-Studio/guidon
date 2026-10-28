@@ -16,6 +16,7 @@ import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { TaskLinksPanel } from "@/components/work/task-links-panel";
 import { TaskAttemptsSection } from "@/components/work/task-attempts-section";
+import { TaskAppChangesSection } from "@/components/work/task-app-changes-section";
 import { TaskAttachmentsSection } from "@/components/work/task-attachments-section";
 import { TaskRelationsSection } from "@/components/work/task-relations-section";
 import { TaskSubtasksSection } from "@/components/work/task-subtasks-section";
@@ -773,6 +774,24 @@ function TaskDetailDialogInner({
         <TaskWhyPanel why={whyContext} loading={whyLoading} error={whyError} members={members} />
 
         <TaskLinksPanel projectId={projectId} taskId={task.id} canEdit={canEdit} />
+
+        <TaskAppChangesSection
+          projectId={projectId}
+          taskId={task.id}
+          members={members}
+          columns={columns}
+          priorities={priorities}
+          canEdit={canEdit}
+          onUndone={(undone) => {
+            // An untouched form follows the undo; one with unsaved edits keeps
+            // them and its old revision, so saving gets the conflict screen.
+            if (!dirty) {
+              setForm(formToTask(undone));
+              setEditRevision(undone.revision ?? -1);
+            }
+            onSaved(undone);
+          }}
+        />
 
         {aiEnabled && (
           <TaskAgentContextExport projectId={projectId} taskId={task.id} />
