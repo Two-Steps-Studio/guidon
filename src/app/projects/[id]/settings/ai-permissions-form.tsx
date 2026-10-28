@@ -60,16 +60,19 @@ export function AiPermissionsForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {PERMISSION_KEYS.map(({ field, labelKey }) => (
-              <label key={field} className="flex items-center gap-2 text-sm">
+              <label key={field} className="flex items-start gap-2 text-sm">
                 <input
                   type="checkbox"
                   name={field}
                   defaultChecked={permissions[field]}
-                  className="h-4 w-4"
+                  className="mt-0.5 h-4 w-4 shrink-0"
                 />
-                {t(labelKey)}
+                <span>
+                  {t(labelKey)}
+                  <span className="block text-xs text-muted-foreground">{t(`${labelKey}Hint`)}</span>
+                </span>
               </label>
             ))}
           </div>

@@ -159,7 +159,7 @@ export default async function ProjectMemoryPage({
               const TypeIcon = typeConfig.icon;
 
               return (
-                <Card key={memory.id}>
+                <Card key={memory.id} id={`memory-${memory.id}`} className="scroll-mt-24 target:ring-2 target:ring-primary">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">

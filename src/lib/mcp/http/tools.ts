@@ -275,7 +275,10 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     {
       description:
         "Mark a task as being worked on (moves it to the in-progress/AI-working column and records who started it). " +
-        "Call it after get_task_context and before doing the work.",
+        "Call it after get_task_context and before doing the work. It claims the task for this connection for 2 hours " +
+        "(the result's claim.expires_at): while the claim runs, other agents can't start or change the task. Call it " +
+        "again to renew a long job; moving the task to review or done releases it. If another agent holds the task " +
+        "it fails - pick another task.",
       inputSchema: { task_id: taskId },
       annotations: { title: "Start task", ...WRITE, idempotentHint: true },
     },

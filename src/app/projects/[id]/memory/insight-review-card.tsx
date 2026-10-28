@@ -77,7 +77,7 @@ export function InsightReviewCard({
 
   return (
     <>
-      <Card className="border-info/40">
+      <Card id={`memory-${memory.id}`} className="border-info/40 scroll-mt-24 target:ring-2 target:ring-primary">
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
             <TypeIcon className="h-5 w-5 text-muted-foreground" />

@@ -814,7 +814,10 @@ export function WorkBoard({
           columns={columns}
           priorities={priorities}
           members={members}
+          existingTitles={topLevelTasks.map((task) => task.title)}
+          canUndo={canDelete}
           onImported={(tasks) => tasks.forEach(upsertTask)}
+          onUndone={(taskIds) => taskIds.forEach(removeTask)}
         />
       )}
 

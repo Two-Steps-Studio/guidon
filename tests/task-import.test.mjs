@@ -3,7 +3,7 @@
  * exports from other tools onto a project's columns and priorities.
  * task-import.ts has no imports, so Node's built-in type stripping runs it.
  */
-import { normalizeDate, parseCsvRows, parseTaskImport, resolveImportedTasks } from "../src/lib/work/task-import.ts";
+import { findDuplicateTitles, normalizeDate, parseCsvRows, parseTaskImport, resolveImportedTasks, titleKey } from "../src/lib/work/task-import.ts";
 
 let pass = 0;
 let fail = 0;
@@ -93,6 +93,39 @@ check("garbage date dropped", normalizeDate("soon") === null);
     JSON.stringify(unmatched) === JSON.stringify({ statuses: ["Waiting"], priorities: ["Whatever"], assignees: ["bob@x.com"] }),
     JSON.stringify(unmatched)
   );
+}
+
+// Duplicates: re-importing the same export shouldn't double the board
+{
+  check("titles compare without case or extra spaces", titleKey("  Fix   LOGIN ") === titleKey("fix login"));
+  const { onBoard, inFile } = findDuplicateTitles(
+    [{ title: "Fix login" }, { title: "New thing" }, { title: "new  thing" }, { title: "FIX LOGIN" }],
+    ["fix login", "Other"]
+  );
+  check("a title already on the board is marked", onBoard.has(0) && onBoard.has(3), JSON.stringify([...onBoard]));
+  check("a repeat inside the file is marked once, the first copy kept", !inFile.has(1) && inFile.has(2) && inFile.size === 1, JSON.stringify([...inFile]));
+  check("nothing on an empty board", findDuplicateTitles([{ title: "a" }], []).onBoard.size === 0);
+}
+
+// Acceptance: a 100-task export keeps every description, status and due date
+{
+  const statuses = ["Backlog", "Todo", "In Progress", "In Review", "Done"];
+  const lines = ["Title,Description,Status,Priority,Due Date"];
+  for (let i = 1; i <= 100; i++) {
+    const description = `Step ${i}: "quoted", with comma\nand a second line`;
+    lines.push([`Task ${i}`, `"${description.replace(/"/g, '""')}"`, statuses[i % 5], i % 2 ? "High" : "Low", `2026-12-${String((i % 28) + 1).padStart(2, "0")}`].join(","));
+  }
+  const parsed = parseTaskImport(lines.join("\n"), "linear.csv");
+  const { tasks } = resolveImportedTasks(parsed.tasks, {
+    columns: [{ status: "backlog", label: "Backlog" }, { status: "todo", label: "Todo" }, { status: "in_progress", label: "In Progress" }, { status: "review", label: "Review" }, { status: "done", label: "Done" }],
+    priorities: [{ key: "low", label: "Low" }, { key: "medium", label: "Medium" }, { key: "high", label: "High" }],
+    members: [],
+  });
+  check("all 100 tasks read", tasks.length === 100, String(tasks.length));
+  check("every multi-line description kept exactly", tasks.every((task, i) => task.description === `Step ${i + 1}: "quoted", with comma\nand a second line`));
+  const expected = ["backlog", "todo", "in_progress", "review", "done"];
+  check("every status lands on its column", tasks.every((task, i) => task.status === expected[(i + 1) % 5]), JSON.stringify(tasks.slice(0, 5).map((t) => t.status)));
+  check("every due date kept", tasks.every((task, i) => task.dueDate === `2026-12-${String(((i + 1) % 28) + 1).padStart(2, "0")}`));
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);

@@ -5,7 +5,9 @@ import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import type { TaskPriority } from "@/types/task";
 import { apiRoute } from "@/lib/api/api-route";
+import { claimedElsewhereMessage, foreignClaim } from "@/lib/api/task-claims";
 import { TRACKED_TASK_FIELDS, appChangeDetails, diffTaskFields } from "@/lib/work/app-changes-core";
+import { agentGate } from "@/lib/api/agent-gate";
 
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
@@ -96,6 +98,10 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
     .eq("id", taskId)
     .maybeSingle();
   if (!existing) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+  if (!guard.humanClient) {
+    const other = await foreignClaim(db, taskId, guard.apiKeyId);
+    if (other) return NextResponse.json({ error: claimedElsewhereMessage(other) }, { status: 409 });
+  }
 
   const { data, error } = await db.from("tasks").update(patch).eq("id", taskId).eq("project_id", existing.project_id).select("*").maybeSingle();
 
@@ -140,6 +146,9 @@ async function handleDELETE(request: NextRequest, { params }: { params: Promise<
     .eq("id", taskId)
     .maybeSingle();
   if (!existing) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+
+  const blocked = await agentGate(db, guard, existing.project_id, "can_delete_tasks");
+  if (blocked) return blocked;
 
   const { data: deleted, error } = await db.from("tasks").delete().eq("id", taskId).select("id");
 

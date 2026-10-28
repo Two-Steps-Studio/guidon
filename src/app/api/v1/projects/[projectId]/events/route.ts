@@ -4,6 +4,7 @@ import { apiDataClient } from "@/lib/api/api-data-client";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { parseLimit } from "@/lib/api/api-route-core";
 import { apiRoute } from "@/lib/api/api-route";
+import { agentGate } from "@/lib/api/agent-gate";
 
 const MAX_LIMIT = 500;
 
@@ -43,6 +44,8 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ p
   const { data: project, error: projectError } = await db.from("projects").select("id").eq("id", projectId).maybeSingle();
   if (projectError) return NextResponse.json({ error: projectError.message }, { status: 400 });
   if (!project) return NextResponse.json({ error: "Project not found." }, { status: 404 });
+  const blocked = await agentGate(db, guard, projectId, "can_read_context");
+  if (blocked) return blocked;
 
   const { data, error } = await db.rpcRows("list_context_events", {
     p_project_id: projectId,

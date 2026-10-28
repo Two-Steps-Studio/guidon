@@ -3,6 +3,7 @@
  * POST /api/v1/batch's parsing and routing (src/lib/api/batch-core.ts).
  * Both files have no imports, so Node's built-in type stripping runs them.
  */
+import { AGENT_PERMISSION_DEFAULTS, agentDecision } from "../src/lib/api/agent-gate-core.ts";
 import {
   decodeCursor,
   encodeCursor,
@@ -94,6 +95,18 @@ check("knowledge item", matchBatchRoute(`/projects/${ID}/decisions/${ID}`)?.para
 check("task action", matchBatchRoute(`/tasks/${ID}/status`)?.params.action === "status");
 check("unknown task action", matchBatchRoute(`/tasks/${ID}/delete-everything`) === null);
 check("non-uuid id", matchBatchRoute("/tasks/abc") === null);
+
+section("AI permissions (Settings -> AI Permissions)");
+const decide = (over) => agentDecision({ humanClient: false, aiEnabled: true, permissions: null, permission: "can_read_context", ...over });
+check("an agent reads context by default", decide({}) === "allowed");
+check("turning reading off blocks it", decide({ permissions: { can_read_context: false } }) === "not_permitted");
+check("deleting is off by default", decide({ permission: "can_delete_tasks" }) === "not_permitted");
+check("an admin can allow deleting", decide({ permission: "can_delete_tasks", permissions: { can_delete_tasks: true } }) === "allowed");
+check("settings changes are off by default", decide({ permission: "can_modify_settings" }) === "not_permitted");
+check("AI turned off for the project wins over every permission", decide({ aiEnabled: false, permissions: { can_read_context: true } }) === "ai_disabled");
+check("an unreadable project row leaves the answer to RLS", decide({ aiEnabled: null }) === "allowed");
+check("a human-operated client (Unity plugin) is not an agent", decide({ humanClient: true, aiEnabled: false, permission: "can_delete_tasks" }) === "allowed");
+check("defaults match migration 016", JSON.stringify(AGENT_PERMISSION_DEFAULTS) === JSON.stringify({ can_read_context: true, can_create_comments: true, can_change_status: true, can_complete_tasks: false, can_modify_settings: false, can_delete_tasks: false }));
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
