@@ -20,7 +20,7 @@ odpowiedź w komentarzu.
    - Sentry i uptime są ustawione.
 2. PR #88 jest na produkcji: przycisk „Connect your agent”, zadania startowe
    i nowy landing.
-3. Pilot (`616a71da`) przeszedł:
+3. Pilot (`616a71da`, scenariusz w [pilot.md](./pilot.md)) przeszedł:
    - co najmniej 3 z 5 osób doszły od rejestracji do pierwszego zadania
      zrobionego przez agenta w Review w mniej niż 10 minut;
    - poprawki P0 są zrobione.
