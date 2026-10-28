@@ -9,6 +9,7 @@ import { getCatalogEntry, isInstallable } from "@/lib/data/module-catalog";
 import { moduleManifestSchema } from "@/lib/work/module-manifest";
 import { installCatalogModule } from "@/lib/work/module-installation";
 import { managersOnly, presentModule, projectRole } from "@/lib/api/module-api";
+import { agentGate } from "@/lib/api/agent-gate";
 
 /**
  * Modules of a project (migrations 080-094). GET lists them (`project:read`,
@@ -56,6 +57,8 @@ async function handlePOST(request: NextRequest, { params }: { params: Promise<{ 
   const db = apiDataClient(guard.userId);
   const { data: project } = await db.from<{ organization_id: string }>("projects").select("organization_id").eq("id", projectId).maybeSingle();
   if (!project) return NextResponse.json({ error: "Project not found." }, { status: 404 });
+  const blocked = await agentGate(db, guard, projectId, "can_modify_settings");
+  if (blocked) return blocked;
   const role = await projectRole(db, projectId, guard.userId);
   if (!role || !["owner", "admin"].includes(role)) return managersOnly();
   const entry = await getCatalogEntry(guard.userId, body.module_id, body.version, db);

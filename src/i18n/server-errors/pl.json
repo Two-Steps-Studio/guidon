@@ -225,5 +225,6 @@
   "The comment is too long.": "Komentarz jest za długi.",
   "Someone already decided this request.": "Ktoś już rozpatrzył tę prośbę.",
   "This request expired. The agent can ask again.": "Ta prośba wygasła. Agent może poprosić ponownie.",
-  "The task no longer exists, so there is nothing to approve.": "To zadanie już nie istnieje, więc nie ma czego akceptować."
+  "The task no longer exists, so there is nothing to approve.": "To zadanie już nie istnieje, więc nie ma czego akceptować.",
+  "Only project owners and admins can undo an import.": "Tylko właściciele i administratorzy projektu mogą cofnąć import."
 }

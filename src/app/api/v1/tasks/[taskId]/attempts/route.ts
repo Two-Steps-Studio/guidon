@@ -11,6 +11,7 @@ import {
   ATTEMPT_TEXT_MAX,
 } from "@/lib/api/attempt-limits";
 import { apiRoute } from "@/lib/api/api-route";
+import { agentGate } from "@/lib/api/agent-gate";
 
 // Same column set as loadAttempts/createAttempt in
 // src/app/projects/[id]/work/attempts-actions.ts (Previous Attempts, migration 013).
@@ -35,8 +36,10 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ t
 
   const db = apiDataClient(guard.userId);
 
-  const { data: task } = await db.from("tasks").select("id").eq("id", taskId).maybeSingle();
+  const { data: task } = await db.from<{ id: string; project_id: string }>("tasks").select("id, project_id").eq("id", taskId).maybeSingle();
   if (!task) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+  const blocked = await agentGate(db, guard, task.project_id, "can_read_context");
+  if (blocked) return blocked;
 
   const { data, error } = await db
     .from("task_attempts")

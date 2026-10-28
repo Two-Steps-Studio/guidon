@@ -12,13 +12,53 @@
  * TaskDetailDialog) as the way to close that gap.
  */
 
-import { HelpCircle, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { HelpCircle, Loader2, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_CONFIG as DECISION_STATUS_CONFIG } from "@/app/projects/[id]/decisions/decision-config";
 import type { TaskCardMember } from "@/components/work/task-card";
 import type { TaskWhyContext, TaskWhyRelatedItem } from "@/lib/context/task-why";
-import type { DecisionStatus } from "@/types/context";
+import type { ContextEntityType, DecisionStatus } from "@/types/context";
+
+/**
+ * Where each linked item lives, so the panel leads to the original instead of
+ * a copy. List pages give each card an id of `<type>-<uuid>`; the browser
+ * scrolls to it and :target highlights it.
+ */
+function hrefFor(projectId: string, type: ContextEntityType, id: string): string {
+  const base = `/projects/${projectId}`;
+  switch (type) {
+    case "decision":
+      return `${base}/decisions#decision-${id}`;
+    case "source":
+      return `${base}/knowledge#source-${id}`;
+    case "memory":
+      return `${base}/memory#memory-${id}`;
+    case "phase":
+      return `${base}/roadmap#phase-${id}`;
+    case "task":
+      return `${base}/work?openTask=${id}`;
+    case "file":
+      return `${base}/files`;
+    case "project":
+      return `/projects/${id}`;
+  }
+}
+
+/**
+ * A link to the original. Links to a card on a list page are plain anchors:
+ * a full navigation is what makes the browser scroll to the card and match
+ * :target (a client-side push does neither), so the card is highlighted.
+ */
+function OriginLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const className = "mt-1 block text-sm font-medium text-foreground underline-offset-2 hover:underline";
+  return href.includes("#") ? (
+    <a href={href} className={className}>{children}</a>
+  ) : (
+    <Link href={href} className={className}>{children}</Link>
+  );
+}
 
 function AttributionLine({
   item,
@@ -43,12 +83,15 @@ function AttributionLine({
 }
 
 function RelatedItemRow({
+  projectId,
   item,
   membersById,
 }: {
+  projectId: string;
   item: TaskWhyRelatedItem;
   membersById: Map<string, TaskCardMember>;
 }) {
+  const t = useTranslations("work");
   const tCommon = useTranslations("common");
   return (
     <li className="rounded-md border border-border p-2.5">
@@ -64,9 +107,17 @@ function RelatedItemRow({
               </Badge>
             )}
           </div>
-          <p className={item.missing ? "mt-1 text-sm italic text-muted-foreground" : "mt-1 text-sm font-medium text-foreground"}>
-            {item.title}
-          </p>
+          {item.missing ? (
+            <p className="mt-1 text-sm italic text-muted-foreground">{item.title}</p>
+          ) : (
+            <OriginLink href={hrefFor(projectId, item.entityType, item.entityId)}>{item.title}</OriginLink>
+          )}
+          {item.unconfirmedAi && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-warning">
+              <Sparkles className="h-3 w-3" aria-hidden />
+              {t("whyUnconfirmedAi")}
+            </p>
+          )}
           {item.preview && (
             <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{item.preview}</p>
           )}
@@ -80,11 +131,13 @@ function RelatedItemRow({
 }
 
 export function TaskWhyPanel({
+  projectId,
   why,
   loading,
   error,
   members,
 }: {
+  projectId: string;
   why: TaskWhyContext | null;
   loading: boolean;
   error: string | null;
@@ -133,7 +186,7 @@ export function TaskWhyPanel({
                   {tCommon("decisionStatus", { status: decision.status })}
                 </Badge>
               </div>
-              <p className="mt-1 text-sm font-medium text-foreground">{decision.title}</p>
+              <OriginLink href={hrefFor(projectId, "decision", decision.id)}>{decision.title}</OriginLink>
               {decision.description && (
                 <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{decision.description}</p>
               )}
@@ -147,7 +200,7 @@ export function TaskWhyPanel({
               </p>
               <ul className="space-y-1.5">
                 {items.map((item) => (
-                  <RelatedItemRow key={item.relationId} item={item} membersById={membersById} />
+                  <RelatedItemRow key={item.relationId} projectId={projectId} item={item} membersById={membersById} />
                 ))}
               </ul>
             </div>
