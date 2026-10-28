@@ -8,6 +8,7 @@ import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import type { DataClient } from "@/lib/data-client";
 import { CREATE_DEFAULTS, projectResource, type ProjectResource } from "@/lib/api/project-resources";
 import { apiRoute } from "@/lib/api/api-route";
+import { agentGate } from "@/lib/api/agent-gate";
 
 /**
  * The project resources in project-resources.ts - decisions, knowledge,
@@ -159,6 +160,13 @@ async function open(request: NextRequest, params: Params["params"], scope: "proj
   const { data: project, error } = await db.from("projects").select("id").eq("id", projectId).maybeSingle();
   if (error) return { ok: false, response: respond(dbError(error)) } as const;
   if (!project) return { ok: false, response: NextResponse.json({ error: "Project not found." }, { status: 404 }) } as const;
+  // Decisions, knowledge, memory, roadmap and tech stack are the project's
+  // context: reading them is what Settings -> AI Permissions calls "Read
+  // project context".
+  if (scope === "project:read") {
+    const blocked = await agentGate(db, guard, projectId, "can_read_context");
+    if (blocked) return { ok: false, response: blocked } as const;
+  }
   return { ok: true, ops: resourceOps(projectResource(path), db, guard.userId, projectId, "api"), itemId: itemId! } as const;
 }
 

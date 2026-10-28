@@ -94,7 +94,9 @@ export async function writeSafetyCoverage({context,origin,fixture,client,browser
     // 5. Signing out leaves no drafts on the device.
     await openTask(edited);await page.locator("#task-title").fill(`${prefix} left behind`);
     await expectEventually(()=>page.evaluate(()=>Object.keys(localStorage).some(key=>key.startsWith("guidon:task-draft:v1:"))),"draft written before sign-out");
-    await page.goto(`${origin}/auth/logout`);await page.waitForURL(url=>url.pathname!=="/auth/logout");
+    // Drafts are cleared before the redirect; only the navigation away matters,
+    // not the landing page's full load (WebKit on CI can take >15 s for it).
+    await page.goto(`${origin}/auth/logout`);await page.waitForURL(url=>url.pathname!=="/auth/logout",{waitUntil:"commit"});
     assert.equal(await page.evaluate(()=>Object.keys(localStorage).filter(key=>key.startsWith("guidon:task-draft:v1:")).length),0);
     assert.equal((await row(edited)).title,`${prefix} edit DRAFT`);
   } catch(error) {
