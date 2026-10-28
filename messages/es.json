@@ -1514,7 +1514,9 @@
     "delete": "Eliminar",
     "editDialogTitle": "Editar entrada de memoria",
     "editDialogDescription": "Actualizar entrada de memoria",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "requiresReview": "Por revisar",
+    "requiresReviewWhy": "{kind, select, decision {La decisión} other {La fuente}} «{title}» cambió el {date}, después de escribir esto. Comprueba que sigue siendo cierto: guardar una edición quita esta marca."
   },
   "technology": {
     "title": "Tecnologías",

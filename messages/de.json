@@ -1514,7 +1514,9 @@
     "delete": "Löschen",
     "editDialogTitle": "Gedächtniseintrag bearbeiten",
     "editDialogDescription": "Gedächtniseintrag aktualisieren",
-    "saveChanges": "Änderungen speichern"
+    "saveChanges": "Änderungen speichern",
+    "requiresReview": "Prüfen",
+    "requiresReviewWhy": "{kind, select, decision {Die Entscheidung} other {Die Quelle}} „{title}“ wurde am {date} geändert, nachdem dies geschrieben wurde. Prüfe, ob es noch gilt - eine gespeicherte Änderung entfernt diese Markierung."
   },
   "technology": {
     "title": "Technologien",
