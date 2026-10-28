@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { showAi } from "@/lib/data/ai-preference";
 import { canCommentOnProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { getLabelPresets } from "@/lib/data/label-presets";
 import { createClient } from "@/lib/supabase-server";
@@ -150,8 +151,9 @@ export default async function ProjectWorkPage({
   // runs alongside that Promise.all instead of as a second sequential
   // round-trip tacked onto the end of the page.
   // Migration 046: a project can switch every AI feature off at once - no
-  // point asking the org whether a provider is configured then.
-  const aiEnabled = access.project.ai_enabled;
+  // point asking the org whether a provider is configured then. 099: a
+  // person can also hide AI for themselves.
+  const aiEnabled = await showAi(access.userId, access.project.ai_enabled);
   const labelPresetsPromise = getLabelPresets(access.userId, projectId);
   const workflowPromise = getWorkflowOverrides(access.userId, projectId);
   const aiAvailablePromise = aiEnabled

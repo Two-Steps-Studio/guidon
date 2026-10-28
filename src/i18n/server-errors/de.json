@@ -216,5 +216,6 @@
   "This link no longer exists.": "Diese Verknüpfung existiert nicht mehr.",
   "Could not update the link.": "Die Verknüpfung konnte nicht aktualisiert werden.",
   "The starter tasks are already on this board.": "Die Startaufgaben sind schon auf diesem Board.",
-  "Could not create the starter tasks. Try again.": "Die Startaufgaben konnten nicht angelegt werden. Versuche es erneut."
+  "Could not create the starter tasks. Try again.": "Die Startaufgaben konnten nicht angelegt werden. Versuche es erneut.",
+  "Could not save the setting.": "Die Einstellung konnte nicht gespeichert werden."
 }

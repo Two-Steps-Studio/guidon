@@ -1760,7 +1760,12 @@
     },
     "backgroundStyleLabel": "Estilo del fondo",
     "backgroundStyle_solid": "Liso — concéntrate en tu trabajo",
-    "backgroundStyle_pattern": "Patrón de Guidon"
+    "backgroundStyle_pattern": "Patrón de Guidon",
+    "aiPreferenceTitle": "Funciones de IA",
+    "aiPreferenceDescription": "Guidon funciona por completo sin IA. Desactívalo para ocultar los botones y widgets de IA en todos los proyectos, solo para ti.",
+    "aiPreferenceToggle": "Mostrar funciones de IA",
+    "aiPreferenceHint": "Oculta el chat de IA, «Connect your agent», las tareas iniciales para agentes y copiar contexto para un agente. Los agentes que ya conectaste siguen funcionando: quítalos en Claves de API o Apps conectadas.",
+    "aiPreferenceFailed": "No se pudo guardar el ajuste."
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",

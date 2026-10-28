@@ -4344,5 +4344,18 @@ section("82. Living memory: unverified insights leave with their evidence (098)"
   });
 }
 
+section("83. A person can hide AI for themselves (099)");
+{
+  await withUser(A, async () => {
+    check("AI is shown by default", (await db.query("SELECT hide_ai FROM public.profiles WHERE id = $1", [A])).rows[0]?.hide_ai === false);
+    const own = await db.query("UPDATE public.profiles SET hide_ai = true WHERE id = $1 RETURNING hide_ai", [A]);
+    check("the owner hides AI on their profile", own.rows[0]?.hide_ai === true);
+    const other = await db.query("UPDATE public.profiles SET hide_ai = true WHERE id = $1 RETURNING id", [B]);
+    check("…but not on someone else's", other.rows.length === 0);
+    check("the email stays read-only (076)", await throwsInSavepoint("UPDATE public.profiles SET email = 'hide-ai@example.com' WHERE id = $1", [A]));
+    await db.query("UPDATE public.profiles SET hide_ai = false WHERE id = $1", [A]);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

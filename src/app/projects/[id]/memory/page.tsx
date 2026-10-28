@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { showAi } from "@/lib/data/ai-preference";
 import { displayName } from "@/lib/people";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
@@ -40,7 +41,7 @@ export default async function ProjectMemoryPage({
   // entirely when !canWrite, same short-circuit the original inline
   // `canWrite && await isAIAvailableForOrg(...)` had. Also skipped when the
   // project has AI features switched off (migration 046).
-  const aiAvailablePromise = canWrite && access.project.ai_enabled
+  const aiAvailablePromise = canWrite && (await showAi(access.userId, access.project.ai_enabled))
     ? isAIAvailableForOrg(access.project.organization_id, access.userId)
     : null;
 

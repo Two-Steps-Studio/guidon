@@ -9,6 +9,7 @@ import { uploadFile, ensureBucketExists } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import { tr } from "@/lib/i18n/server-errors";
+import { dataClient } from "@/lib/data-client";
 
 export type ProfileFormState = {
   error: string | null;
@@ -103,3 +104,22 @@ export async function updateProfile(
   revalidatePath("/profile");
   return { error: null };
 }
+
+/**
+ * The person's own "show AI features" switch (profiles.hide_ai, 099). Only
+ * hides AI in their own view; connected agents and other members are not
+ * affected. The update is scoped to their row and checked, so a missing
+ * column (099 not applied) or a blocked write is reported, not swallowed.
+ */
+export async function setHideAi(hide: boolean): Promise<{ error: string | null }> {
+  const user = await getCurrentUser();
+  const { data, error } = await dataClient(user.id)
+    .from<{ id: string }>("profiles")
+    .update({ hide_ai: hide === true })
+    .eq("id", user.id)
+    .select("id");
+  if (error || !data?.length) return { error: await tr("Could not save the setting.") };
+  revalidatePath("/", "layout");
+  return { error: null };
+}
+
