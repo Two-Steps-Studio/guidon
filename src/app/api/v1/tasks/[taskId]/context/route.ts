@@ -8,6 +8,8 @@ import { buildTaskAgentContext } from "@/lib/context/agent-context-builder";
 import { apiRoute } from "@/lib/api/api-route";
 import { clampBudget } from "@/lib/context/context-pack-core";
 import { contextResponse } from "@/lib/context/context-response";
+import { agentGate } from "@/lib/api/agent-gate";
+import { apiDataClient } from "@/lib/api/api-data-client";
 
 /**
  * Agent-context package for one task, as Markdown (Content-Type
@@ -51,6 +53,9 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ t
     projectId = task.project_id as string;
     getSupabase = async () => supabase;
   }
+
+  const blocked = await agentGate(apiDataClient(guard.userId), guard, projectId, "can_read_context");
+  if (blocked) return blocked;
 
   const search = request.nextUrl.searchParams;
   const context = await buildTaskAgentContext(guard.userId, projectId, taskId, getSupabase, {
