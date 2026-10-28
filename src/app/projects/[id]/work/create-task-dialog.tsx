@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { timeAction } from "@/lib/perf/action-timing";
 import { clearTaskDraft, isNetworkError, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
 import { ImagePlus, Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -204,7 +205,7 @@ export function CreateTaskDialog({
       const columnTasks = existingTasks.filter((task) => normalizeTaskStatus(task.status) === status);
       const maxOrder = columnTasks.reduce((max, task) => Math.max(max, task.sort_order ?? 0), 0);
 
-      const result = await createTask(projectId, {
+      const result = await timeAction("task.create", () => createTask(projectId, {
         title,
         description,
         status,
@@ -214,7 +215,7 @@ export function CreateTaskDialog({
         sortOrder: maxOrder + 100,
         tags: currentTags,
         clientId,
-      });
+      }));
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToCreateTask"));
 
       let task = result.task;

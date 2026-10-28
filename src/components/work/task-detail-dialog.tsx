@@ -5,6 +5,7 @@ import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { confirmAction } from "@/components/ui/confirm-action";
 import { Check, Copy, Eye, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
+import { timeAction } from "@/lib/perf/action-timing";
 import { clearTaskDraft, isNetworkError, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
 import { MarkdownPreview } from "@/components/files/markdown-preview";
 import { useTranslations } from "next-intl";
@@ -297,7 +298,7 @@ function TaskDetailDialogInner({
           .filter(Boolean),
       };
 
-      const result = await updateTask(projectId, task.id, {
+      const result = await timeAction("task.save", () => updateTask(projectId, task.id, {
         ...patch,
         // Explicit nulls: an empty field means "clear", not "leave alone".
         description: form.description.trim() || null,
@@ -310,7 +311,7 @@ function TaskDetailDialogInner({
               recurrence_rule: form.recurrence_rule || null,
               recurrence_interval: form.recurrence_rule ? Number(form.recurrence_interval) : null,
             }),
-      }, editRevision);
+      }, editRevision));
 
       if (result.error || !result.task) { setEditConflict(result.code === "conflict" || result.code === "version_unavailable"); throw new Error(result.error ?? t("failedToSaveTask")); }
 
@@ -335,7 +336,7 @@ function TaskDetailDialogInner({
     setError(null);
 
     try {
-      const result = await deleteTask(projectId, task.id);
+      const result = await timeAction("task.delete", () => deleteTask(projectId, task.id));
       if (result.error) throw new Error(result.error);
 
       discardDraft();

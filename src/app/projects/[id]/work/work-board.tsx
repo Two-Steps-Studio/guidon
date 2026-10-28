@@ -44,6 +44,7 @@ import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
 import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
 import { isNetworkError } from "@/lib/work/task-drafts";
+import { timeAction } from "@/lib/perf/action-timing";
 import type { Task, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
 
@@ -348,7 +349,7 @@ export function WorkBoard({
 
     // A request that never reached the server rejects instead of returning
     // an error; it must roll back too, never leave the card looking moved.
-    const result = await moveTask(projectId, task.id, status, sortOrder).catch((error: unknown) => ({
+    const result = await timeAction("task.move", () => moveTask(projectId, task.id, status, sortOrder)).catch((error: unknown) => ({
       error: isNetworkError(error) ? t("moveNotSaved", { title: task.title }) : t("failedToSaveTask"),
       offline: true,
       created: undefined,
