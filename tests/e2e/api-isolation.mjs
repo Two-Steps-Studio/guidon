@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { request as playwrightRequest } from "playwright";
+import { createHash, randomBytes } from "node:crypto";
 
 export async function apiIsolation({origin,fixture,api,client}){
   assert.equal(new URL(origin).hostname,"127.0.0.1","API security tests require this runner's disposable loopback app");
@@ -66,6 +67,38 @@ export async function apiIsolation({origin,fixture,api,client}){
     await status(await rest("PATCH",`/api/v1/tasks/${createdId}`,api.keys.owner,{data:{title:"Allowed E2E update"}}),200);
     await status(await rest("DELETE",`/api/v1/tasks/${createdId}`,api.keys.owner),200);
     assert.equal((await client.query("SELECT 1 FROM public.tasks WHERE id=$1",[createdId])).rowCount,0);
+    // Two agents (two keys of one person) on one task: the first claims it with a lease,
+    // the second is refused until the lease runs out, review releases it (migration 100).
+    const agentKeys=[];
+    for(const name of ["Agent one","Agent two"]){
+      const raw=`guidon_${randomBytes(32).toString("base64url")}`;
+      const id=(await client.query("INSERT INTO public.api_keys(user_id,name,key_prefix,key_hash,scopes,human_client) VALUES($1,$2,$3,$4,$5,false) RETURNING id",[owner.id,name,raw.slice(0,12),createHash("sha256").update(raw).digest("hex"),["tasks:read","tasks:write","tasks:status"]])).rows[0].id;
+      agentKeys.push({id,raw});
+    }
+    const shared=(await client.query("INSERT INTO public.tasks(project_id,title,created_by) VALUES($1,'Two agents, one task',$2) RETURNING id",[owner.projectId,owner.id])).rows[0].id;
+    try{
+      const [one,two]=agentKeys;
+      const started=await (await status(await rest("POST",`/api/v1/tasks/${shared}/start`,one.raw),200)).json();
+      assert.ok(started.claim?.expires_at && new Date(started.claim.expires_at)>new Date(),"start_task returns the lease");assertions++;
+      const refused=await status(await rest("POST",`/api/v1/tasks/${shared}/start`,two.raw),409);
+      assert.ok((await refused.json()).error.includes("Agent one"),"the refusal names the agent holding the task");assertions++;
+      await status(await rest("PATCH",`/api/v1/tasks/${shared}`,two.raw,{data:{title:"Overwritten by the second agent"}}),409);
+      await status(await rest("PATCH",`/api/v1/tasks/${shared}/status`,two.raw,{data:{status:"review"}}),409);
+      await tool(two.raw,"start_task",{task_id:shared},true);
+      assert.equal((await client.query("SELECT title FROM public.tasks WHERE id=$1",[shared])).rows[0].title,"Two agents, one task","A refused agent changes nothing");
+      await status(await rest("POST",`/api/v1/tasks/${shared}/start`,one.raw),200);
+      await client.query("UPDATE public.task_claims SET claimed_at=now()-interval '3 hours',expires_at=now()-interval '1 second' WHERE task_id=$1",[shared]);
+      await status(await rest("POST",`/api/v1/tasks/${shared}/start`,two.raw),200);
+      await status(await rest("PATCH",`/api/v1/tasks/${shared}/status`,one.raw,{data:{status:"review"}}),409);
+      await status(await rest("PATCH",`/api/v1/tasks/${shared}/status`,two.raw,{data:{status:"review"}}),200);
+      assert.equal((await client.query("SELECT 1 FROM public.task_claims WHERE task_id=$1",[shared])).rowCount,0,"Review releases the claim");
+      await status(await rest("POST",`/api/v1/tasks/${shared}/start`,one.raw),200);
+      // A person (human-operated client) is never blocked by an agent's claim.
+      await status(await rest("PATCH",`/api/v1/tasks/${shared}`,api.keys.owner,{data:{title:"Taken back by a person"}}),200);
+    }finally{
+      await client.query("DELETE FROM public.tasks WHERE id=$1",[shared]);
+      await client.query("DELETE FROM public.api_keys WHERE id = ANY($1)",[agentKeys.map(key=>key.id)]);
+    }
     const mcpCreated=await tool(api.keys.owner,"create_task",{project_id:owner.projectId,title:"Allowed MCP task"});
     const mcpCreatedId=JSON.parse(mcpCreated.content.find(item=>item.type==="text").text).task.id;
     await tool(api.keys.owner,"update_task",{task_id:mcpCreatedId,title:"Allowed MCP update"});

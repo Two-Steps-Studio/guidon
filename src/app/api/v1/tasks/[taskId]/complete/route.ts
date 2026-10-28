@@ -10,7 +10,7 @@ async function handlePOST(request: NextRequest, { params }: { params: Promise<{ 
 
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
-  const result = await completeTask(guard.userId, taskId, { botLabel: guard.botLabel, keyName: guard.keyName, humanClient: guard.humanClient });
+  const result = await completeTask(guard.userId, taskId, { botLabel: guard.botLabel, keyName: guard.keyName, apiKeyId: guard.apiKeyId, humanClient: guard.humanClient });
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json({ task: result.task });
