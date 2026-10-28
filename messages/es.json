@@ -208,15 +208,32 @@
     "progress": "{done} de {total} tareas hechas"
   },
   "landing": {
-    "heroTitle": "Gestión de proyectos centrada en el contexto",
-    "heroSubtitle": "Comprende por qué existe tu proyecto. Registra decisiones, fuentes y contexto junto con tus tareas.",
-    "getStarted": "Empezar",
+    "heroTitle": "Pásale la tarea a tu agente de IA. Ya conoce el proyecto.",
+    "heroSubtitle": "Conecta Claude Code, Codex o Cursor en dos minutos. Tu agente toma una tarea del tablero, lee las decisiones, la memoria del proyecto y los intentos anteriores que hay detrás, y te devuelve el trabajo para que lo revises.",
+    "howItWorks": {
+      "title": "Cómo funciona",
+      "steps": [
+        {
+          "title": "Conecta tu agente",
+          "description": "Elige Claude Code, Codex, Cursor o cualquier app MCP y pega la configuración que te muestra Guidon: una línea para Claude Code. Guidon te avisa cuando el agente se conecta."
+        },
+        {
+          "title": "Toma una tarea, con contexto",
+          "description": "Tu agente toma la siguiente tarea de To do y lee lo que importa para ella: decisiones, reglas del proyecto, memoria y lo que ya se intentó sin éxito."
+        },
+        {
+          "title": "Tú revisas el trabajo",
+          "description": "Las tareas terminadas llegan a Review con un resumen, los archivos cambiados y lo que intentó el agente. Tú decides qué está hecho."
+        }
+      ]
+    },
+    "getStarted": "Empieza gratis - conecta tu agente",
     "signIn": "Iniciar sesión",
     "trySandbox": "Prueba gratis el sandbox de API y agentes",
     "freePlan": "Plan gratuito",
     "selfServeApiKey": "Crea tu propia clave de API",
-    "featuresTitle": "Todo lo que un proyecto necesita para explicarse a sí mismo",
-    "featuresSubtitle": "Las tareas por sí solas no explican por qué un proyecto es como es. Guidon registra el contexto alrededor del trabajo, no solo el trabajo.",
+    "featuresTitle": "El contexto con el que trabaja tu agente",
+    "featuresSubtitle": "Cada tarea llega con las decisiones, fuentes y memoria que hay detrás, para ti y para cada agente que conectes.",
     "features": {
       "taskBoard": {
         "title": "Tablero de tareas",
@@ -701,6 +718,8 @@
     "readOnlyAccess": "Tienes acceso de <b>{role}</b> - el tablero es de solo lectura.",
     "noTasksTitle": "Aún no hay tareas",
     "noTasksDescCanEdit": "Crea la primera tarea para empezar a seguir el trabajo de este proyecto.",
+    "noTasksAgentHint": "O conecta tu agente de IA y deja que tome la primera tarea.",
+    "starterFailed": "No se pudieron añadir las tareas iniciales. Inténtalo de nuevo.",
     "noTasksDescReadOnly": "Todavía no se ha planificado nada para este proyecto.",
     "progressDone": "{done}/{total} hechas ({percent}%)",
     "progressInFlight": "{count} en curso",
@@ -875,6 +894,9 @@
     "removeAttachment": "Quitar {name}",
     "createAttachmentsFailed": "{count, plural, one {No se pudo adjuntar # archivo} other {No se pudieron adjuntar # archivos}}; añádelos desde la tarea.",
     "importButton": "Importar",
+    "connectAgent": "Conectar agente",
+    "connectAgentTitle": "Conecta tu agente de IA",
+    "connectAgentDescription": "Claude Code, Codex, Cursor o cualquier app MCP toma tareas de este tablero, lee su contexto (decisiones, memoria, intentos anteriores) y las devuelve para revisión. Elige tu app y pega la configuración de abajo.",
     "importTitle": "Importar tareas",
     "importDescription": "Trae tareas de Jira, Trello, GitHub, Linear, Asana, Notion o una hoja de cálculo - una exportación CSV o JSON. Se añaden a este tablero; no cambia nada existente.",
     "importChooseFile": "Elige un archivo CSV o JSON, o suéltalo aquí",
@@ -1575,6 +1597,7 @@
       "cta": {
         "hero-start": "Cabecera: Empezar",
         "hero-sandbox": "Cabecera: Probar el sandbox",
+        "how-start": "Cómo funciona: Empieza gratis",
         "pricing-free": "Precios: plan gratuito",
         "pricing-paid": "Precios: plan de pago"
       }
@@ -1625,7 +1648,7 @@
     "mcpCreateButton": "Conectar {client}",
     "mcpCreating": "Creando clave...",
     "mcpError": "No se pudo crear la clave de conexión. Inténtalo de nuevo.",
-    "mcpKeyOnce": "La configuración de abajo contiene tu nueva clave y solo se muestra una vez. Cópiala ahora. Puedes revocar la clave cuando quieras en Claves API, arriba.",
+    "mcpKeyOnce": "La configuración de abajo contiene tu nueva clave y solo se muestra una vez. Cópiala ahora. Puedes revocarla abajo o más tarde en Perfil → Claves API.",
     "mcpCopy": "Copiar",
     "mcpStep_claude-code": "Ejecuta esto en tu terminal (Claude Code debe estar instalado)",
     "mcpVerify_claude-code": "Comprueba la conexión: Guidon debería aparecer como conectado",
@@ -1639,6 +1662,7 @@
     "mcpStep_other_header": "Envía esta cabecera HTTP en cada petición",
     "mcpTry": "Prueba este prompt en tu app de IA",
     "mcpTryPrompt": "Muestra mis proyectos de Guidon, enséñame las tareas en To do y empieza por la de mayor prioridad.",
+    "mcpTryPromptProject": "En mi proyecto de Guidon \"{project}\", toma la tarea de mayor prioridad de To do: lee su contexto con get_task_context, haz el trabajo, registra lo que intentaste y muévela a Review.",
     "backgroundMotionLabel": "Animación del fondo",
     "backgroundMotion_auto": "Automática (ajuste del sistema)",
     "backgroundMotion_on": "Activada",
@@ -1670,6 +1694,10 @@
     "mcpOAuthStep_claude": "En Claude, abre Ajustes → Conectores → Añadir conector personalizado, llámalo Guidon y pega esta URL",
     "mcpOAuthStep_chatgpt": "En ChatGPT, abre Ajustes → Apps y conectores → Crear (modo desarrollador), elige OAuth y pega esta URL",
     "mcpOAuthApprove": "Inicia sesión en Guidon cuando te lo pida y pulsa Permitir: no hay clave que copiar. Aparecerá arriba en Apps conectadas.",
+    "mcpWaiting": "Esperando a tu agente… Ejecuta el prompt de arriba: este estado cambia en cuanto llegue a Guidon.",
+    "mcpConnected": "Conectado: tu agente llegó a Guidon a las {time}.",
+    "mcpRevoke": "Revocar esta clave",
+    "mcpRevoked": "Clave revocada. Tu agente ya no puede llegar a Guidon con ella.",
     "deleteAccount": {
       "title": "Eliminar cuenta",
       "description": "Elimina tu cuenta y cierra tu sesión en todas partes: tu perfil, claves API, apps conectadas, notificaciones y los comentarios e intentos que escribiste. Las tareas y documentos que creaste en proyectos compartidos se quedan con el equipo, sin tu nombre. No se puede deshacer.",
@@ -1976,6 +2004,16 @@
     "welcomeFirstTask": "Añade tu primera tarea",
     "welcomeInvite": "Invita a tu equipo",
     "welcomeImport": "Importa tareas de Trello, Jira o CSV",
+    "welcomeConnectAgent": "Conectar agente",
+    "welcomeStarterTasks": "Añadir tareas iniciales para tu agente",
+    "starterAdded": "Se añadieron 3 tareas iniciales a To do. Conecta tu agente y pídele que tome la primera.",
+    "starterTask_memory_title": "Agente: anota qué es este proyecto",
+    "starterTask_memory_description": "Lee el repositorio (README, carpetas principales, archivos de configuración) y guarda 3-5 datos sobre el proyecto en la memoria del proyecto de Guidon con create_memory: qué es, el stack, cómo ejecutarlo y cómo probarlo. Después usa record_attempt y mueve esta tarea a Review.",
+    "starterTask_plan_title": "Agente: propón las próximas 5 tareas",
+    "starterTask_plan_description": "Revisa el código y las tareas abiertas de este tablero. Crea con create_task hasta 5 tareas concretas en To do, cada una con una descripción corta y un «terminada cuando» claro. No las empieces: lo siguiente lo elige una persona. Después mueve esta tarea a Review.",
+    "starterTask_improve_title": "Agente: haz una mejora pequeña y segura",
+    "starterTask_improve_description": "Elige una mejora pequeña que puedas terminar en unos minutos (una errata, una sección del README que falta, un mensaje de error poco claro). Hazla en una rama nueva, regístrala con record_attempt y los archivos cambiados, resúmela con comment_on_task y mueve esta tarea a Review.",
+    "starterRule": "Los agentes mueven las tareas terminadas a Review, nunca directamente a Done: primero una persona revisa el trabajo.",
     "welcomeDismiss": "Cerrar"
   },
   "oauth": {

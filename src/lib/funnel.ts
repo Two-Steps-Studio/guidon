@@ -3,7 +3,7 @@
  * 096): a daily total per name, nothing about who clicked. Only names in
  * this list are accepted by /api/funnel/cta.
  */
-export const FUNNEL_CTAS = ["hero-start", "hero-sandbox", "pricing-free", "pricing-paid"] as const;
+export const FUNNEL_CTAS = ["hero-start", "hero-sandbox", "how-start", "pricing-free", "pricing-paid"] as const;
 export type FunnelCta = (typeof FUNNEL_CTAS)[number];
 
 export function isFunnelCta(value: unknown): value is FunnelCta {

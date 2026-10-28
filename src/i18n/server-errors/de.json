@@ -214,5 +214,7 @@
   "This report is already resolved.": "Diese Meldung ist bereits erledigt.",
   "You do not have permission to review linked code.": "Du hast keine Berechtigung, verknüpften Code zu prüfen.",
   "This link no longer exists.": "Diese Verknüpfung existiert nicht mehr.",
-  "Could not update the link.": "Die Verknüpfung konnte nicht aktualisiert werden."
+  "Could not update the link.": "Die Verknüpfung konnte nicht aktualisiert werden.",
+  "The starter tasks are already on this board.": "Die Startaufgaben sind schon auf diesem Board.",
+  "Could not create the starter tasks. Try again.": "Die Startaufgaben konnten nicht angelegt werden. Versuche es erneut."
 }

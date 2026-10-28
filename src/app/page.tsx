@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Server, type LucideIcon } from "lucide-react";
+import { Bot, CheckCircle2, CheckSquare, Cpu, FileText, BookOpen, Brain, GitBranch, Github, ListChecks, Server, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
@@ -38,6 +38,9 @@ const FEATURE_SECTIONS: FeatureSection[] = [
   { icon: Brain, key: "memoryContext" },
   { icon: GitBranch, key: "roadmap" },
 ];
+
+// Connect -> takes a task with context -> you review (landing.howItWorks.steps).
+const HOW_IT_WORKS_ICONS: LucideIcon[] = [Bot, ListChecks, CheckCircle2];
 
 // This page has no cookies()/headers() calls, so Next statically prerenders
 // it - without this, the pricing section's plan data would be baked in at
@@ -162,6 +165,38 @@ export default async function Home() {
         </div>
         <div className="relative mx-auto h-3 w-full rounded-b-2xl bg-gradient-to-b from-neutral-300 to-neutral-400 shadow-xl md:h-5 dark:from-neutral-600 dark:to-neutral-800" aria-hidden>
           <div className="absolute left-1/2 top-0 h-1.5 w-[14%] -translate-x-1/2 rounded-b-lg bg-neutral-400 md:h-2 dark:bg-neutral-900/70" />
+        </div>
+      </div>
+    </section>
+
+    {/* The one promise, in three steps - before the feature tour, which is
+        the context the agent works from rather than a list of reasons. */}
+    <section className="border-t border-border py-20" aria-labelledby="how-it-works-title">
+      <div className="container mx-auto max-w-5xl px-4">
+        <h2 id="how-it-works-title" className={`${displayFont.className} mb-12 text-center text-3xl md:text-4xl`}>
+          {t("howItWorks.title")}
+        </h2>
+        <ol className="grid gap-6 md:grid-cols-3">
+          {(t.raw("howItWorks.steps") as { title: string; description: string }[]).map((step, index) => {
+            const Icon = HOW_IT_WORKS_ICONS[index] ?? CheckCircle2;
+            return (
+              <li key={step.title} className="scrim space-y-3 rounded-2xl border border-border p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" aria-hidden />
+                  </span>
+                  <span className="text-sm font-medium text-text-secondary tabular-nums">{index + 1}</span>
+                </div>
+                <h3 className="text-xl font-semibold">{step.title}</h3>
+                <p className="leading-relaxed text-text-secondary">{step.description}</p>
+              </li>
+            );
+          })}
+        </ol>
+        <div className="mt-10 flex justify-center">
+          <Button size="lg" className="h-auto px-8 py-6 text-base" asChild>
+            <CtaLink cta="how-start" href="/start">{t("getStarted")}</CtaLink>
+          </Button>
         </div>
       </div>
     </section>

@@ -104,6 +104,27 @@ Tests:
   - history events;
   - cascade on task delete.
 
+## Living memory (migration 098)
+
+When a task is finished, an AI proposes at most two things worth remembering
+from it (`src/lib/ai/task-learning.ts`):
+- They go to Memory as **unverified insights**. A person accepts, corrects or
+  rejects them; nothing becomes project knowledge on its own.
+- Each insight is linked to the task it came from. In the package it shows
+  as `Evidence: task <id> (get_task_context)`, so an agent can check the
+  source before relying on it.
+- **No repeats.** A proposal that says what memory already says is dropped
+  before it's saved (`isNearDuplicate` in `task-learning-core.ts`):
+  - shared distinctive words count, with and without Polish diacritics;
+  - facts that differ in a number or version ("Godot 4.3" / "Godot 3.5")
+    stay separate.
+- **Withdrawn with its evidence.** If the task is reopened or deleted, its
+  insights still waiting for review are removed. Finishing the task again
+  learns again. Accepted insights stay.
+
+Tests: `test:ai` (repeat detection), `test:db` section 82 (withdrawal on
+reopen and delete, accepted insights kept, project deletion).
+
 ## Observability
 
 - The `X-Guidon-Context` response header carries the numbers as JSON:

@@ -4298,5 +4298,51 @@ section("81. Smart Linking: task_links provenance, review, RLS and history (097)
   });
 }
 
+section("82. Living memory: unverified insights leave with their evidence (098)");
+{
+  let memProject, reopenTask, deleteTask;
+  const learned = async (taskId, content, verified) => {
+    const memoryId = (await db.query("INSERT INTO public.project_memory (project_id, content, memory_type, verified, created_by) VALUES ($1, $2, 'ai_insight', $3, $4) RETURNING id", [memProject, content, verified, A])).rows[0].id;
+    await db.query("INSERT INTO public.context_relations (source_type, source_id, target_type, target_id, relation_type, created_by, metadata) VALUES ('memory', $1, 'task', $2, 'based_on', $3, '{\"origin\":\"task_learning\"}'::jsonb)", [memoryId, taskId, A]);
+    return memoryId;
+  };
+  const exists = async (id) => (await db.query("SELECT 1 FROM public.project_memory WHERE id = $1", [id])).rows.length === 1;
+  let pending, accepted, manual, onDeleted, keptOnDelete;
+  await withUser(A, async () => {
+    memProject = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Living memory') RETURNING id", [orgId])).rows[0].id;
+    reopenTask = (await db.query("INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'Shrink the APK', 'done') RETURNING id, is_done", [memProject])).rows[0];
+    check("the source task starts finished", reopenTask.is_done === true);
+    deleteTask = (await db.query("INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'Cloud saves', 'done') RETURNING id", [memProject])).rows[0].id;
+    reopenTask = reopenTask.id;
+    pending = await learned(reopenTask, "Android builds must stay under 150 MB.", false);
+    accepted = await learned(reopenTask, "Release builds strip debug symbols.", true);
+    // A relation someone added by hand (no task_learning origin) is not the learner's.
+    manual = (await db.query("INSERT INTO public.project_memory (project_id, content, memory_type, verified, created_by) VALUES ($1, 'Builds are signed in CI.', 'ai_insight', false, $2) RETURNING id", [memProject, A])).rows[0].id;
+    await db.query("INSERT INTO public.context_relations (source_type, source_id, target_type, target_id, relation_type, created_by) VALUES ('memory', $1, 'task', $2, 'based_on', $3)", [manual, reopenTask, A]);
+    onDeleted = await learned(deleteTask, "Save files live in user://saves as JSON.", false);
+    keptOnDelete = await learned(deleteTask, "Saves sync on app pause.", true);
+
+    await db.query("UPDATE public.tasks SET status = 'in_progress' WHERE id = $1", [reopenTask]);
+    check("reopening the task withdraws the insight still waiting for review", !(await exists(pending)));
+    check("…its relation goes with it, so finishing again learns again", (await db.query("SELECT 1 FROM public.context_relations WHERE source_id = $1", [pending])).rows.length === 0);
+    check("an insight a person accepted stays", await exists(accepted));
+    check("an insight linked by hand stays", await exists(manual));
+    await db.query("UPDATE public.tasks SET title = 'Shrink the APK more' WHERE id = $1", [reopenTask]);
+    check("other edits of an open task change nothing", await exists(accepted) && await exists(manual));
+
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [deleteTask]);
+    check("deleting the task withdraws its pending insight", !(await exists(onDeleted)));
+    check("…and keeps the accepted one", await exists(keptOnDelete));
+  });
+  await withUser(A, async () => {
+    const before = (await db.query("SELECT count(*)::int n FROM public.project_memory WHERE project_id = $1", [memProject])).rows[0].n;
+    check("there is memory left to cascade", before >= 2, String(before));
+    await db.query("DELETE FROM public.projects WHERE id = $1", [memProject]);
+  });
+  await withServiceRole(async () => {
+    check("deleting the whole project still works (cascade skips the trigger)", (await db.query("SELECT count(*)::int n FROM public.project_memory WHERE project_id = $1", [memProject])).rows[0].n === 0);
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

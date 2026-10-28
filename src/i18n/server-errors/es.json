@@ -214,5 +214,7 @@
   "This report is already resolved.": "Esta denuncia ya está resuelta.",
   "You do not have permission to review linked code.": "No tienes permiso para revisar el código vinculado.",
   "This link no longer exists.": "Este vínculo ya no existe.",
-  "Could not update the link.": "No se pudo actualizar el vínculo."
+  "Could not update the link.": "No se pudo actualizar el vínculo.",
+  "The starter tasks are already on this board.": "Las tareas iniciales ya están en este tablero.",
+  "Could not create the starter tasks. Try again.": "No se pudieron crear las tareas iniciales. Inténtalo de nuevo."
 }

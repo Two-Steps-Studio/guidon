@@ -79,18 +79,37 @@ const MCP_CLIENT_NAMES = new Set(["Claude Code", "Claude Desktop", "Cursor", "VS
 
 export async function createMcpConnectionKey(
   clientName: string
-): Promise<{ error: string | null; fullKey: string | null }> {
+): Promise<{ error: string | null; fullKey: string | null; keyId: string | null }> {
   const user = await getCurrentUser();
   const date = new Date().toISOString().slice(0, 10);
   const label = MCP_CLIENT_NAMES.has(clientName) ? clientName : "AI app";
 
   try {
     const result = await mintApiKey(user.id, `${label} (MCP) ${date}`, MCP_SCOPES);
-    return { error: result.error, fullKey: result.fullKey };
+    return { error: result.error, fullKey: result.fullKey, keyId: result.row?.id ?? null };
   } catch (error) {
     console.error("Failed to create the MCP connection key:", error);
-    return { error: await tr("Could not create the key. Try again."), fullKey: null };
+    return { error: await tr("Could not create the key. Try again."), fullKey: null, keyId: null };
   }
+}
+
+/**
+ * Whether the agent set up with a new connection key has reached Guidon yet:
+ * last_used_at is written by authenticateApiKey on every MCP/REST call. Own
+ * keys only (RLS api_keys_select + the user_id filter); nothing but the
+ * timestamps leaves.
+ */
+export async function getMcpKeyStatus(
+  keyId: string
+): Promise<{ lastUsedAt: string | null; revoked: boolean } | null> {
+  const user = await getCurrentUser();
+  const { data } = await dataClient(user.id)
+    .from<{ last_used_at: string | null; revoked_at: string | null }>("api_keys")
+    .select("last_used_at, revoked_at")
+    .eq("id", keyId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  return data ? { lastUsedAt: data.last_used_at, revoked: data.revoked_at !== null } : null;
 }
 
 export async function revokeApiKey(keyId: string): Promise<{ error: string | null }> {

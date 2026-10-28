@@ -6,7 +6,7 @@ import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { createRateLimitWindow } from "@/lib/ai/rate-limit-window";
 import { normalizeDisabledModules } from "@/lib/work/project-modules";
 import { languageName, normalizeProjectLanguage } from "@/lib/project-language";
-import { parseLearnedFacts, taskHasSubstance, type LearnedFact } from "@/lib/ai/task-learning-core";
+import { newFacts, parseLearnedFacts, taskHasSubstance, type LearnedFact } from "@/lib/ai/task-learning-core";
 
 /**
  * "Learn from finished work": when a task is completed - on the board, in
@@ -23,6 +23,10 @@ import { parseLearnedFacts, taskHasSubstance, type LearnedFact } from "@/lib/ai/
  * quiet when it can't help: AI off for the project or the Memory module
  * hidden, no provider, a task with too little written about it, a task it
  * already learned from, or the per-project hourly cap reached.
+ *
+ * The finished task is the evidence: if it's reopened or deleted, the
+ * insights still waiting for review are withdrawn (migration 098), and a
+ * later completion learns again. Accepted ones stay.
  *
  * The service client is deliberate: this runs for whoever completed the
  * task - a browser session, an API key, a Discord user - after the request,
@@ -100,7 +104,8 @@ async function learn(projectId: string, userId: string, taskId: string): Promise
       .select("content")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
-      .limit(40),
+      // The newest 40 go into the prompt; all of these are checked for repeats.
+      .limit(300),
   ]);
   // Reopened in the meantime, or gone.
   if (!task?.is_done) return;
@@ -126,7 +131,7 @@ async function learn(projectId: string, userId: string, taskId: string): Promise
     material.description && `Description:\n${material.description.slice(0, 4000)}`,
     material.comments.length && `Comments:\n${material.comments.map((c) => `- ${c.slice(0, 800)}`).join("\n")}`,
     material.attempts.length && `Attempts:\n${material.attempts.map((a) => `- ${a.slice(0, 800)}`).join("\n")}`,
-    memory.length && `Already in the project's memory (don't repeat these):\n${memory.map((m) => `- ${m.content.slice(0, 200)}`).join("\n")}`,
+    memory.length && `Already in the project's memory (don't repeat these):\n${memory.slice(0, 40).map((m) => `- ${m.content.slice(0, 200)}`).join("\n")}`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -144,7 +149,9 @@ async function learn(projectId: string, userId: string, taskId: string): Promise
     maxTokens: 400,
   });
 
-  const facts: LearnedFact[] = parseLearnedFacts(result.text);
+  // The prompt asks for nothing already known, but models repeat anyway:
+  // anything memory (or this answer) already says is dropped here.
+  const facts: LearnedFact[] = newFacts(parseLearnedFacts(result.text), memory.map((m) => m.content));
   for (const fact of facts) {
     // An unverified ai_insight: the Memory page's review queue. The kind the
     // model suggested is kept in the text, the reviewer picks it on accept.

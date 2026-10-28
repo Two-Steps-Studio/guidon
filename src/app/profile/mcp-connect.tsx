@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { AlertCircle, Bot, Check, Copy, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useFormatter, useTranslations } from "next-intl";
+import { AlertCircle, Bot, Check, CheckCircle2, Copy, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createMcpConnectionKey } from "./api-keys-actions";
+import { createMcpConnectionKey, getMcpKeyStatus, revokeApiKey } from "./api-keys-actions";
 
 function CopyBlock({ text, copyLabel, errorLabel }: { text: string; copyLabel: string; errorLabel: string }) {
   const [state, setState] = useState<"idle" | "copied" | "error">("idle");
@@ -144,20 +144,106 @@ function setupSteps(client: McpClient, url: string, key: string): { hintKey: Ste
   }
 }
 
+// How often and how long the card checks whether the new key has been used.
+const STATUS_POLL_MS = 4000;
+const STATUS_POLL_LIMIT_MS = 15 * 60 * 1000;
+
+type KeyStatus = "waiting" | "connected" | "revoked";
+
 /**
- * Profile → Integrations: connect any MCP-capable AI app to Guidon's
- * /api/mcp. One click creates a key with exactly the scopes the MCP tools
- * need, then the setup for the chosen app is shown with the key filled in.
+ * After a key is created: waits for the agent's first call (the key's
+ * last_used_at), then says so - the "test connection" step - and offers to
+ * revoke the key right here.
  */
-export function McpConnect() {
+function ConnectionStatus({ keyId }: { keyId: string }) {
+  const t = useTranslations("profile");
+  const format = useFormatter();
+  const [status, setStatus] = useState<KeyStatus>("waiting");
+  const [lastUsedAt, setLastUsedAt] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status !== "waiting") return;
+    const started = Date.now();
+    let stopped = false;
+    const timer = setInterval(async () => {
+      if (Date.now() - started > STATUS_POLL_LIMIT_MS) {
+        clearInterval(timer);
+        return;
+      }
+      const result = await getMcpKeyStatus(keyId).catch(() => null);
+      if (stopped || !result) return;
+      if (result.revoked) setStatus("revoked");
+      else if (result.lastUsedAt) {
+        setLastUsedAt(result.lastUsedAt);
+        setStatus("connected");
+      }
+    }, STATUS_POLL_MS);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [keyId, status]);
+
+  const revoke = async () => {
+    setRevoking(true);
+    setError(null);
+    const result = await revokeApiKey(keyId).catch(() => ({ error: t("mcpError") }));
+    setRevoking(false);
+    if (result.error) setError(result.error);
+    else setStatus("revoked");
+  };
+
+  return (
+    <div className="space-y-2">
+      <p role="status" className="flex items-center gap-2 text-sm">
+        {status === "waiting" && (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
+            <span className="text-muted-foreground">{t("mcpWaiting")}</span>
+          </>
+        )}
+        {status === "connected" && lastUsedAt && (
+          <>
+            <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+            <span>{t("mcpConnected", { time: format.dateTime(new Date(lastUsedAt), { hour: "2-digit", minute: "2-digit" }) })}</span>
+          </>
+        )}
+        {status === "revoked" && <span className="text-muted-foreground">{t("mcpRevoked")}</span>}
+      </p>
+      {status !== "revoked" && (
+        <Button type="button" size="sm" variant="outline" onClick={revoke} disabled={revoking}>
+          {revoking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
+          {t("mcpRevoke")}
+        </Button>
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Profile → Integrations, and "Connect your agent" on a project's board:
+ * connect any MCP-capable AI app to Guidon's /api/mcp. One click creates a
+ * key with exactly the scopes the MCP tools need, then the setup for the
+ * chosen app is shown with the key filled in. With `projectName` the prompt
+ * to try points the agent at that project.
+ */
+export function McpConnect({ projectName, embedded = false }: { projectName?: string; embedded?: boolean } = {}) {
   const t = useTranslations("profile");
   const [client, setClient] = useState<McpClient>("claude-code");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [connection, setConnection] = useState<{ key: string; url: string } | null>(null);
+  const [connection, setConnection] = useState<{ key: string; url: string; keyId: string | null } | null>(null);
 
   const clientName = (id: McpClient) => CLIENT_NAMES[id] || t("mcpClientOther");
   const usesOAuth = OAUTH_CLIENTS.has(client);
+  const tryPrompt = projectName ? t("mcpTryPromptProject", { project: projectName }) : t("mcpTryPrompt");
 
   const handleCreate = async () => {
     setPending(true);
@@ -170,7 +256,7 @@ export function McpConnect() {
       }
       // The browser's own origin is the address the AI app has to reach:
       // right for the hosted app, a self-hosted domain, and localhost alike.
-      setConnection({ key: result.fullKey, url: `${window.location.origin}/api/mcp` });
+      setConnection({ key: result.fullKey, url: `${window.location.origin}/api/mcp`, keyId: result.keyId });
     } catch {
       setError(t("mcpError"));
     } finally {
@@ -179,14 +265,16 @@ export function McpConnect() {
   };
 
   return (
-    <div className="space-y-3 rounded-md border border-border bg-background-secondary px-3 py-3">
-      <div className="flex gap-3">
-        <Bot className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-        <div>
-          <p className="text-sm font-medium">{t("mcpTitle")}</p>
-          <p className="text-sm text-muted-foreground">{t("mcpDescription")}</p>
+    <div className={cn("space-y-3", !embedded && "rounded-md border border-border bg-background-secondary px-3 py-3")}>
+      {!embedded && (
+        <div className="flex gap-3">
+          <Bot className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+          <div>
+            <p className="text-sm font-medium">{t("mcpTitle")}</p>
+            <p className="text-sm text-muted-foreground">{t("mcpDescription")}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div role="radiogroup" aria-label={t("mcpClientLabel")} className="flex flex-wrap gap-1.5">
         {MCP_CLIENTS.map((id) => (
@@ -217,7 +305,7 @@ export function McpConnect() {
           <li className="font-medium">2. {t("mcpOAuthApprove")}</li>
           <li className="space-y-2">
             <p className="font-medium">3. {t("mcpTry")}</p>
-            <CopyBlock text={t("mcpTryPrompt")} copyLabel={t("mcpCopy")} errorLabel={t("copyKeyError")} />
+            <CopyBlock text={tryPrompt} copyLabel={t("mcpCopy")} errorLabel={t("copyKeyError")} />
           </li>
         </ol>
       )}
@@ -251,9 +339,10 @@ export function McpConnect() {
             ))}
             <li className="space-y-2">
               <p className="font-medium">{t("mcpTry")}</p>
-              <CopyBlock text={t("mcpTryPrompt")} copyLabel={t("mcpCopy")} errorLabel={t("copyKeyError")} />
+              <CopyBlock text={tryPrompt} copyLabel={t("mcpCopy")} errorLabel={t("copyKeyError")} />
             </li>
           </ol>
+          {connection.keyId && <ConnectionStatus keyId={connection.keyId} />}
         </div>
       )}
     </div>

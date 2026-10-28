@@ -6,7 +6,7 @@ import type { LabelPreset } from "@/lib/work/label-presets";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Upload, X } from "lucide-react";
+import { Bot, ListChecks, Loader2, Plus, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -38,6 +38,8 @@ import { toolResult, useWebMcpTools } from "@/components/agent/web-mcp";
 import { playSound } from "@/lib/sounds";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { ImportTasksDialog } from "./import-tasks-dialog";
+import { ConnectAgentDialog } from "./connect-agent-dialog";
+import { addAgentStarterTasks } from "./starter-actions";
 import { bulkUpdateTasks, type BulkOperation } from "./bulk-actions";
 import { BulkBar } from "./bulk-bar";
 import { AiTaskChat } from "./ai-task-chat";
@@ -114,6 +116,8 @@ export function WorkBoard({
     setCreateFor(status);
   }, []);
   const [importOpen, setImportOpen] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [starterPending, setStarterPending] = useState(false);
   const [showWelcome, setShowWelcome] = useState(welcome);
   const tOnboarding = useTranslations("onboarding");
 
@@ -377,6 +381,30 @@ export function WorkBoard({
         : [...current.tasks, task],
     }));
 
+  const addStarterTasks = async () => {
+    setStarterPending(true);
+    try {
+      const result = await addAgentStarterTasks(projectId);
+      result.tasks.forEach(upsertTask);
+      if (result.error) toast.error(result.error);
+      else
+        toast.success(tOnboarding("starterAdded"), {
+          action: { label: t("connectAgent"), onClick: () => setAgentOpen(true) },
+        });
+    } catch {
+      toast.error(t("starterFailed"));
+    } finally {
+      setStarterPending(false);
+    }
+  };
+
+  const starterButton = (
+    <Button size="sm" variant="outline" onClick={addStarterTasks} disabled={starterPending}>
+      {starterPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ListChecks className="h-4 w-4" />}
+      {tOnboarding("welcomeStarterTasks")}
+    </Button>
+  );
+
   // Stable identity for the board (KanbanBoard is memo()'d): always calls the
   // latest handleMove, which closes over the current state and columns.
   const handleMoveRef = useRef(handleMove);
@@ -542,6 +570,13 @@ export function WorkBoard({
           )}
 
           {canEdit && (
+            <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
+              <Bot className="h-4 w-4" />
+              {t("connectAgent")}
+            </Button>
+          )}
+
+          {canEdit && (
             <Button
               size="sm"
               onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}
@@ -567,6 +602,11 @@ export function WorkBoard({
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/projects/${projectId}/members`}>{tOnboarding("welcomeInvite")}</Link>
               </Button>
+              <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
+                <Bot className="h-4 w-4" />
+                {tOnboarding("welcomeConnectAgent")}
+              </Button>
+              {topLevelTasks.length === 0 && starterButton}
               <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
                 <Upload className="h-4 w-4" />
                 {tOnboarding("welcomeImport")}
@@ -657,10 +697,22 @@ export function WorkBoard({
               {canEdit ? t("noTasksDescCanEdit") : t("noTasksDescReadOnly")}
             </p>
             {canEdit && (
-              <Button size="sm" className="mt-4" onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}>
-                <Plus className="h-4 w-4" />
-                {t("newTask")}
-              </Button>
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button size="sm" onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}>
+                    <Plus className="h-4 w-4" />
+                    {t("newTask")}
+                  </Button>
+                  {starterButton}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAgentOpen(true)}
+                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                >
+                  {t("noTasksAgentHint")}
+                </button>
+              </div>
             )}
           </div>
         ) : (
@@ -731,6 +783,8 @@ export function WorkBoard({
           onImported={(tasks) => tasks.forEach(upsertTask)}
         />
       )}
+
+      {canEdit && <ConnectAgentDialog open={agentOpen} onOpenChange={setAgentOpen} projectName={projectName} />}
 
       <CreateTaskDialog
         key={createFor ?? "no-column"}
