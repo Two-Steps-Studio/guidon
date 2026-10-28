@@ -140,7 +140,9 @@ try{
   await new Promise(resolve=>proxy.listen(tlsPort,"127.0.0.1",resolve));
   phase="api-mcp";
   results.push(await apiIsolation({origin,fixture,api,client}));
-  for(const [name,browserType] of Object.entries({chromium,firefox,webkit})){
+  // E2E_BROWSERS=webkit (comma-separated) narrows a run, e.g. to bisect one engine.
+  const onlyBrowsers=(process.env.E2E_BROWSERS??"").split(",").map(value=>value.trim()).filter(Boolean);
+  for(const [name,browserType] of Object.entries({chromium,firefox,webkit}).filter(([name])=>!onlyBrowsers.length||onlyBrowsers.includes(name))){
     phase=name;
     console.log(`E2E: ${name} real login, private projects and session smoke`);
     const browser=await browserType.launch();
