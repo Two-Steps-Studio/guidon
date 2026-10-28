@@ -368,3 +368,31 @@ export function resolveImportedTasks(
     },
   };
 }
+
+/** Titles compared the way a person would: case, accents' spacing and punctuation runs don't make a new task. */
+export function titleKey(title: string): string {
+  return title.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * Which imported tasks are already on the board (same title) or repeat an
+ * earlier row of the same file - re-importing an export twice, or importing
+ * after a partial run, shouldn't double the board. Returns the indexes, so
+ * the preview can mark them and the import can leave them out.
+ */
+export function findDuplicateTitles(
+  tasks: { title: string }[],
+  existingTitles: Iterable<string>
+): { onBoard: Set<number>; inFile: Set<number> } {
+  const board = new Set(Array.from(existingTitles, titleKey));
+  const seen = new Set<string>();
+  const onBoard = new Set<number>();
+  const inFile = new Set<number>();
+  tasks.forEach((task, index) => {
+    const key = titleKey(task.title);
+    if (board.has(key)) onBoard.add(index);
+    else if (seen.has(key)) inFile.add(index);
+    seen.add(key);
+  });
+  return { onBoard, inFile };
+}

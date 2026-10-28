@@ -7,6 +7,7 @@ import type { TaskPriority } from "@/types/task";
 import { apiRoute } from "@/lib/api/api-route";
 import { claimedElsewhereMessage, foreignClaim } from "@/lib/api/task-claims";
 import { TRACKED_TASK_FIELDS, appChangeDetails, diffTaskFields } from "@/lib/work/app-changes-core";
+import { agentGate } from "@/lib/api/agent-gate";
 
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:read");
@@ -145,6 +146,9 @@ async function handleDELETE(request: NextRequest, { params }: { params: Promise<
     .eq("id", taskId)
     .maybeSingle();
   if (!existing) return NextResponse.json({ error: "Task not found." }, { status: 404 });
+
+  const blocked = await agentGate(db, guard, existing.project_id, "can_delete_tasks");
+  if (blocked) return blocked;
 
   const { data: deleted, error } = await db.from("tasks").delete().eq("id", taskId).select("id");
 

@@ -96,7 +96,7 @@ export function KnowledgeList({
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
           {sources.map((source) => (
-            <li key={source.id} className="group flex gap-3 bg-card p-4 transition-colors hover:bg-surface-hover">
+            <li key={source.id} id={`source-${source.id}`} className="group flex scroll-mt-24 gap-3 bg-card p-4 transition-colors hover:bg-surface-hover target:ring-2 target:ring-inset target:ring-primary">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-sm font-medium text-foreground">{source.title || t("untitled")}</h3>

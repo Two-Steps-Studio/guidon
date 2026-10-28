@@ -71,6 +71,12 @@ export interface TaskWhyRelatedItem {
   preview: string | null;
   /** Set only for entityType === "decision". */
   status: string | null;
+  /**
+   * An AI insight (project_memory.memory_type = 'ai_insight') no person has
+   * confirmed yet - the panel marks it so an inference is never read as a
+   * fact. False for everything else, including memory people wrote.
+   */
+  unconfirmedAi: boolean;
   createdBy: string | null;
   createdByText: string | null;
   createdAt: string | null;
@@ -327,7 +333,7 @@ export async function buildTaskWhyContext(
         idsByType.decision
       ),
       withUserFetch("context_sources", "id, title, content, author, created_at", idsByType.source),
-      withUserFetch("project_memory", "id, content, memory_type, created_by, created_at", idsByType.memory),
+      withUserFetch("project_memory", "id, content, memory_type, verified, created_by, created_at", idsByType.memory),
       withUserFetch("roadmap_phases", "id, name, description, created_by, created_at", idsByType.phase),
       withUserFetch("project_files", "id, name, uploaded_by, created_at", idsByType.file),
       withUserFetch("tasks", "id, title, created_by, created_at", idsByType.task),
@@ -339,7 +345,7 @@ export async function buildTaskWhyContext(
     [decisionsMap, sourcesMap, memoryMap, phasesMap, filesMap, tasksMap, projectsMap] = await Promise.all([
       fetchMap(supabase, "context_decisions", "id, title, status, description, made_by, made_at", idsByType.decision),
       fetchMap(supabase, "context_sources", "id, title, content, author, created_at", idsByType.source),
-      fetchMap(supabase, "project_memory", "id, content, memory_type, created_by, created_at", idsByType.memory),
+      fetchMap(supabase, "project_memory", "id, content, memory_type, verified, created_by, created_at", idsByType.memory),
       fetchMap(supabase, "roadmap_phases", "id, name, description, created_by, created_at", idsByType.phase),
       fetchMap(supabase, "project_files", "id, name, uploaded_by, created_at", idsByType.file),
       fetchMap(supabase, "tasks", "id, title, created_by, created_at", idsByType.task),
@@ -371,6 +377,7 @@ export async function buildTaskWhyContext(
       title: titleFor(type, row),
       preview: previewFor(type, row),
       status: type === "decision" ? ((row?.status as string | undefined) ?? null) : null,
+      unconfirmedAi: type === "memory" && row?.memory_type === "ai_insight" && row.verified !== true,
       createdBy: creatorIdFor(type, row),
       createdByText: type === "source" ? ((row?.author as string | undefined) ?? null) : null,
       createdAt: createdAtFor(type, row),

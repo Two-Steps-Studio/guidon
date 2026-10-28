@@ -63,6 +63,10 @@ subtasks, relationships, and the task's project context. Use board filters
 and **My tasks** to focus on work assigned to you. Bulk actions are available
 for selecting multiple tasks on the board.
 
+To move work in from Jira, Linear, Trello, Asana, ClickUp, Notion or a
+spreadsheet, use **Import** on the board. See [Moving tasks into
+Guidon](importing.md) for what is kept, duplicates, undo and limits.
+
 When an AI agent works on a task, it can move through the workflow and leave
 its result for a person to review. Project AI permissions determine which
 agent actions are allowed.

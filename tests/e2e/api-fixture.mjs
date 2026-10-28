@@ -20,12 +20,14 @@ export async function seedApiFixture(client, fixture) {
     rate:{user:owner.id,scopes:["tasks:read","project:read"]},
     manager:{user:owner.id,scopes:["project:read","project:write"]},
     viewerProject:{user:fixture.reader.id,scopes:["tasks:read","project:read","project:write"]},
+    // An AI agent's key (not human_client): the project's AI permissions apply to it.
+    agent:{user:owner.id,scopes:["tasks:read","tasks:write","project:read","project:write"],agent:true},
   };
   for(const [name,config] of Object.entries(configurations)){
     const raw=`guidon_${randomBytes(32).toString("base64url")}`;
-    await client.query("INSERT INTO public.api_keys(user_id,name,key_prefix,key_hash,scopes,human_client,revoked_at,expires_at,project_id,allowed_origins) VALUES($1,$2,$3,$4,$5,true,$6,$7,$8,$9)",[
+    await client.query("INSERT INTO public.api_keys(user_id,name,key_prefix,key_hash,scopes,human_client,revoked_at,expires_at,project_id,allowed_origins) VALUES($1,$2,$3,$4,$5,$10,$6,$7,$8,$9)",[
       config.user,`E2E ${name}`,raw.slice(0,12),createHash("sha256").update(raw).digest("hex"),config.scopes,
-      config.revoked?new Date():null,config.expired?new Date(Date.now()-60000):null,config.project??null,config.origins??null,
+      config.revoked?new Date():null,config.expired?new Date(Date.now()-60000):null,config.project??null,config.origins??null,!config.agent,
     ]);
     keys[name]=raw;
   }

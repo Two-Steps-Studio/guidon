@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
+import { isValidUuid } from "@/lib/api/validate-id";
 import { dataClient, serviceDataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -101,8 +102,53 @@ export async function importTasks(
     action: "tasks_imported",
     projectId,
     entityType: "task",
-    details: { count },
+    // The ids make the import auditable and undoable (undoImport below).
+    details: { count, task_ids: created.map((task) => task.id) },
   });
   revalidatePath(`/projects/${projectId}/work`);
   return { error: null, count, tasks: created };
+}
+
+/**
+ * Takes an import back: deletes the tasks it created that nobody has touched
+ * since (revision 0, migration 086) - a task someone already edited, moved
+ * or commented on stays, and is reported as kept. Owners and admins only,
+ * like any task deletion (tasks_delete, 001).
+ */
+export async function undoImport(
+  projectId: string,
+  taskIds: string[]
+): Promise<{ error: string | null; removed: string[]; kept: number }> {
+  const access = await getProjectAccess(projectId);
+  if (!access || !canManageProject(access.role)) {
+    return { error: await tr("Only project owners and admins can undo an import."), removed: [], kept: 0 };
+  }
+  const ids = Array.isArray(taskIds) ? [...new Set(taskIds.filter((id) => typeof id === "string" && isValidUuid(id)))] : [];
+  if (ids.length === 0 || ids.length > MAX_IMPORT_TASKS) return { error: await tr("Nothing to import."), removed: [], kept: 0 };
+
+  const db = dataClient(access.userId);
+  const removed: string[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await db
+      .from<{ id: string }>("tasks")
+      .delete()
+      .eq("project_id", projectId)
+      .in("id", ids.slice(i, i + 200))
+      .eq("revision", 0)
+      .select("id");
+    if (error) return { error: error.message, removed, kept: ids.length - removed.length };
+    removed.push(...data.map((row) => row.id));
+  }
+
+  if (removed.length) {
+    await logActivity({
+      userId: access.userId,
+      action: "tasks_import_undone",
+      projectId,
+      entityType: "task",
+      details: { count: removed.length, task_ids: removed, kept: ids.length - removed.length },
+    });
+    revalidatePath(`/projects/${projectId}/work`);
+  }
+  return { error: null, removed, kept: ids.length - removed.length };
 }
