@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import vm from "node:vm";
+import { randomUUID } from "node:crypto";
 import ts from "typescript";
 import { PGlite } from "@electric-sql/pglite";
 import * as compiler from "../../src/lib/data-client/sql.ts";
@@ -28,9 +29,9 @@ async function load(path,dependencies){
 const adapter=await load("../../src/lib/data-client/index.ts",{"server-only":{},"@/lib/db/pool":{hasDirectDatabase:()=>true},"@/lib/db/session":{withUser:(id,fn)=>asUser(id,()=>fn({query:(q,v)=>db.query(q,v)}))},"@/lib/supabase-server":{},"./sql":compiler});
 let actor=A,role="owner",activities=0,events=0;
 const actions=await load("../../src/app/projects/[id]/work/actions.ts",{
- "next/cache":{revalidatePath(){}},"@/lib/data/project-access":{getProjectAccess:async()=>({userId:actor,role}),canWriteProject:r=>["owner","admin","developer"].includes(r),canManageProject:r=>["owner","admin"].includes(r)},
+ "next/cache":{revalidatePath(){}},"@/lib/data/project-access":{getProjectAccess:async()=>({userId:actor,role,project:{organization_id:org}}),canWriteProject:r=>["owner","admin","developer"].includes(r),canManageProject:r=>["owner","admin"].includes(r)},
  "@/lib/data-client":adapter,"@/lib/data/log-activity":{logActivity:async()=>{activities++;}},"@/lib/data/notifications":{createNotification:async()=>{}},
- "@/lib/events/task-events":{emitTaskEvent:()=>{events++;}},"@/lib/limits":{},"@/lib/work/task-board":{},"@/lib/work/recurrence":{ensureNextOccurrence:async()=>[]},"@/lib/work/recurrence-core":recurrence,"@/lib/i18n/server-errors":{tr:async text=>text},
+ "@/lib/events/task-events":{emitTaskEvent:()=>{events++;}},"@/lib/limits":{hostedTaskLimitError:async()=>null},"@/lib/api/validate-id":{isValidUuid:v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)},"@/lib/work/task-board":{},"@/lib/work/recurrence":{ensureNextOccurrence:async()=>[]},"@/lib/work/recurrence-core":recurrence,"@/lib/i18n/server-errors":{tr:async text=>text},
 });
 try{
  const first=await actions.updateTask(project,task.id,{title:"First editor",description:"Preserve this"},0);
@@ -47,5 +48,15 @@ try{
  actor=A;role="viewer";assert.match((await actions.updateTask(project,task.id,{title:"Viewer"},2)).error,/permission/);
  role="owner";const partial=await actions.updateTask(project,task.id,{title:"Compatible partial client"});assert.equal(partial.error,null);assert.equal(partial.task.revision,3);
  assert.equal((await actions.updateTask(project,task.id,{title:"After refresh"},3)).task.revision,4);
+ // A create retried after a lost response returns the same task, never a copy.
+ const clientId=randomUUID(),input={title:"Created once",description:"",status:"todo",priority:"medium",assigneeId:"",dueDate:"",sortOrder:100,clientId};
+ const made=await actions.createTask(project,input);assert.equal(made.error,null);assert.equal(made.task.id,clientId);
+ const before=activities,retried=await actions.createTask(project,{...input,title:"Changed on retry"});
+ assert.equal(retried.task.id,clientId);assert.equal(retried.task.title,"Created once");assert.equal(activities,before,"a retry logs nothing");
+ assert.equal((await db.query("SELECT count(*)::int AS n FROM tasks WHERE id=$1",[clientId])).rows[0].n,1);
+ // Someone else reusing that id gets neither the task nor a copy.
+ actor=B;const foreign=await actions.createTask(project,input);assert.equal(foreign.task,null);assert.ok(foreign.error);actor=A;
+ const plain=await actions.createTask(project,{...input,clientId:"not-a-uuid",title:"Server id"});assert.equal(plain.error,null);assert.notEqual(plain.task.id,clientId);
+ console.log("pass idempotent create: retry returns the same task, no second log, foreign reuse refused, invalid client id ignored");
  console.log("pass actual task action/adapter/SQL: first edit, stale CAS, all-writer monotonic revision, invalid versions, foreign/viewer denial, preserved fields, no conflict side effects and legacy partial-client compatibility");
 }finally{await db.close();}
