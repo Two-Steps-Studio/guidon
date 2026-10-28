@@ -170,7 +170,10 @@ function TaskDetailDialogInner({
   // they are saved or deliberately discarded, so a crash or a killed mobile
   // tab doesn't lose them.
   const draftKey = task && canEdit && currentUserId ? taskDraftKey(currentUserId, task.id) : null;
-  const discardDraft = () => { if (draftKey) clearTaskDraft(draftKey); };
+  // After a save, delete or discard, a pending debounced write must not
+  // bring the draft back (it would reopen as a false conflict).
+  const draftDone = useRef(false);
+  const discardDraft = () => { draftDone.current = true; if (draftKey) clearTaskDraft(draftKey); };
   const requestClose = useGuardedClose(dirty, saving || deleting, () => { discardDraft(); onClose(); });
   const [error, setError] = useState<string | null>(null);
   // This version belongs to the form's initial snapshot, even if parent props
@@ -271,7 +274,7 @@ function TaskDetailDialogInner({
   }, [draftKey, task, currentUserId]);
   useEffect(() => {
     if (!draftKey || !currentUserId || !dirty || !restoreChecked.current) return;
-    const timer = window.setTimeout(() => writeTaskDraft(draftKey, { userId: currentUserId, revision: editRevision, form }), 300);
+    const timer = window.setTimeout(() => !draftDone.current && writeTaskDraft(draftKey, { userId: currentUserId, revision: editRevision, form }), 300);
     return () => window.clearTimeout(timer);
   }, [draftKey, currentUserId, dirty, editRevision, form]);
 
@@ -743,7 +746,7 @@ function TaskDetailDialogInner({
             <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
               <span>{t("draftRestored", { time: new Date(draftRestoredAt).toLocaleString() })}</span>
               <Button type="button" size="sm" variant="ghost" onClick={() => {
-                discardDraft();
+                clearTaskDraft(draftKey!);
                 setForm(formToTask(task));
                 setEditRevision(task.revision ?? -1);
                 setDraftRestoredAt(null);

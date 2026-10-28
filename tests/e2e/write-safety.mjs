@@ -79,6 +79,18 @@ export async function writeSafetyCoverage({context,origin,fixture,client,browser
     await page.locator("#new-task-title").waitFor({state:"hidden"});
     assert.equal((await client.query("SELECT count(*)::int AS n FROM tasks WHERE project_id=$1 AND title=$2",[owner.projectId,`${prefix} created once`])).rows[0].n,1);
 
+    // 4b. Two tasks typed and submitted quickly, one after the other, are two
+    // tasks: the first one's id must not linger in a draft and swallow the second.
+    for(const suffix of ["first","second"]){
+      await page.getByRole("button",{name:"Add task to Todo",exact:true}).click();
+      await page.locator("#new-task-title").fill(`${prefix} quick ${suffix}`);
+      await page.locator("#new-task-title").press("Enter");
+      await page.locator("#new-task-title").waitFor({state:"hidden"});
+    }
+    await page.waitForTimeout(500);
+    assert.equal((await client.query("SELECT count(*)::int AS n FROM tasks WHERE project_id=$1 AND title LIKE $2",[owner.projectId,`${prefix} quick %`])).rows[0].n,2,"Both quick tasks exist");
+    assert.equal(await page.evaluate(()=>Object.keys(localStorage).filter(key=>key.startsWith("guidon:task-draft:v1:")).length),0,"No draft is left after creating");
+
     // 5. Signing out leaves no drafts on the device.
     await openTask(edited);await page.locator("#task-title").fill(`${prefix} left behind`);
     await expectEventually(()=>page.evaluate(()=>Object.keys(localStorage).some(key=>key.startsWith("guidon:task-draft:v1:"))),"draft written before sign-out");

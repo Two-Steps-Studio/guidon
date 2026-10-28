@@ -51,12 +51,15 @@ try{
  // A create retried after a lost response returns the same task, never a copy.
  const clientId=randomUUID(),input={title:"Created once",description:"",status:"todo",priority:"medium",assigneeId:"",dueDate:"",sortOrder:100,clientId};
  const made=await actions.createTask(project,input);assert.equal(made.error,null);assert.equal(made.task.id,clientId);
- const before=activities,retried=await actions.createTask(project,{...input,title:"Changed on retry"});
+ const before=activities,retried=await actions.createTask(project,input);
  assert.equal(retried.task.id,clientId);assert.equal(retried.task.title,"Created once");assert.equal(activities,before,"a retry logs nothing");
  assert.equal((await db.query("SELECT count(*)::int AS n FROM tasks WHERE id=$1",[clientId])).rows[0].n,1);
+ // An id left over from an earlier task must not swallow a new one.
+ const next=await actions.createTask(project,{...input,title:"A different task"});
+ assert.equal(next.error,null);assert.notEqual(next.task.id,clientId);assert.equal(next.task.title,"A different task");
  // Someone else reusing that id gets neither the task nor a copy.
  actor=B;const foreign=await actions.createTask(project,input);assert.equal(foreign.task,null);assert.ok(foreign.error);actor=A;
  const plain=await actions.createTask(project,{...input,clientId:"not-a-uuid",title:"Server id"});assert.equal(plain.error,null);assert.notEqual(plain.task.id,clientId);
- console.log("pass idempotent create: retry returns the same task, no second log, foreign reuse refused, invalid client id ignored");
+ console.log("pass idempotent create: retry returns the same task, no second log, a reused id with a new title still creates it, foreign reuse refused, invalid client id ignored");
  console.log("pass actual task action/adapter/SQL: first edit, stale CAS, all-writer monotonic revision, invalid versions, foreign/viewer denial, preserved fields, no conflict side effects and legacy partial-client compatibility");
 }finally{await db.close();}

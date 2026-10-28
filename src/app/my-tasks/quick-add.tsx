@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2, Plus } from "lucide-react";
@@ -79,11 +79,13 @@ function QuickAddDialog({ userId, projects, onClose }: { userId: string; project
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dirty = title.trim() !== "";
-  const requestClose = useGuardedClose(dirty, saving, () => { clearTaskDraft(draftKey); onClose(); });
+  // After a save or a discard, a pending debounced write must not restore the draft.
+  const draftDone = useRef(false);
+  const requestClose = useGuardedClose(dirty, saving, () => { draftDone.current = true; clearTaskDraft(draftKey); onClose(); });
 
   useEffect(() => {
     if (!dirty) return;
-    const timer = window.setTimeout(() => writeTaskDraft<QuickDraft>(draftKey, { userId, revision: -1, clientId, form: { title, projectId, dueToday } }), 300);
+    const timer = window.setTimeout(() => !draftDone.current && writeTaskDraft<QuickDraft>(draftKey, { userId, revision: -1, clientId, form: { title, projectId, dueToday } }), 300);
     return () => window.clearTimeout(timer);
   }, [draftKey, userId, clientId, dirty, title, projectId, dueToday]);
 
@@ -97,6 +99,7 @@ function QuickAddDialog({ userId, projects, onClose }: { userId: string; project
         quickAddTask(projectId, { title: title.trim(), dueDate: dueToday ? todayKey() : "", clientId })
       );
       if (result.error || !result.task) throw new Error(result.error ?? tWork("failedToCreateTask"));
+      draftDone.current = true;
       clearTaskDraft(draftKey);
       try { window.localStorage.setItem(LAST_PROJECT_KEY, projectId); } catch { /* storage blocked */ }
       const project = projects.find((item) => item.id === projectId);

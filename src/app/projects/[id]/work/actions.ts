@@ -138,8 +138,13 @@ export async function createTask(
       .maybeSingle();
     return data ?? null;
   };
+  // A retry is the same task sent again. A different title under the same
+  // id is a new task (an id left over in a draft): it gets a fresh id
+  // instead of silently returning the old one.
   const existing = await alreadyCreated();
-  if (existing) return { task: existing, error: null };
+  const sameTask = (task: Task | null) => task !== null && task.title === input.title.trim();
+  if (existing && sameTask(existing)) return { task: existing, error: null };
+  const insertId = existing ? undefined : clientId;
 
   const limitError = await hostedTaskLimitError(projectId, access.project.organization_id);
   if (limitError) return { task: null, error: limitError };
@@ -161,7 +166,7 @@ export async function createTask(
   const { data: task, error } = await dataClient(access.userId)
     .from<Task>("tasks")
     .insert({
-      ...(clientId ? { id: clientId } : {}),
+      ...(insertId ? { id: insertId } : {}),
       project_id: projectId,
       title: input.title.trim(),
       description,
@@ -179,7 +184,7 @@ export async function createTask(
   if (error?.code === "23505") {
     // Two retries raced: the other one inserted it.
     const raced = await alreadyCreated();
-    if (raced) return { task: raced, error: null };
+    if (raced && sameTask(raced)) return { task: raced, error: null };
   }
   if (error || !task) return { task: null, error: error?.message ?? "Failed to create task." };
 
