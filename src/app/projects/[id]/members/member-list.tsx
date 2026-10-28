@@ -19,6 +19,7 @@ import { initialsFor } from "@/lib/people";
 import { addMember, changeMemberRole, removeMember, type MemberRow } from "./actions";
 import type { ProjectRole } from "@/types/project";
 import { isAiAccountEmail } from "@/lib/ai-account-email";
+import { RoleMatrix } from "./role-matrix";
 
 const ASSIGNABLE_BY: Record<"owner" | "admin", ProjectRole[]> = {
   owner: ["owner", "admin", "developer", "tester", "viewer"],
@@ -136,7 +137,7 @@ export function MemberList({
 
   return (
     <>
-      <div className="mx-auto max-w-3xl p-6">
+      <div className="mx-auto w-full min-w-0 max-w-3xl p-6">
         <header className="mb-6 flex flex-wrap items-end gap-4">
           <div className="flex-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
@@ -280,6 +281,8 @@ export function MemberList({
             {t("lastOwnerNote")}
           </p>
         )}
+
+        <RoleMatrix myRole={myRole} />
       </div>
 
       {adding && (

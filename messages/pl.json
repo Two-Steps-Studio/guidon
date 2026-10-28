@@ -1054,6 +1054,19 @@
     "roleHintDeveloper": "Tworzenie i edytowanie zadań, decyzji i wiedzy",
     "roleHintTester": "Komentowanie zadań; odczyt reszty",
     "roleHintViewer": "Dostęp tylko do odczytu",
+    "matrix": {
+      "title": "Co może każda rola",
+      "action": "Działanie",
+      "view": "Widzi zadania, decyzje, notatki, roadmapę i pliki",
+      "comment": "Komentuje zadania i dodaje załączniki",
+      "edit": "Tworzy, edytuje i przenosi zadania; pisze decyzje i notatki",
+      "delete": "Usuwa zadania, decyzje, notatki i pliki",
+      "manage": "Zarządza członkami, ustawieniami, roadmapą i integracjami",
+      "own": "Zmienia lub usuwa właścicieli, usuwa projekt",
+      "yes": "Dozwolone",
+      "no": "Niedozwolone",
+      "note": "Klucze API i podłączone aplikacje AI działają jako osoba, która je podłączyła, więc nigdy nie mają więcej niż jej rola. Konto AI z tej listy ma własną rolę. Projekt udostępniony całej organizacji mogą też czytać jej członkowie spoza tej listy."
+    },
     "memberLimitReached": "Plan {plan} pozwala na {limit} członków w projekcie. <link>Zmień plan</link>, żeby dodać kolejne osoby."
   },
   "settings": {

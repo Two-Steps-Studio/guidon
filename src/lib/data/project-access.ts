@@ -8,6 +8,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import type { ProjectRole, ProjectMethodology } from "@/types/project";
+import { roleCan } from "@/lib/project-permissions";
 
 /**
  * Server-side project authorisation - one gate for every project page.
@@ -46,20 +47,16 @@ export interface ProjectAccess {
   role: ProjectRole | null;
 }
 
-const MANAGE_ROLES: ProjectRole[] = ["owner", "admin"];
-const WRITE_ROLES: ProjectRole[] = ["owner", "admin", "developer"];
-const COMMENT_ROLES: ProjectRole[] = ["owner", "admin", "developer", "tester"];
-
 export function canManageProject(role: ProjectRole | null): boolean {
-  return role !== null && MANAGE_ROLES.includes(role);
+  return roleCan(role, "manage");
 }
 
 export function canWriteProject(role: ProjectRole | null): boolean {
-  return role !== null && WRITE_ROLES.includes(role);
+  return roleCan(role, "edit");
 }
 
 export function canCommentOnProject(role: ProjectRole | null): boolean {
-  return role !== null && COMMENT_ROLES.includes(role);
+  return roleCan(role, "comment");
 }
 
 /**

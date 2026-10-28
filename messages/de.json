@@ -1054,6 +1054,19 @@
     "roleHintDeveloper": "Aufgaben, Entscheidungen und Wissen erstellen und bearbeiten",
     "roleHintTester": "Aufgaben kommentieren; alles andere lesen",
     "roleHintViewer": "Nur Lesezugriff",
+    "matrix": {
+      "title": "Was jede Rolle darf",
+      "action": "Aktion",
+      "view": "Aufgaben, Entscheidungen, Notizen, Roadmap und Dateien sehen",
+      "comment": "Aufgaben kommentieren und Dateien anhängen",
+      "edit": "Aufgaben erstellen, bearbeiten und verschieben; Entscheidungen und Notizen schreiben",
+      "delete": "Aufgaben, Entscheidungen, Notizen und Dateien löschen",
+      "manage": "Mitglieder, Einstellungen, Roadmap und Integrationen verwalten",
+      "own": "Eigentümer ändern oder entfernen, das Projekt löschen",
+      "yes": "Erlaubt",
+      "no": "Nicht erlaubt",
+      "note": "API-Schlüssel und verbundene KI-Apps handeln als die Person, die sie verbunden hat, und bekommen nie mehr als deren Rolle. Ein KI-Konto in dieser Liste hat eine eigene Rolle. Ein Projekt, das mit der ganzen Organisation geteilt ist, können auch Mitglieder lesen, die hier nicht aufgeführt sind."
+    },
     "memberLimitReached": "Dein {plan}-Plan erlaubt {limit} Mitglieder pro Projekt. <link>Plan upgraden</link>, um weitere Personen hinzuzufügen."
   },
   "settings": {

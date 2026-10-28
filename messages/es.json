@@ -1054,6 +1054,19 @@
     "roleHintDeveloper": "Crear y editar tareas, decisiones y conocimiento",
     "roleHintTester": "Comentar tareas; leer todo lo demás",
     "roleHintViewer": "Acceso de solo lectura",
+    "matrix": {
+      "title": "Qué puede hacer cada rol",
+      "action": "Acción",
+      "view": "Ver tareas, decisiones, notas, hoja de ruta y archivos",
+      "comment": "Comentar tareas y adjuntar archivos",
+      "edit": "Crear, editar y mover tareas; escribir decisiones y notas",
+      "delete": "Eliminar tareas, decisiones, notas y archivos",
+      "manage": "Gestionar miembros, ajustes, hoja de ruta e integraciones",
+      "own": "Cambiar o quitar propietarios, eliminar el proyecto",
+      "yes": "Permitido",
+      "no": "No permitido",
+      "note": "Las claves de API y las apps de IA conectadas actúan como la persona que las conectó, así que nunca tienen más que su rol. Una cuenta de IA de esta lista tiene su propio rol. Un proyecto compartido con toda la organización también lo pueden leer miembros que no aparecen aquí."
+    },
     "memberLimitReached": "Tu plan {plan} permite {limit} miembros por proyecto. <link>Mejora el plan</link> para añadir más personas."
   },
   "settings": {

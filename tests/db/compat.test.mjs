@@ -32,6 +32,7 @@ import { createHash } from "node:crypto";
 import { installCatalogModule } from "../../src/lib/work/module-installation.ts";
 import { moduleManifestSchema } from "../../src/lib/work/module-manifest.ts";
 import { parseModuleRecords } from "../../src/lib/work/module-records.ts";
+import { PROJECT_CAPABILITIES } from "../../src/lib/project-permissions.ts";
 import { register } from "node:module";
 // The data client's SQL compiler (pure TS, no imports) - run with
 // --experimental-strip-types, see package.json's test:db.
@@ -4355,6 +4356,58 @@ section("83. A person can hide AI for themselves (099)");
     check("the email stays read-only (076)", await throwsInSavepoint("UPDATE public.profiles SET email = 'hide-ai@example.com' WHERE id = $1", [A]));
     await db.query("UPDATE public.profiles SET hide_ai = false WHERE id = $1", [A]);
   });
+}
+
+section("84. Each project role can do exactly what the Members page says (src/lib/project-permissions.ts)");
+{
+  const people = {
+    admin: "84000000-0000-4000-8000-000000000001",
+    developer: "84000000-0000-4000-8000-000000000002",
+    tester: "84000000-0000-4000-8000-000000000003",
+    viewer: "84000000-0000-4000-8000-000000000004",
+  };
+  let matrixProject;
+  await withUser(A, async () => {
+    matrixProject = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Role matrix') RETURNING id", [orgId])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    for (const [role, id] of Object.entries(people)) {
+      // Outside the organization on purpose: the project role is their only access.
+      await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, $2, '{}') ON CONFLICT DO NOTHING", [id, `matrix-${role}@example.test`]);
+      await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, $3)", [matrixProject, id, role]);
+    }
+  });
+  const newTask = async () => withServiceRole(async () =>
+    (await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Matrix task') RETURNING id", [matrixProject])).rows[0].id);
+  /** True when the statement went through and touched a row; RLS refusals either throw or touch nothing. */
+  const went = async (sql, params) => {
+    try {
+      await db.query("SAVEPOINT m");
+      const result = await db.query(sql, params);
+      await db.query("RELEASE SAVEPOINT m");
+      return result.rows.length > 0;
+    } catch {
+      await db.query("ROLLBACK TO SAVEPOINT m");
+      return false;
+    }
+  };
+  const attempts = {
+    view: (user, task) => went("SELECT id FROM public.tasks WHERE id = $1", [task]),
+    comment: (user, task) => went("INSERT INTO public.task_comments (task_id, author_id, content) VALUES ($1, $2, 'ok') RETURNING id", [task, user]),
+    edit: (user) => went("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'Written by a member') RETURNING id", [matrixProject]),
+    delete: (user, task) => went("DELETE FROM public.tasks WHERE id = $1 AND project_id = $2 RETURNING id", [task, matrixProject]),
+    manage: (user) => went("UPDATE public.projects SET description = 'changed' WHERE id = $1 RETURNING id", [matrixProject]),
+    own: (user) => went("DELETE FROM public.projects WHERE id = $1 RETURNING id", [matrixProject]),
+  };
+  // The owner goes last: "own" deletes the project.
+  for (const [role, user] of [...Object.entries(people), ["owner", A]]) {
+    for (const [capability, attempt] of Object.entries(attempts)) {
+      const task = await newTask();
+      const expected = PROJECT_CAPABILITIES[capability].includes(role);
+      const actual = await withUser(user, () => attempt(user, task));
+      check(`${role} ${expected ? "can" : "cannot"} ${capability}`, actual === expected, `got ${actual}`);
+    }
+  }
 }
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
