@@ -103,6 +103,7 @@ export interface LandingMessages {
   featuresTitle: string;
   featuresSubtitle: string;
   howItWorks?: { title: string; steps: { title: string; description: string }[] };
+  aiOptions?: { title: string; subtitle: string; appsTitle: string; apps: string[]; moreTitle: string; more: { title: string; description: string }[] };
   features: Record<string, { title: string; description: string; bullets: string[] }>;
   faq?: { title: string; items: { q: string; a: string }[] };
 }
@@ -110,11 +111,11 @@ export interface LandingMessages {
 /** Same order as FEATURE_SECTIONS in src/app/page.tsx. */
 export const LANDING_FEATURE_KEYS = [
   "taskBoard",
-  "aiTaskApi",
   "decisions",
   "knowledgeBase",
   "memoryContext",
   "roadmap",
+  "aiTaskApi",
 ] as const;
 
 /**
@@ -142,6 +143,18 @@ export function homepageMarkdown(landing: LandingMessages, siteUrl: string): str
     "",
     ...(landing.howItWorks
       ? [`## ${landing.howItWorks.title}`, "", ...landing.howItWorks.steps.map((step, index) => `${index + 1}. **${step.title}** - ${step.description}`), ""]
+      : []),
+    ...(landing.aiOptions
+      ? [
+          `## ${landing.aiOptions.title}`,
+          "",
+          landing.aiOptions.subtitle,
+          "",
+          `**${landing.aiOptions.appsTitle}:** ${landing.aiOptions.apps.join(", ")}.`,
+          "",
+          ...landing.aiOptions.more.map((option) => `- **${option.title}** - ${option.description}`),
+          "",
+        ]
       : []),
     "## For AI agents",
     "",

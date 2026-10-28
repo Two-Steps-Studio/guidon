@@ -17,7 +17,7 @@ import { BRAND_COLORS } from "@/lib/brand-colors";
 // display font (next/font must be loaded as a raw buffer for Satori, not
 // through the normal Next.js font pipeline).
 
-export const alt = "Guidon - Hand the task to your AI agent. It already knows the project.";
+export const alt = "Guidon - One board for your team's work. Your AI can help too.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -77,7 +77,7 @@ export default function Image() {
             letterSpacing: -1,
           }}
         >
-          Hand the task to your AI agent. It already knows the project.
+          {"One board for your team's work. Your AI can help too."}
         </div>
         <div
           style={{
@@ -90,7 +90,7 @@ export default function Image() {
             lineHeight: 1.4,
           }}
         >
-          Claude Code, Codex or Cursor take tasks with decisions, memory and earlier attempts - and hand them back for review.
+          Tasks, decisions and history in one place. Connect Claude, ChatGPT, Cursor or Codex when you want help.
         </div>
         <div style={{ display: "flex", fontSize: 22, fontWeight: 600, color: BRAND_COLORS.electricBlue, marginTop: 44 }}>
           useguidon.com
