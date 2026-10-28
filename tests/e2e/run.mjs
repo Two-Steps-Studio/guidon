@@ -28,6 +28,7 @@ import { moduleAutomationCoverage } from "./module-automations.mjs";
 import { moduleSandboxCoverage } from "./module-sandbox.mjs";
 import { taskEditingCoverage } from "./task-editing.mjs";
 import { writeSafetyCoverage } from "./write-safety.mjs";
+import { quickAddCoverage } from "./quick-add.mjs";
 import { aiChatBoundaryCoverage } from "./ai-chat.mjs";
 import { mobileCoverage } from "./mobile.mjs";
 import { npmCommand } from "./npm-command.mjs";
@@ -178,6 +179,7 @@ try{
       await taskEditingCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       // Offline and lost responses differ per browser engine, so all three run it.
       await writeSafetyCoverage({context,origin,fixture,client,browserName:name,artifacts});
+      await quickAddCoverage({context,origin,fixture,client,browserName:name,artifacts});
       await calendarEditingCoverage({page,context,origin,fixture,client,browserName:name});
       await connectedAppsCoverage({page,context,origin,fixture,client,browserName:name});
       // Key status and starter tasks are server-side; one browser covers the dialog.

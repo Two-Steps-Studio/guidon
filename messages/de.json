@@ -1238,7 +1238,15 @@
     "group_none": "Ohne Fälligkeit",
     "statusLabel": "Status von {task}",
     "emptyTitle": "Dir ist nichts zugewiesen",
-    "emptyDescription": "Aufgaben, die dir in einem Projekt zugewiesen sind, erscheinen hier."
+    "emptyDescription": "Aufgaben, die dir in einem Projekt zugewiesen sind, erscheinen hier.",
+    "quickAdd": "Schnell hinzufügen",
+    "quickAddDescription": "Zuerst der Titel – der Rest ist optional. Die Aufgabe wird dir zugewiesen und landet im To-do des Projekts.",
+    "quickAddPlaceholder": "Was ist zu tun?",
+    "quickAddProject": "Projekt",
+    "quickAddDueToday": "Heute fällig",
+    "quickAddSubmit": "Aufgabe hinzufügen",
+    "quickAdded": "„{title}“ zu {project} hinzugefügt",
+    "openBoard": "Board öffnen"
   },
   "feedback": {
     "sendFeedback": "Feedback senden",

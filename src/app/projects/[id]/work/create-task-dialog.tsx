@@ -5,7 +5,7 @@ import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { timeAction } from "@/lib/perf/action-timing";
-import { clearTaskDraft, isNetworkError, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
+import { clearTaskDraft, isNetworkError, newTaskId, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
 import { ImagePlus, Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,15 +44,6 @@ interface PendingFile {
 const PENDING_REF = /\]\(pending:([a-z0-9-]+)\)/g;
 
 type CreateDraft = { title: string; description: string; priority: TaskPriority; assigneeId: string; dueDate: string; tags: string };
-
-/** A v4 UUID without crypto.randomUUID(), which plain-HTTP self-hosting lacks. */
-function newTaskId() {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
 
 function splitTags(value: string): string[] {
   return value.split(",").map((tag) => tag.trim()).filter(Boolean);
