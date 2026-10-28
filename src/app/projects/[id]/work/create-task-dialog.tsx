@@ -102,11 +102,14 @@ export function CreateTaskDialog({
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dirty = Boolean(title || description || tags || dueDate || assigneeId || files.length || priority !== "medium");
-  const discardDraft = () => { if (draftKey) clearTaskDraft(draftKey); };
+  // Once the task is created (or the form discarded) no pending debounced
+  // write may bring the draft - and its now-used id - back.
+  const draftDone = useRef(false);
+  const discardDraft = () => { draftDone.current = true; if (draftKey) clearTaskDraft(draftKey); };
   const requestClose = useGuardedClose(dirty, submitting, () => { discardDraft(); onClose(); });
   useEffect(() => {
     if (!draftKey || !currentUserId || !dirty) return;
-    const timer = window.setTimeout(() => writeTaskDraft<CreateDraft>(draftKey, {
+    const timer = window.setTimeout(() => !draftDone.current && writeTaskDraft<CreateDraft>(draftKey, {
       userId: currentUserId, revision: -1, clientId, form: { title, description, priority, assigneeId, dueDate, tags },
     }), 300);
     return () => window.clearTimeout(timer);
@@ -402,7 +405,8 @@ export function CreateTaskDialog({
             <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
               <span>{t("draftRestored", { time: new Date(restored.savedAt).toLocaleString() })}</span>
               <Button type="button" size="sm" variant="ghost" onClick={() => {
-                discardDraft();
+                // Only the restored text goes; what is typed next is drafted again.
+                if (draftKey) clearTaskDraft(draftKey);
                 setTitle(""); setDescription(""); setPriority("medium"); setAssigneeId(""); setDueDate(""); setTags("");
               }}>{t("discardDraft")}</Button>
             </div>
