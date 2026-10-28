@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 
-const { packContext, clampBudget, redactSecrets, neutralize, looksLikeInstructions, scoreItem, relevance, CONTEXT_WEIGHTS: W } = await import("../src/lib/context/context-pack-core.ts");
+const { packContext, clampBudget, redactSecrets, neutralize, looksLikeInstructions, scoreItem, relevance, memoryReviewReasons, githubFreshnessNote, STALE_AFTER_DAYS, CONTEXT_WEIGHTS: W } = await import("../src/lib/context/context-pack-core.ts");
 
 let passed = 0;
 function test(name, run) { run(); passed++; console.log(`pass ${name}`); }
@@ -68,6 +68,52 @@ test("freshness: age is shown, old items lose rank and are marked stale; constra
   assert.match(result.markdown, /Use Node 22\*\* _\(2d ago\)_/);
   assert.ok(!/Keep RLS on\*\* _\([^)]*stale/.test(result.markdown));
   assert.equal(result.stats.stale, 1);
+});
+
+test("freshness depends on the kind: an unverified insight goes stale before a decision, an open PR before a merged one", () => {
+  assert.ok(STALE_AFTER_DAYS.insights < STALE_AFTER_DAYS.decisions && STALE_AFTER_DAYS.sources < STALE_AFTER_DAYS.facts);
+  const insight = item("insights", "i", "Saves are slow on Android", W.insight, { updatedAt: daysAgo(70) });
+  const decision = item("decisions", "d", "Use SQLite for saves", W.relatedDecision, { updatedAt: daysAgo(70) });
+  const openPr = item("prs", "open", "game#12 Faster saves", W.pullRequest, { updatedAt: daysAgo(40), staleAfterDays: 30 });
+  const mergedPr = item("prs", "merged", "game#11 Save slots", W.pullRequest, { updatedAt: daysAgo(40) });
+  const result = pack([insight, decision, openPr, mergedPr]);
+  assert.match(result.markdown, /Saves are slow on Android\*\* _\([^)]*stale/);
+  assert.ok(!/Use SQLite for saves\*\* _\([^)]*stale/.test(result.markdown));
+  assert.match(result.markdown, /Faster saves\*\* _\([^)]*stale/);
+  assert.ok(!/Save slots\*\* _\([^)]*stale/.test(result.markdown));
+  assert.equal(result.stats.stale, 2);
+});
+
+test("memory written before a linked decision or source changed requires review", () => {
+  const memory = [
+    { id: "before", checkedAt: daysAgo(30) },
+    { id: "reconfirmed", checkedAt: daysAgo(1) },
+    { id: "unlinked", checkedAt: daysAgo(90) },
+  ];
+  const reasons = memoryReviewReasons(memory, [
+    { memoryId: "before", kind: "decision", title: "Use SQLite for saves", updatedAt: daysAgo(10) },
+    { memoryId: "before", kind: "source", title: "Save format spec", updatedAt: daysAgo(5) },
+    { memoryId: "reconfirmed", kind: "decision", title: "Use SQLite for saves", updatedAt: daysAgo(10) },
+    { memoryId: "ghost", kind: "decision", title: "Not loaded", updatedAt: daysAgo(1) },
+    { memoryId: "before", kind: "decision", title: "No date", updatedAt: null },
+    // Linked to older memory after its last change: linking isn't a change.
+    { memoryId: "unlinked", kind: "decision", title: "Linked later", updatedAt: daysAgo(20), linkedAt: daysAgo(15) },
+  ]);
+  assert.deepEqual([...reasons.keys()], ["before"]);
+  assert.match(reasons.get("before"), /the source "Save format spec" changed on \d{4}-\d{2}-\d{2}, after this was written/);
+  const result = pack([item("memory", "before", "Saves are JSON files", W.memory, { reviewReason: reasons.get("before") })]);
+  assert.match(result.markdown, /Saves are JSON files\*\* _\([^)]*requires review - the source "Save format spec" changed/);
+  assert.equal(result.stats.requiresReview, 1);
+});
+
+test("the preface says when GitHub last sent an event, and nothing for projects without GitHub", () => {
+  assert.equal(githubFreshnessNote({ repository: null, lastEventAt: null, now }), null);
+  assert.match(githubFreshnessNote({ repository: "studio/game", lastEventAt: null, now }), /studio\/game\) is connected but has sent no events yet/);
+  assert.equal(githubFreshnessNote({ repository: "studio/game", lastEventAt: daysAgo(2), now }), "GitHub (studio/game) last sent an event 2d ago.");
+  assert.match(githubFreshnessNote({ repository: null, lastEventAt: daysAgo(40), now }), /^GitHub last sent an event 40d ago - linked commits and PRs may be out of date\.$/);
+  const result = packContext({ title: "Agent Context: Fix login", header: ["## Task"], items: [], budget: 2000, focus: "", now, freshness: [githubFreshnessNote({ repository: "studio/game", lastEventAt: daysAgo(40), now })] });
+  assert.match(result.markdown, /^> Freshness: GitHub \(studio\/game\) last sent an event 40d ago/m);
+  assert.ok(!pack([]).markdown.includes("Freshness:"));
 });
 
 test("secrets: common key formats and key: value pairs are redacted before they leave", () => {

@@ -16,6 +16,9 @@ import { GenerateInsightButton } from "./generate-insight-button";
 import { InsightReviewCard } from "./insight-review-card";
 import { MemoryCardMenu } from "./memory-card-menu";
 import { MEMORY_TYPE_CONFIG } from "./memory-type-config";
+import { dataClient } from "@/lib/data-client";
+import { memoryDependencies } from "@/lib/context/agent-context-builder";
+import { memoryReviewChanges } from "@/lib/context/context-pack-core";
 import type { ProjectMemory } from "@/types/context";
 
 interface MemoryProfile {
@@ -108,6 +111,17 @@ export default async function ProjectMemoryPage({
   }
 
   const profilesById = new Map(profilesData.map((p) => [p.id, p]));
+
+  // Entries written (or last confirmed) before a decision or source they are
+  // linked to changed - the same rule the agent context applies, so people
+  // see what agents are told to double-check.
+  const reviewChanges = memoryReviewChanges(
+    memories.map((memory) => {
+      const times = [memory.updated_at ?? memory.created_at, memory.verified_at].filter(Boolean).map((value) => new Date(value!).getTime());
+      return { id: memory.id, checkedAt: times.length ? new Date(Math.max(...times)).toISOString() : null };
+    }),
+    await memoryDependencies(dataClient(access.userId), projectId)
+  );
   const canGenerateInsight = aiAvailablePromise !== null && (await aiAvailablePromise);
 
   return (
@@ -167,6 +181,11 @@ export default async function ProjectMemoryPage({
                           <TypeIcon className="h-5 w-5 text-muted-foreground" />
                           <Badge className={typeConfig.color}>{tCommon("memoryType", { type: memory.memory_type })}</Badge>
                           {memory.verified && <Badge variant="outline">{t("verified")}</Badge>}
+                          {reviewChanges.has(memory.id) && (
+                            <Badge variant="outline" className="border-amber-500/60 text-amber-700 dark:text-amber-400">
+                              {t("requiresReview")}
+                            </Badge>
+                          )}
                         </div>
                         <CardDescription className="text-base whitespace-pre-wrap">
                           {memory.content}
@@ -186,6 +205,18 @@ export default async function ProjectMemoryPage({
                     <p className="text-xs text-muted-foreground">
                       {t("createdOn", { date: new Date(memory.created_at).toLocaleDateString() })}
                     </p>
+                    {reviewChanges.has(memory.id) && (() => {
+                      const change = reviewChanges.get(memory.id)!;
+                      return (
+                        <p className="mb-1 text-xs text-amber-700 dark:text-amber-400">
+                          {t("requiresReviewWhy", {
+                            kind: change.kind,
+                            title: change.title,
+                            date: new Date(change.updatedAt!).toLocaleDateString(),
+                          })}
+                        </p>
+                      );
+                    })()}
                     {memory.verified && memory.verified_by && memory.verified_at && (
                       <p className="text-xs text-muted-foreground">
                         {t("verifiedBy", {

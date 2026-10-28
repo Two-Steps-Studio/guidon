@@ -13,24 +13,27 @@ import { dataClient } from "@/lib/data-client";
 import type { SupabaseClientFactory } from "@/lib/context/task-why-builder";
 import { TYPE_LABELS as SOURCE_TYPE_LABELS } from "@/app/projects/[id]/knowledge/source-config";
 import { CONTEXT_TOKEN_DEFAULT, CONTEXT_WEIGHTS as W, neutralize, packContext, type ContextItem } from "@/lib/context/context-pack-core";
-import { decisionItem, DECISION_COLUMNS, DRILL_DOWN, MEMORY_COLUMNS, memoryEvidence, memoryItems, type ContextOptions, type DecisionRow, type MemoryRow, type TaskAgentContext } from "@/lib/context/agent-context-builder";
+import { decisionItem, DECISION_COLUMNS, DRILL_DOWN, freshnessNotes, MEMORY_COLUMNS, memoryDependencies, memoryEvidence, memoryItems, type ContextOptions, type DecisionRow, type MemoryRow, type TaskAgentContext } from "@/lib/context/agent-context-builder";
 
 type SourceRow = { id: string; title: string | null; content: string | null; url: string | null; source_type: string; created_at: string | Date | null; updated_at: string | Date | null };
 
 export async function buildProjectAgentContext(userId: string, projectId: string, getSupabase: SupabaseClientFactory, options: ContextOptions = {}): Promise<TaskAgentContext> {
   const db = dataClient(userId, { supabase: getSupabase });
-  const [project, memory, decisions, sources, evidence] = await Promise.all([
+  const now = options.now ?? new Date();
+  const [project, memory, decisions, sources, evidence, dependencies, freshness] = await Promise.all([
     db.from<{ id: string; name: string; description: string | null }>("projects").select("id, name, description").eq("id", projectId).maybeSingle(),
     db.from<MemoryRow>("project_memory").select(MEMORY_COLUMNS).eq("project_id", projectId).order("created_at", { ascending: false }).limit(500),
     db.from<DecisionRow>("context_decisions").select(DECISION_COLUMNS).eq("project_id", projectId).order("updated_at", { ascending: false }).limit(100),
     db.from<SourceRow>("context_sources").select("id, title, content, url, source_type, created_at, updated_at").eq("project_id", projectId).order("updated_at", { ascending: false }).limit(100),
     memoryEvidence(db, projectId),
+    memoryDependencies(db, projectId),
+    freshnessNotes(db, projectId, now),
   ]);
   if (project.error) return { markdown: "", error: "Could not load the project." };
   if (!project.data) return { markdown: "", error: "Project not found." };
 
   const items: ContextItem[] = [
-    ...memoryItems(memory.data ?? [], evidence),
+    ...memoryItems(memory.data ?? [], evidence, dependencies),
     // Approved decisions are the ones that bind the work; others are history.
     ...(decisions.data ?? []).map((row) => decisionItem(row, row.status === "approved" ? W.relatedDecision : W.recentDecision)),
     ...(sources.data ?? []).map((row): ContextItem => ({
@@ -49,8 +52,9 @@ export async function buildProjectAgentContext(userId: string, projectId: string
     items,
     budget: options.budget ?? CONTEXT_TOKEN_DEFAULT,
     focus: [project.data.name, options.focus ?? ""].join(" "),
-    now: options.now ?? new Date(),
+    now,
     drillDown: DRILL_DOWN,
+    freshness,
   });
   return { markdown: pack.markdown, error: null, stats: pack.stats };
 }

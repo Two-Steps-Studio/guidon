@@ -43,8 +43,21 @@ The task dialog's **Copy agent context** uses a budget of 16000.
   section by id, with the tool that fetches them (for example `get_memory` or
   `get_decision`). The agent asks for exactly those instead of receiving the
   whole project memory in every prompt.
-- **Freshness.** Every item shows its age (`3d ago`, `5mo ago`). Items older
-  than 180 days are marked `stale - verify before relying on it`.
+- **Freshness.** Every item shows its age (`3d ago`, `5mo ago`). An item
+  older than its kind's limit is marked `stale - verify before relying on it`:
+  60 days for unverified AI insights, 90 for knowledge sources, 180 for
+  decisions, attempts, PRs and other memory, 365 for verified facts and
+  files, 30 for an open PR; constraints and rules never go stale
+  (`STALE_AFTER_DAYS` in `context-pack-core.ts`).
+- **Requires review.** A memory entry linked to a decision or source (either
+  direction in `context_relations`) that changed after the link was made and
+  after the entry was last edited or verified is tagged `requires review -
+  the decision "…" changed on <date>, after this was written`. A verified
+  fact in that state moves out of "Verified Facts". The Memory page shows the
+  same mark; saving an edit clears it.
+- **Sync.** When the project has a connected GitHub repository or GitHub
+  events, the preface says when GitHub last sent one (`> Freshness: …`), and
+  warns after 14 days without one or when none ever arrived.
 
 ## Safety
 
