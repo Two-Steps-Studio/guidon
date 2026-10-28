@@ -43,9 +43,13 @@ export async function taskEditingCoverage({page,context,origin,fixture,client,br
     // One save closes its dialog; the loser keeps its form and recovery actions.
     await Promise.all([page.waitForLoadState("networkidle"),other.waitForLoadState("networkidle")]);
     await Promise.race([page.getByRole("alert").filter({hasText:"This task changed or is no longer available."}).waitFor(),other.getByRole("alert").filter({hasText:"This task changed or is no longer available."}).waitFor()]);
-    const loser=await page.locator("#task-title").isVisible()?page:other;
+    // The loser is the window showing the conflict; the winner's dialog may
+    // still be animating closed at this point, so wait for it to go.
+    const conflictIn=p=>p.getByRole("alert").filter({hasText:"This task changed or is no longer available."});
+    const loser=await conflictIn(page).count()?page:other;
     const winner=loser===page?other:page;
-    assert.equal(await winner.locator("#task-title").count(),0);
+    assert.equal(await conflictIn(winner).count(),0,"Only one save may lose");
+    await winner.locator("#task-title").waitFor({state:"hidden"});
     const localText=await loser.locator("#task-title").inputValue();
     const row=(await client.query("SELECT title,description,revision FROM tasks WHERE id=$1",[task.id])).rows[0];
     assert.equal(row.revision,1);assert.notEqual(row.title,localText);assert.equal(row.description,"Original description");
