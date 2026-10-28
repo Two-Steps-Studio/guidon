@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { timeAction } from "@/lib/perf/action-timing";
+import { clearTaskDraft, isNetworkError, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
 import { ImagePlus, Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +43,17 @@ interface PendingFile {
 
 const PENDING_REF = /\]\(pending:([a-z0-9-]+)\)/g;
 
+type CreateDraft = { title: string; description: string; priority: TaskPriority; assigneeId: string; dueDate: string; tags: string };
+
+/** A v4 UUID without crypto.randomUUID(), which plain-HTTP self-hosting lacks. */
+function newTaskId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 function splitTags(value: string): string[] {
   return value.split(",").map((tag) => tag.trim()).filter(Boolean);
 }
@@ -77,21 +90,36 @@ export function CreateTaskDialog({
 }) {
   const t = useTranslations("work");
   const labelPresets = useLabelPresets();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
+  // Unsaved text survives a crash or reload (lib/work/task-drafts.ts); the
+  // dialog only opens on a click, so reading storage here is client-side.
+  const draftKey = currentUserId ? taskDraftKey(currentUserId, `new:${projectId}`) : null;
+  const [restored] = useState(() => (draftKey && currentUserId ? readTaskDraft<CreateDraft>(draftKey, currentUserId) : null));
+  // One id per task being written: a retry can't create it twice.
+  const [clientId] = useState(() => restored?.clientId ?? newTaskId());
+  const [title, setTitle] = useState(restored?.form.title ?? "");
+  const [description, setDescription] = useState(restored?.form.description ?? "");
+  const [priority, setPriority] = useState<TaskPriority>(restored?.form.priority ?? "medium");
   // The project's priorities (060); Medium stays offered even if hidden, as the default.
   const priorities = usePriorities();
   const priorityOptions = priorities.some((p) => p.key === priority) ? priorities : [...priorities, priorityDef(priority)];
-  const [assigneeId, setAssigneeId] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [tags, setTags] = useState("");
+  const [assigneeId, setAssigneeId] = useState(restored?.form.assigneeId ?? "");
+  const [dueDate, setDueDate] = useState(restored?.form.dueDate ?? "");
+  const [tags, setTags] = useState(restored?.form.tags ?? "");
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const requestClose = useGuardedClose(Boolean(title || description || tags || dueDate || assigneeId || files.length || priority !== "medium"), submitting, onClose);
+  const dirty = Boolean(title || description || tags || dueDate || assigneeId || files.length || priority !== "medium");
+  const discardDraft = () => { if (draftKey) clearTaskDraft(draftKey); };
+  const requestClose = useGuardedClose(dirty, submitting, () => { discardDraft(); onClose(); });
+  useEffect(() => {
+    if (!draftKey || !currentUserId || !dirty) return;
+    const timer = window.setTimeout(() => writeTaskDraft<CreateDraft>(draftKey, {
+      userId: currentUserId, revision: -1, clientId, form: { title, description, priority, assigneeId, dueDate, tags },
+    }), 300);
+    return () => window.clearTimeout(timer);
+  }, [draftKey, currentUserId, dirty, clientId, title, description, priority, assigneeId, dueDate, tags]);
 
   // The parent keys this component by target column, so opening the dialog
   // for a different column remounts it with a clean form.
@@ -177,7 +205,7 @@ export function CreateTaskDialog({
       const columnTasks = existingTasks.filter((task) => normalizeTaskStatus(task.status) === status);
       const maxOrder = columnTasks.reduce((max, task) => Math.max(max, task.sort_order ?? 0), 0);
 
-      const result = await createTask(projectId, {
+      const result = await timeAction("task.create", () => createTask(projectId, {
         title,
         description,
         status,
@@ -186,7 +214,8 @@ export function CreateTaskDialog({
         dueDate,
         sortOrder: maxOrder + 100,
         tags: currentTags,
-      });
+        clientId,
+      }));
       if (result.error || !result.task) throw new Error(result.error ?? t("failedToCreateTask"));
 
       let task = result.task;
@@ -199,12 +228,13 @@ export function CreateTaskDialog({
         if (failed > 0) toast.error(t("createAttachmentsFailed", { count: failed }));
       }
 
+      discardDraft();
       playSound("create");
       onCreated(task);
       onClose();
       toast.success(t("taskCreatedToast", { title: task.title }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("failedToCreateTask"));
+      setError(isNetworkError(err) ? t("networkError") : err instanceof Error ? err.message : t("failedToCreateTask"));
     } finally {
       setSubmitting(false);
     }
@@ -377,6 +407,15 @@ export function CreateTaskDialog({
             )}
           </div>
 
+          {restored && dirty && (
+            <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
+              <span>{t("draftRestored", { time: new Date(restored.savedAt).toLocaleString() })}</span>
+              <Button type="button" size="sm" variant="ghost" onClick={() => {
+                discardDraft();
+                setTitle(""); setDescription(""); setPriority("medium"); setAssigneeId(""); setDueDate(""); setTags("");
+              }}>{t("discardDraft")}</Button>
+            </div>
+          )}
           {error && (
             <p
               role="alert"

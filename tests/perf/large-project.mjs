@@ -94,6 +94,12 @@ try {
     // Over the board's cap (page.tsx TASK_LIMIT, 1000) the board must say so instead of silently dropping tasks.
     assert.equal(entry.boardCapNotice, size > 1000, `Board cap notice for ${size} tasks`);
 
+    // Interactions on the loaded board, as a person does them. Open: click to
+    // the dialog's title field. Save/move/create: the `guidon:task.*` entries
+    // the app records itself (src/lib/perf/action-timing.ts, the same spans
+    // production sends to Sentry), from the click to the server's answer.
+    Object.assign(entry, await interactions(page, project, size));
+
     // REST: first page (100) and walking every page.
     const first = [];
     for (let run = 0; run < RUNS; run++) first.push((await timed(async () => { const response = await context.request.get(`${origin}/api/v1/projects/${project}/tasks?limit=100`, { headers }); assert.equal(response.status(), 200); }))[0]);
@@ -123,6 +129,26 @@ try {
     entry.parallelWritesMs = Math.round(parallelMs);
     console.log(size, JSON.stringify(entry));
   }
+
+  // A mid-range phone: 4x slower CPU and "Fast 4G" (Chromium DevTools
+  // presets), on the 1000-task board - the largest the board renders whole.
+  const mobileSize = SIZES.includes(1000) ? 1000 : SIZES[0];
+  const phone = await browser.newContext({ locale: "en-US", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, storageState: await context.storageState() });
+  const phonePage = await phone.newPage(); phonePage.setDefaultTimeout(60000);
+  const cdp = await phone.newCDPSession(phonePage);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 150, downloadThroughput: (9 * 1024 * 1024) / 8, uploadThroughput: (1.5 * 1024 * 1024) / 8 });
+  const mobile = results.mobile = { size: mobileSize };
+  await phonePage.goto(`${origin}/projects/${projects[mobileSize]}/work`);
+  const phoneBoard = [];
+  for (let run = 0; run < RUNS; run++) phoneBoard.push((await timed(async () => {
+    await phonePage.goto(`${origin}/projects/${projects[mobileSize]}/work`, { waitUntil: "load" });
+    await phonePage.locator("article[data-card-id]").first().waitFor();
+  }))[0]);
+  mobile.boardLoadMs = summarize(phoneBoard);
+  mobile.openTaskMs = summarize(await openTimes(phonePage));
+  console.log("mobile", JSON.stringify(mobile));
+  await phone.close();
 } finally {
   await browser?.close();
   if (userId) {
@@ -131,6 +157,53 @@ try {
     await client.query("DELETE FROM auth.users WHERE id=$1", [userId]).catch((error) => console.error("cleanup", error.message));
   }
   await client.end();
+}
+
+async function openTimes(page) {
+  const times = [];
+  for (let run = 0; run < RUNS; run++) {
+    const card = page.locator("article[data-card-id]").nth(run);
+    await card.scrollIntoViewIfNeeded();
+    times.push((await timed(async () => { await card.locator("[data-task-open]").click(); await page.locator("#task-title").waitFor(); }))[0]);
+    await page.keyboard.press("Escape"); await page.locator("#task-title").waitFor({ state: "hidden" });
+  }
+  return times;
+}
+
+async function interactions(page, project, size) {
+  const measured = async (name) => page.evaluate((entry) => performance.getEntriesByName(entry).at(-1)?.duration ?? null, `guidon:${name}`);
+  const clearMeasures = () => page.evaluate(() => performance.clearMeasures());
+  const result = { openTaskMs: summarize(await openTimes(page)) };
+  const save = [], move = [], create = [];
+  for (let run = 0; run < RUNS; run++) {
+    const card = page.locator("article[data-card-id]").nth(run);
+    await card.locator("[data-task-open]").click();
+    await page.locator("#task-title").fill(`Saved ${size} ${run}`);
+    await clearMeasures();
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.locator("#task-title").waitFor({ state: "hidden" });
+    save.push(await measured("task.save"));
+  }
+  for (let run = 0; run < RUNS; run++) {
+    const card = page.locator("article[data-card-id]").nth(run);
+    await clearMeasures();
+    await card.getByRole("button", { name: /^Move task "/ }).click();
+    const target = page.getByRole("menuitem", { name: /^Move to (Review|In Progress)$/ }).first();
+    await target.click();
+    await page.waitForFunction(() => performance.getEntriesByName("guidon:task.move").length > 0);
+    move.push(await measured("task.move"));
+  }
+  for (let run = 0; run < RUNS; run++) {
+    await page.getByRole("button", { name: /^Add task to / }).first().click();
+    await page.locator("#new-task-title").fill(`Created ${size} ${run}`);
+    await clearMeasures();
+    await page.getByRole("button", { name: "Create task", exact: true }).click();
+    await page.locator("#new-task-title").waitFor({ state: "hidden" });
+    create.push(await measured("task.create"));
+  }
+  assert.ok([...save, ...move, ...create].every((value) => typeof value === "number"), "The app records every timed action");
+  await client.query("DELETE FROM public.tasks WHERE project_id=$1 AND title LIKE 'Created %'", [project]);
+  return { ...result, saveTaskMs: summarize(save), moveTaskMs: summarize(move), createTaskMs: summarize(create) };
 }
 
 const report = { origin, measuredAt: new Date().toISOString(), runs: RUNS, parallel: PARALLEL, results };

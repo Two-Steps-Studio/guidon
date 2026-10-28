@@ -948,7 +948,12 @@
         "closed": "closed"
       }
     },
-    "boardCapped": "This board shows {limit} tasks: open ones first, most recently updated first. The other tasks are still in the project - find them with search or the API."
+    "boardCapped": "This board shows {limit} tasks: open ones first, most recently updated first. The other tasks are still in the project - find them with search or the API.",
+    "networkError": "Couldn't reach Guidon, so nothing was saved. Your text is still here - check the connection and try again.",
+    "moveNotSaved": "Couldn't reach Guidon. \"{title}\" is back where it was.",
+    "retryMove": "Retry",
+    "draftRestored": "Restored unsaved changes from {time}. They are not saved yet.",
+    "discardDraft": "Discard them"
   },
   "roadmap": {
     "title": "Roadmap",

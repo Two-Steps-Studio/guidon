@@ -948,7 +948,12 @@
         "closed": "geschlossen"
       }
     },
-    "boardCapped": "Dieses Board zeigt {limit} Aufgaben: offene zuerst, zuletzt geänderte zuerst. Die übrigen Aufgaben sind weiterhin im Projekt - finde sie über die Suche oder die API."
+    "boardCapped": "Dieses Board zeigt {limit} Aufgaben: offene zuerst, zuletzt geänderte zuerst. Die übrigen Aufgaben sind weiterhin im Projekt - finde sie über die Suche oder die API.",
+    "networkError": "Guidon war nicht erreichbar, daher wurde nichts gespeichert. Dein Text ist noch da – prüfe die Verbindung und versuche es erneut.",
+    "moveNotSaved": "Guidon war nicht erreichbar. „{title}“ ist wieder an seinem Platz.",
+    "retryMove": "Erneut versuchen",
+    "draftRestored": "Ungespeicherte Änderungen von {time} wiederhergestellt. Sie sind noch nicht gespeichert.",
+    "discardDraft": "Verwerfen"
   },
   "roadmap": {
     "title": "Roadmap",

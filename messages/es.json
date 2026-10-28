@@ -948,7 +948,12 @@
         "closed": "cerrado"
       }
     },
-    "boardCapped": "Este tablero muestra {limit} tareas: primero las abiertas, empezando por las modificadas más recientemente. Las demás siguen en el proyecto: encuéntralas con la búsqueda o la API."
+    "boardCapped": "Este tablero muestra {limit} tareas: primero las abiertas, empezando por las modificadas más recientemente. Las demás siguen en el proyecto: encuéntralas con la búsqueda o la API.",
+    "networkError": "No se pudo conectar con Guidon, así que no se guardó nada. Tu texto sigue aquí: revisa la conexión e inténtalo de nuevo.",
+    "moveNotSaved": "No se pudo conectar con Guidon. «{title}» volvió a su sitio.",
+    "retryMove": "Reintentar",
+    "draftRestored": "Se restauraron cambios sin guardar de {time}. Aún no están guardados.",
+    "discardDraft": "Descartarlos"
   },
   "roadmap": {
     "title": "Hoja de ruta",
