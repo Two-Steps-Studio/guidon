@@ -170,7 +170,8 @@
     "entityType_project": "Projekt",
     "searching": "Suche läuft…",
     "searchFailed": "Die Suche ist fehlgeschlagen.",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "closestMatches": "Keine genauen Treffer – das sind die ähnlichsten."
   },
   "notifications": {
     "title": "Benachrichtigungen",

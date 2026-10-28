@@ -170,7 +170,8 @@
     "entityType_project": "Project",
     "searching": "Searching…",
     "searchFailed": "Search could not be completed.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "closestMatches": "No exact matches - these are the closest."
   },
   "notifications": {
     "title": "Notifications",

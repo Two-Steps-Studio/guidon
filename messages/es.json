@@ -170,7 +170,8 @@
     "entityType_project": "Proyecto",
     "searching": "Buscando…",
     "searchFailed": "No se pudo completar la búsqueda.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "closestMatches": "No hay coincidencias exactas; estas son las más parecidas."
   },
   "notifications": {
     "title": "Notificaciones",
