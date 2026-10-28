@@ -1751,7 +1751,12 @@
     },
     "backgroundStyleLabel": "Styl tła",
     "backgroundStyle_solid": "Jednolite — skup się na pracy",
-    "backgroundStyle_pattern": "Wzór Guidona"
+    "backgroundStyle_pattern": "Wzór Guidona",
+    "aiPreferenceTitle": "Funkcje AI",
+    "aiPreferenceDescription": "Guidon w pełni działa bez AI. Wyłącz, żeby ukryć przyciski i widżety AI we wszystkich projektach – tylko u siebie.",
+    "aiPreferenceToggle": "Pokazuj funkcje AI",
+    "aiPreferenceHint": "Ukrywa czat AI, „Connect your agent”, zadania startowe dla agentów i kopiowanie kontekstu dla agenta. Podłączone już agenty dalej działają – usuniesz je w Kluczach API albo Połączonych aplikacjach.",
+    "aiPreferenceFailed": "Nie udało się zapisać ustawienia."
   },
   "emails": {
     "passwordResetSubject": "Zresetuj hasło do Guidon",

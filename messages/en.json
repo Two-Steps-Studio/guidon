@@ -1751,7 +1751,12 @@
     },
     "backgroundStyleLabel": "Background style",
     "backgroundStyle_solid": "Solid — focus on your work",
-    "backgroundStyle_pattern": "Guidon pattern"
+    "backgroundStyle_pattern": "Guidon pattern",
+    "aiPreferenceTitle": "AI features",
+    "aiPreferenceDescription": "Guidon works fully without AI. Turn this off to hide AI buttons and widgets in every project - only for you.",
+    "aiPreferenceToggle": "Show AI features",
+    "aiPreferenceHint": "Hides the AI chat, \"Connect your agent\", starter tasks for agents and copying context for an agent. Agents you already connected keep working - remove them under API keys or Connected apps.",
+    "aiPreferenceFailed": "Could not save the setting."
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",

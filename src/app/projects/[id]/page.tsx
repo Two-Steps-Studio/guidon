@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { showAi } from "@/lib/data/ai-preference";
 import { isModuleVisible } from "@/lib/work/project-modules";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +51,7 @@ export default async function ProjectPage({
   // AI insights waiting for review - mostly what it learned from finished
   // tasks (lib/ai/task-learning.ts). Only people who can accept them see it.
   const pendingInsights =
-    canWriteProject(access.role) && project.ai_enabled && isModuleVisible("memory", project.disabled_modules)
+    canWriteProject(access.role) && (await showAi(access.userId, project.ai_enabled)) && isModuleVisible("memory", project.disabled_modules)
       ? (
           await dataClient(access.userId)
             .from("project_memory")

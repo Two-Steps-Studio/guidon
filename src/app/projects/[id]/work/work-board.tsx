@@ -598,7 +598,8 @@ export function WorkBoard({
             </Button>
           )}
 
-          {canEdit && (
+          {/* AI off for the project (046) or hidden by this person (099): no AI calls to action. */}
+          {canEdit && aiEnabled && (
             <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
               <Bot className="h-4 w-4" />
               {t("connectAgent")}
@@ -631,11 +632,13 @@ export function WorkBoard({
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/projects/${projectId}/members`}>{tOnboarding("welcomeInvite")}</Link>
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
-                <Bot className="h-4 w-4" />
-                {tOnboarding("welcomeConnectAgent")}
-              </Button>
-              {topLevelTasks.length === 0 && starterButton}
+              {aiEnabled && (
+                <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
+                  <Bot className="h-4 w-4" />
+                  {tOnboarding("welcomeConnectAgent")}
+                </Button>
+              )}
+              {aiEnabled && topLevelTasks.length === 0 && starterButton}
               <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
                 <Upload className="h-4 w-4" />
                 {tOnboarding("welcomeImport")}
@@ -732,15 +735,17 @@ export function WorkBoard({
                     <Plus className="h-4 w-4" />
                     {t("newTask")}
                   </Button>
-                  {starterButton}
+                  {aiEnabled && starterButton}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAgentOpen(true)}
-                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                >
-                  {t("noTasksAgentHint")}
-                </button>
+                {aiEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => setAgentOpen(true)}
+                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    {t("noTasksAgentHint")}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -813,7 +818,7 @@ export function WorkBoard({
         />
       )}
 
-      {canEdit && <ConnectAgentDialog open={agentOpen} onOpenChange={setAgentOpen} projectName={projectName} />}
+      {canEdit && aiEnabled && <ConnectAgentDialog open={agentOpen} onOpenChange={setAgentOpen} projectName={projectName} />}
 
       <CreateTaskDialog
         key={createFor ?? "no-column"}

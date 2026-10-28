@@ -216,5 +216,6 @@
   "This link no longer exists.": "Este vínculo ya no existe.",
   "Could not update the link.": "No se pudo actualizar el vínculo.",
   "The starter tasks are already on this board.": "Las tareas iniciales ya están en este tablero.",
-  "Could not create the starter tasks. Try again.": "No se pudieron crear las tareas iniciales. Inténtalo de nuevo."
+  "Could not create the starter tasks. Try again.": "No se pudieron crear las tareas iniciales. Inténtalo de nuevo.",
+  "Could not save the setting.": "No se pudo guardar el ajuste."
 }

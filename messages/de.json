@@ -1751,7 +1751,12 @@
     },
     "backgroundStyleLabel": "Hintergrundstil",
     "backgroundStyle_solid": "Einfarbig — konzentriert arbeiten",
-    "backgroundStyle_pattern": "Guidon-Muster"
+    "backgroundStyle_pattern": "Guidon-Muster",
+    "aiPreferenceTitle": "KI-Funktionen",
+    "aiPreferenceDescription": "Guidon funktioniert komplett ohne KI. Schalte das aus, um KI-Schaltflächen und -Widgets in allen Projekten auszublenden – nur für dich.",
+    "aiPreferenceToggle": "KI-Funktionen anzeigen",
+    "aiPreferenceHint": "Blendet den KI-Chat, „Connect your agent“, Startaufgaben für Agenten und das Kopieren von Kontext für einen Agenten aus. Bereits verbundene Agenten arbeiten weiter – entferne sie unter API-Schlüssel oder Verbundene Apps.",
+    "aiPreferenceFailed": "Die Einstellung konnte nicht gespeichert werden."
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",

@@ -9,6 +9,8 @@ import { ConnectedAppsSection } from "./connected-apps";
 import { getConnectedApps } from "./connected-apps-actions";
 import { DeleteAccountSection } from "./delete-account";
 import { getMyDeletionPlan } from "./delete-account-actions";
+import { AiPreferenceSection } from "./ai-preference";
+import { getHideAi } from "@/lib/data/ai-preference";
 
 export default async function ProfilePage() {
   const [user, apiKeys, connectedApps, deletionPlan, now] = await Promise.all([
@@ -29,6 +31,7 @@ export default async function ProfilePage() {
         </div>
 
         <ProfileForm user={user} />
+        <AiPreferenceSection hideAi={await getHideAi(user.id)} />
         <ApiKeysSection initialKeys={apiKeys} />
         <ConnectedAppsSection initialApps={connectedApps} now={now} />
         <IntegrationsSection />
