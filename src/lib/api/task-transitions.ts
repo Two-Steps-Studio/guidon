@@ -234,12 +234,12 @@ export async function completeTask(userId: string, taskId: string, actor: Transi
     if (!ctx.allowAutoComplete) {
       return {
         ok: false,
-        error: "This project does not allow AI to auto-complete tasks. Ask a project admin to enable it in Settings.",
+        error: "This project does not allow AI to auto-complete tasks. Ask a project admin to enable it in Settings. Or ask a person to approve it: POST /api/v1/tasks/{id}/approval-requests {\"action\":\"complete_task\"} (MCP: request_approval), or move the task to review.",
         status: 403,
       };
     }
     if (!ctx.permissions.can_complete_tasks) {
-      return { ok: false, error: "This API key's AI permissions do not include completing tasks.", status: 403 };
+      return { ok: false, error: "This API key's AI permissions do not include completing tasks. Or ask a person to approve it: POST /api/v1/tasks/{id}/approval-requests {\"action\":\"complete_task\"} (MCP: request_approval), or move the task to review.", status: 403 };
     }
   }
   return setStatusAndLog(

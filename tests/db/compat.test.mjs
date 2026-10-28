@@ -197,8 +197,9 @@ for (const [label, sql, expected] of [
   // 57->58 and 143->144: module_automation_runs (094) + module_automation_runs_select.
   // 58->59, policies unchanged: funnel_cta_counts (096) - service_role only.
   // 59->60 and 144->148: task_links (097) + select/insert/update/delete.
-  ["60 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 60],
-  ["148 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 148],
+  // 60->61 and 148->149: agent_approval_requests (102) + agent_approval_requests_select.
+  ["61 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 61],
+  ["149 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 149],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -4410,5 +4411,78 @@ section("84. Each project role can do exactly what the Members page says (src/li
   }
 }
 
+
+section("87. Agents ask for approval; owners/admins decide (102)");
+{
+  const dev = "87000000-0000-4000-8000-000000000001";
+  const viewer = "87000000-0000-4000-8000-000000000002";
+  let project, task, key, otherKey;
+  await withUser(A, async () => {
+    project = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Approvals') RETURNING id", [orgId])).rows[0].id;
+    task = (await db.query("INSERT INTO public.tasks (project_id, title, status) VALUES ($1, 'Ship the save system', 'review') RETURNING id", [project])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    for (const [id, role] of [[dev, "developer"], [viewer, "viewer"]]) {
+      await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, $2, '{}') ON CONFLICT DO NOTHING", [id, `approvals-${role}@example.test`]);
+      await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, $3)", [project, id, role]);
+    }
+    key = (await db.query("INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, 'Claude Code', 'guidon_appr', 'appr1', ARRAY['tasks:write']) RETURNING id", [dev])).rows[0].id;
+    otherKey = (await db.query("INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes) VALUES ($1, 'Not yours', 'guidon_appx', 'appr2', ARRAY['tasks:write']) RETURNING id", [A])).rows[0].id;
+  });
+  const ask = (action, keyId = key) =>
+    db.query("SELECT * FROM public.request_agent_approval($1, $2, 'Tests pass on CI', $3, 'Claude Code')", [task, action, keyId]);
+
+  let first;
+  await withUser(dev, async () => {
+    first = (await ask("complete_task")).rows[0];
+    check("a developer's agent asks to complete a task", first?.created === true);
+    const again = (await ask("complete_task")).rows[0];
+    check("asking again returns the same pending request, not a new one", again.id === first.id && again.created === false);
+    check("…a different action is its own request", (await ask("delete_task")).rows[0].created === true);
+    check("only through someone's own key", await throwsInSavepoint("SELECT * FROM public.request_agent_approval($1, 'complete_task', null, $2, null)", [task, otherKey]));
+    check("unknown actions are refused", await throwsInSavepoint("SELECT * FROM public.request_agent_approval($1, 'drop_project', null, $2, null)", [task, key]));
+    check("no direct inserts", await throwsInSavepoint("INSERT INTO public.agent_approval_requests (project_id, task_id, action, requested_by) VALUES ($1, $2, 'complete_task', $3)", [project, task, dev]));
+    check("the requester can't decide their own request", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [first.id]));
+    const row = (await db.query("SELECT snapshot, app_name, status FROM public.agent_approval_requests WHERE id = $1", [first.id])).rows[0];
+    check("the request keeps what the task looked like", row.snapshot.title === "Ship the save system" && row.snapshot.status === "review" && row.app_name === "Claude Code" && row.status === "pending");
+  });
+  await withUser(viewer, async () => {
+    check("a viewer sees the requests", (await db.query("SELECT id FROM public.agent_approval_requests WHERE project_id = $1", [project])).rows.length === 2);
+    check("…but can't ask", await throwsInSavepoint("SELECT * FROM public.request_agent_approval($1, 'complete_task', null, null, null)", [task]));
+    check("…or decide", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [first.id]));
+  });
+  await withUser(B, async () => {
+    check("someone outside the project sees nothing", (await db.query("SELECT id FROM public.agent_approval_requests WHERE project_id = $1", [project])).rows.length === 0);
+  });
+  await withUser(A, async () => {
+    const decided = (await db.query("SELECT * FROM public.decide_agent_approval($1, false, 'Not before the playtest')", [first.id])).rows[0];
+    check("the owner rejects it with a comment", decided.status === "rejected" && decided.decided_by === A && decided.decision_comment === "Not before the playtest");
+    check("rejecting changes nothing on the task", (await db.query("SELECT status FROM public.tasks WHERE id = $1", [task])).rows[0].status === "review");
+    check("a decided request can't be decided again", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [first.id]));
+    check("no direct updates", await throwsInSavepoint("UPDATE public.agent_approval_requests SET status = 'approved' WHERE id = $1", [first.id]));
+  });
+  await withUser(dev, async () => {
+    check("after a decision the agent may ask again", (await ask("complete_task")).rows[0].created === true);
+  });
+  await withServiceRole(async () => {
+    await db.query("UPDATE public.agent_approval_requests SET expires_at = now() - interval '1 minute' WHERE task_id = $1 AND action = 'complete_task' AND status = 'pending'", [task]);
+  });
+  await withUser(A, async () => {
+    const expired = (await db.query("SELECT id FROM public.agent_approval_requests WHERE task_id = $1 AND action = 'complete_task' AND status = 'pending'", [task])).rows[0].id;
+    check("an expired request can't be approved", await throwsInSavepoint("SELECT * FROM public.decide_agent_approval($1, true, null)", [expired]));
+    const del = (await db.query("SELECT id FROM public.agent_approval_requests WHERE task_id = $1 AND action = 'delete_task'", [task])).rows[0].id;
+    const approved = (await db.query("SELECT * FROM public.decide_agent_approval($1, true, null)", [del])).rows[0];
+    check("the owner approves", approved.status === "approved");
+    await db.query("SELECT public.mark_agent_approval_failed($1, 'boom')", [del]);
+    check("…and can record that running it failed", (await db.query("SELECT status FROM public.agent_approval_requests WHERE id = $1", [del])).rows[0].status === "failed");
+    await db.query("DELETE FROM public.tasks WHERE id = $1", [task]);
+    check("the history stays after the task is deleted", (await db.query("SELECT count(*)::int n FROM public.agent_approval_requests WHERE project_id = $1 AND task_id IS NULL", [project])).rows[0].n >= 2);
+  });
+  await withUser(dev, async () => {
+    const del = (await db.query("SELECT id FROM public.agent_approval_requests WHERE project_id = $1 AND action = 'delete_task'", [project])).rows[0].id;
+    await db.query("SELECT public.mark_agent_approval_failed($1, 'not mine')", [del]);
+    check("only the decider can mark a failure", (await db.query("SELECT decision_comment FROM public.agent_approval_requests WHERE id = $1", [del])).rows[0].decision_comment === "boom");
+  });
+}
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

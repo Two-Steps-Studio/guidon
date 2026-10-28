@@ -72,9 +72,11 @@ Claude Code, by hand:
 claude mcp add --transport http --scope user guidon ${siteUrl}/api/mcp --header "Authorization: Bearer guidon_..."
 \`\`\`
 
-Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`list_events\`, \`list_modules\`, \`install_module\`, \`configure_module\`, \`list_module_runs\`, \`get_task\`, \`get_task_context\`, \`get_project_context\`, \`list_task_links\`, \`review_task_link\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
+Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`list_events\`, \`list_modules\`, \`install_module\`, \`configure_module\`, \`list_module_runs\`, \`get_task\`, \`get_task_context\`, \`get_project_context\`, \`list_task_links\`, \`review_task_link\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\`, \`request_approval\`, \`list_approval_requests\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
 
 Recommended flow for an agent: \`get_task_context\` → \`start_task\` → do the work → \`record_attempt\` → \`comment_on_task\` → \`set_task_status\` with \`review\`.
+
+When the project doesn't let the agent complete or delete a task itself, \`request_approval\` (\`POST /api/v1/tasks/{id}/approval-requests\` with \`action\` \`complete_task\` or \`delete_task\` and a \`reason\`) asks the project's owners and admins instead. Nothing changes until a person approves it in the project's Approvals inbox, and then the action runs as that person; a rejection changes nothing. Asking again while one is waiting returns the same request; requests expire after 7 days. \`list_approval_requests\` shows the outcome and the person's comment.
 
 ## Agent skills
 

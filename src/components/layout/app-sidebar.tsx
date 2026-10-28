@@ -15,6 +15,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -136,6 +137,7 @@ export const PROJECT_NAV = [
     labelKey: "projectGroup",
     items: [
       { href: "members", labelKey: "members", icon: Users },
+      { href: "approvals", labelKey: "approvals", icon: ShieldCheck },
       { href: "activity", labelKey: "activity", icon: Activity },
       { href: "settings", labelKey: "settings", icon: Settings },
     ],
@@ -184,6 +186,12 @@ export interface AppSidebarProps {
   /** projects.disabled_modules (migration 055) - sections hidden from the project nav. */
   disabledModules?: string[];
   moduleLinks?: ProjectModuleLink[];
+  /**
+   * Agents' approval requests (migration 102): null hides the Approvals link
+   * (no agent ever asked here, so a team without AI never sees it); `pending`
+   * is the badge.
+   */
+  approvals?: { pending: number } | null;
 }
 
 /** The person's pinned projects, shown on every app page including dashboard. */
@@ -221,6 +229,7 @@ export function AppSidebar({
   showUpgrade = false,
   disabledModules,
   moduleLinks = [],
+  approvals = null,
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -300,7 +309,9 @@ export function AppSidebar({
 
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => {
-            const items = visibleNavItems(group.items, disabledModules);
+            const items = visibleNavItems(group.items, disabledModules).filter(
+              (item) => item.href !== "approvals" || approvals !== null
+            );
             if (items.length === 0) return null;
             return (
             <SidebarGroup key={group.labelKey ?? `project-group-${groupIndex}`}>
@@ -329,6 +340,9 @@ export function AppSidebar({
                           <span>{t(item.labelKey)}</span>
                         </Link>
                       </SidebarMenuButton>
+                      {item.href === "approvals" && approvals && approvals.pending > 0 && (
+                        <SidebarMenuBadge>{approvals.pending}</SidebarMenuBadge>
+                      )}
                     </SidebarMenuItem>
                   );
                 })}
