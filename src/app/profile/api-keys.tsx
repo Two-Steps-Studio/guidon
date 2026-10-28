@@ -113,6 +113,21 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
               ))}
             </div>
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="key-expires">{t("keyExpiresLabel")}</Label>
+            <select
+              id="key-expires"
+              name="expires"
+              defaultValue="90"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm sm:w-48"
+            >
+              <option value="30">{t("keyExpiresDays", { days: 30 })}</option>
+              <option value="90">{t("keyExpiresDays", { days: 90 })}</option>
+              <option value="365">{t("keyExpiresYear")}</option>
+              <option value="never">{t("keyExpiresNever")}</option>
+            </select>
+            <p className="text-xs text-muted-foreground">{t("keyExpiresHint")}</p>
+          </div>
           {state.error && (
             <div className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
@@ -133,6 +148,9 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{key.name}</span>
                   {key.revoked_at && <Badge variant="secondary">{t("revokedBadge")}</Badge>}
+                  {!key.revoked_at && key.expires_at && new Date(key.expires_at) <= new Date() && (
+                    <Badge variant="secondary">{t("expiredBadge")}</Badge>
+                  )}
                 </div>
                 <p className="font-mono text-xs text-muted-foreground">{key.key_prefix}...</p>
                 <p className="text-xs text-muted-foreground">
@@ -141,6 +159,8 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                   {key.last_used_at
                     ? t("lastUsedOn", { date: formatDate(key.last_used_at) })
                     : t("neverUsed")}
+                  {" · "}
+                  {key.expires_at ? t("expiresOn", { date: formatDate(key.expires_at) }) : t("neverExpires")}
                 </p>
               </div>
               {!key.revoked_at && (

@@ -4410,5 +4410,23 @@ section("84. Each project role can do exactly what the Members page says (src/li
   }
 }
 
+section("86. A personal API key can expire; the server-only columns stay server-only (101)");
+{
+  const insertKey = (extra) => db.query(
+    `INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes${extra.columns}) VALUES ($1, 'Expiring', 'guidon_exp', $2, '{tasks:read}'${extra.values}) RETURNING id, expires_at`,
+    [A, `hash-exp-${Math.random()}`, ...extra.params]
+  );
+  await withUser(A, async () => {
+    const created = await insertKey({ columns: ", expires_at", values: ", $3", params: [new Date(Date.now() + 90 * 86400000).toISOString()] });
+    check("the owner creates a key that expires", created.rows[0]?.expires_at !== null);
+    check("…but can't mark it as a human-operated client (039)", await throwsInSavepoint(
+      "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, human_client) VALUES ($1, 'x', 'guidon_x', 'hash-hc', '{tasks:read}', true)", [A]));
+    check("…nor tie it to an OAuth grant (073)", await throwsInSavepoint(
+      "INSERT INTO public.api_keys (user_id, name, key_prefix, key_hash, scopes, oauth_grant_id) VALUES ($1, 'x', 'guidon_x', 'hash-og', '{tasks:read}', gen_random_uuid())", [A]));
+    check("…nor change the expiry afterwards (only revoked_at is updatable)", await throwsInSavepoint(
+      "UPDATE public.api_keys SET expires_at = NULL WHERE id = $1", [created.rows[0].id]));
+  });
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);
