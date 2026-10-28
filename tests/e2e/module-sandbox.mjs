@@ -63,6 +63,9 @@ export async function moduleSandboxCoverage({ page, context, origin, fixture, cl
     await page.getByRole("checkbox", { name: /Run this code for everyone/ }).check();
     await page.getByRole("button", { name: "Save code", exact: true }).click();
     await page.getByText("Code saved.", { exact: false }).waitFor();
+    // Saving ends with router.refresh(); in WebKit that refresh can still be
+    // in flight and interrupt the next page.goto.
+    await page.waitForLoadState("networkidle");
     const stored = (await client.query("SELECT manifest FROM project_module_packages WHERE project_id=$1 AND module_id=$2", [owner.projectId, moduleId])).rows[0].manifest;
     assert.ok(stored.permissions.includes("code:run") && stored.views.some(view => view.type === "custom") && stored.engine.minVersion === "1.3.0");
 
