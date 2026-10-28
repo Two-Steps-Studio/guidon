@@ -846,6 +846,7 @@
     "whyHeading": "Warum",
     "loadingContext": "Kontext wird geladen...",
     "noContextLinked": "Noch kein Kontext verknüpft.",
+    "whyUnconfirmedAi": "KI-Vorschlag, noch von keiner Person bestätigt",
     "decisionBadge": "Entscheidung",
     "aiTaskAssistant": "KI-Aufgabenassistent",
     "aiTaskAssistantDescription": "Beschreibe Arbeit für {projectName} und prüfe vorgeschlagene Aufgaben, bevor du sie hinzufügst.",
