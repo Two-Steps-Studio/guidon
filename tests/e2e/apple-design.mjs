@@ -204,8 +204,11 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     }
 
     await navigate(route);
-    const ai=page.getByRole('button',{name:'Guidon AI Assistant',exact:true});await ai.press('Enter');
-    const chat=page.getByRole('dialog');await settled(chat);
+    const ai=page.getByRole('button',{name:'Guidon AI Assistant',exact:true});
+    const chat=page.getByRole('dialog');
+    // A key press that lands before WebKit has hydrated the button is lost; press again until it opens.
+    for(let attempt=0;attempt<3 && !(await chat.isVisible());attempt++){await ai.press('Enter');await chat.waitFor({timeout:5000}).catch(()=>{});}
+    await settled(chat);
     const chatBounds=await chat.boundingBox();assert.ok(chatBounds.x>=-1 && chatBounds.width<=376);
     const input=chat.locator('textarea');await input.fill('Keep my composed text');
     let sent=0;
