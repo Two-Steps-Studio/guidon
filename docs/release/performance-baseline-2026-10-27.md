@@ -66,17 +66,57 @@ The parallel writes never failed or timed out.
    next step if real projects reach this size. The budget catches any
    further growth.
 
+## Interactions and a phone (2026-10-28, task `2d7ce5a4`)
+
+The app times its key actions itself (`src/lib/perf/action-timing.ts`):
+- save, create, move and delete, from the click to the server's answer;
+- recorded as a Sentry span in production (with Web Vitals, once
+  `NEXT_PUBLIC_SENTRY_DSN` is set) and as a `guidon:task.*` performance
+  entry that the perf script reads.
+
+Opening a task is measured from the click to the dialog's title field. The
+phone profile has 4× slower CPU and "Fast 4G", on the 1000-task board.
+
+First CI run (GitHub runner, production build, p50 / p95 in ms):
+
+| | 100 tasks | 1000 | 3000 (board shows 1000) | Phone, 1000 |
+|---|---|---|---|---|
+| Open a task | 153 / 483 | 481 / 874 | 432 / 843 | 1104 / 2861 |
+| Save | 71 / 99 | 186 / 338 | 158 / 253 | |
+| Move | 88 / 118 | 283 / 305 | 407 / 409 | |
+| Create | 83 / 90 | 126 / 204 | 120 / 185 | |
+| Board load | 440 / 696 | 1110 / 1327 | 1194 / 1250 | 4150 / 4844 |
+
+### Targets (from the task; not yet all met)
+
+- **Opening a task on a mid-range phone, p95 ≤ 1.5 s: not met (2.9 s).**
+  The slow one was the first open, which waited for the dialog's code.
+  The board now fetches that code when it's idle (`usePreloadTaskDialog`).
+  The next CI run shows whether that's enough.
+- **Board load on that phone: 4.8 s at 1000 tasks.** That's the cost of
+  rendering 1000 cards on a slow CPU. Virtualizing the columns is the
+  fix if real projects get that big.
+- **UI reaction without network ≤ 200 ms:** moves are optimistic, so the
+  card moves at once. This isn't measured separately yet.
+- **No regression above 20%:** not checked automatically. With 5 runs on
+  shared runners, p95 varies more than that between identical runs. The
+  2× budgets catch real regressions without failing on noise.
+
 ## Budgets and CI
 
-`tests/perf/budgets.json` sets each p95 at 2× the measured value, because CI
-runners are slower than the measuring machine. Raise a budget only with a new
-measurement.
+`tests/perf/budgets.json` sets each p95 at 2× the value measured in CI,
+rounded up. Budgets only catch regressions; the targets above are stricter.
+Raise a budget only with a new measurement.
 
-The `Large-project performance` workflow runs manually from the Actions tab
-(workflow_dispatch). It does a production build on PostgreSQL 17, runs the
-script with `--budgets`, and saves the JSON as an artifact. It doesn't run
-on every PR, because it takes several minutes and timings vary between
-runners. Correctness of pagination is covered on every PR by `test:db`.
+The `Large-project performance` workflow (`.github/workflows/performance.yml`)
+does a production build on PostgreSQL 17, runs the script with `--budgets`
+and saves the JSON as an artifact. It runs:
+- on PRs that touch the board, the task dialogs, the data layer,
+  migrations or the perf script;
+- weekly;
+- by hand, with `sizes` (for example `100,1000,10000`).
+
+Correctness of pagination is covered on every PR by `test:db`.
 
 ## Not covered yet
 

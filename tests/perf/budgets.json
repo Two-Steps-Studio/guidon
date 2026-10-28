@@ -1,6 +1,42 @@
 {
-  "_comment": "p95 budgets in ms = 2x the p95 measured on 2026-10-27 (docs/release/performance-baseline-2026-10-27.md), rounded up; CI runners are slower than the measuring machine. Raise a budget only with a new measurement.",
-  "100": { "boardLoadMs": 2000, "boardServerMs": 700, "apiFirstPageMs": 200, "searchMs": 200, "parallelWritesMs": 800 },
-  "1000": { "boardLoadMs": 4200, "boardServerMs": 2200, "apiFirstPageMs": 200, "apiWalkAllMs": 1200, "searchMs": 600, "parallelWritesMs": 800 },
-  "3000": { "boardLoadMs": 4700, "boardServerMs": 2800, "apiFirstPageMs": 200, "apiWalkAllMs": 3000, "searchMs": 600, "parallelWritesMs": 800 }
+  "_comment": "p95 budgets in ms = 2x the p95 measured in CI (board/API: docs/release/performance-baseline-2026-10-27.md; open/save/move/create and mobile: the 2026-10-28 CI run), rounded up to 100 ms. Raise a budget only with a new measurement. The product targets (docs/release/performance-baseline-2026-10-27.md) are stricter than the budgets, which only catch regressions.",
+  "100": {
+    "boardLoadMs": 2000,
+    "boardServerMs": 700,
+    "apiFirstPageMs": 200,
+    "searchMs": 200,
+    "parallelWritesMs": 800,
+    "openTaskMs": 1000,
+    "saveTaskMs": 200,
+    "moveTaskMs": 300,
+    "createTaskMs": 200
+  },
+  "1000": {
+    "boardLoadMs": 4200,
+    "boardServerMs": 2200,
+    "apiFirstPageMs": 200,
+    "apiWalkAllMs": 1200,
+    "searchMs": 600,
+    "parallelWritesMs": 800,
+    "openTaskMs": 1800,
+    "saveTaskMs": 700,
+    "moveTaskMs": 700,
+    "createTaskMs": 500
+  },
+  "3000": {
+    "boardLoadMs": 4700,
+    "boardServerMs": 2800,
+    "apiFirstPageMs": 200,
+    "apiWalkAllMs": 3000,
+    "searchMs": 600,
+    "parallelWritesMs": 800,
+    "openTaskMs": 1700,
+    "saveTaskMs": 600,
+    "moveTaskMs": 900,
+    "createTaskMs": 400
+  },
+  "mobile": {
+    "boardLoadMs": 9700,
+    "openTaskMs": 5800
+  }
 }

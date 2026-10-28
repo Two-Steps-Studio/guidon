@@ -18,9 +18,24 @@ import { isTypingTarget } from "@/components/layout/keyboard-shortcuts";
 // TaskDetailDialog (and the attempts/why-panel sections it always imports)
 // only matter once a task is actually opened - code-split so the board's
 // initial load doesn't pay for a dialog nobody may click into this visit.
-const TaskDetailDialog = dynamic(() =>
-  import("@/components/work/task-detail-dialog").then((mod) => mod.TaskDetailDialog)
-);
+const loadTaskDetailDialog = () => import("@/components/work/task-detail-dialog");
+const TaskDetailDialog = dynamic(() => loadTaskDetailDialog().then((mod) => mod.TaskDetailDialog));
+
+// ...but fetched once the board is idle, so the first task someone opens
+// doesn't wait for the chunk on a slow phone (tests/perf: the first open was
+// the p95 on a throttled 4G mid-range profile).
+function usePreloadTaskDialog() {
+  useEffect(() => {
+    const preload = () => void loadTaskDetailDialog().catch(() => {});
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(preload, { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    // Safari has no requestIdleCallback.
+    const timer = window.setTimeout(preload, 1500);
+    return () => window.clearTimeout(timer);
+  }, []);
+}
 import type { TaskCardMember } from "@/components/work/task-card";
 import {
   BOARD_COLUMNS,
@@ -102,6 +117,7 @@ export function WorkBoard({
   boardLimit?: number | null;
 }) {
   const t = useTranslations("work");
+  usePreloadTaskDialog();
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
 

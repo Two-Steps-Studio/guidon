@@ -146,6 +146,9 @@ try {
     await phonePage.locator("article[data-card-id]").first().waitFor();
   }))[0]);
   mobile.boardLoadMs = summarize(phoneBoard);
+  // A person looks at the board before tapping a task; the board uses that
+  // idle time to fetch the task dialog (work-board.tsx usePreloadTaskDialog).
+  await phonePage.waitForTimeout(2000);
   mobile.openTaskMs = summarize(await openTimes(phonePage));
   console.log("mobile", JSON.stringify(mobile));
   await phone.close();
