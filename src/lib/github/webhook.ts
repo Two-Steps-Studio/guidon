@@ -1,6 +1,5 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { getApiUserClient } from "@/lib/api/api-key-auth";
 import { setTaskStatus } from "@/lib/api/task-transitions";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -14,17 +13,7 @@ import { dataClient } from "@/lib/data-client";
 /** Shown as the author of the comments and status changes the integration makes (actor_label, migration 036). */
 export const GITHUB_ACTOR_LABEL = "GitHub";
 
-/**
- * Verifies GitHub's `X-Hub-Signature-256` (HMAC-SHA256 of the raw body with
- * the App's webhook secret). Constant-time; false for a missing or
- * malformed header.
- */
-export function verifyGithubSignature(rawBody: string, header: string | null, secret: string): boolean {
-  if (!header || !header.startsWith("sha256=")) return false;
-  const expected = createHmac("sha256", secret).update(rawBody, "utf8").digest();
-  const given = Buffer.from(header.slice("sha256=".length), "hex");
-  return given.length === expected.length && timingSafeEqual(given, expected);
-}
+export { verifyGithubSignature } from "./signature";
 
 export interface GithubConnectionTarget {
   projectId: string;

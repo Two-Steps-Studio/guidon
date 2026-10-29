@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { verifyGithubSignature } from "../src/lib/github/signature.ts";
 /**
  * GitHub -> Guidon task rules (src/lib/github/task-refs.ts): which references
  * are recognised and what each event does to the referenced tasks.
@@ -24,6 +25,23 @@ function check(label, ok, detail = "") {
   }
 }
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+console.log("\n  Webhook signatures");
+{
+  // Published GitHub test vector, not an application credential.
+  const secret = "It's a Secret to Everybody";
+  const body = "Hello, World!";
+  const signature = "sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17";
+  check("GitHub's documented signature is valid", verifyGithubSignature(body, signature, secret));
+  check("changed body is refused", !verifyGithubSignature(body + "!", signature, secret));
+  check("wrong secret is refused", !verifyGithubSignature(body, signature, "wrong"));
+  for (const [label, header] of [
+    ["missing", null], ["empty", ""], ["short", signature.slice(0, -2)],
+    ["non-hex suffix", signature + "garbage"], ["odd hex suffix", signature + "a"],
+    ["whitespace suffix", signature + " "], ["newline suffix", signature + "\n"],
+    ["wrong algorithm", signature.replace("sha256=", "sha1=")],
+  ]) check(`${label} signature is refused`, !verifyGithubSignature(body, header, secret));
+}
 
 console.log("\n  extractTaskRefs");
 check("short ref", eq(extractTaskRefs("Fix door guidon#1A2b3c4d"), ["1a2b3c4d"]));

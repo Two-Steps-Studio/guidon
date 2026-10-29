@@ -12,6 +12,8 @@ Related Guidon tasks: `f141afb1-c8cb-4fa1-a673-6caa66fc47bf` and `f3bdc95c-1b04-
 
 ## Task description editing
 
+Additional read-only SQL inspection confirmed: `private_schema_present=true`, `revision_function_present=false`, `revision_column_present=false`, `revision_trigger_present=false`. The Supabase backups page reports that the Free Plan does not include scheduled project backups. An external/manual backup has not been confirmed; no upgrade was purchased. Establish a recoverable backup before approving a production repair.
+
 The web edit dialog needs a valid revision to conditionally save its snapshot. Missing revision causes the reported refusal, as designed. The calendar projection fix already exists in main. Do not remove compare-and-swap, substitute revision 0 or silently send an unconditional edit to hide the schema error.
 
 `086_task_edit_revision.sql` adds an integer revision with default 0, a nonnegative constraint and a trigger that advances it on every insert/update. The isolated schema and task-editing suites verify stale-save rejection, authorized saves, foreign/viewer denial and preservation of other fields. This does not establish that the migration has been applied to Cloud.
