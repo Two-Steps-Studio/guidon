@@ -220,5 +220,11 @@
   "Could not save the setting.": "No se pudo guardar el ajuste.",
   "This change was already undone or no longer exists.": "Este cambio ya se deshizo o ya no existe.",
   "Someone changed this since, so there is nothing to undo.": "Alguien lo cambió después, así que no hay nada que deshacer.",
+  "Only project owners and admins can approve or reject requests.": "Solo los propietarios y administradores del proyecto pueden aprobar o rechazar solicitudes.",
+  "This request could not be decided.": "No se pudo resolver esta solicitud.",
+  "The comment is too long.": "El comentario es demasiado largo.",
+  "Someone already decided this request.": "Alguien ya resolvió esta solicitud.",
+  "This request expired. The agent can ask again.": "Esta solicitud caducó. El agente puede volver a pedirla.",
+  "The task no longer exists, so there is nothing to approve.": "La tarea ya no existe, así que no hay nada que aprobar.",
   "Only project owners and admins can undo an import.": "Solo los propietarios y administradores del proyecto pueden deshacer una importación."
 }

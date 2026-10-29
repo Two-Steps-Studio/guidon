@@ -152,7 +152,8 @@
     "extensionsGroup": "Extensiones",
     "billingPrices": "Precios",
     "funnel": "Embudo",
-    "moduleReview": "Revisión de módulos"
+    "moduleReview": "Revisión de módulos",
+    "approvals": "Aprobaciones"
   },
   "commandPalette": {
     "triggerLabel": "Buscar...",
@@ -2649,5 +2650,44 @@
       "conflict": "El módulo cambió mientras tanto. Copia tu código, recarga y guarda de nuevo.",
       "saveFailed": "No se pudo guardar. Inténtalo de nuevo."
     }
+  },
+  "approvals": {
+    "title": "Aprobaciones",
+    "subtitle": "Lo que las apps y agentes conectados pidieron hacer pero no pueden hacer por su cuenta. No pasa nada hasta que un propietario o administrador lo aprueba; entonces la acción se ejecuta en su nombre.",
+    "emptyTitle": "Aún no hay solicitudes",
+    "emptyDescription": "Cuando un agente no puede completar o eliminar una tarea, puede pedirlo aquí.",
+    "filter": "Mostrar",
+    "filterPending": "Pendientes ({count})",
+    "filterAll": "Todas",
+    "nothingWaiting": "Nada espera una decisión.",
+    "untitled": "Tarea sin título",
+    "unknownApp": "Una app",
+    "onBehalfOf": "para {person}",
+    "taskGone": "eliminada",
+    "action": {
+      "complete_task": "Completar",
+      "delete_task": "Eliminar"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "approved": "Aprobada",
+      "rejected": "Rechazada",
+      "expired": "Caducada",
+      "failed": "Fallida"
+    },
+    "statusChange": "Estado",
+    "changesTo": "cambia a",
+    "deleteEffect": "La tarea, sus subtareas, comentarios y adjuntos se eliminan para siempre.",
+    "reason": "Motivo",
+    "expires": "Caduca {date}",
+    "comment": "Comentario",
+    "commentPlaceholder": "Comentario opcional que verá el agente",
+    "approveComplete": "Aprobar y completar",
+    "approveDelete": "Aprobar y eliminar",
+    "reject": "Rechazar",
+    "confirmDelete": "¿Eliminar “{title}” para siempre? Lo pidió el agente; no se puede deshacer.",
+    "onlyManagers": "Solo los propietarios y administradores del proyecto pueden decidir.",
+    "decidedBy": "{person}, {date}",
+    "failed": "Algo salió mal. Inténtalo de nuevo."
   }
 }

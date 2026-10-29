@@ -432,6 +432,29 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           requestBody: { required: true, content: json(body(recordAttemptFields)) },
         }),
       },
+      "/tasks/{taskId}/approval-requests": {
+        parameters: [taskIdParam],
+        get: op("listApprovalRequests", "A task's approval requests, newest first", "tasks:read", ok("Requests", wrap("requests", { type: "array", items: { type: "object" } })), { tags: ["Tasks"] }),
+        post: op(
+          "requestApproval",
+          "Ask the project's owners/admins to approve completing or deleting a task this key may not do itself",
+          "tasks:write",
+          ok("The pending request (201 when new, 200 when one was already waiting)", {
+            type: "object",
+            properties: { request: { type: "object" }, created: { type: "boolean" } },
+            required: ["request", "created"],
+          }),
+          {
+            tags: ["Tasks"],
+            description:
+              "Nothing changes until a person approves it in the project's Approvals inbox; the action then runs as them, and a rejection changes nothing. One pending request per task and action; requests expire after 7 days.",
+            requestBody: {
+              required: true,
+              content: json(body({ action: z.enum(["complete_task", "delete_task"]), reason: z.string().max(2000).optional() }, ["action"])),
+            },
+          }
+        ),
+      },
       "/projects/{projectId}/tasks/import": {
         parameters: [projectIdParam],
         post: op("importTasks", "Create many tasks asynchronously (up to 500)", "tasks:write", {

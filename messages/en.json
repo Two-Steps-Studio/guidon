@@ -152,7 +152,8 @@
     "extensionsGroup": "Extensions",
     "billingPrices": "Prices",
     "funnel": "Funnel",
-    "moduleReview": "Module review"
+    "moduleReview": "Module review",
+    "approvals": "Approvals"
   },
   "commandPalette": {
     "triggerLabel": "Search...",
@@ -2649,5 +2650,44 @@
       "conflict": "The module changed meanwhile. Copy your code, reload and save again.",
       "saveFailed": "Saving failed. Try again."
     }
+  },
+  "approvals": {
+    "title": "Approvals",
+    "subtitle": "What connected apps and agents asked to do but may not do on their own. Nothing happens until an owner or admin approves; the action then runs as them.",
+    "emptyTitle": "No requests yet",
+    "emptyDescription": "When an agent isn't allowed to complete or delete a task, it can ask here instead.",
+    "filter": "Show",
+    "filterPending": "Waiting ({count})",
+    "filterAll": "All",
+    "nothingWaiting": "Nothing is waiting for a decision.",
+    "untitled": "Untitled task",
+    "unknownApp": "An app",
+    "onBehalfOf": "for {person}",
+    "taskGone": "deleted",
+    "action": {
+      "complete_task": "Complete",
+      "delete_task": "Delete"
+    },
+    "status": {
+      "pending": "Waiting",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "failed": "Failed"
+    },
+    "statusChange": "Status",
+    "changesTo": "changes to",
+    "deleteEffect": "The task, its subtasks, comments and attachments are deleted for good.",
+    "reason": "Reason",
+    "expires": "Expires {date}",
+    "comment": "Comment",
+    "commentPlaceholder": "Optional comment the agent will see",
+    "approveComplete": "Approve and complete",
+    "approveDelete": "Approve and delete",
+    "reject": "Reject",
+    "confirmDelete": "Delete “{title}” for good? The agent asked; this can't be undone.",
+    "onlyManagers": "Only project owners and admins can decide.",
+    "decidedBy": "{person}, {date}",
+    "failed": "Something went wrong. Try again."
   }
 }

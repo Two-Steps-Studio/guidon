@@ -3,7 +3,7 @@ import "server-only";
 import { after } from "next/server";
 import { dataClient, serviceDataClient } from "@/lib/data-client";
 
-export type NotificationType = "task_assigned" | "module_review";
+export type NotificationType = "task_assigned" | "module_review" | "module_automation" | "agent_approval";
 
 export interface Notification {
   id: string;

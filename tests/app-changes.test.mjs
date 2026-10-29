@@ -2,6 +2,7 @@
 // diffs, what gets stored, parsing stored rows, and undo that never overwrites a later edit.
 import assert from "node:assert/strict";
 import { appChangeDetails, diffTaskFields, isRestorable, parseAppChange, parseUndo, undoPatch } from "../src/lib/work/app-changes-core.ts";
+import { decisionRefusal, effectiveStatus, parseApprovalRequestBody, sortInbox } from "../src/lib/work/agent-approvals-core.ts";
 
 let passed = 0, failed = 0;
 function check(name, fn) {
@@ -84,6 +85,45 @@ check("the undo row describes the reverse change", () => assert.deepEqual(
   undoPatch(change, { title: "Fix login redirect", status: "review" }).reverted,
   { title: { from: "Fix login redirect", to: "Fix login" }, status: { from: "review", to: "todo" } },
 ));
+
+console.log("\n  Approval requests");
+check("a request names one of the two actions", () => {
+  assert.deepEqual(parseApprovalRequestBody({ action: "complete_task", reason: "  CI is green  " }), { action: "complete_task", reason: "CI is green" });
+  assert.deepEqual(parseApprovalRequestBody({ action: "delete_task" }), { action: "delete_task", reason: null });
+  assert.ok("error" in parseApprovalRequestBody({ action: "drop_project" }));
+  assert.ok("error" in parseApprovalRequestBody({}));
+  assert.ok("error" in parseApprovalRequestBody(null));
+  assert.ok("error" in parseApprovalRequestBody([]));
+});
+check("the reason is text with a bound", () => {
+  assert.ok("error" in parseApprovalRequestBody({ action: "complete_task", reason: 5 }));
+  assert.ok("error" in parseApprovalRequestBody({ action: "complete_task", reason: "x".repeat(2001) }));
+  assert.deepEqual(parseApprovalRequestBody({ action: "complete_task", reason: "   " }), { action: "complete_task", reason: null });
+});
+const now = new Date("2026-10-28T12:00:00Z");
+check("a waiting request past its expiry reads as expired", () => {
+  assert.equal(effectiveStatus({ status: "pending", expires_at: "2026-10-28T11:59:59Z" }, now), "expired");
+  assert.equal(effectiveStatus({ status: "pending", expires_at: "2026-10-29T00:00:00Z" }, now), "pending");
+  assert.equal(effectiveStatus({ status: "approved", expires_at: "2026-10-01T00:00:00Z" }, now), "approved");
+});
+check("the inbox shows waiting requests first, the one expiring soonest on top", () => {
+  const rows = [
+    { id: "old-decided", status: "rejected", created_at: "2026-10-20T00:00:00Z", expires_at: "2026-10-27T00:00:00Z" },
+    { id: "late", status: "pending", created_at: "2026-10-28T10:00:00Z", expires_at: "2026-11-04T10:00:00Z" },
+    { id: "new-decided", status: "approved", created_at: "2026-10-26T00:00:00Z", expires_at: "2026-11-02T00:00:00Z" },
+    { id: "soon", status: "pending", created_at: "2026-10-22T00:00:00Z", expires_at: "2026-10-29T00:00:00Z" },
+    { id: "lapsed", status: "pending", created_at: "2026-10-27T00:00:00Z", expires_at: "2026-10-28T00:00:00Z" },
+  ];
+  assert.deepEqual(sortInbox(rows, now).map((row) => row.id), ["soon", "late", "lapsed", "new-decided", "old-decided"]);
+});
+check("database refusals are told apart", () => {
+  assert.equal(decisionRefusal("Already decided"), "already_decided");
+  assert.equal(decisionRefusal("Expired"), "expired");
+  assert.equal(decisionRefusal("The task no longer exists"), "task_gone");
+  assert.equal(decisionRefusal("Only project owners and admins can decide"), "forbidden");
+  assert.equal(decisionRefusal("something internal: relation x"), "unknown");
+  assert.equal(decisionRefusal(undefined), "unknown");
+});
 
 console.log(`\n  ${passed} pass / ${failed} fail\n`);
 process.exit(failed ? 1 : 0);
