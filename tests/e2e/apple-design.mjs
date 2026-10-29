@@ -197,12 +197,13 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     // Moodboard uses the same viewer, but verify its actual entry point and
     // the visible corner close button on a narrow viewport as well.
     await navigate(`${origin}/projects/${owner.projectId}/references`);
-    await page.locator('input[type="file"]').setInputFiles([images[0]]);
-    const referenceOpen = page.getByRole('button', { name: messages.moodboard.openImage.replace('{name}', images[0].name), exact: true });
+    const referenceImage = { ...images[0], name: `moodboard-close-${browserName}.png` };
+    await page.locator('input[type="file"]').setInputFiles([referenceImage]);
+    const referenceOpen = page.getByRole('button', { name: messages.moodboard.openImage.replace('{name}', referenceImage.name), exact: true });
     await referenceOpen.waitFor();
     await page.setViewportSize({ width: 375, height: 667 });
     await referenceOpen.click();
-    const referenceViewer = page.getByRole('dialog', { name: images[0].name, exact: true });
+    const referenceViewer = page.getByRole('dialog', { name: referenceImage.name, exact: true });
     await referenceViewer.waitFor();
     const referenceClose = referenceViewer.getByRole('button', { name: messages.lightbox.close, exact: true });
     const viewerBounds = await referenceViewer.boundingBox(), referenceCloseBounds = await referenceClose.boundingBox();
