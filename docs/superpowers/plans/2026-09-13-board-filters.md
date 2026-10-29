@@ -4,7 +4,7 @@
 
 **Goal:** Add three independent, AND-combined quick filters (assignee, priority, tag) to the work board, so a board with many tasks can be narrowed down without scrolling every column by eye.
 
-**Architecture:** Pure client-side view state in `WorkBoard` — three `useState` filters derive a `filteredTasks` list from the already-loaded `topLevelTasks`, passed to `KanbanBoard` instead of the unfiltered list. `KanbanBoard` gains a `filtersActive` flag so an empty column can say "no tasks match the filters" instead of its normal empty-state hint. No schema change, no new Server Action, no persistence — same pattern as the sort-mode toggle shipped in the previous round.
+**Architecture:** Pure client-side view state in `WorkBoard` - three `useState` filters derive a `filteredTasks` list from the already-loaded `topLevelTasks`, passed to `KanbanBoard` instead of the unfiltered list. `KanbanBoard` gains a `filtersActive` flag so an empty column can say "no tasks match the filters" instead of its normal empty-state hint. No schema change, no new Server Action, no persistence - same pattern as the sort-mode toggle shipped in the previous round.
 
 **Tech Stack:** Next.js/React client components, no new dependencies.
 
@@ -132,7 +132,7 @@ Insert the new derivations between them:
   const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
 ```
 
-Note: `progress` (the "`X/Y done`" header text) stays computed from `topLevelTasks`, not `filteredTasks` — it's a project-wide stat, not a view-level one. Do not change its input. Likewise, do not change `existingTasks={topLevelTasks}` further down in `CreateTaskDialog`'s props (used to compute a new task's `sort_order` against every existing task in a column, not just the currently-visible ones) — that stays as `topLevelTasks` too.
+Note: `progress` (the "`X/Y done`" header text) stays computed from `topLevelTasks`, not `filteredTasks` - it's a project-wide stat, not a view-level one. Do not change its input. Likewise, do not change `existingTasks={topLevelTasks}` further down in `CreateTaskDialog`'s props (used to compute a new task's `sort_order` against every existing task in a column, not just the currently-visible ones) - that stays as `topLevelTasks` too.
 
 - [ ] **Step 4: Add the filter row to the header, and pass the new props to `KanbanBoard`**
 
@@ -230,7 +230,7 @@ Insert a new filter row between the header and the error banner:
         {error && (
 ```
 
-This filter row is not wrapped in a `canEdit` check — filtering is a read-only view preference, visible to every viewer, same as the sort-mode `<Select>` above it.
+This filter row is not wrapped in a `canEdit` check - filtering is a read-only view preference, visible to every viewer, same as the sort-mode `<Select>` above it.
 
 Then this call currently reads:
 
@@ -269,7 +269,7 @@ Change `tasks` to the filtered list and add `filtersActive`:
           />
 ```
 
-Do not change the `{topLevelTasks.length === 0 ? (...) : (<KanbanBoard ... />)}` ternary's condition — it stays keyed on the unfiltered `topLevelTasks.length`, so the big "No tasks yet" empty-project panel only appears when the project truly has zero tasks, never merely because a filter hides everything (that case is handled per-column inside `KanbanBoard`, via Step 5 below).
+Do not change the `{topLevelTasks.length === 0 ? (...) : (<KanbanBoard ... />)}` ternary's condition - it stays keyed on the unfiltered `topLevelTasks.length`, so the big "No tasks yet" empty-project panel only appears when the project truly has zero tasks, never merely because a filter hides everything (that case is handled per-column inside `KanbanBoard`, via Step 5 below).
 
 - [ ] **Step 5: Add `filtersActive` to `KanbanBoard` and use it for the empty-column message**
 
@@ -383,7 +383,7 @@ Run:
 npm run lint
 ```
 
-Expected: no new errors in `src/app/projects/[id]/work/work-board.tsx` or `src/components/work/kanban-board.tsx`. This repo has pre-existing `@typescript-eslint/no-explicit-any` errors in unrelated files — ignore those.
+Expected: no new errors in `src/app/projects/[id]/work/work-board.tsx` or `src/components/work/kanban-board.tsx`. This repo has pre-existing `@typescript-eslint/no-explicit-any` errors in unrelated files - ignore those.
 
 - [ ] **Step 8: Build**
 
@@ -393,7 +393,7 @@ Run:
 npm run build
 ```
 
-Expected: build succeeds, `/projects/[id]/work` still listed as a route. Note: this worktree may need a `.env.local` present to get past a missing-Supabase-env-vars build failure (a pre-existing environment gap unrelated to this change, hit by the previous round's implementer too) — if so, temporarily copy `.env.local` from `C:\guidon` (gitignored, confirm with `git check-ignore -v .env.local` before copying, and delete it again afterward so nothing gets staged).
+Expected: build succeeds, `/projects/[id]/work` still listed as a route. Note: this worktree may need a `.env.local` present to get past a missing-Supabase-env-vars build failure (a pre-existing environment gap unrelated to this change, hit by the previous round's implementer too) - if so, temporarily copy `.env.local` from `C:\guidon` (gitignored, confirm with `git check-ignore -v .env.local` before copying, and delete it again afterward so nothing gets staged).
 
 - [ ] **Step 9: Run the DB/RLS regression suite**
 
@@ -403,11 +403,11 @@ Run:
 npm run test:db
 ```
 
-Expected: `132 pass / 0 fail` (this change touches no schema/RLS code at all — this just confirms nothing else regressed).
+Expected: `132 pass / 0 fail` (this change touches no schema/RLS code at all - this just confirms nothing else regressed).
 
 - [ ] **Step 10: Manual browser check**
 
-There is no running dev server and no browser tool available to you in this subagent context. **Skip this step** — the controlling session performs the manual/browser verification separately after your work is reviewed. Do not attempt to start a dev server.
+There is no running dev server and no browser tool available to you in this subagent context. **Skip this step** - the controlling session performs the manual/browser verification separately after your work is reviewed. Do not attempt to start a dev server.
 
 - [ ] **Step 11: Commit**
 
@@ -436,7 +436,7 @@ EOF
 
 ## Context
 
-This is the third of four planned improvements to Guidon's project-planning UX (subtask table — shipped; sort by due date — shipped; board filters — this task; bulk task actions). Confirmed with the user via clarifying question: status is deliberately excluded as a filter dimension (status is already the board's column axis). Design rationale: `docs/superpowers/specs/2026-09-13-board-filters-design.md`.
+This is the third of four planned improvements to Guidon's project-planning UX (subtask table - shipped; sort by due date - shipped; board filters - this task; bulk task actions). Confirmed with the user via clarifying question: status is deliberately excluded as a filter dimension (status is already the board's column axis). Design rationale: `docs/superpowers/specs/2026-09-13-board-filters-design.md`.
 
 ## Before You Begin
 
@@ -445,7 +445,7 @@ If you have questions about the requirements, approach, dependencies, or anythin
 ## Your Job
 
 Once you're clear on requirements:
-1. Implement exactly what the task specifies (the 11 steps above, in order — skip Step 10 as instructed)
+1. Implement exactly what the task specifies (the 11 steps above, in order - skip Step 10 as instructed)
 2. Verify implementation works (tsc, lint, build, test:db as specified)
 3. Commit your work (Step 11's exact commit message)
 4. Self-review (see below)
@@ -455,8 +455,8 @@ Once you're clear on requirements:
 
 ## Code Organization
 
-- Follow the file structure and code given in the task exactly — this task's code was fully specified by a prior planning phase, not left for you to design.
-- If you find the plan's given code doesn't actually match the current file contents when you go to apply it (e.g. line numbers or surrounding code have drifted), don't force it — read the actual current file, apply the equivalent edit precisely, and note the discrepancy in your report.
+- Follow the file structure and code given in the task exactly - this task's code was fully specified by a prior planning phase, not left for you to design.
+- If you find the plan's given code doesn't actually match the current file contents when you go to apply it (e.g. line numbers or surrounding code have drifted), don't force it - read the actual current file, apply the equivalent edit precisely, and note the discrepancy in your report.
 - Don't restructure anything outside what the task specifies.
 
 ## When You're in Over Your Head
@@ -476,7 +476,7 @@ Review your work with fresh eyes. Ask yourself:
 - Did I fully implement all 11 steps (except skipped Step 10)?
 - Are there edge cases I didn't handle?
 - Is the code clean, and did I follow the exact code given rather than improvising?
-- Did I avoid overbuilding — no persistence, no status filter, no free-text search, no change to `boardProgress`'s inputs?
+- Did I avoid overbuilding - no persistence, no status filter, no free-text search, no change to `boardProgress`'s inputs?
 - Do tsc/lint/build/test:db all actually pass (paste real output, don't assume)?
 - Did the project-wide progress header and `CreateTaskDialog`'s `existingTasks` prop both stay on `topLevelTasks`, not `filteredTasks`?
 
@@ -498,18 +498,18 @@ When done, report:
 ## Plan self-review
 
 **Spec coverage:**
-- "Three independent quick filters, AND-combined" — Step 3's `filteredTasks` applies all three conditions in sequence, any failing condition excludes the task. ✓
-- "Status deliberately not a filter dimension" — no status filter appears anywhere in the plan. ✓
-- "Client-side only, no backend change" — no Server Action, no migration, no API route touched anywhere in this plan. ✓
-- "Progress header stays project-wide" — Step 3's comment explicitly calls out leaving `progress`'s input as `topLevelTasks`; Step 4 doesn't touch the progress `<p>` block at all. ✓
-- "Column counts reflect what's visible" — automatic once `KanbanBoard` receives `filteredTasks` (its own `columnTasks.length` badge, unchanged code, now counts the filtered set) — no extra code needed, and the plan doesn't add any. ✓
-- "Distinguish no tasks from no tasks match filters" — Step 5's `filtersActive` prop and empty-state message swap. ✓
-- "Clear filters, visible only when active" — Step 4's `{filtersActive && (<button>...)}`. ✓
-- "State: plain view state, not persisted" — Step 2's three plain `useState("all")`, no localStorage/DB anywhere. ✓
-- "Interaction with sort mode: filtered list is what gets grouped/sorted" — `KanbanBoard` already receives whatever `tasks` prop it's given and runs `groupTasksByStatus` on it regardless of source; passing `filteredTasks` instead of `topLevelTasks` (Step 4) means sorting now operates on the filtered set automatically, no `KanbanBoard`-internal change needed beyond what Step 5 already adds. ✓
-- "UI placement: new row below header, above error banner, not gated by canEdit" — Step 4's insertion point and lack of a `canEdit` wrapper match exactly. ✓
-- Verification steps — Steps 6-10 cover tsc/lint/build/test:db/manual (manual correctly deferred). ✓
+- "Three independent quick filters, AND-combined" - Step 3's `filteredTasks` applies all three conditions in sequence, any failing condition excludes the task. ✓
+- "Status deliberately not a filter dimension" - no status filter appears anywhere in the plan. ✓
+- "Client-side only, no backend change" - no Server Action, no migration, no API route touched anywhere in this plan. ✓
+- "Progress header stays project-wide" - Step 3's comment explicitly calls out leaving `progress`'s input as `topLevelTasks`; Step 4 doesn't touch the progress `<p>` block at all. ✓
+- "Column counts reflect what's visible" - automatic once `KanbanBoard` receives `filteredTasks` (its own `columnTasks.length` badge, unchanged code, now counts the filtered set) - no extra code needed, and the plan doesn't add any. ✓
+- "Distinguish no tasks from no tasks match filters" - Step 5's `filtersActive` prop and empty-state message swap. ✓
+- "Clear filters, visible only when active" - Step 4's `{filtersActive && (<button>...)}`. ✓
+- "State: plain view state, not persisted" - Step 2's three plain `useState("all")`, no localStorage/DB anywhere. ✓
+- "Interaction with sort mode: filtered list is what gets grouped/sorted" - `KanbanBoard` already receives whatever `tasks` prop it's given and runs `groupTasksByStatus` on it regardless of source; passing `filteredTasks` instead of `topLevelTasks` (Step 4) means sorting now operates on the filtered set automatically, no `KanbanBoard`-internal change needed beyond what Step 5 already adds. ✓
+- "UI placement: new row below header, above error banner, not gated by canEdit" - Step 4's insertion point and lack of a `canEdit` wrapper match exactly. ✓
+- Verification steps - Steps 6-10 cover tsc/lint/build/test:db/manual (manual correctly deferred). ✓
 
 **Placeholder scan:** no TBD/TODO/"add appropriate handling" phrases; every step shows complete, copy-pasteable code or an exact command with expected output.
 
-**Type consistency:** `assigneeFilter`/`priorityFilter`/`tagFilter` are all plain `useState("all")` (inferred `string`), consistently compared with `!== "all"` and never given a narrower type — correct, since `assigneeFilter`'s value is either `"all"` or a `member.id` (a `string`), `priorityFilter`'s is either `"all"` or a `TaskPriority` value compared via `normalizeTaskPriority(task.priority) !== priorityFilter` (comparing two strings, no type mismatch since `TASK_PRIORITIES`' values are already plain strings used as `<option value>`), and `tagFilter`'s is either `"all"` or a tag string. `filtersActive` is a plain boolean used identically in both files (`WorkBoard` computes it, `KanbanBoard` receives it as a prop with the same name and boolean type). `KanbanBoardProps.filtersActive?: boolean` (Step 5) matches the `filtersActive={filtersActive}` passed in Step 4.
+**Type consistency:** `assigneeFilter`/`priorityFilter`/`tagFilter` are all plain `useState("all")` (inferred `string`), consistently compared with `!== "all"` and never given a narrower type - correct, since `assigneeFilter`'s value is either `"all"` or a `member.id` (a `string`), `priorityFilter`'s is either `"all"` or a `TaskPriority` value compared via `normalizeTaskPriority(task.priority) !== priorityFilter` (comparing two strings, no type mismatch since `TASK_PRIORITIES`' values are already plain strings used as `<option value>`), and `tagFilter`'s is either `"all"` or a tag string. `filtersActive` is a plain boolean used identically in both files (`WorkBoard` computes it, `KanbanBoard` receives it as a prop with the same name and boolean type). `KanbanBoardProps.filtersActive?: boolean` (Step 5) matches the `filtersActive={filtersActive}` passed in Step 4.

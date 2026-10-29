@@ -38,7 +38,7 @@ export default async function AdminModulesPage() {
     <section className="space-y-4" aria-labelledby="review-queue">
       <h3 id="review-queue" className="text-lg font-semibold">{t("queueTitle", { count: queue.length })}</h3>
       {!queue.length && <p className="text-sm text-muted-foreground">{t("queueEmpty")}</p>}
-      {queue.map((entry) => <Submission key={`${entry.moduleId}@${entry.version}`} entry={entry} submitter={entry.submittedBy ? submitters.get(entry.submittedBy) ?? "?" : "—"} own={entry.submittedBy === admin.id} labels={labels} t={t} />)}
+      {queue.map((entry) => <Submission key={`${entry.moduleId}@${entry.version}`} entry={entry} submitter={entry.submittedBy ? submitters.get(entry.submittedBy) ?? "?" : "-"} own={entry.submittedBy === admin.id} labels={labels} t={t} />)}
     </section>
     <section className="space-y-3" aria-labelledby="open-reports">
       <h3 id="open-reports" className="text-lg font-semibold">{t("reportsTitle", { count: reports.data.length })}</h3>
@@ -51,7 +51,7 @@ export default async function AdminModulesPage() {
     </section>
     <section className="space-y-2" aria-labelledby="registry-log">
       <h3 id="registry-log" className="text-lg font-semibold">{t("logTitle")}</h3>
-      <ul className="space-y-1 text-sm">{events.data.map((event) => { const at = new Date(event.created_at).toISOString(); return <li key={event.id} className="break-words"><time dateTime={at} className="text-muted-foreground">{at.slice(0, 16).replace("T", " ")}</time> · {event.module_id}{event.version ? `@${event.version}` : ""} · {t(`action.${event.action}`)}{event.note ? ` — ${event.note}` : ""}</li>; })}</ul>
+      <ul className="space-y-1 text-sm">{events.data.map((event) => { const at = new Date(event.created_at).toISOString(); return <li key={event.id} className="break-words"><time dateTime={at} className="text-muted-foreground">{at.slice(0, 16).replace("T", " ")}</time> · {event.module_id}{event.version ? `@${event.version}` : ""} · {t(`action.${event.action}`)}{event.note ? ` - ${event.note}` : ""}</li>; })}</ul>
     </section>
   </div>;
 }
@@ -66,7 +66,7 @@ function Submission({ entry, submitter, own, labels, t }: { entry: CatalogEntry;
     <ModulePermissionList permissions={entry.manifest.permissions} labels={labels} />
     <ul className="list-inside list-disc text-sm">{entry.manifest.views.map((view) => <li key={view.id} className="break-words">{view.name} ({view.type})</li>)}</ul>
     {review.blocking.length + review.warnings.length > 0 && <div className="space-y-1 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm"><p className="font-medium">{t("warningsTitle")}</p>
-      <ul className="list-inside list-disc">{[...review.blocking, ...review.warnings].map((finding, index) => <li key={index} className="break-words">{t(`finding.${finding.code}`)} — <code>{finding.path}</code>{finding.excerpt ? `: ${finding.excerpt}` : ""}</li>)}</ul></div>}
+      <ul className="list-inside list-disc">{[...review.blocking, ...review.warnings].map((finding, index) => <li key={index} className="break-words">{t(`finding.${finding.code}`)} - <code>{finding.path}</code>{finding.excerpt ? `: ${finding.excerpt}` : ""}</li>)}</ul></div>}
     <details className="text-sm"><summary className="cursor-pointer">{t("manifestJson")}</summary><pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-xs">{JSON.stringify(entry.manifest, null, 2)}</pre></details>
     <ReviewControls moduleId={entry.moduleId} version={entry.version} ownSubmission={own} />
   </article>;

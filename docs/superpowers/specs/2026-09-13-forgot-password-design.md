@@ -2,13 +2,13 @@
 
 ## Problem
 
-Guidon has no password-recovery feature at all — confirmed via grep, no
+Guidon has no password-recovery feature at all - confirmed via grep, no
 code path calls `resetPasswordForEmail`, `signInWithOtp`,
 `inviteUserByEmail`, `updateUser({ email })`, or reauthentication.
 Someone who forgets their password on the hosted product has no way
 back into their account. Self-hosted mode has no email-sending
 capability whatsoever (confirmed: `local-auth.ts` only uses email for
-format validation, nothing sends mail) — so this feature is
+format validation, nothing sends mail) - so this feature is
 hosted-mode only, gated the same way `OAuthButtons` already hides
 itself in self-hosted (`{!local && ...}`).
 
@@ -16,7 +16,7 @@ Rather than relying on Supabase's own email dispatch (which requires
 configuring SMTP in the Supabase dashboard and editing the email
 template there, disconnected from this repo), Guidon's own backend
 generates the recovery link via Supabase's admin API and sends the
-actual email itself through Resend — full control over the template
+actual email itself through Resend - full control over the template
 lives in code, reviewable and versioned like everything else, and
 isn't gated on Supabase dashboard configuration at all beyond having a
 service-role key (which this codebase already uses elsewhere).
@@ -27,7 +27,7 @@ service-role key (which this codebase already uses elsewhere).
 
 1. `/auth/login` gets a "Forgot password?" link next to the password
    field, hidden in self-hosted mode (`local`).
-2. `/auth/forgot-password` — email-only form. Submitting calls a new
+2. `/auth/forgot-password` - email-only form. Submitting calls a new
    Server Action, `requestPasswordReset(email)`.
 3. `requestPasswordReset(email)`:
    - Rate-limits by email first, before doing anything else that could
@@ -38,7 +38,7 @@ service-role key (which this codebase already uses elsewhere).
      This returns a `hashed_token` **without** Supabase sending its own
      email.
    - **Does not email `data.properties.action_link`** (GoTrue's own
-     hosted `/verify`-then-redirect endpoint) — this codebase's
+     hosted `/verify`-then-redirect endpoint) - this codebase's
      Supabase clients are hard-configured for the PKCE flow
      (`@supabase/ssr` sets `flowType: "pkce"` unconditionally), but
      `admin.generateLink()` never involves a browser, so no PKCE
@@ -48,7 +48,7 @@ service-role key (which this codebase already uses elsewhere).
      `${SITE_URL}/auth/reset-password/verify?token_hash=${hashed_token}&type=recovery`
      (`SITE_URL` from `src/lib/site-url.ts`).
    - Sends that link via a new `sendPasswordResetEmail` helper
-     (Resend's REST API, plain `fetch`, no SDK dependency — same
+     (Resend's REST API, plain `fetch`, no SDK dependency - same
      philosophy as this codebase's AI providers: "avoids adding a
      vendor SDK dependency where a small fetch call suffices").
    - Always returns the same generic result to the caller, regardless
@@ -57,19 +57,19 @@ service-role key (which this codebase already uses elsewhere).
 4. The user clicks the link in the email, landing on a **new,
    dedicated Route Handler**, `/auth/reset-password/verify/route.ts`,
    which calls `supabase.auth.verifyOtp({ token_hash, type: "recovery" })`
-   — this verifies the token directly with no PKCE involved at all —
+   - this verifies the token directly with no PKCE involved at all -
    and redirects to the plain `/auth/reset-password` page. This must be
    a Route Handler and not the page itself: Next.js only permits
    `cookies().set()` (which session persistence depends on) from a
-   Server Action or Route Handler, never a page's render — calling
+   Server Action or Route Handler, never a page's render - calling
    `verifyOtp` directly in a page verifies the token but silently never
    persists the resulting session cookie. Deliberately kept as its own
    small route rather than folded into the existing `/auth/callback`
    route, which handles a different, already-working flow (OAuth's PKCE
-   code exchange) — isolating this means a bug here can't regress that.
+   code exchange) - isolating this means a bug here can't regress that.
    `callback/route.ts` and `safe-redirect.ts` are unchanged; this
    feature never routes through either.
-5. `/auth/reset-password` — by the time this page renders, the new
+5. `/auth/reset-password` - by the time this page renders, the new
    Route Handler has already established a real Supabase session (via
    `verifyOtp`, cookie-persisted). The page checks for that session
    server-side (`getUser()`); no session means the link was
@@ -83,14 +83,14 @@ recovery link through the existing `/auth/callback` (PKCE code
 exchange) and had `/auth/reset-password`'s own page component call
 `verifyOtp` directly. Both were found to be genuinely broken during
 code-quality review (the PKCE mismatch above, and the cookie-persistence
-problem above) rather than merely risky — the flow described here is
+problem above) rather than merely risky - the flow described here is
 what actually ships.
 
 ### Self-hosted gating
 
 `/auth/forgot-password/page.tsx` and `/auth/reset-password/page.tsx`
 both redirect to `/auth/login` immediately when `hasDirectDatabase()`
-is true — this feature simply does not exist in that mode, the same
+is true - this feature simply does not exist in that mode, the same
 as OAuth doesn't. The login page's "Forgot password?" link is hidden
 under the same `{!local && ...}` condition `OAuthButtons` already uses.
 
@@ -103,18 +103,18 @@ or rate-limit behavior:
 - The Server Action's return value is the same generic
   `{ error: null }`-shaped success in all three cases: real email
   (link generated and sent), nonexistent email (`generateLink` errors
-  with something like "user not found" — caught and swallowed, logged
+  with something like "user not found" - caught and swallowed, logged
   server-side only), **and an unrelated send failure** (Resend API
-  error — logged server-side, but *also* swallowed into the same
+  error - logged server-side, but *also* swallowed into the same
   generic success, not surfaced distinctly). An earlier version of
   this spec called the send-failure case "safe to show distinctly
   because it happens identically regardless of whether the email
-  exists" — that reasoning was wrong: the send-failure branch is only
+  exists" - that reasoning was wrong: the send-failure branch is only
   reachable *after* `generateLink` has already confirmed the email
   exists, so surfacing it differently from the nonexistent-email case
   would make any systemic Resend problem (a bad `RESEND_API_KEY`, an
   unverified `RESEND_FROM_EMAIL` sending domain, a Resend outage) a
-  perfect enumeration oracle for as long as it lasted — every real
+  perfect enumeration oracle for as long as it lasted - every real
   account would hit the distinguishing branch, every fake one the
   generic success. Caught during code-quality review before this
   shipped; the corrected behavior is what's described above.
@@ -129,7 +129,7 @@ or rate-limit behavior:
 
 Reuses `src/lib/auth/rate-limit.ts`'s existing `isLockedOut`/
 `recordFailedAttempt` functions (already in this codebase for login
-lockout) rather than writing a near-duplicate module — same
+lockout) rather than writing a near-duplicate module - same
 in-memory-per-process tradeoff, already documented and accepted there.
 Key it as `` `reset:${normalizedEmail}` `` so this doesn't share a
 counter with that module's own login-lockout tracking for the same
@@ -137,7 +137,7 @@ email address (a different concern with the same shape). This
 reasonable to reuse as-is: 5 requests per 15 minutes per email is a
 sane default for both "wrong password attempts" and "reset email
 requests," and this repo's existing rate-limit module isn't
-parameterized per call site — reusing it exactly as it stands is
+parameterized per call site - reusing it exactly as it stands is
 simpler than forking a second copy with different constants for no
 concrete reason.
 
@@ -151,9 +151,9 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
 
 - Reads `RESEND_API_KEY` and `RESEND_FROM_EMAIL` from `process.env`,
   throwing a clear "X requires Y to be set" error if either is missing
-  — same fail-loudly-at-use-time philosophy as `requireEnv` in
+  - same fail-loudly-at-use-time philosophy as `requireEnv` in
   `src/lib/ai/provider.ts` (not reused directly, since that helper's
-  signature is tied to `AIProviderName` — a small local equivalent
+  signature is tied to `AIProviderName` - a small local equivalent
   instead).
 - POSTs to `https://api.resend.com/emails` with
   `Authorization: Bearer ${RESEND_API_KEY}`, `from: RESEND_FROM_EMAIL`,
@@ -165,7 +165,7 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
 
 The HTML template reuses the exact visual language already delivered
 for the "Confirm sign up" template in the previous round (dark
-card, Guidon wordmark, `#1d4fd8` primary-blue button) — same look,
+card, Guidon wordmark, `#1d4fd8` primary-blue button) - same look,
 different copy ("Reset your password" / "Set a new password for your
 Guidon account" instead of confirming an email), and a real
 interpolated link instead of a `{{ .ConfirmationURL }}` Go-template
@@ -177,7 +177,7 @@ through Supabase's dashboard template engine.
 Two new required (for this feature only) env vars, documented in
 `.env.example`: `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (e.g.
 `"Guidon <noreply@useguidon.com>"`). Missing either only breaks
-`requestPasswordReset` itself (throws when actually called) — it does
+`requestPasswordReset` itself (throws when actually called) - it does
 not affect any other part of the app, the same way an unset
 `AI_PROVIDER` only affects AI features and nothing else.
 
@@ -201,16 +201,16 @@ not affect any other part of the app, the same way an unset
 - Redoing the already-shipped "Confirm sign up" email the same way
   (fully code-driven via Resend, replacing the Supabase-dashboard
   template delivered in the previous round). A natural, symmetrical
-  follow-up, but not requested for this round — mention it as an
+  follow-up, but not requested for this round - mention it as an
   option, don't build it silently.
 - Any self-hosted equivalent (no email-sending capability exists
   there at all; out of scope for this feature entirely, not just this
   round).
 - Magic link/OTP, invite-user, change-email, or reauthentication flows
-  — confirmed unused by any current code path; building their email
+  - confirmed unused by any current code path; building their email
   templates now would be dead code no feature triggers.
 - Persisting or displaying rate-limit state anywhere in the UI beyond
   a plain error message when it trips.
 - A "resend the email" button/cooldown UI on the forgot-password page
-  itself — submitting the form again re-triggers the same rate-limited
+  itself - submitting the form again re-triggers the same rate-limited
   action, which is sufficient.

@@ -1,4 +1,4 @@
-# Large-project performance baseline — 2026-10-27
+# Large-project performance baseline - 2026-10-27
 
 Guidon task `40e24352` ([QA][P1] Performance i regresja dużych projektów).
 

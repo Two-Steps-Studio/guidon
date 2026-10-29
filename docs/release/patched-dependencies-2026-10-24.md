@@ -1,4 +1,4 @@
-# Runtime dependency remediation — 2026-10-24
+# Runtime dependency remediation - 2026-10-24
 
 Task: `dec8686b-4eee-4b95-a657-eaf026da9b97`.
 

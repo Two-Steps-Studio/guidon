@@ -1,4 +1,4 @@
-# Context Engine QA — 2026-10-28
+# Context Engine QA - 2026-10-28
 
 Guidon task `9ddf32fc` ([Context Engine P0] QA: E2E, uprawnienia, regresja
 i quality gates). Każde kryterium zadania ma tu wskazany dowód: test,
@@ -53,12 +53,12 @@ produkcji.
 | Złe linki | `test:github`: fałszywe trafienia (ogólne słowa, jedno wspólne słowo, odnośniki-podróbki, niepowiązane PR-y), najwyżej 3 sugestie, confidence < 1. Odrzucenie w UI (`smart-linking.mjs`) |
 | Zdarzenia poza kolejnością | `nextPrState` (`test:github`, 5 przypadków) i `agent-loop.mjs` |
 | Powtórzone dostarczenie | `agent-loop.mjs` (ten sam push dwa razy, jeden link). Unikalność `task_links (task, kind, repository, ref)` (`test:db` 81). Komentarze i zmiany statusu z webhooka są claimowane per zdarzenie (`github_task_events`) |
-| Wycieki uprawnień | `api-isolation.mjs` (125 sprawdzeń REST/MCP); `test:db` 81–82; obcy klucz w `agent-loop.mjs` |
+| Wycieki uprawnień | `api-isolation.mjs` (125 sprawdzeń REST/MCP); `test:db` 81-82; obcy klucz w `agent-loop.mjs` |
 | Prompt injection | `test:context`: nagłówki, bloki kodu, HTML i linie poziome z tekstu użytkownika są neutralizowane, tekst przypominający instrukcje jest oznaczany. `api-isolation.mjs`: wpis „Ignore all previous instructions…” jest oznaczony w prawdziwym pakiecie. Pakiet mówi agentowi, że treść to dane, nie polecenia |
 | Usuwanie danych | `test:db` 81 (usunięcie zadania usuwa jego linki); 82 (ponowne otwarcie lub usunięcie wycofuje niezweryfikowane wnioski, zaakceptowane zostają, usunięcie projektu działa); sekrety są redagowane przed wysłaniem (`test:context`, `api-isolation.mjs`) |
 | Bez zgody na zewnętrzny LLM | Pakiety kontekstu nigdy nie wołają LLM: są składane dosłownie z wierszy pod RLS (`agent-context-builder.ts`). Uczenie z zakończonych zadań (`task-learning.ts`) działa tylko, gdy: (1) projekt ma włączone AI (`projects.ai_enabled`, migracja 046), (2) moduł Memory nie jest ukryty, (3) organizacja skonfigurowała dostawcę. Jego wynik to niezweryfikowane wpisy do review |
 | Trafność i świeżość | `test:context`: ranking (reguły > decyzja powiązana > nieudane próby > fakty…), trafność względem zadania i `focus`, kara za wiek, oznaczenie stale, budżet tokenów dla całego dokumentu |
-| Opóźnienie | `agent-loop.mjs` mierzy `get_task_context` przy 300 wpisach pamięci. Budżet testu: 5000 ms. Lokalnie (serwer deweloperski): 67–442 ms. Wartość z CI jest w logu E2E („pass agent loop … ms”). `npm run perf:large` mierzy tablicę i API przy 1000–3000 zadaniach |
+| Opóźnienie | `agent-loop.mjs` mierzy `get_task_context` przy 300 wpisach pamięci. Budżet testu: 5000 ms. Lokalnie (serwer deweloperski): 67-442 ms. Wartość z CI jest w logu E2E („pass agent loop … ms”). `npm run perf:large` mierzy tablicę i API przy 1000-3000 zadaniach |
 
 ## Czego ten przebieg nie sprawdza
 

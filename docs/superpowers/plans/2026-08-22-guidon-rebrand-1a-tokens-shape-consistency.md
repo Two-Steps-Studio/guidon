@@ -1,10 +1,10 @@
-# Guidon Rebrand — Plan 1a: Tokens, Typography, Shape, Consistency
+# Guidon Rebrand - Plan 1a: Tokens, Typography, Shape, Consistency
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Apply the approved visual rebrand (electric blue accent, Geist typography, sharper/flatter shape) at the design-system level, and fix the four concrete consistency bugs found during the code audit — all without touching navigation structure (that's Plan 1b).
+**Goal:** Apply the approved visual rebrand (electric blue accent, Geist typography, sharper/flatter shape) at the design-system level, and fix the four concrete consistency bugs found during the code audit - all without touching navigation structure (that's Plan 1b).
 
-**Architecture:** Everything here flows from three low-level changes — `globals.css` tokens, `layout.tsx` fonts, and the four shared `components/ui/*` primitives — which every page already consumes, so most of the visual change is "free." The remaining tasks are mechanical, per-file fixes: a new shared `EmptyState` component replacing 14 duplicated blocks, three files with hardcoded Tailwind colors moving to design tokens, eleven pages getting a unified container width, and three admin tables getting a hover state.
+**Architecture:** Everything here flows from three low-level changes - `globals.css` tokens, `layout.tsx` fonts, and the four shared `components/ui/*` primitives - which every page already consumes, so most of the visual change is "free." The remaining tasks are mechanical, per-file fixes: a new shared `EmptyState` component replacing 14 duplicated blocks, three files with hardcoded Tailwind colors moving to design tokens, eleven pages getting a unified container width, and three admin tables getting a hover state.
 
 **Tech Stack:** Tailwind v4 (`@theme inline` bridge), `next/font/google` (Geist, Geist Mono), shadcn "new-york" component primitives, CVA.
 
@@ -12,7 +12,7 @@ Spec: `docs/superpowers/specs/2026-08-22-guidon-rebrand-design.md`
 
 ---
 
-### Task 1: Design tokens — electric blue accent + radius token
+### Task 1: Design tokens - electric blue accent + radius token
 
 **Files:**
 - Modify: `src/app/globals.css`
@@ -66,7 +66,7 @@ Replace `--color-ring: #2dd4a7;` (currently line 172) with:
     --color-ring: #4d8dff;
 ```
 
-This block does not need its own `--radius` — the token doesn't change between light and dark, so it stays defined once on `:root` (Step 1) and inherits.
+This block does not need its own `--radius` - the token doesn't change between light and dark, so it stays defined once on `:root` (Step 1) and inherits.
 
 - [ ] **Step 3: Update the explicit-dark-mode block**
 
@@ -107,7 +107,7 @@ git commit -m "Replace teal/green brand tokens with electric blue, add --radius 
 
 ---
 
-### Task 2: Typography — Geist Sans + Geist Mono
+### Task 2: Typography - Geist Sans + Geist Mono
 
 **Files:**
 - Modify: `src/app/layout.tsx`
@@ -149,7 +149,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-(The `Analytics` import was already unused before this change — `npm run lint` already reports `'Analytics' is defined but never used` today. Leaving it as pre-existing, unrelated lint debt; not introduced by this task.)
+(The `Analytics` import was already unused before this change - `npm run lint` already reports `'Analytics' is defined but never used` today. Leaving it as pre-existing, unrelated lint debt; not introduced by this task.)
 
 - [ ] **Step 2: Point the CSS font bridge at the new variables**
 
@@ -223,7 +223,7 @@ git commit -m "Use the mono font for dashboard stat values"
 
 ---
 
-### Task 4: Shared component shape — flatter, sharper
+### Task 4: Shared component shape - flatter, sharper
 
 **Files:**
 - Modify: `src/components/ui/card.tsx`
@@ -257,7 +257,7 @@ In `src/components/ui/button.tsx`, replace the `variants.variant` object (curren
       },
 ```
 
-(Only the trailing `shadow`/`shadow-sm` classes are removed from `default`, `destructive`, `outline`, and `secondary` — everything else in each variant string is unchanged.)
+(Only the trailing `shadow`/`shadow-sm` classes are removed from `default`, `destructive`, `outline`, and `secondary` - everything else in each variant string is unchanged.)
 
 - [ ] **Step 3: Remove the shadow from `Input`**
 
@@ -267,7 +267,7 @@ In `src/components/ui/input.tsx`, replace the class string (currently line 13):
           "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
 ```
 
-(Only `shadow-sm` is removed; everything else is unchanged. `rounded-md` is left as-is on both `Button` and `Input` — Tailwind's `rounded-md` is already 6px, matching the new `--radius` token's value, so there's no visible difference and no need to introduce the CSS-variable form on every primitive.)
+(Only `shadow-sm` is removed; everything else is unchanged. `rounded-md` is left as-is on both `Button` and `Input` - Tailwind's `rounded-md` is already 6px, matching the new `--radius` token's value, so there's no visible difference and no need to introduce the CSS-variable form on every primitive.)
 
 - [ ] **Step 4: Type-check**
 
@@ -305,7 +305,7 @@ interface EmptyStateProps {
 
 /**
  * The icon-in-a-tinted-square treatment matches the feature cards on the
- * public landing page (src/app/page.tsx) — reused here so every empty state
+ * public landing page (src/app/page.tsx) - reused here so every empty state
  * in the app gets the same, more finished look instead of the plain muted
  * icon each of the 14 previous call sites hand-rolled slightly differently.
  */
@@ -410,7 +410,7 @@ Add the import:
 import { EmptyState } from "@/components/ui/empty-state";
 ```
 
-Replace the empty-state block (currently lines 144-170ish — the `<Card>...</Card>` wrapping the conditional description/action):
+Replace the empty-state block (currently lines 144-170ish - the `<Card>...</Card>` wrapping the conditional description/action):
 
 ```typescript
           <EmptyState
@@ -441,7 +441,7 @@ Replace the empty-state block (currently lines 144-170ish — the `<Card>...</Ca
           />
 ```
 
-This replaces the whole `{projects.length === 0 ? (<Card>...</Card>) : (...)}` block's true-branch (currently `src/app/projects/page.tsx` lines 144-174) — the `<Card>` (no `border-dashed` here, unlike most other instances) wrapping a `<CardContent>` with the icon, heading, and the inner `organizations.length === 0` ternary between "Create an organization first..." / "Create Organization" and "Create your first project..." / "Create Project", both branches linking to `/organizations`. The false-branch (the actual projects grid, starting at the `) : (` that follows) is untouched.
+This replaces the whole `{projects.length === 0 ? (<Card>...</Card>) : (...)}` block's true-branch (currently `src/app/projects/page.tsx` lines 144-174) - the `<Card>` (no `border-dashed` here, unlike most other instances) wrapping a `<CardContent>` with the icon, heading, and the inner `organizations.length === 0` ternary between "Create an organization first..." / "Create Organization" and "Create your first project..." / "Create Project", both branches linking to `/organizations`. The false-branch (the actual projects grid, starting at the `) : (` that follows) is untouched.
 
 - [ ] **Step 4: Type-check**
 
@@ -776,7 +776,7 @@ Replace the empty-state block (currently lines 55-66):
 - [ ] **Step 6: Type-check**
 
 Run: `npx tsc --noEmit`
-Expected: no new errors. In particular, check whether `Card`/`CardContent` are still used elsewhere in each of these five files — if a file's only use of `Card`/`CardContent` was the empty state just replaced, remove that now-unused import (TypeScript will flag it as unused, or `npm run lint` will).
+Expected: no new errors. In particular, check whether `Card`/`CardContent` are still used elsewhere in each of these five files - if a file's only use of `Card`/`CardContent` was the empty state just replaced, remove that now-unused import (TypeScript will flag it as unused, or `npm run lint` will).
 
 - [ ] **Step 7: Commit**
 
@@ -851,7 +851,7 @@ Replace its one usage site (currently line 133, inside the member-row `<Badge cl
                     </Badge>
 ```
 
-(This is already a `Badge`, not a plain `<span>` — only the `className={ROLE_COLORS[...]}` prop is replaced with `variant={...}`; the `<Shield>` icon and `{member.role}` children are unchanged. `Badge` is already imported in this file.)
+(This is already a `Badge`, not a plain `<span>` - only the `className={ROLE_COLORS[...]}` prop is replaced with `variant={...}`; the `<Shield>` icon and `{member.role}` children are unchanged. `Badge` is already imported in this file.)
 
 - [ ] **Step 4: Type-check**
 
@@ -976,7 +976,7 @@ git commit -m "Unify page container width/padding across the app"
 - Modify: `src/app/admin/users/page.tsx`
 - Modify: `src/app/admin/logs/page.tsx`
 
-`admin/logs/page.tsx` renders a `<ul>` of entries, not a `<table>` — check at implementation time whether it has an equivalent per-row hover already; if its list items already have a hover class, leave it, and only add hover states to the two files below that don't.
+`admin/logs/page.tsx` renders a `<ul>` of entries, not a `<table>` - check at implementation time whether it has an equivalent per-row hover already; if its list items already have a hover class, leave it, and only add hover states to the two files below that don't.
 
 - [ ] **Step 1: `admin/organizations/page.tsx`**
 
@@ -1027,7 +1027,7 @@ npx tsc --noEmit
 npm run lint
 ```
 
-Expected: `tsc` clean. `lint` should show the same pre-existing `no-explicit-any` errors and the `Analytics`/`projectColor` unused-var warnings documented in the prior (project-limit) session's audit — no *new* errors introduced by this plan's files. If any of Task 8's five files still import `Card`/`CardContent` unused after the empty-state migration, fix those specific unused-import warnings now.
+Expected: `tsc` clean. `lint` should show the same pre-existing `no-explicit-any` errors and the `Analytics`/`projectColor` unused-var warnings documented in the prior (project-limit) session's audit - no *new* errors introduced by this plan's files. If any of Task 8's five files still import `Card`/`CardContent` unused after the empty-state migration, fix those specific unused-import warnings now.
 
 - [ ] **Step 2: Production build**
 
@@ -1040,9 +1040,9 @@ Expected: builds successfully, same environment requirements as before (`.env.lo
 - [ ] **Step 3: Visual check, if the Browser pane is available**
 
 Start the dev server (`guidon-dev` in `.claude/launch.json`) and check, in both light and dark:
-- `/` — landing page renders with the new blue accent and Geist font.
-- `/dashboard` — stat numbers render in the mono font; empty state (if no projects) shows the new icon-in-square treatment.
-- A project's `/decisions` or `/roadmap` page — empty state (if empty) matches the new treatment; page content is capped at the same width as `/organizations`.
-- `/admin/organizations` — table rows highlight on hover.
+- `/` - landing page renders with the new blue accent and Geist font.
+- `/dashboard` - stat numbers render in the mono font; empty state (if no projects) shows the new icon-in-square treatment.
+- A project's `/decisions` or `/roadmap` page - empty state (if empty) matches the new treatment; page content is capped at the same width as `/organizations`.
+- `/admin/organizations` - table rows highlight on hover.
 
-If the Browser pane's screenshot tool is unavailable in this environment (confirmed unavailable earlier in this project's session — "the Browser pane is not displayed" — this may or may not still be true at execution time), use `read_page`/`get_page_text` to confirm the expected classes and text render, consistent with how the previous (project-limit) plan handled the same constraint.
+If the Browser pane's screenshot tool is unavailable in this environment (confirmed unavailable earlier in this project's session - "the Browser pane is not displayed" - this may or may not still be true at execution time), use `read_page`/`get_page_text` to confirm the expected classes and text render, consistent with how the previous (project-limit) plan handled the same constraint.

@@ -36,7 +36,7 @@ const pl: Messages = {
     openProject: "Otwórz projekt {name}",
   },
   sync: {
-    offline: "Offline – pokazuję dane zapisane w telefonie",
+    offline: "Offline - pokazuję dane zapisane w telefonie",
     pending: "Zmiany czekające na synchronizację: {count}",
     lastSynced: "Zaktualizowano {time}",
     notSynced: "Jeszcze nie zaktualizowano",

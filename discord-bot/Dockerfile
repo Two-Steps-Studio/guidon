@@ -1,5 +1,5 @@
 # =====================================================
-# GUIDON DISCORD BOT — production image
+# GUIDON DISCORD BOT - production image
 # =====================================================
 #
 # Same multi-stage shape as the main app's own Dockerfile: deps -> build ->

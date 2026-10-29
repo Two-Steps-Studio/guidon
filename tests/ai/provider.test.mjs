@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Tests the AI provider factory's pure logic — env-var resolution,
- * validation, and request-shaping — without a live API key or network
+ * Tests the AI provider factory's pure logic - env-var resolution,
+ * validation, and request-shaping - without a live API key or network
  * access (TODO.md §6/§7).
  *
  *   npm run test:ai
  *
  * src/lib/ai/provider.ts and src/lib/ai/providers/*.ts start with
  * `import "server-only"`, which throws when loaded outside Next.js's
- * react-server build condition (see node_modules/server-only/index.js) —
+ * react-server build condition (see node_modules/server-only/index.js) -
  * the same reason tests/db/compat.test.mjs mirrors src/lib/db/session.ts
  * instead of importing it directly. The functions below mirror the real
  * implementation's env-resolution and request-building logic for the same
@@ -317,7 +317,7 @@ section("request shaping: openai-compatible");
 }
 
 {
-  // ollama: no API key configured — self-hosted, no data leaves the machine.
+  // ollama: no API key configured - self-hosted, no data leaves the machine.
   const req = buildOpenAICompatRequest("http://localhost:11434/v1", undefined, "qwen3", {
     messages: [{ role: "user", content: "hi" }],
   });

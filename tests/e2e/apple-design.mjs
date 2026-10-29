@@ -47,13 +47,13 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('alert').filter({hasText:messages.notifications.loadFailed}).waitFor({state:'hidden'});await page.keyboard.press('Escape');
 
     await navigate(origin+'/profile');await page.getByRole('button',{name:/^Background style:/}).click();
-    await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
+    await page.getByRole('menuitem',{name:'Solid - focus on your work',exact:true}).click();
     await frames(page);assert.equal(await page.locator('canvas').count(),0);
     await page.getByRole('button',{name:/^Background style:/}).click();
     await page.getByRole('menuitem',{name:'Guidon pattern',exact:true}).click();
     await page.locator('canvas').waitFor();
     await page.getByRole('button',{name:/^Background style:/}).click();
-    await page.getByRole('menuitem',{name:'Solid — focus on your work',exact:true}).click();
+    await page.getByRole('menuitem',{name:'Solid - focus on your work',exact:true}).click();
     assert.equal(errors.some(error=>/418|hydrat/i.test(error)),false,'Profile must hydrate with fixture API key dates');
     await navigate(`${origin}/projects/${owner.projectId}/settings`);
     await page.locator('#avatar:enabled').setInputFiles(images[0]);

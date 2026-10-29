@@ -1,4 +1,4 @@
-# Agent registration verification — 2026-10-25
+# Agent registration verification - 2026-10-25
 
 Baseline: `cb47a84` (main, PR #70 merged). This change implements the previously
 missing human-approved `service_auth` profile; it does not assert a new production

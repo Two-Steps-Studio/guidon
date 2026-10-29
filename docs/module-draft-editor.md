@@ -1,6 +1,6 @@
 # Module draft editor
 
-Apply migration 083 after 080–082 before deployment. This adds one personal
+Apply migration 083 after 080-082 before deployment. This adds one personal
 draft per user/project; no installation or existing module records are changed.
 Owners/admins can read and save only their own draft while they retain the
 project role. Another admin cannot read its prompts or history. RLS applies
@@ -10,8 +10,8 @@ clients have no grants. Project/user deletion cascades to personal drafts.
 ## Editing and storage
 
 Desktop (1280px viewport and up) shows Chat/Preview/Inspector at 28/52/20
-relative widths by default. Accessible range controls adjust Chat to 25–30%
-and Preview to 50–55%; Inspector gets the remainder. Smaller screens use
+relative widths by default. Accessible range controls adjust Chat to 25-30%
+and Preview to 50-55%; Inspector gets the remainder. Smaller screens use
 keyboard-accessible tabs with arrows/Home/End. The toolbar stays available
 at the top on small screens.
 

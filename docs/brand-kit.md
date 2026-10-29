@@ -57,7 +57,7 @@ specific, verifiable scope is stated.
 ### Website or directory short description
 
 Context-first project management for development teams. Keep tasks,
-decisions, and project knowledge together—and give AI agents a structured way
+decisions, and project knowledge together-and give AI agents a structured way
 to help.
 
 ### 30-second introduction
@@ -80,7 +80,7 @@ Explore Guidon: https://useguidon.com
 ### X post
 
 Keep the why with the work. Guidon brings tasks, decisions, and project
-context together for development teams—with REST and MCP access for AI agents.
+context together for development teams-with REST and MCP access for AI agents.
 
 https://useguidon.com
 

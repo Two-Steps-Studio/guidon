@@ -1,5 +1,5 @@
 # =====================================================
-# GUIDON — obraz produkcyjny
+# GUIDON - obraz produkcyjny
 # =====================================================
 #
 # Wieloetapowy: zależności → build → runtime. Etap runtime nie zawiera
@@ -8,7 +8,7 @@
 #   docker build -t guidon .
 #   docker run -p 3000:3000 --env-file .env guidon
 #
-# Zwykle uruchamiany przez docker-compose.yml — patrz docs/self-hosting.md.
+# Zwykle uruchamiany przez docker-compose.yml - patrz docs/self-hosting.md.
 
 # -----------------------------------------------------
 # 1. Zależności
@@ -16,7 +16,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 
-# Instalacja z lockfile'a, bez skryptów — build nie może wykonywać
+# Instalacja z lockfile'a, bez skryptów - build nie może wykonywać
 # postinstall z zależności (§10: self-hosting to wdrożenie wrażliwe).
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
@@ -98,7 +98,7 @@ COPY --from=deps --chown=guidon:nodejs /app/node_modules/postgres-interval ./nod
 COPY --from=deps --chown=guidon:nodejs /app/node_modules/split2 ./node_modules/split2
 
 # Katalog na pliki przy STORAGE_PROVIDER=local. W compose montowany jako
-# wolumen — bez tego uploady znikają przy restarcie (§30).
+# wolumen - bez tego uploady znikają przy restarcie (§30).
 RUN mkdir -p /app/storage && chown guidon:nodejs /app/storage
 
 USER guidon

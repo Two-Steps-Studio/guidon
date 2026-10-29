@@ -5,7 +5,7 @@
 1. Załóż [konto npm](https://www.npmjs.com/signup) oraz [konto PyPI](https://pypi.org/account/register/). Użyj adresu e-mail, do którego masz stały dostęp. Osoba zakładająca konto musi być uprawniona do prowadzenia go i przyjęcia warunków usługi.
 2. Potwierdź oba adresy e-mail. Włącz uwierzytelnianie dwuskładnikowe zgodnie z instrukcjami usług. Zapisz kody odzyskiwania w swoim menedżerze haseł. Haseł, tokenów i kodów odzyskiwania nie wysyłaj w czacie ani nie dodawaj do repozytorium.
 3. Na npm sprawdź możliwość utworzenia lub uzyskania dostępu do organizacji `guidon`. Jest niezależna od organizacji GitHub. Potrzebujemy uprawnień do `@guidon/sdk` oraz `guidon-cli`. Nie zmieniaj nazw paczek i nie wykupuj planu automatycznie, jeśli nazwa lub uprawnienia okażą się niedostępne.
-4. Na PyPI przygotuj zaufanego wydawcę dla projektu `guidon-sdk` zgodnie z instrukcją poniżej. Nazwa projektu może być zajęta mimo wcześniejszej odpowiedzi 404 — dopiero rejestr potwierdza możliwość publikacji.
+4. Na PyPI przygotuj zaufanego wydawcę dla projektu `guidon-sdk` zgodnie z instrukcją poniżej. Nazwa projektu może być zajęta mimo wcześniejszej odpowiedzi 404 - dopiero rejestr potwierdza możliwość publikacji.
 
 ## Co potem przekazać
 

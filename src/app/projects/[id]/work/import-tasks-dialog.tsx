@@ -152,7 +152,7 @@ export function ImportTasksDialog({
   const columnLabel = (status: string) => columns.find((c) => c.status === status)?.label ?? status;
   const memberName = (id: string | null) => {
     const member = id ? members.find((m) => m.id === id) : null;
-    return member ? member.full_name || member.email : "—";
+    return member ? member.full_name || member.email : "-";
   };
 
   // Same fallback as resolveImportedTasks: Backlog if shown, else the first column.
@@ -309,7 +309,7 @@ export function ImportTasksDialog({
                           <td className="px-2 py-1.5">{columnLabel(task.status)}</td>
                           <td className="px-2 py-1.5">{priorityDef(task.priority, priorities).label}</td>
                           <td className="px-2 py-1.5">{memberName(task.assigneeId)}</td>
-                          <td className="px-2 py-1.5 tabular-nums">{task.dueDate ?? "—"}</td>
+                          <td className="px-2 py-1.5 tabular-nums">{task.dueDate ?? "-"}</td>
                         </tr>
                       ))}
                     </tbody>

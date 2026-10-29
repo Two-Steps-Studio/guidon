@@ -56,7 +56,7 @@ docker run --rm -v guidon_guidon-db:/data -v "$PWD":/backup alpine \
   tar czf /backup/guidon-db-$(date +%F).tar.gz -C /data .
 ```
 
-(Compose prefixes volume names with the project/directory name — check
+(Compose prefixes volume names with the project/directory name - check
 `docker volume ls` for the exact name on your host if the above doesn't
 match.)
 
@@ -106,7 +106,7 @@ CI runs it on every change to the app or the migrations.
 
 ## Local file storage (`STORAGE_PROVIDER=local`)
 
-Files live under `STORAGE_PATH` — in Docker Compose, the named volume
+Files live under `STORAGE_PATH` - in Docker Compose, the named volume
 `guidon-storage` mounted at `/app/storage`. Back up the directory (or
 volume) the same way as above:
 
@@ -121,11 +121,11 @@ tar czf guidon-storage-$(date +%F).tar.gz -C "$STORAGE_PATH" .
 
 ## What's not here
 
-- No scheduled/automated backup job — set one up with cron, a systemd timer,
+- No scheduled/automated backup job - set one up with cron, a systemd timer,
   or your platform's equivalent, calling the commands above.
 - No scheduled restore check against *your* backups. `npm run test:restore`
   proves the procedure on scratch data; still restore one of your real backups
   onto a scratch server now and then, because a backup nobody has restored
   is only a hope.
-- No cross-region replication or off-site copy step — that's your
+- No cross-region replication or off-site copy step - that's your
   infrastructure decision, not something this repo prescribes.

@@ -4,7 +4,7 @@
 
 Guidon only runs in a browser tab today. A desktop app gives it its own
 window, a dock/taskbar presence, a system-tray icon to live in the
-background, and (later) native notifications — the way Slack, Discord,
+background, and (later) native notifications - the way Slack, Discord,
 Linear, and Notion's desktop apps work for their own web products.
 
 ## Design
@@ -15,22 +15,22 @@ Two fundamentally different ways to "desktop-ify" a full-stack Next.js
 app were considered:
 
 1. **Thin wrapper (chosen)**: Tauri opens a native window with a
-   WebView pointed at an already-running Guidon instance — hosted
+   WebView pointed at an already-running Guidon instance - hosted
    (Guidon Cloud) or self-hosted, whichever URL the user configures.
    Zero backend changes; the web app is unaware it's running inside
    Tauri at all.
 2. **Bundled server**: package the whole Next.js standalone server as
    a sidecar process inside the app, for offline use. Rejected for
-   this round — it's effectively a third deployment mode alongside
+   this round - it's effectively a third deployment mode alongside
    hosted/self-hosted (bundling a Node runtime, managing a local
-   port, and still needing *some* database — remote Supabase or a
+   port, and still needing *some* database - remote Supabase or a
    bundled Postgres), a much larger and more ongoing maintenance
    commitment than what a first desktop app needs to prove out.
 
 ### Security posture: remote content gets zero native API access
 
 The loaded page (Guidon Cloud or a self-hosted instance) is treated as
-untrusted remote content — it is granted **no** Tauri command access
+untrusted remote content - it is granted **no** Tauri command access
 (filesystem, shell, etc.). Every native feature (tray, autostart,
 updater, the server-URL setting) is implemented entirely in the Tauri
 shell layer (Rust + a small local bundled UI), never by the remote
@@ -50,7 +50,7 @@ window at the new URL. This is how a self-hosted user points the app
 at their own instance instead of Guidon Cloud.
 
 Because this settings window is local bundled content, it can safely
-use Tauri APIs (reading/writing the config) — the separation from the
+use Tauri APIs (reading/writing the config) - the separation from the
 remote-content main window is what keeps the "zero API access for
 remote content" rule simple to reason about.
 
@@ -59,14 +59,14 @@ remote content" rule simple to reason about.
 WebView2 (the Windows WebView Tauri uses) keeps its own persistent
 profile per app data directory, the same way a browser profile
 persists cookies/localStorage across restarts. Login "just works" the
-same way it does in a browser tab — no special session-bridging code
+same way it does in a browser tab - no special session-bridging code
 needed.
 
 ### Tray and window behavior
 
 - A system tray icon with a menu: Show/Hide, Quit.
 - Closing the main window hides it to tray instead of quitting the
-  process (matches Slack/Discord convention) — Quit is only reachable
+  process (matches Slack/Discord convention) - Quit is only reachable
   from the tray menu or a native "Exit" action.
 - Optional autostart at Windows login, toggled from the local Settings
   window, via Tauri's official `tauri-plugin-autostart`.
@@ -76,12 +76,12 @@ needed.
 `tauri-plugin-updater`, checking a `latest.json` manifest published
 alongside GitHub Releases for this repo (Tauri's release workflow can
 generate this manifest automatically). No custom update server needed.
-Requires release artifacts to be publicly fetchable — if this repo or
+Requires release artifacts to be publicly fetchable - if this repo or
 its releases are ever made private, the update channel needs to move
 to a separate public static host; out of scope to solve now since the
 repo is currently public-reachable for this purpose.
 
-Windows installers are unsigned for this first round — SmartScreen
+Windows installers are unsigned for this first round - SmartScreen
 will show a warning on first run, standard for a new unsigned app. A
 code-signing certificate is a separate, later decision (has an
 ongoing cost), not a blocker for shipping v1.
@@ -89,7 +89,7 @@ ongoing cost), not a blocker for shipping v1.
 ### Explicitly deferred
 
 - **Native OS notifications**: Guidon has no notification system at
-  all today — no notifications table, no server-side detection of
+  all today - no notifications table, no server-side detection of
   "new comment" / "task assigned to you" events, nothing in the
   browser UI either. Wiring native notifications to nothing meaningful
   isn't worth building. A real in-app notification system is a
@@ -118,7 +118,7 @@ desktop/
 ```
 
 Nothing under `desktop/` is built or deployed by the existing
-`npm run build`/Vercel/Docker pipelines — it's an independent build
+`npm run build`/Vercel/Docker pipelines - it's an independent build
 artifact (a Windows installer), built and released separately.
 
 ### Verification

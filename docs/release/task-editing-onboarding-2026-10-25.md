@@ -1,4 +1,4 @@
-# Task editing and onboarding — 2026-10-25
+# Task editing and onboarding - 2026-10-25
 
 Delivery: existing draft PR #72, `codex/board-completion`.
 No production deployment, configuration change or live migration was performed.
@@ -83,5 +83,5 @@ Physical device and screen-reader checks remain separate manual release gates.
 
 Related board cards:
 
-- `d7b880f7-d561-4746-9998-1417995202fe` — Kanban and concurrent task edits.
-- `0a88a2dd-5827-40fe-8f61-516039ad5a67` — onboarding, organization and first project.
+- `d7b880f7-d561-4746-9998-1417995202fe` - Kanban and concurrent task edits.
+- `0a88a2dd-5827-40fe-8f61-516039ad5a67` - onboarding, organization and first project.

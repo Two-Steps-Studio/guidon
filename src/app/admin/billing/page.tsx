@@ -124,7 +124,7 @@ export default async function AdminBillingPage() {
                           {euros(current.amount_cents)} <span className="font-mono text-xs text-muted-foreground">{current.stripe_price_id}</span>
                         </>
                       ) : (
-                        "—"
+                        "-"
                       )}
                     </td>
                     <td className="tabular-nums">
@@ -133,7 +133,7 @@ export default async function AdminBillingPage() {
                           {euros(next.amountCents)} <span className="font-mono text-xs text-muted-foreground">{next.priceId}</span>
                         </>
                       ) : (
-                        "—"
+                        "-"
                       )}
                     </td>
                     <td className={status === "inSync" ? "text-success" : status === "missing" ? "text-muted-foreground" : "text-warning"}>

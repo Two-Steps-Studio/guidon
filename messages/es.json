@@ -718,7 +718,7 @@
       "projectTypeLabel": "Tipo de proyecto (opcional)",
       "notSet": "Sin definir",
       "workflowLabel": "Flujo de trabajo",
-      "workflowHelp": "Scrum añade sprints, backlog y puntos de historia — próximamente. Por ahora, esto solo etiqueta el proyecto.",
+      "workflowHelp": "Scrum añade sprints, backlog y puntos de historia - próximamente. Por ahora, esto solo etiqueta el proyecto.",
       "aiEnabledLabel": "Funciones de IA",
       "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto, los permisos de agentes de IA y el acceso de agentes por API. Puedes cambiarlo más tarde en la configuración del proyecto.",
       "cancel": "Cancelar",
@@ -1119,7 +1119,7 @@
     "projectTypeLabel": "Tipo de proyecto",
     "notSet": "Sin definir",
     "workflowLabel": "Flujo de trabajo",
-    "workflowHelp": "Scrum añade sprints, backlog y puntos de historia — próximamente. Por ahora, esto solo etiqueta el proyecto.",
+    "workflowHelp": "Scrum añade sprints, backlog y puntos de historia - próximamente. Por ahora, esto solo etiqueta el proyecto.",
     "aiEnabledLabel": "Funciones de IA",
     "aiEnabledHelp": "Activa la columna «IA trabajando», el asistente de tareas con IA, las conclusiones generadas en la memoria del proyecto y el acceso para agentes de IA. Si está desactivado, la columna «IA trabajando» solo se muestra mientras contenga tareas y los permisos de IA guardados se conservan.",
     "colorLabel": "Color del proyecto",
@@ -1814,7 +1814,7 @@
       "deleting": "Eliminando..."
     },
     "backgroundStyleLabel": "Estilo del fondo",
-    "backgroundStyle_solid": "Liso — concéntrate en tu trabajo",
+    "backgroundStyle_solid": "Liso - concéntrate en tu trabajo",
     "backgroundStyle_pattern": "Patrón de Guidon",
     "aiPreferenceTitle": "Funciones de IA",
     "aiPreferenceDescription": "Guidon funciona por completo sin IA. Desactívalo para ocultar los botones y widgets de IA en todos los proyectos, solo para ti.",
@@ -2045,7 +2045,7 @@
     "createTitle": "Nueva cuenta de IA",
     "createDescription": "Un miembro para un agente de IA. No puede iniciar sesión - solo funciona con las claves que crees para él.",
     "nameLabel": "Nombre",
-    "namePlaceholder": "Claude – backend",
+    "namePlaceholder": "Claude - backend",
     "descriptionLabel": "Qué hace (opcional)",
     "descriptionPlaceholder": "Toma bugs de backend de Por hacer y los devuelve a revisión.",
     "projectsLabel": "Proyectos",
@@ -2204,7 +2204,7 @@
     "saveFailed": "No se pudo guardar el módulo. Inténtalo de nuevo.",
     "reload": "Recargar los datos guardados",
     "manage": "Configuración",
-    "uninstalled": "Desinstalado — datos conservados",
+    "uninstalled": "Desinstalado - datos conservados",
     "addItem": "Añadir elemento",
     "addTitle": "Añadir un módulo",
     "addHint": "Empieza con una plantilla, importa un archivo JSON o pega un módulo. Revisa sus permisos e instálalo en este proyecto.",
@@ -2256,7 +2256,7 @@
     "screenshots": "Capturas de pantalla",
     "changelog": "Historial de cambios",
     "noChangelog": "No hay notas de versión publicadas.",
-    "uninstalled": "Desinstalado — datos conservados"
+    "uninstalled": "Desinstalado - datos conservados"
   },
   "moduleInstaller": {
     "title": "Instalar módulo",
@@ -2277,7 +2277,7 @@
   "moduleManager": {
     "enabled": "Activado",
     "disabled": "Desactivado",
-    "uninstalled": "Desinstalado — datos conservados",
+    "uninstalled": "Desinstalado - datos conservados",
     "saved": "Guardado.",
     "data": "Datos y conservación",
     "retainHint": "La desinstalación conserva registros y ajustes. Los módulos conservados cuentan para el límite. Exporta los datos antes de eliminar el proyecto.",

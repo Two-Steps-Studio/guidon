@@ -43,7 +43,7 @@ function RecordForm({ entity, record, pending, onSave, onCancel, fields }: {
     }
     onSave({ id: record?.id ?? crypto.randomUUID(), entity: entity.id, values });
   }}>
-    <h3 className="font-medium">{record ? t("editRecord") : t("addRecord")} — {entity.name}</h3>
+    <h3 className="font-medium">{record ? t("editRecord") : t("addRecord")} - {entity.name}</h3>
     {visibleFields.map((field) => {
       const id = `${prefix}-${field.id}`;
       const value = record?.values[field.id];

@@ -1,4 +1,4 @@
-# Guidon task inventory — 2026-10-25
+# Guidon task inventory - 2026-10-25
 
 Snapshot before work: 231 cards, 50 Done, 139 Review, 17 Todo, 25 Backlog. Review means awaiting verification, not complete. This inventory is not acceptance evidence.
 

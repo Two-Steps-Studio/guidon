@@ -718,7 +718,7 @@
       "projectTypeLabel": "Project Type (optional)",
       "notSet": "Not set",
       "workflowLabel": "Workflow",
-      "workflowHelp": "Scrum adds sprints, backlog, and story points — coming soon. For now this just labels the project.",
+      "workflowHelp": "Scrum adds sprints, backlog, and story points - coming soon. For now this just labels the project.",
       "aiEnabledLabel": "AI features",
       "aiEnabledHelp": "Enables the AI Working column, the AI task assistant, generated memory insights, AI agent permissions and agent API access. You can change this later in project settings.",
       "cancel": "Cancel",
@@ -1119,7 +1119,7 @@
     "projectTypeLabel": "Project Type",
     "notSet": "Not set",
     "workflowLabel": "Workflow",
-    "workflowHelp": "Scrum adds sprints, backlog, and story points — coming soon. For now this just labels the project.",
+    "workflowHelp": "Scrum adds sprints, backlog, and story points - coming soon. For now this just labels the project.",
     "aiEnabledLabel": "AI features",
     "aiEnabledHelp": "Turns on the AI Working column, the AI task assistant, generated memory insights and access for AI agents. When off, the AI Working column stays visible only while it still holds tasks, and saved AI permissions are kept.",
     "colorLabel": "Project Color",
@@ -1814,7 +1814,7 @@
       "deleting": "Deleting..."
     },
     "backgroundStyleLabel": "Background style",
-    "backgroundStyle_solid": "Solid — focus on your work",
+    "backgroundStyle_solid": "Solid - focus on your work",
     "backgroundStyle_pattern": "Guidon pattern",
     "aiPreferenceTitle": "AI features",
     "aiPreferenceDescription": "Guidon works fully without AI. Turn this off to hide AI buttons and widgets in every project - only for you.",
@@ -2045,7 +2045,7 @@
     "createTitle": "New AI account",
     "createDescription": "A member for an AI agent. It can't sign in - it works only through the keys you create for it.",
     "nameLabel": "Name",
-    "namePlaceholder": "Claude – backend",
+    "namePlaceholder": "Claude - backend",
     "descriptionLabel": "What it does (optional)",
     "descriptionPlaceholder": "Picks up backend bugs from Todo and hands them back for review.",
     "projectsLabel": "Projects",
@@ -2204,7 +2204,7 @@
     "saveFailed": "Could not save the module. Please try again.",
     "reload": "Reload saved data",
     "manage": "Configuration",
-    "uninstalled": "Uninstalled — data retained",
+    "uninstalled": "Uninstalled - data retained",
     "addItem": "Add item",
     "addTitle": "Add a module",
     "addHint": "Start from a template, import a JSON file or paste a module. Review its permissions, then install it in this project.",
@@ -2256,7 +2256,7 @@
     "screenshots": "Screenshots",
     "changelog": "Changelog",
     "noChangelog": "No release notes published.",
-    "uninstalled": "Uninstalled — data retained"
+    "uninstalled": "Uninstalled - data retained"
   },
   "moduleInstaller": {
     "title": "Install module",
@@ -2277,7 +2277,7 @@
   "moduleManager": {
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "uninstalled": "Uninstalled — data retained",
+    "uninstalled": "Uninstalled - data retained",
     "saved": "Saved.",
     "data": "Data and retention",
     "retainHint": "Uninstall keeps all records and settings. Retained packages count toward the project limit. Export data before removing the entire project.",

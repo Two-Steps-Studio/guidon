@@ -1,7 +1,7 @@
-# Security and tenant isolation — 2026-10-27
+# Security and tenant isolation - 2026-10-27
 
 Guidon task `97feeeb4` ([Launch] security and tenant isolation). This pass adds
-the module surfaces from migrations 092–094 and engine 1.3 to the existing
+the module surfaces from migrations 092-094 and engine 1.3 to the existing
 evidence ([REST/MCP isolation](./api-mcp-isolation-2026-10-24.md),
 [webhooks](./webhook-qa-2026-10-25.md),
 [authentication](./authentication-coverage-2026-10-24.md)).
@@ -16,7 +16,7 @@ not proof that no other paths exist.
 
 | Area | Evidence | Result |
 |---|---|---|
-| RLS, all tables and policies | `test:db`: migrations 000–094 on PGlite, sections 1–78 | 741 pass |
+| RLS, all tables and policies | `test:db`: migrations 000-094 on PGlite, sections 1-78 | 741 pass |
 | REST/MCP isolation and scopes | `tests/e2e/api-isolation.mjs` | 125 checks pass (was 110) |
 | Module API/MCP, another tenant | the same suite, new checks | see below |
 | Removed member | the same suite, new checks | see below |
@@ -78,7 +78,7 @@ New checks on the module surfaces:
 Supabase Cloud has no staging project (constraint from 2026-10-25), so these
 remain open:
 
-- the RLS catalogue actually deployed, and whether migrations 086–094 are applied;
+- the RLS catalogue actually deployed, and whether migrations 086-094 are applied;
 - Cloud Auth settings: providers, JWT expiry, rate limits;
 - Storage bucket policies;
 - `MODULE_SIGNING_KEY`, `CRON_SECRET` and the Resend variables in Vercel;
@@ -90,7 +90,7 @@ compare them with `test:db` section 0 (counts) and the migrations.
 
 ## Deployment order for the module work
 
-1. Migrations 093, then 094 (after 086–092).
+1. Migrations 093, then 094 (after 086-092).
 2. Optional: `MODULE_SIGNING_KEY` (Ed25519 JWK, see `.env.example`).
 3. `CRON_SECRET` is already used by `/api/cron/webhooks`, which now also
    retries automations.

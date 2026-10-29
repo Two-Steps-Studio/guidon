@@ -1,4 +1,4 @@
-# Accessibility release gate — 2026-10-25
+# Accessibility release gate - 2026-10-25
 
 This gate uses `@axe-core/playwright` 4.14.0 against the actual production build
 in disposable PostgreSQL. No project/customer data or external checkout is used.

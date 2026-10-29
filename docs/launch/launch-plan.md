@@ -59,13 +59,13 @@ wielu kont. To łamie zasady prawie wszędzie i kończy się banem domeny.
 | Dzień | Gdzie | Co | Uwagi |
 |---|---|---|---|
 | D-3 | Discordy/fora Claude Code, Cursor i Codex (kanały „showcase”, jeśli są) | Krótki post + GIF, prośba o feedback | Testujemy, czy przekaz jest jasny. Pytania z komentarzy dopisujemy do FAQ |
-| D | Show HN | Post „Show HN” (niżej) | Najlepiej we wtorek–czwartek rano czasu US East. Przez pierwsze 3 h odpowiadać na każdy komentarz |
+| D | Show HN | Post „Show HN” (niżej) | Najlepiej we wtorek-czwartek rano czasu US East. Przez pierwsze 3 h odpowiadać na każdy komentarz |
 | D | X / Bluesky | Wątek z nagraniem | Link do strony, nie do rejestracji |
 | D+1 | r/ClaudeAI | Post „I built…” (niżej) | Sprawdzić, czy subreddit ma dzień lub flair na projekty |
 | D+3 | r/ChatGPTCoding albo r/cursor | Ten sam post, dopasowany do narzędzia | Najpierw instrukcja dla tego narzędzia, potem link |
 | D+5 | r/gamedev / r/IndieDev | Tylko w wątkach, gdzie wolno pokazywać narzędzia | Kąt: „solo dev z agentem AI, który pamięta decyzje projektu” |
 | D+7 | Post „co zadziałało, co nie” | Liczby z `/admin/funnel` | Uczciwe liczby, także słabe |
-| D+8–14 | Odpowiedzi, poprawki z feedbacku | — | Reklamy (`0d072e51`) dopiero po tym, jeśli lejek działa |
+| D+8-14 | Odpowiedzi, poprawki z feedbacku | - | Reklamy (`0d072e51`) dopiero po tym, jeśli lejek działa |
 
 ## Cel i jak mierzymy
 
@@ -102,7 +102,7 @@ udowodnić.
 
 ### Show HN
 
-**Title:** Show HN: Guidon – a task board your AI coding agent works from
+**Title:** Show HN: Guidon - a task board your AI coding agent works from
 
 **Body:**
 

@@ -402,14 +402,14 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {activeTab.success.pullRequestUrl ? (
                         <>
-                          Pull request opened —{" "}
+                          Pull request opened -{" "}
                           <a href={activeTab.success.pullRequestUrl} target="_blank" rel="noreferrer" className="underline">
                             view on GitHub
                           </a>
                         </>
                       ) : (
                         <>
-                          Committed —{" "}
+                          Committed -{" "}
                           {activeTab.success.commitUrl ? (
                             <a href={activeTab.success.commitUrl} target="_blank" rel="noreferrer" className="underline">
                               view on GitHub

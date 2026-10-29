@@ -1,4 +1,4 @@
-# Organization webhook QA — 2026-10-25
+# Organization webhook QA - 2026-10-25
 
 Guidon task: `d94e8175-e41a-4522-a4ff-6bd0cada8ad4`.
 Baseline: `730f02a` (main). Scope: current single-attempt organization webhooks,

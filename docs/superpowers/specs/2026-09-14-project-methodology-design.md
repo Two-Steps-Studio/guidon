@@ -2,14 +2,14 @@
 
 ## Problem
 
-Guidon has no concept of project methodology — every project works the
+Guidon has no concept of project methodology - every project works the
 same way (a single Kanban board, roadmap phases). The user wants to be
 able to mark a project as following Scrum instead, eventually gaining
 sprints, a backlog, story points, and a burndown chart. That full scope
 is too large for one round, so it's split into three sequential
 pieces:
 
-1. **This round**: the `methodology` field itself — selectable when
+1. **This round**: the `methodology` field itself - selectable when
    creating a project, editable afterward, displayed on the project
    page. No sprint/backlog/story-point behavior yet.
 2. A later round: sprint management (create/start/complete sprints,
@@ -34,12 +34,12 @@ GRANT UPDATE (name, description, status, color, allow_ai_auto_complete, avatar_u
     TO authenticated;
 ```
 
-No new RLS *policy* is needed — `methodology` is a plain column on
+No new RLS *policy* is needed - `methodology` is a plain column on
 `projects`, already covered by that table's existing SELECT/UPDATE
 policies, the same way the `avatar_url` column added in migration 018
 needed no policy of its own. **But** migrations 014/017/018/023
 narrowed `GRANT UPDATE` on `projects` to an explicit column allowlist
-(a self-elevation guard — see 023's own comment), so the new column
+(a self-elevation guard - see 023's own comment), so the new column
 must be added to that list in this same migration, or every settings
 save will fail with "permission denied" despite passing RLS, exactly
 as 023's own warning comment says. The list above is the current one
@@ -50,7 +50,7 @@ as of migration 023 (confirmed no later migration touches it) plus
 
 The field is called `methodology`, kept deliberately separate from
 the existing `project_type` column (`game | website | mobile_app | api
-| tool | other` — an unrelated category tag defined in
+| tool | other` - an unrelated category tag defined in
 `src/types/project.ts`). In the UI it's labeled "Workflow" to avoid
 being confused with the "Project Type" dropdown that already sits
 next to it in the same forms.
@@ -75,9 +75,9 @@ as `methodology?: ProjectMethodology`.
 `src/app/organizations/[id]/create-project-dialog.tsx` gains a
 "Workflow" radio group (Standard / Scrum, Standard pre-selected) in
 `ProjectForm`, with helper text under it: "Scrum adds sprints,
-backlog, and story points — coming soon." This exists so picking
+backlog, and story points - coming soon." This exists so picking
 Scrum today doesn't look broken when nothing else visibly changes yet
-— it only sets the flag for now.
+- it only sets the flag for now.
 
 `createProject` in `src/app/organizations/[id]/actions.ts` reads
 `formData.get("methodology")`, validates it against
@@ -98,7 +98,7 @@ Supabase `.update()` call), the same way `projectType` already is
 there.
 
 No restriction on switching between Standard and Scrum in either
-direction for this round — there's no sprint data yet for a
+direction for this round - there's no sprint data yet for a
 switch to orphan or invalidate. Part 2 will need to decide what
 happens to an existing project's sprints if it's switched back to
 Standard; out of scope here.
@@ -107,7 +107,7 @@ Standard; out of scope here.
 
 `src/app/projects/[id]/page.tsx` (around the existing project-type
 badge at line 97) gets a small "Scrum" badge, shown only when
-`project.methodology === "scrum"` — mirrors how the project-type badge
+`project.methodology === "scrum"` - mirrors how the project-type badge
 already only renders when set. Standard projects show no badge (it's
 the unremarkable default), so this is one line of new JSX, not a new
 component.
@@ -115,7 +115,7 @@ component.
 ### Verification
 
 - `npx tsc --noEmit`, `npm run lint`, `npm run build`.
-- `npm run test:db` — no RLS change, but a schema change touches the
+- `npm run test:db` - no RLS change, but a schema change touches the
   migration chain, so this must still pass at the same-or-higher pass
   count (132).
 - Manual: create a project with each Workflow option in the browser,
@@ -126,7 +126,7 @@ component.
 
 - Sprints, backlog view, story points, burndown chart (parts 2 and 3).
 - Any behavior change to the Kanban board or roadmap for Scrum
-  projects — this round is metadata only.
+  projects - this round is metadata only.
 - Restricting or migrating data when a project's methodology changes
-  after sprints exist (not applicable yet — no sprint data exists
+  after sprints exist (not applicable yet - no sprint data exists
   until part 2 ships).

@@ -1,10 +1,10 @@
-# Wydanie produkcyjne i porządkowanie Guidona — 2026-10-24
+# Wydanie produkcyjne i porządkowanie Guidona - 2026-10-24
 
 ## Stan wydania
 
 Właściciel zatwierdził wdrożenie produkcyjne w tej rozmowie. Kod na main:
 `ce37c6b6`, PR #64 i #65. Końcowe CI #65: trzy przeglądarki, 110 kontroli
-REST/MCP, 606 kontroli bazy i pozostałe bramki workflow — zaliczone.
+REST/MCP, 606 kontroli bazy i pozostałe bramki workflow - zaliczone.
 [Dowód aplikacji](https://github.com/Two-Steps-Studio/guidon/actions/runs/40123162260),
 [dowód modułów](https://github.com/Two-Steps-Studio/guidon/actions/runs/40122427965).
 
@@ -34,7 +34,7 @@ produkcji. Samo istnienie tabel nie potwierdza poprawności RLS.
    wcześniejsze zmiany ręczne.
 2. Potwierdzić dostępny backup/rollback. Przygotować konkretną listę koniecznych
    zmian. Migracja 084 jest rozszerzająca, zachowuje NULL dla starych rekordów
-   i ogranicza nowe oceny do 1–5. Nie usuwać danych ani nie resetować bazy.
+   i ogranicza nowe oceny do 1-5. Nie usuwać danych ani nie resetować bazy.
 3. Wykonać wymagane zmiany schematu przed wdrożeniem writerów i zweryfikować
    ich strukturę. Odnotować rzeczywisty wynik, zamiast dopisywać historię
    niewykonanych migracji.
@@ -49,7 +49,7 @@ Do tego czasu `git.deploymentEnabled.main = false` pozostaje na main.
 
 ## Inwentaryzacja tablicy
 
-Stan pobrany przed rozpoczęciem tej partii: **231 kart** — 132 Review, 24 Todo,
+Stan pobrany przed rozpoczęciem tej partii: **231 kart** - 132 Review, 24 Todo,
 25 Backlog i 50 Done. W Review: 8 critical, 29 high, 91 medium, 4 low.
 Poprzednia karta triage mówiła o 94 Review; liczba jest już nieaktualna.
 [Pełna lista 132 kart](./review-inventory-2026-10-24.csv) jest inwentaryzacją,
@@ -64,9 +64,9 @@ nie protokołem ich zaakceptowania. Nie zamknięto masowo żadnych kart.
 | Izolacja API/MCP (f76a9572) | PR #60, 110 rzeczywistych kontroli HTTP na izolowanym PostgreSQL, ponowione w CI #65 | Review: brak pełnej macierzy Cloud JWT/PostgREST, plików, eksportu i cofnięcia członkostwa |
 | Auth E2E (faf1537d) | PR #59, rejestracja, sesje, role i bezpieczny redirect na trzech przeglądarkach; PR #65 stabilizuje fixture | Review: Cloud confirmation/reset/ponowne użycie tokenu oraz zewnętrzny OAuth wymagają stagingu |
 | Infrastruktura E2E (ab507a10) | PR #56 i #65, świeży build, fikcyjne konta, trzy przeglądarki, ślady i cleanup | Review: implementacja kryteriów infrastruktury udokumentowana; akceptacja właściciela |
-| Fix — wystający przycisk (b1c937b4) | Poprzednia poprawka nagłówka projektu i edit-project-dialog; odczytano kontekst próby | Review: sprawdzić wskazany widok i zrzut na urządzeniu, nie utożsamiać z samym testem tablicy |
-| Niebezpieczne — cudze projekty (121c8707) | Kod korzysta z sesji/RLS; migracje 064/067 zmieniają project_access; izolacja lokalna w CI | Review: brak dowodu rzeczywistych polityk Cloud. Nie używać service-role do dowodzenia izolacji użytkowników i nie testować cudzych danych produkcyjnych |
-| Błąd — Unity 403 (e12afb78) | Kontekst zawiera poprawkę human_client w migracji 039 i trasach z uprzednim E2E | Review: historyczny SUCCEEDED nie zastępuje próby aktualnej wtyczki z właściwą rolą i kluczem |
+| Fix - wystający przycisk (b1c937b4) | Poprzednia poprawka nagłówka projektu i edit-project-dialog; odczytano kontekst próby | Review: sprawdzić wskazany widok i zrzut na urządzeniu, nie utożsamiać z samym testem tablicy |
+| Niebezpieczne - cudze projekty (121c8707) | Kod korzysta z sesji/RLS; migracje 064/067 zmieniają project_access; izolacja lokalna w CI | Review: brak dowodu rzeczywistych polityk Cloud. Nie używać service-role do dowodzenia izolacji użytkowników i nie testować cudzych danych produkcyjnych |
+| Błąd - Unity 403 (e12afb78) | Kontekst zawiera poprawkę human_client w migracji 039 i trasach z uprzednim E2E | Review: historyczny SUCCEEDED nie zastępuje próby aktualnej wtyczki z właściwą rolą i kluczem |
 
 To pierwszy przebieg triage ośmiu kart krytycznych. Pozostałe 124 Review nie
 otrzymały w tej partii ponownej walidacji kodu i stagingu. Kolejność: 29 high,

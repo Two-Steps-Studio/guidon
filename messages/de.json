@@ -173,7 +173,7 @@
     "searching": "Suche läuft…",
     "searchFailed": "Die Suche ist fehlgeschlagen.",
     "retry": "Erneut versuchen",
-    "closestMatches": "Keine genauen Treffer – das sind die ähnlichsten."
+    "closestMatches": "Keine genauen Treffer - das sind die ähnlichsten."
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -212,7 +212,7 @@
   },
   "landing": {
     "heroTitle": "Ein Board für die Arbeit deines Teams. Deine KI kann mithelfen.",
-    "heroSubtitle": "Plant, verteilt und erledigt Aufgaben gemeinsam – Entscheidungen und Verlauf jeder Aufgabe liegen direkt daneben. Wenn du Hilfe willst, verbinde Claude, ChatGPT, Cursor, Codex oder jede MCP-App: Sie arbeitet mit denselben Aufgaben, und du prüfst, was sie tut.",
+    "heroSubtitle": "Plant, verteilt und erledigt Aufgaben gemeinsam - Entscheidungen und Verlauf jeder Aufgabe liegen direkt daneben. Wenn du Hilfe willst, verbinde Claude, ChatGPT, Cursor, Codex oder jede MCP-App: Sie arbeitet mit denselben Aufgaben, und du prüfst, was sie tut.",
     "howItWorks": {
       "title": "So funktioniert's",
       "steps": [
@@ -222,11 +222,11 @@
         },
         {
           "title": "Das Warum neben der Aufgabe",
-          "description": "Entscheidungen, Quellen und Notizen liegen bei der Arbeit, die sie erklären – niemand muss zweimal fragen, und Neue arbeiten sich selbst ein."
+          "description": "Entscheidungen, Quellen und Notizen liegen bei der Arbeit, die sie erklären - niemand muss zweimal fragen, und Neue arbeiten sich selbst ein."
         },
         {
           "title": "KI dazuholen, wenn du willst",
-          "description": "Verbinde die KI-App, die du schon nutzt. Sie nimmt eine Aufgabe, liest ihren Kontext und gibt die Arbeit ins Review – ein Mensch entscheidet, was fertig ist. Guidon funktioniert auch komplett ohne KI."
+          "description": "Verbinde die KI-App, die du schon nutzt. Sie nimmt eine Aufgabe, liest ihren Kontext und gibt die Arbeit ins Review - ein Mensch entscheidet, was fertig ist. Guidon funktioniert auch komplett ohne KI."
         }
       ]
     },
@@ -271,7 +271,7 @@
     "freePlan": "Kostenloser Tarif",
     "selfServeApiKey": "API-Schlüssel selbst erstellen",
     "featuresTitle": "Alles zur Arbeit an einem Ort",
-    "featuresSubtitle": "Zuerst für Menschen gemacht. Jede Aufgabe behält die Entscheidungen, Quellen und das Gedächtnis dahinter – für dein Team und für jede KI, die du verbindest.",
+    "featuresSubtitle": "Zuerst für Menschen gemacht. Jede Aufgabe behält die Entscheidungen, Quellen und das Gedächtnis dahinter - für dein Team und für jede KI, die du verbindest.",
     "features": {
       "taskBoard": {
         "title": "Aufgabenboard",
@@ -382,7 +382,7 @@
       "items": [
         {
           "q": "Was ist Guidon?",
-          "a": "Guidon ist ein Projekt-Board für Teams. Jedes Projekt hat ein Kanban-Board und daneben die Entscheidungen hinter der Arbeit, genutzte Quellen und Technologien, eine Roadmap und ein Projektgedächtnis – wer eine Aufgabe übernimmt, bekommt auch den Grund dafür. KI ist optional: Du kannst Claude, ChatGPT, Cursor, Codex und andere Apps verbinden, und sie arbeiten mit denselben Aufgaben unter deiner Prüfung."
+          "a": "Guidon ist ein Projekt-Board für Teams. Jedes Projekt hat ein Kanban-Board und daneben die Entscheidungen hinter der Arbeit, genutzte Quellen und Technologien, eine Roadmap und ein Projektgedächtnis - wer eine Aufgabe übernimmt, bekommt auch den Grund dafür. KI ist optional: Du kannst Claude, ChatGPT, Cursor, Codex und andere Apps verbinden, und sie arbeiten mit denselben Aufgaben unter deiner Prüfung."
         },
         {
           "q": "Ist Guidon kostenlos?",
@@ -718,7 +718,7 @@
       "projectTypeLabel": "Projekttyp (optional)",
       "notSet": "Nicht festgelegt",
       "workflowLabel": "Workflow",
-      "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu — bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
+      "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu - bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
       "aiEnabledLabel": "KI-Funktionen",
       "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis, KI-Agentenberechtigungen und den API-Zugriff für Agenten. Du kannst das später in den Projekteinstellungen ändern.",
       "cancel": "Abbrechen",
@@ -999,7 +999,7 @@
       }
     },
     "boardCapped": "Dieses Board zeigt {limit} Aufgaben: offene zuerst, zuletzt geänderte zuerst. Die übrigen Aufgaben sind weiterhin im Projekt - finde sie über die Suche oder die API.",
-    "networkError": "Guidon war nicht erreichbar, daher wurde nichts gespeichert. Dein Text ist noch da – prüfe die Verbindung und versuche es erneut.",
+    "networkError": "Guidon war nicht erreichbar, daher wurde nichts gespeichert. Dein Text ist noch da - prüfe die Verbindung und versuche es erneut.",
     "moveNotSaved": "Guidon war nicht erreichbar. „{title}“ ist wieder an seinem Platz.",
     "retryMove": "Erneut versuchen",
     "draftRestored": "Ungespeicherte Änderungen von {time} wiederhergestellt. Sie sind noch nicht gespeichert.",
@@ -1119,7 +1119,7 @@
     "projectTypeLabel": "Projekttyp",
     "notSet": "Nicht festgelegt",
     "workflowLabel": "Workflow",
-    "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu — bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
+    "workflowHelp": "Scrum fügt Sprints, Backlog und Story Points hinzu - bald verfügbar. Vorerst dient dies nur zur Kennzeichnung des Projekts.",
     "aiEnabledLabel": "KI-Funktionen",
     "aiEnabledHelp": "Aktiviert die Spalte „KI arbeitet“, den KI-Aufgabenassistenten, generierte Erkenntnisse im Projektgedächtnis und den Zugriff für KI-Agenten. Ausgeschaltet bleibt die Spalte „KI arbeitet“ nur sichtbar, solange sie noch Aufgaben enthält; gespeicherte KI-Berechtigungen bleiben erhalten.",
     "colorLabel": "Projektfarbe",
@@ -1255,7 +1255,7 @@
     "exportFailed": "Export fehlgeschlagen.",
     "exportButton": "Als .guidon-Datei exportieren",
     "discordTitle": "Discord",
-    "discordDescription": "Erhalte Benachrichtigungen in einem Discord-Kanal, wenn Aufgaben erstellt, verschoben oder abgeschlossen werden – und verknüpfe den Guidon-Bot, um /task-Befehle von Discord aus auszuführen.",
+    "discordDescription": "Erhalte Benachrichtigungen in einem Discord-Kanal, wenn Aufgaben erstellt, verschoben oder abgeschlossen werden - und verknüpfe den Guidon-Bot, um /task-Befehle von Discord aus auszuführen.",
     "discordLinkedGuild": "Verbunden mit Discord-Server: {guild}",
     "discordWebhookConfigured": "Benachrichtigungen sind konfiguriert",
     "discordRemoveWebhook": "Entfernen",
@@ -1329,7 +1329,7 @@
     "emptyTitle": "Dir ist nichts zugewiesen",
     "emptyDescription": "Aufgaben, die dir in einem Projekt zugewiesen sind, erscheinen hier.",
     "quickAdd": "Schnell hinzufügen",
-    "quickAddDescription": "Zuerst der Titel – der Rest ist optional. Die Aufgabe wird dir zugewiesen und landet im To-do des Projekts.",
+    "quickAddDescription": "Zuerst der Titel - der Rest ist optional. Die Aufgabe wird dir zugewiesen und landet im To-do des Projekts.",
     "quickAddPlaceholder": "Was ist zu tun?",
     "quickAddProject": "Projekt",
     "quickAddDueToday": "Heute fällig",
@@ -1814,12 +1814,12 @@
       "deleting": "Wird gelöscht..."
     },
     "backgroundStyleLabel": "Hintergrundstil",
-    "backgroundStyle_solid": "Einfarbig — konzentriert arbeiten",
+    "backgroundStyle_solid": "Einfarbig - konzentriert arbeiten",
     "backgroundStyle_pattern": "Guidon-Muster",
     "aiPreferenceTitle": "KI-Funktionen",
-    "aiPreferenceDescription": "Guidon funktioniert komplett ohne KI. Schalte das aus, um KI-Schaltflächen und -Widgets in allen Projekten auszublenden – nur für dich.",
+    "aiPreferenceDescription": "Guidon funktioniert komplett ohne KI. Schalte das aus, um KI-Schaltflächen und -Widgets in allen Projekten auszublenden - nur für dich.",
     "aiPreferenceToggle": "KI-Funktionen anzeigen",
-    "aiPreferenceHint": "Blendet den KI-Chat, „Connect your agent“, Startaufgaben für Agenten und das Kopieren von Kontext für einen Agenten aus. Bereits verbundene Agenten arbeiten weiter – entferne sie unter API-Schlüssel oder Verbundene Apps.",
+    "aiPreferenceHint": "Blendet den KI-Chat, „Connect your agent“, Startaufgaben für Agenten und das Kopieren von Kontext für einen Agenten aus. Bereits verbundene Agenten arbeiten weiter - entferne sie unter API-Schlüssel oder Verbundene Apps.",
     "aiPreferenceFailed": "Die Einstellung konnte nicht gespeichert werden.",
     "keyExpiresLabel": "Gültig",
     "keyExpiresDays": "{days} Tage",
@@ -2045,7 +2045,7 @@
     "createTitle": "Neues KI-Konto",
     "createDescription": "Ein Mitglied für einen KI-Agenten. Es kann sich nicht anmelden - es arbeitet nur über die Schlüssel, die du dafür erstellst.",
     "nameLabel": "Name",
-    "namePlaceholder": "Claude – Backend",
+    "namePlaceholder": "Claude - Backend",
     "descriptionLabel": "Was es tut (optional)",
     "descriptionPlaceholder": "Nimmt Backend-Bugs aus Todo und gibt sie zum Review zurück.",
     "projectsLabel": "Projekte",
@@ -2068,7 +2068,7 @@
     "typeTitle": "Was baust du?",
     "typeDescription": "Wähle das Passendste - es richtet die richtigen Bereiche und Labels ein. Alles lässt sich später ändern.",
     "nameTitle": "Woran arbeitest du?",
-    "nameDescription": "Gib deinem Projekt einen Namen. Mehr brauchst du nicht – die nächsten Fragen sind optional, und du kannst alles später ändern.",
+    "nameDescription": "Gib deinem Projekt einen Namen. Mehr brauchst du nicht - die nächsten Fragen sind optional, und du kannst alles später ändern.",
     "projectNameLabel": "Projektname",
     "projectNamePlaceholder": "z. B. Emberfall",
     "studioNameLabel": "Studio oder Team (optional)",
@@ -2132,7 +2132,7 @@
     "starterTask_improve_description": "Wähle eine kleine Verbesserung, die in ein paar Minuten fertig ist (ein Tippfehler, ein fehlender README-Abschnitt, eine unklare Fehlermeldung). Setze sie in einem neuen Branch um, halte sie mit record_attempt samt geänderten Dateien fest, fasse sie mit comment_on_task zusammen und verschiebe diese Aufgabe nach Review.",
     "starterRule": "Agenten verschieben fertige Aufgaben nach Review, nie direkt nach Done - ein Mensch prüft die Arbeit zuerst.",
     "welcomeDismiss": "Schließen",
-    "skipSetup": "Überspringen – später einrichten"
+    "skipSetup": "Überspringen - später einrichten"
   },
   "oauth": {
     "title": "{app} mit Guidon verbinden",
@@ -2204,7 +2204,7 @@
     "saveFailed": "Modul konnte nicht gespeichert werden. Erneut versuchen.",
     "reload": "Gespeicherte Daten neu laden",
     "manage": "Konfiguration",
-    "uninstalled": "Deinstalliert — Daten erhalten",
+    "uninstalled": "Deinstalliert - Daten erhalten",
     "addItem": "Eintrag hinzufügen",
     "addTitle": "Modul hinzufügen",
     "addHint": "Mit einer Vorlage beginnen, eine JSON-Datei importieren oder ein Modul einfügen. Berechtigungen prüfen und im Projekt installieren.",
@@ -2256,7 +2256,7 @@
     "screenshots": "Screenshots",
     "changelog": "Änderungsprotokoll",
     "noChangelog": "Keine Versionshinweise veröffentlicht.",
-    "uninstalled": "Deinstalliert — Daten erhalten"
+    "uninstalled": "Deinstalliert - Daten erhalten"
   },
   "moduleInstaller": {
     "title": "Modul installieren",
@@ -2277,7 +2277,7 @@
   "moduleManager": {
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
-    "uninstalled": "Deinstalliert — Daten erhalten",
+    "uninstalled": "Deinstalliert - Daten erhalten",
     "saved": "Gespeichert.",
     "data": "Datenaufbewahrung",
     "retainHint": "Die Deinstallation erhält Datensätze und Einstellungen. Aufbewahrte Module zählen zum Projektlimit. Daten vor dem Löschen des Projekts exportieren.",

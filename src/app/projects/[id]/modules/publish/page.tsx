@@ -25,9 +25,9 @@ export default async function PublishModulePage({ params, searchParams }: { para
     <header className="space-y-1"><h1 className="break-words text-2xl font-semibold">{t("publishTitle")}: {manifest.name}</h1><p className="text-sm text-muted-foreground">{t("publishHint")}</p></header>
     <section className="space-y-2 rounded-lg border bg-card p-4 text-sm">
       <p><span className="text-muted-foreground">{t("moduleId")}:</span> <code>{manifest.id}</code></p>
-      <p><span className="text-muted-foreground">{t("permissions")}:</span> {manifest.permissions.join(", ") || "—"}</p>
-      <p><span className="text-muted-foreground">{t("views")}:</span> {manifest.views.map((view) => `${view.name} (${view.type})`).join(", ") || "—"}</p>
-      {review.warnings.length > 0 && <div role="note" className="space-y-1 rounded-md border border-warning/40 bg-warning/10 p-3"><p className="font-medium">{t("warningsTitle")}</p><ul className="list-inside list-disc">{review.warnings.map((warning, index) => <li key={index} className="break-words">{t(`finding.${warning.code}`)} — <code>{warning.path}</code>{warning.excerpt ? `: ${warning.excerpt}` : ""}</li>)}</ul></div>}
+      <p><span className="text-muted-foreground">{t("permissions")}:</span> {manifest.permissions.join(", ") || "-"}</p>
+      <p><span className="text-muted-foreground">{t("views")}:</span> {manifest.views.map((view) => `${view.name} (${view.type})`).join(", ") || "-"}</p>
+      {review.warnings.length > 0 && <div role="note" className="space-y-1 rounded-md border border-warning/40 bg-warning/10 p-3"><p className="font-medium">{t("warningsTitle")}</p><ul className="list-inside list-disc">{review.warnings.map((warning, index) => <li key={index} className="break-words">{t(`finding.${warning.code}`)} - <code>{warning.path}</code>{warning.excerpt ? `: ${warning.excerpt}` : ""}</li>)}</ul></div>}
     </section>
     <PublishForm projectId={id} source={source} defaults={{ version, author: user.full_name || "" }} back={back} />
   </section>;

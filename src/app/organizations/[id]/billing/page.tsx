@@ -310,7 +310,7 @@ export default async function BillingPage({
                       <td>
                         {(() => {
                           const amount = amountFor(plan, interval);
-                          return amount === undefined ? "—" : formatPrice(amount, interval, t);
+                          return amount === undefined ? "-" : formatPrice(amount, interval, t);
                         })()}
                         {trialAvailable && plan.price_cents !== null && plan.price_cents > 0 && !isCurrent && purchasable(plan) && (
                           <div className="text-xs text-muted-foreground">{t("trialNotice", { days: TRIAL_PERIOD_DAYS })}</div>
@@ -319,7 +319,7 @@ export default async function BillingPage({
                       <td>{formatCount(plan.project_limit, t)}</td>
                       {showSeats && <td>{formatCount(plan.member_limit ?? null, t)}</td>}
                       <td>{formatCount(plan.task_limit_per_project, t)}</td>
-                      <td>{plan.member_limit_per_project === undefined ? "—" : formatCount(plan.member_limit_per_project, t)}</td>
+                      <td>{plan.member_limit_per_project === undefined ? "-" : formatCount(plan.member_limit_per_project, t)}</td>
                       <td>{formatBytes(plan.storage_limit_bytes, t)}</td>
                       <td>{plan.has_ai_features ? <Check className="h-4 w-4 text-success" /> : <Minus className="h-4 w-4 text-muted-foreground" />}</td>
                       <td>{plan.has_github_integration ? <Check className="h-4 w-4 text-success" /> : <Minus className="h-4 w-4 text-muted-foreground" />}</td>

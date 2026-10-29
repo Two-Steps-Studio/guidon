@@ -3,7 +3,7 @@
 ## Zakres
 
 Gałąź `codex/apple-design-fixes-main` zawiera wcześniejsze poprawki ze stosu
-PR #57–63 oraz poprawki audytu `docs/audits/apple-design-2026-10-24.md`.
+PR #57-63 oraz poprawki audytu `docs/audits/apple-design-2026-10-24.md`.
 Punktem wyjścia integracji jest `origin/main` z commitem `24b040d`.
 Scalenie rodzica przed późniejszym PR-em potomnym nie przeniosło automatycznie
 wszystkich późniejszych commitów na main; wspólny PR zamyka tę lukę historii.

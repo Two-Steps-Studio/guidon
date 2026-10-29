@@ -1,4 +1,4 @@
-# Guidon task pass — 22 October 2026
+# Guidon task pass - 22 October 2026
 
 Board read: **Gudion**, project `6661ef0a-81d9-490e-bdf7-f954ed4accd4`.
 The starting board contained 141 tasks: 8 todo, 87 review and 46 done.

@@ -165,7 +165,7 @@ error message appears in the red bar under the toolbar.
   building works as normal.
 - **"The following modules are missing or built with a different engine
   version: ... GuidonTasks. Would you like to rebuild them now?"** This is
-  expected on first use — the plugin ships as source and has never been
+  expected on first use - the plugin ships as source and has never been
   compiled for your engine version. Click **Yes**. If your project lists
   *other* modules alongside `GuidonTasks` in that prompt, those are
   pre-existing plugins/modules in your project unrelated to Guidon; a

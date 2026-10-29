@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A user bounced to `/auth/login` from a protected page lands back on that exact page after signing in, across all three sign-in paths — not always `/dashboard`. Remove unused, misleading session-config constants.
+**Goal:** A user bounced to `/auth/login` from a protected page lands back on that exact page after signing in, across all three sign-in paths - not always `/dashboard`. Remove unused, misleading session-config constants.
 
 **Architecture:** Extract the existing `safeRedirect()` validator (currently duplicated nowhere, but living only in the OAuth callback route) into a shared helper; wire `LoginForm`/`SignupForm` to read the `?redirect=` query param `proxy.ts` already sets and thread it through to every `router.push`/`<OAuthButtons>` call that currently hardcodes `/dashboard`.
 
@@ -43,7 +43,7 @@ import { safeRedirect } from "@/lib/auth/safe-redirect";
 ```
 
 Delete the route's own local `safeRedirect` function (currently the last
-17 lines of the file, `function safeRedirect(value: string | null): string { ... }`) — the imported one is behaviorally identical, so the one call site (`const redirect = safeRedirect(searchParams.get("redirect"));`) needs no change beyond the import.
+17 lines of the file, `function safeRedirect(value: string | null): string { ... }`) - the imported one is behaviorally identical, so the one call site (`const redirect = safeRedirect(searchParams.get("redirect"));`) needs no change beyond the import.
 
 - [ ] **Step 3: Type-check**
 
@@ -149,7 +149,7 @@ line 33):
 ```
 
 (the `return` on the following line is unchanged, shown here only for
-context — only the `router.push` argument changes).
+context - only the `router.push` argument changes).
 
 - [ ] **Step 3: Pass it to `OAuthButtons`**
 
@@ -161,7 +161,7 @@ Replace the current `<OAuthButtons />` call (currently line 133):
 
 - [ ] **Step 4: Leave the Supabase-signup branch's destination unchanged**
 
-The Supabase branch's `router.push('/auth/login?message=Check your email to confirm your account')` (currently line 60) is intentionally NOT modified — see the spec's reasoning (a fresh `/auth/signup?redirect=X` visit has no equivalent carry-forward path today, and inventing one is out of scope for this phase).
+The Supabase branch's `router.push('/auth/login?message=Check your email to confirm your account')` (currently line 60) is intentionally NOT modified - see the spec's reasoning (a fresh `/auth/signup?redirect=X` visit has no equivalent carry-forward path today, and inventing one is out of scope for this phase).
 
 - [ ] **Step 5: Wrap the page in `Suspense`, since `useSearchParams` now requires it**
 
@@ -178,7 +178,7 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { SignupForm } from "./signup-form";
 
 // See src/app/auth/login/page.tsx for why this must not be statically
-// prerendered — DATABASE_URL is a runtime-only env var under Docker Compose.
+// prerendered - DATABASE_URL is a runtime-only env var under Docker Compose.
 export const dynamic = "force-dynamic";
 
 export default function SignupPage() {
@@ -212,7 +212,7 @@ git commit -m "SignupForm: honor the ?redirect= param instead of always going to
 - [ ] **Step 1: Verify nothing references the three exports**
 
 Run: `grep -rn "SESSION_EXPIRY_HOURS\|SESSION_SECURITY\|isSupabaseConfigured" --include=*.ts --include=*.tsx src/`
-Expected: only the three declaration lines inside `src/lib/supabase.ts` itself — no other call site anywhere.
+Expected: only the three declaration lines inside `src/lib/supabase.ts` itself - no other call site anywhere.
 
 - [ ] **Step 2: Delete the three exports and their comments**
 
@@ -272,18 +272,18 @@ npm run build
 
 Expected: `tsc` clean. `lint` shows only the same pre-existing
 `no-explicit-any` debt documented in the prior two plans this
-session — no new errors. `build` succeeds, including `/auth/login`,
+session - no new errors. `build` succeeds, including `/auth/login`,
 `/auth/signup`, and `/auth/callback`.
 
 - [ ] **Step 2: Trace all three redirect paths by reading the final code**
 
 Confirm, by reading the committed files:
 - `proxy.ts`'s `redirectToLogin()` and its self-hosted equivalent both
-  still set `?redirect=<pathname>` (unchanged by this plan — just confirm
+  still set `?redirect=<pathname>` (unchanged by this plan - just confirm
   it wasn't accidentally touched).
 - `LoginForm` and `SignupForm` both resolve that param through
   `safeRedirect()` and use the result in every `router.push`/`OAuthButtons`
-  call site touched in Tasks 2–3.
+  call site touched in Tasks 2-3.
 - `src/app/auth/callback/route.ts` still imports and uses the shared
   `safeRedirect()` (Task 1) with identical behavior to before the
   extraction.
@@ -294,7 +294,7 @@ Start the dev server, navigate directly to a protected URL while logged
 out (e.g. `/dashboard`), confirm the browser lands on
 `/auth/login?redirect=%2Fdashboard` (or similar), and inspect the login
 form's rendered markup / `OAuthButtons` for evidence the redirect target
-is threaded through — a full login round-trip isn't possible without
+is threaded through - a full login round-trip isn't possible without
 real credentials in this environment (same constraint as the two prior
 plans this session), so this step is a static/DOM check, not a live
 authenticated click-through.

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** `profiles.avatar_url` is a permanent (or effectively permanent) URL after this change, not a 10-minute signed URL — fixes the avatar disappearing after any page refresh past that window.
+**Goal:** `profiles.avatar_url` is a permanent (or effectively permanent) URL after this change, not a 10-minute signed URL - fixes the avatar disappearing after any page refresh past that window.
 
 **Architecture:** `StorageProvider.getUrl()` gains a `public` option; both providers honor it (Supabase: real `getPublicUrl()`; local: a 50-year signed URL, reusing the existing signing path unchanged); `uploadFile()` threads it through; `profile/actions.ts` sets it for avatar uploads.
 
@@ -10,7 +10,7 @@ Spec: `docs/superpowers/specs/2026-08-22-avatar-public-url-fix-design.md`
 
 ---
 
-### Task 1: `StorageProvider` interface — options object
+### Task 1: `StorageProvider` interface - options object
 
 **Files:**
 - Modify: `src/lib/storage/provider.ts`
@@ -39,7 +39,7 @@ git add src/lib/storage/provider.ts
 git commit -m "StorageProvider.getUrl: options object with a public flag"
 ```
 
-(No type-check yet — the two implementations don't match the new
+(No type-check yet - the two implementations don't match the new
 interface until Task 2, so `tsc` is expected to fail until then. Run it
 after Task 2 instead.)
 
@@ -92,7 +92,7 @@ Replace `getUrl()` (currently lines 102-122):
    * covers bucket, path and expiry, so a URL cannot be edited to reach another
    * object or to extend its own lifetime.
    *
-   * `public: true` doesn't add a separate unsigned serving path — it just
+   * `public: true` doesn't add a separate unsigned serving path - it just
    * signs for PUBLIC_URL_TTL_SECONDS (50 years) instead of the normal
    * 10-minute default, so /api/storage's verification is unchanged either
    * way. That's the whole fix for the avatars bucket: a permanent-in-practice
@@ -127,7 +127,7 @@ Replace `getUrl()` (currently lines 102-122):
 Add the new constant near the top of the file, alongside the class (before `export class LocalStorageProvider`):
 
 ```typescript
-/** Effectively permanent — see getUrl()'s `public` option. */
+/** Effectively permanent - see getUrl()'s `public` option. */
 const PUBLIC_URL_TTL_SECONDS = 50 * 365 * 24 * 60 * 60;
 ```
 
@@ -145,7 +145,7 @@ git commit -m "Both storage providers honor getUrl's public option"
 
 ---
 
-### Task 3: `storage.ts` — thread `public` through `uploadFile`, fix `getPublicUrl`/`getSignedUrl`
+### Task 3: `storage.ts` - thread `public` through `uploadFile`, fix `getPublicUrl`/`getSignedUrl`
 
 **Files:**
 - Modify: `src/lib/storage/storage.ts`
@@ -224,7 +224,7 @@ git commit -m "storage.ts: thread the public option through uploadFile/getPublic
 
 ---
 
-### Task 4: `profile/actions.ts` — request a public URL for avatars
+### Task 4: `profile/actions.ts` - request a public URL for avatars
 
 **Files:**
 - Modify: `src/app/profile/actions.ts`
@@ -264,7 +264,7 @@ npm run build
 ```
 
 Expected: `tsc` clean. `lint` shows only the same pre-existing
-`no-explicit-any` debt from the prior plans this session — no new
+`no-explicit-any` debt from the prior plans this session - no new
 errors. `build` succeeds.
 
 - [ ] **Step 2: Confirm the two other `uploadFile` callers are unaffected**
@@ -272,7 +272,7 @@ errors. `build` succeeds.
 Run: `grep -n "uploadFile(" src/lib/storage/storage.ts`
 Expected: `uploadProjectFile` and `uploadTaskAttachment` (the two other
 callers inside this same file) still call `uploadFile(...)` without a
-`public` option — confirming they keep the private/signed default
+`public` option - confirming they keep the private/signed default
 behavior, unchanged by this plan.
 
 - [ ] **Step 3: Trace the fix end-to-end by reading the final files**
@@ -284,7 +284,7 @@ provider calls `getPublicUrl()` (no expiry) OR local provider signs for
 
 - [ ] **Step 4: Browser check, if a working storage backend is reachable**
 
-Same constraint as the auth phase's verification — this environment has
+Same constraint as the auth phase's verification - this environment has
 no live Supabase/local-storage credentials to complete a real upload
 round-trip, so this is a code-path trace, not a live click-through. If a
 real environment becomes available: upload an avatar, wait past 10

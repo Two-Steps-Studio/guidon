@@ -161,7 +161,7 @@ export function ImportProjectDialog({ organizations, projects }: ImportProjectDi
               <p>
                 <span className="font-medium">{preview.projectName}</span>
                 {preview.projectDescription && (
-                  <span className="text-muted-foreground"> — {preview.projectDescription}</span>
+                  <span className="text-muted-foreground"> - {preview.projectDescription}</span>
                 )}
               </p>
               <p className="text-muted-foreground">

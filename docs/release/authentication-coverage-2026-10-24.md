@@ -1,4 +1,4 @@
-# Authentication QA evidence — 2026-10-24
+# Authentication QA evidence - 2026-10-24
 
 Existing QA task: `faf1537d-aed4-4a50-b2ab-f2d105c2db7e`.
 

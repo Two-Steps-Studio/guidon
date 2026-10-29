@@ -36,7 +36,7 @@ const de: Messages = {
     openProject: "Projekt {name} öffnen",
   },
   sync: {
-    offline: "Offline – gespeicherte Daten werden angezeigt",
+    offline: "Offline - gespeicherte Daten werden angezeigt",
     pending: "Änderungen warten auf Synchronisierung: {count}",
     lastSynced: "Aktualisiert {time}",
     notSynced: "Noch nicht aktualisiert",

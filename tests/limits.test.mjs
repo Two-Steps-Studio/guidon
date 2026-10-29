@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * Proves the Guidon Cloud project-limit check (src/lib/limits.ts) actually
- * flips off for self-hosted installs — the whole point of that module.
+ * flips off for self-hosted installs - the whole point of that module.
  *
  *   npm run test:limits
  *
  * Mirrors the real module (same reasoning as tests/auth/local-auth.test.mjs
- * — plain `node *.mjs` here has no loader for the `@/` path alias or the
+ * - plain `node *.mjs` here has no loader for the `@/` path alias or the
  * "server-only" import that file carries).
  */
 
@@ -40,7 +40,7 @@ function isHostedProjectLimitReached(currentProjectCount, limit = HOSTED_PROJECT
 }
 
 function testHostedMode() {
-  section("tryb hostowany (brak DATABASE_URL) — domyslny limit 1 projektu/organizacje");
+  section("tryb hostowany (brak DATABASE_URL) - domyslny limit 1 projektu/organizacje");
 
   delete process.env.DATABASE_URL;
 
@@ -60,7 +60,7 @@ function testCustomLimit() {
 }
 
 function testSelfHostedMode() {
-  section("tryb self-hosted (DATABASE_URL ustawione) — brak limitu");
+  section("tryb self-hosted (DATABASE_URL ustawione) - brak limitu");
 
   process.env.DATABASE_URL = "postgresql://guidon:test@localhost:5432/guidon";
 

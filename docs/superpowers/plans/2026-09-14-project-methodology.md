@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a `methodology` field (`standard` | `scrum`) to projects, selectable at creation and in settings, displayed as a badge — metadata only, no sprint/backlog behavior yet (that's a later round).
+**Goal:** Add a `methodology` field (`standard` | `scrum`) to projects, selectable at creation and in settings, displayed as a badge - metadata only, no sprint/backlog behavior yet (that's a later round).
 
 **Architecture:** One new nullable-free `text` column with a CHECK constraint on `projects`, threaded through both dual-mode Server Actions (`withUser` raw SQL / Supabase client) exactly the way the existing `project_type` column already is, plus a matching UI radio group in the two places projects are created/edited.
 
@@ -62,7 +62,7 @@ COMMIT;
 Run: `npm run migrate:status`
 Expected: `029_project_methodology.sql` listed, then after `npm run migrate`, listed as applied with no error.
 
-(If no local `DATABASE_URL` is configured in this environment, skip actually running `npm run migrate` here — `npm run test:db` in Task 4 applies every migration against an in-memory PGlite instance and will catch a syntax error or ordering problem regardless.)
+(If no local `DATABASE_URL` is configured in this environment, skip actually running `npm run migrate` here - `npm run test:db` in Task 4 applies every migration against an in-memory PGlite instance and will catch a syntax error or ordering problem regardless.)
 
 - [ ] **Step 3: Add the type and label map to `src/types/project.ts`**
 
@@ -77,14 +77,14 @@ export const PROJECT_METHODOLOGY_LABELS: Record<ProjectMethodology, string> = {
 };
 ```
 
-Add `methodology: ProjectMethodology;` to the `Project` interface (after `project_type: ProjectType | null;` on line 30 — note `methodology` is NOT nullable, unlike `project_type`, since the DB column is `NOT NULL DEFAULT 'standard'`).
+Add `methodology: ProjectMethodology;` to the `Project` interface (after `project_type: ProjectType | null;` on line 30 - note `methodology` is NOT nullable, unlike `project_type`, since the DB column is `NOT NULL DEFAULT 'standard'`).
 
 Add `methodology?: ProjectMethodology;` to both `CreateProjectData` (after line 47) and `UpdateProjectData` (after line 60).
 
 - [ ] **Step 4: Type-check**
 
 Run: `npx tsc --noEmit`
-Expected: no new errors (existing call sites that build a `Project` object from a DB row will still compile since they spread `...row` rather than listing every field explicitly — confirm this holds by checking the diagnostics list is unchanged from before this step).
+Expected: no new errors (existing call sites that build a `Project` object from a DB row will still compile since they spread `...row` rather than listing every field explicitly - confirm this holds by checking the diagnostics list is unchanged from before this step).
 
 - [ ] **Step 5: Commit**
 
@@ -137,7 +137,7 @@ Insert this block into `ProjectForm`'s JSX, right after the "Project Type" `<div
     ))}
   </div>
   <p className="text-xs text-muted-foreground">
-    Scrum adds sprints, backlog, and story points — coming soon. For now this
+    Scrum adds sprints, backlog, and story points - coming soon. For now this
     just labels the project.
   </p>
 </div>
@@ -186,7 +186,7 @@ Update the Supabase `.insert({...})` call to add `methodology,` alongside the ex
 - [ ] **Step 3: Type-check and lint**
 
 Run: `npx tsc --noEmit && npm run lint`
-Expected: no new errors (the pre-existing 26 `no-explicit-any` lint errors in unrelated files are baseline and expected — confirm the count doesn't grow).
+Expected: no new errors (the pre-existing 26 `no-explicit-any` lint errors in unrelated files are baseline and expected - confirm the count doesn't grow).
 
 - [ ] **Step 4: Commit**
 
@@ -241,7 +241,7 @@ Insert this block right after the "Project Type" `<div className="space-y-2">...
     ))}
   </div>
   <p className="text-xs text-muted-foreground">
-    Scrum adds sprints, backlog, and story points — coming soon. For now this
+    Scrum adds sprints, backlog, and story points - coming soon. For now this
     just labels the project.
   </p>
 </div>
@@ -296,7 +296,7 @@ In `src/app/projects/[id]/page.tsx`, right after the existing project-type `Badg
 {project.methodology === "scrum" && <Badge variant="outline">Scrum</Badge>}
 ```
 
-(`Badge` is already imported in this file for the project-type badge above it — confirm with `grep -n "^import.*Badge" src/app/projects/[id]/page.tsx` before assuming, and add the import if it's missing.)
+(`Badge` is already imported in this file for the project-type badge above it - confirm with `grep -n "^import.*Badge" src/app/projects/[id]/page.tsx` before assuming, and add the import if it's missing.)
 
 - [ ] **Step 4: Type-check and lint**
 
@@ -319,7 +319,7 @@ git commit -m "Add Workflow selector to project settings and a Scrum badge to th
 - [ ] **Step 1: Run the full check suite**
 
 Run: `npx tsc --noEmit && npm run lint && npm run build && npm run test:db`
-Expected: `tsc`/`build` clean; `lint` shows only the pre-existing 26 baseline errors (no new ones, no files touched by this plan appearing in the list); `test:db` prints `132 pass / 0 fail` or higher — migration 029 gets exercised as part of the chain PGlite applies, so a typo in the SQL fails this step, not silently.
+Expected: `tsc`/`build` clean; `lint` shows only the pre-existing 26 baseline errors (no new ones, no files touched by this plan appearing in the list); `test:db` prints `132 pass / 0 fail` or higher - migration 029 gets exercised as part of the chain PGlite applies, so a typo in the SQL fails this step, not silently.
 
 - [ ] **Step 2: Manual browser check**
 
@@ -331,4 +331,4 @@ Start the dev server, then:
 
 Expected: all four steps behave as described, with no console errors.
 
-- [ ] **Step 3: If everything above passes, this plan is complete — proceed to superpowers:finishing-a-development-branch on the worktree branch.**
+- [ ] **Step 3: If everything above passes, this plan is complete - proceed to superpowers:finishing-a-development-branch on the worktree branch.**

@@ -1,4 +1,4 @@
-# Board/sidebar layout fixes — 2026-10-24
+# Board/sidebar layout fixes - 2026-10-24
 
 Guidon cards:
 

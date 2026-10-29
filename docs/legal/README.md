@@ -1,4 +1,4 @@
-# Guidon legal adaptation — review draft
+# Guidon legal adaptation - review draft
 
 Prepared 2026-10-25. These documents reduce ambiguity; they do not guarantee compliance or prevent claims. Do not deploy this draft as adopted contractual terms until the checks below are resolved.
 
