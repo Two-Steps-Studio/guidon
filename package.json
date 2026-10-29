@@ -19,6 +19,7 @@
     "migrate:status": "node scripts/migrate.mjs --status",
     "brand:icons": "node scripts/generate-brand-icons.mjs",
     "test:db": "node --experimental-strip-types tests/db/compat.test.mjs",
+    "test:migrations": "node --test tests/migration-reporting.test.mjs",
     "test:task-editing": "node --experimental-strip-types tests/db/task-edit-revision.test.mjs",
     "test:board-pan": "node tests/board-pan.test.cjs",
     "test:ai": "node --experimental-strip-types tests/ai/provider.test.mjs && node --experimental-strip-types tests/ai/task-learning.test.mjs && node --conditions=react-server --experimental-strip-types tests/ai/provider-transport.test.mjs && node --conditions=react-server --experimental-strip-types tests/ai/chat-route.test.mjs",

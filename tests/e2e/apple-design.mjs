@@ -131,6 +131,17 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     assert.equal((await client.query('SELECT title FROM public.tasks WHERE id=$1',[task.id])).rows[0].title,task.title);
 
     await page.getByRole('button',{name:'New task',exact:true}).click();
+    const scrim = page.locator('[data-slot="dialog-overlay"]');
+    await scrim.waitFor();
+    const scrimAlpha = await scrim.evaluate(node => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = getComputedStyle(node).backgroundColor;
+      ctx.fillRect(0, 0, 1, 1);
+      return ctx.getImageData(0, 0, 1, 1).data[3] / 255;
+    });
+    assert.ok(scrimAlpha > 0 && scrimAlpha < 1, 'Task creation dims the board through a translucent backdrop');
     await page.locator('#new-task-title').fill('Unsaved new task');await page.locator('#new-task-description').fill('Keep this description');
     await page.getByRole('dialog').locator('input[type="file"]').setInputFiles(images);
     await page.keyboard.press('Escape');await confirm.getByRole('button',{name:'Cancel',exact:true}).click();
@@ -170,13 +181,37 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     assert.equal(await lightbox.count(),1,'Cancelled image drag does not switch');
     point=await start();await page.mouse.move(point.x-180,point.y);await page.mouse.up();
     await page.getByRole('dialog',{name:secondImage,exact:true}).waitFor();
-    await page.keyboard.press('Escape');await page.locator('#task-title').waitFor();
+    const closeImage = page.getByRole('dialog',{name:secondImage,exact:true}).getByRole('button',{name:messages.lightbox.close,exact:true});
+    const closeBounds = await closeImage.boundingBox();
+    assert.ok(closeBounds && closeBounds.width >= 44 && closeBounds.height >= 44, 'Image close control has a touch-sized target');
+    await closeImage.click();
+    await page.getByRole('dialog',{name:secondImage,exact:true}).waitFor({state:'hidden'});
+    await page.locator('#task-title').waitFor();
     await page.getByRole('dialog').getByRole('button',{name:'Delete',exact:true}).click();
     await confirm.getByRole('button',{name:'Cancel',exact:true}).click();await confirm.waitFor({state:'hidden'});
     assert.equal((await client.query('SELECT 1 FROM public.tasks WHERE id=$1',[stored.id])).rowCount,1);
     await page.getByRole('dialog').getByRole('button',{name:'Delete',exact:true}).click();
     await confirm.getByRole('button',{name:'Delete',exact:true}).click();await page.locator('#task-title').waitFor({state:'hidden'});
     assert.equal((await client.query('SELECT 1 FROM public.tasks WHERE id=$1',[stored.id])).rowCount,0);
+
+    // Moodboard uses the same viewer, but verify its actual entry point and
+    // the visible corner close button on a narrow viewport as well.
+    await navigate(`${origin}/projects/${owner.projectId}/references`);
+    const referenceImage = { ...images[0], name: `moodboard-close-${browserName}.png` };
+    await page.locator('input[type="file"]').setInputFiles([referenceImage]);
+    const referenceOpen = page.getByRole('button', { name: messages.moodboard.openImage.replace('{name}', referenceImage.name), exact: true });
+    await referenceOpen.waitFor();
+    await page.setViewportSize({ width: 375, height: 667 });
+    await referenceOpen.click();
+    const referenceViewer = page.getByRole('dialog', { name: referenceImage.name, exact: true });
+    await referenceViewer.waitFor();
+    const referenceClose = referenceViewer.getByRole('button', { name: messages.lightbox.close, exact: true });
+    const viewerBounds = await referenceViewer.boundingBox(), referenceCloseBounds = await referenceClose.boundingBox();
+    assert.ok(referenceCloseBounds && viewerBounds && referenceCloseBounds.x >= viewerBounds.x + viewerBounds.width / 2 && referenceCloseBounds.y < viewerBounds.y + 70, 'Moodboard X stays in the top-right corner');
+    await referenceClose.click();
+    await referenceViewer.waitFor({ state: 'hidden' });
+    await referenceOpen.waitFor();
+    await page.setViewportSize({ width: 1440, height: 1000 });
 
     await navigate(`${origin}/projects/${owner.projectId}/context`);
     await page.getByRole('tab',{name:/Decisions/}).focus();await page.keyboard.press('ArrowRight');
