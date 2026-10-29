@@ -153,6 +153,7 @@
     "billingPrices": "Preise",
     "funnel": "Funnel",
     "moduleReview": "Modulprüfung",
+    "agentBrief": "Agenten-Briefing",
     "approvals": "Freigaben"
   },
   "commandPalette": {
@@ -1729,14 +1730,6 @@
     "copyKeyError": "Automatisches Kopieren fehlgeschlagen - markiere den Schlüssel oben und kopiere ihn manuell.",
     "keyNameLabel": "Name",
     "keyNamePlaceholder": "z. B. Claude Code Agent",
-    "keyExpiresLabel": "Gültig",
-    "keyExpiresDays": "{days} Tage",
-    "keyExpiresYear": "Ein Jahr",
-    "keyExpiresNever": "Unbegrenzt",
-    "keyExpiresHint": "Ein Schlüssel für eine KI-App sollte von selbst ablaufen. Du kannst ihn jederzeit widerrufen.",
-    "expiresOn": "läuft ab am {date}",
-    "neverExpires": "läuft nicht ab",
-    "expiredBadge": "Abgelaufen",
     "scopesLabel": "Berechtigungen",
     "creating": "Wird erstellt...",
     "createApiKeyButton": "API-Schlüssel erstellen",
@@ -1827,7 +1820,15 @@
     "aiPreferenceDescription": "Guidon funktioniert komplett ohne KI. Schalte das aus, um KI-Schaltflächen und -Widgets in allen Projekten auszublenden – nur für dich.",
     "aiPreferenceToggle": "KI-Funktionen anzeigen",
     "aiPreferenceHint": "Blendet den KI-Chat, „Connect your agent“, Startaufgaben für Agenten und das Kopieren von Kontext für einen Agenten aus. Bereits verbundene Agenten arbeiten weiter – entferne sie unter API-Schlüssel oder Verbundene Apps.",
-    "aiPreferenceFailed": "Die Einstellung konnte nicht gespeichert werden."
+    "aiPreferenceFailed": "Die Einstellung konnte nicht gespeichert werden.",
+    "keyExpiresLabel": "Gültig",
+    "keyExpiresDays": "{days} Tage",
+    "keyExpiresYear": "Ein Jahr",
+    "keyExpiresNever": "Unbegrenzt",
+    "keyExpiresHint": "Ein Schlüssel für eine KI-App sollte von selbst ablaufen. Du kannst ihn jederzeit widerrufen.",
+    "expiresOn": "läuft ab am {date}",
+    "neverExpires": "läuft nicht ab",
+    "expiredBadge": "Abgelaufen"
   },
   "emails": {
     "passwordResetSubject": "Setze dein Guidon-Passwort zurück",
@@ -2652,6 +2653,28 @@
       "conflict": "Das Modul wurde inzwischen geändert. Kopiere deinen Code, lade neu und speichere erneut.",
       "saveFailed": "Speichern fehlgeschlagen. Versuche es erneut."
     }
+  },
+  "agentBrief": {
+    "title": "Agenten-Briefing",
+    "subtitle": "Eine kurze Beschreibung des Projekts für KI-Agenten - Zweck, Stack, Konventionen, Einschränkungen und was sie tun dürfen. Aus den Projektdaten erzeugt, von Menschen geprüft und freigegeben.",
+    "generate": "Aus dem Projekt erzeugen",
+    "regenerate": "Neu aus dem Projekt erzeugen",
+    "confirmRegenerate": "Deine Änderungen durch einen neuen Entwurf aus den Projektdaten ersetzen?",
+    "approve": "Als v{version} freigeben",
+    "approved": "Als v{version} freigegeben. Agenten lesen jetzt diese Version.",
+    "editorLabel": "Agenten-Briefing (Markdown)",
+    "emptyDraft": "Erzeuge einen Entwurf aus dem Projekt und bearbeite ihn dann.",
+    "stats": "{claims} Zeilen · {unsourced} ohne Quelle · {unverified} unbestätigt",
+    "noneYet": "Noch kein freigegebenes Briefing. Ein Projektinhaber oder Admin kann hier eines freigeben.",
+    "howAgentsRead": "Agenten lesen die neueste freigegebene Version mit dem MCP-Werkzeug get_agent_brief oder über GET /api/v1/projects/{projectId}/brief (?version=N für eine ältere). Zeilen ohne Quelle werden als von Hand hinzugefügt markiert.",
+    "history": "Versionen",
+    "noVersions": "Noch nichts freigegeben.",
+    "versionLabel": "v{version}",
+    "current": "aktuell",
+    "download": "v{version} als Markdown herunterladen",
+    "approvedBy": "{person}, {date}",
+    "unknown": "Unbekannt",
+    "failed": "Etwas ist schiefgelaufen. Versuche es erneut."
   },
   "approvals": {
     "title": "Freigaben",

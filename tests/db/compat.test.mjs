@@ -199,8 +199,9 @@ for (const [label, sql, expected] of [
   // 59->60 and 144->148: task_links (097) + select/insert/update/delete.
   // 60->61 and 148->149: task_claims (100) + task_claims_select.
   // 61->62 and 149->150: agent_approval_requests (102) + agent_approval_requests_select.
-  ["62 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 62],
-  ["150 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 150],
+  // 62->63 and 150->151: agent_briefs (103) + agent_briefs_select.
+  ["63 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 63],
+  ["151 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 151],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -4549,6 +4550,36 @@ section("87. Agents ask for approval; owners/admins decide (102)");
     const del = (await db.query("SELECT id FROM public.agent_approval_requests WHERE project_id = $1 AND action = 'delete_task'", [project])).rows[0].id;
     await db.query("SELECT public.mark_agent_approval_failed($1, 'not mine')", [del]);
     check("only the decider can mark a failure", (await db.query("SELECT decision_comment FROM public.agent_approval_requests WHERE id = $1", [del])).rows[0].decision_comment === "boom");
+  });
+}
+
+section("88. Agent brief versions: owners/admins approve, members read (103)");
+{
+  const dev = "88000000-0000-4000-8000-000000000001";
+  let project;
+  await withUser(A, async () => {
+    project = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Brief') RETURNING id", [orgId])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, 'brief-dev@example.test', '{}') ON CONFLICT DO NOTHING", [dev]);
+    await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, 'developer')", [project, dev]);
+  });
+  await withUser(A, async () => {
+    const first = (await db.query("SELECT * FROM public.save_agent_brief($1, '# Brief v1')", [project])).rows[0];
+    const second = (await db.query("SELECT * FROM public.save_agent_brief($1, '# Brief v2')", [project])).rows[0];
+    check("the owner saves numbered versions", first.version === 1 && second.version === 2 && second.approved_by === A);
+    check("versions can't be rewritten", await throwsInSavepoint("UPDATE public.agent_briefs SET content = 'changed' WHERE id = $1", [first.id]));
+    check("no direct inserts", await throwsInSavepoint("INSERT INTO public.agent_briefs (project_id, version, content) VALUES ($1, 9, 'x')", [project]));
+    check("an empty brief is refused", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '')", [project]));
+  });
+  await withUser(dev, async () => {
+    const rows = (await db.query("SELECT version, content FROM public.agent_briefs WHERE project_id = $1 ORDER BY version", [project])).rows;
+    check("a developer reads every version exactly as approved", rows.length === 2 && rows[0].content === "# Brief v1");
+    check("…but can't approve one", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '# mine')", [project]));
+  });
+  await withUser(B, async () => {
+    check("someone outside the project reads nothing", (await db.query("SELECT 1 FROM public.agent_briefs WHERE project_id = $1", [project])).rows.length === 0);
+    check("…and can't save one", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '# theirs')", [project]));
   });
 }
 

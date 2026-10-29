@@ -6,6 +6,8 @@ import assert from "node:assert/strict";
 
 const { packContext, clampBudget, redactSecrets, neutralize, looksLikeInstructions, scoreItem, relevance, memoryReviewReasons, githubFreshnessNote, STALE_AFTER_DAYS, CONTEXT_WEIGHTS: W } = await import("../src/lib/context/context-pack-core.ts");
 
+const { generateBrief, markUnsourcedClaims, briefStats } = await import("../src/lib/context/agent-brief-core.ts");
+
 let passed = 0;
 function test(name, run) { run(); passed++; console.log(`pass ${name}`); }
 
@@ -68,6 +70,38 @@ test("freshness: age is shown, old items lose rank and are marked stale; constra
   assert.match(result.markdown, /Use Node 22\*\* _\(2d ago\)_/);
   assert.ok(!/Keep RLS on\*\* _\([^)]*stale/.test(result.markdown));
   assert.equal(result.stats.stale, 1);
+});
+
+test("agent brief: every line names its source; missing and unverified ones say so; hand-typed lines are marked", () => {
+  const brief = generateBrief({
+    project: { id: "p0000000-1", name: "Space Miner", description: "A mining game for Android." },
+    technologies: [{ id: "t0000000-1", name: "Godot", version: "4.3", category: "frontend" }],
+    memory: [
+      { id: "m0000000-1", content: "Builds must stay under 150 MB", memory_type: "constraint", verified: true },
+      { id: "m0000000-2", content: "Saves are JSON", memory_type: "fact", verified: false },
+      { id: "m0000000-3", content: "Use tabs", memory_type: "project_rule", verified: false },
+    ],
+    decisions: [{ id: "d0000000-1", title: "Use SQLite for saves", status: "approved" }, { id: "d0000000-2", title: "Maybe Rust", status: "proposed" }],
+    ai: { enabled: true, allowAutoComplete: false, permissions: { can_complete_tasks: true } },
+  });
+  assert.match(brief, /- A mining game for Android\. _\[project p0000000\]_/);
+  assert.match(brief, /- Godot 4\.3 \(frontend\) _\[technology t0000000\]_/);
+  assert.match(brief, /- Use SQLite for saves _\[decision d0000000\]_/);
+  assert.ok(!brief.includes("Maybe Rust"), "only approved decisions");
+  assert.ok(!brief.includes("Saves are JSON"), "unverified facts stay out");
+  assert.match(brief, /- Use tabs _\[memory m0000000\]_ _\[unverified - check before relying on it\]_/);
+  assert.match(brief, /- Not allowed: Mark tasks done/, "completing needs auto-complete too");
+  assert.match(brief, /- Allowed: Read the project's context/);
+  const empty = generateBrief({ project: { id: "p1", name: "Empty", description: null }, technologies: [], memory: [], decisions: [], ai: { enabled: false, allowAutoComplete: false, permissions: null } });
+  assert.match(empty, /No project description yet[^\n]*_\[no source\]_/);
+  assert.match(empty, /AI features are turned off/);
+  const edited = markUnsourcedClaims(`${brief}- Deploy only on Mondays\n* Never force-push\n`, 3);
+  assert.match(edited, /- Deploy only on Mondays _\[added by hand in v3\]_/);
+  assert.match(edited, /\* Never force-push _\[added by hand in v3\]_/);
+  assert.equal(markUnsourcedClaims(edited, 4), edited, "marking is stable");
+  const stats = briefStats(edited);
+  assert.equal(stats.unsourced, 2);
+  assert.equal(stats.unverified, 1);
 });
 
 test("freshness depends on the kind: an unverified insight goes stale before a decision, an open PR before a merged one", () => {

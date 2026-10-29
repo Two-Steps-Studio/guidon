@@ -8,6 +8,7 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   LABEL_NAME_MAX_LENGTH,
   LABEL_STARTER_SETS,
@@ -28,7 +29,7 @@ function check(label, ok, detail = "") {
   }
 }
 
-const root = new URL("..", import.meta.url).pathname;
+const root = fileURLToPath(new URL("..", import.meta.url));
 
 for (const locale of ["en", "pl", "de", "es"]) {
   console.log(`\n  starter sets: ${locale}`);

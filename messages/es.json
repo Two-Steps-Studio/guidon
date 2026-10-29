@@ -153,6 +153,7 @@
     "billingPrices": "Precios",
     "funnel": "Embudo",
     "moduleReview": "Revisión de módulos",
+    "agentBrief": "Resumen para agentes",
     "approvals": "Aprobaciones"
   },
   "commandPalette": {
@@ -1729,14 +1730,6 @@
     "copyKeyError": "No se pudo copiar automáticamente - selecciona la clave de arriba y cópiala manualmente.",
     "keyNameLabel": "Nombre",
     "keyNamePlaceholder": "p. ej. Agente Claude Code",
-    "keyExpiresLabel": "Validez",
-    "keyExpiresDays": "{days} días",
-    "keyExpiresYear": "Un año",
-    "keyExpiresNever": "Sin caducidad",
-    "keyExpiresHint": "Una clave que das a una app de IA debería caducar sola. Puedes revocarla cuando quieras.",
-    "expiresOn": "caduca el {date}",
-    "neverExpires": "no caduca",
-    "expiredBadge": "Caducada",
     "scopesLabel": "Permisos",
     "creating": "Creando...",
     "createApiKeyButton": "Crear clave de API",
@@ -1827,7 +1820,15 @@
     "aiPreferenceDescription": "Guidon funciona por completo sin IA. Desactívalo para ocultar los botones y widgets de IA en todos los proyectos, solo para ti.",
     "aiPreferenceToggle": "Mostrar funciones de IA",
     "aiPreferenceHint": "Oculta el chat de IA, «Connect your agent», las tareas iniciales para agentes y copiar contexto para un agente. Los agentes que ya conectaste siguen funcionando: quítalos en Claves de API o Apps conectadas.",
-    "aiPreferenceFailed": "No se pudo guardar el ajuste."
+    "aiPreferenceFailed": "No se pudo guardar el ajuste.",
+    "keyExpiresLabel": "Validez",
+    "keyExpiresDays": "{days} días",
+    "keyExpiresYear": "Un año",
+    "keyExpiresNever": "Sin caducidad",
+    "keyExpiresHint": "Una clave que das a una app de IA debería caducar sola. Puedes revocarla cuando quieras.",
+    "expiresOn": "caduca el {date}",
+    "neverExpires": "no caduca",
+    "expiredBadge": "Caducada"
   },
   "emails": {
     "passwordResetSubject": "Restablece tu contraseña de Guidon",
@@ -2652,6 +2653,28 @@
       "conflict": "El módulo cambió mientras tanto. Copia tu código, recarga y guarda de nuevo.",
       "saveFailed": "No se pudo guardar. Inténtalo de nuevo."
     }
+  },
+  "agentBrief": {
+    "title": "Resumen para agentes",
+    "subtitle": "Una descripción breve del proyecto para agentes de IA: propósito, stack, convenciones, restricciones y lo que pueden hacer. Generado a partir de los datos del proyecto, revisado y aprobado por personas.",
+    "generate": "Generar desde el proyecto",
+    "regenerate": "Regenerar desde el proyecto",
+    "confirmRegenerate": "¿Reemplazar tus cambios con un borrador nuevo a partir de los datos del proyecto?",
+    "approve": "Aprobar como v{version}",
+    "approved": "Aprobado como v{version}. Los agentes leen ahora esta versión.",
+    "editorLabel": "Resumen para agentes (Markdown)",
+    "emptyDraft": "Genera un borrador desde el proyecto y luego edítalo.",
+    "stats": "{claims} líneas · {unsourced} sin fuente · {unverified} sin verificar",
+    "noneYet": "Aún no hay un resumen aprobado. Un propietario o administrador del proyecto puede aprobarlo aquí.",
+    "howAgentsRead": "Los agentes leen la última versión aprobada con la herramienta MCP get_agent_brief o con GET /api/v1/projects/{projectId}/brief (?version=N para una anterior). Las líneas añadidas sin fuente se marcan como añadidas a mano.",
+    "history": "Versiones",
+    "noVersions": "Aún no hay nada aprobado.",
+    "versionLabel": "v{version}",
+    "current": "actual",
+    "download": "Descargar v{version} en Markdown",
+    "approvedBy": "{person}, {date}",
+    "unknown": "Desconocido",
+    "failed": "Algo salió mal. Inténtalo de nuevo."
   },
   "approvals": {
     "title": "Aprobaciones",

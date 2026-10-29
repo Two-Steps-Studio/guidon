@@ -424,6 +424,18 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           requestBody: { required: true, content: json(body(commentFields)) },
         }),
       },
+      "/projects/{projectId}/brief": {
+        parameters: [projectIdParam],
+        get: op("getAgentBrief", "The project's approved agent brief (Markdown)", "tasks:read", {
+          "200": {
+            description: "The latest approved version, or `version` exactly as approved. X-Brief-Version names the version.",
+            content: { "text/markdown": { schema: { type: "string" } } },
+          },
+        }, {
+          tags: ["Context"],
+          parameters: [{ name: "version", in: "query", required: false, schema: { type: "integer", minimum: 1 } }],
+        }),
+      },
       "/tasks/{taskId}/attempts": {
         parameters: [taskIdParam],
         get: op("listAttempts", "List the attempts recorded on a task, newest first", "tasks:read", ok("Attempts", wrap("attempts", { type: "array", items: ref("Attempt") })), { tags: ["Attempts"] }),

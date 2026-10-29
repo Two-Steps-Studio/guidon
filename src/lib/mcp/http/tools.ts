@@ -15,6 +15,7 @@ import { POST as completeTask } from "@/app/api/v1/tasks/[taskId]/complete/route
 import { POST as commentOnTask } from "@/app/api/v1/tasks/[taskId]/comment/route";
 import { GET as getTaskContext } from "@/app/api/v1/tasks/[taskId]/context/route";
 import { GET as getProjectContext } from "@/app/api/v1/projects/[projectId]/context/route";
+import { GET as getAgentBrief } from "@/app/api/v1/projects/[projectId]/brief/route";
 import { GET as listTaskLinks } from "@/app/api/v1/tasks/[taskId]/links/route";
 import { PATCH as reviewTaskLink } from "@/app/api/v1/tasks/[taskId]/links/[linkId]/route";
 import { GET as listAttempts, POST as recordAttempt } from "@/app/api/v1/tasks/[taskId]/attempts/route";
@@ -410,6 +411,25 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     },
     ({ task_id, ...fields }) =>
       dispatch(recordAttempt, { taskId: task_id }, { method: "POST", path: `/api/v1/tasks/${task_id}/attempts`, body: defined(fields) })
+  );
+
+  server.registerTool(
+    "get_agent_brief",
+    {
+      description:
+        "Read the project's agent brief: a short Markdown summary its owners/admins approved - purpose, stack, " +
+        "conventions, constraints and the actions agents may take - with every line's source in _[...]_. " +
+        "Lines marked unverified or added by hand are not backed by the project's data. Read it first when you " +
+        "start on a project; then get_project_context or get_task_context for the details. Without `version`, " +
+        "the latest approved one.",
+      inputSchema: {
+        project_id: projectId,
+        version: z.number().int().min(1).optional().describe("An earlier approved version, exactly as approved."),
+      },
+      annotations: { title: "Get agent brief", ...READ_ONLY },
+    },
+    ({ project_id, version }) =>
+      dispatch(getAgentBrief, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/brief`, query: { version: version === undefined ? undefined : String(version) } })
   );
 
   server.registerTool(

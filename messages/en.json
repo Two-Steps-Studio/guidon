@@ -153,6 +153,7 @@
     "billingPrices": "Prices",
     "funnel": "Funnel",
     "moduleReview": "Module review",
+    "agentBrief": "Agent brief",
     "approvals": "Approvals"
   },
   "commandPalette": {
@@ -1729,14 +1730,6 @@
     "copyKeyError": "Couldn't copy automatically - select the key above and copy it manually.",
     "keyNameLabel": "Name",
     "keyNamePlaceholder": "e.g. Claude Code agent",
-    "keyExpiresLabel": "Expires",
-    "keyExpiresDays": "After {days} days",
-    "keyExpiresYear": "After a year",
-    "keyExpiresNever": "Never",
-    "keyExpiresHint": "A key you give an AI app should end on its own. You can revoke it any time.",
-    "expiresOn": "expires {date}",
-    "neverExpires": "never expires",
-    "expiredBadge": "Expired",
     "scopesLabel": "Scopes",
     "creating": "Creating...",
     "createApiKeyButton": "Create API Key",
@@ -1827,7 +1820,15 @@
     "aiPreferenceDescription": "Guidon works fully without AI. Turn this off to hide AI buttons and widgets in every project - only for you.",
     "aiPreferenceToggle": "Show AI features",
     "aiPreferenceHint": "Hides the AI chat, \"Connect your agent\", starter tasks for agents and copying context for an agent. Agents you already connected keep working - remove them under API keys or Connected apps.",
-    "aiPreferenceFailed": "Could not save the setting."
+    "aiPreferenceFailed": "Could not save the setting.",
+    "keyExpiresLabel": "Expires",
+    "keyExpiresDays": "After {days} days",
+    "keyExpiresYear": "After a year",
+    "keyExpiresNever": "Never",
+    "keyExpiresHint": "A key you give an AI app should end on its own. You can revoke it any time.",
+    "expiresOn": "expires {date}",
+    "neverExpires": "never expires",
+    "expiredBadge": "Expired"
   },
   "emails": {
     "passwordResetSubject": "Reset your Guidon password",
@@ -2652,6 +2653,28 @@
       "conflict": "The module changed meanwhile. Copy your code, reload and save again.",
       "saveFailed": "Saving failed. Try again."
     }
+  },
+  "agentBrief": {
+    "title": "Agent brief",
+    "subtitle": "A short description of this project for AI agents - purpose, stack, conventions, constraints and what they may do. Generated from the project's data, checked and approved by people.",
+    "generate": "Generate from the project",
+    "regenerate": "Regenerate from the project",
+    "confirmRegenerate": "Replace your edits with a fresh draft from the project's data?",
+    "approve": "Approve as v{version}",
+    "approved": "Approved as v{version}. Agents now read this version.",
+    "editorLabel": "Agent brief (Markdown)",
+    "emptyDraft": "Generate a draft from the project, then edit it.",
+    "stats": "{claims} lines · {unsourced} without a source · {unverified} unverified",
+    "noneYet": "No approved brief yet. A project owner or admin can approve one here.",
+    "howAgentsRead": "Agents read the latest approved version with the get_agent_brief MCP tool or GET /api/v1/projects/{projectId}/brief (?version=N for an earlier one). Lines you add without a source are marked as added by hand.",
+    "history": "Versions",
+    "noVersions": "Nothing approved yet.",
+    "versionLabel": "v{version}",
+    "current": "current",
+    "download": "Download v{version} as Markdown",
+    "approvedBy": "{person}, {date}",
+    "unknown": "Unknown",
+    "failed": "Something went wrong. Try again."
   },
   "approvals": {
     "title": "Approvals",

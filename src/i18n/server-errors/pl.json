@@ -220,11 +220,15 @@
   "Could not save the setting.": "Nie udało się zapisać ustawienia.",
   "This change was already undone or no longer exists.": "Ta zmiana została już cofnięta albo już nie istnieje.",
   "Someone changed this since, so there is nothing to undo.": "Ktoś zmienił to w międzyczasie, więc nie ma czego cofać.",
+  "Only project owners and admins can approve the agent brief.": "Tylko właściciele i administratorzy projektu mogą zatwierdzić brief dla agentów.",
+  "The brief is empty.": "Brief jest pusty.",
+  "The brief is too long.": "Brief jest za długi.",
+  "The brief could not be saved.": "Nie udało się zapisać briefu.",
+  "Only project owners and admins can undo an import.": "Tylko właściciele i administratorzy projektu mogą cofnąć import.",
   "Only project owners and admins can approve or reject requests.": "Tylko właściciele i administratorzy projektu mogą akceptować lub odrzucać prośby.",
   "This request could not be decided.": "Nie udało się rozpatrzyć tej prośby.",
   "The comment is too long.": "Komentarz jest za długi.",
   "Someone already decided this request.": "Ktoś już rozpatrzył tę prośbę.",
   "This request expired. The agent can ask again.": "Ta prośba wygasła. Agent może poprosić ponownie.",
-  "The task no longer exists, so there is nothing to approve.": "To zadanie już nie istnieje, więc nie ma czego akceptować.",
-  "Only project owners and admins can undo an import.": "Tylko właściciele i administratorzy projektu mogą cofnąć import."
+  "The task no longer exists, so there is nothing to approve.": "To zadanie już nie istnieje, więc nie ma czego akceptować."
 }
