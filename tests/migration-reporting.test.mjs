@@ -25,9 +25,13 @@ for (const flag of ['--status', '--dry-run']) {
       const result = report(flag, mode);
       assert.equal(result.status, 0, result.stderr || result.error?.message);
       assert.match(result.stdout, /PENDING/);
+      assert.match(result.stdout, /PENDING means unrecorded/);
       assert.match(result.stdout, new RegExp('TEST_REGISTRY_PRESENT=' + (mode === 'present')));
       if (mode === 'present') assert.match(result.stdout, /applied\s+000_baseline_schema.sql/);
-      else assert.doesNotMatch(result.stdout, /applied\s+000_baseline_schema.sql/);
+      else {
+        assert.doesNotMatch(result.stdout, /applied\s+000_baseline_schema.sql/);
+        assert.match(result.stdout, /No migration registry found; no registry was created/);
+      }
     });
   }
   test(`${flag} still refuses changed migration checksums`, () => {

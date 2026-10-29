@@ -198,6 +198,11 @@ async function main() {
 
     if (STATUS_ONLY || DRY_RUN) {
       console.log(`\n  ${migrations.length} migration(s) total\n`);
+      if (!registry[0].present) {
+        console.log("  No migration registry found; no registry was created.\n");
+      }
+      console.log("  PENDING means unrecorded, not proof that schema objects are absent.");
+      console.log("  Compare existing schema before applying migrations to a manually managed database.\n");
       for (const m of migrations) {
         const mark = applied.has(m.name) ? "applied" : "PENDING";
         console.log(`    ${mark.padEnd(8)} ${m.name}`);

@@ -26,13 +26,18 @@ script or an agent on its own.
 
 ## 2. Release order
 
-1. **Migrations first.** Every migration in this repo is additive: new
-   tables, columns or functions, or data copied while the original is kept.
-   The previous app version keeps working on the new schema, so migrating
-   first never breaks the running app.
-   - Cloud: apply the pending files in Supabase's SQL editor or CLI, in
-     numeric order. Then record them the way the project tracks applied
-     migrations.
+1. **Review and reconcile migrations before deploying dependent code.**
+   `PENDING` means a file is absent from the runner's history; it does not
+   prove that its schema objects are absent. Cloud history currently ends
+   at 055 while some later objects already exist. Follow the concrete
+   [production prerequisite review](release/production-prerequisites-2026-10-29.md)
+   before applying SQL or recording checksums.
+   - Cloud: compare the actual schema with each unrecorded file, review
+     dependencies, lock impact, constraints, functions and old-client
+     compatibility, then obtain operator approval for the exact plan.
+     Apply only the genuinely missing, reviewed changes in dependency order
+     and record the verified history. Additive intent alone does not
+     guarantee an interruption-free migration.
    - Self-hosted: `npm run migrate`. Docker Compose does this on its own
      before `app` starts.
 2. **Then the app.**
