@@ -16,6 +16,8 @@ on:
       - 'tests/auth/agent-claims.test.mjs'
       - 'tests/db/agent-claims.test.mjs'
       - 'tests/db/task-edit-revision.test.mjs'
+      - 'tests/migration-reporting.test.mjs'
+      - 'tests/fixtures/migration-cli-pg.mjs'
       - 'docs/webhooks.md'
       - 'scripts/**'
       - 'package*.json'
@@ -65,6 +67,7 @@ jobs:
       - run: npm run test:app-changes
       - run: node --experimental-strip-types tests/date-format.test.mjs
       - run: npm run test:db
+      - run: npm run test:migrations
       - run: npm run test:task-editing
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4

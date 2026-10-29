@@ -155,7 +155,14 @@ async function main() {
   await client.connect();
 
   try {
-    await ensureRegistry(client);
+    const reporting = STATUS_ONLY || DRY_RUN;
+    if (reporting) {
+      // Reporting must work with read-only credentials, even on a database
+      // that has never used this runner. Do not bootstrap any schema here.
+      await client.query("BEGIN READ ONLY");
+    } else {
+      await ensureRegistry(client);
+    }
 
     // Must precede the migrations: 000 declares a foreign key to auth.users
     // and 001 grants to `authenticated` 97 times. Skipped entirely when
@@ -164,9 +171,12 @@ async function main() {
       await ensureAuthCompat(client);
     }
 
-    const { rows } = await client.query(
-      "SELECT name, checksum FROM public.guidon_migrations"
+    const { rows: registry } = await client.query(
+      "SELECT to_regclass('public.guidon_migrations') IS NOT NULL AS present"
     );
+    const { rows } = registry[0].present
+      ? await client.query("SELECT name, checksum FROM public.guidon_migrations")
+      : { rows: [] };
     const applied = new Map(rows.map((r) => [r.name, r.checksum]));
 
     // A migration that changed after being applied means the repo no longer
@@ -238,6 +248,7 @@ async function main() {
 
     console.log("\n  Done.\n");
   } finally {
+    if (STATUS_ONLY || DRY_RUN) await client.query("ROLLBACK");
     await client.end();
   }
 }

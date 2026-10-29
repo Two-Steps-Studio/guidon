@@ -1,0 +1,6 @@
+participant_id,status,session_date,agent,device,landing_understood,account_project_complete,agent_connected,first_review_seconds,revoke_verified,mobile_review_complete,assistance,blocker,evidence_reference
+P1,not_scheduled,,,,,,,,,,,,
+P2,not_scheduled,,,,,,,,,,,,
+P3,not_scheduled,,,,,,,,,,,,
+P4,not_scheduled,,,,,,,,,,,,
+P5,not_scheduled,,,,,,,,,,,,

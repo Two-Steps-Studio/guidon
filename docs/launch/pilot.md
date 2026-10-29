@@ -22,8 +22,8 @@ tylko za wyraźną zgodą testera. Konto testowe można potem usunąć
 
 ### Zaproszenie (do wklejenia)
 
-> Hej, robię narzędzie, w którym agent AI (Claude Code / Codex / Cursor) sam
-> bierze zadania z tablicy i zna kontekst projektu. Szukam 3-5 osób na 30
+> Hej, robię tablicę zadań dla małych zespołów, z decyzjami i historią pracy
+> obok zadania. Opcjonalnie można podłączyć swojego agenta AI. Szukam 3-5 osób na 30
 > minut: zakładasz konto, podłączasz swojego agenta i dajesz mu jedno
 > zadanie, a ja patrzę, gdzie się gubisz. Twoje repo, Twój agent, nic nie
 > instaluję u Ciebie poza konfiguracją MCP, którą potem możesz usunąć.
@@ -55,6 +55,11 @@ Odpowiedź na pytanie 4 to pomysł: zapisujemy go do Backlogu, nie
 implementujemy od razu (zasada fokusu).
 
 ## Wyniki
+
+Do porównywania sesji użyj także `pilot-results.template.csv`. Puste pola
+oznaczają brak pomiaru, a nie zero sekund lub udany test. Nie wpisuj danych
+osobowych ani prywatnych nagrań do repozytorium. Szablon nie jest wynikiem
+pilota; obecnie nie zebrano w nim żadnych sesji.
 
 Zapisuj w Guidonie: jeden komentarz w zadaniu `616a71da` na testera, w tym
 formacie.
