@@ -140,7 +140,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder={t("namePlaceholder")}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 autoComplete="name"
