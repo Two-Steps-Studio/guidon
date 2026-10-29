@@ -1513,7 +1513,9 @@
     "delete": "Usuń",
     "editDialogTitle": "Edytuj wpis pamięci",
     "editDialogDescription": "Zaktualizuj wpis pamięci",
-    "saveChanges": "Zapisz zmiany"
+    "saveChanges": "Zapisz zmiany",
+    "requiresReview": "Do sprawdzenia",
+    "requiresReviewWhy": "{kind, select, decision {Decyzja} other {Źródło}} „{title}” zmieniła się {date}, już po zapisaniu tego wpisu. Sprawdź, czy nadal obowiązuje - zapisanie edycji usuwa to oznaczenie."
   },
   "technology": {
     "title": "Technologie",

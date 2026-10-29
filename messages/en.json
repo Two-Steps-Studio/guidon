@@ -1513,7 +1513,9 @@
     "delete": "Delete",
     "editDialogTitle": "Edit Memory",
     "editDialogDescription": "Update memory entry",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "requiresReview": "Requires review",
+    "requiresReviewWhy": "The {kind, select, decision {decision} other {source}} “{title}” changed on {date}, after this was written. Check it still holds - saving an edit clears this mark."
   },
   "technology": {
     "title": "Technologies",

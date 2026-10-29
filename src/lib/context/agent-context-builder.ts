@@ -20,7 +20,17 @@ import { MEMORY_TYPE_CONFIG } from "@/app/projects/[id]/memory/memory-type-confi
 import { TYPE_LABELS as SOURCE_TYPE_LABELS } from "@/app/projects/[id]/knowledge/source-config";
 import type { MemoryType } from "@/types/context";
 import { listTaskLinks, type TaskLink } from "@/lib/data/task-links";
-import { CONTEXT_TOKEN_DEFAULT, CONTEXT_WEIGHTS as W, neutralize, packContext, type ContextItem, type ContextPackStats } from "@/lib/context/context-pack-core";
+import {
+  CONTEXT_TOKEN_DEFAULT,
+  CONTEXT_WEIGHTS as W,
+  githubFreshnessNote,
+  memoryReviewReasons,
+  neutralize,
+  packContext,
+  type ContextItem,
+  type ContextPackStats,
+  type MemoryDependency,
+} from "@/lib/context/context-pack-core";
 
 export interface TaskAgentContext {
   markdown: string;
@@ -35,13 +45,13 @@ const FAIL = (error: string): TaskAgentContext => ({ markdown: "", error });
 type Stamp = string | Date | null;
 const iso = (value: Stamp): string | null => (value ? new Date(value).toISOString() : null);
 
-export interface MemoryRow { id: string; content: string; memory_type: MemoryType; verified: boolean; confidence: number | null; created_at: Stamp; updated_at: Stamp }
+export interface MemoryRow { id: string; content: string; memory_type: MemoryType; verified: boolean; verified_at?: Stamp; confidence: number | null; created_at: Stamp; updated_at: Stamp }
 export interface DecisionRow { id: string; title: string; status: string; decision_type: string; description: string | null; created_at: Stamp; updated_at: Stamp }
 interface FileRow { id: string; name: string; category: string | null; file_url: string | null; created_at: Stamp }
 interface SourceRow { id: string; title: string | null; content: string | null; url: string | null; source_type: string; created_at: Stamp; updated_at: Stamp }
 export interface AttemptRow { id: string; problem: string; approach: string; outcome: string; result: string | null; failure_reason: string | null; files_changed: string[]; related_pr_url: string | null; agent: string | null; created_at: Stamp }
 
-export const MEMORY_COLUMNS = "id, content, memory_type, verified, confidence, created_at, updated_at";
+export const MEMORY_COLUMNS = "id, content, memory_type, verified, verified_at, confidence, created_at, updated_at";
 export const DECISION_COLUMNS = "id, title, status, decision_type, description, created_at, updated_at";
 export const ATTEMPT_COLUMNS = "id, problem, approach, outcome, result, failure_reason, files_changed, related_pr_url, agent, created_at";
 
@@ -64,13 +74,82 @@ export async function memoryEvidence(db: DataClient, projectId: string): Promise
   return evidence;
 }
 
-/** Project memory as context items: constraints/rules timeless, verified facts, AI insights, the rest. */
-export function memoryItems(memory: MemoryRow[], evidence: Map<string, string[]> = new Map()): ContextItem[] {
+/**
+ * Decisions and sources each memory entry is linked to (context_relations,
+ * either direction), with their last change - what memoryReviewReasons
+ * compares against. Read under RLS; a row the caller can't see is skipped.
+ */
+export async function memoryDependencies(db: DataClient, projectId: string): Promise<MemoryDependency[]> {
+  const [outgoing, incoming] = await Promise.all([
+    db.from<{ source_id: string; target_type: string; target_id: string; created_at: Stamp }>("context_relations")
+      .select("source_id, target_type, target_id, created_at").eq("project_id", projectId).eq("source_type", "memory").in("target_type", ["decision", "source"]).limit(1000),
+    db.from<{ target_id: string; source_type: string; source_id: string; created_at: Stamp }>("context_relations")
+      .select("target_id, source_type, source_id, created_at").eq("project_id", projectId).eq("target_type", "memory").in("source_type", ["decision", "source"]).limit(1000),
+  ]);
+  const pairs = [
+    ...(outgoing.data ?? []).map((row) => ({ memoryId: row.source_id, kind: row.target_type, id: row.target_id, linkedAt: iso(row.created_at) })),
+    ...(incoming.data ?? []).map((row) => ({ memoryId: row.target_id, kind: row.source_type, id: row.source_id, linkedAt: iso(row.created_at) })),
+  ] as { memoryId: string; kind: "decision" | "source"; id: string; linkedAt: string | null }[];
+  if (!pairs.length) return [];
+  const ids = (kind: string) => [...new Set(pairs.filter((pair) => pair.kind === kind).map((pair) => pair.id))];
+  const [decisions, sources] = await Promise.all([
+    ids("decision").length
+      ? db.from<{ id: string; title: string; updated_at: Stamp }>("context_decisions").select("id, title, updated_at").eq("project_id", projectId).in("id", ids("decision"))
+      : Promise.resolve({ data: [] as { id: string; title: string; updated_at: Stamp }[] }),
+    ids("source").length
+      ? db.from<{ id: string; title: string | null; updated_at: Stamp }>("context_sources").select("id, title, updated_at").eq("project_id", projectId).in("id", ids("source"))
+      : Promise.resolve({ data: [] as { id: string; title: string | null; updated_at: Stamp }[] }),
+  ]);
+  const changed = new Map<string, { title: string; updatedAt: string | null }>([
+    ...(decisions.data ?? []).map((row) => [`decision:${row.id}`, { title: row.title, updatedAt: iso(row.updated_at) }] as const),
+    ...(sources.data ?? []).map((row) => [`source:${row.id}`, { title: row.title?.trim() || "Untitled", updatedAt: iso(row.updated_at) }] as const),
+  ]);
+  return pairs.flatMap((pair) => {
+    const target = changed.get(`${pair.kind}:${pair.id}`);
+    return target ? [{ memoryId: pair.memoryId, kind: pair.kind, title: target.title, updatedAt: target.updatedAt, linkedAt: pair.linkedAt }] : [];
+  });
+}
+
+/** Freshness notes for the package preface: for now, when GitHub last sent this project an event. */
+export async function freshnessNotes(db: DataClient, projectId: string, now: Date): Promise<string[]> {
+  const [connection, lastEvent] = await Promise.all([
+    db.from<{ repo_owner: string; repo_name: string }>("github_connections").select("repo_owner, repo_name").eq("project_id", projectId).maybeSingle(),
+    db.from<{ received_at: Stamp }>("context_events").select("received_at").eq("project_id", projectId).eq("source", "github").order("received_at", { ascending: false }).limit(1),
+  ]);
+  const note = githubFreshnessNote({
+    repository: connection.data ? `${connection.data.repo_owner}/${connection.data.repo_name}` : null,
+    lastEventAt: iso(lastEvent.data?.[0]?.received_at ?? null),
+    now,
+  });
+  return note ? [note] : [];
+}
+
+/**
+ * Project memory as context items: constraints/rules timeless, verified
+ * facts, AI insights, the rest. `dependencies` marks entries whose linked
+ * decision or source changed after they were written as "requires review";
+ * a verified fact in that state leaves "Verified Facts", since it may no
+ * longer hold.
+ */
+export function memoryItems(memory: MemoryRow[], evidence: Map<string, string[]> = new Map(), dependencies: MemoryDependency[] = []): ContextItem[] {
+  const reasons = memoryReviewReasons(
+    memory.map((row) => ({ id: row.id, checkedAt: latest(row.updated_at ?? row.created_at, row.verified_at ?? null) })),
+    dependencies
+  );
   return memory.map((row): ContextItem => {
-    const item = memoryItem(row);
+    let item = memoryItem(row);
+    const reviewReason = reasons.get(row.id);
+    if (reviewReason) {
+      item = item.section === "facts" ? { ...item, section: "memory", tags: ["Fact (verified before the change)"], weight: W.memory, reviewReason } : { ...item, reviewReason };
+    }
     const tasks = evidence.get(row.id);
     return tasks?.length ? { ...item, details: [...(item.details ?? []), `Evidence: task ${tasks.join(", ")} (get_task_context)`] } : item;
   });
+}
+
+function latest(a: Stamp, b: Stamp): string | null {
+  const times = [a, b].filter(Boolean).map((value) => new Date(value!).getTime());
+  return times.length ? new Date(Math.max(...times)).toISOString() : null;
 }
 
 function memoryItem(row: MemoryRow): ContextItem {
@@ -123,6 +202,8 @@ export function linkItem(link: TaskLink): ContextItem {
     details: [...(link.url ? [link.url] : []), ...(link.evidence ? [link.evidence] : [])],
     weight: suggested ? W.memory : W.pullRequest + (link.kind === "pull_request" ? 5 : 0),
     updatedAt: link.updated_at,
+    // An open PR nobody touched for a month is likely abandoned; a merged one stays true.
+    ...(link.kind === "pull_request" && link.pr_state === "open" ? { staleAfterDays: 30 } : {}),
   };
 }
 
@@ -147,7 +228,8 @@ export async function buildTaskAgentContext(
   options: ContextOptions = {}
 ): Promise<TaskAgentContext> {
   const db = dataClient(userId, { supabase: getSupabase });
-  const [taskResult, why, memoryResult, attemptsResult, linksResult, evidence] = await Promise.all([
+  const now = options.now ?? new Date();
+  const [taskResult, why, memoryResult, attemptsResult, linksResult, evidence, dependencies, freshness] = await Promise.all([
     db.from<{ id: string; title: string; description: string | null; status: string; priority: string; tags: string[] | null }>("tasks")
       .select("id, title, description, status, priority, tags").eq("id", taskId).eq("project_id", projectId).maybeSingle(),
     buildTaskWhyContext(userId, projectId, taskId, getSupabase),
@@ -155,6 +237,8 @@ export async function buildTaskAgentContext(
     db.from<AttemptRow>("task_attempts").select(ATTEMPT_COLUMNS).eq("task_id", taskId).order("created_at", { ascending: false }).limit(100),
     listTaskLinks(db, projectId, taskId),
     memoryEvidence(db, projectId),
+    memoryDependencies(db, projectId),
+    freshnessNotes(db, projectId, now),
   ]);
   if (taskResult.error) return FAIL("Could not load the task.");
   const task = taskResult.data;
@@ -172,7 +256,7 @@ export async function buildTaskAgentContext(
   ]);
 
   const items: ContextItem[] = [
-    ...memoryItems(memoryResult.data ?? [], evidence),
+    ...memoryItems(memoryResult.data ?? [], evidence, dependencies),
     ...(decisions.data ?? []).map((row) => why.decision?.id === row.id ? decisionItem(row, W.linkedDecision, ["linked decision"]) : decisionItem(row, W.relatedDecision)),
     ...(attemptsResult.data ?? []).map(attemptItem),
     ...(files.data ?? []).map((row): ContextItem => ({ section: "files", id: row.id, title: row.name, tags: row.category ? [row.category] : [], details: row.file_url ? [row.file_url] : [], weight: W.file, updatedAt: iso(row.created_at) })),
@@ -200,8 +284,9 @@ export async function buildTaskAgentContext(
     items,
     budget: options.budget ?? CONTEXT_TOKEN_DEFAULT,
     focus: [task.title, task.description ?? "", options.focus ?? ""].join(" "),
-    now: options.now ?? new Date(),
+    now,
     drillDown: DRILL_DOWN,
+    freshness,
   });
   return { markdown: pack.markdown, error: null, stats: pack.stats };
 }
