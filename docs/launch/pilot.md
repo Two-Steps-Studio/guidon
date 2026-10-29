@@ -1,4 +1,4 @@
-# Pilot z 3–5 testerami
+# Pilot z 3-5 testerami
 
 Guidon task `616a71da`. Cel: przed publikacją (`docs/launch/launch-plan.md`)
 sprawdzić na ludziach jedną rzecz: **czy nowa osoba sama dojdzie od strony
@@ -7,7 +7,7 @@ dojdzie, poprawiamy onboarding, a nie dokładamy funkcji.
 
 ## Kogo zaprosić
 
-- 3–5 osób, które **już pracują z Claude Code, Codex albo Cursor** i mają
+- 3-5 osób, które **już pracują z Claude Code, Codex albo Cursor** i mają
   własne repozytorium (może być małe).
 - Najlepiej osoby, które znasz: znajomi programiści, ktoś ze szkoły lub koła
   informatycznego, ktoś z Discorda, z kim już rozmawiałeś.
@@ -23,7 +23,7 @@ tylko za wyraźną zgodą testera. Konto testowe można potem usunąć
 ### Zaproszenie (do wklejenia)
 
 > Hej, robię narzędzie, w którym agent AI (Claude Code / Codex / Cursor) sam
-> bierze zadania z tablicy i zna kontekst projektu. Szukam 3–5 osób na 30
+> bierze zadania z tablicy i zna kontekst projektu. Szukam 3-5 osób na 30
 > minut: zakładasz konto, podłączasz swojego agenta i dajesz mu jedno
 > zadanie, a ja patrzę, gdzie się gubisz. Twoje repo, Twój agent, nic nie
 > instaluję u Ciebie poza konfiguracją MCP, którą potem możesz usunąć.

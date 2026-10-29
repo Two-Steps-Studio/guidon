@@ -22,8 +22,8 @@ export function ModuleView({ manifest, view, records, labels, onEdit, onRemove }
   const readValue = (record: ModuleRecord, id: string) => Object.hasOwn(record.values, id) ? record.values[id] : undefined;
   const value = (record: ModuleRecord, field: typeof fields[number]) => {
     const raw = Object.hasOwn(record.values, field.id) ? record.values[field.id] : null;
-    if (raw === undefined || raw === null || raw === "") return "—";
-    if (field.type === "select") return field.options.find((option) => option.value === raw)?.label ?? "—";
+    if (raw === undefined || raw === null || raw === "") return "-";
+    if (field.type === "select") return field.options.find((option) => option.value === raw)?.label ?? "-";
     if (typeof raw === "boolean") return raw ? labels.yes : labels.no;
     if (field.type === "url" && typeof raw === "string" && isModuleUrl(raw)) return h("a", { href: raw, target: "_blank", rel: "noopener noreferrer", className: "text-primary underline" }, raw);
     return String(raw);

@@ -1,4 +1,4 @@
-# Calendar saves, dropdown surfaces and CI follow-up — 2026-10-25
+# Calendar saves, dropdown surfaces and CI follow-up - 2026-10-25
 
 Follow-up to PR #74, which was merged while this batch was being verified. Guidon
 cards: `f3bdc95c-1b04-41b7-8418-04c59ab99631` (task description) and

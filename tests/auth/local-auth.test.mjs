@@ -6,7 +6,7 @@
  *
  *   npm run test:auth
  *
- * No database, no Next.js runtime — this file mirrors the two modules'
+ * No database, no Next.js runtime - this file mirrors the two modules'
  * algorithms exactly (same pattern as tests/db/compat.test.mjs mirroring
  * src/lib/db/session.ts), because plain `node *.mjs` here has no loader for
  * the `@/` path alias or "server-only"/"next/headers" imports those modules

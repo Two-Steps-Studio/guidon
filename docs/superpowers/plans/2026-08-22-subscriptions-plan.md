@@ -21,7 +21,7 @@ Spec: `docs/superpowers/specs/2026-08-22-subscriptions-design.md`
 
 ```sql
 -- ============================================================
--- GUIDON — MIGRACJA 015
+-- GUIDON - MIGRACJA 015
 -- plans + subscriptions: Free/Pro/Team/Business (TODO §10-13)
 -- ============================================================
 --
@@ -30,17 +30,17 @@ Spec: `docs/superpowers/specs/2026-08-22-subscriptions-design.md`
 -- POWÓD
 -- -----
 -- Zero istniejącego kodu billingowego (grep po "stripe"/"subscription"/
--- "billing" w całym repo — nic). Ta migracja dodaje realny schemat planów
+-- "billing" w całym repo - nic). Ta migracja dodaje realny schemat planów
 -- i subskrypcji, budowany wokół istniejącego organizations.project_limit
 -- (migracja 014), nie zamiast niego.
 --
--- Free zmienia się z dzisiejszego project_limit DEFAULT 1 na 2 — patrz
+-- Free zmienia się z dzisiejszego project_limit DEFAULT 1 na 2 - patrz
 -- docs/superpowers/specs/2026-08-22-subscriptions-design.md, potwierdzone
 -- z użytkownikiem wprost. Istniejące organizacje NIE są retroaktywnie
--- dotykane — to zmiana DEFAULT dla nowych wierszy, nie migracja danych.
+-- dotykane - to zmiana DEFAULT dla nowych wierszy, nie migracja danych.
 --
 -- BEZPIECZEŃSTWO: subscriptions ma zero polityk INSERT/UPDATE/DELETE dla
--- authenticated — dokładnie ta sama lekcja co project_limit w 014: gdyby
+-- authenticated - dokładnie ta sama lekcja co project_limit w 014: gdyby
 -- właściciel organizacji mógł UPDATE własną subskrypcję, mógłby się sam
 -- awansować na dowolny plan za darmo. Jedyna legalna ścieżka zapisu to
 -- service_role (panel admina).
@@ -119,7 +119,7 @@ CREATE TRIGGER update_subscriptions_updated_at
     EXECUTE FUNCTION private.update_updated_at_column();
 
 
--- New organizations get a Free subscription automatically — same pattern
+-- New organizations get a Free subscription automatically - same pattern
 -- as on_organization_created (001) creating the owner membership, added
 -- as a second, independent trigger.
 CREATE FUNCTION private.handle_new_organization_subscription()
@@ -276,7 +276,7 @@ export interface OrgPlanLimits {
 
 /**
  * Reads the organization's current plan limits via its subscription. Self-
- * hosted installs never call this — every enforcement point checks
+ * hosted installs never call this - every enforcement point checks
  * hasDirectDatabase() first, same convention as isHostedProjectLimitReached.
  */
 export async function getOrgPlanLimits(organizationId: string): Promise<OrgPlanLimits> {
@@ -350,7 +350,7 @@ Add near `getProjectStorageUsage` (after it, before `checkProjectStorageQuota`):
 /**
  * Total bytes stored across every project in an organization. Sums
  * project_files.size_bytes joined through projects, the same source
- * getProjectStorageUsage reads — not StorageProvider.usage(), which would
+ * getProjectStorageUsage reads - not StorageProvider.usage(), which would
  * require listing every project's storage prefix separately for one
  * number the database already has indexed.
  */
@@ -377,7 +377,7 @@ Run: `npx tsc --noEmit`
 Expected: no new errors. If the Supabase JS types reject the
 `projects!inner(organization_id)` embedded-filter syntax, fall back to two
 queries: `SELECT id FROM projects WHERE organization_id = $1` then
-`SELECT size_bytes FROM project_files WHERE project_id = ANY($1)` — read
+`SELECT size_bytes FROM project_files WHERE project_id = ANY($1)` - read
 `getStorageProvider`/existing query patterns in this file for the
 established two-step style already used elsewhere if the embedded filter
 doesn't type-check cleanly.
@@ -428,7 +428,7 @@ In `createTask()`, immediately after the existing permission check (`if (!access
 
 `access.project.organization_id` is already available on `ProjectAccess`
 (`src/lib/data/project-access.ts`, confirmed by reading it during this
-plan's research) — no new data fetch needed for that part. `createClient`
+plan's research) - no new data fetch needed for that part. `createClient`
 is already imported in this file (used lower down in the Supabase branch).
 
 - [ ] **Step 3: Type-check**
@@ -476,7 +476,7 @@ validation (`if (!(file instanceof File) || file.size === 0)`), before the
   }
 ```
 
-(`access.project.organization_id` — same field, confirmed available the
+(`access.project.organization_id` - same field, confirmed available the
 same way as Task 4.)
 
 - [ ] **Step 3: Type-check**
@@ -506,7 +506,7 @@ npx shadcn@latest add progress
 
 Answer any overwrite prompt `n` (this component shouldn't collide with
 anything existing, but the sidebar install in Plan 1b showed prompts can
-appear for shared dependencies — decline any that ask about files other
+appear for shared dependencies - decline any that ask about files other
 than `progress.tsx` itself).
 
 - [ ] **Step 2: Verify it uses the flattened shape from Plan 1a**
@@ -604,7 +604,7 @@ export default async function BillingPage({
           </div>
           <Card>
             <CardContent className="py-6 text-muted-foreground">
-              Self-hosted installs have no plan limits — billing only applies to Guidon Cloud.
+              Self-hosted installs have no plan limits - billing only applies to Guidon Cloud.
             </CardContent>
           </Card>
         </div>
@@ -718,7 +718,7 @@ export default async function BillingPage({
 ```
 
 The `requireOrgAccess(orgId)` result is discarded via an array hole
-(`const [, user] = ...`) — it's called purely for its gating side effect
+(`const [, user] = ...`) - it's called purely for its gating side effect
 (redirects if the caller isn't an org member), and the page only ever
 needs `orgId` itself (already in scope) for its queries, not any field of
 the access result. No unused-variable warning results, since nothing is
@@ -787,11 +787,11 @@ git commit -m "Add a Billing link to the organization page header"
 - Create: `src/app/admin/organizations/plan-editor.tsx`
 - Modify: `src/app/admin/organizations/page.tsx`
 
-- [ ] **Step 1: `admin.ts` — include the plan in the org list query**
+- [ ] **Step 1: `admin.ts` - include the plan in the org list query**
 
 Confirmed by reading the current file: `listOrganizationsForAdmin()`
 resolves member/owner data via a **separate** query keyed by `orgIds`,
-merged in JS via `Map`s (not an embedded Supabase relation select) — the
+merged in JS via `Map`s (not an embedded Supabase relation select) - the
 plan/subscription addition follows that exact same established pattern,
 not a nested `.select()`.
 
@@ -847,11 +847,11 @@ second lookup:
 ```
 
 (A second `const supabase = createServiceClient();` inside the `else`
-branch shadows the outer one from the member-lookup block above it — this
+branch shadows the outer one from the member-lookup block above it - this
 mirrors how `organizations`, `member`, and now `subscription` lookups are
 each their own small, independent query in this function; do not try to
 reuse a single `supabase` variable across all three if the existing code
-doesn't already do so — read the surrounding lines to confirm before
+doesn't already do so - read the surrounding lines to confirm before
 choosing between adding a new `const` or reusing an existing one in
 scope.)
 
@@ -881,7 +881,7 @@ export type UpdatePlanState = {
 };
 
 /**
- * Admin-only plan change (no self-service upgrade in this phase — see the
+ * Admin-only plan change (no self-service upgrade in this phase - see the
  * spec's "Context" section for why). Updates both the subscription's
  * plan_id and organizations.project_limit together, so the two stay in
  * sync at the moment of an actual plan change; project_limit remains
@@ -948,7 +948,7 @@ export async function updateOrganizationPlan(
 
 (`requireAdminAccess`, `hasDirectDatabase`, `withServiceRole`,
 `createServiceClient`, `revalidatePath` are all already imported in this
-file per the existing `updateOrganizationProjectLimit` action — no new
+file per the existing `updateOrganizationProjectLimit` action - no new
 imports needed beyond what's already there.)
 
 - [ ] **Step 3: `PlanEditor` component**
@@ -1010,10 +1010,10 @@ export function PlanEditor({
 }
 ```
 
-(No separate "Save" button — changing the select immediately saves, since
+(No separate "Save" button - changing the select immediately saves, since
 a plan change isn't a numeric value someone would type incrementally like
 the project-limit field; `Button` import is unused if not needed elsewhere
-in the file — omit it if `select`-only compiles clean without it.)
+in the file - omit it if `select`-only compiles clean without it.)
 
 - [ ] **Step 4: Wire into the admin organizations table**
 
@@ -1054,8 +1054,8 @@ and the "**The project-per-organization cap is specific to Cloud.** Every
 organization starts at 1 project..." paragraph) both need "1" replaced
 with "2" to match this phase's new default, and a mention that the default
 now comes from the organization's plan (Free = 2), not a flat constant.
-Read the current text first — it may have shifted slightly since first
-written — and update both occurrences consistently with this phase's
+Read the current text first - it may have shifted slightly since first
+written - and update both occurrences consistently with this phase's
 actual behavior.
 
 - [ ] **Step 2: Commit**
@@ -1083,7 +1083,7 @@ npm run build
 
 Expected: `test:db` and `test:limits` both `0 fail`. `tsc` clean. `lint`
 shows only the pre-existing `no-explicit-any` debt from prior plans this
-session — no new errors. `build` succeeds, including
+session - no new errors. `build` succeeds, including
 `/organizations/[id]/billing`.
 
 - [ ] **Step 2: Trace the enforcement paths by reading the final files**
@@ -1094,7 +1094,7 @@ installs hit neither check (matching every other limit in this codebase).
 
 - [ ] **Step 3: Browser check, if the Browser pane and a real backend cooperate**
 
-Same constraint as every prior plan this session — no live Supabase/local
+Same constraint as every prior plan this session - no live Supabase/local
 storage credentials in this environment, so this is a static/DOM check of
 `/organizations/[id]/billing`'s rendered markup (via `read_page`/
 `get_page_text`) rather than a full authenticated click-through with real

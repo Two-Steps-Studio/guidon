@@ -6,7 +6,7 @@
 
 **Architecture:** No schema change. Subtasks are already full `tasks` rows with a real `status` column; this is a UI rewrite of one section of `task-detail-dialog.tsx` plus deleting one now-redundant server action (`toggleSubtask`) in favor of the already-audited, general-purpose `updateTask`.
 
-**Tech Stack:** Next.js Server Actions, React (client component), no new dependencies. This repo has no component/unit test runner (only Node-script integration tests for DB/RLS, AI, auth, and limits — see `package.json`'s `test:*` scripts), so verification for the UI portion is `npx tsc --noEmit` + `npm run lint` + `npm run build` + a manual browser check, matching how every other UI change in this codebase has been verified; `npm run test:db` covers the one RLS-adjacent code path touched (`updateTask`).
+**Tech Stack:** Next.js Server Actions, React (client component), no new dependencies. This repo has no component/unit test runner (only Node-script integration tests for DB/RLS, AI, auth, and limits - see `package.json`'s `test:*` scripts), so verification for the UI portion is `npx tsc --noEmit` + `npm run lint` + `npm run build` + a manual browser check, matching how every other UI change in this codebase has been verified; `npm run test:db` covers the one RLS-adjacent code path touched (`updateTask`).
 
 Reference spec: `docs/superpowers/specs/2026-09-12-subtask-status-table-design.md`
 
@@ -102,7 +102,7 @@ export async function toggleSubtask(
 }
 ```
 
-The file's `updateTask` (already scoped by `project_id` with a rowcount/`.select()` check) is the direct replacement — no new backend code is needed. Do not run `tsc`/`lint`/`build` yet; `task-detail-dialog.tsx` still imports the now-deleted function and will not compile until Step 2 is done.
+The file's `updateTask` (already scoped by `project_id` with a rowcount/`.select()` check) is the direct replacement - no new backend code is needed. Do not run `tsc`/`lint`/`build` yet; `task-detail-dialog.tsx` still imports the now-deleted function and will not compile until Step 2 is done.
 
 - [ ] **Step 2: Update the import list in task-detail-dialog.tsx**
 
@@ -171,7 +171,7 @@ function subtaskStatusOptions(
 }
 ```
 
-This reuses the exact same fallback logic the file already applies to the parent task's own status field (`statusOptions`, computed inside the component body) — `BOARD_COLUMNS` and `BoardColumn` are already imported at the top of this file.
+This reuses the exact same fallback logic the file already applies to the parent task's own status field (`statusOptions`, computed inside the component body) - `BOARD_COLUMNS` and `BoardColumn` are already imported at the top of this file.
 
 - [ ] **Step 4: Replace subtask-related state and handlers**
 
@@ -587,7 +587,7 @@ Replace the whole block with:
         </section>
 ```
 
-`Check` and `cn` may now be unused in this file if nothing else references them — the next step's build/lint pass will catch that; do not remove either import speculatively before checking (see Step 6/7). `X` and `Loader2` are still used above (delete button, add-subtask spinner) and elsewhere in the file, so they stay regardless.
+`Check` and `cn` may now be unused in this file if nothing else references them - the next step's build/lint pass will catch that; do not remove either import speculatively before checking (see Step 6/7). `X` and `Loader2` are still used above (delete button, add-subtask spinner) and elsewhere in the file, so they stay regardless.
 
 - [ ] **Step 6: Type-check**
 
@@ -597,7 +597,7 @@ Run:
 npx tsc --noEmit
 ```
 
-Expected: no errors. If `Check` or `cn` show as unused-import errors (this project's ESLint, not `tsc`, flags unused imports — `tsc` itself won't fail on an unused import), skip for now and handle in Step 7.
+Expected: no errors. If `Check` or `cn` show as unused-import errors (this project's ESLint, not `tsc`, flags unused imports - `tsc` itself won't fail on an unused import), skip for now and handle in Step 7.
 
 - [ ] **Step 7: Lint**
 
@@ -607,9 +607,9 @@ Run:
 npm run lint
 ```
 
-Expected: no new errors in `src/app/projects/[id]/work/actions.ts` or `src/components/work/task-detail-dialog.tsx`. This repo has pre-existing `@typescript-eslint/no-explicit-any` errors in unrelated files (confirmed earlier this session in `search/route.ts`, `storage.ts`, etc.) — ignore those, they predate this change.
+Expected: no new errors in `src/app/projects/[id]/work/actions.ts` or `src/components/work/task-detail-dialog.tsx`. This repo has pre-existing `@typescript-eslint/no-explicit-any` errors in unrelated files (confirmed earlier this session in `search/route.ts`, `storage.ts`, etc.) - ignore those, they predate this change.
 
-If lint reports `Check` as unused in `task-detail-dialog.tsx`: check whether it's still used elsewhere in the file (as of this plan's writing, it is — the "Export agent context" copy-button at approximately line 801 renders `agentContextCopied ? <Check ... /> : <Copy ... />`). If lint still flags it as unused, that means this plan's assumption was wrong for some reason — re-check with `grep -n "Check" src/components/work/task-detail-dialog.tsx` before removing the import, since removing a still-used import would be a bug, not a fix. If `cn` is genuinely unused after this change (the deleted checkbox `<button>` was its only remaining call site in this file — verify with `grep -n "cn(" src/components/work/task-detail-dialog.tsx`), remove `cn` from the top import line.
+If lint reports `Check` as unused in `task-detail-dialog.tsx`: check whether it's still used elsewhere in the file (as of this plan's writing, it is - the "Export agent context" copy-button at approximately line 801 renders `agentContextCopied ? <Check ... /> : <Copy ... />`). If lint still flags it as unused, that means this plan's assumption was wrong for some reason - re-check with `grep -n "Check" src/components/work/task-detail-dialog.tsx` before removing the import, since removing a still-used import would be a bug, not a fix. If `cn` is genuinely unused after this change (the deleted checkbox `<button>` was its only remaining call site in this file - verify with `grep -n "cn(" src/components/work/task-detail-dialog.tsx`), remove `cn` from the top import line.
 
 - [ ] **Step 8: Build**
 
@@ -629,18 +629,18 @@ Run:
 npm run test:db
 ```
 
-Expected: `132 pass / 0 fail` (same count as before this change — no migration was added, this just confirms `updateTask`'s existing RLS-adjacent behavior wasn't disturbed).
+Expected: `132 pass / 0 fail` (same count as before this change - no migration was added, this just confirms `updateTask`'s existing RLS-adjacent behavior wasn't disturbed).
 
 - [ ] **Step 10: Manual browser check**
 
 Start the dev server and open a project with at least one task that has subtasks (or create one):
 
-1. Open a task, add a subtask via the existing "Add a subtask..." field — confirm it appears as a table row with status "Todo".
-2. Click into the title cell, change the text, click elsewhere (blur) — confirm the new title persists after closing and reopening the task dialog.
-3. Click into the title cell, change the text, press Escape — confirm it reverts to the original title without saving.
-4. Change the status dropdown to "Review" — confirm the dropdown shows "Review" immediately and stays there after the request completes (no flicker back to the old value), and that the `x/y done` counter in the section header does not count it.
-5. Change the status dropdown to "Done" — confirm the `x/y done` counter increments.
-6. Delete a subtask via the existing delete (X) button — confirm it disappears from the table and from the board's subtask-count badge.
+1. Open a task, add a subtask via the existing "Add a subtask..." field - confirm it appears as a table row with status "Todo".
+2. Click into the title cell, change the text, click elsewhere (blur) - confirm the new title persists after closing and reopening the task dialog.
+3. Click into the title cell, change the text, press Escape - confirm it reverts to the original title without saving.
+4. Change the status dropdown to "Review" - confirm the dropdown shows "Review" immediately and stays there after the request completes (no flicker back to the old value), and that the `x/y done` counter in the section header does not count it.
+5. Change the status dropdown to "Done" - confirm the `x/y done` counter increments.
+6. Delete a subtask via the existing delete (X) button - confirm it disappears from the table and from the board's subtask-count badge.
 7. Confirm a read-only viewer (a user without `canEdit`) sees the title input and status dropdown disabled, matching the old checkbox's disabled behavior.
 
 - [ ] **Step 11: Commit**
@@ -668,15 +668,15 @@ EOF
 ## Plan self-review
 
 **Spec coverage:**
-- "No schema change" — Task 1 touches no migrations. ✓
-- "Retire `toggleSubtask`, use `updateTask` directly" — Step 1 (delete), Steps 4-5 (call sites switched). ✓
-- "Title: inline input, commit on blur/Enter, revert on Escape" — Step 4 (`handleSubtaskTitleCommit`), Step 5 (`onBlur`/`onKeyDown`). ✓
-- "Status: dropdown from the project's configured columns, commits on change" — Step 3 (`subtaskStatusOptions`), Step 4 (`handleSubtaskStatusChange`), Step 5 (`<Select>`). ✓
-- "Delete unchanged" — Step 5 keeps the existing delete button/handler verbatim. ✓
-- "Progress counter keeps working" — Step 5 keeps the `x/y done` header unchanged, still keyed off `isDone`. ✓
-- "Per-row busy/error state so one row's save can't block others" — `savingSubtaskId`/`deletingSubtaskId` are keyed by subtask id, unchanged in spirit from before. ✓
-- "A failed save reverts to last known-good value" — both draft maps are cleared in `finally` regardless of success/failure, and a `<select>`/`<input>` with no draft entry falls back to reading straight from the (unchanged, on failure) `subtask` prop. ✓
-- Out-of-scope items (other 3 planning improvements, main task's own save-button UX, reordering, notifications) — none touched by this plan. ✓
+- "No schema change" - Task 1 touches no migrations. ✓
+- "Retire `toggleSubtask`, use `updateTask` directly" - Step 1 (delete), Steps 4-5 (call sites switched). ✓
+- "Title: inline input, commit on blur/Enter, revert on Escape" - Step 4 (`handleSubtaskTitleCommit`), Step 5 (`onBlur`/`onKeyDown`). ✓
+- "Status: dropdown from the project's configured columns, commits on change" - Step 3 (`subtaskStatusOptions`), Step 4 (`handleSubtaskStatusChange`), Step 5 (`<Select>`). ✓
+- "Delete unchanged" - Step 5 keeps the existing delete button/handler verbatim. ✓
+- "Progress counter keeps working" - Step 5 keeps the `x/y done` header unchanged, still keyed off `isDone`. ✓
+- "Per-row busy/error state so one row's save can't block others" - `savingSubtaskId`/`deletingSubtaskId` are keyed by subtask id, unchanged in spirit from before. ✓
+- "A failed save reverts to last known-good value" - both draft maps are cleared in `finally` regardless of success/failure, and a `<select>`/`<input>` with no draft entry falls back to reading straight from the (unchanged, on failure) `subtask` prop. ✓
+- Out-of-scope items (other 3 planning improvements, main task's own save-button UX, reordering, notifications) - none touched by this plan. ✓
 
 **Placeholder scan:** no TBD/TODO/"add appropriate handling" phrases; every step shows complete, copy-pasteable code or an exact command with expected output.
 

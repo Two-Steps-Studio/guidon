@@ -49,7 +49,7 @@ export function ApprovalInbox({
   const pendingCount = requests.filter((request) => effectiveStatus(request) === "pending").length;
   const shown = filter === "pending" ? requests.filter((request) => effectiveStatus(request) === "pending") : requests;
   const statusLabel = (status: string | undefined) =>
-    !status ? "—" : BUILT_IN_STATUSES.has(status) ? tWork("status", { status }) : status;
+    !status ? "-" : BUILT_IN_STATUSES.has(status) ? tWork("status", { status }) : status;
 
   const decide = async (request: ApprovalRequest, approve: boolean) => {
     if (approve && request.action === "delete_task") {
@@ -187,7 +187,7 @@ export function ApprovalInbox({
                         person: decider,
                         date: format.dateTime(new Date(request.decided_at), { dateStyle: "medium", timeStyle: "short" }),
                       })}
-                    {request.decision_comment && <> — {request.decision_comment}</>}
+                    {request.decision_comment && <> - {request.decision_comment}</>}
                   </p>
                 )
               )}

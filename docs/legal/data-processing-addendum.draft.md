@@ -1,4 +1,4 @@
-# Data Processing Addendum — negotiation draft
+# Data Processing Addendum - negotiation draft
 
 Version 2026-10-25. **Not executed. Not incorporated into Cloud terms by publication.** Complete the parties, annexes and authorisation mechanism and obtain legal review before offering this agreement for acceptance. No vendor contract, transfer instrument or technical safeguard is certified by this draft.
 
@@ -22,7 +22,7 @@ The processor notifies the controller of a personal-data breach without undue de
 
 ## 4. Assistance
 
-Taking account of the nature of processing, the processor assists through appropriate technical and organisational measures with data-subject requests. It forwards requests relating to controller data without undue delay and does not decide them independently except on instructions or legal obligation. Taking account of information available, it assists with security, breach notifications, impact assessments and prior consultation under Articles 32–36.
+Taking account of the nature of processing, the processor assists through appropriate technical and organisational measures with data-subject requests. It forwards requests relating to controller data without undue delay and does not decide them independently except on instructions or legal obligation. Taking account of information available, it assists with security, breach notifications, impact assessments and prior consultation under Articles 32-36.
 
 ## 5. Subprocessors
 
@@ -42,7 +42,7 @@ Processing lasts for the service period and any specifically agreed lawful wind-
 
 The processor makes available all information necessary to demonstrate compliance with Article 28 and allows and contributes to audits, including inspections, by the controller or its mandated auditor. Proportionate scheduling, confidentiality and protection of other customers may be agreed but must not defeat these rights, urgent investigations or supervisory authority access. It promptly flags unlawful instructions as described above.
 
-## Annex A — processing particulars (complete before execution)
+## Annex A - processing particulars (complete before execution)
 
 | Required field | Deployment-specific agreement |
 | --- | --- |
@@ -54,11 +54,11 @@ The processor makes available all information necessary to demonstrate complianc
 | Controller duties and rights | Lawful instructions, data minimisation, authority to supply data, transparency and handling controller obligations; no transfer of processor's own statutory duties |
 | Instruction/privacy contacts | Fill controller and processor contacts and escalation channel |
 
-## Annex B — measures and lifecycle (evidence required)
+## Annex B - measures and lifecycle (evidence required)
 
 Record actual access/tenant isolation, privileged access controls, transport/storage protection, secret management, logging/redaction, vulnerability handling, incident process, staff confidentiality, backup/restore, data-subject assistance, export and deletion procedures. For each, identify implemented controls and responsible owner; do not mark planned controls as implemented. Fill retention/backup periods, deletion verification and exceptions, restore safeguards and processing locations.
 
-## Annex C — authorised processors and transfers (verify each row)
+## Annex C - authorised processors and transfers (verify each row)
 
 Inventory candidates include hosting/delivery (Vercel), database/auth/storage (Supabase), transactional email (Resend), diagnostics (Sentry if enabled) and any instructed AI or other processing. Determine each recipient's actual role; payment provider independent-controller processing may belong outside this DPA. For every actual subprocessor list legal entity, function/data, processing countries, contract, authorisation and transfer mechanism with evidence. **No candidate is authorised by this uncompleted annex.**
 

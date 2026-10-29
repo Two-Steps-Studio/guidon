@@ -38,7 +38,7 @@ function fail(message) {
 
 /**
  * Only numbered files are migrations. Helper scripts that live alongside them
- * (diagnose_rls.sql, fix_missing_profiles.sql) are deliberately excluded —
+ * (diagnose_rls.sql, fix_missing_profiles.sql) are deliberately excluded -
  * they are diagnostics, not schema history.
  */
 async function loadMigrations() {
@@ -73,7 +73,7 @@ async function loadMigrations() {
  * the database what it actually has. On Supabase the answer is yes and the file
  * is never even read, so a managed install cannot be altered by this code path.
  *
- * This runs before the numbered migrations and outside their history — it is
+ * This runs before the numbered migrations and outside their history - it is
  * infrastructure provisioning, not a schema change. It is still recorded, so
  * `--status` shows what a given database was built from.
  */
@@ -92,7 +92,7 @@ async function ensureAuthCompat(client) {
   const file = path.join(HERE, "..", "src", "db", "bootstrap", "000_auth_compat.sql");
   const sql = await readFile(file, "utf8");
 
-  console.log("\n  No auth.uid() found — this is a plain PostgreSQL.");
+  console.log("\n  No auth.uid() found - this is a plain PostgreSQL.");
   process.stdout.write("  Applying Supabase compatibility layer ... ");
 
   try {
@@ -101,7 +101,7 @@ async function ensureAuthCompat(client) {
     console.log("FAILED");
     fail(
       `The compatibility layer could not be applied:\n    ${error.message}\n\n` +
-        "  It needs a role that may CREATE ROLE and CREATE SCHEMA — the\n" +
+        "  It needs a role that may CREATE ROLE and CREATE SCHEMA - the\n" +
         "  database owner. Nothing was changed."
     );
   }
@@ -193,7 +193,7 @@ async function main() {
         console.log(`    ${mark.padEnd(8)} ${m.name}`);
       }
       console.log(
-        `\n  ${pending.length} pending${DRY_RUN ? " (dry run — nothing applied)" : ""}\n`
+        `\n  ${pending.length} pending${DRY_RUN ? " (dry run - nothing applied)" : ""}\n`
       );
       return;
     }

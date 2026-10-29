@@ -45,7 +45,7 @@ script or an agent on its own.
 
 | Signal | Where | Healthy |
 |---|---|---|
-| `GET /api/health` | Uptime monitor every 1–5 min | `200`, `"status":"ok"`. Any required component down returns `503` with that component's `status` and `detail` |
+| `GET /api/health` | Uptime monitor every 1-5 min | `200`, `"status":"ok"`. Any required component down returns `503` with that component's `status` and `detail` |
 | Server errors | Sentry (`SENTRY_DSN`), through `onRequestError` in `src/instrumentation.ts` | No new issue in 15 min |
 | Browser errors | Sentry (`NEXT_PUBLIC_SENTRY_DSN`); errors caught by `error.tsx` and `global-error.tsx` are reported too | No new issue |
 | Function logs | Vercel → Logs: filter on `[Stripe webhook]`, `[modules]`, `[webhooks]` | No repeating errors |

@@ -1,4 +1,4 @@
-# Stripe webhook QA — 2026-10-27
+# Stripe webhook QA - 2026-10-27
 
 Guidon task `9129015e` ([QA][P0] Stripe sandbox). The tests made no payments
 and no network calls. The Stripe webhook's rules now live in

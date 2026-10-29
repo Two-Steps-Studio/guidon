@@ -22,7 +22,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   try {
     const existing = await getLinkByGuild(guildId);
     status = existing
-      ? "This server is currently linked to a Guidon project — using the link below and choosing another project will move it."
+      ? "This server is currently linked to a Guidon project - using the link below and choosing another project will move it."
       : "This server isn't linked to a Guidon project yet.";
   } catch (err) {
     console.error("guidon-link: could not look up the current link:", err);

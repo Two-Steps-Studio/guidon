@@ -1,4 +1,4 @@
-# REST/MCP isolation QA — 2026-10-24
+# REST/MCP isolation QA - 2026-10-24
 
 Existing broad QA card: `f76a9572-8004-492f-b560-ab88e99fdde4`.
 

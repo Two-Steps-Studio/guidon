@@ -25,12 +25,12 @@ export function SkeletonPage({ className, children }: { className?: string; chil
 export function SkeletonHeader({ actions = 0, className }: { actions?: number; className?: string }) {
   return (
     <div className={cn("mb-8 flex flex-wrap items-start justify-between gap-4", className)}>
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-56" />
+      <div className="min-w-0 space-y-2">
+        <Skeleton className="h-8 w-56 max-w-full" />
         <Skeleton className="h-4 w-80 max-w-[70vw]" />
       </div>
       {actions > 0 && (
-        <div className="flex gap-2">
+        <div className="flex max-w-full flex-wrap gap-2">
           {Array.from({ length: actions }, (_, i) => (
             <Skeleton key={i} className="h-9 w-32" />
           ))}

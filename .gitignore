@@ -40,7 +40,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files — real ones stay out, the template is committed on purpose.
+# env files - real ones stay out, the template is committed on purpose.
 # Self-hosting depends on .env.example being in the repo (TODO.md §11, §26).
 .env*
 !.env.example

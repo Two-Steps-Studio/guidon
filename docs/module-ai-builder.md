@@ -7,7 +7,7 @@ the instance fallback; no new provider, credential store or model API is added.
 
 ## Flow
 
-1. Describe the module (1–6000 characters). Only that text is sent to the
+1. Describe the module (1-6000 characters). Only that text is sent to the
    configured AI provider, without tasks, records, project name or secrets.
 2. Review the proposed entities, typed fields, selection options, bounds,
    views/mappings and exact requested permissions. Answer any questions by
@@ -52,7 +52,7 @@ Only request ID, stage, outcome and planning duration are recorded, not user
 prompts, generated output, API keys or raw error bodies. Unauthorized/AI-disabled
 calls stop before credential resolution and do not create builder attempts.
 
-No new database migration is required; existing module migrations 080–082 and
+No new database migration is required; existing module migrations 080-082 and
 organization AI settings must already be installed. Production deployment is
 not part of this change.
 

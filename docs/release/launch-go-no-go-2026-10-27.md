@@ -1,4 +1,4 @@
-# Launch readiness: end-to-end path and go/no-go — 2026-10-27
+# Launch readiness: end-to-end path and go/no-go - 2026-10-27
 
 Guidon task `57226c85` ([Launch] Audyt gotowości do premiery i scenariusze
 end-to-end). This page shows where each step of the customer path is
@@ -16,15 +16,15 @@ input. **a11y** is `run.mjs --accessibility-audit`.
 |---|---|---|---|---|---|---|
 | 1 | Sign-up, login, password reset, sessions | `authentication.mjs`; `test:auth` | E2E | Mobile | invalid/revoked sessions | ✅ (ticket `faf1537d`) |
 | 2 | Onboarding → organization → first project | `onboarding.mjs` (project type, modules, studio) | E2E | Mobile | new account | ✅ (ticket `0a88a2dd`) |
-| 3 | Invitation | `onboarding.mjs`: a link for an address without an account, only the hash is stored, acceptance; `test:db` section 75 | E2E | — | member role | ✅ |
+| 3 | Invitation | `onboarding.mjs`: a link for an address without an account, only the hash is stored, acceptance; `test:db` section 75 | E2E | - | member role | ✅ |
 | 4 | Tasks | `task-editing.mjs`, `board-layout.mjs`, `calendar-editing.mjs`; `test:task-editing` | E2E | Mobile | viewer has no write controls | ✅ |
-| 5 | AI and MCP | `ai-chat.mjs` (boundary without a provider); `api-isolation.mjs` (125 REST/MCP checks); `agent-claims.mjs`; `profile-connected-apps.mjs` (OAuth apps) | E2E | — | owner / viewer / read-only key / other tenant / removed member | ✅ |
-| 6 | Paid subscription | `test:billing` (webhook flow, 14 cases, PR #84). **No end-to-end run against Stripe test mode** | — | — | owner/admin only (`canManageOrg`) | ⛔ see blockers |
-| 7 | Cancellation | Stripe Customer Portal → `customer.subscription.updated/deleted` → Free (unit-tested in `test:billing`) | — | — | — | ⛔ same as 6 |
-| — | Tenant isolation, RLS | `test:db` (741 on #82, 709 on #84); `docs/release/security-tenant-isolation-2026-10-27.md` | | | two organizations, viewer, stranger | ✅ (ticket `97feeeb4`) |
-| — | Large projects | `npm run perf:large`; `docs/release/performance-baseline-2026-10-27.md` | | | | ✅ (ticket `40e24352`) |
-| — | Backup / rollback | `test:restore` in CI; `docs/release-runbook.md` | | | | ✅ procedure; Cloud setup pending (ticket `2cc56dff`) |
-| — | Accessibility | `run.mjs --accessibility-audit` | E2E | | | ✅ |
+| 5 | AI and MCP | `ai-chat.mjs` (boundary without a provider); `api-isolation.mjs` (125 REST/MCP checks); `agent-claims.mjs`; `profile-connected-apps.mjs` (OAuth apps) | E2E | - | owner / viewer / read-only key / other tenant / removed member | ✅ |
+| 6 | Paid subscription | `test:billing` (webhook flow, 14 cases, PR #84). **No end-to-end run against Stripe test mode** | - | - | owner/admin only (`canManageOrg`) | ⛔ see blockers |
+| 7 | Cancellation | Stripe Customer Portal → `customer.subscription.updated/deleted` → Free (unit-tested in `test:billing`) | - | - | - | ⛔ same as 6 |
+| - | Tenant isolation, RLS | `test:db` (741 on #82, 709 on #84); `docs/release/security-tenant-isolation-2026-10-27.md` | | | two organizations, viewer, stranger | ✅ (ticket `97feeeb4`) |
+| - | Large projects | `npm run perf:large`; `docs/release/performance-baseline-2026-10-27.md` | | | | ✅ (ticket `40e24352`) |
+| - | Backup / rollback | `test:restore` in CI; `docs/release-runbook.md` | | | | ✅ procedure; Cloud setup pending (ticket `2cc56dff`) |
+| - | Accessibility | `run.mjs --accessibility-audit` | E2E | | | ✅ |
 
 ## Blockers
 
@@ -32,12 +32,12 @@ input. **a11y** is `run.mjs --accessibility-audit`.
 
 1. **There is no payment account the product can legally use.** Stripe and
    Paddle accounts have to be opened by an adult, either a parent or
-   guardian or their company. Until then, steps 6–7 can't be run even in
+   guardian or their company. Until then, steps 6-7 can't be run even in
    test mode. Tickets: `bb72c893` (production Stripe) and `73e5b3b9` (paid
    modules, design only).
 2. **PRs #82 and #84 must be merged and their migrations applied in
    production:**
-   - 086–092, if not applied yet;
+   - 086-092, if not applied yet;
    - 093 and 094 (#82);
    - 095 and 096 (#84).
 
@@ -78,7 +78,7 @@ input. **a11y** is `run.mjs --accessibility-audit`.
 **Free (beta) launch: GO** once all of these hold:
 
 - [ ] #82 and #84 merged with green CI.
-- [ ] Migrations 086–096 applied in production, in order. Supabase migration
+- [ ] Migrations 086-096 applied in production, in order. Supabase migration
       history is checked and matches the files.
 - [ ] Sentry DSNs set and one test event received. Uptime check active.
 - [ ] Resend variables set, and one invitation email received.

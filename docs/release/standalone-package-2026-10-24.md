@@ -1,4 +1,4 @@
-# Standalone artifact hardening — 2026-10-24
+# Standalone artifact hardening - 2026-10-24
 
 Task: `7acbf37e-00cc-4a67-b024-1159da7740bc`.
 

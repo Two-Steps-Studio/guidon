@@ -6,14 +6,14 @@ import { LEGAL_VERSION, legalOperator, legalPublicationReady, type LegalCopy } f
 export function LegalNotice() {
   if (legalPublicationReady) return null;
   return <aside aria-label="Document status" className="mb-8 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm">
-    <strong>Draft for review — not ready for publication.</strong>
+    <strong>Draft for review - not ready for publication.</strong>
     <p>Service provider identification and the final legal review must be completed before these documents are adopted. This draft does not remove any statutory rights.</p>
   </aside>;
 }
 
 export function OperatorContact() {
   return <address className="not-italic">
-    <p>{legalOperator.name || "Guidon — service provider identification pending"}</p>
+    <p>{legalOperator.name || "Guidon - service provider identification pending"}</p>
     {legalOperator.address && <p className="whitespace-pre-line">{legalOperator.address}</p>}
     <p>{legalOperator.country}</p>
     {legalOperator.phone && <p>{legalOperator.phone}</p>}

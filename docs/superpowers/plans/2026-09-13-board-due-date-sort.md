@@ -4,7 +4,7 @@
 
 **Goal:** Add a board-wide "Manual / Due date" sort toggle to the work board, so a column can be viewed ordered by nearest deadline instead of only by drag position.
 
-**Architecture:** Pure client-side view state — a new optional comparator parameter on the existing `groupTasksByStatus()` helper, threaded through `KanbanBoard` via a new `sortMode` prop that also disables drag-and-drop while active (a dragged position would be overwritten by the due-date sort on the next render). No schema change, no new Server Action, no persistence.
+**Architecture:** Pure client-side view state - a new optional comparator parameter on the existing `groupTasksByStatus()` helper, threaded through `KanbanBoard` via a new `sortMode` prop that also disables drag-and-drop while active (a dragged position would be overwritten by the due-date sort on the next render). No schema change, no new Server Action, no persistence.
 
 **Tech Stack:** Next.js Server Actions/React (client components), no new dependencies.
 
@@ -104,7 +104,7 @@ export function compareTasksByDueDate(a: Task, b: Task): number {
 }
 ```
 
-This is the only call site change needed in this file — `groupTasksByStatus`'s new second parameter has a default, so nothing else that calls it needs to change.
+This is the only call site change needed in this file - `groupTasksByStatus`'s new second parameter has a default, so nothing else that calls it needs to change.
 
 - [ ] **Step 2: Import the new comparator and add `sortMode` to `KanbanBoard`'s props**
 
@@ -253,7 +253,7 @@ export function KanbanBoard({
 
 - [ ] **Step 3: Gate every drag-related check on `canDrag` instead of `canEdit`**
 
-Still in `src/components/work/kanban-board.tsx`, four more spots reference `canEdit` for drag behavior. The "+ add task" button in the column header (which stays `canEdit`-gated, unaffected) is not one of them — only these four:
+Still in `src/components/work/kanban-board.tsx`, four more spots reference `canEdit` for drag behavior. The "+ add task" button in the column header (which stays `canEdit`-gated, unaffected) is not one of them - only these four:
 
 `handleReorder` currently:
 
@@ -459,7 +459,7 @@ becomes:
               />
 ```
 
-Do not touch the `{canEdit && (<Button ... onClick={() => onCreateTask(column.status)}>...)}` block in the column header — creating a task in a specific column stays available regardless of sort mode.
+Do not touch the `{canEdit && (<Button ... onClick={() => onCreateTask(column.status)}>...)}` block in the column header - creating a task in a specific column stays available regardless of sort mode.
 
 - [ ] **Step 4: Add the sort-mode state and toggle to `WorkBoard`**
 
@@ -606,7 +606,7 @@ Run:
 npm run lint
 ```
 
-Expected: no new errors in `src/lib/work/task-board.ts`, `src/components/work/kanban-board.tsx`, or `src/app/projects/[id]/work/work-board.tsx`. This repo has pre-existing `@typescript-eslint/no-explicit-any` errors in unrelated files — ignore those.
+Expected: no new errors in `src/lib/work/task-board.ts`, `src/components/work/kanban-board.tsx`, or `src/app/projects/[id]/work/work-board.tsx`. This repo has pre-existing `@typescript-eslint/no-explicit-any` errors in unrelated files - ignore those.
 
 - [ ] **Step 7: Build**
 
@@ -626,11 +626,11 @@ Run:
 npm run test:db
 ```
 
-Expected: `132 pass / 0 fail` (this change touches no schema/RLS code at all — this just confirms nothing else regressed).
+Expected: `132 pass / 0 fail` (this change touches no schema/RLS code at all - this just confirms nothing else regressed).
 
 - [ ] **Step 9: Manual browser check**
 
-There is no running dev server and no browser tool available to you in this subagent context. **Skip this step** — the controlling session performs the manual/browser verification separately after your work is reviewed. Do not attempt to start a dev server.
+There is no running dev server and no browser tool available to you in this subagent context. **Skip this step** - the controlling session performs the manual/browser verification separately after your work is reviewed. Do not attempt to start a dev server.
 
 - [ ] **Step 10: Commit**
 
@@ -657,7 +657,7 @@ EOF
 
 ## Context
 
-This is the second of four planned improvements to Guidon's project-planning UX (subtask table — shipped; deadline visibility — this plan; board filters; bulk actions). The per-card due-date indicator (colored text + icon, `dueState()`/`DUE_STATE_CLASSES`/`formatDueDate` in `src/lib/work/task-board.ts`, rendered by `TaskCard`) already exists and is out of scope — confirmed with the user the only gap is the lack of a way to order a column by nearest deadline. Design rationale: `docs/superpowers/specs/2026-09-13-board-due-date-sort-design.md`.
+This is the second of four planned improvements to Guidon's project-planning UX (subtask table - shipped; deadline visibility - this plan; board filters; bulk actions). The per-card due-date indicator (colored text + icon, `dueState()`/`DUE_STATE_CLASSES`/`formatDueDate` in `src/lib/work/task-board.ts`, rendered by `TaskCard`) already exists and is out of scope - confirmed with the user the only gap is the lack of a way to order a column by nearest deadline. Design rationale: `docs/superpowers/specs/2026-09-13-board-due-date-sort-design.md`.
 
 ## Before You Begin
 
@@ -666,7 +666,7 @@ If you have questions about the requirements, approach, dependencies, or anythin
 ## Your Job
 
 Once you're clear on requirements:
-1. Implement exactly what the task specifies (the 10 steps above, in order — skip Step 9 as instructed)
+1. Implement exactly what the task specifies (the 10 steps above, in order - skip Step 9 as instructed)
 2. Verify implementation works (tsc, lint, build, test:db as specified)
 3. Commit your work (Step 10's exact commit message)
 4. Self-review (see below)
@@ -676,8 +676,8 @@ Once you're clear on requirements:
 
 ## Code Organization
 
-- Follow the file structure and code given in the task exactly — this task's code was fully specified by a prior planning phase, not left for you to design.
-- If you find the plan's given code doesn't actually match the current file contents when you go to apply it (e.g. line numbers or surrounding code have drifted), don't force it — read the actual current file, apply the equivalent edit precisely, and note the discrepancy in your report.
+- Follow the file structure and code given in the task exactly - this task's code was fully specified by a prior planning phase, not left for you to design.
+- If you find the plan's given code doesn't actually match the current file contents when you go to apply it (e.g. line numbers or surrounding code have drifted), don't force it - read the actual current file, apply the equivalent edit precisely, and note the discrepancy in your report.
 - Don't restructure anything outside what the task specifies.
 
 ## When You're in Over Your Head
@@ -697,7 +697,7 @@ Review your work with fresh eyes. Ask yourself:
 - Did I fully implement all 10 steps (except skipped Step 9)?
 - Are there edge cases I didn't handle?
 - Is the code clean, and did I follow the exact code given rather than improvising?
-- Did I avoid overbuilding — no extra features beyond what the task specifies (no persistence, no per-column toggle, no due-soon badge)?
+- Did I avoid overbuilding - no extra features beyond what the task specifies (no persistence, no per-column toggle, no due-soon badge)?
 - Do tsc/lint/build/test:db all actually pass (paste real output, don't assume)?
 - Did I leave the "+ add task" button's `canEdit` gate untouched (it should NOT have become `canDrag`)?
 
@@ -719,15 +719,15 @@ When done, report:
 ## Plan self-review
 
 **Spec coverage:**
-- "One board-wide toggle, not per-column" — Step 4 adds one `sortMode` state in `WorkBoard`, passed down. ✓
-- "Visible to every viewer... not gated by canEdit" — the `<Select>` in Step 4 sits outside any `canEdit` conditional. ✓
-- "State lives in a plain useState... not persisted" — Step 4's `useState<"manual" | "due_date">("manual")`, no localStorage/DB touch anywhere in the plan. ✓
-- "A second comparator, not a parallel data path" — Step 1 adds one optional parameter to the existing `groupTasksByStatus`, no new grouping function. ✓
-- "Dated tasks ascending, undated always last, ties fall back to compareTasks" — `compareTasksByDueDate` in Step 1 matches exactly. ✓
-- "Dragging is disabled while sorted by due date... status change still works via the dialog" — Step 3's four `canEdit`→`canDrag` substitutions cover both mouse drag (`onDragOver`/`onDrop`/`TaskCard draggable`) and keyboard reorder (`handleReorder`/`onReorder`); the task detail dialog's status field is untouched by this plan, so it keeps working exactly as it does today. ✓
-- "UI: a `<Select>`... between progress text and New task button" — Step 4's JSX placement matches. ✓
-- Verification steps (tsc/lint/build/test:db/manual) — Steps 5-9 cover all of them, with Step 9 correctly deferred to the controlling session (no browser access here, same pattern as the prior plan). ✓
+- "One board-wide toggle, not per-column" - Step 4 adds one `sortMode` state in `WorkBoard`, passed down. ✓
+- "Visible to every viewer... not gated by canEdit" - the `<Select>` in Step 4 sits outside any `canEdit` conditional. ✓
+- "State lives in a plain useState... not persisted" - Step 4's `useState<"manual" | "due_date">("manual")`, no localStorage/DB touch anywhere in the plan. ✓
+- "A second comparator, not a parallel data path" - Step 1 adds one optional parameter to the existing `groupTasksByStatus`, no new grouping function. ✓
+- "Dated tasks ascending, undated always last, ties fall back to compareTasks" - `compareTasksByDueDate` in Step 1 matches exactly. ✓
+- "Dragging is disabled while sorted by due date... status change still works via the dialog" - Step 3's four `canEdit`→`canDrag` substitutions cover both mouse drag (`onDragOver`/`onDrop`/`TaskCard draggable`) and keyboard reorder (`handleReorder`/`onReorder`); the task detail dialog's status field is untouched by this plan, so it keeps working exactly as it does today. ✓
+- "UI: a `<Select>`... between progress text and New task button" - Step 4's JSX placement matches. ✓
+- Verification steps (tsc/lint/build/test:db/manual) - Steps 5-9 cover all of them, with Step 9 correctly deferred to the controlling session (no browser access here, same pattern as the prior plan). ✓
 
 **Placeholder scan:** no TBD/TODO/"add appropriate handling" phrases; every step shows complete, copy-pasteable code or an exact command with expected output.
 
-**Type consistency:** `sortMode?: "manual" | "due_date"` (KanbanBoardProps) matches `useState<"manual" | "due_date">("manual")` (WorkBoard) matches the `<Select>`'s `onChange` cast (`event.target.value as "manual" | "due_date"`) matches `compareTasksByDueDate`'s signature (`(a: Task, b: Task) => number`, identical to `compareTasks`'s, so it satisfies `groupTasksByStatus`'s new `compare` parameter type without a cast). `canDrag` is computed once in `KanbanBoard` and used consistently everywhere `canEdit` previously gated drag behavior — confirmed by re-reading Step 3 line by line against Step 2's full destructuring, no leftover bare `canEdit` in a drag-related spot.
+**Type consistency:** `sortMode?: "manual" | "due_date"` (KanbanBoardProps) matches `useState<"manual" | "due_date">("manual")` (WorkBoard) matches the `<Select>`'s `onChange` cast (`event.target.value as "manual" | "due_date"`) matches `compareTasksByDueDate`'s signature (`(a: Task, b: Task) => number`, identical to `compareTasks`'s, so it satisfies `groupTasksByStatus`'s new `compare` parameter type without a cast). `canDrag` is computed once in `KanbanBoard` and used consistently everywhere `canEdit` previously gated drag behavior - confirmed by re-reading Step 3 line by line against Step 2's full destructuring, no leftover bare `canEdit` in a drag-related spot.

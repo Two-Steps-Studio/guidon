@@ -1,8 +1,8 @@
 # Guidon
 
 **Context-first project management for development teams.** Guidon tracks not
-just what a project's tasks are, but *why* — decisions, context relations,
-project memory, and the provenance behind them — for developer- and
+just what a project's tasks are, but *why* - decisions, context relations,
+project memory, and the provenance behind them - for developer- and
 game-development-friendly teams.
 
 [Website](https://useguidon.com) ·
@@ -16,15 +16,15 @@ game-development-friendly teams.
 
 ![Guidon task board](./public/landing/taskBoard-light.webp)
 
-- **Task board** per project — drag and drop, custom columns, labels, subtasks, bulk actions, *My tasks* across projects.
-- **Decisions, knowledge base, moodboard, roadmap, calendar** — the context behind the work, each module switchable per project.
-- **Built for AI agents** — REST API ([OpenAPI](https://useguidon.com/openapi.json)) and an MCP server, so Claude Code, Cursor, Codex and others can pick up, work and hand back tasks.
-- **Where you already work** — plugins for Unity, Unreal Engine, Godot, Blender, JetBrains and VS Code, a desktop app, a Discord bot and in-game bug reports.
-- **Self-hostable** — Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama).
+- **Task board** per project - drag and drop, custom columns, labels, subtasks, bulk actions, *My tasks* across projects.
+- **Decisions, knowledge base, moodboard, roadmap, calendar** - the context behind the work, each module switchable per project.
+- **Built for AI agents** - REST API ([OpenAPI](https://useguidon.com/openapi.json)) and an MCP server, so Claude Code, Cursor, Codex and others can pick up, work and hand back tasks.
+- **Where you already work** - plugins for Unity, Unreal Engine, Godot, Blender, JetBrains and VS Code, a desktop app, a Discord bot and in-game bug reports.
+- **Self-hostable** - Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama).
 
 Guidon runs three ways: as a hosted Cloud product, self-hosted on your own
 infrastructure, or as a local development server. Self-hosting is a
-first-class product mode here, not an afterthought — see
+first-class product mode here, not an afterthought - see
 [docs/self-hosting.md](./docs/self-hosting.md) for the full story, including
 what's genuinely self-hostable today and what isn't yet.
 
@@ -47,27 +47,27 @@ The skills are in [`skills/`](./skills/). For a connected MCP server, see the
 | For | Using Guidon without running anything | Deploying on infrastructure you control | Changing Guidon's code |
 | Runs on | Guidon Cloud | Your server (Docker Compose or bare Node) | Your machine |
 | Setup | Sign up | `docker compose up -d` | `npm install && npm run dev` |
-| Details | — | [docs/self-hosting.md](./docs/self-hosting.md) | below |
+| Details | - | [docs/self-hosting.md](./docs/self-hosting.md) | below |
 
 **Before choosing self-hosted:** sign-in, data access, storage
 (`STORAGE_PROVIDER=local`), and AI (`AI_PROVIDER=ollama`) are all genuinely
-self-hostable today — a plain PostgreSQL with zero Supabase software
+self-hostable today - a plain PostgreSQL with zero Supabase software
 running is enough to sign up, create a project, and use the whole
 application, verified live against a real `docker compose up` stack, not
 just by reading the code. Full details, including exactly what runs where,
 in [docs/self-hosting.md](./docs/self-hosting.md#read-this-first-current-state).
 
-## Quickstart — Cloud
+## Quickstart - Cloud
 
 Nothing to run. Use the hosted product.
 
-## Quickstart — Self-hosted
+## Quickstart - Self-hosted
 
 ```bash
 git clone <this repo>
 cd guidon
 cp .env.example .env
-# fill in .env — see docs/self-hosting.md for what's required
+# fill in .env - see docs/self-hosting.md for what's required
 docker compose up -d
 curl http://localhost:3000/api/health
 ```
@@ -75,7 +75,7 @@ curl http://localhost:3000/api/health
 Full walkthrough, including the non-Docker path, choosing a storage/AI
 backend, and admin access: [docs/self-hosting.md](./docs/self-hosting.md).
 
-## Quickstart — Development
+## Quickstart - Development
 
 ```bash
 npm install
@@ -107,19 +107,19 @@ Available scripts (`package.json`):
 ## Tech stack
 
 - **Framework**: Next.js 16.3.0, App Router, React 19. Pages read data as
-  Server Components and write through Server Actions — the browser never
+  Server Components and write through Server Actions - the browser never
   talks to the database directly (see
   [docs/architecture.md](./docs/architecture.md)).
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS v4
 - **UI Components**: shadcn/ui (Radix UI primitives)
-- **Database**: PostgreSQL, either Supabase or a self-hosted instance —
+- **Database**: PostgreSQL, either Supabase or a self-hosted instance -
   `hasDirectDatabase()` picks the mode per request based on whether
-  `DATABASE_URL` is set, and both paths enforce the same RLS policies — see
+  `DATABASE_URL` is set, and both paths enforce the same RLS policies - see
   [docs/self-hosting.md](./docs/self-hosting.md).
 - **Auth**: Supabase Auth (email/password, plus optional Google/Discord OAuth)
   on the hosted path; signed-cookie local auth on the self-hosted path
-- **Storage**: pluggable `StorageProvider` — Supabase Storage or local
+- **Storage**: pluggable `StorageProvider` - Supabase Storage or local
   filesystem (`s3` interface-ready, not implemented)
 - **AI**: pluggable `AIProvider` abstraction, seven backends, wired into task
   chat and project-memory insight generation (see
@@ -133,13 +133,13 @@ guidon/
 ├── src/
 │   ├── proxy.ts              # Route protection (Next's middleware convention, renamed upstream)
 │   ├── app/                  # Next.js App Router
-│   │   ├── auth/             # Login, signup, logout, OAuth callback — the only client-side data pages
+│   │   ├── auth/             # Login, signup, logout, OAuth callback - the only client-side data pages
 │   │   ├── dashboard/
 │   │   ├── organizations/    # Server Components + actions.ts (Server Actions)
 │   │   ├── projects/[id]/    # Server Components + actions.ts, files/actions.ts (uploads), context/, decisions/, knowledge/, memory/, roadmap/, settings/, technology/, work/
-│   │   ├── admin/            # Instance-admin panel, gated by ADMIN_EMAILS (dashboard, organizations, users, logs, integrations) — mostly read-only; organizations also exposes admin-only plan/limit overrides
+│   │   ├── admin/            # Instance-admin panel, gated by ADMIN_EMAILS (dashboard, organizations, users, logs, integrations) - mostly read-only; organizations also exposes admin-only plan/limit overrides
 │   │   └── api/
-│   │       ├── health/       # GET /api/health — reports db/storage/auth/ai status
+│   │       ├── health/       # GET /api/health - reports db/storage/auth/ai status
 │   │       ├── storage/      # Serves objects for STORAGE_PROVIDER=local
 │   │       └── v1/           # Narrow surface for non-UI callers (currently just /search)
 │   ├── components/
@@ -150,7 +150,7 @@ guidon/
 │   │   ├── auth/                # OAuth provider config, auth helpers
 │   │   ├── context/              # Context Layer: agent context, relations, task "why"
 │   │   ├── data/                  # Authorization + data-access modules (current-user, org-access, project-access, admin, admin-access)
-│   │   ├── db/                     # pool.ts (pg Pool) + session.ts (RLS-scoped transactions) — self-hosted-Postgres layer, used whenever DATABASE_URL is set (see docs/architecture.md)
+│   │   ├── db/                     # pool.ts (pg Pool) + session.ts (RLS-scoped transactions) - self-hosted-Postgres layer, used whenever DATABASE_URL is set (see docs/architecture.md)
 │   │   ├── health/                  # Shared health-check logic (db/storage/auth/ai)
 │   │   ├── search/                   # Backing logic for /api/v1/search
 │   │   ├── storage/                   # StorageProvider abstraction (Supabase / local / S3-reserved)
@@ -164,9 +164,9 @@ guidon/
 │       │   └── 000_auth_compat.sql   # Recreates auth.uid()/auth.users/roles on plain PostgreSQL
 │       └── migrations/
 │           ├── 000_baseline_schema.sql  # ... through 012_context_relations_cleanup_triggers.sql
-│           └── README.md                # Per-migration reference (authoritative — not repeated here)
+│           └── README.md                # Per-migration reference (authoritative - not repeated here)
 ├── scripts/
-│   └── migrate.mjs         # Migration runner — npm run migrate / migrate:status
+│   └── migrate.mjs         # Migration runner - npm run migrate / migrate:status
 ├── tests/
 │   ├── db/compat.test.mjs   # npm run test:db
 │   └── ai/provider.test.mjs # npm run test:ai
@@ -183,38 +183,38 @@ guidon/
 ├── docker-compose.yml       # db + migrate + app services for self-hosting
 ├── .env.example             # Full environment variable reference (source of truth)
 ├── components.json          # shadcn/ui configuration
-├── next.config.ts            # output: "standalone" for Docker only — see the file's own comment for why not unconditional
+├── next.config.ts            # output: "standalone" for Docker only - see the file's own comment for why not unconditional
 └── package.json
 ```
 
 ## Deeper documentation
 
-- [docs/user-guide.md](./docs/user-guide.md) — the main web-app workflows,
+- [docs/user-guide.md](./docs/user-guide.md) - the main web-app workflows,
   project areas, task board, agent access and integrations.
-- [docs/brand-kit.md](./docs/brand-kit.md) — product positioning, marketing
+- [docs/brand-kit.md](./docs/brand-kit.md) - product positioning, marketing
   copy and logo exports.
-- [docs/launch-readiness-checklist.md](./docs/launch-readiness-checklist.md) —
+- [docs/launch-readiness-checklist.md](./docs/launch-readiness-checklist.md) -
   repository-backed launch checklist.
-- [docs/architecture.md](./docs/architecture.md) — how the pieces fit
+- [docs/architecture.md](./docs/architecture.md) - how the pieces fit
   together and why (Server Components/Actions, the database layer, the
   provider abstractions, the admin panel, health checks, `/api/v1`).
-- [docs/self-hosting.md](./docs/self-hosting.md) — the complete self-hosting
+- [docs/self-hosting.md](./docs/self-hosting.md) - the complete self-hosting
   walkthrough.
-- [docs/configuration.md](./docs/configuration.md) — every environment
+- [docs/configuration.md](./docs/configuration.md) - every environment
   variable, explained.
-- [docs/upgrading.md](./docs/upgrading.md) — upgrading a running self-hosted
+- [docs/upgrading.md](./docs/upgrading.md) - upgrading a running self-hosted
   instance.
-- [docs/backups.md](./docs/backups.md) — backing up a self-hosted instance.
-- [docs/auth-setup.md](./docs/auth-setup.md) — Google/Discord OAuth setup.
-- `src/db/migrations/README.md` — the schema, migration by migration.
+- [docs/backups.md](./docs/backups.md) - backing up a self-hosted instance.
+- [docs/auth-setup.md](./docs/auth-setup.md) - Google/Discord OAuth setup.
+- `src/db/migrations/README.md` - the schema, migration by migration.
 
 ## Security
 
 - Row-Level Security (RLS) in PostgreSQL is the actual authorization
-  boundary — 70 policies, not application-level checks alone.
+  boundary - 70 policies, not application-level checks alone.
 - Permission checks (organization/project roles) at the data-access layer,
   on top of RLS.
-- `/api/health` never returns secrets, connection strings, or hostnames —
+- `/api/health` never returns secrets, connection strings, or hostnames -
   see `src/lib/health/checks.ts`'s `safeReason()`.
 - The local storage provider validates paths against directory traversal
   (`assertSafeStoragePath` / `assertSafeBucket`) and signs download URLs.

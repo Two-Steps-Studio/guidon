@@ -47,7 +47,8 @@
     "signup": {
       "title": "Utwórz konto",
       "description": "Podaj swoje dane, aby utworzyć konto Guidon",
-      "fullNameLabel": "Imię i nazwisko",
+      "fullNameLabel": "Nazwa lub imię i nazwisko",
+      "namePlaceholder": "Twoja nazwa lub imię i nazwisko",
       "emailLabel": "E-mail",
       "passwordLabel": "Hasło",
       "creatingAccount": "Tworzenie konta...",
@@ -173,7 +174,7 @@
     "searching": "Wyszukiwanie…",
     "searchFailed": "Nie udało się wyszukać.",
     "retry": "Spróbuj ponownie",
-    "closestMatches": "Brak dokładnych wyników – oto najbliższe."
+    "closestMatches": "Brak dokładnych wyników - oto najbliższe."
   },
   "notifications": {
     "title": "Powiadomienia",
@@ -226,7 +227,7 @@
         },
         {
           "title": "Dołącz AI, kiedy chcesz",
-          "description": "Podłącz aplikację AI, której już używasz. Bierze zadanie, czyta jego kontekst i oddaje pracę do Review – o tym, co jest gotowe, decyduje człowiek. Guidon w pełni działa też bez AI."
+          "description": "Podłącz aplikację AI, której już używasz. Bierze zadanie, czyta jego kontekst i oddaje pracę do Review - o tym, co jest gotowe, decyduje człowiek. Guidon w pełni działa też bez AI."
         }
       ]
     },
@@ -271,7 +272,7 @@
     "freePlan": "Darmowy plan",
     "selfServeApiKey": "Samodzielnie utwórz klucz API",
     "featuresTitle": "Wszystko o pracy w jednym miejscu",
-    "featuresSubtitle": "Przede wszystkim dla ludzi. Każde zadanie ma przy sobie decyzje, źródła i pamięć projektu – dla Twojego zespołu i dla każdego AI, które podłączysz.",
+    "featuresSubtitle": "Przede wszystkim dla ludzi. Każde zadanie ma przy sobie decyzje, źródła i pamięć projektu - dla Twojego zespołu i dla każdego AI, które podłączysz.",
     "features": {
       "taskBoard": {
         "title": "Tablica zadań",
@@ -382,7 +383,7 @@
       "items": [
         {
           "q": "Czym jest Guidon?",
-          "a": "Guidon to tablica projektów dla zespołów. Każdy projekt ma tablicę Kanban, a obok niej decyzje stojące za pracą, źródła i technologie, z których korzysta, roadmapę i pamięć projektu – więc kto bierze zadanie, dostaje też powód, dla którego ono istnieje. AI jest opcjonalne: możesz podłączyć Claude, ChatGPT, Cursor, Codex i inne aplikacje, a one pracują na tych samych zadaniach pod Twoim nadzorem."
+          "a": "Guidon to tablica projektów dla zespołów. Każdy projekt ma tablicę Kanban, a obok niej decyzje stojące za pracą, źródła i technologie, z których korzysta, roadmapę i pamięć projektu - więc kto bierze zadanie, dostaje też powód, dla którego ono istnieje. AI jest opcjonalne: możesz podłączyć Claude, ChatGPT, Cursor, Codex i inne aplikacje, a one pracują na tych samych zadaniach pod Twoim nadzorem."
         },
         {
           "q": "Czy Guidon jest darmowy?",
@@ -718,7 +719,7 @@
       "projectTypeLabel": "Typ projektu (opcjonalnie)",
       "notSet": "Nie ustawiono",
       "workflowLabel": "Tryb pracy",
-      "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story — wkrótce. Na razie to tylko etykieta projektu.",
+      "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story - wkrótce. Na razie to tylko etykieta projektu.",
       "aiEnabledLabel": "Funkcje AI",
       "aiEnabledHelp": "Włącza kolumnę „AI pracuje”, asystenta zadań AI, generowane wnioski w pamięci projektu, uprawnienia agentów AI i dostęp agentów przez API. Możesz to zmienić później w ustawieniach projektu.",
       "cancel": "Anuluj",
@@ -999,7 +1000,7 @@
       }
     },
     "boardCapped": "Tablica pokazuje {limit} zadań: najpierw otwarte, od ostatnio zmienionych. Pozostałe zadania nadal są w projekcie - znajdziesz je przez wyszukiwanie albo API.",
-    "networkError": "Brak połączenia z Guidonem, więc nic nie zostało zapisane. Twój tekst jest nadal tutaj – sprawdź połączenie i spróbuj ponownie.",
+    "networkError": "Brak połączenia z Guidonem, więc nic nie zostało zapisane. Twój tekst jest nadal tutaj - sprawdź połączenie i spróbuj ponownie.",
     "moveNotSaved": "Brak połączenia z Guidonem. „{title}” wróciło na swoje miejsce.",
     "retryMove": "Ponów",
     "draftRestored": "Przywrócono niezapisane zmiany z {time}. Nie są jeszcze zapisane.",
@@ -1119,7 +1120,7 @@
     "projectTypeLabel": "Typ projektu",
     "notSet": "Nie ustawiono",
     "workflowLabel": "Tryb pracy",
-    "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story — wkrótce. Na razie to tylko etykieta projektu.",
+    "workflowHelp": "Scrum dodaje sprinty, backlog i punkty story - wkrótce. Na razie to tylko etykieta projektu.",
     "aiEnabledLabel": "Funkcje AI",
     "aiEnabledHelp": "Włącza kolumnę „AI pracuje”, asystenta zadań AI, generowane wnioski w pamięci projektu i dostęp dla agentów AI. Po wyłączeniu kolumna „AI pracuje” jest widoczna tylko, dopóki są w niej zadania, a zapisane uprawnienia AI zostają zachowane.",
     "colorLabel": "Kolor projektu",
@@ -1255,7 +1256,7 @@
     "exportFailed": "Eksport nie powiódł się.",
     "exportButton": "Eksportuj do pliku .guidon",
     "discordTitle": "Discord",
-    "discordDescription": "Otrzymuj powiadomienia na kanale Discord, gdy zadania są tworzone, przenoszone lub kończone — i podłącz bota Guidon, żeby uruchamiać komendy /task z Discorda.",
+    "discordDescription": "Otrzymuj powiadomienia na kanale Discord, gdy zadania są tworzone, przenoszone lub kończone - i podłącz bota Guidon, żeby uruchamiać komendy /task z Discorda.",
     "discordLinkedGuild": "Podłączono do serwera Discord: {guild}",
     "discordWebhookConfigured": "Powiadomienia są skonfigurowane",
     "discordRemoveWebhook": "Usuń",
@@ -1329,7 +1330,7 @@
     "emptyTitle": "Nic nie jest do Ciebie przypisane",
     "emptyDescription": "Tutaj pojawią się zadania przypisane do Ciebie w dowolnym projekcie.",
     "quickAdd": "Szybkie dodawanie",
-    "quickAddDescription": "Najpierw tytuł – reszta jest opcjonalna. Zadanie jest przypisane do Ciebie i trafia do To do projektu.",
+    "quickAddDescription": "Najpierw tytuł - reszta jest opcjonalna. Zadanie jest przypisane do Ciebie i trafia do To do projektu.",
     "quickAddPlaceholder": "Co jest do zrobienia?",
     "quickAddProject": "Projekt",
     "quickAddDueToday": "Termin dziś",
@@ -1611,7 +1612,7 @@
     "usersCountSubtitleTruncated": "{count, plural, one {# użytkownik} few {# użytkowników} many {# użytkowników} other {# użytkownika}} w tej instancji (ograniczone do {count} w tym widoku v1 - bez stronicowania).",
     "usersEmptyTitle": "Brak użytkowników",
     "colEmail": "E-mail",
-    "colFullName": "Imię i nazwisko",
+    "colFullName": "Nazwa lub imię i nazwisko",
     "planFree": "Free",
     "planPro": "Pro",
     "planTeam": "Team",
@@ -1711,8 +1712,8 @@
     "title": "Profil",
     "subtitle": "Zarządzaj danymi swojego konta",
     "unnamedUser": "Bez nazwy",
-    "nameLabel": "Imię i nazwisko",
-    "namePlaceholder": "Twoje imię i nazwisko",
+    "nameLabel": "Nazwa lub imię i nazwisko",
+    "namePlaceholder": "Twoja nazwa lub imię i nazwisko",
     "avatarLabel": "Awatar",
     "avatarHelp": "Prześlij obraz jako swój awatar. Pozostaw puste, aby zachować obecny lub używać inicjałów.",
     "emailLabel": "E-mail",
@@ -1814,12 +1815,12 @@
       "deleting": "Usuwanie..."
     },
     "backgroundStyleLabel": "Styl tła",
-    "backgroundStyle_solid": "Jednolite — skup się na pracy",
+    "backgroundStyle_solid": "Jednolite - skup się na pracy",
     "backgroundStyle_pattern": "Wzór Guidona",
     "aiPreferenceTitle": "Funkcje AI",
-    "aiPreferenceDescription": "Guidon w pełni działa bez AI. Wyłącz, żeby ukryć przyciski i widżety AI we wszystkich projektach – tylko u siebie.",
+    "aiPreferenceDescription": "Guidon w pełni działa bez AI. Wyłącz, żeby ukryć przyciski i widżety AI we wszystkich projektach - tylko u siebie.",
     "aiPreferenceToggle": "Pokazuj funkcje AI",
-    "aiPreferenceHint": "Ukrywa czat AI, „Connect your agent”, zadania startowe dla agentów i kopiowanie kontekstu dla agenta. Podłączone już agenty dalej działają – usuniesz je w Kluczach API albo Połączonych aplikacjach.",
+    "aiPreferenceHint": "Ukrywa czat AI, „Connect your agent”, zadania startowe dla agentów i kopiowanie kontekstu dla agenta. Podłączone już agenty dalej działają - usuniesz je w Kluczach API albo Połączonych aplikacjach.",
     "aiPreferenceFailed": "Nie udało się zapisać ustawienia.",
     "keyExpiresLabel": "Ważny",
     "keyExpiresDays": "{days} dni",
@@ -2045,7 +2046,7 @@
     "createTitle": "Nowe konto AI",
     "createDescription": "Członek dla agenta AI. Nie może się zalogować - działa tylko przez klucze, które dla niego utworzysz.",
     "nameLabel": "Nazwa",
-    "namePlaceholder": "Claude – backend",
+    "namePlaceholder": "Claude - backend",
     "descriptionLabel": "Co robi (opcjonalnie)",
     "descriptionPlaceholder": "Bierze bugi backendu z To do i oddaje je do review.",
     "projectsLabel": "Projekty",
@@ -2068,7 +2069,7 @@
     "typeTitle": "Co tworzysz?",
     "typeDescription": "Wybierz najbliższe - ustawi odpowiednie sekcje i etykiety. Wszystko zmienisz później.",
     "nameTitle": "Nad czym pracujesz?",
-    "nameDescription": "Nazwij projekt. Tylko tyle jest potrzebne – kolejne pytania są opcjonalne i wszystko zmienisz później.",
+    "nameDescription": "Nazwij projekt. Tylko tyle jest potrzebne - kolejne pytania są opcjonalne i wszystko zmienisz później.",
     "projectNameLabel": "Nazwa projektu",
     "projectNamePlaceholder": "np. Emberfall",
     "studioNameLabel": "Studio lub zespół (opcjonalnie)",
@@ -2132,7 +2133,7 @@
     "starterTask_improve_description": "Wybierz jedną małą poprawkę na kilka minut (literówka, brakująca sekcja README, niejasny komunikat błędu). Zrób ją na nowej gałęzi, zapisz record_attempt ze zmienionymi plikami, dodaj podsumowanie przez comment_on_task i przenieś to zadanie do Review.",
     "starterRule": "Agenci przenoszą skończone zadania do Review, nigdy prosto do Done - najpierw pracę sprawdza człowiek.",
     "welcomeDismiss": "Zamknij",
-    "skipSetup": "Pomiń – ustawię później"
+    "skipSetup": "Pomiń - ustawię później"
   },
   "oauth": {
     "title": "Połącz {app} z Guidonem",
@@ -2204,7 +2205,7 @@
     "saveFailed": "Nie udało się zapisać modułu. Spróbuj ponownie.",
     "reload": "Odśwież zapisane dane",
     "manage": "Konfiguracja",
-    "uninstalled": "Odinstalowany — dane zachowane",
+    "uninstalled": "Odinstalowany - dane zachowane",
     "addItem": "Dodaj element",
     "addTitle": "Dodaj moduł",
     "addHint": "Zacznij od szablonu, zaimportuj plik JSON albo wklej moduł. Sprawdź uprawnienia i zainstaluj go w tym projekcie.",
@@ -2256,7 +2257,7 @@
     "screenshots": "Zrzuty ekranu",
     "changelog": "Historia zmian",
     "noChangelog": "Nie opublikowano informacji o zmianach.",
-    "uninstalled": "Odinstalowany — dane zachowane"
+    "uninstalled": "Odinstalowany - dane zachowane"
   },
   "moduleInstaller": {
     "title": "Zainstaluj moduł",
@@ -2277,7 +2278,7 @@
   "moduleManager": {
     "enabled": "Włączony",
     "disabled": "Wyłączony",
-    "uninstalled": "Odinstalowany — dane zachowane",
+    "uninstalled": "Odinstalowany - dane zachowane",
     "saved": "Zapisano.",
     "data": "Dane i przechowywanie",
     "retainHint": "Odinstalowanie zachowuje rekordy i ustawienia. Zachowane moduły wliczają się do limitu projektu. Wyeksportuj dane przed usunięciem całego projektu.",

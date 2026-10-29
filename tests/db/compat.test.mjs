@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Proves the schema works on a plain PostgreSQL — no Supabase, no Docker.
+ * Proves the schema works on a plain PostgreSQL - no Supabase, no Docker.
  *
  *   npm run test:db
  *
@@ -19,7 +19,7 @@
  * Two known deviations from a production PostgreSQL, neither affecting the
  * result: PGlite ships no pgcrypto (gen_random_uuid is built in since PG13
  * and the schema uses no other pgcrypto function), and it serves a single
- * connection — which makes it the strictest possible test for §4, since any
+ * connection - which makes it the strictest possible test for §4, since any
  * identity residue would be inherited immediately by the next transaction.
  */
 
@@ -76,7 +76,7 @@ const db = new PGlite();
 const forPglite = (sql) =>
   sql.replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/g, "SELECT 1;");
 
-/** Mirrors src/lib/db/session.ts exactly — if that changes, change this too. */
+/** Mirrors src/lib/db/session.ts exactly - if that changes, change this too. */
 async function withUser(userId, fn) {
   await db.exec("BEGIN");
   await db.query("SELECT set_config('request.jwt.claims', $1, true)", [
@@ -109,7 +109,7 @@ async function withServiceRole(fn) {
   }
 }
 
-/** Mirrors src/lib/db/session.ts's withAnon — no identity at all. */
+/** Mirrors src/lib/db/session.ts's withAnon - no identity at all. */
 async function withAnon(fn) {
   await db.exec("BEGIN");
   await db.exec("SET LOCAL ROLE anon");
@@ -566,7 +566,7 @@ section("11. sprzatanie sierot context_relations (migracja 012)");
  * normal user's view (entity_project_id() returns NULL for a deleted
  * entity, so the SELECT policy's IS NOT NULL check never passes). Counting
  * as service_role is what actually distinguishes "the trigger deleted the
- * row" from "RLS is merely hiding a row that is still physically there" —
+ * row" from "RLS is merely hiding a row that is still physically there" -
  * the whole point of migration 012.
  */
 async function countRelationAsServiceRole(relationId) {
@@ -579,7 +579,7 @@ async function countRelationAsServiceRole(relationId) {
   });
 }
 
-// One source-side check per entity table — this is what actually exercises
+// One source-side check per entity table - this is what actually exercises
 // each of the six triggers individually. A copy-paste mistake in migration
 // 012 (wrong table attached to a trigger, or the wrong TG_ARGV literal)
 // would only be caught by testing every table, not just one.
@@ -668,7 +668,7 @@ for (const { type, insert, deleteEntity } of sourceSideCases) {
 }
 
 // Target-side: the OR branch in cleanup_context_relations_on_delete(). Only
-// one table needs covering here — the string-matching logic is identical
+// one table needs covering here - the string-matching logic is identical
 // regardless of which table's trigger fires it, unlike the source-side loop
 // above where each table's trigger is a distinct, independently-wireable
 // object in migration 012.
@@ -698,7 +698,7 @@ await withUser(A, async () => {
 });
 
 // Negative control: deleting an unrelated task must not touch a relation
-// that never referenced it — otherwise the WHERE clause could be too broad
+// that never referenced it - otherwise the WHERE clause could be too broad
 // (e.g. matching on id alone regardless of source_type) and this whole
 // section would pass for the wrong reason.
 await withUser(A, async () => {
@@ -733,8 +733,8 @@ await withUser(A, async () => {
 // ------------------------------------------------------------------
 section("12. auth.users jako sluzy self-hosted logowaniu (src/lib/auth/local-auth.ts)");
 
-// signUpLocal() i signInLocal() dzialaja wylacznie przez withServiceRole() —
-// nigdy pod tozsamoscia authenticated/anon — bo auth.users ma RLS wlaczone
+// signUpLocal() i signInLocal() dzialaja wylacznie przez withServiceRole() -
+// nigdy pod tozsamoscia authenticated/anon - bo auth.users ma RLS wlaczone
 // bez zadnej polityki (000_auth_compat.sql §3: "odmow wszystkim poza
 // wlascicielem i BYPASSRLS"). Ta sekcja dowodzi, ze to zalozenie jest
 // prawdziwe, nie zakladane.
@@ -785,7 +785,7 @@ await expectRejected(
 );
 
 // ------------------------------------------------------------------
-section("13. task_attempts — Previous Attempts (migracja 013)");
+section("13. task_attempts - Previous Attempts (migracja 013)");
 
 let attemptTaskId;
 let attemptId;
@@ -842,7 +842,7 @@ const remainingAttempts = await withServiceRole(async () => {
 check("ON DELETE CASCADE z tasks kasuje probe", remainingAttempts === 0, remainingAttempts);
 
 // ------------------------------------------------------------------
-section("14. project_limit — grant na poziomie kolumny (migracja 014)");
+section("14. project_limit - grant na poziomie kolumny (migracja 014)");
 
 await withUser(A, async () => {
   const rename = await db.query(

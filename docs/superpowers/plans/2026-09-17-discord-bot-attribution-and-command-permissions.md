@@ -4,15 +4,15 @@
 
 **Goal:** Bot-originated Discord actions (task comments, status changes) display as "Discord bot" instead of the human who ran the OAuth connect flow, and `/task`'s four subcommands become four separate Discord commands so a server admin can grant them to different roles using Discord's own per-command permission screen.
 
-**Architecture:** A new nullable `bot_label` column on `api_keys`, set once when `linkDiscordGuildViaOAuth` mints the Discord bot's key, rides through `authenticateApiKey()` into every `/api/v1` request as `ApiKeyIdentity.botLabel`. The two write paths that currently attribute writes to `guard.userId` (the comment route, and `task-transitions.ts`'s status-change path) additionally stamp a new `actor_label` column on `task_comments`/`activity_logs` with that label. The real `author_id`/`user_id` columns are untouched — they remain the actual RLS/audit identity. Rendering code prefers `actor_label` when present. Separately, `discord-bot/`'s single `/task` command (4 subcommands) is split into 4 top-level commands so Discord's native per-guild command-permission UI can gate them individually.
+**Architecture:** A new nullable `bot_label` column on `api_keys`, set once when `linkDiscordGuildViaOAuth` mints the Discord bot's key, rides through `authenticateApiKey()` into every `/api/v1` request as `ApiKeyIdentity.botLabel`. The two write paths that currently attribute writes to `guard.userId` (the comment route, and `task-transitions.ts`'s status-change path) additionally stamp a new `actor_label` column on `task_comments`/`activity_logs` with that label. The real `author_id`/`user_id` columns are untouched - they remain the actual RLS/audit identity. Rendering code prefers `actor_label` when present. Separately, `discord-bot/`'s single `/task` command (4 subcommands) is split into 4 top-level commands so Discord's native per-guild command-permission UI can gate them individually.
 
 **Tech Stack:** PostgreSQL migration (`src/db/migrations/`), Next.js Server Actions/route handlers (existing `/api/v1` layer), the standalone `discord-bot/` TypeScript package (discord.js).
 
-This is this repo's real verification stack, not a generic template: `npx tsc --noEmit`, `npm run lint`, `npm run test:db` (a plain Node script against PGlite — no Jest/Vitest, see `CLAUDE.md`). There is no component/unit test runner for the TypeScript logic, so those changes are verified by `tsc`+`lint`+manual code reading, matching how every other Server Action in this codebase is verified.
+This is this repo's real verification stack, not a generic template: `npx tsc --noEmit`, `npm run lint`, `npm run test:db` (a plain Node script against PGlite - no Jest/Vitest, see `CLAUDE.md`). There is no component/unit test runner for the TypeScript logic, so those changes are verified by `tsc`+`lint`+manual code reading, matching how every other Server Action in this codebase is verified.
 
 ---
 
-### Task 1: Migration 036 — the three new columns
+### Task 1: Migration 036 - the three new columns
 
 **Files:**
 - Create: `src/db/migrations/036_bot_action_labels.sql`
@@ -64,7 +64,7 @@ COMMIT;
 In `src/db/migrations/README.md`, add a row immediately after the `035_discord_integration.sql` row (currently the last row of the table, right before the `## The compatibility layer runs before all of this` heading):
 
 ```markdown
-| `036_bot_action_labels.sql` | Adds `api_keys.bot_label`, `task_comments.actor_label`, `activity_logs.actor_label` (all nullable `text`, no new RLS). `linkDiscordGuildViaOAuth` (`src/lib/data/discord-integration.ts`) sets `bot_label = 'Discord bot'` on the key it mints; `authenticateApiKey()` surfaces it as `ApiKeyIdentity.botLabel`; the comment route and `task-transitions.ts` stamp it onto `actor_label` so bot-originated comments/status-changes display as "Discord bot" instead of the human who ran the OAuth connect flow — `author_id`/`user_id` themselves are untouched (still the real RLS/audit identity). | Discord bot comments/status changes showing as "Discord bot" instead of a specific person's name |
+| `036_bot_action_labels.sql` | Adds `api_keys.bot_label`, `task_comments.actor_label`, `activity_logs.actor_label` (all nullable `text`, no new RLS). `linkDiscordGuildViaOAuth` (`src/lib/data/discord-integration.ts`) sets `bot_label = 'Discord bot'` on the key it mints; `authenticateApiKey()` surfaces it as `ApiKeyIdentity.botLabel`; the comment route and `task-transitions.ts` stamp it onto `actor_label` so bot-originated comments/status-changes display as "Discord bot" instead of the human who ran the OAuth connect flow - `author_id`/`user_id` themselves are untouched (still the real RLS/audit identity). | Discord bot comments/status changes showing as "Discord bot" instead of a specific person's name |
 ```
 
 - [ ] **Step 3: Add the compat-test section**
@@ -238,7 +238,7 @@ And the Supabase branch's insert:
 - [ ] **Step 3: Type-check**
 
 Run: `npx tsc --noEmit`
-Expected: no errors. (`ApiKeyIdentity.botLabel` is a new required field — every object literal returned as `ApiKeyIdentity` was updated above, so no call site is left constructing a stale shape.)
+Expected: no errors. (`ApiKeyIdentity.botLabel` is a new required field - every object literal returned as `ApiKeyIdentity` was updated above, so no call site is left constructing a stale shape.)
 
 - [ ] **Step 4: Commit**
 
@@ -329,7 +329,7 @@ async function setStatusAndLog(
 }
 ```
 
-(Only the two comments explaining the RLS zero-rows trap and the `PGRST116` reasoning were dropped from this listing for brevity — keep them in the actual file; do not delete existing comments, only change the signature and the two `activity_logs` writes as shown.)
+(Only the two comments explaining the RLS zero-rows trap and the `PGRST116` reasoning were dropped from this listing for brevity - keep them in the actual file; do not delete existing comments, only change the signature and the two `activity_logs` writes as shown.)
 
 - [ ] **Step 2: Thread `botLabel` through the three exported transition functions**
 
@@ -517,7 +517,7 @@ In `loadComments`, change both the direct-Postgres query and the Supabase `.sele
     .order("created_at", { ascending: true });
 ```
 
-In `postComment`, change the `RETURNING`/`.select(...)` column lists (the insert itself is unchanged — the human web UI never sets `actor_label`, so it stays `NULL` by column default, exactly today's behavior):
+In `postComment`, change the `RETURNING`/`.select(...)` column lists (the insert itself is unchanged - the human web UI never sets `actor_label`, so it stays `NULL` by column default, exactly today's behavior):
 
 ```ts
       const result = await withUser(access.userId, ({ query }) =>
@@ -605,7 +605,7 @@ git commit -m "Add actor_label to TaskComment and ActivityLogRow"
 
 - [ ] **Step 1: Update the comment list rendering**
 
-In `src/components/work/task-detail-dialog.tsx`, `Bot` is already imported from `lucide-react` (line 4) — no import change needed. Replace the block starting at `{comments.map((comment) => {`:
+In `src/components/work/task-detail-dialog.tsx`, `Bot` is already imported from `lucide-react` (line 4) - no import change needed. Replace the block starting at `{comments.map((comment) => {`:
 
 ```tsx
               {comments.map((comment) => {
@@ -629,7 +629,7 @@ In `src/components/work/task-detail-dialog.tsx`, `Bot` is already imported from 
                         {new Date(comment.created_at).toLocaleString()}
 ```
 
-(Everything after `{new Date(comment.created_at).toLocaleString()}` in that block — the decision-marking button etc. — is unchanged; only the two lines producing the avatar content and the display name change.)
+(Everything after `{new Date(comment.created_at).toLocaleString()}` in that block - the decision-marking button etc. - is unchanged; only the two lines producing the avatar content and the display name change.)
 
 - [ ] **Step 2: Update the activity log rendering**
 
@@ -647,12 +647,12 @@ Expected: no errors.
 - [ ] **Step 4: Lint**
 
 Run: `npm run lint`
-Expected: 26 problems (same pre-existing baseline as before this feature — see `git log`'s "Parallelize independent queries/calls (perf audit round 3)" commit for the confirmed baseline), none of them in the files touched by this plan.
+Expected: 26 problems (same pre-existing baseline as before this feature - see `git log`'s "Parallelize independent queries/calls (perf audit round 3)" commit for the confirmed baseline), none of them in the files touched by this plan.
 
 - [ ] **Step 5: Run the DB compat suite one more time**
 
 Run: `npm run test:db`
-Expected: `149 pass / 0 fail` (unchanged from Task 1 — this task touches no SQL).
+Expected: `149 pass / 0 fail` (unchanged from Task 1 - this task touches no SQL).
 
 - [ ] **Step 6: Commit**
 
@@ -693,7 +693,7 @@ function formatTaskList(tasks: GuidonTask[]): string {
   const LIST_LIMIT = 25;
   const lines = tasks
     .slice(0, LIST_LIMIT)
-    .map((task) => `\`${task.id.slice(0, 8)}\` **${task.title}** — ${task.status} (${task.priority})`);
+    .map((task) => `\`${task.id.slice(0, 8)}\` **${task.title}** - ${task.status} (${task.priority})`);
   const suffix = tasks.length > LIST_LIMIT ? `\n…and ${tasks.length - LIST_LIMIT} more.` : "";
   return lines.join("\n") + suffix;
 }
@@ -857,7 +857,7 @@ console.log(`Registered ${result.length} application commands.`);
 
 - [ ] **Step 7: Update `index.ts`**
 
-Replace the top of the file (imports and the `commands` map — the `Client`/`InteractionCreate` handler below it is unchanged):
+Replace the top of the file (imports and the `commands` map - the `Client`/`InteractionCreate` handler below it is unchanged):
 
 ```ts
 import { Client, Events, GatewayIntentBits, type ChatInputCommandInteraction } from "discord.js";
@@ -927,7 +927,7 @@ adding one is a separate, deliberate decision, not bundled into this bot.
 - [ ] **Step 9: Build the bot package**
 
 Run: `cd discord-bot && npm run build`
-Expected: compiles cleanly to `discord-bot/dist/`, no TypeScript errors. (This is the same verification the earlier `tsx`-not-found fix in this project used — there's no automated test suite in `discord-bot/`.)
+Expected: compiles cleanly to `discord-bot/dist/`, no TypeScript errors. (This is the same verification the earlier `tsx`-not-found fix in this project used - there's no automated test suite in `discord-bot/`.)
 
 - [ ] **Step 10: Commit**
 
@@ -938,7 +938,7 @@ git add discord-bot/src/commands/task.ts
 git commit -m "Split discord-bot's /task command into 4 commands for per-role Discord permissions"
 ```
 
-(The second `git add` stages the deletion of `task.ts` — `git add` on a removed path stages the removal.)
+(The second `git add` stages the deletion of `task.ts` - `git add` on a removed path stages the removal.)
 
 ---
 
@@ -964,11 +964,11 @@ Expected: `149 pass / 0 fail`.
 - [ ] **Step 4: Production build**
 
 Run: `npm run build`
-Expected: builds cleanly, same route list as before this feature (no new routes were added — only existing ones changed).
+Expected: builds cleanly, same route list as before this feature (no new routes were added - only existing ones changed).
 
 - [ ] **Step 5: discord-bot build**
 
 Run: `cd discord-bot && npm run build`
 Expected: compiles cleanly.
 
-No commit for this task — it's pure verification of the seven commits already made above. If any step fails, fix the regression in the relevant earlier task's files and re-run from Step 1.
+No commit for this task - it's pure verification of the seven commits already made above. If any step fails, fix the regression in the relevant earlier task's files and re-run from Step 1.

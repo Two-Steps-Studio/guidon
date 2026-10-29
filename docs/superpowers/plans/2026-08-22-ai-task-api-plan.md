@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** An external AI agent holding a Guidon API key can list/read tasks, start work, comment, change status, and (only when explicitly allowed) complete a task — authenticated and scoped safely, with the same RLS every other identity in this codebase already goes through.
+**Goal:** An external AI agent holding a Guidon API key can list/read tasks, start work, comment, change status, and (only when explicitly allowed) complete a task - authenticated and scoped safely, with the same RLS every other identity in this codebase already goes through.
 
-**Architecture:** Migration adds `ai_working` to the task status vocabulary, `project_ai_permissions`, and `api_keys`. A shared `src/lib/api/` module resolves a bearer key to its owner and lets route handlers run queries as that user (self-hosted: `withUser`; hosted: a short-lived custom JWT signed with `SUPABASE_JWT_SECRET`, reusing `session-cookie.ts`'s HMAC pattern — no new JWT library). Six route handlers under `src/app/api/v1/`. Two UI additions (API Keys on `/profile`, AI Permissions on project settings) and four `action-config.ts` entries so AI activity shows up in the existing project Activity feed.
+**Architecture:** Migration adds `ai_working` to the task status vocabulary, `project_ai_permissions`, and `api_keys`. A shared `src/lib/api/` module resolves a bearer key to its owner and lets route handlers run queries as that user (self-hosted: `withUser`; hosted: a short-lived custom JWT signed with `SUPABASE_JWT_SECRET`, reusing `session-cookie.ts`'s HMAC pattern - no new JWT library). Six route handlers under `src/app/api/v1/`. Two UI additions (API Keys on `/profile`, AI Permissions on project settings) and four `action-config.ts` entries so AI activity shows up in the existing project Activity feed.
 
 Spec: `docs/superpowers/specs/2026-08-22-ai-task-api-design.md`
 
@@ -17,24 +17,24 @@ Spec: `docs/superpowers/specs/2026-08-22-ai-task-api-design.md`
 
 ```sql
 -- ============================================================
--- GUIDON — MIGRACJA 016
+-- GUIDON - MIGRACJA 016
 -- AI Task API: status ai_working, api_keys, project_ai_permissions
 -- ============================================================
 --
 -- Uruchomić PO 015.
 --
 -- Cykl życia taska dla agenta AI: todo/backlog -> ai_working -> review ->
--- done. `review` już istnieje (migracja 002) — jedyny nowy stan to
+-- done. `review` już istnieje (migracja 002) - jedyny nowy stan to
 -- ai_working. `ai_working -> done` bezpośrednio wymaga jednocześnie
--- projects.allow_ai_auto_complete=true I uprawnienia can_complete_tasks —
+-- projects.allow_ai_auto_complete=true I uprawnienia can_complete_tasks -
 -- domyślnie oba wyłączone, zgodnie z wprost wyrażonym wymogiem: AI nie
 -- oznacza tasków jako ukończone bez wyraźnej zgody.
 --
 -- api_keys: hash (sha256), nigdy plaintext. Revoke to UPDATE tylko kolumny
--- revoked_at (GRANT UPDATE na tej jednej kolumnie) — właściciel klucza NIE
+-- revoked_at (GRANT UPDATE na tej jednej kolumnie) - właściciel klucza NIE
 -- może zmienić scopes/key_hash własnego klucza, ta sama lekcja co
 -- project_limit w migracji 014. project_ai_permissions: domyślne wartości
--- dokładnie odzwierciedlają listę użytkownika — read/comment/status wł.,
+-- dokładnie odzwierciedlają listę użytkownika - read/comment/status wł.,
 -- complete/modify/delete wył.
 -- ============================================================
 
@@ -136,7 +136,7 @@ FOR INSERT
 TO authenticated
 WITH CHECK (user_id = (SELECT auth.uid()));
 
--- Revoke is an UPDATE of one column (see the GRANT below), not a DELETE —
+-- Revoke is an UPDATE of one column (see the GRANT below), not a DELETE -
 -- a revoked key stays as a row (name, scopes, history) rather than
 -- disappearing, matching task_attempts' (013) "log entry" instinct.
 DROP POLICY IF EXISTS api_keys_revoke ON public.api_keys;
@@ -151,7 +151,7 @@ WITH CHECK (user_id = (SELECT auth.uid()));
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_ai_permissions TO authenticated;
 
 -- api_keys: authenticated gets SELECT/INSERT freely, but UPDATE only on
--- revoked_at — the RLS policy above says "your own row," this GRANT says
+-- revoked_at - the RLS policy above says "your own row," this GRANT says
 -- "only this column," together closing the gap migration 014 first
 -- documented: RLS alone doesn't stop a caller from writing columns a
 -- policy's role-check never looks at.
@@ -246,7 +246,7 @@ git commit -m "Add AI Task API schema: ai_working status, api_keys, project_ai_p
 
 ---
 
-### Task 2: Task status vocabulary — `types/task.ts`, `task-board.ts`
+### Task 2: Task status vocabulary - `types/task.ts`, `task-board.ts`
 
 **Files:**
 - Modify: `src/types/task.ts`
@@ -278,7 +278,7 @@ between `in_progress` and `review`:
   },
 ```
 
-(`in_progress` already uses `bg-warning` — `ai_working` uses `bg-info`
+(`in_progress` already uses `bg-warning` - `ai_working` uses `bg-info`
 (blue) to read as visually distinct from a human's own in-progress work,
 not implying "blocked/waiting" the way reusing warning would.)
 
@@ -299,7 +299,7 @@ git commit -m "Add ai_working to the task status vocabulary and Kanban board"
 
 ---
 
-### Task 3: Activity log vocabulary — `types/api.ts`, `action-config.ts`
+### Task 3: Activity log vocabulary - `types/api.ts`, `action-config.ts`
 
 **Files:**
 - Modify: `src/types/api.ts`
@@ -332,7 +332,7 @@ across the app):
   task_ai_completed: { label: "AI completed task", icon: Bot, color: "text-success" },
 ```
 
-(`task_ai_completed` uses `text-success` instead — matches every other
+(`task_ai_completed` uses `text-success` instead - matches every other
 "...completed"/"...approved" terminal-success entry already in this map,
 e.g. `decision_approved`.)
 
@@ -424,7 +424,7 @@ login-attempt lockout:
 import "server-only";
 
 /**
- * Per-API-key request rate limit. In-memory, per-process — same
+ * Per-API-key request rate limit. In-memory, per-process - same
  * documented limitation as src/lib/auth/rate-limit.ts (resets on restart,
  * doesn't share state across replicas); this deployment runs one `app`
  * container (docker-compose.yml), so that's acceptable today. A
@@ -503,7 +503,7 @@ export interface ApiKeyIdentity {
 
 /**
  * Resolves a bearer token to the API key's owner, or null if it's missing,
- * malformed, unknown, or revoked. Updates last_used_at as a side effect —
+ * malformed, unknown, or revoked. Updates last_used_at as a side effect -
  * every caller of this function is about to actually use the key, there is
  * no separate "check without using" call site in this codebase.
  */
@@ -548,7 +548,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
 }
 
 /**
- * A Supabase client that operates under RLS as `userId` — for the hosted
+ * A Supabase client that operates under RLS as `userId` - for the hosted
  * path only (self-hosted route handlers call withUser(userId, ...)
  * directly instead, the same mechanism every other identity in this
  * codebase already uses; there is nothing for this function to do there).
@@ -557,7 +557,7 @@ export async function authenticateApiKey(authHeader: string | null): Promise<Api
  * own session tokens carry ({ sub, role: "authenticated", exp }), signed
  * with SUPABASE_JWT_SECRET. PostgREST decodes it exactly like a real
  * session token, so auth.uid() resolves to userId and every existing RLS
- * policy applies unchanged — no authorization logic is reimplemented here.
+ * policy applies unchanged - no authorization logic is reimplemented here.
  */
 export async function getApiUserClient(userId: string) {
   const jwt = await signApiJwt(userId);
@@ -613,7 +613,7 @@ async function signApiJwt(userId: string): Promise<string> {
 ```
 
 (`signApiJwt` reuses the exact base64url-encoding/HMAC-via-`crypto.subtle`
-pattern already in `src/lib/auth/session-cookie.ts` — deliberately
+pattern already in `src/lib/auth/session-cookie.ts` - deliberately
 duplicated rather than imported, since that file's `signSession`/
 `verifySessionCookie` are shaped around this app's own session cookie
 payload (`{sub, exp}` with no `role` claim, no JWT header), not a
@@ -635,7 +635,7 @@ git commit -m "Add API key authentication with JWT impersonation for the hosted 
 
 ---
 
-### Task 7: `.env.example` — document `SUPABASE_JWT_SECRET`
+### Task 7: `.env.example` - document `SUPABASE_JWT_SECRET`
 
 **Files:**
 - Modify: `.env.example`
@@ -648,7 +648,7 @@ this plan's research) and add, in the same section:
 
 ```
 # Required only if you use the AI Task API (src/app/api/v1) on Guidon
-# Cloud — signs short-lived JWTs so an API key's requests run under the
+# Cloud - signs short-lived JWTs so an API key's requests run under the
 # same RLS a real session would. Find it in Supabase: Project Settings →
 # API → JWT Settings → JWT Secret. Self-hosted installs never need this.
 SUPABASE_JWT_SECRET=your-supabase-jwt-secret
@@ -674,7 +674,7 @@ git commit -m "Document SUPABASE_JWT_SECRET for the AI Task API"
 - Create: `src/app/api/v1/tasks/[taskId]/comment/route.ts`
 
 Every route shares the same opening boilerplate (auth, scope check, rate
-limit) — write it once as a small shared helper rather than six copies.
+limit) - write it once as a small shared helper rather than six copies.
 
 - [ ] **Step 1: Shared route guard**
 
@@ -692,7 +692,7 @@ import type { ApiKeyScope } from "./api-keys";
  * Runs the common checks every /api/v1 AI Task API route needs, in order:
  * valid key -> not rate-limited -> has the required scope. Returns either
  * the authenticated identity or a ready-to-return NextResponse for the
- * caller to `return` immediately — mirrors requireAuth()/isAuthError() in
+ * caller to `return` immediately - mirrors requireAuth()/isAuthError() in
  * src/lib/auth/auth-helpers.ts, the existing pattern for "check or bail"
  * in this codebase's API routes.
  */
@@ -761,7 +761,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 ```
 
-(An empty array — not a 404 — is the correct response for a project the
+(An empty array - not a 404 - is the correct response for a project the
 key's owner isn't a member of: RLS returns zero rows either way, and
 distinguishing "empty project" from "no access" via a different status
 code would leak which project IDs exist to a caller who shouldn't be able
@@ -804,7 +804,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 ```
 
 (A single task by ID legitimately returns 404 rather than an empty
-result, unlike the list endpoint above — there's no plural-collection
+result, unlike the list endpoint above - there's no plural-collection
 ambiguity here to hide behind, and the task ID itself was already known
 to the caller.)
 
@@ -1277,7 +1277,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   useEffect(() => {
     if (state.fullKey) {
       // A newly created key isn't in `initialKeys` yet (no full page reload
-      // happened) — the banner below shows it; the list itself catches up
+      // happened) - the banner below shows it; the list itself catches up
       // on next navigation via revalidatePath, matching this codebase's
       // existing useActionState + Server Action revalidation pattern.
     }
@@ -1299,7 +1299,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
       <CardContent className="space-y-6">
         {state.fullKey && (
           <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm">
-            <p className="mb-2 font-medium">Copy this key now — it won&apos;t be shown again.</p>
+            <p className="mb-2 font-medium">Copy this key now - it won&apos;t be shown again.</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 overflow-x-auto rounded bg-background px-2 py-1 font-mono text-xs">
                 {state.fullKey}
@@ -1376,7 +1376,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
 - [ ] **Step 3: Wire into `/profile/page.tsx`**
 
 Read `src/app/profile/page.tsx`'s current content first (it changed
-across Phase 1b's Task 4 — read before editing). Add the import:
+across Phase 1b's Task 4 - read before editing). Add the import:
 
 ```typescript
 import { ApiKeysSection } from "./api-keys";
@@ -1599,7 +1599,7 @@ export function AiPermissionsForm({
 
 Add fetching `project_ai_permissions` (defaulting to the same
 `{true,true,true,false,false,false}` shape the migration's column
-defaults use, for a project that's never had a row written — matches
+defaults use, for a project that's never had a row written - matches
 `getOrgPlanLimits`'s own "fail closed to sane defaults" precedent from
 Phase 4) alongside the existing `project`/`technologies` fetch, and render
 `<AiPermissionsForm projectId={projectId} permissions={...} allowAutoComplete={project.allow_ai_auto_complete} />`
@@ -1634,7 +1634,7 @@ npm run build
 ```
 
 Expected: `test:db`/`test:limits` both `0 fail`. `tsc` clean. `lint` shows
-only pre-existing `no-explicit-any` debt — no new errors. `build`
+only pre-existing `no-explicit-any` debt - no new errors. `build`
 succeeds, including all six new `/api/v1/...` routes and both new UI
 sections.
 
@@ -1643,13 +1643,13 @@ sections.
 Confirm every route under `src/app/api/v1/tasks` and
 `src/app/api/v1/projects` calls `guardApiRequest` before touching any
 data, and that `getApiUserClient`/`withUser` are the only ways any of
-these routes reach the database — no route should use
+these routes reach the database - no route should use
 `createServiceClient()` directly (that would bypass RLS entirely, exactly
 what this phase's design was built to avoid).
 
 - [ ] **Step 3: Manual/curl check, if a working backend is reachable**
 
-Same constraint as every prior plan this session — no live Supabase/local
+Same constraint as every prior plan this session - no live Supabase/local
 credentials here. If a real environment is available: create an API key
 on `/profile`, then:
 
@@ -1658,5 +1658,5 @@ curl -H "Authorization: Bearer guidon_..." https://your-instance/api/v1/projects
 ```
 
 confirm a 401 with no header, a 403 with a key lacking `tasks:read`, and a
-200 with the right scope — and confirm a key's owner who isn't a member of
+200 with the right scope - and confirm a key's owner who isn't a member of
 the target project gets an empty list, not another user's tasks.

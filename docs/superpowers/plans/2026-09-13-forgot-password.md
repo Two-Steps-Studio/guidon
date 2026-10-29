@@ -4,7 +4,7 @@
 
 **Goal:** Add a hosted-mode-only "Forgot password?" flow: request a reset by email, receive a Guidon-branded email sent by Guidon's own backend via Resend (not Supabase's dashboard-configured mailer), and set a new password.
 
-**Architecture:** Guidon's backend calls Supabase's admin API (`generateLink`) to mint a recovery link without Supabase sending its own email, then sends the actual branded email itself via a plain `fetch` call to Resend's REST API. The recovery link routes through the app's *already-existing* `/auth/callback` route unchanged (same mechanism the OAuth flow already uses) to establish a session, landing on a new page that lets the user set a new password. Self-hosted mode has no email-sending capability at all, so this feature is completely absent there — new routes redirect away, and the login page's link is hidden — mirroring how `OAuthButtons` already hides itself in that mode.
+**Architecture:** Guidon's backend calls Supabase's admin API (`generateLink`) to mint a recovery link without Supabase sending its own email, then sends the actual branded email itself via a plain `fetch` call to Resend's REST API. The recovery link routes through the app's *already-existing* `/auth/callback` route unchanged (same mechanism the OAuth flow already uses) to establish a session, landing on a new page that lets the user set a new password. Self-hosted mode has no email-sending capability at all, so this feature is completely absent there - new routes redirect away, and the login page's link is hidden - mirroring how `OAuthButtons` already hides itself in that mode.
 
 **Tech Stack:** Next.js Server Actions, Supabase Admin API (`supabase.auth.admin.generateLink`), Resend REST API via plain `fetch` (no SDK dependency).
 
@@ -395,7 +395,7 @@ Expected: no new errors in the three new files.
 - [ ] **Step 6: Build**
 
 Run: `npm run build`
-Expected: build succeeds, `/auth/forgot-password` listed as a route. Note: this worktree may need a `.env.local` present to get past a missing-Supabase-env-vars build failure (a pre-existing environment gap unrelated to this change, hit by prior rounds' implementers too) — if so, temporarily copy `.env.local` from `C:\guidon` (gitignored, confirm with `git check-ignore -v .env.local` before copying, and delete it again afterward so nothing gets staged).
+Expected: build succeeds, `/auth/forgot-password` listed as a route. Note: this worktree may need a `.env.local` present to get past a missing-Supabase-env-vars build failure (a pre-existing environment gap unrelated to this change, hit by prior rounds' implementers too) - if so, temporarily copy `.env.local` from `C:\guidon` (gitignored, confirm with `git check-ignore -v .env.local` before copying, and delete it again afterward so nothing gets staged).
 
 - [ ] **Step 7: Commit**
 
@@ -665,7 +665,7 @@ Expected: `132 pass / 0 fail` (this feature touches no schema/RLS code at all).
 
 - [ ] **Step 9: Manual verification (necessarily limited)**
 
-There is no running dev server and no browser tool available to you in this subagent context, and a real end-to-end test additionally requires a working `RESEND_API_KEY` (a real Resend account with a verified domain) and a Supabase project's real service-role key — neither is assumed to exist in this environment. **Skip live testing** — instead, trace through the code by hand one more time and confirm in your report:
+There is no running dev server and no browser tool available to you in this subagent context, and a real end-to-end test additionally requires a working `RESEND_API_KEY` (a real Resend account with a verified domain) and a Supabase project's real service-role key - neither is assumed to exist in this environment. **Skip live testing** - instead, trace through the code by hand one more time and confirm in your report:
 - `requestPasswordReset` returns the exact same `{ error: null }` shape for a nonexistent email as for a real one (re-read the function once more with fresh eyes).
 - The self-hosted redirects in both new `page.tsx` files are unconditional and happen before anything else runs.
 - The "Forgot password?" link is correctly wrapped in `{!local && ...}`.
@@ -695,7 +695,7 @@ EOF
 
 ## Context
 
-This is a hosted-mode-only feature — Guidon's self-hosted mode has no email-sending capability at all (confirmed via grep: `local-auth.ts` only uses email for format validation), so every new route redirects away when `hasDirectDatabase()` is true, exactly mirroring how `OAuthButtons` already hides itself in that mode. The recovery link deliberately routes through the *already-existing* `/auth/callback` route completely unchanged — do not modify `src/app/auth/callback/route.ts` or `src/lib/auth/safe-redirect.ts`, neither needs to change for this to work (the redirect target is just a same-site path, already supported). Design rationale: `docs/superpowers/specs/2026-09-13-forgot-password-design.md`.
+This is a hosted-mode-only feature - Guidon's self-hosted mode has no email-sending capability at all (confirmed via grep: `local-auth.ts` only uses email for format validation), so every new route redirects away when `hasDirectDatabase()` is true, exactly mirroring how `OAuthButtons` already hides itself in that mode. The recovery link deliberately routes through the *already-existing* `/auth/callback` route completely unchanged - do not modify `src/app/auth/callback/route.ts` or `src/lib/auth/safe-redirect.ts`, neither needs to change for this to work (the redirect target is just a same-site path, already supported). Design rationale: `docs/superpowers/specs/2026-09-13-forgot-password-design.md`.
 
 ## Before You Begin
 
@@ -714,8 +714,8 @@ For whichever task you've been assigned:
 
 ## Code Organization
 
-- Follow the file structure and code given in each task exactly — this was fully specified by a prior planning phase, not left for you to design.
-- If you find the plan's given code doesn't actually match the current file contents when you go to apply an edit (e.g. `login-form.tsx` in Task 3), don't force it — read the actual current file, apply the equivalent edit precisely, and note the discrepancy in your report.
+- Follow the file structure and code given in each task exactly - this was fully specified by a prior planning phase, not left for you to design.
+- If you find the plan's given code doesn't actually match the current file contents when you go to apply an edit (e.g. `login-form.tsx` in Task 3), don't force it - read the actual current file, apply the equivalent edit precisely, and note the discrepancy in your report.
 - Don't restructure anything outside what the task specifies.
 
 ## When You're in Over Your Head
@@ -734,7 +734,7 @@ It is always OK to stop and say "this is too hard for me." Bad work is worse tha
 Review your work with fresh eyes. Ask yourself:
 - Did I fully implement every step in my assigned task (except any explicitly skipped)?
 - Is the code clean, and did I follow the exact code given rather than improvising?
-- Did I avoid overbuilding — no extra features, no self-hosted equivalent, no UI beyond what's specified?
+- Did I avoid overbuilding - no extra features, no self-hosted equivalent, no UI beyond what's specified?
 - Do tsc/lint/build (and test:db, for Task 3) all actually pass (paste real output, don't assume)?
 - (Task 2 specifically) Does `requestPasswordReset` genuinely return the same shape whether or not the email exists?
 - (Task 3 specifically) Is the self-hosted redirect unconditional and does it happen before any session check?
@@ -757,18 +757,18 @@ When done, report:
 ## Plan self-review
 
 **Spec coverage:**
-- "Forgot password?" link, hidden in self-hosted — Task 3, Step 3. ✓
-- `/auth/forgot-password` request form + `requestPasswordReset` action — Task 2. ✓
-- `generateLink` (admin API, no Supabase-sent email) + `redirectTo` built from `SITE_URL` pointing back through the existing callback route — Task 2, Step 1. ✓
-- No changes to `callback/route.ts`/`safe-redirect.ts` — neither file appears in any task's file list, and the plan's "Context" section explicitly calls out not touching them. ✓
-- `/auth/reset-password` session gate + `updateUser` form — Task 3, Steps 1-2. ✓
-- Self-hosted gating on both new pages — Task 2 Step 2, Task 3 Step 1. ✓
-- Anti-enumeration (same generic result regardless of existence; rate-limit counter incremented before the existence-revealing call; only a genuine send failure surfaces as an error) — Task 2, Step 1, matches the spec's exact three-branch design. ✓
-- Rate limiting reusing `rate-limit.ts` with a `reset:` prefixed key — Task 2, Step 1. ✓
-- Resend module: plain fetch, required env vars, reused visual template — Task 1. ✓
-- Env var documentation — Task 3, Step 4. ✓
-- Verification per task (tsc/lint/build, test:db in Task 3, manual limited to hand-tracing since no live Resend/Supabase credentials are assumed) — present in every task, Task 3 Step 9 explicitly explains why live testing is skipped here. ✓
+- "Forgot password?" link, hidden in self-hosted - Task 3, Step 3. ✓
+- `/auth/forgot-password` request form + `requestPasswordReset` action - Task 2. ✓
+- `generateLink` (admin API, no Supabase-sent email) + `redirectTo` built from `SITE_URL` pointing back through the existing callback route - Task 2, Step 1. ✓
+- No changes to `callback/route.ts`/`safe-redirect.ts` - neither file appears in any task's file list, and the plan's "Context" section explicitly calls out not touching them. ✓
+- `/auth/reset-password` session gate + `updateUser` form - Task 3, Steps 1-2. ✓
+- Self-hosted gating on both new pages - Task 2 Step 2, Task 3 Step 1. ✓
+- Anti-enumeration (same generic result regardless of existence; rate-limit counter incremented before the existence-revealing call; only a genuine send failure surfaces as an error) - Task 2, Step 1, matches the spec's exact three-branch design. ✓
+- Rate limiting reusing `rate-limit.ts` with a `reset:` prefixed key - Task 2, Step 1. ✓
+- Resend module: plain fetch, required env vars, reused visual template - Task 1. ✓
+- Env var documentation - Task 3, Step 4. ✓
+- Verification per task (tsc/lint/build, test:db in Task 3, manual limited to hand-tracing since no live Resend/Supabase credentials are assumed) - present in every task, Task 3 Step 9 explicitly explains why live testing is skipped here. ✓
 
 **Placeholder scan:** no TBD/TODO/"add appropriate handling" phrases; every step shows complete, copy-pasteable code or an exact command with expected output.
 
-**Type consistency:** `requestPasswordReset(email: string): Promise<RequestPasswordResetResult>` (Task 2) is called from `forgot-password-form.tsx` exactly as `requestPasswordReset(email)` with `result.error` checked — matches. `sendPasswordResetEmail(to: string, resetLink: string): Promise<void>` (Task 1) is called from `requestPasswordReset` as `sendPasswordResetEmail(normalizedEmail, data.properties.action_link)` — matches (both `string` arguments in the same order). `isLockedOut`/`recordFailedAttempt` (Task 2) are the exact existing exports from `src/lib/auth/rate-limit.ts` (confirmed in this session's own exploration), used with a plain `string` key — matches their existing signatures (`isLockedOut(key: string): boolean`, `recordFailedAttempt(key: string): void`). `SITE_URL` (Task 2) is the exact existing export from `src/lib/site-url.ts`, a plain `string` constant — used directly in a template literal, no type mismatch.
+**Type consistency:** `requestPasswordReset(email: string): Promise<RequestPasswordResetResult>` (Task 2) is called from `forgot-password-form.tsx` exactly as `requestPasswordReset(email)` with `result.error` checked - matches. `sendPasswordResetEmail(to: string, resetLink: string): Promise<void>` (Task 1) is called from `requestPasswordReset` as `sendPasswordResetEmail(normalizedEmail, data.properties.action_link)` - matches (both `string` arguments in the same order). `isLockedOut`/`recordFailedAttempt` (Task 2) are the exact existing exports from `src/lib/auth/rate-limit.ts` (confirmed in this session's own exploration), used with a plain `string` key - matches their existing signatures (`isLockedOut(key: string): boolean`, `recordFailedAttempt(key: string): void`). `SITE_URL` (Task 2) is the exact existing export from `src/lib/site-url.ts`, a plain `string` constant - used directly in a template literal, no type mismatch.

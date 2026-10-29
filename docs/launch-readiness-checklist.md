@@ -6,7 +6,7 @@ list is written for a mobile app, so some items do not map directly to
 Guidon's web SaaS model. “Implemented” means code exists; production service
 configuration still needs to be checked in the deployment environment.
 
-## Release evidence update — 2026-10-24
+## Release evidence update - 2026-10-24
 
 **Release remains on HOLD until the remaining integration/operations evidence
 and owner deployment approval.** The execution order and dated board baseline

@@ -8,7 +8,7 @@
 
 **Tech Stack:** PostgreSQL migration, Next.js Server Actions, the existing `StorageProvider` abstraction (works identically self-hosted and Supabase).
 
-Verification throughout: `npx tsc --noEmit`, `npm run lint`, `npm run test:db`, `npm run build` — this repo has no component/unit test runner (per `CLAUDE.md`), so UI correctness is verified by reading the code plus a real browser pass against the PGlite harness already used repeatedly this session, not by writing component tests.
+Verification throughout: `npx tsc --noEmit`, `npm run lint`, `npm run test:db`, `npm run build` - this repo has no component/unit test runner (per `CLAUDE.md`), so UI correctness is verified by reading the code plus a real browser pass against the PGlite harness already used repeatedly this session, not by writing component tests.
 
 ---
 

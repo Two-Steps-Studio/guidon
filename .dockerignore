@@ -1,4 +1,4 @@
-# Build artefacts and local state — never belong in the image context.
+# Build artefacts and local state - never belong in the image context.
 node_modules
 .next
 storage

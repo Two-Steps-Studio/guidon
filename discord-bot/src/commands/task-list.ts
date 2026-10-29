@@ -18,7 +18,7 @@ function formatTaskList(tasks: GuidonTask[]): string {
   // a truncated id here would be copy-pasteable but never actually work.
   const lines = tasks
     .slice(0, LIST_LIMIT)
-    .map((task) => `\`${task.id}\` **${task.title}** — ${task.status} (${task.priority})`);
+    .map((task) => `\`${task.id}\` **${task.title}** - ${task.status} (${task.priority})`);
   const suffix = tasks.length > LIST_LIMIT ? `\n…and ${tasks.length - LIST_LIMIT} more.` : "";
   return lines.join("\n") + suffix;
 }

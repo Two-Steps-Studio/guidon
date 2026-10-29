@@ -1,4 +1,4 @@
-# Per-organization project limit — design
+# Per-organization project limit - design
 
 ## Problem
 
@@ -6,7 +6,7 @@ Guidon Cloud (hosted, no `DATABASE_URL`) caps every organization at 1
 project via the hardcoded constant `HOSTED_PROJECT_LIMIT_PER_ORG` in
 `src/lib/limits.ts`. There is no way to raise that cap for a specific
 organization (e.g. a paying customer) without a code change and redeploy.
-Self-hosted installs (`DATABASE_URL` set) already have no limit at all —
+Self-hosted installs (`DATABASE_URL` set) already have no limit at all -
 out of scope, unaffected by this change.
 
 ## Goal
@@ -14,11 +14,11 @@ out of scope, unaffected by this change.
 An instance admin (gated by the existing `ADMIN_EMAILS` allowlist, see
 `src/lib/data/admin-access.ts`) can set a per-organization project limit
 from the admin panel. New organizations still default to 1. Only admins
-can change it — an organization's own owner/admin must not be able to
+can change it - an organization's own owner/admin must not be able to
 self-elevate their limit.
 
 Not building: an "unlimited" sentinel value (numeric cap only), and no new
-dedicated admin org-detail page — the limit is edited inline in the
+dedicated admin org-detail page - the limit is edited inline in the
 existing `/admin/organizations` table.
 
 ## Schema
@@ -45,7 +45,7 @@ CREATE POLICY organizations_update ON public.organizations FOR UPDATE
 
 Table-level `GRANT UPDATE ... TO authenticated` currently covers all
 columns, so adding `project_limit` as a plain column would let an org
-owner raise their own limit directly through the Supabase client — RLS
+owner raise their own limit directly through the Supabase client - RLS
 alone doesn't stop it. The migration narrows the grant:
 
 ```sql
@@ -60,7 +60,7 @@ unaffected and remains the only way to write `project_limit`.
 
 No existing code currently updates `organizations` through the
 `authenticated` path (confirmed by search), so narrowing the grant to
-those three columns changes nothing observable today — it only closes the
+those three columns changes nothing observable today - it only closes the
 gap the new column would otherwise open.
 
 ## Business logic
@@ -69,7 +69,7 @@ gap the new column would otherwise open.
 - `HOSTED_PROJECT_LIMIT_MESSAGE` (string) becomes `hostedProjectLimitMessage(limit: number)` (function), so the copy reflects the organization's actual limit.
 - `src/lib/data/org-access.ts` (`getOrgAccess`): add `project_limit` to the selected/queried columns in both the self-hosted (`withUser` SQL) and Supabase branches, and to the `OrgAccess.organization` type.
 - `src/app/organizations/[id]/actions.ts` (`createProject`): pass `access.organization.project_limit` into `isHostedProjectLimitReached` instead of relying on the default.
-- `src/app/organizations/[id]/page.tsx`: same — pass the org's limit, and render `hostedProjectLimitMessage(organization.project_limit)`.
+- `src/app/organizations/[id]/page.tsx`: same - pass the org's limit, and render `hostedProjectLimitMessage(organization.project_limit)`.
 - Self-hosted path is untouched: `isHostedProjectLimitReached` still returns `false` immediately when `hasDirectDatabase()` is true, regardless of the limit argument.
 
 ## Admin UI
@@ -91,7 +91,7 @@ export async function updateOrganizationProjectLimit(orgId: string, newLimit: nu
 - Self-hosted: `withServiceRole(({ query }) => query("UPDATE organizations SET project_limit = $1 WHERE id = $2", [newLimit, orgId]))`.
 - Supabase: `createServiceClient().from("organizations").update({ project_limit: newLimit }).eq("id", orgId)`.
 - `revalidatePath("/admin/organizations")` on success.
-- Implemented for both branches for consistency with the rest of the admin data layer (`src/lib/data/admin.ts`), even though self-hosted installs never enforce the limit — the value is still stored so admin data stays consistent if an install later starts enforcing it.
+- Implemented for both branches for consistency with the rest of the admin data layer (`src/lib/data/admin.ts`), even though self-hosted installs never enforce the limit - the value is still stored so admin data stays consistent if an install later starts enforcing it.
 
 `listOrganizationsForAdmin` (`src/lib/data/admin.ts`) adds `project_limit`
 to `AdminOrganizationRow` and to both branches' queries.

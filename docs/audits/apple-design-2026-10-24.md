@@ -1,4 +1,4 @@
-# Guidon — audyt interfejsu według apple-design
+# Guidon - audyt interfejsu według apple-design
 
 Data: 2026-10-24. Baza aplikacji: `a006133bde6fa76d2f13e1c04b48292544904bf6`
 (PR #62, wraz z wcześniejszymi PR-ami w tym stosie). To audyt UX i implementacji
@@ -31,7 +31,7 @@ elementu nie rozwiąże tych problemów.
 - Obserwacja DOM wskazuje kandydatów do sprawdzenia (wymiary, etykiety,
   landmarki, błędy JS). Sam skan nie jest testem VoiceOver ani certyfikatem WCAG.
   Próg 44px jest celem wygody dotyku; każdy mniejszy element nie jest automatycznie
-  naruszeniem WCAG — liczą się też odstępy, alternatywy i właściwe kryterium.
+  naruszeniem WCAG - liczą się też odstępy, alternatywy i właściwe kryterium.
 - **K**: potwierdzone w kodzie; **R**: zaobserwowane w działającym UI;
   **H**: hipoteza/propozycja projektowa, wymaga porównania z użytkownikami.
   P1: utrata pracy lub bariera kluczowej obsługi; P2: znacząca jakość/ergonomia;
@@ -172,11 +172,11 @@ i tekst w aplikacji znajduje się na scrim.
 świadomy wybór. **Dowód:** porównanie czytelności i wydajności na słabym GPU,
 pomiar klatek oraz energii na urządzeniu. Nie twierdzę, że sam WebGL dowodzi
 regresji wydajności. Kod ma już ograniczenie DPR, obserwację widoczności i pauzę
-w ukrytej karcie — należy je zachować.
+w ukrytej karcie - należy je zachować.
 
 ### AD-11 · P2 · Lightbox nie prowadzi obrazu razem z palcem · K
 
-`ui/image-lightbox.tsx:88–99` zapamiętuje początek i rozpoznaje poziomy dystans
+`ui/image-lightbox.tsx:88-99` zapamiętuje początek i rozpoznaje poziomy dystans
 dopiero na końcu. Brak śledzenia 1:1, blokady osi, obsługi anulowania i prędkości.
 Ukośny pionowy gest może zmienić zdjęcie. Obraz zmienia się skokowo.
 
@@ -196,14 +196,14 @@ obrazu za suwakiem. Zachować klawiaturowe suwaki i opisane etykiety.
 
 ### AD-13 · P2 · Wyszukiwanie ukrywa oczekiwanie i błąd jako pusty wynik · K
 
-`layout/command-palette.tsx:119–175`: jest 200ms debounce i abort, ale stan
+`layout/command-palette.tsx:119-175`: jest 200ms debounce i abort, ale stan
 `loading` wyłącznie ukrywa „brak wyników”. Nie widać komunikatu oczekiwania;
 błąd HTTP nie jest rozróżniony, catch ustawia pustą listę. Starsze `finally`
 może też zmienić stan oczekiwania nowszego żądania.
 
 **Poprawka/dowód:** osobno szukanie, brak wyników i błąd z ponowieniem; odpowiedź
 ostatniego zapytania wygrywa; test opóźnionych i przestawionych odpowiedzi.
-Sam debounce nie jest błędem — zmniejsza zbędne zapytania.
+Sam debounce nie jest błędem - zmniejsza zbędne zapytania.
 
 ### AD-14 · P2 · Zakładki kontekstu nie komunikują stanu · K
 
@@ -226,7 +226,7 @@ każde jest osiągalne z kalendarza dotykiem i klawiaturą.
 
 ### AD-16 · P2 · Zmiana położenia karty nie jest ogłaszana czytnikowi · K
 
-Karty mają nazwy, Enter/Spację, Alt+strzałki oraz menu zmiany statusu — to mocna
+Karty mają nazwy, Enter/Spację, Alt+strzałki oraz menu zmiany statusu - to mocna
 podstawa. Brak dedykowanego ogłoszenia sukcesu przeniesienia i pozycji w tablicy.
 Nie należy zakładać, że sama zmiana DOM zostanie właściwie odczytana.
 
@@ -279,7 +279,7 @@ Na `/profile` z kluczami API testowego konta powtarza się React #418 (różnica
 tekstu serwera i klienta), w jasnym/ciemnym motywie i obu szerokościach.
 To rzeczywisty błąd, mimo odpowiedzi HTTP 200 i widocznego formularza.
 `profile/api-keys.tsx:132/135` formatuje daty przez `toLocaleDateString()` bez
-ustalonego locale/timezone — kandydat do diagnozy, nie udowodniona przyczyna.
+ustalonego locale/timezone - kandydat do diagnozy, nie udowodniona przyczyna.
 
 **Poprawka/dowód:** ustalić dokładny różniący się tekst w trybie diagnostycznym,
 ujednolicić wejściowe dane/formatowanie, bez `suppressHydrationWarning` jako
@@ -305,9 +305,9 @@ hydratacji i brak utraty fokusu podczas uruchamiania profilu.
   formularz feedbacku z radiami i celami 44px, zachowaniem danych po błędzie.
 - Typografia: Geist z fallbackiem systemowym, ciało blisko neutralnego trackingu,
   nagłówki mają osobny tracking/leading. Pola w pomiarze mają 16px mimo `text-sm`
-  w komponentach — nie zgłaszam niepotwierdzonego błędu automatycznego zoomu iOS.
+  w komponentach - nie zgłaszam niepotwierdzonego błędu automatycznego zoomu iOS.
 
-## Aplikacja natywna — osobny przegląd kodu
+## Aplikacja natywna - osobny przegląd kodu
 
 Mocne podstawy: systemowy font, skala 17px dla treści, safe area w FAB i pickerach,
 haptyka z centralnym wyłącznikiem, 50px wiersze opcji, etykiety dostępności,
@@ -320,7 +320,7 @@ Modal i powrocie; przerwanie swipe w ReanimatedSwipeable; reduced motion toastó
 (domyślne zachowanie zależy od użytej wersji biblioteki, brak podstaw do zgłoszenia
 pewnego błędu wyłącznie po braku jawnego parametru); klawiatura formularzy,
 orientacja, offline i scenariusze ponowienia. Kolory info/priority mobile nadal
-różnią się od semantycznych akcentów webu — uzgodnić rolę, nie zamieniać masowo
+różnią się od semantycznych akcentów webu - uzgodnić rolę, nie zamieniać masowo
 wszystkich kolorów statusów na kolor marki.
 
 ## Kolejność prac
@@ -347,13 +347,13 @@ w pełni odwzorowane przez wejście właściciela do pustego projektu.
 Nie wykonano testów z prawdziwymi użytkownikami, czytnikami na urządzeniu,
 200%/400% zoomem całej macierzy, pomiarów energii/GPU/FPS ani pełnego pomiaru
 kontrastu każdej pary (zwłaszcza nad tapetą). Brak automatycznego przepełnienia
-`documentElement` nie dowodzi, że nic nie jest ucięte — root używa `overflow-x:clip`.
+`documentElement` nie dowodzi, że nic nie jest ucięte - root używa `overflow-x:clip`.
 Nie wolno zamieniać statusu tych pozycji na „zaliczone”. Instrukcja stagingu:
 `docs/release/staging-handoff.md`.
 
 ## Odtworzenie zbierania dowodów
 
-`node tests/e2e/run.mjs --design-audit` — ten sam izolowany build, własny Docker
+`node tests/e2e/run.mjs --design-audit` - ten sam izolowany build, własny Docker
 PostgreSQL, blokada usług live i sprzątanie jak w istniejącym E2E. Zwykły
 `npm run test:e2e` zachowuje dotychczasowy zestaw regresji. Tryb audytu kolekcjonuje
 obserwacje i screenshoty, nie udaje zielonego testu wszystkich zasad UX.

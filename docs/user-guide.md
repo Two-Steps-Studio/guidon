@@ -34,18 +34,18 @@ display preference; it does not delete its data.
 
 The available project areas include:
 
-- **Work** — task board, task details, comments, attachments, labels,
+- **Work** - task board, task details, comments, attachments, labels,
   subtasks, and task relationships.
-- **Calendar** — tasks and project dates in a calendar view.
-- **Roadmap** — project milestones and planned work.
-- **Files** — project documents and connected repository files.
-- **Knowledge** — collected project knowledge and sources.
-- **Decisions** — decisions and their rationale.
-- **References** — links and other useful project references.
-- **Technology** — the project's technology inventory.
-- **Memory** — review project insights generated from its activity and
+- **Calendar** - tasks and project dates in a calendar view.
+- **Roadmap** - project milestones and planned work.
+- **Files** - project documents and connected repository files.
+- **Knowledge** - collected project knowledge and sources.
+- **Decisions** - decisions and their rationale.
+- **References** - links and other useful project references.
+- **Technology** - the project's technology inventory.
+- **Memory** - review project insights generated from its activity and
   context when AI is enabled.
-- **Context** — relationships between project entities and the background
+- **Context** - relationships between project entities and the background
   behind the work.
 
 Not every project needs every area. Project templates provide starting
@@ -108,12 +108,12 @@ configuration details.
 
 ## More documentation
 
-- [Architecture](./architecture.md) — application structure and data flow.
-- [Configuration](./configuration.md) — environment variables and providers.
-- [Authentication setup](./auth-setup.md) — OAuth provider setup.
-- [Self-hosting](./self-hosting.md) — deployment and operational setup.
-- [Backups](./backups.md) — backup and recovery guidance.
-- [Upgrading](./upgrading.md) — updating a self-hosted installation.
-- [Webhooks](./webhooks.md) — outgoing webhook configuration.
+- [Architecture](./architecture.md) - application structure and data flow.
+- [Configuration](./configuration.md) - environment variables and providers.
+- [Authentication setup](./auth-setup.md) - OAuth provider setup.
+- [Self-hosting](./self-hosting.md) - deployment and operational setup.
+- [Backups](./backups.md) - backup and recovery guidance.
+- [Upgrading](./upgrading.md) - updating a self-hosted installation.
+- [Webhooks](./webhooks.md) - outgoing webhook configuration.
 
 For API and MCP details, use the [Guidon developer portal](https://useguidon.com/developers).

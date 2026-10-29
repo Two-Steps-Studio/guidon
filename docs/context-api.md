@@ -11,7 +11,7 @@ safe to put into a prompt.
 
 Both accept these parameters:
 
-- `max_tokens`: 500–32000, default 6000.
+- `max_tokens`: 500-32000, default 6000.
 - `focus`: up to 500 characters of words to prioritise.
 
 The task dialog's **Copy agent context** uses a budget of 16000.
@@ -86,7 +86,7 @@ as comments.
 | Provenance | Created when | Status |
 |---|---|---|
 | `explicit_reference` | A commit message, branch name or PR title/body mentions `guidon#xxxxxxxx` (the GitHub webhook) | `confirmed` |
-| `suggestion` | A new, reopened or ready-for-review PR mentions no task, but shares at least two distinctive words with an open task's title and covers at least half of that title's words. Generic words like "fix" or "update" never count. At most 3 per PR | `suggested`, confidence 0.40–0.90, never 1, with the evidence |
+| `suggestion` | A new, reopened or ready-for-review PR mentions no task, but shares at least two distinctive words with an open task's title and covers at least half of that title's words. Generic words like "fix" or "update" never count. At most 3 per PR | `suggested`, confidence 0.40-0.90, never 1, with the evidence |
 | `manual` | Reserved for a person adding a link | `confirmed` |
 
 - **Review.** People with write access, and agents through

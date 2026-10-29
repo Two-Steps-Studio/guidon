@@ -1,4 +1,4 @@
-# Beta label and rated feedback — 2026-10-24
+# Beta label and rated feedback - 2026-10-24
 
 Guidon cards: `6fdc95eb-3afd-4703-80d1-8f63c0b22632` (BETA),
 `56b3bd1f-0b60-4e07-8f26-9561388e5eae` (feedback rating).
@@ -8,7 +8,7 @@ Guidon cards: `6fdc95eb-3afd-4703-80d1-8f63c0b22632` (BETA),
 - A shared BETA badge uses existing semantic brand colors in the app header,
   public hero/footer, login/signup and onboarding. It does not cover controls
   with a floating overlay or add a dismissible warning.
-- Feedback asks for an explicit 1–5 rating using native labeled radio controls,
+- Feedback asks for an explicit 1-5 rating using native labeled radio controls,
   keyboard navigation and 44px touch targets. Sending requires text and a score.
   Failed submissions retain both values; reopening the form starts fresh.
 - The admin inbox shows each score or an explicit “No rating” for old feedback.
@@ -18,7 +18,7 @@ Guidon cards: `6fdc95eb-3afd-4703-80d1-8f63c0b22632` (BETA),
 
 ## Database rollout and rollback
 
-Migration `084_feedback_rating.sql` adds nullable `smallint` with a 1–5 CHECK.
+Migration `084_feedback_rating.sql` adds nullable `smallint` with a 1-5 CHECK.
 No rows are rewritten/deleted, no RLS/grants change and no index is needed.
 Old clients can omit the score; supplying an invalid score is rejected server-side.
 Old records remain NULL, without fabricated historical ratings.
@@ -42,7 +42,7 @@ authorized by this document or performed as part of this PR.
   admin display of rated/legacy entries and non-admin denial in three browsers.
 - Cloud/PostgREST deployment configuration remains a separate staging gate.
 
-Verified local run: `bf226207c4b0` — clean install, real migrations, production
+Verified local run: `bf226207c4b0` - clean install, real migrations, production
 build, packaging canaries, REST/MCP checks, expanded auth/feedback scenarios in
 Chromium/Firefox/WebKit, credential log scan and cleanup pass. Targeted ESLint
 and whitespace checks pass. A 375px feedback screenshot was visually inspected.

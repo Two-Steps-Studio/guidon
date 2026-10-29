@@ -1,166 +1,143 @@
-# Logowanie przez Google, GitHub, Discord i inne — konfiguracja
+# Logowanie przez Google i GitHub
 
-Kod jest gotowy w obu aplikacjach. Poniższe kroki trzeba wykonać **poza
-repozytorium**: klucze powstają w Google Cloud, Discordzie i panelu Supabase.
+Guidon obsługuje te logowania w kodzie. W trybie Supabase trzeba skonfigurować
+klientów OAuth u dostawców, zapisać ich dane w Supabase i dopiero potem włączyć
+przyciski w aplikacji. Nie wymaga to tworzenia drugiego projektu Supabase.
 
-Punkty 1–6 dotyczą trybu hostowanego (Supabase). Self-hosted (z
-`DATABASE_URL`) nie używa Supabase — patrz „Self-hosted” na końcu.
+## Dwa różne adresy powrotne
 
-Dwa osobne projekty Supabase = dwie osobne konfiguracje:
+| Etap | Adres |
+|---|---|
+| Google/GitHub -> Supabase | `https://<project-ref>.supabase.co/auth/v1/callback` |
+| Supabase -> Guidon | `https://useguidon.com/auth/callback` |
+| Supabase -> lokalny Guidon | `http://localhost:5803/auth/callback` |
 
-| Aplikacja | Projekt Supabase | Adres produkcyjny |
-|---|---|---|
-| tss-website | `zkwkfh…` | (domena TSS) |
-| Guidon | `thtzae…` | (domena Guidona) |
+Callback dostawcy skopiuj z **Authentication -> Sign In / Providers** w swoim
+projekcie Supabase. Dla obecnego projektu Guidona jest to:
 
-Jedną aplikację Google/Discord można współdzielić — wystarczy dopisać oba
-adresy przekierowania.
-
----
-
-## 1. Adres przekierowania Supabase
-
-Dla każdego projektu Supabase adres callbacku ma postać:
-
-```
-https://<ref>.supabase.co/auth/v1/callback
+```text
+https://thtzaeeatjwyitifdcxb.supabase.co/auth/v1/callback
 ```
 
-czyli konkretnie:
+Adres `/api/github/callback` obsługuje integrację repozytoriów. Nie zastępuj go
+w istniejącej aplikacji GitHub używanej do tej integracji. Dla logowania utwórz
+osobną aplikację OAuth, np. **Guidon Sign-in**.
 
-```
-https://zkwkfhdyqwotijjhsegj.supabase.co/auth/v1/callback     # TSS
-https://thtzaeeatjwyitifdcxb.supabase.co/auth/v1/callback     # Guidon
-```
+## Google
 
-To ten adres wpisuje się u Google i Discorda — **nie** adres aplikacji.
-Supabase dopiero potem odsyła użytkownika na `/auth/callback` w aplikacji.
+1. Otwórz [Google Cloud](https://console.cloud.google.com/). Pierwsze użycie
+   konta może wymagać osobistej decyzji o akceptacji warunków Google Cloud.
+2. Wybierz projekt należący do operatora Guidona albo utwórz właściwy projekt.
+3. W **Google Auth Platform** skonfiguruj nazwę aplikacji, adres wsparcia,
+   domenę `useguidon.com`, regulamin i politykę prywatności oraz odbiorców.
+   W trybie **Testing** dodaj konta testowe. Sam zapis klienta nie oznacza,
+   że aplikacja jest opublikowana dla wszystkich użytkowników.
+4. W **Clients** utwórz klienta typu **Web application**.
+5. W **Authorized redirect URIs** wpisz dokładny callback Supabase z tabeli.
+   Nie wpisuj tam `/auth/callback` Guidona ani adresu integracji GitHub.
+6. **Client ID** i **Client secret** zapisz bezpośrednio w ustawieniach
+   dostawcy **Google** w Supabase. Następnie włącz dostawcę i zapisz.
 
----
+Wystarczą dane potrzebne do logowania: tożsamość, podstawowy profil i e-mail.
+Dostęp do Dysku Google, poczty ani kalendarza nie jest potrzebny.
 
-## 2. Google
+## GitHub
 
-1. [Google Cloud Console](https://console.cloud.google.com/) → utwórz projekt
-   (albo użyj istniejącego).
-2. **APIs & Services → OAuth consent screen** — typ *External*, uzupełnij
-   nazwę aplikacji, e-mail kontaktowy i domenę.
-3. **APIs & Services → Credentials → Create credentials → OAuth client ID**
-   - Application type: **Web application**
-   - Authorized redirect URIs: oba adresy z punktu 1
-4. Skopiuj **Client ID** i **Client secret**.
-5. Supabase → **Authentication → Providers → Google** → włącz, wklej klucze,
-   zapisz. Powtórz w drugim projekcie.
+1. Otwórz [GitHub -> OAuth Apps](https://github.com/settings/developers).
+   Sprawdź, kto jest właścicielem istniejących aplikacji i do czego służą.
+2. Wybierz **New OAuth App** i przygotuj:
+   - **Application name:** `Guidon Sign-in`;
+   - **Homepage URL:** `https://useguidon.com`;
+   - **Authorization callback URL / Redirect URI:** dokładny callback Supabase;
+   - dopasowanie callbacku bez wildcardów; Device Flow nie jest potrzebny.
+3. Zarejestruj aplikację i utwórz jej sekret. Sekret pokaże się tylko podczas
+   tworzenia, więc zapisz go bezpośrednio w przeznaczonym do tego panelu.
+4. W Supabase otwórz dostawcę **GitHub**, zapisz **Client ID** i **Client
+   secret**, włącz dostawcę i zapisz.
 
----
+Logowanie nie wymaga uprawnień do repozytoriów. Klucze integracji GitHub App
+Guidona i klucze logowania przez GitHub to osobne konfiguracje.
 
-## 3. Discord
+## Supabase -> URL Configuration
 
-1. [Discord Developer Portal](https://discord.com/developers/applications) →
-   **New Application**.
-2. **OAuth2 → Redirects** → dodaj oba adresy z punktu 1.
-3. Skopiuj **Client ID** i **Client Secret** (zakładka OAuth2).
-4. Supabase → **Authentication → Providers → Discord** → włącz, wklej klucze,
-   zapisz. Powtórz w drugim projekcie.
+W **Authentication -> URL Configuration** ustaw:
 
----
+- **Site URL:** `https://useguidon.com`;
+- **Redirect URLs:** callbacki Guidona potrzebne w danym środowisku, w tym
+  `https://useguidon.com/auth/callback` i lokalnie
+  `http://localhost:5803/auth/callback`.
 
-## 4. Adresy powrotne aplikacji
+Kod przekazuje bezpieczny wewnętrzny cel w parametrze `redirect` callbacku.
+Przy weryfikacji sprawdź pełny adres `redirectTo`, łącznie z tym parametrem,
+przeciwko regułom dopuszczonych URL-i. Na produkcji używaj dokładnych reguł
+potrzebnych dla callbacku, zamiast wildcarda obejmującego całą domenę.
 
-Supabase → **Authentication → URL Configuration**:
+Używaj konsekwentnie `localhost` podczas lokalnego logowania. Przejście między
+`localhost` i `127.0.0.1` zmienia pochodzenie strony i miejsce zapisu cookies.
 
-- **Site URL** — adres produkcyjny aplikacji
-- **Redirect URLs** — dopisz oba:
-  ```
-  http://localhost:5803/auth/callback
-  https://<domena-produkcyjna>/auth/callback
-  ```
+## Przyciski w Guidonie
 
-Bez wpisu dla `localhost` logowanie nie zadziała w trakcie developmentu.
-
----
-
-## 5. Włączenie przycisków
-
-Dopiero **po** skonfigurowaniu providerów w Supabase dopisz w `.env.local`:
+Po potwierdzeniu, że obaj dostawcy są skonfigurowani w Supabase, ustaw:
 
 ```env
-NEXT_PUBLIC_AUTH_PROVIDERS=google,github,discord
+NEXT_PUBLIC_AUTH_PROVIDERS=google,github
 ```
 
-Obsługiwane: `google`, `github`, `discord`, `gitlab`. GitHub i GitLab
-konfiguruje się tak samo jak Discorda: w GitHubie **Settings → Developer
-settings → OAuth Apps → New OAuth App** (Authorization callback URL = adres
-z punktu 1), w GitLabie **Preferences → Applications** (scope `read_user`),
-a klucze wkleja w Supabase → **Authentication → Providers**.
+Lokalnie jest to `.env.local`. Uruchom ponownie serwer. W hostingu ustaw
+zmienną dla właściwego środowiska i przygotuj nowy build. Wdrożenie produkcyjne
+jest osobnym krokiem wymagającym zgody operatora.
 
-Przyciski pojawiają się wyłącznie dla wymienionych providerów. Instalacja
-bez tej zmiennej zostaje przy logowaniu hasłem — celowo, żeby nie pokazywać
-przycisku, który po kliknięciu zwróci błąd.
+Ta zmienna zawiera tylko nazwy dostawców. Samo jej ustawienie nie konfiguruje
+Google ani GitHuba. Bez niej Guidon celowo pokazuje logowanie hasłem.
+Obsługiwane są też `discord` i `gitlab`, po ich osobnym skonfigurowaniu.
 
----
+Sekretów OAuth nie wpisuj do `NEXT_PUBLIC_*`, repozytorium, dokumentacji,
+zgłoszeń ani czatu. W trybie Supabase przechowuje je Supabase, a nie frontend.
 
-## 6. Weryfikacja
+## Weryfikacja
 
-1. `npm run dev`
-2. `/auth/login` — przyciski Google i Discord widoczne
-3. Kliknięcie przenosi do providera, zgoda wraca na `/auth/callback`,
-   a stamtąd na `/dashboard`
-4. W Supabase → **Authentication → Users** pojawia się konto z odpowiednim
-   providerem
+Sprawdź osobno Google i GitHub, najpierw na koncie przeznaczonym do testów:
 
-Gdy coś pójdzie nie tak, błąd wraca na `/auth/login?error=…` zamiast pustego
-ekranu — komunikat providera jest przekazywany wprost.
+1. Dostawca jest włączony w Supabase i ma właściwy Client ID oraz sekret.
+2. `/auth/login` oraz `/auth/signup` pokazują właściwy przycisk.
+3. Kliknięcie prowadzi do właściwego dostawcy z callbackiem Supabase.
+4. Po zgodzie użytkownika powrót do `/auth/callback` zapisuje sesję i prowadzi
+   na żądaną stronę Guidona. Odświeżenie strony zachowuje sesję.
+5. Odmowa zgody pokazuje błąd; nie tworzy pozornej zalogowanej sesji.
+6. Wylogowanie zamyka sesję. Powtórne logowanie działa również lokalnie.
+7. Inne konto nie otrzymuje dostępu do prywatnych projektów poprzedniego.
 
----
+Zielone testy PKCE, state i callbacków nie zastępują konfiguracji klientów ani
+potwierdzenia prawdziwego przebiegu u zewnętrznych dostawców.
 
-## Uwaga o kontach
+## Tożsamości i istniejące konta
 
-Google i Discord to w Supabase **osobne tożsamości**. Zalogowanie się raz
-Google'em, a raz Discordem na ten sam adres e-mail utworzy dwa konta, chyba
-że w Supabase włączysz **Authentication → Providers → Allow linking accounts
-with the same email**. Warto to rozważyć przed uruchomieniem produkcyjnym —
-później scalanie kont jest znacznie trudniejsze.
-
----
+Supabase automatycznie łączy tożsamości o tym samym adresie e-mail zgodnie ze
+swoimi regułami bezpieczeństwa. Nie trzeba włączać wymyślonego ustawienia
+"Allow linking accounts with the same email". Różne adresy mogą oznaczać różne
+konta. Sprawdź istniejące konto przy włączeniu drugiego dostawcy i zachowaj
+weryfikację adresu e-mail.
 
 ## Self-hosted
 
-Bez Supabase Guidon ma własnego klienta OAuth/OIDC. Każdy dostawca włącza
-się sam, gdy w środowisku są jego klucze (odczyt w runtime — jeden obraz
-Dockera dla każdej konfiguracji). Adres przekierowania, który wpisuje się
-u dostawcy:
+Gdy ustawiono `DATABASE_URL`, Guidon korzysta z własnego klienta OAuth/OIDC,
+a nie z Supabase Auth. Callback ma wtedy inną postać:
 
-```
+```text
 <APP_URL>/auth/oauth/<google|github|discord|gitlab|oidc>/callback
 ```
 
-Zmienne: `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`,
-`DISCORD_OAUTH_CLIENT_ID/SECRET`, `GITLAB_CLIENT_ID/SECRET` (+ `GITLAB_URL`
-dla własnego GitLaba) oraz `OIDC_ISSUER`, `OIDC_CLIENT_ID/SECRET`,
-`OIDC_NAME` dla dowolnego dostawcy OpenID Connect (Keycloak, Authentik,
-Entra ID…). Szczegóły: `docs/configuration.md`, sekcja SIGN-IN PROVIDERS.
+Ustawienia serwerowe to `GOOGLE_CLIENT_ID/SECRET`,
+`GITHUB_OAUTH_CLIENT_ID/SECRET`, `DISCORD_OAUTH_CLIENT_ID/SECRET`,
+`GITLAB_CLIENT_ID/SECRET` oraz opcjonalnie `GITLAB_URL`. Dostawca OIDC używa
+`OIDC_ISSUER`, `OIDC_CLIENT_ID/SECRET` i `OIDC_NAME`. Szczegóły są w
+[configuration.md](configuration.md). Akceptowany jest tylko zweryfikowany
+e-mail. Opcjonalny dostawca Two Steps Studio może korzystać z tego samego
+mechanizmu OIDC; nie jest warunkiem działania własnej instalacji Guidona.
 
-Przyjmowany jest tylko **zweryfikowany** e-mail: loguje do konta Guidona z
-tym adresem (konto z hasłem może od tej pory logować się też np. Google'em)
-albo zakłada nowe, bez hasła.
+## Dokumentacja dostawców
 
----
-
-## „Zaloguj przez Two Steps Studio"
-
-To po prostu dostawca `oidc` wskazujący na serwer tożsamości TSS — gdy TSS
-go uruchomi (np. Supabase Auth projektu tss-website jako serwer OAuth 2.1 /
-OIDC, albo Keycloak), wystarczy ustawić:
-
-```env
-OIDC_ISSUER=https://<adres issuera TSS>
-OIDC_CLIENT_ID=...
-OIDC_CLIENT_SECRET=...
-OIDC_NAME=Two Steps Studio
-```
-
-Issuer musi wystawiać `/.well-known/openid-configuration` i claim
-`email_verified`. Działa dziś w trybie self-hosted; w trybie hostowanym
-wymaga dodania tego dostawcy w Supabase (osobny krok). Self-hosted Guidon nie
-może od TSS zależeć (TODO.md §1), więc ta metoda zawsze jest jedną z kilku,
-nigdy jedyną.
+- [Supabase: Google](https://supabase.com/docs/guides/auth/social-sign-in/auth-google)
+- [Supabase: GitHub](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)
+- [Supabase: redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls)
+- [Supabase: identity linking](https://supabase.com/docs/guides/auth/auth-identity-linking)

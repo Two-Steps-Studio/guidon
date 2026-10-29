@@ -34,7 +34,7 @@ const en = {
     openProject: "Open project {name}",
   },
   sync: {
-    offline: "Offline – showing data saved on this phone",
+    offline: "Offline - showing data saved on this phone",
     pending: "Changes waiting to sync: {count}",
     lastSynced: "Updated {time}",
     notSynced: "Not updated yet",
