@@ -13,4 +13,3 @@ export function verifyGithubSignature(rawBody: string, header: string | null, se
   const given = Buffer.from(header.slice("sha256=".length), "hex");
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
-
