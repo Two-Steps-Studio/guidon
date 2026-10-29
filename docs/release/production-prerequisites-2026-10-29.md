@@ -1,5 +1,7 @@
 # Production prerequisites - 2026-10-29
 
+Historical preflight below. The later owner-approved schema repair is completed and verified in [Cloud migration reconciliation](./cloud-migration-reconciliation-2026-10-29.md#approved-production-execution); the original missing-revision finding is no longer current.
+
 Related Guidon tasks: `f141afb1-c8cb-4fa1-a673-6caa66fc47bf` and `f3bdc95c-1b04-41b7-8418-04c59ab99631`.
 
 ## Read-only findings
