@@ -17,6 +17,9 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
   const payload = (label) => `${label} ${marker} <img src=x onerror="window.__sectionXss=1">`;
   const created = { decision: payload("Decision"), phase: payload("Phase"), source: payload("Source") };
   const fileName = `qa-${marker}.txt`;
+  const hydrationErrors = [];
+  const onPageError = error => { if (/React error #418|hydrat/i.test(error.message)) hydrationErrors.push(error.message); };
+  page.on("pageerror", onPageError);
   async function login(user) {
     await context.clearCookies(); await page.goto(`${origin}/auth/login`);
     await page.locator("#email").fill(user.email); await page.locator("#password").fill(fixture.password);
@@ -85,7 +88,9 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     assert.ok(rows.storage_path?.includes(owner.projectId), "A file is stored under its own project");
 
     // Signed download link works; a changed path or signature does not.
-    const file = (await client.query("SELECT id FROM project_files WHERE project_id=$1 AND name=$2", [owner.projectId, fileName])).rows[0];
+    const file = (await client.query("SELECT id,created_at FROM project_files WHERE project_id=$1 AND name=$2", [owner.projectId, fileName])).rows[0];
+    const expectedDate = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(file.created_at));
+    assert.equal(await page.locator("main time").textContent(), expectedDate, "File dates use the application's explicit locale and timezone, never the host defaults");
     await page.getByRole("button", { name: `Options for ${fileName}`, exact: true }).click();
     // WebKit does not consistently report a download as a page request.
     // The actual download event supplies its URL and proves the user action.
@@ -126,7 +131,9 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     }
     const exported = await context.request.get(`${root}/modules/anything/export`);
     assert.equal(exported.status(), 403, "Module export is refused outside the project");
+    assert.deepEqual(hydrationErrors, [], "Project sections must hydrate without discarding the user's first interaction");
   } finally {
+    page.off("pageerror", onPageError);
     await client.query("DELETE FROM context_decisions WHERE project_id=$1 AND title=$2", [owner.projectId, created.decision]);
     await client.query("DELETE FROM roadmap_phases WHERE project_id=$1 AND name=$2", [owner.projectId, created.phase]);
     await client.query("DELETE FROM context_sources WHERE project_id=$1 AND title=$2", [owner.projectId, created.source]);

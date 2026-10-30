@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -237,6 +237,7 @@ function FileCard({
      static analysis being unable to prove it. */
   const t = useTranslations("files");
   const Icon = getFileIcon(file.mime_type || "");
+  const format = useFormatter();
   const colorClass = getFileColor(file.mime_type || "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -322,7 +323,7 @@ function FileCard({
         )}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{file.mime_type}</span>
-          <span>{new Date(file.created_at).toLocaleDateString()}</span>
+          <time dateTime={new Date(file.created_at).toISOString()}>{format.dateTime(new Date(file.created_at), { dateStyle: "medium", timeZone: "UTC" })}</time>
         </div>
       </CardContent>
     </Card>
