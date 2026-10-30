@@ -84,6 +84,7 @@ const PUBLIC_SECTIONS = new Set([
   ".well-known",
   "start",
   "about",
+  "brand",
   "about.md",
   "contact",
   "contact.md",
@@ -115,6 +116,7 @@ for (const entry of readdirSync(appDir)) {
   check(`${entry}/ is signed-in or public`, SIGNED_IN_SECTIONS.has(segment) || PUBLIC_SECTIONS.has(segment));
 }
 const proxySource = readFileSync(join(root, "src/proxy.ts"), "utf8");
+check("proxy.ts lists /brand as public", proxySource.includes("'/brand'"));
 check("proxy.ts lists /auth/ and /legal/ as public", proxySource.includes("'/auth/'") && proxySource.includes("'/legal/'"));
 check("proxy.ts lists /index.md and /llms.txt as public", proxySource.includes("'/index.md'") && proxySource.includes("'/llms.txt'"));
 
