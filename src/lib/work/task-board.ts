@@ -414,6 +414,36 @@ export function taskComparator(priorities?: readonly PriorityDef[]): (a: Task, b
 
 export const compareTasks = taskComparator();
 
+/** Personal pins lead each column without changing the project's saved order. */
+export function pinnedTaskComparator(
+  pinnedIds: ReadonlySet<string>,
+  compare: (a: Task, b: Task) => number
+): (a: Task, b: Task) => number {
+  return (a, b) => Number(pinnedIds.has(b.id)) - Number(pinnedIds.has(a.id)) || compare(a, b);
+}
+
+/** Pins form a separate ordered group: midpoint arithmetic must not span it. */
+export type RelativeTaskPosition = { id: string; side: "before" | "after" };
+
+export function taskPositionAnchor(column: Task[], index: number, movingId?: string): RelativeTaskPosition | undefined {
+  const siblings = column.filter(task => task.id !== movingId);
+  const next = siblings[index];
+  if (next) return { id: next.id, side: "before" };
+  const previous = siblings[index - 1];
+  return previous ? { id: previous.id, side: "after" } : undefined;
+}
+
+export function pinnedTaskDrop(column: Task[], index: number, movingId: string, pinnedIds: ReadonlySet<string>) {
+  const siblings = column.filter(task => task.id !== movingId);
+  const movingPinned = pinnedIds.has(movingId);
+  const pinCount = siblings.filter(task => pinnedIds.has(task.id)).length;
+  const bounded = Math.max(0, Math.min(index, siblings.length));
+  const targetIndex = movingPinned ? Math.min(bounded, pinCount) : Math.max(bounded, pinCount);
+  const peers = siblings.filter(task => pinnedIds.has(task.id) === movingPinned);
+  const peerIndex = movingPinned ? targetIndex : targetIndex - pinCount;
+  return { index: targetIndex, sortOrder: sortOrderForPosition(peers, peerIndex), anchor: taskPositionAnchor(peers, peerIndex) };
+}
+
 /**
  * Same underlying issue as dueDateKey above, for any other timestamptz
  * column (created_at here) used only for ordering: self-hosted mode hands
@@ -635,20 +665,24 @@ const RENUMBER_SPACING = 1000;
  * the caller to persist as one batch.
  */
 export function resolveColumnRenumbering(
-  siblings: { id: string; sort_order: number }[],
+  siblings: { id: string; sort_order: number | null }[],
   movingTaskId: string,
-  rawSortOrder: number
+  rawSortOrder: number,
+  anchor?: RelativeTaskPosition
 ): { id: string; sort_order: number }[] | null {
   const rounded = Math.round(rawSortOrder);
   const collides = siblings.some((task) => task.sort_order === rounded);
-  if (!collides) return null;
+  if (!collides && !(anchor && siblings.some(task => task.sort_order === null))) return null;
 
   // Where the moving task ranks among the current siblings - not by the
   // rounded integer (that's exactly the value in collision), but by the
   // original float, which is only ever equal to an existing sort_order at
   // the boundaries (sortOrderForPosition never returns an existing
   // neighbour's own value in the interior of a column).
-  const insertAt = siblings.findIndex((task) => task.sort_order > rawSortOrder);
+  const anchorIndex = anchor ? siblings.findIndex(task => task.id === anchor.id) : -1;
+  const insertAt = anchorIndex >= 0
+    ? anchorIndex + (anchor!.side === "after" ? 1 : 0)
+    : siblings.findIndex((task) => task.sort_order !== null && task.sort_order > rawSortOrder);
   const ordered =
     insertAt === -1
       ? [...siblings, { id: movingTaskId, sort_order: rawSortOrder }]

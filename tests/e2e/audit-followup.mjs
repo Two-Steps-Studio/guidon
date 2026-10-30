@@ -30,7 +30,9 @@ export async function auditFollowupCoverage({ page, origin, fixture, client, art
       context.fillStyle = "blue";context.fillRect(32, 0, 32, 64);
       return canvas.toDataURL().split(",")[1];
     });
-    const imageInput = page.locator("#avatar");
+    // setInputFiles bypasses actionability: wait for the cropper's hydration guard,
+    // otherwise it can dispatch change while React has no listener yet.
+    const imageInput = page.locator("#avatar:enabled");
     await imageInput.setInputFiles({ name: "audit-square.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
     const dialog = page.getByRole("dialog");
     await dialog.waitFor();

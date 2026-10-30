@@ -27,11 +27,13 @@ async function load(path,dependencies){
  const exports={};vm.runInNewContext(code,{exports,process,Date,console,require(name){assert.ok(Object.hasOwn(dependencies,name),`Unexpected dependency ${name}`);return dependencies[name];}});return exports;
 }
 const adapter=await load("../../src/lib/data-client/index.ts",{"server-only":{},"@/lib/db/pool":{hasDirectDatabase:()=>true},"@/lib/db/session":{withUser:(id,fn)=>asUser(id,()=>fn({query:(q,v)=>db.query(q,v)}))},"@/lib/supabase-server":{},"./sql":compiler});
+const board=await load("../../src/lib/work/task-board.ts",{"@/lib/date":{}});
+const workflow=await load("../../src/lib/data/workflow.ts",{"server-only":{},"@/lib/data-client":adapter});
 let actor=A,role="owner",activities=0,events=0;
 const actions=await load("../../src/app/projects/[id]/work/actions.ts",{
  "next/cache":{revalidatePath(){}},"@/lib/data/project-access":{getProjectAccess:async()=>({userId:actor,role,project:{organization_id:org}}),canWriteProject:r=>["owner","admin","developer"].includes(r),canManageProject:r=>["owner","admin"].includes(r)},
  "@/lib/data-client":adapter,"@/lib/data/log-activity":{logActivity:async()=>{activities++;}},"@/lib/data/notifications":{createNotification:async()=>{}},
- "@/lib/events/task-events":{emitTaskEvent:()=>{events++;}},"@/lib/limits":{hostedTaskLimitError:async()=>null},"@/lib/api/validate-id":{isValidUuid:v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)},"@/lib/work/task-board":{},"@/lib/work/recurrence":{ensureNextOccurrence:async()=>[]},"@/lib/work/recurrence-core":recurrence,"@/lib/i18n/server-errors":{tr:async text=>text},
+ "@/lib/events/task-events":{emitTaskEvent:()=>{events++;}},"@/lib/limits":{hostedTaskLimitError:async()=>null},"@/lib/api/validate-id":{isValidUuid:v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)},"@/lib/work/task-board":board,"@/lib/data/workflow":workflow,"@/lib/work/recurrence":{ensureNextOccurrence:async()=>[]},"@/lib/work/recurrence-core":recurrence,"@/lib/i18n/server-errors":{tr:async text=>text},
 });
 try{
  const first=await actions.updateTask(project,task.id,{title:"First editor",description:"Preserve this"},0);
@@ -62,4 +64,14 @@ try{
  const plain=await actions.createTask(project,{...input,clientId:"not-a-uuid",title:"Server id"});assert.equal(plain.error,null);assert.notEqual(plain.task.id,clientId);
  console.log("pass idempotent create: retry returns the same task, no second log, a reused id with a new title still creates it, foreign reuse refused, invalid client id ignored");
  console.log("pass actual task action/adapter/SQL: first edit, stale CAS, all-writer monotonic revision, invalid versions, foreign/viewer denial, preserved fields, no conflict side effects and legacy partial-client compatibility");
+ const legacy=await asUser(A,async()=>(await db.query("INSERT INTO tasks(project_id,title,created_by,status,sort_order) VALUES($1,'Positioned',$2,'backlog',1000),($1,'Legacy neighbour',$2,'backlog',NULL) RETURNING id",[project,A])).rows);
+ const moved=await actions.moveTask(project,legacy[0].id,'backlog',1000,{id:legacy[1].id,side:'after'});
+ assert.equal(moved.error,null);assert.equal(moved.positions.length,2);
+ assert.deepEqual((await db.query("SELECT id FROM tasks WHERE project_id=$1 AND status='backlog' ORDER BY sort_order",[project])).rows.map(row=>row.id),[legacy[1].id,legacy[0].id]);
+ const snapshot=(await db.query("SELECT id,sort_order,revision FROM tasks WHERE project_id=$1 ORDER BY id",[project])).rows;
+ // The existing Todo task is not a valid neighbour in the Backlog column.
+ for(const anchor of [{id:task.id,side:'before'},{id:randomUUID(),side:'after'},{id:legacy[1].id,side:'invalid'}])assert.ok((await actions.moveTask(project,legacy[0].id,'backlog',1000,anchor)).error);
+ role='viewer';assert.ok((await actions.moveTask(project,legacy[0].id,'backlog',1000,{id:legacy[1].id,side:'before'})).error);role='owner';
+ assert.deepEqual((await db.query("SELECT id,sort_order,revision FROM tasks WHERE project_id=$1 ORDER BY id",[project])).rows,snapshot,'Rejected neighbour/role must not renumber any row');
+ console.log('pass actual move action/adapter/SQL: legacy null neighbour, persisted order, wrong-column/missing/invalid anchors and viewer denial without writes');
 }finally{await db.close();}

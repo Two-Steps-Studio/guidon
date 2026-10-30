@@ -14,7 +14,7 @@ import { usePinnedProjects } from "@/components/projects/pinned-projects-context
  * (migration 065, up to 3). Sits inside a card that is a link, so it stops
  * the click from opening the project.
  */
-export function PinProjectButton({ projectId, projectName, pinned }: { projectId: string; projectName: string; pinned: boolean }) {
+export function PinProjectButton({ projectId, projectName, avatarUrl, pinned }: { projectId: string; projectName: string; avatarUrl?: string | null; pinned: boolean }) {
   const t = useTranslations("projects.list");
   const router = useRouter();
   const pinnedProjects = usePinnedProjects();
@@ -35,7 +35,7 @@ export function PinProjectButton({ projectId, projectName, pinned }: { projectId
         const next = !isPinned;
         if (pinnedProjects) {
           startTransition(async () => {
-            await pinnedProjects.toggle({ id: projectId, name: projectName });
+            await pinnedProjects.toggle({ id: projectId, name: projectName, avatar_url: avatarUrl });
           });
           return;
         }

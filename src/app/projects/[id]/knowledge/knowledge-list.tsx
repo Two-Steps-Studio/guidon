@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ExternalLink, FileText, FolderOpen, StickyNote } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { CreateSourceDialog } from "./create-source-dialog";
 import { SourceCardMenu } from "./source-card-menu";
@@ -30,6 +30,7 @@ export function KnowledgeList({
   projectColor?: string;
 }) {
   const t = useTranslations("knowledge");
+  const format = useFormatter();
   const tCommon = useTranslations("common");
   const sources = initialSources;
 
@@ -112,7 +113,7 @@ export function KnowledgeList({
                 )}
 
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-                  <time dateTime={source.created_at}>{new Date(source.created_at).toLocaleDateString()}</time>
+                  <time dateTime={new Date(source.created_at).toISOString()}>{format.dateTime(new Date(source.created_at), { dateStyle: "medium", timeZone: "UTC" })}</time>
                   {source.url && (
                     <a
                       href={source.url}

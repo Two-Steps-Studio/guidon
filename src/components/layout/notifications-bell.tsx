@@ -103,7 +103,7 @@ export function NotificationsBell() {
   }
 
   return (
-    <DropdownMenu onOpenChange={(open) => open && refresh()}>
+    <DropdownMenu modal={false} onOpenChange={(open) => open && refresh()}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"

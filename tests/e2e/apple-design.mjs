@@ -109,6 +109,9 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     const openTask=card.locator('[data-task-open]');
     await openTask.focus();await openTask.press(index>0?'Alt+ArrowUp':'Alt+ArrowDown');
     await page.getByRole('status').filter({hasText:new RegExp(`${task.title}.*position ${position}`)}).waitFor();await frames(page);
+    assert.equal((await page.locator('[data-column-status="backlog"] [data-card-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.cardId))).indexOf(task.id)+1,position,'The announced keyboard position must match the visible card order');
+    const persisted=await client.query("SELECT id FROM tasks WHERE project_id=$1 AND status='backlog' AND parent_task_id IS NULL ORDER BY sort_order NULLS LAST",[owner.projectId]);
+    assert.equal(persisted.rows.findIndex(row=>row.id===task.id)+1,position,'Keyboard reorder must persist even when a legacy neighbour has null sort_order');
     assert.equal(await openTask.evaluate(node=>node===document.activeElement),true,'Keyboard reorder retains focus');
 
     // A rejected optimistic move keeps the prior row and exposes a live error.
@@ -133,15 +136,15 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     await page.getByRole('button',{name:'New task',exact:true}).click();
     const scrim = page.locator('[data-slot="dialog-overlay"]');
     await scrim.waitFor();
-    const scrimAlpha = await scrim.evaluate(node => {
+    const scrimState = await scrim.evaluate(node => {
       const canvas = document.createElement('canvas');
       canvas.width = canvas.height = 1;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = getComputedStyle(node).backgroundColor;
       ctx.fillRect(0, 0, 1, 1);
-      return ctx.getImageData(0, 0, 1, 1).data[3] / 255;
+      return { alpha: ctx.getImageData(0, 0, 1, 1).data[3] / 255, opaque: matchMedia('(prefers-reduced-transparency: reduce)').matches || matchMedia('(prefers-contrast: more)').matches };
     });
-    assert.ok(scrimAlpha > 0 && scrimAlpha < 1, 'Task creation dims the board through a translucent backdrop');
+    assert.ok(scrimState.alpha > 0 && (scrimState.opaque ? scrimState.alpha === 1 : scrimState.alpha < 1), 'Task backdrop dims the board and respects reduced-transparency/contrast preferences');
     await page.locator('#new-task-title').fill('Unsaved new task');await page.locator('#new-task-description').fill('Keep this description');
     await page.getByRole('dialog').locator('input[type="file"]').setInputFiles(images);
     await page.keyboard.press('Escape');await confirm.getByRole('button',{name:'Cancel',exact:true}).click();

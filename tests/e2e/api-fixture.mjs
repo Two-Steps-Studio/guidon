@@ -12,6 +12,8 @@ export async function seedApiFixture(client, fixture) {
     owner:{user:owner.id,scopes:["tasks:read","tasks:write","project:read"]},
     foreign:{user:foreign.id,scopes:["tasks:read","tasks:write","project:read"]},
     read:{user:owner.id,scopes:["tasks:read","project:read"]},
+    attachments:{user:owner.id,scopes:["tasks:read"]},
+    boundAttachments:{user:owner.id,scopes:["tasks:read"],project:owner.projectId},
     viewer:{user:fixture.reader.id,scopes:["tasks:read","tasks:write","project:read"]},
     revoked:{user:owner.id,scopes:["tasks:read"],revoked:true},
     expired:{user:owner.id,scopes:["tasks:read"],expired:true},

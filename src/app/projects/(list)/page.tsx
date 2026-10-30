@@ -238,7 +238,7 @@ export default async function ProjectsPage() {
                         </AvatarFallback>
                       </Avatar>
                       <span className="min-w-0 truncate">{project.name}</span>
-                      <PinProjectButton projectId={project.id} projectName={project.name} pinned={pinnedSet.has(project.id)} />
+                      <PinProjectButton projectId={project.id} projectName={project.name} avatarUrl={project.avatar_url} pinned={pinnedSet.has(project.id)} />
                     </CardTitle>
                     <CardDescription>{project.organizations?.name}</CardDescription>
                   </CardHeader>

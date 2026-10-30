@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { attachmentToolResult } from "./attachment-content";
 
 /**
  * In-process dispatch from an MCP tool call to the existing /api/v1 route
@@ -12,7 +14,7 @@ import { NextRequest } from "next/server";
 /** Tool result shape the MCP SDK accepts from a tool callback. */
 export interface ToolResult {
   [key: string]: unknown;
-  content: { type: "text"; text: string }[];
+  content: CallToolResult["content"];
   isError?: boolean;
 }
 
@@ -23,6 +25,8 @@ interface CallOptions {
   query?: Record<string, string | undefined>;
   /** Sent as a JSON body when present. */
   body?: unknown;
+  /** Only attachment tools opt in: all other tools retain JSON/Markdown text. */
+  attachmentUri?: string;
 }
 
 export type Dispatch = <P = undefined>(
@@ -69,6 +73,9 @@ export function createDispatch(origin: string, authorization: string): Dispatch 
       response = await handler(new NextRequest(url, { method: options.method, headers, body }), {
         params: Promise.resolve(params),
       });
+      if (response.ok && options.attachmentUri && response.headers.has("content-disposition")) {
+        return attachmentToolResult(new Uint8Array(await response.arrayBuffer()), response.headers.get("content-type") ?? "application/octet-stream", options.attachmentUri);
+      }
       text = await response.text();
     } catch (error) {
       // A direct /api/v1 caller gets a generic 500 when a handler throws; the

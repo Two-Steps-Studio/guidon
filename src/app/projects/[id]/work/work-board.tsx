@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { KanbanBoard } from "@/components/work/kanban-board";
+import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { isTypingTarget } from "@/components/layout/keyboard-shortcuts";
 
 // TaskDetailDialog (and the attempts/why-panel sections it always imports)
@@ -44,9 +45,13 @@ import {
   isDone,
   normalizeTaskPriority,
   normalizeTaskStatus,
+  pinnedTaskComparator,
+  taskComparator,
+  compareTasksByDueDate,
   subtaskProgress,
   type BoardColumn,
   type PriorityDef,
+  type RelativeTaskPosition,
 } from "@/lib/work/task-board";
 import { createTask, moveTask } from "./actions";
 import { toolResult, useWebMcpTools } from "@/components/agent/web-mcp";
@@ -117,6 +122,7 @@ export function WorkBoard({
   boardLimit?: number | null;
 }) {
   const t = useTranslations("work");
+  const pinned = usePinnedTasks();
   usePreloadTaskDialog();
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
@@ -347,7 +353,7 @@ export function WorkBoard({
     if (operation.kind === "delete") setSelectedIds(new Set());
   };
 
-  const handleMove = async (task: Task, status: TaskStatus, sortOrder: number) => {
+  const handleMove = async (task: Task, status: TaskStatus, sortOrder: number, anchor?: RelativeTaskPosition) => {
     const focused = document.activeElement;
     const restoreFocus = focused instanceof HTMLElement && focused.closest('[data-card-id]')?.getAttribute('data-card-id') === task.id;
     setMoveAnnouncement("");
@@ -365,10 +371,11 @@ export function WorkBoard({
 
     // A request that never reached the server rejects instead of returning
     // an error; it must roll back too, never leave the card looking moved.
-    const result = await timeAction("task.move", () => moveTask(projectId, task.id, status, sortOrder)).catch((error: unknown) => ({
+    const result = await timeAction("task.move", () => moveTask(projectId, task.id, status, sortOrder, anchor)).catch((error: unknown) => ({
       error: isNetworkError(error) ? t("moveNotSaved", { title: task.title }) : t("failedToSaveTask"),
       offline: true,
       created: undefined,
+      positions: undefined,
     }));
     if (result.error) {
       // Roll back only this task's fields, not the whole tasks array as a
@@ -387,13 +394,18 @@ export function WorkBoard({
       }));
       playSound("error");
       toast.error(result.error, "offline" in result ? {
-        action: { label: t("retryMove"), onClick: () => void handleMoveRef.current({ ...task, status: previousStatus, sort_order: previousSortOrder }, status, sortOrder) },
+        action: { label: t("retryMove"), onClick: () => void handleMoveRef.current({ ...task, status: previousStatus, sort_order: previousSortOrder }, status, sortOrder, anchor) },
       } : undefined);
       setMoveAnnouncement(result.error);
       return;
     }
     const column = columns.find(column => column.status === status);
-    const position = state.tasks.filter(item => item.id !== task.id && item.status === status && (item.sort_order ?? 0) < sortOrder).length + 1;
+    const positions = new Map(result.positions?.map(item => [item.id, item.sort_order]));
+    if (positions.size) setState(current => ({ ...current, tasks: current.tasks.map(item => positions.has(item.id) ? { ...item, sort_order: positions.get(item.id)! } : item) }));
+    const nextColumn = [...filteredTasks.filter(item => item.id !== task.id && normalizeTaskStatus(item.status) === status), { ...task, status, sort_order: sortOrder }]
+      .map(item => positions.has(item.id) ? { ...item, sort_order: positions.get(item.id)! } : item)
+      .sort(pinnedTaskComparator(new Set(pinned?.tasks.map(item => item.id)), sortMode === "due_date" ? compareTasksByDueDate : taskComparator(priorities)));
+    const position = nextColumn.findIndex(item => item.id === task.id) + 1;
     setMoveAnnouncement(t("taskMovedAnnouncement", { title: task.title, column: column?.label ?? status, position }));
     if (restoreFocus) requestAnimationFrame(() => {
       if (document.activeElement === focused || document.activeElement === document.body) document.querySelector<HTMLElement>(`[data-card-id="${task.id}"] [data-task-open]`)?.focus({ preventScroll: true });
@@ -441,7 +453,7 @@ export function WorkBoard({
     handleMoveRef.current = handleMove;
   });
   const moveTaskStable = useCallback(
-    (task: Task, status: TaskStatus, sortOrder: number) => handleMoveRef.current(task, status, sortOrder),
+    (task: Task, status: TaskStatus, sortOrder: number, anchor?: RelativeTaskPosition) => handleMoveRef.current(task, status, sortOrder, anchor),
     []
   );
 
