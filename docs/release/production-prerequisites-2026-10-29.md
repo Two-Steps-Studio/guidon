@@ -1,5 +1,7 @@
 # Production prerequisites - 2026-10-29
 
+Historical preflight below. The later owner-approved schema repair is completed and verified in [Cloud migration reconciliation](./cloud-migration-reconciliation-2026-10-29.md#approved-production-execution); the original missing-revision finding is no longer current.
+
 Related Guidon tasks: `f141afb1-c8cb-4fa1-a673-6caa66fc47bf` and `f3bdc95c-1b04-41b7-8418-04c59ab99631`.
 
 ## Read-only findings
@@ -31,6 +33,12 @@ The web edit dialog needs a valid revision to conditionally save its snapshot. M
 
 Previously `--status` and `--dry-run` called `CREATE TABLE IF NOT EXISTS guidon_migrations` before reporting. They now use a read-only transaction, probe for the registry and report all files pending if absent. They never bootstrap schema in reporting mode and still reject changed migration checksums.
 
-`npm run test:migrations` invokes the real CLI against disposable PostgreSQL via PGlite with read-only transactions enforced. Six regressions cover both reporting flags, present/absent registries and checksum drift. No live connection or production credentials are used by those tests.
+`npm run test:migrations` invokes the real CLI against disposable PostgreSQL via PGlite with read-only transactions enforced. Twelve regressions cover both reporting flags, present/absent registries, historical LF/CRLF checksums and actual SQL drift. No live connection or production credentials are used by those tests.
+
+## Registry reconciliation follow-up
+
+A read-only registry comparison found 56 recorded files (000-055) and 47 unrecorded files in this checkout (057-103; 056 belongs to a separate branch). All 56 historical checksums match the current file bytes or their LF/CRLF encoding: 16 exact, 19 LF and 21 CRLF. No substantive SQL mismatch was found by this comparison. This still does not establish the live state of unrecorded migrations.
+
+The runner now accepts those exact newline encodings for existing checksums. It does not trim SQL, accept arbitrary content changes, rewrite history or reapply recorded files. New records retain the checksum of the bytes executed. The old verifier rejected two newline compatibility cases; all 12 reporting tests pass after the change. The live migration registry was not edited.
 
 No live migrations, registry mutations, paid plan changes or application deployments were performed in this pass.

@@ -34,9 +34,18 @@ for (const flag of ['--status', '--dry-run']) {
       }
     });
   }
-  test(`${flag} still refuses changed migration checksums`, () => {
-    const result = report(flag, 'drift');
-    assert.equal(result.status, 1);
-    assert.match(result.stderr, /modified after they were applied/);
-  });
+  for (const mode of ['lf', 'crlf']) {
+    test(`${flag} accepts historical ${mode} checksums without registry writes`, () => {
+      const result = report(flag, mode);
+      assert.equal(result.status, 0, result.stderr || result.error?.message);
+      assert.match(result.stdout, /applied\s+000_baseline_schema.sql/);
+    });
+  }
+  for (const mode of ['drift', 'sql-drift']) {
+    test(`${flag} still refuses changed migration checksums (${mode})`, () => {
+      const result = report(flag, mode);
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /modified after they were applied/);
+    });
+  }
 }
