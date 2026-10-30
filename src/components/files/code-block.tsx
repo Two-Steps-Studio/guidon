@@ -151,7 +151,7 @@ export default function CodeBlock({ url, language, plain }: CodeBlockProps) {
 
   if (plain) {
     return (
-      <pre className="overflow-auto p-4 font-mono text-xs leading-relaxed text-foreground">
+      <pre tabIndex={0} className="overflow-auto p-4 font-mono text-xs leading-relaxed text-foreground focus-visible:outline-2 focus-visible:outline-ring">
         {content}
       </pre>
     );
@@ -159,6 +159,8 @@ export default function CodeBlock({ url, language, plain }: CodeBlockProps) {
 
   return (
     <SyntaxHighlighter
+      tabIndex={0}
+      className="focus-visible:outline-2 focus-visible:outline-ring"
       language={language}
       style={dark ? oneDark : oneLight}
       showLineNumbers

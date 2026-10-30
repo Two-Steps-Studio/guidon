@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { squareCrop } from "@/lib/image-crop";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -33,6 +34,9 @@ export function ImageCropInput({
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const rectangle = dimensions ? squareCrop(dimensions.width, dimensions.height, zoom, x, y) : null;
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => () => { if (source?.startsWith("blob:")) URL.revokeObjectURL(source); }, [source]);
@@ -40,20 +44,21 @@ export function ImageCropInput({
   const crop = () => {
     const image = imageRef.current;
     const input = inputRef.current;
-    if (!image || !input?.files?.[0]) return;
-    const side = Math.min(image.naturalWidth, image.naturalHeight) / zoom;
-    const maxX = image.naturalWidth - side;
-    const maxY = image.naturalHeight - side;
-    const sx = maxX * (x + 100) / 200;
-    const sy = maxY * (y + 100) / 200;
+    const originalFile = input?.files?.[0];
+    if (!image || !originalFile || !rectangle || processing) return;
+    const { sx, sy, side } = rectangle;
     const canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 512;
     const context = canvas.getContext("2d");
-    if (!context) return;
+    if (!context) { setError(t("failed")); return; }
+    setProcessing(true);
     context.drawImage(image, sx, sy, side, side, 0, 0, 512, 512);
     canvas.toBlob((blob) => {
-      if (!blob || !inputRef.current) { setError(t("failed")); return; }
+      // Closing the cropper or choosing another file cancels this export.
+      if (inputRef.current?.files?.[0] !== originalFile) return;
+      setProcessing(false);
+      if (!blob) { setError(t("failed")); return; }
       const file = new File([blob], fileName.replace(/\.[^.]+$/, "") + ".webp", { type: "image/webp" });
       const transfer = new DataTransfer();
       transfer.items.add(file);
@@ -79,6 +84,7 @@ export function ImageCropInput({
           if (!file) return;
           setFileName(file.name);
           setZoom(1); setX(0); setY(0); setError(null);
+          setDimensions(null); setProcessing(false);
           setSource(URL.createObjectURL(file));
         }}
       />
@@ -91,7 +97,12 @@ export function ImageCropInput({
           {source && (
             <div className="space-y-4">
               <div className="relative mx-auto aspect-square w-full max-w-[320px] overflow-hidden rounded-lg bg-muted">
-                <Image ref={imageRef} src={source} alt="" width={512} height={512} unoptimized className="h-full w-full object-cover" style={{ transform: `scale(${zoom}) translate(${-x / 2}%, ${-y / 2}%)` }} />
+                <Image key={source} ref={imageRef} src={source} alt="" width={512} height={512} unoptimized
+                  className="absolute max-w-none"
+                  style={rectangle?.style ?? { width: "100%", height: "100%", opacity: 0 }}
+                  onLoad={event => { const image = event.currentTarget; if (image.isConnected) setDimensions({ width: image.naturalWidth, height: image.naturalHeight }); }}
+                  onError={() => { setDimensions(null); setError(t("failed")); }}
+                />
               </div>
               <label className="block space-y-1 text-sm">{t("zoom")}
                 <input aria-label={t("zoom")} type="range" min="1" max="3" step="0.01" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-full" />
@@ -109,7 +120,7 @@ export function ImageCropInput({
           )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => { if (inputRef.current) inputRef.current.value = "";setSource(null); }}>{t("cancel")}</Button>
-            <Button type="button" onClick={crop}>{t("apply")}</Button>
+            <Button type="button" onClick={crop} disabled={!rectangle || processing}>{t("apply")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

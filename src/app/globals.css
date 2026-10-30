@@ -41,6 +41,16 @@
    ============================================ */
 
 :root {
+  /* Shared motion: crisp product UI; no route/list entrance delays. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-menu: 180ms;
+  --motion-dialog: 200ms;
+  --motion-drawer: 240ms;
+  --motion-tooltip: 125ms;
+  --motion-exit: 120ms;
+
   /* Brand */
   --color-primary: var(--color-brand);
   --color-primary-hover: #1640b0;
@@ -127,7 +137,8 @@
   --background: var(--color-background);
   --foreground: var(--color-text);
 
-  --radius: 0.375rem;
+  /* Shared corner scale: controls 10px, cards 14px, floating surfaces 18px. */
+  --radius: 0.875rem;
 
   /* Sidebar - delegates to existing tokens rather than shadcn's raw defaults,
      so it never drifts from the rest of the palette across light/dark. */
@@ -384,7 +395,11 @@
   --color-priority-high: var(--color-priority-high);
   --color-priority-critical: var(--color-priority-critical);
 
-  --radius: var(--radius);
+  --radius-sm: calc(var(--radius) - 0.5rem);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+  --radius-2xl: calc(var(--radius) + 0.625rem);
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, sans-serif;
@@ -483,6 +498,36 @@ body {
   }
 }
 
+/* Shared Radix surfaces keep their trigger origins and Presence lifecycle.
+   Only opacity/transform animate; keyboard command surfaces opt out entirely. */
+:is([data-slot="dialog-content"], [data-slot="dialog-overlay"],
+    [data-slot="sheet-content"], [data-slot="sheet-overlay"],
+    [data-slot="popover-content"], [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"], [data-slot="tooltip-content"]) {
+  animation-duration: var(--motion-menu);
+  animation-timing-function: var(--ease-out);
+}
+:is([data-slot="dialog-content"], [data-slot="dialog-overlay"]) {
+  animation-duration: var(--motion-dialog);
+}
+:is([data-slot="sheet-content"], [data-slot="sheet-overlay"]) {
+  animation-duration: var(--motion-drawer);
+  animation-timing-function: var(--ease-drawer);
+}
+[data-slot="tooltip-content"] { animation-duration: var(--motion-tooltip); }
+:is([data-slot="dialog-content"], [data-slot="dialog-overlay"],
+    [data-slot="sheet-content"], [data-slot="sheet-overlay"],
+    [data-slot="popover-content"], [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"], [data-slot="tooltip-content"])[data-state="closed"] {
+  animation-duration: var(--motion-exit);
+}
+[data-motion="none"], [data-slot="tooltip-content"][data-state="instant-open"] {
+  animation: none !important;
+  transition: none !important;
+}
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
 /* Respect users who ask for less motion. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -493,6 +538,21 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  /* Retain gentle state feedback without slides, zooms or springs. */
+  :is([data-slot="dialog-content"], [data-slot="dialog-overlay"],
+      [data-slot="sheet-content"], [data-slot="sheet-overlay"],
+      [data-slot="popover-content"], [data-slot="dropdown-menu-content"],
+      [data-slot="dropdown-menu-sub-content"], [data-slot="tooltip-content"]):not([data-motion="none"]):not([data-state="instant-open"]) {
+    animation-name: ui-fade-in !important;
+    animation-duration: var(--motion-exit) !important;
+  }
+  :is([data-slot="dialog-content"], [data-slot="dialog-overlay"],
+      [data-slot="sheet-content"], [data-slot="sheet-overlay"],
+      [data-slot="popover-content"], [data-slot="dropdown-menu-content"],
+      [data-slot="dropdown-menu-sub-content"], [data-slot="tooltip-content"])[data-state="closed"]:not([data-motion="none"]) {
+    animation-name: ui-fade-out !important;
+  }
+  [data-slot="button"]:active { scale: 1; }
 }
 
 /* Nothing may widen the page sideways: a tooltip, menu or long word that

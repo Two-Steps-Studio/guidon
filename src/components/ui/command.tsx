@@ -54,6 +54,7 @@ function CommandDialog({
       <DialogTitle className="sr-only">{title}</DialogTitle>
       <DialogDescription className="sr-only">{description}</DialogDescription>
       <DialogContent
+        motion="none"
         showCloseButton={false}
         className="overflow-hidden p-0 shadow-lg sm:max-w-2xl"
       >

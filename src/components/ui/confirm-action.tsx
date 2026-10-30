@@ -35,7 +35,7 @@ export function ConfirmActionHost() {
     queue[0]?.resolve(accepted);setQueue(current => current.slice(1));
   };
   return <Dialog open={queue.length > 0} onOpenChange={open => { if (!open) finish(false); }}>
-    <DialogContent showCloseButton={false} className="sm:max-w-md data-[state=closed]:animate-none">
+    <DialogContent motion={queue.length ? "default" : "none"} showCloseButton={false} className="sm:max-w-md">
       <DialogHeader><DialogTitle>{t("confirmActionTitle")}</DialogTitle><DialogDescription className="whitespace-pre-wrap">{queue[0]?.message}</DialogDescription></DialogHeader>
       <DialogFooter><Button autoFocus variant="outline" onClick={() => finish(false)}>{t("cancel")}</Button><Button variant="destructive" onClick={() => finish(true)}>{queue[0]?.accept ?? t("confirmActionContinue")}</Button></DialogFooter>
     </DialogContent>

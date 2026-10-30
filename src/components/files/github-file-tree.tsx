@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -95,6 +95,7 @@ function DirectoryLevel({
   onOpenFile: (path: string) => void;
   cache: Map<string, DirectoryListing>;
 }) {
+  const regionPrefix = useId();
   const cacheKey = `${projectId}:${path}`;
   const [listing, setListing] = useState<DirectoryListing | null>(() => cache.get(cacheKey) ?? null);
   const [error, setError] = useState<string | null>(null);
@@ -165,6 +166,7 @@ function DirectoryLevel({
       )}
       {listing.entries.map((entry) => {
         const isOpen = expanded.has(entry.path);
+        const regionId = `${regionPrefix}-${encodeURIComponent(entry.path)}`;
         const isActive = entry.type === "file" && entry.path === activePath;
         const { icon: FileIcon, colorClass } = entry.type === "file" ? fileIconFor(entry.name) : { icon: Folder, colorClass: "text-info" };
 
@@ -172,6 +174,9 @@ function DirectoryLevel({
           <li key={entry.path}>
             <button
               type="button"
+              aria-expanded={entry.type === "dir" ? isOpen : undefined}
+              aria-controls={entry.type === "dir" && isOpen ? regionId : undefined}
+              aria-current={isActive ? "true" : undefined}
               onClick={() => {
                 if (entry.type === "dir") {
                   setExpanded((prev) => {
@@ -191,7 +196,7 @@ function DirectoryLevel({
             >
               {entry.type === "dir" ? (
                 <ChevronRight
-                  className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+                  className={`h-3.5 w-3.5 shrink-0 text-muted-foreground ${
                     isOpen ? "rotate-90" : ""
                   }`}
                 />
@@ -203,14 +208,16 @@ function DirectoryLevel({
             </button>
 
             {entry.type === "dir" && isOpen && (
-              <DirectoryLevel
-                projectId={projectId}
-                path={entry.path}
-                depth={depth + 1}
-                activePath={activePath}
-                onOpenFile={onOpenFile}
-                cache={cache}
-              />
+              <div id={regionId}>
+                <DirectoryLevel
+                  projectId={projectId}
+                  path={entry.path}
+                  depth={depth + 1}
+                  activePath={activePath}
+                  onOpenFile={onOpenFile}
+                  cache={cache}
+                />
+              </div>
             )}
           </li>
         );

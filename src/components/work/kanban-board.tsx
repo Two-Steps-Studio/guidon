@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "motion/react";
+import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import { useReducedMotionPreference } from "@/lib/use-reduced-motion";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -136,10 +136,13 @@ function KanbanBoardComponent({
   const t = useTranslations("work");
   const reduceMotion = useReducedMotionPreference();
   const [pointerDrag, setPointerDrag] = useState<PointerDrag | null>(null);
+  const ghostX = useMotionValue(0);
+  const ghostY = useMotionValue(0);
+  const ghostTransform = useMotionTemplate`translate3d(${ghostX}px, ${ghostY}px, 0)`;
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const draggingTask = pointerDrag?.task ?? null;
 
-  // Mirrors of the two state values above, read from inside stable
+  // Mirrors of the drag metadata/target, read from inside stable
   // (empty/near-empty-deps) callbacks that fire on every pointermove tick -
   // see handleDragMove/handleDragEnd. Using state directly there would
   // either go stale (closure captured at callback-creation time) or force
@@ -425,18 +428,19 @@ function KanbanBoardComponent({
         y: rect.top,
       };
       pointerDragRef.current = next;
+      ghostX.set(rect.left);
+      ghostY.set(rect.top);
       pendingPosRef.current = { x: clientX, y: clientY };
       setPointerDrag(next);
       if (autoScrollRafRef.current == null) {
         autoScrollRafRef.current = requestAnimationFrame(runAutoScroll);
       }
     },
-    [runAutoScroll]
+    [runAutoScroll, ghostX, ghostY]
   );
 
-  // Also stable. Throttled to one state update per animation frame - a
-  // pointer can fire dozens of move events per second, far more than the
-  // display can show, and each one otherwise re-renders the whole board.
+  // Move the ghost outside React's render cycle. React only needs to update
+  // when the insertion target changes, not for every pointer coordinate.
   const handleDragMove = useCallback(
     (clientX: number, clientY: number) => {
       pendingPosRef.current = { x: clientX, y: clientY };
@@ -454,11 +458,12 @@ function KanbanBoardComponent({
           y: pos.y - drag.grabOffsetY,
         };
         pointerDragRef.current = nextGhost;
-        setPointerDrag(nextGhost);
+        ghostX.set(nextGhost.x);
+        ghostY.set(nextGhost.y);
         updateDropTarget(pos, drag.task.id);
       });
     },
-    [updateDropTarget]
+    [updateDropTarget, ghostX, ghostY]
   );
 
   // Also stable - reads the just-dropped task/target from refs rather than
@@ -633,48 +638,41 @@ function KanbanBoardComponent({
 
       {typeof document !== "undefined" &&
         createPortal(
-          <AnimatePresence>
-            {pointerDrag && draggingTask && (
-              <motion.div
-                data-slot="task-drag-ghost"
-                aria-hidden="true"
-                inert
-                key={draggingTask.id}
-                initial={{ scale: 1, opacity: 0.9, boxShadow: "0 1px 2px rgba(0,0,0,0.08)" }}
-                animate={{
-                  scale: reduceMotion ? 1 : 1.03,
-                  opacity: 1,
-                  boxShadow: "0 24px 40px -12px rgba(0,0,0,0.35)",
-                }}
-                exit={{ scale: reduceMotion ? 1 : 0.97, opacity: 0, transition: { duration: reduceMotion ? 0 : 0.15, ease: "easeOut" } }}
-                transition={reduceMotion ? { duration: 0 } : { type: "spring", damping: 30, stiffness: 420 }}
-                style={{
-                  position: "fixed",
-                  left: 0,
-                  top: 0,
-                  x: pointerDrag.x,
-                  y: pointerDrag.y,
-                  width: pointerDrag.width,
-                  zIndex: 100,
-                  pointerEvents: "none",
-                }}
-              >
-                <TaskCard
-                  task={draggingTask}
-                  assignee={ghostAssignee}
-                  commentCount={commentCounts[draggingTask.id]}
-                  coverImageUrl={coverImages[draggingTask.id]}
-                  subtaskProgress={subtaskCounts[draggingTask.id]}
-                  draggable={false}
-                  isDragging={false}
-                  onOpen={noop}
-                  onDragStart={noop}
-                  onDragMove={noop}
-                  onDragEnd={noop}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>,
+          pointerDrag && draggingTask ? (
+            <motion.div
+              data-slot="task-drag-ghost"
+              aria-hidden="true"
+              inert
+              key={draggingTask.id}
+              initial={{ opacity: 0.9 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reduceMotion ? 0 : 0.12 }}
+              style={{
+                position: "fixed",
+                left: 0,
+                top: 0,
+                transform: ghostTransform,
+                boxShadow: "0 24px 40px -12px rgba(0,0,0,0.35)",
+                width: pointerDrag.width,
+                zIndex: 100,
+                pointerEvents: "none",
+              }}
+            >
+              <TaskCard
+                task={draggingTask}
+                assignee={ghostAssignee}
+                commentCount={commentCounts[draggingTask.id]}
+                coverImageUrl={coverImages[draggingTask.id]}
+                subtaskProgress={subtaskCounts[draggingTask.id]}
+                draggable={false}
+                isDragging={false}
+                onOpen={noop}
+                onDragStart={noop}
+                onDragMove={noop}
+                onDragEnd={noop}
+              />
+            </motion.div>
+          ) : null,
           document.body
         )}
     </div>
@@ -704,7 +702,7 @@ function DropZone({
   }
 
   return (
-    <div className={cn("transition-all", grow ? "min-h-8 flex-1" : "h-2", active && "h-2")}>
+    <div className={cn(grow ? "min-h-8 flex-1" : "h-2", active && "h-2")}>
       <div
         className={cn(
           "h-0.5 rounded-full transition-colors",

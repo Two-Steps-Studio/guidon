@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
@@ -66,8 +67,11 @@ export function FileViewer({
     if (!file) return;
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowLeft" && previous) onNavigate(previous);
-      if (event.key === "ArrowRight" && next) onNavigate(next);
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest('input,textarea,select,button,a,video,audio,pre,code,[contenteditable]:not([contenteditable="false"]),[role="slider"],[role="textbox"],[role="combobox"],[role="menu"],[role="listbox"]')) return;
+      if (event.key === "ArrowLeft" && previous) { event.preventDefault(); onNavigate(previous); }
+      if (event.key === "ArrowRight" && next) { event.preventDefault(); onNavigate(next); }
     };
 
     window.addEventListener("keydown", onKey);
@@ -284,6 +288,7 @@ function Unsupported({ reason }: { reason: string }) {
 }
 
 function DownloadButton({ file }: { file: ProjectFile }) {
+  const t = useTranslations("files");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -302,6 +307,7 @@ function DownloadButton({ file }: { file: ProjectFile }) {
       // the browser always saves to disk instead of rendering the file
       // inline for types like PDFs and images.
       const response = await fetch(result.url);
+      if (!response.ok) throw new Error(t("downloadHttpError", { status: response.status }));
       const data = await response.blob();
 
       const href = URL.createObjectURL(data);
@@ -313,11 +319,11 @@ function DownloadButton({ file }: { file: ProjectFile }) {
       link.remove();
       URL.revokeObjectURL(href);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Download failed");
+      setError(err instanceof Error ? err.message : t("downloadFailed"));
     } finally {
       setBusy(false);
     }
-  }, [file]);
+  }, [file, t]);
 
   return (
     <div className="ml-auto flex items-center gap-2">
@@ -332,7 +338,7 @@ function DownloadButton({ file }: { file: ProjectFile }) {
         ) : (
           <Download className="h-4 w-4" />
         )}
-        Download
+        {t("download")}
       </Button>
     </div>
   );

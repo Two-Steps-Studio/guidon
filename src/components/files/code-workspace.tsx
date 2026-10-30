@@ -4,7 +4,7 @@ import { confirmAction } from "@/components/ui/confirm-action";
 
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Monaco } from "@monaco-editor/react";
 import {
   AlertCircle,
@@ -114,6 +114,8 @@ interface CodeWorkspaceProps {
  */
 export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorkspaceProps) {
   const tCommon = useTranslations("common");
+  const tFiles = useTranslations("files");
+  const branchNameId = useId();
   const [tabs, setTabs] = useState<OpenTab[]>([]);
   const [activePath, setActivePath] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
@@ -455,9 +457,10 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-2 text-xs">
+                    <div role="group" aria-label={tFiles("commitMode")} className="flex items-center gap-2 text-xs">
                       <button
                         type="button"
+                        aria-pressed={activeTab.mode === "direct"}
                         onClick={() => updateTab(activeTab.path, { mode: "direct" })}
                         className={`rounded-md border px-2 py-1 ${
                           activeTab.mode === "direct"
@@ -465,10 +468,11 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
                             : "border-border text-muted-foreground"
                         }`}
                       >
-                        Commit directly
+                        {tFiles("commitDirectly")}
                       </button>
                       <button
                         type="button"
+                        aria-pressed={activeTab.mode === "pr"}
                         onClick={() => updateTab(activeTab.path, { mode: "pr" })}
                         className={`flex items-center gap-1 rounded-md border px-2 py-1 ${
                           activeTab.mode === "pr"
@@ -477,17 +481,20 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
                         }`}
                       >
                         <GitPullRequest className="h-3 w-3" />
-                        New branch + PR
+                        {tFiles("newBranchPr")}
                       </button>
                     </div>
 
                     {activeTab.mode === "pr" && (
-                      <Input
-                        value={activeTab.newBranchName}
-                        onChange={(e) => updateTab(activeTab.path, { newBranchName: e.target.value })}
-                        placeholder="new-branch-name"
-                        className="h-8 max-w-56 text-xs"
-                      />
+                      <>
+                        <Label htmlFor={branchNameId} className="sr-only">{tFiles("newBranchName")}</Label>
+                        <Input id={branchNameId}
+                          value={activeTab.newBranchName}
+                          onChange={(e) => updateTab(activeTab.path, { newBranchName: e.target.value })}
+                          placeholder="new-branch-name"
+                          className="h-8 max-w-56 text-xs"
+                        />
+                      </>
                     )}
 
                     <Button

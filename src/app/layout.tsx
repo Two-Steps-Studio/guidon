@@ -130,14 +130,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 children here too nested two main landmarks on every page. */}
             {children}
             <ConfirmActionHost />
-            {/* theme defaults to "light" and does NOT track the OS on its own
-                (ask-sonner), so it must be told explicitly - "system" follows
-                prefers-color-scheme the same way globals.css does; "light"/
-                "dark" mirrors the user's explicit choice above so toasts don't
-                look inconsistent with the rest of the UI. */}
-            <Toaster theme={theme} richColors closeButton />
             <GlobalWebMcpTools />
           </div>
+          {/* Keep notifications outside the app stacking context so modal
+              feedback stays visible. Explicit theme follows the saved choice. */}
+          <Toaster theme={theme} richColors closeButton style={{ pointerEvents: "auto" }} toastOptions={{ style: { borderRadius: "var(--radius-lg)" } }} />
         </NextIntlClientProvider>
       </body>
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA

@@ -13,6 +13,7 @@ import type { CurrentUser } from "@/lib/data/current-user";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { BackgroundMotionSwitcher } from "@/components/layout/background-motion-switcher";
 import { WallpaperPicker } from "@/components/layout/wallpaper-picker";
+import { initialsFor } from "@/lib/people";
 import { SoundSwitcher } from "@/components/layout/sound-switcher";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 
@@ -29,10 +30,10 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
           <Avatar className="h-16 w-16">
             <AvatarImage src={user.avatar_url || undefined} />
             <AvatarFallback className="text-lg">
-              {user.full_name?.[0] || user.email?.[0] || "U"}
+              {initialsFor(user)}
             </AvatarFallback>
           </Avatar>
-          <div>
+          <div className="min-w-0 [overflow-wrap:anywhere]">
             <CardTitle>{user.full_name || t("unnamedUser")}</CardTitle>
             <CardDescription>{user.email}</CardDescription>
           </div>

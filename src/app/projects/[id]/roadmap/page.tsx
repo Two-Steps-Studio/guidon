@@ -143,7 +143,7 @@ export default async function ProjectRoadmapPage({
                   <div className="mt-4">
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-primary h-2 rounded-full transition-all"
+                        className="bg-primary h-2 rounded-full"
                         style={{ 
                           width: `${phase.completion_percentage}%`,
                           backgroundColor: access.project.color || undefined
