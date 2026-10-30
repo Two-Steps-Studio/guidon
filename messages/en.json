@@ -358,6 +358,7 @@
       "paidSoon": "Paid plans open soon. Start free now - your projects stay when you upgrade."
     },
     "footer": {
+      "brand": "Brand guidelines",
       "developers": "Developers",
       "terms": "Terms of Service",
       "privacy": "Privacy Policy",
@@ -2730,5 +2731,39 @@
     "onlyManagers": "Only project owners and admins can decide.",
     "decidedBy": "{person}, {date}",
     "failed": "Something went wrong. Try again."
+  },
+  "brandPage": {
+    "title": "Brand guidelines",
+    "description": "Official Guidon logos, colors and practical guidance for sharing the brand.",
+    "back": "Back to Guidon",
+    "eyebrow": "Guidon / Brand resources",
+    "intro": "One identity. Every touchpoint.",
+    "lead": "Use these original assets and the established palette across product screenshots, social profiles and marketing materials.",
+    "logos": "Logo assets",
+    "logoLead": "Choose the full logo when there is room to read the name. Choose the symbol for compact placements.",
+    "wordmark": "Full logo",
+    "wordmarkUse": "Blue on light surfaces; white on dark backgrounds. Preserve the proportions and leave clear space around the logo.",
+    "avatar": "Social profile",
+    "avatarUse": "Use this dark PNG for social profiles. Its clear space keeps the symbol intact in circular crops.",
+    "downloadBlue": "Download blue logo (PNG)",
+    "downloadWhite": "Download white logo (PNG)",
+    "downloadAvatar": "Download profile image (PNG)",
+    "downloadSymbol": "Download blue symbol (SVG)",
+    "palette": "Color palette",
+    "paletteLead": "Guidon Blue leads. Electric Blue supports. Midnight Navy provides the dark marketing backdrop.",
+    "blue": "Primary logo color, light-mode actions and links.",
+    "electricBlue": "Supporting highlights and dark-mode actions.",
+    "midnightNavy": "Dark marketing backgrounds and social graphics.",
+    "white": "Logo and foreground on dark backgrounds.",
+    "ink": "Body text on light product surfaces.",
+    "type": "Typography & voice",
+    "typeLead": "Geist is the main interface font. Keep copy clear, practical and grounded in what the product does today. The lettering in the logo is artwork: use the exported logo rather than recreating it with a font.",
+    "tagline": "Keep the why with the work.",
+    "rules": "Use with care",
+    "ruleOne": "Keep the original aspect ratio. Do not stretch, rotate, recolor or add effects to the logo.",
+    "ruleTwo": "Use the full logo on banners; use the symbol for profile pictures. Keep important content inside each platform’s safe area.",
+    "ruleThree": "Choose enough contrast. State colors and user-selected task labels remain separate from the brand palette.",
+    "preview": "Link previews",
+    "previewText": "The preview shown by Discord and other services is a separate 1200 × 630 social image. Updating a profile picture or a banner does not change that preview. Services may cache it after an update."
   }
 }

@@ -66,6 +66,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/pricing.md',
     '/llms.txt',
     '/plugins',
+    '/brand',
     '/.well-known/agent-skills/index.json',
     '/.well-known/ard.json',
   ]) {
