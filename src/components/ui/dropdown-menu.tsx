@@ -24,6 +24,9 @@ function DropdownMenu({
   open: openProp,
   defaultOpen = false,
   onOpenChange,
+  // Ordinary menus should not remove the page scrollbar or move fixed UI.
+  // Callers can still opt into modal focus/scroll isolation explicitly.
+  modal = false,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
@@ -47,6 +50,7 @@ function DropdownMenu({
           data-slot="dropdown-menu"
           open={open}
           onOpenChange={setOpen}
+          modal={modal}
           {...props}
         />
       </DropdownMenuToggleContext.Provider>

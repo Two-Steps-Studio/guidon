@@ -93,6 +93,7 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/ask',
   // Who runs Guidon and how to reach them, plus their Markdown twins.
   '/about',
+  '/brand',
   '/about.md',
   '/contact',
   '/contact.md',

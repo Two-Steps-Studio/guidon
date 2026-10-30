@@ -178,6 +178,8 @@ font is Geist. Use these tokens rather than adding one-off UI colors.
 ## Links
 
 - Website: https://useguidon.com
+- Public brand guidelines and logo downloads: https://useguidon.com/brand
+- Changing the Discord/social link preview: [Polish guide](social-link-preview-pl.md)
 - Product overview: https://useguidon.com/about
 - Developers: https://useguidon.com/developers
 - Plugins: https://useguidon.com/plugins

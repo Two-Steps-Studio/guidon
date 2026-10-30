@@ -358,6 +358,7 @@
       "paidSoon": "Płatne plany wkrótce. Zacznij za darmo - projekty zostaną po przejściu na płatny plan."
     },
     "footer": {
+      "brand": "Zasady marki",
       "developers": "Dla deweloperów",
       "terms": "Regulamin",
       "privacy": "Polityka prywatności",
@@ -2730,5 +2731,39 @@
     "onlyManagers": "Decydować mogą tylko właściciele i admini projektu.",
     "decidedBy": "{person}, {date}",
     "failed": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "brandPage": {
+    "title": "Zasady marki",
+    "description": "Oficjalne logo Guidona, kolory i wskazówki do materiałów promocyjnych.",
+    "back": "Wróć do Guidona",
+    "eyebrow": "Guidon / Materiały marki",
+    "intro": "Jedna marka. W każdym miejscu.",
+    "lead": "Korzystaj z oryginalnych plików i ustalonej palety w zrzutach aplikacji, profilach społecznościowych i materiałach marketingowych.",
+    "logos": "Pliki logo",
+    "logoLead": "Pełne logo wybierz tam, gdzie można przeczytać nazwę. Sam symbol sprawdzi się w małych miejscach.",
+    "wordmark": "Pełne logo",
+    "wordmarkUse": "Niebieskie na jasnych powierzchniach, białe na ciemnym tle. Zachowaj proporcje i wolne miejsce wokół znaku.",
+    "avatar": "Profil w social mediach",
+    "avatarUse": "Ten PNG z ciemnym tłem nadaje się na zdjęcie profilowe. Margines chroni rogi symbolu przy kadrowaniu do koła.",
+    "downloadBlue": "Pobierz niebieskie logo (PNG)",
+    "downloadWhite": "Pobierz białe logo (PNG)",
+    "downloadAvatar": "Pobierz profilowe (PNG)",
+    "downloadSymbol": "Pobierz niebieski symbol (SVG)",
+    "palette": "Paleta kolorów",
+    "paletteLead": "Guidon Blue jest kolorem głównym. Electric Blue go uzupełnia. Midnight Navy to ciemne tło materiałów marketingowych.",
+    "blue": "Główny kolor logo, akcji i linków w jasnym motywie.",
+    "electricBlue": "Dodatkowe akcenty i akcje w ciemnym motywie.",
+    "midnightNavy": "Ciemne tło grafik marketingowych i społecznościowych.",
+    "white": "Logo i tekst na ciemnym tle.",
+    "ink": "Tekst na jasnych powierzchniach aplikacji.",
+    "type": "Typografia i język",
+    "typeLead": "Geist to główna czcionka interfejsu. Pisz jasno, praktycznie i o funkcjach dostępnych dziś. Napis w logo jest grafiką: używaj eksportu zamiast odtwarzać go czcionką.",
+    "tagline": "Nie gub kontekstu pracy.",
+    "rules": "Zasady użycia",
+    "ruleOne": "Zachowaj oryginalne proporcje. Nie rozciągaj, nie obracaj i nie zmieniaj kolorów logo ani nie dodawaj efektów.",
+    "ruleTwo": "Na banerach używaj pełnego logo, na profilowym samego symbolu. Ważne elementy trzymaj w bezpiecznym obszarze danej platformy.",
+    "ruleThree": "Zadbaj o kontrast. Kolory statusów i tagów wybrane przez użytkowników są oddzielone od palety marki.",
+    "preview": "Podgląd linku",
+    "previewText": "Grafika wyświetlana na Discordzie i w innych serwisach to osobny obraz 1200 × 630. Zmiana profilowego lub banera nie zmienia tego podglądu. Serwisy mogą przechowywać poprzedni obraz w pamięci podręcznej."
   }
 }

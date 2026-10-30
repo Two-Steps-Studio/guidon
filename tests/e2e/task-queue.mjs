@@ -26,6 +26,32 @@ export async function taskQueueCoverage({ page, origin, fixture, client, browser
     const column = page.locator('[data-column-status="todo"]');
     await column.locator("[data-card-id]").first().waitFor();
     assert.equal(await column.locator("[data-card-id]").first().getAttribute("data-card-id"), ids[1], "Personal pin leads the column despite its later saved position");
+    // A regular dropdown must not lock the page or compensate its scrollbar.
+    // Force overflow so the regression also covers desktop classic scrollbars.
+    await page.evaluate(() => {
+      const spacer = document.createElement('div'); spacer.id = 'dropdown-scroll-fixture';
+      spacer.style.height = '200vh'; document.body.append(spacer);
+    });
+    const menuTrigger = column.locator(`[data-card-id="${ids[1]}"]`).getByRole('button', { name: /Move task/ });
+    await menuTrigger.focus();
+    const menuLayout = () => page.evaluate(() => ({
+      width: document.documentElement.clientWidth, scroll: scrollY,
+      padding: getComputedStyle(document.body).paddingRight,
+      margin: getComputedStyle(document.body).marginRight,
+      headerX: document.querySelector('main > header')?.getBoundingClientRect().x,
+    }));
+    const menuBefore = await menuLayout();
+    await menuTrigger.press('ArrowDown');
+    await page.getByRole('menu').waitFor(); await frames(page);
+    assert.equal(await page.locator('body').getAttribute('data-scroll-locked'), null, 'Ordinary dropdowns do not lock body scrolling');
+    assert.deepEqual(await menuLayout(), menuBefore, 'Opening a dropdown preserves viewport, scroll and header position');
+    await page.keyboard.press('Escape');
+    await page.getByRole('menu').waitFor({ state: 'hidden' });
+    assert.equal(await menuTrigger.evaluate(node => node === document.activeElement), true, 'Escape returns focus to the trigger');
+    await menuTrigger.press('Enter'); await page.getByRole('menu').waitFor();
+    await page.locator('h1').click();
+    await page.getByRole('menu').waitFor({ state: 'hidden' });
+    await page.evaluate(() => document.getElementById('dropdown-scroll-fixture')?.remove());
     const second = column.locator(`[data-card-id="${ids[2]}"] [data-task-open]`);
     await second.focus();await second.press("Alt+ArrowUp");
     await page.getByRole("status").filter({hasText:/Queue ordinary second.*position 2/}).waitFor();
@@ -89,6 +115,8 @@ export async function taskQueueCoverage({ page, origin, fixture, client, browser
     assert.doesNotMatch(sitemap,/\/auth\/login|\/auth\/signup|<lastmod>/);
     await page.goto(origin+"/auth/logout");
     await page.waitForURL(url => url.pathname === "/");
+    const { brandPageCoverage } = await import("./brand-page.mjs");
+    await brandPageCoverage({page,origin,browserName,artifacts});
     await page.goto(origin+"/auth/login");
     assert.equal(new URL(page.url()).pathname,"/auth/login");
     assert.ok((await page.locator('meta[name="robots"]').getAttribute("content")).includes("noindex"));
