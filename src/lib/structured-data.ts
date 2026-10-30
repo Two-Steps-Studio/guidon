@@ -81,6 +81,7 @@ export function homepageJsonLd(siteUrl: string, plans: PricedPlan[], features: F
         "@type": "WebSite",
         "@id": `${siteUrl}/#website`,
         name: "Guidon",
+        alternateName: new URL(siteUrl).hostname,
         url: siteUrl,
         description: DESCRIPTION,
         publisher: { "@id": `${siteUrl}/#organization` },

@@ -43,4 +43,10 @@ The owner subsequently approved the exact plan. It was executed successfully wit
 
 Postflight: **103 records, no pending files and no checksum mismatch** under the exact LF/CRLF compatibility rule. `tasks.revision` and its trigger exist. Every public table has RLS enabled. A production probe under `authenticated` confirmed a fresh conditional save succeeds, a stale save is refused, and a foreign identity cannot update the task; the entire probe was rolled back and the original revision was confirmed unchanged. No cleanup routine was invoked.
 
-Both GitHub and the newly published Google client completed real local sign-in and a protected-profile reload. Production frontend still advertised password only at the last check. Vercel production provider flags and a rebuild remain a separate approval/access step; publishing the Google client alone did not deploy Guidon.
+Both GitHub and the newly published Google client completed real local sign-in and a protected-profile reload.
+
+## Approved production frontend deployment (completed)
+
+The owner approved Production `NEXT_PUBLIC_AUTH_PROVIDERS=google,github` and deployment of current main. Vercel deployment `5DcCVREPqv8J4DdpVv92SPnBDLhm` reached Ready on main `0fb43b9` with `useguidon.com` assigned. Both buttons appeared on the public login page, and both real provider flows reached a protected profile and retained the session on reload. No extra scopes were granted.
+
+On 2026-10-30, the owner separately requested the latest main on production. Deployment `AzrTifEVc425EbiqRGT4eC6aJsJW` reached Ready on `d8b8f95a1c76bba27f9276147e63fbbf4cbd537e` (PR #114), with `useguidon.com` assigned. The remote main SHA was rechecked after completion. This does not deploy later task-queue changes or imply that email, billing, Sentry or uptime checks are complete.

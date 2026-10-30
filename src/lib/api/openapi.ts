@@ -385,6 +385,20 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           parameters: contextParams,
         }),
       },
+      "/projects/{projectId}/tasks/{taskId}/attachments": {
+        parameters: [projectIdParam, taskIdParam],
+        get: op("listTaskAttachments", "List images and files attached to a task", "tasks:read", ok("Attachment metadata and next_cursor", { type: "object", properties: { attachments: { type: "array", items: { type: "object" } }, next_cursor: { type: ["string", "null"] } } }), {
+          tags: ["Tasks"],
+          description: "Read-only, RLS-scoped task attachments; requires project context permission for agents. Does not expose storage paths or permanent public URLs.",
+          parameters: [{ name: "cursor", in: "query", schema: { type: "string", format: "uuid" }, description: "next_cursor from the preceding page (100 entries maximum)." }],
+        }),
+      },
+      "/projects/{projectId}/tasks/{taskId}/attachments/{attachmentId}": {
+        parameters: [projectIdParam, taskIdParam, { name: "attachmentId", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+        get: op("getTaskAttachment", "Read a task attachment or obtain a temporary download URL", "tasks:read", {
+          "200": { description: "Attachment bytes, or JSON download metadata for mode=download/files over 2 MiB. Download URLs expire after 600 seconds.", content: { "application/octet-stream": { schema: { type: "string", format: "binary" } }, "image/png": { schema: { type: "string", format: "binary" } }, "application/json": { schema: { type: "object" } } } },
+        }, { tags: ["Tasks"], parameters: [{ name: "mode", in: "query", schema: { type: "string", enum: ["content", "download"], default: "content" } }] }),
+      },
       "/tasks/{taskId}/links": {
         parameters: [taskIdParam],
         get: op("listTaskLinks", "Commits, branches and PRs linked to the task", "tasks:read", ok("Links", wrap("links", { type: "array", items: { type: "object" } })), {

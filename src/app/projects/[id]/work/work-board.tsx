@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { KanbanBoard } from "@/components/work/kanban-board";
+import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { isTypingTarget } from "@/components/layout/keyboard-shortcuts";
 
 // TaskDetailDialog (and the attempts/why-panel sections it always imports)
@@ -44,6 +45,9 @@ import {
   isDone,
   normalizeTaskPriority,
   normalizeTaskStatus,
+  pinnedTaskComparator,
+  taskComparator,
+  compareTasksByDueDate,
   subtaskProgress,
   type BoardColumn,
   type PriorityDef,
@@ -117,6 +121,7 @@ export function WorkBoard({
   boardLimit?: number | null;
 }) {
   const t = useTranslations("work");
+  const pinned = usePinnedTasks();
   usePreloadTaskDialog();
   const canDelete = role === "owner" || role === "admin";
   const canEdit = canWrite;
@@ -393,7 +398,9 @@ export function WorkBoard({
       return;
     }
     const column = columns.find(column => column.status === status);
-    const position = state.tasks.filter(item => item.id !== task.id && item.status === status && (item.sort_order ?? 0) < sortOrder).length + 1;
+    const nextColumn = [...filteredTasks.filter(item => item.id !== task.id && normalizeTaskStatus(item.status) === status), { ...task, status, sort_order: sortOrder }]
+      .sort(pinnedTaskComparator(new Set(pinned?.tasks.map(item => item.id)), sortMode === "due_date" ? compareTasksByDueDate : taskComparator(priorities)));
+    const position = nextColumn.findIndex(item => item.id === task.id) + 1;
     setMoveAnnouncement(t("taskMovedAnnouncement", { title: task.title, column: column?.label ?? status, position }));
     if (restoreFocus) requestAnimationFrame(() => {
       if (document.activeElement === focused || document.activeElement === document.body) document.querySelector<HTMLElement>(`[data-card-id="${task.id}"] [data-task-open]`)?.focus({ preventScroll: true });

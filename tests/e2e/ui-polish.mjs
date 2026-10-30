@@ -33,7 +33,9 @@ export async function uiPolishCoverage({ page, context, origin, fixture, client,
       assert.ok(await email.evaluate(node => node.getBoundingClientRect().right <= innerWidth + 1), "Long email must fit on a phone");
     }
     await page.goto(`${origin}/projects/${owner.projectId}/work`);
-    const card = page.locator(`[data-card-id="${taskId}"]`);
+    // A drag preview can contain a presentation copy of a card in a portal.
+    // Exercise the actual card inside the visible board, not that copy.
+    const card = page.getByRole("list", {name:"Task board",exact:true}).locator(`[data-card-id="${taskId}"]`);
     await card.scrollIntoViewIfNeeded();
     assert.ok(await card.evaluate(node => [...node.querySelectorAll("ul li")].every(label => label.getBoundingClientRect().right <= node.getBoundingClientRect().right + 1)), "Long labels must fit inside their card");
     await page.screenshot({ path: path.join(artifacts, "ui-polish-phone.png"), fullPage: true });

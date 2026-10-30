@@ -15,6 +15,8 @@ import {
   type LabelStarterSet,
 } from "@/lib/work/label-presets";
 import { addLabelPreset, addLabelPresetSet, deleteLabelPreset, updateLabelPreset } from "./label-presets-actions";
+import { suggestProjectLabels } from "./label-ai-actions";
+import type { LabelSuggestion } from "@/lib/ai/label-suggestions";
 
 function ColorPicker({
   value,
@@ -50,10 +52,12 @@ export function LabelPresetsForm({
   projectId,
   initialPresets,
   canManage,
+  aiEnabled = false,
 }: {
   projectId: string;
   initialPresets: LabelPreset[];
   canManage: boolean;
+  aiEnabled?: boolean;
 }) {
   const t = useTranslations("settings");
   const [presets, setPresets] = useState(initialPresets);
@@ -61,7 +65,33 @@ export function LabelPresetsForm({
   const [newColor, setNewColor] = useState<string>(LABEL_COLORS[6]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [suggestions, setSuggestions] = useState<LabelSuggestion[] | null>(null);
   const colorLabel = (color: string) => t("labelColorAria", { color });
+
+  const suggest = () => {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const result = await suggestProjectLabels(projectId);
+        if (result.error) { setError(result.error); return; }
+        setSuggestions(result.suggestions);
+      } catch { setError(t("labelAiFailed")); }
+    });
+  };
+
+  const applySuggestions = () => {
+    if (!suggestions?.length) return;
+    setError(null);
+    startTransition(async () => {
+      try {
+        const result = await addLabelPresetSet(projectId, suggestions);
+        setPresets(prev => [...prev, ...result.added]);
+        // Partial saves remain visible, and retry skips already-added names.
+        if (result.error) setError(result.error);
+        else setSuggestions(null);
+      } catch { setError(t("labelAiFailed")); }
+    });
+  };
 
   const add = () => {
     setError(null);
@@ -127,6 +157,20 @@ export function LabelPresetsForm({
         <CardDescription>{t("labelPresetsDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {canManage && aiEnabled && <div className="space-y-3 rounded-lg border p-3">
+          <Button type="button" variant="outline" onClick={suggest} disabled={pending}>
+            <Sparkles className="mr-2 size-4" aria-hidden />{pending ? t("labelAiWorking") : t("labelAiSuggest")}
+          </Button>
+          <p className="text-xs text-muted-foreground">{t("labelAiHelp")}</p>
+          {suggestions !== null && <div className="space-y-3" aria-live="polite">
+            <p className="text-sm">{suggestions.length ? t("labelAiPreview") : t("labelAiEmpty")}</p>
+            <ul className="flex flex-wrap gap-2">{suggestions.map(label => <li key={label.name}><LabelChip name={label.name} color={label.color} /></li>)}</ul>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={applySuggestions} disabled={pending || !suggestions.length}>{t("labelAiApply")}</Button>
+              <Button type="button" variant="ghost" disabled={pending} onClick={() => setSuggestions(null)}>{t("labelAiDismiss")}</Button>
+            </div>
+          </div>}
+        </div>}
         {presets.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("labelPresetsEmpty")}</p>
         ) : (
@@ -203,7 +247,7 @@ export function LabelPresetsForm({
         )}
 
         {error && (
-          <p className="flex items-center gap-2 text-sm text-destructive">
+          <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </p>

@@ -1,15 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { LEGAL_VERSION, legalOperator, legalPublicationReady, type LegalCopy } from "@/lib/legal";
-
-export function LegalNotice() {
-  if (legalPublicationReady) return null;
-  return <aside aria-label="Document status" className="mb-8 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm">
-    <strong>Draft for review - not ready for publication.</strong>
-    <p>Service provider identification and the final legal review must be completed before these documents are adopted. This draft does not remove any statutory rights.</p>
-  </aside>;
-}
+import { LEGAL_VERSION, legalOperator, type LegalCopy } from "@/lib/legal";
 
 export function OperatorContact() {
   return <address className="not-italic">
@@ -28,7 +20,6 @@ export function LegalDocument({ copy, templateCredit = true }: { copy: LegalCopy
       <Link href="/" className="text-sm underline">Back to home</Link>
     </div></header>
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <LegalNotice />
       <h1 className="text-3xl font-bold">{copy.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">Version / last revised: {LEGAL_VERSION}</p>
       <nav aria-label="Legal documents" className="my-6 flex flex-wrap gap-4 text-sm underline">

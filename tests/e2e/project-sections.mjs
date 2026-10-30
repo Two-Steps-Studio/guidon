@@ -87,11 +87,13 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     // Signed download link works; a changed path or signature does not.
     const file = (await client.query("SELECT id FROM project_files WHERE project_id=$1 AND name=$2", [owner.projectId, fileName])).rows[0];
     await page.getByRole("button", { name: `Options for ${fileName}`, exact: true }).click();
-    const download = page.waitForEvent("download").catch(() => null);
-    const navigation = page.waitForRequest(request => request.url().includes("/api/storage?"));
-    await page.getByRole("menuitem", { name: "Download", exact: true }).click();
-    const signed = new URL((await navigation).url());
-    await download;
+    // WebKit does not consistently report a download as a page request.
+    // The actual download event supplies its URL and proves the user action.
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("menuitem", { name: "Download", exact: true }).click(),
+    ]);
+    const signed = new URL(download.url());
     const downloaded = await context.request.get(signed.toString());
     assert.equal(downloaded.status(), 200, "Signed link downloads the file");
     // Anything outside the inline allowlist (raster images, PDF) is a forced download that can't be sniffed into a document.

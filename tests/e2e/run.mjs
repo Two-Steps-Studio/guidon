@@ -44,6 +44,7 @@ import assert from "node:assert/strict";
 
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const designAuditMode=process.argv.includes("--design-audit");
+const taskQueueMode=process.argv.includes("--task-queue");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
 const mobileMode=process.argv.includes("--mobile-audit");
 const includeAccessibility=process.argv.includes("--with-accessibility");
@@ -143,6 +144,8 @@ try{
   await new Promise(resolve=>proxy.listen(tlsPort,"127.0.0.1",resolve));
   phase="api-mcp";
   results.push(await apiIsolation({origin,fixture,api,client}));
+  const {attachmentApiCoverage}=await import("./task-attachments.mjs");
+  results.push(await attachmentApiCoverage({origin,fixture,api,client,storagePath:environment.STORAGE_PATH}));
   for(const [name,browserType] of Object.entries({chromium,firefox,webkit})){
     phase=name;
     console.log(`E2E: ${name} real login, private projects and session smoke`);
@@ -156,7 +159,10 @@ try{
     const page=await context.newPage();page.setDefaultTimeout(name==='webkit'?30000:15000);
     const started=Date.now();
     try{
-      if(mobileMode){
+      if(taskQueueMode){
+        const {taskQueueCoverage}=await import("./task-queue.mjs");
+        await taskQueueCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      }else if(mobileMode){
         await mobileCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       }else if(accessibilityMode){
         const {accessibilityCoverage}=await import("./accessibility.mjs");
@@ -172,6 +178,12 @@ try{
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
       if(name==="chromium")await uiPolishCoverage({page,context,origin,fixture,client,artifacts});
+      if(name==="chromium") {
+        const {taskQueueCoverage}=await import("./task-queue.mjs");
+        await taskQueueCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+        await page.goto(origin+"/auth/logout");
+        await page.waitForURL(url=>url.pathname==="/");
+      }
       if(name==="chromium")await auditFollowupCoverage({page,origin,fixture,client,artifacts});
       await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await projectSectionCoverage({page,context,origin,fixture,client,browserName:name,artifacts});

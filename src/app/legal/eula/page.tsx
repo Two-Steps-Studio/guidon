@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SUPPORT_EMAIL } from "@/lib/project-links";
-import { LegalNotice, OperatorContact } from "@/components/legal/legal-document";
+import { OperatorContact } from "@/components/legal/legal-document";
 import { LEGAL_VERSION, legalRobots } from "@/lib/legal";
 
 export const metadata: Metadata = {
@@ -29,7 +29,6 @@ export default function EulaPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <LegalNotice />
         <h1 className="mb-2 text-3xl font-bold">End User License Agreement</h1>
         <p className="mb-10 text-sm text-muted-foreground">Last updated: {LAST_UPDATED}</p>
 

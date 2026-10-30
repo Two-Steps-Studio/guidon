@@ -48,6 +48,8 @@ jobs:
       - run: npm run test:package
       - run: npm run test:auth
       - run: npm run test:ai
+      - run: npm run test:mcp-attachments
+      - run: node --experimental-strip-types --import ./tests/fixtures/register-app-paths.mjs tests/pinned-task-order.test.mjs
       - run: npm run test:webhooks
       - run: npm run test:agent-readiness
       - run: npm run test:agent-claims

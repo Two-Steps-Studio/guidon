@@ -414,6 +414,26 @@ export function taskComparator(priorities?: readonly PriorityDef[]): (a: Task, b
 
 export const compareTasks = taskComparator();
 
+/** Personal pins lead each column without changing the project's saved order. */
+export function pinnedTaskComparator(
+  pinnedIds: ReadonlySet<string>,
+  compare: (a: Task, b: Task) => number
+): (a: Task, b: Task) => number {
+  return (a, b) => Number(pinnedIds.has(b.id)) - Number(pinnedIds.has(a.id)) || compare(a, b);
+}
+
+/** Pins form a separate ordered group: midpoint arithmetic must not span it. */
+export function pinnedTaskDrop(column: Task[], index: number, movingId: string, pinnedIds: ReadonlySet<string>) {
+  const siblings = column.filter(task => task.id !== movingId);
+  const movingPinned = pinnedIds.has(movingId);
+  const pinCount = siblings.filter(task => pinnedIds.has(task.id)).length;
+  const bounded = Math.max(0, Math.min(index, siblings.length));
+  const targetIndex = movingPinned ? Math.min(bounded, pinCount) : Math.max(bounded, pinCount);
+  const peers = siblings.filter(task => pinnedIds.has(task.id) === movingPinned);
+  const peerIndex = movingPinned ? targetIndex : targetIndex - pinCount;
+  return { index: targetIndex, sortOrder: sortOrderForPosition(peers, peerIndex) };
+}
+
 /**
  * Same underlying issue as dueDateKey above, for any other timestamptz
  * column (created_at here) used only for ordering: self-hosted mode hands

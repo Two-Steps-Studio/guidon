@@ -9,6 +9,7 @@ export const MAX_PINNED_PROJECTS = 3;
 export interface PinnedProject {
   id: string;
   name: string;
+  avatar_url?: string | null;
 }
 
 /**
@@ -34,7 +35,7 @@ export async function getPinnedProjects(userId: string): Promise<PinnedProject[]
 
   const { data } = await dataClient(userId)
     .from<PinnedProject>("projects")
-    .select("id, name")
+    .select("id, name, avatar_url")
     .in("id", ids);
   const byId = new Map((data ?? []).map((project) => [project.id, project]));
   return ids.flatMap((id) => {

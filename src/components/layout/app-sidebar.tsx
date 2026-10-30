@@ -210,7 +210,10 @@ function PinnedProjectsGroup() {
           <SidebarMenuItem key={project.id}>
             <SidebarMenuButton asChild tooltip={project.name}>
               <Link href={`/projects/${project.id}`}>
-                <Pin />
+                <Avatar className="size-4 shrink-0 rounded-sm">
+                  <AvatarImage src={project.avatar_url || undefined} alt="" className="object-cover" />
+                  <AvatarFallback className="rounded-sm bg-transparent"><Pin className="size-4" /></AvatarFallback>
+                </Avatar>
                 <span>{project.name}</span>
               </Link>
             </SidebarMenuButton>
@@ -393,15 +396,16 @@ export function AppSidebar({
                 asChild
                 size="lg"
                 tooltip={user.full_name || user.email}
+                className="group-data-[collapsible=icon]:justify-center"
               >
                 <Link href="/profile">
-                  <Avatar className="h-6 w-6">
+                  <Avatar className="size-6 shrink-0">
                     <AvatarImage src={user.avatar_url || undefined} />
                     <AvatarFallback>
                       {initialsFor(user)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex min-w-0 flex-col">
+                  <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
                     <span className="truncate text-sm font-medium">
                       {user.full_name || t("user")}
                     </span>
@@ -409,7 +413,7 @@ export function AppSidebar({
                       {user.email}
                     </span>
                   </div>
-                  <User className="ml-auto h-4 w-4 text-muted-foreground" />
+                  <User className="ml-auto h-4 w-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

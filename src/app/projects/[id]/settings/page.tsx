@@ -20,6 +20,7 @@ import { DiscordIntegrationForm } from "./discord-integration-form";
 import { getDiscordIntegrationInfo } from "@/lib/data/discord-integration";
 import type { Project } from "@/types/project";
 import type { Technology } from "@/types/technology";
+import { showAi } from "@/lib/data/ai-preference";
 
 interface AiPermissionsRow {
   can_read_context: boolean;
@@ -137,6 +138,7 @@ export default async function ProjectSettingsPage({
         projectId={projectId}
         initialPresets={labelPresets}
         canManage={canManageProject(access.role)}
+        aiEnabled={await showAi(access.userId, project.ai_enabled)}
       />
       {/* Hidden, not just disabled, when the project has AI switched off
           (migration 046) - the saved permissions are kept as-is and come

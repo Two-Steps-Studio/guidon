@@ -13,6 +13,8 @@ import {
   compareTasksByDueDate,
   groupTasksByStatus,
   taskComparator,
+  pinnedTaskComparator,
+  pinnedTaskDrop,
   normalizeTaskStatus,
   sortOrderForPosition,
   type BoardColumn,
@@ -22,6 +24,7 @@ import { attachBoardPan } from "@/components/work/board-pan";
 import { TaskCard, type TaskCardMember } from "@/components/work/task-card";
 import type { Task, TaskStatus } from "@/types/task";
 import { usePriorities } from "@/components/work/workflow-context";
+import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -171,10 +174,14 @@ function KanbanBoardComponent({
   // `groups[status]` and `membersById.get(...)` would hand out fresh
   // objects/Maps every render even when nothing the card displays changed.
   const priorities = usePriorities();
+  const pinned = usePinnedTasks();
+  const pinnedIds = useMemo(() => new Set(pinned?.tasks.map(task => task.id)), [pinned?.tasks]);
+  const pinnedIdsRef = useRef(pinnedIds);
+  useEffect(() => { pinnedIdsRef.current = pinnedIds; }, [pinnedIds]);
   const groups = useMemo(
     () =>
-      groupTasksByStatus(tasks, sortMode === "due_date" ? compareTasksByDueDate : taskComparator(priorities), columns),
-    [tasks, sortMode, priorities, columns]
+      groupTasksByStatus(tasks, pinnedTaskComparator(pinnedIds, sortMode === "due_date" ? compareTasksByDueDate : taskComparator(priorities)), columns),
+    [tasks, sortMode, priorities, columns, pinnedIds]
   );
   const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
   // One array per column, built once: passing `columns.filter(...)` inline
@@ -229,7 +236,7 @@ function KanbanBoardComponent({
     async (task: Task, direction: "up" | "down") => {
       if (!canDrag) return;
       const status = normalizeTaskStatus(task.status);
-      const column = groupsRef.current[status];
+      const column = groupsRef.current[status].filter(item => pinnedIdsRef.current.has(item.id) === pinnedIdsRef.current.has(task.id));
       const currentIndex = column.findIndex((item) => item.id === task.id);
       if (currentIndex === -1) return;
 
@@ -253,7 +260,7 @@ function KanbanBoardComponent({
     async (task: Task, status: TaskStatus) => {
       if (!canEdit || normalizeTaskStatus(task.status) === status) return;
       const column = groupsRef.current[status];
-      const sortOrder = sortOrderForPosition(column, column.length, task.id);
+      const sortOrder = pinnedTaskDrop(column, column.length, task.id, pinnedIdsRef.current).sortOrder;
       await onMoveTaskRef.current(task, status, sortOrder);
     },
     [canEdit]
@@ -265,16 +272,17 @@ function KanbanBoardComponent({
       const currentStatus = normalizeTaskStatus(task.status);
       const column = groupsRef.current[status];
       const currentIndex = column.findIndex((item) => item.id === task.id);
+      const target = pinnedTaskDrop(column, index, task.id, pinnedIdsRef.current);
 
       // No-op: dropped exactly where it already sits.
       if (
         currentStatus === status &&
-        (currentIndex === index || currentIndex === index - 1)
+        currentIndex === target.index
       ) {
         return;
       }
 
-      const sortOrder = sortOrderForPosition(column, index, task.id);
+      const sortOrder = target.sortOrder;
       await onMoveTaskRef.current(task, status, sortOrder);
     },
     [canDrag]
@@ -351,7 +359,7 @@ function KanbanBoardComponent({
       }
     }
 
-    const next: DropTarget = { status, index };
+    const next: DropTarget = { status, index: pinnedTaskDrop(groupsRef.current[status], index, draggedTaskId, pinnedIdsRef.current).index };
     if (dropTargetRef.current?.status !== next.status || dropTargetRef.current?.index !== next.index) {
       dropTargetRef.current = next;
       setDropTarget(next);
@@ -607,8 +615,8 @@ function KanbanBoardComponent({
                     onDragEnd={handleDragEnd}
                     onDragCancel={cancelDrag}
                     onReorder={canDrag ? handleReorder : undefined}
-                    canMoveUp={index > 0}
-                    canMoveDown={index < columnTasks.length - 1}
+                    canMoveUp={index > 0 && pinnedIds.has(columnTasks[index - 1].id) === pinnedIds.has(task.id)}
+                    canMoveDown={index < columnTasks.length - 1 && pinnedIds.has(columnTasks[index + 1].id) === pinnedIds.has(task.id)}
                     moveTargets={canEdit ? moveTargetsByStatus.get(column.status) : undefined}
                     onMoveTo={canEdit ? handleMoveTo : undefined}
                     selected={selectedIds?.has(task.id) ?? false}
