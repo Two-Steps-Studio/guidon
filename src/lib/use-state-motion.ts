@@ -13,14 +13,18 @@ export function useStateMotion<T extends HTMLElement>(value: unknown) {
   useEffect(() => {
     const changed = previous.current !== value;
     previous.current = value;
+    const node = ref.current;
+    const current = animation.current?.playState === "running" && node ? getComputedStyle(node) : null;
+    const opacity = current?.opacity ?? .7;
+    const transform = current?.transform ?? "translateY(2%)";
     animation.current?.cancel();
-    if (!changed || !pointer.current || !ref.current) return;
-    const easing = getComputedStyle(ref.current).getPropertyValue("--ease-out").trim();
-    animation.current = ref.current.animate(reduce ? [{opacity:.7},{opacity:1}] : [
-      {opacity:.7, transform:"translateY(2%)"}, {opacity:1, transform:"translateY(0)"},
+    if (!changed || !pointer.current || !node) return;
+    const easing = getComputedStyle(node).getPropertyValue("--ease-out").trim();
+    animation.current = node.animate(reduce ? [{opacity},{opacity:1}] : [
+      {opacity, transform}, {opacity:1, transform:"translateY(0)"},
     ], {duration:reduce ? 120 : 180, easing});
-    return () => animation.current?.cancel();
   }, [value, reduce]);
+  useEffect(() => () => { animation.current?.cancel(); }, []);
   return {
     ref,
     inputHandlers: {
