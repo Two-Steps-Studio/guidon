@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import io
 import os
 import sys
 import threading
 import time
 import unittest
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
@@ -317,6 +319,27 @@ class RequestShapeTests(Base):
     def test_request_escape_hatch(self):
         self.route("GET /api/v1/anything", lambda r, a: {"body": {"q": r["query"]}})
         self.assertEqual(self.client.request("GET", "/anything", query={"a": 1, "b": None, "c": True}), {"q": {"a": "1", "c": "true"}})
+
+
+class ErrorResponseLifetimeTests(unittest.TestCase):
+    def test_error_responses_close_before_retry_or_raise(self):
+        for status, expected_calls in [(401, 1), (503, 2)]:
+            bodies = []
+            test = self
+
+            class Opener:
+                def open(self, request, **kwargs):
+                    test.assertTrue(all(body.closed for body in bodies), "Close the previous error before retrying")
+                    body = io.BytesIO(b'{"error":"failure"}')
+                    bodies.append(body)
+                    raise urllib.error.HTTPError(request.full_url, status, "failure", {"Content-Type": "application/json", "Retry-After": "0"}, body)
+
+            client = Guidon(api_key=KEY, opener=Opener(), max_retries=1)
+            with self.assertRaises(GuidonError) as caught:
+                client.projects.list()
+            self.assertEqual(caught.exception.status, status)
+            self.assertEqual(len(bodies), expected_calls)
+            self.assertTrue(all(body.closed for body in bodies))
 
 
 class ErrorTests(Base):

@@ -168,7 +168,10 @@ class HttpClient:
                     status = resp.status
                     content_type = resp.headers.get("Content-Type")
             except urllib.error.HTTPError as http_error:
-                error = self._error_from_response(http_error, method, url)
+                try:
+                    error = self._error_from_response(http_error, method, url)
+                finally:
+                    http_error.close()
                 # 409 idempotency_in_progress: the first request with this key is still running.
                 in_progress = error.status == 409 and error.code == "idempotency_in_progress"
                 if attempt < attempts and (error.status in _RETRYABLE_STATUS or in_progress):

@@ -11,6 +11,8 @@ on:
       - 'tests/*webhook*.mjs'
       - 'tests/agent-readiness.test.mjs'
       - 'tests/agent-web.test.mjs'
+      - 'tests/avatar-image.test.mjs'
+      - 'sdk/python/**'
       - 'tests/fixtures/*app-paths*.mjs'
       - 'tests/web-bot-auth.test.mjs'
       - 'tests/auth/agent-claims.test.mjs'
@@ -49,6 +51,13 @@ jobs:
       - run: npm run test:auth
       - run: npm run test:ai
       - run: npm run test:mcp-attachments
+      - run: npm run test:images
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python SDK regressions
+        working-directory: sdk/python
+        run: python -m unittest discover -s tests -v
       - run: node --experimental-strip-types --import ./tests/fixtures/register-app-paths.mjs tests/pinned-task-order.test.mjs
       - run: npm run test:webhooks
       - run: npm run test:agent-readiness

@@ -263,7 +263,7 @@ export function ardCatalog(siteUrl: string) {
         identifier: urn(`skill:${SKILL_NAME}`),
         trustManifest,
         displayName: SKILL_NAME,
-        type: "application/agent-skills+md",
+        type: 'text/markdown; profile="urn:air:agent-skills"',
         url: `${siteUrl}/.well-known/agent-skills/${SKILL_NAME}/SKILL.md`,
         description: "How an agent picks up, works on and reports back on Guidon tasks.",
         tags: ["skill"],

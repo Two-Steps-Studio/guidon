@@ -187,6 +187,10 @@ function KanbanBoardComponent({
     [tasks, sortMode, priorities, columns, pinnedIds]
   );
   const membersById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
+  // Only one likely visible cover gets priority; the rest stay lazy.
+  const priorityCoverId = useMemo(() => columns.slice(0, 4)
+    .flatMap(column => groups[column.status].slice(0, 3))
+    .find(task => coverImages[task.id])?.id, [columns, groups, coverImages]);
   // One array per column, built once: passing `columns.filter(...)` inline
   // made a new array for every card on every render, which broke TaskCard's
   // memo() - every drag-move tick re-rendered the whole board (with a few
@@ -609,6 +613,7 @@ function KanbanBoardComponent({
                     }
                     commentCount={commentCounts[task.id]}
                     coverImageUrl={coverImages[task.id]}
+                    coverPriority={task.id === priorityCoverId}
                     subtaskProgress={subtaskCounts[task.id]}
                     draggable={canDrag}
                     isDragging={draggingTask?.id === task.id}
