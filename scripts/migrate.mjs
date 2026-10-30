@@ -53,10 +53,15 @@ async function loadMigrations() {
   return Promise.all(
     files.map(async (name) => {
       const sql = await readFile(path.join(MIGRATIONS_DIR, name), "utf8");
+      // Historical runs came from both Windows and Linux checkouts. Accept
+      // only those exact newline encodings, never trim or normalize SQL.
+      const lf = sql.replace(/\r\n/g, "\n");
+      const checksum = (text) => createHash("sha256").update(text).digest("hex").slice(0, 16);
       return {
         name,
         sql,
-        checksum: createHash("sha256").update(sql).digest("hex").slice(0, 16),
+        checksum: checksum(sql),
+        compatibleChecksums: new Set([sql, lf, lf.replace(/\n/g, "\r\n")].map(checksum)),
       };
     })
   );
@@ -182,7 +187,7 @@ async function main() {
     // A migration that changed after being applied means the repo no longer
     // describes the database. Refuse rather than guess.
     const drifted = migrations.filter(
-      (m) => applied.has(m.name) && applied.get(m.name) !== m.checksum
+      (m) => applied.has(m.name) && !m.compatibleChecksums.has(applied.get(m.name))
     );
 
     if (drifted.length > 0) {
