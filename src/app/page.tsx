@@ -14,6 +14,8 @@ import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
 import { BetaBadge } from "@/components/layout/beta-badge";
+import { AnimatedFaq } from "@/components/landing/animated-faq";
+import { MarketingMotion } from "@/components/landing/marketing-motion";
 import { CtaLink } from "@/components/landing/cta-link";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
@@ -145,9 +147,11 @@ export default async function Home() {
       {/* A laptop drawn in CSS around a real screenshot of the dashboard, one
           per theme - regenerate with scripts/landing/capture.mjs. */}
       <div className="mx-auto max-w-6xl">
+        <MarketingMotion kind="laptop" replayLabel={t("motion.replay")}>
+        <div data-motion-actor="laptop">
         <div className="relative mx-auto w-[88%] rounded-t-[1.1rem] rounded-b-sm border border-neutral-700 bg-neutral-900 p-[1.4%] pb-[1.8%] shadow-2xl dark:border-neutral-600">
           <span className="absolute left-1/2 top-[0.55%] h-1 w-1 -translate-x-1/2 rounded-full bg-neutral-600 md:h-1.5 md:w-1.5" aria-hidden />
-          <div className="overflow-hidden rounded-[0.3rem] bg-background">
+          <div className="relative overflow-hidden rounded-[0.3rem] bg-background">
             <Image
               src="/landing/hero-dashboard-light.webp"
               alt={t("heroShotAlt")}
@@ -165,11 +169,45 @@ export default async function Home() {
               sizes="(min-width: 1152px) 1000px, 88vw"
               className="hidden h-auto w-full dark:block"
             />
+            <span data-motion-actor="screen-light" aria-hidden="true" />
           </div>
         </div>
         <div className="relative mx-auto h-3 w-full rounded-b-2xl bg-gradient-to-b from-neutral-300 to-neutral-400 shadow-xl md:h-5 dark:from-neutral-600 dark:to-neutral-800" aria-hidden>
           <div className="absolute left-1/2 top-0 h-1.5 w-[14%] -translate-x-1/2 rounded-b-lg bg-neutral-400 md:h-2 dark:bg-neutral-900/70" />
         </div>
+        </div>
+        </MarketingMotion>
+      </div>
+    </section>
+
+    <section className="border-t border-border bg-background px-4 py-16" aria-labelledby="context-demo-title">
+      <div className="mx-auto max-w-5xl">
+        <p className="mb-3 text-center text-xs font-medium uppercase tracking-widest text-primary">{t("motion.example")}</p>
+        <h2 id="context-demo-title" className={`${displayFont.className} text-center text-3xl md:text-4xl`}>{t("motion.title")}</h2>
+        <p className="mx-auto mt-4 max-w-xl text-center text-text-secondary">{t("motion.description")}</p>
+        <MarketingMotion kind="context" replayLabel={t("motion.replay")}>
+          <div className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-background/90 p-6 md:p-10" aria-hidden="true">
+            <div data-motion-actor="signal" className="pointer-events-none absolute inset-x-8 top-1/2 hidden h-px bg-gradient-to-r from-transparent via-primary to-transparent md:block" />
+            <div className="relative grid items-center gap-6 md:grid-cols-3">
+              <div data-motion-actor="task" className="rounded-xl border border-primary/30 bg-card p-5 shadow-lg">
+                <CheckSquare className="mb-5 h-6 w-6 text-primary" />
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("motion.taskLabel")}</p>
+                <p className="mt-2 font-semibold">{t("motion.task")}</p>
+                <div className="mt-6 h-1.5 rounded-full bg-primary/15"><div className="h-full w-2/3 rounded-full bg-primary" /></div>
+              </div>
+              <div className="space-y-3">
+                <div data-motion-actor="decision" className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"><FileText className="h-5 w-5 shrink-0 text-primary" /><p className="text-sm font-medium">{t("motion.decision")}</p></div>
+                <div data-motion-actor="knowledge" className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"><BookOpen className="h-5 w-5 shrink-0 text-primary" /><p className="text-sm font-medium">{t("motion.knowledge")}</p></div>
+              </div>
+              <div data-motion-actor="result" className="rounded-xl border border-primary/30 bg-primary/5 p-5">
+                <Bot className="mb-5 h-6 w-6 text-primary" />
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("motion.agent")}</p>
+                <p className="mt-2 font-semibold">{t("motion.review")}</p>
+                <CheckCircle2 className="mt-5 h-5 w-5 text-success" />
+              </div>
+            </div>
+          </div>
+        </MarketingMotion>
       </div>
     </section>
 
@@ -323,13 +361,7 @@ export default async function Home() {
         </h2>
         <div className="scrim divide-y divide-border rounded-2xl px-6">
           {faq.map((item) => (
-            <details key={item.q} className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
-                {item.q}
-                <span aria-hidden className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
-              </summary>
-              <p className="pt-3 text-text-secondary">{item.a}</p>
-            </details>
+            <AnimatedFaq key={item.q} question={item.q} answer={item.a} />
           ))}
         </div>
       </div>

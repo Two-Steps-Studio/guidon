@@ -117,6 +117,8 @@ export async function taskQueueCoverage({ page, origin, fixture, client, browser
     await page.waitForURL(url => url.pathname === "/");
     const { brandPageCoverage } = await import("./brand-page.mjs");
     await brandPageCoverage({page,origin,browserName,artifacts});
+    const { motionCoverage } = await import("./motion.mjs");
+    await motionCoverage({page,origin,browserName,artifacts});
     await page.goto(origin+"/auth/login");
     assert.equal(new URL(page.url()).pathname,"/auth/login");
     assert.ok((await page.locator('meta[name="robots"]').getAttribute("content")).includes("noindex"));

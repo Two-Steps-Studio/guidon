@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, FileUp, Loader2, Undo2, Upload } from "lucide-react";
+import { useStateMotion } from "@/lib/use-state-motion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -165,6 +166,8 @@ export function ImportTasksDialog({
     ...(unmatched?.assignees.length ? [t("importUnmatchedAssignees", { values: unmatched.assignees.join(", ") })] : []),
   ];
 
+  const { ref: resultRef, inputHandlers: resultInputHandlers } = useStateMotion<HTMLSpanElement>(imported);
+
   return (
     <Dialog
       open={open}
@@ -173,7 +176,7 @@ export function ImportTasksDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="max-w-3xl">
+      <DialogContent {...resultInputHandlers} className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>{t("importTitle")}</DialogTitle>
           <DialogDescription>{t("importDescription")}</DialogDescription>
@@ -182,7 +185,7 @@ export function ImportTasksDialog({
         {imported ? (
           <div className="space-y-3">
             <p className="flex items-center gap-2 text-sm font-medium">
-              <CheckCircle2 className="h-4 w-4 text-success" />
+              <span ref={resultRef} className="inline-flex" data-state-motion="import-result"><CheckCircle2 className="h-4 w-4 text-success" /></span>
               {t("importDoneTitle", { count: importedCount })}
             </p>
             {undoMessage ? (
