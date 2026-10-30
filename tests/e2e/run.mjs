@@ -161,7 +161,7 @@ try{
     try{
       if(taskQueueMode){
         const {taskQueueCoverage}=await import("./task-queue.mjs");
-        await taskQueueCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+        await taskQueueCoverage({page,context,origin,fixture,client,browserName:name,artifacts,storagePath:environment.STORAGE_PATH,authSecret:environment.AUTH_SECRET});
       }else if(mobileMode){
         await mobileCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       }else if(accessibilityMode){
@@ -180,7 +180,7 @@ try{
       if(name==="chromium")await uiPolishCoverage({page,context,origin,fixture,client,artifacts});
       if(name==="chromium") {
         const {taskQueueCoverage}=await import("./task-queue.mjs");
-        await taskQueueCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+        await taskQueueCoverage({page,context,origin,fixture,client,browserName:name,artifacts,storagePath:environment.STORAGE_PATH,authSecret:environment.AUTH_SECRET});
         await page.goto(origin+"/auth/logout");
         await page.waitForURL(url=>url.pathname==="/");
       }

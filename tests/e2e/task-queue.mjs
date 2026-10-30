@@ -3,7 +3,7 @@ import path from "node:path";
 
 const frames = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
-export async function taskQueueCoverage({ page, origin, fixture, client, browserName, artifacts }) {
+export async function taskQueueCoverage({ page, origin, fixture, client, browserName, artifacts, storagePath, authSecret }) {
   const owner = fixture.users[0];
   const previous = (await client.query("SELECT pinned_task_ids,pinned_project_ids FROM profiles WHERE id=$1", [owner.id])).rows[0];
   const project = (await client.query("SELECT avatar_url FROM projects WHERE id=$1", [owner.projectId])).rows[0];
@@ -20,6 +20,8 @@ export async function taskQueueCoverage({ page, origin, fixture, client, browser
     await page.locator("#password").fill(fixture.password);
     await page.locator('button[type="submit"]').click();
     await page.waitForURL(url => url.pathname === "/dashboard");
+    const { lighthouseReportCoverage } = await import("./lighthouse-report.mjs");
+    await lighthouseReportCoverage({page,origin,fixture,client,browserName,storagePath,authSecret});
     await page.goto(`${origin}/projects/${owner.projectId}/work`);
     const column = page.locator('[data-column-status="todo"]');
     await column.locator("[data-card-id]").first().waitFor();

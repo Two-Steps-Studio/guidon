@@ -2,9 +2,9 @@ import { SITE_URL } from "@/lib/site-url";
 
 /**
  * robots.txt, written by hand rather than with Next's MetadataRoute (which
- * can't emit the agent-discovery lines): the crawl rules, the sitemap,
- * `Schemamap` for NLWeb's structured-data feeds and `Agentmap` for the
- * Agentic Resource Discovery catalog.
+ * crawl rules and sitemap. Extra discovery URLs are comments so standard
+ * robots parsers do not treat experimental vocabulary as invalid directives.
+ * Agents discover ARD through its well-known URL and HTTP/HTML links.
  */
 export const dynamic = "force-static";
 
@@ -18,9 +18,9 @@ export function GET() {
     "Allow: /api/mcp/docs/server-card",
     "",
     `Sitemap: ${SITE_URL}/sitemap.xml`,
-    `Schemamap: ${SITE_URL}/schemamap.xml`,
-    `Agentmap: ${SITE_URL}/.well-known/ard.json`,
+    `# Schemamap: ${SITE_URL}/schemamap.xml`,
+    `# Agentmap: ${SITE_URL}/.well-known/ard.json`,
     "",
   ].join("\n");
-  return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8", Link: `<${SITE_URL}/.well-known/ard.json>; rel="ard"; type="application/ai-catalog+json"` } });
 }

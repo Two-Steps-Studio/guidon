@@ -74,7 +74,16 @@ function buildContentSecurityPolicy(): string {
   return directives.join("; ");
 }
 
+function publicAvatarPatterns(): NonNullable<NextConfig["images"]>["remotePatterns"] {
+  try {
+    const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
+    if (url.protocol !== "https:") return [];
+    return [{ protocol: "https", hostname: url.hostname, port: url.port, pathname: "/storage/v1/object/public/avatars/**", search: "" }];
+  } catch { return []; }
+}
+
 const nextConfig: NextConfig = {
+  images: { remotePatterns: publicAvatarPatterns() },
   // Local storage is mutable runtime data, never a server build input. Newer
   // filesystem tracing can otherwise include the whole repo through its root.
   outputFileTracingExcludes: {
@@ -156,6 +165,7 @@ const nextConfig: NextConfig = {
               '</openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
               '</developers>; rel="service-doc"',
               '</.well-known/api-catalog>; rel="api-catalog"',
+              '</.well-known/ard.json>; rel="ard"; type="application/ai-catalog+json"',
               '</llms.txt>; rel="describedby"; type="text/plain"',
             ].join(", "),
           },

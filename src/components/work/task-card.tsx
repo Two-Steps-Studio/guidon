@@ -52,6 +52,7 @@ interface TaskCardProps {
   commentCount?: number;
   /** Signed URL of the task's most recently uploaded image attachment, if any. */
   coverImageUrl?: string;
+  coverPriority?: boolean;
   subtaskProgress?: SubtaskProgress;
   draggable: boolean;
   isDragging: boolean;
@@ -156,6 +157,7 @@ function TaskCardComponent({
   assignee,
   commentCount = 0,
   coverImageUrl,
+  coverPriority = false,
   subtaskProgress,
   draggable,
   isDragging,
@@ -369,7 +371,8 @@ function TaskCardComponent({
             alt=""
             // Off-screen cards (most of a large board) don't download theirs
             // until scrolled to.
-            loading="lazy"
+            loading={coverPriority ? "eager" : "lazy"}
+            fetchPriority={coverPriority ? "high" : "auto"}
             decoding="async"
             width={260}
             height={112}

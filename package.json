@@ -24,6 +24,7 @@
     "test:board-pan": "node tests/board-pan.test.cjs",
     "test:ai": "node --experimental-strip-types tests/ai/provider.test.mjs && node --experimental-strip-types tests/ai/task-learning.test.mjs && node --conditions=react-server --experimental-strip-types tests/ai/provider-transport.test.mjs && node --conditions=react-server --experimental-strip-types tests/ai/chat-route.test.mjs && node --experimental-strip-types tests/ai/label-suggestions.test.mjs",
     "test:mcp-attachments": "node --experimental-strip-types tests/mcp-attachments.test.mjs",
+    "test:images": "node --experimental-strip-types tests/avatar-image.test.mjs",
     "test:auth": "node --experimental-strip-types tests/auth/local-auth.test.mjs && node --experimental-strip-types tests/auth/oauth.test.mjs && node --experimental-strip-types tests/auth/mobile-login.test.mjs && node --experimental-strip-types tests/auth/oauth-server.test.mjs && node --experimental-strip-types tests/auth/account-deletion.test.mjs && node --experimental-strip-types --test tests/auth/client-assertion.test.mjs && node --experimental-strip-types --conditions=react-server tests/auth/session-cookie.test.mjs",
     "test:limits": "node tests/limits.test.mjs",
     "test:reports": "node --experimental-strip-types tests/game-report.test.mjs",

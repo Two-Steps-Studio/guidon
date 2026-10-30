@@ -6,7 +6,7 @@
  */
 
 import { createServiceClient } from "@/lib/supabase-server";
-import { getStorageProvider } from "./provider";
+import { getStorageProvider, assertSafeStoragePath } from "./provider";
 import { compressAttachment, makeCoverThumbnail, thumbnailPathFor } from "./attachment-compression";
 
 export { thumbnailPathFor };
@@ -308,20 +308,13 @@ export async function deleteTaskAttachment(storagePath: string): Promise<boolean
 }
 
 /**
- * Signed URL for a card cover: the thumbnail when there is one, else the
- * original (attachments uploaded before thumbnails existed).
+ * Session-authorized card preview, including for legacy attachments without
+ * a thumbnail. Kept under its existing function name for callers.
  */
 export async function getSignedCoverUrl(storagePath: string): Promise<string> {
-  const provider = await getStorageProvider();
-  const thumbnail = thumbnailPathFor(storagePath);
-  try {
-    if (!provider.exists || (await provider.exists(STORAGE_BUCKETS.ATTACHMENTS, thumbnail))) {
-      return await provider.getUrl(STORAGE_BUCKETS.ATTACHMENTS, thumbnail, { expiresInSeconds: 3600 });
-    }
-  } catch {
-    // Supabase: signing a missing object fails - fall through to the original.
-  }
-  return getSignedUrl(STORAGE_BUCKETS.ATTACHMENTS, storagePath);
+  // The preview route checks the current session and RLS on every request,
+  // downsizes legacy originals too, and never exposes a storage capability.
+  return `/api/task-cover?path=${encodeURIComponent(assertSafeStoragePath(storagePath))}`;
 }
 
 // ============================================
