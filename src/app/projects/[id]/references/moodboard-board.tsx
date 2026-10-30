@@ -2,7 +2,7 @@
 
 import { confirmAction } from "@/components/ui/confirm-action";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ExternalLink, ImagePlus, Images, Loader2, Pencil, Trash2 } from "lucide-react";
@@ -15,6 +15,10 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { imageFiles, withReadableName } from "@/lib/files/images";
 import { deleteReference, updateReference, uploadReference, type ProjectReference } from "./actions";
+
+const subscribeHydration = () => () => {};
+const clientHydrated = () => true;
+const serverHydrated = () => false;
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -49,6 +53,8 @@ export function MoodboardBoard({
   subtitle: string;
 }) {
   const t = useTranslations("moodboard");
+  // File change events fired before hydration cannot be replayed reliably.
+  const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated);
   const [references, setReferences] = useState(initialReferences);
   const [uploading, setUploading] = useState(0);
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -154,6 +160,7 @@ export function MoodboardBoard({
             <input
               ref={fileInputRef}
               type="file"
+              disabled={!hydrated}
               accept="image/png,image/jpeg,image/gif,image/webp"
               multiple
               className="hidden"
@@ -162,7 +169,7 @@ export function MoodboardBoard({
                 event.target.value = "";
               }}
             />
-            <Button onClick={() => fileInputRef.current?.click()}>
+            <Button disabled={!hydrated} onClick={() => fileInputRef.current?.click()}>
               <ImagePlus className="h-4 w-4" />
               {t("addImages")}
             </Button>
@@ -197,7 +204,7 @@ export function MoodboardBoard({
           description={canUpload ? t("emptyDescription") : t("emptyDescriptionReadOnly")}
           action={
             canUpload ? (
-              <Button onClick={() => fileInputRef.current?.click()}>
+              <Button disabled={!hydrated} onClick={() => fileInputRef.current?.click()}>
                 <ImagePlus className="h-4 w-4" />
                 {t("addImages")}
               </Button>

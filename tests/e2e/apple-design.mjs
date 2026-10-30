@@ -199,9 +199,23 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
 
     // Moodboard uses the same viewer, but verify its actual entry point and
     // the visible corner close button on a narrow viewport as well.
-    await navigate(`${origin}/projects/${owner.projectId}/references`);
+    const referenceRoute = `${origin}/projects/${owner.projectId}/references`;
+    // Inspect the real SSR document without executing its scripts: controls
+    // must not accept a file until React has attached the upload handler.
+    const referenceDocument = await page.request.get(referenceRoute);
+    assert.equal(referenceDocument.status(), 200);
+    const beforeHydration = await page.evaluate(({ html, label }) => {
+      const document = new DOMParser().parseFromString(html, 'text/html');
+      const input = document.querySelector('input[type="file"]');
+      const buttons = [...document.querySelectorAll('button')].filter(button => button.textContent.trim() === label);
+      return { inputDisabled: input?.disabled, buttonsDisabled: buttons.length > 0 && buttons.every(button => button.disabled) };
+    }, { html: await referenceDocument.text(), label: messages.moodboard.addImages });
+    assert.deepEqual(beforeHydration, { inputDisabled: true, buttonsDisabled: true }, 'SSR upload controls wait for hydration');
+    await navigate(referenceRoute);
     const referenceImage = { ...images[0], name: `moodboard-close-${browserName}.png` };
-    await page.locator('input[type="file"]').setInputFiles([referenceImage]);
+    const referenceInput = page.locator('input[type="file"]:enabled');
+    await referenceInput.waitFor({ state: 'attached' });
+    await referenceInput.setInputFiles([referenceImage]);
     const referenceOpen = page.getByRole('button', { name: messages.moodboard.openImage.replace('{name}', referenceImage.name), exact: true });
     await referenceOpen.waitFor();
     await page.setViewportSize({ width: 375, height: 667 });
