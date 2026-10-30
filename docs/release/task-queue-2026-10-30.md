@@ -20,7 +20,9 @@ Snapshot: 263 tasks, 8 Todo, 46 Backlog, 205 Review, 4 Done. Review is not proof
 - The same run passed 166 existing REST/MCP isolation checks plus real attachment API/MCP checks: native image bytes, text/JSON resources, temporary private downloads, pagination, scope/project/task/member isolation, expired/revoked keys and agent permissions.
 - AI provider/parser/transport/chat suites and new label tests passed; label tests cover role/AI/rate gates, scoped bounded context, deduplication and safe failures without real billed requests. Labels/translations passed; agent-web 174/174, context-pack 13/13, pin-order and MIME/size-boundary tests passed. TypeScript, focused ESLint and diff whitespace checks passed.
 - Broad local E2E previously completed Chromium/Firefox but exposed test-harness assumptions in WebKit download observation and Windows reduced-transparency handling. These tests now observe actual downloads and honor the real OS preference. The final broad CI suite remains a separate check; the targeted run is not represented as a full-suite pass.
-- No live Supabase writes or new production deployment in this batch. Supabase-hosted attachment reading and installed-plugin discovery need the approved rollout and a real-file verification.
+- No production schema/storage changes or live test fixtures in this batch. Requested task status, attempt and comment updates were made through Guidon MCP. Supabase-hosted attachment reading and installed-plugin discovery need the approved rollout and a real-file verification.
+
+PR: https://github.com/Two-Steps-Studio/guidon/pull/115. Six implementation cards moved to Review with successful test evidence. SEO and MCP attachments also moved to Review with explicitly partial outcomes: ranking measurement and hosted rollout/client discovery remain pending. Footer stays in Backlog waiting for its reference; the empty "Do zeobienia" card stays in Backlog with a request to clarify scope. No cards were blanket-marked Done.
 
 ## Initial board snapshot
 
