@@ -212,6 +212,18 @@
     "progress": "{done} of {total} tasks done"
   },
   "landing": {
+    "motion": {
+      "replay": "Replay animation",
+      "example": "Illustrative workflow",
+      "title": "The why travels with the work.",
+      "description": "A task, its supporting decisions and project knowledge stay together. When you connect an agent, its work returns for your review.",
+      "taskLabel": "Task",
+      "task": "Prepare the website launch",
+      "decision": "Decision: keep sign-up simple",
+      "knowledge": "Knowledge: launch checklist",
+      "agent": "Optional AI agent",
+      "review": "Ready for your review"
+    },
     "heroTitle": "One board for your team's work. Your AI can help too.",
     "heroSubtitle": "Plan, assign and finish tasks together, with the decisions and history behind each one kept right next to it. When you want help, connect Claude, ChatGPT, Cursor, Codex or any MCP app: it works from the same tasks, and you review what it does.",
     "howItWorks": {

@@ -1,0 +1,78 @@
+.scene { position: relative; isolation: isolate; }
+.scene [data-motion-actor] { transform-origin: center; }
+.scene[data-play="true"] [data-motion-actor="laptop"] {
+  animation: laptop-arrive 1200ms var(--ease-out) both;
+}
+.scene[data-play="true"] [data-motion-actor="screen-light"] {
+  animation: screen-light 1800ms var(--ease-in-out) both;
+}
+.scene [data-motion-actor="screen-light"] {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(110deg, transparent 25%, color-mix(in srgb, var(--color-brand-accent) 18%, transparent) 42%, rgb(255 255 255 / .32) 50%, transparent 65%);
+}
+.scene[data-play="true"] [data-motion-actor="task"] {
+  animation: task-story 3600ms var(--ease-in-out) both;
+}
+.scene[data-play="true"] [data-motion-actor="decision"] {
+  animation: context-arrive 600ms var(--ease-out) 400ms both;
+}
+.scene[data-play="true"] [data-motion-actor="knowledge"] {
+  animation: context-arrive 600ms var(--ease-out) 460ms both;
+}
+.scene[data-play="true"] [data-motion-actor="result"] {
+  animation: context-arrive 600ms var(--ease-out) 1800ms both;
+}
+.scene[data-play="true"] [data-motion-actor="signal"] {
+  animation: signal-pass 1800ms var(--ease-in-out) 600ms both;
+}
+.scene[data-paused="true"] [data-motion-actor] { animation-play-state: paused; }
+.replay {
+  visibility: hidden;
+  display: flex; align-items: center; gap: .4rem; min-height: 44px;
+  margin: 1rem auto 0; padding: .5rem .75rem; border-radius: var(--radius-md);
+  font-size: .75rem; color: var(--color-text-secondary);
+  transition: opacity 125ms var(--ease-out);
+}
+.scene[data-play="true"] .replay { visibility: visible; }
+.replay:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .replay:hover { opacity: .75; } }
+@keyframes laptop-arrive {
+  from { transform: perspective(1400px) translateY(3%) rotateX(8deg) scale(.97); }
+  to { transform: perspective(1400px) translateY(0) rotateX(0deg) scale(1); }
+}
+@keyframes context-arrive {
+  from { opacity: .3; transform: translateY(8%) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes screen-light {
+  0% { opacity: 0; transform: translateX(-100%); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+@keyframes task-story {
+  0% { transform: translateY(0) rotate(0deg); }
+  25%, 50% { transform: translateY(-8%) rotate(-2deg); }
+  75%, 100% { transform: translateY(0) rotate(0deg); }
+}
+@keyframes signal-pass {
+  0% { opacity: 0; transform: translateX(-45%) scaleX(.95); }
+  35%, 65% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(45%) scaleX(1); }
+}
+/* Small screens retain the story without perspective or lateral movement. */
+@media (max-width: 767px) {
+  .scene[data-play="true"] [data-motion-actor="laptop"],
+  .scene[data-play="true"] [data-motion-actor="task"] {
+    animation: gentle-arrive 600ms var(--ease-out) both;
+  }
+}
+@keyframes gentle-arrive { from { opacity: .7; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .scene[data-play="true"] [data-motion-actor] {
+    animation: gentle-arrive var(--motion-exit) var(--ease-out) both !important;
+    animation-delay: 0ms !important;
+    transform: none;
+  }
+  .scene [data-motion-actor="signal"] { display: none; }
+  .scene [data-motion-actor="screen-light"] { display: none; }
+}

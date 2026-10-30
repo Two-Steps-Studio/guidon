@@ -19,6 +19,7 @@ import {
   Webhook,
   type LucideIcon,
 } from "lucide-react";
+import { useStateMotion } from "@/lib/use-state-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +64,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
   const tSettings = useTranslations("settings");
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const { ref: stepRef, inputHandlers: stepInputHandlers } = useStateMotion<HTMLFormElement>(step);
   const [projectType, setProjectType] = useState<ProjectType | null>(null);
   const [projectName, setProjectName] = useState("");
   const [studioName, setStudioName] = useState("");
@@ -119,7 +121,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
   const finishHref = "/start/finish";
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10 sm:py-16">
+    <div {...stepInputHandlers} className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10 sm:py-16">
       <div className="space-y-3">
         <div className="flex gap-1.5" aria-hidden>
           {STEPS.map((name, index) => (
@@ -132,7 +134,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
         <p className="text-xs text-muted-foreground">{t("stepOf", { step: step + 1, total: STEPS.length })}</p>
       </div>
 
-      <form
+      <form ref={stepRef} data-state-motion="onboarding"
         onSubmit={(event) => {
           event.preventDefault();
           next();

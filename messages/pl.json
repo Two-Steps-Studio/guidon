@@ -212,6 +212,18 @@
     "progress": "{done} z {total} zadań ukończonych"
   },
   "landing": {
+    "motion": {
+      "replay": "Odtwórz animację",
+      "example": "Przykładowy przebieg pracy",
+      "title": "Kontekst podąża za zadaniem.",
+      "description": "Zadanie, decyzje i wiedza projektu pozostają razem. Gdy podłączysz agenta, wynik jego pracy wraca do Twojej oceny.",
+      "taskLabel": "Zadanie",
+      "task": "Przygotuj start strony",
+      "decision": "Decyzja: prosta rejestracja",
+      "knowledge": "Wiedza: lista przed premierą",
+      "agent": "Opcjonalny agent AI",
+      "review": "Gotowe do Twojej oceny"
+    },
     "heroTitle": "Jedna tablica na pracę zespołu. AI może pomóc.",
     "heroSubtitle": "Planujcie, przydzielajcie i kończcie zadania razem, a decyzje i historia każdego zadania są tuż obok niego. Kiedy chcesz pomocy, podłącz Claude, ChatGPT, Cursor, Codex albo dowolną aplikację MCP: pracuje na tych samych zadaniach, a Ty sprawdzasz, co zrobiła.",
     "howItWorks": {
