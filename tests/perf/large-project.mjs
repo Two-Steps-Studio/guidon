@@ -189,12 +189,20 @@ async function interactions(page, project, size) {
   }
   for (let run = 0; run < RUNS; run++) {
     const card = page.locator("article[data-card-id]").nth(run);
+    const taskId = await card.getAttribute("data-card-id");
+    const title = await card.locator("[data-task-open]").textContent();
     await clearMeasures();
     await card.getByRole("button", { name: /^Move task "/ }).click();
     const target = page.getByRole("menuitem", { name: /^Move to (Review|In Progress)$/ }).first();
+    const status = (await target.textContent()).includes("Review") ? "review" : "in_progress";
     await target.click();
     await page.waitForFunction(() => performance.getEntriesByName("guidon:task.move").length > 0);
     move.push(await measured("task.move"));
+    // The server-action measure ends before React applies the returned order.
+    // Finish that interaction before nth(run) resolves the next card: otherwise
+    // the previous move can relocate/unmount it while its menu is opening.
+    await page.getByRole("status").filter({ hasText: title }).waitFor();
+    await page.locator(`[data-column-status="${status}"] [data-card-id="${taskId}"]`).waitFor();
   }
   for (let run = 0; run < RUNS; run++) {
     await page.getByRole("button", { name: /^Add task to / }).first().click();
