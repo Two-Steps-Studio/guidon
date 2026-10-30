@@ -17,6 +17,8 @@ import { authenticationCoverage } from "./authentication.mjs";
 import { seedApiFixture } from "./api-fixture.mjs";
 import { apiIsolation } from "./api-isolation.mjs";
 import { feedbackCoverage } from "./feedback.mjs";
+import { auditFollowupCoverage } from "./audit-followup.mjs";
+import { uiPolishCoverage } from "./ui-polish.mjs";
 import { boardLayoutCoverage } from "./board-layout.mjs";
 import { agentClaimCoverage } from "./agent-claims.mjs";
 import { projectModuleCoverage } from "./project-modules.mjs";
@@ -169,6 +171,8 @@ try{
       await agentClaimCoverage({page,context,origin,fixture,client,connectionString,browserName:name,artifacts});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await boardLayoutCoverage({page,origin,fixture,client,browserName:name,artifacts});
+      if(name==="chromium")await uiPolishCoverage({page,context,origin,fixture,client,artifacts});
+      if(name==="chromium")await auditFollowupCoverage({page,origin,fixture,client,artifacts});
       await projectModuleCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       await projectSectionCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       // Registry rules are server-side; one browser keeps the run inside its time budget.

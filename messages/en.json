@@ -1457,6 +1457,13 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "downloadFailed": "Download failed.",
+    "downloadHttpError": "Download failed (HTTP {status}).",
+    "disconnectRepo": "Disconnect repository {repository}",
+    "commitMode": "Commit mode",
+    "commitDirectly": "Commit directly",
+    "newBranchPr": "New branch + PR",
+    "newBranchName": "New branch name",
     "title": "Files",
     "subtitle": "Project documents and assets",
     "uploading": "Uploading...",

@@ -4,6 +4,8 @@ import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
+import { SurfaceMotionProvider, SurfaceMotionTrigger, useSurfaceMotion, keepReopenedSurfaceFocus } from "@/components/ui/surface-motion"
+import { dismissNestedSurface } from "@/components/ui/nested-surface"
 import { cn } from "@/lib/utils"
 
 // Radix opens the menu on `pointerdown`. On touch screens that fires at the
@@ -39,14 +41,16 @@ function DropdownMenu({
   )
 
   return (
-    <DropdownMenuToggleContext.Provider value={setOpen}>
-      <DropdownMenuPrimitive.Root
-        data-slot="dropdown-menu"
-        open={open}
-        onOpenChange={setOpen}
-        {...props}
-      />
-    </DropdownMenuToggleContext.Provider>
+    <SurfaceMotionProvider>
+      <DropdownMenuToggleContext.Provider value={setOpen}>
+        <DropdownMenuPrimitive.Root
+          data-slot="dropdown-menu"
+          open={open}
+          onOpenChange={setOpen}
+          {...props}
+        />
+      </DropdownMenuToggleContext.Provider>
+    </SurfaceMotionProvider>
   )
 }
 
@@ -71,52 +75,68 @@ function DropdownMenuTrigger({
   const tap = React.useRef<{ id: number; x: number; y: number } | null>(null)
 
   return (
-    <DropdownMenuPrimitive.Trigger
-      data-slot="dropdown-menu-trigger"
-      className={cn("touch-manipulation", className)}
-      onPointerDown={(event) => {
-        onPointerDown?.(event)
-        tap.current = null
-        // preventDefault makes Radix skip its own pointerdown toggle.
-        if (setOpen && !event.defaultPrevented && event.pointerType !== "mouse") {
-          tap.current = { id: event.pointerId, x: event.clientX, y: event.clientY }
-          event.preventDefault()
-        }
-      }}
-      onPointerMove={(event) => {
-        onPointerMove?.(event)
-        const start = tap.current
-        if (start?.id === event.pointerId && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) tap.current = null
-      }}
-      onPointerUp={(event) => {
-        onPointerUp?.(event)
-        const start = tap.current
-        tap.current = null
-        if (setOpen && start?.id === event.pointerId && !event.defaultPrevented && !props.disabled && Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 10) setOpen(previous => !previous)
-      }}
-      onPointerCancel={(event) => { onPointerCancel?.(event); tap.current = null }}
-      onClick={onClick}
-      {...props}
-    />
+    <SurfaceMotionTrigger>
+      <DropdownMenuPrimitive.Trigger
+        data-slot="dropdown-menu-trigger"
+        className={cn("touch-manipulation", className)}
+        onPointerDown={(event) => {
+          onPointerDown?.(event)
+          tap.current = null
+          // preventDefault makes Radix skip its own pointerdown toggle.
+          if (setOpen && !event.defaultPrevented && event.pointerType !== "mouse") {
+            tap.current = { id: event.pointerId, x: event.clientX, y: event.clientY }
+            event.preventDefault()
+          }
+        }}
+        onPointerMove={(event) => {
+          onPointerMove?.(event)
+          const start = tap.current
+          if (start?.id === event.pointerId && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) tap.current = null
+        }}
+        onPointerUp={(event) => {
+          onPointerUp?.(event)
+          const start = tap.current
+          tap.current = null
+          if (setOpen && start?.id === event.pointerId && !event.defaultPrevented && !props.disabled && Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 10) setOpen(previous => !previous)
+        }}
+        onPointerCancel={(event) => { onPointerCancel?.(event); tap.current = null }}
+        onClick={onClick}
+        {...props}
+      />
+    </SurfaceMotionTrigger>
   )
 }
 
 function DropdownMenuContent({
   className,
   sideOffset = 4,
+  onCloseAutoFocus,
+  onEscapeKeyDown,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+  const motion = useSurfaceMotion()
   return (
     <DropdownMenuPrimitive.Portal>
-      <DropdownMenuPrimitive.Content
-        data-slot="dropdown-menu-content"
-        sideOffset={sideOffset}
-        className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md overscroll-contain",
-          className
-        )}
-        {...props}
-      />
+      <SurfaceMotionTrigger>
+        <DropdownMenuPrimitive.Content
+          data-slot="dropdown-menu-content"
+          data-motion={motion}
+          onEscapeKeyDown={event => {
+            onEscapeKeyDown?.(event)
+            dismissNestedSurface(event)
+          }}
+          onCloseAutoFocus={event => {
+            onCloseAutoFocus?.(event)
+            keepReopenedSurfaceFocus(event)
+          }}
+          sideOffset={sideOffset}
+          className={cn(
+            "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border p-1 shadow-md overscroll-contain",
+            className
+          )}
+          {...props}
+        />
+      </SurfaceMotionTrigger>
     </DropdownMenuPrimitive.Portal>
   )
 }
@@ -296,15 +316,19 @@ function DropdownMenuSubContent({
   className,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+  const motion = useSurfaceMotion()
   return (
-    <DropdownMenuPrimitive.SubContent
-      data-slot="dropdown-menu-sub-content"
-      className={cn(
-        "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-lg",
-        className
-      )}
-      {...props}
-    />
+    <SurfaceMotionTrigger>
+      <DropdownMenuPrimitive.SubContent
+        data-slot="dropdown-menu-sub-content"
+          data-motion={motion}
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-lg border p-1 shadow-lg",
+          className
+        )}
+        {...props}
+      />
+    </SurfaceMotionTrigger>
   )
 }
 

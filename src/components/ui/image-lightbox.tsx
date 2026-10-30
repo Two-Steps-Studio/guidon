@@ -95,6 +95,8 @@ export function ImageLightbox({
               className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 pb-4 sm:px-14"
               style={{ touchAction: "pan-y pinch-zoom" }}
               onPointerDown={event => {
+                // A second finger belongs to native pinch zoom, never a new swipe.
+                if (gesture.current || !event.isPrimary) return;
                 if (count < 2 || event.button !== 0 || (event.target as HTMLElement).closest("button,a")) return;
                 serial.current++;x.stop();
                 gesture.current = { id: event.pointerId, startX: event.clientX, startY: event.clientY, offset: x.get(), axis: "pending", samples: [{ x: event.clientX, time: event.timeStamp }] };
@@ -109,8 +111,8 @@ export function ImageLightbox({
                 drag.samples.push({ x: event.clientX, time: event.timeStamp });
                 drag.samples = drag.samples.filter(sample => event.timeStamp - sample.time <= 100).slice(-6);
               }}
-              onPointerCancel={cancel}
-              onLostPointerCapture={() => { if (gesture.current) cancel(); }}
+              onPointerCancel={event => { if (gesture.current?.id === event.pointerId) cancel(); }}
+              onLostPointerCapture={event => { if (gesture.current?.id === event.pointerId) cancel(); }}
               onPointerUp={event => {
                 const drag = gesture.current;if (!drag || drag.id !== event.pointerId) return;
                 gesture.current = null;

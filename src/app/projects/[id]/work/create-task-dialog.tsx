@@ -238,7 +238,7 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) void requestClose(); }}>
-      <DialogContent scrollable className="sm:max-w-xl" onCloseAutoFocus={event => {
+      <DialogContent motion="none" scrollable className="sm:max-w-xl" onCloseAutoFocus={event => {
         const target = returnFocusRef?.current;
         if (target?.isConnected) { event.preventDefault(); target.focus(); }
       }}>

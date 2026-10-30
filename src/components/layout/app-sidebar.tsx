@@ -1,5 +1,6 @@
 "use client";
 
+import { initialsFor } from "@/lib/people";
 import { isModuleVisible } from "@/lib/work/project-modules";
 import Link from "next/link";
 import Image from "next/image";
@@ -397,7 +398,7 @@ export function AppSidebar({
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={user.avatar_url || undefined} />
                     <AvatarFallback>
-                      {user.full_name?.[0] || user.email?.[0] || "U"}
+                      {initialsFor(user)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex min-w-0 flex-col">

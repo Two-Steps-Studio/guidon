@@ -80,7 +80,7 @@ export function KeyboardShortcuts() {
 
   return (
     <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent motion="none" className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>

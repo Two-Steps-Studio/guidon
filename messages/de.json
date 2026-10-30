@@ -1457,6 +1457,13 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "downloadFailed": "Download fehlgeschlagen.",
+    "downloadHttpError": "Download fehlgeschlagen (HTTP {status}).",
+    "disconnectRepo": "Repository {repository} trennen",
+    "commitMode": "Commit-Modus",
+    "commitDirectly": "Direkt committen",
+    "newBranchPr": "Neuer Branch + PR",
+    "newBranchName": "Name des neuen Branches",
     "title": "Dateien",
     "subtitle": "Projektdokumente und -ressourcen",
     "uploading": "Wird hochgeladen...",

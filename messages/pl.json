@@ -1457,6 +1457,13 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "downloadFailed": "Nie udało się pobrać pliku.",
+    "downloadHttpError": "Nie udało się pobrać pliku (HTTP {status}).",
+    "disconnectRepo": "Odłącz repozytorium {repository}",
+    "commitMode": "Tryb zapisu zmian",
+    "commitDirectly": "Zapisz bezpośrednio",
+    "newBranchPr": "Nowa gałąź + PR",
+    "newBranchName": "Nazwa nowej gałęzi",
     "title": "Pliki",
     "subtitle": "Dokumenty i zasoby projektu",
     "uploading": "Przesyłanie...",

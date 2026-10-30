@@ -1457,6 +1457,13 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "downloadFailed": "No se pudo descargar el archivo.",
+    "downloadHttpError": "No se pudo descargar el archivo (HTTP {status}).",
+    "disconnectRepo": "Desconectar repositorio {repository}",
+    "commitMode": "Modo de commit",
+    "commitDirectly": "Commit directo",
+    "newBranchPr": "Nueva rama + PR",
+    "newBranchName": "Nombre de la nueva rama",
     "title": "Archivos",
     "subtitle": "Documentos y recursos del proyecto",
     "uploading": "Subiendo...",

@@ -141,10 +141,9 @@ function clearHoldTimer(gesture: Gesture) {
 }
 
 /**
- * Wrapped in memo() below: KanbanBoard re-renders on every drag-move tick
- * (dropTarget/ghost position tracks the pointer, which changes many times
- * per second while dragging) - without memo, every card in every column
- * re-rendered on each of those ticks, not just the one being dragged.
+ * Wrapped in memo() below: KanbanBoard re-renders when the drop target
+ * changes. Ghost coordinates update outside React; memo also prevents
+ * target changes from re-rendering every other card in every column.
  * KanbanBoard's onDragStart/onDragMove/onDragEnd/onReorder props are
  * referentially stable (useCallback with empty/ref-based deps - see
  * kanban-board.tsx), and isDragging/canMoveUp/canMoveDown are plain
@@ -186,6 +185,8 @@ function TaskCardComponent({
   const labelPresets = useLabelPresets();
 
   const gestureRef = useRef<Gesture | null>(null);
+  const cancelDragRef = useRef(onDragCancel);
+  useEffect(() => { cancelDragRef.current = onDragCancel; }, [onDragCancel]);
   const cardRef = useRef<HTMLElement>(null);
   // A drag that ends on the card's own element also dispatches a browser
   // click right after pointerup - without this, dropping a card reopens it.
@@ -203,7 +204,13 @@ function TaskCardComponent({
     card.addEventListener("touchmove", blockScrollWhileDragging, { passive: false });
     return () => {
       card.removeEventListener("touchmove", blockScrollWhileDragging);
-      if (gestureRef.current) clearHoldTimer(gestureRef.current);
+      const gesture = gestureRef.current;
+      gestureRef.current = null;
+      if (gesture) {
+        clearHoldTimer(gesture);
+        if (gesture.armed) cancelDragRef.current?.();
+        if (card.hasPointerCapture(gesture.pointerId)) card.releasePointerCapture(gesture.pointerId);
+      }
     };
   }, []);
 
@@ -225,6 +232,7 @@ function TaskCardComponent({
 
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLElement>) => {
+      if (gestureRef.current || !event.isPrimary) return;
       // A long-press usually isn't followed by a click, so a flag left over
       // from the previous drag would otherwise swallow the next real tap.
       suppressClickRef.current = false;
@@ -235,7 +243,6 @@ function TaskCardComponent({
       // Don't hijack the "..." move-to menu's own press/click.
       if ((event.target as HTMLElement).closest("button:not([data-task-open])")) return;
 
-      if (gestureRef.current) clearHoldTimer(gestureRef.current);
       const gesture: Gesture = {
         pointerId: event.pointerId,
         pointerType: event.pointerType,
@@ -301,9 +308,9 @@ function TaskCardComponent({
     [onDragEnd]
   );
 
-  const cancelGesture = useCallback(() => {
+  const cancelGesture = useCallback((event: React.PointerEvent<HTMLElement>) => {
     const gesture = gestureRef.current;
-    if (!gesture) return;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
     gestureRef.current = null;
     clearHoldTimer(gesture);
     if (gesture.armed) onDragCancel?.();
@@ -465,7 +472,7 @@ function TaskCardComponent({
             ) : (
               <li
                 key={tag}
-                className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground"
+                className="max-w-full rounded border border-border bg-muted px-1.5 py-0.5 text-[11px] leading-snug text-foreground/80 [overflow-wrap:anywhere]"
               >
                 {tag}
               </li>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import { AlertCircle, Github, Loader2, Unlink } from "lucide-react";
@@ -30,6 +31,7 @@ interface GithubRepoPanelProps {
 }
 
 export function GithubRepoPanel({ projectId, repoInfo, canManage, canWrite }: GithubRepoPanelProps) {
+  const t = useTranslations("files");
   const [pending, startTransition] = useTransition();
 
   // Errors from the OAuth connect/callback routes come back as a query param
@@ -104,7 +106,9 @@ export function GithubRepoPanel({ projectId, repoInfo, canManage, canWrite }: Gi
                 </a>
               </Button>
               {repoInfo && (
-                <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={pending}>
+                <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={pending}
+                  aria-label={t("disconnectRepo", { repository: `${repoInfo.repoOwner}/${repoInfo.repoName}` })}
+                  title={t("disconnectRepo", { repository: `${repoInfo.repoOwner}/${repoInfo.repoName}` })}>
                   {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />}
                 </Button>
               )}

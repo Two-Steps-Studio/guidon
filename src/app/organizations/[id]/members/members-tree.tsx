@@ -50,8 +50,8 @@ export async function MembersTree({
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 text-sm sm:p-6">
-      <div className="flex items-center gap-2 font-semibold">
-        <Building2 className="h-4 w-4 text-primary" />
+      <div className="flex flex-wrap items-center gap-2 font-semibold [overflow-wrap:anywhere]">
+        <Building2 className="h-4 w-4 shrink-0 text-primary" />
         {orgName}
         <span className="font-normal text-muted-foreground">· {t("treePeople", { count: members.length })}</span>
       </div>
@@ -75,9 +75,9 @@ export async function MembersTree({
                       <li key={person.userId}>
                         <details className="group/person">
                           <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted [&::-webkit-details-marker]:hidden">
-                            <span className="font-medium">{person.name}</span>
+                            <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{person.name}</span>
                             {person.name !== person.email && !isAiAccountEmail(person.email) && (
-                              <span className="text-xs text-muted-foreground">{person.email}</span>
+                              <span className="min-w-0 text-xs text-muted-foreground [overflow-wrap:anywhere]">{person.email}</span>
                             )}
                             <Badge variant="outline" className="text-[10px]">
                               {tCommon("role", { role: person.role })}
@@ -87,9 +87,9 @@ export async function MembersTree({
                           {onProjects.length > 0 && (
                             <ul className="ml-2 space-y-0.5 border-l border-border py-1 pl-4">
                               {onProjects.map((project) => (
-                                <li key={project.id} className="flex items-center gap-2 px-1.5 py-0.5">
-                                  <FolderKanban className="h-3.5 w-3.5 text-muted-foreground" />
-                                  <Link href={`/projects/${project.id}/members`} className="hover:underline">
+                                <li key={project.id} className="flex flex-wrap items-center gap-2 px-1.5 py-0.5">
+                                  <FolderKanban className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                  <Link href={`/projects/${project.id}/members`} className="min-w-0 hover:underline [overflow-wrap:anywhere]">
                                     {project.name}
                                   </Link>
                                   <span className="text-xs text-muted-foreground">
