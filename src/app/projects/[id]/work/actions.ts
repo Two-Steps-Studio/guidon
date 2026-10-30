@@ -7,7 +7,8 @@ import { logActivity } from "@/lib/data/log-activity";
 import { createNotification } from "@/lib/data/notifications";
 import { emitTaskEvent } from "@/lib/events/task-events";
 import { hostedTaskLimitError } from "@/lib/limits";
-import { resolveColumnRenumbering } from "@/lib/work/task-board";
+import { resolveColumnRenumbering, resolvePriorities, taskComparator, type RelativeTaskPosition } from "@/lib/work/task-board";
+import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { ensureNextOccurrence } from "@/lib/work/recurrence";
 import { normalizeRecurrence } from "@/lib/work/recurrence-core";
 import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
@@ -16,13 +17,14 @@ import { isValidUuid } from "@/lib/api/validate-id";
 
 /** `created`: a repeating task's next occurrence (and its subtasks), made because this finished it. */
 export type TaskActionResult = { task: Task | null; error: string | null; created?: Task[]; code?: "conflict" | "version_unavailable" };
-export type TaskMutationResult = { error: string | null; created?: Task[] };
+export type TaskMutationResult = { error: string | null; created?: Task[]; positions?: { id: string; sort_order: number }[] };
 
 export async function moveTask(
   projectId: string,
   taskId: string,
   status: TaskStatus,
-  sortOrder: number
+  sortOrder: number,
+  anchor?: RelativeTaskPosition
 ): Promise<TaskMutationResult> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
@@ -30,6 +32,9 @@ export async function moveTask(
   }
 
   const db = dataClient(access.userId);
+  if (!Number.isFinite(sortOrder) || (anchor && (!isValidUuid(anchor.id) || !["before", "after"].includes(anchor.side)))) {
+    return { error: await tr("This task could not be found in this project.") };
+  }
 
   // sort_order is `integer` - sortOrderForPosition's float midpoint only has
   // room to insert between two neighbours while they're still more than 1
@@ -39,16 +44,22 @@ export async function moveTask(
   // the card then silently sorts by compareTasks()'s tiebreak instead of
   // where it was dropped. See resolveColumnRenumbering's own comment.
   const { data: siblings, error: siblingsError } = await db
-    .from<{ id: string; sort_order: number }>("tasks")
-    .select("id, sort_order")
+    .from<Task>("tasks")
+    .select("id, sort_order, priority, created_at")
     .eq("project_id", projectId)
     .eq("status", status)
     .is("parent_task_id", null)
     .neq("id", taskId)
     .order("sort_order", { ascending: true });
   if (siblingsError) return { error: siblingsError.message };
+  if (anchor && !siblings.some(task => task.id === anchor.id)) return { error: await tr("This task could not be found in this project.") };
+  if (anchor && siblings.some(task => task.sort_order === null)) {
+    // Match the board's tie-breaks before normalizing legacy unpositioned rows.
+    const workflow = await getWorkflowOverrides(access.userId, projectId, db);
+    siblings.sort(taskComparator(resolvePriorities(workflow.priorities)));
+  }
 
-  const plan = resolveColumnRenumbering(siblings, taskId, sortOrder);
+  const plan = resolveColumnRenumbering(siblings, taskId, sortOrder, anchor);
 
   if (plan) {
     // One round-trip for the whole column instead of one UPDATE per sibling
@@ -95,7 +106,7 @@ export async function moveTask(
   );
 
   revalidatePath(`/projects/${projectId}/work`);
-  return { error: null, created };
+  return { error: null, created, positions: plan ?? [{ id: taskId, sort_order: Math.round(sortOrder) }] };
 }
 
 export async function createTask(

@@ -17,6 +17,8 @@ import {
   pinnedTaskDrop,
   normalizeTaskStatus,
   sortOrderForPosition,
+  taskPositionAnchor,
+  type RelativeTaskPosition,
   type BoardColumn,
   type SubtaskProgress,
 } from "@/lib/work/task-board";
@@ -61,7 +63,8 @@ interface KanbanBoardProps {
   onMoveTask: (
     task: Task,
     status: TaskStatus,
-    sortOrder: number
+    sortOrder: number,
+    anchor?: RelativeTaskPosition
   ) => Promise<void> | void;
   projectColor?: string;
   /** Bulk selection (owned by the parent, which shows the bulk-action bar). */
@@ -244,7 +247,7 @@ function KanbanBoardComponent({
       if (targetIndex < 0 || targetIndex >= column.length) return; // already at an edge
 
       const sortOrder = sortOrderForPosition(column, targetIndex, task.id);
-      await onMoveTaskRef.current(task, status, sortOrder);
+      await onMoveTaskRef.current(task, status, sortOrder, taskPositionAnchor(column, targetIndex, task.id));
     },
     [canDrag]
   );
@@ -260,8 +263,8 @@ function KanbanBoardComponent({
     async (task: Task, status: TaskStatus) => {
       if (!canEdit || normalizeTaskStatus(task.status) === status) return;
       const column = groupsRef.current[status];
-      const sortOrder = pinnedTaskDrop(column, column.length, task.id, pinnedIdsRef.current).sortOrder;
-      await onMoveTaskRef.current(task, status, sortOrder);
+      const target = pinnedTaskDrop(column, column.length, task.id, pinnedIdsRef.current);
+      await onMoveTaskRef.current(task, status, target.sortOrder, target.anchor);
     },
     [canEdit]
   );
@@ -283,7 +286,7 @@ function KanbanBoardComponent({
       }
 
       const sortOrder = target.sortOrder;
-      await onMoveTaskRef.current(task, status, sortOrder);
+      await onMoveTaskRef.current(task, status, sortOrder, target.anchor);
     },
     [canDrag]
   );

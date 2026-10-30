@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { groupTasksByStatus, taskComparator, pinnedTaskComparator, pinnedTaskDrop, compareTasksByDueDate } from "../src/lib/work/task-board.ts";
+import { groupTasksByStatus, taskComparator, pinnedTaskComparator, pinnedTaskDrop, compareTasksByDueDate, taskPositionAnchor, resolveColumnRenumbering } from "../src/lib/work/task-board.ts";
 
 const tasks=[
   {id:"first",status:"todo",sort_order:1,priority:"medium",created_at:"2026-01-01",due_date:"2026-01-01"},
@@ -24,4 +24,12 @@ assert.ok(drop.sortOrder<1,"Insertion uses the first ordinary card's order, not 
 const next=column.map(task=>task.id==="second"?{...task,sort_order:drop.sortOrder}:task).sort(pinnedTaskComparator(pins,taskComparator()));
 assert.deepEqual(next.map(task=>task.id),["pin","second","first"]);
 assert.equal(pinnedTaskDrop(column,999,"pin",pins).index,0,"A pin cannot be dropped below ordinary cards");
+assert.deepEqual(drop.anchor,{id:"first",side:"before"});
+const legacy=[{id:"a",sort_order:1000},{id:"b",sort_order:null},{id:"c",sort_order:null}];
+for(const [index,expected] of [[0,["moving","a","b","c"]],[1,["a","moving","b","c"]],[2,["a","b","moving","c"]],[3,["a","b","c","moving"]]]) {
+  const plan=resolveColumnRenumbering(legacy,"moving",1000,taskPositionAnchor(legacy,index));
+  assert.deepEqual(plan.map(task=>task.id),expected,"Legacy null positions respect the actual neighbouring card");
+  assert.ok(plan.every((task,index)=>task.sort_order===(index+1)*1000));
+}
+assert.equal(resolveColumnRenumbering([{id:"a",sort_order:1000}],"moving",2000,{id:"a",side:"after"}),null,"Normal moves keep the single-row fast path");
 console.log("pass per-column pin order, due-date mode, unpin and saved-position preservation");

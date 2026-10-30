@@ -16,6 +16,8 @@ Snapshot: 263 tasks, 8 Todo, 46 Backlog, 205 Review, 4 Done. Review is not proof
 
 ## Verification of this batch
 
+- Broad-suite follow-up: the CI crop test selected an SSR-disabled input before hydration; it now waits for `#avatar:enabled`, preserving the application guard. The full local suite then exposed a real legacy-board defect: a neighbour with null `sort_order` made keyboard movement a no-op. Moves now carry a project/column-validated neighbour anchor, normalize legacy positions only when necessary, and apply returned persisted positions before announcing the result. Unit cases cover null neighbours before/between/after, and E2E checks both displayed and persisted position. The broad suite is being rerun for this follow-up; no full-pass claim until it completes.
+
 - Final isolated production build and targeted UI suite: `node tests/e2e/run.mjs --task-queue`, **passed** in Chromium, Firefox and WebKit. Artifact run: `output/e2e/8d2be390645b`.
 - The same run passed 166 existing REST/MCP isolation checks plus real attachment API/MCP checks: native image bytes, text/JSON resources, temporary private downloads, pagination, scope/project/task/member isolation, expired/revoked keys and agent permissions.
 - AI provider/parser/transport/chat suites and new label tests passed; label tests cover role/AI/rate gates, scoped bounded context, deduplication and safe failures without real billed requests. Labels/translations passed; agent-web 174/174, context-pack 13/13, pin-order and MIME/size-boundary tests passed. TypeScript, focused ESLint and diff whitespace checks passed.

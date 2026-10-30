@@ -109,6 +109,9 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     const openTask=card.locator('[data-task-open]');
     await openTask.focus();await openTask.press(index>0?'Alt+ArrowUp':'Alt+ArrowDown');
     await page.getByRole('status').filter({hasText:new RegExp(`${task.title}.*position ${position}`)}).waitFor();await frames(page);
+    assert.equal((await page.locator('[data-column-status="backlog"] [data-card-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.cardId))).indexOf(task.id)+1,position,'The announced keyboard position must match the visible card order');
+    const persisted=await client.query("SELECT id FROM tasks WHERE project_id=$1 AND status='backlog' AND parent_task_id IS NULL ORDER BY sort_order NULLS LAST",[owner.projectId]);
+    assert.equal(persisted.rows.findIndex(row=>row.id===task.id)+1,position,'Keyboard reorder must persist even when a legacy neighbour has null sort_order');
     assert.equal(await openTask.evaluate(node=>node===document.activeElement),true,'Keyboard reorder retains focus');
 
     // A rejected optimistic move keeps the prior row and exposes a live error.
