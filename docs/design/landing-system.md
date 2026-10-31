@@ -23,7 +23,7 @@ reused. Guidon's own brand kit and shipped features remain the source of truth.
 Changes are limited to the homepage and its presentation components. Existing
 pricing queries, calculations, checkout destinations, canonical/Markdown metadata
 and JSON-LD stay intact. Authenticated interfaces, APIs and schemas are outside
-scope. The shared background renderer receives only a homepage-specific opt-out.
+scope. The shared background renderer keeps a homepage-specific branded pattern.
 
 ## System
 
@@ -36,7 +36,7 @@ scope. The shared background renderer receives only a homepage-specific opt-out.
 | Spacing | 4, 8, 12, 16, 24, 32, 48, 64, 96, 128px. Section padding 64px mobile, 96px desktop. |
 | Containers | Main 1120px, product 1200px, prose 640px; horizontal gutters 20–32px. |
 | Colors | Existing semantic neutrals, Guidon Blue #1D4FD8, Electric Blue #4D8DFF. Existing theme tokens determine contrast. |
-| Surfaces | Opaque background and secondary background, 1px semantic borders. No glass, animated texture or ambient glow. |
+| Surfaces | Branded dither under an 88% neutral page wash; opaque navigation, cards and secondary sections, 1px semantic borders. No glass or ambient glow. |
 | Radius | Controls 8px, cards 12px, product frames 16px. |
 | Actions | 44px minimum height, one primary blue action, neutral secondary action, visible keyboard focus. |
 | Cards | Common border/padding; imagery carries the story. One restrained product-frame shadow. |
@@ -58,7 +58,9 @@ and the isolated build. Record actual evidence and limitations after validation.
 The homepage now follows this single system, including pricing and the grouped
 footer. The old marketing-only camera/tilt/story components were removed. The
 existing logged-in UI, APIs, schema, pricing calculations and checkout targets
-were not redesigned. The shared background renderer opts out only at `/`.
+were not redesigned. Following review, the branded dither is restored on `/`
+behind a neutral wash, with existing motion preferences respected. Personal
+wallpapers and solid-background preferences still govern the other pages.
 Period/currency selection is immediate to avoid low-contrast color crossfades.
 Secondary footer/sandbox links do not speculatively prefetch whole documents.
 Theme-specific product images follow Next 16's `fetchPriority` guidance rather
@@ -115,3 +117,12 @@ The source screenshot captures are actual UI with explicitly illustrative data.
 This validation uses browser viewports, not physical mobile hardware. Live Cloud
 pricing/Stripe settings and numeric Lighthouse budgets were not remeasured.
 No production deployment, environment update or database migration was performed.
+
+### Dither restoration after review
+
+Restored the branded homepage pattern behind an 88% neutral wash, preserving
+opaque controls/cards and existing motion preferences. Authenticated backgrounds
+are unchanged. Revalidated with `node tests/e2e/run.mjs --landing` (run
+aca135047006): Chromium, Firefox and WebKit passed, including both themes,
+mobile/tablet/desktop, pricing and accessibility checks. TypeScript, targeted
+lint and diff checks passed. Light/dark desktop screenshots were inspected.
