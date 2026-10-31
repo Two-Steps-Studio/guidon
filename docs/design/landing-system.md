@@ -126,4 +126,3 @@ are unchanged. Revalidated with `node tests/e2e/run.mjs --landing` (run
 aca135047006): Chromium, Firefox and WebKit passed, including both themes,
 mobile/tablet/desktop, pricing and accessibility checks. TypeScript, targeted
 lint and diff checks passed. Light/dark desktop screenshots were inspected.
-
