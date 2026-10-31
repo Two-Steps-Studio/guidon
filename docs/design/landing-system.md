@@ -122,8 +122,7 @@ No production deployment, environment update or database migration was performed
 
 Restored the branded homepage pattern behind an 88% neutral wash, preserving
 opaque controls/cards and existing motion preferences. Authenticated backgrounds
-are unchanged. Revalidated with 
-ode tests/e2e/run.mjs --landing (run
+are unchanged. Revalidated with `node tests/e2e/run.mjs --landing` (run
 aca135047006): Chromium, Firefox and WebKit passed, including both themes,
 mobile/tablet/desktop, pricing and accessibility checks. TypeScript, targeted
 lint and diff checks passed. Light/dark desktop screenshots were inspected.
