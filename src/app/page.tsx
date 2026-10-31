@@ -17,7 +17,7 @@ import { BetaBadge } from "@/components/layout/beta-badge";
 import { AnimatedFaq } from "@/components/landing/animated-faq";
 import { MarketingMotion } from "@/components/landing/marketing-motion";
 import { RevealGroup } from "@/components/landing/reveal-group";
-import motionStyles from "@/components/landing/marketing-motion.module.css";
+import { ScrollPreview } from "@/components/landing/scroll-preview";
 import { CtaLink } from "@/components/landing/cta-link";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
@@ -292,7 +292,7 @@ export default async function Home() {
           </p>
         </div>
 
-        <RevealGroup className="space-y-16">
+        <div className="space-y-16">
           {FEATURE_SECTIONS.map((feature, index) => {
             const Icon = feature.icon;
             const reversed = index % 2 === 1;
@@ -310,8 +310,7 @@ export default async function Home() {
                 {/* Real screenshots of the demo project, one per theme -
                     regenerate with scripts/landing/capture.mjs when the
                     captured pages change. */}
-                <div className="w-full md:w-[55%] md:shrink-0">
-                  <div data-product-preview className={`${motionStyles.preview} overflow-hidden rounded-xl border border-border bg-card shadow-xl`}>
+                <ScrollPreview className="w-full md:w-[55%] md:shrink-0">
                     <Image
                       src={`/landing/${feature.key}-light.webp`}
                       alt={t(`features.${feature.key}.title`)}
@@ -328,8 +327,7 @@ export default async function Home() {
                       sizes="(min-width: 768px) 55vw, 100vw"
                       className="hidden h-auto w-full dark:block"
                     />
-                  </div>
-                </div>
+                </ScrollPreview>
                 <div className="scrim flex-1 space-y-3 rounded-2xl p-6 text-center md:text-left">
                   <div className="mx-auto md:mx-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
                     <Icon className="w-5 h-5 text-primary" />
@@ -348,7 +346,7 @@ export default async function Home() {
               </div>
             );
           })}
-        </RevealGroup>
+        </div>
       </div>
     </section>
 

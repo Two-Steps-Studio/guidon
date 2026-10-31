@@ -25,13 +25,27 @@ Reduced motion removes spatial changes and decorative sweeps, retaining a
 
 ## Product tour and native action feedback
 
-Homepage step cards, integration cards and the six product screenshots now arrive
+Homepage step cards and integration cards arrive
 once on intersection (600 ms, ease-out, up to 180 ms of 60 ms staggering).
 Only transform and opacity change. SSR is fully visible; keyboard activity and
 focus settle active animations and keyboard activity suppresses later reveals.
 Reduced motion retains a 120 ms opacity change with no delay. Hiding the document
-settles playback. Desktop screenshot hover uses a 240 ms perspective transition;
-touch and reduced-motion users retain a stationary preview.
+settles playback.
+
+Product screenshots have their own scroll-linked entrance: they straighten from
+8 degrees of perspective and scale .94 to 1 as their static wrapper crosses
+95% to 35% of the viewport height. Text stays stationary. Scrolling back reverses
+the same continuous progress; there is no timer, replay button, pinned page or
+scroll interception. Phones use at most 12px of vertical movement and scale .98
+to 1 without perspective. Reduced motion and keyboard navigation settle the image
+immediately. SSR/no-JS retains the complete screenshot.
+
+IntersectionObserver gates work to visible previews. Passive scroll/resize
+listeners coalesce updates with requestAnimationFrame, read wrapper geometry
+before writing the inner transform, and never update React state per frame.
+Hidden documents cancel queued work; unmount removes listeners. This keeps
+layout measurements independent from the transformed screenshot. It is a
+scroll-handler implementation, not a claim of compositor-only scheduling.
 
 Expo action buttons (sign-in, retry, floating create) share a 120 ms Reanimated
 CSS transition: scale .97 and opacity on press-in, retargeting on release.
