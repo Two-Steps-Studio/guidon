@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CtaLink } from "@/components/landing/cta-link";
-import { Fraunces } from "next/font/google";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +11,7 @@ import { publicPlanPrice, type PublicPlanPrice } from "@/lib/billing/public-pric
 import { RevealGroup } from "@/components/landing/reveal-group";
 import { Check } from "lucide-react";
 
-// Matches the display font used for headlines on the rest of the landing
-// page (src/app/page.tsx) - kept as a separate call since next/font/google
-// requires the call at module scope in each file that uses it.
-const displayFont = Fraunces({ subsets: ["latin"], weight: ["600"] });
+import styles from "@/components/landing/landing.module.css";
 
 export interface PlanRow {
   id: string;
@@ -90,37 +86,19 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
   const t = useTranslations("landing.pricing");
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [interval, setInterval] = useState<BillingInterval>("month");
-  const sectionRef = useRef<HTMLElement>(null);
-  const [showNavigator, setShowNavigator] = useState(false);
-  useEffect(() => {
-    const section = sectionRef.current;
-    const hero = document.querySelector('[data-home-hero]');
-    if (!section || !hero || !window.IntersectionObserver) return;
-    let heroPassed = false, pricingVisible = false;
-    const update = () => setShowNavigator(heroPassed && !pricingVisible);
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (entry.target === hero) heroPassed = entry.boundingClientRect.bottom <= 0;
-        else pricingVisible = entry.isIntersecting;
-      }
-      update();
-    });
-    observer.observe(hero); observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
-  const periods = (navigate = false) => <div role="group" aria-label={t("intervalLabel")} className="inline-flex max-w-full flex-wrap justify-center gap-1 rounded-xl border border-border bg-background p-1">
+  const periods = () => <div role="group" aria-label={t("intervalLabel")} className="inline-flex max-w-full flex-wrap justify-center gap-1 rounded-xl border border-border bg-background p-1">
     {BILLING_INTERVALS.map(option => <button key={option} type="button" aria-pressed={interval === option}
-      onClick={() => { setInterval(option); if (navigate) { sectionRef.current?.focus({preventScroll:true}); sectionRef.current?.scrollIntoView({block:"start"}); } }}
+      onClick={() => setInterval(option)}
       className={`min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${interval === option ? "bg-primary text-primary-foreground" : "text-text-secondary hover:bg-muted"}`}>
       {t(`interval_${option}`)}
     </button>)}
   </div>;
 
   return (
-    <section ref={sectionRef} tabIndex={-1} id="pricing" className="relative scroll-mt-16 overflow-hidden border-t border-border bg-background-secondary/30 py-20">
-      <div className="container relative z-10 mx-auto max-w-6xl px-4">
-        <div className="scrim mx-auto mb-12 max-w-3xl space-y-4 rounded-2xl px-6 py-6 text-center">
-          <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>{t("title")}</h2>
+    <section tabIndex={-1} id="pricing" className={`${styles.landing} ${styles.pricing}`}>
+      <div className={styles.container}>
+        <div className={styles.pricingHeader}>
+          <h2>{t("title")}</h2>
           <p className="text-text-secondary">{t("subtitle")}</p>
           {!checkoutAvailable && <p className="text-sm text-text-secondary" role="note">{t("paidSoon")}</p>}
 
@@ -149,21 +127,21 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
           </div>
         </div>
 
-        <RevealGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <RevealGroup className={styles.pricingGrid}>
           {plans.map((plan) => {
             const isPopular = plan.id === "pro";
             const price = publicPlanPrice(plan, prices, interval, currency);
             return (
               <Card
                 key={plan.id}
-                className={`relative flex flex-col ${isPopular ? "border-primary shadow-lg shadow-primary/10" : "border-border/50"}`}
+                className={`${styles.priceCard} relative flex flex-col ${isPopular ? "border-primary" : "border-border"}`}
               >
                 {isPopular && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">{t("mostPopular")}</Badge>
                 )}
                 <CardHeader>
                   <CardTitle>{plan.name}</CardTitle>
-                  <div className="text-3xl font-bold">
+                  <div data-price className="font-semibold">
                     {formatPrice(price, t)}
                     {price.cents != null && price.cents > 0 && (
                       <span className="text-sm font-normal text-text-muted">{t(`per_${interval}`)}</span>
@@ -206,10 +184,7 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
           })}
         </RevealGroup>
       </div>
-      {showNavigator && <aside aria-label={t("browsePlans")} className="fixed inset-x-0 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-40 mx-auto w-fit max-w-[calc(100%-1rem)] rounded-2xl border border-border bg-background p-2 shadow-xl">
-        <p className="mb-1 text-center text-xs font-medium text-text-secondary">{t("browsePlans")}</p>
-        {periods(true)}
-      </aside>}
+
     </section>
   );
 }

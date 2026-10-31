@@ -43,10 +43,10 @@ export function DitherBackground() {
   const reduceMotion = useReducedMotionPreference();
   const patternRef = useRef<HTMLDivElement>(null);
 
-  // The landing page always uses the branded Dither. Keep device preferences
-  // intact so they still apply when navigating back into the app.
+  // Marketing uses a quiet opaque surface. Device preferences remain intact
+  // and the authenticated application retains its existing background behavior.
   const isLandingPage = pathname === "/";
-  const showPattern = isLandingPage || (!wallpaper && style === "pattern");
+  const showPattern = !isLandingPage && !wallpaper && style === "pattern";
   const canMove = motion !== "off" && (motion === "on" || !reduceMotion);
 
   useEffect(() => {
@@ -69,7 +69,9 @@ export function DitherBackground() {
     };
   }, [showPattern, canMove, pathname]);
 
-  if (!isLandingPage && wallpaper) {
+  if (isLandingPage) return null;
+
+  if (wallpaper) {
     return (
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 min-h-lvh">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${wallpaper})` }} />

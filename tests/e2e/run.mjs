@@ -46,6 +46,7 @@ const root=fileURLToPath(new URL("../../",import.meta.url));
 const designAuditMode=process.argv.includes("--design-audit");
 const writeSafetyMode=process.argv.includes("--write-safety");
 const searchMode=process.argv.includes("--search");
+const landingAssetsMode=process.argv.includes("--landing-assets");
 const landingMode=process.argv.includes("--landing");
 const taskQueueMode=process.argv.includes("--task-queue");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
@@ -155,7 +156,23 @@ try{
   results.push(await apiIsolation({origin,fixture,api,client}));
   const {attachmentApiCoverage}=await import("./task-attachments.mjs");
   results.push(await attachmentApiCoverage({origin,fixture,api,client,storagePath:environment.STORAGE_PATH}));
-  for(const [name,browserType] of Object.entries({chromium,firefox,webkit})){
+  if (landingAssetsMode) {
+    const owner=fixture.users[0];
+    // Names/data are fictional and confined to this run's newly-created database.
+    await client.query("UPDATE profiles SET full_name='Alex Morgan' WHERE id=$1",[owner.id]);
+    // Remove only this disposable run's synthetic API-isolation workspace so
+    // its test names/activity cannot appear in marketing captures.
+    await client.query("DELETE FROM organizations WHERE id=$1",[owner.organizationId]);
+    const seedOutput=await run(process.execPath,["scripts/landing/seed-demo.mjs"],{env:{...environment,DEMO_USER_EMAIL:owner.email}});
+    const projectId=/DEMO_PROJECT_ID=([0-9a-f-]+)/.exec(seedOutput)?.[1];
+    const taskId=/DEMO_TASK_ID=([0-9a-f-]+)/.exec(seedOutput)?.[1];
+    assert.ok(projectId&&taskId,"Disposable demo was seeded");
+    // Keep the demo's explicitly authored activity, not bulk-seeding noise.
+    await client.query("DELETE FROM activity_logs WHERE user_id=$1 AND actor_label IS NULL",[owner.id]);
+    await run(process.execPath,["scripts/landing/capture.mjs"],{env:{...environment,BASE_URL:origin,DEMO_USER_EMAIL:owner.email,DEMO_USER_PASSWORD:fixture.password,DEMO_PROJECT_ID:projectId,DEMO_TASK_ID:taskId,LANDING_CAPTURE_OUTPUT:path.join(artifacts,"landing-assets"),LANDING_CAPTURE_TEST_TLS:"1"}});
+    results.push({mode:"disposable-landing-asset-capture",outcome:"passed"});
+  }
+  for(const [name,browserType] of Object.entries(landingAssetsMode?{}:{chromium,firefox,webkit})){
     phase=name;
     console.log(`E2E: ${name} real login, private projects and session smoke`);
     const browser=await browserType.launch();
@@ -250,7 +267,7 @@ try{
 }finally{
   clearTimeout(deadline);
   await writeFile(path.join(artifacts,"app.log"),appLog);
-  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:searchMode?"search-isolated-production-build":landingMode?"landing-isolated-production-build":mobileMode?"mobile-isolated-self-hosted":accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
+  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:landingAssetsMode?"landing-asset-capture":searchMode?"search-isolated-production-build":landingMode?"landing-isolated-production-build":mobileMode?"mobile-isolated-self-hosted":accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
   if(proxy)await new Promise(resolve=>proxy.close(resolve));
   if(app){app.kill();await new Promise(resolve=>{app.once("exit",resolve);setTimeout(()=>{app.kill("SIGKILL");resolve();},3000).unref();});}
   await client?.end();
