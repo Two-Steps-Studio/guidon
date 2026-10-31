@@ -4,7 +4,8 @@
   --landing-gutter: clamp(1.25rem, 3vw, 2rem);
   --landing-section: clamp(4rem, 7vw, 6rem);
   --landing-radius: 12px;
-  background: var(--color-background);
+  /* Soften the branded dither behind copy; cards and navigation stay opaque. */
+  background: color-mix(in srgb, var(--color-background) 88%, transparent);
   color: var(--color-text);
   font-family: var(--font-geist-sans), sans-serif;
   font-size: 16px;
