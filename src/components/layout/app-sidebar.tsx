@@ -64,7 +64,6 @@ import {
   ChevronDown,
   TrendingUp,
   Search,
-  Square//Lasso, // Not available in lucide, will use a generic icon
   LayoutTemplate,
 } from "lucide-react";
 

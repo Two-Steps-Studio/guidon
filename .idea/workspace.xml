@@ -12,11 +12,12 @@
   <component name="ChangeListManager">
     <list default="true" id="eb2433ed-318a-4796-bbb1-8503adb9f9ef" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/mcp/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/mcp/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/auth/login/login-form.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/login/login-form.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/auth/logout/logout-client.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/logout/logout-client.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/whiteboard/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/whiteboard/actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/whiteboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/whiteboard/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/app-sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/app-sidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/whiteboard/whiteboard-canvas.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/whiteboard/whiteboard-canvas.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/whiteboard/whiteboard-toolbar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/whiteboard/whiteboard-toolbar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/data/whiteboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/data/whiteboard.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -114,7 +115,7 @@
       <workItem from="1789921823413" duration="6227000" />
       <workItem from="1790784192293" duration="651000" />
       <workItem from="1792603149445" duration="1375000" />
-      <workItem from="1793457196535" duration="7559000" />
+      <workItem from="1793457196535" duration="9509000" />
     </task>
     <servers />
   </component>

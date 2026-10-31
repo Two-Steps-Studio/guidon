@@ -17,11 +17,10 @@ import {
   ConnectionMode,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { WhiteboardElement, getElements, upsertElement } from "@/lib/data/whiteboard";
 import { useDebounce } from "@/hooks/use-debounce";
 import { TaskProposalModal } from "./task-proposal-modal";
 import { WhiteboardToolbar } from "./whiteboard-toolbar";
-import { generateTaskProposals } from "@/app/projects/[id]/whiteboard/actions";
+import { generateTaskProposals, getElementsAction, upsertElementAction, getEdgesAction, upsertEdgeAction, deleteEdgesAction } from "@/app/projects/[id]/whiteboard/actions";
 import { toast } from "sonner";
 
 interface WhiteboardCanvasProps {
@@ -54,8 +53,29 @@ const StickyNode = ({ data, id }: any) => {
   );
 };
 
+const ShapeNode = ({ data, id }: any) => {
+  return (
+    <div
+      className={`p-3 rounded-sm shadow-sm border border-border min-w-[150px] min-h-[100px] text-foreground flex items-center justify-center text-center ${
+        data.shape === "circle" ? "rounded-full" : "rounded-sm"
+      }`}
+      style={{ backgroundColor: data.color }}
+    >
+      <div
+        className="text-sm whitespace-pre-wrap outline-none"
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={(e) => data.onChange && data.onChange(id, e.currentTarget.innerText)}
+      >
+        {data.content}
+      </div>
+    </div>
+  );
+};
+
 const nodeTypes = {
   sticky: StickyNode,
+  shape: ShapeNode,
 };
 
 export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
@@ -63,10 +83,11 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [loading, setLoading] = useState(true);
   const [lastSavedNodes, setLastSavedNodes] = useState<Node[]>([]);
-  const [selectedNodes, setSelectedNodes] = useState<Node[]');
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [aiProposals, setAiProposals] = useState<{ prose: string; proposals: any[] } | null>(null);
 
   const debouncedNodes = useDebounce(nodes, 1000);
+  const debouncedEdges = useDebounce(edges, 1000);
 
   useEffect(() => {
     if (debouncedNodes === lastSavedNodes) return;
@@ -79,13 +100,13 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
         y: node.position.y,
         width: (node as any).width || 150,
         height: (node as any).height || 150,
-        content: { text: (node.data as any).content },
+        content: { text: (node.data as any).content, shape: (node.data as any).shape },
         color: (node.data as any).color,
       }));
 
       try {
         for (const el of elements) {
-          await upsertElement(projectId, el);
+          await upsertElementAction(projectId, el);
         }
         setLastSavedNodes([...debouncedNodes]);
       } catch (e) {
@@ -96,16 +117,42 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
   }, [debouncedNodes, projectId]);
 
   useEffect(() => {
+    if (debouncedEdges === undefined) return;
+
+    async function saveEdges() {
+      try {
+        for (const edge of debouncedEdges) {
+          await upsertEdgeAction(projectId, {
+            board_id: "default",
+            source_id: edge.source,
+            target_id: edge.target,
+            type: edge.type,
+            label: (edge.label as any)?.value || null,
+          });
+        }
+      } catch (e) {
+        console.error("Failed to save edges", e);
+      }
+    }
+    saveEdges();
+  }, [debouncedEdges, projectId]);
+
+  useEffect(() => {
     async function loadElements() {
       setLoading(true);
       try {
-        const elements = await getElements("default", projectId);
-        const initialNodes = elements.map(el => ({
+        const [elements, edges] = await Promise.all([
+          getElementsAction("default", projectId),
+          getEdgesAction(projectId, "default"),
+        ]);
+
+        const initialNodes = elements.map((el: any) => ({
           id: el.id,
           type: el.type,
           position: { x: el.x, y: el.y },
           data: {
             content: el.content?.text,
+            shape: el.content?.shape,
             color: el.content?.color,
             onChange: (id: string, text: string) => {
               setNodes(nds => nds.map(node =>
@@ -116,7 +163,17 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
             }
           },
         }));
+
+        const initialEdges = edges.map((e: any) => ({
+          id: e.id,
+          source: e.source_id,
+          target: e.target_id,
+          label: e.label,
+          type: e.type,
+        }));
+
         setNodes(initialNodes);
+        setEdges(initialEdges);
         setLastSavedNodes(initialNodes);
       } catch (e) {
         console.error("Failed to load elements", e);
@@ -180,7 +237,7 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
           onClose={() => setAiProposals(null)}
           projectId={projectId}
           proposals={aiProposals.proposals}
-          onConfirmed={() => setAiPproposals(null)}
+          onConfirmed={() => setAiProposals(null)}
         />
       )}
     </div>

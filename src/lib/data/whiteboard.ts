@@ -23,6 +23,18 @@ export interface WhiteboardElement {
   updated_at: string;
 }
 
+export interface WhiteboardEdge {
+  id: string;
+  project_id: string;
+  board_id: string;
+  source_id: string;
+  target_id: string;
+  label: string | null;
+  type: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function getWhiteboards(projectId: ProjectId) {
   return await dataClient(projectId).from("whiteboards").select("*").order("created_at", { ascending: false });
 }
@@ -70,4 +82,28 @@ export async function deleteElements(projectId: ProjectId, ids: string[]) {
     .in("id", ids);
 
   if (error) throw new Error(`Failed to delete elements: ${error.message}`);
+}
+
+export async function getEdges(boardId: string, projectId: ProjectId) {
+  return await dataClient(projectId).from("whiteboard_edges").select("*").eq("board_id", boardId);
+}
+
+export async function upsertEdge(projectId: ProjectId, edge: Partial<WhiteboardEdge>) {
+  const { data, error } = await dataClient(projectId)
+    .from("whiteboard_edges")
+    .upsert(edge)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to upsert edge: ${error.message}`);
+  return data;
+}
+
+export async function deleteEdges(projectId: ProjectId, ids: string[]) {
+  const { error } = await dataClient(projectId)
+    .from("whiteboard_edges")
+    .delete()
+    .in("id", ids);
+
+  if (error) throw new Error(`Failed to delete edges: ${error.message}`);
 }

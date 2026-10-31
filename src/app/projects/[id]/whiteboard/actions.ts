@@ -1,19 +1,23 @@
-"use server";
+import "server-only";
 
 import { getAIProvider } from "@/lib/ai/provider";
 import { parseTaskProposals, type TaskProposal } from "@/lib/ai/task-proposal-parser";
 import { getOptionalCurrentUser } from "@/lib/data/current-user";
-import { getProjectContext } from "@/lib/data/project-access";
+import { getProjectAccess } from "@/lib/data/project-access";
 import { timeAction } from "@/lib/perf/action-timing";
 import { randomUUID } from "node:crypto";
+import { getElements, upsertElement, deleteElements, getEdges, upsertEdge, deleteEdges } from "@/lib/data/whiteboard";
+import type { WhiteboardElement, WhiteboardEdge } from "@/lib/data/whiteboard";
+import type { ProjectId } from "@/types/index";
 
 export async function generateTaskProposals(projectId: string, selectedTexts: string[]) {
   const user = await getOptionalCurrentUser();
   if (!user) throw new Error("Authentication required");
 
-  const project = await getProjectContext(projectId);
-  if (!project) throw new Error("Project not found");
+  const access = await getProjectAccess(projectId);
+  if (!access) throw new Error("Project not found");
 
+  const project = access.project;
   const provider = await getAIProvider();
 
   const systemPrompt = `
@@ -64,4 +68,58 @@ JSON Format:
     prose: parsed.prose,
     proposals: parsed.proposals,
   };
+}
+
+export async function getElementsAction(projectId: string, boardId: string = "default") {
+  try {
+    return await getElements(boardId, projectId);
+  } catch (e) {
+    console.error("Error fetching elements:", e);
+    throw e;
+  }
+}
+
+export async function upsertElementAction(projectId: string, element: Partial<WhiteboardElement>) {
+  try {
+    return await upsertElement(projectId, element);
+  } catch (e) {
+    console.error("Error upserting element:", e);
+    throw e;
+  }
+}
+
+export async function deleteElementsAction(projectId: string, ids: string[]) {
+  try {
+    return await deleteElements(projectId, ids);
+  } catch (e) {
+    console.error("Error deleting elements:", e);
+    throw e;
+  }
+}
+
+export async function getEdgesAction(projectId: string, boardId: string = "default") {
+  try {
+    return await getEdges(boardId, projectId);
+  } catch (e) {
+    console.error("Error fetching edges:", e);
+    throw e;
+  }
+}
+
+export async function upsertEdgeAction(projectId: string, edge: Partial<WhiteboardEdge>) {
+  try {
+    return await upsertEdge(projectId, edge);
+  } catch (e) {
+    console.error("Error upserting edge:", e);
+    throw e;
+  }
+}
+
+export async function deleteEdgesAction(projectId: string, ids: string[]) {
+  try {
+    return await deleteEdges(projectId, ids);
+  } catch (e) {
+    console.error("Error deleting edges:", e);
+    throw e;
+  }
 }
