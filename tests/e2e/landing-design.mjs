@@ -18,7 +18,7 @@ export async function landingDesignCoverage({page,origin,browserName,artifacts})
         await page.getByRole('heading',{level:1,name:'Keep the why with the work.'}).waitFor();
         assert.equal(await page.locator('main').count(),1);
         assert.equal(await page.locator('h1').count(),1);
-        assert.equal(await page.locator('[data-app-background]').count(),0,'Only the homepage opts out of the app background');
+        assert.equal(await page.locator('[data-app-background]').count(),1,'The homepage retains the branded dither background');
         assert.equal(await page.locator('[data-scroll-stage], [data-stage-tilt]').count(),0,'No sticky camera or cursor tilt');
         const canonical=new URL(await page.locator('link[rel="canonical"]').getAttribute('href'));
         assert.equal(canonical.origin,origin);assert.equal(canonical.pathname,"/");
