@@ -395,7 +395,17 @@
       "prioritySupport": "Priority support",
       "unlimitedMembers": "Unlimited members",
       "membersCount": "{count, plural, one {# member} other {# members}}",
-      "paidSoon": "Paid plans open soon. Start free now - your projects stay when you upgrade."
+      "paidSoon": "Paid plans open soon. Start free now - your projects stay when you upgrade.",
+      "interval_week": "Weekly",
+      "interval_month": "Monthly",
+      "interval_year": "Yearly",
+      "intervalLabel": "Billing period",
+      "per_week": "/week",
+      "per_month": "/mo",
+      "per_year": "/year",
+      "unavailable": "Not available",
+      "browsePlans": "Explore plans",
+      "actualPrices": "Prices are per billing period. Payments are processed in EUR. Unavailable periods are marked on each plan."
     },
     "footer": {
       "brand": "Brand guidelines",
@@ -451,7 +461,9 @@
           "a": "Yes, at any time: Profile → Delete account on the website. The Privacy Policy explains what is stored and why."
         }
       ]
-    }
+    },
+    "exploreProduct": "Explore Guidon",
+    "previewDashboard": "Dashboard"
   },
   "organizations": {
     "common": {

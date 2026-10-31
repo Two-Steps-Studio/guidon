@@ -18,7 +18,9 @@ import { AnimatedFaq } from "@/components/landing/animated-faq";
 import { MarketingMotion } from "@/components/landing/marketing-motion";
 import { RevealGroup } from "@/components/landing/reveal-group";
 import { ScrollPreview } from "@/components/landing/scroll-preview";
+import { ProductScreen } from "@/components/landing/product-screen";
 import { ScrollStage } from "@/components/landing/scroll-stage";
+import type { PublicPlanPrice } from "@/lib/billing/public-pricing";
 import { CtaLink } from "@/components/landing/cta-link";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
@@ -82,6 +84,9 @@ export default async function Home() {
   const plans = hasDirectDatabase()
     ? []
     : ((await createServiceClient().from("plans").select("*").order("sort_order")).data as PlanRow[] | null) ?? [];
+
+  const prices = hasDirectDatabase() ? [] : ((await createServiceClient()
+    .from("plan_prices").select("plan_id, billing_interval, amount_cents").eq("active", true)).data as PublicPlanPrice[] | null) ?? [];
 
   return (
     <>
@@ -153,24 +158,11 @@ export default async function Home() {
         <div className="relative mx-auto w-[88%] rounded-t-[1.1rem] rounded-b-sm border border-neutral-700 bg-neutral-900 p-[1.4%] pb-[1.8%] shadow-2xl dark:border-neutral-600">
           <span className="absolute left-1/2 top-[0.55%] h-1 w-1 -translate-x-1/2 rounded-full bg-neutral-600 md:h-1.5 md:w-1.5" aria-hidden />
           <div className="relative overflow-hidden rounded-[0.3rem] bg-background">
-            <Image
-              src="/landing/hero-dashboard-light.webp"
-              alt={t("heroShotAlt")}
-              width={2000}
-              height={1250}
-              priority
-              sizes="(min-width: 1152px) 1000px, 88vw"
-              className="h-auto w-full dark:hidden"
-            />
-            <Image
-              src="/landing/hero-dashboard-dark.webp"
-              alt={t("heroShotAlt")}
-              width={2000}
-              height={1250}
-              sizes="(min-width: 1152px) 1000px, 88vw"
-              className="hidden h-auto w-full dark:block"
-            />
-            <span data-motion-actor="screen-light" aria-hidden="true" />
+            <ProductScreen label={t("exploreProduct")} views={[
+              {key:"hero-dashboard", title:t("previewDashboard"), alt:t("heroShotAlt")},
+              {key:"taskBoard", title:t("features.taskBoard.title"), alt:t("features.taskBoard.title")},
+              {key:"roadmap", title:t("features.roadmap.title"), alt:t("features.roadmap.title")},
+            ]} />
           </div>
         </div>
         <div className="relative mx-auto h-3 w-full rounded-b-2xl bg-gradient-to-b from-neutral-300 to-neutral-400 shadow-xl md:h-5 dark:from-neutral-600 dark:to-neutral-800" aria-hidden>
@@ -351,7 +343,7 @@ export default async function Home() {
       </div>
     </section>
 
-    {plans.length > 0 && <PricingSection plans={plans} checkoutAvailable={!hasDirectDatabase() && isBillingConfigured()} />}
+    {plans.length > 0 && <PricingSection plans={plans} prices={prices} checkoutAvailable={!hasDirectDatabase() && isBillingConfigured()} />}
 
     <section className="border-t border-border py-20" aria-labelledby="faq-title" id="frequently-asked-questions">
       <div className="container mx-auto max-w-3xl px-4">

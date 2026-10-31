@@ -1,3 +1,4 @@
+import { isBillingInterval } from "@/lib/billing/billing-core";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -29,9 +30,9 @@ interface OrganizationRow {
 export default async function UpgradePage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; interval?: string }>;
 }) {
-  const { plan } = await searchParams;
+  const { plan, interval } = await searchParams;
   const t = await getTranslations("upgrade");
   const user = await getCurrentUser();
   const db = dataClient(user.id);
@@ -48,7 +49,10 @@ export default async function UpgradePage({
     ? await db.from<OrganizationRow>("organizations").select("id, name").in("id", manageableIds).order("name")
     : { data: [] as OrganizationRow[] };
 
-  const query = plan ? `?plan=${encodeURIComponent(plan)}` : "";
+  const queryParams = new URLSearchParams();
+  if (plan) queryParams.set("plan", plan);
+  if (isBillingInterval(interval)) queryParams.set("interval", interval);
+  const query = queryParams.size ? `?${queryParams}` : "";
   const billingHref = (orgId: string) => `/organizations/${orgId}/billing${query}`;
 
   if (organizations?.length === 1) {

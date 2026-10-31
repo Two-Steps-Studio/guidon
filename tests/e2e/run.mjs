@@ -45,6 +45,7 @@ import assert from "node:assert/strict";
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const designAuditMode=process.argv.includes("--design-audit");
 const writeSafetyMode=process.argv.includes("--write-safety");
+const landingMode=process.argv.includes("--landing");
 const taskQueueMode=process.argv.includes("--task-queue");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
 const mobileMode=process.argv.includes("--mobile-audit");
@@ -88,6 +89,12 @@ try{
     const target=path.resolve(directory,name);
     if(!target.startsWith(directory+path.sep))throw new Error("Source path escaped test directory");
     await mkdir(path.dirname(target),{recursive:true});await copyFile(path.join(root,name),target);
+  }
+  if (landingMode) {
+    const { pricingFixturePage } = await import("./landing-pricing.mjs");
+    const fixtureDirectory = path.join(directory, "src/app/auth/e2e-pricing");
+    await mkdir(fixtureDirectory, {recursive:true});
+    await writeFile(path.join(fixtureDirectory, "page.tsx"), pricingFixturePage);
   }
   const dbPassword=randomBytes(18).toString("hex");
   phase="database";
@@ -160,7 +167,12 @@ try{
     const page=await context.newPage();page.setDefaultTimeout(name==='webkit'?30000:15000);
     const started=Date.now();
     try{
-      if(writeSafetyMode){
+      if(landingMode){
+        const { motionCoverage } = await import("./motion.mjs");
+        const { landingPricingCoverage } = await import("./landing-pricing.mjs");
+        await motionCoverage({page,origin,browserName:name,artifacts});
+        await landingPricingCoverage({page,origin,browserName:name,artifacts,fixture});
+      }else if(writeSafetyMode){
         await writeSafetyCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
       }else if(taskQueueMode){
         const {taskQueueCoverage}=await import("./task-queue.mjs");
@@ -229,7 +241,7 @@ try{
 }finally{
   clearTimeout(deadline);
   await writeFile(path.join(artifacts,"app.log"),appLog);
-  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:mobileMode?"mobile-isolated-self-hosted":accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
+  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:landingMode?"landing-isolated-production-build":mobileMode?"mobile-isolated-self-hosted":accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
   if(proxy)await new Promise(resolve=>proxy.close(resolve));
   if(app){app.kill();await new Promise(resolve=>{app.once("exit",resolve);setTimeout(()=>{app.kill("SIGKILL");resolve();},3000).unref();});}
   await client?.end();

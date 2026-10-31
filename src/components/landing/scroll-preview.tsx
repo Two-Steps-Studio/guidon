@@ -25,8 +25,8 @@ export function ScrollPreview({ children, className, direction=1 }: { children: 
       root.dataset.scrollProgress = progress.toFixed(3);
       if (progress === 1) { image.style.transform = ""; return; }
       image.style.transform = desktop.matches
-        ? `perspective(1400px) translateX(${remaining * direction * 24}px) translateY(${remaining * 24}px) rotateX(${remaining * 12}deg) rotateY(${remaining * direction * -8}deg) scale(${1 - remaining * .08})`
-        : `translateY(${remaining * 12}px) scale(${1 - remaining * .02})`;
+        ? `perspective(1400px) translateX(${remaining * direction * 80}px) translateY(${remaining * 60}px) rotateX(${remaining * 18}deg) rotateY(${remaining * direction * -12}deg) scale(${1 - remaining * .12})`
+        : `translateY(${remaining * 18}px) scale(${1 - remaining * .02})`;
     };
     const schedule = () => { if (visible && !frame) frame = requestAnimationFrame(update); };
     const onPreference = () => { if (reduced.matches) settle(); else schedule(); };

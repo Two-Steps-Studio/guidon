@@ -395,7 +395,17 @@
       "prioritySupport": "Priorytetowe wsparcie",
       "unlimitedMembers": "Nieograniczona liczba osób",
       "membersCount": "{count, plural, one {# osoba} few {# osoby} many {# osób} other {# osoby}}",
-      "paidSoon": "Płatne plany wkrótce. Zacznij za darmo - projekty zostaną po przejściu na płatny plan."
+      "paidSoon": "Płatne plany wkrótce. Zacznij za darmo - projekty zostaną po przejściu na płatny plan.",
+      "interval_week": "Tygodniowo",
+      "interval_month": "Miesięcznie",
+      "interval_year": "Rocznie",
+      "intervalLabel": "Okres rozliczeniowy",
+      "per_week": "/tydz.",
+      "per_month": "/mies.",
+      "per_year": "/rok",
+      "unavailable": "Niedostępne",
+      "browsePlans": "Porównaj plany",
+      "actualPrices": "Ceny za cały okres rozliczeniowy. Płatności są rozliczane w EUR. Dostępność wybranego okresu sprawdzisz przy każdym planie."
     },
     "footer": {
       "brand": "Zasady marki",
@@ -451,7 +461,9 @@
           "a": "Tak, w każdej chwili: Profil → Usuń konto na stronie. Polityka prywatności wyjaśnia, co przechowujemy i dlaczego."
         }
       ]
-    }
+    },
+    "exploreProduct": "Poznaj Guidona",
+    "previewDashboard": "Pulpit"
   },
   "organizations": {
     "common": {
