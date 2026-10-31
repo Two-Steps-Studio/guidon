@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { MotionPressable } from "@/components/MotionPressable";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -96,23 +97,23 @@ export default function SignInScreen() {
             </View>
           ) : null}
 
-          <Pressable
+          <MotionPressable
             onPress={signIn}
             disabled={busy}
             accessibilityRole="button"
             accessibilityLabel={t("signIn.button")}
             accessibilityState={{ busy, disabled: busy }}
-            style={({ pressed }) => [
+            style={[
               styles.primary,
               rounded(radius.control + 2),
-              { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
+              { backgroundColor: colors.primary, opacity: busy ? 0.85 : 1 },
             ]}
           >
             {busy ? <ActivityIndicator color={colors.onPrimary} /> : null}
             <Text style={[styles.primaryText, { color: colors.onPrimary }]}>
               {busy ? t("signIn.signingIn") : t("signIn.button")}
             </Text>
-          </Pressable>
+          </MotionPressable>
 
           <Text style={[styles.serverCaption, { color: colors.textMuted }]}>
             {t("signIn.serverCaption", { server: hostOf(session.server) })}

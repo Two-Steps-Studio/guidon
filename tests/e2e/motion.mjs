@@ -6,6 +6,43 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
   try {
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.setViewportSize({width:1440,height:1000});
+    await page.addInitScript(() => {
+      window.__revealCalls = [];
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function(frames, options) {
+        if (this.parentElement?.hasAttribute('data-reveal-group')) window.__revealCalls.push({frames, options});
+        return animate.call(this, frames, options);
+      };
+    });
+    await page.goto(origin + '/');
+    const reveals = page.locator('[data-reveal-group]');
+    await reveals.first().scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => window.__revealCalls.length > 0);
+    const revealCalls = await page.evaluate(() => window.__revealCalls);
+    for (const {frames, options} of revealCalls) {
+      assert.equal(options.duration, 600);
+      assert.ok(options.delay <= 180, 'Stagger is bounded');
+      assert.ok(frames.every(frame => Object.keys(frame).every(key => ['opacity','transform'].includes(key))));
+    }
+    await page.keyboard.press('Tab');
+    const beforeKeyboardScroll = await page.evaluate(() => window.__revealCalls.length);
+    await reveals.last().scrollIntoViewIfNeeded();
+    await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(() => window.__revealCalls.length), beforeKeyboardScroll, 'Keyboard navigation settles and suppresses decorative entrances');
+    const preview = page.locator('[data-product-preview]').first();
+    await preview.hover();
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-product-preview]')).transform !== 'none');
+    await preview.evaluate(node => node.getAnimations().forEach(animation => animation.finish()));
+    await page.screenshot({path:path.join(artifacts,`${browserName}-product-tour-motion.png`)});
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await page.goto(origin + '/');
+    await reveals.first().scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => window.__revealCalls.length > 0);
+    const reducedReveals = await page.evaluate(() => window.__revealCalls);
+    assert.ok(reducedReveals.every(({frames,options}) => options.duration === 120 && options.delay === 0 && frames.every(frame => !('transform' in frame))));
+    await preview.hover();
+    assert.equal(await preview.evaluate(node => getComputedStyle(node).transform), 'none', 'Reduced-motion previews remain stationary on hover');
+    await page.emulateMedia({reducedMotion:'no-preference'});
     await page.goto(origin + '/');
     const laptop = page.locator('[data-marketing-motion="laptop"]');
     await laptop.scrollIntoViewIfNeeded();

@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Pressable, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
+import { MotionPressable } from "./MotionPressable";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { haptics } from "@/lib/haptics";
 import { spacing, useTheme } from "@/theme";
@@ -11,24 +12,23 @@ export function Fab({ onPress, accessibilityLabel }: { onPress: () => void; acce
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <Pressable
+    <MotionPressable
       onPress={() => {
         haptics.tap();
         onPress();
       }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [
+      style={[
         styles.fab,
         {
           backgroundColor: colors.primary,
           bottom: Math.max(insets.bottom, spacing.lg) + spacing.sm,
-          transform: [{ scale: pressed ? 0.94 : 1 }],
         },
       ]}
     >
       <Ionicons name="add" size={30} color={colors.onPrimary} />
-    </Pressable>
+    </MotionPressable>
   );
 }
 
