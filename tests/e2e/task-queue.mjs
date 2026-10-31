@@ -20,6 +20,8 @@ export async function taskQueueCoverage({ page, origin, fixture, client, browser
     await page.locator("#password").fill(fixture.password);
     await page.locator('button[type="submit"]').click();
     await page.waitForURL(url => url.pathname === "/dashboard");
+    const { agentMonitoringCoverage } = await import('./agent-monitoring.mjs');
+    await agentMonitoringCoverage({page,origin,fixture,client,browserName,artifacts});
     const organizationName=(await client.query('SELECT name FROM organizations WHERE id=$1',[owner.organizationId])).rows[0].name;
     await page.goto(origin + '/admin/organizations');
     const organizationRow=page.locator('tbody tr').filter({hasText:organizationName});
