@@ -15,6 +15,18 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
       };
     });
     await page.goto(origin + '/');
+    for (const size of [{width:1440,height:1000},{width:375,height:812}]) {
+      await page.setViewportSize(size);
+      const hero = page.locator('[data-home-hero]');
+      const outer = await hero.boundingBox();
+      const content = await hero.locator(':scope > div').boundingBox();
+      assert.ok(outer.height >= size.height - 1, 'The opening hero fills the first screen');
+      assert.ok(Math.abs((outer.y + outer.height / 2) - (content.y + content.height / 2)) < 2, 'Logo, copy and actions are vertically centered');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.screenshot({path:path.join(artifacts,`${browserName}-hero-${size.width}.png`)});
+    }
+    await page.setViewportSize({width:1440,height:1000});
+    assert.equal(await page.getByRole('button',{name:/Replay animation|Odtwórz animację/}).count(), 0, 'Marketing has no replay controls');
     const reveals = page.locator('[data-reveal-group]');
     await reveals.first().scrollIntoViewIfNeeded();
     await page.waitForFunction(() => window.__revealCalls.length > 0);
@@ -66,10 +78,8 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
     await page.evaluate(() => scrollTo(0,0));
     await page.waitForFunction(() => document.querySelector('[data-marketing-motion="context"]')?.dataset.paused === 'true');
     await scene.scrollIntoViewIfNeeded();
-    await scene.getByRole('button').press('Enter');
-    assert.equal(await scene.evaluate(node => node.getAnimations({subtree:true}).some(animation => animation.playState === 'running')), false, 'Keyboard does not start a replay');
+    assert.equal(await scene.getByRole('button').count(), 0);
     await page.emulateMedia({reducedMotion:'reduce'});
-    await scene.getByRole('button').click();
     const gentle = await scene.evaluate(node => node.getAnimations({subtree:true}).map(animation => ({
       duration:animation.effect.getTiming().duration,
       frames:animation.effect.getKeyframes(),

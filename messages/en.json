@@ -213,7 +213,6 @@
   },
   "landing": {
     "motion": {
-      "replay": "Replay animation",
       "example": "Illustrative workflow",
       "title": "The why travels with the work.",
       "description": "A task, its supporting decisions and project knowledge stay together. When you connect an agent, its work returns for your review.",

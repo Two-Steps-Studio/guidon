@@ -15,14 +15,13 @@ and optional agent result over 3600 ms. It is explicitly an example, not a live
 claim about an agent operating on a visitor's project.
 
 IntersectionObserver starts each scene once, at 15% intersection. Leaving the
-viewport or hiding the document pauses playback. Pointer activation can replay
-it. Keyboard activation settles the scene immediately. No infinite loops,
+viewport or hiding the document pauses playback. There are no replay controls.
+No infinite loops,
 autoplay video, extra motion dependency or delayed call to action.
 
 Mobile replaces the laptop perspective and task rotation with a gentle fade.
 Reduced motion removes spatial changes and decorative sweeps, retaining a
-120 ms opacity change. Without JS, all illustrative content is visible and the
-nonfunctional replay control stays hidden.
+120 ms opacity change. Without JS, all illustrative content is visible.
 
 ## Product tour and native action feedback
 
@@ -62,7 +61,7 @@ the answer fades for 125 ms after pointer activation; no height animation.
 `node tests/e2e/run.mjs --task-queue` exercises the marketing sequences and
 onboarding in Chromium, Firefox and WebKit using an isolated production build.
 It checks compositor-only properties, bounded single iterations, offscreen
-pause, keyboard replay, reduced motion, mobile layout and keyboard wizard
+pause, reduced motion, mobile layout and keyboard wizard
 navigation. Screenshots are written with the other disposable E2E artifacts.
 The full `npm run test:e2e` retains real signup, onboarding, task import and
 workspace checks. Production deployment remains a separate approved action.
