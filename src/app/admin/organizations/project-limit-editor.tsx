@@ -9,9 +9,11 @@ import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "./constants";
 
 export function ProjectLimitEditor({
   orgId,
+  orgName,
   initialLimit,
 }: {
   orgId: string;
+  orgName: string;
   initialLimit: number;
 }) {
   const t = useTranslations("admin");
@@ -68,6 +70,7 @@ export function ProjectLimitEditor({
       ) : (
         <Input
           type="number"
+          aria-label={`${t("colProjectLimit")}: ${orgName}`}
           min={1}
           value={value}
           onChange={(e) => {
