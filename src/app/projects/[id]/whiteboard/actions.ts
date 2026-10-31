@@ -3,6 +3,12 @@ import { timeAction } from "@/lib/perf/action-timing";
 import { randomUUID } from "node:crypto";
 import type { ProjectId } from "@/types/index";
 
+/**
+ * Server Actions for the Whiteboard module.
+ * All server-side dependencies are dynamically imported to prevent
+ * bundling into client components.
+ */
+
 export async function generateTaskProposals(projectId: string, selectedTexts: string[]) {
   const { getOptionalCurrentUser } = await import("@/lib/data/current-user");
   const { getProjectAccess } = await import("@/lib/data/project-access");
