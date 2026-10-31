@@ -45,6 +45,7 @@ uniform float uScale;
 uniform float uContrast;
 uniform float uBrightness;
 uniform int uEffect;
+uniform int uMotionMode;
 uniform float uRadius;
 uniform float uStrength;
 uniform vec3 uTrail[${MAX_TRAIL}];
@@ -102,10 +103,14 @@ float fbm(vec2 p) {
   return value;
 }
 
-float pattern(vec2 p) {
+const pattern = (p: vec2) => {
+  if (uMotionMode == 1) {
+    vec2 p2 = p - uTime * uWaveSpeed;
+    return fbm(p + fbm(p2));
+  }
   vec2 p2 = p - uTime * uWaveSpeed;
   return fbm(p + fbm(p2));
-}
+};
 
 void main() {
   vec2 corner = (gl_FragCoord.xy - 0.5) * uCell;
@@ -317,6 +322,7 @@ export interface DitherProps {
   clickRipple?: boolean;
   intro?: boolean;
   disableAnimation?: boolean;
+  motionMode?: "drift" | "expand";
   /** Animate even when the OS asks for reduced motion (an explicit user opt-in). */
   ignoreReducedMotion?: boolean;
   dpr?: number;
@@ -512,6 +518,7 @@ const Dither = ({
       gl.uniform1f(w.uContrast, s.contrast);
       gl.uniform1f(w.uBrightness, s.brightness);
       gl.uniform1i(w.uEffect, s.effect);
+      gl.uniform1i(w.uMotionMode, s.motionMode);
       gl.uniform1f(w.uRadius, s.mouseRadius);
       gl.uniform1f(w.uStrength, s.mouseStrength);
       gl.uniform3fv(w.uTrail, trailData);

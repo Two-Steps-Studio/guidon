@@ -4,12 +4,14 @@
   --landing-gutter: clamp(1.25rem, 3vw, 2rem);
   --landing-section: clamp(4rem, 7vw, 6rem);
   --landing-radius: 12px;
+  --landing-navigation-height: 77px;
   /* Soften the branded dither behind copy; cards and navigation stay opaque. */
   background: color-mix(in srgb, var(--color-background) 88%, transparent);
   color: var(--color-text);
   font-family: var(--font-geist-sans), sans-serif;
   font-size: 16px;
   line-height: 1.65;
+  padding-top: var(--landing-navigation-height);
 }
 .landing *, .landing *::before, .landing *::after { box-sizing: border-box; }
 .landing :is(a,button,summary):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
@@ -18,7 +20,7 @@
 .productContainer { width: min(var(--landing-product-width), calc(100% - var(--landing-gutter) * 2)); margin-inline: auto; }
 .skip { position: fixed; left: 1rem; top: -8rem; z-index: 100; padding: .75rem 1rem; background: var(--color-background); border: 1px solid var(--color-border); }
 .skip:focus { top: 1rem; }
-.header { position: sticky; top: 0; z-index: 40; background: var(--color-background); border-bottom: 1px solid var(--color-border); }
+.header { position: fixed; inset: 0 0 auto; z-index: 40; background: var(--color-background); border-bottom: 1px solid var(--color-border); }
 .navigation { width: min(var(--landing-product-width), calc(100% - var(--landing-gutter) * 2)); min-height: 76px; margin-inline: auto; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; }
 .logo { display: inline-flex; align-items: center; width: 100px; flex-shrink: 0; }
 .logo img { width: 100%; height: auto; }

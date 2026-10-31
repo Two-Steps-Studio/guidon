@@ -51,7 +51,7 @@ export function DitherBackground() {
 
   useEffect(() => {
     const pattern = patternRef.current;
-    if (!pattern || !showPattern || !canMove) return;
+    if (!pattern || !showPattern || !canMove || isLandingPage) return;
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -67,7 +67,7 @@ export function DitherBackground() {
       cancelAnimationFrame(frame);
       pattern.style.transform = "";
     };
-  }, [showPattern, canMove, pathname]);
+  }, [showPattern, canMove, pathname, isLandingPage]);
 
   if (wallpaper && !isLandingPage) {
     return (
@@ -81,10 +81,9 @@ export function DitherBackground() {
 
   if (!isLandingPage && style === "solid") return null;
   return (
-    // The viewport layer covers even the bottom of long settings pages.
-    // Overscan keeps the small scroll translation from exposing empty edges.
-    <div data-app-background aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 min-h-lvh overflow-hidden">
-      <div ref={patternRef} data-background-pattern className="absolute -inset-8">
+    <div data-app-background aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 min-h-lvh overflow-hidden"
+      style={isLandingPage ? { top: "-12rem", bottom: "-12rem" } : undefined}>
+      <div ref={patternRef} data-background-pattern className={isLandingPage ? "absolute inset-0" : "absolute -inset-8"}>
       <Dither
         waveColor={WAVE_COLOR[theme]}
         backgroundColor="transparent"
@@ -99,8 +98,10 @@ export function DitherBackground() {
         ignoreReducedMotion={motion === "on"}
         enableMouseInteraction={false}
         clickRipple={false}
+        motionMode={isLandingPage ? "expand" : "drift"}
       />
       </div>
+      {isLandingPage && <div className="absolute inset-0" style={{ background: "color-mix(in srgb, var(--color-background) 88%, transparent)" }} />}
     </div>
   );
 }

@@ -108,7 +108,7 @@ export default async function Home() {
 
       <main id="landing-main" tabIndex={-1}>
         <section data-home-hero className={styles.hero} aria-labelledby="hero-title">
-          <div className={styles.container}>
+          <RevealGroup className={styles.container}>
             <p className={styles.eyebrow}><span className={styles.brandDot} aria-hidden />{d("eyebrow")}<BetaBadge /></p>
             <h1 id="hero-title">{d("heroFirst")}<br/><span>{d("heroSecond")}</span></h1>
             <p className={styles.lead}>{d("heroDescription")}</p>
@@ -117,7 +117,7 @@ export default async function Home() {
               <a href="#product" className={styles.buttonSecondary}>{d("explore")}</a>
             </div>
             <p className={styles.heroNote}>{d("heroNote")}</p>
-          </div>
+          </RevealGroup>
         </section>
 
         <section id="product" className={styles.productSection} aria-labelledby="hero-shot-title">
