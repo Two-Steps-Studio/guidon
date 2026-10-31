@@ -9,6 +9,10 @@ import { createClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { withUser } from "@/lib/db/session";
 import { configFor } from "./action-config";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { showAi } from "@/lib/data/ai-preference";
+import { AgentMonitoringReport } from "@/components/work/agent-monitoring-report";
 
 interface ActorProfile {
   id: string;
@@ -27,8 +31,10 @@ interface ActorProfile {
  */
 export default async function ProjectActivityPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const { id: projectId } = await params;
   const t = await getTranslations("activity");
@@ -40,6 +46,9 @@ export default async function ProjectActivityPage({
     requireProjectAccess(projectId),
     getRecentActivity(projectId),
   ]);
+  const monitoringVisible = await showAi(access.userId,access.project.ai_enabled);
+  const monitoring = monitoringVisible && (await searchParams).view === "agents";
+  const tMonitor = await getTranslations("agentMonitoring");
 
   // user_id references profiles(id) ON DELETE SET NULL (000_baseline_schema.sql)
   // - resolved separately, same pattern as memory/page.tsx's verified_by lookup.
@@ -69,9 +78,13 @@ export default async function ProjectActivityPage({
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
+        {monitoringVisible && <nav aria-label={t("title")} className="mt-4 flex flex-wrap gap-2">
+          <Button asChild variant={monitoring?"outline":"default"}><Link href={`/projects/${projectId}/activity`} aria-current={!monitoring?"page":undefined}>{t("title")}</Link></Button>
+          <Button asChild variant={monitoring?"default":"outline"}><Link href={`/projects/${projectId}/activity?view=agents`} aria-current={monitoring?"page":undefined}>{tMonitor("title")}</Link></Button>
+        </nav>}
       </div>
 
-      {entries.length === 0 ? (
+      {monitoring ? <AgentMonitoringReport userId={access.userId} projectId={projectId} /> : entries.length === 0 ? (
         <EmptyState
           icon={ActivityIcon}
           title={t("emptyTitle")}
