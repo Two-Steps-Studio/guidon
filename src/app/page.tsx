@@ -16,6 +16,8 @@ import { SITE_URL } from "@/lib/site-url";
 import { BetaBadge } from "@/components/layout/beta-badge";
 import { AnimatedFaq } from "@/components/landing/animated-faq";
 import { MarketingMotion } from "@/components/landing/marketing-motion";
+import { RevealGroup } from "@/components/landing/reveal-group";
+import motionStyles from "@/components/landing/marketing-motion.module.css";
 import { CtaLink } from "@/components/landing/cta-link";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
@@ -87,10 +89,8 @@ export default async function Home() {
       dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans, FEATURE_SECTIONS.map(({ key }) => ({ title: t(`features.${key}.title`), description: t(`features.${key}.description`) })), faq)).replace(/</g, "\\u003c") }}
     />
     <main>
-    {/* Not full-screen: the live board mockup below starts above the fold,
-        so the first screen shows the product, not only the pitch. */}
-    <div className="relative overflow-hidden bg-background/70 dark:bg-background/60">
-      <div className="container relative z-10 mx-auto px-4 pb-12 pt-14 md:pt-20">
+    <div data-home-hero className="relative flex min-h-svh items-center overflow-hidden bg-background/70 dark:bg-background/60">
+      <div className="container relative z-10 mx-auto px-4 py-12 md:py-20">
         <div className="max-w-5xl mx-auto text-center space-y-8">
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-center gap-3"><Image
@@ -147,7 +147,7 @@ export default async function Home() {
       {/* A laptop drawn in CSS around a real screenshot of the dashboard, one
           per theme - regenerate with scripts/landing/capture.mjs. */}
       <div className="mx-auto max-w-6xl">
-        <MarketingMotion kind="laptop" replayLabel={t("motion.replay")}>
+        <MarketingMotion kind="laptop">
         <div data-motion-actor="laptop">
         <div className="relative mx-auto w-[88%] rounded-t-[1.1rem] rounded-b-sm border border-neutral-700 bg-neutral-900 p-[1.4%] pb-[1.8%] shadow-2xl dark:border-neutral-600">
           <span className="absolute left-1/2 top-[0.55%] h-1 w-1 -translate-x-1/2 rounded-full bg-neutral-600 md:h-1.5 md:w-1.5" aria-hidden />
@@ -185,7 +185,7 @@ export default async function Home() {
         <p className="mb-3 text-center text-xs font-medium uppercase tracking-widest text-primary">{t("motion.example")}</p>
         <h2 id="context-demo-title" className={`${displayFont.className} text-center text-3xl md:text-4xl`}>{t("motion.title")}</h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-text-secondary">{t("motion.description")}</p>
-        <MarketingMotion kind="context" replayLabel={t("motion.replay")}>
+        <MarketingMotion kind="context">
           <div className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-background/90 p-6 md:p-10" aria-hidden="true">
             <div data-motion-actor="signal" className="pointer-events-none absolute inset-x-8 top-1/2 hidden h-px bg-gradient-to-r from-transparent via-primary to-transparent md:block" />
             <div className="relative grid items-center gap-6 md:grid-cols-3">
@@ -218,7 +218,7 @@ export default async function Home() {
         <h2 id="how-it-works-title" className={`${displayFont.className} mb-12 text-center text-3xl md:text-4xl`}>
           {t("howItWorks.title")}
         </h2>
-        <ol className="grid gap-6 md:grid-cols-3">
+        <RevealGroup as="ol" className="grid gap-6 md:grid-cols-3">
           {(t.raw("howItWorks.steps") as { title: string; description: string }[]).map((step, index) => {
             const Icon = HOW_IT_WORKS_ICONS[index] ?? CheckCircle2;
             return (
@@ -234,7 +234,7 @@ export default async function Home() {
               </li>
             );
           })}
-        </ol>
+        </RevealGroup>
         <div className="mt-10 flex justify-center">
           <Button size="lg" className="h-auto px-8 py-6 text-base" asChild>
             <CtaLink cta="how-start" href="/start">{t("getStarted")}</CtaLink>
@@ -262,7 +262,7 @@ export default async function Home() {
           ))}
         </ul>
         <h3 className="scrim mx-auto mb-4 w-fit rounded-full px-3 py-1 text-center text-sm font-medium uppercase tracking-wide text-text-secondary">{t("aiOptions.moreTitle")}</h3>
-        <ul className="grid gap-4 sm:grid-cols-2">
+        <RevealGroup as="ul" className="grid gap-4 sm:grid-cols-2">
           {(t.raw("aiOptions.more") as { title: string; description: string }[]).map((option, index) => {
             const Icon = AI_OPTION_ICONS[index] ?? Bot;
             return (
@@ -277,7 +277,7 @@ export default async function Home() {
               </li>
             );
           })}
-        </ul>
+        </RevealGroup>
       </div>
     </section>
 
@@ -292,7 +292,7 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="space-y-16">
+        <RevealGroup className="space-y-16">
           {FEATURE_SECTIONS.map((feature, index) => {
             const Icon = feature.icon;
             const reversed = index % 2 === 1;
@@ -311,7 +311,7 @@ export default async function Home() {
                     regenerate with scripts/landing/capture.mjs when the
                     captured pages change. */}
                 <div className="w-full md:w-[55%] md:shrink-0">
-                  <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+                  <div data-product-preview className={`${motionStyles.preview} overflow-hidden rounded-xl border border-border bg-card shadow-xl`}>
                     <Image
                       src={`/landing/${feature.key}-light.webp`}
                       alt={t(`features.${feature.key}.title`)}
@@ -348,7 +348,7 @@ export default async function Home() {
               </div>
             );
           })}
-        </div>
+        </RevealGroup>
       </div>
     </section>
 

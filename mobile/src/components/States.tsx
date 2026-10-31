@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { MotionPressable } from "./MotionPressable";
 import { useI18n } from "@/i18n";
 import { radius, rounded, spacing, typography, useTheme } from "@/theme";
 
@@ -29,7 +30,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
     <View style={styles.wrap}>
       <Ionicons name="warning-outline" size={40} color={colors.textFaint} />
       <Text style={[styles.message, { color: colors.textMuted }]}>{message}</Text>
-      <Pressable
+      <MotionPressable
         onPress={onRetry}
         accessibilityRole="button"
         style={({ pressed }) => [
@@ -39,7 +40,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
         ]}
       >
         <Text style={[styles.buttonText, { color: colors.primary }]}>{t("common.retry")}</Text>
-      </Pressable>
+      </MotionPressable>
     </View>
   );
 }
@@ -57,6 +58,6 @@ const styles = StyleSheet.create({
   wrap: { alignItems: "center", justifyContent: "center", paddingVertical: 64, paddingHorizontal: spacing.xxl, gap: spacing.md },
   title: { ...typography.headline, textAlign: "center" },
   message: { ...typography.subhead, textAlign: "center", lineHeight: 21 },
-  button: { paddingHorizontal: spacing.xl, paddingVertical: spacing.md, marginTop: spacing.sm },
+  button: { minHeight: 48, justifyContent: "center", paddingHorizontal: spacing.xl, paddingVertical: spacing.md, marginTop: spacing.sm },
   buttonText: { ...typography.headline },
 });

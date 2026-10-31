@@ -213,7 +213,6 @@
   },
   "landing": {
     "motion": {
-      "replay": "Odtwórz animację",
       "example": "Przykładowy przebieg pracy",
       "title": "Kontekst podąża za zadaniem.",
       "description": "Zadanie, decyzje i wiedza projektu pozostają razem. Gdy podłączysz agenta, wynik jego pracy wraca do Twojej oceny.",

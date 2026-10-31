@@ -6,6 +6,55 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
   try {
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.setViewportSize({width:1440,height:1000});
+    await page.addInitScript(() => {
+      window.__revealCalls = [];
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function(frames, options) {
+        if (this.parentElement?.hasAttribute('data-reveal-group')) window.__revealCalls.push({frames, options});
+        return animate.call(this, frames, options);
+      };
+    });
+    await page.goto(origin + '/');
+    for (const size of [{width:1440,height:1000},{width:375,height:812}]) {
+      await page.setViewportSize(size);
+      const hero = page.locator('[data-home-hero]');
+      const outer = await hero.boundingBox();
+      const content = await hero.locator(':scope > div').boundingBox();
+      assert.ok(outer.height >= size.height - 1, 'The opening hero fills the first screen');
+      assert.ok(Math.abs((outer.y + outer.height / 2) - (content.y + content.height / 2)) < 2, 'Logo, copy and actions are vertically centered');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.screenshot({path:path.join(artifacts,`${browserName}-hero-${size.width}.png`)});
+    }
+    await page.setViewportSize({width:1440,height:1000});
+    assert.equal(await page.getByRole('button',{name:/Replay animation|Odtwórz animację/}).count(), 0, 'Marketing has no replay controls');
+    const reveals = page.locator('[data-reveal-group]');
+    await reveals.first().scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => window.__revealCalls.length > 0);
+    const revealCalls = await page.evaluate(() => window.__revealCalls);
+    for (const {frames, options} of revealCalls) {
+      assert.equal(options.duration, 600);
+      assert.ok(options.delay <= 180, 'Stagger is bounded');
+      assert.ok(frames.every(frame => Object.keys(frame).every(key => ['opacity','transform'].includes(key))));
+    }
+    await page.keyboard.press('Tab');
+    const beforeKeyboardScroll = await page.evaluate(() => window.__revealCalls.length);
+    await reveals.last().scrollIntoViewIfNeeded();
+    await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(() => window.__revealCalls.length), beforeKeyboardScroll, 'Keyboard navigation settles and suppresses decorative entrances');
+    const preview = page.locator('[data-product-preview]').first();
+    await preview.hover();
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-product-preview]')).transform !== 'none');
+    await preview.evaluate(node => node.getAnimations().forEach(animation => animation.finish()));
+    await page.screenshot({path:path.join(artifacts,`${browserName}-product-tour-motion.png`)});
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await page.goto(origin + '/');
+    await reveals.first().scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => window.__revealCalls.length > 0);
+    const reducedReveals = await page.evaluate(() => window.__revealCalls);
+    assert.ok(reducedReveals.every(({frames,options}) => options.duration === 120 && options.delay === 0 && frames.every(frame => !('transform' in frame))));
+    await preview.hover();
+    assert.equal(await preview.evaluate(node => getComputedStyle(node).transform), 'none', 'Reduced-motion previews remain stationary on hover');
+    await page.emulateMedia({reducedMotion:'no-preference'});
     await page.goto(origin + '/');
     const laptop = page.locator('[data-marketing-motion="laptop"]');
     await laptop.scrollIntoViewIfNeeded();
@@ -29,10 +78,8 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
     await page.evaluate(() => scrollTo(0,0));
     await page.waitForFunction(() => document.querySelector('[data-marketing-motion="context"]')?.dataset.paused === 'true');
     await scene.scrollIntoViewIfNeeded();
-    await scene.getByRole('button').press('Enter');
-    assert.equal(await scene.evaluate(node => node.getAnimations({subtree:true}).some(animation => animation.playState === 'running')), false, 'Keyboard does not start a replay');
+    assert.equal(await scene.getByRole('button').count(), 0);
     await page.emulateMedia({reducedMotion:'reduce'});
-    await scene.getByRole('button').click();
     const gentle = await scene.evaluate(node => node.getAnimations({subtree:true}).map(animation => ({
       duration:animation.effect.getTiming().duration,
       frames:animation.effect.getKeyframes(),

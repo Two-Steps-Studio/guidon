@@ -1,4 +1,9 @@
 .scene { position: relative; isolation: isolate; }
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .preview { transition: transform 240ms var(--ease-out); }
+  .preview:hover { transform: perspective(1400px) rotateY(-3deg) translateY(-1%); }
+  .preview:focus-within { transform: none; }
+}
 .scene [data-motion-actor] { transform-origin: center; }
 .scene[data-play="true"] [data-motion-actor="laptop"] {
   animation: laptop-arrive 1200ms var(--ease-out) both;
@@ -26,16 +31,6 @@
   animation: signal-pass 1800ms var(--ease-in-out) 600ms both;
 }
 .scene[data-paused="true"] [data-motion-actor] { animation-play-state: paused; }
-.replay {
-  visibility: hidden;
-  display: flex; align-items: center; gap: .4rem; min-height: 44px;
-  margin: 1rem auto 0; padding: .5rem .75rem; border-radius: var(--radius-md);
-  font-size: .75rem; color: var(--color-text-secondary);
-  transition: opacity 125ms var(--ease-out);
-}
-.scene[data-play="true"] .replay { visibility: visible; }
-.replay:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
-@media (hover: hover) and (pointer: fine) { .replay:hover { opacity: .75; } }
 @keyframes laptop-arrive {
   from { transform: perspective(1400px) translateY(3%) rotateX(8deg) scale(.97); }
   to { transform: perspective(1400px) translateY(0) rotateX(0deg) scale(1); }
