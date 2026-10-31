@@ -5,8 +5,9 @@ import { hasDirectDatabase } from '@/lib/db/pool';
 import { withUser } from '@/lib/db/session';
 import { isValidUuid, invalidIdResponse } from '@/lib/api/validate-id';
 import { apiRoute } from "@/lib/api/api-route";
+import { taskCandidates } from "@/lib/search/task-candidates";
 import { dataClient } from "@/lib/data-client";
-import { likePattern, rankTasks, taskRefPrefix, type TaskMatch } from "@/lib/search/task-search-core";
+import { rankTasks } from "@/lib/search/task-search-core";
 
 interface SearchResult {
   type: string;
@@ -333,53 +334,17 @@ async function searchSupabase(
   return results;
 }
 
-interface TaskCandidate {
-  id: string;
-  title: string;
-  description?: string | null;
-  status: string;
-  priority: string;
-  project_id: string;
-  updated_at: string;
-}
-
-/** Recent titles ranked in memory; enough for a typo or a reference to find any active task. */
-const TASK_CANDIDATES = 2000;
-
-/**
- * Tasks, ranked by src/lib/search/task-search-core.ts: the newest
- * TASK_CANDIDATES titles in scope (for typos, diacritics and short ids) plus
- * literal title/description matches from any age, both through the data
- * client under RLS - one project, or every project the caller can see.
- */
-async function searchTasks(userId: string, query: string, projectId: string | null): Promise<SearchResult[]> {
-  const db = dataClient(userId);
-  const scoped = (columns: string) => {
-    const builder = db.from<TaskCandidate>("tasks").select(columns);
-    return projectId ? builder.eq("project_id", projectId) : builder;
-  };
-  const pattern = likePattern(query);
-  const ref = taskRefPrefix(query);
-  const [recent, byTitle, byDescription, byId] = await Promise.all([
-    scoped("id, title, status, priority, project_id, updated_at").order("updated_at", { ascending: false }).limit(TASK_CANDIDATES),
-    scoped("id, title, status, priority, project_id, updated_at").ilike("title", pattern).limit(50),
-    scoped("id, title, description, status, priority, project_id, updated_at").ilike("description", pattern).limit(50),
-    ref?.length === 32 ? scoped("id, title, status, priority, project_id, updated_at").eq("id", query.trim().replace(/^guidon#/i, "")).limit(1) : Promise.resolve({ data: [], error: null }),
-  ]);
-  const error = recent.error ?? byTitle.error ?? byDescription.error ?? byId.error;
-  if (error) throw new Error(error.message);
-  // One row per task, keeping the description when a query fetched it.
-  const merged = new Map<string, TaskCandidate>();
-  for (const row of [...(byDescription.data ?? []), ...(byId.data ?? []), ...(byTitle.data ?? []), ...(recent.data ?? [])]) {
-    if (!merged.has(row.id)) merged.set(row.id, row);
-  }
-  return rankTasks(query, [...merged.values()], 10).map(({ task, match }: { task: TaskCandidate; match: TaskMatch }) => ({
+/** Ranked read-only candidates under the caller's RLS identity. */
+async function searchTasks(userId: string, query: string, projectId: string | null): Promise<{results:SearchResult[]; limited:boolean}> {
+  const candidates = await taskCandidates(dataClient(userId), query, projectId);
+  const results = rankTasks(query, candidates.tasks, 10).map(({ task, match }) => ({
     type: "task",
     id: task.id,
     title: task.title,
     description: task.description ?? null,
     metadata: { status: task.status, priority: task.priority, project_id: task.project_id, match },
   }));
+  return {results, limited:candidates.limited};
 }
 
 async function handleGET(request: NextRequest) {
@@ -388,13 +353,13 @@ async function handleGET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q');
+    const query = searchParams.get('q')?.trim();
     const projectId = searchParams.get('project_id');
     const entityTypes = searchParams.get('entity_types');
 
-    if (!query) {
+    if (!query || query.length > 200) {
       return NextResponse.json(
-        { error: 'Search query is required' },
+        { error: 'Search query must contain between 1 and 200 characters' },
         { status: 400 }
       );
     }
@@ -423,17 +388,16 @@ async function handleGET(request: NextRequest) {
         : ['task', 'project'];
 
     const [tasks, others] = await Promise.all([
-      types.includes('task') ? searchTasks(auth.userId, query, projectId) : Promise.resolve([]),
+      types.includes('task') ? searchTasks(auth.userId, query, projectId) : Promise.resolve({results:[] as SearchResult[],limited:false}),
       hasDirectDatabase()
         ? searchLocal(auth.userId, query, projectId, types)
         : searchSupabase(query, projectId, types),
     ]);
-    const results = [...tasks, ...others];
+    const results = [...tasks.results, ...others];
 
-    return NextResponse.json({ results });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ results, diagnostics: { taskCandidatesLimited: tasks.limited } }, {headers:{"Cache-Control":"private, no-store"}});
+  } catch {
+    return NextResponse.json({ error: 'Search is temporarily unavailable' }, { status: 500 });
   }
 }
 

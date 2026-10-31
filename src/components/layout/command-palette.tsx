@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { countSearchEvent } from "./search-metrics";
 import { Search } from "lucide-react";
 import {
   CommandDialog,
@@ -65,10 +66,12 @@ const MIN_QUERY_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 200;
 
 export function CommandPalette({ currentProjectId, disabledModules }: CommandPaletteProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [limited, setLimited] = useState(false);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   const router = useRouter();
@@ -103,6 +106,7 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
   function resetSearch() {
     setQuery("");
     setResults([]);
+    setLimited(false);
     setLoading(false);
     setFailed(false);
   }
@@ -120,6 +124,7 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
     if (!open || trimmed.length < MIN_QUERY_LENGTH) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
+      setLimited(false);
       setLoading(false);
       return;
     }
@@ -128,15 +133,18 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
     setLoading(true);
     setFailed(false);
     setResults([]);
+    setLimited(false);
     const timer = setTimeout(() => {
       const params = new URLSearchParams({ q: trimmed });
       if (currentProjectId) params.set("project_id", currentProjectId);
       fetch(`/api/v1/search?${params.toString()}`, { signal: controller.signal })
         .then((res) => { if (!res.ok) throw new Error("Search failed");return res.json(); })
-        .then((data: { results?: SearchResult[] }) => { if (!controller.signal.aborted) setResults(data.results ?? []); })
+        .then((data: { results?: SearchResult[]; diagnostics?: {taskCandidatesLimited?: boolean} }) => { if (!controller.signal.aborted) { setResults(data.results ?? []); countSearchEvent(data.results?.length ? "results" : "zero"); setLimited(data.diagnostics?.taskCandidatesLimited === true); } })
         .catch((err: unknown) => {
           if (controller.signal.aborted || (err instanceof DOMException && err.name === "AbortError")) return;
+          countSearchEvent("failed");
           setFailed(true);setResults([]);
+          setLimited(false);
         })
         .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     }, SEARCH_DEBOUNCE_MS);
@@ -176,13 +184,14 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
         description={t("description")}
         shouldFilter={false}
       >
-        <CommandInput placeholder={t("placeholder")} value={query} onValueChange={setQuery} />
+        <CommandInput ref={inputRef} maxLength={200} placeholder={t("placeholder")} value={query} onValueChange={setQuery} />
         <CommandList>
           {showResults ? (
             <>
               {loading && <p role="status" className="p-4 text-sm text-muted-foreground">{t("searching")}</p>}
               {failed && <div className="p-4 text-sm"><p role="alert">{t("searchFailed")}</p><button className="mt-2 rounded border px-3 py-2" onClick={() => setRetry(value => value + 1)}>{t("retry")}</button></div>}
-              {!loading && !failed && results.length === 0 && <CommandEmpty>{t("noResults")}</CommandEmpty>}
+              {!loading && !failed && results.length === 0 && <CommandEmpty><p>{t("noResults")}</p><p className="mt-2 text-xs">{t("noResultsHint")}</p><button type="button" className="mt-3 rounded border px-3 py-2" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>{t("clearSearch")}</button></CommandEmpty>}
+              {!loading && !failed && limited && <p role="status" className="px-4 py-2 text-xs text-muted-foreground">{t("limitedResults")}</p>}
               {results.length > 0 && results.every((result) => result.metadata.match === "fuzzy") && (
                 <p role="status" className="px-4 pt-3 text-xs text-muted-foreground">{t("closestMatches")}</p>
               )}
@@ -192,7 +201,7 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
                     <CommandItem
                       key={`${result.type}-${result.id}`}
                       value={`${result.type}-${result.id}`}
-                      onSelect={() => go(resultHref(result, currentProjectId))}
+                      onSelect={() => { countSearchEvent("click"); go(resultHref(result, currentProjectId)); }}
                     >
                       <span className="flex-1 truncate">{result.title}</span>
                       <span className="shrink-0 text-xs text-muted-foreground">

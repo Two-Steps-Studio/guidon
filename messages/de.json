@@ -140,6 +140,7 @@
     "createOrganization": "Organisation erstellen"
   },
   "nav": {
+    "searchQuality": "Suchqualität",
     "upgradePlan": "Plan upgraden",
     "toggleSidebar": "Seitenleiste ein-/ausblenden (Strg+B)",
     "dashboard": "Dashboard",
@@ -187,6 +188,9 @@
     "approvals": "Freigaben"
   },
   "commandPalette": {
+    "noResultsHint": "Versuche den vollständigen Aufgabentitel oder die Aufgaben-ID und prüfe das ausgewählte Projekt.",
+    "clearSearch": "Suche löschen",
+    "limitedResults": "Suche ältere Aufgaben mit einem genaueren Titel oder der vollständigen Aufgaben-ID.",
     "triggerLabel": "Suchen...",
     "title": "Befehlspalette",
     "description": "Suchen und zu allem springen",
@@ -1600,6 +1604,18 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "searchQuality": {
+      "title": "Suchqualität",
+      "description": "Anonyme Tageszähler nach UTC-Wochen. Keine Suchtexte, Aufgabennamen, IDs oder Nutzerprofile.",
+      "scope": "Letzte acht Wochen, aktuelle Woche unvollständig. Ungefähre Ereigniszahlen, keine eindeutigen Personen oder Erfolgsnachweise. Datenschutzoptionen, blockierte Anfragen und Wiederholungen beeinflussen die Zahlen.",
+      "unavailable": "Zähler nicht verfügbar. Datenbankmigration 104 aktiviert diesen Bericht.",
+      "week": "Wochenbeginn",
+      "searches": "Abgeschlossene Suchen",
+      "zero": "Ohne Ergebnisse",
+      "zeroRate": "Anteil ohne Ergebnis",
+      "clicks": "Ergebnisauswahl",
+      "failed": "Suchfehler"
+    },
     "signedInAs": "Angemeldet als {email} - instanzweite Ansicht, umgeht organisationsbezogene Berechtigungen.",
     "statusOk": "OK",
     "statusDegraded": "Eingeschränkt",

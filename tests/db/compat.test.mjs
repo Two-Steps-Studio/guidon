@@ -200,7 +200,7 @@ for (const [label, sql, expected] of [
   // 60->61 and 148->149: task_claims (100) + task_claims_select.
   // 61->62 and 149->150: agent_approval_requests (102) + agent_approval_requests_select.
   // 62->63 and 150->151: agent_briefs (103) + agent_briefs_select.
-  ["63 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 63],
+  ["64 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 64],
   ["151 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 151],
 ]) {
   const { rows } = await db.query(sql);
@@ -4582,6 +4582,22 @@ section("88. Agent brief versions: owners/admins approve, members read (103)");
     check("…and can't save one", await throwsInSavepoint("SELECT * FROM public.save_agent_brief($1, '# theirs')", [project]));
   });
 }
+
+section("89. Anonymous search-quality counters (104)");
+await withServiceRole(async () => {
+  await db.query("INSERT INTO public.search_quality_counts(day,event,count) VALUES (current_date-90,'zero',1)");
+  await db.query("SELECT public.record_search_event('zero')");
+  await db.query("SELECT public.record_search_event('zero')");
+  const rows=(await db.query("SELECT day,event,count FROM public.search_quality_counts")).rows;
+  check("only daily aggregate fields, atomic increments and stale-date pruning", rows.length===1 && rows[0].event==='zero' && Number(rows[0].count)===2);
+  check("arbitrary event content is refused", await throwsInSavepoint("SELECT public.record_search_event('PRIVATE QUERY')"));
+});
+await withUser(A,async()=>{
+  check("a signed-in user cannot read the global counters",await throwsInSavepoint("SELECT * FROM public.search_quality_counts"));
+  check("a signed-in user cannot execute the privileged counter RPC",await throwsInSavepoint("SELECT public.record_search_event('zero')"));
+  check("a signed-in user cannot directly insert a counter",await throwsInSavepoint("INSERT INTO public.search_quality_counts(event,count) VALUES ('click',1)"));
+});
+check("the counter function does not elevate its caller",(await db.query("SELECT prosecdef FROM pg_proc WHERE oid='public.record_search_event(text)'::regprocedure")).rows[0].prosecdef===false);
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

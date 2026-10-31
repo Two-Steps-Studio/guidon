@@ -215,3 +215,17 @@ for verification and the remaining onboarding gates.
 Until this is applied, every query that joins `profiles` returns null for other
 users. The UI degrades to "Unknown member" rather than dropping the row, but
 member names will not appear.
+
+
+## Search quality counters (104)
+
+`104_search_quality_counters.sql` adds global daily counts of command-palette
+search outcomes and result selections. Rows contain only UTC day, fixed event
+name and count. Only `service_role` can access the table or increment RPC;
+`/api/search-metrics` first checks the signed-in session and canonical `APP_URL`
+origin. `/admin/search` requires the existing instance-admin allowlist.
+
+Apply with the usual migration runner before enabling counters. Until then,
+search still works, telemetry fails quietly and the admin page reports that
+counters are unavailable. No migration is applied to hosted databases by tests.
+The RPC prunes dates older than 56 days on the next accepted event.

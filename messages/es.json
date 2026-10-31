@@ -140,6 +140,7 @@
     "createOrganization": "Crear organización"
   },
   "nav": {
+    "searchQuality": "Calidad de búsqueda",
     "upgradePlan": "Mejorar plan",
     "toggleSidebar": "Mostrar/ocultar barra lateral (Ctrl+B)",
     "dashboard": "Panel",
@@ -187,6 +188,9 @@
     "approvals": "Aprobaciones"
   },
   "commandPalette": {
+    "noResultsHint": "Prueba el título completo o el ID de la tarea y comprueba el proyecto seleccionado.",
+    "clearSearch": "Borrar búsqueda",
+    "limitedResults": "Para tareas antiguas, prueba un título más preciso o el ID completo.",
     "triggerLabel": "Buscar...",
     "title": "Paleta de comandos",
     "description": "Buscar y saltar a cualquier elemento",
@@ -1600,6 +1604,18 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "searchQuality": {
+      "title": "Calidad de búsqueda",
+      "description": "Totales diarios anónimos agrupados por semanas UTC. Sin consultas, nombres de tareas, IDs ni perfiles.",
+      "scope": "Últimas ocho semanas, semana actual incompleta. Son recuentos aproximados de eventos, no personas únicas ni prueba de éxito. La privacidad, los bloqueos y los reintentos pueden afectar los totales.",
+      "unavailable": "Contadores no disponibles. Aplica la migración de base de datos 104 para activar el informe.",
+      "week": "Inicio de semana",
+      "searches": "Búsquedas completadas",
+      "zero": "Sin resultados",
+      "zeroRate": "Porcentaje sin resultados",
+      "clicks": "Selecciones",
+      "failed": "Errores de búsqueda"
+    },
     "signedInAs": "Sesión iniciada como {email} - vista de toda la instancia, omite los permisos por organización.",
     "statusOk": "OK",
     "statusDegraded": "Degradado",
