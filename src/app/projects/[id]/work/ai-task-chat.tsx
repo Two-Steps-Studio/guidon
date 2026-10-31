@@ -15,10 +15,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { normalizeTaskStatus, PRIORITY_CLASSES } from "@/lib/work/task-board";
+import { newBrowserUuid } from "@/lib/work/task-drafts";
 import { parseTaskProposals, type TaskProposal } from "@/lib/ai/task-proposal-parser";
 import { sendTaskChatMessage, type ChatMessage } from "./ai-chat-actions";
 import { createTask } from "./actions";
 import type { Task } from "@/types/task";
+import posthog from "posthog-js";
 
 interface ProposalRow extends TaskProposal {
   selected: boolean;
@@ -70,9 +72,11 @@ export function AiTaskChat({
   // (or just reset) would setMessages() onto the new, empty conversation,
   // appearing as an assistant message with no matching user message.
   const generationRef = useRef(0);
+  const sessionIdRef = useRef<string | null>(null);
 
   const resetChat = () => {
     generationRef.current += 1;
+    sessionIdRef.current = null;
     setMessages([]);
     setInput("");
     setSending(false);
@@ -98,13 +102,16 @@ export function AiTaskChat({
     setMessages(nextMessages);
     setInput("");
     setSending(true);
+    posthog.capture("ai_task_assistant_message_sent");
 
     const history: ChatMessage[] = nextMessages.map((message) => ({
       role: message.role,
       content: message.rawContent,
     }));
 
-    const result = await sendTaskChatMessage(projectId, history);
+    const sessionId = sessionIdRef.current ?? newBrowserUuid();
+    sessionIdRef.current = sessionId;
+    const result = await sendTaskChatMessage(projectId, history, sessionId);
     if (generation !== generationRef.current) return; // chat was reset while this was in flight
     setSending(false);
 
@@ -184,6 +191,7 @@ export function AiTaskChat({
       );
 
       let firstError: string | null = null;
+      let createdCount = 0;
       for (const { proposal, result } of results) {
         if (result.error || !result.task) {
           firstError ??= result.error ?? t("failedToCreateTask");
@@ -191,6 +199,7 @@ export function AiTaskChat({
         }
 
         const createdTask = result.task;
+        createdCount += 1;
         setMessages((current) =>
           current.map((current_, i) => {
             if (i !== messageIndex || !current_.proposals) return current_;
@@ -203,6 +212,12 @@ export function AiTaskChat({
           })
         );
         onCreated(createdTask);
+      }
+      if (createdCount > 0) {
+        posthog.capture("ai_task_proposals_added", {
+          proposed_task_count: toCreate.length,
+          created_task_count: createdCount,
+        });
       }
       if (firstError) setAddError(firstError);
     } catch {

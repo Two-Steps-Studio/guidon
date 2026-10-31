@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import type { BillingInterval } from "@/lib/billing/billing-core";
 import { createCheckoutSession, createPortalSession } from "./actions";
+import posthog from "posthog-js";
 
 /**
  * Both actions redirect on success (Stripe Checkout / the Customer Portal),
@@ -33,6 +34,7 @@ export function UpgradeButton({
         disabled={pending}
         onClick={() => {
           setError(null);
+          posthog.capture("billing_checkout_started", { plan_id: planId, billing_interval: interval });
           startTransition(async () => {
             const result = await createCheckoutSession(organizationId, planId, interval);
             if (result.error) setError(result.error);

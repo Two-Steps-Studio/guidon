@@ -2,7 +2,7 @@
 
 import { signUpLocal, createLocalSession } from "@/lib/auth/local-auth";
 
-export type SignupActionResult = { error: string } | { ok: true };
+export type SignupActionResult = { error: string } | { ok: true; userId: string };
 
 /**
  * Self-hosted signup. No email confirmation step - there is no mail sender
@@ -21,5 +21,5 @@ export async function signupLocalAction(
   if ("error" in result) return { error: result.error };
 
   await createLocalSession(result.userId);
-  return { ok: true };
+  return { ok: true, userId: result.userId };
 }

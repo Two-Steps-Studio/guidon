@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Bot, Check, Loader2, Send, Sparkles, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BOARD_COLUMNS } from "@/lib/work/task-board";
+import { newBrowserUuid } from "@/lib/work/task-drafts";
 
 interface FoundTask {
   id: string;
@@ -35,6 +36,7 @@ export function AIChat({ projectId }: { projectId: string }) {
   const [confirmingIndex, setConfirmingIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRequest = useRef<AbortController | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
 
   useEffect(() => () => activeRequest.current?.abort(), []);
   function changeOpen(open: boolean) {
@@ -58,6 +60,8 @@ export function AIChat({ projectId }: { projectId: string }) {
     setIsLoading(true);
     const controller = new AbortController();
     activeRequest.current = controller;
+    const sessionId = sessionIdRef.current ?? newBrowserUuid();
+    sessionIdRef.current = sessionId;
 
     try {
       const res = await fetch("/api/ai/chat", {
@@ -66,6 +70,7 @@ export function AIChat({ projectId }: { projectId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           projectId,
+          sessionId,
           messages: history.slice(-20).map(({ role, content }) => ({ role, content })),
         }),
       });

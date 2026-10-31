@@ -2,7 +2,7 @@
 
 import { signInLocal, createLocalSession } from "@/lib/auth/local-auth";
 
-export type LoginActionResult = { error: string } | { ok: true };
+export type LoginActionResult = { error: string } | { ok: true; userId: string };
 
 /**
  * Self-hosted login (DATABASE_URL set, no Supabase software running).
@@ -16,5 +16,5 @@ export async function loginLocalAction(email: string, password: string): Promise
   if ("error" in result) return { error: result.error };
 
   await createLocalSession(result.userId);
-  return { ok: true };
+  return { ok: true, userId: result.userId };
 }

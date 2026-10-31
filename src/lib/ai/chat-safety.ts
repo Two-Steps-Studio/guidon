@@ -3,6 +3,7 @@ import { z } from "zod";
 export const MAX_CHAT_MESSAGES = 20;
 export const chatRequestSchema = z.object({
   projectId: z.string().uuid(),
+  sessionId: z.string().uuid().optional(),
   messages: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string().max(8000),

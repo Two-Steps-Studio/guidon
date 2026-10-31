@@ -32,6 +32,7 @@ import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import { createTask, updateTask } from "./actions";
 import { uploadTaskAttachment } from "./attachments-actions";
 import { playSound } from "@/lib/sounds";
+import posthog from "posthog-js";
 
 /** A file chosen before the task exists - uploaded right after it's created. */
 interface PendingFile {
@@ -222,6 +223,14 @@ export function CreateTaskDialog({
         if (failed > 0) toast.error(t("createAttachmentsFailed", { count: failed }));
       }
 
+      posthog.capture("task_created", {
+        status,
+        priority,
+        has_assignee: Boolean(assigneeId),
+        has_due_date: Boolean(dueDate),
+        label_count: currentTags.length,
+        attachment_count: files.length,
+      });
       discardDraft();
       playSound("create");
       onCreated(task);

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { acceptInvitation } from "./actions";
+import posthog from "posthog-js";
 
 export function AcceptInvitationButton({ token }: { token: string }) {
   const t = useTranslations("invitation");
@@ -22,13 +23,14 @@ export function AcceptInvitationButton({ token }: { token: string }) {
       <Button
         className="w-full"
         disabled={pending}
-        onClick={() =>
+        onClick={() => {
+          posthog.capture("invitation_acceptance_started");
           startTransition(async () => {
             const result = await acceptInvitation(token);
             // On success the action redirects; a result only comes back on failure.
             if (result) setError(result.error);
-          })
-        }
+          });
+        }}
       >
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
         {t("accept")}

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AICompletionInput, AICompletionResult, AIProvider } from "../provider";
 import { completionSignal, requireEnv } from "../provider";
+import { captureAIGeneration } from "../posthog-ai";
 import { fromOpenAIChoice, toOpenAIMessages, toOpenAITools, type OpenAIChoice } from "./wire-format";
 
 const DEFAULT_API_VERSION = "2024-10-21";
@@ -62,6 +63,7 @@ export class AzureOpenAIProvider implements AIProvider {
   }
 
   async complete(input: AICompletionInput): Promise<AICompletionResult> {
+    const startedAt = Date.now();
     const { url, headers, body } = this.buildRequest(input);
 
     const res = await fetch(url, {
@@ -77,10 +79,12 @@ export class AzureOpenAIProvider implements AIProvider {
 
     const data = (await res.json()) as { choices?: OpenAIChoice[]; model?: string };
 
-    return {
+    const result = {
       ...fromOpenAIChoice(data.choices?.[0]),
       model: data.model ?? this.model,
-      provider: "azure-openai",
+      provider: "azure-openai" as const,
     };
+    await captureAIGeneration(input, result, (Date.now() - startedAt) / 1000);
+    return result;
   }
 }

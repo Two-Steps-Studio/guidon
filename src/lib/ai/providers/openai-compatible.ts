@@ -7,6 +7,7 @@ import type {
   AIProviderName,
 } from "../provider";
 import { completionSignal, requireEnv, requireModel } from "../provider";
+import { captureAIGeneration } from "../posthog-ai";
 import { fromOpenAIChoice, toOpenAIMessages, toOpenAITools, type OpenAIChoice } from "./wire-format";
 
 /**
@@ -140,6 +141,7 @@ export class OpenAICompatibleProvider implements AIProvider {
   }
 
   async complete(input: AICompletionInput): Promise<AICompletionResult> {
+    const startedAt = Date.now();
     let res = await this.post(input);
 
     // Plenty of local (Ollama) and gateway models reject a request that
@@ -157,11 +159,13 @@ export class OpenAICompatibleProvider implements AIProvider {
 
     const data = (await res.json()) as { choices?: OpenAIChoice[]; model?: string };
 
-    return {
+    const result = {
       ...fromOpenAIChoice(data.choices?.[0]),
       model: data.model ?? this.model,
       provider: this.name,
     };
+    await captureAIGeneration(input, result, (Date.now() - startedAt) / 1000);
+    return result;
   }
 
   private post(input: AICompletionInput): Promise<Response> {

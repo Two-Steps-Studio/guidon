@@ -7,13 +7,16 @@ import * as Sentry from "@sentry/nextjs";
  * and Sentry.init() is never even called. See docs/configuration.md.
  */
 export async function register(): Promise<void> {
-  if (!process.env.SENTRY_DSN) return;
-
-  if (process.env.NEXT_RUNTIME === "nodejs" || process.env.NEXT_RUNTIME === "edge") {
+  if (process.env.SENTRY_DSN && (process.env.NEXT_RUNTIME === "nodejs" || process.env.NEXT_RUNTIME === "edge")) {
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
       tracesSampleRate: 0.1,
     });
+  }
+
+  // Keep the OTLP provider separate from the application's existing loggers.
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    await import("@/lib/posthog-logs");
   }
 }
 

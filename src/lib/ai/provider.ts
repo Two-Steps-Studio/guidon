@@ -61,6 +61,13 @@ export interface AIMessage {
 export interface AICompletionInput {
   /** Optional caller cancellation/deadline, combined with provider timeout. */
   signal?: AbortSignal;
+  /** AI Observability correlation supplied by the authenticated call site. */
+  observability?: {
+    sessionId: string | null;
+    traceId: string;
+    distinctId: string;
+    spanName: string;
+  };
   system?: string;
   messages: AIMessage[];
   tools?: Array<{

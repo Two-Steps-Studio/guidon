@@ -13,6 +13,7 @@ import type { Task } from "@/types/task";
 import { priorityDef, type BoardColumn, type PriorityDef } from "@/lib/work/task-board";
 import { findDuplicateTitles, parseTaskImport, resolveImportedTasks, type ParseResult } from "@/lib/work/task-import";
 import { importTasks, undoImport } from "./import-tasks-actions";
+import posthog from "posthog-js";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const PREVIEW_ROWS = 8;
@@ -129,6 +130,11 @@ export function ImportTasksDialog({
       }
       setImported(result.tasks);
       setImportedCount(result.tasks.length);
+      posthog.capture("tasks_imported", {
+        task_count: result.tasks.length,
+        import_format: parsed?.format ?? "unknown",
+        skipped_duplicate_count: duplicateCount,
+      });
     });
   };
 

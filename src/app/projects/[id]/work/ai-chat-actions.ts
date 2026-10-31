@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
@@ -47,7 +48,8 @@ function buildSystemPrompt(projectName: string): string {
  */
 export async function sendTaskChatMessage(
   projectId: string,
-  history: ChatMessage[]
+  history: ChatMessage[],
+  sessionId: string | null = null
 ): Promise<ChatResult> {
   const access = await getProjectAccess(projectId);
   // Same tier as createTask/generateInsight - this is a write-adjacent
@@ -81,6 +83,12 @@ export async function sendTaskChatMessage(
 
   try {
     const result = await provider.complete({
+      observability: {
+        sessionId,
+        traceId: randomUUID(),
+        distinctId: access.userId,
+        spanName: "task_planning_assistant",
+      },
       system: buildSystemPrompt(access.project.name) + languageInstruction(await getProjectLanguage(access.userId, projectId)),
       messages: trimmedHistory,
       maxTokens: 1000,

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createOrganization, type CreateOrganizationState } from "./actions";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
+import posthog from "posthog-js";
 
 const initialState: CreateOrganizationState = { error: null };
 
@@ -72,7 +73,10 @@ function OrgForm({ onCancel }: { onCancel: () => void }) {
   const [state, formAction, pending] = useActionState(createOrganization, initialState);
 
   return (
-    <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-4">
+    <form onSubmit={(event) => {
+      posthog.capture("organization_creation_submitted");
+      submitKeepingValues(event, formAction);
+    }} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">{t("nameLabel")}</Label>
         <Input id="name" name="name" placeholder={t("namePlaceholder")} required />

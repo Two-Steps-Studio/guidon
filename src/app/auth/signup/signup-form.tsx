@@ -18,6 +18,7 @@ import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
 import { isAiAccountEmail } from "@/lib/ai-account-email"
 import { BetaBadge } from "@/components/layout/beta-badge"
+import posthog from "posthog-js"
 
 const subscribeHydration = () => () => {}
 const clientHydrated = () => true
@@ -48,6 +49,9 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
       if (local) {
         const result = await signupLocalAction(email, password, fullName)
         if ("error" in result) throw new Error(result.error)
+        if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== result.userId) posthog.reset()
+        posthog.identify(result.userId, { email: email.trim().toLowerCase(), name: fullName.trim() })
+        posthog.capture("account_signup_completed", { signup_method: "local_password" })
         router.push(redirectTarget)
         return
       }
@@ -91,6 +95,15 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
       // match how most mainstream signup forms behave.
       if (data.user && data.user.identities && data.user.identities.length === 0) {
         throw new Error(t("emailAlreadyRegistered"))
+      }
+
+      if (data.session && data.user) {
+        if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== data.user.id) posthog.reset()
+        posthog.identify(data.user.id, {
+          email: data.user.email ?? email.trim().toLowerCase(),
+          name: fullName.trim(),
+        })
+        posthog.capture("account_signup_completed", { signup_method: "password" })
       }
 
       // The profile row is created by private.handle_new_user(), an AFTER

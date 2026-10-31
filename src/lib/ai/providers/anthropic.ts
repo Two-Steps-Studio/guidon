@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AICompletionInput, AICompletionResult, AIProvider } from "../provider";
 import { completionSignal, requireEnv, requireModel } from "../provider";
+import { captureAIGeneration } from "../posthog-ai";
 import { fromAnthropicContent, toAnthropicMessages, toAnthropicTools, type AnthropicResponseBlock } from "./wire-format";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -59,6 +60,7 @@ export class AnthropicProvider implements AIProvider {
   }
 
   async complete(input: AICompletionInput): Promise<AICompletionResult> {
+    const startedAt = Date.now();
     const { url, headers, body } = this.buildRequest(input);
 
     const res = await fetch(url, {
@@ -78,10 +80,12 @@ export class AnthropicProvider implements AIProvider {
       stop_reason?: string;
     };
 
-    return {
+    const result = {
       ...fromAnthropicContent(data.content, data.stop_reason),
       model: data.model ?? this.model,
-      provider: "anthropic",
+      provider: "anthropic" as const,
     };
+    await captureAIGeneration(input, result, (Date.now() - startedAt) / 1000);
+    return result;
   }
 }

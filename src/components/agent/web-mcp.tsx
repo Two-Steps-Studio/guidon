@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 
 /**
  * WebMCP (webmachinelearning/webmcp): tools a browser agent - Chrome's,
@@ -93,8 +94,23 @@ const PAGES: Record<string, string> = {
 };
 
 /** Tools available on every page: search the docs, open a page. */
-export function GlobalWebMcpTools() {
+export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string; fullName?: string } | null }) {
   const router = useRouter();
+
+  useEffect(() => {
+    if (!user) return;
+
+    // This runs once after hydration (and after any authenticated navigation),
+    // so browser events and automatically captured errors inherit the stable
+    // auth UUID without needing identity at individual event call sites.
+    if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== user.id) {
+      posthog.reset();
+    }
+    posthog.identify(user.id, {
+      ...(user.email ? { email: user.email } : {}),
+      ...(user.fullName ? { name: user.fullName } : {}),
+    });
+  }, [user]);
   useWebMcpTools([
     {
       name: "search_guidon_docs",

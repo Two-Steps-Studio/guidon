@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 import { clearAllTaskDrafts } from '@/lib/work/task-drafts';
 import { logoutLocalAction } from './actions';
+import posthog from "posthog-js";
 
 export function LogoutClient({ local }: { local: boolean }) {
   const t = useTranslations('auth.logout');
@@ -16,6 +17,9 @@ export function LogoutClient({ local }: { local: boolean }) {
     const logout = async () => {
       // Unsaved task edits stay on this device only for the person who wrote them.
       clearAllTaskDrafts();
+      // Reset before ending the app session so the next visitor cannot inherit
+      // this person's persisted browser identity.
+      posthog.reset();
       try {
         if (local) {
           await logoutLocalAction();

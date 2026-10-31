@@ -21,6 +21,7 @@ import { type ProjectType, type ProjectMethodology } from "@/types/project";
 import { PROJECT_TEMPLATES, type ProjectTemplate } from "@/lib/work/project-modules";
 import { Select } from "@/components/ui/select";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
+import posthog from "posthog-js";
 
 const initialState: CreateProjectState = { error: null };
 
@@ -108,7 +109,16 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
   const [state, formAction, pending] = useActionState(createProjectWithOrg, initialState);
 
   return (
-    <form onSubmit={(event) => submitKeepingValues(event, formAction)} className="space-y-4">
+    <form onSubmit={(event) => {
+      const formData = new FormData(event.currentTarget);
+      posthog.capture("project_creation_submitted", {
+        project_type: formData.get("projectType") || "not_set",
+        project_template: formData.get("template") || "none",
+        methodology: formData.get("methodology") || "standard",
+        ai_enabled: formData.get("aiEnabled") === "on",
+      });
+      submitKeepingValues(event, formAction);
+    }} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="projectName">{t("nameLabel")}</Label>
         <Input id="projectName" name="name" placeholder={t("namePlaceholder")} required />
@@ -248,6 +258,11 @@ function ImportFromFileForm({ orgId, onCancel }: { orgId: string; onCancel: () =
     event.preventDefault();
     if (!fileContent) return;
     setError(null);
+    posthog.capture("project_import_submitted", {
+      source: "guidon_file",
+      task_count: preview?.taskCount ?? 0,
+      phase_count: preview?.phaseCount ?? 0,
+    });
     startImport(async () => {
       // Redirects to the new project on success.
       const result = await importGuidonFile({ fileContent, mode: "new", targetId: orgId, projectName: name });

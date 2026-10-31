@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
+import posthog from "posthog-js";
 
 /**
  * Last-resort boundary for errors in the root layout itself, where
@@ -12,6 +13,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   useEffect(() => {
     console.error(error);
     Sentry.captureException(error);
+    posthog.captureException(error);
   }, [error]);
 
   return (

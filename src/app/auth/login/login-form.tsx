@@ -17,6 +17,7 @@ import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { loginLocalAction } from "./actions"
 import { BetaBadge } from "@/components/layout/beta-badge"
+import posthog from "posthog-js"
 
 // The server HTML is visible before React attaches controlled-input handlers.
 // Prevent early typing from being discarded when hydration initializes state.
@@ -58,18 +59,24 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
       if (local) {
         const result = await loginLocalAction(email, password)
         if ("error" in result) throw new Error(result.error)
+        if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== result.userId) posthog.reset()
+        posthog.identify(result.userId, { email: email.trim().toLowerCase() })
         router.push(redirectTarget)
         return
       }
 
       const supabase = createClient()
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) throw signInError
+      if (data.user) {
+        if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== data.user.id) posthog.reset()
+        posthog.identify(data.user.id, { email: data.user.email ?? email.trim().toLowerCase() })
+      }
 
       router.push(redirectTarget)
     } catch (err) {

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { dataClient } from "@/lib/data-client";
@@ -386,6 +387,12 @@ export async function generateInsight(projectId: string): Promise<{ error: strin
   let text: string;
   try {
     const result = await provider.complete({
+      observability: {
+        sessionId: null,
+        traceId: randomUUID(),
+        distinctId: access.userId,
+        spanName: "generate_project_insight",
+      },
       system:
         "You are reviewing a software project's recorded facts, constraints, and decisions. " +
         "Point out ONE specific, non-obvious risk, gap, tension, or connection worth the team's " +

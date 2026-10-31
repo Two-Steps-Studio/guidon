@@ -55,13 +55,23 @@ function buildContentSecurityPolicy(): string {
     supabaseOrigin = "";
   }
 
+  let posthogOrigin = "";
+  let posthogAssetsOrigin = "";
+  try {
+    const posthogUrl = new URL(process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "");
+    posthogOrigin = posthogUrl.origin;
+    posthogAssetsOrigin = `${posthogUrl.protocol}//${posthogUrl.hostname.replace(".i.", "-assets.i.")}`;
+  } catch {
+    // PostHog is optional, so leave its CSP sources out until configured.
+  }
+
   const directives = [
     `default-src 'self'`,
-    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${posthogAssetsOrigin ? ` ${posthogAssetsOrigin}` : ""}${isDev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https:`,
     `font-src 'self' data:`,
-    `connect-src 'self' https://*.google-analytics.com${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
+    `connect-src 'self' https://*.google-analytics.com${supabaseOrigin ? ` ${supabaseOrigin}` : ""}${posthogOrigin ? ` ${posthogOrigin}` : ""}`,
     `media-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
     `frame-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
     `worker-src 'self' blob:`,

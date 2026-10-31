@@ -103,14 +103,11 @@ float fbm(vec2 p) {
   return value;
 }
 
-const pattern = (p: vec2) => {
-  if (uMotionMode == 1) {
-    vec2 p2 = p - uTime * uWaveSpeed;
-    return fbm(p + fbm(p2));
-  }
-  vec2 p2 = p - uTime * uWaveSpeed;
+float pattern(vec2 p) {
+  float t = uTime * uWaveSpeed;
+  vec2 p2 = (uMotionMode == 1) ? p * (1.0 + t * 0.1) - t : p - t;
   return fbm(p + fbm(p2));
-};
+}
 
 void main() {
   vec2 corner = (gl_FragCoord.xy - 0.5) * uCell;
@@ -259,7 +256,8 @@ void main() {
   float upper = rising ? 1.0 - min(uBackground.r, min(uBackground.g, uBackground.b)) : 0.0;
   offset = floor(clamp(offset, lower, upper) * levels + 0.5) / levels;
   outColor = vec4(toSrgb(uBackground + offset), 1.0);
-}`;
+}
+`;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -352,6 +350,7 @@ const Dither = ({
   trail = 0.5,
   clickRipple = true,
   intro = true,
+  motionMode = "drift",
   dpr,
   className = "",
   style,
@@ -372,6 +371,7 @@ const Dither = ({
     enableMouseInteraction,
     mouseRadius: Math.max(0.001, mouseRadius),
     mode: MODES[ditherMode] ?? 0,
+    motionMode: motionMode === "expand" ? 1 : 0,
     palette: Array.isArray(palette) ? palette.filter(Boolean).slice(0, MAX_PALETTE) : [],
     scale: Math.max(0.05, scale),
     contrast,
@@ -722,11 +722,6 @@ const Dither = ({
       gl.deleteVertexArray(vao);
       gl.deleteTexture(field);
       gl.deleteFramebuffer(framebuffer);
-      // Deliberately no WEBGL_lose_context: React re-runs mount effects twice
-      // in dev StrictMode, and a canvas that lost its context hands the same
-      // lost context back on remount, so the second (real) mount would never
-      // draw. Deleting the resources above is enough - the context itself is
-      // released with the canvas.
     };
   }, []);
 

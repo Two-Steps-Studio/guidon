@@ -63,18 +63,17 @@ export function clearAllTaskDrafts() {
   }
 }
 
-/**
- * A new task's id, picked by the form once so a retry can't create it twice
- * (createTask's clientId). Not crypto.randomUUID(): plain-HTTP self-hosting
- * lacks it.
- */
-export function newTaskId() {
+/** A browser UUID that also works for plain-HTTP self-hosting. */
+export function newBrowserUuid() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   bytes[6] = (bytes[6] & 0x0f) | 0x40;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
   const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
+
+/** A stable client id so retrying task creation cannot create it twice. */
+export const newTaskId = newBrowserUuid;
 
 /**
  * A Server Action that never reached the server (offline, DNS, a dropped

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { after } from "next/server";
 import { serviceDataClient } from "@/lib/data-client";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
@@ -137,6 +138,12 @@ async function learn(projectId: string, userId: string, taskId: string): Promise
     .join("\n\n");
 
   const result = await provider.complete({
+    observability: {
+      sessionId: null,
+      traceId: randomUUID(),
+      distinctId: userId,
+      spanName: "learn_from_completed_task",
+    },
     system:
       "You keep a software/game project's long-term memory. From a task that was just finished, extract at most TWO " +
       "durable things future work on this project should know: a fact about the codebase or game, a rule or convention, " +

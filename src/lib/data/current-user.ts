@@ -34,10 +34,10 @@ export type CurrentUser = {
  * createClient() is unaffected by this branch - this function only changes
  * how identity itself is resolved.
  */
-export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser> {
+export const getOptionalCurrentUser = cache(async function getOptionalCurrentUser(): Promise<CurrentUser | null> {
   if (hasDirectDatabase()) {
     const userId = await getLocalSessionUserId();
-    if (!userId) redirect("/auth/login");
+    if (!userId) return null;
 
     const profile = await withUser(userId, ({ query }) =>
       query("SELECT email, full_name, avatar_url FROM profiles WHERE id = $1", [userId])
@@ -56,12 +56,8 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
   }
 
   const supabase = await createClient();
-
   const user = await getAuthUser();
-
-  if (!user) {
-    redirect("/auth/login");
-  }
+  if (!user) return null;
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -77,4 +73,10 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     full_name: profile?.full_name ?? undefined,
     avatar_url: profile?.avatar_url ?? undefined,
   };
+});
+
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser> {
+  const user = await getOptionalCurrentUser();
+  if (!user) redirect("/auth/login");
+  return user;
 });

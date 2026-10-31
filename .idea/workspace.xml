@@ -10,7 +10,43 @@
     <configurations />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eb2433ed-318a-4796-bbb1-8503adb9f9ef" name="Changes" comment="" />
+    <list default="true" id="eb2433ed-318a-4796-bbb1-8503adb9f9ef" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/ai/chat/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/ai/chat/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/auth/login/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/login/actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/auth/login/login-form.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/login/login-form.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/auth/logout/logout-client.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/logout/logout-client.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/auth/signup/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/signup/actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/auth/signup/signup-form.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/signup/signup-form.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/global-error.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/global-error.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/invite/[token]/accept-button.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/invite/[token]/accept-button.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/organizations/[id]/billing/billing-actions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/organizations/[id]/billing/billing-actions.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/organizations/[id]/create-project-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/organizations/[id]/create-project-dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/organizations/create-organization-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/organizations/create-organization-dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/memory/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/memory/actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-chat-actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-chat-actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-task-chat.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-task-chat.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/create-task-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/create-task-dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/import-tasks-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/import-tasks-dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/agent/web-mcp.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/agent/web-mcp.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ai/AIChat.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ai/AIChat.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/instrumentation-client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/instrumentation-client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/instrumentation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/instrumentation.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/ai/chat-safety.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/chat-safety.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/ai/provider.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/provider.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/ai/providers/anthropic.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/providers/anthropic.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/ai/providers/azure-openai.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/providers/azure-openai.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/ai/providers/openai-compatible.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/providers/openai-compatible.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/ai/task-learning.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/task-learning.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/data/current-user.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/data/current-user.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/work/task-drafts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/work/task-drafts.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -33,36 +69,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;claude/sidebar-dropdowns&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
-    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\guidon\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "js.debugger.nextJs.config.created.client": "true",
+    "js.debugger.nextJs.config.created.server": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\guidon\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="ReactDesignerToolWindowState">
     <option name="myId2Visible">
       <map>
@@ -107,6 +143,7 @@
       <workItem from="1789921823413" duration="6227000" />
       <workItem from="1790784192293" duration="651000" />
       <workItem from="1792603149445" duration="1375000" />
+      <workItem from="1793457196535" duration="3282000" />
     </task>
     <servers />
   </component>

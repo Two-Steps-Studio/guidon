@@ -67,3 +67,4 @@ plugins/**/*.vsix
 /.idea
 .idea/workspace.xml
 /.freebuff
+.env.local

@@ -11,6 +11,7 @@ import { ConfirmActionHost } from "@/components/ui/confirm-action";
 import { SITE_URL } from "@/lib/site-url";
 import { BRAND_COLORS } from "@/lib/brand-colors";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
+import { getOptionalCurrentUser } from "@/lib/data/current-user";
 import "./globals.css";
 
 
@@ -101,6 +102,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const currentUser = await getOptionalCurrentUser();
 
   // "system" (the default) sets no data-theme attribute at all, so
   // globals.css's `@media (prefers-color-scheme: dark)` block picks
@@ -130,7 +132,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 children here too nested two main landmarks on every page. */}
             {children}
             <ConfirmActionHost />
-            <GlobalWebMcpTools />
+            <GlobalWebMcpTools user={currentUser ? {
+              id: currentUser.id,
+              email: currentUser.email,
+              fullName: currentUser.full_name,
+            } : null} />
           </div>
           {/* Keep notifications outside the app stacking context so modal
               feedback stays visible. Explicit theme follows the saved choice. */}

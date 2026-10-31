@@ -1,16 +1,21 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { getCurrentUser } from "@/lib/data/current-user";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { getProjectLanguage } from "@/lib/data/project-language";
 import { languageInstruction } from "@/lib/project-language";
 import { resolveAIProvider } from "@/lib/ai/resolve-provider";
 import { isChatRateLimited, recordChatMessage } from "@/lib/ai/chat-rate-limit";
-import { ALL_CHAT_TOOLS, runChatTool, type FoundTask } from "@/lib/ai/chat-tools";
+import { ALL_CHAT_TOOLS, runChatTool, type ChatToolResult, type FoundTask } from "@/lib/ai/chat-tools";
 import type { AIMessage } from "@/lib/ai/provider";
 import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { resolveBoardColumns, resolvePriorities } from "@/lib/work/task-board";
 import { chatRequestSchema, safeChatFailure } from "@/lib/ai/chat-safety";
 import { AI_REQUEST_TIMEOUT_MS } from "@/lib/ai/provider";
+import { captureAIToolSpan } from "@/lib/ai/posthog-ai";
+import { SeverityNumber } from "@opentelemetry/api-logs";
+import { emitPostHogLog, flushPostHogLogs } from "@/lib/posthog-logs";
 
 const MAX_TOOL_ITERATIONS = 5;
 const MAX_TOOL_CALLS = 20;
@@ -43,7 +48,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Provide a project ID and up to 20 user/assistant messages of at most 8000 characters, ending with a non-empty user message." }, { status: 400 });
   }
-  const { projectId, messages: incomingMessages } = parsed.data;
+  const { projectId, messages: incomingMessages, sessionId } = parsed.data;
 
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) {
@@ -55,6 +60,8 @@ export async function POST(request: NextRequest) {
   const tasks = new Map<string, FoundTask>();
   let pendingDelete: { taskId: string; title: string } | undefined;
   let toolCalls = 0;
+  const traceId = randomUUID();
+  const aiSessionId = sessionId ?? null;
 
   try {
     signal.throwIfAborted();
@@ -94,6 +101,12 @@ export async function POST(request: NextRequest) {
       signal.throwIfAborted();
       const result = await provider.complete({
         signal,
+        observability: {
+          sessionId: aiSessionId,
+          traceId,
+          distinctId: access.userId,
+          spanName: "project_assistant",
+        },
         system: buildSystemPrompt(access.project.name, workflowText) + languageInstruction(projectLanguage),
         messages,
         tools: ALL_CHAT_TOOLS as unknown as Array<{ name: string; description: string; input_schema: object }>,
@@ -108,6 +121,11 @@ export async function POST(request: NextRequest) {
       }
 
       if (!result.tool_calls || result.tool_calls.length === 0) {
+        emitPostHogLog("ai_chat_response_completed", SeverityNumber.INFO, {
+          tool_calls_used: toolCalls > 0,
+          actions_returned: actions.length,
+        });
+        after(flushPostHogLogs);
         return NextResponse.json({ text: result.text, actions, tasks: [...tasks.values()], pendingDelete });
       }
 
@@ -116,13 +134,41 @@ export async function POST(request: NextRequest) {
       for (const call of result.tool_calls) {
         signal.throwIfAborted();
         toolCalls++;
-        const toolResult = await runChatTool(call.name, call.args, projectId, access.userId);
+        const toolStartedAt = Date.now();
+        let toolResult: ChatToolResult;
+        try {
+          toolResult = await runChatTool(call.name, call.args, projectId, access.userId);
+        } catch (error) {
+          await captureAIToolSpan({
+            sessionId: aiSessionId,
+            traceId,
+            distinctId: access.userId,
+            name: call.name,
+            input: call.args,
+            latency: (Date.now() - toolStartedAt) / 1000,
+            error,
+          });
+          throw error;
+        }
+        await captureAIToolSpan({
+          sessionId: aiSessionId,
+          traceId,
+          distinctId: access.userId,
+          name: call.name,
+          input: call.args,
+          output: toolResult,
+          latency: (Date.now() - toolStartedAt) / 1000,
+        });
         actions.push(toolResult.label ?? toolResult.summary);
         for (const task of toolResult.tasks ?? []) tasks.set(task.id, task);
         messages.push({ role: "tool", content: toolResult.summary, tool_call_id: call.id });
 
         if (toolResult.pendingDelete) {
           pendingDelete = toolResult.pendingDelete;
+          emitPostHogLog("ai_chat_delete_confirmation_requested", SeverityNumber.INFO, {
+            actions_returned: actions.length,
+          });
+          after(flushPostHogLogs);
           return NextResponse.json({ text: "", actions, tasks: [...tasks.values()], pendingDelete });
         }
       }
@@ -140,6 +186,11 @@ export async function POST(request: NextRequest) {
       : safeChatFailure(error);
     // Log only a controlled code, never provider bodies, prompts or credentials.
     console.warn("[AI Chat API]", failure.code);
+    emitPostHogLog("ai_chat_request_failed", SeverityNumber.WARN, {
+      failure_code: failure.code,
+      http_status: failure.status,
+    });
+    after(flushPostHogLogs);
     return NextResponse.json({ error: failure.error, code: failure.code, actions }, { status: failure.status });
   }
 }
