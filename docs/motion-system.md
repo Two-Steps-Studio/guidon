@@ -7,9 +7,20 @@ staggering or moving data to the workspace.
 
 ## Marketing: explanation
 
+The laptop now sits in a native sticky scroll stage on desktop. Across 170svh
+of document flow, it straightens from 24 degrees and .9 scale to its full-size
+pose, with a coordinated blue halo and a decorative progress line. Scroll
+position is the only clock; reversing the wheel reverses the camera. Stage
+geometry is reserved in CSS before hydration. No wheel interception, animation
+library, replay button or delayed navigation. Keyboard input settles the camera
+without collapsing the stage. Phones and reduced motion use ordinary flow.
+Visibility gates rAF work; listeners and queued frames are removed on unmount.
+The older timed laptop transform is disabled inside the desktop stage so the
+two camera motions cannot compete.
+
 The homepage laptop is a real screenshot, visible in SSR and throughout the
-entrance. Its frame straightens over 1200 ms using the shared ease-out curve;
-a separate decorative light pass uses transform/opacity for 1800 ms.
+entrance. The desktop stage owns its camera transform, overriding the older
+1200 ms fallback; a decorative light pass uses transform/opacity for 1800 ms.
 The contextual workflow illustration coordinates a task, decision, knowledge
 and optional agent result over 3600 ms. It is explicitly an example, not a live
 claim about an agent operating on a visitor's project.
@@ -33,7 +44,7 @@ Reduced motion retains a 120 ms opacity change with no delay. Hiding the documen
 settles playback.
 
 Product screenshots have their own scroll-linked entrance: they straighten from
-8 degrees of perspective and scale .94 to 1 as their static wrapper crosses
+12 degrees of pitch, alternating 8-degree yaw and scale .92 to 1 as their static wrapper crosses
 95% to 35% of the viewport height. Text stays stationary. Scrolling back reverses
 the same continuous progress; there is no timer, replay button, pinned page or
 scroll interception. Phones use at most 12px of vertical movement and scale .98
