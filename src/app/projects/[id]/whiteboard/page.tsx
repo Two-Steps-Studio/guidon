@@ -13,7 +13,6 @@ export default async function WhiteboardPage({ params }: { params: Promise<{ id:
     <div className={styles.page}>
       <div className={styles.canvasContainer}>
         <WhiteboardCanvas projectId={projectId} />
-        <WhiteboardToolbar projectId={projectId} />
       </div>
     </div>
   );

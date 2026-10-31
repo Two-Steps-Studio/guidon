@@ -63,6 +63,9 @@ export function TaskProposalModal({
             description: p.description,
             priority: p.priority as any,
             status: "todo",
+            assigneeId: "", // Default to unassigned
+            dueDate: new Date().toISOString(),
+            sortOrder: 0,
           })
         )
       );
@@ -104,7 +107,7 @@ export function TaskProposalModal({
                 />
                 <Select
                   value={p.priority}
-                  onChange={v => updateProposal(i, "priority", v)}
+                  onChange={e => updateProposal(i, "priority", e.target.value)}
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>

@@ -9,12 +9,14 @@ import {
   Node,
   Edge,
   Connection,
-  NodeUpdate,
-  NodePosition,
   useNodesState,
   useEdgesState,
   addEdge,
   ConnectionMode,
+  Position,
+  OnSelectionChangeParams,
+  OnSelectionChangeFunc,
+  BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -141,10 +143,13 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
     async function loadElements() {
       setLoading(true);
       try {
-        const [elements, edges] = await Promise.all([
+        const [elementsResult, edgesResult] = await Promise.all([
           getElementsAction("default", projectId),
           getEdgesAction(projectId, "default"),
         ]);
+
+        const elements = elementsResult.data || [];
+        const edges = edgesResult.data || [];
 
         const initialNodes = elements.map((el: any) => ({
           id: el.id,
@@ -184,8 +189,8 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
     loadElements();
   }, [projectId]);
 
-  const onSelectionChange = useCallback((nodes: Node[]) => {
-    setSelectedNodes(nodes);
+  const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
+    setSelectedNodes(params.nodes);
   }, []);
 
   const onConnect = useCallback((params: Connection) => {
@@ -220,7 +225,7 @@ export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
         connectionMode={ConnectionMode.Loose}
         fitView
       >
-        <Background variant="dots" gap={20} size={1} />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
         <Controls />
         <MiniMap />
       </ReactFlow>

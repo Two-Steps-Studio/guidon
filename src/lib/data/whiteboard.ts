@@ -65,13 +65,23 @@ export async function getElements(boardId: string, projectId: ProjectId) {
 }
 
 export async function upsertElement(projectId: ProjectId, element: Partial<WhiteboardElement>) {
+  const id = element.id;
+  if (!id) throw new Error("Element ID is required for upsert");
+
+  const result = await dataClient(projectId).upsertRow("whiteboard_elements", {
+    key: { id },
+    set: element,
+  });
+
+  if (result.error) throw new Error(`Failed to upsert element: ${result.error.message}`);
+
   const { data, error } = await dataClient(projectId)
     .from("whiteboard_elements")
-    .upsert(element)
-    .select()
+    .select("*")
+    .eq("id", id)
     .single();
 
-  if (error) throw new Error(`Failed to upsert element: ${error.message}`);
+  if (error) throw new Error(`Failed to fetch updated element: ${error.message}`);
   return data;
 }
 
@@ -89,13 +99,23 @@ export async function getEdges(boardId: string, projectId: ProjectId) {
 }
 
 export async function upsertEdge(projectId: ProjectId, edge: Partial<WhiteboardEdge>) {
+  const id = edge.id;
+  if (!id) throw new Error("Edge ID is required for upsert");
+
+  const result = await dataClient(projectId).upsertRow("whiteboard_edges", {
+    key: { id },
+    set: edge,
+  });
+
+  if (result.error) throw new Error(`Failed to upsert edge: ${result.error.message}`);
+
   const { data, error } = await dataClient(projectId)
     .from("whiteboard_edges")
-    .upsert(edge)
-    .select()
+    .select("*")
+    .eq("id", id)
     .single();
 
-  if (error) throw new Error(`Failed to upsert edge: ${error.message}`);
+  if (error) throw new Error(`Failed to fetch updated edge: ${error.message}`);
   return data;
 }
 

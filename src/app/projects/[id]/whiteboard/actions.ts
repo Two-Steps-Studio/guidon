@@ -1,3 +1,5 @@
+"use server";
+
 import { parseTaskProposals, type TaskProposal } from "@/lib/ai/task-proposal-parser";
 import { timeAction } from "@/lib/perf/action-timing";
 import { randomUUID } from "node:crypto";
