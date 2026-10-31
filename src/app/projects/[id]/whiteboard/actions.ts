@@ -1,16 +1,14 @@
-import "server-only";
-
-import { getAIProvider } from "@/lib/ai/provider";
 import { parseTaskProposals, type TaskProposal } from "@/lib/ai/task-proposal-parser";
-import { getOptionalCurrentUser } from "@/lib/data/current-user";
-import { getProjectAccess } from "@/lib/data/project-access";
 import { timeAction } from "@/lib/perf/action-timing";
 import { randomUUID } from "node:crypto";
-import { getElements, upsertElement, deleteElements, getEdges, upsertEdge, deleteEdges } from "@/lib/data/whiteboard";
 import type { WhiteboardElement, WhiteboardEdge } from "@/lib/data/whiteboard";
 import type { ProjectId } from "@/types/index";
 
 export async function generateTaskProposals(projectId: string, selectedTexts: string[]) {
+  const { getOptionalCurrentUser } = await import("@/lib/data/current-user");
+  const { getProjectAccess } = await import("@/lib/data/project-access");
+  const { getAIProvider } = await import("@/lib/ai/provider");
+
   const user = await getOptionalCurrentUser();
   if (!user) throw new Error("Authentication required");
 
@@ -71,6 +69,7 @@ JSON Format:
 }
 
 export async function getElementsAction(projectId: string, boardId: string = "default") {
+  const { getElements } = await import("@/lib/data/whiteboard");
   try {
     return await getElements(boardId, projectId);
   } catch (e) {
@@ -80,6 +79,7 @@ export async function getElementsAction(projectId: string, boardId: string = "de
 }
 
 export async function upsertElementAction(projectId: string, element: Partial<WhiteboardElement>) {
+  const { upsertElement } = await import("@/lib/data/whiteboard");
   try {
     return await upsertElement(projectId, element);
   } catch (e) {
@@ -89,6 +89,7 @@ export async function upsertElementAction(projectId: string, element: Partial<Wh
 }
 
 export async function deleteElementsAction(projectId: string, ids: string[]) {
+  const { deleteElements } = await import("@/lib/data/whiteboard");
   try {
     return await deleteElements(projectId, ids);
   } catch (e) {
@@ -98,6 +99,7 @@ export async function deleteElementsAction(projectId: string, ids: string[]) {
 }
 
 export async function getEdgesAction(projectId: string, boardId: string = "default") {
+  const { getEdges } = await import("@/lib/data/whiteboard");
   try {
     return await getEdges(boardId, projectId);
   } catch (e) {
@@ -107,6 +109,7 @@ export async function getEdgesAction(projectId: string, boardId: string = "defau
 }
 
 export async function upsertEdgeAction(projectId: string, edge: Partial<WhiteboardEdge>) {
+  const { upsertEdge } = await import("@/lib/data/whiteboard");
   try {
     return await upsertEdge(projectId, edge);
   } catch (e) {
@@ -116,6 +119,7 @@ export async function upsertEdgeAction(projectId: string, edge: Partial<Whiteboa
 }
 
 export async function deleteEdgesAction(projectId: string, ids: string[]) {
+  const { deleteEdges } = await import("@/lib/data/whiteboard");
   try {
     return await deleteEdges(projectId, ids);
   } catch (e) {
