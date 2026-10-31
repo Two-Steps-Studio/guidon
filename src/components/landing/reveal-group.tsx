@@ -30,7 +30,7 @@ export function RevealGroup({ children, className, as: Tag = "div" }: {
         if (keyboard || document.hidden || entry.target.contains(document.activeElement)) continue;
         const frames = reduced.matches
           ? [{ opacity: .75 }, { opacity: 1 }]
-          : [{ opacity: .75, transform: "translateY(16px) scale(.97)" }, { opacity: 1, transform: "translateY(0) scale(1)" }];
+          : [{ opacity: .2, transform: "translateY(48px) scale(.97)" }, { opacity: 1, transform: "translateY(0) scale(1)" }];
         const animation = entry.target.animate(frames, {
           duration: reduced.matches ? 120 : 600,
           delay: reduced.matches ? 0 : Math.min(order++, 3) * 60,

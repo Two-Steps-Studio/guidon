@@ -384,7 +384,17 @@
       "prioritySupport": "Prioritäts-Support",
       "unlimitedMembers": "Unbegrenzte Mitglieder",
       "membersCount": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
-      "paidSoon": "Bezahlte Pläne starten bald. Fang jetzt kostenlos an - deine Projekte bleiben beim Upgrade erhalten."
+      "paidSoon": "Bezahlte Pläne starten bald. Fang jetzt kostenlos an - deine Projekte bleiben beim Upgrade erhalten.",
+      "interval_week": "Wöchentlich",
+      "interval_month": "Monatlich",
+      "interval_year": "Jährlich",
+      "intervalLabel": "Abrechnungszeitraum",
+      "per_week": "/Woche",
+      "per_month": "/Monat",
+      "per_year": "/Jahr",
+      "unavailable": "Nicht verfügbar",
+      "browsePlans": "Tarife vergleichen",
+      "actualPrices": "Preise pro Abrechnungszeitraum. Zahlungen werden in EUR abgewickelt. Nicht verfügbare Zeiträume sind beim jeweiligen Tarif gekennzeichnet."
     },
     "footer": {
       "developers": "Für Entwickler",
@@ -439,7 +449,9 @@
           "a": "Ja, jederzeit: Profil → Konto löschen auf der Website. Die Datenschutzerklärung erklärt, was gespeichert wird und warum."
         }
       ]
-    }
+    },
+    "exploreProduct": "Guidon entdecken",
+    "previewDashboard": "Übersicht"
   },
   "organizations": {
     "common": {

@@ -384,7 +384,17 @@
       "prioritySupport": "Soporte prioritario",
       "unlimitedMembers": "Miembros ilimitados",
       "membersCount": "{count, plural, one {# miembro} other {# miembros}}",
-      "paidSoon": "Los planes de pago llegan pronto. Empieza gratis ahora: tus proyectos se mantienen al mejorar el plan."
+      "paidSoon": "Los planes de pago llegan pronto. Empieza gratis ahora: tus proyectos se mantienen al mejorar el plan.",
+      "interval_week": "Semanal",
+      "interval_month": "Mensual",
+      "interval_year": "Anual",
+      "intervalLabel": "Periodo de facturación",
+      "per_week": "/semana",
+      "per_month": "/mes",
+      "per_year": "/año",
+      "unavailable": "No disponible",
+      "browsePlans": "Comparar planes",
+      "actualPrices": "Precios por periodo de facturación. Los pagos se procesan en EUR. Cada plan indica los periodos no disponibles."
     },
     "footer": {
       "developers": "Desarrolladores",
@@ -439,7 +449,9 @@
           "a": "Sí, en cualquier momento: Perfil → Eliminar cuenta en el sitio web. La Política de privacidad explica qué se guarda y por qué."
         }
       ]
-    }
+    },
+    "exploreProduct": "Explorar Guidon",
+    "previewDashboard": "Panel"
   },
   "organizations": {
     "common": {

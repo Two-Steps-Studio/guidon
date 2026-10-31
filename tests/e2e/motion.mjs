@@ -83,12 +83,25 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
     assert.ok(Math.abs(secondViewport.y-firstViewport.y)<2,'The laptop stays pinned while the camera move progresses');
     assert.notEqual(await stage.locator('[data-stage-surface]').evaluate(node=>node.style.transform),stageArrival);
     await page.screenshot({path:path.join(artifacts,`${browserName}-scroll-stage-open.png`)});
+    const surfaceBounds=await stage.locator('[data-stage-surface]').boundingBox();
+    await page.mouse.move(surfaceBounds.x+surfaceBounds.width*.75,surfaceBounds.y+surfaceBounds.height*.4);
+    await page.waitForFunction(()=>document.querySelector('[data-stage-tilt]').style.transform.includes('perspective'));
+    await page.mouse.move(0,0);
+    await page.waitForFunction(()=>document.querySelector('[data-stage-tilt]').style.transform==='');
+    const screen=stage.locator('[data-product-screen]');
+    await screen.getByRole('button').nth(1).click();
+    await page.waitForFunction(()=>document.querySelector('[data-product-screen] img').getAttribute('src').includes('taskBoard-light'));
+    assert.equal(await screen.getByRole('button').nth(1).getAttribute('aria-pressed'),'true');
+    await screen.getByRole('button').first().click();
+
     await stagePosition(.05);
     await page.waitForFunction(()=>Number(document.querySelector('[data-scroll-stage]').dataset.stageProgress)<.4);
     assert.equal(await stage.locator('[data-stage-surface]').evaluate(node=>node.style.transform),stageArrival,'The camera move reverses with scroll');
     await page.emulateMedia({reducedMotion:'reduce'});
     await page.waitForFunction(()=>document.querySelector('[data-stage-surface]').style.transform==='');
     assert.equal(await stage.locator(':scope > div').evaluate(node=>getComputedStyle(node).position),'relative','Reduced motion uses normal document flow');
+    await stage.locator('[data-stage-surface]').hover();
+    assert.equal(await stage.locator('[data-stage-tilt]').evaluate(node=>node.style.transform),'','Reduced motion also disables cursor tilt');
     await page.emulateMedia({reducedMotion:'no-preference'});
     const laptop = page.locator('[data-marketing-motion="laptop"]');
     await laptop.scrollIntoViewIfNeeded();

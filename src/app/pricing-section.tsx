@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CtaLink } from "@/components/landing/cta-link";
 import { Fraunces } from "next/font/google";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BILLING_INTERVALS, type BillingInterval } from "@/lib/billing/billing-core";
+import { publicPlanPrice, type PublicPlanPrice } from "@/lib/billing/public-pricing";
+import { RevealGroup } from "@/components/landing/reveal-group";
 import { Check } from "lucide-react";
 
 // Matches the display font used for headlines on the rest of the landing
@@ -45,26 +48,8 @@ function formatBytes(bytes: number | null, t: PricingTranslator): string {
   return t("mbStorage", { count: Math.round(bytes / (1024 * 1024)) });
 }
 
-/**
- * Falls back to the EUR amount (and reports that as the actual currency
- * used, not the requested one) when a plan has no price_pln_cents set -
- * a future plan inserted without a PLN price would otherwise display its
- * EUR-cents number with a "zł" suffix under the PLN toggle, silently
- * showing the wrong price. migration 019_plan_pln_pricing.sql backfills
- * all 4 plans that had a fixed price at the time, so this only matters for
- * a plan added later. `cents: null` (034_enterprise_plan.sql's "contact us"
- * pricing) short-circuits before either branch - there's no currency to
- * fall back to when there's no price at all.
- */
-function priceFor(plan: PlanRow, currency: Currency): { cents: number | null; currency: Currency } {
-  if (plan.price_cents === null) return { cents: null, currency };
-  if (currency === "PLN" && plan.price_pln_cents !== null) {
-    return { cents: plan.price_pln_cents, currency: "PLN" };
-  }
-  return { cents: plan.price_cents, currency: "EUR" };
-}
-
-function formatPrice({ cents, currency }: { cents: number | null; currency: Currency }, t: PricingTranslator): string {
+function formatPrice({ cents, currency }: { cents: number | null | undefined; currency: Currency }, t: PricingTranslator): string {
+  if (cents === undefined) return t("unavailable");
   if (cents === null) return t("contactUs");
   if (cents === 0) return t("free");
   const amount = (cents / 100).toFixed(2);
@@ -101,18 +86,46 @@ function planFeatures(plan: PlanRow, t: PricingTranslator): string[] {
 const CURRENCIES: Currency[] = ["EUR", "PLN"];
 
 /** `checkoutAvailable` false (Stripe not configured yet): paid plans start free instead of ending at a checkout error. */
-export function PricingSection({ plans, checkoutAvailable = true }: { plans: PlanRow[]; checkoutAvailable?: boolean }) {
+export function PricingSection({ plans, prices = [], checkoutAvailable = true }: { plans: PlanRow[]; prices?: PublicPlanPrice[]; checkoutAvailable?: boolean }) {
   const t = useTranslations("landing.pricing");
   const [currency, setCurrency] = useState<Currency>("EUR");
+  const [interval, setInterval] = useState<BillingInterval>("month");
+  const sectionRef = useRef<HTMLElement>(null);
+  const [showNavigator, setShowNavigator] = useState(false);
+  useEffect(() => {
+    const section = sectionRef.current;
+    const hero = document.querySelector('[data-home-hero]');
+    if (!section || !hero || !window.IntersectionObserver) return;
+    let heroPassed = false, pricingVisible = false;
+    const update = () => setShowNavigator(heroPassed && !pricingVisible);
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.target === hero) heroPassed = entry.boundingClientRect.bottom <= 0;
+        else pricingVisible = entry.isIntersecting;
+      }
+      update();
+    });
+    observer.observe(hero); observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+  const periods = (navigate = false) => <div role="group" aria-label={t("intervalLabel")} className="inline-flex max-w-full flex-wrap justify-center gap-1 rounded-xl border border-border bg-background p-1">
+    {BILLING_INTERVALS.map(option => <button key={option} type="button" aria-pressed={interval === option}
+      onClick={() => { setInterval(option); if (navigate) { sectionRef.current?.focus({preventScroll:true}); sectionRef.current?.scrollIntoView({block:"start"}); } }}
+      className={`min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${interval === option ? "bg-primary text-primary-foreground" : "text-text-secondary hover:bg-muted"}`}>
+      {t(`interval_${option}`)}
+    </button>)}
+  </div>;
 
   return (
-    <section id="pricing" className="relative scroll-mt-16 overflow-hidden border-t border-border bg-background-secondary/30 py-20">
+    <section ref={sectionRef} tabIndex={-1} id="pricing" className="relative scroll-mt-16 overflow-hidden border-t border-border bg-background-secondary/30 py-20">
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <div className="scrim mx-auto mb-12 max-w-3xl space-y-4 rounded-2xl px-6 py-6 text-center">
           <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>{t("title")}</h2>
           <p className="text-text-secondary">{t("subtitle")}</p>
           {!checkoutAvailable && <p className="text-sm text-text-secondary" role="note">{t("paidSoon")}</p>}
 
+          <div>{periods()}</div>
+          <p className="text-xs text-text-muted">{t("actualPrices")}</p>
           <div
             role="group"
             aria-label={t("currencyLabel")}
@@ -136,10 +149,10 @@ export function PricingSection({ plans, checkoutAvailable = true }: { plans: Pla
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <RevealGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           {plans.map((plan) => {
             const isPopular = plan.id === "pro";
-            const price = priceFor(plan, currency);
+            const price = publicPlanPrice(plan, prices, interval, currency);
             return (
               <Card
                 key={plan.id}
@@ -152,8 +165,8 @@ export function PricingSection({ plans, checkoutAvailable = true }: { plans: Pla
                   <CardTitle>{plan.name}</CardTitle>
                   <div className="text-3xl font-bold">
                     {formatPrice(price, t)}
-                    {price.cents !== null && price.cents > 0 && (
-                      <span className="text-sm font-normal text-text-muted">{t("perMonth")}</span>
+                    {price.cents != null && price.cents > 0 && (
+                      <span className="text-sm font-normal text-text-muted">{t(`per_${interval}`)}</span>
                     )}
                   </div>
                 </CardHeader>
@@ -179,20 +192,24 @@ export function PricingSection({ plans, checkoutAvailable = true }: { plans: Pla
                     <CtaLink
                       cta={price.cents ? "pricing-paid" : "pricing-free"}
                       href={
-                        price.cents && checkoutAvailable
-                          ? `/auth/signup?redirect=${encodeURIComponent(`/upgrade?plan=${plan.id}`)}`
-                          : "/start"
+                        price.cents != null && price.cents > 0 && checkoutAvailable
+                          ? `/auth/signup?redirect=${encodeURIComponent(`/upgrade?plan=${encodeURIComponent(plan.id)}&interval=${interval}`)}`
+                          : price.cents == null ? "/contact" : "/start"
                       }
                     >
-                      {t("getStarted")}
+                      {t(price.cents === undefined || price.cents === null ? "contactUs" : "getStarted")}
                     </CtaLink>
                   </Button>
                 </CardContent>
               </Card>
             );
           })}
-        </div>
+        </RevealGroup>
       </div>
+      {showNavigator && <aside aria-label={t("browsePlans")} className="fixed inset-x-0 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-40 mx-auto w-fit max-w-[calc(100%-1rem)] rounded-2xl border border-border bg-background p-2 shadow-xl">
+        <p className="mb-1 text-center text-xs font-medium text-text-secondary">{t("browsePlans")}</p>
+        {periods(true)}
+      </aside>}
     </section>
   );
 }
