@@ -7,6 +7,8 @@
     "packages/cli"
   ],
   "scripts": {
+    "check:agent-evidence": "node scripts/check-agent-evidence.mjs",
+    "test:agent-evidence": "node --test tests/agent-evidence.test.mjs",
     "predev": "node scripts/build-plugin-zips.mjs",
     "dev": "next dev --webpack -p 5803",
     "prebuild": "node scripts/build-plugin-zips.mjs && node scripts/copy-monaco-assets.mjs",

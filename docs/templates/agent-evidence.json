@@ -1,0 +1,13 @@
+{
+  "version": "RoG-1",
+  "projectId": "6661ef0a-81d9-490e-bdf7-f954ed4accd4",
+  "taskId": "b85538e6-3c75-4ce4-b9e9-98df317d7076",
+  "sourceRevision": "TODO",
+  "sources": [{"reference": "Guidon task b85538e6-3c75-4ce4-b9e9-98df317d7076", "version": "TODO"}],
+  "status": {"outcome": "blocked", "observedColumn": "TODO", "summary": "TODO", "blocker": "Template only; no verification has been performed.", "handoff": "human_review"},
+  "acceptanceCriteria": ["TODO"],
+  "evidence": ["TODO"],
+  "regression": [{"command": "TODO", "result": "not_run", "sourceRevision": "TODO", "artifact": "TODO"}],
+  "safety": {"scope": "TODO", "findings": "TODO", "evidence": ["TODO"], "approvalRequired": null},
+  "rollback": {"steps": ["TODO"], "verification": "TODO"}
+}
