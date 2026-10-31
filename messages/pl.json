@@ -140,6 +140,7 @@
     "createOrganization": "Utwórz organizację"
   },
   "nav": {
+    "searchQuality": "Jakość wyszukiwania",
     "upgradePlan": "Ulepsz plan",
     "toggleSidebar": "Pokaż/ukryj pasek boczny (Ctrl+B)",
     "dashboard": "Pulpit",
@@ -187,6 +188,9 @@
     "approvals": "Akceptacje"
   },
   "commandPalette": {
+    "noResultsHint": "Spróbuj pełnego tytułu lub ID zadania albo sprawdź wybrany projekt.",
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "limitedResults": "Dla starszych zadań spróbuj dokładniejszego tytułu lub pełnego ID.",
     "triggerLabel": "Szukaj...",
     "title": "Paleta poleceń",
     "description": "Szukaj i przechodź do dowolnego elementu",
@@ -1612,6 +1616,18 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "searchQuality": {
+      "title": "Jakość wyszukiwania",
+      "description": "Anonimowe liczniki dzienne pogrupowane w tygodnie UTC. Bez treści zapytań, nazw zadań, identyfikatorów i profili użytkowników.",
+      "scope": "Ostatnie osiem tygodni, bieżący tydzień jest niepełny. To przybliżone liczniki zdarzeń, a nie liczba osób ani dowód skuteczności wyszukiwania. Ustawienia prywatności, blokady i powtórzenia mogą wpływać na wyniki.",
+      "unavailable": "Liczniki niedostępne. Zastosuj migrację bazy 104, aby włączyć raport.",
+      "week": "Początek tygodnia",
+      "searches": "Ukończone wyszukiwania",
+      "zero": "Brak wyników",
+      "zeroRate": "Udział pustych wyników",
+      "clicks": "Wybory wyników",
+      "failed": "Błędy wyszukiwania"
+    },
     "signedInAs": "Zalogowano jako {email} - widok obejmujący całą instancję, pomija uprawnienia organizacji.",
     "statusOk": "OK",
     "statusDegraded": "Ograniczona sprawność",

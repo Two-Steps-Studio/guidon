@@ -45,6 +45,7 @@ import assert from "node:assert/strict";
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const designAuditMode=process.argv.includes("--design-audit");
 const writeSafetyMode=process.argv.includes("--write-safety");
+const searchMode=process.argv.includes("--search");
 const landingMode=process.argv.includes("--landing");
 const taskQueueMode=process.argv.includes("--task-queue");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
@@ -167,7 +168,10 @@ try{
     const page=await context.newPage();page.setDefaultTimeout(name==='webkit'?30000:15000);
     const started=Date.now();
     try{
-      if(landingMode){
+      if(searchMode){
+        const { searchDiagnosticsCoverage } = await import("./search-diagnostics.mjs");
+        await searchDiagnosticsCoverage({page,origin,fixture,client,browserName:name,artifacts});
+      }else if(landingMode){
         const { motionCoverage } = await import("./motion.mjs");
         const { landingPricingCoverage } = await import("./landing-pricing.mjs");
         await motionCoverage({page,origin,browserName:name,artifacts});
@@ -188,6 +192,11 @@ try{
       }else{
       await releaseSmoke({page,context,origin,fixture});
       await authenticationCoverage({page,context,origin,fixture,browserName:name,invalidSessions});
+      if(name==="chromium") {
+        const { searchDiagnosticsCoverage } = await import("./search-diagnostics.mjs");
+        await searchDiagnosticsCoverage({page,origin,fixture,client,browserName:name,artifacts});
+        await page.goto(origin+"/dashboard");
+      }
       await onboardingCoverage({page,context,origin,fixture,client,browserName:name});
       await agentClaimCoverage({page,context,origin,fixture,client,connectionString,browserName:name,artifacts});
       await feedbackCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
@@ -241,7 +250,7 @@ try{
 }finally{
   clearTimeout(deadline);
   await writeFile(path.join(artifacts,"app.log"),appLog);
-  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:landingMode?"landing-isolated-production-build":mobileMode?"mobile-isolated-self-hosted":accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
+  await writeFile(path.join(artifacts,"results.json"),JSON.stringify({runId,mode:searchMode?"search-isolated-production-build":landingMode?"landing-isolated-production-build":mobileMode?"mobile-isolated-self-hosted":accessibilityMode?"accessibility-isolated-self-hosted":designAuditMode?"design-audit-isolated-self-hosted":"isolated-self-hosted-production-build",outcome:completed?(designAuditMode?"evidence-collected":"passed"):"failed",phase,results},null,2));
   if(proxy)await new Promise(resolve=>proxy.close(resolve));
   if(app){app.kill();await new Promise(resolve=>{app.once("exit",resolve);setTimeout(()=>{app.kill("SIGKILL");resolve();},3000).unref();});}
   await client?.end();

@@ -140,6 +140,7 @@
     "createOrganization": "Create organization"
   },
   "nav": {
+    "searchQuality": "Search quality",
     "upgradePlan": "Upgrade plan",
     "toggleSidebar": "Toggle sidebar (Ctrl+B)",
     "dashboard": "Dashboard",
@@ -187,6 +188,9 @@
     "approvals": "Approvals"
   },
   "commandPalette": {
+    "noResultsHint": "Try a full task title or task ID, or check the selected project.",
+    "clearSearch": "Clear search",
+    "limitedResults": "For older tasks, try a more precise title or the full task ID.",
     "triggerLabel": "Search...",
     "title": "Command palette",
     "description": "Search and jump to anything",
@@ -1612,6 +1616,18 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "searchQuality": {
+      "title": "Search quality",
+      "description": "Daily anonymous event totals grouped into UTC weeks. No query text, task names, IDs or user profiles are recorded.",
+      "scope": "Last eight weeks, current week incomplete. These are best-effort event counts, not unique people or proof of search success. Privacy preferences, blocked requests and retries can affect totals.",
+      "unavailable": "Counters unavailable. Apply database migration 104 to enable this report.",
+      "week": "Week starting",
+      "searches": "Completed searches",
+      "zero": "Zero results",
+      "zeroRate": "Zero-result share",
+      "clicks": "Result selections",
+      "failed": "Search errors"
+    },
     "signedInAs": "Signed in as {email} - instance-wide view, bypasses per-organization access.",
     "statusOk": "OK",
     "statusDegraded": "Degraded",

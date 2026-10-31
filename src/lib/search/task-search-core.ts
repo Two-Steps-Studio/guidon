@@ -49,11 +49,19 @@ function words(value: string): string[] {
  * as written in commits. Null for ordinary text.
  */
 export function taskRefPrefix(query: string): string | null {
-  const match = /^(?:guidon#)?([0-9a-f-]{6,36})$/i.exec(query.trim());
+  const match = /^(guidon#)?([0-9a-f-]{6,36})$/i.exec(query.trim());
   if (!match) return null;
-  const hex = match[1].replace(/-/g, "").toLowerCase();
+  const hex = match[2].replace(/-/g, "").toLowerCase();
   // "facade" or "decade" are words, not references: require a digit.
-  return hex.length >= 6 && /\d/.test(hex) ? hex : null;
+  return hex.length >= 6 && hex.length <= 32 && (match[1] || /\d/.test(hex)) ? hex : null;
+}
+
+/** Inclusive UUID bounds use the primary-key index, without casting UUIDs to text. */
+export function taskRefBounds(query: string): { lower: string; upper: string } | null {
+  const prefix = taskRefPrefix(query);
+  if (!prefix) return null;
+  const uuid = (hex: string) => `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+  return { lower: uuid(prefix.padEnd(32, "0")), upper: uuid(prefix.padEnd(32, "f")) };
 }
 
 /** Edit distance with adjacent swaps, giving up (returning max + 1) past `max`. */
@@ -136,7 +144,7 @@ export function rankTasks<T extends SearchableTask>(query: string, tasks: readon
     const scored = scoreTask(query, task);
     if (scored) ranked.push({ task, ...scored });
   }
-  return ranked.sort((a, b) => b.score - a.score || time(b.task.updated_at) - time(a.task.updated_at)).slice(0, limit);
+  return ranked.sort((a, b) => b.score - a.score || time(b.task.updated_at) - time(a.task.updated_at) || a.task.id.localeCompare(b.task.id)).slice(0, limit);
 }
 
 /** An ILIKE pattern that matches the text literally (% and _ are wildcards there). */
