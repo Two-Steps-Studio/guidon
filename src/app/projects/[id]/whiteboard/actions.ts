@@ -1,7 +1,6 @@
 import { parseTaskProposals, type TaskProposal } from "@/lib/ai/task-proposal-parser";
 import { timeAction } from "@/lib/perf/action-timing";
 import { randomUUID } from "node:crypto";
-import type { WhiteboardElement, WhiteboardEdge } from "@/lib/data/whiteboard";
 import type { ProjectId } from "@/types/index";
 
 export async function generateTaskProposals(projectId: string, selectedTexts: string[]) {
@@ -78,7 +77,7 @@ export async function getElementsAction(projectId: string, boardId: string = "de
   }
 }
 
-export async function upsertElementAction(projectId: string, element: Partial<WhiteboardElement>) {
+export async function upsertElementAction(projectId: string, element: any) {
   const { upsertElement } = await import("@/lib/data/whiteboard");
   try {
     return await upsertElement(projectId, element);
@@ -108,7 +107,7 @@ export async function getEdgesAction(projectId: string, boardId: string = "defau
   }
 }
 
-export async function upsertEdgeAction(projectId: string, edge: Partial<WhiteboardEdge>) {
+export async function upsertEdgeAction(projectId: string, edge: any) {
   const { upsertEdge } = await import("@/lib/data/whiteboard");
   try {
     return await upsertEdge(projectId, edge);
