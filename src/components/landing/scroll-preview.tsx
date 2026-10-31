@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 /** A scroll-linked product illustration; the untransformed wrapper owns geometry. */
-export function ScrollPreview({ children, className }: { children: ReactNode; className: string }) {
+export function ScrollPreview({ children, className, direction=1 }: { children: ReactNode; className: string; direction?: 1 | -1 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -25,7 +25,7 @@ export function ScrollPreview({ children, className }: { children: ReactNode; cl
       root.dataset.scrollProgress = progress.toFixed(3);
       if (progress === 1) { image.style.transform = ""; return; }
       image.style.transform = desktop.matches
-        ? `perspective(1400px) translateY(${remaining * 24}px) rotateX(${remaining * 8}deg) scale(${1 - remaining * .06})`
+        ? `perspective(1400px) translateX(${remaining * direction * 24}px) translateY(${remaining * 24}px) rotateX(${remaining * 12}deg) rotateY(${remaining * direction * -8}deg) scale(${1 - remaining * .08})`
         : `translateY(${remaining * 12}px) scale(${1 - remaining * .02})`;
     };
     const schedule = () => { if (visible && !frame) frame = requestAnimationFrame(update); };
@@ -49,7 +49,7 @@ export function ScrollPreview({ children, className }: { children: ReactNode; cl
       reduced.removeEventListener("change", onPreference);
       desktop.removeEventListener("change", schedule);
     };
-  }, []);
+  }, [direction]);
   return <div ref={rootRef} data-product-preview className={className}>
     <div ref={imageRef} data-scroll-preview className="origin-center overflow-hidden rounded-xl border border-border bg-card shadow-xl">{children}</div>
   </div>;

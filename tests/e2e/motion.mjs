@@ -70,6 +70,26 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
     assert.equal(await preview.locator('[data-scroll-preview]').evaluate(node => getComputedStyle(node).transform), 'none', 'Reduced-motion previews remain stationary on scroll');
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.goto(origin + '/');
+    const stage=page.locator('[data-scroll-stage]');
+    const stagePosition=fraction=>stage.evaluate((node,fraction)=>scrollTo(0,scrollY+node.getBoundingClientRect().top-innerHeight*fraction),fraction);
+    await stagePosition(.05);
+    await page.waitForFunction(()=>Number(document.querySelector('[data-scroll-stage]').dataset.stageProgress)<.4);
+    const stageArrival=await stage.locator('[data-stage-surface]').evaluate(node=>node.style.transform);
+    const firstViewport=await stage.locator(':scope > div').boundingBox();
+    await page.screenshot({path:path.join(artifacts,`${browserName}-scroll-stage-arrival.png`)});
+    await stagePosition(-.3);
+    await page.waitForFunction(()=>Number(document.querySelector('[data-scroll-stage]').dataset.stageProgress)>.65);
+    const secondViewport=await stage.locator(':scope > div').boundingBox();
+    assert.ok(Math.abs(secondViewport.y-firstViewport.y)<2,'The laptop stays pinned while the camera move progresses');
+    assert.notEqual(await stage.locator('[data-stage-surface]').evaluate(node=>node.style.transform),stageArrival);
+    await page.screenshot({path:path.join(artifacts,`${browserName}-scroll-stage-open.png`)});
+    await stagePosition(.05);
+    await page.waitForFunction(()=>Number(document.querySelector('[data-scroll-stage]').dataset.stageProgress)<.4);
+    assert.equal(await stage.locator('[data-stage-surface]').evaluate(node=>node.style.transform),stageArrival,'The camera move reverses with scroll');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await page.waitForFunction(()=>document.querySelector('[data-stage-surface]').style.transform==='');
+    assert.equal(await stage.locator(':scope > div').evaluate(node=>getComputedStyle(node).position),'relative','Reduced motion uses normal document flow');
+    await page.emulateMedia({reducedMotion:'no-preference'});
     const laptop = page.locator('[data-marketing-motion="laptop"]');
     await laptop.scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelector('[data-marketing-motion="laptop"]')?.dataset.play === 'true');
@@ -105,6 +125,7 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
     }
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.setViewportSize({width:375,height:812});
+    assert.equal(await stage.locator(':scope > div').evaluate(node=>getComputedStyle(node).position),'relative','Phone layouts do not pin the laptop');
     await scrollToPreview(.9);
     await page.waitForFunction(() => Number(document.querySelector('[data-product-preview]').dataset.scrollProgress) < .2);
     assert.equal(await preview.locator('[data-scroll-preview]').evaluate(node => node.style.transform.includes('perspective')),false,'Phone previews avoid 3D perspective');

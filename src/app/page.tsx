@@ -18,6 +18,7 @@ import { AnimatedFaq } from "@/components/landing/animated-faq";
 import { MarketingMotion } from "@/components/landing/marketing-motion";
 import { RevealGroup } from "@/components/landing/reveal-group";
 import { ScrollPreview } from "@/components/landing/scroll-preview";
+import { ScrollStage } from "@/components/landing/scroll-stage";
 import { CtaLink } from "@/components/landing/cta-link";
 
 // A display serif for headlines only, paired against the app-wide Geist Sans
@@ -147,7 +148,7 @@ export default async function Home() {
       {/* A laptop drawn in CSS around a real screenshot of the dashboard, one
           per theme - regenerate with scripts/landing/capture.mjs. */}
       <div className="mx-auto max-w-6xl">
-        <MarketingMotion kind="laptop">
+        <ScrollStage><MarketingMotion kind="laptop">
         <div data-motion-actor="laptop">
         <div className="relative mx-auto w-[88%] rounded-t-[1.1rem] rounded-b-sm border border-neutral-700 bg-neutral-900 p-[1.4%] pb-[1.8%] shadow-2xl dark:border-neutral-600">
           <span className="absolute left-1/2 top-[0.55%] h-1 w-1 -translate-x-1/2 rounded-full bg-neutral-600 md:h-1.5 md:w-1.5" aria-hidden />
@@ -176,7 +177,7 @@ export default async function Home() {
           <div className="absolute left-1/2 top-0 h-1.5 w-[14%] -translate-x-1/2 rounded-b-lg bg-neutral-400 md:h-2 dark:bg-neutral-900/70" />
         </div>
         </div>
-        </MarketingMotion>
+        </MarketingMotion></ScrollStage>
       </div>
     </section>
 
@@ -310,7 +311,7 @@ export default async function Home() {
                 {/* Real screenshots of the demo project, one per theme -
                     regenerate with scripts/landing/capture.mjs when the
                     captured pages change. */}
-                <ScrollPreview className="w-full md:w-[55%] md:shrink-0">
+                <ScrollPreview direction={reversed?-1:1} className="w-full md:w-[55%] md:shrink-0">
                     <Image
                       src={`/landing/${feature.key}-light.webp`}
                       alt={t(`features.${feature.key}.title`)}
