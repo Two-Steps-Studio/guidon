@@ -44,6 +44,7 @@ import assert from "node:assert/strict";
 
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const designAuditMode=process.argv.includes("--design-audit");
+const writeSafetyMode=process.argv.includes("--write-safety");
 const taskQueueMode=process.argv.includes("--task-queue");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
 const mobileMode=process.argv.includes("--mobile-audit");
@@ -159,7 +160,9 @@ try{
     const page=await context.newPage();page.setDefaultTimeout(name==='webkit'?30000:15000);
     const started=Date.now();
     try{
-      if(taskQueueMode){
+      if(writeSafetyMode){
+        await writeSafetyCoverage({page,context,origin,fixture,client,browserName:name,artifacts});
+      }else if(taskQueueMode){
         const {taskQueueCoverage}=await import("./task-queue.mjs");
         await taskQueueCoverage({page,context,origin,fixture,client,browserName:name,artifacts,storagePath:environment.STORAGE_PATH,authSecret:environment.AUTH_SECRET});
       }else if(mobileMode){

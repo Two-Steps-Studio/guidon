@@ -7,9 +7,11 @@ import { Select } from "@/components/ui/select";
 
 export function PlanEditor({
   orgId,
+  orgName,
   initialPlanId,
 }: {
   orgId: string;
+  orgName: string;
   initialPlanId: string;
 }) {
   const t = useTranslations("admin");
@@ -41,6 +43,7 @@ export function PlanEditor({
   return (
     <div className="flex items-center gap-2">
       <Select
+        aria-label={`${t("colPlan")}: ${orgName}`}
         value={value}
         onChange={(e) => save(e.target.value)}
         disabled={pending}

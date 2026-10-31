@@ -20,6 +20,14 @@ export async function taskQueueCoverage({ page, origin, fixture, client, browser
     await page.locator("#password").fill(fixture.password);
     await page.locator('button[type="submit"]').click();
     await page.waitForURL(url => url.pathname === "/dashboard");
+    const organizationName=(await client.query('SELECT name FROM organizations WHERE id=$1',[owner.organizationId])).rows[0].name;
+    await page.goto(origin + '/admin/organizations');
+    const organizationRow=page.locator('tbody tr').filter({hasText:organizationName});
+    await organizationRow.getByRole('spinbutton',{name:`Project limit: ${organizationName}`,exact:true}).waitFor();
+    await organizationRow.getByRole('button',{name:`Plan: ${organizationName}: Free`,exact:true}).waitFor();
+    await page.goto(`${origin}/organizations/${owner.organizationId}`);
+    const avatarInput=page.locator('input[type="file"]');
+    assert.ok((await avatarInput.getAttribute('aria-label'))?.includes(organizationName), 'The image input is named even when visually hidden');
     const { lighthouseReportCoverage } = await import("./lighthouse-report.mjs");
     await lighthouseReportCoverage({page,origin,fixture,client,browserName,storagePath,authSecret});
     await page.goto(`${origin}/projects/${owner.projectId}/work`);

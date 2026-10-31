@@ -54,10 +54,10 @@ export default async function AdminOrganizationsPage() {
                     <td>{org.memberCount}</td>
                     <td className="text-muted-foreground">{new Date(org.created_at).toLocaleDateString()}</td>
                     <td>
-                      <ProjectLimitEditor orgId={org.id} initialLimit={org.project_limit} />
+                      <ProjectLimitEditor orgId={org.id} orgName={org.name} initialLimit={org.project_limit} />
                     </td>
                     <td>
-                      <PlanEditor orgId={org.id} initialPlanId={org.planId} />
+                      <PlanEditor orgId={org.id} orgName={org.name} initialPlanId={org.planId} />
                     </td>
                   </tr>
                 ))}

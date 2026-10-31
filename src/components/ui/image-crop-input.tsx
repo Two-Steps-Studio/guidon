@@ -18,12 +18,14 @@ export function ImageCropInput({
   accept = "image/*",
   currentImage,
   onReady,
+  "aria-label": ariaLabel,
 }: {
   name: string;
   id?: string;
   accept?: string;
   currentImage?: string | null;
   onReady?: () => void;
+  "aria-label"?: string;
 }) {
   const t = useTranslations("common.imageCrop");
   const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated);
@@ -75,6 +77,7 @@ export function ImageCropInput({
         ref={inputRef}
         id={id}
         type="file"
+        aria-label={ariaLabel}
         disabled={!hydrated}
         name={name}
         accept={accept}

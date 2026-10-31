@@ -29,7 +29,7 @@ export function OrgAvatarUpload({
     <div>
       <form ref={formRef} action={formAction}>
         <div className="sr-only">
-          <ImageCropInput name="avatar" onReady={() => formRef.current?.requestSubmit()} />
+          <ImageCropInput name="avatar" aria-label={t("changeImageAria", { name })} onReady={() => formRef.current?.requestSubmit()} />
         </div>
         <button
           type="button"

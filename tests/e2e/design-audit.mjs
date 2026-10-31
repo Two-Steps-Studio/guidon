@@ -11,6 +11,7 @@ export async function designAudit({page,context,origin,fixture,browserName,artif
     // interrupting the next observation. Cookies remain scoped to this fixture.
     if(page!==entryPage)await page.close();page=await context.newPage();
     await page.setViewportSize(mode.startsWith('phone')?{width:375,height:812}:{width:1440,height:1000});
+    await page.emulateMedia({colorScheme:mode.includes('dark')?'dark':'light',reducedMotion:mode.includes('reduce')?'reduce':'no-preference'});
     const errors=[];const listener=e=>errors.push(e.message);page.on('pageerror',listener);
     try{
       const response=await page.goto(origin+route);await page.locator('body').waitFor();
@@ -26,9 +27,10 @@ export async function designAudit({page,context,origin,fixture,browserName,artif
       });
       const filename=`audit-${browserName}-${mode}-${route.replace(/[^a-z0-9-]/gi,'_').slice(0,110)}.png`;
       await page.screenshot({path:path.join(artifacts,filename)});
-      rows.push({route,mode,status:response?.status(),landed:new URL(page.url()).pathname,...data,errors,screenshot:filename});
+      const preferences=await page.evaluate(()=>({reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches,dark:matchMedia('(prefers-color-scheme: dark)').matches,coarsePointer:matchMedia('(pointer: coarse)').matches}));
+      rows.push({route,mode,preferences,status:response?.status(),landed:new URL(page.url()).pathname,...data,errors,screenshot:filename});
     }catch(error){rows.push({route,mode,error:error.message});}
-    finally{page.off('pageerror',listener);}
+    finally{page.off('pageerror',listener);await writeFile(path.join(artifacts,`design-audit-${browserName}.json`),JSON.stringify(rows,null,2));}
   };
   for(const route of publicRoutes)await inspect(route,'desktop-light');
   await page.goto(origin+'/auth/login');await page.locator('#email').fill(owner.email);await page.locator('#password').fill(fixture.password);await page.locator('button[type="submit"]').click();await page.waitForURL(u=>u.pathname==='/dashboard');
@@ -47,9 +49,14 @@ export async function designAudit({page,context,origin,fixture,browserName,artif
     const title=await input.inputValue();await input.fill(title+' UNSAVED AUDIT');
     await page.keyboard.press('Escape');
     const closed=await page.getByRole('dialog').count()===0;
-    await card.click();await input.waitFor();
-    rows.push({scenario:'unsaved-task-edit-escape',closedWithoutConfirmation:closed,draftLost:await input.inputValue()===title});
+    const discard=page.getByRole('button',{name:'Discard changes',exact:true});
+    const confirmationShown=await discard.isVisible();
+    if(confirmationShown)await page.getByRole('button',{name:'Cancel',exact:true}).click();
+    if(closed){await card.click();await input.waitFor();}
+    rows.push({scenario:'unsaved-task-edit-escape',closedWithoutConfirmation:closed,confirmationShown,draftLost:await input.inputValue()===title});
     await page.keyboard.press('Escape');
+    if(await discard.isVisible())await discard.click();
+    await input.waitFor({state:'hidden'});
     const ai=page.locator('div.fixed.bottom-6.right-6 button');
     if(await ai.count()){
       await ai.click();const dialog=page.getByRole('dialog');await dialog.waitFor();
