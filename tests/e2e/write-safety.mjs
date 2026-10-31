@@ -14,6 +14,7 @@ export async function writeSafetyCoverage({context,origin,fixture,client,browser
   const isolated=await context.browser().newContext({ignoreHTTPSErrors:true,locale:"en-US",viewport:{width:1440,height:1000}});
   await isolated.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
   const page=await isolated.newPage();page.setDefaultTimeout(15000);
+  await isolated.tracing.start({screenshots:true,snapshots:true,sources:true});
   // Reloading over a dirty form asks through beforeunload; this test accepts.
   page.on("dialog",dialog=>void dialog.accept());
   const board=`${origin}/projects/${owner.projectId}/work`;
@@ -103,6 +104,7 @@ export async function writeSafetyCoverage({context,origin,fixture,client,browser
     await page.screenshot({path:path.join(artifacts,`${browserName}-write-safety-failed.png`),fullPage:true});
     throw error;
   } finally {
+    await isolated.tracing.stop({path:path.join(artifacts,`${browserName}-write-safety-trace.zip`)});
     await isolated.close();
     await client.query("DELETE FROM tasks WHERE project_id=$1 AND title LIKE $2",[owner.projectId,`${prefix}%`]);
   }
