@@ -2,7 +2,12 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-export type TimedAction = "task.save" | "task.create" | "task.move" | "task.delete";
+export type TimedAction =
+  | "task.save"
+  | "task.create"
+  | "task.move"
+  | "task.delete"
+  | "whiteboard.ai.generate-proposals";
 
 /**
  * Times a key board action from the click to the server's answer, under one
