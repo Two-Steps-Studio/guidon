@@ -64,6 +64,8 @@ import {
   ChevronDown,
   TrendingUp,
   Search,
+  Square//Lasso, // Not available in lucide, will use a generic icon
+  LayoutTemplate,
 } from "lucide-react";
 
 export const GLOBAL_NAV = [
@@ -113,6 +115,7 @@ export const PROJECT_NAV = [
     labelKey: "workGroup",
     items: [
       { href: "work", labelKey: "taskBoard", icon: CheckSquare },
+      { href: "whiteboard", labelKey: "whiteboard", icon: LayoutTemplate },
       { href: "calendar", labelKey: "calendar", icon: CalendarDays },
       { href: "roadmap", labelKey: "roadmap", icon: GitBranch },
       { href: "files", labelKey: "files", icon: FolderOpen },

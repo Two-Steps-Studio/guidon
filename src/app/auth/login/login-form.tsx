@@ -61,6 +61,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
         if ("error" in result) throw new Error(result.error)
         if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== result.userId) posthog.reset()
         posthog.identify(result.userId, { email: email.trim().toLowerCase() })
+        posthog.capture("login_completed", { method: "local_password" })
         router.push(redirectTarget)
         return
       }
@@ -76,6 +77,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
       if (data.user) {
         if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== data.user.id) posthog.reset()
         posthog.identify(data.user.id, { email: data.user.email ?? email.trim().toLowerCase() })
+        posthog.capture("login_completed", { method: "supabase_password" })
       }
 
       router.push(redirectTarget)

@@ -19,6 +19,7 @@ export function LogoutClient({ local }: { local: boolean }) {
       clearAllTaskDrafts();
       // Reset before ending the app session so the next visitor cannot inherit
       // this person's persisted browser identity.
+      posthog.capture("logout_completed");
       posthog.reset();
       try {
         if (local) {

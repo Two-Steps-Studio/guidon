@@ -11,41 +11,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="eb2433ed-318a-4796-bbb1-8503adb9f9ef" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/ai/chat/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/ai/chat/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/auth/login/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/login/actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/mcp/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/mcp/route.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/auth/login/login-form.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/login/login-form.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/auth/logout/logout-client.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/logout/logout-client.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/auth/signup/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/signup/actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/auth/signup/signup-form.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/auth/signup/signup-form.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/global-error.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/global-error.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/invite/[token]/accept-button.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/invite/[token]/accept-button.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/organizations/[id]/billing/billing-actions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/organizations/[id]/billing/billing-actions.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/organizations/[id]/create-project-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/organizations/[id]/create-project-dialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/organizations/create-organization-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/organizations/create-organization-dialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/memory/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/memory/actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-chat-actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-chat-actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-task-chat.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/ai-task-chat.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/create-task-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/create-task-dialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/projects/[id]/work/import-tasks-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/projects/[id]/work/import-tasks-dialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/agent/web-mcp.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/agent/web-mcp.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/ai/AIChat.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ai/AIChat.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/instrumentation-client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/instrumentation-client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/instrumentation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/instrumentation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/ai/chat-safety.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/chat-safety.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/ai/provider.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/provider.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/ai/providers/anthropic.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/providers/anthropic.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/ai/providers/azure-openai.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/providers/azure-openai.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/ai/providers/openai-compatible.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/providers/openai-compatible.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/ai/task-learning.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/task-learning.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/data/current-user.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/data/current-user.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/work/task-drafts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/work/task-drafts.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,7 +114,7 @@
       <workItem from="1789921823413" duration="6227000" />
       <workItem from="1790784192293" duration="651000" />
       <workItem from="1792603149445" duration="1375000" />
-      <workItem from="1793457196535" duration="3282000" />
+      <workItem from="1793457196535" duration="7559000" />
     </task>
     <servers />
   </component>

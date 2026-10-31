@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { instrument } from "@posthog/mcp";
+import { PostHog } from "posthog-node";
 import { authenticateApiKey } from "@/lib/api/api-key-auth";
 import { isRateLimited, recordRequest } from "@/lib/api/rate-limit";
 import { createDispatch } from "@/lib/mcp/http/dispatch";
@@ -33,6 +35,29 @@ import { SITE_URL } from "@/lib/site-url";
  * which dispatches its own tool calls in-process via src/lib/ai/chat-tools.ts
  * against session-based Server Actions, not this API-key-gated endpoint.
  */
+
+const posthogProjectToken = process.env.POSTHOG_PROJECT_TOKEN?.trim();
+const posthogHost = process.env.POSTHOG_HOST?.trim();
+
+if (!posthogProjectToken && process.env.NODE_ENV === "development") {
+  throw new Error(
+    "POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured"
+  );
+}
+if (!posthogHost && process.env.NODE_ENV === "development") {
+  throw new Error(
+    "POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_HOST is configured"
+  );
+}
+
+const posthog = posthogProjectToken && posthogHost
+  ? new PostHog(posthogProjectToken, {
+      host: posthogHost,
+      flushAt: 1,
+      flushInterval: 0,
+      enableExceptionAutocapture: true,
+    })
+  : null;
 
 /** One POST may carry a JSON-RPC batch; cap it so it cannot fan out unbounded tool calls. */
 const MAX_BATCH_MESSAGES = 20;
@@ -112,6 +137,14 @@ async function handle(request: NextRequest): Promise<Response> {
         "project allows it. You act as the signed-in user, only in their projects, limited to the token's scopes.",
     }
   );
+  if (posthog) {
+    instrument(server, posthog, {
+      captureModel: true,
+      enableConversationId: true,
+      enableExceptionAutocapture: true,
+      identify: { distinctId: identity.userId },
+    });
+  }
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -126,8 +159,9 @@ async function handle(request: NextRequest): Promise<Response> {
     await server.connect(transport);
     return await transport.handleRequest(request);
   } finally {
-    // JSON-response mode has fully resolved by now; release the per-request
-    // server/transport pair even when connect() or handleRequest() threw.
+    // JSON-response mode has fully resolved by now; flush analytics and release
+    // the per-request server/transport pair even when handling threw.
+    if (posthog) await posthog.flush().catch(() => undefined);
     await transport.close().catch(() => undefined);
     await server.close().catch(() => undefined);
   }
