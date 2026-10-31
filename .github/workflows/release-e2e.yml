@@ -76,6 +76,7 @@ jobs:
       - run: npm run test:context
       - run: npm run test:search
       - run: npm run test:app-changes
+      - run: npm run test:agent-evidence
       - run: node --experimental-strip-types tests/date-format.test.mjs
       - run: npm run test:db
       - run: npm run test:migrations
