@@ -1,5 +1,26 @@
 # Follow-up to the supplied Ora PDF and Lighthouse report
 
+## Additional Guidon task snapshot reviewed on 2026-10-31
+
+Task `69e78634-3edd-43ae-badc-50c7a0178066` contains a separate run from
+2026-10-30 22:28:49 UTC against an authenticated `/projects/.../work` page:
+performance 95, accessibility 100, best practices 100, SEO 66, agentic 98.
+FCP 0.7 s, LCP 1.3 s, Speed Index 1.2 s. These are the supplied report's
+measurements, not a fresh measurement of this PR or a controlled comparison.
+
+The largest reported unused scripts belong to browser extensions. Its ARD
+warning concerns the existing OpenAPI media type, and its SEO finding is the
+intentional private-page indexing restriction. The image finding estimates
+13 KiB of further savings, while authenticated preview resizing/authorization
+already has regression coverage in `tests/e2e/lighthouse-report.mjs`.
+No private indexing/cache restriction or valid media type was removed for a score.
+
+Next verification: measure the deployed public homepage and the signed-in board
+separately, using an extension-free profile, fixed device/network settings and
+three runs. Record the median plus LCP/INP/CLS; review the current image response
+before further quality/size changes. The old JSON does not prove the current
+production version or justify promising 100 points.
+
 The supplied Lighthouse 13.5 desktop run measured a signed-in project board on 2026-10-30: performance 88, accessibility 100, best practices 100, SEO 58 and agentic browsing 98. The PDF is a separate external snapshot with overall agent readiness 89. Neither score is a promise of a later scan's result.
 
 ## Implemented changes
