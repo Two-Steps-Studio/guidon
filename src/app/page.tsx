@@ -1,32 +1,22 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Fraunces } from "next/font/google";
 import { getTranslations } from "next-intl/server";
-import { Button } from "@/components/ui/button";
-import { Bot, CheckCircle2, CheckSquare, Code2, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Globe, MessageSquare, Server, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, Bot, CheckSquare, Code2, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Globe, MessageSquare, Server, Users, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
 import { BetaBadge } from "@/components/layout/beta-badge";
 import { AnimatedFaq } from "@/components/landing/animated-faq";
-import { MarketingMotion } from "@/components/landing/marketing-motion";
 import { RevealGroup } from "@/components/landing/reveal-group";
-import { ScrollPreview } from "@/components/landing/scroll-preview";
 import { ProductScreen } from "@/components/landing/product-screen";
-import { ScrollStage } from "@/components/landing/scroll-stage";
 import type { PublicPlanPrice } from "@/lib/billing/public-pricing";
+import styles from "@/components/landing/landing.module.css";
 import { CtaLink } from "@/components/landing/cta-link";
-
-// A display serif for headlines only, paired against the app-wide Geist Sans
-// body font - scoped to this marketing page so the rest of the app (which
-// has no room for a decorative font) is untouched.
-const displayFont = Fraunces({ subsets: ["latin"], weight: ["600"] });
 
 interface FeatureSection {
   icon: LucideIcon;
@@ -69,6 +59,7 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const t = await getTranslations("landing");
+  const d = await getTranslations("landing.design");
   // Plain text on purpose: the same answers go into the FAQPage JSON-LD.
   const faq = t.raw("faq.items") as FaqItem[];
   // Self-hosted installs have no billing concept at all (mirrors
@@ -88,311 +79,148 @@ export default async function Home() {
   const prices = hasDirectDatabase() ? [] : ((await createServiceClient()
     .from("plan_prices").select("plan_id, billing_interval, amount_cents").eq("active", true)).data as PublicPlanPrice[] | null) ?? [];
 
+  const links = [
+    {href:"#product", label:d("navProduct")},
+    {href:"#features", label:d("navFeatures")},
+    {href:"#integrations", label:d("navIntegrations")},
+    {href:plans.length ? "#pricing" : "#self-hosted", label:plans.length ? d("navPricing") : t("footer.selfHosting")},
+  ];
+  const footerGroups = [
+    {title:d("footerProduct"), links:[...links.slice(0,3), {href:"/start",label:t("getStarted")} ]},
+    {title:d("footerResources"), links:[{href:"/developers",label:t("footer.developers")},{href:SELF_HOSTING_DOCS_URL,label:t("footer.selfHosting")},{href:GITHUB_REPO_URL,label:"GitHub"},{href:"/contact",label:t("footer.contact")},{href:"/brand",label:t("footer.brand")}]},
+    {title:d("footerLegal"),links:[{href:"/legal/terms",label:t("footer.terms")},{href:"/legal/privacy",label:t("footer.privacy")},{href:"/legal/refunds",label:t("footer.refunds")},{href:"/legal/eula",label:t("footer.eula")},{href:"/legal/cookies",label:t("footer.cookies")}]},
+  ];
+
   return (
-    <>
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans, FEATURE_SECTIONS.map(({ key }) => ({ title: t(`features.${key}.title`), description: t(`features.${key}.description`) })), faq)).replace(/</g, "\\u003c") }}
-    />
-    <main>
-    <div data-home-hero className="relative flex min-h-svh items-center overflow-hidden bg-background/70 dark:bg-background/60">
-      <div className="container relative z-10 mx-auto px-4 py-12 md:py-20">
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-center gap-3"><Image
-              src="/assets/guidon-wordmark.png"
-              alt="Guidon"
-              width={769}
-              height={285}
-              priority
-              className="h-16 w-auto dark:invert md:h-20"
-            /><BetaBadge /></div>
-            <div className="space-y-3">
-              <h1
-                className={`${displayFont.className} text-5xl md:text-6xl tracking-tight text-text dark:text-text`}
-              >
-                {t("heroTitle")}
-              </h1>
-              <p className="text-xl text-text-secondary max-w-3xl mx-auto leading-relaxed">
-                {t("heroSubtitle")}
-              </p>
-            </div>
-          </div>
+    <div data-landing className={styles.landing}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans, FEATURE_SECTIONS.map(({ key }) => ({ title: t(`features.${key}.title`), description: t(`features.${key}.description`) })), faq)).replace(/</g, "\\u003c") }} />
+      <a href="#landing-main" className={styles.skip}>{d("skip")}</a>
+      <header className={styles.header}>
+        <nav className={styles.navigation} aria-label={d("navLabel")}>
+          <Link href="/" aria-label="Guidon" className={styles.logo}>
+            <Image src="/brand/guidon-wordmark-blue.png" alt="Guidon" width={200} height={74} className="dark:hidden" />
+            <Image src="/brand/guidon-wordmark-white.png" alt="Guidon" width={200} height={74} className="hidden dark:block" />
+          </Link>
+          <div className={styles.navLinks}>{links.map(link=><a key={link.href} href={link.href}>{link.label}</a>)}</div>
+          <div className={styles.navActions}><Link className={styles.signIn} href="/auth/login">{t("signIn")}</Link><Link href="/start" className={styles.buttonSmall}>{d("navStart")}</Link></div>
+        </nav>
+      </header>
 
-          <div>
-            <div className="flex gap-4 justify-center flex-wrap">
-              <Button size="lg" className="text-base px-8 py-6 h-auto" asChild>
-                <CtaLink cta="hero-start" href="/start">{t("getStarted")}</CtaLink>
-              </Button>
-              <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto" asChild>
-                <Link href="/auth/login">{t("signIn")}</Link>
-              </Button>
+      <main id="landing-main" tabIndex={-1}>
+        <section data-home-hero className={styles.hero} aria-labelledby="hero-title">
+          <div className={styles.container}>
+            <p className={styles.eyebrow}><span className={styles.brandDot} aria-hidden />{d("eyebrow")}<BetaBadge /></p>
+            <h1 id="hero-title">{d("heroFirst")}<br/><span>{d("heroSecond")}</span></h1>
+            <p className={styles.lead}>{d("heroDescription")}</p>
+            <div className={styles.actions}>
+              <CtaLink cta="hero-start" href="/start" className={styles.button}>{t("getStarted")}<ArrowRight size={16} aria-hidden /></CtaLink>
+              <a href="#product" className={styles.buttonSecondary}>{d("explore")}</a>
             </div>
-            <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1 text-sm text-text-secondary">
-              <Link href="#pricing" className="underline underline-offset-4 hover:text-foreground">
-                {t("freePlan")}
-              </Link>
-              <span aria-hidden>·</span>
-              <Link href="/developers#authentication" className="underline underline-offset-4 hover:text-foreground">
-                {t("selfServeApiKey")}
-              </Link>
-              <span aria-hidden>·</span>
-              <CtaLink cta="hero-sandbox" href="/sandbox" className="underline underline-offset-4 hover:text-foreground">
-                {t("trySandbox")}
-              </CtaLink>
+            <p className={styles.heroNote}>{d("heroNote")}</p>
+          </div>
+        </section>
+
+        <section id="product" className={styles.productSection} aria-labelledby="hero-shot-title">
+          <div className={styles.productContainer}>
+            <h2 id="hero-shot-title" className="sr-only">{t("heroShotTitle")}</h2>
+            <div className={styles.productFrame}>
+              <ProductScreen label={t("exploreProduct")} views={[
+                {key:"hero-dashboard",title:t("previewDashboard"),alt:t("heroShotAlt")},
+                {key:"taskBoard",title:d("taskDetails"),alt:d("taskDetails")},
+                {key:"roadmap",title:t("features.roadmap.title"),alt:t("features.roadmap.title")},
+              ]}/>
+            </div>
+            <p className={styles.caption}>{d("previewNote")}</p>
+          </div>
+        </section>
+
+        <section className={styles.section} aria-labelledby="benefits-title">
+          <div className={styles.container}>
+            <div className={styles.sectionHeading}>
+              <p className={styles.kicker}>{d("benefitsLabel")}</p>
+              <h2 id="benefits-title">{d("benefitsTitle")}</h2>
+              <p>{d("benefitsDescription")}</p>
+            </div>
+            <RevealGroup className={styles.benefits}>
+              {(t.raw("howItWorks.steps") as {title:string;description:string}[]).map((step,index)=>{
+                const Icon=HOW_IT_WORKS_ICONS[index];
+                return <div key={step.title}><Icon size={22} aria-hidden/><h3>{step.title}</h3><p>{step.description}</p></div>;
+              })}
+            </RevealGroup>
+          </div>
+        </section>
+
+        <section id="features" className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="features-title">
+          <div className={styles.container}>
+            <div className={styles.sectionHeading}>
+              <p className={styles.kicker}>{d("featuresLabel")}</p>
+              <h2 id="features-title">{d("featuresTitle")}</h2>
+              <p>{d("featuresDescription")}</p>
+            </div>
+            <div className={styles.featurePrimary}>
+              <div className={styles.featureCopy}>
+                <CheckSquare size={24} aria-hidden/>
+                <h3>{t("features.taskBoard.title")}</h3>
+                <p>{t("features.taskBoard.description")}</p>
+                <ul>{(t.raw("features.taskBoard.bullets") as string[]).map(item=><li key={item}><span aria-hidden>✓</span>{item}</li>)}</ul>
+              </div>
+              <div className={styles.featureImage}>{["light","dark"].map(theme=><Image key={theme} src={`/landing/taskBoard-${theme}.webp`} alt={t("features.taskBoard.title")} width={1600} height={1000} sizes="(min-width: 960px) 650px, 100vw" className={theme==="light"?"dark:hidden":"hidden dark:block"}/>)}</div>
+            </div>
+            <RevealGroup className={styles.featureGrid}>
+              {(["decisions","knowledgeBase"] as const).map(key=><article key={key} className={styles.featureCard}>
+                <div className={styles.featureCopy}><h3>{t(`features.${key}.title`)}</h3><p>{t(`features.${key}.description`)}</p></div>
+                <div className={styles.featureImage}>{["light","dark"].map(theme=><Image key={theme} src={`/landing/${key}-${theme}.webp`} alt={t(`features.${key}.title`)} width={1600} height={1000} sizes="(min-width: 768px) 540px, 100vw" className={theme==="light"?"dark:hidden":"hidden dark:block"}/>)}</div>
+              </article>)}
+            </RevealGroup>
+            <div className={styles.capabilities}>
+              {FEATURE_SECTIONS.filter(feature=>["memoryContext","roadmap","aiTaskApi"].includes(feature.key)).map(({key,icon:Icon})=><div key={key}><Icon size={18} aria-hidden/><div><h3>{t(`features.${key}.title`)}</h3><p>{t(`features.${key}.description`)}</p></div></div>)}
             </div>
           </div>
+        </section>
+
+        <section id="integrations" className={styles.section} aria-labelledby="integrations-title">
+          <div className={`${styles.container} ${styles.integrationLayout}`}>
+            <div className={styles.sectionHeading}>
+              <p className={styles.kicker}>{d("integrationsLabel")}</p>
+              <h2 id="integrations-title">{d("integrationsTitle")}</h2>
+              <p>{t("aiOptions.subtitle")}</p>
+              <Link href="/developers" className={styles.textLink}>{d("integrationDocs")}<ArrowRight size={16} aria-hidden/></Link>
+            </div>
+            <div className={styles.integrationPanel}>
+              <div className={styles.apps}><p className={styles.kicker}>{t("aiOptions.appsTitle")}</p><ul>{(t.raw("aiOptions.apps") as string[]).map(app=><li key={app}>{app}</li>)}</ul></div>
+              {(t.raw("aiOptions.more") as {title:string;description:string}[]).map((option,index)=>{
+                const Icon=AI_OPTION_ICONS[index]??Bot;
+                return <div key={option.title} className={styles.integrationRow}><Icon size={20} aria-hidden/><div><h3>{option.title}</h3><p>{option.description}</p></div></div>;
+              })}
+            </div>
+          </div>
+        </section>
+
+        {plans.length > 0 && <PricingSection plans={plans} prices={prices} checkoutAvailable={!hasDirectDatabase() && isBillingConfigured()} />}
+
+        <section id="self-hosted" className={`${styles.section} ${styles.hosting}`} aria-labelledby="self-host-title">
+          <div className={styles.container}><Server size={24} aria-hidden/><div><h2 id="self-host-title">{t("selfHost.title")}</h2><p>{t("selfHost.description")}</p></div><a href={SELF_HOSTING_DOCS_URL} className={styles.buttonSecondary}>{t("selfHost.guide")}<ArrowRight size={16} aria-hidden/></a></div>
+        </section>
+
+        <section id="frequently-asked-questions" className={styles.section} aria-labelledby="faq-title">
+          <div className={`${styles.container} ${styles.faqLayout}`}>
+            <div className={styles.sectionHeading}><p className={styles.kicker}>{d("faqLabel")}</p><h2 id="faq-title">{t("faq.title")}</h2><Link href="/contact" className={styles.textLink}>{t("footer.contact")}<ArrowRight size={16} aria-hidden/></Link></div>
+            <div className={styles.faq}>{faq.map(item=><AnimatedFaq key={item.q} question={item.q} answer={item.a}/>)}</div>
+          </div>
+        </section>
+
+        <section className={`${styles.section} ${styles.finalCta}`} aria-labelledby="final-title">
+          <div className={styles.container}><p className={styles.kicker}>{d("finalLabel")}</p><h2 id="final-title">{d("finalTitle")}</h2><p>{d("finalDescription")}</p><div className={styles.actions}><CtaLink cta="how-start" href="/start" className={styles.button}>{t("getStarted")}<ArrowRight size={16} aria-hidden/></CtaLink><CtaLink cta="hero-sandbox" prefetch={false} href="/sandbox" className={styles.buttonSecondary}>{d("sandbox")}</CtaLink></div></div>
+        </section>
+      </main>
+
+      <footer data-site-footer className={styles.footer}>
+        <div className={`${styles.container} ${styles.footerGrid}`}>
+          <div className={styles.footerBrand}><Link href="/" className={styles.logo} aria-label="Guidon"><Image src="/brand/guidon-wordmark-blue.png" alt="Guidon" width={200} height={74} className="dark:hidden"/><Image src="/brand/guidon-wordmark-white.png" alt="Guidon" width={200} height={74} className="hidden dark:block"/></Link><p>{d("footerDescription")}</p><BetaBadge/></div>
+          {footerGroups.map(group=><div key={group.title}><h2>{group.title}</h2><ul>{group.links.map(link=><li key={link.href}><Link prefetch={false} href={link.href}>{link.label}</Link></li>)}</ul></div>)}
         </div>
-      </div>
+        <div className={`${styles.container} ${styles.footerBottom}`}><span>{t("footer.copyright",{year:new Date().getFullYear()})} · Two Steps Studio</span><Link href="/about">{t("footer.about")}</Link></div>
+      </footer>
     </div>
-
-    <section className="bg-gradient-to-b from-background/70 to-transparent px-4 pb-20 dark:from-background/60" aria-labelledby="hero-shot-title">
-      <h2 id="hero-shot-title" className="sr-only">
-        {t("heroShotTitle")}
-      </h2>
-      {/* A laptop drawn in CSS around a real screenshot of the dashboard, one
-          per theme - regenerate with scripts/landing/capture.mjs. */}
-      <div className="mx-auto max-w-6xl">
-        <ScrollStage><MarketingMotion kind="laptop">
-        <div data-motion-actor="laptop">
-        <div className="relative mx-auto w-[88%] rounded-t-[1.1rem] rounded-b-sm border border-neutral-700 bg-neutral-900 p-[1.4%] pb-[1.8%] shadow-2xl dark:border-neutral-600">
-          <span className="absolute left-1/2 top-[0.55%] h-1 w-1 -translate-x-1/2 rounded-full bg-neutral-600 md:h-1.5 md:w-1.5" aria-hidden />
-          <div className="relative overflow-hidden rounded-[0.3rem] bg-background">
-            <ProductScreen label={t("exploreProduct")} views={[
-              {key:"hero-dashboard", title:t("previewDashboard"), alt:t("heroShotAlt")},
-              {key:"taskBoard", title:t("features.taskBoard.title"), alt:t("features.taskBoard.title")},
-              {key:"roadmap", title:t("features.roadmap.title"), alt:t("features.roadmap.title")},
-            ]} />
-          </div>
-        </div>
-        <div className="relative mx-auto h-3 w-full rounded-b-2xl bg-gradient-to-b from-neutral-300 to-neutral-400 shadow-xl md:h-5 dark:from-neutral-600 dark:to-neutral-800" aria-hidden>
-          <div className="absolute left-1/2 top-0 h-1.5 w-[14%] -translate-x-1/2 rounded-b-lg bg-neutral-400 md:h-2 dark:bg-neutral-900/70" />
-        </div>
-        </div>
-        </MarketingMotion></ScrollStage>
-      </div>
-    </section>
-
-    <section className="border-t border-border bg-background px-4 py-16" aria-labelledby="context-demo-title">
-      <div className="mx-auto max-w-5xl">
-        <p className="mb-3 text-center text-xs font-medium uppercase tracking-widest text-primary">{t("motion.example")}</p>
-        <h2 id="context-demo-title" className={`${displayFont.className} text-center text-3xl md:text-4xl`}>{t("motion.title")}</h2>
-        <p className="mx-auto mt-4 max-w-xl text-center text-text-secondary">{t("motion.description")}</p>
-        <MarketingMotion kind="context">
-          <div className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-background/90 p-6 md:p-10" aria-hidden="true">
-            <div data-motion-actor="signal" className="pointer-events-none absolute inset-x-8 top-1/2 hidden h-px bg-gradient-to-r from-transparent via-primary to-transparent md:block" />
-            <div className="relative grid items-center gap-6 md:grid-cols-3">
-              <div data-motion-actor="task" className="rounded-xl border border-primary/30 bg-card p-5 shadow-lg">
-                <CheckSquare className="mb-5 h-6 w-6 text-primary" />
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("motion.taskLabel")}</p>
-                <p className="mt-2 font-semibold">{t("motion.task")}</p>
-                <div className="mt-6 h-1.5 rounded-full bg-primary/15"><div className="h-full w-2/3 rounded-full bg-primary" /></div>
-              </div>
-              <div className="space-y-3">
-                <div data-motion-actor="decision" className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"><FileText className="h-5 w-5 shrink-0 text-primary" /><p className="text-sm font-medium">{t("motion.decision")}</p></div>
-                <div data-motion-actor="knowledge" className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"><BookOpen className="h-5 w-5 shrink-0 text-primary" /><p className="text-sm font-medium">{t("motion.knowledge")}</p></div>
-              </div>
-              <div data-motion-actor="result" className="rounded-xl border border-primary/30 bg-primary/5 p-5">
-                <Bot className="mb-5 h-6 w-6 text-primary" />
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("motion.agent")}</p>
-                <p className="mt-2 font-semibold">{t("motion.review")}</p>
-                <CheckCircle2 className="mt-5 h-5 w-5 text-success" />
-              </div>
-            </div>
-          </div>
-        </MarketingMotion>
-      </div>
-    </section>
-
-    {/* The promise in three steps - a board for people, the why beside
-        each task, AI only when wanted - before the AI options and the tour. */}
-    <section className="border-t border-border py-20" aria-labelledby="how-it-works-title">
-      <div className="container mx-auto max-w-5xl px-4">
-        <h2 id="how-it-works-title" className={`${displayFont.className} mb-12 text-center text-3xl md:text-4xl`}>
-          {t("howItWorks.title")}
-        </h2>
-        <RevealGroup as="ol" className="grid gap-6 md:grid-cols-3">
-          {(t.raw("howItWorks.steps") as { title: string; description: string }[]).map((step, index) => {
-            const Icon = HOW_IT_WORKS_ICONS[index] ?? CheckCircle2;
-            return (
-              <li key={step.title} className="scrim space-y-3 rounded-2xl border border-border p-6">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-                    <Icon className="h-5 w-5 text-primary" aria-hidden />
-                  </span>
-                  <span className="text-sm font-medium text-text-secondary tabular-nums">{index + 1}</span>
-                </div>
-                <h3 className="text-xl font-semibold">{step.title}</h3>
-                <p className="leading-relaxed text-text-secondary">{step.description}</p>
-              </li>
-            );
-          })}
-        </RevealGroup>
-        <div className="mt-10 flex justify-center">
-          <Button size="lg" className="h-auto px-8 py-6 text-base" asChild>
-            <CtaLink cta="how-start" href="/start">{t("getStarted")}</CtaLink>
-          </Button>
-        </div>
-      </div>
-    </section>
-
-    {/* Every way to bring AI in, all optional. Only what exists today: the
-        apps match the Connect dialog (src/app/profile/mcp-connect.tsx). The
-        pills and cards are opaque (bg-card), not scrim: thirteen more blurred
-        panels over the animated Dither kept WebKit from painting at all. */}
-    <section className="border-t border-border py-20" aria-labelledby="ai-options-title">
-      <div className="container mx-auto max-w-5xl px-4">
-        <div className="scrim mx-auto mb-10 max-w-3xl space-y-3 rounded-2xl px-6 py-6 text-center">
-          <h2 id="ai-options-title" className={`${displayFont.className} text-3xl md:text-4xl`}>
-            {t("aiOptions.title")}
-          </h2>
-          <p className="text-text-secondary">{t("aiOptions.subtitle")}</p>
-        </div>
-        <h3 className="scrim mx-auto mb-4 w-fit rounded-full px-3 py-1 text-center text-sm font-medium uppercase tracking-wide text-text-secondary">{t("aiOptions.appsTitle")}</h3>
-        <ul className="mb-12 flex flex-wrap justify-center gap-2">
-          {(t.raw("aiOptions.apps") as string[]).map((app) => (
-            <li key={app} className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium">{app}</li>
-          ))}
-        </ul>
-        <h3 className="scrim mx-auto mb-4 w-fit rounded-full px-3 py-1 text-center text-sm font-medium uppercase tracking-wide text-text-secondary">{t("aiOptions.moreTitle")}</h3>
-        <RevealGroup as="ul" className="grid gap-4 sm:grid-cols-2">
-          {(t.raw("aiOptions.more") as { title: string; description: string }[]).map((option, index) => {
-            const Icon = AI_OPTION_ICONS[index] ?? Bot;
-            return (
-              <li key={option.title} className="flex gap-4 rounded-2xl border border-border bg-card p-5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                  <Icon className="h-5 w-5 text-primary" aria-hidden />
-                </span>
-                <div className="space-y-1">
-                  <h4 className="font-semibold">{option.title}</h4>
-                  <p className="text-sm leading-relaxed text-text-secondary">{option.description}</p>
-                </div>
-              </li>
-            );
-          })}
-        </RevealGroup>
-      </div>
-    </section>
-
-    <section className="border-t border-border py-20">
-      <div className="container mx-auto max-w-6xl px-4">
-        <div className="scrim mx-auto mb-16 max-w-3xl space-y-3 rounded-2xl px-6 py-6 text-center">
-          <h2 className={`${displayFont.className} text-3xl md:text-4xl`}>
-            {t("featuresTitle")}
-          </h2>
-          <p className="text-text-secondary max-w-2xl mx-auto">
-            {t("featuresSubtitle")}
-          </p>
-        </div>
-
-        <div className="space-y-16">
-          {FEATURE_SECTIONS.map((feature, index) => {
-            const Icon = feature.icon;
-            const reversed = index % 2 === 1;
-            // t.raw() instead of t(): each `bullets` value is a JSON array
-            // of strings, not an ICU message, so t()'s string-interpolation
-            // formatting doesn't apply - .raw() returns the array as-is.
-            const bullets = t.raw(`features.${feature.key}.bullets`) as string[];
-            return (
-              <div
-                key={feature.key}
-                className={`flex flex-col md:flex-row items-center gap-8 md:gap-12 ${
-                  reversed ? "md:flex-row-reverse" : ""
-                }`}
-              >
-                {/* Real screenshots of the demo project, one per theme -
-                    regenerate with scripts/landing/capture.mjs when the
-                    captured pages change. */}
-                <ScrollPreview direction={reversed?-1:1} className="w-full md:w-[55%] md:shrink-0">
-                    <Image
-                      src={`/landing/${feature.key}-light.webp`}
-                      alt={t(`features.${feature.key}.title`)}
-                      width={1600}
-                      height={1000}
-                      sizes="(min-width: 768px) 55vw, 100vw"
-                      className="h-auto w-full dark:hidden"
-                    />
-                    <Image
-                      src={`/landing/${feature.key}-dark.webp`}
-                      alt={t(`features.${feature.key}.title`)}
-                      width={1600}
-                      height={1000}
-                      sizes="(min-width: 768px) 55vw, 100vw"
-                      className="hidden h-auto w-full dark:block"
-                    />
-                </ScrollPreview>
-                <div className="scrim flex-1 space-y-3 rounded-2xl p-6 text-center md:text-left">
-                  <div className="mx-auto md:mx-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-semibold">{t(`features.${feature.key}.title`)}</h3>
-                  <p className="text-text-secondary leading-relaxed">{t(`features.${feature.key}.description`)}</p>
-                  <ul className="inline-block text-left text-sm text-text-secondary space-y-1.5 pt-1">
-                    {bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-2">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
-                        {bullet}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-
-    {plans.length > 0 && <PricingSection plans={plans} prices={prices} checkoutAvailable={!hasDirectDatabase() && isBillingConfigured()} />}
-
-    <section className="border-t border-border py-20" aria-labelledby="faq-title" id="frequently-asked-questions">
-      <div className="container mx-auto max-w-3xl px-4">
-        <h2 id="faq-title" className={`${displayFont.className} mb-8 text-center text-3xl md:text-4xl`}>
-          {t("faq.title")}
-        </h2>
-        <div className="scrim divide-y divide-border rounded-2xl px-6">
-          {faq.map((item) => (
-            <AnimatedFaq key={item.q} question={item.q} answer={item.a} />
-          ))}
-        </div>
-      </div>
-    </section>
-
-    <section className="border-t border-border py-20" aria-labelledby="self-host-title">
-      <div className="container mx-auto max-w-3xl px-4">
-        <div className="scrim space-y-4 rounded-2xl px-6 py-8 text-center">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-            <Server className="h-5 w-5 text-primary" />
-          </div>
-          <h2 id="self-host-title" className={`${displayFont.className} text-3xl md:text-4xl`}>
-            {t("selfHost.title")}
-          </h2>
-          <p className="mx-auto max-w-2xl text-text-secondary">{t("selfHost.description")}</p>
-          <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <Button asChild>
-              <a href={SELF_HOSTING_DOCS_URL} target="_blank" rel="noopener noreferrer">
-                <Server className="mr-2 h-4 w-4" />
-                {t("selfHost.guide")}
-              </a>
-            </Button>
-            <Button variant="outline" asChild>
-              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-4 w-4" />
-                {t("selfHost.github")}
-              </a>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/developers">
-                <Cpu className="mr-2 h-4 w-4" />
-                {t("selfHost.apiDocs")}
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
-    </main>
-    <SiteFooter />
-    </>
   );
 }

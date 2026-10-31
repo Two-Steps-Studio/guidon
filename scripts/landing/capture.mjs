@@ -23,7 +23,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const OUT = path.join(HERE, "..", "..", "public", "landing");
+const OUT = process.env.LANDING_CAPTURE_OUTPUT ?? path.join(HERE, "..", "..", "public", "landing");
 
 const env = process.env;
 for (const key of ["DEMO_USER_EMAIL", "DEMO_USER_PASSWORD", "DEMO_PROJECT_ID", "DEMO_TASK_ID"]) {
@@ -55,8 +55,11 @@ for (const theme of ["light", "dark"]) {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 820 },
     deviceScaleFactor: 2,
+    // Only the disposable loopback TLS fixture may use its generated certificate.
+    ignoreHTTPSErrors: env.LANDING_CAPTURE_TEST_TLS === "1" && new URL(BASE).hostname === "127.0.0.1",
     colorScheme: theme,
   });
+  await context.addInitScript(() => localStorage.setItem("guidon-background-style", "solid"));
   const page = await context.newPage();
   await page.goto(`${BASE}/auth/login`, { waitUntil: "networkidle" });
   await page.fill("#email", env.DEMO_USER_EMAIL);
@@ -74,12 +77,18 @@ for (const theme of ["light", "dark"]) {
     await target.waitFor();
     // Floating AI chat button and focus rings are noise in a still image.
     await page.addStyleTag({ content: ".fixed.bottom-6.right-6 { display: none !important; }" });
-    if (shot.preview) await page.getByRole("button", { name: "Preview" }).click();
+    if (shot.preview && await page.getByRole("button", { name: "Preview", exact: true }).isVisible()) await page.getByRole("button", { name: "Preview", exact: true }).click();
     await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : null));
     await page.waitForTimeout(600); // fonts, images, entry transitions
     const box = await target.boundingBox();
     // Top of the page only, at a fixed aspect ratio - consistent tiles on the landing page.
     const clip = { x: box.x, y: box.y, width: box.width, height: Math.min(box.height, box.width * 0.625) };
+    if (shot.preview) {
+      // Focus this real UI excerpt on the task and its context, rather than
+      // the dialog's administrative controls. Keep the shared 8:5 framing.
+      const title = await page.locator("#task-title").boundingBox();
+      if (title) clip.y = Math.min(Math.max(box.y, title.y - 32), 820 - clip.height);
+    }
     const png = await page.screenshot({ clip });
     const file = path.join(OUT, `${shot.key}-${theme}.webp`);
     await sharp(png).resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82 }).toFile(file);

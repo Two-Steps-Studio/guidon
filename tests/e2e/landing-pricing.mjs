@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import {writeFile} from 'node:fs/promises';
+import AxeBuilder from '@axe-core/playwright';
 
 // Written ONLY into the runner's disposable source copy, never into the app.
 // Self-hosted homepages intentionally have no Cloud pricing catalogue.
@@ -12,7 +14,9 @@ export default function Fixture(){return <>
   <div style={{height:'200vh'}}>Product tour</div>
   <PricingSection plans={[
     {...base,id:'free',name:'Free',price_cents:0},
+    {...base,id:'solo',name:'Solo',price_cents:500},
     {...base,id:'pro',name:'Pro',price_cents:1000},
+    {...base,id:'studio',name:'Studio',price_cents:2000},
     {...base,id:'enterprise',name:'Enterprise',price_cents:null},
   ]} prices={[
     {plan_id:'pro',billing_interval:'month',amount_cents:1000},
@@ -27,13 +31,9 @@ export async function landingPricingCoverage({page,origin,browserName,artifacts,
   const pricing=page.locator('#pricing');
   // Card has no data-slot in some deployments; select by its heading instead.
   const proCard=pricing.getByRole('heading',{name:'Pro',exact:true}).locator('..').locator('..');
-  await page.evaluate(()=>scrollTo(0,innerHeight*1.1));
-  const navigator=page.getByRole('complementary',{name:'Explore plans'});
-  await navigator.waitFor();
-  await navigator.getByRole('button',{name:'Yearly',exact:true}).click();
-  await navigator.waitFor({state:'hidden'});
+  await pricing.scrollIntoViewIfNeeded();
+  await pricing.getByRole('button',{name:'Yearly',exact:true}).click();
   assert.equal(await pricing.getByRole('button',{name:'Yearly',exact:true}).getAttribute('aria-pressed'),'true');
-  await page.waitForFunction(()=>document.activeElement?.id==='pricing');
   await proCard.getByText('€100.00',{exact:false}).waitFor();
   const link=proCard.getByRole('link',{name:'Get Started',exact:true});
   const signup=new URL(await link.getAttribute('href'),origin);
@@ -56,6 +56,15 @@ export async function landingPricingCoverage({page,origin,browserName,artifacts,
     await page.setViewportSize({width,height:900});
     await pricing.scrollIntoViewIfNeeded();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    if(width===1440) {
+      const tops=await pricing.locator('ul').evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().top));
+      assert.ok(Math.max(...tops)-Math.min(...tops)<2,'All plan feature lists align, including the popular plan badge');
+    }
+    if(browserName==='chromium') {
+      const a11y=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
+      await writeFile(path.join(artifacts,`pricing-a11y-${width}.json`),JSON.stringify(a11y.violations,null,2));
+      assert.deepEqual(a11y.violations.map(violation=>({id:violation.id,targets:violation.nodes.map(node=>node.target)})),[]);
+    }
     await page.screenshot({path:path.join(artifacts,browserName+'-pricing-'+width+'.png')});
   }
   await page.goto(origin+'/auth/login');

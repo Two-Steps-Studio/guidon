@@ -175,6 +175,11 @@ The interface tokens in `src/app/globals.css` map to this palette:
 `--color-primary` switches between them for light and dark themes. The primary
 font is Geist. Use these tokens rather than adding one-off UI colors.
 
+The homepage's typography, spacing, surfaces, responsive layouts and motion
+rules are defined in [the landing design system](design/landing-system.md).
+This presentation layer derives from the palette above and does not change
+the authenticated application's design tokens.
+
 ## Links
 
 - Website: https://useguidon.com
