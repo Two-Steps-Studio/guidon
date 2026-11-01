@@ -168,6 +168,8 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
         type="button"
         aria-label={`${t("triggerLabel")} ⌘K`}
         aria-keyshortcuts="Meta+K Control+K"
+        // Stabilny uchwyt dla spotlight tour (przewodnik po aplikacji).
+        data-tour="command"
         data-slot="button"
         onClick={() => setOpen(true)}
         className="flex h-8 w-11 shrink-0 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-full md:max-w-64 md:shrink"

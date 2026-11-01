@@ -17,7 +17,7 @@ import { PinnedTasksProvider } from "@/components/work/pinned-tasks-context";
 import { getPinnedProjects, type PinnedProject } from "@/lib/data/pinned-projects";
 import { PinnedProjectsProvider } from "@/components/projects/pinned-projects-context";
 import { AppMessages } from "@/components/layout/app-messages";
-import { WalkthroughAutoOpen } from "@/components/layout/walkthrough-dialog";
+import { WalkthroughAutoOpen } from "@/components/layout/walkthrough-tour";
 import { BetaBadge } from "@/components/layout/beta-badge";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };

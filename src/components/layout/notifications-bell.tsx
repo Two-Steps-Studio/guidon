@@ -109,6 +109,8 @@ export function NotificationsBell() {
               variant="ghost"
               size="icon"
               className="relative h-8 w-8"
+              // Stabilny uchwyt dla spotlight tour (przewodnik po aplikacji).
+              data-tour="bell"
               aria-label={unreadCount > 0 ? t("bellAriaUnread", { count: unreadCount }) : t("bellAria")}
             >
               <Bell className="size-4" />

@@ -41,14 +41,17 @@ export function SelectMenu({
   onValueChange,
   disabled,
   className,
+  dataTour,
   "aria-label": ariaLabel,
-}: SelectMenuProps) {
+}: SelectMenuProps & { dataTour?: string }) {
   const current = options.find((option) => option.value === value)
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={disabled}
+        // Stabilny uchwyt dla spotlight tour (przewodnik po aplikacji).
+        data-tour={dataTour}
         aria-label={`${ariaLabel}: ${current?.label ?? value}`}
         className={cn(
           "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-left text-sm shadow-sm transition-colors",

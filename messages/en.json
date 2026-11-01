@@ -1120,6 +1120,7 @@
     }
   },
   "roadmap": {
+    "dialogTitle": "Create Phase",
     "title": "Roadmap",
     "subtitle": "Project phases and timeline",
     "newPhase": "New Phase",
@@ -1131,7 +1132,6 @@
     "progress": "Progress:",
     "notSet": "Not set",
     "phaseStatus": "{status, select, planned {Planned} in_progress {In Progress} completed {Completed} blocked {Blocked} other {Planned}}",
-    "dialogTitle": "Create Phase",
     "dialogDescription": "Add a new phase to the roadmap",
     "cancel": "Cancel",
     "creating": "Creating...",
@@ -1150,6 +1150,7 @@
     "completionLabel": "Completion %"
   },
   "members": {
+    "dialogTitle": "Create Phase",
     "title": "Members",
     "subtitle": "Who can see and change this project.",
     "addMember": "Add member",
@@ -1166,7 +1167,6 @@
     "couldNotAddMember": "Could not add that member",
     "couldNotAddMemberRetry": "Could not add that member. Please try again.",
     "unknownMember": "Unknown member",
-    "dialogTitle": "Add member",
     "dialogDescription": "People must already belong to the organization that owns this project.",
     "manageOrgMembers": "Manage organization members",
     "personLabel": "Person",
@@ -1440,8 +1440,8 @@
     "openBoard": "Open board"
   },
   "feedback": {
+    "dialogTitle": "Create Phase",
     "sendFeedback": "Send feedback",
-    "dialogTitle": "Send feedback",
     "dialogDescription": "Tell us what's working, what's broken, or what you'd like to see - we read every message.",
     "placeholder": "What's on your mind?",
     "send": "Send",
@@ -1487,6 +1487,7 @@
     "deleteRelationAria": "Delete relation"
   },
   "decisions": {
+    "dialogTitle": "Create Phase",
     "title": "Decisions",
     "subtitle": "Track important project decisions and their rationale",
     "createDecision": "Create Decision",
@@ -1495,7 +1496,6 @@
     "impact": "Impact",
     "alternativesConsidered": "Alternatives Considered",
     "newDecision": "New Decision",
-    "dialogTitle": "Create Decision",
     "dialogDescription": "Record a new project decision",
     "cancel": "Cancel",
     "creating": "Creating...",
@@ -1589,6 +1589,7 @@
     "connect": "Connect"
   },
   "memory": {
+    "dialogTitle": "Create Phase",
     "title": "Memory",
     "subtitle": "Persistent project knowledge and insights",
     "pendingReview": "Pending Review ({count})",
@@ -1600,7 +1601,6 @@
     "verifiedBy": "Verified by {name}, {date}",
     "unknown": "Unknown",
     "newMemory": "New Memory",
-    "dialogTitle": "Create Memory",
     "dialogDescription": "Add a new memory entry to the project",
     "contentLabel": "Content",
     "typeLabel": "Type",
@@ -2872,27 +2872,26 @@
   },
   "walkthrough": {
     "launcher": "App tour",
-    "dialogTitle": "Welcome to Guidon",
-    "dialogSubtitle": "A quick tour of the main places in the app. It takes a minute.",
     "stepOf": "Step {step} of {total}",
     "back": "Back",
     "next": "Next",
     "skip": "Skip and don't show again",
     "done": "Let's go",
-    "step1Title": "Welcome to Guidon",
-    "step1Body": "Guidon keeps your task board, project knowledge and AI agents' work in one place. This tour shows you where everything lives.",
-    "step2Title": "Task board",
-    "step2Body": "Drag tasks across columns from Backlog to Done. You get subtasks, comments, priorities and due dates - and an AI agent can work on a task, documenting every change as an attempt.",
-    "step3Title": "Project knowledge",
-    "step3Body": "Record decisions with reasoning and alternatives, add knowledge sources and technologies, and keep references on the moodboard.",
-    "step4Title": "Memory and context",
-    "step4Body": "Guidon remembers your project's facts, rules and constraints. Agents pick them up through the agent brief, and the context graph shows how it all connects.",
-    "step5Title": "Plan and progress",
-    "step5Body": "The roadmap shows phases and progress, the calendar shows task deadlines, and the activity feed shows what the team has been moving.",
-    "step6Title": "AI in Guidon",
-    "step6Body": "Delegate work to agents, approve their changes under Approvals, and use the API and webhooks to plug Guidon into your own automations.",
-    "step7Title": "Create your first project",
-    "step7Body": "Start with an organization and a project. The tour stays available any time from the sidebar footer."
+    "spot1Title": "Dashboard",
+    "spot1Body": "Everything in one place: open tasks, latest activity and project progress.",
+    "spot2Title": "My tasks",
+    "spot2Body": "Your open and overdue work from every project, in one list.",
+    "spot3Title": "Projects",
+    "spot3Body": "The team's projects - every piece of work starts here.",
+    "spot4Title": "Search",
+    "spot4Body": "Press Ctrl+K (Cmd+K) to jump to tasks, projects and actions.",
+    "spot5Title": "Notifications",
+    "spot5Body": "This bell shows what happened while you were away.",
+    "spot6Title": "Your profile",
+    "spot6Body": "Your account, integrations and personal settings.",
+    "spot7Title": "Language",
+    "spot7Body": "Switch the app language here (and the theme just above).",
+    "ctaOpen": "Show"
   },
   "whiteboard": {
     "boardDefaultName": "Main board",
