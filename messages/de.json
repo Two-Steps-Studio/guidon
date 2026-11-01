@@ -1059,6 +1059,8 @@
     "unpinTask": "Lösen",
     "pinTooMany": "Du kannst bis zu 10 Aufgaben anheften. Löse zuerst eine.",
     "pinFailed": "Das Anheften hat nicht geklappt. Versuch es noch einmal.",
+    "pinnedTasksHeading": "Angeheftet",
+    "pinnedTaskAria": "Angeheftete Aufgabe",
     "taskMovedAnnouncement": "{title} nach {column} verschoben, Position {position}",
     "links": {
       "heading": "Verknüpfter Code",

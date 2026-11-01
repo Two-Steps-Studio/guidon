@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import { useReducedMotionPreference } from "@/lib/use-reduced-motion";
-import { Plus } from "lucide-react";
+import { Pin, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -540,6 +540,9 @@ function KanbanBoardComponent({
     >
       {columns.map((column) => {
         const columnTasks = groups[column.status];
+        // Pins are sorted to the front of the column (pinnedTaskComparator) -
+        // this is where that block ends, so the dashed rule can mark it.
+        const pinnedCount = columnTasks.filter((task) => pinnedIds.has(task.id)).length;
         const isTargetColumn = dropTarget?.status === column.status;
 
         return (
@@ -593,44 +596,66 @@ function KanbanBoardComponent({
                 // No content-visibility:auto here: cards never rendered yet get
                 // a guessed height, so a long column's scroll end and scrollbar
                 // jumped as they came into view (release E2E board-layout).
-                <div key={task.id}>
-                  <DropZone
-                    active={
-                      isTargetColumn &&
-                      dropTarget?.index === index &&
-                      draggingTask?.id !== task.id
-                    }
-                    enabled={Boolean(draggingTask) && canDrag}
-                    grow={false}
-                    projectColor={projectColor}
-                  />
-                  <TaskCard
-                    task={task}
-                    assignee={
-                      task.assignee_id
-                        ? membersById.get(task.assignee_id)
-                        : undefined
-                    }
-                    commentCount={commentCounts[task.id]}
-                    coverImageUrl={coverImages[task.id]}
-                    coverPriority={task.id === priorityCoverId}
-                    subtaskProgress={subtaskCounts[task.id]}
-                    draggable={canDrag}
-                    isDragging={draggingTask?.id === task.id}
-                    onOpen={onOpenTask}
-                    onDragStart={handleDragStart}
-                    onDragMove={handleDragMove}
-                    onDragEnd={handleDragEnd}
-                    onDragCancel={cancelDrag}
-                    onReorder={canDrag ? handleReorder : undefined}
-                    canMoveUp={index > 0 && pinnedIds.has(columnTasks[index - 1].id) === pinnedIds.has(task.id)}
-                    canMoveDown={index < columnTasks.length - 1 && pinnedIds.has(columnTasks[index + 1].id) === pinnedIds.has(task.id)}
-                    moveTargets={canEdit ? moveTargetsByStatus.get(column.status) : undefined}
-                    onMoveTo={canEdit ? handleMoveTo : undefined}
-                    selected={selectedIds?.has(task.id) ?? false}
-                    onSelect={canEdit && onSelectionChange ? handleSelect : undefined}
-                  />
-                </div>
+                <Fragment key={task.id}>
+                  {/* The person's pins lead the column as their own block; a
+                      dashed rule marks where they end and the project's saved
+                      order resumes. Omitted when a column is all (or no)
+                      pins, since there's nothing to separate. */}
+                  {index === pinnedCount && pinnedCount < columnTasks.length && (
+                    <div
+                      role="separator"
+                      aria-label={t("pinnedTasksHeading")}
+                      data-pinned-separator
+                      className="flex items-center gap-2 px-1 py-0.5"
+                    >
+                      <span className="h-px flex-1 border-t border-dashed border-border" />
+                      <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        <Pin className="h-2.5 w-2.5" aria-hidden />
+                        {t("pinnedTasksHeading")}
+                      </span>
+                      <span className="h-px flex-1 border-t border-dashed border-border" />
+                    </div>
+                  )}
+                  <div>
+                    <DropZone
+                      active={
+                        isTargetColumn &&
+                        dropTarget?.index === index &&
+                        draggingTask?.id !== task.id
+                      }
+                      enabled={Boolean(draggingTask) && canDrag}
+                      grow={false}
+                      projectColor={projectColor}
+                    />
+                    <TaskCard
+                      task={task}
+                      assignee={
+                        task.assignee_id
+                          ? membersById.get(task.assignee_id)
+                          : undefined
+                      }
+                      commentCount={commentCounts[task.id]}
+                      coverImageUrl={coverImages[task.id]}
+                      coverPriority={task.id === priorityCoverId}
+                      subtaskProgress={subtaskCounts[task.id]}
+                      pinned={pinnedIds.has(task.id)}
+                      draggable={canDrag}
+                      isDragging={draggingTask?.id === task.id}
+                      onOpen={onOpenTask}
+                      onDragStart={handleDragStart}
+                      onDragMove={handleDragMove}
+                      onDragEnd={handleDragEnd}
+                      onDragCancel={cancelDrag}
+                      onReorder={canDrag ? handleReorder : undefined}
+                      canMoveUp={index > 0 && pinnedIds.has(columnTasks[index - 1].id) === pinnedIds.has(task.id)}
+                      canMoveDown={index < columnTasks.length - 1 && pinnedIds.has(columnTasks[index + 1].id) === pinnedIds.has(task.id)}
+                      moveTargets={canEdit ? moveTargetsByStatus.get(column.status) : undefined}
+                      onMoveTo={canEdit ? handleMoveTo : undefined}
+                      selected={selectedIds?.has(task.id) ?? false}
+                      onSelect={canEdit && onSelectionChange ? handleSelect : undefined}
+                    />
+                  </div>
+                </Fragment>
               ))}
 
               <DropZone
