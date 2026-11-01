@@ -18,6 +18,7 @@
     "lint": "eslint",
     "postinstall": "node scripts/copy-monaco-assets.mjs",
     "migrate": "node scripts/migrate.mjs",
+    "demo:seed": "node scripts/seed-walkthrough-demo.mjs",
     "migrate:status": "node scripts/migrate.mjs --status",
     "brand:icons": "node scripts/generate-brand-icons.mjs",
     "test:db": "node --experimental-strip-types tests/db/compat.test.mjs",
