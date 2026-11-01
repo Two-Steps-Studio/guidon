@@ -1,7 +1,11 @@
+/* Tablica wypełnia resztę widoku pod przyklejonym nagłówkiem powłoki
+   (AppShell header = h-12 = 3rem). 100dvh liczy względem całego ekranu,
+   więc poprzednie calc(100vh - header) szafowało scroll i chowało
+   toolbar pod krawędź okna. */
 .page {
   position: relative;
   width: 100%;
-  height: calc(100vh - var(--sidebar-header-height, 0px));
+  height: calc(100dvh - 3rem);
   overflow: hidden;
   background: var(--color-background);
 }

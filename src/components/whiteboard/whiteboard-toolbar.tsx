@@ -1,61 +1,115 @@
 "use client";
 
-import React from "react";
+import { useTranslations } from "next-intl";
+import { Circle, ClipboardList, Plus, Sparkles, Square, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles } from "lucide-react";
-import { upsertElementAction } from "@/app/projects/[id]/whiteboard/actions";
 import type { Node } from "reactflow";
 
 interface WhiteboardToolbarProps {
-  projectId: string;
+  onAddSticky: () => void;
+  onAddRectangle: () => void;
+  onAddCircle: () => void;
+  tasksVisible: boolean;
+  onToggleTasks: () => void;
   selectedNodes: Node[];
+  onDeleteSelected: () => void;
+  onColorChange: (color: string) => void;
+  colors: string[];
   onAIConvert: () => void;
 }
 
-export function WhiteboardToolbar({ projectId, selectedNodes, onAIConvert }: WhiteboardToolbarProps) {
-  const addElement = async (type: "sticky" | "shape", shape?: "rectangle" | "circle") => {
-    try {
-      await upsertElementAction(projectId, {
-        type: type === "sticky" ? "sticky" : "shape",
-        x: 100,
-        y: 100,
-        content: {
-          text: "New Element",
-          color: type === "sticky" ? "#fef3c7" : "#e2e8f0",
-          shape: shape || "rectangle"
-        },
-      });
-      window.location.reload();
-    } catch (e) {
-      console.error(`Failed to add ${type}`, e);
-    }
-  };
+/**
+ * Pasek narzędzi tablicy - elementy tworzy kanwa na środku widoku (toolbar
+ * tylko prosi), a podwójny klik na tle tworzy karteczkę pod kursorem,
+ * także w trybie przewijania czy zaznaczania.
+ */
+export function WhiteboardToolbar({
+  onAddSticky,
+  onAddRectangle,
+  onAddCircle,
+  tasksVisible,
+  onToggleTasks,
+  selectedNodes,
+  onDeleteSelected,
+  onColorChange,
+  colors,
+  onAIConvert,
+}: WhiteboardToolbarProps) {
+  const t = useTranslations("whiteboard");
+
+  const singleSticky = selectedNodes.length === 1 && selectedNodes[0].type === "sticky";
+  const selectedColors = selectedNodes.filter((node) => node.type === "sticky").length;
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 p-2 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg">
-      <Button variant="ghost" size="sm" onClick={() => addElement("sticky")} className="gap-2">
+    <div
+      data-tour-toolbar
+      className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 flex max-w-[95%] flex-wrap items-center justify-center gap-2 rounded-full border border-border bg-background/80 p-2 shadow-lg backdrop-blur-md"
+    >
+      <Button variant="ghost" size="sm" onClick={onAddSticky} className="gap-2">
         <Plus size={16} />
-        <span>Add Sticky</span>
+        <span>{t("addSticky")}</span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => addElement("shape", "rectangle")} className="gap-2">
-        <div className="size-3 border border-foreground" />
-        <span>Rectangle</span>
+      <Button variant="ghost" size="sm" onClick={onAddRectangle} className="gap-2" title={t("addRectangle")}>
+        <Square size={14} />
+        <span>{t("addRectangle")}</span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => addElement("shape", "circle")} className="gap-2">
-        <div className="size-3 border border-foreground rounded-full" />
-        <span>Circle</span>
+      <Button variant="ghost" size="sm" onClick={onAddCircle} className="gap-2" title={t("addCircle")}>
+        <Circle />
+        <span>{t("addCircle")}</span>
       </Button>
-      <div className="w-px h-4 bg-border mx-1" />
+
+      <div className="mx-1 h-4 w-px bg-border" />
+
+      <Button
+        variant={tasksVisible ? "secondary" : "ghost"}
+        size="sm"
+        onClick={onToggleTasks}
+        className="gap-2"
+      >
+        <ClipboardList size={16} />
+        <span>{tasksVisible ? t("hideTasks") : t("showTasks")}</span>
+      </Button>
+
+      <div className="mx-1 h-4 w-px bg-border" />
+
       <Button
         variant="ghost"
         size="sm"
         onClick={onAIConvert}
-        disabled={selectedNodes.length === 0}
+        disabled={selectedColors === 0}
         className="gap-2 text-primary disabled:opacity-50"
       >
         <Sparkles size={16} />
-        <span>AI Convert to Tasks</span>
+        <span>{t("convertToTasks")}</span>
       </Button>
+
+      {singleSticky && (
+        <>
+          <div className="mx-1 h-4 w-px bg-border" />
+          <div className="flex items-center gap-1" role="group" aria-label={t("colorLabel")}>
+            {colors.map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => onColorChange(color)}
+                aria-label={`${t("colorLabel")}: ${color}`}
+                className="size-5 rounded-full border border-border transition-transform hover:scale-110"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {selectedNodes.length > 0 && (
+        <>
+          <div className="mx-1 h-4 w-px bg-border" />
+          <Button variant="ghost" size="sm" onClick={onDeleteSelected} className="gap-2 text-destructive">
+            <Trash2 size={16} />
+            <span>{t("deleteSelected")}</span>
+          </Button>
+        </>
+      )}
     </div>
   );
 }

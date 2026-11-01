@@ -27,6 +27,7 @@ import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { FeedbackMenuItem } from "@/components/layout/feedback-dialog";
+import { WalkthroughMenuItem } from "@/components/layout/walkthrough-dialog";
 import type { SwitchableProject } from "@/lib/data/project-access";
 import type { Theme } from "@/lib/theme";
 import type { ProjectModuleLink } from "@/lib/data/project-module-navigation";
@@ -181,6 +182,9 @@ export interface AppSidebarProps {
     full_name?: string;
     avatar_url?: string;
   };
+  /** User id (from AppShell's getCurrentUser): keys the walkthrough's
+   *  per-account "seen" marker in localStorage. Undefined when signed out. */
+  userId?: string;
   projectId?: string;
   currentProjectName?: string;
   projects?: SwitchableProject[];
@@ -230,6 +234,7 @@ function PinnedProjectsGroup() {
 
 export function AppSidebar({
   user,
+  userId,
   projectId,
   currentProjectName,
   projects,
@@ -443,6 +448,7 @@ export function AppSidebar({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <WalkthroughMenuItem userId={userId ?? null} />
             <FeedbackMenuItem />
             <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:px-0">
               <ThemeSwitcher currentTheme={currentTheme} />
