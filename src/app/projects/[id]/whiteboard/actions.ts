@@ -11,16 +11,27 @@ import type { ProjectId } from "@/types/index";
  * bundling into client components.
  */
 
-export async function generateTaskProposals(projectId: string, selectedTexts: string[]) {
+/**
+ * Wspólna walidacja dla akcji tablicy: tożsamość (getOptionalCurrentUser)
+ * i dostęp do projektu (RLS to prawdziwa bariera; access daje userId do
+ * dalszych zapytań i sam projekt).
+ */
+async function requireProject(projectId: string) {
   const { getOptionalCurrentUser } = await import("@/lib/data/current-user");
   const { getProjectAccess } = await import("@/lib/data/project-access");
-  const { getAIProvider } = await import("@/lib/ai/provider");
 
   const user = await getOptionalCurrentUser();
   if (!user) throw new Error("Authentication required");
 
   const access = await getProjectAccess(projectId);
   if (!access) throw new Error("Project not found");
+
+  return { userId: user.id, access };
+}
+
+export async function generateTaskProposals(projectId: string, selectedTexts: string[]) {
+  const { userId, access } = await requireProject(projectId);
+  const { getAIProvider } = await import("@/lib/ai/provider");
 
   const project = access.project;
   const provider = await getAIProvider();
@@ -62,7 +73,7 @@ JSON Format:
       observability: {
         sessionId: "whiteboard-session",
         traceId: randomUUID(),
-        distinctId: user.id,
+        distinctId: userId,
         spanName: "whiteboard-convert-to-tasks",
       },
     });
@@ -75,62 +86,75 @@ JSON Format:
   };
 }
 
-export async function getElementsAction(projectId: string, boardId: string = "default") {
+/**
+ * Rozstrzyga tablicę projektu: istniejący board (pierwszy wg created_at)
+ * albo nowo utworzona „Główna tablica". board_id KOLUMNY whiteboard_elements
+ * to UUID z tabeli whiteboards - napis "default" nie przechodzi FK, więc
+ * każdy element/edge zapisujemy na prawdziwym boardzie.
+ */
+export async function getBoardAction(projectId: string) {
+  const { userId } = await requireProject(projectId);
+  const { getWhiteboards, createWhiteboard } = await import("@/lib/data/whiteboard");
+  const { getLocale, getTranslations } = await import("next-intl/server");
+
+  const boards = await getWhiteboards(userId, projectId);
+  const existing = boards.data?.[0];
+  if (existing) return { boardId: existing.id as string, name: existing.name as string };
+
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: "whiteboard" });
+  const created = await createWhiteboard(userId, projectId, t("boardDefaultName"));
+  if (!created) throw new Error("Failed to create the project board");
+  return { boardId: created.id as string, name: created.name as string };
+}
+
+export async function getElementsAction(projectId: string, boardId: string) {
+  const { userId } = await requireProject(projectId);
   const { getElements } = await import("@/lib/data/whiteboard");
-  try {
-    return await getElements(boardId, projectId);
-  } catch (e) {
-    console.error("Error fetching elements:", e);
-    throw e;
-  }
+  return await getElements(userId, boardId, projectId);
 }
 
 export async function upsertElementAction(projectId: string, element: any) {
+  const { userId } = await requireProject(projectId);
   const { upsertElement } = await import("@/lib/data/whiteboard");
-  try {
-    return await upsertElement(projectId, element);
-  } catch (e) {
-    console.error("Error upserting element:", e);
-    throw e;
-  }
+  return await upsertElement(userId, projectId, element);
 }
 
 export async function deleteElementsAction(projectId: string, ids: string[]) {
+  const { userId } = await requireProject(projectId);
   const { deleteElements } = await import("@/lib/data/whiteboard");
-  try {
-    return await deleteElements(projectId, ids);
-  } catch (e) {
-    console.error("Error deleting elements:", e);
-    throw e;
-  }
+  return await deleteElements(userId, projectId, ids);
 }
 
-export async function getEdgesAction(projectId: string, boardId: string = "default") {
+export async function getEdgesAction(projectId: string, boardId: string) {
+  const { userId } = await requireProject(projectId);
   const { getEdges } = await import("@/lib/data/whiteboard");
-  try {
-    return await getEdges(boardId, projectId);
-  } catch (e) {
-    console.error("Error fetching edges:", e);
-    throw e;
-  }
+  return await getEdges(userId, boardId, projectId);
 }
 
 export async function upsertEdgeAction(projectId: string, edge: any) {
+  const { userId } = await requireProject(projectId);
   const { upsertEdge } = await import("@/lib/data/whiteboard");
-  try {
-    return await upsertEdge(projectId, edge);
-  } catch (e) {
-    console.error("Error upserting edge:", e);
-    throw e;
-  }
+  return await upsertEdge(userId, projectId, edge);
 }
 
 export async function deleteEdgesAction(projectId: string, ids: string[]) {
+  const { userId } = await requireProject(projectId);
   const { deleteEdges } = await import("@/lib/data/whiteboard");
-  try {
-    return await deleteEdges(projectId, ids);
-  } catch (e) {
-    console.error("Error deleting edges:", e);
-    throw e;
-  }
+  return await deleteEdges(userId, projectId, ids);
+}
+
+/** Wszystkie zadania projektu na tablicę (przycisk „Pokaż zadania"). */
+export async function getTasksForBoardAction(projectId: string) {
+  const { userId, access } = await requireProject(projectId);
+  const ROWS = 500;
+  const { data, error } = await (await import("@/lib/data-client")).dataClient(userId)
+    .from("tasks")
+    .select("id, title, status, priority, is_done, due_date")
+    .eq("project_id", projectId)
+    .order("sort_order", { ascending: true })
+    .limit(ROWS);
+
+  if (error) throw new Error(`Failed to load tasks: ${error.message}`);
+  return data;
 }
