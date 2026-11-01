@@ -1059,6 +1059,8 @@
     "unpinTask": "Desfijar",
     "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
     "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo.",
+    "pinnedTasksHeading": "Fijadas",
+    "pinnedTaskAria": "Tarea fijada",
     "taskMovedAnnouncement": "{title} se movió a {column}, posición {position}",
     "links": {
       "heading": "Código vinculado",

@@ -1071,6 +1071,8 @@
     "unpinTask": "Odepnij",
     "pinTooMany": "Możesz przypiąć do 10 zadań. Najpierw odepnij któreś.",
     "pinFailed": "Nie udało się zmienić przypięcia. Spróbuj ponownie.",
+    "pinnedTasksHeading": "Przypięte",
+    "pinnedTaskAria": "Przypięte zadanie",
     "taskMovedAnnouncement": "Przeniesiono {title} do kolumny {column}, pozycja {position}",
     "links": {
       "heading": "Powiązany kod",

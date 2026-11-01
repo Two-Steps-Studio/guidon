@@ -1071,6 +1071,8 @@
     "unpinTask": "Unpin",
     "pinTooMany": "You can pin up to 10 tasks. Unpin one first.",
     "pinFailed": "Couldn't change the pin. Try again.",
+    "pinnedTasksHeading": "Pinned",
+    "pinnedTaskAria": "Pinned task",
     "taskMovedAnnouncement": "{title} moved to {column}, position {position}",
     "links": {
       "heading": "Linked code",

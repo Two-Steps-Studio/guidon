@@ -15,7 +15,7 @@ import {
 } from "@/lib/work/task-board";
 import type { Task, TaskStatus } from "@/types/task";
 import type { BoardColumn, SubtaskProgress } from "@/lib/work/task-board";
-import { CalendarDays, CheckCircle2, CheckSquare, ListChecks, MessageSquare, MoreVertical, Repeat, Square } from "lucide-react";
+import { CalendarDays, CheckCircle2, CheckSquare, ListChecks, MessageSquare, MoreVertical, Pin, Repeat, Square } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +54,8 @@ interface TaskCardProps {
   coverImageUrl?: string;
   coverPriority?: boolean;
   subtaskProgress?: SubtaskProgress;
+  /** Pinned by the signed-in person - badges the card and leads its column (see kanban-board.tsx). */
+  pinned?: boolean;
   draggable: boolean;
   isDragging: boolean;
   onOpen: (task: Task) => void;
@@ -159,6 +161,7 @@ function TaskCardComponent({
   coverImageUrl,
   coverPriority = false,
   subtaskProgress,
+  pinned = false,
   draggable,
   isDragging,
   onOpen,
@@ -403,6 +406,15 @@ function TaskCardComponent({
               if (onReorder && event.altKey && event.key === "ArrowUp" && canMoveUp) { event.preventDefault(); onReorder(task, "up"); }
               if (onReorder && event.altKey && event.key === "ArrowDown" && canMoveDown) { event.preventDefault(); onReorder(task, "down"); }
             }}>{task.title}</button>
+          {pinned && (
+            <span
+              title={t("pinnedTaskAria")}
+              className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded bg-primary/10 p-0.5 align-middle text-primary"
+            >
+              <Pin className="h-2.5 w-2.5" aria-hidden />
+              <span className="sr-only">{t("pinnedTaskAria")}</span>
+            </span>
+          )}
           {fresh && (
             <span className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded bg-primary/10 px-1 py-px align-middle text-[10px] font-semibold uppercase leading-3 tracking-wide text-primary">
               {t("newBadge")}
