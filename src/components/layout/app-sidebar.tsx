@@ -27,7 +27,7 @@ import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { FeedbackMenuItem } from "@/components/layout/feedback-dialog";
-import { WalkthroughMenuItem } from "@/components/layout/walkthrough-dialog";
+import { WalkthroughMenuItem } from "@/components/layout/walkthrough-tour";
 import type { SwitchableProject } from "@/lib/data/project-access";
 import type { Theme } from "@/lib/theme";
 import type { ProjectModuleLink } from "@/lib/data/project-module-navigation";

@@ -22,6 +22,7 @@ export function LanguageSwitcher() {
   return (
     <SelectMenu
       aria-label={t("languageLabel")}
+      dataTour="language"
       value={currentLocale}
       className={SIDEBAR_SELECT_CLASS_NAME}
       disabled={isPending}

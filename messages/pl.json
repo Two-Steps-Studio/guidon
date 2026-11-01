@@ -1120,6 +1120,7 @@
     }
   },
   "roadmap": {
+    "dialogTitle": "Utwórz fazę",
     "title": "Plan działań",
     "subtitle": "Fazy i oś czasu projektu",
     "newPhase": "Nowa faza",
@@ -1131,7 +1132,6 @@
     "progress": "Postęp:",
     "notSet": "Nie ustawiono",
     "phaseStatus": "{status, select, planned {Zaplanowana} in_progress {W toku} completed {Ukończona} blocked {Zablokowana} other {Zaplanowana}}",
-    "dialogTitle": "Utwórz fazę",
     "dialogDescription": "Dodaj nową fazę do planu działań",
     "cancel": "Anuluj",
     "creating": "Tworzenie...",
@@ -1150,6 +1150,7 @@
     "completionLabel": "Ukończenie %"
   },
   "members": {
+    "dialogTitle": "Utwórz fazę",
     "title": "Członkowie",
     "subtitle": "Kto widzi i może zmieniać ten projekt.",
     "addMember": "Dodaj członka",
@@ -1166,7 +1167,6 @@
     "couldNotAddMember": "Nie udało się dodać tego członka",
     "couldNotAddMemberRetry": "Nie udało się dodać tego członka. Spróbuj ponownie.",
     "unknownMember": "Nieznany członek",
-    "dialogTitle": "Dodaj członka",
     "dialogDescription": "Osoby muszą już należeć do organizacji, do której należy ten projekt.",
     "manageOrgMembers": "Zarządzaj członkami organizacji",
     "personLabel": "Osoba",
@@ -1440,8 +1440,8 @@
     "openBoard": "Otwórz tablicę"
   },
   "feedback": {
+    "dialogTitle": "Utwórz fazę",
     "sendFeedback": "Wyślij opinię",
-    "dialogTitle": "Wyślij opinię",
     "dialogDescription": "Napisz, co działa dobrze, co jest zepsute, albo czego brakuje - czytamy każdą wiadomość.",
     "placeholder": "Co masz na myśli?",
     "send": "Wyślij",
@@ -1487,6 +1487,7 @@
     "deleteRelationAria": "Usuń relację"
   },
   "decisions": {
+    "dialogTitle": "Utwórz fazę",
     "title": "Decyzje",
     "subtitle": "Śledź ważne decyzje projektowe i ich uzasadnienie",
     "createDecision": "Utwórz decyzję",
@@ -1495,7 +1496,6 @@
     "impact": "Wpływ",
     "alternativesConsidered": "Rozważane alternatywy",
     "newDecision": "Nowa decyzja",
-    "dialogTitle": "Utwórz decyzję",
     "dialogDescription": "Zapisz nową decyzję projektową",
     "cancel": "Anuluj",
     "creating": "Tworzenie...",
@@ -1589,6 +1589,7 @@
     "connect": "Połącz"
   },
   "memory": {
+    "dialogTitle": "Utwórz fazę",
     "title": "Pamięć",
     "subtitle": "Trwała wiedza i wnioski o projekcie",
     "pendingReview": "Oczekuje na przegląd ({count})",
@@ -1600,7 +1601,6 @@
     "verifiedBy": "Zweryfikowane przez {name}, {date}",
     "unknown": "Nieznany",
     "newMemory": "Nowy wpis pamięci",
-    "dialogTitle": "Utwórz wpis pamięci",
     "dialogDescription": "Dodaj nowy wpis pamięci do projektu",
     "contentLabel": "Treść",
     "typeLabel": "Typ",
@@ -2872,27 +2872,26 @@
   },
   "walkthrough": {
     "launcher": "Przewodnik",
-    "dialogTitle": "Witaj w Guidon",
-    "dialogSubtitle": "Krótki przewodnik po najważniejszych miejscach aplikacji. Zajmie minutę.",
     "stepOf": "Krok {step} z {total}",
     "back": "Wstecz",
     "next": "Dalej",
     "skip": "Pomiń i nie pokazuj ponownie",
     "done": "Zaczynamy",
-    "step1Title": "Witaj w Guidon",
-    "step1Body": "Guidon trzyma tablicę zadań, wiedzę projektową i pracę agentów AI w jednym miejscu. Ten przewodnik pokaże, co gdzie znajdziesz.",
-    "step2Title": "Tablica zadań",
-    "step2Body": "Zadania przeciągasz po kolumnach od Backlogu do Gotowe. Masz podzadania, komentarze, priorytety i terminy - a agent AI może pracować nad zadaniem, opisując każdą zmianę w historii prób.",
-    "step3Title": "Wiedza projektowa",
-    "step3Body": "Zapisuj decyzje z uzasadnieniem i alternatywami, dodawaj źródła wiedzy i technologie, a referencje trzymaj na moodboardzie.",
-    "step4Title": "Pamięć i kontekst",
-    "step4Body": "Aplikacja pamięta fakty, reguły i ograniczenia projektu. Agenci sięgną po nie przez brief agenta, a graf kontekstu pokazuje, jak to wszystko powiązane.",
-    "step5Title": "Plan i postęp",
-    "step5Body": "Roadmapa pokazuje fazy i postęp, kalendarz terminy zadań, a strumień aktywności - co poruszył zespół.",
-    "step6Title": "AI w Guidon",
-    "step6Body": "Zlecaj agentom pracę nad zadaniami, zatwierdzaj ich zmiany w zakładce Zatwierdzenia, a API i webhooks pozwolą wpinać Guidon we własne automatyzacje.",
-    "step7Title": "Utwórz pierwszy projekt",
-    "step7Body": "Zacznij od organizacji i projektu. Przewodnik zawsze znajdziesz w stopce panelu bocznego."
+    "spot1Title": "Pulpit",
+    "spot1Body": "Wszystko w jednym miejscu: otwarte zadania, ostatnia aktywność i postęp projektów.",
+    "spot2Title": "Moje zadania",
+    "spot2Body": "Twoje otwarte i przeterminowane zadania ze wszystkich projektów, na jednej liście.",
+    "spot3Title": "Projekty",
+    "spot3Body": "Projekty zespołu - każda praca zaczyna się tutaj.",
+    "spot4Title": "Wyszukiwanie",
+    "spot4Body": "Ctrl+K (Cmd+K) otwiera szybki przewodnik po zadaniach, projektach i akcjach.",
+    "spot5Title": "Powiadomienia",
+    "spot5Body": "Dzwoneczek pokazuje, co się stało, gdy Cię nie było.",
+    "spot6Title": "Twój profil",
+    "spot6Body": "Konto, integracje i ustawienia osobiste.",
+    "spot7Title": "Język",
+    "spot7Body": "Tutaj zmienisz język aplikacji (a tuż nad tym - motyw).",
+    "ctaOpen": "Pokaż"
   },
   "whiteboard": {
     "boardDefaultName": "Główna tablica",
