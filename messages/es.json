@@ -2823,5 +2823,46 @@
     "onlyManagers": "Solo los propietarios y administradores del proyecto pueden decidir.",
     "decidedBy": "{person}, {date}",
     "failed": "Algo salió mal. Inténtalo de nuevo."
+  },
+  "walkthrough": {
+    "launcher": "Recorrido",
+    "dialogTitle": "Bienvenido a Guidon",
+    "dialogSubtitle": "Un recorrido rápido por los puntos principales de la app. Tarda un minuto.",
+    "stepOf": "Paso {step} de {total}",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "skip": "Omitir y no volver a mostrar",
+    "done": "Empecemos",
+    "step1Title": "Bienvenido a Guidon",
+    "step1Body": "Guidon reúne el tablero de tareas, el conocimiento del proyecto y el trabajo de los agentes de IA en un solo lugar. Este recorrido te muestra dónde está cada cosa.",
+    "step2Title": "Tablero de tareas",
+    "step2Body": "Arrastra las tareas por las columnas del Backlog a Hecho. Tienes subtareas, comentarios, prioridades y fechas límite - y un agente de IA puede trabajar en la tarea documentando cada cambio como intento.",
+    "step3Title": "Conocimiento del proyecto",
+    "step3Body": "Registra decisiones con justificación y alternativas, añade fuentes de conocimiento y tecnologías, y guarda las referencias en el moodboard.",
+    "step4Title": "Memoria y contexto",
+    "step4Body": "Guidon recuerda los hechos, reglas y restricciones del proyecto. Los agentes los consultan a través del brief del agente, y el grafo de contexto muestra cómo está todo conectado.",
+    "step5Title": "Plan y progreso",
+    "step5Body": "La hoja de ruta muestra fases y progreso, el calendario las fechas límite, y el flujo de actividad qué ha movido el equipo.",
+    "step6Title": "IA en Guidon",
+    "step6Body": "Delega trabajo a los agentes, aprueba sus cambios en Aprobaciones, y usa la API y los webhooks para integrar Guidon en tus automatizaciones.",
+    "step7Title": "Crea tu primer proyecto",
+    "step7Body": "Empieza con una organización y un proyecto. El recorrido estará siempre disponible en el pie de la barra lateral."
+  },
+  "whiteboard": {
+    "boardDefaultName": "Pizarra principal",
+    "addSticky": "Añadir nota",
+    "addRectangle": "Añadir rectángulo",
+    "addCircle": "Añadir círculo",
+    "showTasks": "Mostrar tareas",
+    "hideTasks": "Ocultar tareas",
+    "convertToTasks": "Convertir en tareas (IA)",
+    "aiNeedsSelection": "Selecciona al menos una nota con texto",
+    "aiError": "La conversión con IA falló",
+    "deleteSelected": "Eliminar selección (Supr)",
+    "canvasHint": "Doble clic en el lienzo para añadir una nota",
+    "colorLabel": "Color de la nota",
+    "taskChip": "Tarea",
+    "loadError": "No se pudo cargar la pizarra",
+    "saveError": "No se pudieron guardar los cambios"
   }
-}
+  }

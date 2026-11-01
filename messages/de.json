@@ -2823,5 +2823,46 @@
     "onlyManagers": "Nur Projektinhaber und Admins können entscheiden.",
     "decidedBy": "{person}, {date}",
     "failed": "Etwas ist schiefgelaufen. Versuche es erneut."
+  },
+  "walkthrough": {
+    "launcher": "App-Rundgang",
+    "dialogTitle": "Willkommen bei Guidon",
+    "dialogSubtitle": "Eine kurze Tour durch die wichtigsten Bereiche der App. Dauert eine Minute.",
+    "stepOf": "Schritt {step} von {total}",
+    "back": "Zurück",
+    "next": "Weiter",
+    "skip": "Überspringen und nicht mehr zeigen",
+    "done": "Los geht's",
+    "step1Title": "Willkommen bei Guidon",
+    "step1Body": "Guidon vereint Taskboard, Projektwissen und die Arbeit der KI-Agenten an einem Ort. Diese Tour zeigt dir, wo du was findest.",
+    "step2Title": "Taskboard",
+    "step2Body": "Ziehe Aufgaben vom Backlog bis Done durch die Spalten. Dazu gibt es Teilaufgaben, Kommentare, Prioritäten und Fristen - und ein KI-Agent kann an einer Aufgabe arbeiten und jede Änderung als Versuch dokumentiert.",
+    "step3Title": "Projektwissen",
+    "step3Body": "Halte Entscheidungen mit Begründung und Alternativen fest, ergänze Wissensquellen und Technologien, und sammle Referenzen auf dem Moodboard.",
+    "step4Title": "Gedächtnis und Kontext",
+    "step4Body": "Guidon merkt sich Fakten, Regeln und Einschränkungen deines Projekts. Agenten greifen über das Agent-Briefing darauf zu, und der Kontext-Graph zeigt, wie alles zusammenhängt.",
+    "step5Title": "Plan und Fortschritt",
+    "step5Body": "Die Roadmap zeigt Phasen und Fortschritt, der Kalender die Fristen, und der Aktivitätsstrom zeigt, was das Team bewegt hat.",
+    "step6Title": "KI in Guidon",
+    "step6Body": "Delegiere Arbeit an Agenten, bestätige ihre Änderungen unter Freigaben, und nutze API und Webhooks, um Guidon in eigene Automatisierungen einzubinden.",
+    "step7Title": "Erstelle dein erstes Projekt",
+    "step7Body": "Starte mit einer Organisation und einem Projekt. Die Tour findest du jederzeit in der Fußzeile der Seitenleiste."
+  },
+  "whiteboard": {
+    "boardDefaultName": "Hauptboard",
+    "addSticky": "Notizzettel hinzufügen",
+    "addRectangle": "Rechteck hinzufügen",
+    "addCircle": "Kreis hinzufügen",
+    "showTasks": "Aufgaben zeigen",
+    "hideTasks": "Aufgaben ausblenden",
+    "convertToTasks": "KI → Aufgaben",
+    "aiNeedsSelection": "Markiere mindestens einen Notizzettel mit Text",
+    "aiError": "KI-Konvertierung fehlgeschlagen",
+    "deleteSelected": "Auswahl löschen (Entf)",
+    "canvasHint": "Doppelklick auf die Fläche fügt einen Notizzettel ein",
+    "colorLabel": "Notizzettel-Farbe",
+    "taskChip": "Aufgabe",
+    "loadError": "Board konnte nicht geladen werden",
+    "saveError": "Speichern fehlgeschlagen"
   }
-}
+  }

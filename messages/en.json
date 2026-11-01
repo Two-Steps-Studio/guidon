@@ -2869,5 +2869,46 @@
     "ruleThree": "Choose enough contrast. State colors and user-selected task labels remain separate from the brand palette.",
     "preview": "Link previews",
     "previewText": "The preview shown by Discord and other services is a separate 1200 × 630 social image. Updating a profile picture or a banner does not change that preview. Services may cache it after an update."
+  },
+  "walkthrough": {
+    "launcher": "App tour",
+    "dialogTitle": "Welcome to Guidon",
+    "dialogSubtitle": "A quick tour of the main places in the app. It takes a minute.",
+    "stepOf": "Step {step} of {total}",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip and don't show again",
+    "done": "Let's go",
+    "step1Title": "Welcome to Guidon",
+    "step1Body": "Guidon keeps your task board, project knowledge and AI agents' work in one place. This tour shows you where everything lives.",
+    "step2Title": "Task board",
+    "step2Body": "Drag tasks across columns from Backlog to Done. You get subtasks, comments, priorities and due dates - and an AI agent can work on a task, documenting every change as an attempt.",
+    "step3Title": "Project knowledge",
+    "step3Body": "Record decisions with reasoning and alternatives, add knowledge sources and technologies, and keep references on the moodboard.",
+    "step4Title": "Memory and context",
+    "step4Body": "Guidon remembers your project's facts, rules and constraints. Agents pick them up through the agent brief, and the context graph shows how it all connects.",
+    "step5Title": "Plan and progress",
+    "step5Body": "The roadmap shows phases and progress, the calendar shows task deadlines, and the activity feed shows what the team has been moving.",
+    "step6Title": "AI in Guidon",
+    "step6Body": "Delegate work to agents, approve their changes under Approvals, and use the API and webhooks to plug Guidon into your own automations.",
+    "step7Title": "Create your first project",
+    "step7Body": "Start with an organization and a project. The tour stays available any time from the sidebar footer."
+  },
+  "whiteboard": {
+    "boardDefaultName": "Main board",
+    "addSticky": "Add sticky",
+    "addRectangle": "Add rectangle",
+    "addCircle": "Add circle",
+    "showTasks": "Show tasks",
+    "hideTasks": "Hide tasks",
+    "convertToTasks": "AI convert to tasks",
+    "aiNeedsSelection": "Select at least one note with text",
+    "aiError": "AI conversion failed",
+    "deleteSelected": "Delete selected (Del)",
+    "canvasHint": "Double-click the canvas to add a sticky note",
+    "colorLabel": "Sticky colour",
+    "taskChip": "Task",
+    "loadError": "Failed to load the board",
+    "saveError": "Failed to save the board"
   }
-}
+  }

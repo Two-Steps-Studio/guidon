@@ -2869,5 +2869,46 @@
     "ruleThree": "Zadbaj o kontrast. Kolory statusów i tagów wybrane przez użytkowników są oddzielone od palety marki.",
     "preview": "Podgląd linku",
     "previewText": "Grafika wyświetlana na Discordzie i w innych serwisach to osobny obraz 1200 × 630. Zmiana profilowego lub banera nie zmienia tego podglądu. Serwisy mogą przechowywać poprzedni obraz w pamięci podręcznej."
+  },
+  "walkthrough": {
+    "launcher": "Przewodnik",
+    "dialogTitle": "Witaj w Guidon",
+    "dialogSubtitle": "Krótki przewodnik po najważniejszych miejscach aplikacji. Zajmie minutę.",
+    "stepOf": "Krok {step} z {total}",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "skip": "Pomiń i nie pokazuj ponownie",
+    "done": "Zaczynamy",
+    "step1Title": "Witaj w Guidon",
+    "step1Body": "Guidon trzyma tablicę zadań, wiedzę projektową i pracę agentów AI w jednym miejscu. Ten przewodnik pokaże, co gdzie znajdziesz.",
+    "step2Title": "Tablica zadań",
+    "step2Body": "Zadania przeciągasz po kolumnach od Backlogu do Gotowe. Masz podzadania, komentarze, priorytety i terminy - a agent AI może pracować nad zadaniem, opisując każdą zmianę w historii prób.",
+    "step3Title": "Wiedza projektowa",
+    "step3Body": "Zapisuj decyzje z uzasadnieniem i alternatywami, dodawaj źródła wiedzy i technologie, a referencje trzymaj na moodboardzie.",
+    "step4Title": "Pamięć i kontekst",
+    "step4Body": "Aplikacja pamięta fakty, reguły i ograniczenia projektu. Agenci sięgną po nie przez brief agenta, a graf kontekstu pokazuje, jak to wszystko powiązane.",
+    "step5Title": "Plan i postęp",
+    "step5Body": "Roadmapa pokazuje fazy i postęp, kalendarz terminy zadań, a strumień aktywności - co poruszył zespół.",
+    "step6Title": "AI w Guidon",
+    "step6Body": "Zlecaj agentom pracę nad zadaniami, zatwierdzaj ich zmiany w zakładce Zatwierdzenia, a API i webhooks pozwolą wpinać Guidon we własne automatyzacje.",
+    "step7Title": "Utwórz pierwszy projekt",
+    "step7Body": "Zacznij od organizacji i projektu. Przewodnik zawsze znajdziesz w stopce panelu bocznego."
+  },
+  "whiteboard": {
+    "boardDefaultName": "Główna tablica",
+    "addSticky": "Dodaj karteczkę",
+    "addRectangle": "Dodaj prostokąt",
+    "addCircle": "Dodaj okrąg",
+    "showTasks": "Pokaż zadania",
+    "hideTasks": "Ukryj zadania",
+    "convertToTasks": "Zamień na zadania (AI)",
+    "aiNeedsSelection": "Zaznacz co najmniej jedną karteczkę z tekstem",
+    "aiError": "Konwersja AI nie powiodła się",
+    "deleteSelected": "Usuń zaznaczone (Del)",
+    "canvasHint": "Kliknij dwukrotnie tło, aby dodać karteczkę",
+    "colorLabel": "Kolor karteczki",
+    "taskChip": "Zadanie",
+    "loadError": "Nie udało się wczytać tablicy",
+    "saveError": "Nie udało się zapisać zmian na tablicy"
   }
-}
+  }

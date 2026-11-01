@@ -17,6 +17,7 @@ import { PinnedTasksProvider } from "@/components/work/pinned-tasks-context";
 import { getPinnedProjects, type PinnedProject } from "@/lib/data/pinned-projects";
 import { PinnedProjectsProvider } from "@/components/projects/pinned-projects-context";
 import { AppMessages } from "@/components/layout/app-messages";
+import { WalkthroughAutoOpen } from "@/components/layout/walkthrough-dialog";
 import { BetaBadge } from "@/components/layout/beta-badge";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
@@ -35,11 +36,13 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
   const currentTheme = themeCookie && isSupportedTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
   const tNav = await getTranslations("nav");
   // Pinned tasks (migration 074) in the sidebar on every page; a failure
-  // here (no column yet, signed out) just means an empty list.
+  // here (no column yet, signed out) just means an empty list. The id is
+  // kept separately to key the walkthrough's per-account "seen" flag.
   let pinnedTasks: PinnedTask[] = [];
   let pinnedProjects: PinnedProject[] = [];
+  let userId: string | null = null;
   try {
-    const userId = (await getCurrentUser()).id;
+    userId = (await getCurrentUser()).id;
     [pinnedTasks, pinnedProjects] = await Promise.all([getPinnedTasks(userId), getPinnedProjects(userId)]);
   } catch {
     pinnedTasks = [];
@@ -53,6 +56,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
         {...sidebarProps}
+        userId={userId ?? undefined}
         currentTheme={currentTheme}
         // Plans only exist on Guidon Cloud (self-hosted has no limits - see
         // the billing page), and upgrading needs Stripe.
@@ -75,6 +79,9 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
         {children}
         <SiteFooter />
         <KeyboardShortcuts />
+        {/* Przewodnik po aplikacji: automatycznie raz na konto (nowa
+            rejestracja też), z opcją „pomiń i nie pokazuj ponownie". */}
+        <WalkthroughAutoOpen userId={userId} />
       </SidebarInset>
     </SidebarProvider>
     </PinnedTasksProvider>
