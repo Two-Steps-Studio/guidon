@@ -116,6 +116,7 @@ function DropdownMenuContent({
   sideOffset = 4,
   onCloseAutoFocus,
   onEscapeKeyDown,
+  onPointerDownOutside,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   const motion = useSurfaceMotion()
@@ -128,6 +129,14 @@ function DropdownMenuContent({
           onEscapeKeyDown={event => {
             onEscapeKeyDown?.(event)
             dismissNestedSurface(event)
+          }}
+          onPointerDownOutside={event => {
+            onPointerDownOutside?.(event)
+            // A touch on the open menu's own trigger is not "outside": the
+            // trigger's pointerup toggle closes it. Dismissing here too made
+            // that toggle reopen it, so a second tap never closed the menu.
+            const target = event.target instanceof Element ? event.target : null
+            if (event.detail.originalEvent.pointerType !== "mouse" && target?.closest('[data-slot="dropdown-menu-trigger"][data-state="open"]')) event.preventDefault()
           }}
           onCloseAutoFocus={event => {
             onCloseAutoFocus?.(event)
