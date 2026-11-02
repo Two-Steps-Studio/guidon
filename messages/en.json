@@ -836,6 +836,8 @@
   "work": {
     "dueOverdue": "Overdue",
     "dueToday": "Today",
+    "copyTaskLink": "Copy link to this task",
+    "taskLinkCopied": "Link copied",
     "duplicate": "Duplicate",
     "duplicateTitle": "{title} (copy)",
     "duplicated": "Duplicated as \"{title}\"",
@@ -2144,6 +2146,8 @@
     "help": "Show this list"
   },
   "datePicker": {
+    "tomorrow": "Tomorrow",
+    "inAWeek": "In 7 days",
     "placeholder": "Pick a date",
     "clear": "Clear date",
     "today": "Today",

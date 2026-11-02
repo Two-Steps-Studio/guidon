@@ -824,6 +824,8 @@
   "work": {
     "dueOverdue": "Vencida",
     "dueToday": "Hoy",
+    "copyTaskLink": "Copiar enlace a esta tarea",
+    "taskLinkCopied": "Enlace copiado",
     "duplicate": "Duplicar",
     "duplicateTitle": "{title} (copia)",
     "duplicated": "Copia creada: «{title}»",
@@ -2132,6 +2134,8 @@
     "help": "Mostrar esta lista"
   },
   "datePicker": {
+    "tomorrow": "Mañana",
+    "inAWeek": "En 7 días",
     "placeholder": "Elegir fecha",
     "clear": "Borrar fecha",
     "today": "Hoy",
