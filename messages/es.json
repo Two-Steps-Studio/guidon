@@ -1145,7 +1145,7 @@
     "completionLabel": "Finalización %"
   },
   "members": {
-    "dialogTitle": "Crear fase",
+    "dialogTitle": "Añadir miembro",
     "title": "Miembros",
     "subtitle": "Quién puede ver y modificar este proyecto.",
     "addMember": "Añadir miembro",
@@ -1435,7 +1435,7 @@
     "openBoard": "Abrir tablero"
   },
   "feedback": {
-    "dialogTitle": "Crear fase",
+    "dialogTitle": "Enviar comentarios",
     "sendFeedback": "Enviar comentarios",
     "dialogDescription": "Cuéntanos qué funciona, qué está roto o qué te gustaría ver - leemos todos los mensajes.",
     "placeholder": "¿Qué tienes en mente?",
@@ -1482,7 +1482,7 @@
     "deleteRelationAria": "Eliminar relación"
   },
   "decisions": {
-    "dialogTitle": "Crear fase",
+    "dialogTitle": "Crear decisión",
     "title": "Decisiones",
     "subtitle": "Registra las decisiones importantes del proyecto y su razonamiento",
     "createDecision": "Crear decisión",
@@ -1584,7 +1584,7 @@
     "connect": "Conectar"
   },
   "memory": {
-    "dialogTitle": "Crear fase",
+    "dialogTitle": "Crear entrada de memoria",
     "title": "Memoria",
     "subtitle": "Conocimiento e información persistentes del proyecto",
     "pendingReview": "Pendiente de revisión ({count})",

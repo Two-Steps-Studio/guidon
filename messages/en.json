@@ -1157,7 +1157,7 @@
     "completionLabel": "Completion %"
   },
   "members": {
-    "dialogTitle": "Create Phase",
+    "dialogTitle": "Add member",
     "title": "Members",
     "subtitle": "Who can see and change this project.",
     "addMember": "Add member",
@@ -1447,7 +1447,7 @@
     "openBoard": "Open board"
   },
   "feedback": {
-    "dialogTitle": "Create Phase",
+    "dialogTitle": "Send feedback",
     "sendFeedback": "Send feedback",
     "dialogDescription": "Tell us what's working, what's broken, or what you'd like to see - we read every message.",
     "placeholder": "What's on your mind?",
@@ -1494,7 +1494,7 @@
     "deleteRelationAria": "Delete relation"
   },
   "decisions": {
-    "dialogTitle": "Create Phase",
+    "dialogTitle": "Create Decision",
     "title": "Decisions",
     "subtitle": "Track important project decisions and their rationale",
     "createDecision": "Create Decision",
@@ -1596,7 +1596,7 @@
     "connect": "Connect"
   },
   "memory": {
-    "dialogTitle": "Create Phase",
+    "dialogTitle": "Create Memory",
     "title": "Memory",
     "subtitle": "Persistent project knowledge and insights",
     "pendingReview": "Pending Review ({count})",
