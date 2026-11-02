@@ -529,6 +529,36 @@ body {
 @keyframes ui-fade-out { from { opacity: 1; } to { opacity: 0; } }
 
 /* Respect users who ask for less motion. */
+/* On/off settings: a native checkbox (forms and keyboard unchanged) drawn as a switch. Use with role="switch". */
+input[type="checkbox"].switch {
+  appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  /* Off track readable on cards in both themes (3:1 against the surface). */
+  background: color-mix(in srgb, var(--color-foreground) 30%, transparent);
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-out);
+}
+input[type="checkbox"].switch::before {
+  content: "";
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff; /* white in both themes: the page colour would vanish on the dark track */
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  transition: transform 150ms var(--ease-out);
+}
+input[type="checkbox"].switch:checked { background: var(--color-primary); }
+input[type="checkbox"].switch:checked::before { transform: translateX(1rem); }
+input[type="checkbox"].switch:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

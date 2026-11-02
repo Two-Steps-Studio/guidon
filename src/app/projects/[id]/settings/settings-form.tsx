@@ -180,9 +180,10 @@ export function SettingsForm({
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
+                role="switch"
                 name="aiEnabled"
                 defaultChecked={project.ai_enabled}
-                className="h-4 w-4"
+                className="switch"
               />
               {t("aiEnabledLabel")}
             </label>

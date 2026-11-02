@@ -65,9 +65,10 @@ export function AiPermissionsForm({
               <label key={field} className="flex items-start gap-2 text-sm">
                 <input
                   type="checkbox"
+                  role="switch"
                   name={field}
                   defaultChecked={permissions[field]}
-                  className="mt-0.5 h-4 w-4 shrink-0"
+                  className="switch mt-0.5"
                 />
                 <span>
                   {t(labelKey)}
@@ -81,9 +82,10 @@ export function AiPermissionsForm({
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
+                role="switch"
                 name="allow_ai_auto_complete"
                 defaultChecked={allowAutoComplete}
-                className="h-4 w-4"
+                className="switch"
               />
               {t("allowAutoComplete")}
             </label>
