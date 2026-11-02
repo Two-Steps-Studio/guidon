@@ -2144,6 +2144,8 @@
     "help": "Pokaż tę listę"
   },
   "datePicker": {
+    "tomorrow": "Jutro",
+    "inAWeek": "Za 7 dni",
     "placeholder": "Wybierz datę",
     "clear": "Wyczyść datę",
     "today": "Dziś",
