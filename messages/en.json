@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "dueOverdue": "Overdue",
+    "dueToday": "Today",
     "duplicate": "Duplicate",
     "duplicateTitle": "{title} (copy)",
     "duplicated": "Duplicated as \"{title}\"",

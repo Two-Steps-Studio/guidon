@@ -562,7 +562,7 @@ export function subtaskProgress(subtasks: Task[], columns?: readonly BoardColumn
 // DUE DATES
 // ============================================
 
-export type DueState = "none" | "upcoming" | "soon" | "overdue";
+export type DueState = "none" | "upcoming" | "soon" | "today" | "overdue";
 
 /**
  * `Task.due_date` is typed `string`, and that's exactly what it is when it
@@ -585,7 +585,8 @@ export function dueState(
   dueDate: string | null,
   status: TaskStatus | LegacyTaskStatus | string,
   /** The task's is_done (custom done columns); falls back to the status. */
-  done?: boolean
+  done?: boolean,
+  now = new Date()
 ): DueState {
   if (!dueDate || (done ?? isDone(status))) return "none";
 
@@ -593,13 +594,15 @@ export function dueState(
   if (Number.isNaN(due)) return "none";
 
   // Calendar-day comparison, not an instant delta - due_date is written as
-  // UTC midnight of the picked day (see lib/date.ts), so comparing exact
-  // instants against Date.now() flips "overdue" up to a full day early for
-  // any viewer west of UTC, and up to a day late for anyone east of it.
-  const daysUntilDue = utcDaysBetween(Date.now(), due);
+  // UTC midnight of the picked day (see lib/date.ts). "Today" is the
+  // viewer's own calendar day: taking it from UTC put a task due today in
+  // "overdue" or "tomorrow" for the hours the viewer's date differs from UTC's.
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysUntilDue = utcDaysBetween(today, due);
 
   if (daysUntilDue < 0) return "overdue";
-  if (daysUntilDue <= 1) return "soon"; // due today or tomorrow
+  if (daysUntilDue === 0) return "today";
+  if (daysUntilDue === 1) return "soon";
   return "upcoming";
 }
 
@@ -607,6 +610,7 @@ export const DUE_STATE_CLASSES: Record<DueState, string> = {
   none: "text-muted-foreground",
   upcoming: "text-muted-foreground",
   soon: "text-warning",
+  today: "text-warning",
   overdue: "text-danger",
 };
 

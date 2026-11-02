@@ -33,3 +33,24 @@ for(const [index,expected] of [[0,["moving","a","b","c"]],[1,["a","moving","b","
 }
 assert.equal(resolveColumnRenumbering([{id:"a",sort_order:1000}],"moving",2000,{id:"a",side:"after"}),null,"Normal moves keep the single-row fast path");
 console.log("pass per-column pin order, due-date mode, unpin and saved-position preservation");
+
+// Due today / overdue follow the viewer's own calendar day, in any timezone.
+{
+  const { dueState } = await import("../src/lib/work/task-board.ts");
+  const previous = process.env.TZ;
+  try {
+    for (const [zone, localNow] of [["Europe/Warsaw", "2026-11-03T00:30:00+01:00"], ["America/Los_Angeles", "2026-11-02T23:30:00-08:00"], ["UTC", "2026-11-02T12:00:00Z"]]) {
+      process.env.TZ = zone;
+      const now = new Date(localNow), day = (offset) => { const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + offset)); return d.toISOString(); };
+      assert.equal(dueState(day(0), "todo", false, now), "today", `${zone}: due today`);
+      assert.equal(dueState(day(-1), "todo", false, now), "overdue", `${zone}: due yesterday`);
+      assert.equal(dueState(day(1), "todo", false, now), "soon", `${zone}: due tomorrow`);
+      assert.equal(dueState(day(5), "todo", false, now), "upcoming", `${zone}: later`);
+      assert.equal(dueState(day(-1), "done", true, now), "none", `${zone}: done tasks are never overdue`);
+    }
+    // 30 minutes after midnight in Warsaw is still yesterday in UTC: a task due on the Warsaw date is today, not tomorrow.
+    process.env.TZ = "Europe/Warsaw";
+    assert.equal(dueState("2026-11-03T00:00:00.000Z", "todo", false, new Date("2026-11-02T23:30:00Z")), "today");
+  } finally { if (previous === undefined) delete process.env.TZ; else process.env.TZ = previous; }
+  console.log("pass due today/overdue use the viewer's calendar day across timezones");
+}

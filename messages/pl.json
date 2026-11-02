@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "dueOverdue": "Po terminie",
+    "dueToday": "Dziś",
     "duplicate": "Duplikuj",
     "duplicateTitle": "{title} (kopia)",
     "duplicated": "Utworzono kopię „{title}”",
