@@ -42,6 +42,10 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
   }
   try {
     await login(owner);
+    // The owner reaches project settings from the board header in one click.
+    await page.goto(`${root}/work`);
+    await page.getByRole("link", { name: "Project settings", exact: true }).click();
+    await page.waitForURL(url => url.pathname === `/projects/${owner.projectId}/settings`);
     await create("decisions", "New Decision", async dialog => {
       await dialog.getByLabel("Title", { exact: true }).fill(created.decision);
       await dialog.getByLabel("Description", { exact: true }).fill(`<script>window.__sectionXss=1</script>`);
@@ -115,6 +119,9 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
 
     // Viewer: reads every section, gets no write controls.
     await login(fixture.reader);
+    await page.goto(`${root}/work`); await page.getByRole("heading", { name: "Task board", exact: true }).waitFor();
+    assert.equal(await page.getByRole("link", { name: "Project settings", exact: true }).count(), 0, "Only owners and admins get the settings shortcut");
+    assert.equal((await page.goto(`${root}/settings`)).status(), 200, "The viewer's settings page opens read-only, not a 404");
     for (const [section, title, control] of [["decisions", created.decision, "New Decision"], ["roadmap", created.phase, "New Phase"], ["knowledge", created.source, "New entry"], ["files", fileName, "Upload File"]]) {
       await page.goto(`${root}/${section}`);
       await page.getByText(title, { exact: true }).first().waitFor();

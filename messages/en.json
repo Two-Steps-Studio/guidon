@@ -834,6 +834,7 @@
     }
   },
   "work": {
+    "projectSettings": "Project settings",
     "dueOverdue": "Overdue",
     "dueToday": "Today",
     "copyTaskLink": "Copy link to this task",
