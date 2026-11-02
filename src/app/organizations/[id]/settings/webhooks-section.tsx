@@ -212,7 +212,8 @@ function WebhookRow({ organizationId, webhook }: { organizationId: string; webho
                 const enabled = event.target.checked;
                 run(() => setWebhookEnabled(organizationId, webhook.id, enabled));
               }}
-              className="h-4 w-4 accent-primary"
+              role="switch"
+              className="switch"
             />
             {t("enabled")}
           </label>

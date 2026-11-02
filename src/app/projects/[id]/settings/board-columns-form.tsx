@@ -217,7 +217,8 @@ function ListEditor({
                 >
                   <input
                     type="checkbox"
-                    className="h-3.5 w-3.5"
+                    role="switch"
+                    className="switch"
                     checked={row.isDone}
                     disabled={row.builtin}
                     onChange={(event) => update(index, { isDone: event.target.checked })}

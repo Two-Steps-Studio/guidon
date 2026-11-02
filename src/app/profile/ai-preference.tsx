@@ -44,7 +44,7 @@ export function AiPreferenceSection({ hideAi }: { hideAi: boolean }) {
             type="checkbox"
             role="switch"
             aria-checked={show}
-            className="h-5 w-5 shrink-0 accent-primary"
+            className="switch"
             checked={show}
             disabled={pending}
             onChange={(event) => toggle(event.target.checked)}

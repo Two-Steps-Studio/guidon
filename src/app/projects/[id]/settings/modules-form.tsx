@@ -78,7 +78,8 @@ export function ModulesForm({
                   checked={on}
                   disabled={!canManage || pending}
                   onChange={() => toggle(item.href)}
-                  className="size-4"
+                  role="switch"
+                  className="switch"
                 />
                 <item.icon className="h-4 w-4 text-muted-foreground" />
                 <span className={on ? "" : "text-muted-foreground line-through"}>{tNav(item.labelKey)}</span>

@@ -183,7 +183,7 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
       </div>
       <div className="rounded-md border border-border p-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <input type="checkbox" name="aiEnabled" defaultChecked className="h-4 w-4" />
+          <input type="checkbox" role="switch" name="aiEnabled" defaultChecked className="switch" />
           {t("aiEnabledLabel")}
         </label>
         <p className="mt-1 text-xs text-muted-foreground">{t("aiEnabledHelp")}</p>
