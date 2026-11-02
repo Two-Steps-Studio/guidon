@@ -207,6 +207,16 @@ const nextConfig: NextConfig = {
           // nothing here needs cross-origin isolation (no SharedArrayBuffer).
         ],
       },
+      // API answers mostly carry one person's data; without this they go out
+      // as `public, max-age=0` and a shared cache may keep a copy. This header
+      // overrides the route's own, so the routes cached on purpose are left
+      // out: the public MCP server cards and /api/storage (public images are
+      // immutable; private files private, max-age=60). A new public route
+      // missing here just loses caching, never leaks.
+      {
+        source: "/api/:path((?!storage|mcp/server-card|mcp/docs/server-card).*)",
+        headers: [{ key: "Cache-Control", value: "private, no-store" }],
+      },
       // Files other sites embed: the report widget script, brand assets and
       // icons. A later matching rule replaces the same header.
       ...["/widget/:path*", "/brand/:path*", "/assets/:path*", "/icons/:path*", "/downloads/:path*"].map((source) => ({
