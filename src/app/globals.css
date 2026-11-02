@@ -558,6 +558,17 @@ input[type="checkbox"].switch:checked { background: var(--color-primary); }
 input[type="checkbox"].switch:checked::before { transform: translateX(1rem); }
 input[type="checkbox"].switch:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
 input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
+/* <RollingNumber>: each digit column rolls from 0 to its digit (--digit). */
+.number-roll {
+  transform: translateY(calc(var(--digit) * -1em));
+  animation: number-roll 700ms var(--ease-out) both;
+}
+@keyframes number-roll {
+  from { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .number-roll { animation: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,
