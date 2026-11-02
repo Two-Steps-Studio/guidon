@@ -78,9 +78,11 @@ async function findUser(client) {
   return rows[0] ?? null;
 }
 
-async function findDemoOrganization(client) {
+/** Only this user's own demo organisation: --reset must never delete someone else's. */
+async function findDemoOrganization(client, userId) {
   const { rows } = await client.query(
-    `SELECT id FROM public.organizations WHERE slug LIKE 'guidon-demo-%' LIMIT 1`
+    `SELECT id FROM public.organizations WHERE slug LIKE 'guidon-demo-%' AND created_by = $1 LIMIT 1`,
+    [userId]
   );
   return rows[0]?.id ?? null;
 }
@@ -133,7 +135,7 @@ async function main() {
     }
     const userId = user.id;
 
-    const existingOrg = await findDemoOrganization(client);
+    const existingOrg = await findDemoOrganization(client, userId);
     if (existingOrg && !args.reset) {
       fail(
         "Organizacja demo już istnieje. Uruchom z --reset, aby zastąpić ją" +
@@ -437,8 +439,8 @@ async function main() {
       );
       await client.query(
         `INSERT INTO public.whiteboard_edges (project_id, board_id, source_id, target_id, label, type)
-         VALUES ($1, 'default', $2, $3, 'włącza kamerę 2', 'default')`,
-        [projectId, notes.rows[0].id, notes.rows[2].id]
+         VALUES ($1, $2, $3, $4, 'włącza kamerę 2', 'default')`,
+        [projectId, boardId, notes.rows[0].id, notes.rows[2].id]
       );
 
       // 6. Roadmapa (R.5): dwie fazy z postępem
