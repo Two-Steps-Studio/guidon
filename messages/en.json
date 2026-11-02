@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "dueOverdue": "Overdue",
+    "dueToday": "Today",
     "copyTaskLink": "Copy link to this task",
     "taskLinkCopied": "Link copied",
     "duplicate": "Duplicate",

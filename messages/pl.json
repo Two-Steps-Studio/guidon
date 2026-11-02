@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "dueOverdue": "Po terminie",
+    "dueToday": "Dziś",
     "copyTaskLink": "Kopiuj link do zadania",
     "taskLinkCopied": "Skopiowano link",
     "duplicate": "Duplikuj",

@@ -519,7 +519,10 @@ function TaskCardComponent({
           <span className={cn("flex items-center gap-1", DUE_STATE_CLASSES[due])}>
             <CalendarDays className="h-3 w-3" aria-hidden />
             {formatDueDate(task.due_date, locale)}
-            {due === "overdue" && <span className="sr-only">(overdue)</span>}
+            {/* In words too: colour is not the only signal. */}
+            {(due === "overdue" || due === "today") && (
+              <span className="font-medium">{t(due === "overdue" ? "dueOverdue" : "dueToday")}</span>
+            )}
           </span>
         )}
 
