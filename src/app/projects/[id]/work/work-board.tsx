@@ -6,7 +6,7 @@ import type { LabelPreset } from "@/lib/work/label-presets";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bot, ListChecks, Loader2, Plus, Upload, X } from "lucide-react";
+import { Bot, ListChecks, Loader2, Plus, Settings, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -613,6 +613,15 @@ export function WorkBoard({
               )}
             </p>
           </div>
+
+          {/* Owners and admins change settings; everyone else still reaches the read-only page from the sidebar. */}
+          {canDelete && (
+            <Button size="sm" variant="ghost" className="h-8 w-8 shrink-0 p-0" asChild>
+              <Link href={`/projects/${projectId}/settings`} aria-label={t("projectSettings")} title={t("projectSettings")}>
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
 
           <Select
             aria-label={t("sortBy")}

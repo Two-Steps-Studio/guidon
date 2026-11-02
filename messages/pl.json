@@ -834,6 +834,7 @@
     }
   },
   "work": {
+    "projectSettings": "Ustawienia projektu",
     "dueOverdue": "Po terminie",
     "dueToday": "Dziś",
     "copyTaskLink": "Kopiuj link do zadania",

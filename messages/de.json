@@ -822,6 +822,7 @@
     }
   },
   "work": {
+    "projectSettings": "Projekteinstellungen",
     "dueOverdue": "Überfällig",
     "dueToday": "Heute",
     "copyTaskLink": "Link zu dieser Aufgabe kopieren",
