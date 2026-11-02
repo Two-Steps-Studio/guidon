@@ -8,6 +8,7 @@ import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SIDEBAR_GROUPS_COOKIE, parseCollapsedGroups } from "@/lib/sidebar-groups";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
@@ -58,6 +59,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
         {...sidebarProps}
         userId={userId ?? undefined}
         currentTheme={currentTheme}
+        collapsedGroups={parseCollapsedGroups(cookieStore.get(SIDEBAR_GROUPS_COOKIE)?.value)}
         // Plans only exist on Guidon Cloud (self-hosted has no limits - see
         // the billing page), and upgrading needs Stripe.
         showUpgrade={!hasDirectDatabase() && isBillingConfigured()}
