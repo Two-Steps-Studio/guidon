@@ -1,7 +1,7 @@
 import "server-only";
 import { SUPPORT_EMAIL } from "@/lib/project-links";
 
-export const LEGAL_VERSION = "2026-10-24";
+export const LEGAL_VERSION = "2026-11-02";
 // Public identification only. Never place IDs, credentials or private notes here.
 export const legalOperator = {
   name: process.env.LEGAL_OPERATOR_NAME?.trim() ?? "",
