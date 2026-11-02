@@ -822,6 +822,8 @@
     }
   },
   "work": {
+    "noFilterMatchesTitle": "Keine Aufgabe passt zu diesen Filtern",
+    "noFilterMatchesDesc": "{count, plural, one {# Aufgabe ist} other {# Aufgaben sind}} durch den Filter für Person, Priorität oder Label ausgeblendet.",
     "projectSettings": "Projekteinstellungen",
     "dueOverdue": "Überfällig",
     "dueToday": "Heute",
@@ -1495,6 +1497,7 @@
     "deleteRelationAria": "Beziehung löschen"
   },
   "decisions": {
+    "emptyDescriptionReadOnly": "In diesem Projekt wurden noch keine Entscheidungen festgehalten.",
     "dialogTitle": "Entscheidung erstellen",
     "title": "Entscheidungen",
     "subtitle": "Wichtige Projektentscheidungen und ihre Begründung verfolgen",
@@ -1566,6 +1569,7 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "emptyDescriptionReadOnly": "In dieses Projekt wurden noch keine Dateien hochgeladen.",
     "downloadFailed": "Download fehlgeschlagen.",
     "downloadHttpError": "Download fehlgeschlagen (HTTP {status}).",
     "disconnectRepo": "Repository {repository} trennen",

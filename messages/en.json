@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "noFilterMatchesTitle": "No tasks match these filters",
+    "noFilterMatchesDesc": "{count, plural, one {# task is} other {# tasks are}} hidden by the assignee, priority or label filter.",
     "projectSettings": "Project settings",
     "dueOverdue": "Overdue",
     "dueToday": "Today",
@@ -1507,6 +1509,7 @@
     "deleteRelationAria": "Delete relation"
   },
   "decisions": {
+    "emptyDescriptionReadOnly": "No decisions have been recorded in this project yet.",
     "dialogTitle": "Create Decision",
     "title": "Decisions",
     "subtitle": "Track important project decisions and their rationale",
@@ -1578,6 +1581,7 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "emptyDescriptionReadOnly": "No files have been uploaded to this project yet.",
     "downloadFailed": "Download failed.",
     "downloadHttpError": "Download failed (HTTP {status}).",
     "disconnectRepo": "Disconnect repository {repository}",

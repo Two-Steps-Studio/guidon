@@ -188,7 +188,7 @@ export function FilesBrowser({
         <EmptyState
           icon={FileText}
           title={t("emptyTitle")}
-          description={t("emptyDescription")}
+          description={t(canWrite ? "emptyDescription" : "emptyDescriptionReadOnly")}
           action={
             canWrite ? (
               <Button

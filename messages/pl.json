@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "noFilterMatchesTitle": "Żadne zadanie nie pasuje do filtrów",
+    "noFilterMatchesDesc": "{count, plural, one {# zadanie jest ukryte} few {# zadania są ukryte} other {# zadań jest ukrytych}} przez filtr osoby, priorytetu lub etykiety.",
     "projectSettings": "Ustawienia projektu",
     "dueOverdue": "Po terminie",
     "dueToday": "Dziś",
@@ -1507,6 +1509,7 @@
     "deleteRelationAria": "Usuń relację"
   },
   "decisions": {
+    "emptyDescriptionReadOnly": "W tym projekcie nie zapisano jeszcze żadnej decyzji.",
     "dialogTitle": "Utwórz decyzję",
     "title": "Decyzje",
     "subtitle": "Śledź ważne decyzje projektowe i ich uzasadnienie",
@@ -1578,6 +1581,7 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "emptyDescriptionReadOnly": "Do tego projektu nie dodano jeszcze plików.",
     "downloadFailed": "Nie udało się pobrać pliku.",
     "downloadHttpError": "Nie udało się pobrać pliku (HTTP {status}).",
     "disconnectRepo": "Odłącz repozytorium {repository}",

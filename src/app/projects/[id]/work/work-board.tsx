@@ -235,6 +235,11 @@ export function WorkBoard({
   const filtersActive =
     assigneeFilter !== "all" || priorityFilter !== "all" || tagFilter !== "all";
 
+  const clearFilters = () => {
+    setAssigneeFilter("all");
+    setPriorityFilter("all");
+    setTagFilter("all");
+  };
   const filteredTasks = useMemo(() => {
     return topLevelTasks.filter((task) => {
       if (assigneeFilter !== "all" && task.assignee_id !== assigneeFilter) {
@@ -755,11 +760,7 @@ export function WorkBoard({
           {filtersActive && (
             <button
               type="button"
-              onClick={() => {
-                setAssigneeFilter("all");
-                setPriorityFilter("all");
-                setTagFilter("all");
-              }}
+              onClick={clearFilters}
               className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
               {t("clearFilters")}
@@ -802,6 +803,18 @@ export function WorkBoard({
                 )}
               </div>
             )}
+          </div>
+        ) : filtersActive && filteredTasks.length === 0 ? (
+          // Tasks exist but the filters hide all of them: say so once, with the way out.
+          <div className="rounded-xl border border-dashed border-border py-16 text-center">
+            <h2 className="text-sm font-medium text-foreground">{t("noFilterMatchesTitle")}</h2>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              {t("noFilterMatchesDesc", { count: topLevelTasks.length })}
+            </p>
+            <Button size="sm" variant="outline" className="mt-4" onClick={clearFilters}>
+              <X className="h-4 w-4" />
+              {t("clearFilters")}
+            </Button>
           </div>
         ) : (
           <KanbanBoard
