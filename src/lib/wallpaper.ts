@@ -22,10 +22,9 @@ const CHANGE_EVENT = "guidon:wallpaper";
 const MAX_SIDE = 2560;
 export const WALLPAPER_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 
-/** How much the page colour is laid over the picture, so text stays readable. */
-export const WALLPAPER_DIM_OPTIONS = ["20", "40", "60", "80"] as const;
-export type WallpaperDim = (typeof WALLPAPER_DIM_OPTIONS)[number];
-const dimPreference = createDevicePreference<WallpaperDim>("guidon-wallpaper-dim", WALLPAPER_DIM_OPTIONS, "60");
+/** How much of the page colour (0-100 %) is laid over the picture, so text stays readable. */
+const WALLPAPER_DIM_OPTIONS = Array.from({ length: 101 }, (_, percent) => String(percent));
+const dimPreference = createDevicePreference<string>("guidon-wallpaper-dim", WALLPAPER_DIM_OPTIONS, "60");
 export const useWallpaperDim = dimPreference.usePreference;
 export const setWallpaperDim = dimPreference.set;
 
