@@ -200,8 +200,9 @@ for (const [label, sql, expected] of [
   // 60->61 and 148->149: task_claims (100) + task_claims_select.
   // 61->62 and 149->150: agent_approval_requests (102) + agent_approval_requests_select.
   // 62->63 and 150->151: agent_briefs (103) + agent_briefs_select.
-  ["64 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 64],
-  ["151 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 151],
+  // 64->67 and 151->159: whiteboards, whiteboard_elements, whiteboard_edges (105/106) with the policies of 107 (4 + 2 + 2).
+  ["67 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 67],
+  ["159 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 159],
 ]) {
   const { rows } = await db.query(sql);
   check(label, rows[0].n === expected, rows[0].n);
@@ -4599,5 +4600,51 @@ await withUser(A,async()=>{
 });
 check("the counter function does not elevate its caller",(await db.query("SELECT prosecdef FROM pg_proc WHERE oid='public.record_search_event(text)'::regprocedure")).rows[0].prosecdef===false);
 
+
+section("90. Whiteboard: members read, editors write, edges stay on one board (105-107)");
+{
+  const viewer = "90000000-0000-4000-8000-000000000001";
+  const dev = "90000000-0000-4000-8000-000000000002";
+  let project, other, board, otherBoard, a, b, foreign;
+  await withUser(A, async () => {
+    project = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Whiteboard') RETURNING id", [orgId])).rows[0].id;
+    other = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Other whiteboard') RETURNING id", [orgId])).rows[0].id;
+    otherBoard = (await db.query("INSERT INTO public.whiteboards (project_id, name) VALUES ($1, 'Other') RETURNING id", [other])).rows[0].id;
+    foreign = (await db.query("INSERT INTO public.whiteboard_elements (board_id, type) VALUES ($1, 'sticky') RETURNING id", [otherBoard])).rows[0].id;
+  });
+  await withServiceRole(async () => {
+    for (const [id, role] of [[viewer, "viewer"], [dev, "developer"]]) {
+      await db.query("INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES ($1, $2, '{}') ON CONFLICT DO NOTHING", [id, `whiteboard-${role}@example.test`]);
+      await db.query("INSERT INTO public.project_members (project_id, user_id, role) VALUES ($1, $2, $3)", [project, id, role]);
+    }
+  });
+  await withUser(dev, async () => {
+    board = (await db.query("INSERT INTO public.whiteboards (project_id, name) VALUES ($1, 'Ideas') RETURNING id", [project])).rows[0].id;
+    a = (await db.query("INSERT INTO public.whiteboard_elements (board_id, type) VALUES ($1, 'sticky') RETURNING id", [board])).rows[0].id;
+    b = (await db.query("INSERT INTO public.whiteboard_elements (board_id, type) VALUES ($1, 'shape') RETURNING id", [board])).rows[0].id;
+    const edge = await db.query("INSERT INTO public.whiteboard_edges (project_id, board_id, source_id, target_id) VALUES ($1, $2, $3, $4) RETURNING id", [project, board, a, b]);
+    check("a developer creates a board, notes and an arrow between them", edge.rows.length === 1);
+    check("an arrow can't reach a note on another project's board", await throwsInSavepoint(
+      "INSERT INTO public.whiteboard_edges (project_id, board_id, source_id, target_id) VALUES ($1, $2, $3, $4)", [project, board, a, foreign]));
+    check("…nor be filed under another project", await throwsInSavepoint(
+      "INSERT INTO public.whiteboard_edges (project_id, board_id, source_id, target_id) VALUES ($1, $2, $3, $4)", [other, board, a, b]));
+    check("a note can't be moved onto another project's board", await throwsInSavepoint(
+      "UPDATE public.whiteboard_elements SET board_id = $1 WHERE id = $2", [otherBoard, a]));
+    check("a developer can't delete the whole board", (await db.query("DELETE FROM public.whiteboards WHERE id = $1 RETURNING id", [board])).rows.length === 0);
+  });
+  await withUser(viewer, async () => {
+    check("a viewer sees the board and its notes", (await db.query("SELECT id FROM public.whiteboard_elements WHERE board_id = $1", [board])).rows.length === 2);
+    check("…but can't edit a note", (await db.query("UPDATE public.whiteboard_elements SET x = 99 WHERE id = $1 RETURNING id", [a])).rows.length === 0);
+    check("…add one", await throwsInSavepoint("INSERT INTO public.whiteboard_elements (board_id, type) VALUES ($1, 'sticky')", [board]));
+    check("…or delete one", (await db.query("DELETE FROM public.whiteboard_elements WHERE id = $1 RETURNING id", [a])).rows.length === 0);
+  });
+  await withUser(B, async () => {
+    check("someone outside the project sees no board", (await db.query("SELECT id FROM public.whiteboards WHERE project_id = $1", [project])).rows.length === 0);
+  });
+  await withUser(A, async () => {
+    check("the owner deletes the board, notes and arrows with it", (await db.query("DELETE FROM public.whiteboards WHERE id = $1 RETURNING id", [board])).rows.length === 1
+      && (await db.query("SELECT count(*)::int n FROM public.whiteboard_edges WHERE source_id = $1", [a])).rows[0].n === 0);
+  });
+}
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

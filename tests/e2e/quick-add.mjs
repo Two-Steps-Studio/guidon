@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import { allowBrowserRequest } from "./isolation.mjs";
+import { allowBrowserRequest, skipWalkthrough } from "./isolation.mjs";
 
 // My tasks on a phone: the floating button, a title, Enter - a task assigned
 // to you in the project's To do, in three interactions, without horizontal
@@ -8,6 +8,7 @@ import { allowBrowserRequest } from "./isolation.mjs";
 export async function quickAddCoverage({context,origin,fixture,client,browserName,artifacts}) {
   const owner=fixture.users[0], title=`Quick add ${browserName}`;
   const phone=await context.browser().newContext({ignoreHTTPSErrors:true,locale:"en-US",viewport:{width:375,height:812},hasTouch:true});
+  await skipWalkthrough(phone,fixture.users.map(user=>user.id));
   await phone.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
   const page=await phone.newPage();page.setDefaultTimeout(15000);
   try {

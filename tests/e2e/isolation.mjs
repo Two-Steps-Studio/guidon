@@ -25,3 +25,10 @@ export function allowBrowserRequest(url, origin) {
   const parsed = new URL(url);
   return parsed.origin === origin || ["data:","blob:"].includes(parsed.protocol);
 }
+
+/** Marks the walkthrough as seen for these users, so its overlay never covers the controls a test taps. */
+export function skipWalkthrough(context, userIds) {
+  return context.addInitScript(ids => {
+    try { for (const id of ids) localStorage.setItem(`guidon.walkthrough.seen.v1:${id}`, "1"); } catch {}
+  }, userIds);
+}

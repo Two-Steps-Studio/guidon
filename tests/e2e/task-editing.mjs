@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import { allowBrowserRequest } from "./isolation.mjs";
+import { allowBrowserRequest, skipWalkthrough } from "./isolation.mjs";
 
 export async function taskEditingCoverage({page,context,origin,fixture,client,browserName,artifacts}) {
   const owner=fixture.users[0], title=`Concurrent editing ${browserName}`;
@@ -10,6 +10,7 @@ export async function taskEditingCoverage({page,context,origin,fixture,client,br
   const other=await second.newPage();other.setDefaultTimeout(15000);
   let unexpectedDialogs=0;
   for(const p of [page,other])p.on("dialog",dialog=>{unexpectedDialogs++;void dialog.dismiss();});
+  await skipWalkthrough(second,fixture.users.map(user=>user.id));
   await second.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
   const root=`${origin}/projects/${owner.projectId}/work`;
   async function openTask(p){

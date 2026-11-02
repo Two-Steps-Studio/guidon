@@ -68,3 +68,6 @@ plugins/**/*.vsix
 .idea/workspace.xml
 /.freebuff
 .env.local
+
+# Affinity Designer lock files
+*~lock~
