@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,7 +61,7 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
   const t = useTranslations("context");
   const tCommon = useTranslations("common");
   const createWithProject = createRelation.bind(null, projectId);
-  const [state, formAction, pending] = useActionState(createWithProject, initialState);
+  const [state, formAction, pending] = useSafeActionState(createWithProject, initialState);
   const submittedRef = useRef(false);
 
   useEffect(() => {
@@ -125,7 +127,7 @@ function RelationForm({ projectId, onClose }: { projectId: string; onClose: () =
         </Select>
       </div>
       {state.error && (
-        <div className="text-sm text-destructive flex items-center gap-2">
+        <div role="alert" className="text-sm text-destructive flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
           {state.error}
         </div>

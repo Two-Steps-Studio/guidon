@@ -2,6 +2,14 @@ import assert from "node:assert/strict";
 
 export async function releaseSmoke({page,context,origin,fixture}) {
   const [own,foreign]=fixture.users;
+  const landing=await context.request.get(`${origin}/`);
+  assert.equal(landing.headers()["x-powered-by"],undefined,"The stack must not be advertised");
+  assert.equal(landing.headers()["cross-origin-opener-policy"],"same-origin");
+  assert.equal(landing.headers()["cross-origin-resource-policy"],"same-origin");
+  assert.equal((await context.request.get(`${origin}/widget/report.js`)).headers()["cross-origin-resource-policy"],"cross-origin","Sites embedding the report widget must be able to load it");
+  // API answers stay out of shared caches; the public server card keeps its hour.
+  assert.equal((await context.request.get(`${origin}/api/v1/projects`)).headers()["cache-control"],"private, no-store");
+  assert.equal((await context.request.get(`${origin}/api/mcp/server-card`)).headers()["cache-control"],"public, max-age=3600");
   const staticPage=await context.newPage();
   await staticPage.route("**/_next/static/**/*.js",route=>route.abort());
   await staticPage.goto(`${origin}/auth/login`);

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
-import {allowBrowserRequest} from './isolation.mjs';
+import {allowBrowserRequest,skipWalkthrough} from './isolation.mjs';
 
 const frames=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getAnimations({subtree:true}).map(animation=>animation.finished.catch(()=>{})));});
@@ -312,7 +312,7 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     if(browserName==='chromium'){
       const touch=await context.browser().newContext({ignoreHTTPSErrors:true,hasTouch:true,locale:'en-US',viewport:{width:375,height:812}});
       try{
-        await touch.addCookies(await context.cookies());await touch.route('**/*',route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
+        await touch.addCookies(await context.cookies());await skipWalkthrough(touch,fixture.users.map(user=>user.id));await touch.route('**/*',route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
         const phone=await touch.newPage();await phone.goto(route);
         assert.equal(await phone.evaluate(()=>matchMedia('(pointer: coarse)').matches),true);
         for(const name of [`${messages.commandPalette.triggerLabel} ⌘K`,messages.notifications.bellAria]){

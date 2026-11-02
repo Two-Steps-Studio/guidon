@@ -48,6 +48,12 @@ export async function mobileCoverage({page,context,origin,fixture,client,browser
    await page.reload();assert.equal((await client.query('SELECT priority FROM tasks WHERE id=$1',[task.id])).rows[0].priority,'high');
    await card.scrollIntoViewIfNeeded();await card.getByRole('button',{name:`Move task "${title}"`,exact:true}).tap();await page.getByRole('menuitem',{name:'Move to Review',exact:true}).tap();await page.getByRole('status').filter({hasText:title}).waitFor();
    await page.reload();assert.equal((await client.query('SELECT status FROM tasks WHERE id=$1',[task.id])).rows[0].status,'review');
+   const cardMenu=card.getByRole('button',{name:`Move task "${title}"`,exact:true});await card.scrollIntoViewIfNeeded();
+   await cardMenu.tap();await page.getByRole('menu').waitFor();await cardMenu.tap();await page.getByRole('menu').waitFor({state:'hidden'});// a second tap closes it
+   await cardMenu.tap();await page.getByRole('menuitem',{name:'Duplicate',exact:true}).tap();
+   await page.locator('[data-sonner-toast]').filter({hasText:`Duplicated as "${title} (copy)"`}).waitFor();
+   const copy=(await client.query('SELECT id,status,assignee_id,due_date FROM tasks WHERE project_id=$1 AND title=$2',[owner.projectId,`${title} (copy)`])).rows[0];assert.ok(copy,'Duplicate must create the copy');created.push(copy.id);
+   assert.equal(copy.status,'review','The copy lands in the same column');assert.equal(copy.assignee_id,null);assert.equal(copy.due_date,null);
    metrics.push({width,height:812,upload:true,prioritySave:true,touchMenuMove:true});await page.screenshot({path:path.join(artifacts,`${browserName}-mobile-${width}.png`),fullPage:true});
   }
   if(browserName==='chromium'){

@@ -144,7 +144,6 @@ export async function POST(request: NextRequest) {
             traceId,
             distinctId: access.userId,
             name: call.name,
-            input: call.args,
             latency: (Date.now() - toolStartedAt) / 1000,
             error,
           });
@@ -155,8 +154,6 @@ export async function POST(request: NextRequest) {
           traceId,
           distinctId: access.userId,
           name: call.name,
-          input: call.args,
-          output: toolResult,
           latency: (Date.now() - toolStartedAt) / 1000,
         });
         actions.push(toolResult.label ?? toolResult.summary);

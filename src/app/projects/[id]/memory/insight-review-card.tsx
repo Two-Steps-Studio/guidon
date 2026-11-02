@@ -1,5 +1,7 @@
 "use client";
 
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
 /**
  * Review UI for one pending AI insight (memory_type === 'ai_insight' AND
  * verified === false) - TODO.md §20's Accept / Correct / Reject workflow.
@@ -8,7 +10,7 @@
  * memory-page.tsx renders it through the regular card path.
  */
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { AlertCircle, Check, Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
@@ -165,7 +167,7 @@ function CorrectInsightForm({
 }) {
   const t = useTranslations("memory");
   const correctWithIds = correctAndAcceptInsight.bind(null, projectId, memory.id);
-  const [correctState, correctAction, correctPending] = useActionState(correctWithIds, initialState);
+  const [correctState, correctAction, correctPending] = useSafeActionState(correctWithIds, initialState);
   const submittedRef = useRef(false);
 
   useEffect(() => {

@@ -5,6 +5,8 @@ import { isModuleVisible } from "@/lib/work/project-modules";
 import Link from "next/link";
 import Image from "next/image";
 import { Fragment, useState } from "react";
+import { writeCollapsedGroups } from "@/lib/sidebar-groups";
+import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { usePinnedProjects } from "@/components/projects/pinned-projects-context";
@@ -202,19 +204,49 @@ export interface AppSidebarProps {
    * is the badge.
    */
   approvals?: { pending: number } | null;
+  /** Sections collapsed earlier (sidebar_groups cookie, read in app-shell.tsx). */
+  collapsedGroups?: string[];
+}
+
+/**
+ * A section heading that folds its items away. In the narrow icon rail every
+ * icon stays visible (folding there would hide them with no heading to bring
+ * them back); on mobile the sheet always shows labels, so it stays focusable.
+ */
+function useSectionFold(collapsed: ReadonlySet<string>, toggle: (key: string) => void) {
+  const { state, isMobile } = useSidebar();
+  const iconRail = state === "collapsed" && !isMobile;
+  return (key: string, id: string, label: string) => {
+    const folded = collapsed.has(key);
+    return {
+      label: (
+        <SidebarGroupLabel asChild>
+          <button type="button" tabIndex={iconRail ? -1 : 0} aria-expanded={!folded} aria-controls={id} onClick={() => toggle(key)} className="w-full justify-between focus-visible:ring-2">
+            <span className="truncate">{label}</span>
+            <ChevronDown aria-hidden className={cn("size-3 shrink-0 transition-transform", folded && "-rotate-90")} />
+          </button>
+        </SidebarGroupLabel>
+      ),
+      id,
+      /** Folded: only the current page's link stays, so the active section is still visible. */
+      shows: (active: boolean) => active || !folded || iconRail,
+    };
+  };
 }
 
 /** The person's pinned projects, shown on every app page including dashboard. */
-function PinnedProjectsGroup() {
+function PinnedProjectsGroup({ fold }: { fold: ReturnType<typeof useSectionFold> }) {
   const t = useTranslations("nav");
   const pinned = usePinnedProjects();
+  const pathname = usePathname();
   if (!pinned || pinned.projects.length === 0) return null;
+  const section = fold("pinnedProjects", "nav-group-pinned", t("pinnedProjects"));
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{t("pinnedProjects")}</SidebarGroupLabel>
-      <SidebarMenu>
-        {pinned.projects.map((project) => (
+      {section.label}
+      <SidebarMenu id={section.id}>
+        {pinned.projects.filter((project) => section.shows(pathname.startsWith(`/projects/${project.id}`))).map((project) => (
           <SidebarMenuItem key={project.id}>
             <SidebarMenuButton asChild tooltip={project.name}>
               <Link href={`/projects/${project.id}`}>
@@ -244,11 +276,17 @@ export function AppSidebar({
   disabledModules,
   moduleLinks = [],
   approvals = null,
+  collapsedGroups = [],
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
-  const { state: sidebarState } = useSidebar();
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set(collapsedGroups));
+  const fold = useSectionFold(collapsed, (key) => {
+    const next = new Set(collapsed);
+    if (!next.delete(key)) next.add(key);
+    setCollapsed(next);
+    writeCollapsedGroups([...next]);
+  });
   const isAdmin = pathname.startsWith("/admin");
 
   const isGlobalActive = (href: string) =>
@@ -319,7 +357,7 @@ export function AppSidebar({
           </SidebarMenu>
         </SidebarGroup>
 
-        <PinnedProjectsGroup />
+        <PinnedProjectsGroup fold={fold} />
 
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => {
@@ -327,13 +365,12 @@ export function AppSidebar({
               (item) => item.href !== "approvals" || approvals !== null
             );
             if (items.length === 0) return null;
+            const section = group.labelKey ? fold(group.labelKey, `project-nav-group-${groupIndex}`, t(group.labelKey)) : null;
             return (
             <SidebarGroup key={group.labelKey ?? `project-group-${groupIndex}`}>
-              {group.labelKey && (
-                <SidebarGroupLabel asChild><button type="button" tabIndex={sidebarState === "collapsed" ? -1 : 0} aria-expanded={!collapsedGroups[group.labelKey]} aria-controls={`project-nav-group-${groupIndex}`} onClick={() => setCollapsedGroups(current => ({ ...current, [group.labelKey!]: !current[group.labelKey!] }))} className="w-full justify-between focus-visible:ring-2">{t(group.labelKey)}<ChevronDown className={`size-3 transition-transform ${collapsedGroups[group.labelKey] ? "-rotate-90" : ""}`} /></button></SidebarGroupLabel>
-              )}
-              <SidebarMenu id={`project-nav-group-${groupIndex}`} className={group.labelKey && collapsedGroups[group.labelKey] ? "hidden" : undefined}>
-                {items.map((item) => {
+              {section?.label}
+              <SidebarMenu id={section?.id}>
+                {items.filter((item) => section?.shows(isProjectActive(item.href)) ?? true).map((item) => {
                   const active = isProjectActive(item.href);
                   const href = `/projects/${projectId}${item.href ? `/${item.href}` : ""}`;
                   return (
@@ -365,14 +402,17 @@ export function AppSidebar({
             );
           })}
 
-        {projectId && moduleGroups.map((group) => <SidebarGroup key={group.category ?? ""}>
-          <SidebarGroupLabel>{group.category ?? t("customModules")}</SidebarGroupLabel>
-          <SidebarMenu>{group.links.map(module => <SidebarMenuItem key={module.id}>
+        {projectId && moduleGroups.map((group, groupIndex) => {
+          const section = fold(`module:${group.category ?? ""}`, `module-nav-group-${groupIndex}`, group.category ?? t("customModules"));
+          return <SidebarGroup key={group.category ?? ""}>
+          {section.label}
+          <SidebarMenu id={section.id}>{group.links.filter(module => section.shows(pathname === module.href)).map(module => <SidebarMenuItem key={module.id}>
             <SidebarMenuButton asChild isActive={pathname === module.href} tooltip={module.name}>
               <Link href={module.href} aria-current={pathname === module.href ? "page" : undefined}><Puzzle /><span className="truncate">{module.name}</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>)}</SidebarMenu>
-        </SidebarGroup>)}
+        </SidebarGroup>;
+        })}
 
         {isAdmin && (
           <SidebarGroup>
@@ -405,12 +445,13 @@ export function AppSidebar({
                 asChild
                 size="lg"
                 tooltip={user.full_name || user.email}
-                className="group-data-[collapsible=icon]:justify-center"
+                // Collapsed, the same 32 px square as the icons around it, not a 48 px tall one.
+                className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!h-8"
               >
                 <Link href="/profile">
                   <Avatar className="size-6 shrink-0">
                     <AvatarImage src={user.avatar_url || undefined} />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-[10px] font-medium">
                       {initialsFor(user)}
                     </AvatarFallback>
                   </Avatar>

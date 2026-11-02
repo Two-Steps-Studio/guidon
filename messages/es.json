@@ -1,34 +1,42 @@
 {
   "agentMonitoring": {
-      "title": "Actividad de agentes",
+    "title": "Actividad de agentes",
     "scope": "Informe de solo lectura de hasta {limit} tareas modificadas recientemente, con reservas, trabajo registrado, aprobaciones y memoria. Los contadores corresponden a la selección disponible.",
-      "generated": "Actualizado: {date}",
-      "truncated": "Se alcanzó un límite de datos. Los contadores pueden estar incompletos.",
-      "error": "No se pudo cargar el informe de agentes. Recarga la página para intentarlo de nuevo.",
-      "review": "Tareas en Review",
-      "repeats": "Intentos adicionales registrados",
-      "approvals": "Aprobaciones pendientes",
-      "unverified": "Memoria sin verificar",
-      "statuses": "Tareas por estado",
-      "claims": "Reservas actuales de tareas",
-      "unknown": "Agente sin etiqueta",
-      "leaseAge": "Duración de la reserva: {minutes} min",
-      "expired": "Caducada",
-      "active": "Activa",
-      "expires": "Caduca: {date}",
-      "attempts": "Trabajo registrado por agente",
-      "reportedLabels": "Los nombres son etiquetas declaradas por los agentes. Los resultados de los intentos no son decisiones humanas de Review; los intentos adicionales no son necesariamente reintentos automáticos.",
-      "agent": "Etiqueta del agente",
-      "tasks": "Tareas distintas",
-      "succeeded": "Correctos",
-      "partial": "Parciales",
-      "failed": "Fallidos",
-      "memory": "Actualidad de la memoria y cobertura",
-      "memoryUpdated": "Última actualización de memoria: {date}",
-      "unavailable": "Este informe no recopila costes de tokens ni resultados separados de revisión humana. La falta de datos no significa cero.",
-      "empty": "No hay registros en esta selección."
+    "generated": "Actualizado: {date}",
+    "truncated": "Se alcanzó un límite de datos. Los contadores pueden estar incompletos.",
+    "error": "No se pudo cargar el informe de agentes. Recarga la página para intentarlo de nuevo.",
+    "review": "Tareas en Review",
+    "repeats": "Intentos adicionales registrados",
+    "approvals": "Aprobaciones pendientes",
+    "unverified": "Memoria sin verificar",
+    "statuses": "Tareas por estado",
+    "claims": "Reservas actuales de tareas",
+    "unknown": "Agente sin etiqueta",
+    "leaseAge": "Duración de la reserva: {minutes} min",
+    "expired": "Caducada",
+    "active": "Activa",
+    "expires": "Caduca: {date}",
+    "attempts": "Trabajo registrado por agente",
+    "reportedLabels": "Los nombres son etiquetas declaradas por los agentes. Los resultados de los intentos no son decisiones humanas de Review; los intentos adicionales no son necesariamente reintentos automáticos.",
+    "agent": "Etiqueta del agente",
+    "tasks": "Tareas distintas",
+    "succeeded": "Correctos",
+    "partial": "Parciales",
+    "failed": "Fallidos",
+    "memory": "Actualidad de la memoria y cobertura",
+    "memoryUpdated": "Última actualización de memoria: {date}",
+    "unavailable": "Este informe no recopila costes de tokens ni resultados separados de revisión humana. La falta de datos no significa cero.",
+    "empty": "No hay registros en esta selección."
   },
   "common": {
+    "analyticsConsent": {
+      "label": "Elección de analítica",
+      "message": "¿Podemos usar la analítica opcional de PostHog para ver qué funciones se usan y detectar errores? No se recoge nada si no lo permites. <cookies>Detalles</cookies>",
+      "allow": "Permitir",
+      "decline": "No, gracias",
+      "withdraw": "Retirar el consentimiento de analítica",
+      "change": "Cambiar la elección de analítica"
+    },
     "loading": "Cargando...",
     "projectType": "{type, select, game {Juego} website {Sitio web} mobile_app {Aplicación móvil} api {API} tool {Herramienta} other {Otro}}",
     "projectMethodology": "{methodology, select, standard {Estándar} scrum {Scrum} other {Estándar}}",
@@ -125,6 +133,8 @@
     }
   },
   "errors": {
+    "saveNetwork": "No se pudo conectar con Guidon y no se guardó nada. Tus cambios siguen aquí: revisa la conexión e inténtalo de nuevo.",
+    "saveFailed": "Algo salió mal y no se guardó nada. Tus cambios siguen aquí: inténtalo de nuevo.",
     "generic": {
       "title": "Algo salió mal",
       "defaultMessage": "Se produjo un error inesperado al cargar esta página.",
@@ -814,6 +824,18 @@
     }
   },
   "work": {
+    "noFilterMatchesTitle": "Ninguna tarea coincide con estos filtros",
+    "noFilterMatchesDesc": "{count, plural, one {# tarea está oculta} other {# tareas están ocultas}} por el filtro de persona, prioridad o etiqueta.",
+    "projectSettings": "Ajustes del proyecto",
+    "dueOverdue": "Vencida",
+    "dueToday": "Hoy",
+    "copyTaskLink": "Copiar enlace a esta tarea",
+    "taskLinkCopied": "Enlace copiado",
+    "duplicate": "Duplicar",
+    "duplicateTitle": "{title} (copia)",
+    "duplicated": "Copia creada: «{title}»",
+    "duplicateOpen": "Abrir",
+    "duplicateFailed": "No se pudo duplicar la tarea. Inténtalo de nuevo.",
     "downloadTaskEdits": "Descargar mis cambios",
     "reloadTask": "Cargar tarea actual",
     "status": "{status, select, backlog {Backlog} todo {Por hacer} in_progress {En curso} ai_working {IA trabajando} review {Revisión} done {Hecho} other {Backlog}}",
@@ -1059,6 +1081,8 @@
     "unpinTask": "Desfijar",
     "pinTooMany": "Puedes fijar hasta 10 tareas. Desfija alguna primero.",
     "pinFailed": "No se pudo cambiar la fijación. Inténtalo de nuevo.",
+    "pinnedTasksHeading": "Fijadas",
+    "pinnedTaskAria": "Tarea fijada",
     "taskMovedAnnouncement": "{title} se movió a {column}, posición {position}",
     "links": {
       "heading": "Código vinculado",
@@ -1138,7 +1162,7 @@
     "completionLabel": "Finalización %"
   },
   "members": {
-    "dialogTitle": "Crear fase",
+    "dialogTitle": "Añadir miembro",
     "title": "Miembros",
     "subtitle": "Quién puede ver y modificar este proyecto.",
     "addMember": "Añadir miembro",
@@ -1428,7 +1452,7 @@
     "openBoard": "Abrir tablero"
   },
   "feedback": {
-    "dialogTitle": "Crear fase",
+    "dialogTitle": "Enviar comentarios",
     "sendFeedback": "Enviar comentarios",
     "dialogDescription": "Cuéntanos qué funciona, qué está roto o qué te gustaría ver - leemos todos los mensajes.",
     "placeholder": "¿Qué tienes en mente?",
@@ -1475,7 +1499,8 @@
     "deleteRelationAria": "Eliminar relación"
   },
   "decisions": {
-    "dialogTitle": "Crear fase",
+    "emptyDescriptionReadOnly": "Todavía no se ha registrado ninguna decisión en este proyecto.",
+    "dialogTitle": "Crear decisión",
     "title": "Decisiones",
     "subtitle": "Registra las decisiones importantes del proyecto y su razonamiento",
     "createDecision": "Crear decisión",
@@ -1546,6 +1571,7 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "emptyDescriptionReadOnly": "Todavía no se han subido archivos a este proyecto.",
     "downloadFailed": "No se pudo descargar el archivo.",
     "downloadHttpError": "No se pudo descargar el archivo (HTTP {status}).",
     "disconnectRepo": "Desconectar repositorio {repository}",
@@ -1577,7 +1603,7 @@
     "connect": "Conectar"
   },
   "memory": {
-    "dialogTitle": "Crear fase",
+    "dialogTitle": "Crear entrada de memoria",
     "title": "Memoria",
     "subtitle": "Conocimiento e información persistentes del proyecto",
     "pendingReview": "Pendiente de revisión ({count})",
@@ -2115,6 +2141,8 @@
     "help": "Mostrar esta lista"
   },
   "datePicker": {
+    "tomorrow": "Mañana",
+    "inAWeek": "En 7 días",
     "placeholder": "Elegir fecha",
     "clear": "Borrar fecha",
     "today": "Hoy",
@@ -2829,23 +2857,24 @@
     "stepOf": "Paso {step} de {total}",
     "back": "Atrás",
     "next": "Siguiente",
-    "skip": "Omitir y no volver a mostrar",
+    "skip": "Omitir",
     "done": "Empecemos",
-    "spot1Title": "Panel",
-    "spot1Body": "Todo en un lugar: tareas abiertas, actividad reciente y progreso de proyectos.",
-    "spot2Title": "Mis tareas",
-    "spot2Body": "Tu trabajo abierto y atrasado de todos los proyectos, en una sola lista.",
-    "spot3Title": "Proyectos",
-    "spot3Body": "Los proyectos del equipo: todo trabajo empieza aquí.",
-    "spot4Title": "Búsqueda",
-    "spot4Body": "Ctrl+K (Cmd+K) salta a tareas, proyectos y acciones.",
-    "spot5Title": "Notificaciones",
-    "spot5Body": "La campana muestra lo que pasó mientras no estabas.",
-    "spot6Title": "Tu perfil",
-    "spot6Body": "Tu cuenta, integraciones y ajustes personales.",
-    "spot7Title": "Idioma",
-    "spot7Body": "Aquí cambias el idioma de la app (el tema, justo arriba).",
-    "ctaOpen": "Mostrar"
+    "projectsTitle": "Proyectos",
+    "projectsBody": "Los proyectos de tu equipo. Cada uno tiene en esta barra su tablero, decisiones y archivos.",
+    "newTaskTitle": "Añade una tarea",
+    "newTaskBody": "Haz clic aquí para añadir ya tu primera tarea; no hace falta terminar el recorrido.",
+    "boardTitle": "Tablero",
+    "boardBody": "Las columnas son estados. Arrastra una tarjeta o usa su menú para moverla.",
+    "decisionsTitle": "Decisiones",
+    "decisionsBody": "Anota por qué se decidió algo. Vincúlalo a tareas para que el motivo quede junto al trabajo.",
+    "filesTitle": "Archivos",
+    "filesBody": "Especificaciones, diseños y adjuntos del proyecto en un solo lugar.",
+    "agentTitle": "IA (opcional)",
+    "agentBody": "Conecta Claude Code, Codex u otro agente para que lea y actualice tareas. Puedes omitirlo.",
+    "searchTitle": "Búsqueda",
+    "searchBody": "Ctrl+K (Cmd+K) salta a tareas, proyectos y acciones.",
+    "replayTitle": "Repetir el recorrido",
+    "replayBody": "Aquí puedes volver a abrir este recorrido cuando quieras."
   },
   "whiteboard": {
     "boardDefaultName": "Pizarra principal",
@@ -2862,6 +2891,15 @@
     "colorLabel": "Color de la nota",
     "taskChip": "Tarea",
     "loadError": "No se pudo cargar la pizarra",
-    "saveError": "No se pudieron guardar los cambios"
+    "saveError": "No se pudieron guardar los cambios",
+    "proposalsTitle": "Revisa las tareas propuestas",
+    "proposalsDescription": "La IA redactó estas tareas a partir de tus notas. Edítalas antes de crearlas.",
+    "proposalTitleLabel": "Título de la tarea",
+    "proposalPriorityLabel": "Prioridad",
+    "proposalDescriptionLabel": "Descripción",
+    "proposalsCreate": "{count, plural, one {Crear # tarea} other {Crear # tareas}}",
+    "proposalsCreated": "{count, plural, one {# tarea creada} other {# tareas creadas}}",
+    "proposalsPartlyCreated": "{created} creadas, {failed} fallaron",
+    "proposalsFailed": "No se pudieron crear las tareas"
   }
-  }
+}

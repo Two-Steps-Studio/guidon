@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import type { Node } from "reactflow";
 
 interface WhiteboardToolbarProps {
+  /** Viewers and testers only look at the board (RLS 107). */
+  canEdit: boolean;
+  /** AI on for the project and not hidden by the person. */
+  ai: boolean;
   onAddSticky: () => void;
   onAddRectangle: () => void;
   onAddCircle: () => void;
@@ -24,6 +28,8 @@ interface WhiteboardToolbarProps {
  * także w trybie przewijania czy zaznaczania.
  */
 export function WhiteboardToolbar({
+  canEdit,
+  ai,
   onAddSticky,
   onAddRectangle,
   onAddCircle,
@@ -45,20 +51,24 @@ export function WhiteboardToolbar({
       data-tour-toolbar
       className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 flex max-w-[95%] flex-wrap items-center justify-center gap-2 rounded-full border border-border bg-background/80 p-2 shadow-lg backdrop-blur-md"
     >
-      <Button variant="ghost" size="sm" onClick={onAddSticky} className="gap-2">
-        <Plus size={16} />
-        <span>{t("addSticky")}</span>
-      </Button>
-      <Button variant="ghost" size="sm" onClick={onAddRectangle} className="gap-2" title={t("addRectangle")}>
-        <Square size={14} />
-        <span>{t("addRectangle")}</span>
-      </Button>
-      <Button variant="ghost" size="sm" onClick={onAddCircle} className="gap-2" title={t("addCircle")}>
-        <Circle />
-        <span>{t("addCircle")}</span>
-      </Button>
+      {canEdit && (
+        <>
+          <Button variant="ghost" size="sm" onClick={onAddSticky} className="gap-2">
+            <Plus size={16} />
+            <span>{t("addSticky")}</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onAddRectangle} className="gap-2" title={t("addRectangle")}>
+            <Square size={14} />
+            <span>{t("addRectangle")}</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onAddCircle} className="gap-2" title={t("addCircle")}>
+            <Circle />
+            <span>{t("addCircle")}</span>
+          </Button>
 
-      <div className="mx-1 h-4 w-px bg-border" />
+          <div className="mx-1 h-4 w-px bg-border" />
+        </>
+      )}
 
       <Button
         variant={tasksVisible ? "secondary" : "ghost"}
@@ -70,20 +80,23 @@ export function WhiteboardToolbar({
         <span>{tasksVisible ? t("hideTasks") : t("showTasks")}</span>
       </Button>
 
-      <div className="mx-1 h-4 w-px bg-border" />
+      {ai && (
+        <>
+          <div className="mx-1 h-4 w-px bg-border" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onAIConvert}
+            disabled={selectedColors === 0}
+            className="gap-2 text-primary disabled:opacity-50"
+          >
+            <Sparkles size={16} />
+            <span>{t("convertToTasks")}</span>
+          </Button>
+        </>
+      )}
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onAIConvert}
-        disabled={selectedColors === 0}
-        className="gap-2 text-primary disabled:opacity-50"
-      >
-        <Sparkles size={16} />
-        <span>{t("convertToTasks")}</span>
-      </Button>
-
-      {singleSticky && (
+      {canEdit && singleSticky && (
         <>
           <div className="mx-1 h-4 w-px bg-border" />
           <div className="flex items-center gap-1" role="group" aria-label={t("colorLabel")}>
@@ -101,7 +114,7 @@ export function WhiteboardToolbar({
         </>
       )}
 
-      {selectedNodes.length > 0 && (
+      {canEdit && selectedNodes.length > 0 && (
         <>
           <div className="mx-1 h-4 w-px bg-border" />
           <Button variant="ghost" size="sm" onClick={onDeleteSelected} className="gap-2 text-destructive">

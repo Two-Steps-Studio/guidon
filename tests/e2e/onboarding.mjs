@@ -28,13 +28,22 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
     assert.equal(project.project_type,"website");assert.ok(project.disabled_modules.includes("technology"));
     for(const table of ["project_members","organization_members"]){const column=table==="project_members"?"project_id":"organization_id";assert.equal((await client.query(`SELECT role FROM ${table} WHERE ${column}=$1 AND user_id=$2`,[table==="project_members"?projectId:orgId,user.id])).rows[0].role,"owner");}
     assert.equal(await page.evaluate(()=>localStorage.getItem("guidon-onboarding")),null);
-    await page.getByRole("button",{name:"Add your first task",exact:true}).click();
+    // A new account gets the tour on its own; its "Add a task" step is the real
+    // button, so the first task doesn't wait for the rest of the tour.
+    const tour=page.locator("[data-tour-overlay]");
+    await tour.getByText(/^Step 1 of \d+$/).waitFor();
+    for(let i=0;i<5&&!(await page.getByRole("dialog",{name:"Add a task",exact:true}).isVisible());i++)await tour.getByRole("button",{name:"Next",exact:true}).click();
+    const newTask=await page.locator('[data-tour="new-task"]').boundingBox();
+    await page.mouse.click(newTask.x+newTask.width/2,newTask.y+newTask.height/2);
+    await tour.waitFor({state:"hidden"});
     await page.locator("#new-task-title").fill(`First task ${browserName}`);
     await page.getByRole("button",{name:"Create task",exact:true}).click();
     await page.locator("#new-task-title").waitFor({state:"hidden"});
     await page.getByRole("button",{name:`Open task First task ${browserName}`,exact:true}).waitFor();
     assert.ok(Date.now()-started<60000,`From /start to the first task took ${Date.now()-started} ms`);
     await page.reload();await page.getByRole("button",{name:`Open task First task ${browserName}`,exact:true}).waitFor();
+    assert.equal(await page.evaluate(id=>localStorage.getItem(`guidon.walkthrough.seen.v1:${id}`),user.id),"1","A closed tour must not come back by itself");
+    assert.equal(await tour.count(),0,"A closed tour must not come back by itself");
     assert.equal((await client.query("SELECT count(*)::int AS n FROM tasks WHERE project_id=$1",[projectId])).rows[0].n,1);
     await page.goto(`${origin}/start/finish`);await page.waitForURL(url=>url.pathname==="/dashboard");
     assert.equal((await client.query("SELECT count(*)::int AS n FROM organizations WHERE created_by=$1",[user.id])).rows[0].n,1,"Finishing again with cleared answers must not duplicate workspaces");

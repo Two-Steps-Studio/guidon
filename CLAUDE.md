@@ -34,6 +34,7 @@ npm run test:api               # what every /api/v1 response shares: error codes
 npm run test:billing           # billing rules: weekly/monthly/yearly intervals, once-per-organization trial, grace period after a failed payment (src/lib/billing/billing-core.ts); Stripe webhook flow: duplicates, out-of-order delivery, retry after a failure, no plan without payment, signatures offline (src/lib/billing/stripe-webhook-core.ts)
 npm run test:context           # Context Engine package for agents: token budget over the whole document, ranking/relevance, freshness, secret redaction, untrusted-text neutralization and instruction flagging (src/lib/context/context-pack-core.ts, docs/context-api.md)
 npm run test:search            # task search ranking: diacritics, task ids/guidon#refs, typos, ordering, 30 realistic queries over 1200 tasks with the wanted one in the top 5 (src/lib/search/task-search-core.ts)
+npm run test:markdown           # task descriptions as markdown: raw HTML and script URLs never become markup, external links open safely, lists/checklists/code blocks (src/components/files/markdown-preview.tsx)
 npm run test:app-changes       # what an app (API key/MCP/GitHub) changed on a task and undoing it: diffs, stored rows, undo that never overwrites a later edit (src/lib/work/app-changes-core.ts); agents asking for approval: request bodies, expiry, inbox order (src/lib/work/agent-approvals-core.ts)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
@@ -44,6 +45,16 @@ Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` fro
 `test:db`/`test:ai`/`test:auth`/`test:limits`/`test:reports`/`test:github`/`test:webhooks`/`test:agent-web`/`test:labels`/`test:import`/`test:recurrence`/`test:billing`/`test:api`/`test:context`/`test:search`/`test:app-changes` are plain Node scripts (`tests/db/compat.test.mjs`, etc.), not a test framework - there is no `--grep`/name filter; each run always executes the whole file. `test:db` is the primary regression safety net for anything schema- or RLS-adjacent (migrations, RLS policies, any Server Action that reads/writes through `withUser`) - run it after touching `src/db/migrations/**` or any permission-checking code, and expect the pass count printed at the end (currently 684) to stay the same or grow, never shrink.
 
 There is no component/unit test runner (no Jest/Vitest/RTL) - UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
+
+## Code quality skills (owner's rule: use them for any code)
+
+- **Writing or changing code:** work in `ponytail` mode (`.claude/skills/ponytail/SKILL.md`): the smallest change that fully solves the task. For `.ts`/`.tsx`, also follow `.claude/skills/typescript-best-practices/SKILL.md`.
+- **Before a commit you push:**
+  - Review your own diff against `.claude/skills/thermo-nuclear-code-quality-review/SKILL.md` (structure, files over 1000 lines, ad-hoc branches, wrong layer).
+  - Also review it against `.claude/skills/ponytail-review/SKILL.md` (correctness, security, load, tests).
+  - Fix what they find before pushing.
+- **Other pstack skills** (`.claude/skills/`, `principle-*`, `blast-radius`, `interrogate`, `tdd`, ...) are invoked by the user with `/name`. Agents may read and apply a SKILL.md directly when it fits the task.
+- **Sources and licenses:** `.claude/skills/THIRD_PARTY.md`.
 
 ## Architecture
 

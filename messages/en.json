@@ -1,34 +1,42 @@
 {
   "agentMonitoring": {
-      "title": "Agent activity",
+    "title": "Agent activity",
     "scope": "Read-only snapshot of up to {limit} recently updated tasks, with task reservations, recorded work, approvals and memory. Counts describe the available selection.",
-      "generated": "Updated: {date}",
-      "truncated": "The snapshot reached a data limit. Counts may be incomplete.",
-      "error": "Could not load the agent report. Reload the page to try again.",
-      "review": "Tasks in Review",
-      "repeats": "Additional recorded attempts",
-      "approvals": "Pending approvals",
-      "unverified": "Unverified memory",
-      "statuses": "Tasks by status",
-      "claims": "Current task leases",
-      "unknown": "Unlabelled agent",
-      "leaseAge": "Lease age: {minutes} min",
-      "expired": "Expired",
-      "active": "Active",
-      "expires": "Expires: {date}",
-      "attempts": "Recorded work by agent",
-      "reportedLabels": "Agent names are self-reported labels. Attempt results are not human Review decisions; additional attempts are not necessarily automatic retries.",
-      "agent": "Agent label",
-      "tasks": "Distinct tasks",
-      "succeeded": "Succeeded",
-      "partial": "Partial",
-      "failed": "Failed",
-      "memory": "Memory freshness and data coverage",
-      "memoryUpdated": "Most recent memory update: {date}",
-      "unavailable": "Token costs and separate human Review outcomes are not collected by this report. Unavailable values are not zero.",
-      "empty": "No records in this snapshot."
+    "generated": "Updated: {date}",
+    "truncated": "The snapshot reached a data limit. Counts may be incomplete.",
+    "error": "Could not load the agent report. Reload the page to try again.",
+    "review": "Tasks in Review",
+    "repeats": "Additional recorded attempts",
+    "approvals": "Pending approvals",
+    "unverified": "Unverified memory",
+    "statuses": "Tasks by status",
+    "claims": "Current task leases",
+    "unknown": "Unlabelled agent",
+    "leaseAge": "Lease age: {minutes} min",
+    "expired": "Expired",
+    "active": "Active",
+    "expires": "Expires: {date}",
+    "attempts": "Recorded work by agent",
+    "reportedLabels": "Agent names are self-reported labels. Attempt results are not human Review decisions; additional attempts are not necessarily automatic retries.",
+    "agent": "Agent label",
+    "tasks": "Distinct tasks",
+    "succeeded": "Succeeded",
+    "partial": "Partial",
+    "failed": "Failed",
+    "memory": "Memory freshness and data coverage",
+    "memoryUpdated": "Most recent memory update: {date}",
+    "unavailable": "Token costs and separate human Review outcomes are not collected by this report. Unavailable values are not zero.",
+    "empty": "No records in this snapshot."
   },
   "common": {
+    "analyticsConsent": {
+      "label": "Analytics choice",
+      "message": "May we use optional PostHog analytics to see which features are used and catch errors? Nothing is collected unless you allow it. <cookies>Details</cookies>",
+      "allow": "Allow",
+      "decline": "No thanks",
+      "withdraw": "Withdraw analytics consent",
+      "change": "Change analytics choice"
+    },
     "loading": "Loading...",
     "projectType": "{type, select, game {Game} website {Website} mobile_app {Mobile App} api {API} tool {Tool} other {Other}}",
     "projectMethodology": "{methodology, select, standard {Standard} scrum {Scrum} other {Standard}}",
@@ -125,6 +133,8 @@
     }
   },
   "errors": {
+    "saveNetwork": "Couldn't reach Guidon, so nothing was saved. Your changes are still here - check the connection and try again.",
+    "saveFailed": "Something went wrong and nothing was saved. Your changes are still here - try again.",
     "generic": {
       "title": "Something went wrong",
       "defaultMessage": "An unexpected error occurred while loading this page.",
@@ -826,6 +836,18 @@
     }
   },
   "work": {
+    "noFilterMatchesTitle": "No tasks match these filters",
+    "noFilterMatchesDesc": "{count, plural, one {# task is} other {# tasks are}} hidden by the assignee, priority or label filter.",
+    "projectSettings": "Project settings",
+    "dueOverdue": "Overdue",
+    "dueToday": "Today",
+    "copyTaskLink": "Copy link to this task",
+    "taskLinkCopied": "Link copied",
+    "duplicate": "Duplicate",
+    "duplicateTitle": "{title} (copy)",
+    "duplicated": "Duplicated as \"{title}\"",
+    "duplicateOpen": "Open",
+    "duplicateFailed": "Couldn't duplicate the task. Try again.",
     "downloadTaskEdits": "Download my edits",
     "reloadTask": "Reload latest task",
     "status": "{status, select, backlog {Backlog} todo {Todo} in_progress {In Progress} ai_working {AI Working} review {Review} done {Done} other {Backlog}}",
@@ -1071,6 +1093,8 @@
     "unpinTask": "Unpin",
     "pinTooMany": "You can pin up to 10 tasks. Unpin one first.",
     "pinFailed": "Couldn't change the pin. Try again.",
+    "pinnedTasksHeading": "Pinned",
+    "pinnedTaskAria": "Pinned task",
     "taskMovedAnnouncement": "{title} moved to {column}, position {position}",
     "links": {
       "heading": "Linked code",
@@ -1150,7 +1174,7 @@
     "completionLabel": "Completion %"
   },
   "members": {
-    "dialogTitle": "Create Phase",
+    "dialogTitle": "Add member",
     "title": "Members",
     "subtitle": "Who can see and change this project.",
     "addMember": "Add member",
@@ -1440,7 +1464,7 @@
     "openBoard": "Open board"
   },
   "feedback": {
-    "dialogTitle": "Create Phase",
+    "dialogTitle": "Send feedback",
     "sendFeedback": "Send feedback",
     "dialogDescription": "Tell us what's working, what's broken, or what you'd like to see - we read every message.",
     "placeholder": "What's on your mind?",
@@ -1487,7 +1511,8 @@
     "deleteRelationAria": "Delete relation"
   },
   "decisions": {
-    "dialogTitle": "Create Phase",
+    "emptyDescriptionReadOnly": "No decisions have been recorded in this project yet.",
+    "dialogTitle": "Create Decision",
     "title": "Decisions",
     "subtitle": "Track important project decisions and their rationale",
     "createDecision": "Create Decision",
@@ -1558,6 +1583,7 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "emptyDescriptionReadOnly": "No files have been uploaded to this project yet.",
     "downloadFailed": "Download failed.",
     "downloadHttpError": "Download failed (HTTP {status}).",
     "disconnectRepo": "Disconnect repository {repository}",
@@ -1589,7 +1615,7 @@
     "connect": "Connect"
   },
   "memory": {
-    "dialogTitle": "Create Phase",
+    "dialogTitle": "Create Memory",
     "title": "Memory",
     "subtitle": "Persistent project knowledge and insights",
     "pendingReview": "Pending Review ({count})",
@@ -2127,6 +2153,8 @@
     "help": "Show this list"
   },
   "datePicker": {
+    "tomorrow": "Tomorrow",
+    "inAWeek": "In 7 days",
     "placeholder": "Pick a date",
     "clear": "Clear date",
     "today": "Today",
@@ -2875,23 +2903,24 @@
     "stepOf": "Step {step} of {total}",
     "back": "Back",
     "next": "Next",
-    "skip": "Skip and don't show again",
+    "skip": "Skip",
     "done": "Let's go",
-    "spot1Title": "Dashboard",
-    "spot1Body": "Everything in one place: open tasks, latest activity and project progress.",
-    "spot2Title": "My tasks",
-    "spot2Body": "Your open and overdue work from every project, in one list.",
-    "spot3Title": "Projects",
-    "spot3Body": "The team's projects - every piece of work starts here.",
-    "spot4Title": "Search",
-    "spot4Body": "Press Ctrl+K (Cmd+K) to jump to tasks, projects and actions.",
-    "spot5Title": "Notifications",
-    "spot5Body": "This bell shows what happened while you were away.",
-    "spot6Title": "Your profile",
-    "spot6Body": "Your account, integrations and personal settings.",
-    "spot7Title": "Language",
-    "spot7Body": "Switch the app language here (and the theme just above).",
-    "ctaOpen": "Show"
+    "projectsTitle": "Projects",
+    "projectsBody": "Your team's projects. Each one has its own board, decisions and files in this sidebar.",
+    "newTaskTitle": "Add a task",
+    "newTaskBody": "Click here to add your first task now - you don't have to finish the tour.",
+    "boardTitle": "Board",
+    "boardBody": "Columns are statuses. Drag a card, or use its menu, to move it along.",
+    "decisionsTitle": "Decisions",
+    "decisionsBody": "Record why something was decided. Link it to tasks so the reasoning stays next to the work.",
+    "filesTitle": "Files",
+    "filesBody": "Specs, designs and attachments for the project, in one place.",
+    "agentTitle": "AI (optional)",
+    "agentBody": "Connect Claude Code, Codex or another agent so it can read and update tasks. You can skip this.",
+    "searchTitle": "Search",
+    "searchBody": "Ctrl+K (Cmd+K) jumps to tasks, projects and actions.",
+    "replayTitle": "Replay the tour",
+    "replayBody": "You can open this tour again here at any time."
   },
   "whiteboard": {
     "boardDefaultName": "Main board",
@@ -2908,6 +2937,15 @@
     "colorLabel": "Sticky colour",
     "taskChip": "Task",
     "loadError": "Failed to load the board",
-    "saveError": "Failed to save the board"
+    "saveError": "Failed to save the board",
+    "proposalsTitle": "Review the proposed tasks",
+    "proposalsDescription": "AI drafted these tasks from your notes. Edit them before they're created.",
+    "proposalTitleLabel": "Task title",
+    "proposalPriorityLabel": "Priority",
+    "proposalDescriptionLabel": "Description",
+    "proposalsCreate": "{count, plural, one {Create # task} other {Create # tasks}}",
+    "proposalsCreated": "{count, plural, one {Created # task} other {Created # tasks}}",
+    "proposalsPartlyCreated": "Created {created}, {failed} failed",
+    "proposalsFailed": "Could not create the tasks"
   }
-  }
+}

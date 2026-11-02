@@ -2,19 +2,20 @@
 
 /**
  * Przewodnik po aplikacji (spotlight tour) — podświetla rzeczywiste elementy
- * interfejsu (otwór w przyciemnionej zasłonie), opisuje je w dymku i opcjonalnie
- * prowadzi przyciskiem „Pokaż" na docelową stronę.
+ * interfejsu (otwór w przyciemnionej zasłonie) i opisuje je w dymku. Klik w
+ * podświetlony element zamyka tour i wykonuje akcję (np. „Nowe zadanie"),
+ * więc pierwszego taska można dodać bez przechodzenia całości.
  *
- * Pokazuje się automatycznie raz na konto (klucz localStorage per userId;
- * „Pomiń i nie pokazuj ponownie" zapisuje znacznik wyłącznie dla tego konta),
- * a wpis „Przewodnik" w stopce sidebara otwiera go z każdej strony.
+ * Pokazuje się automatycznie raz na konto (klucz localStorage per userId).
+ * Każde zamknięcie — pominięcie, Escape, klik w tło, koniec — zapisuje
+ * znacznik, więc tour sam nie wraca; wpis „Przewodnik" w stopce sidebara
+ * otwiera go ponownie z każdej strony.
  *
  * Kroki bez istniejącego elementu (np. strona, na której czegoś nie ma) są
  * pomijane, więc tour nie może „utknąć" na pustym pomoście.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,17 +52,15 @@ interface TourStep {
   selector: string;
   title: string;
   body: string;
-  /** Przycisk „Pokaż" przenosi tutaj i kończy tour. */
-  href?: string;
 }
 
 export interface SpotlightTourProps {
   userId: string | null;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps) {
+/** Mounted only while open, so every opening starts from the first step. */
+function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
   const t = useTranslations("walkthrough");
   const [steps, setSteps] = useState<TourStep[]>([]);
   const [index, setIndex] = useState(0);
@@ -69,32 +68,26 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
   const [placement, setPlacement] = useState<"below" | "above">("below");
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
-  const finish = useCallback(
-    (remember: boolean) => {
-      if (remember && userId) markWalkthroughSeen(userId);
-      onOpenChange(false);
-    },
-    [userId, onOpenChange]
-  );
+  const finish = useCallback(() => {
+    if (userId) markWalkthroughSeen(userId);
+    onOpenChange(false);
+  }, [userId, onOpenChange]);
 
   // Wejście: zbierz kroki (tylko te, których element faktycznie istnieje),
   // pod eskortą rAF — dokument jest gotowy efektem po nawodnieniu.
   useEffect(() => {
-    if (!open) {
-      setSteps([]);
-      setRect(null);
-      setIndex(0);
-      return;
-    }
     const raf = requestAnimationFrame(() => {
+      // Steps whose control isn't on this page, isn't visible (mobile
+      // sidebar, collapsed section) or isn't allowed for this role are skipped.
       const all: TourStep[] = [
-        { selector: 'a[href="/dashboard"]', title: t("spot1Title"), body: t("spot1Body") },
-        { selector: 'a[href="/my-tasks"]', title: t("spot2Title"), body: t("spot2Body") },
-        { selector: 'a[href="/projects"]', title: t("spot3Title"), body: t("spot3Body"), href: "/projects" },
-        { selector: '[data-tour="command"]', title: t("spot4Title"), body: t("spot4Body") },
-        { selector: '[data-tour="bell"]', title: t("spot5Title"), body: t("spot5Body") },
-        { selector: 'a[href="/profile"]', title: t("spot6Title"), body: t("spot6Body") },
-        { selector: '[data-tour="language"]', title: t("spot7Title"), body: t("spot7Body") },
+        { selector: 'a[href="/projects"]', title: t("projectsTitle"), body: t("projectsBody") },
+        { selector: '[data-tour="new-task"]', title: t("newTaskTitle"), body: t("newTaskBody") },
+        { selector: '[data-tour="board"]', title: t("boardTitle"), body: t("boardBody") },
+        { selector: 'a[href^="/projects/"][href$="/decisions"]', title: t("decisionsTitle"), body: t("decisionsBody") },
+        { selector: 'a[href^="/projects/"][href$="/files"]', title: t("filesTitle"), body: t("filesBody") },
+        { selector: '[data-tour="connect-agent"]', title: t("agentTitle"), body: t("agentBody") },
+        { selector: '[data-tour="command"]', title: t("searchTitle"), body: t("searchBody") },
+        { selector: '[data-tour="walkthrough"]', title: t("replayTitle"), body: t("replayBody") },
       ];
       setSteps(
         all.filter((step) => {
@@ -105,24 +98,22 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
     });
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, []);
 
-  /* Escape zamyka bez zapisu znacznika (tour wróci przy następnym wejściu). */
   useEffect(() => {
-    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") finish(false);
+      if (event.key === "Escape") finish();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, finish]);
+  }, [finish]);
 
   /* Pomiar elementu bieżącego kroku + przewinięcie do niego. */
   useEffect(() => {
-    if (!open || steps.length === 0) return;
+    if (steps.length === 0) return;
     if (index > steps.length - 1) {
       // Element zniknął w międzyczasie — zamiast utknąć, domknij tour.
-      finish(false);
+      finish();
       return;
     }
     let raf = 0;
@@ -147,7 +138,7 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
       window.removeEventListener("resize", onScroll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, steps, index]);
+  }, [steps, index]);
 
   /* Połóż dymek poniżej podświetlenia, a gdy brakuje miejsca — nad nim. */
   useLayoutEffect(() => {
@@ -157,7 +148,7 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
     setPlacement(below < window.innerHeight ? "below" : "above");
   }, [rect, index, steps]);
 
-  if (!open || !rect || steps.length === 0) return null;
+  if (!rect || steps.length === 0) return null;
 
   const current = steps[index];
   const isFirst = index === 0;
@@ -181,11 +172,11 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
 
   return (
     <div className="fixed inset-0 z-[100]" data-tour-overlay>
-      {/* Zasłona z otworem: podświetlony element może być klikany, klik
-          poza nim domyka tour (bez zapisu znacznika). */}
+      {/* Zasłona z otworem. Klik trafia w warstwę pod spodem: w otworze
+          zamyka tour i klika podświetlony element, poza nim tylko zamyka. */}
       <div
         aria-hidden
-        className="absolute rounded-xl transition-all duration-200"
+        className="pointer-events-none absolute rounded-xl transition-all duration-200"
         style={{
           ...highlight,
           boxShadow: "0 0 0 200vmax hsl(0 0% 0% / 0.65)",
@@ -197,7 +188,13 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
         aria-label={t("skip")}
         className="fixed inset-0 cursor-default"
         style={{ zIndex: -1 }}
-        onClick={() => finish(false)}
+        onClick={(event) => {
+          const inHole =
+            event.clientX >= highlight.left && event.clientX <= highlight.left + highlight.width &&
+            event.clientY >= highlight.top && event.clientY <= highlight.top + highlight.height;
+          finish();
+          if (inHole) document.querySelector<HTMLElement>(current.selector)?.click();
+        }}
       />
 
       <div
@@ -215,17 +212,8 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
         </div>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{current.body}</p>
 
-        {current.href && (
-          <Button size="sm" className="mt-3 w-full" asChild>
-            <Link href={current.href}>
-              <Sparkles className="mr-1.5 size-4" aria-hidden />
-              {t("ctaOpen")}
-            </Link>
-          </Button>
-        )}
-
         <div className="mt-3 flex items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={() => finish(true)}>
+          <Button variant="ghost" size="sm" onClick={finish}>
             {t("skip")}
           </Button>
           <div className="flex gap-2">
@@ -237,7 +225,7 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
             >
               {t("back")}
             </Button>
-            <Button size="sm" onClick={() => (isLast ? finish(true) : setIndex(index + 1))}>
+            <Button size="sm" onClick={() => (isLast ? finish() : setIndex(index + 1))}>
               {isLast ? t("done") : t("next")}
             </Button>
           </div>
@@ -253,13 +241,11 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
  * w tej przeglądarce (klucz per userId, nie per przeglądarka).
  */
 export function WalkthroughAutoOpen({ userId }: { userId: string | null }) {
-  const [open, setOpen] = useState(false);
+  // The tour renders nothing until it has measured a step, so the server and
+  // the first client render match even when this starts out true.
+  const [open, setOpen] = useState(() => typeof window !== "undefined" && !!userId && !isWalkthroughSeen(userId));
 
-  useEffect(() => {
-    if (userId && !isWalkthroughSeen(userId)) setOpen(true);
-  }, [userId]);
-
-  return <SpotlightTour userId={userId} open={open} onOpenChange={setOpen} />;
+  return open ? <SpotlightTour userId={userId} onOpenChange={setOpen} /> : null;
 }
 
 /** Ręczne uruchomienie: wpis „Przewodnik" w stopce sidebara (wzór: FeedbackMenuItem). */
@@ -270,12 +256,12 @@ export function WalkthroughMenuItem({ userId }: { userId: string | null }) {
   return (
     <>
       <SidebarMenuItem>
-        <SidebarMenuButton type="button" tooltip={t("launcher")} onClick={() => setOpen(true)}>
+        <SidebarMenuButton type="button" tooltip={t("launcher")} onClick={() => setOpen(true)} data-tour="walkthrough">
           <Sparkles className={cn("size-4 shrink-0")} />
           <span>{t("launcher")}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <SpotlightTour userId={userId} open={open} onOpenChange={setOpen} />
+      {open && <SpotlightTour userId={userId} onOpenChange={setOpen} />}
     </>
   );
 }

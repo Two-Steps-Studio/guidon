@@ -217,7 +217,8 @@ function ListEditor({
                 >
                   <input
                     type="checkbox"
-                    className="h-3.5 w-3.5"
+                    role="switch"
+                    className="switch"
                     checked={row.isDone}
                     disabled={row.builtin}
                     onChange={(event) => update(index, { isDone: event.target.checked })}
@@ -260,7 +261,7 @@ function ListEditor({
         </Button>
 
         {error && (
-          <div className="flex items-center gap-2 text-sm text-destructive">
+          <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
@@ -271,7 +272,7 @@ function ListEditor({
             <Check className="mr-2 h-4 w-4" />
             {saving ? t("saving") : saveLabel}
           </Button>
-          {saved && !saving && <span className="text-sm text-success">{t("saved")}</span>}
+          {saved && !saving && <span role="status" className="text-sm text-success">{t("saved")}</span>}
         </div>
       </CardContent>
     </Card>

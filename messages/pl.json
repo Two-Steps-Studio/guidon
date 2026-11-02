@@ -1,34 +1,42 @@
 {
   "agentMonitoring": {
-      "title": "Praca agentów",
+    "title": "Praca agentów",
     "scope": "Raport tylko do odczytu: do {limit} ostatnio zmienionych zadań wraz z rezerwacjami, zapisaną pracą, zatwierdzeniami i pamięcią. Liczniki dotyczą dostępnego zestawu.",
-      "generated": "Aktualizacja: {date}",
-      "truncated": "Osiągnięto limit danych raportu. Liczniki mogą być niepełne.",
-      "error": "Nie udało się pobrać raportu agentów. Odśwież stronę, aby spróbować ponownie.",
-      "review": "Zadania w Review",
-      "repeats": "Dodatkowe zapisane próby",
-      "approvals": "Oczekujące zatwierdzenia",
-      "unverified": "Niezweryfikowana pamięć",
-      "statuses": "Zadania według statusu",
-      "claims": "Bieżące rezerwacje zadań",
-      "unknown": "Agent bez etykiety",
-      "leaseAge": "Czas rezerwacji: {minutes} min",
-      "expired": "Wygasła",
-      "active": "Aktywna",
-      "expires": "Wygasa: {date}",
-      "attempts": "Zapisana praca według agenta",
-      "reportedLabels": "Nazwy agentów są deklarowanymi etykietami. Wynik próby nie oznacza decyzji człowieka w Review; dodatkowa próba nie musi być automatycznym ponowieniem.",
-      "agent": "Etykieta agenta",
-      "tasks": "Różne zadania",
-      "succeeded": "Udane",
-      "partial": "Częściowe",
-      "failed": "Nieudane",
-      "memory": "Świeżość pamięci i zakres danych",
-      "memoryUpdated": "Ostatnia zmiana pamięci: {date}",
-      "unavailable": "Ten raport nie zbiera kosztów tokenów ani osobnych wyników oceny człowieka. Brak danych nie oznacza zera.",
-      "empty": "Brak wpisów w tym zestawie."
+    "generated": "Aktualizacja: {date}",
+    "truncated": "Osiągnięto limit danych raportu. Liczniki mogą być niepełne.",
+    "error": "Nie udało się pobrać raportu agentów. Odśwież stronę, aby spróbować ponownie.",
+    "review": "Zadania w Review",
+    "repeats": "Dodatkowe zapisane próby",
+    "approvals": "Oczekujące zatwierdzenia",
+    "unverified": "Niezweryfikowana pamięć",
+    "statuses": "Zadania według statusu",
+    "claims": "Bieżące rezerwacje zadań",
+    "unknown": "Agent bez etykiety",
+    "leaseAge": "Czas rezerwacji: {minutes} min",
+    "expired": "Wygasła",
+    "active": "Aktywna",
+    "expires": "Wygasa: {date}",
+    "attempts": "Zapisana praca według agenta",
+    "reportedLabels": "Nazwy agentów są deklarowanymi etykietami. Wynik próby nie oznacza decyzji człowieka w Review; dodatkowa próba nie musi być automatycznym ponowieniem.",
+    "agent": "Etykieta agenta",
+    "tasks": "Różne zadania",
+    "succeeded": "Udane",
+    "partial": "Częściowe",
+    "failed": "Nieudane",
+    "memory": "Świeżość pamięci i zakres danych",
+    "memoryUpdated": "Ostatnia zmiana pamięci: {date}",
+    "unavailable": "Ten raport nie zbiera kosztów tokenów ani osobnych wyników oceny człowieka. Brak danych nie oznacza zera.",
+    "empty": "Brak wpisów w tym zestawie."
   },
   "common": {
+    "analyticsConsent": {
+      "label": "Wybór analityki",
+      "message": "Czy możemy używać opcjonalnej analityki PostHog, żeby widzieć, z których funkcji korzystasz, i wyłapywać błędy? Bez Twojej zgody nic nie zbieramy. <cookies>Szczegóły</cookies>",
+      "allow": "Zezwól",
+      "decline": "Nie, dziękuję",
+      "withdraw": "Wycofaj zgodę na analitykę",
+      "change": "Zmień wybór analityki"
+    },
     "loading": "Ładowanie...",
     "projectType": "{type, select, game {Gra} website {Strona internetowa} mobile_app {Aplikacja mobilna} api {API} tool {Narzędzie} other {Inne}}",
     "projectMethodology": "{methodology, select, standard {Standardowy} scrum {Scrum} other {Standardowy}}",
@@ -125,6 +133,8 @@
     }
   },
   "errors": {
+    "saveNetwork": "Brak połączenia z Guidonem, nic nie zapisano. Twoje zmiany są nadal tutaj - sprawdź połączenie i spróbuj ponownie.",
+    "saveFailed": "Coś poszło nie tak i nic nie zapisano. Twoje zmiany są nadal tutaj - spróbuj ponownie.",
     "generic": {
       "title": "Coś poszło nie tak",
       "defaultMessage": "Wystąpił nieoczekiwany błąd podczas wczytywania tej strony.",
@@ -826,6 +836,18 @@
     }
   },
   "work": {
+    "noFilterMatchesTitle": "Żadne zadanie nie pasuje do filtrów",
+    "noFilterMatchesDesc": "{count, plural, one {# zadanie jest ukryte} few {# zadania są ukryte} other {# zadań jest ukrytych}} przez filtr osoby, priorytetu lub etykiety.",
+    "projectSettings": "Ustawienia projektu",
+    "dueOverdue": "Po terminie",
+    "dueToday": "Dziś",
+    "copyTaskLink": "Kopiuj link do zadania",
+    "taskLinkCopied": "Skopiowano link",
+    "duplicate": "Duplikuj",
+    "duplicateTitle": "{title} (kopia)",
+    "duplicated": "Utworzono kopię „{title}”",
+    "duplicateOpen": "Otwórz",
+    "duplicateFailed": "Nie udało się zduplikować zadania. Spróbuj ponownie.",
     "downloadTaskEdits": "Pobierz moje zmiany",
     "reloadTask": "Wczytaj aktualne zadanie",
     "status": "{status, select, backlog {Backlog} todo {Do zrobienia} in_progress {W toku} ai_working {AI pracuje} review {Przegląd} done {Zrobione} other {Backlog}}",
@@ -1071,6 +1093,8 @@
     "unpinTask": "Odepnij",
     "pinTooMany": "Możesz przypiąć do 10 zadań. Najpierw odepnij któreś.",
     "pinFailed": "Nie udało się zmienić przypięcia. Spróbuj ponownie.",
+    "pinnedTasksHeading": "Przypięte",
+    "pinnedTaskAria": "Przypięte zadanie",
     "taskMovedAnnouncement": "Przeniesiono {title} do kolumny {column}, pozycja {position}",
     "links": {
       "heading": "Powiązany kod",
@@ -1150,7 +1174,7 @@
     "completionLabel": "Ukończenie %"
   },
   "members": {
-    "dialogTitle": "Utwórz fazę",
+    "dialogTitle": "Dodaj członka",
     "title": "Członkowie",
     "subtitle": "Kto widzi i może zmieniać ten projekt.",
     "addMember": "Dodaj członka",
@@ -1440,7 +1464,7 @@
     "openBoard": "Otwórz tablicę"
   },
   "feedback": {
-    "dialogTitle": "Utwórz fazę",
+    "dialogTitle": "Wyślij opinię",
     "sendFeedback": "Wyślij opinię",
     "dialogDescription": "Napisz, co działa dobrze, co jest zepsute, albo czego brakuje - czytamy każdą wiadomość.",
     "placeholder": "Co masz na myśli?",
@@ -1487,7 +1511,8 @@
     "deleteRelationAria": "Usuń relację"
   },
   "decisions": {
-    "dialogTitle": "Utwórz fazę",
+    "emptyDescriptionReadOnly": "W tym projekcie nie zapisano jeszcze żadnej decyzji.",
+    "dialogTitle": "Utwórz decyzję",
     "title": "Decyzje",
     "subtitle": "Śledź ważne decyzje projektowe i ich uzasadnienie",
     "createDecision": "Utwórz decyzję",
@@ -1558,6 +1583,7 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "emptyDescriptionReadOnly": "Do tego projektu nie dodano jeszcze plików.",
     "downloadFailed": "Nie udało się pobrać pliku.",
     "downloadHttpError": "Nie udało się pobrać pliku (HTTP {status}).",
     "disconnectRepo": "Odłącz repozytorium {repository}",
@@ -1589,7 +1615,7 @@
     "connect": "Połącz"
   },
   "memory": {
-    "dialogTitle": "Utwórz fazę",
+    "dialogTitle": "Utwórz wpis pamięci",
     "title": "Pamięć",
     "subtitle": "Trwała wiedza i wnioski o projekcie",
     "pendingReview": "Oczekuje na przegląd ({count})",
@@ -2127,6 +2153,8 @@
     "help": "Pokaż tę listę"
   },
   "datePicker": {
+    "tomorrow": "Jutro",
+    "inAWeek": "Za 7 dni",
     "placeholder": "Wybierz datę",
     "clear": "Wyczyść datę",
     "today": "Dziś",
@@ -2875,23 +2903,24 @@
     "stepOf": "Krok {step} z {total}",
     "back": "Wstecz",
     "next": "Dalej",
-    "skip": "Pomiń i nie pokazuj ponownie",
+    "skip": "Pomiń",
     "done": "Zaczynamy",
-    "spot1Title": "Pulpit",
-    "spot1Body": "Wszystko w jednym miejscu: otwarte zadania, ostatnia aktywność i postęp projektów.",
-    "spot2Title": "Moje zadania",
-    "spot2Body": "Twoje otwarte i przeterminowane zadania ze wszystkich projektów, na jednej liście.",
-    "spot3Title": "Projekty",
-    "spot3Body": "Projekty zespołu - każda praca zaczyna się tutaj.",
-    "spot4Title": "Wyszukiwanie",
-    "spot4Body": "Ctrl+K (Cmd+K) otwiera szybki przewodnik po zadaniach, projektach i akcjach.",
-    "spot5Title": "Powiadomienia",
-    "spot5Body": "Dzwoneczek pokazuje, co się stało, gdy Cię nie było.",
-    "spot6Title": "Twój profil",
-    "spot6Body": "Konto, integracje i ustawienia osobiste.",
-    "spot7Title": "Język",
-    "spot7Body": "Tutaj zmienisz język aplikacji (a tuż nad tym - motyw).",
-    "ctaOpen": "Pokaż"
+    "projectsTitle": "Projekty",
+    "projectsBody": "Projekty zespołu. Każdy ma w tym pasku własną tablicę, decyzje i pliki.",
+    "newTaskTitle": "Dodaj zadanie",
+    "newTaskBody": "Kliknij tutaj, żeby od razu dodać pierwsze zadanie - nie musisz kończyć przewodnika.",
+    "boardTitle": "Tablica",
+    "boardBody": "Kolumny to statusy. Przeciągnij kartę albo użyj jej menu, żeby ją przesunąć.",
+    "decisionsTitle": "Decyzje",
+    "decisionsBody": "Zapisuj, dlaczego coś postanowiono. Połącz decyzję z zadaniami, żeby uzasadnienie było przy pracy.",
+    "filesTitle": "Pliki",
+    "filesBody": "Specyfikacje, projekty i załączniki projektu w jednym miejscu.",
+    "agentTitle": "AI (opcjonalnie)",
+    "agentBody": "Podłącz Claude Code, Codex lub innego agenta, żeby czytał i aktualizował zadania. Możesz to pominąć.",
+    "searchTitle": "Wyszukiwanie",
+    "searchBody": "Ctrl+K (Cmd+K) przenosi do zadań, projektów i akcji.",
+    "replayTitle": "Powtórz przewodnik",
+    "replayBody": "Tutaj w każdej chwili otworzysz ten przewodnik ponownie."
   },
   "whiteboard": {
     "boardDefaultName": "Główna tablica",
@@ -2908,6 +2937,15 @@
     "colorLabel": "Kolor karteczki",
     "taskChip": "Zadanie",
     "loadError": "Nie udało się wczytać tablicy",
-    "saveError": "Nie udało się zapisać zmian na tablicy"
+    "saveError": "Nie udało się zapisać zmian na tablicy",
+    "proposalsTitle": "Sprawdź proponowane zadania",
+    "proposalsDescription": "AI przygotowało te zadania z Twoich notatek. Popraw je, zanim zostaną utworzone.",
+    "proposalTitleLabel": "Tytuł zadania",
+    "proposalPriorityLabel": "Priorytet",
+    "proposalDescriptionLabel": "Opis",
+    "proposalsCreate": "{count, plural, one {Utwórz # zadanie} few {Utwórz # zadania} many {Utwórz # zadań} other {Utwórz # zadania}}",
+    "proposalsCreated": "{count, plural, one {Utworzono # zadanie} few {Utworzono # zadania} many {Utworzono # zadań} other {Utworzono # zadania}}",
+    "proposalsPartlyCreated": "Utworzono {created}, nie udało się {failed}",
+    "proposalsFailed": "Nie udało się utworzyć zadań"
   }
-  }
+}

@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -125,7 +127,7 @@ function EditMemoryForm({
   const t = useTranslations("memory");
   const tCommon = useTranslations("common");
   const updateWithIds = updateMemory.bind(null, projectId, memoryId);
-  const [state, formAction, pending] = useActionState(updateWithIds, initialState);
+  const [state, formAction, pending] = useSafeActionState(updateWithIds, initialState);
   const submittedRef = useRef(false);
 
   useEffect(() => {
@@ -159,7 +161,7 @@ function EditMemoryForm({
         </Select>
       </div>
       {state.error && (
-        <div className="text-sm text-destructive flex items-center gap-2">
+        <div role="alert" className="text-sm text-destructive flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
           {state.error}
         </div>

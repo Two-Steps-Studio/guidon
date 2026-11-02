@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +24,7 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
   const t = useTranslations("roadmap");
   const [open, setOpen] = useState(false);
   const createWithProject = createPhase.bind(null, projectId);
-  const [state, formAction, pending] = useActionState(createWithProject, initialState);
+  const [state, formAction, pending] = useSafeActionState(createWithProject, initialState);
   const submittedRef = useRef(false);
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
         >
           <PhaseFormFields idPrefix="create-phase" />
           {state.error && (
-            <div className="text-sm text-destructive flex items-center gap-2">
+            <div role="alert" className="text-sm text-destructive flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               {state.error}
             </div>

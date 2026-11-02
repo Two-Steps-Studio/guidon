@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { PROJECT_LANGUAGES, languageName } from "@/lib/project-language";
 import { toast } from "sonner";
@@ -36,7 +38,7 @@ export function SettingsForm({
   const locale = useLocale();
   const tCommon = useTranslations("common");
   const updateWithId = updateProjectSettings.bind(null, project.id);
-  const [state, formAction, saving] = useActionState(updateWithId, initialState);
+  const [state, formAction, saving] = useSafeActionState(updateWithId, initialState);
   const [technologies, setTechnologies] = useState<string[]>(initialTechnologies);
   const [color, setColor] = useState(project.color || BRAND_COLORS.blue);
 
@@ -180,9 +182,10 @@ export function SettingsForm({
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
+                role="switch"
                 name="aiEnabled"
                 defaultChecked={project.ai_enabled}
-                className="h-4 w-4"
+                className="switch"
               />
               {t("aiEnabledLabel")}
             </label>
@@ -239,7 +242,7 @@ export function SettingsForm({
       </Card>
 
       {state.error && (
-        <div className="p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-2 text-destructive">
+        <div role="alert" className="p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-2 text-destructive">
           <AlertCircle className="h-4 w-4" />
           {state.error}
         </div>

@@ -135,7 +135,7 @@ export function RepoPicker({ projectId, installUrl }: { projectId: string; insta
       )}
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+        <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>

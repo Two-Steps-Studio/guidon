@@ -1,8 +1,10 @@
 "use client";
 
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
 import { confirmAction } from "@/components/ui/confirm-action";
 
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertCircle, Check, Copy, Send, Trash2, Webhook } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,7 +51,7 @@ export function WebhooksSection({
 }) {
   const t = useTranslations("organizations.settings.webhooks");
   const [adding, setAdding] = useState(false);
-  const [state, formAction, saving] = useActionState(createWebhook.bind(null, organizationId), initialState);
+  const [state, formAction, saving] = useSafeActionState(createWebhook.bind(null, organizationId), initialState);
 
   // Close the form once a webhook is created; the secret is then shown above
   // the list. Adjusted during render, same pattern as AiSettingsForm.
@@ -212,7 +214,8 @@ function WebhookRow({ organizationId, webhook }: { organizationId: string; webho
                 const enabled = event.target.checked;
                 run(() => setWebhookEnabled(organizationId, webhook.id, enabled));
               }}
-              className="h-4 w-4 accent-primary"
+              role="switch"
+              className="switch"
             />
             {t("enabled")}
           </label>

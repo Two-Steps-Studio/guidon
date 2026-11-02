@@ -78,7 +78,8 @@ export function ModulesForm({
                   checked={on}
                   disabled={!canManage || pending}
                   onChange={() => toggle(item.href)}
-                  className="size-4"
+                  role="switch"
+                  className="switch"
                 />
                 <item.icon className="h-4 w-4 text-muted-foreground" />
                 <span className={on ? "" : "text-muted-foreground line-through"}>{tNav(item.labelKey)}</span>
@@ -93,7 +94,7 @@ export function ModulesForm({
               {t("modulesSave")}
             </Button>
             {saved && (
-              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span role="status" className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Check className="h-4 w-4" />
                 {t("modulesSaved")}
               </span>
@@ -103,7 +104,7 @@ export function ModulesForm({
           <p className="text-sm text-muted-foreground">{t("modulesManageHint")}</p>
         )}
         {error && (
-          <p className="flex items-center gap-2 text-sm text-destructive">
+          <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </p>

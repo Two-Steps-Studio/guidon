@@ -71,7 +71,7 @@ export default async function ProjectDecisionsPage({
         <EmptyState
           icon={CheckCircle2}
           title={t("emptyTitle")}
-          description={t("emptyDescription")}
+          description={t(canWrite ? "emptyDescription" : "emptyDescriptionReadOnly")}
           action={
             canWrite ? (
               <CreateDecisionDialog

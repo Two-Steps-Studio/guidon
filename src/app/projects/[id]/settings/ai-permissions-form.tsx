@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,7 +42,7 @@ export function AiPermissionsForm({
 }) {
   const t = useTranslations("settings");
   const updateWithId = updateAiPermissions.bind(null, projectId);
-  const [state, formAction, saving] = useActionState(updateWithId, initialState);
+  const [state, formAction, saving] = useSafeActionState(updateWithId, initialState);
 
   // Same reference-equality detection as settings-form.tsx, in an effect
   // rather than during render since toast() is a side effect.
@@ -65,9 +67,10 @@ export function AiPermissionsForm({
               <label key={field} className="flex items-start gap-2 text-sm">
                 <input
                   type="checkbox"
+                  role="switch"
                   name={field}
                   defaultChecked={permissions[field]}
-                  className="mt-0.5 h-4 w-4 shrink-0"
+                  className="switch mt-0.5"
                 />
                 <span>
                   {t(labelKey)}
@@ -81,9 +84,10 @@ export function AiPermissionsForm({
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
+                role="switch"
                 name="allow_ai_auto_complete"
                 defaultChecked={allowAutoComplete}
-                className="h-4 w-4"
+                className="switch"
               />
               {t("allowAutoComplete")}
             </label>
@@ -93,7 +97,7 @@ export function AiPermissionsForm({
           </div>
 
           {state.error && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
+            <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
               {state.error}
             </div>

@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { cn } from "@/lib/utils";
 
 /** Source line (0-based) of the task-list item currently being rendered, for its checkbox. */
 const TaskLineContext = createContext<number | null>(null);
@@ -36,6 +37,13 @@ function TaskCheckbox({
  * rather than @tailwindcss/typography (not a dependency here) so headings,
  * links, etc. pick up Guidon's own color tokens instead of prose defaults.
  */
+/** react-markdown passes each component its AST `node`; it must not reach the DOM as an attribute. */
+function domProps<P extends { node?: unknown }>(props: P): Omit<P, "node"> {
+  const rest = { ...props };
+  delete rest.node;
+  return rest;
+}
+
 /** Scheme for task-attachment images (`![x](attachment:<id>)`), resolved to a signed URL at render time. */
 const ATTACHMENT_SCHEME = "attachment:";
 
@@ -65,17 +73,18 @@ export function MarkdownPreview({
         remarkPlugins={[remarkGfm]}
         urlTransform={urlTransform}
         components={{
-          h1: (props) => <h1 className="mb-4 mt-6 text-2xl font-bold first:mt-0" {...props} />,
-          h2: (props) => <h2 className="mb-3 mt-6 text-xl font-bold first:mt-0" {...props} />,
-          h3: (props) => <h3 className="mb-2 mt-5 text-lg font-semibold first:mt-0" {...props} />,
-          h4: (props) => <h4 className="mb-2 mt-4 text-base font-semibold first:mt-0" {...props} />,
-          p: (props) => <p className="mb-4 last:mb-0" {...props} />,
-          a: (props) => <a className="text-primary underline hover:no-underline" target="_blank" rel="noreferrer" {...props} />,
+          h1: (props) => <h1 className="mb-4 mt-6 text-2xl font-bold first:mt-0" {...domProps(props)} />,
+          h2: (props) => <h2 className="mb-3 mt-6 text-xl font-bold first:mt-0" {...domProps(props)} />,
+          h3: (props) => <h3 className="mb-2 mt-5 text-lg font-semibold first:mt-0" {...domProps(props)} />,
+          h4: (props) => <h4 className="mb-2 mt-4 text-base font-semibold first:mt-0" {...domProps(props)} />,
+          p: (props) => <p className="mb-4 last:mb-0" {...domProps(props)} />,
+          // External by default: a new tab that can't reach back into Guidon (target/rel last, so nothing overrides them).
+          a: (props) => <a className="text-primary underline hover:no-underline" {...domProps(props)} target="_blank" rel="noopener noreferrer nofollow" />,
           // One shape for every list: GFM marks a whole list "contains-task-list"
           // as soon as one item is a checkbox, and plain items in such a mixed
           // list still need their bullet - the checkbox items sit in the
           // bullet's place instead (li below).
-          ul: (props) => <ul {...props} className="mb-4 list-disc space-y-1 pl-6" />,
+          ul: (props) => <ul {...domProps(props)} className="mb-4 list-disc space-y-1 pl-6" />,
           li: ({ node, className, children, ...props }) => {
             const isTask = className?.includes("task-list-item") ?? false;
             const line = node?.position?.start.line;
@@ -91,37 +100,28 @@ export function MarkdownPreview({
           },
           input: ({ type, checked }) =>
             type === "checkbox" ? <TaskCheckbox checked={Boolean(checked)} onToggle={onToggleTask} /> : null,
-          ol: (props) => <ol className="mb-4 list-decimal space-y-1 pl-6" {...props} />,
+          ol: (props) => <ol className="mb-4 list-decimal space-y-1 pl-6" {...domProps(props)} />,
           blockquote: (props) => (
-            <blockquote className="mb-4 border-l-2 border-border pl-4 text-muted-foreground" {...props} />
+            <blockquote className="mb-4 border-l-2 border-border pl-4 text-muted-foreground" {...domProps(props)} />
           ),
           hr: () => <hr className="my-6 border-border" />,
-          code: ({ className, children, ...props }) => {
-            const isBlock = /language-/.test(className ?? "");
-            if (isBlock) {
-              return (
-                <code
-                  className="block overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs"
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            }
-            return (
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs" {...props}>
-                {children}
-              </code>
-            );
-          },
-          pre: (props) => <pre className="mb-4" {...props} />,
+          // Inline code is a chip; a fenced block (with or without a language)
+          // is styled by its <pre>, which scrolls sideways on a phone instead of overflowing.
+          code: ({ className, children, ...props }) => (
+            <code className={cn("rounded bg-muted px-1.5 py-0.5 font-mono text-xs", className)} {...domProps(props)}>
+              {children}
+            </code>
+          ),
+          pre: (props) => (
+            <pre className="mb-4 overflow-x-auto rounded-md bg-muted p-3 [&>code]:bg-transparent [&>code]:p-0" {...domProps(props)} />
+          ),
           table: (props) => (
             <div className="mb-4 overflow-x-auto">
-              <table className="w-full border-collapse text-sm" {...props} />
+              <table className="w-full border-collapse text-sm" {...domProps(props)} />
             </div>
           ),
-          th: (props) => <th className="border border-border bg-muted px-3 py-1.5 text-left font-medium" {...props} />,
-          td: (props) => <td className="border border-border px-3 py-1.5" {...props} />,
+          th: (props) => <th className="border border-border bg-muted px-3 py-1.5 text-left font-medium" {...domProps(props)} />,
+          td: (props) => <td className="border border-border px-3 py-1.5" {...domProps(props)} />,
           img: ({ alt, src, node: _node, ...props }) => {
             void _node;
             if (typeof src === "string" && src.startsWith(ATTACHMENT_SCHEME)) {

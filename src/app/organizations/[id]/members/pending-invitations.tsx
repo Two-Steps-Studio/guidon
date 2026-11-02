@@ -42,7 +42,7 @@ export function PendingInvitations({ orgId, invitations }: { orgId: string; invi
         {t("pendingTitle", { count: invitations.length })}
       </h2>
       {error && (
-        <p className="mb-2 flex items-center gap-1 text-sm text-destructive">
+        <p role="alert" className="mb-2 flex items-center gap-1 text-sm text-destructive">
           <AlertCircle className="h-4 w-4" aria-hidden="true" />
           {error}
         </p>

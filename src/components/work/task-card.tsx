@@ -15,11 +15,12 @@ import {
 } from "@/lib/work/task-board";
 import type { Task, TaskStatus } from "@/types/task";
 import type { BoardColumn, SubtaskProgress } from "@/lib/work/task-board";
-import { CalendarDays, CheckCircle2, CheckSquare, ListChecks, MessageSquare, MoreVertical, Repeat, Square } from "lucide-react";
+import { CalendarDays, CheckCircle2, CheckSquare, ListChecks, MessageSquare, MoreVertical, Pin, Repeat, Square } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,8 @@ interface TaskCardProps {
   coverImageUrl?: string;
   coverPriority?: boolean;
   subtaskProgress?: SubtaskProgress;
+  /** Pinned by the signed-in person - badges the card and leads its column (see kanban-board.tsx). */
+  pinned?: boolean;
   draggable: boolean;
   isDragging: boolean;
   onOpen: (task: Task) => void;
@@ -81,6 +84,8 @@ interface TaskCardProps {
   moveTargets?: readonly BoardColumn[];
   /** Touch-friendly alternative to dragging - see kanban-board.tsx's handleMoveTo doc comment for why this exists. */
   onMoveTo?: (task: Task, status: TaskStatus) => void;
+  /** Copies the task into its column. Undefined on a read-only board. */
+  onDuplicate?: (task: Task) => void;
   /** Part of the board's bulk selection (Ctrl/Cmd/Shift-click). */
   selected?: boolean;
   /** Ctrl/Cmd-click toggles this card, Shift-click extends from the last one. Undefined on a read-only board. */
@@ -159,6 +164,7 @@ function TaskCardComponent({
   coverImageUrl,
   coverPriority = false,
   subtaskProgress,
+  pinned = false,
   draggable,
   isDragging,
   onOpen,
@@ -171,6 +177,7 @@ function TaskCardComponent({
   canMoveDown = false,
   moveTargets,
   onMoveTo,
+  onDuplicate,
   selected = false,
   onSelect,
 }: TaskCardProps) {
@@ -403,13 +410,22 @@ function TaskCardComponent({
               if (onReorder && event.altKey && event.key === "ArrowUp" && canMoveUp) { event.preventDefault(); onReorder(task, "up"); }
               if (onReorder && event.altKey && event.key === "ArrowDown" && canMoveDown) { event.preventDefault(); onReorder(task, "down"); }
             }}>{task.title}</button>
+          {pinned && (
+            <span
+              title={t("pinnedTaskAria")}
+              className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded bg-primary/10 p-0.5 align-middle text-primary"
+            >
+              <Pin className="h-2.5 w-2.5" aria-hidden />
+              <span className="sr-only">{t("pinnedTaskAria")}</span>
+            </span>
+          )}
           {fresh && (
             <span className="ml-1.5 inline-flex translate-y-[-1px] items-center rounded bg-primary/10 px-1 py-px align-middle text-[10px] font-semibold uppercase leading-3 tracking-wide text-primary">
               {t("newBadge")}
             </span>
           )}
         </h3>
-        {onMoveTo && moveTargets && moveTargets.length > 0 && (
+        {((onMoveTo && moveTargets && moveTargets.length > 0) || onDuplicate) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -423,11 +439,17 @@ function TaskCardComponent({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
-              {moveTargets.map((target) => (
+              {onMoveTo && moveTargets?.map((target) => (
                 <DropdownMenuItem key={target.status} onSelect={() => onMoveTo(task, target.status)}>
                   {t("moveToColumn", { column: target.label })}
                 </DropdownMenuItem>
               ))}
+              {onDuplicate && (
+                <>
+                  {onMoveTo && moveTargets && moveTargets.length > 0 && <DropdownMenuSeparator />}
+                  <DropdownMenuItem onSelect={() => onDuplicate(task)}>{t("duplicate")}</DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -497,7 +519,10 @@ function TaskCardComponent({
           <span className={cn("flex items-center gap-1", DUE_STATE_CLASSES[due])}>
             <CalendarDays className="h-3 w-3" aria-hidden />
             {formatDueDate(task.due_date, locale)}
-            {due === "overdue" && <span className="sr-only">(overdue)</span>}
+            {/* In words too: colour is not the only signal. */}
+            {(due === "overdue" || due === "today") && (
+              <span className="font-medium">{t(due === "overdue" ? "dueOverdue" : "dueToday")}</span>
+            )}
           </span>
         )}
 

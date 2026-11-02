@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +24,7 @@ export function CreateSourceDialog({ projectId, trigger, projectColor }: { proje
   const t = useTranslations("knowledge");
   const [open, setOpen] = useState(false);
   const createWithProject = createSource.bind(null, projectId);
-  const [state, formAction, pending] = useActionState(createWithProject, initialState);
+  const [state, formAction, pending] = useSafeActionState(createWithProject, initialState);
   const submittedRef = useRef(false);
 
   useEffect(() => {

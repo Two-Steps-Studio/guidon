@@ -6,7 +6,7 @@ import type { LabelPreset } from "@/lib/work/label-presets";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bot, ListChecks, Loader2, Plus, Upload, X } from "lucide-react";
+import { Bot, ListChecks, Loader2, Plus, Settings, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -235,6 +235,11 @@ export function WorkBoard({
   const filtersActive =
     assigneeFilter !== "all" || priorityFilter !== "all" || tagFilter !== "all";
 
+  const clearFilters = () => {
+    setAssigneeFilter("all");
+    setPriorityFilter("all");
+    setTagFilter("all");
+  };
   const filteredTasks = useMemo(() => {
     return topLevelTasks.filter((task) => {
       if (assigneeFilter !== "all" && task.assignee_id !== assigneeFilter) {
@@ -457,6 +462,38 @@ export function WorkBoard({
     []
   );
 
+  // Title, description (with its checklist), priority and labels, at the end
+  // of the same column. Not the assignee, due date, comments, history or
+  // attachments. createTask checks the permission and plan limit.
+  const handleDuplicate = async (task: Task) => {
+    const status = normalizeTaskStatus(task.status);
+    const column = state.tasks.filter((item) => normalizeTaskStatus(item.status) === status);
+    const result = await createTask(projectId, {
+      title: t("duplicateTitle", { title: task.title }),
+      description: task.description ?? "",
+      status,
+      priority: task.priority,
+      assigneeId: "",
+      dueDate: "",
+      sortOrder: Math.max(0, ...column.map((item) => item.sort_order ?? 0)) + 100,
+      tags: task.tags,
+    }).catch(() => ({ task: null, error: t("duplicateFailed") }));
+    if (!result.task) {
+      toast.error(result.error ?? t("duplicateFailed"));
+      return;
+    }
+    const copy = result.task;
+    upsertTask(copy);
+    toast.success(t("duplicated", { title: copy.title }), {
+      action: { label: t("duplicateOpen"), onClick: () => setOpenTask(copy) },
+    });
+  };
+  const handleDuplicateRef = useRef(handleDuplicate);
+  useEffect(() => {
+    handleDuplicateRef.current = handleDuplicate;
+  });
+  const duplicateTaskStable = useCallback((task: Task) => void handleDuplicateRef.current(task), []);
+
   // WebMCP: a browser agent working in this tab can read and change the
   // board as the person - through the same actions (and permissions) as
   // the UI, with the same optimistic updates.
@@ -582,6 +619,15 @@ export function WorkBoard({
             </p>
           </div>
 
+          {/* Owners and admins change settings; everyone else still reaches the read-only page from the sidebar. */}
+          {canDelete && (
+            <Button size="sm" variant="ghost" className="h-8 w-8 shrink-0 p-0" asChild>
+              <Link href={`/projects/${projectId}/settings`} aria-label={t("projectSettings")} title={t("projectSettings")}>
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+
           <Select
             aria-label={t("sortBy")}
             className="h-8 w-40 shrink-0 "
@@ -612,7 +658,7 @@ export function WorkBoard({
 
           {/* AI off for the project (046) or hidden by this person (099): no AI calls to action. */}
           {canEdit && aiEnabled && (
-            <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)} data-tour="connect-agent">
               <Bot className="h-4 w-4" />
               {t("connectAgent")}
             </Button>
@@ -623,6 +669,7 @@ export function WorkBoard({
               size="sm"
               onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}
               style={projectColor ? { backgroundColor: projectColor } : undefined}
+              data-tour="new-task"
             >
               <Plus className="h-4 w-4" />
               {t("newTask")}
@@ -713,11 +760,7 @@ export function WorkBoard({
           {filtersActive && (
             <button
               type="button"
-              onClick={() => {
-                setAssigneeFilter("all");
-                setPriorityFilter("all");
-                setTagFilter("all");
-              }}
+              onClick={clearFilters}
               className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
               {t("clearFilters")}
@@ -761,6 +804,18 @@ export function WorkBoard({
               </div>
             )}
           </div>
+        ) : filtersActive && filteredTasks.length === 0 ? (
+          // Tasks exist but the filters hide all of them: say so once, with the way out.
+          <div className="rounded-xl border border-dashed border-border py-16 text-center">
+            <h2 className="text-sm font-medium text-foreground">{t("noFilterMatchesTitle")}</h2>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              {t("noFilterMatchesDesc", { count: topLevelTasks.length })}
+            </p>
+            <Button size="sm" variant="outline" className="mt-4" onClick={clearFilters}>
+              <X className="h-4 w-4" />
+              {t("clearFilters")}
+            </Button>
+          </div>
         ) : (
           <KanbanBoard
             tasks={filteredTasks}
@@ -775,6 +830,7 @@ export function WorkBoard({
             onOpenTask={setOpenTask}
             onCreateTask={openCreate}
             onMoveTask={moveTaskStable}
+            onDuplicateTask={canEdit ? duplicateTaskStable : undefined}
             projectColor={projectColor}
             selectedIds={selectedIds}
             onSelectionChange={canEdit ? setSelectedIds : undefined}

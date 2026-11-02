@@ -97,7 +97,7 @@ export function ResetPasswordForm() {
               />
             </div>
             {error && (
-              <div className="text-sm text-destructive">
+              <div role="alert" className="text-sm text-destructive">
                 {error}
               </div>
             )}

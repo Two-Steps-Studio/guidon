@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
   const locale = useLocale();
   const formatDate = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value));
   const [keys, setKeys] = useState(initialKeys);
-  const [state, formAction, creating] = useActionState(createApiKey, initialState);
+  const [state, formAction, creating] = useSafeActionState(createApiKey, initialState);
   const [revoking, startRevoke] = useTransition();
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
 
@@ -129,7 +131,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
             <p className="text-xs text-muted-foreground">{t("keyExpiresHint")}</p>
           </div>
           {state.error && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
+            <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
               {state.error}
             </div>

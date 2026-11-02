@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { confirmAction } from "@/components/ui/confirm-action";
-import { Check, Copy, Eye, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
+import { Check, Copy, Eye, Link2, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { timeAction } from "@/lib/perf/action-timing";
 import { clearTaskDraft, isNetworkError, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
@@ -236,6 +236,17 @@ function TaskDetailDialogInner({
     }
   };
 
+  // The board opens ?openTask=<id> on arrival; signed out, login keeps the query and comes back here.
+  const handleCopyTaskLink = async () => {
+    if (!task) return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/projects/${projectId}/work?openTask=${task.id}`);
+      toast.success(t("taskLinkCopied"));
+    } catch {
+      toast.error(t("failedToCopyToClipboard"));
+    }
+  };
+
   const handleCopyTaskId = async () => {
     if (!task) return;
     try {
@@ -428,6 +439,17 @@ function TaskDetailDialogInner({
               title={t("copyTaskId")}
             >
               <Copy className="h-3.5 w-3.5" aria-hidden />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={handleCopyTaskLink}
+              aria-label={t("copyTaskLink")}
+              title={t("copyTaskLink")}
+            >
+              <Link2 className="h-3.5 w-3.5" aria-hidden />
             </Button>
           </div>
           {/* Mentioning this in a commit, PR or branch name links it via the GitHub integration (src/lib/github/task-refs.ts). */}

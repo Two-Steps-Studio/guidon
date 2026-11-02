@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -106,7 +108,7 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
   const tCommon = useTranslations("common");
   const tSettings = useTranslations("settings");
   const createProjectWithOrg = createProject.bind(null, orgId);
-  const [state, formAction, pending] = useActionState(createProjectWithOrg, initialState);
+  const [state, formAction, pending] = useSafeActionState(createProjectWithOrg, initialState);
 
   return (
     <form onSubmit={(event) => {
@@ -183,13 +185,13 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
       </div>
       <div className="rounded-md border border-border p-3">
         <label className="flex items-center gap-2 text-sm font-medium">
-          <input type="checkbox" name="aiEnabled" defaultChecked className="h-4 w-4" />
+          <input type="checkbox" role="switch" name="aiEnabled" defaultChecked className="switch" />
           {t("aiEnabledLabel")}
         </label>
         <p className="mt-1 text-xs text-muted-foreground">{t("aiEnabledHelp")}</p>
       </div>
       {state.error && (
-        <div className="text-sm text-destructive flex items-center gap-2">
+        <div role="alert" className="text-sm text-destructive flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
           {state.error}
         </div>
