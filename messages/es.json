@@ -822,6 +822,8 @@
     }
   },
   "work": {
+    "copyTaskLink": "Copiar enlace a esta tarea",
+    "taskLinkCopied": "Enlace copiado",
     "duplicate": "Duplicar",
     "duplicateTitle": "{title} (copia)",
     "duplicated": "Copia creada: «{title}»",

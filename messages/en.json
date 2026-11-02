@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "copyTaskLink": "Copy link to this task",
+    "taskLinkCopied": "Link copied",
     "duplicate": "Duplicate",
     "duplicateTitle": "{title} (copy)",
     "duplicated": "Duplicated as \"{title}\"",
