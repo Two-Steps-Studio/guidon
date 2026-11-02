@@ -93,6 +93,8 @@ function publicAvatarPatterns(): NonNullable<NextConfig["images"]>["remotePatter
 }
 
 const nextConfig: NextConfig = {
+  // "X-Powered-By: Next.js" only helps fingerprint the stack (ZAP, Seobility).
+  poweredByHeader: false,
   images: { remotePatterns: publicAvatarPatterns() },
   // Local storage is mutable runtime data, never a server build input. Newer
   // filesystem tracing can otherwise include the whole repo through its root.
@@ -196,8 +198,21 @@ const nextConfig: NextConfig = {
           // behind the user's own reverse proxy) deployment too.
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
           { key: "Content-Security-Policy", value: buildContentSecurityPolicy() },
+          // Browser isolation (ZAP). Sign-in, Stripe and OAuth are redirects, and
+          // the only window.open uses noopener, so no page needs its opener.
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+          // No Cross-Origin-Embedder-Policy: require-corp/credentialless would
+          // block avatars and images from other origins (img-src https:), and
+          // nothing here needs cross-origin isolation (no SharedArrayBuffer).
         ],
       },
+      // Files other sites embed: the report widget script, brand assets and
+      // icons. A later matching rule replaces the same header.
+      ...["/widget/:path*", "/brand/:path*", "/assets/:path*", "/icons/:path*", "/downloads/:path*"].map((source) => ({
+        source,
+        headers: [{ key: "Cross-Origin-Resource-Policy", value: "cross-origin" }],
+      })),
     ];
   },
 };
