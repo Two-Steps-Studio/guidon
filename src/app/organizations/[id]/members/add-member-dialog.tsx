@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +35,7 @@ export function AddMemberDialog({
   const tCommon = useTranslations("organizations.common");
   const [open, setOpen] = useState(false);
   const addMemberWithOrg = addMember.bind(null, orgId);
-  const [state, formAction, pending] = useActionState(addMemberWithOrg, initialState);
+  const [state, formAction, pending] = useSafeActionState(addMemberWithOrg, initialState);
   // The state the current submission started from: a new successful
   // result after it closes the dialog - unless it is an invitation, which
   // keeps the dialog open to show its link (shown only once) until closed.
@@ -126,7 +128,7 @@ export function AddMemberDialog({
             </Select>
           </div>
           {state.error && (
-            <div className="text-sm text-destructive flex items-center gap-2">
+            <div role="alert" className="text-sm text-destructive flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               {state.error}
             </div>

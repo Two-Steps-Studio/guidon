@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +22,7 @@ import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 const initialState: ProfileFormState = { error: null };
 
 export function ProfileForm({ user }: { user: CurrentUser }) {
-  const [state, formAction, pending] = useActionState(updateProfile, initialState);
+  const [state, formAction, pending] = useSafeActionState(updateProfile, initialState);
   const t = useTranslations("profile");
 
   return (
@@ -97,7 +99,7 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
           </div>
 
           {state.error && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
+            <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
               {state.error}
             </div>

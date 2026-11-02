@@ -133,6 +133,8 @@
     }
   },
   "errors": {
+    "saveNetwork": "Guidon war nicht erreichbar, nichts wurde gespeichert. Deine Änderungen sind noch da - prüfe die Verbindung und versuch es erneut.",
+    "saveFailed": "Etwas ist schiefgelaufen, nichts wurde gespeichert. Deine Änderungen sind noch da - versuch es erneut.",
     "generic": {
       "title": "Etwas ist schiefgelaufen",
       "defaultMessage": "Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten.",

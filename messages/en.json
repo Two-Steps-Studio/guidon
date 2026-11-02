@@ -133,6 +133,8 @@
     }
   },
   "errors": {
+    "saveNetwork": "Couldn't reach Guidon, so nothing was saved. Your changes are still here - check the connection and try again.",
+    "saveFailed": "Something went wrong and nothing was saved. Your changes are still here - try again.",
     "generic": {
       "title": "Something went wrong",
       "defaultMessage": "An unexpected error occurred while loading this page.",

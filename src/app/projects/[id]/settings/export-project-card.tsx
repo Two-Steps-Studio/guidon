@@ -49,7 +49,7 @@ export function ExportProjectCard({ projectId }: { projectId: string }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {error && (
-          <p className="flex items-center gap-2 text-sm text-destructive">
+          <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4" />
             {error}
           </p>
