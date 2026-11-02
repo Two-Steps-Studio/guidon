@@ -18,84 +18,80 @@ import {
   addEdge,
   useReactFlow,
   BackgroundVariant,
+  Handle,
+  Position,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
+import type { TaskProposal } from "@/lib/ai/task-proposal-parser";
+import type { EdgeInput, ElementInput, ShapeKind, WhiteboardElementType } from "@/lib/data/whiteboard";
 import { TaskProposalModal } from "./task-proposal-modal";
 import { WhiteboardToolbar } from "./whiteboard-toolbar";
 import {
-  generateTaskProposals,
-  getBoardAction,
-  getElementsAction,
-  getTasksForBoardAction,
-  upsertElementAction,
-  getEdgesAction,
-  upsertEdgeAction,
-  deleteEdgesAction,
   deleteElementsAction,
+  generateTaskProposals,
+  getTasksForBoardAction,
+  loadBoardAction,
+  saveEdgesAction,
+  saveElementsAction,
 } from "@/app/projects/[id]/whiteboard/actions";
-import { toast } from "sonner";
 
-interface WhiteboardCanvasProps {
-  projectId: string;
-}
-
-interface StickyData {
+interface NoteData {
   content?: string;
   color?: string;
-  onChange?: (id: string, text: string) => void;
+  shape?: ShapeKind;
+  editable: boolean;
+  onChange: (id: string, text: string) => void;
 }
 
-interface ShapeData extends StickyData {
-  shape?: "rectangle" | "circle";
+interface TaskData {
+  taskId: string;
+  title: string;
+  status: string;
+  done: boolean;
+  projectId: string;
 }
 
 const STICKY_COLORS = ["#fef3c7", "#fde68a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#e5e7eb"];
 
-const StickyNode = ({ data, id }: { data: StickyData; id: string }) => {
-  const handleTextChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const newText = e.currentTarget.innerText;
-    if (data.onChange) {
-      data.onChange(id, newText);
-    }
-  };
-
+/** The note's text plus the dots arrows start and end at (any dot connects to any, ConnectionMode.Loose). */
+function EditableText({ id, data }: { id: string; data: NoteData }) {
   return (
-    <div
-      className="p-3 rounded-sm shadow-sm border border-border min-w-[150px] min-h-[100px] text-foreground"
-      style={{ backgroundColor: data.color }}
-    >
+    <>
+      <Handle type="source" position={Position.Left} id="left" isConnectable={data.editable} />
       <div
         className="text-sm whitespace-pre-wrap outline-none"
-        contentEditable
+        contentEditable={data.editable}
         suppressContentEditableWarning
-        onBlur={handleTextChange}
+        onBlur={(e) => data.onChange(id, e.currentTarget.innerText)}
       >
         {data.content}
       </div>
-    </div>
+      <Handle type="source" position={Position.Right} id="right" isConnectable={data.editable} />
+    </>
   );
-};
+}
 
-const ShapeNode = ({ data, id }: { data: ShapeData; id: string }) => {
-  return (
-    <div
-      className={`p-3 rounded-sm shadow-sm border border-border min-w-[150px] min-h-[100px] text-foreground flex items-center justify-center text-center ${
-        data.shape === "circle" ? "rounded-full" : "rounded-sm"
-      }`}
-      style={{ backgroundColor: data.color }}
-    >
-      <div
-        className="text-sm whitespace-pre-wrap outline-none"
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={(e) => data.onChange && data.onChange(id, e.currentTarget.innerText)}
-      >
-        {data.content}
-      </div>
-    </div>
-  );
-};
+const StickyNode = ({ data, id }: { data: NoteData; id: string }) => (
+  <div
+    className="p-3 rounded-sm shadow-sm border border-border min-w-[150px] min-h-[100px] text-foreground"
+    style={{ backgroundColor: data.color }}
+  >
+    <EditableText id={id} data={data} />
+  </div>
+);
+
+const ShapeNode = ({ data, id }: { data: NoteData; id: string }) => (
+  <div
+    className={`p-3 shadow-sm border border-border min-w-[150px] min-h-[100px] text-foreground flex items-center justify-center text-center ${
+      data.shape === "circle" ? "rounded-full" : "rounded-sm"
+    }`}
+    style={{ backgroundColor: data.color }}
+  >
+    <EditableText id={id} data={data} />
+  </div>
+);
 
 /** Kółka statusów - barwy zgodne z przyzwyczajeniami z tablicy zadań. */
 const STATUS_DOT_CLASSES: Record<string, string> = {
@@ -112,7 +108,7 @@ const STATUS_DOT_CLASSES: Record<string, string> = {
  * Zadania nie są elementami tablicy (nie zapisujemy ich do bazy) - są
  * nakładką na tą samą kanwę, by można je łączyć z notatkami i kształtami.
  */
-const TaskNode = ({ data }: { data: any }) => {
+const TaskNode = ({ data }: { data: TaskData }) => {
   const router = useRouter();
   const t = useTranslations("whiteboard");
 
@@ -135,187 +131,155 @@ const TaskNode = ({ data }: { data: any }) => {
   );
 };
 
-const nodeTypes = {
-  sticky: StickyNode,
-  shape: ShapeNode,
-  task: TaskNode,
-};
+const nodeTypes = { sticky: StickyNode, shape: ShapeNode, task: TaskNode };
+
+const isTaskNode = (id: string) => id.startsWith("task:");
+
+/** A board element as saved - task cards are an overlay and never saved. */
+function toElementInput(node: Node<NoteData>): ElementInput {
+  return {
+    id: node.id,
+    type: node.type as WhiteboardElementType,
+    x: node.position.x,
+    y: node.position.y,
+    content: { text: node.data.content, shape: node.data.shape, color: node.data.color },
+  };
+}
+
+function toEdgeInput(edge: Edge): EdgeInput {
+  return { id: edge.id, source_id: edge.source, target_id: edge.target, label: typeof edge.label === "string" ? edge.label : null };
+}
+
+/** What changed since the last save, by id - a drag saves one note, not the whole board. */
+function changedSince<T extends { id: string }>(items: T[], saved: Map<string, string>): T[] {
+  return items.filter((item) => saved.get(item.id) !== JSON.stringify(item));
+}
+
+function remember<T extends { id: string }>(items: T[], saved: Map<string, string>) {
+  for (const item of items) saved.set(item.id, JSON.stringify(item));
+}
 
 /** Pozycje zadań dodanych na tablicę - zapamiętane na czas sesji (toggle off/on). */
 interface TaskSnapshot {
   id: string;
   title: string;
   status: string;
-  priority: string;
   done: boolean;
   position: { x: number; y: number };
 }
 
-function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
+function WhiteboardFlow({ projectId }: { projectId: string }) {
   const { screenToFlowPosition } = useReactFlow();
   const t = useTranslations("whiteboard");
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [boardId, setBoardId] = useState<string | null>(null);
+  const [board, setBoard] = useState<{ id: string; canEdit: boolean; ai: boolean } | null>(null);
   const [tasksVisible, setTasksVisible] = useState(false);
   const [taskSnapshot, setTaskSnapshot] = useState<TaskSnapshot[]>([]);
   const [lastSelected, setLastSelected] = useState<Node[]>([]);
-  const [aiProposals, setAiProposals] = useState<{ prose: string; proposals: any[] } | null>(null);
+  const [aiProposals, setAiProposals] = useState<TaskProposal[] | null>(null);
 
-  // Referencje na dane do zapisu - porównanie JSON-em, nie referencją:
-  // listener keydown i rebuild palety nie powinny uruchamiać zapisu.
-  const lastSavedNodesJsonRef = useRef<string>("");
-  const lastSavedEdgesJsonRef = useRef<string>("");
+  // What the database holds, per id (JSON) - so a save sends only what changed.
+  const savedElements = useRef(new Map<string, string>());
+  const savedEdges = useRef(new Map<string, string>());
 
   const debouncedNodes = useDebounce(nodes, 1000);
   const debouncedEdges = useDebounce(edges, 1000);
 
+  const setText = useCallback(
+    (id: string, text: string) =>
+      setNodes((nds) => nds.map((node) => (node.id === id ? { ...node, data: { ...node.data, content: text } } : node))),
+    [setNodes]
+  );
+
   useEffect(() => {
     let cancelled = false;
-    async function loadBoard() {
-      try {
-        // 1. Realny board (UUID) - albo utworzenie „Głównej tablicy".
-        const board = (await getBoardAction(projectId)) as { boardId: string; name: string };
+    loadBoardAction(projectId)
+      .then((loaded) => {
         if (cancelled) return;
-        setBoardId(board.boardId);
-
-        const [elementsResult, edgesResult] = await Promise.all([
-          getElementsAction(projectId, board.boardId),
-          getEdgesAction(projectId, board.boardId),
-        ]);
-        if (cancelled) return;
-
-        const initialNodes = (elementsResult.data ?? []).map((el: any) => ({
+        const initialNodes: Node<NoteData>[] = loaded.elements.map((el) => ({
           id: el.id,
           type: el.type,
           position: { x: el.x, y: el.y },
-          data: {
-            content: el.content?.text,
-            shape: el.content?.shape,
-            color: el.content?.color,
-            onChange: (id: string, text: string) => {
-              setNodes((nds) =>
-                nds.map((node) => (node.id === id ? { ...node, data: { ...node.data, content: text } } : node))
-              );
-            },
-          },
+          data: { content: el.content?.text, shape: el.content?.shape, color: el.content?.color, editable: loaded.canEdit, onChange: setText },
         }));
-
-        const initialEdges = (edgesResult.data ?? []).map((e: any) => ({
+        const initialEdges: Edge[] = loaded.edges.map((e) => ({
           id: e.id,
           source: e.source_id,
           target: e.target_id,
-          label: e.label,
-          type: e.type ?? "default",
+          // shortcut: dots aren't saved, so a saved arrow runs right-to-left; save them if arrows need other sides.
+          sourceHandle: "right",
+          targetHandle: "left",
+          label: e.label ?? undefined,
+          type: e.type,
         }));
-
+        remember(initialNodes.map(toElementInput), savedElements.current);
+        remember(initialEdges.map(toEdgeInput), savedEdges.current);
         setNodes(initialNodes);
         setEdges(initialEdges);
-        lastSavedNodesJsonRef.current = JSON.stringify(boardNodesJson(initialNodes));
-        lastSavedEdgesJsonRef.current = JSON.stringify(persistableEdgesJson(initialEdges));
-      } catch (e) {
-        if (!cancelled) {
-          console.error("Failed to load the board", e);
-          toast.error(t("loadError"));
-        }
-      }
-    }
-    loadBoard();
+        setBoard({ id: loaded.boardId, canEdit: loaded.canEdit, ai: loaded.ai });
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        console.error("Failed to load the board", e);
+        toast.error(t("loadError"));
+      });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  /** Elementy tablicy przeznaczone do zapisu - karty zadań (type "task") z nich wykluczone. */
-  function boardNodesJson(list: Node[]) {
-    return list
-      .filter((node) => node.type !== "task")
-      .map((node) => ({
-        id: node.id,
-        type: node.type,
-        position: { x: node.position.x, y: node.position.y },
-        content: { text: (node.data as StickyData).content, shape: (node.data as ShapeData).shape, color: (node.data as StickyData).color },
-      }));
-  }
-
-  /** Krawędzie z kartami zadań są tylko lokalne (elementy tablicy są nimi FK). */
-  function persistableEdgesJson(list: Edge[]) {
-    return list
-      .filter((edge) => !edge.source.startsWith("task:") && !edge.target.startsWith("task:"))
-      .map((edge) => ({
-        id: edge.id,
-        board_id: boardId,
-        source_id: edge.source,
-        target_id: edge.target,
-        type: edge.type ?? "default",
-        label: typeof edge.label === "string" ? edge.label : (edge.label as any)?.value ?? null,
-      }));
-  }
+  useEffect(() => {
+    if (!board?.canEdit) return;
+    const changed = changedSince(
+      debouncedNodes.filter((node) => !isTaskNode(node.id)).map(toElementInput),
+      savedElements.current
+    );
+    if (changed.length === 0) return;
+    saveElementsAction(projectId, board.id, changed)
+      .then(() => remember(changed, savedElements.current))
+      .catch((e) => {
+        console.error("Failed to save the board", e);
+        toast.error(t("saveError"));
+      });
+  }, [debouncedNodes, board, projectId, t]);
 
   useEffect(() => {
-    const snapshot = JSON.stringify(boardNodesJson(debouncedNodes));
-    if (snapshot === lastSavedNodesJsonRef.current) return;
-
-    async function saveElements() {
-      const elements = boardNodesJson(debouncedNodes);
-      try {
-        for (const el of elements) {
-          await upsertElementAction(projectId, { ...el, board_id: boardId });
-        }
-        lastSavedNodesJsonRef.current = snapshot;
-      } catch (e) {
-        console.error("Failed to save elements", e);
+    if (!board?.canEdit) return;
+    // Arrows to task cards stay local: tasks aren't board elements.
+    const changed = changedSince(
+      debouncedEdges.filter((edge) => !isTaskNode(edge.source) && !isTaskNode(edge.target)).map(toEdgeInput),
+      savedEdges.current
+    );
+    if (changed.length === 0) return;
+    saveEdgesAction(projectId, board.id, changed)
+      .then(() => remember(changed, savedEdges.current))
+      .catch((e) => {
+        console.error("Failed to save the board", e);
         toast.error(t("saveError"));
-      }
-    }
-    saveElements();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedNodes, projectId]);
-
-  useEffect(() => {
-    const snapshot = JSON.stringify(persistableEdgesJson(debouncedEdges));
-    if (snapshot === lastSavedEdgesJsonRef.current) return;
-
-    async function saveEdges() {
-      try {
-        for (const edge of persistableEdgesJson(debouncedEdges)) {
-          await upsertEdgeAction(projectId, edge);
-        }
-        lastSavedEdgesJsonRef.current = snapshot;
-      } catch (e) {
-        console.error("Failed to save edges", e);
-        toast.error(t("saveError"));
-      }
-    }
-    saveEdges();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedEdges, projectId]);
+      });
+  }, [debouncedEdges, board, projectId, t]);
 
   /** Tworzenie elementu w konkretnym miejscu kanwy (id po stronie klienta). */
   const createNode = useCallback(
-    (type: "sticky" | "shape", shape?: "rectangle" | "circle", position?: { x: number; y: number }) => {
-      const newPosition =
-        position ??
-        screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-
-      const newNode: Node = {
+    (type: WhiteboardElementType, shape?: ShapeKind, position?: { x: number; y: number }) => {
+      const newNode: Node<NoteData> = {
         id: crypto.randomUUID(),
         type,
-        position: newPosition,
+        position: position ?? screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }),
         data: {
           content: "",
-          color: type === "sticky" ? "#fef3c7" : "#e2e8f0",
+          color: type === "sticky" ? STICKY_COLORS[0] : "#e2e8f0",
           shape: shape ?? "rectangle",
-          onChange: (id: string, text: string) => {
-            setNodes((nds) => nds.map((node) => (node.id === id ? { ...node, data: { ...node.data, content: text } } : node)));
-          },
+          editable: true,
+          onChange: setText,
         },
       };
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition, setNodes]
+    [screenToFlowPosition, setNodes, setText]
   );
 
   /**
@@ -324,63 +288,46 @@ function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
    * niezależnie od tego, jakim trybem nawigujemy po tablicy.
    */
   const handleDoubleClick = (event: React.MouseEvent) => {
+    if (!board?.canEdit) return;
     const target = event.target as HTMLElement;
-    if (
-      target.closest(".react-flow__node") ||
-      target.closest(".react-flow__edge") ||
-      target.closest(".react-flow__controls") ||
-      target.closest(".react-flow__minimap") ||
-      target.closest("[data-tour-toolbar]")
-    ) {
+    if (target.closest(".react-flow__node, .react-flow__edge, .react-flow__controls, .react-flow__minimap, [data-tour-toolbar]")) {
       return;
     }
     event.preventDefault();
     createNode("sticky", undefined, screenToFlowPosition({ x: event.clientX, y: event.clientY }));
   };
 
-  const onConnect = useCallback((params: Connection) => {
-    setEdges((eds) =>
-      addEdge({ ...params, id: `edge-${crypto.randomUUID()}`, type: "default" } as Edge, eds)
-    );
-  }, [setEdges]);
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, id: crypto.randomUUID(), type: "default" }, eds)),
+    [setEdges]
+  );
 
-  const onSelectionChange = useCallback((params: { nodes: Node[] }) => {
-    setLastSelected(params.nodes);
-  }, []);
+  const onSelectionChange = useCallback((params: { nodes: Node[] }) => setLastSelected(params.nodes), []);
 
-  /** Usuwa zaznaczone elementy (karty zadań zostają - to nie elementy tablicy). */
+  /** Usuwa zaznaczone elementy z ich strzałkami (karty zadań zostają - to nie elementy tablicy). */
   const deleteSelected = useCallback(async () => {
-    const deletable = lastSelected.filter((node) => node.type !== "task");
-    if (deletable.length === 0) return;
-    const deletableIds = new Set(deletable.map((node) => node.id));
+    if (!board) return;
+    const ids = lastSelected.filter((node) => !isTaskNode(node.id)).map((node) => node.id);
+    if (ids.length === 0) return;
+    const deleted = new Set(ids);
 
-    const incidentEdges = edges.filter(
-      (edge) => deletableIds.has(edge.source) || deletableIds.has(edge.target)
-    );
-
-    setNodes((nds) => nds.filter((node) => !deletableIds.has(node.id)));
-    setEdges((eds) => eds.filter((edge) => !incidentEdges.includes(edge)));
+    setNodes((nds) => nds.filter((node) => !deleted.has(node.id)));
+    setEdges((eds) => eds.filter((edge) => !deleted.has(edge.source) && !deleted.has(edge.target)));
+    setLastSelected([]);
 
     try {
-      if (incidentEdges.length > 0) {
-        await deleteEdgesAction(
-          projectId,
-          incidentEdges
-            .filter((edge) => !edge.source.startsWith("task:") && !edge.target.startsWith("task:"))
-            .map((edge) => edge.id)
-        );
-      }
-      await deleteElementsAction(projectId, [...deletableIds]);
+      // Saved arrows go with their notes (ON DELETE CASCADE).
+      await deleteElementsAction(projectId, board.id, ids.filter((id) => savedElements.current.has(id)));
+      for (const id of ids) savedElements.current.delete(id);
     } catch (e) {
-      console.error("Failed to delete nodes", e);
+      console.error("Failed to delete notes", e);
       toast.error(t("saveError"));
     }
-    setLastSelected([]);
-  }, [lastSelected, edges, projectId, setNodes, setEdges, t]);
+  }, [board, lastSelected, projectId, setNodes, setEdges, t]);
 
   /** Delete/Backspace usuwa zaznaczone elementy (bez kart zadań). */
   useEffect(() => {
-    if (lastSelected.length === 0) return;
+    if (lastSelected.length === 0 || !board?.canEdit) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Delete" && event.key !== "Backspace") return;
       const target = event.target as HTMLElement;
@@ -390,53 +337,39 @@ function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lastSelected, deleteSelected]);
+  }, [lastSelected, board, deleteSelected]);
 
   const toggleTasks = useCallback(async () => {
     if (tasksVisible) {
       // Zapamiętaj pozycje kart zadań na czas sesji i zdejmij je z kanwy.
-      const accessedIds = nodes.filter((n) => n.type === "task").map((n) => n.id);
-      const positions = new Map(
-        nodes.filter((n) => n.type === "task").map((n) => [n.id, n.position])
-      );
-      setNodes((nds) => nds.filter((n) => n.type !== "task"));
-      setEdges((eds) => eds.filter((e) => !accessedIds.includes(e.source) && !accessedIds.includes(e.target)));
+      const positions = new Map(nodes.filter((n) => isTaskNode(n.id)).map((n) => [n.id, n.position]));
+      setNodes((nds) => nds.filter((n) => !isTaskNode(n.id)));
+      setEdges((eds) => eds.filter((e) => !isTaskNode(e.source) && !isTaskNode(e.target)));
       setTaskSnapshot((snap) => snap.map((s) => ({ ...s, position: positions.get(`task:${s.id}`) ?? s.position })));
       setTasksVisible(false);
       return;
     }
 
     try {
-      const tasks = (await getTasksForBoardAction(projectId)) as any[];
-      const merged: TaskSnapshot[] = tasks.map((task, index) => {
-        const previous = taskSnapshot.find((entry) => entry.id === task.id);
-        return {
-          id: task.id,
-          title: task.title,
-          status: task.status,
-          priority: task.priority,
-          done: Boolean(task.is_done),
-          position: previous?.position ?? {
-            x: 900 + (index % 4) * 260,
-            y: 80 + Math.floor(index / 4) * 200,
-          },
-        };
-      });
+      const tasks = await getTasksForBoardAction(projectId);
+      const merged: TaskSnapshot[] = tasks.map((task, index) => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        done: task.is_done,
+        position: taskSnapshot.find((entry) => entry.id === task.id)?.position ?? {
+          x: 900 + (index % 4) * 260,
+          y: 80 + Math.floor(index / 4) * 200,
+        },
+      }));
       setTaskSnapshot(merged);
-      const taskNodes = merged.map((snapshot) => ({
+      const taskNodes: Node<TaskData>[] = merged.map((snapshot) => ({
         id: `task:${snapshot.id}`,
         type: "task",
         position: snapshot.position,
-        data: {
-          taskId: snapshot.id,
-          title: snapshot.title,
-          status: snapshot.status,
-          priority: snapshot.priority,
-          done: snapshot.done,
-          projectId,
-        },
-      })) as Node[];
-      setNodes((nds) => [...nds.filter((n) => n.type !== "task"), ...taskNodes]);
+        data: { taskId: snapshot.id, title: snapshot.title, status: snapshot.status, done: snapshot.done, projectId },
+      }));
+      setNodes((nds) => [...nds.filter((n) => !isTaskNode(n.id)), ...taskNodes]);
       setTasksVisible(true);
     } catch (e) {
       console.error("Failed to load tasks", e);
@@ -446,11 +379,10 @@ function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
 
   const changeSelectedColor = useCallback(
     (color: string) => {
+      const selected = new Set(lastSelected.map((s) => s.id));
       setNodes((nds) =>
         nds.map((node) =>
-          lastSelected.some((s) => s.id === node.id) && node.type === "sticky"
-            ? { ...node, data: { ...node.data, color }, selected: true }
-            : node
+          selected.has(node.id) && node.type === "sticky" ? { ...node, data: { ...node.data, color }, selected: true } : node
         )
       );
     },
@@ -459,28 +391,27 @@ function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
 
   const handleAIConvert = async () => {
     const texts = lastSelected
-      .filter((n) => n.type !== "task")
-      .map((n) => (n.data as StickyData).content)
+      .filter((n) => !isTaskNode(n.id))
+      .map((n) => (n.data as NoteData).content?.trim())
       .filter((text): text is string => Boolean(text));
     if (texts.length === 0) {
       toast.error(t("aiNeedsSelection"));
       return;
     }
-
     try {
-      const result = await generateTaskProposals(projectId, texts);
-      setAiProposals(result);
-    } catch (e) {
+      setAiProposals(await generateTaskProposals(projectId, texts));
+    } catch {
       toast.error(t("aiError"));
     }
   };
 
   return (
     <div className="w-full h-full relative" onDoubleClick={handleDoubleClick}>
-      {/* Podpowiedź: jak szybko dodać karteczkę. */}
-      <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-background/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
-        {t("canvasHint")}
-      </div>
+      {board?.canEdit && (
+        <div className="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-border bg-background/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
+          {t("canvasHint")}
+        </div>
+      )}
 
       <ReactFlow
         nodes={nodes}
@@ -490,7 +421,11 @@ function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
         onConnect={onConnect}
         onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
+        nodesDraggable={Boolean(board?.canEdit)}
+        nodesConnectable={Boolean(board?.canEdit)}
         deleteKeyCode={null}
+        // Double-click adds a note (handleDoubleClick); zooming on it swallowed the event.
+        zoomOnDoubleClick={false}
         connectionMode={ConnectionMode.Loose}
         fitView
         fitViewOptions={{ padding: 0.25 }}
@@ -501,6 +436,8 @@ function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
       </ReactFlow>
 
       <WhiteboardToolbar
+        canEdit={Boolean(board?.canEdit)}
+        ai={Boolean(board?.ai)}
         onAddSticky={() => createNode("sticky")}
         onAddRectangle={() => createNode("shape", "rectangle")}
         onAddCircle={() => createNode("shape", "circle")}
@@ -514,19 +451,13 @@ function WhiteboardFlow({ projectId }: WhiteboardCanvasProps) {
       />
 
       {aiProposals && (
-        <TaskProposalModal
-          open={!!aiProposals}
-          onClose={() => setAiProposals(null)}
-          projectId={projectId}
-          proposals={aiProposals.proposals}
-          onConfirmed={() => setAiProposals(null)}
-        />
+        <TaskProposalModal projectId={projectId} proposals={aiProposals} onClose={() => setAiProposals(null)} />
       )}
     </div>
   );
 }
 
-export function WhiteboardCanvas({ projectId }: WhiteboardCanvasProps) {
+export function WhiteboardCanvas({ projectId }: { projectId: string }) {
   return (
     <ReactFlowProvider>
       <WhiteboardFlow projectId={projectId} />
