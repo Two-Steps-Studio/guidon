@@ -612,7 +612,7 @@ export function WorkBoard({
 
           {/* AI off for the project (046) or hidden by this person (099): no AI calls to action. */}
           {canEdit && aiEnabled && (
-            <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)} data-tour="connect-agent">
               <Bot className="h-4 w-4" />
               {t("connectAgent")}
             </Button>
@@ -623,6 +623,7 @@ export function WorkBoard({
               size="sm"
               onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}
               style={projectColor ? { backgroundColor: projectColor } : undefined}
+              data-tour="new-task"
             >
               <Plus className="h-4 w-4" />
               {t("newTask")}
