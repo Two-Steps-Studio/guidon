@@ -529,6 +529,18 @@ body {
 @keyframes ui-fade-out { from { opacity: 1; } to { opacity: 0; } }
 
 /* Respect users who ask for less motion. */
+/* <RollingNumber>: each digit column rolls from 0 to its digit (--digit). */
+.number-roll {
+  transform: translateY(calc(var(--digit) * -1em));
+  animation: number-roll 700ms var(--ease-out) both;
+}
+@keyframes number-roll {
+  from { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .number-roll { animation: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

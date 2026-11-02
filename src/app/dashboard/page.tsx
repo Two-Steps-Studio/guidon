@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { RollingNumber } from "@/components/ui/rolling-number";
 import {
   Activity as ActivityIcon,
   AlertTriangle,
@@ -180,7 +181,7 @@ function StatTile({
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className={cn("text-2xl font-bold tabular-nums", tone === "danger" && value > 0 && "text-danger")}>{value}</p>
+          <p className={cn("text-2xl font-bold", tone === "danger" && value > 0 && "text-danger")}><RollingNumber value={value} /></p>
           <p className="text-sm leading-tight text-muted-foreground">{label}</p>
         </div>
       </CardContent>
