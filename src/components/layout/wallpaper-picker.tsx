@@ -4,16 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SelectMenu } from "@/components/ui/select-menu";
-import {
-  WALLPAPER_DIM_OPTIONS,
-  prepareWallpaper,
-  saveWallpaper,
-  setWallpaperDim,
-  useWallpaperDim,
-  useWallpaperUrl,
-  type WallpaperDim,
-} from "@/lib/wallpaper";
+import { prepareWallpaper, saveWallpaper, setWallpaperDim, useWallpaperDim, useWallpaperUrl } from "@/lib/wallpaper";
 
 /** Profile -> Wallpaper: pick, preview, dim or remove this device's background picture. */
 export function WallpaperPicker() {
@@ -51,12 +42,19 @@ export function WallpaperPicker() {
         </Button>
         {url && (
           <>
-            <SelectMenu
-              aria-label={t("wallpaperDimLabel")}
-              value={dim}
-              options={WALLPAPER_DIM_OPTIONS.map((value) => ({ value, label: t("wallpaperDim", { percent: value }) }))}
-              onValueChange={(value) => setWallpaperDim(value as WallpaperDim)}
-            />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={dim}
+                aria-label={t("wallpaperDimLabel")}
+                aria-valuetext={t("wallpaperDim", { percent: dim })}
+                onChange={(event) => setWallpaperDim(event.target.value)}
+                className="w-32"
+              />
+              <span className="w-24 tabular-nums text-muted-foreground">{t("wallpaperDim", { percent: dim })}</span>
+            </label>
             <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => void saveWallpaper(null)}>
               <Trash2 className="h-4 w-4" />
               {t("wallpaperRemove")}
