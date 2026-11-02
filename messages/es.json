@@ -2130,6 +2130,8 @@
     "help": "Mostrar esta lista"
   },
   "datePicker": {
+    "tomorrow": "Mañana",
+    "inAWeek": "En 7 días",
     "placeholder": "Elegir fecha",
     "clear": "Borrar fecha",
     "today": "Hoy",

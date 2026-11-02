@@ -2142,6 +2142,8 @@
     "help": "Show this list"
   },
   "datePicker": {
+    "tomorrow": "Tomorrow",
+    "inAWeek": "In 7 days",
     "placeholder": "Pick a date",
     "clear": "Clear date",
     "today": "Today",

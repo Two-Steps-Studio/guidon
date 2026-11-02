@@ -281,12 +281,18 @@ export function DatePicker({ value: controlled, defaultValue = "", onChange: onC
             </div>
           ))}
         </div>
-        <div className="mt-2 flex justify-between border-t border-border pt-2">
+        <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-border pt-2">
           <Button type="button" variant="ghost" size="sm" onClick={() => pick(today)}>
             {t("today")}
           </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => pick(addDays(today, 1))}>
+            {t("tomorrow")}
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => pick(addDays(today, 7))}>
+            {t("inAWeek")}
+          </Button>
           {selected && (
-            <Button type="button" variant="ghost" size="sm" onClick={() => pick("")}>
+            <Button type="button" variant="ghost" size="sm" className="ml-auto" onClick={() => pick("")}>
               {t("clear")}
             </Button>
           )}

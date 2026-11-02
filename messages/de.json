@@ -2130,6 +2130,8 @@
     "help": "Diese Liste anzeigen"
   },
   "datePicker": {
+    "tomorrow": "Morgen",
+    "inAWeek": "In 7 Tagen",
     "placeholder": "Datum wählen",
     "clear": "Datum löschen",
     "today": "Heute",
