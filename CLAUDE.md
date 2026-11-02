@@ -45,6 +45,16 @@ Guidon Desktop releases are built by `.github/workflows/desktop-release.yml` fro
 
 There is no component/unit test runner (no Jest/Vitest/RTL) - UI changes are verified via `tsc` + `lint` + `build` plus a manual/browser pass, not automated tests.
 
+## Code quality skills (owner's rule: use them for any code)
+
+- **Writing or changing code:** work in `ponytail` mode (`.claude/skills/ponytail/SKILL.md`): the smallest change that fully solves the task. For `.ts`/`.tsx`, also follow `.claude/skills/typescript-best-practices/SKILL.md`.
+- **Before a commit you push:**
+  - Review your own diff against `.claude/skills/thermo-nuclear-code-quality-review/SKILL.md` (structure, files over 1000 lines, ad-hoc branches, wrong layer).
+  - Also review it against `.claude/skills/ponytail-review/SKILL.md` (correctness, security, load, tests).
+  - Fix what they find before pushing.
+- **Other pstack skills** (`.claude/skills/`, `principle-*`, `blast-radius`, `interrogate`, `tdd`, ...) are invoked by the user with `/name`. Agents may read and apply a SKILL.md directly when it fits the task.
+- **Sources and licenses:** `.claude/skills/THIRD_PARTY.md`.
+
 ## Architecture
 
 ### Dual-mode data layer - the one thing that touches almost every Server Action
