@@ -537,6 +537,7 @@ function KanbanBoardComponent({
       )}
       role="list"
       aria-label={t("taskBoardAria")}
+      data-tour="board"
     >
       {columns.map((column) => {
         const columnTasks = groups[column.status];
