@@ -57,11 +57,11 @@ interface TourStep {
 
 export interface SpotlightTourProps {
   userId: string | null;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps) {
+/** Mounted only while open, so every opening starts from the first step. */
+function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
   const t = useTranslations("walkthrough");
   const [steps, setSteps] = useState<TourStep[]>([]);
   const [index, setIndex] = useState(0);
@@ -80,12 +80,6 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
   // Wejście: zbierz kroki (tylko te, których element faktycznie istnieje),
   // pod eskortą rAF — dokument jest gotowy efektem po nawodnieniu.
   useEffect(() => {
-    if (!open) {
-      setSteps([]);
-      setRect(null);
-      setIndex(0);
-      return;
-    }
     const raf = requestAnimationFrame(() => {
       const all: TourStep[] = [
         { selector: 'a[href="/dashboard"]', title: t("spot1Title"), body: t("spot1Body") },
@@ -105,21 +99,20 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
     });
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, []);
 
   /* Escape zamyka bez zapisu znacznika (tour wróci przy następnym wejściu). */
   useEffect(() => {
-    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") finish(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, finish]);
+  }, [finish]);
 
   /* Pomiar elementu bieżącego kroku + przewinięcie do niego. */
   useEffect(() => {
-    if (!open || steps.length === 0) return;
+    if (steps.length === 0) return;
     if (index > steps.length - 1) {
       // Element zniknął w międzyczasie — zamiast utknąć, domknij tour.
       finish(false);
@@ -147,7 +140,7 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
       window.removeEventListener("resize", onScroll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, steps, index]);
+  }, [steps, index]);
 
   /* Połóż dymek poniżej podświetlenia, a gdy brakuje miejsca — nad nim. */
   useLayoutEffect(() => {
@@ -157,7 +150,7 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
     setPlacement(below < window.innerHeight ? "below" : "above");
   }, [rect, index, steps]);
 
-  if (!open || !rect || steps.length === 0) return null;
+  if (!rect || steps.length === 0) return null;
 
   const current = steps[index];
   const isFirst = index === 0;
@@ -253,13 +246,11 @@ export function SpotlightTour({ userId, open, onOpenChange }: SpotlightTourProps
  * w tej przeglądarce (klucz per userId, nie per przeglądarka).
  */
 export function WalkthroughAutoOpen({ userId }: { userId: string | null }) {
-  const [open, setOpen] = useState(false);
+  // The tour renders nothing until it has measured a step, so the server and
+  // the first client render match even when this starts out true.
+  const [open, setOpen] = useState(() => typeof window !== "undefined" && !!userId && !isWalkthroughSeen(userId));
 
-  useEffect(() => {
-    if (userId && !isWalkthroughSeen(userId)) setOpen(true);
-  }, [userId]);
-
-  return <SpotlightTour userId={userId} open={open} onOpenChange={setOpen} />;
+  return open ? <SpotlightTour userId={userId} onOpenChange={setOpen} /> : null;
 }
 
 /** Ręczne uruchomienie: wpis „Przewodnik" w stopce sidebara (wzór: FeedbackMenuItem). */
@@ -275,7 +266,7 @@ export function WalkthroughMenuItem({ userId }: { userId: string | null }) {
           <span>{t("launcher")}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <SpotlightTour userId={userId} open={open} onOpenChange={setOpen} />
+      {open && <SpotlightTour userId={userId} onOpenChange={setOpen} />}
     </>
   );
 }

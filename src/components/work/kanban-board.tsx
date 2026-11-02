@@ -601,7 +601,7 @@ function KanbanBoardComponent({
                       dashed rule marks where they end and the project's saved
                       order resumes. Omitted when a column is all (or no)
                       pins, since there's nothing to separate. */}
-                  {index === pinnedCount && pinnedCount < columnTasks.length && (
+                  {pinnedCount > 0 && index === pinnedCount && pinnedCount < columnTasks.length && (
                     <div
                       role="separator"
                       aria-label={t("pinnedTasksHeading")}
