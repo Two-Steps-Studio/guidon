@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { skipWalkthrough } from "./isolation.mjs";
 
 export async function onboardingCoverage({page,context,origin,fixture,client,browserName}) {
   const email=`signup-${browserName}@guidon.example.test`;
@@ -6,6 +7,7 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
   const name=`Onboarding project ${browserName}`,studio=`Onboarding studio ${browserName}`;
   const invitedEmail=`invited-${browserName}@guidon.example.test`;
   let orgId,inviteLink;
+  await skipWalkthrough(context,[user.id]);
   try {
     await context.clearCookies();await page.goto(`${origin}/auth/login`);await page.waitForLoadState("networkidle");
     await page.locator("#email").fill(email);await page.locator("#password").fill(fixture.password);
