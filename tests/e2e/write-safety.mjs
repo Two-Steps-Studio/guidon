@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import { allowBrowserRequest } from "./isolation.mjs";
+import { allowBrowserRequest, skipWalkthrough } from "./isolation.mjs";
 
 // Nothing a person typed or did is lost or shown as done when it wasn't:
 // moves and saves without a network roll back or keep the form, unsaved
@@ -12,6 +12,7 @@ export async function writeSafetyCoverage({context,origin,fixture,client,browser
   const moved=await insert(`${prefix} move`), edited=await insert(`${prefix} edit`);
   // Its own context: offline mode, storage and sign-out stay inside it.
   const isolated=await context.browser().newContext({ignoreHTTPSErrors:true,locale:"en-US",viewport:{width:1440,height:1000}});
+  await skipWalkthrough(isolated,fixture.users.map(user=>user.id));
   await isolated.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
   const page=await isolated.newPage();page.setDefaultTimeout(15000);
   await isolated.tracing.start({screenshots:true,snapshots:true,sources:true});

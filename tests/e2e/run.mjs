@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { chromium,firefox,webkit,devices } from "playwright";
-import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopySource } from "./isolation.mjs";
+import { isolatedEnvironment,assertDisposablePath,allowBrowserRequest,shouldCopySource,skipWalkthrough } from "./isolation.mjs";
 import { seedReleaseFixture } from "./seed.mjs";
 import { releaseSmoke } from "./smoke.mjs";
 import { authenticationCoverage } from "./authentication.mjs";
@@ -178,6 +178,7 @@ try{
     const browser=await browserType.launch();
     const context=await browser.newContext({...(mobileMode?{hasTouch:true,isMobile:name!=='firefox',deviceScaleFactor:2,userAgent:devices[name==='webkit'?'iPhone 13':'Pixel 7'].userAgent}:{}),ignoreHTTPSErrors:true,locale:"en-US",viewport:mobileMode?{width:375,height:812}:{width:1440,height:1000},recordVideo:{dir:path.join(artifacts,name)}});
     const blocked=[];
+    await skipWalkthrough(context,fixture.users.map(user=>user.id));
     await context.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():(blocked.push(new URL(route.request().url()).origin),route.abort()));
     await context.tracing.start({screenshots:true,snapshots:true,sources:true});
     // WebKit on the CI runner sometimes takes over 15 s to fire a page's load event (a

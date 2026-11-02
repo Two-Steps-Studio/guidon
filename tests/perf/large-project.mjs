@@ -12,6 +12,7 @@ import { createHash, randomBytes, scryptSync } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import pg from "pg";
 import { chromium } from "playwright";
+import { skipWalkthrough } from "../e2e/isolation.mjs";
 
 const argument = (name, fallback) => { const index = process.argv.indexOf(`--${name}`); return index > 0 ? process.argv[index + 1] : fallback; };
 const origin = argument("origin", "http://127.0.0.1:5803");
@@ -63,6 +64,7 @@ try {
 
   browser = await chromium.launch();
   const context = await browser.newContext({ locale: "en-US", viewport: { width: 1440, height: 1000 } });
+  await skipWalkthrough(context, [userId]);
   const page = await context.newPage();
   page.setDefaultTimeout(60000);
   await page.goto(`${origin}/auth/login`);
@@ -134,6 +136,7 @@ try {
   // presets), on the 1000-task board - the largest the board renders whole.
   const mobileSize = SIZES.includes(1000) ? 1000 : SIZES[0];
   const phone = await browser.newContext({ locale: "en-US", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, storageState: await context.storageState() });
+  await skipWalkthrough(phone, [userId]);
   const phonePage = await phone.newPage(); phonePage.setDefaultTimeout(60000);
   const cdp = await phone.newCDPSession(phonePage);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import { allowBrowserRequest } from "./isolation.mjs";
+import { allowBrowserRequest, skipWalkthrough } from "./isolation.mjs";
 
 // A person who doesn't want AI turns it off in their profile: the board
 // shows no AI calls to action, for them only, and turning it back on
@@ -8,6 +8,7 @@ import { allowBrowserRequest } from "./isolation.mjs";
 export async function hideAiCoverage({context,origin,fixture,client,browserName,artifacts}) {
   const owner=fixture.users[0];
   const isolated=await context.browser().newContext({ignoreHTTPSErrors:true,locale:"en-US",viewport:{width:1440,height:1000}});
+  await skipWalkthrough(isolated,fixture.users.map(user=>user.id));
   await isolated.route("**/*",route=>allowBrowserRequest(route.request().url(),origin)?route.continue():route.abort());
   const page=await isolated.newPage();page.setDefaultTimeout(15000);
   const board=`${origin}/projects/${owner.projectId}/work`;
