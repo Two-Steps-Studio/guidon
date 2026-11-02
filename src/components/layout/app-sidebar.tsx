@@ -405,12 +405,13 @@ export function AppSidebar({
                 asChild
                 size="lg"
                 tooltip={user.full_name || user.email}
-                className="group-data-[collapsible=icon]:justify-center"
+                // Collapsed, the same 32 px square as the icons around it, not a 48 px tall one.
+                className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!h-8"
               >
                 <Link href="/profile">
                   <Avatar className="size-6 shrink-0">
                     <AvatarImage src={user.avatar_url || undefined} />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-[10px] font-medium">
                       {initialsFor(user)}
                     </AvatarFallback>
                   </Avatar>
