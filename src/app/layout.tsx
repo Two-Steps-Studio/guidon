@@ -8,6 +8,7 @@ import { Toaster } from "sonner";
 import { GlobalWebMcpTools } from "@/components/agent/web-mcp";
 import { DitherBackground } from "@/components/layout/dither-background";
 import { ConfirmActionHost } from "@/components/ui/confirm-action";
+import { AnalyticsConsent } from "@/components/layout/analytics-consent";
 import { SITE_URL } from "@/lib/site-url";
 import { BRAND_COLORS } from "@/lib/brand-colors";
 import { DEFAULT_THEME, THEME_COOKIE, isSupportedTheme } from "@/lib/theme";
@@ -132,6 +133,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 children here too nested two main landmarks on every page. */}
             {children}
             <ConfirmActionHost />
+            <AnalyticsConsent />
             <GlobalWebMcpTools user={currentUser ? {
               id: currentUser.id,
               email: currentUser.email,
@@ -146,8 +148,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Self-hosted installs have no relationship to the Guidon Cloud GA
           property - only load it when this is actually Guidon Cloud, same
           gating src/app/page.tsx already uses for cloud-only pricing. */}
-      {/* Optional analytics must not load until an informed opt-in mechanism
-          is implemented. Do not restore unconditional third-party tracking. */}
     </html>
   );
 }

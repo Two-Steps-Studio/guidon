@@ -29,6 +29,14 @@
     "empty": "No records in this snapshot."
   },
   "common": {
+    "analyticsConsent": {
+      "label": "Analytics choice",
+      "message": "May we use optional PostHog analytics to see which features are used and catch errors? Nothing is collected unless you allow it. <cookies>Details</cookies>",
+      "allow": "Allow",
+      "decline": "No thanks",
+      "withdraw": "Withdraw analytics consent",
+      "change": "Change analytics choice"
+    },
     "loading": "Loading...",
     "projectType": "{type, select, game {Game} website {Website} mobile_app {Mobile App} api {API} tool {Tool} other {Other}}",
     "projectMethodology": "{methodology, select, standard {Standard} scrum {Scrum} other {Standard}}",

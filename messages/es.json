@@ -29,6 +29,14 @@
     "empty": "No hay registros en esta selección."
   },
   "common": {
+    "analyticsConsent": {
+      "label": "Elección de analítica",
+      "message": "¿Podemos usar la analítica opcional de PostHog para ver qué funciones se usan y detectar errores? No se recoge nada si no lo permites. <cookies>Detalles</cookies>",
+      "allow": "Permitir",
+      "decline": "No, gracias",
+      "withdraw": "Retirar el consentimiento de analítica",
+      "change": "Cambiar la elección de analítica"
+    },
     "loading": "Cargando...",
     "projectType": "{type, select, game {Juego} website {Sitio web} mobile_app {Aplicación móvil} api {API} tool {Herramienta} other {Otro}}",
     "projectMethodology": "{methodology, select, standard {Estándar} scrum {Scrum} other {Estándar}}",

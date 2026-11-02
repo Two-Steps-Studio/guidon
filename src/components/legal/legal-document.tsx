@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LEGAL_VERSION, legalOperator, type LegalCopy } from "@/lib/legal";
 
@@ -13,7 +14,7 @@ export function OperatorContact() {
   </address>;
 }
 
-export function LegalDocument({ copy, templateCredit = true }: { copy: LegalCopy; templateCredit?: boolean }) {
+export function LegalDocument({ copy, templateCredit = true, children }: { copy: LegalCopy; templateCredit?: boolean; children?: ReactNode }) {
   return <div className="min-h-screen bg-background">
     <header className="border-b"><div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
       <Link href="/"><Image src="/assets/guidon-wordmark.png" alt="Guidon" width={110} height={41} priority className="dark:invert" /></Link>
@@ -37,6 +38,7 @@ export function LegalDocument({ copy, templateCredit = true }: { copy: LegalCopy
           {section.items && <ul className="list-disc space-y-2 pl-6">{section.items.map(item => <li key={item}>{item}</li>)}</ul>}
         </section>)}
       </div>
+      {children}
       {templateCredit && <p className="mt-12 border-t pt-4 text-sm text-muted-foreground">
         Adapted using <a className="underline" href="https://github.com/General-Legal/legal-templates">General Legal templates</a> (CC0 1.0).
         Guidon-specific changes have not been reviewed or endorsed by General Legal.
