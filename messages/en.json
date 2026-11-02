@@ -826,6 +826,11 @@
     }
   },
   "work": {
+    "duplicate": "Duplicate",
+    "duplicateTitle": "{title} (copy)",
+    "duplicated": "Duplicated as \"{title}\"",
+    "duplicateOpen": "Open",
+    "duplicateFailed": "Couldn't duplicate the task. Try again.",
     "downloadTaskEdits": "Download my edits",
     "reloadTask": "Reload latest task",
     "status": "{status, select, backlog {Backlog} todo {Todo} in_progress {In Progress} ai_working {AI Working} review {Review} done {Done} other {Backlog}}",

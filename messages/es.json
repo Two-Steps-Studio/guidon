@@ -814,6 +814,11 @@
     }
   },
   "work": {
+    "duplicate": "Duplicar",
+    "duplicateTitle": "{title} (copia)",
+    "duplicated": "Copia creada: «{title}»",
+    "duplicateOpen": "Abrir",
+    "duplicateFailed": "No se pudo duplicar la tarea. Inténtalo de nuevo.",
     "downloadTaskEdits": "Descargar mis cambios",
     "reloadTask": "Cargar tarea actual",
     "status": "{status, select, backlog {Backlog} todo {Por hacer} in_progress {En curso} ai_working {IA trabajando} review {Revisión} done {Hecho} other {Backlog}}",

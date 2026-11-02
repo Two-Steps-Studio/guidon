@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,8 @@ interface TaskCardProps {
   moveTargets?: readonly BoardColumn[];
   /** Touch-friendly alternative to dragging - see kanban-board.tsx's handleMoveTo doc comment for why this exists. */
   onMoveTo?: (task: Task, status: TaskStatus) => void;
+  /** Copies the task into its column. Undefined on a read-only board. */
+  onDuplicate?: (task: Task) => void;
   /** Part of the board's bulk selection (Ctrl/Cmd/Shift-click). */
   selected?: boolean;
   /** Ctrl/Cmd-click toggles this card, Shift-click extends from the last one. Undefined on a read-only board. */
@@ -174,6 +177,7 @@ function TaskCardComponent({
   canMoveDown = false,
   moveTargets,
   onMoveTo,
+  onDuplicate,
   selected = false,
   onSelect,
 }: TaskCardProps) {
@@ -421,7 +425,7 @@ function TaskCardComponent({
             </span>
           )}
         </h3>
-        {onMoveTo && moveTargets && moveTargets.length > 0 && (
+        {((onMoveTo && moveTargets && moveTargets.length > 0) || onDuplicate) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -435,11 +439,17 @@ function TaskCardComponent({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
-              {moveTargets.map((target) => (
+              {onMoveTo && moveTargets?.map((target) => (
                 <DropdownMenuItem key={target.status} onSelect={() => onMoveTo(task, target.status)}>
                   {t("moveToColumn", { column: target.label })}
                 </DropdownMenuItem>
               ))}
+              {onDuplicate && (
+                <>
+                  {onMoveTo && moveTargets && moveTargets.length > 0 && <DropdownMenuSeparator />}
+                  <DropdownMenuItem onSelect={() => onDuplicate(task)}>{t("duplicate")}</DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

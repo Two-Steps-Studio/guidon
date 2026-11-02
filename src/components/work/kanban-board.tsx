@@ -66,6 +66,8 @@ interface KanbanBoardProps {
     sortOrder: number,
     anchor?: RelativeTaskPosition
   ) => Promise<void> | void;
+  /** Copies a task into its column. Omitted on a read-only board. */
+  onDuplicateTask?: (task: Task) => void;
   projectColor?: string;
   /** Bulk selection (owned by the parent, which shows the bulk-action bar). */
   selectedIds?: ReadonlySet<string>;
@@ -134,6 +136,7 @@ function KanbanBoardComponent({
   onOpenTask,
   onCreateTask,
   onMoveTask,
+  onDuplicateTask,
   projectColor,
   selectedIds,
   onSelectionChange,
@@ -651,6 +654,7 @@ function KanbanBoardComponent({
                       canMoveDown={index < columnTasks.length - 1 && pinnedIds.has(columnTasks[index + 1].id) === pinnedIds.has(task.id)}
                       moveTargets={canEdit ? moveTargetsByStatus.get(column.status) : undefined}
                       onMoveTo={canEdit ? handleMoveTo : undefined}
+                      onDuplicate={canEdit ? onDuplicateTask : undefined}
                       selected={selectedIds?.has(task.id) ?? false}
                       onSelect={canEdit && onSelectionChange ? handleSelect : undefined}
                     />

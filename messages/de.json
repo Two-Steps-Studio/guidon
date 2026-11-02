@@ -814,6 +814,11 @@
     }
   },
   "work": {
+    "duplicate": "Duplizieren",
+    "duplicateTitle": "{title} (Kopie)",
+    "duplicated": "Kopie „{title}“ erstellt",
+    "duplicateOpen": "Öffnen",
+    "duplicateFailed": "Die Aufgabe konnte nicht dupliziert werden. Versuch es noch einmal.",
     "downloadTaskEdits": "Meine Änderungen herunterladen",
     "reloadTask": "Aktuelle Aufgabe laden",
     "status": "{status, select, backlog {Backlog} todo {Zu erledigen} in_progress {In Bearbeitung} ai_working {KI arbeitet} review {Überprüfung} done {Erledigt} other {Backlog}}",
