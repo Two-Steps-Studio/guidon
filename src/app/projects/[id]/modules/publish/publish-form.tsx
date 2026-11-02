@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,7 @@ const initial: PublishState = { error: null };
 
 export function PublishForm({ projectId, source, defaults, back }: { projectId: string; source: PublishSource; defaults: { version: string; author: string }; back: string }) {
   const t = useTranslations("moduleRegistry");
-  const [state, action, pending] = useActionState(publishModule.bind(null, projectId, source), initial);
+  const [state, action, pending] = useSafeActionState(publishModule.bind(null, projectId, source), initial);
   if (state.done) return <div role="status" className="space-y-3 rounded-lg border bg-card p-4">
     <p className="font-medium">{state.done.status === "published" ? t("publishedNow", { version: state.done.version }) : t("submittedForReview", { version: state.done.version })}</p>
     <div className="flex flex-wrap gap-3 text-sm"><Link href="/my-modules#published" className="text-primary underline">{t("toDashboard")}</Link><Link href={back} className="text-primary underline">{t("back")}</Link></div>

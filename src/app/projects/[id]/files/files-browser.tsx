@@ -316,7 +316,7 @@ function FileCard({
       </CardHeader>
       <CardContent className="pt-0">
         {error && (
-          <p className="text-xs text-destructive mb-2 flex items-center gap-1">
+          <p role="alert" className="text-xs text-destructive mb-2 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             {error}
           </p>

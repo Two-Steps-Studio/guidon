@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,7 +69,7 @@ export function AiSettingsForm({
   });
   const [customModel, setCustomModel] = useState(configured?.model ?? "");
   const saveWithId = saveOrgAiSettings.bind(null, organizationId);
-  const [state, formAction, saving] = useActionState(saveWithId, initialState);
+  const [state, formAction, saving] = useSafeActionState(saveWithId, initialState);
   const [removing, startRemove] = useTransition();
   const [removeError, setRemoveError] = useState<string | null>(null);
 
@@ -221,7 +223,7 @@ export function AiSettingsForm({
               />
             </div>
             {state.error && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
+              <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" />
                 {state.error}
               </div>

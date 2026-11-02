@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,7 +72,7 @@ export function CreateOrganizationDialog({
 function OrgForm({ onCancel }: { onCancel: () => void }) {
   const t = useTranslations("organizations.create");
   const tCommon = useTranslations("organizations.common");
-  const [state, formAction, pending] = useActionState(createOrganization, initialState);
+  const [state, formAction, pending] = useSafeActionState(createOrganization, initialState);
 
   return (
     <form onSubmit={(event) => {
@@ -90,7 +92,7 @@ function OrgForm({ onCancel }: { onCancel: () => void }) {
         <Input id="description" name="description" placeholder={t("descriptionPlaceholder")} />
       </div>
       {state.error && (
-        <div className="text-sm text-destructive flex items-center gap-2">
+        <div role="alert" className="text-sm text-destructive flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
           {state.error}
         </div>

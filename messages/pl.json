@@ -133,6 +133,8 @@
     }
   },
   "errors": {
+    "saveNetwork": "Brak połączenia z Guidonem, nic nie zapisano. Twoje zmiany są nadal tutaj - sprawdź połączenie i spróbuj ponownie.",
+    "saveFailed": "Coś poszło nie tak i nic nie zapisano. Twoje zmiany są nadal tutaj - spróbuj ponownie.",
     "generic": {
       "title": "Coś poszło nie tak",
       "defaultMessage": "Wystąpił nieoczekiwany błąd podczas wczytywania tej strony.",

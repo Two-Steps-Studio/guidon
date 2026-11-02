@@ -85,7 +85,7 @@ export function ProjectLimitEditor({
         {t("save")}
       </Button>
       {error && <span className="text-xs text-destructive">{error}</span>}
-      {saved && !error && <span className="text-xs text-success">{t("saved")}</span>}
+      {saved && !error && <span role="status" className="text-xs text-success">{t("saved")}</span>}
     </div>
   );
 }

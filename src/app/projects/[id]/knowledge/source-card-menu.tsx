@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -115,7 +117,7 @@ function EditSourceForm({
 }) {
   const t = useTranslations("knowledge");
   const updateWithIds = updateSource.bind(null, projectId, source.id);
-  const [state, formAction, pending] = useActionState(updateWithIds, initialState);
+  const [state, formAction, pending] = useSafeActionState(updateWithIds, initialState);
   const submittedRef = useRef(false);
 
   useEffect(() => {

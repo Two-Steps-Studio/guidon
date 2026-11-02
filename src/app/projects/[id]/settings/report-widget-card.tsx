@@ -167,7 +167,7 @@ export function ReportWidgetCard({
         )}
 
         {error && (
-          <p className="flex items-center gap-2 text-sm text-destructive">
+          <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </p>

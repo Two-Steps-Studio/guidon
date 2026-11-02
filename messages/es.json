@@ -133,6 +133,8 @@
     }
   },
   "errors": {
+    "saveNetwork": "No se pudo conectar con Guidon y no se guardó nada. Tus cambios siguen aquí: revisa la conexión e inténtalo de nuevo.",
+    "saveFailed": "Algo salió mal y no se guardó nada. Tus cambios siguen aquí: inténtalo de nuevo.",
     "generic": {
       "title": "Algo salió mal",
       "defaultMessage": "Se produjo un error inesperado al cargar esta página.",
