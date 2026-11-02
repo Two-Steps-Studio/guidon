@@ -822,6 +822,8 @@
     }
   },
   "work": {
+    "noFilterMatchesTitle": "Ninguna tarea coincide con estos filtros",
+    "noFilterMatchesDesc": "{count, plural, one {# tarea está oculta} other {# tareas están ocultas}} por el filtro de persona, prioridad o etiqueta.",
     "projectSettings": "Ajustes del proyecto",
     "dueOverdue": "Vencida",
     "dueToday": "Hoy",
@@ -1495,6 +1497,7 @@
     "deleteRelationAria": "Eliminar relación"
   },
   "decisions": {
+    "emptyDescriptionReadOnly": "Todavía no se ha registrado ninguna decisión en este proyecto.",
     "dialogTitle": "Crear decisión",
     "title": "Decisiones",
     "subtitle": "Registra las decisiones importantes del proyecto y su razonamiento",
@@ -1566,6 +1569,7 @@
     "moduleBuilderLog": "{stage} · {outcome} · {requestId}"
   },
   "files": {
+    "emptyDescriptionReadOnly": "Todavía no se han subido archivos a este proyecto.",
     "downloadFailed": "No se pudo descargar el archivo.",
     "downloadHttpError": "No se pudo descargar el archivo (HTTP {status}).",
     "disconnectRepo": "Desconectar repositorio {repository}",
