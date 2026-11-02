@@ -834,6 +834,8 @@
     }
   },
   "work": {
+    "copyTaskLink": "Kopiuj link do zadania",
+    "taskLinkCopied": "Skopiowano link",
     "duplicate": "Duplikuj",
     "duplicateTitle": "{title} (kopia)",
     "duplicated": "Utworzono kopię „{title}”",
