@@ -457,6 +457,38 @@ export function WorkBoard({
     []
   );
 
+  // Title, description (with its checklist), priority and labels, at the end
+  // of the same column. Not the assignee, due date, comments, history or
+  // attachments. createTask checks the permission and plan limit.
+  const handleDuplicate = async (task: Task) => {
+    const status = normalizeTaskStatus(task.status);
+    const column = state.tasks.filter((item) => normalizeTaskStatus(item.status) === status);
+    const result = await createTask(projectId, {
+      title: t("duplicateTitle", { title: task.title }),
+      description: task.description ?? "",
+      status,
+      priority: task.priority,
+      assigneeId: "",
+      dueDate: "",
+      sortOrder: Math.max(0, ...column.map((item) => item.sort_order ?? 0)) + 100,
+      tags: task.tags,
+    }).catch(() => ({ task: null, error: t("duplicateFailed") }));
+    if (!result.task) {
+      toast.error(result.error ?? t("duplicateFailed"));
+      return;
+    }
+    const copy = result.task;
+    upsertTask(copy);
+    toast.success(t("duplicated", { title: copy.title }), {
+      action: { label: t("duplicateOpen"), onClick: () => setOpenTask(copy) },
+    });
+  };
+  const handleDuplicateRef = useRef(handleDuplicate);
+  useEffect(() => {
+    handleDuplicateRef.current = handleDuplicate;
+  });
+  const duplicateTaskStable = useCallback((task: Task) => void handleDuplicateRef.current(task), []);
+
   // WebMCP: a browser agent working in this tab can read and change the
   // board as the person - through the same actions (and permissions) as
   // the UI, with the same optimistic updates.
@@ -776,6 +808,7 @@ export function WorkBoard({
             onOpenTask={setOpenTask}
             onCreateTask={openCreate}
             onMoveTask={moveTaskStable}
+            onDuplicateTask={canEdit ? duplicateTaskStable : undefined}
             projectColor={projectColor}
             selectedIds={selectedIds}
             onSelectionChange={canEdit ? setSelectedIds : undefined}

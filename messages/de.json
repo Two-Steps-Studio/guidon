@@ -822,6 +822,11 @@
     }
   },
   "work": {
+    "duplicate": "Duplizieren",
+    "duplicateTitle": "{title} (Kopie)",
+    "duplicated": "Kopie „{title}“ erstellt",
+    "duplicateOpen": "Öffnen",
+    "duplicateFailed": "Die Aufgabe konnte nicht dupliziert werden. Versuch es noch einmal.",
     "downloadTaskEdits": "Meine Änderungen herunterladen",
     "reloadTask": "Aktuelle Aufgabe laden",
     "status": "{status, select, backlog {Backlog} todo {Zu erledigen} in_progress {In Bearbeitung} ai_working {KI arbeitet} review {Überprüfung} done {Erledigt} other {Backlog}}",
@@ -1148,7 +1153,7 @@
     "completionLabel": "Fertigstellung %"
   },
   "members": {
-    "dialogTitle": "Phase erstellen",
+    "dialogTitle": "Mitglied hinzufügen",
     "title": "Mitglieder",
     "subtitle": "Wer dieses Projekt sehen und ändern kann.",
     "addMember": "Mitglied hinzufügen",
@@ -1438,7 +1443,7 @@
     "openBoard": "Board öffnen"
   },
   "feedback": {
-    "dialogTitle": "Phase erstellen",
+    "dialogTitle": "Feedback senden",
     "sendFeedback": "Feedback senden",
     "dialogDescription": "Sag uns, was funktioniert, was kaputt ist oder was du dir wünschst - wir lesen jede Nachricht.",
     "placeholder": "Was möchtest du uns mitteilen?",
@@ -1485,7 +1490,7 @@
     "deleteRelationAria": "Beziehung löschen"
   },
   "decisions": {
-    "dialogTitle": "Phase erstellen",
+    "dialogTitle": "Entscheidung erstellen",
     "title": "Entscheidungen",
     "subtitle": "Wichtige Projektentscheidungen und ihre Begründung verfolgen",
     "createDecision": "Entscheidung erstellen",
@@ -1587,7 +1592,7 @@
     "connect": "Verbinden"
   },
   "memory": {
-    "dialogTitle": "Phase erstellen",
+    "dialogTitle": "Gedächtniseintrag erstellen",
     "title": "Gedächtnis",
     "subtitle": "Dauerhaftes Projektwissen und Erkenntnisse",
     "pendingReview": "Ausstehende Überprüfung ({count})",

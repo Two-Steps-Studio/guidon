@@ -834,6 +834,11 @@
     }
   },
   "work": {
+    "duplicate": "Duplikuj",
+    "duplicateTitle": "{title} (kopia)",
+    "duplicated": "Utworzono kopię „{title}”",
+    "duplicateOpen": "Otwórz",
+    "duplicateFailed": "Nie udało się zduplikować zadania. Spróbuj ponownie.",
     "downloadTaskEdits": "Pobierz moje zmiany",
     "reloadTask": "Wczytaj aktualne zadanie",
     "status": "{status, select, backlog {Backlog} todo {Do zrobienia} in_progress {W toku} ai_working {AI pracuje} review {Przegląd} done {Zrobione} other {Backlog}}",
@@ -1160,7 +1165,7 @@
     "completionLabel": "Ukończenie %"
   },
   "members": {
-    "dialogTitle": "Utwórz fazę",
+    "dialogTitle": "Dodaj członka",
     "title": "Członkowie",
     "subtitle": "Kto widzi i może zmieniać ten projekt.",
     "addMember": "Dodaj członka",
@@ -1450,7 +1455,7 @@
     "openBoard": "Otwórz tablicę"
   },
   "feedback": {
-    "dialogTitle": "Utwórz fazę",
+    "dialogTitle": "Wyślij opinię",
     "sendFeedback": "Wyślij opinię",
     "dialogDescription": "Napisz, co działa dobrze, co jest zepsute, albo czego brakuje - czytamy każdą wiadomość.",
     "placeholder": "Co masz na myśli?",
@@ -1497,7 +1502,7 @@
     "deleteRelationAria": "Usuń relację"
   },
   "decisions": {
-    "dialogTitle": "Utwórz fazę",
+    "dialogTitle": "Utwórz decyzję",
     "title": "Decyzje",
     "subtitle": "Śledź ważne decyzje projektowe i ich uzasadnienie",
     "createDecision": "Utwórz decyzję",
@@ -1599,7 +1604,7 @@
     "connect": "Połącz"
   },
   "memory": {
-    "dialogTitle": "Utwórz fazę",
+    "dialogTitle": "Utwórz wpis pamięci",
     "title": "Pamięć",
     "subtitle": "Trwała wiedza i wnioski o projekcie",
     "pendingReview": "Oczekuje na przegląd ({count})",
