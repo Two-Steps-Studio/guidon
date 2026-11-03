@@ -445,8 +445,9 @@ export function AppSidebar({
                 asChild
                 size="lg"
                 tooltip={user.full_name || user.email}
-                // Collapsed, the same 32 px square as the icons around it, not a 48 px tall one.
-                className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!h-8"
+                // Collapsed, the same 32 px square as the icons around it, not a 48 px tall one;
+                // my-2 keeps the row 48 px so it doesn't jump on collapse (e2e board-layout).
+                className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!h-8 group-data-[collapsible=icon]:my-2"
               >
                 <Link href="/profile">
                   <Avatar className="size-6 shrink-0">
