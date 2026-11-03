@@ -563,7 +563,7 @@ function KanbanBoardComponent({
             style={isTargetColumn && projectColor ? { borderColor: projectColor } : undefined}
             // Right-click on the column (not on a card) is the quick way to add a task to it.
             onContextMenu={canEdit ? (event) => {
-              if ((event.target as HTMLElement).closest("[data-card-id], a, input, textarea")) return;
+              if (event.defaultPrevented || (event.target as HTMLElement).closest("[data-card-id], a, input, textarea")) return;
               event.preventDefault();
               onCreateTask(column.status);
             } : undefined}

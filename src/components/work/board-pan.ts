@@ -38,6 +38,12 @@ export function attachBoardPan(board: HTMLElement) {
   const up = (event: PointerEvent) => {
     if (event.pointerId === active?.id) finish();
   };
+  // A long press on touch fires contextmenu; on the board that's the card drag, never a menu.
+  let lastPointer = "mouse";
+  const note = (event: PointerEvent) => { lastPointer = event.pointerType; };
+  const context = (event: Event) => { if (lastPointer !== "mouse") event.preventDefault(); };
+  board.addEventListener("pointerdown", note, true);
+  board.addEventListener("contextmenu", context);
   board.addEventListener("pointerdown", down);
   board.addEventListener("pointermove", move);
   board.addEventListener("pointerup", up);
@@ -51,6 +57,8 @@ export function attachBoardPan(board: HTMLElement) {
     board.removeEventListener("pointerup", up);
     board.removeEventListener("pointercancel", up);
     board.removeEventListener("lostpointercapture", up);
+    board.removeEventListener("pointerdown", note, true);
+    board.removeEventListener("contextmenu", context);
     window.removeEventListener("blur", finish);
   };
 }
