@@ -30,6 +30,21 @@ export async function releaseSmoke({page,context,origin,fixture}) {
   await page.getByRole("heading",{level:1}).waitFor();
   const session=(await context.cookies()).find(cookie=>cookie.name==="guidon-session");
   assert.ok(session?.httpOnly && session?.secure,"Production login must retain HttpOnly and Secure cookies");
+  assert.notEqual(session.sameSite,"None","A cross-site form must not carry the session");
+  // CORS (docs/audits/cors-2026-11-02.md): public documents are readable from
+  // any site; nothing answers a foreign Origin with credentials allowed, and
+  // signed-in routes don't answer it at all - even with a live session cookie.
+  const evil={Origin:"https://evil.example"};
+  for (const pathname of ["/api/mcp/server-card","/auth.md","/openapi.json","/.well-known/oauth-authorization-server"]) {
+    const headers=(await context.request.get(origin+pathname,{headers:evil})).headers();
+    assert.equal(headers["access-control-allow-origin"],"*",`${pathname} is a public document`);
+    assert.equal(headers["access-control-allow-credentials"],undefined);
+  }
+  for (const [method,pathname] of [["GET","/api/v1/search?q=a"],["GET","/api/v1/projects"],["POST","/api/mcp"],["POST","/api/ai/chat"],["OPTIONS","/api/v1/projects"],["OPTIONS","/api/mcp"]]) {
+    const headers=(await context.request.fetch(origin+pathname,{method,maxRedirects:0,headers:{...evil,"Access-Control-Request-Method":"POST","Access-Control-Request-Headers":"authorization,content-type"}})).headers();
+    assert.equal(headers["access-control-allow-origin"],undefined,`${method} ${pathname} must not be readable from another site`);
+    assert.equal(headers["access-control-allow-credentials"],undefined);
+  }
   await page.goto(`${origin}/projects`);
   await page.getByText(own.projectName,{exact:true}).first().waitFor();
   assert.equal((await page.locator("body").innerText()).includes(foreign.projectName),false);
