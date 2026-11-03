@@ -561,6 +561,12 @@ function KanbanBoardComponent({
               isTargetColumn && "border-primary/40"
             )}
             style={isTargetColumn && projectColor ? { borderColor: projectColor } : undefined}
+            // Right-click on the column (not on a card) is the quick way to add a task to it.
+            onContextMenu={canEdit ? (event) => {
+              if ((event.target as HTMLElement).closest("[data-card-id], a, input, textarea")) return;
+              event.preventDefault();
+              onCreateTask(column.status);
+            } : undefined}
           >
             <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
               <span
