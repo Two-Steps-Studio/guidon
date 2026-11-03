@@ -24,7 +24,7 @@ export async function mobileCoverage({page,context,origin,fixture,client,browser
    await toggle.tap();await drawer.waitFor();await settled(drawer);await drawer.getByRole('link',{name:'Calendar',exact:true}).tap();
    await page.waitForURL(url=>url.pathname===`/projects/${owner.projectId}/calendar`);await drawer.waitFor({state:'hidden'});
    await page.getByRole('heading',{level:1}).waitFor();await page.getByRole('button',{name:'Toggle sidebar (Ctrl+B)',exact:true}).tap();await drawer.waitFor();await settled(drawer);
-   await drawer.getByRole('link',{name:'Task Board',exact:true}).tap();await page.waitForURL(url=>url.pathname.endsWith('/work'));await drawer.waitFor({state:'hidden'});
+   await drawer.getByRole('link',{name:'Task board',exact:true}).tap();await page.waitForURL(url=>url.pathname.endsWith('/work'));await drawer.waitFor({state:'hidden'});
    const board=page.getByRole('list',{name:'Task board',exact:true});await board.waitFor();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.ok(await board.evaluate(node=>node.scrollWidth>node.clientWidth));
    const heading=await page.getByRole('heading',{name:'Task board',exact:true}).boundingBox();assert.ok(heading.height<50,'The title must not be squeezed between toolbar buttons');

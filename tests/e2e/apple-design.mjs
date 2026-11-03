@@ -236,8 +236,8 @@ export async function appleDesignCoverage({page,context,origin,fixture,client,br
     assert.equal(await page.getByRole('tabpanel').count(),1);
     const sidebar=page.locator('[data-sidebar="sidebar"]');
     const workGroup=sidebar.getByRole('button',{name:'Work',exact:true});
-    await workGroup.click();assert.equal(await sidebar.getByRole('link',{name:'Task Board',exact:true}).isVisible(),false);
-    await workGroup.click();await sidebar.getByRole('link',{name:'Task Board',exact:true}).waitFor();
+    await workGroup.click();assert.equal(await sidebar.getByRole('link',{name:'Task board',exact:true}).isVisible(),false);
+    await workGroup.click();await sidebar.getByRole('link',{name:'Task board',exact:true}).waitFor();
 
     await navigate(`${origin}/projects/${owner.projectId}/calendar`);
     await page.getByLabel('View',{exact:true}).selectOption('month');

@@ -59,16 +59,16 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     assert.equal(await knowledge.getAttribute("aria-expanded"), "false", "A folded section stays folded after a reload");
     assert.equal(await sidebar.getByRole("link", { name: "Decisions", exact: true }).count(), 0);
     assert.equal(await sidebar.getByRole("link", { name: "Calendar", exact: true }).count(), 0);
-    assert.equal(await sidebar.getByRole("link", { name: "Task Board", exact: true }).count(), 1, "The current page stays visible in its folded section");
+    assert.equal(await sidebar.getByRole("link", { name: "Task board", exact: true }).count(), 1, "The current page stays visible in its folded section");
     await knowledge.click(); await work.click();
     assert.equal(await sidebar.getByRole("link", { name: "Decisions", exact: true }).count(), 1);
-    await create("decisions", "New Decision", async dialog => {
+    await create("decisions", "New decision", async dialog => {
       await dialog.getByLabel("Title", { exact: true }).fill(created.decision);
       await dialog.getByLabel("Description", { exact: true }).fill(`<script>window.__sectionXss=1</script>`);
-    }, "Create Decision", created.decision);
-    await create("roadmap", "New Phase", async dialog => {
-      await dialog.getByLabel("Phase Name", { exact: true }).fill(created.phase);
-    }, "Create Phase", created.phase);
+    }, "Create decision", created.decision);
+    await create("roadmap", "New phase", async dialog => {
+      await dialog.getByLabel("Phase name", { exact: true }).fill(created.phase);
+    }, "Create phase", created.phase);
 
     // Knowledge: the server refuses a non-http(s) link even when the browser's own check is bypassed.
     await page.goto(`${root}/knowledge`);
@@ -138,7 +138,7 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     await page.goto(`${root}/work`); await page.getByRole("heading", { name: "Task board", exact: true }).waitFor();
     assert.equal(await page.getByRole("link", { name: "Project settings", exact: true }).count(), 0, "Only owners and admins get the settings shortcut");
     assert.equal((await page.goto(`${root}/settings`)).status(), 200, "The viewer's settings page opens read-only, not a 404");
-    for (const [section, title, control] of [["decisions", created.decision, "New Decision"], ["roadmap", created.phase, "New Phase"], ["knowledge", created.source, "New entry"], ["files", fileName, "Upload File"]]) {
+    for (const [section, title, control] of [["decisions", created.decision, "New decision"], ["roadmap", created.phase, "New phase"], ["knowledge", created.source, "New entry"], ["files", fileName, "Upload file"]]) {
       await page.goto(`${root}/${section}`);
       await page.getByText(title, { exact: true }).first().waitFor();
       assert.equal(await page.getByRole("button", { name: control, exact: true }).count(), 0, `Viewer has no "${control}" on ${section}`);

@@ -50,19 +50,19 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
     const foreign=await context.request.get(`${origin}/projects/${fixture.users[0].projectId}/work`);assert.equal((await foreign.text()).includes(fixture.users[0].projectName),false);
     // An address without an account gets an invitation link (migration 091).
     await page.goto(`${origin}/organizations/${orgId}/members`);
-    await page.getByRole("button",{name:"Add Member",exact:true}).click();
+    await page.getByRole("button",{name:"Add member",exact:true}).click();
     const orgDialog=page.getByRole("dialog");
     await orgDialog.locator("#email").fill(invitedEmail);
-    await orgDialog.getByRole("button",{name:"Add Member",exact:true}).click();
+    await orgDialog.getByRole("button",{name:"Add member",exact:true}).click();
     inviteLink=await orgDialog.locator("#invite-link").inputValue();
     assert.match(inviteLink,/\/invite\/[A-Za-z0-9_-]{43}$/);
     const stored=(await client.query("SELECT token_hash,status,role FROM invitations WHERE organization_id=$1 AND email=$2",[orgId,invitedEmail])).rows[0];
     assert.equal(stored.status,"pending");assert.equal(stored.role,"member");assert.ok(!inviteLink.includes(stored.token_hash),"Only the hash is stored");
     await orgDialog.getByRole("button",{name:"Done",exact:true}).click();await orgDialog.waitFor({state:"hidden"});
     await page.getByText(invitedEmail,{exact:true}).waitFor();
-    await page.getByRole("button",{name:"Add Member",exact:true}).click();
+    await page.getByRole("button",{name:"Add member",exact:true}).click();
     await orgDialog.locator("#email").fill(fixture.reader.email);
-    await orgDialog.getByRole("button",{name:"Add Member",exact:true}).click();await orgDialog.waitFor({state:"hidden"});
+    await orgDialog.getByRole("button",{name:"Add member",exact:true}).click();await orgDialog.waitFor({state:"hidden"});
     assert.equal((await client.query("SELECT role FROM organization_members WHERE organization_id=$1 AND user_id=$2",[orgId,fixture.reader.id])).rows[0].role,"member");
     await page.goto(`${origin}/projects/${projectId}/members`);
     await page.getByRole("button",{name:"Add member",exact:true}).click();
