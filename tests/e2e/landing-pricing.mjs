@@ -35,7 +35,7 @@ export async function landingPricingCoverage({page,origin,browserName,artifacts,
   await pricing.getByRole('button',{name:'Yearly',exact:true}).click();
   assert.equal(await pricing.getByRole('button',{name:'Yearly',exact:true}).getAttribute('aria-pressed'),'true');
   await proCard.getByText('€100.00',{exact:false}).waitFor();
-  const link=proCard.getByRole('link',{name:'Get Started',exact:true});
+  const link=proCard.getByRole('link',{name:'Get started',exact:true});
   const signup=new URL(await link.getAttribute('href'),origin);
   const upgrade=new URL(signup.searchParams.get('redirect'),origin);
   assert.equal(upgrade.searchParams.get('interval'),'year');
@@ -46,7 +46,7 @@ export async function landingPricingCoverage({page,origin,browserName,artifacts,
   await proCard.getByText('Not available',{exact:true}).waitFor();
   assert.equal(await proCard.getByRole('link',{name:'Contact us',exact:true}).getAttribute('href'),'/contact');
   const free=pricing.getByRole('heading',{name:'Free',exact:true}).locator('..').locator('..');
-  await free.getByRole('link',{name:'Get Started',exact:true}).waitFor();
+  await free.getByRole('link',{name:'Get started',exact:true}).waitFor();
   const custom=pricing.getByRole('heading',{name:'Enterprise',exact:true}).locator('..').locator('..');
   assert.equal(await custom.getByRole('link',{name:'Contact us',exact:true}).getAttribute('href'),'/contact');
   await pricing.getByRole('button',{name:'Monthly',exact:true}).focus();
