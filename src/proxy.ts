@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { contentSecurityPolicy } from '@/lib/csp'
 import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/auth/session-cookie'
 import { assertValidSupabaseUrl } from '@/lib/supabase-env'
 import {
@@ -235,7 +236,25 @@ async function proxyLocal(request: NextRequest) {
   return NextResponse.next({ request })
 }
 
+/**
+ * Every answer carries a Content-Security-Policy with a fresh nonce
+ * (src/lib/csp.ts). Next reads it from the request header and puts the nonce
+ * on its own scripts, so no 'unsafe-inline' is needed.
+ */
 export async function proxy(request: NextRequest) {
+  const csp = contentSecurityPolicy({
+    nonce: btoa(crypto.randomUUID()),
+    isDev: process.env.NODE_ENV === 'development',
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  })
+  request.headers.set('Content-Security-Policy', csp)
+  const response = await route(request)
+  response.headers.set('Content-Security-Policy', csp)
+  return response
+}
+
+async function route(request: NextRequest) {
   const early = agentResponse(request)
   if (early) return early
 
