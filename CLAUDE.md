@@ -36,6 +36,7 @@ npm run test:context           # Context Engine package for agents: token budget
 npm run test:search            # task search ranking: diacritics, task ids/guidon#refs, typos, ordering, 30 realistic queries over 1200 tasks with the wanted one in the top 5 (src/lib/search/task-search-core.ts)
 npm run test:markdown           # task descriptions as markdown: raw HTML and script URLs never become markup, external links open safely, lists/checklists/code blocks (src/components/files/markdown-preview.tsx)
 npm run test:app-changes       # what an app (API key/MCP/GitHub) changed on a task and undoing it: diffs, stored rows, undo that never overwrites a later edit (src/lib/work/app-changes-core.ts); agents asking for approval: request bodies, expiry, inbox order (src/lib/work/agent-approvals-core.ts)
+npm run test:csp               # Content-Security-Policy: pages allow scripts only by per-request nonce (src/proxy.ts) or the module sandbox hash, never 'unsafe-inline'; the hash stays in step with the sandbox frame (src/lib/csp.ts)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
 ```

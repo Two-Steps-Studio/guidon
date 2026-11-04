@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs/config";
 import path from "node:path";
+import { contentSecurityPolicy } from "./src/lib/csp";
 import { normalizeSiteUrl } from "./src/lib/oauth/oauth-core";
 
 // One canonical address: www.<APP_URL host> answers 301 to APP_URL, path and query kept (SEO audit).
@@ -10,84 +11,6 @@ const SITE_HOST = new URL(SITE_ORIGIN).hostname;
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
-/**
- * Content-Security-Policy, scoped to what this app actually loads (audited,
- * not a blind default - a wrong CSP silently breaks features instead of
- * failing a build):
- * - script-src/style-src need 'unsafe-inline': Radix UI (this app's dialog/
- *   dropdown/popover primitives) sets inline `style=""` attributes for
- *   positioning, and Next injects inline hydration scripts. A nonce-based
- *   policy would need every page forced into dynamic rendering (killing
- *   static optimization for the public marketing/auth pages) - not worth it
- *   for this app's threat model, which is dominated by third-party-origin
- *   loading, not same-origin inline content.
- * - img-src/media-src/frame-src allow the Supabase origin: browser-side
- *   Supabase Auth (login/signup/logout/reset-password/OAuth,
- *   src/lib/supabase.ts's createBrowserClient) calls it directly, and
- *   file-viewer.tsx previews attachments (img/video/audio/iframe for PDF)
- *   straight from a signed storage URL, which is same-origin in self-hosted
- *   `local` mode but the Supabase storage origin in hosted mode.
- * - img-src also allows any https origin: OAuth (Google/Discord) avatar URLs
- *   come from whichever provider the user signed in with, not one fixed
- *   domain.
- * - worker-src allows blob: for Monaco's editor workers (otherwise served
- *   same-origin from public/monaco-editor/vs, see scripts/copy-monaco-assets.mjs).
- * - No `upgrade-insecure-requests`: would force HTTPS on every subresource,
- *   breaking self-hosted deployments that intentionally run over plain HTTP
- *   behind their own reverse proxy (same reasoning as the HSTS header below).
- * - Inline JSON-LD (src/app/page.tsx, type="application/ld+json") is exempt
- *   from script-src by spec - browsers never treat it as executable script.
- * - script-src/connect-src allow Google Analytics's origins: layout.tsx
- *   renders `@next/third-parties/google`'s <GoogleAnalytics> when
- *   `!hasDirectDatabase()` (hosted mode only) - included unconditionally
- *   here since next.config.ts's headers() is static per build, not
- *   per-request, and an unused allowlist entry on self-hosted builds is
- *   harmless. connect-src needs the `*.google-analytics.com` wildcard, not
- *   just `www.google-analytics.com` - GA4 sends collect requests to a
- *   region-specific subdomain (observed: region1.google-analytics.com),
- *   confirmed by an actual CSP-violation console error during verification,
- *   not just Google's docs.
- */
-function buildContentSecurityPolicy(): string {
-  const isDev = process.env.NODE_ENV === "development";
-
-  let supabaseOrigin = "";
-  try {
-    supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
-      : "";
-  } catch {
-    supabaseOrigin = "";
-  }
-
-  let posthogOrigin = "";
-  let posthogAssetsOrigin = "";
-  try {
-    const posthogUrl = new URL(process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "");
-    posthogOrigin = posthogUrl.origin;
-    posthogAssetsOrigin = `${posthogUrl.protocol}//${posthogUrl.hostname.replace(".i.", "-assets.i.")}`;
-  } catch {
-    // PostHog is optional, so leave its CSP sources out until configured.
-  }
-
-  const directives = [
-    `default-src 'self'`,
-    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${posthogAssetsOrigin ? ` ${posthogAssetsOrigin}` : ""}${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: blob: https:`,
-    `font-src 'self' data:`,
-    `connect-src 'self' https://*.google-analytics.com${supabaseOrigin ? ` ${supabaseOrigin}` : ""}${posthogOrigin ? ` ${posthogOrigin}` : ""}`,
-    `media-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
-    `frame-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
-    `worker-src 'self' blob:`,
-    `object-src 'none'`,
-    `base-uri 'self'`,
-    `form-action 'self'`,
-    `frame-ancestors 'none'`,
-  ];
-
-  return directives.join("; ");
-}
 
 function publicAvatarPatterns(): NonNullable<NextConfig["images"]>["remotePatterns"] {
   try {
@@ -207,7 +130,8 @@ const nextConfig: NextConfig = {
           // to send unconditionally for the self-hosted (possibly TLS-less,
           // behind the user's own reverse proxy) deployment too.
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-          { key: "Content-Security-Policy", value: buildContentSecurityPolicy() },
+          // Static files the proxy skips; pages get a per-request nonce policy from src/proxy.ts.
+          { key: "Content-Security-Policy", value: contentSecurityPolicy({ isDev: process.env.NODE_ENV === "development", supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL, posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST }) },
           // Browser isolation (ZAP). Sign-in, Stripe and OAuth are redirects, and
           // the only window.open uses noopener, so no page needs its opener.
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
