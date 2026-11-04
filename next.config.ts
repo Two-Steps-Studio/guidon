@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs/config";
 import path from "node:path";
+import { normalizeSiteUrl } from "./src/lib/oauth/oauth-core";
+
+// One canonical address: www.<APP_URL host> answers 301 to APP_URL, path and query kept (SEO audit).
+const SITE_ORIGIN = normalizeSiteUrl(process.env.APP_URL?.trim() || "https://useguidon.com");
+const SITE_HOST = new URL(SITE_ORIGIN).hostname;
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -155,6 +160,11 @@ const nextConfig: NextConfig = {
       // not just Next's 1MB default. Rounded up for multipart overhead.
       bodySizeLimit: "30mb",
     },
+  },
+
+  async redirects() {
+    if (SITE_HOST.startsWith("www.")) return [];
+    return [{ source: "/:path*", has: [{ type: "host", value: `www.${SITE_HOST}` }], destination: `${SITE_ORIGIN}/:path*`, statusCode: 301 }];
   },
 
   // Baseline security headers - applied here rather than in src/proxy.ts so
