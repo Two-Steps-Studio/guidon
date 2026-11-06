@@ -457,7 +457,7 @@
       "tasksPerProjectCount": "{count, plural, one {# Aufgabe pro Projekt} other {# Aufgaben pro Projekt}}",
       "unlimitedMembersPerProject": "Unbegrenzte Mitglieder pro Projekt",
       "membersPerProjectCount": "{count, plural, one {# Mitglied pro Projekt} other {# Mitglieder pro Projekt}}",
-      "aiTaskApi": "KI-Aufgaben-API",
+      "aiTaskApi": "KI-Apps (MCP) und API anbinden",
       "githubIntegration": "GitHub-Integration",
       "advancedAnalytics": "Erweiterte Analysen",
       "teamRoles": "Teamrollen",

@@ -468,7 +468,7 @@
       "tasksPerProjectCount": "{count, plural, one {# zadanie na projekt} few {# zadania na projekt} many {# zadań na projekt} other {# zadania na projekt}}",
       "unlimitedMembersPerProject": "Nieograniczona liczba członków projektu",
       "membersPerProjectCount": "{count, plural, one {# członek w projekcie} few {# członków w projekcie} many {# członków w projekcie} other {# członka w projekcie}}",
-      "aiTaskApi": "API zadań AI",
+      "aiTaskApi": "Podłączanie aplikacji AI (MCP) i API",
       "githubIntegration": "Integracja z GitHub",
       "advancedAnalytics": "Zaawansowana analityka",
       "teamRoles": "Role zespołowe",

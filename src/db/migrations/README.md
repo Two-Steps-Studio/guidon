@@ -240,3 +240,12 @@ Apply with the usual migration runner before enabling counters. Until then,
 search still works, telemetry fails quietly and the admin page reports that
 counters are unavailable. No migration is applied to hosted databases by tests.
 The RPC prunes dates older than 56 days on the next accepted event.
+
+## Plan features match the app (119)
+
+`119_plan_features_match_app.sql` only updates rows in `public.plans`. AI
+(API, MCP) and GitHub are on every plan, as the app never gated them; team
+roles exist in every organization; advanced analytics and organization audit
+logs are switched off until they are built. Paid plans differ by limits and
+support. Apply with the usual runner; until then the pricing page keeps
+listing the old flags.
