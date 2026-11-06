@@ -28,7 +28,7 @@ import {
   ONBOARDING_PROJECT_TYPES,
   ONBOARDING_TEAM_SIZES,
   defaultTemplateFor,
-  readStoredOnboarding,
+  readStoredOnboardingDraft,
   storeOnboarding,
   type OnboardingAnswers,
   type OnboardingTeamSize,
@@ -64,6 +64,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
   const tSettings = useTranslations("settings");
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [restored, setRestored] = useState(false);
   const { ref: stepRef, inputHandlers: stepInputHandlers } = useStateMotion<HTMLFormElement>(step);
   const [projectType, setProjectType] = useState<ProjectType | null>(null);
   const [projectName, setProjectName] = useState("");
@@ -74,18 +75,18 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
 
   // Resume an earlier visit.
   useEffect(() => {
-    const saved = readStoredOnboarding();
-    if (!saved) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from localStorage, which the server render can't see
-    setProjectType(saved.projectType);
-    setProjectName(saved.projectName);
-    setStudioName(saved.studioName);
-    setTemplate(saved.template);
-    setMethodology(saved.methodology);
-    setTeamSize(saved.teamSize);
-    // Everything was answered (e.g. back here after confirming the email):
-    // straight to the last step.
-    setStep(STEPS.length - 1);
+    const saved = readStoredOnboardingDraft(STEPS.length - 1);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- wait for browser storage before persisting
+    setRestored(true);
+    if (saved) {
+      setProjectType(saved.projectType);
+      setProjectName(saved.projectName);
+      setStudioName(saved.studioName);
+      setTemplate(saved.template);
+      setMethodology(saved.methodology);
+      setTeamSize(saved.teamSize);
+      setStep(saved.step);
+    }
   }, []);
 
   const answers: OnboardingAnswers | null =
@@ -93,10 +94,9 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
       ? { projectType, projectName: projectName.trim(), studioName: studioName.trim(), template, methodology, teamSize }
       : null;
 
-  const serialized = answers ? JSON.stringify(answers) : null;
   useEffect(() => {
-    if (serialized) storeOnboarding(JSON.parse(serialized) as OnboardingAnswers);
-  }, [serialized]);
+    if (restored) storeOnboarding({ step, projectType, projectName, studioName, template, methodology, teamSize });
+  }, [restored, step, projectType, projectName, studioName, template, methodology, teamSize]);
 
   const canContinue = [Boolean(projectName.trim()), Boolean(projectType), Boolean(template), Boolean(teamSize), true][step];
   const next = () => canContinue && setStep((current) => Math.min(current + 1, STEPS.length - 1));

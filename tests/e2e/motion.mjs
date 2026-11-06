@@ -27,8 +27,11 @@ export async function motionCoverage({page, origin, browserName, artifacts}) {
     await page.getByRole('button',{name:'Continue',exact:true}).press('Enter');
     await page.getByRole('button',{name:/Website/}).waitFor();
     assert.equal(await page.evaluate(() => window.__motionCalls.length), pointerCalls, 'Keyboard wizard navigation stays instant');
+    await page.reload();
+    await page.getByRole('button',{name:/Website/}).waitFor();
+    await page.getByRole('button',{name:'Back',exact:true}).press('Enter');
+    assert.equal(await page.locator('#onboarding-project').inputValue(), 'Motion test');
     await page.evaluate(previous => {
-      Element.prototype.animate = window.__originalAnimate;
       if (previous === null) localStorage.removeItem('guidon-onboarding'); else localStorage.setItem('guidon-onboarding', previous);
     }, stored);
   } finally {
