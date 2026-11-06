@@ -57,6 +57,6 @@ export function adminPagesForRole(role: AdminRole): AdminPage[] {
 export function resolveAdminRole(mode: string | undefined, allowlisted: boolean, grantRole?: unknown): AdminRole | null {
   if (!allowlisted) return null;
   if (mode === undefined || mode === "" || mode === "legacy") return "super_admin";
-  if (mode === "grants" && isAdminRole(grantRole)) return grantRole;
+  if ((mode === "grants" || mode === "sso") && isAdminRole(grantRole)) return grantRole;
   return null;
 }

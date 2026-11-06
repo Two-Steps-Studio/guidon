@@ -70,6 +70,23 @@
     "discardFileChanges": "Odrzucić niezapisane zmiany w pliku {path}?"
   },
   "auth": {
+    "admin": {
+      "title": "Logowanie do panelu administracyjnego",
+      "unavailable": "SSO administratora jest niedostępne w tej instalacji.",
+      "continueSso": "Kontynuuj przez SSO",
+      "noFactor": "Poproś administratora o pomoc w dodaniu aplikacji TOTP do tego konta.",
+      "factor": "Aplikacja uwierzytelniająca",
+      "factorNumber": "Aplikacja {number}",
+      "code": "Kod sześciocyfrowy",
+      "verify": "Zweryfikuj i otwórz panel",
+      "back": "Wróć do dashboardu",
+      "end": "Zakończ sesję administracyjną",
+      "errors": {
+        "sso": "Nie udało się potwierdzić SSO. Zacznij ponownie.",
+        "code": "Nie udało się zweryfikować kodu lub aplikacji.",
+        "session": "Nie udało się zaktualizować sesji administracyjnej. Spróbuj ponownie."
+      }
+    },
     "login": {
       "title": "Zaloguj się",
       "description": "Podaj e-mail i hasło, aby uzyskać dostęp do konta",

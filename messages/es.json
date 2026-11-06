@@ -70,6 +70,23 @@
     "discardFileChanges": "¿Descartar los cambios sin guardar de {path}?"
   },
   "auth": {
+    "admin": {
+      "title": "Acceso de administración",
+      "unavailable": "El SSO de administración no está disponible en esta instalación.",
+      "continueSso": "Continuar con SSO",
+      "noFactor": "Pide a tu administrador que te ayude a configurar un autenticador TOTP para esta cuenta.",
+      "factor": "Autenticador",
+      "factorNumber": "Autenticador {number}",
+      "code": "Código de seis dígitos",
+      "verify": "Verificar y abrir administración",
+      "back": "Volver al panel",
+      "end": "Cerrar sesión de administración",
+      "errors": {
+        "sso": "No se pudo verificar el SSO. Vuelve a empezar.",
+        "code": "No se pudo verificar el código o el autenticador.",
+        "session": "No se pudo actualizar la sesión de administración. Inténtalo de nuevo."
+      }
+    },
     "login": {
       "title": "Iniciar sesión",
       "description": "Introduce tu correo electrónico y contraseña para acceder a tu cuenta",

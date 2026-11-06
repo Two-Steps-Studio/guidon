@@ -70,6 +70,23 @@
     "discardFileChanges": "Ungespeicherte Änderungen an {path} verwerfen?"
   },
   "auth": {
+    "admin": {
+      "title": "Admin-Anmeldung",
+      "unavailable": "Admin-SSO ist in dieser Installation nicht verfügbar.",
+      "continueSso": "Mit SSO fortfahren",
+      "noFactor": "Bitte deinen Administrator, einen TOTP-Authenticator für dieses Konto einzurichten.",
+      "factor": "Authenticator",
+      "factorNumber": "Authenticator {number}",
+      "code": "Sechsstelliger Code",
+      "verify": "Prüfen und Adminbereich öffnen",
+      "back": "Zurück zum Dashboard",
+      "end": "Admin-Sitzung beenden",
+      "errors": {
+        "sso": "SSO konnte nicht bestätigt werden. Starte erneut.",
+        "code": "Der Code oder Authenticator konnte nicht bestätigt werden.",
+        "session": "Die Admin-Sitzung konnte nicht aktualisiert werden. Versuche es erneut."
+      }
+    },
     "login": {
       "title": "Anmelden",
       "description": "Gib deine E-Mail-Adresse und dein Passwort ein, um auf dein Konto zuzugreifen",

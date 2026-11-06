@@ -8,8 +8,11 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { withServiceRole } from "@/lib/db/session";
 import { getAuthUser } from "./auth-user";
 import { getCurrentUser } from "./current-user";
+import { hasActiveAdminSession } from "@/lib/admin/session";
+import { ADMIN_SIGN_IN_PATH } from "@/lib/admin/session-policy";
 
-const getAdminAccess = cache(async () => {
+/** Preflight for SSO/MFA enrollment checks. Admin data requires requireAdminAccess. */
+export const requireAdminIdentity = cache(async () => {
   const user = await getCurrentUser();
   const emails = new Set((process.env.ADMIN_EMAILS ?? "").split(",").map(email => email.trim().toLowerCase()).filter(Boolean));
   if (emails.size === 0) redirect("/dashboard");
@@ -25,20 +28,31 @@ const getAdminAccess = cache(async () => {
 
   const mode = process.env.PLATFORM_ADMIN_ACCESS;
   let grantRole: unknown;
-  if (mode === "grants") {
+  let grantId: string | null = null;
+  if (mode === "grants" || mode === "sso") {
     const { data, error } = await serviceDataClient()
-      .from<{ role: string }>("platform_admin_grants")
-      .select("role")
+      .from<{ id: string; role: string }>("platform_admin_grants")
+      .select("id, role")
       .eq("user_id", user.id)
       .is("revoked_at", null)
       .maybeSingle();
     if (error) redirect("/dashboard");
     grantRole = data?.role;
+    grantId = data?.id ?? null;
   }
 
   const role = resolveAdminRole(mode, true, grantRole);
   if (!role) redirect("/dashboard");
-  return { ...user, email, role };
+  return { ...user, email, role, grantId };
+});
+
+const getAdminAccess = cache(async () => {
+  const admin = await requireAdminIdentity();
+  if (process.env.PLATFORM_ADMIN_ACCESS === "sso" &&
+      (!admin.grantId || !await hasActiveAdminSession(admin.id, admin.grantId))) {
+    redirect(ADMIN_SIGN_IN_PATH);
+  }
+  return admin;
 });
 
 /** Layouts, pages and Server Actions call this independently. */
