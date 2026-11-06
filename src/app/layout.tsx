@@ -71,12 +71,13 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     statusBarStyle: "default",
   },
+  // No title/description/url here: Next fills og:/twitter: title and
+  // description from each page's own metadata, so a shared /developers link
+  // shows that page instead of the homepage. og:url is left out for the same
+  // reason - a fixed "/" marked every page as a copy of the homepage.
   openGraph: {
     type: "website",
-    url: "/",
     siteName: SITE_NAME,
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
     // Image comes from src/app/opengraph-image.tsx (Next's file-convention
     // OG image, generated at request time) - a properly sized 1200x630
     // branded card instead of the raw wordmark logo asset previously listed
@@ -85,8 +86,6 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
   },
   other: { google: "notranslate" },
   robots: {

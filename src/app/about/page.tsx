@@ -5,7 +5,7 @@ import { SITE_URL } from "@/lib/site-url";
 import { companyPageJsonLd } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
-  title: "About Guidon",
+  title: { absolute: "About Guidon - who builds it and why" },
   description: "Who makes Guidon - context-first project management for development teams - and what makes it different.",
   alternates: { canonical: "/about", types: { "text/markdown": "/about.md" } },
 };
