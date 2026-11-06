@@ -165,3 +165,27 @@ jobs:
           path: output/e2e/
           if-no-files-found: warn
           retention-days: 7
+  write-safety:
+    # Drafts, lost responses and sign-out across Chromium, Firefox and WebKit
+    # (tests/e2e/write-safety.mjs); it never ran in CI, so a WebKit-only
+    # failure went unseen (Guidon task 9037932e).
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: node tests/e2e/run.mjs --write-safety
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: write-safety-e2e
+          path: output/e2e/
+          if-no-files-found: warn
+          retention-days: 7
