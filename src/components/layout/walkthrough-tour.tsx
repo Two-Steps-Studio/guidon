@@ -217,7 +217,16 @@ function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
           zIndex: -1,
           clipPath: `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${highlight.left}px ${highlight.top}px, ${highlight.left + highlight.width}px ${highlight.top}px, ${highlight.left + highlight.width}px ${highlight.top + highlight.height}px, ${highlight.left}px ${highlight.top + highlight.height}px, ${highlight.left}px ${highlight.top}px)`,
         }}
-        onClick={finish}
+        onClick={(event) => {
+          // Right after "Next" the hole still sits on the previous step until
+          // the next measure, so a quick click on the new control lands here:
+          // hand it on when it is over that control (live box), else just close.
+          const target = document.querySelector<HTMLElement>(current.selector);
+          const box = target?.getBoundingClientRect();
+          const onTarget = !!box && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+          finish();
+          if (onTarget) target?.click();
+        }}
       />
 
       <div
