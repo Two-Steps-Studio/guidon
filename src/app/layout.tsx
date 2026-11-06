@@ -88,6 +88,7 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
+  other: { google: "notranslate" },
   robots: {
     index: true,
     follow: true,
@@ -118,7 +119,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const theme = themeCookie && isSupportedTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
 
   return (
+    // Browser page translation (Chrome/Google Translate) rewrites text nodes React
+    // still owns, and the next update crashes with "removeChild ... not a child".
+    // The app is translated itself (language switcher), so opt out.
     <html
+      translate="no"
       lang={locale}
       data-theme={theme === "system" ? undefined : theme}
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}

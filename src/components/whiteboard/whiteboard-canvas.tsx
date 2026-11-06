@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -57,17 +57,24 @@ const STICKY_COLORS = ["#fef3c7", "#fde68a", "#bbf7d0", "#bfdbfe", "#fbcfe8", "#
 
 /** The note's text plus the dots arrows start and end at (any dot connects to any, ConnectionMode.Loose). */
 function EditableText({ id, data }: { id: string; data: NoteData }) {
+  // The text is set here, not rendered as a React child: typing replaces the
+  // browser's text nodes and React would then crash removing one it no longer owns.
+  const textRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (el && document.activeElement !== el && el.innerText !== (data.content ?? "")) el.innerText = data.content ?? "";
+  }, [data.content]);
   return (
     <>
       <Handle type="source" position={Position.Left} id="left" isConnectable={data.editable} />
+      {/* nodrag/nopan: React Flow otherwise takes the pointer for dragging and
+          the text never gets focus; min-h keeps an empty note clickable. */}
       <div
-        className="text-sm whitespace-pre-wrap outline-none"
+        ref={textRef}
+        className={`min-h-[4.5rem] w-full text-sm whitespace-pre-wrap outline-none${data.editable ? " nodrag nopan cursor-text" : ""}`}
         contentEditable={data.editable}
-        suppressContentEditableWarning
         onBlur={(e) => data.onChange(id, e.currentTarget.innerText)}
-      >
-        {data.content}
-      </div>
+      />
       <Handle type="source" position={Position.Right} id="right" isConnectable={data.editable} />
     </>
   );
