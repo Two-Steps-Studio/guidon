@@ -176,6 +176,7 @@
     "createOrganization": "Utwórz organizację"
   },
   "nav": {
+    "adminAudit": "Audyt administracyjny",
     "searchQuality": "Jakość wyszukiwania",
     "upgradePlan": "Ulepsz plan",
     "toggleSidebar": "Pokaż/ukryj pasek boczny (Ctrl+B)",
@@ -1714,6 +1715,28 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "audit": {
+      "title": "Audyt administracyjny",
+      "description": "Zmiany administracyjne, odmowy dostępu i wyniki operacji. Wpisy z końcówką .requested oznaczają rozpoczęcie operacji.",
+      "actor": "ID wykonawcy",
+      "target": "ID obiektu",
+      "request": "ID żądania",
+      "from": "Od (UTC)",
+      "through": "Do (UTC)",
+      "action": "Akcja",
+      "type": "Typ obiektu",
+      "outcome": "Wynik",
+      "all": "Wszystkie",
+      "filter": "Filtruj",
+      "clear": "Wyczyść",
+      "empty": "Brak zdarzeń pasujących do filtrów.",
+      "before": "Przed",
+      "after": "Po",
+      "older": "Starsze zdarzenia",
+      "succeeded": "Powodzenie",
+      "failed": "Błąd",
+      "denied": "Odmowa"
+    },
     "searchQuality": {
       "title": "Jakość wyszukiwania",
       "description": "Anonimowe liczniki dzienne pogrupowane w tygodnie UTC. Bez treści zapytań, nazw zadań, identyfikatorów i profili użytkowników.",

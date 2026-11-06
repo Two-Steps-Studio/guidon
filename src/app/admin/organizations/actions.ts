@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminAccess } from "@/lib/data/admin-access";
+import { auditAdminMutation } from "@/lib/admin/audit";
 import { serviceDataClient } from "@/lib/data-client";
 import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "./constants";
 import { tr } from "@/lib/i18n/server-errors";
@@ -20,22 +20,33 @@ export async function updateOrganizationProjectLimit(
   orgId: string,
   newLimit: number
 ): Promise<UpdateProjectLimitState> {
-  await requireAdminAccess("organizations.limits.edit");
+  return auditAdminMutation("organizations.limits.edit", orgId, async (_admin, changes) => {
+    if (!Number.isInteger(newLimit) || newLimit < 1) {
+      return { error: await tr("Project limit must be a whole number of 1 or more.") };
+    }
 
-  if (!Number.isInteger(newLimit) || newLimit < 1) {
-    return { error: await tr("Project limit must be a whole number of 1 or more.") };
-  }
+    const db = serviceDataClient();
+    const { data: previous, error: readError } = await db
+      .from<{ project_limit: number }>("organizations")
+      .select("project_limit")
+      .eq("id", orgId)
+      .maybeSingle();
+    if (readError) return { error: readError.message };
+    if (!previous) return { error: await tr("This organization no longer exists.") };
+    const { data: updated, error } = await db
+      .from("organizations")
+      .update({ project_limit: newLimit })
+      .eq("id", orgId)
+      .eq("project_limit", previous.project_limit)
+      .select("id");
+    if (error) return { error: error.message };
+    if (updated.length === 0) return { error: await tr("The organization changed. Refresh and try again.") };
+    changes.before = { project_limit: previous.project_limit };
+    changes.after = { project_limit: newLimit };
 
-  const { data: updated, error } = await serviceDataClient()
-    .from("organizations")
-    .update({ project_limit: newLimit })
-    .eq("id", orgId)
-    .select("id");
-  if (error) return { error: error.message };
-  if (updated.length === 0) return { error: await tr("This organization no longer exists.") };
-
-  revalidatePath("/admin/organizations");
-  return { error: null };
+    revalidatePath("/admin/organizations");
+    return { error: null };
+  });
 }
 
 export type UpdatePlanState = {
@@ -61,44 +72,47 @@ export async function updateOrganizationPlan(
   orgId: string,
   planId: string
 ): Promise<UpdatePlanState> {
-  await requireAdminAccess("organizations.plan.edit");
+  return auditAdminMutation("organizations.plan.edit", orgId, async (_admin, changes) => {
+    if (planId !== "free" && planId !== "pro" && planId !== "team" && planId !== "business" && planId !== "enterprise") {
+      return { error: await tr("Unknown plan.") };
+    }
 
-  const validPlanIds = ["free", "pro", "team", "business", "enterprise"];
-  if (!validPlanIds.includes(planId)) {
-    return { error: await tr("Unknown plan.") };
-  }
+    const db = serviceDataClient();
 
-  const db = serviceDataClient();
+    const { data: plan } = await db
+      .from<{ project_limit: number | null }>("plans")
+      .select("project_limit")
+      .eq("id", planId)
+      .maybeSingle();
 
-  const { data: plan } = await db
-    .from<{ project_limit: number | null }>("plans")
-    .select("project_limit")
-    .eq("id", planId)
-    .maybeSingle();
+    // organizations.project_limit is NOT NULL (014), so an unlimited plan
+    // (NULL in plans) is stored as the sentinel - see ./constants.ts. First,
+    // so a vanished organization stops here instead of failing the
+    // subscription insert below on its foreign key.
+    const projectLimit = plan?.project_limit ?? ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL;
+    const { data: updatedOrgs, error: orgError } = await db
+      .from("organizations")
+      .update({ project_limit: projectLimit })
+      .eq("id", orgId)
+      .select("id");
+    if (orgError) return { error: orgError.message };
+    if (updatedOrgs.length === 0) return { error: await tr("This organization no longer exists.") };
 
-  // organizations.project_limit is NOT NULL (014), so an unlimited plan
-  // (NULL in plans) is stored as the sentinel - see ./constants.ts. First,
-  // so a vanished organization stops here instead of failing the
-  // subscription insert below on its foreign key.
-  const { data: updatedOrgs, error: orgError } = await db
-    .from("organizations")
-    .update({ project_limit: plan?.project_limit ?? ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL })
-    .eq("id", orgId)
-    .select("id");
-  if (orgError) return { error: orgError.message };
-  if (updatedOrgs.length === 0) return { error: await tr("This organization no longer exists.") };
+    changes.after = { project_limit: projectLimit };
 
-  // upsertRow, not a plain update: organizations created before migration
-  // 015 never got a subscription row (015's trigger only covers new ones,
-  // 052 backfills them), and the admin panel is exactly where you'd go to
-  // fix that - "no subscription row to update" was a dead end.
-  const now = new Date().toISOString();
-  const { error: subError } = await db.upsertRow("subscriptions", {
-    key: { organization_id: orgId },
-    set: { plan_id: planId, current_period_start: now, cancel_at_period_end: false, updated_at: now },
+    // upsertRow, not a plain update: organizations created before migration
+    // 015 never got a subscription row (015's trigger only covers new ones,
+    // 052 backfills them), and the admin panel is exactly where you'd go to
+    // fix that - "no subscription row to update" was a dead end.
+    const now = new Date().toISOString();
+    const { error: subError } = await db.upsertRow("subscriptions", {
+      key: { organization_id: orgId },
+      set: { plan_id: planId, current_period_start: now, cancel_at_period_end: false, updated_at: now },
+    });
+    if (subError) return { error: subError.message };
+    changes.after.plan_id = planId;
+
+    revalidatePath("/admin/organizations");
+    return { error: null };
   });
-  if (subError) return { error: subError.message };
-
-  revalidatePath("/admin/organizations");
-  return { error: null };
 }

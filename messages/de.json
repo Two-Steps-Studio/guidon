@@ -176,6 +176,7 @@
     "createOrganization": "Organisation erstellen"
   },
   "nav": {
+    "adminAudit": "Admin-Audit",
     "searchQuality": "Suchqualität",
     "upgradePlan": "Plan upgraden",
     "toggleSidebar": "Seitenleiste ein-/ausblenden (Strg+B)",
@@ -1702,6 +1703,28 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "audit": {
+      "title": "Admin-Audit",
+      "description": "Administrative Änderungen, Zugriffsverweigerungen und Ergebnisse. Einträge mit .requested markieren den Beginn eines Vorgangs.",
+      "actor": "Akteur-ID",
+      "target": "Ziel-ID",
+      "request": "Anfrage-ID",
+      "from": "Von (UTC)",
+      "through": "Bis (UTC)",
+      "action": "Aktion",
+      "type": "Zieltyp",
+      "outcome": "Ergebnis",
+      "all": "Alle",
+      "filter": "Filtern",
+      "clear": "Zurücksetzen",
+      "empty": "Keine passenden Audit-Ereignisse.",
+      "before": "Vorher",
+      "after": "Nachher",
+      "older": "Ältere Ereignisse",
+      "succeeded": "Erfolgreich",
+      "failed": "Fehlgeschlagen",
+      "denied": "Verweigert"
+    },
     "searchQuality": {
       "title": "Suchqualität",
       "description": "Anonyme Tageszähler nach UTC-Wochen. Keine Suchtexte, Aufgabennamen, IDs oder Nutzerprofile.",
