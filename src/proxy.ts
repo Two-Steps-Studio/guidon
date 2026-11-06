@@ -106,6 +106,7 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // Webhook retry worker (src/app/api/cron/webhooks) - authenticates with
   // CRON_SECRET, not a session.
   '/api/cron/webhooks',
+  '/api/cron/admin-usage',
   // A2A docs agent (src/app/api/a2a) - public like the docs MCP server.
   '/api/a2a',
   // Onboarding before the account exists (app/start) - the questions come

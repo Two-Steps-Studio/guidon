@@ -110,6 +110,7 @@ them. Prefer the runner.
 | `112_platform_admin_diagnostics.sql` | Stores actor-bound, 15-minute support previews with server-only access. | Apply before enabling account diagnostics. |
 | `113_platform_stripe_invoices.sql` | Stores one Stripe snapshot per invoice, including its latest payment failure and optional card last four. The service-only upsert protects newer state against late writes. | Apply before subscribing the webhook to invoice events. |
 | `114_platform_stripe_payment_history.sql` | Stores redacted Stripe invoice payment history and updates it in the same transaction as the invoice snapshot. | Required for invoice payments and historical import. |
+| `115_platform_admin_usage_snapshots.sql` | Stores nightly counts of unique accounts with logged activity over 1, 7 and 30 completed UTC days. | Apply before enabling `/api/cron/admin-usage`. Use the existing `CRON_SECRET` bearer authentication. |
 
 ## The compatibility layer runs before all of this
 

@@ -13,9 +13,11 @@ export default async function AdminFunnelPage() {
   await requireAdminAccess("funnel.read");
   const t = await getTranslations("admin.funnel");
   const db = serviceDataClient();
-  const [cohortsResult, ctaResult] = await Promise.all([
+  const [cohortsResult, ctaResult, usageResult] = await Promise.all([
     db.rpcRows<{ week: string | Date; signed_up: number; created_project: number; created_task: number; connected_integration: number; started_checkout: number; paid: number }>("admin_funnel_cohorts", { p_weeks: 8 }),
     db.from("funnel_cta_counts").select<{ day: string | Date; cta: string; count: number }>("day, cta, count").order("day", { ascending: false }).limit(500),
+    db.from<{ day: string; dau: number; wau: number; mau: number }>("platform_admin_usage_snapshots")
+      .select("day, dau, wau, mau").order("day", { ascending: false }).limit(14),
   ]);
   if (cohortsResult.error || ctaResult.error) throw new Error("Could not load the funnel. Apply migration 096 before deployment.");
   const cohorts = cohortsResult.data.map(toFunnelCohort);
@@ -29,6 +31,24 @@ export default async function AdminFunnelPage() {
         <h2 className="text-2xl font-bold">{t("title")}</h2>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
+      <section className="space-y-3" aria-labelledby="funnel-usage">
+        <h3 id="funnel-usage" className="text-lg font-semibold">{t("usageTitle")}</h3>
+        <p className="text-sm text-muted-foreground">{t("usageDescription")}</p>
+        {usageResult.error ? <p role="status">{t("usageUnavailable")}</p>
+          : usageResult.data.length === 0 ? <p>{t("usageEmpty")}</p> : (
+          <table className="w-full max-w-xl text-sm">
+            <thead><tr><th scope="col" className="p-2 text-left">{t("usageDay")}</th>
+              {["DAU", "WAU", "MAU"].map(label => <th key={label} scope="col" className={cell}>{label}</th>)}
+            </tr></thead>
+            <tbody>{usageResult.data.map(row => {
+              const day = new Date(row.day).toISOString().slice(0, 10);
+              return <tr key={day}><th scope="row" className="p-2 text-left font-normal">{day}</th>
+                <td className={cell}>{row.dau}</td><td className={cell}>{row.wau}</td><td className={cell}>{row.mau}</td>
+              </tr>;
+            })}</tbody>
+          </table>
+        )}
+      </section>
 
       <section className="space-y-3" aria-labelledby="funnel-cohorts">
         <h3 id="funnel-cohorts" className="text-lg font-semibold">{t("cohortsTitle")}</h3>

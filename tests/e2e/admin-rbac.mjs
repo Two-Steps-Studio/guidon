@@ -227,6 +227,29 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   assert.equal(await page.locator('a[href="/admin/organizations"]').count(), 0);
 
   await setRole("read_only");
+  const snapshot = async () => {
+    await client.query("SELECT platform_admin_refresh_usage()");
+    return (await client.query("SELECT dau::int, wau::int, mau::int FROM platform_admin_usage_snapshots ORDER BY day DESC LIMIT 1")).rows[0];
+  };
+  const baseline = await snapshot();
+  const { rows: [{ id: dayUser }, { id: weekUser }, { id: monthUser }, { id: botUser }] } = await client.query(`
+    INSERT INTO auth.users(email) SELECT 'metric-' || n || '@example.test' FROM generate_series(1, 4) AS g(n) RETURNING id
+  `);
+  await client.query(`
+    WITH utc AS (SELECT date_trunc('day', timezone('UTC', now())) AT TIME ZONE 'UTC' AS boundary)
+    INSERT INTO activity_logs(user_id, action, created_at, actor_label)
+    SELECT events.user_id::uuid, 'metric_fixture', utc.boundary - events.age::interval, events.actor
+    FROM utc CROSS JOIN (VALUES
+      ($1::text, '1 hour', NULL::text), ($1, '2 hours', NULL),
+      ($2, '2 days', NULL), ($3, '15 days', NULL), ($4, '1 hour', 'Bot'), ($4, '0 hours', NULL)
+    ) AS events(user_id, age, actor)
+  `, [dayUser, weekUser, monthUser, botUser]);
+  const usage = await snapshot();
+  assert.deepEqual(usage, { dau: baseline.dau + 1, wau: baseline.wau + 2, mau: baseline.mau + 3 });
+  assert.deepEqual(await snapshot(), usage);
+  await page.goto(`${origin}/admin/funnel`);
+  await page.getByRole("heading", { name: "Active users" }).waitFor();
+  assert.equal(await page.locator("#funnel-usage + p + table tbody tr").count(), 1);
   await page.goto(`${origin}/admin/organizations`);
   await page.waitForURL(url => url.pathname === "/admin");
   assert.equal(await page.locator('a[href="/admin/organizations"]').count(), 0);
