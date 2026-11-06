@@ -32,6 +32,7 @@ export function ModuleSwitches({
   name?: string;
 }) {
   const tNav = useTranslations("nav");
+  const tDesc = useTranslations("settings.moduleDescriptions");
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {MODULE_ITEMS.map((item) => {
@@ -39,7 +40,7 @@ export function ModuleSwitches({
         return (
           <label
             key={item.href}
-            className="flex cursor-pointer items-center gap-3 rounded-md border border-border px-3 py-2 text-sm has-[:disabled]:cursor-default"
+            className="flex cursor-pointer items-start gap-3 rounded-md border border-border px-3 py-2 text-sm has-[:disabled]:cursor-default"
           >
             <input
               type="checkbox"
@@ -49,10 +50,16 @@ export function ModuleSwitches({
               disabled={locked}
               onChange={() => onToggle(item.href)}
               role="switch"
-              className="switch"
+              aria-describedby={`module-desc-${item.href}`}
+              className="switch mt-0.5"
             />
-            <item.icon className="h-4 w-4 text-muted-foreground" />
-            <span className={on ? "" : "text-muted-foreground line-through"}>{tNav(item.labelKey)}</span>
+            <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0">
+              <span className={on ? "" : "text-muted-foreground line-through"}>{tNav(item.labelKey)}</span>
+              <span id={`module-desc-${item.href}`} className="mt-0.5 block text-xs text-muted-foreground">
+                {tDesc(item.href)}
+              </span>
+            </span>
           </label>
         );
       })}
