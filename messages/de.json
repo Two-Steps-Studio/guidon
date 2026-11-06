@@ -1439,7 +1439,19 @@
     "visibilityHint": "Organisationsmitglieder, die nicht im Projekt sind, sehen es nur lesend, bis du sie auf der Mitglieder-Seite hinzufügst. Inhaber und Admins der Organisation sehen immer alle Projekte.",
     "languageLabel": "Projektsprache",
     "languageAuto": "Automatisch",
-    "languageHint": "Die Sprache, in der Guidons KI für dieses Projekt schreibt - Antworten des Assistenten, Memory-Erkenntnisse, was sie aus erledigten Aufgaben lernt. Automatisch folgt der Sprache, in der du schreibst."
+    "languageHint": "Die Sprache, in der Guidons KI für dieses Projekt schreibt - Antworten des Assistenten, Memory-Erkenntnisse, was sie aus erledigten Aufgaben lernt. Automatisch folgt der Sprache, in der du schreibst.",
+    "moduleDescriptions": {
+      "work": "Aufgabenboard mit einer Spalte pro Status.",
+      "calendar": "Aufgaben mit Fälligkeitsdatum im Kalender.",
+      "roadmap": "Phasen und Meilensteine des Projekts im Zeitverlauf.",
+      "files": "Spezifikationen, Entwürfe und Anhänge an einem Ort.",
+      "knowledge": "Notizen, Anleitungen und Links, die das Team immer wieder braucht.",
+      "decisions": "Warum etwas entschieden wurde, verknüpft mit den betroffenen Aufgaben.",
+      "references": "Ein Moodboard mit Bildern und visuellen Referenzen.",
+      "technology": "Der Tech-Stack des Projekts: Sprachen, Tools und Dienste.",
+      "memory": "Fakten, Regeln und Erkenntnisse, die sich Team und KI-Agenten merken.",
+      "context": "Ein Graph, der Aufgaben, Entscheidungen und Notizen verbindet."
+    }
   },
   "discordLink": {
     "title": "Guidon-Discord-Bot verbinden",

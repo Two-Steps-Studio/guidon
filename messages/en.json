@@ -1451,7 +1451,19 @@
     "visibilityHint": "Organization members who aren't on the project see it read-only until you add them on the Members page. The organization's owner and admins always see every project.",
     "languageLabel": "Project language",
     "languageAuto": "Automatic",
-    "languageHint": "The language Guidon's AI writes in for this project - assistant replies, memory insights, what it learns from finished tasks. Automatic follows the language you write in."
+    "languageHint": "The language Guidon's AI writes in for this project - assistant replies, memory insights, what it learns from finished tasks. Automatic follows the language you write in.",
+    "moduleDescriptions": {
+      "work": "Task board with a column for each status.",
+      "calendar": "Tasks with due dates on a calendar.",
+      "roadmap": "Project phases and milestones over time.",
+      "files": "Specs, designs and attachments in one place.",
+      "knowledge": "Notes, guides and links the team keeps coming back to.",
+      "decisions": "Why something was decided, linked to the tasks it affects.",
+      "references": "A moodboard of images and visual references.",
+      "technology": "The project's tech stack: languages, tools and services.",
+      "memory": "Facts, rules and insights the team and AI agents remember.",
+      "context": "A graph of how tasks, decisions and notes connect."
+    }
   },
   "discordLink": {
     "title": "Connect the Guidon Discord bot",

@@ -1451,7 +1451,19 @@
     "visibilityHint": "Członkowie organizacji spoza projektu widzą go tylko do odczytu, dopóki nie dodasz ich na stronie Członkowie. Właściciel i administratorzy organizacji zawsze widzą wszystkie projekty.",
     "languageLabel": "Język projektu",
     "languageAuto": "Automatycznie",
-    "languageHint": "Język, w którym AI Guidona pisze w tym projekcie - odpowiedzi asystenta, wnioski do pamięci, nauka z ukończonych zadań. Automatycznie = w języku, w którym piszesz."
+    "languageHint": "Język, w którym AI Guidona pisze w tym projekcie - odpowiedzi asystenta, wnioski do pamięci, nauka z ukończonych zadań. Automatycznie = w języku, w którym piszesz.",
+    "moduleDescriptions": {
+      "work": "Tablica zadań z kolumną dla każdego statusu.",
+      "calendar": "Zadania z terminami w kalendarzu.",
+      "roadmap": "Etapy i kamienie milowe projektu w czasie.",
+      "files": "Specyfikacje, projekty i załączniki w jednym miejscu.",
+      "knowledge": "Notatki, poradniki i linki, do których zespół wraca.",
+      "decisions": "Dlaczego coś postanowiono, połączone z zadaniami, których dotyczy.",
+      "references": "Moodboard z obrazami i inspiracjami wizualnymi.",
+      "technology": "Technologie projektu: języki, narzędzia i usługi.",
+      "memory": "Fakty, zasady i wnioski, które pamiętają zespół i agenci AI.",
+      "context": "Graf powiązań między zadaniami, decyzjami i notatkami."
+    }
   },
   "discordLink": {
     "title": "Połącz bota Guidon z Discorda",
