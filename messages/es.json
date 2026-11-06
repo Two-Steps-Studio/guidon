@@ -1703,6 +1703,24 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "diagnostics": {
+      "title": "Diagnóstico de cuenta",
+      "reason": "Motivo",
+      "choose": "Selecciona un motivo",
+      "support": "Solicitud de soporte",
+      "incident": "Investigación de incidente",
+      "access": "Problema de acceso",
+      "start": "Abrir vista de solo lectura",
+      "end": "Salir de la vista",
+      "banner": "Diagnóstico de solo lectura · sesión de 15 minutos",
+      "expired": "Esta vista ha caducado.",
+      "failed": "No se pudo actualizar la sesión de diagnóstico.",
+      "account": "ID de cuenta",
+      "expires": "Caduca",
+      "organizations": "Membresías en organizaciones",
+      "activity": "Tipos de actividad reciente",
+      "empty": "No hay actividad registrada."
+    },
     "directory": {
       "command": "Buscar usuarios",
       "filter": "Buscar por",

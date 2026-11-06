@@ -5,6 +5,7 @@ import { serviceDataClient } from "@/lib/data-client";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { tr } from "@/lib/i18n/server-errors";
 import type { AdminPermission } from "./permissions";
+import type { DiagnosticReason } from "./diagnostic-reasons";
 
 export const AUDIT_TARGETS = {
   "organizations.limits.edit": "organization",
@@ -16,6 +17,8 @@ export const AUDIT_TARGETS = {
   "modules.withdraw": "module_version",
   "modules.reports.resolve": "module_report",
   "users.directory.search": "user",
+  "users.diagnostics.start": "user",
+  "users.diagnostics.end": "user",
 } as const satisfies Partial<Record<AdminPermission, string>>;
 
 export type AuditAction = keyof typeof AUDIT_TARGETS;
@@ -25,6 +28,8 @@ type AuditState = {
   active?: boolean;
   status?: "published" | "rejected" | "withdrawn" | "resolved";
   changed_prices?: number;
+  diagnostic_reason?: DiagnosticReason;
+  diagnostic_id?: string;
 };
 
 export const AUDIT_UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;

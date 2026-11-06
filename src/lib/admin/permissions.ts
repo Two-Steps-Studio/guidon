@@ -18,17 +18,18 @@ export type AdminPermission = (typeof ADMIN_PAGE_PERMISSIONS)[AdminPage]
   | "organizations.limits.edit" | "organizations.plan.edit"
   | "billing.prices.sync" | "promos.create" | "promos.toggle"
   | "modules.review" | "modules.withdraw" | "modules.reports.resolve"
-  | "users.pii.reveal" | "users.directory.search";
+  | "users.pii.reveal" | "users.directory.search" | "users.diagnostics.start" | "users.diagnostics.end";
 
 const ROLE_PERMISSIONS = {
   super_admin: [
     ...Object.values(ADMIN_PAGE_PERMISSIONS),
     "users.pii.reveal",
     "users.directory.search",
+    "users.diagnostics.start", "users.diagnostics.end",
     "organizations.limits.edit", "organizations.plan.edit", "billing.prices.sync",
     "promos.create", "promos.toggle", "modules.review", "modules.withdraw", "modules.reports.resolve",
   ],
-  support: ["overview.read", "users.read", "organizations.read", "feedback.read"],
+  support: ["overview.read", "users.read", "organizations.read", "feedback.read", "users.diagnostics.start", "users.diagnostics.end"],
   finance: [
     "overview.read", "organizations.read", "funnel.read", "promos.read", "billing.read",
     "organizations.plan.edit", "billing.prices.sync", "promos.create", "promos.toggle",

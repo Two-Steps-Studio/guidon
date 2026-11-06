@@ -1703,6 +1703,24 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "diagnostics": {
+      "title": "Kontodiagnose",
+      "reason": "Grund",
+      "choose": "Wähle einen Grund",
+      "support": "Supportanfrage",
+      "incident": "Vorfalluntersuchung",
+      "access": "Zugriffsproblem",
+      "start": "Schreibgeschützte Vorschau öffnen",
+      "end": "Vorschau beenden",
+      "banner": "Schreibgeschützte Diagnose · 15 Minuten",
+      "expired": "Diese Vorschau ist abgelaufen.",
+      "failed": "Die Diagnosesitzung konnte nicht aktualisiert werden.",
+      "account": "Konto-ID",
+      "expires": "Läuft ab",
+      "organizations": "Organisationsmitgliedschaften",
+      "activity": "Letzte Aktivitätstypen",
+      "empty": "Keine Aktivität erfasst."
+    },
     "directory": {
       "command": "Benutzer suchen",
       "filter": "Suchen nach",

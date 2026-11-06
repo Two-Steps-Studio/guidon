@@ -157,6 +157,29 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await page.locator("main table").waitFor();
   assert.deepEqual(await page.getByLabel("Search by").locator("option").allTextContents(), ["User ID"]);
   assert.equal(await page.getByRole("button", { name: "Reveal profile" }).count(), 0);
+  await page.goto(`${origin}/admin/users/${target.id}`);
+  await page.getByLabel("Reason").selectOption("access");
+  await page.getByRole("button", { name: "Start read-only preview" }).click();
+  await page.waitForURL(url => url.pathname.includes("/diagnostics/"));
+  const preview = page.url();
+  await page.getByText("Read-only diagnostic preview · 15-minute session").waitFor();
+  assert.ok(!(await page.locator("main").textContent()).includes(target.email));
+  assert.equal(await page.getByRole("button", { name: "Reveal profile" }).count(), 0);
+  await page.getByRole("button", { name: "Exit preview" }).click();
+  await page.waitForURL(url => url.pathname === `/admin/users/${target.id}`);
+  await page.goto(preview);
+  await page.getByText(/page could not be found/i).waitFor();
+  const { rows: [expired] } = await client.query(
+    "INSERT INTO platform_admin_diagnostics (actor_id, target_id, reason, expires_at) VALUES ($1, $2, 'support', now() - interval '1 second') RETURNING id",
+    [owner.id, target.id],
+  );
+  await page.goto(`${origin}/admin/users/${target.id}/diagnostics/${expired.id}`);
+  await page.getByText(/page could not be found/i).waitFor();
+  const { rows: diagnosticAudits } = await client.query(
+    "SELECT action FROM platform_admin_audit_events WHERE target_id = $1 AND action IN ('users.diagnostics.start', 'users.diagnostics.end') AND outcome = 'succeeded' ORDER BY action",
+    [target.id],
+  );
+  assert.deepEqual(diagnosticAudits.map(row => row.action), ["users.diagnostics.end", "users.diagnostics.start"]);
   await page.goto(`${origin}/admin/billing`);
   await page.waitForURL(url => url.pathname === "/admin");
 

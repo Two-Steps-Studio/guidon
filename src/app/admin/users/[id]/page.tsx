@@ -7,6 +7,7 @@ import { listUsersForAdmin } from "@/lib/data/admin";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
 import { ProfileDisclosure } from "../profile-disclosure";
+import { StartUserDiagnostics } from "../diagnostics-controls";
 
 export default async function AdminUserDetail({ params }: { params: Promise<{ id: string }> }) {
   const { role } = await requireAdminAccess("users.read");
@@ -37,5 +38,6 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
       {memberships.data.slice(0, 50).map(member => <li key={member.organization_id} className="break-all">{member.organization_id} · {member.role}</li>)}
     </ul> : <p>—</p>}
     {memberships.data.length > 50 && <p>{t("directory.membershipLimit")}</p>}
+    {hasAdminPermission(role, "users.diagnostics.start") && <StartUserDiagnostics targetId={user.id} />}
   </div>;
 }

@@ -1715,6 +1715,24 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "diagnostics": {
+      "title": "Account diagnostics",
+      "reason": "Reason",
+      "choose": "Choose a reason",
+      "support": "Support request",
+      "incident": "Incident investigation",
+      "access": "Access troubleshooting",
+      "start": "Start read-only preview",
+      "end": "Exit preview",
+      "banner": "Read-only diagnostic preview · 15-minute session",
+      "expired": "This preview expired.",
+      "failed": "The diagnostic session could not be updated.",
+      "account": "Account ID",
+      "expires": "Expires",
+      "organizations": "Organization memberships",
+      "activity": "Recent activity types",
+      "empty": "No activity recorded."
+    },
     "directory": {
       "command": "Search users",
       "filter": "Search by",

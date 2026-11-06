@@ -1715,6 +1715,24 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "diagnostics": {
+      "title": "Diagnostyka konta",
+      "reason": "Powód",
+      "choose": "Wybierz powód",
+      "support": "Zgłoszenie do wsparcia",
+      "incident": "Analiza incydentu",
+      "access": "Problem z dostępem",
+      "start": "Otwórz podgląd tylko do odczytu",
+      "end": "Zakończ podgląd",
+      "banner": "Podgląd tylko do odczytu · sesja 15 minut",
+      "expired": "Podgląd wygasł.",
+      "failed": "Nie udało się zaktualizować sesji diagnostycznej.",
+      "account": "ID konta",
+      "expires": "Wygasa",
+      "organizations": "Członkostwa w organizacjach",
+      "activity": "Typy ostatnich zdarzeń",
+      "empty": "Brak zarejestrowanej aktywności."
+    },
     "directory": {
       "command": "Szukaj użytkowników",
       "filter": "Szukaj po",
