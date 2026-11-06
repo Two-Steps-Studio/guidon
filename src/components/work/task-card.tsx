@@ -431,7 +431,7 @@ function TaskCardComponent({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 shrink-0 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
+                className="h-6 w-6 shrink-0 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 max-md:opacity-100"
                 aria-label={t("moveTaskAria", { title: task.title })}
                 onClick={(event) => event.stopPropagation()}
               >
