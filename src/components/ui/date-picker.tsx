@@ -87,6 +87,8 @@ interface DatePickerProps {
   name?: string
   disabled?: boolean
   className?: string
+  "aria-invalid"?: boolean
+  "aria-describedby"?: string
 }
 
 /**
@@ -97,7 +99,7 @@ interface DatePickerProps {
  * stay unchanged. Keyboard: arrows move by day/week, PageUp/PageDown by
  * month, Home jumps to today, Enter picks.
  */
-export function DatePicker({ value: controlled, defaultValue = "", onChange: onControlledChange, id, name, disabled, className }: DatePickerProps) {
+export function DatePicker({ value: controlled, defaultValue = "", onChange: onControlledChange, id, name, disabled, className, "aria-invalid": invalid, "aria-describedby": describedBy }: DatePickerProps) {
   const [uncontrolled, setUncontrolled] = React.useState<DayString>(defaultValue)
   const value = controlled ?? uncontrolled
   const onChange = (next: DayString) => {
@@ -195,6 +197,8 @@ export function DatePicker({ value: controlled, defaultValue = "", onChange: onC
         <PopoverTrigger asChild disabled={disabled}>
           <button
             id={id}
+            aria-invalid={invalid}
+            aria-describedby={describedBy}
             type="button"
             className={cn(
               "flex h-9 w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-left text-sm shadow-sm transition-colors",

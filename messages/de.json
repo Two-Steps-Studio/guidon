@@ -1463,6 +1463,7 @@
     "quickAdd": "Schnell hinzufügen",
     "quickAddDescription": "Zuerst der Titel - der Rest ist optional. Die Aufgabe wird dir zugewiesen und landet im To-do des Projekts.",
     "quickAddPlaceholder": "Was ist zu tun?",
+    "quickAddTitleRequired": "Gib einen Titel für die Aufgabe ein.",
     "quickAddProject": "Projekt",
     "quickAddDueToday": "Heute fällig",
     "quickAddSubmit": "Aufgabe hinzufügen",

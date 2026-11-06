@@ -1475,6 +1475,7 @@
     "quickAdd": "Quick add",
     "quickAddDescription": "Title first - the rest is optional. It's assigned to you and goes to the project's To do.",
     "quickAddPlaceholder": "What needs doing?",
+    "quickAddTitleRequired": "Enter a title for the task.",
     "quickAddProject": "Project",
     "quickAddDueToday": "Due today",
     "quickAddSubmit": "Add task",

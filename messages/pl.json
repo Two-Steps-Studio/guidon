@@ -1475,6 +1475,7 @@
     "quickAdd": "Szybkie dodawanie",
     "quickAddDescription": "Najpierw tytuł - reszta jest opcjonalna. Zadanie jest przypisane do Ciebie i trafia do To do projektu.",
     "quickAddPlaceholder": "Co jest do zrobienia?",
+    "quickAddTitleRequired": "Wpisz tytuł zadania.",
     "quickAddProject": "Projekt",
     "quickAddDueToday": "Termin dziś",
     "quickAddSubmit": "Dodaj zadanie",

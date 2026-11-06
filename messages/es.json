@@ -1463,6 +1463,7 @@
     "quickAdd": "Añadir rápido",
     "quickAddDescription": "Primero el título; lo demás es opcional. Se te asigna a ti y va a Por hacer del proyecto.",
     "quickAddPlaceholder": "¿Qué hay que hacer?",
+    "quickAddTitleRequired": "Introduce un título para la tarea.",
     "quickAddProject": "Proyecto",
     "quickAddDueToday": "Vence hoy",
     "quickAddSubmit": "Añadir tarea",

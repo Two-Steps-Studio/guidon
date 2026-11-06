@@ -10,6 +10,7 @@ import { tr } from "@/lib/i18n/server-errors";
 
 export type DecisionFormState = {
   error: string | null;
+  field?: "title" | "status" | "type";
 };
 
 const VALID_STATUSES: Decision["status"][] = ["proposed", "approved", "rejected", "deprecated"];
@@ -40,16 +41,16 @@ async function parseDecisionForm(formData: FormData) {
   const decisionType = formData.get("decision_type");
 
   if (typeof title !== "string" || title.trim().length === 0) {
-    return { error: await tr("Title is required.") } as const;
+    return { error: await tr("Title is required."), field: "title" } as const;
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as Decision["status"])) {
-    return { error: await tr("Invalid status.") } as const;
+    return { error: await tr("Invalid status."), field: "status" } as const;
   }
   if (
     typeof decisionType !== "string" ||
     !VALID_TYPES.includes(decisionType as Decision["decision_type"])
   ) {
-    return { error: await tr("Invalid decision type.") } as const;
+    return { error: await tr("Invalid decision type."), field: "type" } as const;
   }
 
   const alternatives =
@@ -86,7 +87,7 @@ export async function createDecision(
   }
 
   const parsed = await parseDecisionForm(formData);
-  if (parsed.error) return { error: parsed.error };
+  if (parsed.error) return { error: parsed.error, field: parsed.field };
 
   // Optional: "mark comment as decision" (TaskDetailDialog, work/actions.ts
   // posts these as hidden fields via CreateDecisionDialog's `link` prop).
@@ -175,7 +176,7 @@ export async function updateDecision(
   }
 
   const parsed = await parseDecisionForm(formData);
-  if (parsed.error) return { error: parsed.error };
+  if (parsed.error) return { error: parsed.error, field: parsed.field };
 
   const action: ActivityAction =
     parsed.status === "approved"

@@ -50,12 +50,15 @@ export function CreateDecisionDialog({
   const submittedRef = useRef(false);
 
   useEffect(() => {
+    if (submittedRef.current && !pending && state.field) {
+      document.getElementById(`${idPrefix}-${state.field}`)?.focus();
+    }
     if (submittedRef.current && !pending && state.error === null) {
       setOpen(false);
       submittedRef.current = false;
       onCreated?.();
     }
-  }, [pending, state, onCreated]);
+  }, [pending, state, onCreated, idPrefix]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -76,14 +79,14 @@ export function CreateDecisionDialog({
           onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
           className="space-y-4"
         >
-          <DecisionFormFields idPrefix={idPrefix} defaults={defaults} />
+          <DecisionFormFields idPrefix={idPrefix} defaults={defaults} issue={state} />
           {link && (
             <>
               <input type="hidden" name="link_source_type" value={link.sourceType} />
               <input type="hidden" name="link_source_id" value={link.sourceId} />
             </>
           )}
-          {state.error && (
+          {state.error && !state.field && (
             <div role="alert" className="text-sm text-destructive flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               {state.error}
