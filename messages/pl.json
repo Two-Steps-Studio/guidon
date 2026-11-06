@@ -1715,6 +1715,23 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "invoices": {
+      "title": "Faktury Stripe",
+      "description": "Do 100 ostatnio zsynchronizowanych faktur wraz ze stanem płatności.",
+      "back": "Rozliczenia",
+      "clear": "Wyczyść filtr organizacji",
+      "invoice": "Faktura",
+      "organization": "Organizacja",
+      "status": "Status",
+      "due": "Do zapłaty",
+      "paid": "Zapłacono",
+      "remaining": "Pozostało",
+      "attempts": "Próby",
+      "lastFailure": "Ostatni błąd",
+      "card": "Karta",
+      "pdf": "PDF faktury",
+      "empty": "Brak zsynchronizowanych faktur."
+    },
     "diagnostics": {
       "title": "Diagnostyka konta",
       "reason": "Powód",

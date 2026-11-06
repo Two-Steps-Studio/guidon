@@ -107,6 +107,8 @@ them. Prefer the runner.
 | `109_platform_admin_auth_session.sql` | Service-role-only checks for a live Supabase Auth session and a matching admin session. A check can update activity only while both sessions and the grant are active and the admin session is within its lifetime. | Admin SSO/MFA with server-side idle expiry and revocation. Direct Postgres returns false when `auth.sessions` is absent. |
 | `110_platform_admin_pii_reveal.sql` | Service-role-only profile disclosure with an atomic audit insert and a shared limit of 10 requests per administrator in a rolling minute. | Apply before enabling the admin profile reveal action. |
 | `111_platform_admin_directory.sql` | Adds indexed directory lookups and a service-role-only search function that returns masked profile rows. | Apply before deploying the admin directory. |
+| `112_platform_admin_diagnostics.sql` | Stores actor-bound, 15-minute support previews with server-only access. | Apply before enabling account diagnostics. |
+| `113_platform_stripe_invoices.sql` | Stores one Stripe snapshot per invoice, including its latest payment failure and optional card last four. The service-only upsert protects newer state against late writes. | Apply before subscribing the webhook to invoice events. |
 
 ## The compatibility layer runs before all of this
 

@@ -1703,6 +1703,23 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "invoices": {
+      "title": "Stripe-Rechnungen",
+      "description": "Bis zu 100 zuletzt synchronisierte Rechnungen mit Zahlungsstatus.",
+      "back": "Abrechnung",
+      "clear": "Organisationsfilter zurücksetzen",
+      "invoice": "Rechnung",
+      "organization": "Organisation",
+      "status": "Status",
+      "due": "Fällig",
+      "paid": "Bezahlt",
+      "remaining": "Offen",
+      "attempts": "Versuche",
+      "lastFailure": "Letzter Fehler",
+      "card": "Karte",
+      "pdf": "Rechnungs-PDF",
+      "empty": "Keine synchronisierten Rechnungen."
+    },
     "diagnostics": {
       "title": "Kontodiagnose",
       "reason": "Grund",

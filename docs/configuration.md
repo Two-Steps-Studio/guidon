@@ -267,7 +267,7 @@ needs.
 | Variable | Meaning |
 |---|---|
 | `STRIPE_SECRET_KEY` | Enables `src/lib/billing/stripe.ts`'s `getStripe()`. Without it, `isBillingConfigured()` is false and the billing page's Upgrade/Manage billing buttons don't render - a read-only plan table, same as before this existed. |
-| `STRIPE_WEBHOOK_SECRET` | Verifies the `Stripe-Signature` header on `POST /api/stripe/webhook` (`stripe.webhooks.constructEvent`). Get it from the Dashboard webhook endpoint you create for `<origin>/api/stripe/webhook`, subscribed to `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. |
+| `STRIPE_WEBHOOK_SECRET` | Verifies the `Stripe-Signature` header on `POST /api/stripe/webhook` (`stripe.webhooks.constructEvent`). Subscribe the Dashboard endpoint to `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. After applying migration 113, also subscribe to `invoice.finalized`, `invoice.updated`, `invoice.paid`, `invoice.payment_failed`, `invoice.voided`, and `invoice.marked_uncollectible`. |
 
 **One-time setup after creating a Stripe account:** create a recurring Price
 for each paid plan (Pro/Team/Business) in the Dashboard, then set that

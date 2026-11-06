@@ -10,9 +10,22 @@ import Stripe from "stripe";
 
 const { processStripeEvent, decideSubscriptionWrite, snapshotFromStripe, mapStripeStatus } = await import("../src/lib/billing/stripe-webhook-core.ts");
 const { paymentState, GRACE_PERIOD_DAYS } = await import("../src/lib/billing/billing-core.ts");
+const { stripeInvoicePdf, invoiceCardLastFour } = await import("../src/lib/billing/stripe-invoice-core.ts");
 
 let passed = 0;
 async function test(name, run) { await run(); passed++; console.log(`pass ${name}`); }
+
+await test("invoice metadata exposes only a Stripe HTTPS PDF and four card digits", () => {
+  assert.equal(stripeInvoicePdf("https://pay.stripe.com/test.pdf"), "https://pay.stripe.com/test.pdf");
+  assert.equal(stripeInvoicePdf("https://stripe.com.example.test/test.pdf"), null);
+  assert.equal(stripeInvoicePdf("http://pay.stripe.com/test.pdf"), null);
+  const payment = { status: "paid", payment: {
+    type: "payment_intent", payment_intent: { latest_charge: { payment_method_details: { card: { last4: "4242" } } } },
+  } };
+  assert.equal(invoiceCardLastFour(payment), "4242");
+  assert.equal(invoiceCardLastFour({ ...payment, status: "open" }), null);
+  assert.equal(invoiceCardLastFour({ status: "paid", payment: { type: "charge", charge: "ch_unexpanded" } }), null);
+});
 
 const ORG = "org-1";
 const DAY = 24 * 60 * 60 * 1000;

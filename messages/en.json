@@ -1715,6 +1715,23 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "invoices": {
+      "title": "Stripe invoices",
+      "description": "Up to 100 recently synced invoices and their payment status.",
+      "back": "Billing",
+      "clear": "Clear organization filter",
+      "invoice": "Invoice",
+      "organization": "Organization",
+      "status": "Status",
+      "due": "Due",
+      "paid": "Paid",
+      "remaining": "Outstanding",
+      "attempts": "Attempts",
+      "lastFailure": "Last failure",
+      "card": "Card",
+      "pdf": "Invoice PDF",
+      "empty": "No synced invoices."
+    },
     "diagnostics": {
       "title": "Account diagnostics",
       "reason": "Reason",

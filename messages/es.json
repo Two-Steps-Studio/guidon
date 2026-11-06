@@ -1703,6 +1703,23 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "invoices": {
+      "title": "Facturas de Stripe",
+      "description": "Hasta 100 facturas sincronizadas recientemente con su estado de pago.",
+      "back": "Facturación",
+      "clear": "Borrar filtro de organización",
+      "invoice": "Factura",
+      "organization": "Organización",
+      "status": "Estado",
+      "due": "Importe",
+      "paid": "Pagado",
+      "remaining": "Pendiente",
+      "attempts": "Intentos",
+      "lastFailure": "Último fallo",
+      "card": "Tarjeta",
+      "pdf": "PDF de factura",
+      "empty": "No hay facturas sincronizadas."
+    },
     "diagnostics": {
       "title": "Diagnóstico de cuenta",
       "reason": "Motivo",

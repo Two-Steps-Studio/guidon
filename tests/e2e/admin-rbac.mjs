@@ -145,6 +145,29 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   );
   assert.deepEqual(searchAudit, { target_id: null, before_state: null, after_state: null });
   await setRole("finance");
+  const invoice = {
+    invoice_id: "in_fixture", organization_id: fixture.users[0].organizationId, invoice_number: "TEST-001",
+    status: "paid", currency: "eur", amount_due: 1200, amount_paid: 1200, amount_remaining: 0,
+    attempt_count: 2, invoice_pdf: "https://pay.stripe.com/test-invoice.pdf", card_last4: "4242",
+    issued_at: "2025-01-01T00:00:00Z", observed_at: "2025-01-02T00:00:00Z", failed_at: null,
+  };
+  const saveInvoice = snapshot => client.query("SELECT platform_stripe_save_invoice($1)", [snapshot]);
+  await saveInvoice(invoice);
+  await saveInvoice(invoice);
+  await saveInvoice({
+    ...invoice, status: "open", amount_paid: 0, amount_remaining: 1200,
+    observed_at: "2025-01-01T01:00:00Z", failed_at: "2025-01-01T01:00:00Z",
+  });
+  const { rows: savedInvoices } = await client.query(
+    "SELECT status, failed_at FROM platform_stripe_invoices WHERE invoice_id = $1", [invoice.invoice_id],
+  );
+  assert.equal(savedInvoices.length, 1);
+  assert.equal(savedInvoices[0].status, "paid");
+  assert.equal(savedInvoices[0].failed_at.toISOString(), "2025-01-01T01:00:00.000Z");
+  await page.goto(`${origin}/admin/billing/invoices`);
+  await page.getByRole("heading", { name: "Stripe invoices" }).waitFor();
+  await page.getByRole("link", { name: "Invoice PDF" }).waitFor();
+  assert.match(await page.locator("main table").textContent(), /TEST-001.*paid.*4242/);
   await page.goto(`${origin}/admin/organizations`);
   await page.locator("main table").waitFor();
   assert.equal(await page.getByRole("spinbutton").count(), 0);
@@ -181,6 +204,8 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   );
   assert.deepEqual(diagnosticAudits.map(row => row.action), ["users.diagnostics.end", "users.diagnostics.start"]);
   await page.goto(`${origin}/admin/billing`);
+  await page.waitForURL(url => url.pathname === "/admin");
+  await page.goto(`${origin}/admin/billing/invoices`);
   await page.waitForURL(url => url.pathname === "/admin");
 
   await setRole("engineering");
