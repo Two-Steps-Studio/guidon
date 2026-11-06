@@ -121,6 +121,19 @@ function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [finish]);
 
+  // A click that reaches the highlighted control (through the hole) closes the
+  // tour; the control itself handles the click as usual.
+  const currentSelector = steps[index]?.selector;
+  useEffect(() => {
+    if (!currentSelector) return;
+    const onClick = (event: MouseEvent) => {
+      const target = document.querySelector(currentSelector);
+      if (target && event.target instanceof Node && target.contains(event.target)) finish();
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [currentSelector, finish]);
+
   /* Pomiar elementu bieżącego kroku + przewinięcie do niego. */
   useEffect(() => {
     if (steps.length === 0) return;
@@ -184,40 +197,34 @@ function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
   );
 
   return (
-    <div className="fixed inset-0 z-[100]" data-tour-overlay>
-      {/* Zasłona z otworem. Klik trafia w warstwę pod spodem: w otworze
-          zamyka tour i klika podświetlony element, poza nim tylko zamyka. */}
+    <div className="pointer-events-none fixed inset-0 z-[100]" data-tour-overlay>
       <div
         aria-hidden
-        className="pointer-events-none absolute rounded-xl transition-all duration-200"
+        className="absolute rounded-xl transition-all duration-200"
         style={{
           ...highlight,
           boxShadow: "0 0 0 200vmax hsl(0 0% 0% / 0.65)",
         }}
       />
-      {/* Przezroczysta warstwa na resztę ekranu: łapie klik w tło. */}
+      {/* Catches clicks on the dimmed backdrop (closes the tour). The hole is cut
+          out of it, so a click there reaches the real control natively; the
+          capture listener above then closes the tour. */}
       <button
         type="button"
         aria-label={t("skip")}
-        className="fixed inset-0 cursor-default"
-        style={{ zIndex: -1 }}
-        onClick={(event) => {
-          const inHole =
-            event.clientX >= highlight.left && event.clientX <= highlight.left + highlight.width &&
-            event.clientY >= highlight.top && event.clientY <= highlight.top + highlight.height;
-          const target = inHole ? document.querySelector<HTMLElement>(current.selector) : null;
-          finish();
-          // Clicked once the tour is gone: a dialog opened from inside this
-          // click (and the overlay's focus change) closed again in Firefox.
-          if (target) requestAnimationFrame(() => target.click());
+        className="pointer-events-auto fixed inset-0 cursor-default"
+        style={{
+          zIndex: -1,
+          clipPath: `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${highlight.left}px ${highlight.top}px, ${highlight.left + highlight.width}px ${highlight.top}px, ${highlight.left + highlight.width}px ${highlight.top + highlight.height}px, ${highlight.left}px ${highlight.top + highlight.height}px, ${highlight.left}px ${highlight.top}px)`,
         }}
+        onClick={finish}
       />
 
       <div
         ref={popoverRef}
         role="dialog"
         aria-label={current.title}
-        className="fixed w-[min(340px,calc(100vw-1.5rem))] rounded-xl border border-border bg-background p-4 shadow-lg"
+        className="pointer-events-auto fixed w-[min(340px,calc(100vw-1.5rem))] rounded-xl border border-border bg-background p-4 shadow-lg"
         style={{ top: popoverTop, bottom: popoverBottom, left: popoverLeft }}
       >
         <div className="flex items-start justify-between gap-2">
