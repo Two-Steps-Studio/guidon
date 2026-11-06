@@ -205,8 +205,11 @@ function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
           const inHole =
             event.clientX >= highlight.left && event.clientX <= highlight.left + highlight.width &&
             event.clientY >= highlight.top && event.clientY <= highlight.top + highlight.height;
+          const target = inHole ? document.querySelector<HTMLElement>(current.selector) : null;
           finish();
-          if (inHole) document.querySelector<HTMLElement>(current.selector)?.click();
+          // Clicked once the tour is gone: a dialog opened from inside this
+          // click (and the overlay's focus change) closed again in Firefox.
+          if (target) requestAnimationFrame(() => target.click());
         }}
       />
 
