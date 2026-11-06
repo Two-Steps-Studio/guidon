@@ -1765,6 +1765,20 @@
       "activity": "Recent activity types",
       "empty": "No activity recorded."
     },
+    "recovery": {
+      "title": "Account operations",
+      "description": "Send a recovery link to the email on the authentication account.",
+      "confirm": "Enter the full user ID to confirm",
+      "sent": "Recovery email sent.",
+      "failed": "The operation could not be confirmed. Check the audit log before retrying.",
+      "limited": "Too many requests. Try again later.",
+      "operation": "Operation",
+      "recovery": "Send recovery email",
+      "block": "Block new sign-ins",
+      "unblock": "Allow sign-ins again",
+      "signinDescription": "Existing sessions can remain valid until their tokens expire.",
+      "updated": "Sign-in restriction updated."
+    },
     "directory": {
       "command": "Search users",
       "filter": "Search by",

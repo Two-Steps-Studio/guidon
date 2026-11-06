@@ -1753,6 +1753,20 @@
       "activity": "Letzte Aktivitätstypen",
       "empty": "Keine Aktivität erfasst."
     },
+    "recovery": {
+      "title": "Kontovorgänge",
+      "description": "Sende einen Wiederherstellungslink an die E-Mail-Adresse des Anmeldekontos.",
+      "confirm": "Gib zur Bestätigung die vollständige Benutzer-ID ein",
+      "sent": "Wiederherstellungs-E-Mail gesendet.",
+      "failed": "Der Vorgang konnte nicht bestätigt werden. Prüfe vor einem erneuten Versuch das Audit-Protokoll.",
+      "limited": "Zu viele Anfragen. Versuche es später erneut.",
+      "operation": "Vorgang",
+      "recovery": "Wiederherstellungs-E-Mail senden",
+      "block": "Neue Anmeldungen sperren",
+      "unblock": "Anmeldungen wieder erlauben",
+      "signinDescription": "Bestehende Sitzungen können bis zum Ablauf ihrer Tokens gültig bleiben.",
+      "updated": "Anmeldebeschränkung aktualisiert."
+    },
     "directory": {
       "command": "Benutzer suchen",
       "filter": "Suchen nach",

@@ -25,6 +25,9 @@ export const AUDIT_TARGETS = {
   "users.support.manage": "user",
   "operations.manage": "queue_job",
   "users.bulk": "user_directory",
+  "users.password.recovery": "user",
+  "users.signin.block": "user",
+  "users.signin.unblock": "user",
 } as const satisfies Partial<Record<AdminPermission, string>>;
 
 export type AuditAction = keyof typeof AUDIT_TARGETS;
@@ -45,6 +48,7 @@ type AuditState = {
   queue?: "webhooks" | "automations";
   bulk_operation?: "export" | "tag";
   bulk_processed?: number;
+  signin_blocked?: boolean;
 };
 
 export const AUDIT_UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;

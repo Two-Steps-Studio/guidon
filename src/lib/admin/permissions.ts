@@ -21,7 +21,7 @@ export type AdminPermission = (typeof ADMIN_PAGE_PERMISSIONS)[AdminPage]
   | "organizations.limits.edit" | "organizations.plan.edit"
   | "billing.prices.sync" | "billing.invoices.import" | "billing.invoices.retry" | "promos.create" | "promos.toggle"
   | "modules.review" | "modules.withdraw" | "modules.reports.resolve"
-  | "users.pii.reveal" | "users.directory.search" | "users.diagnostics.start" | "users.diagnostics.end" | "users.support.manage";
+  | "users.pii.reveal" | "users.directory.search" | "users.diagnostics.start" | "users.diagnostics.end" | "users.support.manage" | "users.password.recovery" | "users.signin.block" | "users.signin.unblock";
 
 const ROLE_PERMISSIONS = {
   super_admin: [
@@ -30,6 +30,9 @@ const ROLE_PERMISSIONS = {
     "users.directory.search",
     "users.diagnostics.start", "users.diagnostics.end",
     "users.support.manage",
+    "users.password.recovery",
+    "users.signin.block",
+    "users.signin.unblock",
     "organizations.limits.edit", "organizations.plan.edit", "billing.prices.sync",
     "billing.invoices.import", "billing.invoices.retry",
     "promos.create", "promos.toggle", "modules.review", "modules.withdraw", "modules.reports.resolve",

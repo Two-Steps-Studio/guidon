@@ -40,3 +40,12 @@ test("kill switch outranks explicit rules and rollout is stable for an organizat
   assert.equal(evaluateFlag(FLAG_KEY, rollout, subject), evaluateFlag(FLAG_KEY, rollout, { ...subject, user: "another" }));
   assert.equal(flagSchema.safeParse({ ...config, rollout: 101 }).success, false);
 });
+
+test("only super admins can operate on authentication accounts", () => {
+  for (const permission of ["users.password.recovery", "users.signin.block", "users.signin.unblock"]) {
+    assert.equal(hasAdminPermission("super_admin", permission), true);
+    for (const role of ["support", "finance", "engineering", "read_only"]) {
+      assert.equal(hasAdminPermission(role, permission), false);
+    }
+  }
+});

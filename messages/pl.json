@@ -1765,6 +1765,20 @@
       "activity": "Typy ostatnich zdarzeń",
       "empty": "Brak zarejestrowanej aktywności."
     },
+    "recovery": {
+      "title": "Operacje na koncie",
+      "description": "Wyślij link do odzyskania hasła na adres przypisany do konta logowania.",
+      "confirm": "Wpisz pełne ID użytkownika, aby potwierdzić",
+      "sent": "E-mail odzyskiwania został wysłany.",
+      "failed": "Nie udało się potwierdzić operacji. Sprawdź audyt przed ponowieniem.",
+      "limited": "Za dużo żądań. Spróbuj ponownie później.",
+      "operation": "Operacja",
+      "recovery": "Wyślij e-mail odzyskiwania",
+      "block": "Zablokuj nowe logowania",
+      "unblock": "Przywróć logowanie",
+      "signinDescription": "Istniejące sesje mogą działać do wygaśnięcia tokenów.",
+      "updated": "Zmieniono ograniczenie logowania."
+    },
     "directory": {
       "command": "Szukaj użytkowników",
       "filter": "Szukaj po",

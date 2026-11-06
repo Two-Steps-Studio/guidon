@@ -9,11 +9,15 @@ import { serviceDataClient } from "@/lib/data-client";
 import { ProfileDisclosure } from "../profile-disclosure";
 import { StartUserDiagnostics } from "../diagnostics-controls";
 import { SupportRecord } from "../support-record";
+import { AdminAccountOperations } from "../account-operations";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { isEmailConfigured } from "@/lib/email/resend";
 
 export default async function AdminUserDetail({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams: Promise<{ support?: string }>;
 }) {
-  const { role } = await requireAdminAccess("users.read");
+  const admin = await requireAdminAccess("users.read");
+  const { role } = admin;
   const { id } = await params;
   if (!AUDIT_UUID.test(id)) notFound();
   const { data, error } = await listUsersForAdmin(null, id);
@@ -26,6 +30,9 @@ export default async function AdminUserDetail({ params, searchParams }: {
       .select("organization_id, role").eq("user_id", user.id).order("organization_id").limit(51),
   ]);
   if (memberships.error) throw new Error("Could not load organization memberships");
+  const canRecover = hasAdminPermission(role, "users.password.recovery") && isEmailConfigured();
+  const canBlock = admin.id !== user.id && hasAdminPermission(role, "users.signin.block");
+  const canUnblock = admin.id !== user.id && hasAdminPermission(role, "users.signin.unblock");
 
   return <div className="container mx-auto max-w-4xl space-y-4 px-4 py-8 sm:px-6">
     <Link href="/admin/users" className="underline">{t("users")}</Link>
@@ -43,5 +50,7 @@ export default async function AdminUserDetail({ params, searchParams }: {
     {memberships.data.length > 50 && <p>{t("directory.membershipLimit")}</p>}
     {hasAdminPermission(role, "users.diagnostics.start") && <StartUserDiagnostics targetId={user.id} />}
     {hasAdminPermission(role, "users.support.manage") && <SupportRecord userId={user.id} result={(await searchParams).support} />}
+    {!hasDirectDatabase() && (canRecover || canBlock || canUnblock) &&
+      <AdminAccountOperations userId={user.id} canRecover={canRecover} canBlock={canBlock} canUnblock={canUnblock} />}
   </div>;
 }
