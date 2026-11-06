@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase-server";
 import { safeRedirect } from "@/lib/auth/safe-redirect";
 import { ADMIN_SIGN_IN_PATH } from "@/lib/admin/session-policy";
@@ -43,6 +44,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(adminSso ? new URL(ADMIN_SIGN_IN_PATH, SITE_URL) : `${origin}${redirect}`);
   } catch (error) {
     if (adminSso) return NextResponse.redirect(adminSsoError);
+    // A signup confirmation link opened in another browser (phone mail app):
+    // Supabase already confirmed the email before redirecting here, only the
+    // PKCE verifier cookie is missing - so the person just needs to sign in.
+    if ((error as { code?: string }).code === "pkce_code_verifier_not_found") {
+      const t = await getTranslations("auth.signup");
+      return NextResponse.redirect(
+        `${origin}/auth/login?message=${encodeURIComponent(t("confirmedOtherBrowser"))}&redirect=${encodeURIComponent(redirect)}`
+      );
+    }
     const message =
       error instanceof Error ? error.message : "Could not complete sign-in";
 

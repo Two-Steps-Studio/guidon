@@ -110,6 +110,7 @@
       "haveAccount": "¿Ya tienes una cuenta?",
       "signIn": "Inicia sesión",
       "confirmEmailMessage": "Revisa tu correo para confirmar tu cuenta",
+      "confirmedOtherBrowser": "Tu correo está confirmado. El enlace se abrió en un navegador distinto al del registro, así que inicia sesión aquí para continuar.",
       "emailAlreadyRegistered": "Ya existe una cuenta con este correo electrónico. Inicia sesión.",
       "invalidEmail": "Introduce un correo electrónico válido."
     },
