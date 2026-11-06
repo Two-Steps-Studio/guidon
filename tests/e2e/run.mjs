@@ -138,13 +138,16 @@ try{
   await cp(path.join(directory,".next/static"),path.join(standalone,".next/static"),{recursive:true});
   app=spawn(process.execPath,["--require",path.join(directory,"tests/e2e/network-guard.cjs"),"server.js"],{cwd:standalone,env:{...environment,NODE_ENV:"production",HOSTNAME:"127.0.0.1",PORT:String(appPort)},windowsHide:true,signal:controller.signal});
   app.stdout.on("data",chunk=>{appLog+=chunk;});app.stderr.on("data",chunk=>{appLog+=chunk;});app.on("error",()=>{});
+  // A 502 from the proxy below with nothing in app.log: say whether the server died (OOM kill = signal).
+  app.on("exit",(code,signal)=>{appLog+=`\n[e2e] production server exited: code=${code} signal=${signal}\n`;});
   await waitFor(async()=>{const response=await fetch(`http://127.0.0.1:${appPort}/api/health`,{signal:AbortSignal.timeout(3000)});return response.ok;},"production server");
   let openssl="openssl";
   if(process.platform==="win32"){const gitOpenSsl="C:\\Program Files\\Git\\usr\\bin\\openssl.exe";try{await access(gitOpenSsl);openssl=gitOpenSsl;}catch{}}
   await run(openssl,["req","-x509","-newkey","rsa:2048","-nodes","-keyout","test.key","-out","test.crt","-days","1","-subj","/CN=localhost","-addext","subjectAltName=DNS:localhost,IP:127.0.0.1"]);
   proxy=createHttpsServer({key:await readFile(path.join(directory,"test.key")),cert:await readFile(path.join(directory,"test.crt"))},(request,response)=>{
     const upstream=httpRequest({hostname:"127.0.0.1",port:appPort,path:request.url,method:request.method,headers:{...request.headers,"x-forwarded-proto":"https","x-forwarded-host":request.headers.host}},remote=>{response.writeHead(remote.statusCode,remote.headers);remote.pipe(response);});
-    upstream.on("error",()=>{
+    upstream.on("error",error=>{
+      appLog+=`[e2e proxy] ${request.method} ${request.url.split("?")[0]}: ${error.code ?? error.message}\n`;
       if(response.destroyed)return;
       if(response.headersSent){response.destroy();return;}
       response.writeHead(502);response.end();
