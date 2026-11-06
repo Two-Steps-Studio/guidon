@@ -1050,6 +1050,7 @@
     "bulkHint": "Strg/Cmd-Klick wählt mehrere Karten, Umschalt-Klick einen Bereich",
     "cardSelected": "Ausgewählt",
     "attachmentsLabel": "Anhänge",
+    "optionalTaskDetails": "Optionale Aufgabendetails",
     "addAttachments": "Dateien hinzufügen",
     "removeAttachment": "{name} entfernen",
     "createAttachmentsFailed": "{count, plural, one {# Datei konnte} other {# Dateien konnten}} nicht angehängt werden - füge sie in der Aufgabe hinzu.",

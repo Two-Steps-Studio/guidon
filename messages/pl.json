@@ -1062,6 +1062,7 @@
     "bulkHint": "Ctrl/Cmd+klik zaznacza kilka kart, Shift+klik zakres",
     "cardSelected": "Zaznaczone",
     "attachmentsLabel": "Załączniki",
+    "optionalTaskDetails": "Opcjonalne szczegóły zadania",
     "addAttachments": "Dodaj pliki",
     "removeAttachment": "Usuń {name}",
     "createAttachmentsFailed": "{count, plural, one {Nie udało się dołączyć # pliku} few {Nie udało się dołączyć # plików} other {Nie udało się dołączyć # plików}} - dodaj je z poziomu zadania.",

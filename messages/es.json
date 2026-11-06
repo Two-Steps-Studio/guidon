@@ -1050,6 +1050,7 @@
     "bulkHint": "Ctrl/Cmd+clic para seleccionar varias tarjetas, Mayús+clic para un rango",
     "cardSelected": "Seleccionada",
     "attachmentsLabel": "Adjuntos",
+    "optionalTaskDetails": "Detalles opcionales de la tarea",
     "addAttachments": "Añadir archivos",
     "removeAttachment": "Quitar {name}",
     "createAttachmentsFailed": "{count, plural, one {No se pudo adjuntar # archivo} other {No se pudieron adjuntar # archivos}}; añádelos desde la tarea.",

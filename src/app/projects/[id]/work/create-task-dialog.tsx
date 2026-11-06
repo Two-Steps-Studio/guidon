@@ -303,112 +303,120 @@ export function CreateTaskDialog({
             <p className="text-xs text-muted-foreground">{t("pasteImageHint")}</p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="new-task-priority">{t("priorityLabel")}</Label>
-              <Select
-                id="new-task-priority"
-                value={priority}
-                onChange={(event) => setPriority(event.target.value as TaskPriority)}
-              >
-                {priorityOptions.map((option) => (
-                  <option key={option.key} value={option.key}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
+          <details className="rounded-md border border-border px-3">
+            <summary className="cursor-pointer py-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
+              {t("optionalTaskDetails")}
+            </summary>
+            <div className="space-y-4 pb-3">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="new-task-priority">{t("priorityLabel")}</Label>
+                  <Select
+                    id="new-task-priority"
+                    value={priority}
+                    onChange={(event) => setPriority(event.target.value as TaskPriority)}
+                  >
+                    {priorityOptions.map((option) => (
+                      <option key={option.key} value={option.key}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="new-task-assignee">{t("assigneeLabel")}</Label>
-              <Select id="new-task-assignee" value={assigneeId} onChange={(event) => setAssigneeId(event.target.value)}>
-                <option value="">{t("unassigned")}</option>
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.full_name || member.email}
-                  </option>
-                ))}
-              </Select>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-task-assignee">{t("assigneeLabel")}</Label>
+                  <Select id="new-task-assignee" value={assigneeId} onChange={(event) => setAssigneeId(event.target.value)}>
+                    <option value="">{t("unassigned")}</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.full_name || member.email}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="new-task-due">{t("dueDateLabel")}</Label>
-              <DatePicker id="new-task-due" value={dueDate} onChange={setDueDate} />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="new-task-tags">{t("labelsLabel")}</Label>
-            <Input
-              id="new-task-tags"
-              value={tags}
-              placeholder={t("labelsPlaceholder")}
-              onChange={(event) => setTags(event.target.value)}
-            />
-            {labelPresets.length > 0 && (
-              <div className="flex flex-wrap gap-1.5" aria-label={t("labelPresetsAria")} role="group">
-                {labelPresets.map((preset) => {
-                  const active = currentTags.some((tag) => tag.toLowerCase() === preset.name.toLowerCase());
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => togglePreset(preset.name)}
-                      className={cn("rounded-full transition-opacity", active ? "opacity-100" : "opacity-50 hover:opacity-80")}
-                    >
-                      <LabelChip name={preset.name} color={preset.color} />
-                    </button>
-                  );
-                })}
+                <div className="space-y-2">
+                  <Label htmlFor="new-task-due">{t("dueDateLabel")}</Label>
+                  <DatePicker id="new-task-due" value={dueDate} onChange={setDueDate} />
+                </div>
               </div>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">{t("attachmentsLabel")}</span>
-              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                <Paperclip className="h-4 w-4" />
-                {t("addAttachments")}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(event) => {
-                  addFiles(Array.from(event.target.files ?? []), false);
-                  event.target.value = "";
-                }}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="new-task-tags">{t("labelsLabel")}</Label>
+                <Input
+                  id="new-task-tags"
+                  value={tags}
+                  placeholder={t("labelsPlaceholder")}
+                  onChange={(event) => setTags(event.target.value)}
+                />
+                {labelPresets.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5" aria-label={t("labelPresetsAria")} role="group">
+                    {labelPresets.map((preset) => {
+                      const active = currentTags.some((tag) => tag.toLowerCase() === preset.name.toLowerCase());
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => togglePreset(preset.name)}
+                          className={cn("rounded-full transition-opacity", active ? "opacity-100" : "opacity-50 hover:opacity-80")}
+                        >
+                          <LabelChip name={preset.name} color={preset.color} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium">{t("attachmentsLabel")}</span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <Paperclip className="h-4 w-4" />
+                    {t("addAttachments")}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(event) => {
+                      addFiles(Array.from(event.target.files ?? []), false);
+                      event.target.value = "";
+                    }}
+                  />
+                </div>
+                {files.length > 0 && (
+                  <ul className="space-y-1">
+                    {files.map((entry) => (
+                      <li key={entry.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1 text-sm">
+                        {entry.file.type.startsWith("image/") ? (
+                          <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                        ) : (
+                          <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                        )}
+                        <span className="min-w-0 flex-1 truncate">{entry.file.name}</span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {Math.max(1, Math.round(entry.file.size / 1024))} KB
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(entry.id)}
+                          aria-label={t("removeAttachment", { name: entry.file.name })}
+                          className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
             </div>
-            {files.length > 0 && (
-              <ul className="space-y-1">
-                {files.map((entry) => (
-                  <li key={entry.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1 text-sm">
-                    {entry.file.type.startsWith("image/") ? (
-                      <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                    ) : (
-                      <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                    )}
-                    <span className="min-w-0 flex-1 truncate">{entry.file.name}</span>
-                    <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                      {Math.max(1, Math.round(entry.file.size / 1024))} KB
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(entry.id)}
-                      aria-label={t("removeAttachment", { name: entry.file.name })}
-                      className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          </details>
 
           {restored && dirty && (
             <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">

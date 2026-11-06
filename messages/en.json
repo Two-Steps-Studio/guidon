@@ -1062,6 +1062,7 @@
     "bulkHint": "Ctrl/Cmd-click cards to select several, Shift-click for a range",
     "cardSelected": "Selected",
     "attachmentsLabel": "Attachments",
+    "optionalTaskDetails": "Optional task details",
     "addAttachments": "Add files",
     "removeAttachment": "Remove {name}",
     "createAttachmentsFailed": "{count, plural, one {# file} other {# files}} couldn't be attached - add {count, plural, one {it} other {them}} from the task.",

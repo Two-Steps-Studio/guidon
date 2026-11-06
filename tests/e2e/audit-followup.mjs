@@ -91,6 +91,7 @@ export async function auditFollowupCoverage({ page, origin, fixture, client, art
     await page.keyboard.press("Escape");await menu.waitFor({ state: "hidden" });
 
     await page.getByRole("button", { name: "New task", exact: true }).click();
+    await page.getByRole("dialog").getByText("Optional task details", { exact: true }).click();
     await page.locator("#new-task-due").focus();await page.keyboard.press("Enter");
     const calendar = page.locator('[data-slot="popover-content"]');await calendar.waitFor();
     assert.equal(await calendar.evaluate(node => getComputedStyle(node).animationName), "none", "Keyboard date picker must open instantly");
