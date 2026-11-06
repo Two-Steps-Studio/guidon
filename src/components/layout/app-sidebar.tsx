@@ -1,6 +1,7 @@
 "use client";
 
 import { initialsFor } from "@/lib/people";
+import type { AdminPage } from "@/lib/admin/permissions";
 import { isModuleVisible } from "@/lib/work/project-modules";
 import Link from "next/link";
 import Image from "next/image";
@@ -179,6 +180,7 @@ const ADMIN_NAV = [
 ] as const;
 
 export interface AppSidebarProps {
+  adminPages?: readonly AdminPage[];
   user?: {
     email?: string;
     full_name?: string;
@@ -277,6 +279,7 @@ export function AppSidebar({
   moduleLinks = [],
   approvals = null,
   collapsedGroups = [],
+  adminPages = [],
 }: AppSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -287,7 +290,6 @@ export function AppSidebar({
     setCollapsed(next);
     writeCollapsedGroups([...next]);
   });
-  const isAdmin = pathname.startsWith("/admin");
 
   const isGlobalActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -415,11 +417,11 @@ export function AppSidebar({
         </SidebarGroup>;
         })}
 
-        {isAdmin && (
+        {adminPages.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>{t("adminGroup")}</SidebarGroupLabel>
             <SidebarMenu>
-              {ADMIN_NAV.map((item) => (
+              {ADMIN_NAV.filter(item => adminPages.includes(item.href)).map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

@@ -10,7 +10,7 @@ import { recentCtaTotals, toFunnelCohort } from "@/lib/funnel";
  * cross-tenant by design, like the other admin pages.
  */
 export default async function AdminFunnelPage() {
-  await requireAdminAccess();
+  await requireAdminAccess("funnel.read");
   const t = await getTranslations("admin.funnel");
   const db = serviceDataClient();
   const [cohortsResult, ctaResult] = await Promise.all([

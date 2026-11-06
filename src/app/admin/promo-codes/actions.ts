@@ -22,7 +22,7 @@ export interface PromoCodeInput {
 }
 
 export async function createPromoCode(input: PromoCodeInput): Promise<{ error: string | null }> {
-  const admin = await requireAdminAccess();
+  const admin = await requireAdminAccess("promos.create");
   const code = normalizePromoCode(input.code);
   if (!PROMO_CODE_RE.test(code)) return { error: await tr("Codes are 3-40 letters, digits, - or _.") };
   if (!Number.isInteger(input.durationDays) || input.durationDays < 1 || input.durationDays > 3650) {
@@ -59,7 +59,7 @@ export async function createPromoCode(input: PromoCodeInput): Promise<{ error: s
 }
 
 export async function setPromoCodeActive(id: string, active: boolean): Promise<{ error: string | null }> {
-  await requireAdminAccess();
+  await requireAdminAccess("promos.toggle");
   const { data, error } = await serviceDataClient().from("promo_codes").update({ active }).eq("id", id).select<{ id: string }>("id");
   if (error) return { error: error.message };
   if (!data.length) return { error: await tr("Code not found.") };

@@ -18,7 +18,7 @@ import { configFor } from "@/app/projects/[id]/activity/action-config";
  * per-project page's own empty-state pattern.
  */
 export default async function AdminLogsPage() {
-  await requireAdminAccess();
+  await requireAdminAccess("activity.read");
   const t = await getTranslations("admin");
 
   const entries = await listRecentActivityForAdmin(100);

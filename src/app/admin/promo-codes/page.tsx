@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
 import { CreatePromoCodeForm, PromoCodeToggle } from "./promo-code-forms";
+import { hasAdminPermission } from "@/lib/admin/permissions";
 
 interface PromoCodeRow {
   id: string;
@@ -33,7 +34,7 @@ function codeStatus(code: PromoCodeRow): "Active" | "Off" | "Expired" | "UsedUp"
  * typed at checkout.
  */
 export default async function AdminPromoCodesPage() {
-  await requireAdminAccess();
+  const { role } = await requireAdminAccess("promos.read");
   const t = await getTranslations("admin");
   const db = serviceDataClient();
 
@@ -50,7 +51,7 @@ export default async function AdminPromoCodesPage() {
         <p className="text-muted-foreground">{t("promoDescription")}</p>
       </div>
 
-      <Card>
+      {hasAdminPermission(role, "promos.create") && <Card>
         <CardHeader>
           <CardTitle>{t("promoCreateTitle")}</CardTitle>
           <CardDescription>{t("promoCreateDescription")}</CardDescription>
@@ -58,7 +59,7 @@ export default async function AdminPromoCodesPage() {
         <CardContent>
           <CreatePromoCodeForm plans={plans.filter((plan) => plan.id !== "free")} />
         </CardContent>
-      </Card>
+      </Card>}
 
       {error ? (
         <p className="text-sm text-destructive">{t("promoMigrationMissing")}</p>
@@ -96,7 +97,7 @@ export default async function AdminPromoCodesPage() {
                           <span className={status === "Active" ? "text-success" : "text-muted-foreground"}>
                             {t(`promoStatus${status}`)}
                           </span>
-                          <PromoCodeToggle id={code.id} active={code.active} />
+                          {hasAdminPermission(role, "promos.toggle") && <PromoCodeToggle id={code.id} active={code.active} />}
                         </div>
                       </td>
                     </tr>

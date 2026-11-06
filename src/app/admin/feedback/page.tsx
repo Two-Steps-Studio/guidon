@@ -14,7 +14,7 @@ import { listFeedbackForAdmin, resolveProfilesForAdmin } from "@/lib/data/admin"
  * present but never assumed.
  */
 export default async function AdminFeedbackPage() {
-  await requireAdminAccess();
+  await requireAdminAccess("feedback.read");
   const t = await getTranslations("admin");
 
   const entries = await listFeedbackForAdmin();

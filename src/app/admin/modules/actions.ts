@@ -16,7 +16,7 @@ const isVersion = (value: string) => /^[0-9A-Za-z.+-]{1,128}$/.test(value);
  * checks - the CHECK on module_catalog_entries backs it up.
  */
 export async function reviewModuleVersion(moduleId: string, version: string, decision: "approve" | "reject", note: string): Promise<{ error: string | null }> {
-  const admin = await requireAdminAccess();
+  const admin = await requireAdminAccess("modules.review");
   if (!isId(moduleId) || !isVersion(version) || !["approve", "reject"].includes(decision) || note.length > 2000) return { error: await tr("Invalid request.") };
   if (decision === "reject" && !note.trim()) return { error: await tr("Explain why the version is rejected - the author sees this note.") };
   const db = serviceDataClient();
@@ -41,7 +41,7 @@ export async function reviewModuleVersion(moduleId: string, version: string, dec
 
 /** Takes a version out of the catalog and installation (existing installations keep working). */
 export async function withdrawModuleVersionAsAdmin(moduleId: string, version: string, note: string): Promise<{ error: string | null }> {
-  const admin = await requireAdminAccess();
+  const admin = await requireAdminAccess("modules.withdraw");
   if (!isId(moduleId) || !isVersion(version) || note.length > 2000) return { error: await tr("Invalid request.") };
   const db = serviceDataClient();
   const result = await db.from("module_catalog_entries").update({ status: "withdrawn", published: false }).eq("module_id", moduleId).eq("version", version).neq("status", "withdrawn").select("module_id");
@@ -53,7 +53,7 @@ export async function withdrawModuleVersionAsAdmin(moduleId: string, version: st
 }
 
 export async function resolveModuleReport(reportId: string): Promise<{ error: string | null }> {
-  const admin = await requireAdminAccess();
+  const admin = await requireAdminAccess("modules.reports.resolve");
   if (!/^[0-9a-f-]{36}$/.test(reportId)) return { error: await tr("Invalid request.") };
   const db = serviceDataClient();
   const result = await db.from("module_reports").update({ status: "resolved", resolved_at: new Date().toISOString() }).eq("id", reportId).eq("status", "open").select<{ module_id: string; version: string }>("module_id, version");

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { getAdminCounts } from "@/lib/data/admin";
+import { hasAdminPermission } from "@/lib/admin/permissions";
 import { checkAI, checkAuth, checkBilling, checkDatabase, checkStorage, type Status } from "@/lib/health/checks";
 
 const STATUS_ICONS: Record<Status, { className: string; Icon: typeof CheckCircle2 }> = {
@@ -29,7 +30,7 @@ function StatusBadge({ status, label }: { status: Status; label: string }) {
  * same four health checks (src/lib/health/checks.ts) plus one counts query.
  */
 export default async function AdminOverviewPage() {
-  await requireAdminAccess();
+  const { role } = await requireAdminAccess("overview.read");
   const t = await getTranslations("admin");
 
   const STATUS_LABELS: Record<Status, string> = {
@@ -39,18 +40,19 @@ export default async function AdminOverviewPage() {
     not_configured: t("statusNotConfigured"),
   };
 
+  const canReadHealth = hasAdminPermission(role, "integrations.read");
   const [database, storage, ai, counts] = await Promise.all([
-    checkDatabase(),
-    checkStorage(),
-    checkAI(),
+    canReadHealth ? checkDatabase() : null,
+    canReadHealth ? checkStorage() : null,
+    canReadHealth ? checkAI() : null,
     getAdminCounts(),
   ]);
-  const auth = checkAuth();
-  const billing = checkBilling();
+  const auth = canReadHealth ? checkAuth() : null;
+  const billing = canReadHealth ? checkBilling() : null;
 
   return (
     <div className="container mx-auto max-w-7xl space-y-10 px-6 py-8">
-      <section className="space-y-4">
+      {database && storage && ai && auth && billing && <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold">{t("systemStatusTitle")}</h2>
           <p className="text-muted-foreground">{t("systemStatusDescription")}</p>
@@ -127,7 +129,7 @@ export default async function AdminOverviewPage() {
             </CardContent>
           </Card>
         </div>
-      </section>
+      </section>}
 
       <section className="space-y-4">
         <div>
@@ -162,7 +164,7 @@ export default async function AdminOverviewPage() {
         </div>
       </section>
 
-      <section className="space-y-4">
+      {storage && <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold">{t("storage")}</h2>
           <p className="text-muted-foreground">{t("storageSectionDescription")}</p>
@@ -176,9 +178,9 @@ export default async function AdminOverviewPage() {
             <StatusBadge status={storage.status} label={STATUS_LABELS[storage.status]} />
           </CardContent>
         </Card>
-      </section>
+      </section>}
 
-      <section className="space-y-4">
+      {ai && <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold">{t("aiProviderSectionTitle")}</h2>
           <p className="text-muted-foreground">{t("aiProviderSectionDescription")}</p>
@@ -196,9 +198,9 @@ export default async function AdminOverviewPage() {
             <StatusBadge status={ai.status} label={STATUS_LABELS[ai.status]} />
           </CardContent>
         </Card>
-      </section>
+      </section>}
 
-      <section className="space-y-4">
+      {auth && <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold">{t("authentication")}</h2>
           <p className="text-muted-foreground">{t("authSectionDescription")}</p>
@@ -219,7 +221,7 @@ export default async function AdminOverviewPage() {
             <StatusBadge status={auth.status} label={STATUS_LABELS[auth.status]} />
           </CardContent>
         </Card>
-      </section>
+      </section>}
     </div>
   );
 }

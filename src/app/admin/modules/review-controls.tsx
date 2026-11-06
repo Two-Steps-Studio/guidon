@@ -26,7 +26,7 @@ export function ReviewControls({ moduleId, version, ownSubmission }: { moduleId:
   </div>;
 }
 
-export function ReportControls({ reportId, moduleId, version }: { reportId: string; moduleId: string; version: string }) {
+export function ReportControls({ reportId, moduleId, version, canResolve, canWithdraw }: { reportId: string; moduleId: string; version: string; canResolve: boolean; canWithdraw: boolean }) {
   const t = useTranslations("moduleRegistry");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -34,8 +34,8 @@ export function ReportControls({ reportId, moduleId, version }: { reportId: stri
   const act = (fn: () => Promise<{ error: string | null }>) => start(async () => { const result = await fn(); setError(result.error); if (!result.error) router.refresh(); });
   return <div className="space-y-1">
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="outline" disabled={pending} onClick={() => act(() => resolveModuleReport(reportId))}>{t("resolveReport")}</Button>
-      <Button size="sm" variant="outline" className="text-destructive" disabled={pending} onClick={() => act(() => withdrawModuleVersionAsAdmin(moduleId, version, "Withdrawn after a report"))}>{t("withdrawVersion")}</Button>
+      {canResolve && <Button size="sm" variant="outline" disabled={pending} onClick={() => act(() => resolveModuleReport(reportId))}>{t("resolveReport")}</Button>}
+      {canWithdraw && <Button size="sm" variant="outline" className="text-destructive" disabled={pending} onClick={() => act(() => withdrawModuleVersionAsAdmin(moduleId, version, "Withdrawn after a report"))}>{t("withdrawVersion")}</Button>}
     </div>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
   </div>;

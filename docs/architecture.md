@@ -109,20 +109,14 @@ request to an external vendor.
 
 ## Admin panel (TODO.md §25)
 
-`src/app/admin/*` - five routes: the dashboard (`page.tsx`), `organizations`,
-`users`, `logs`, `integrations`. Every route is gated by
-`requireAdminAccess()` (`src/lib/data/admin-access.ts`), which checks the
-signed-in user's email against the `ADMIN_EMAILS` allowlist - there is no
-admin role in the database. Four of the five routes are read-only: they
-render cross-tenant queries from `src/lib/data/admin.ts` (via
-`createServiceClient()`, since "every organization" is definitionally a
-cross-tenant read RLS is designed to prevent for anyone else) and the
-`/api/health` checks for System Status. `organizations` is the one
-exception: `src/app/admin/organizations/actions.ts` exposes
-`updateOrganizationProjectLimit` and `updateOrganizationPlan`, an
-intentional admin escape hatch for overriding a plan/limit by hand - both
-re-check `requireAdminAccess()` themselves (defense in depth, not just the
-page-level gate) before writing.
+Each page and Server Action under `src/app/admin` requires a specific
+permission before performing a cross-tenant read or write. The server reads
+the authenticated account email and checks `ADMIN_EMAILS`. With
+`PLATFORM_ADMIN_ACCESS=grants`, it also reads an active role grant for the
+account UUID. The matrix in `src/lib/admin/permissions.ts` controls route
+access, mutations and sidebar visibility. Organization membership roles
+are independent from platform roles. See [configuration](./configuration.md#admin-todomd-25)
+for the rollout and local verification commands.
 
 ## Health checks
 

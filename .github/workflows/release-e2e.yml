@@ -68,6 +68,7 @@ jobs:
       - run: npm run test:feedback
       # Pure-logic suites that had no CI step: billing + Stripe webhook flow, plan limits, reports, GitHub refs, labels/translations, import, recurrence.
       - run: npm run test:billing
+      - run: npm run test:admin
       - run: npm run test:limits
       - run: npm run test:reports
       - run: npm run test:github

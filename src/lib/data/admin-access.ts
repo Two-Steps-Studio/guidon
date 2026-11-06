@@ -1,44 +1,49 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
+import { hasAdminPermission, resolveAdminRole, type AdminPermission } from "@/lib/admin/permissions";
+import { serviceDataClient } from "@/lib/data-client";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { withServiceRole } from "@/lib/db/session";
+import { getAuthUser } from "./auth-user";
 import { getCurrentUser } from "./current-user";
 
-/**
- * Instance-admin gate (TODO.md §25).
- *
- * Guidon has no site-wide "admin" role - authorization elsewhere in this
- * codebase is entirely scoped to organization/project membership
- * (src/lib/data/org-access.ts, src/lib/data/project-access.ts). Rather than
- * invent a new role column and an admin-granting UI (a security feature
- * that deserves its own careful design, out of scope here), instance-admin
- * access is a static allowlist read from the environment: ADMIN_EMAILS,
- * comma-separated, matched case-insensitively against the signed-in user's
- * email.
- *
- * An unset or empty ADMIN_EMAILS makes /admin unreachable by anyone - the
- * safe default for an install that hasn't opted in.
- */
-function adminEmails(): Set<string> {
-  return new Set(
-    (process.env.ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean)
-  );
-}
-
-/**
- * getCurrentUser() already redirects unauthenticated requests to
- * /auth/login, so by the time we get here there is always a signed-in user
- * - this only has to decide whether *this* user is on the allowlist.
- */
-export async function requireAdminAccess() {
+const getAdminAccess = cache(async () => {
   const user = await getCurrentUser();
-  const allowed = adminEmails();
+  const emails = new Set((process.env.ADMIN_EMAILS ?? "").split(",").map(email => email.trim().toLowerCase()).filter(Boolean));
+  if (emails.size === 0) redirect("/dashboard");
 
-  if (allowed.size === 0 || !user.email || !allowed.has(user.email.toLowerCase())) {
-    redirect("/dashboard");
+  // Profile fields can be edited. Use the authentication record for allowlist checks.
+  const email = hasDirectDatabase()
+    ? await withServiceRole(async ({ query }) => {
+      const result = await query("SELECT email FROM auth.users WHERE id = $1", [user.id]);
+      return result.rows[0]?.email as string | null | undefined;
+    })
+    : (await getAuthUser())?.email;
+  if (!email || !emails.has(email.toLowerCase())) redirect("/dashboard");
+
+  const mode = process.env.PLATFORM_ADMIN_ACCESS;
+  let grantRole: unknown;
+  if (mode === "grants") {
+    const { data, error } = await serviceDataClient()
+      .from<{ role: string }>("platform_admin_grants")
+      .select("role")
+      .eq("user_id", user.id)
+      .is("revoked_at", null)
+      .maybeSingle();
+    if (error) redirect("/dashboard");
+    grantRole = data?.role;
   }
 
-  return user;
+  const role = resolveAdminRole(mode, true, grantRole);
+  if (!role) redirect("/dashboard");
+  return { ...user, email, role };
+});
+
+/** Layouts, pages and Server Actions call this independently. */
+export async function requireAdminAccess(permission: AdminPermission) {
+  const admin = await getAdminAccess();
+  if (!hasAdminPermission(admin.role, permission)) redirect("/admin");
+  return admin;
 }

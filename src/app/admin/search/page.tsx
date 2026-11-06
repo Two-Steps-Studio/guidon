@@ -11,7 +11,7 @@ async function loadCounters() {
 }
 
 export default async function SearchQualityPage() {
-  await requireAdminAccess();
+  await requireAdminAccess("search.read");
   const t = await getTranslations("admin.searchQuality");
   // Cross-tenant aggregates deliberately restricted to administrators.
   const {data,error,now} = await loadCounters();

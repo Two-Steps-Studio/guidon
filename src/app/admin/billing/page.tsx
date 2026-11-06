@@ -7,6 +7,7 @@ import { loadPlans, loadStoredPrices, previewPriceSync } from "@/lib/billing/pri
 import type { PriceSyncPlan, SyncInterval } from "@/lib/billing/price-sync-core";
 import { SITE_URL } from "@/lib/site-url";
 import { SyncPricesButton } from "./sync-button";
+import { hasAdminPermission } from "@/lib/admin/permissions";
 
 const INTERVALS: SyncInterval[] = ["week", "month", "year"];
 const NOT_SOLD = new Set(["free", "enterprise"]);
@@ -23,7 +24,7 @@ type RowStatus = "inSync" | "new" | "changed" | "removed" | "missing";
  * showing any secret.
  */
 export default async function AdminBillingPage() {
-  await requireAdminAccess();
+  const { role } = await requireAdminAccess("billing.read");
   const t = await getTranslations("admin");
   const configured = !hasDirectDatabase() && isBillingConfigured();
   const secretKey = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
@@ -163,7 +164,7 @@ export default async function AdminBillingPage() {
             </details>
           )}
 
-          <SyncPricesButton disabled={!preview || preview.errors.length > 0 || !pendingChanges} />
+          {hasAdminPermission(role, "billing.prices.sync") && <SyncPricesButton disabled={!preview || preview.errors.length > 0 || !pendingChanges} />}
           {preview && !pendingChanges && preview.errors.length === 0 && (
             <p className="text-sm text-muted-foreground">{t("pricesUpToDate")}</p>
           )}

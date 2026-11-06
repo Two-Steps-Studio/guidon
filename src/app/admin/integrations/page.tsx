@@ -26,7 +26,7 @@ function MaskedRow({ label, isSet, notSetLabel }: { label: string; isSet: boolea
  * pages would mostly duplicate the same few lookups across two files.
  */
 export default async function AdminIntegrationsPage() {
-  await requireAdminAccess();
+  await requireAdminAccess("integrations.read");
   const t = await getTranslations("admin");
 
   const githubClientId = Boolean(process.env.GITHUB_APP_CLIENT_ID?.trim());
