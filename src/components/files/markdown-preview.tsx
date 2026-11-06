@@ -113,7 +113,8 @@ export function MarkdownPreview({
             </code>
           ),
           pre: (props) => (
-            <pre className="mb-4 overflow-x-auto rounded-md bg-muted p-3 [&>code]:bg-transparent [&>code]:p-0" {...domProps(props)} />
+            // tabIndex: keyboard users can scroll a long line into view (WCAG 2.1.1).
+            <pre tabIndex={0} className="mb-4 overflow-x-auto rounded-md bg-muted p-3 [&>code]:bg-transparent [&>code]:p-0 focus-visible:outline-2 focus-visible:outline-ring" {...domProps(props)} />
           ),
           table: (props) => (
             <div className="mb-4 overflow-x-auto">
