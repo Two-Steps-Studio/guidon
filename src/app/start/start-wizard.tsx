@@ -62,6 +62,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
   const t = useTranslations("onboarding");
   const tCommon = useTranslations("common");
   const tSettings = useTranslations("settings");
+  const tLanding = useTranslations("landing.design");
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [restored, setRestored] = useState(false);
@@ -282,7 +283,9 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
               {t("back")}
             </Button>
           ) : (
-            <span />
+            <Link href="/sandbox" className="inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-2">
+              {tLanding("sandbox")}
+            </Link>
           )}
           <div className="flex items-center gap-2">
             {step > 0 && step < STEPS.length - 1 && (
