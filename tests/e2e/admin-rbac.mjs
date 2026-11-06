@@ -264,12 +264,8 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
     VALUES ($1, $2, 'task.created', '{}', 'failed', 1) RETURNING id
   `, [webhook.id, owner.organizationId]);
   await client.query(`
-    INSERT INTO module_catalog_entries (module_id, version, organization_id, category, description, manifest, published, status, visibility)
-    VALUES ('synthetic-report', '1.0.0', $1, 'research', 'Synthetic listing', '{}', false, 'draft', 'private')
-  `, [owner.organizationId]);
-  await client.query(`
     INSERT INTO module_reports (module_id, version, reporter_id, reason)
-    VALUES ('synthetic-report', '1.0.0', $1, 'spam')
+    VALUES ('release-planning', '1.0.0', $1, 'spam')
   `, [target.id]);
   await page.goto(`${origin}/admin/operations`);
   await page.getByRole("link", { name: "Open abuse reports" }).waitFor();
