@@ -67,8 +67,8 @@ environment.MODULE_SIGNING_KEY=JSON.stringify(generateKeyPairSync("ed25519").pri
 const controller=new AbortController();
 // Aborting also stops the production server (spawned with this signal), so
 // the limit must cover the build plus a whole browser pass; CI runs one
-// browser per job (--browser=<name>), each of which takes ~11 min.
-const deadline=setTimeout(()=>controller.abort(new Error("E2E global timeout")),25*60*1000);
+// browser per job (--browser=<name>); the Chromium pass alone takes ~24 min.
+const deadline=setTimeout(()=>controller.abort(new Error("E2E global timeout")),50*60*1000);
 let app,proxy,client;
 let appLog="";
 let phase="source-copy";
