@@ -5,6 +5,42 @@ import { AUDIT_UUID, auditAdminMutation } from "@/lib/admin/audit";
 import { serviceDataClient } from "@/lib/data-client";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listUsersForAdmin, type AdminUserRow } from "@/lib/data/admin";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { createServiceClient } from "@/lib/supabase-server";
+import { deliverPasswordRecovery } from "@/lib/auth/password-recovery";
+import { isEmailConfigured } from "@/lib/email/resend";
+import { isAiAccountEmail } from "@/lib/ai-account-email";
+
+export async function applyAdminAccountOperation(operation: string, userId: string, confirmation: string) {
+  const action = operation === "block" ? "users.signin.block"
+    : operation === "unblock" ? "users.signin.unblock" : "users.password.recovery";
+  return auditAdminMutation(action, userId, async (admin, changes) => {
+    if (operation !== "recovery" && operation !== "block" && operation !== "unblock") return { error: "invalid" };
+    if (typeof userId !== "string" || !AUDIT_UUID.test(userId) || confirmation !== userId) {
+      return { error: "confirmation" };
+    }
+    if (hasDirectDatabase() || (operation === "recovery" && !isEmailConfigured())) return { error: "unavailable" };
+    const targetId = userId.toLowerCase();
+    if (operation !== "recovery" && targetId === admin.id) return { error: "self" };
+    try {
+      const auth = createServiceClient().auth.admin;
+      const { data, error } = await auth.getUserById(targetId);
+      if (error || !data.user || isAiAccountEmail(data.user.email)) return { error: "unavailable" };
+      if (operation === "recovery") {
+        if (!data.user.email) return { error: "unavailable" };
+        const result = await deliverPasswordRecovery(data.user.email, targetId);
+        return { error: result === "sent" ? null : result };
+      }
+      const block = operation === "block";
+      const updated = await auth.updateUserById(targetId, { ban_duration: block ? "876000h" : "none" });
+      if (updated.error || updated.data.user?.id !== targetId) return { error: "unavailable" };
+      changes.after = { signin_blocked: block };
+      return { error: null };
+    } catch {
+      return { error: "unavailable" };
+    }
+  });
+}
 
 const searchPatterns = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,

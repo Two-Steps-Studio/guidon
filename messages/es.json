@@ -1703,6 +1703,20 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "recovery": {
+      "title": "Operaciones de cuenta",
+      "description": "Envía un enlace de recuperación al correo de la cuenta de autenticación.",
+      "confirm": "Introduce el ID de usuario completo para confirmar",
+      "sent": "Correo de recuperación enviado.",
+      "failed": "No se pudo confirmar la operación. Consulta la auditoría antes de reintentar.",
+      "limited": "Demasiadas solicitudes. Inténtalo más tarde.",
+      "operation": "Operación",
+      "recovery": "Enviar correo de recuperación",
+      "block": "Bloquear nuevos inicios de sesión",
+      "unblock": "Volver a permitir el inicio de sesión",
+      "signinDescription": "Las sesiones existentes pueden seguir activas hasta que caduquen sus tokens.",
+      "updated": "Restricción de inicio de sesión actualizada."
+    },
     "directory": {
       "command": "Buscar usuarios",
       "filter": "Buscar por",

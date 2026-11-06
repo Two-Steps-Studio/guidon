@@ -7,9 +7,13 @@ import { listUsersForAdmin } from "@/lib/data/admin";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
 import { ProfileDisclosure } from "../profile-disclosure";
+import { AdminAccountOperations } from "../account-operations";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { isEmailConfigured } from "@/lib/email/resend";
 
 export default async function AdminUserDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { role } = await requireAdminAccess("users.read");
+  const admin = await requireAdminAccess("users.read");
+  const { role } = admin;
   const { id } = await params;
   if (!AUDIT_UUID.test(id)) notFound();
   const { data, error } = await listUsersForAdmin(null, id);
@@ -22,6 +26,9 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
       .select("organization_id, role").eq("user_id", user.id).order("organization_id").limit(51),
   ]);
   if (memberships.error) throw new Error("Could not load organization memberships");
+  const canRecover = hasAdminPermission(role, "users.password.recovery") && isEmailConfigured();
+  const canBlock = admin.id !== user.id && hasAdminPermission(role, "users.signin.block");
+  const canUnblock = admin.id !== user.id && hasAdminPermission(role, "users.signin.unblock");
 
   return <div className="container mx-auto max-w-4xl space-y-4 px-4 py-8 sm:px-6">
     <Link href="/admin/users" className="underline">{t("users")}</Link>
@@ -37,5 +44,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
       {memberships.data.slice(0, 50).map(member => <li key={member.organization_id} className="break-all">{member.organization_id} · {member.role}</li>)}
     </ul> : <p>—</p>}
     {memberships.data.length > 50 && <p>{t("directory.membershipLimit")}</p>}
+    {!hasDirectDatabase() && (canRecover || canBlock || canUnblock) &&
+      <AdminAccountOperations userId={user.id} canRecover={canRecover} canBlock={canBlock} canUnblock={canUnblock} />}
   </div>;
 }

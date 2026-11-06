@@ -139,6 +139,7 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   assert.ok(!page.url().includes(encodeURIComponent(target.email)));
   await targetRow.getByRole("link", { name: target.id }).click();
   await page.getByRole("heading", { name: "User details" }).waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Account operations" }).count(), 0);
   assert.ok(!(await page.locator("main").textContent()).includes(target.email));
   const { rows: [searchAudit] } = await client.query(
     "SELECT target_id, before_state, after_state FROM platform_admin_audit_events WHERE action = 'users.directory.search' AND outcome = 'succeeded'",
