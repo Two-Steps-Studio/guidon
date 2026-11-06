@@ -1703,6 +1703,17 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "pii": {
+      "userId": "ID de usuario",
+      "profile": "Datos del perfil",
+      "hidden": "Ocultos",
+      "reveal": "Mostrar perfil",
+      "hide": "Ocultar perfil",
+      "loading": "Mostrando…",
+      "limited": "Límite alcanzado. Inténtalo de nuevo en un minuto.",
+      "failed": "Perfil no disponible.",
+      "unavailable": "La visualización no está disponible temporalmente."
+    },
     "audit": {
       "title": "Auditoría administrativa",
       "description": "Cambios administrativos, accesos denegados y resultados. Las entradas con .requested marcan el inicio de una operación.",

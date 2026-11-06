@@ -6,7 +6,7 @@ import { withServiceRole } from "@/lib/db/session";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { AUDIT_TARGETS, AUDIT_UUID } from "./audit";
 
-export const AUDIT_ACTIONS = Object.keys(AUDIT_TARGETS).flatMap(action => [action, `${action}.requested`]);
+export const AUDIT_ACTIONS = [...Object.keys(AUDIT_TARGETS).flatMap(action => [action, `${action}.requested`]), "users.pii.reveal"];
 export const AUDIT_TARGET_TYPES = [...new Set([...Object.values(AUDIT_TARGETS), "user"])];
 export const AUDIT_OUTCOMES = ["succeeded", "failed", "denied"] as const;
 

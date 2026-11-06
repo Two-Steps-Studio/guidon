@@ -87,6 +87,43 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await page.locator("main ol li").first().waitFor();
   assert.equal(await page.locator("main ol li").count(), 1);
   assert.ok(!firstPageRequests.includes(await page.locator('main ol a[href*="?request="]').textContent()));
+
+  const target = fixture.users[1];
+  await page.goto(`${origin}/admin/users`);
+  const userTable = page.locator("main table");
+  const targetRow = userTable.getByRole("row").filter({ hasText: target.id });
+  const reveal = targetRow.getByRole("button", { name: "Reveal profile" });
+  await reveal.waitFor();
+  assert.ok(!(await userTable.textContent()).includes(target.email));
+  await reveal.click();
+  await targetRow.getByText(target.email, { exact: true }).waitFor();
+  await targetRow.getByRole("button", { name: "Hide profile" }).click();
+  assert.ok(!(await targetRow.textContent()).includes(target.email));
+  const { rows: [disclosure] } = await client.query(
+    "SELECT actor_id, target_id, outcome, before_state, after_state FROM platform_admin_audit_events WHERE action = 'users.pii.reveal'",
+  );
+  assert.deepEqual(disclosure, {
+    actor_id: owner.id, target_id: target.id, outcome: "succeeded", before_state: null, after_state: null,
+  });
+  // Database-side requests and the browser share the same per-actor quota.
+  const { rows: [grant] } = await client.query(
+    "SELECT has_function_privilege('authenticated', 'public.platform_admin_reveal_profile(uuid,uuid,uuid)', 'EXECUTE') AS allowed",
+  );
+  assert.equal(grant.allowed, false);
+  await client.query(
+    "SELECT public.platform_admin_reveal_profile($1, $2, gen_random_uuid()) FROM generate_series(1, 9)",
+    [owner.id, target.id],
+  );
+  await reveal.click();
+  await targetRow.getByRole("alert").getByText(/Disclosure limit reached/).waitFor();
+  assert.ok(!(await targetRow.textContent()).includes(target.email));
+  await setRole("support");
+  await reveal.click();
+  await page.waitForURL(url => url.pathname === "/admin");
+  const { rows: [denial] } = await client.query(
+    "SELECT count(*)::int AS total FROM platform_admin_audit_events WHERE action = 'users.pii.reveal' AND outcome = 'denied'",
+  );
+  assert.equal(denial.total, 1);
   await setRole("finance");
   await page.goto(`${origin}/admin/organizations`);
   await page.locator("main table").waitFor();

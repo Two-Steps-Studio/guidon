@@ -17,11 +17,13 @@ export type AdminPage = keyof typeof ADMIN_PAGE_PERMISSIONS;
 export type AdminPermission = (typeof ADMIN_PAGE_PERMISSIONS)[AdminPage]
   | "organizations.limits.edit" | "organizations.plan.edit"
   | "billing.prices.sync" | "promos.create" | "promos.toggle"
-  | "modules.review" | "modules.withdraw" | "modules.reports.resolve";
+  | "modules.review" | "modules.withdraw" | "modules.reports.resolve"
+  | "users.pii.reveal";
 
 const ROLE_PERMISSIONS = {
   super_admin: [
     ...Object.values(ADMIN_PAGE_PERMISSIONS),
+    "users.pii.reveal",
     "organizations.limits.edit", "organizations.plan.edit", "billing.prices.sync",
     "promos.create", "promos.toggle", "modules.review", "modules.withdraw", "modules.reports.resolve",
   ],

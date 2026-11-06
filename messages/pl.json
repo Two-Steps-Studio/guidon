@@ -1715,6 +1715,17 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "pii": {
+      "userId": "ID użytkownika",
+      "profile": "Dane profilu",
+      "hidden": "Ukryte",
+      "reveal": "Odsłoń profil",
+      "hide": "Ukryj profil",
+      "loading": "Odsłanianie…",
+      "limited": "Osiągnięto limit ujawnień. Spróbuj ponownie za minutę.",
+      "failed": "Profil niedostępny.",
+      "unavailable": "Ujawnianie danych jest chwilowo niedostępne."
+    },
     "audit": {
       "title": "Audyt administracyjny",
       "description": "Zmiany administracyjne, odmowy dostępu i wyniki operacji. Wpisy z końcówką .requested oznaczają rozpoczęcie operacji.",

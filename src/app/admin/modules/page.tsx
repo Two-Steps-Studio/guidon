@@ -30,19 +30,13 @@ export default async function AdminModulesPage() {
   ]);
   if (pending.error || reports.error || events.error) throw new Error("Could not load the module registry. Apply migration 093 before deployment.");
   const queue = pending.data.flatMap((row) => { try { return [decodeCatalogRow(row)]; } catch { return []; } });
-  const submitters = new Map<string, string>();
-  const ids = [...new Set(queue.map((entry) => entry.submittedBy).filter((id): id is string => Boolean(id)))];
-  if (ids.length) {
-    const { data } = await db.from("profiles").select<{ id: string; email: string | null; full_name: string | null }>("id, email, full_name").in("id", ids);
-    for (const profile of data ?? []) submitters.set(profile.id, profile.full_name || profile.email || profile.id);
-  }
   const labels = { read: runtime("permissionRead"), write: runtime("permissionWrite"), none: runtime("permissionNone"), "tasks:write": runtime("permissionTasks"), "notifications:send": runtime("permissionNotify"), "webhooks:send": runtime("permissionWebhooks"), "code:run": runtime("permissionCode") };
   return <div className="container mx-auto max-w-5xl space-y-8 px-6 py-8">
     <div><h2 className="text-2xl font-bold">{t("adminTitle")}</h2><p className="text-muted-foreground">{t("adminDescription")}</p></div>
     <section className="space-y-4" aria-labelledby="review-queue">
       <h3 id="review-queue" className="text-lg font-semibold">{t("queueTitle", { count: queue.length })}</h3>
       {!queue.length && <p className="text-sm text-muted-foreground">{t("queueEmpty")}</p>}
-      {queue.map((entry) => <Submission key={`${entry.moduleId}@${entry.version}`} entry={entry} submitter={entry.submittedBy ? submitters.get(entry.submittedBy) ?? "?" : "-"} own={entry.submittedBy === admin.id} labels={labels} t={t} canReview={canReview} />)}
+      {queue.map((entry) => <Submission key={`${entry.moduleId}@${entry.version}`} entry={entry} submitter={entry.submittedBy ?? "-"} own={entry.submittedBy === admin.id} labels={labels} t={t} canReview={canReview} />)}
     </section>
     <section className="space-y-3" aria-labelledby="open-reports">
       <h3 id="open-reports" className="text-lg font-semibold">{t("reportsTitle", { count: reports.data.length })}</h3>

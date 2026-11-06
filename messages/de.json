@@ -1703,6 +1703,17 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "pii": {
+      "userId": "Benutzer-ID",
+      "profile": "Profildaten",
+      "hidden": "Ausgeblendet",
+      "reveal": "Profil anzeigen",
+      "hide": "Profil ausblenden",
+      "loading": "Wird angezeigt…",
+      "limited": "Limit erreicht. Versuche es in einer Minute erneut.",
+      "failed": "Profil nicht verfügbar.",
+      "unavailable": "Die Anzeige ist vorübergehend nicht verfügbar."
+    },
     "audit": {
       "title": "Admin-Audit",
       "description": "Administrative Änderungen, Zugriffsverweigerungen und Ergebnisse. Einträge mit .requested markieren den Beginn eines Vorgangs.",
