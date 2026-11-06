@@ -1715,6 +1715,26 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "directory": {
+      "command": "Search users",
+      "filter": "Search by",
+      "value": "Search value",
+      "id": "User ID",
+      "email": "Email",
+      "name": "Name starts with",
+      "domain": "Email domain",
+      "stripe": "Stripe customer or subscription ID",
+      "submit": "Search",
+      "clear": "Clear",
+      "invalid": "Enter a valid value for this filter.",
+      "unavailable": "The directory is temporarily unavailable.",
+      "empty": "No users found.",
+      "previous": "Previous",
+      "next": "Next",
+      "detail": "User details",
+      "memberships": "Organization memberships",
+      "membershipLimit": "Showing the first 50 memberships."
+    },
     "pii": {
       "userId": "User ID",
       "profile": "Profile data",

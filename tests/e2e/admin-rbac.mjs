@@ -124,6 +124,26 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
     "SELECT count(*)::int AS total FROM platform_admin_audit_events WHERE action = 'users.pii.reveal' AND outcome = 'denied'",
   );
   assert.equal(denial.total, 1);
+
+  await setRole("super_admin");
+  await page.goto(`${origin}/admin`);
+  await page.keyboard.press("Control+k");
+  await page.getByRole("option", { name: "Search users" }).click();
+  await page.waitForURL(url => url.pathname === "/admin/users");
+  await page.getByLabel("Search by").selectOption("email");
+  await page.getByLabel("Search value").fill(target.email);
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await userTable.getByRole("row").nth(2).waitFor({ state: "detached" });
+  assert.equal(await userTable.getByRole("row").count(), 2);
+  assert.ok(!(await userTable.textContent()).includes(target.email));
+  assert.ok(!page.url().includes(encodeURIComponent(target.email)));
+  await targetRow.getByRole("link", { name: target.id }).click();
+  await page.getByRole("heading", { name: "User details" }).waitFor();
+  assert.ok(!(await page.locator("main").textContent()).includes(target.email));
+  const { rows: [searchAudit] } = await client.query(
+    "SELECT target_id, before_state, after_state FROM platform_admin_audit_events WHERE action = 'users.directory.search' AND outcome = 'succeeded'",
+  );
+  assert.deepEqual(searchAudit, { target_id: null, before_state: null, after_state: null });
   await setRole("finance");
   await page.goto(`${origin}/admin/organizations`);
   await page.locator("main table").waitFor();
@@ -135,6 +155,8 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await setRole("support");
   await page.goto(`${origin}/admin/users`);
   await page.locator("main table").waitFor();
+  assert.deepEqual(await page.getByLabel("Search by").locator("option").allTextContents(), ["User ID"]);
+  assert.equal(await page.getByRole("button", { name: "Reveal profile" }).count(), 0);
   await page.goto(`${origin}/admin/billing`);
   await page.waitForURL(url => url.pathname === "/admin");
 
@@ -162,4 +184,38 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await signIn(outsider.email);
   await page.goto(`${origin}/admin`);
   await page.waitForURL(url => url.pathname === "/dashboard");
+
+  // Synthetic workload in the disposable database. Report database round-trip
+  // p95 independently of browser/network latency and avoid CI timing thresholds.
+  await client.query(`
+    INSERT INTO auth.users (email, raw_user_meta_data)
+    SELECT 'perf-' || n || '@bench.example.test', jsonb_build_object('full_name', 'Synthetic ' || n)
+    FROM generate_series(1, 10000) AS g(n)
+  `);
+  await client.query("ANALYZE public.profiles");
+  const query = "SELECT * FROM public.platform_admin_search_profiles($1, $2, $3)";
+  const { rows: [stripeOwner] } = await client.query(
+    "SELECT organization_id, user_id FROM organization_members WHERE role = 'owner' LIMIT 1",
+  );
+  await client.query(
+    "UPDATE subscriptions SET stripe_customer_id = 'cus_adminfixture' WHERE organization_id = $1",
+    [stripeOwner.organization_id],
+  );
+  assert.ok((await client.query(query, ["stripe", "cus_adminfixture", null])).rows.some(row => row.id === stripeOwner.user_id));
+  assert.equal((await client.query(query, ["email", "perf-42@bench.example.test", null])).rows.length, 1);
+  assert.equal((await client.query(query, ["name", "Synthetic", null])).rows.length, 26);
+  const domainPage = (await client.query(query, ["domain", "bench.example.test", null])).rows;
+  assert.equal(domainPage.length, 26);
+  const later = (await client.query(query, ["domain", "bench.example.test", domainPage[24].id])).rows;
+  assert.equal(later[0].id, domainPage[25].id);
+  for (const [kind, term] of [["email", "perf-42@bench.example.test"], ["name", "Synthetic"], ["domain", "bench.example.test"], ["stripe", "cus_adminfixture"]]) {
+    const samples = [];
+    for (let sample = 0; sample < 40; sample++) {
+      const start = performance.now();
+      await client.query(query, [kind, term, null]);
+      samples.push(performance.now() - start);
+    }
+    samples.sort((a, b) => a - b);
+    console.log(`Admin directory ${kind} p95 (${samples.length} queries, 10,000 synthetic profiles): ${samples[Math.ceil(samples.length * 0.95) - 1].toFixed(1)} ms`);
+  }
 }

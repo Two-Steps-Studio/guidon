@@ -107,19 +107,18 @@ export async function listOrganizationsForAdmin(includeOwners: boolean): Promise
 
 export interface AdminUserRow {
   id: string;
-  created_at: string;
+  created_at: string | null;
 }
 
-export async function listUsersForAdmin(): Promise<{
-  rows: AdminUserRow[];
-  truncated: boolean;
-}> {
-  const { data: rows } = await serviceDataClient()
+export async function listUsersForAdmin(after: string | null, id?: string) {
+  const query = serviceDataClient()
     .from<AdminUserRow>("profiles")
     .select("id, created_at")
-    .order("created_at", { ascending: false })
-    .limit(LIST_LIMIT);
-  return { rows, truncated: rows.length === LIST_LIMIT };
+    .order("id")
+    .limit(26);
+  if (after) query.gt("id", after);
+  if (id) query.eq("id", id);
+  return await query;
 }
 
 export interface AdminActivityRow {

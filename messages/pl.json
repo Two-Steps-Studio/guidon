@@ -1715,6 +1715,26 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "directory": {
+      "command": "Szukaj użytkowników",
+      "filter": "Szukaj po",
+      "value": "Szukana wartość",
+      "id": "ID użytkownika",
+      "email": "E-mail",
+      "name": "Początek nazwy",
+      "domain": "Domena e-mail",
+      "stripe": "ID klienta lub subskrypcji Stripe",
+      "submit": "Szukaj",
+      "clear": "Wyczyść",
+      "invalid": "Wpisz wartość pasującą do filtra.",
+      "unavailable": "Katalog jest chwilowo niedostępny.",
+      "empty": "Nie znaleziono użytkowników.",
+      "previous": "Poprzednia",
+      "next": "Następna",
+      "detail": "Szczegóły użytkownika",
+      "memberships": "Członkostwa w organizacjach",
+      "membershipLimit": "Wyświetlono pierwszych 50 członkostw."
+    },
     "pii": {
       "userId": "ID użytkownika",
       "profile": "Dane profilu",

@@ -106,6 +106,7 @@ them. Prefer the runner.
 | `108_platform_admin_schema.sql` | Adds platform role grants, session records and audit events. Requires a verified user UUID for the explicit initial grant. Revokes inherited Data API grants and enables RLS. The service role may read grants, manage session timestamps and append audit events. | Foundation for later admin authorization. Applying the migration grants no user access. Verify with `tests/platform-admin-schema.sql` on a disposable database. |
 | `109_platform_admin_auth_session.sql` | Service-role-only checks for a live Supabase Auth session and a matching admin session. A check can update activity only while both sessions and the grant are active and the admin session is within its lifetime. | Admin SSO/MFA with server-side idle expiry and revocation. Direct Postgres returns false when `auth.sessions` is absent. |
 | `110_platform_admin_pii_reveal.sql` | Service-role-only profile disclosure with an atomic audit insert and a shared limit of 10 requests per administrator in a rolling minute. | Apply before enabling the admin profile reveal action. |
+| `111_platform_admin_directory.sql` | Adds indexed directory lookups and a service-role-only search function that returns masked profile rows. | Apply before deploying the admin directory. |
 
 ## The compatibility layer runs before all of this
 

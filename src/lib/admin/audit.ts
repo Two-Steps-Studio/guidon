@@ -15,6 +15,7 @@ export const AUDIT_TARGETS = {
   "modules.review": "module_version",
   "modules.withdraw": "module_version",
   "modules.reports.resolve": "module_report",
+  "users.directory.search": "user",
 } as const satisfies Partial<Record<AdminPermission, string>>;
 
 export type AuditAction = keyof typeof AUDIT_TARGETS;

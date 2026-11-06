@@ -1703,6 +1703,26 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "directory": {
+      "command": "Benutzer suchen",
+      "filter": "Suchen nach",
+      "value": "Suchwert",
+      "id": "Benutzer-ID",
+      "email": "E-Mail",
+      "name": "Namensanfang",
+      "domain": "E-Mail-Domain",
+      "stripe": "Stripe-Kunden- oder Abonnement-ID",
+      "submit": "Suchen",
+      "clear": "Zurücksetzen",
+      "invalid": "Gib einen gültigen Filterwert ein.",
+      "unavailable": "Das Verzeichnis ist vorübergehend nicht verfügbar.",
+      "empty": "Keine Benutzer gefunden.",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "detail": "Benutzerdetails",
+      "memberships": "Organisationsmitgliedschaften",
+      "membershipLimit": "Die ersten 50 Mitgliedschaften werden angezeigt."
+    },
     "pii": {
       "userId": "Benutzer-ID",
       "profile": "Profildaten",
