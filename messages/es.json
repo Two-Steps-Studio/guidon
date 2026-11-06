@@ -151,6 +151,9 @@
     "title": "Mejorar plan",
     "description": "Los planes se aplican a toda una organización. Elige la organización cuyo plan quieres cambiar.",
     "choosePlan": "Elegir plan",
+    "selection": "Plan seleccionado: {plan} · {interval, select, week {Semanal} month {Mensual} year {Anual} other {Mensual}}",
+    "loadFailed": "No se pudieron cargar tus organizaciones.",
+    "retry": "Reintentar",
     "noOrganizationsTitle": "No hay ninguna organización que puedas mejorar",
     "noOrganizationsDescription": "Solo el propietario o los administradores de una organización pueden cambiar su plan. Pídeselo a uno de ellos o crea tu propia organización.",
     "createOrganization": "Crear organización"

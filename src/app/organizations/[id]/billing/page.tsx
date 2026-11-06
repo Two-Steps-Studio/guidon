@@ -283,7 +283,8 @@ export default async function BillingPage({
                 {intervals.map((value) => (
                   <Link
                     key={value}
-                    href={`/organizations/${orgId}/billing?interval=${value}`}
+                    href={`/organizations/${orgId}/billing?${new URLSearchParams({ interval: value, ...(typeof requestedPlanId === "string" ? { plan: requestedPlanId } : {}) })}`}
+                    aria-current={interval === value ? "page" : undefined}
                     scroll={false}
                     aria-current={value === interval ? "page" : undefined}
                     className={cn(

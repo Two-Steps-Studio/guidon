@@ -151,6 +151,9 @@
     "title": "Upgrade plan",
     "description": "Plans apply to a whole organization. Choose the organization whose plan you want to change.",
     "choosePlan": "Choose a plan",
+    "selection": "Selected plan: {plan} · {interval, select, week {Weekly} month {Monthly} year {Yearly} other {Monthly}}",
+    "loadFailed": "We couldn't load your organizations.",
+    "retry": "Try again",
     "noOrganizationsTitle": "No organization you can upgrade",
     "noOrganizationsDescription": "Only an organization's owner or admins can change its plan. Ask one of them, or create your own organization.",
     "createOrganization": "Create organization"

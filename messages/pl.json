@@ -151,6 +151,9 @@
     "title": "Ulepsz plan",
     "description": "Plan dotyczy całej organizacji. Wybierz organizację, której plan chcesz zmienić.",
     "choosePlan": "Wybierz plan",
+    "selection": "Wybrany plan: {plan} · {interval, select, week {Tygodniowo} month {Miesięcznie} year {Rocznie} other {Miesięcznie}}",
+    "loadFailed": "Nie udało się wczytać organizacji.",
+    "retry": "Spróbuj ponownie",
     "noOrganizationsTitle": "Brak organizacji, którą możesz ulepszyć",
     "noOrganizationsDescription": "Plan organizacji może zmienić tylko jej właściciel lub administrator. Poproś jednego z nich albo utwórz własną organizację.",
     "createOrganization": "Utwórz organizację"
