@@ -99,9 +99,12 @@ export function DitherBackground() {
         enableMouseInteraction={false}
         clickRipple={false}
         motionMode={isLandingPage ? "expand" : "drift"}
+        // A brighter wave on the homepage so the branded pattern reads at a glance.
+        brightness={isLandingPage ? 0.15 : 0}
       />
       </div>
-      {isLandingPage && <div className="absolute inset-0" style={{ background: "color-mix(in srgb, var(--color-background) 88%, transparent)" }} />}
+      {/* Fixed veil: thick mid-screen where the copy sits, thin at the edges so the pattern shows. */}
+      {isLandingPage && <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 45% 40% at 50% 38%, color-mix(in srgb, var(--color-background) 88%, transparent), color-mix(in srgb, var(--color-background) 45%, transparent))" }} />}
     </div>
   );
 }
