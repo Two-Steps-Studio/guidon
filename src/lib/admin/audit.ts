@@ -16,6 +16,9 @@ export const AUDIT_TARGETS = {
   "modules.withdraw": "module_version",
   "modules.reports.resolve": "module_report",
   "users.directory.search": "user",
+  "users.password.recovery": "user",
+  "users.signin.block": "user",
+  "users.signin.unblock": "user",
 } as const satisfies Partial<Record<AdminPermission, string>>;
 
 export type AuditAction = keyof typeof AUDIT_TARGETS;
@@ -25,6 +28,7 @@ type AuditState = {
   active?: boolean;
   status?: "published" | "rejected" | "withdrawn" | "resolved";
   changed_prices?: number;
+  signin_blocked?: boolean;
 };
 
 export const AUDIT_UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;

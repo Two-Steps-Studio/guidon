@@ -26,3 +26,12 @@ test("read-only users see only aggregate pages", () => {
   assert.deepEqual(adminPagesForRole("read_only"), ["/admin", "/admin/funnel"]);
   assert.equal(hasAdminPermission("read_only", "modules.withdraw"), false);
 });
+
+test("only super admins can operate on authentication accounts", () => {
+  for (const permission of ["users.password.recovery", "users.signin.block", "users.signin.unblock"]) {
+    assert.equal(hasAdminPermission("super_admin", permission), true);
+    for (const role of ["support", "finance", "engineering", "read_only"]) {
+      assert.equal(hasAdminPermission(role, permission), false);
+    }
+  }
+});
