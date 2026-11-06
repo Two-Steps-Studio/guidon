@@ -44,7 +44,8 @@ request `Host` or forwarded headers, which may differ between proxy hops.
 | Variable | Meaning |
 |---|---|
 | `ADMIN_EMAILS` | Comma-separated emails allowed into `/admin`, matched case-insensitively. |
-| `PLATFORM_ADMIN_ACCESS` | Unset or `legacy` uses the email allowlist. `grants` also requires an active `platform_admin_grants` row for the verified user ID and applies its role. Unknown values deny access. Use `grants` in disposable tests until the dedicated admin session and MFA rollout is ready. |
+| `PLATFORM_ADMIN_ACCESS` | Unset or `legacy` uses the email allowlist. `grants` adds the UUID role grant for RBAC testing. `sso` adds SAML, TOTP and a separate admin session. Unknown values deny access. |
+| `PLATFORM_ADMIN_SSO_PROVIDER_ID` | UUID of the trusted Supabase Auth SAML provider for `sso` mode. |
 
 An empty `ADMIN_EMAILS` closes `/admin` in both modes. The check uses the
 authenticated account's email. In grants mode, apply migration 108 and have
@@ -55,12 +56,22 @@ Support can read accounts, organizations and feedback. Finance can manage
 billing prices, organization plans and promotions. Engineering can access
 diagnostics and moderate modules. Read-only sees aggregate counts and the
 funnel. Super admins also manage project limits. Each page and Server Action
-checks its own permission. Grant mode does not provide SSO, MFA or a separate
-idle timeout yet. Use `npm run test:admin` for the role matrix and
+checks its own permission. Use `npm run test:admin` for the role matrix and
 `node tests/e2e/run.mjs --admin-rbac --browser=chromium` for local enforcement.
 
+To enable `sso`, apply migrations 108 and 109, configure a Supabase SAML identity
+provider and enroll a verified TOTP factor for the intended administrator.
+Use the UUID of that SAML-authenticated account for its role grant. Add the
+canonical HTTPS callback `/auth/callback?redirect=%2Fauth%2Fadmin` to the Auth
+redirect allowlist and start at `/auth/admin`. The allowlist still applies.
+The admin session expires after 30 minutes without an admin request or after
+eight hours total. A fresh TOTP challenge is required to open it again.
+Ending the admin session revokes it independently of the application login.
+Direct-Postgres installations have no Supabase Auth session to verify. Setting
+`sso` on such an installation denies admin access.
+
 **Docker Compose note:** `docker-compose.yml`'s `app` service forwards
-`ADMIN_EMAILS` and `PLATFORM_ADMIN_ACCESS` through to the container. See
+the admin environment variables through to the container. See
 [self-hosting.md](./self-hosting.md#admin-panel-access).
 
 ---
@@ -256,7 +267,7 @@ needs.
 | Variable | Meaning |
 |---|---|
 | `STRIPE_SECRET_KEY` | Enables `src/lib/billing/stripe.ts`'s `getStripe()`. Without it, `isBillingConfigured()` is false and the billing page's Upgrade/Manage billing buttons don't render - a read-only plan table, same as before this existed. |
-| `STRIPE_WEBHOOK_SECRET` | Verifies the `Stripe-Signature` header on `POST /api/stripe/webhook` (`stripe.webhooks.constructEvent`). Get it from the Dashboard webhook endpoint you create for `<origin>/api/stripe/webhook`, subscribed to `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. |
+| `STRIPE_WEBHOOK_SECRET` | Verifies the `Stripe-Signature` header on `POST /api/stripe/webhook` (`stripe.webhooks.constructEvent`). Subscribe the Dashboard endpoint to `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. After applying migrations 113 and 114, also subscribe to `invoice.finalized`, `invoice.updated`, `invoice.paid`, `invoice.payment_failed`, `invoice.voided`, `invoice.marked_uncollectible`, and `invoice_payment.paid`. Finance can import historical invoices in batches under Admin → Billing → Stripe invoices using the organization ID. |
 
 **One-time setup after creating a Stripe account:** create a recurring Price
 for each paid plan (Pro/Team/Business) in the Dashboard, then set that

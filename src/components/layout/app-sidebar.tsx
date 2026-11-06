@@ -171,12 +171,15 @@ const ADMIN_NAV = [
   { href: "/admin/users", labelKey: "users", icon: Users },
   { href: "/admin/integrations", labelKey: "integrations", icon: Plug },
   { href: "/admin/logs", labelKey: "logs", icon: ScrollText },
+  { href: "/admin/audit", labelKey: "adminAudit", icon: ScrollText },
   { href: "/admin/feedback", labelKey: "feedback", icon: MessageSquarePlus },
   { href: "/admin/funnel", labelKey: "funnel", icon: TrendingUp },
   { href: "/admin/search", labelKey: "searchQuality", icon: Search },
   { href: "/admin/promo-codes", labelKey: "promoCodes", icon: Ticket },
   { href: "/admin/billing", labelKey: "billingPrices", icon: CreditCard },
   { href: "/admin/modules", labelKey: "moduleReview", icon: Blocks },
+  { href: "/admin/flags", labelKey: "adminFlags", icon: ShieldCheck },
+  { href: "/admin/operations", labelKey: "adminOperations", icon: ScrollText },
 ] as const;
 
 export interface AppSidebarProps {

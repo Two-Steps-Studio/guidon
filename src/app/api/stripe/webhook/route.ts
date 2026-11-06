@@ -5,6 +5,8 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "@/app/admin/organizations/constants";
 import { processStripeEvent, snapshotFromStripe, type WebhookDeps } from "@/lib/billing/stripe-webhook-core";
+import { INVOICE_EVENTS } from "@/lib/billing/stripe-invoice-core";
+import { syncStripeInvoice } from "@/lib/billing/stripe-invoice-sync";
 
 /** Stripe's own events are small JSON - generous cap against an unsigned, unbounded body. */
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -61,6 +63,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid signature." }, { status: 401 });
   }
 
+  if (INVOICE_EVENTS.has(event.type)) {
+    try {
+      await syncStripeInvoice(stripe, event);
+      return NextResponse.json({ ok: true });
+    } catch {
+      console.error("[Stripe invoice webhook] synchronization failed", event.id);
+      return NextResponse.json({ error: "Invoice synchronization failed." }, { status: 503 });
+    }
+  }
   const outcome = await processStripeEvent(event, webhookDeps(stripe));
   return NextResponse.json(outcome.body, { status: outcome.status });
 }

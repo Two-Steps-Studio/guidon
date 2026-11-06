@@ -201,7 +201,7 @@ for (const [label, sql, expected] of [
   // 61->62 and 149->150: agent_approval_requests (102) + agent_approval_requests_select.
   // 62->63 and 150->151: agent_briefs (103) + agent_briefs_select.
   // 64->67 and 151->159: whiteboards, whiteboard_elements, whiteboard_edges (105/106) with the policies of 107 (4 + 2 + 2).
-  ["67 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 67],
+  ["76 tabel", "SELECT count(*)::int n FROM information_schema.tables WHERE table_schema='public'", 76],
   ["159 polityk RLS", "SELECT count(*)::int n FROM pg_policies WHERE schemaname='public'", 159],
 ]) {
   const { rows } = await db.query(sql);

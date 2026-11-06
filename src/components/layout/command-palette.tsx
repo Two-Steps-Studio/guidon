@@ -32,6 +32,7 @@ interface CommandPaletteProps {
   currentProjectId?: string;
   /** projects.disabled_modules (migration 055) - hidden sections aren't offered either. */
   disabledModules?: string[];
+  adminUserDirectory?: boolean;
 }
 
 /**
@@ -65,7 +66,7 @@ function resultHref(result: SearchResult, currentProjectId?: string): string {
 const MIN_QUERY_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 200;
 
-export function CommandPalette({ currentProjectId, disabledModules }: CommandPaletteProps) {
+export function CommandPalette({ currentProjectId, disabledModules, adminUserDirectory }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -77,6 +78,7 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
   const router = useRouter();
   const tNav = useTranslations("nav");
   const t = useTranslations("commandPalette");
+  const tAdmin = useTranslations("admin.directory");
   const entityTypeLabels: Record<string, string> = {
     task: t("entityType_task"),
     decision: t("entityType_decision"),
@@ -217,6 +219,9 @@ export function CommandPalette({ currentProjectId, disabledModules }: CommandPal
           ) : (
             <>
               <CommandGroup heading={t("navigateGroup")}>
+                {adminUserDirectory && <CommandItem value="/admin/users" onSelect={() => go("/admin/users")}>
+                  <Search />{tAdmin("command")}
+                </CommandItem>}
                 {GLOBAL_NAV.map((item) => (
                   <CommandItem key={item.href} value={item.href} onSelect={() => go(item.href)}>
                     <item.icon />

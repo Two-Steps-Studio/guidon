@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { hasDirectDatabase } from "@/lib/db/pool";
@@ -63,6 +64,7 @@ export default async function AdminBillingPage() {
       <div>
         <h2 className="text-2xl font-bold">{t("pricesTitle")}</h2>
         <p className="text-muted-foreground">{t("pricesDescription")}</p>
+        <Link href="/admin/billing/invoices" className="text-sm underline">{t("invoices.title")}</Link>
       </div>
 
       <Card>

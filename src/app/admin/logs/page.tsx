@@ -1,10 +1,9 @@
 import { Activity as ActivityIcon } from "lucide-react";
-import { displayName } from "@/lib/people";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
-import { listRecentActivityForAdmin, resolveProfilesForAdmin } from "@/lib/data/admin";
+import { listRecentActivityForAdmin } from "@/lib/data/admin";
 import { configFor } from "@/app/projects/[id]/activity/action-config";
 
 /**
@@ -22,14 +21,6 @@ export default async function AdminLogsPage() {
   const t = await getTranslations("admin");
 
   const entries = await listRecentActivityForAdmin(100);
-
-  // user_id references profiles(id) ON DELETE SET NULL - resolved
-  // separately, same pattern as the per-project activity page.
-  const userIds = Array.from(
-    new Set(entries.map((entry) => entry.user_id).filter((id): id is string => !!id))
-  );
-  const profilesData = await resolveProfilesForAdmin(userIds);
-  const profilesById = new Map(profilesData.map((p) => [p.id, p]));
 
   return (
     <div className="container mx-auto max-w-7xl space-y-4 px-6 py-8">
@@ -53,7 +44,6 @@ export default async function AdminLogsPage() {
               {entries.map((entry) => {
                 const config = configFor(entry.action);
                 const Icon = config.icon;
-                const actor = entry.user_id ? profilesById.get(entry.user_id) : undefined;
                 const scope = entry.project_id
                   ? t("projectScope", { id: entry.project_id.slice(0, 8) })
                   : entry.organization_id
@@ -65,7 +55,7 @@ export default async function AdminLogsPage() {
                     <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${config.color}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm">
-                        <span className="font-medium">{entry.actor_label || displayName(actor, t("someone"))}</span>{" "}
+                        <span className="font-medium">{entry.user_id ?? t("someone")}</span>{" "}
                         <span className="text-muted-foreground">{config.label.toLowerCase()}</span>
                         {entry.entity_type && <span className="text-muted-foreground"> · {entry.entity_type}</span>}
                         <span className="text-muted-foreground"> · {scope}</span>

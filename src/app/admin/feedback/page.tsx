@@ -1,10 +1,9 @@
 import { MessageSquare } from "lucide-react";
-import { displayName } from "@/lib/people";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
-import { listFeedbackForAdmin, resolveProfilesForAdmin } from "@/lib/data/admin";
+import { listFeedbackForAdmin } from "@/lib/data/admin";
 
 /**
  * Instance-wide feedback inbox - same shape as /admin/logs (read-only,
@@ -18,12 +17,6 @@ export default async function AdminFeedbackPage() {
   const t = await getTranslations("admin");
 
   const entries = await listFeedbackForAdmin();
-
-  // user_id references profiles(id) ON DELETE SET NULL - resolved
-  // separately, same pattern as the logs page.
-  const userIds = Array.from(new Set(entries.map((entry) => entry.user_id).filter((id): id is string => !!id)));
-  const profilesData = await resolveProfilesForAdmin(userIds);
-  const profilesById = new Map(profilesData.map((p) => [p.id, p]));
 
   return (
     <div className="container mx-auto max-w-7xl space-y-4 px-6 py-8">
@@ -43,7 +36,6 @@ export default async function AdminFeedbackPage() {
           <CardContent className="p-0">
             <ul className="divide-y divide-border">
               {entries.map((entry) => {
-                const author = entry.user_id ? profilesById.get(entry.user_id) : undefined;
 
                 return (
                   <li key={entry.id} className="flex items-start gap-3 px-4 py-3 hover:bg-surface-hover">
@@ -52,7 +44,7 @@ export default async function AdminFeedbackPage() {
                       <p className="text-sm font-medium text-primary">{entry.rating == null ? t("feedbackUnrated") : t("feedbackRating", { rating: entry.rating })}</p>
                       <p className="whitespace-pre-wrap text-sm">{entry.message}</p>
                       <p className="text-xs text-muted-foreground">
-                        {t("feedbackFrom", { name: displayName(author, t("feedbackAnonymous")) })}
+                        {t("feedbackFrom", { name: entry.user_id ?? t("feedbackAnonymous") })}
                         {" · "}
                         {new Date(entry.created_at).toLocaleString()}
                         {entry.page_url && <> · {t("feedbackPageContext", { page: entry.page_url })}</>}
