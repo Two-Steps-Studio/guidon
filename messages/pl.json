@@ -1716,6 +1716,12 @@
   },
   "admin": {
     "invoices": {
+      "organizationId": "ID organizacji",
+      "import": "Importuj starsze faktury",
+      "importNext": "Importuj kolejną partię",
+      "importFailed": "Nie udało się potwierdzić importu. Ponów tę samą partię.",
+      "imported": "Zaimportowano faktur w tej partii: {count}",
+      "payments": "Historia płatności",
       "title": "Faktury Stripe",
       "description": "Do 100 ostatnio zsynchronizowanych faktur wraz ze stanem płatności.",
       "back": "Rozliczenia",

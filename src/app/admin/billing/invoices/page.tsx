@@ -1,24 +1,29 @@
 import Link from "next/link";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
-import { stripeInvoicePdf } from "@/lib/billing/stripe-invoice-core";
+import { stripeInvoicePdf, type InvoicePaymentSummary } from "@/lib/billing/stripe-invoice-core";
 import { AUDIT_UUID } from "@/lib/admin/audit";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
+import { hasAdminPermission } from "@/lib/admin/permissions";
+import { hasDirectDatabase } from "@/lib/db/pool";
+import { isBillingConfigured } from "@/lib/billing/stripe";
+import { ImportInvoices } from "./import-invoices";
 
 type InvoiceRow = {
   invoice_id: string; invoice_number: string | null; organization_id: string;
   status: string; currency: string; amount_due: number; amount_paid: number;
   amount_remaining: number; attempt_count: number; card_last4: string | null;
   invoice_pdf: string | null; issued_at: string; failed_at: string | null;
+  payment_history: InvoicePaymentSummary[] | null;
 };
 
 export default async function AdminInvoicesPage({ searchParams }: {
   searchParams: Promise<{ org?: string }>;
 }) {
-  await requireAdminAccess("billing.read");
+  const { role } = await requireAdminAccess("billing.read");
   const { org } = await searchParams;
   const query = serviceDataClient().from<InvoiceRow>("platform_stripe_invoices")
-    .select("invoice_id, invoice_number, organization_id, status, currency, amount_due, amount_paid, amount_remaining, attempt_count, card_last4, invoice_pdf, issued_at, failed_at")
+    .select("invoice_id, invoice_number, organization_id, status, currency, amount_due, amount_paid, amount_remaining, attempt_count, card_last4, invoice_pdf, issued_at, failed_at, payment_history")
     .order("issued_at", { ascending: false }).order("invoice_id").limit(100);
   const scoped = typeof org === "string" && AUDIT_UUID.test(org);
   if (scoped) query.eq("organization_id", org);
@@ -37,6 +42,8 @@ export default async function AdminInvoicesPage({ searchParams }: {
     <h2 className="text-2xl font-bold">{t("title")}</h2>
     <p className="text-muted-foreground">{t("description")}</p>
     {scoped && <Link href="/admin/billing/invoices" className="underline">{t("clear")}</Link>}
+    {hasAdminPermission(role, "billing.invoices.import") && !hasDirectDatabase() && isBillingConfigured() &&
+      <ImportInvoices key={scoped ? org : "all"} organizationId={scoped ? org : undefined} />}
     {data.length ? <div className="overflow-x-auto rounded-xl border">
       <table className="w-full text-sm">
         <thead><tr className="border-b text-left [&>th]:p-3">
@@ -49,6 +56,13 @@ export default async function AdminInvoicesPage({ searchParams }: {
             return <tr key={invoice.invoice_id} className="[&>td]:p-3">
               <td>{invoice.invoice_number ?? invoice.invoice_id}<br />{date(invoice.issued_at)}
                 {pdf && <><br /><a href={pdf} target="_blank" rel="noopener noreferrer" className="underline">{t("pdf")}</a></>}
+                {!!invoice.payment_history?.length && <details className="mt-2 min-w-44">
+                  <summary className="cursor-pointer">{t("payments")}</summary>
+                  <ul className="mt-1 space-y-1">{invoice.payment_history.map(payment => <li key={payment.id}>
+                    {date(payment.recordedAt)} · {payment.status} · {payment.amount === null ? "—" : amount(payment.amount, payment.currency)}
+                    {payment.last4 && ` · •••• ${payment.last4}`}
+                  </li>)}</ul>
+                </details>}
               </td>
               <td><Link className="underline" href={`/admin/billing/invoices?org=${invoice.organization_id}`}>{invoice.organization_id}</Link></td>
               <td>{invoice.status}</td>

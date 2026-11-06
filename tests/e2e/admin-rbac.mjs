@@ -151,13 +151,16 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
     attempt_count: 2, invoice_pdf: "https://pay.stripe.com/test-invoice.pdf", card_last4: "4242",
     issued_at: "2025-01-01T00:00:00Z", observed_at: "2025-01-02T00:00:00Z", failed_at: null,
   };
-  const saveInvoice = snapshot => client.query("SELECT platform_stripe_save_invoice($1)", [snapshot]);
+  const history = [{ id: "inpay_fixture", status: "paid", currency: "eur", amount: 1200, recordedAt: invoice.observed_at, last4: "4242" }];
+  const saveInvoice = (snapshot, payments = history) => client.query(
+    "SELECT platform_stripe_save_invoice_history($1, $2)", [snapshot, JSON.stringify(payments)],
+  );
   await saveInvoice(invoice);
   await saveInvoice(invoice);
   await saveInvoice({
     ...invoice, status: "open", amount_paid: 0, amount_remaining: 1200,
     observed_at: "2025-01-01T01:00:00Z", failed_at: "2025-01-01T01:00:00Z",
-  });
+  }, []);
   const { rows: savedInvoices } = await client.query(
     "SELECT status, failed_at FROM platform_stripe_invoices WHERE invoice_id = $1", [invoice.invoice_id],
   );
@@ -167,6 +170,8 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await page.goto(`${origin}/admin/billing/invoices`);
   await page.getByRole("heading", { name: "Stripe invoices" }).waitFor();
   await page.getByRole("link", { name: "Invoice PDF" }).waitFor();
+  await page.getByText("Payment history", { exact: true }).click();
+  await page.getByText(/paid.*12\.00.*4242/).waitFor();
   assert.match(await page.locator("main table").textContent(), /TEST-001.*paid.*4242/);
   await page.goto(`${origin}/admin/organizations`);
   await page.locator("main table").waitFor();

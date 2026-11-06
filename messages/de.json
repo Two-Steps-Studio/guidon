@@ -1704,6 +1704,12 @@
   },
   "admin": {
     "invoices": {
+      "organizationId": "Organisations-ID",
+      "import": "Ältere Rechnungen importieren",
+      "importNext": "Nächste Gruppe importieren",
+      "importFailed": "Import konnte nicht bestätigt werden. Wiederhole dieselbe Gruppe.",
+      "imported": "Importierte Rechnungen in dieser Gruppe: {count}",
+      "payments": "Zahlungsverlauf",
       "title": "Stripe-Rechnungen",
       "description": "Bis zu 100 zuletzt synchronisierte Rechnungen mit Zahlungsstatus.",
       "back": "Abrechnung",

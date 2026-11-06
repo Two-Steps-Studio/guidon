@@ -16,7 +16,7 @@ export const ADMIN_PAGE_PERMISSIONS = {
 export type AdminPage = keyof typeof ADMIN_PAGE_PERMISSIONS;
 export type AdminPermission = (typeof ADMIN_PAGE_PERMISSIONS)[AdminPage]
   | "organizations.limits.edit" | "organizations.plan.edit"
-  | "billing.prices.sync" | "promos.create" | "promos.toggle"
+  | "billing.prices.sync" | "billing.invoices.import" | "promos.create" | "promos.toggle"
   | "modules.review" | "modules.withdraw" | "modules.reports.resolve"
   | "users.pii.reveal" | "users.directory.search" | "users.diagnostics.start" | "users.diagnostics.end";
 
@@ -27,12 +27,13 @@ const ROLE_PERMISSIONS = {
     "users.directory.search",
     "users.diagnostics.start", "users.diagnostics.end",
     "organizations.limits.edit", "organizations.plan.edit", "billing.prices.sync",
+    "billing.invoices.import",
     "promos.create", "promos.toggle", "modules.review", "modules.withdraw", "modules.reports.resolve",
   ],
   support: ["overview.read", "users.read", "organizations.read", "feedback.read", "users.diagnostics.start", "users.diagnostics.end"],
   finance: [
     "overview.read", "organizations.read", "funnel.read", "promos.read", "billing.read",
-    "organizations.plan.edit", "billing.prices.sync", "promos.create", "promos.toggle",
+    "organizations.plan.edit", "billing.prices.sync", "billing.invoices.import", "promos.create", "promos.toggle",
   ],
   engineering: [
     "overview.read", "integrations.read", "activity.read", "search.read", "modules.read",

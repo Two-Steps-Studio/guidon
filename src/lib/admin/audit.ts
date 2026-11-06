@@ -11,6 +11,7 @@ export const AUDIT_TARGETS = {
   "organizations.limits.edit": "organization",
   "organizations.plan.edit": "organization",
   "billing.prices.sync": "billing",
+  "billing.invoices.import": "organization",
   "promos.create": "promo_code",
   "promos.toggle": "promo_code",
   "modules.review": "module_version",
@@ -28,6 +29,7 @@ type AuditState = {
   active?: boolean;
   status?: "published" | "rejected" | "withdrawn" | "resolved";
   changed_prices?: number;
+  imported_invoices?: number;
   diagnostic_reason?: DiagnosticReason;
   diagnostic_id?: string;
 };

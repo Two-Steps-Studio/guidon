@@ -2,7 +2,28 @@ import type Stripe from "stripe";
 
 export const INVOICE_EVENTS = new Set([
   "invoice.finalized", "invoice.updated", "invoice.paid", "invoice.payment_failed", "invoice.voided", "invoice.marked_uncollectible",
+  "invoice_payment.paid",
 ]);
+
+export type InvoicePaymentSummary = {
+  id: string;
+  status: string;
+  currency: string;
+  amount: number | null;
+  recordedAt: string;
+  last4: string | null;
+};
+
+export function summarizeInvoicePayment(payment: Stripe.InvoicePayment): InvoicePaymentSummary {
+  return {
+    id: payment.id,
+    status: payment.status,
+    currency: payment.currency,
+    amount: payment.amount_paid,
+    recordedAt: new Date((payment.status_transitions.paid_at ?? payment.created) * 1000).toISOString(),
+    last4: invoiceCardLastFour(payment),
+  };
+}
 
 export function stripeInvoicePdf(value: string | null | undefined) {
   if (!value) return null;

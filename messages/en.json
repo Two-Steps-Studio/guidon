@@ -1716,6 +1716,12 @@
   },
   "admin": {
     "invoices": {
+      "organizationId": "Organization ID",
+      "import": "Import historical invoices",
+      "importNext": "Import next batch",
+      "importFailed": "The import could not be confirmed. Retry the same batch.",
+      "imported": "Invoices imported in this batch: {count}",
+      "payments": "Payment history",
       "title": "Stripe invoices",
       "description": "Up to 100 recently synced invoices and their payment status.",
       "back": "Billing",

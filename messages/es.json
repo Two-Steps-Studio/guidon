@@ -1704,6 +1704,12 @@
   },
   "admin": {
     "invoices": {
+      "organizationId": "ID de organización",
+      "import": "Importar facturas anteriores",
+      "importNext": "Importar siguiente lote",
+      "importFailed": "No se pudo confirmar la importación. Reintenta el mismo lote.",
+      "imported": "Facturas importadas en este lote: {count}",
+      "payments": "Historial de pagos",
       "title": "Facturas de Stripe",
       "description": "Hasta 100 facturas sincronizadas recientemente con su estado de pago.",
       "back": "Facturación",
