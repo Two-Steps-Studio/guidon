@@ -52,6 +52,7 @@ const taskQueueMode=process.argv.includes("--task-queue");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
 const mobileMode=process.argv.includes("--mobile-audit");
 const includeAccessibility=process.argv.includes("--with-accessibility");
+const onlyBrowser=process.argv.find(arg=>arg.startsWith("--browser="))?.slice("--browser=".length);
 const runId=randomBytes(6).toString("hex");
 const artifacts=path.join(root,"output/e2e",runId);
 await mkdir(artifacts,{recursive:true});
@@ -64,7 +65,10 @@ environment.AGENT_AUTH_PRIVATE_KEY=JSON.stringify(generateKeyPairSync("ed25519")
 environment.GITHUB_APP_WEBHOOK_SECRET=randomBytes(32).toString("hex");
 environment.MODULE_SIGNING_KEY=JSON.stringify(generateKeyPairSync("ed25519").privateKey.export({format:"jwk"}));
 const controller=new AbortController();
-const deadline=setTimeout(()=>controller.abort(new Error("E2E global timeout")),12*60*1000);
+// Aborting also stops the production server (spawned with this signal), so
+// the limit must cover the build plus a whole browser pass; CI runs one
+// browser per job (--browser=<name>), each of which takes ~11 min.
+const deadline=setTimeout(()=>controller.abort(new Error("E2E global timeout")),25*60*1000);
 let app,proxy,client;
 let appLog="";
 let phase="source-copy";
@@ -175,7 +179,9 @@ try{
     await run(process.execPath,["scripts/landing/capture.mjs"],{env:{...environment,BASE_URL:origin,DEMO_USER_EMAIL:owner.email,DEMO_USER_PASSWORD:fixture.password,DEMO_PROJECT_ID:projectId,DEMO_TASK_ID:taskId,LANDING_CAPTURE_OUTPUT:path.join(artifacts,"landing-assets"),LANDING_CAPTURE_TEST_TLS:"1"}});
     results.push({mode:"disposable-landing-asset-capture",outcome:"passed"});
   }
-  for(const [name,browserType] of Object.entries(landingAssetsMode?{}:{chromium,firefox,webkit})){
+  const browsers=Object.entries(landingAssetsMode?{}:{chromium,firefox,webkit}).filter(([name])=>!onlyBrowser||name===onlyBrowser);
+  if(onlyBrowser&&browsers.length===0)throw new Error(`Unknown --browser=${onlyBrowser}`);
+  for(const [name,browserType] of browsers){
     phase=name;
     console.log(`E2E: ${name} real login, private projects and session smoke`);
     const browser=await browserType.launch();
