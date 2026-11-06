@@ -70,6 +70,23 @@
     "discardFileChanges": "Discard unsaved changes to {path}?"
   },
   "auth": {
+    "admin": {
+      "title": "Admin sign-in",
+      "unavailable": "Admin SSO is unavailable on this installation.",
+      "continueSso": "Continue with SSO",
+      "noFactor": "Ask your administrator to help enroll a TOTP authenticator for this account.",
+      "factor": "Authenticator",
+      "factorNumber": "Authenticator {number}",
+      "code": "Six-digit code",
+      "verify": "Verify and open admin",
+      "back": "Back to dashboard",
+      "end": "End admin session",
+      "errors": {
+        "sso": "Could not verify SSO. Start again.",
+        "code": "The code or authenticator could not be verified.",
+        "session": "Could not update the admin session. Try again."
+      }
+    },
     "login": {
       "title": "Sign in",
       "description": "Enter your email and password to access your account",
