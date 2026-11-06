@@ -176,6 +176,7 @@
     "createOrganization": "Create organization"
   },
   "nav": {
+    "adminAudit": "Admin audit",
     "searchQuality": "Search quality",
     "upgradePlan": "Upgrade plan",
     "toggleSidebar": "Toggle sidebar (Ctrl+B)",
@@ -1714,6 +1715,28 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "audit": {
+      "title": "Admin audit",
+      "description": "Administrative changes, access denials and their outcomes. Entries ending in .requested record the start of an operation.",
+      "actor": "Actor ID",
+      "target": "Target ID",
+      "request": "Request ID",
+      "from": "From (UTC)",
+      "through": "Through (UTC)",
+      "action": "Action",
+      "type": "Target type",
+      "outcome": "Outcome",
+      "all": "All",
+      "filter": "Apply filters",
+      "clear": "Clear",
+      "empty": "No audit events match these filters.",
+      "before": "Before",
+      "after": "After",
+      "older": "Older events",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "denied": "Denied"
+    },
     "searchQuality": {
       "title": "Search quality",
       "description": "Daily anonymous event totals grouped into UTC weeks. No query text, task names, IDs or user profiles are recorded.",

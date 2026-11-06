@@ -1,4 +1,7 @@
 {
+  "The audit log is unavailable. No changes were made.": "Dziennik audytu jest niedostępny. Zmiany nie zostały zapisane.",
+  "The operation finished, but its audit outcome could not be saved. Check the current state before retrying.": "Operacja się zakończyła, ale jej wyniku nie udało się zapisać w dzienniku audytu. Sprawdź aktualny stan przed ponowieniem.",
+  "The organization changed. Refresh and try again.": "Dane organizacji uległy zmianie. Odśwież stronę i spróbuj ponownie.",
   "The task version is unavailable. Download your edits, then reload after the database is updated.": "Wersja zadania jest niedostępna. Pobierz zmiany, a po aktualizacji bazy odśwież stronę.",
   "This task changed or is no longer available. Your edits were not saved. Download them before reloading.": "Zadanie zmieniło się lub nie jest już dostępne. Twoje zmiany nie zostały zapisane. Pobierz je przed odświeżeniem.",
   "A new branch name is required to open a pull request.": "Aby otworzyć pull request, podaj nazwę nowej gałęzi.",

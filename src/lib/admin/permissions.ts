@@ -4,6 +4,7 @@ export const ADMIN_PAGE_PERMISSIONS = {
   "/admin/users": "users.read",
   "/admin/integrations": "integrations.read",
   "/admin/logs": "activity.read",
+  "/admin/audit": "audit.read",
   "/admin/feedback": "feedback.read",
   "/admin/funnel": "funnel.read",
   "/admin/search": "search.read",

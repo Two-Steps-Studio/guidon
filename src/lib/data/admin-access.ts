@@ -56,8 +56,14 @@ const getAdminAccess = cache(async () => {
 });
 
 /** Layouts, pages and Server Actions call this independently. */
-export async function requireAdminAccess(permission: AdminPermission) {
+export async function requireAdminAccess(
+  permission: AdminPermission,
+  onDenied?: (actor: Awaited<ReturnType<typeof getAdminAccess>>) => Promise<void>,
+) {
   const admin = await getAdminAccess();
-  if (!hasAdminPermission(admin.role, permission)) redirect("/admin");
+  if (!hasAdminPermission(admin.role, permission)) {
+    await onDenied?.(admin);
+    redirect("/admin");
+  }
   return admin;
 }

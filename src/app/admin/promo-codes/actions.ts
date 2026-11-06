@@ -1,7 +1,8 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { requireAdminAccess } from "@/lib/data/admin-access";
+import { auditAdminMutation } from "@/lib/admin/audit";
 import { serviceDataClient } from "@/lib/data-client";
 import { PROMO_CODE_RE, normalizePromoCode } from "@/lib/billing/promo-codes";
 import { tr } from "@/lib/i18n/server-errors";
@@ -22,47 +23,54 @@ export interface PromoCodeInput {
 }
 
 export async function createPromoCode(input: PromoCodeInput): Promise<{ error: string | null }> {
-  const admin = await requireAdminAccess("promos.create");
-  const code = normalizePromoCode(input.code);
-  if (!PROMO_CODE_RE.test(code)) return { error: await tr("Codes are 3-40 letters, digits, - or _.") };
-  if (!Number.isInteger(input.durationDays) || input.durationDays < 1 || input.durationDays > 3650) {
-    return { error: await tr("Duration must be 1-3650 days.") };
-  }
-  if (input.maxRedemptions !== null && (!Number.isInteger(input.maxRedemptions) || input.maxRedemptions < 1)) {
-    return { error: await tr("Max uses must be a whole number of at least 1, or empty for unlimited.") };
-  }
-  let expiresAt: string | null = null;
-  if (input.expiresOn) {
-    // The end of that day, UTC: "valid until 31 Dec" includes 31 Dec.
-    const end = new Date(`${input.expiresOn}T23:59:59Z`);
-    if (Number.isNaN(end.getTime())) return { error: await tr("Invalid end date.") };
-    expiresAt = end.toISOString();
-  }
+  const id = randomUUID();
+  return auditAdminMutation("promos.create", id, async (admin, changes) => {
+    const code = normalizePromoCode(input.code);
+    if (!PROMO_CODE_RE.test(code)) return { error: await tr("Codes are 3-40 letters, digits, - or _.") };
+    if (!Number.isInteger(input.durationDays) || input.durationDays < 1 || input.durationDays > 3650) {
+      return { error: await tr("Duration must be 1-3650 days.") };
+    }
+    if (input.maxRedemptions !== null && (!Number.isInteger(input.maxRedemptions) || input.maxRedemptions < 1)) {
+      return { error: await tr("Max uses must be a whole number of at least 1, or empty for unlimited.") };
+    }
+    let expiresAt: string | null = null;
+    if (input.expiresOn) {
+      // The end of that day, UTC: "valid until 31 Dec" includes 31 Dec.
+      const end = new Date(`${input.expiresOn}T23:59:59Z`);
+      if (Number.isNaN(end.getTime())) return { error: await tr("Invalid end date.") };
+      expiresAt = end.toISOString();
+    }
 
-  const db = serviceDataClient();
-  const { data: plan } = await db.from<{ id: string }>("plans").select("id").eq("id", input.planId).maybeSingle();
-  if (!plan || plan.id === "free") return { error: await tr("Pick a paid plan.") };
+    const db = serviceDataClient();
+    const { data: plan } = await db.from<{ id: string }>("plans").select("id").eq("id", input.planId).maybeSingle();
+    if (!plan || plan.id === "free") return { error: await tr("Pick a paid plan.") };
 
-  const { error } = await db.from("promo_codes").insert({
-    code,
-    plan_id: plan.id,
-    duration_days: input.durationDays,
-    max_redemptions: input.maxRedemptions,
-    expires_at: expiresAt,
-    note: input.note.trim().slice(0, 500) || null,
-    created_by: admin.id,
+    const { error } = await db.from("promo_codes").insert({
+      id,
+      code,
+      plan_id: plan.id,
+      duration_days: input.durationDays,
+      max_redemptions: input.maxRedemptions,
+      expires_at: expiresAt,
+      note: input.note.trim().slice(0, 500) || null,
+      created_by: admin.id,
+    });
+    if (error) return { error: error.code === "23505" ? "That code already exists." : error.message };
+
+    changes.after = { active: true };
+    revalidatePath("/admin/promo-codes");
+    return { error: null };
   });
-  if (error) return { error: error.code === "23505" ? "That code already exists." : error.message };
-
-  revalidatePath("/admin/promo-codes");
-  return { error: null };
 }
 
 export async function setPromoCodeActive(id: string, active: boolean): Promise<{ error: string | null }> {
-  await requireAdminAccess("promos.toggle");
-  const { data, error } = await serviceDataClient().from("promo_codes").update({ active }).eq("id", id).select<{ id: string }>("id");
-  if (error) return { error: error.message };
-  if (!data.length) return { error: await tr("Code not found.") };
-  revalidatePath("/admin/promo-codes");
-  return { error: null };
+  return auditAdminMutation("promos.toggle", id, async (_admin, changes) => {
+    if (typeof active !== "boolean") return { error: await tr("Invalid request.") };
+    const { data, error } = await serviceDataClient().from("promo_codes").update({ active }).eq("id", id).select<{ id: string }>("id");
+    if (error) return { error: error.message };
+    if (!data.length) return { error: await tr("Code not found.") };
+    changes.after = { active };
+    revalidatePath("/admin/promo-codes");
+    return { error: null };
+  });
 }

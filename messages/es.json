@@ -176,6 +176,7 @@
     "createOrganization": "Crear organización"
   },
   "nav": {
+    "adminAudit": "Auditoría administrativa",
     "searchQuality": "Calidad de búsqueda",
     "upgradePlan": "Mejorar plan",
     "toggleSidebar": "Mostrar/ocultar barra lateral (Ctrl+B)",
@@ -1702,6 +1703,28 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "audit": {
+      "title": "Auditoría administrativa",
+      "description": "Cambios administrativos, accesos denegados y resultados. Las entradas con .requested marcan el inicio de una operación.",
+      "actor": "ID del autor",
+      "target": "ID del objetivo",
+      "request": "ID de solicitud",
+      "from": "Desde (UTC)",
+      "through": "Hasta (UTC)",
+      "action": "Acción",
+      "type": "Tipo de objetivo",
+      "outcome": "Resultado",
+      "all": "Todos",
+      "filter": "Filtrar",
+      "clear": "Borrar filtros",
+      "empty": "No hay eventos que coincidan con estos filtros.",
+      "before": "Antes",
+      "after": "Después",
+      "older": "Eventos anteriores",
+      "succeeded": "Correcto",
+      "failed": "Fallido",
+      "denied": "Denegado"
+    },
     "searchQuality": {
       "title": "Calidad de búsqueda",
       "description": "Totales diarios anónimos agrupados por semanas UTC. Sin consultas, nombres de tareas, IDs ni perfiles.",
