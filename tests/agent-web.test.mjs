@@ -197,7 +197,7 @@ const pricing = pricingMarkdown(
   "https://useguidon.com"
 );
 check("H1 then one H2 per plan", pricing.startsWith("# Guidon pricing") && pricing.split("\n").filter((l) => l.startsWith("## ")).length === 3);
-check("free / priced / custom", pricing.includes("Price: Free") && pricing.includes("€12.00 per month (49.00 zł)") && pricing.includes("Custom pricing"));
+check("free / checkout currency / custom", pricing.includes("Price: Free") && pricing.includes("€12.00 per month") && !pricing.includes("49.00 zł") && pricing.includes("Custom pricing"));
 check("limits and features", pricing.includes("- 3 projects") && pricing.includes("- Unlimited projects") && pricing.includes("- 10 GB storage") && pricing.includes("- Audit logs"));
 check("no plans still reads", pricingMarkdown([], "https://x").includes("not available"));
 

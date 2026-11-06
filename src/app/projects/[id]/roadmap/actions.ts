@@ -9,6 +9,7 @@ import { tr } from "@/lib/i18n/server-errors";
 
 export type PhaseFormState = {
   error: string | null;
+  field?: "name" | "status" | "end";
 };
 
 const VALID_STATUSES: PhaseStatus[] = ["planned", "in_progress", "completed", "blocked"];
@@ -31,10 +32,10 @@ async function parsePhaseForm(formData: FormData) {
   const completion = formData.get("completion_percentage");
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return { error: await tr("Phase name is required.") } as const;
+    return { error: await tr("Phase name is required."), field: "name" } as const;
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as PhaseStatus)) {
-    return { error: await tr("Invalid status.") } as const;
+    return { error: await tr("Invalid status."), field: "status" } as const;
   }
   if (
     typeof startDate === "string" &&
@@ -43,7 +44,7 @@ async function parsePhaseForm(formData: FormData) {
     plannedEndDate &&
     plannedEndDate < startDate
   ) {
-    return { error: await tr("Planned end date can't be before the start date.") } as const;
+    return { error: await tr("Planned end date can't be before the start date."), field: "end" } as const;
   }
 
   const completionValue = Number(completion);
@@ -77,7 +78,7 @@ export async function createPhase(
   }
 
   const parsed = await parsePhaseForm(formData);
-  if (parsed.error) return { error: parsed.error };
+  if (parsed.error) return { error: parsed.error, field: parsed.field };
 
   const db = dataClient(access.userId);
 
@@ -133,7 +134,7 @@ export async function updatePhase(
   }
 
   const parsed = await parsePhaseForm(formData);
-  if (parsed.error) return { error: parsed.error };
+  if (parsed.error) return { error: parsed.error, field: parsed.field };
 
   const { data, error } = await dataClient(access.userId)
     .from("roadmap_phases")

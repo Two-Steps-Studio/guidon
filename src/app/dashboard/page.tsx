@@ -10,13 +10,13 @@ import {
   AlertTriangle,
   ArrowRight,
   BrainCircuit,
+  Building2,
   CheckCircle2,
   CircleDot,
   FolderKanban,
   GitBranch,
   ListChecks,
   Network,
-  Plus,
   type LucideIcon,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
@@ -230,12 +230,14 @@ export default async function DashboardPage() {
                 {tNav("myTasks")}
               </Link>
             </Button>
-            <Button asChild>
-              <Link href="/organizations">
-                <Plus className="mr-2 h-4 w-4" />
-                {t("newProject")}
-              </Link>
-            </Button>
+            {data.totalProjects > 0 && (
+              <Button asChild>
+                <Link href="/organizations">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  {t("chooseProjectOrganization")}
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -266,9 +268,9 @@ export default async function DashboardPage() {
               description={t("createFirstProjectDesc")}
               action={
                 <Button asChild>
-                  <Link href="/organizations?create=1">
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t("createFirstProjectButton")}
+                  <Link href="/organizations">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    {t("chooseProjectOrganization")}
                   </Link>
                 </Button>
               }

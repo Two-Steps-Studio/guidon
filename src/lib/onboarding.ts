@@ -25,6 +25,13 @@ export interface OnboardingAnswers {
   teamSize: OnboardingTeamSize;
 }
 
+export type OnboardingDraft = Omit<OnboardingAnswers, "projectType" | "template" | "teamSize"> & {
+  projectType: ProjectType | null;
+  template: ProjectTemplate | null;
+  teamSize: OnboardingTeamSize | null;
+  step: number;
+};
+
 /** A sensible template for what's being built - pre-selected, still changeable. */
 export function defaultTemplateFor(type: ProjectType): ProjectTemplate {
   if (type === "game") return "gamedev";
@@ -61,7 +68,38 @@ export function readStoredOnboarding(): OnboardingAnswers | null {
   }
 }
 
-export function storeOnboarding(answers: OnboardingAnswers | null): void {
+export function readStoredOnboardingDraft(lastStep: number): OnboardingDraft | null {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(ONBOARDING_STORAGE_KEY) ?? "null");
+    if (!value || typeof value !== "object") return null;
+    const v = value as Record<string, unknown>;
+    const legacy = parseOnboardingAnswers(value);
+    if (typeof v.step !== "number" || !Number.isInteger(v.step)) {
+      return legacy ? { ...legacy, step: lastStep } : null;
+    }
+
+    const projectName = typeof v.projectName === "string" ? v.projectName.slice(0, 100) : "";
+    const projectType = ONBOARDING_PROJECT_TYPES.find(type => type === v.projectType) ?? null;
+    const template = typeof v.template === "string" && isProjectTemplate(v.template) ? v.template : null;
+    const teamSize = ONBOARDING_TEAM_SIZES.find(size => size === v.teamSize) ?? null;
+    const firstIncomplete = [Boolean(projectName.trim()), Boolean(projectType), Boolean(template), Boolean(teamSize)]
+      .findIndex(answered => !answered);
+
+    return {
+      projectName,
+      projectType,
+      studioName: typeof v.studioName === "string" ? v.studioName.slice(0, 100) : "",
+      template,
+      methodology: v.methodology === "scrum" ? "scrum" : "standard",
+      teamSize,
+      step: Math.max(0, Math.min(v.step, firstIncomplete < 0 ? lastStep : firstIncomplete)),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function storeOnboarding(answers: OnboardingAnswers | OnboardingDraft | null): void {
   try {
     if (answers) localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(answers));
     else localStorage.removeItem(ONBOARDING_STORAGE_KEY);

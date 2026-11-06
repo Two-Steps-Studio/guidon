@@ -118,16 +118,22 @@ export default async function ProjectSettingsPage({
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <SettingsForm
+      <nav aria-label={t("title")} className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-primary">
+        <a href="#project-general" className="underline underline-offset-2">{t("general")}</a>
+        <a href="#project-modules" className="underline underline-offset-2">{t("modulesTitle")}</a>
+        <a href="#project-columns" className="underline underline-offset-2">{t("boardColumnsTitle")}</a>
+        <a href="#project-export" className="underline underline-offset-2">{t("exportProjectTitle")}</a>
+      </nav>
+      <div id="project-general" className="scroll-mt-24"><SettingsForm
         project={project}
         initialTechnologies={technologies.map((t) => t.name)}
-      />
-      <ModulesForm
+      /></div>
+      <div id="project-modules" className="scroll-mt-24"><ModulesForm
         projectId={projectId}
         initialDisabled={project.disabled_modules ?? []}
         canManage={canManageProject(access.role)}
-      />
-      <BoardColumnsForm projectId={projectId} overrides={workflow.columns} />
+      /></div>
+      <div id="project-columns" className="scroll-mt-24"><BoardColumnsForm projectId={projectId} overrides={workflow.columns} /></div>
       <FinishedTasksForm
         projectId={projectId}
         initialDays={project.done_cleanup_days ?? null}
@@ -154,7 +160,7 @@ export default async function ProjectSettingsPage({
       {canWriteProject(access.role) && (
         <ReportWidgetCard projectId={projectId} siteUrl={SITE_URL} initialKeys={await listReportWidgetKeys(projectId)} />
       )}
-      <ExportProjectCard projectId={projectId} />
+      <div id="project-export" className="scroll-mt-24"><ExportProjectCard projectId={projectId} /></div>
       {access.role === "owner" && <DangerZoneCard projectId={projectId} />}
     </div>
   );

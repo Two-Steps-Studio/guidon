@@ -87,6 +87,8 @@ interface DatePickerProps {
   name?: string
   disabled?: boolean
   className?: string
+  invalid?: boolean
+  "aria-describedby"?: string
 }
 
 /**
@@ -97,7 +99,7 @@ interface DatePickerProps {
  * stay unchanged. Keyboard: arrows move by day/week, PageUp/PageDown by
  * month, Home jumps to today, Enter picks.
  */
-export function DatePicker({ value: controlled, defaultValue = "", onChange: onControlledChange, id, name, disabled, className }: DatePickerProps) {
+export function DatePicker({ value: controlled, defaultValue = "", onChange: onControlledChange, id, name, disabled, className, invalid, "aria-describedby": describedBy }: DatePickerProps) {
   const [uncontrolled, setUncontrolled] = React.useState<DayString>(defaultValue)
   const value = controlled ?? uncontrolled
   const onChange = (next: DayString) => {
@@ -195,12 +197,14 @@ export function DatePicker({ value: controlled, defaultValue = "", onChange: onC
         <PopoverTrigger asChild disabled={disabled}>
           <button
             id={id}
+            aria-describedby={describedBy}
             type="button"
             className={cn(
               "flex h-9 w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-left text-sm shadow-sm transition-colors",
               "hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
               "disabled:cursor-not-allowed disabled:opacity-50",
-              selected && "pr-9"
+              selected && "pr-9",
+              invalid && "border-destructive"
             )}
           >
             <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />

@@ -40,8 +40,7 @@ export async function landingPricingCoverage({page,origin,browserName,artifacts,
   const upgrade=new URL(signup.searchParams.get('redirect'),origin);
   assert.equal(upgrade.searchParams.get('interval'),'year');
   assert.equal(upgrade.searchParams.get('plan'),'pro');
-  await pricing.getByRole('button',{name:'PLN',exact:true}).click();
-  await proCard.getByText('€100.00',{exact:false}).waitFor();
+  assert.equal(await pricing.getByRole('button',{name:'PLN',exact:true}).count(),0);
   await pricing.getByRole('button',{name:'Weekly',exact:true}).click();
   await proCard.getByText('Not available',{exact:true}).waitFor();
   assert.equal(await proCard.getByRole('link',{name:'Contact us',exact:true}).getAttribute('href'),'/contact');
@@ -52,6 +51,7 @@ export async function landingPricingCoverage({page,origin,browserName,artifacts,
   await pricing.getByRole('button',{name:'Monthly',exact:true}).focus();
   await page.keyboard.press('Enter');
   await proCard.getByText('€10.00',{exact:false}).waitFor();
+  await pricing.getByRole('heading',{name:'Solo',exact:true}).locator('..').getByText('€5.00',{exact:false}).waitFor();
   for(const width of [375,1440]) {
     await page.setViewportSize({width,height:900});
     await pricing.scrollIntoViewIfNeeded();

@@ -5,24 +5,35 @@ import { Label } from "@/components/ui/label";
 import { STATUS_CONFIG } from "./phase-status-config";
 import type { PhaseStatus, RoadmapPhase } from "@/types/task";
 import { Select } from "@/components/ui/select";
+import type { PhaseFormState } from "./actions";
 
 /** Shared fields for the create and edit phase dialogs, keyed by `idPrefix` so both can be on the page at once. */
 export function PhaseFormFields({
   idPrefix,
   defaults,
+  issue,
 }: {
   idPrefix: string;
+  issue?: PhaseFormState;
   defaults?: Pick<
     RoadmapPhase,
     "name" | "description" | "start_date" | "planned_end_date" | "status" | "completion_percentage"
   >;
 }) {
   const t = useTranslations("roadmap");
+  const errorId = `${idPrefix}-error`;
+  const issueProps = (field: string) => issue?.field === field
+    ? { "aria-invalid": true, "aria-describedby": errorId }
+    : {};
+  const message = (field: string) => issue?.field === field && issue.error
+    ? <p id={errorId} role="alert" className="text-sm text-destructive">{issue.error}</p>
+    : null;
   return (
     <>
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}-name`}>{t("phaseNameLabel")}</Label>
-        <Input id={`${idPrefix}-name`} name="name" defaultValue={defaults?.name} required />
+        <Input id={`${idPrefix}-name`} name="name" defaultValue={defaults?.name} required {...issueProps("name")} />
+        {message("name")}
       </div>
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}-description`}>{t("descriptionLabel")}</Label>
@@ -35,7 +46,9 @@ export function PhaseFormFields({
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-end`}>{t("endDateLabel")}</Label>
-          <DatePicker id={`${idPrefix}-end`} name="planned_end_date" defaultValue={toDayValue(defaults?.planned_end_date)} />
+          <DatePicker id={`${idPrefix}-end`} name="planned_end_date" defaultValue={toDayValue(defaults?.planned_end_date)}
+            invalid={issue?.field === "end"} aria-describedby={issue?.field === "end" ? errorId : undefined} />
+          {message("end")}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -44,6 +57,7 @@ export function PhaseFormFields({
           <Select
             id={`${idPrefix}-status`}
             name="status"
+            {...issueProps("status")}
             defaultValue={defaults?.status ?? "planned"}
           >
             {(Object.keys(STATUS_CONFIG) as PhaseStatus[]).map((status) => (
@@ -52,6 +66,7 @@ export function PhaseFormFields({
               </option>
             ))}
           </Select>
+          {message("status")}
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-completion`}>{t("completionLabel")}</Label>

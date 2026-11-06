@@ -78,7 +78,9 @@ function QuickAddDialog({ userId, projects, onClose }: { userId: string; project
   const [dueToday, setDueToday] = useState(restored?.form.dueToday ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [titleTouched, setTitleTouched] = useState(false);
   const dirty = title.trim() !== "";
+  const titleInvalid = titleTouched && !dirty;
   // After a save or a discard, a pending debounced write must not restore the draft.
   const draftDone = useRef(false);
   const requestClose = useGuardedClose(dirty, saving, () => { draftDone.current = true; clearTaskDraft(draftKey); onClose(); });
@@ -136,10 +138,16 @@ function QuickAddDialog({ userId, projects, onClose }: { userId: string; project
               autoFocus
               value={title}
               maxLength={500}
+              required
+              aria-invalid={titleInvalid || undefined}
+              aria-describedby={titleInvalid ? "quick-add-title-error" : undefined}
+              onBlur={() => setTitleTouched(true)}
+              onInvalid={() => setTitleTouched(true)}
               enterKeyHint="done"
               placeholder={t("quickAddPlaceholder")}
               onChange={(event) => setTitle(event.target.value)}
             />
+            {titleInvalid && <p id="quick-add-title-error" role="alert" className="text-sm text-destructive">{t("quickAddTitleRequired")}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {projects.length > 1 && (

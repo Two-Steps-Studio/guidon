@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
+import { useAuthFieldErrors } from "@/components/auth/use-auth-field-errors"
 import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { signupLocalAction } from "./actions"
@@ -29,6 +30,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
   const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated)
   const t = useTranslations("auth.signup")
   const tCommon = useTranslations("auth.common")
+  const { errors, fieldProps, setFieldError } = useAuthFieldErrors()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
@@ -45,10 +47,18 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
 
     try {
       // Reserved for AI accounts; the Supabase path has no server step to refuse it.
-      if (isAiAccountEmail(email.trim())) throw new Error(t("invalidEmail"))
+      if (isAiAccountEmail(email.trim())) {
+        setFieldError("email", t("invalidEmail"))
+        return
+      }
       if (local) {
         const result = await signupLocalAction(email, password, fullName)
-        if ("error" in result) throw new Error(result.error)
+        if ("error" in result) {
+          if (result.error === "Password must be at least 6 characters.") setFieldError("password", tCommon("shortPassword"))
+          else if (result.error === "Enter a valid email address.") setFieldError("email", t("invalidEmail"))
+          else setError(tCommon("invalidCredentials"))
+          return
+        }
         if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== result.userId) posthog.reset()
         posthog.identify(result.userId, { email: email.trim().toLowerCase(), name: fullName.trim() })
         posthog.capture("account_signup_completed", { signup_method: "local_password" })
@@ -82,7 +92,12 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
         },
       })
 
-      if (signUpError) throw signUpError
+      if (signUpError) {
+        if (signUpError.code === "email_address_invalid") setFieldError("email", t("invalidEmail"))
+        else if (signUpError.code === "weak_password") setFieldError("password", tCommon("weakPassword"))
+        else setError(tCommon("tryAgainLater"))
+        return
+      }
 
       // Deliberate choice, not Supabase's default: signUp() against an
       // already-registered, confirmed email returns success with no error
@@ -94,7 +109,8 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
       // more private but was confusing real users retrying a signup) to
       // match how most mainstream signup forms behave.
       if (data.user && data.user.identities && data.user.identities.length === 0) {
-        throw new Error(t("emailAlreadyRegistered"))
+        setFieldError("email", t("emailAlreadyRegistered"))
+        return
       }
 
       if (data.session && data.user) {
@@ -116,8 +132,8 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
       // inserts fixed earlier: the trigger already does this.
 
       router.push(`/auth/login?message=${encodeURIComponent(t("confirmEmailMessage"))}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tCommon("somethingWentWrong"))
+    } catch {
+      setError(tCommon("tryAgainLater"))
     } finally {
       setLoading(false)
     }
@@ -151,6 +167,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
             <div className="space-y-2">
               <Label htmlFor="fullName">{t("fullNameLabel")}</Label>
               <Input
+                {...fieldProps("fullName")}
                 id="fullName"
                 type="text"
                 placeholder={t("namePlaceholder")}
@@ -161,10 +178,12 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 autoFocus
                 required
               />
+              {errors.fullName && <p id="auth-error-fullName" role="alert" className="text-sm text-destructive">{errors.fullName}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">{t("emailLabel")}</Label>
               <Input
+                {...fieldProps("email")}
                 id="email"
                 type="email"
                 placeholder="john@example.com"
@@ -174,10 +193,12 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 disabled={!hydrated || loading}
                 required
               />
+              {errors.email && <p id="auth-error-email" role="alert" className="text-sm text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("passwordLabel")}</Label>
               <PasswordInput
+                {...fieldProps("password")}
                 id="password"
                 placeholder="••••••••"
                 value={password}
@@ -189,6 +210,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
                 required
                 minLength={6}
               />
+              {errors.password && <p id="auth-error-password" role="alert" className="text-sm text-destructive">{errors.password}</p>}
             </div>
             {error && (
               <div role="alert" className="flex items-center gap-2 text-sm text-destructive">

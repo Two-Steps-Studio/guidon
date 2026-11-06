@@ -37,7 +37,7 @@ export default async function UpgradePage({
   const user = await getCurrentUser();
   const db = dataClient(user.id);
 
-  const { data: memberships } = await db
+  const { data: memberships, error: membershipError } = await db
     .from<MembershipRow>("organization_members")
     .select("organization_id, role")
     .eq("user_id", user.id);
@@ -45,19 +45,24 @@ export default async function UpgradePage({
     .filter((membership) => canManageOrg(membership.role))
     .map((membership) => membership.organization_id);
 
-  const { data: organizations } = manageableIds.length
+  const { data: organizations, error: organizationsError } = manageableIds.length && !membershipError
     ? await db.from<OrganizationRow>("organizations").select("id, name").in("id", manageableIds).order("name")
-    : { data: [] as OrganizationRow[] };
+    : { data: [] as OrganizationRow[], error: null };
 
   const queryParams = new URLSearchParams();
-  if (plan) queryParams.set("plan", plan);
+  const requestedPlan = typeof plan === "string" && /^[a-z0-9_-]{1,64}$/i.test(plan) ? plan : null;
+  if (requestedPlan) queryParams.set("plan", requestedPlan);
   if (isBillingInterval(interval)) queryParams.set("interval", interval);
   const query = queryParams.size ? `?${queryParams}` : "";
   const billingHref = (orgId: string) => `/organizations/${orgId}/billing${query}`;
 
-  if (organizations?.length === 1) {
+  const failed = Boolean(membershipError || organizationsError);
+  if (!failed && organizations?.length === 1) {
     redirect(billingHref(organizations[0].id));
   }
+  const { data: selectedPlan } = requestedPlan && !failed
+    ? await db.from<{ name: string }>("plans").select("name").eq("id", requestedPlan).maybeSingle()
+    : { data: null };
 
   return (
     <AppShell user={user}>
@@ -65,7 +70,19 @@ export default async function UpgradePage({
         <h1 className="mb-2 text-3xl font-bold">{t("title")}</h1>
         <p className="mb-8 text-muted-foreground">{t("description")}</p>
 
-        {organizations && organizations.length > 0 ? (
+        {selectedPlan && (
+          <p className="mb-4 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+            {t("selection", { plan: selectedPlan.name, interval: isBillingInterval(interval) ? interval : "month" })}
+          </p>
+        )}
+        {failed ? (
+          <Card>
+            <CardContent className="space-y-3 py-4">
+              <p role="alert">{t("loadFailed")}</p>
+              <Button variant="outline" asChild><a href={`/upgrade${query}`}>{t("retry")}</a></Button>
+            </CardContent>
+          </Card>
+        ) : organizations && organizations.length > 0 ? (
           <div className="space-y-3">
             {organizations.map((organization) => (
               <Link key={organization.id} href={billingHref(organization.id)} className="block">

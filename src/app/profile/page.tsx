@@ -30,11 +30,17 @@ export default async function ProfilePage() {
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
 
-        <ProfileForm user={user} />
+        <nav aria-label={t("title")} className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-primary">
+          <a href="#profile-details" className="underline underline-offset-2">{t("title")}</a>
+          <a href="#profile-api-keys" className="underline underline-offset-2">{t("apiKeysTitle")}</a>
+          <a href="#profile-connected-apps" className="underline underline-offset-2">{t("connectedApps.title")}</a>
+          <a href="#profile-integrations" className="underline underline-offset-2">{t("integrationsTitle")}</a>
+        </nav>
+        <div id="profile-details" className="scroll-mt-16"><ProfileForm user={user} /></div>
         <AiPreferenceSection hideAi={await getHideAi(user.id)} />
-        <ApiKeysSection initialKeys={apiKeys} />
-        <ConnectedAppsSection initialApps={connectedApps} now={now} />
-        <IntegrationsSection />
+        <div id="profile-api-keys" className="scroll-mt-16"><ApiKeysSection initialKeys={apiKeys} /></div>
+        <div id="profile-connected-apps" className="scroll-mt-16"><ConnectedAppsSection initialApps={connectedApps} now={now} /></div>
+        <div id="profile-integrations" className="scroll-mt-16"><IntegrationsSection /></div>
         <DeleteAccountSection email={user.email ?? ""} plan={deletionPlan} />
       </div>
     </AppShell>

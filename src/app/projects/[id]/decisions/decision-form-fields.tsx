@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Decision, DecisionStatus, DecisionType } from "@/types/context";
 import { Select } from "@/components/ui/select";
+import type { DecisionFormState } from "./actions";
 
 const STATUS_VALUES: DecisionStatus[] = ["proposed", "approved", "rejected", "deprecated"];
 const TYPE_VALUES: DecisionType[] = ["technical", "architectural", "product", "business", "process", "other"];
@@ -11,8 +12,10 @@ const TYPE_VALUES: DecisionType[] = ["technical", "architectural", "product", "b
 export function DecisionFormFields({
   idPrefix,
   defaults,
+  issue,
 }: {
   idPrefix: string;
+  issue?: DecisionFormState;
   /** Partial on purpose: the "mark comment as decision" flow (TaskDetailDialog)
    *  only prefills title/description, unlike the edit dialog which passes a
    *  full Decision. */
@@ -22,11 +25,19 @@ export function DecisionFormFields({
 }) {
   const t = useTranslations("decisions");
   const tCommon = useTranslations("common");
+  const errorId = `${idPrefix}-error`;
+  const issueProps = (field: string) => issue?.field === field
+    ? { "aria-invalid": true, "aria-describedby": errorId }
+    : {};
+  const message = (field: string) => issue?.field === field && issue.error
+    ? <p id={errorId} role="alert" className="text-sm text-destructive">{issue.error}</p>
+    : null;
   return (
     <>
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}-title`}>{t("titleLabel")}</Label>
-        <Input id={`${idPrefix}-title`} name="title" defaultValue={defaults?.title} required />
+        <Input id={`${idPrefix}-title`} name="title" defaultValue={defaults?.title} required {...issueProps("title")} />
+        {message("title")}
       </div>
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}-description`}>{t("descriptionLabel")}</Label>
@@ -57,6 +68,7 @@ export function DecisionFormFields({
           <Select
             id={`${idPrefix}-status`}
             name="status"
+            {...issueProps("status")}
             defaultValue={defaults?.status ?? "proposed"}
           >
             {STATUS_VALUES.map((status) => (
@@ -65,12 +77,14 @@ export function DecisionFormFields({
               </option>
             ))}
           </Select>
+          {message("status")}
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-type`}>{t("typeLabel")}</Label>
           <Select
             id={`${idPrefix}-type`}
             name="decision_type"
+            {...issueProps("type")}
             defaultValue={defaults?.decision_type ?? "technical"}
           >
             {TYPE_VALUES.map((value) => (
@@ -79,6 +93,7 @@ export function DecisionFormFields({
               </option>
             ))}
           </Select>
+          {message("type")}
         </div>
       </div>
     </>

@@ -28,6 +28,9 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
   const submittedRef = useRef(false);
 
   useEffect(() => {
+    if (submittedRef.current && !pending && state.field) {
+      document.getElementById(`create-phase-${state.field}`)?.focus();
+    }
     if (submittedRef.current && !pending && state.error === null) {
       setOpen(false);
       submittedRef.current = false;
@@ -53,8 +56,8 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
           onSubmit={(event) => { submittedRef.current = true; submitKeepingValues(event, formAction); }}
           className="space-y-4"
         >
-          <PhaseFormFields idPrefix="create-phase" />
-          {state.error && (
+          <PhaseFormFields idPrefix="create-phase" issue={state} />
+          {state.error && !state.field && (
             <div role="alert" className="text-sm text-destructive flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
               {state.error}

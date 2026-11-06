@@ -55,6 +55,8 @@ export async function authenticationCoverage({page,context,origin,fixture,browse
   await page.locator("#password").evaluate(input=>input.removeAttribute("minlength"));
   await page.locator('button[type="submit"]').click();
   await page.getByRole("alert").filter({hasText:"Password must be at least 6 characters."}).waitFor();
+  assert.equal(await page.locator("#password").getAttribute("aria-describedby"), "auth-error-password");
+  assert.equal(await page.locator("#email").inputValue(), `weak-${browserName}@guidon.example.test`);
   assert.equal((await context.cookies()).some(cookie=>cookie.name==="guidon-session"),false);
 
   await page.goto(`${origin}/auth/signup`);

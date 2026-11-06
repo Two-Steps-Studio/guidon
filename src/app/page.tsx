@@ -130,7 +130,12 @@ export default async function Home() {
                 {key:"roadmap",title:t("features.roadmap.title"),alt:t("features.roadmap.title")},
               ]}/>
             </div>
-            <p className={styles.caption}>{d("previewNote")}</p>
+            <p className={styles.caption}>
+              {d("previewNote")}{" "}
+              <CtaLink cta="hero-sandbox" prefetch={false} href="/sandbox" className="inline-flex min-h-11 items-center text-primary underline underline-offset-2">
+                {d("sandbox")}
+              </CtaLink>
+            </p>
           </div>
         </section>
 

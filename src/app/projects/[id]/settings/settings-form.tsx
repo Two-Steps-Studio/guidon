@@ -51,7 +51,15 @@ export function SettingsForm({
   useEffect(() => {
     if (state === initialState) return;
     if (!state.error) toast.success(t("settingsSavedToast"));
+    if (state.field) document.getElementById(state.field)?.focus();
   }, [state, t]);
+
+  const fieldProps = (field: SettingsFormState["field"]) => state.field === field
+    ? { "aria-invalid": true, "aria-describedby": "project-settings-field-error" }
+    : {};
+  const fieldError = (field: SettingsFormState["field"]) => state.field === field && state.error
+    ? <p id="project-settings-field-error" role="alert" className="text-sm text-destructive">{state.error}</p>
+    : null;
 
   const handleTechnologyAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && e.currentTarget.value.trim()) {
@@ -100,7 +108,8 @@ export function SettingsForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">{t("nameLabel")}</Label>
-            <Input id="name" name="name" defaultValue={project.name} required />
+            <Input id="name" name="name" defaultValue={project.name} required {...fieldProps("name")} />
+            {fieldError("name")}
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">{t("descriptionLabel")}</Label>
@@ -110,6 +119,7 @@ export function SettingsForm({
             <Label htmlFor="status">{t("statusLabel")}</Label>
             <Select
               id="status"
+              {...fieldProps("status")}
               name="status"
               defaultValue={project.status}
             >
@@ -121,6 +131,7 @@ export function SettingsForm({
             </Select>
           </div>
           <div className="space-y-2">
+            {fieldError("status")}
             <Label htmlFor="language">{t("languageLabel")}</Label>
             <Select id="language" name="language" defaultValue={project.language ?? ""}>
               <option value="">{t("languageAuto")}</option>
@@ -148,6 +159,7 @@ export function SettingsForm({
             <Label htmlFor="projectType">{t("projectTypeLabel")}</Label>
             <Select
               id="projectType"
+              {...fieldProps("projectType")}
               name="projectType"
               defaultValue={project.project_type ?? ""}
             >
@@ -160,6 +172,7 @@ export function SettingsForm({
             </Select>
           </div>
           <div className="space-y-2">
+            {fieldError("projectType")}
             <Label>{t("workflowLabel")}</Label>
             <div className="flex gap-4">
               {PROJECT_METHODOLOGY_VALUES.map((value) => (
@@ -204,6 +217,8 @@ export function SettingsForm({
               />
               <Input
                 id="colorHex"
+                {...fieldProps("colorHex")}
+                aria-label={t("colorLabel")}
                 name="colorHex"
                 type="text"
                 value={color}
@@ -214,6 +229,7 @@ export function SettingsForm({
                 maxLength={7}
               />
             </div>
+            {fieldError("colorHex")}
             <p className="text-xs text-muted-foreground">
               {t("colorHelp")}
             </p>
@@ -241,7 +257,7 @@ export function SettingsForm({
         </CardContent>
       </Card>
 
-      {state.error && (
+      {state.error && !state.field && (
         <div role="alert" className="p-4 bg-destructive/10 border border-destructive rounded-lg flex items-center gap-2 text-destructive">
           <AlertCircle className="h-4 w-4" />
           {state.error}

@@ -79,12 +79,9 @@ function planFeatures(plan: PlanRow, t: PricingTranslator): string[] {
   return features;
 }
 
-const CURRENCIES: Currency[] = ["EUR", "PLN"];
-
 /** `checkoutAvailable` false (Stripe not configured yet): paid plans start free instead of ending at a checkout error. */
 export function PricingSection({ plans, prices = [], checkoutAvailable = true }: { plans: PlanRow[]; prices?: PublicPlanPrice[]; checkoutAvailable?: boolean }) {
   const t = useTranslations("landing.pricing");
-  const [currency, setCurrency] = useState<Currency>("EUR");
   const [interval, setInterval] = useState<BillingInterval>("month");
   const periods = () => <div role="group" aria-label={t("intervalLabel")} className="inline-flex max-w-full flex-wrap justify-center gap-1 rounded-xl border border-border bg-background p-1">
     {BILLING_INTERVALS.map(option => <button key={option} type="button" aria-pressed={interval === option}
@@ -104,33 +101,13 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
 
           <div>{periods()}</div>
           <p className="text-xs text-text-muted">{t("actualPrices")}</p>
-          <div
-            role="group"
-            aria-label={t("currencyLabel")}
-            className="inline-flex rounded-lg border border-border p-1"
-          >
-            {CURRENCIES.map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={currency === option}
-                onClick={() => setCurrency(option)}
-                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                  currency === option
-                    ? "bg-primary text-primary-foreground"
-                    : "text-text-muted hover:text-text"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
         </div>
 
         <RevealGroup className={styles.pricingGrid}>
           {plans.map((plan) => {
             const isPopular = plan.id === "pro";
-            const price = publicPlanPrice(plan, prices, interval, currency);
+            // The Stripe sync and organization checkout use the EUR catalogue.
+            const price = publicPlanPrice(plan, prices, interval, "EUR");
             return (
               <Card
                 key={plan.id}

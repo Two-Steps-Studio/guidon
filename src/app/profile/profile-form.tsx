@@ -1,6 +1,7 @@
 "use client";
 
 import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
+import { useEffect } from "react";
 
 
 import { useTranslations } from "next-intl";
@@ -24,6 +25,15 @@ const initialState: ProfileFormState = { error: null };
 export function ProfileForm({ user }: { user: CurrentUser }) {
   const [state, formAction, pending] = useSafeActionState(updateProfile, initialState);
   const t = useTranslations("profile");
+  useEffect(() => {
+    if (state.field) document.getElementById(state.field)?.focus();
+  }, [state]);
+  const fieldProps = (field: ProfileFormState["field"]) => state.field === field
+    ? { "aria-invalid": true, "aria-describedby": "profile-field-error" }
+    : {};
+  const fieldError = (field: ProfileFormState["field"]) => state.field === field && state.error
+    ? <p id="profile-field-error" role="alert" className="text-sm text-destructive">{state.error}</p>
+    : null;
 
   return (
     <Card>
@@ -48,10 +58,12 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
             <Input
               id="full_name"
               name="full_name"
+              {...fieldProps("full_name")}
               defaultValue={user.full_name ?? ""}
               placeholder={t("namePlaceholder")}
               required
             />
+            {fieldError("full_name")}
           </div>
 
           <div className="space-y-2">
@@ -59,9 +71,11 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
             <Input
               id="avatar"
               name="avatar"
+              {...fieldProps("avatar")}
               type="file"
               accept="image/*"
             />
+            {fieldError("avatar")}
             <p className="text-xs text-muted-foreground">
               {t("avatarHelp")}
             </p>
@@ -98,7 +112,7 @@ export function ProfileForm({ user }: { user: CurrentUser }) {
             <p className="text-xs text-muted-foreground">{t("soundsHelp")}</p>
           </div>
 
-          {state.error && (
+          {state.error && !state.field && (
             <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
               {state.error}

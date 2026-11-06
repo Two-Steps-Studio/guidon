@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { BillingInterval } from "@/lib/billing/billing-core";
 import { createCheckoutSession, createPortalSession } from "./actions";
@@ -24,6 +25,7 @@ export function UpgradeButton({
   interval: BillingInterval;
   label: string;
 }) {
+  const t = useTranslations("organizations.billing");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -41,14 +43,15 @@ export function UpgradeButton({
           });
         }}
       >
-        {label}
+        {pending ? t("openingStripe") : label}
       </Button>
-      {error && <span className="max-w-[16rem] text-right text-xs text-destructive">{error}</span>}
+      {error && <p role="alert" className="max-w-[16rem] text-right text-xs text-destructive">{error} {t("tryAgainOrContact")}</p>}
     </div>
   );
 }
 
 export function ManageBillingButton({ organizationId, label }: { organizationId: string; label: string }) {
+  const t = useTranslations("organizations.billing");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -66,9 +69,9 @@ export function ManageBillingButton({ organizationId, label }: { organizationId:
           });
         }}
       >
-        {label}
+        {pending ? t("openingStripe") : label}
       </Button>
-      {error && <span className="max-w-[16rem] text-right text-xs text-destructive">{error}</span>}
+      {error && <p role="alert" className="max-w-[16rem] text-right text-xs text-destructive">{error} {t("tryAgainOrContact")}</p>}
     </div>
   );
 }
