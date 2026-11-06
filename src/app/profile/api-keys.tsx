@@ -1,4 +1,5 @@
 "use client";
+import { CopyStateIcon } from "@/components/ui/copy-state-icon";
 
 import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
 
@@ -10,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { AlertCircle, KeyRound, Trash2 } from "lucide-react";
 import { API_KEY_SCOPES } from "@/lib/api/scopes";
 import { createApiKey, revokeApiKey, type ApiKeyRow, type CreateApiKeyState } from "./api-keys-actions";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
@@ -88,7 +89,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: ApiKeyRow[] }) {
                 {state.fullKey}
               </code>
               <Button type="button" size="sm" variant="outline" onClick={handleCopyFullKey}>
-                {copyState === "copied" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                <CopyStateIcon copied={copyState === "copied"} className="h-3 w-3" />
               </Button>
             </div>
             {copyState === "error" && (

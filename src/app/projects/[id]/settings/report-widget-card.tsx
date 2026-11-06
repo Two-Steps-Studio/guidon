@@ -1,10 +1,11 @@
 "use client";
+import { CopyStateIcon } from "@/components/ui/copy-state-icon";
 
 import { confirmAction } from "@/components/ui/confirm-action";
 
 import { useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertCircle, Bug, Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { AlertCircle, Bug, KeyRound, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,7 +125,7 @@ export function ReportWidgetCard({
             onClick={copy}
             aria-label={t("reportWidgetCopy")}
           >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            <CopyStateIcon copied={copied} className="h-4 w-4" />
           </Button>
         </div>
 

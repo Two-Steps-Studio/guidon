@@ -1,4 +1,5 @@
 "use client";
+import { CopyStateIcon } from "@/components/ui/copy-state-icon";
 
 import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
 
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Check, Copy, Loader2, MailCheck, Plus } from "lucide-react";
+import { AlertCircle, Loader2, MailCheck, Plus } from "lucide-react";
 import { addMember, type MemberActionState } from "./actions";
 import { Select } from "@/components/ui/select";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
@@ -95,7 +96,7 @@ export function AddMemberDialog({
               <div className="flex gap-2">
                 <Input id="invite-link" readOnly value={invited.link} onFocus={(event) => event.currentTarget.select()} />
                 <Button type="button" variant="outline" onClick={copyLink} aria-label={t("copyInviteLink")}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <CopyStateIcon copied={copied} className="h-4 w-4" />
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">{t("inviteLinkHint")}</p>
