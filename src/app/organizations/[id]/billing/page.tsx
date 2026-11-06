@@ -335,7 +335,10 @@ export default async function BillingPage({
                           return amount === undefined ? "-" : formatPrice(amount, interval, t);
                         })()}
                         {trialAvailable && plan.price_cents !== null && plan.price_cents > 0 && !isCurrent && purchasable(plan) && (
-                          <div className="text-xs text-muted-foreground">{t("trialNotice", { days: TRIAL_PERIOD_DAYS })}</div>
+                          <div className="max-w-xs space-y-1 text-xs text-muted-foreground">
+                            <p>{t("trialNotice", { days: TRIAL_PERIOD_DAYS })}</p>
+                            <p>{t("trialEndNotice")}</p>
+                          </div>
                         )}
                       </td>
                       <td>{formatCount(plan.project_limit, t)}</td>
@@ -364,6 +367,10 @@ export default async function BillingPage({
                 })}
               </tbody>
             </table>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-4 text-sm">
+              <Link href="/contact" className="text-primary underline underline-offset-2">{t("billingHelp")}</Link>
+              <Link href="/legal/refunds" className="text-primary underline underline-offset-2">{t("refundPolicy")}</Link>
+            </div>
           </CardContent>
         </Card>
       </div>
