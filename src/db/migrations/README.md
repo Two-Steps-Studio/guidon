@@ -103,6 +103,7 @@ them. Prefer the runner.
 | `105_whiteboards.sql` | Whiteboard module: `whiteboards` (project, name) and `whiteboard_elements` (board, type, position, size, `content` jsonb). Its single member-only policy per table is replaced by 107. | The project's whiteboard |
 | `106_whiteboard_edges.sql` | `whiteboard_edges` (project, `board_id` as text holding the board's id, source/target elements `ON DELETE CASCADE`, label, type). Policies replaced by 107. | Arrows between whiteboard notes |
 | `107_whiteboard_access.sql` | Grants for the three whiteboard tables (105/106 had none, so self-hosted Postgres refused every query). Policies like the rest of the schema: read with `private.project_access`; write notes, arrows and boards as owner/admin/developer; delete a board as owner/admin. An arrow's ends must be elements of its own board, in its own project. `test:db` section 90. | Viewers and testers only look at the board; an arrow can't point into another project |
+| `108_platform_admin_schema.sql` | Adds platform role grants, session records and audit events. Requires a verified user UUID for the explicit initial grant. Revokes inherited Data API grants and enables RLS. The service role may read grants, manage session timestamps and append audit events. | Foundation for later admin authorization. Applying the migration grants no user access. Verify with `tests/platform-admin-schema.sql` on a disposable database. |
 
 ## The compatibility layer runs before all of this
 
