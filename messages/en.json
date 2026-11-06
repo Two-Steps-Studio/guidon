@@ -1716,6 +1716,13 @@
   },
   "admin": {
     "invoices": {
+      "collections": "Collections queue",
+      "collectionsDescription": "Open invoices with an outstanding balance and at least one payment attempt.",
+      "retryConfirm": "Type {id} to confirm a new charge attempt",
+      "retry": "Retry payment",
+      "retryPaid": "Stripe confirmed payment.",
+      "retryStale": "Invoice changed or cannot be retried. Refresh the queue.",
+      "retryFailed": "Payment could not be confirmed. Check the invoice before starting a new attempt.",
       "organizationId": "Organization ID",
       "import": "Import historical invoices",
       "importNext": "Import next batch",

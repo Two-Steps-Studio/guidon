@@ -1704,6 +1704,13 @@
   },
   "admin": {
     "invoices": {
+      "collections": "Cola de cobros",
+      "collectionsDescription": "Facturas abiertas con saldo pendiente y al menos un intento de pago.",
+      "retryConfirm": "Escribe {id} para confirmar un nuevo intento de cobro",
+      "retry": "Reintentar pago",
+      "retryPaid": "Stripe confirmó el pago.",
+      "retryStale": "La factura cambió o no permite reintentos. Actualiza la cola.",
+      "retryFailed": "No se pudo confirmar el pago. Comprueba la factura antes de iniciar otro intento.",
       "organizationId": "ID de organización",
       "import": "Importar facturas anteriores",
       "importNext": "Importar siguiente lote",

@@ -44,3 +44,13 @@ export function invoiceCardLastFour(payment: Stripe.InvoicePayment | undefined) 
   const digits = typeof charge === "object" ? charge?.payment_method_details?.card?.last4 : undefined;
   return typeof digits === "string" && /^\d{4}$/.test(digits) ? digits : null;
 }
+
+export function canRetryStripeInvoice(
+  invoice: Pick<Stripe.Invoice, "customer" | "status" | "amount_remaining" | "currency" | "collection_method" | "attempt_count">,
+  expected: { customer: string; amount: number; currency: string },
+): boolean {
+  const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  return customerId === expected.customer && invoice.status === "open" && invoice.amount_remaining > 0 &&
+    invoice.amount_remaining === expected.amount && invoice.currency === expected.currency &&
+    invoice.collection_method === "charge_automatically" && invoice.attempt_count > 0;
+}

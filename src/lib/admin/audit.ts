@@ -12,6 +12,7 @@ export const AUDIT_TARGETS = {
   "organizations.plan.edit": "organization",
   "billing.prices.sync": "billing",
   "billing.invoices.import": "organization",
+  "billing.invoices.retry": "stripe_invoice",
   "promos.create": "promo_code",
   "promos.toggle": "promo_code",
   "modules.review": "module_version",
@@ -30,6 +31,7 @@ type AuditState = {
   status?: "published" | "rejected" | "withdrawn" | "resolved";
   changed_prices?: number;
   imported_invoices?: number;
+  invoice_payment_status?: "open" | "paid" | "unconfirmed";
   diagnostic_reason?: DiagnosticReason;
   diagnostic_id?: string;
 };
@@ -48,7 +50,7 @@ export async function auditAdminMutation<T extends { error: string | null }>(
   const safeTarget = typeof targetId === "string" && (
     targetType === "module_version"
       ? /^[a-z][a-z0-9-]{0,63}@[0-9A-Za-z.+-]{1,128}$/.test(targetId)
-      : AUDIT_UUID.test(targetId)
+      : targetType === "stripe_invoice" ? /^in_[a-z\d]{1,100}$/i.test(targetId) : AUDIT_UUID.test(targetId)
   ) ? targetId : null;
   const requestId = randomUUID();
   const changes: { before?: AuditState; after?: AuditState } = {};

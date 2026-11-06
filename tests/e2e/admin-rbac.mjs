@@ -173,6 +173,14 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await page.getByText("Payment history", { exact: true }).click();
   await page.getByText(/paid.*12\.00.*4242/).waitFor();
   assert.match(await page.locator("main table").textContent(), /TEST-001.*paid.*4242/);
+  await saveInvoice({ ...invoice, invoice_id: "in_open", invoice_number: "TEST-002",
+    status: "open", amount_paid: 0, amount_remaining: 1200, failed_at: invoice.observed_at,
+  }, []);
+  await page.getByRole("link", { name: "Collections queue" }).click();
+  await page.getByRole("heading", { name: "Collections queue" }).waitFor();
+  await page.getByText("TEST-002", { exact: false }).waitFor();
+  assert.equal(await page.getByText("TEST-001", { exact: false }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Retry payment" }).count(), 0);
   await page.goto(`${origin}/admin/organizations`);
   await page.locator("main table").waitFor();
   assert.equal(await page.getByRole("spinbutton").count(), 0);

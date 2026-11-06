@@ -8,6 +8,7 @@ import { hasAdminPermission } from "@/lib/admin/permissions";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
 import { ImportInvoices } from "./import-invoices";
+import { RetryInvoice } from "./retry-invoice";
 
 type InvoiceRow = {
   invoice_id: string; invoice_number: string | null; organization_id: string;
@@ -18,15 +19,24 @@ type InvoiceRow = {
 };
 
 export default async function AdminInvoicesPage({ searchParams }: {
-  searchParams: Promise<{ org?: string }>;
+  searchParams: Promise<{ org?: string; view?: string }>;
 }) {
   const { role } = await requireAdminAccess("billing.read");
-  const { org } = await searchParams;
+  const { org, view } = await searchParams;
+  const overdue = view === "collections";
   const query = serviceDataClient().from<InvoiceRow>("platform_stripe_invoices")
     .select("invoice_id, invoice_number, organization_id, status, currency, amount_due, amount_paid, amount_remaining, attempt_count, card_last4, invoice_pdf, issued_at, failed_at, payment_history")
     .order("issued_at", { ascending: false }).order("invoice_id").limit(100);
   const scoped = typeof org === "string" && AUDIT_UUID.test(org);
   if (scoped) query.eq("organization_id", org);
+  if (overdue) query.eq("status", "open").gt("amount_remaining", 0).gt("attempt_count", 0);
+  const retryEnabled = hasAdminPermission(role, "billing.invoices.retry") && !hasDirectDatabase() && isBillingConfigured();
+  const invoiceHref = (organization?: string, collections = overdue) => {
+    const params = new URLSearchParams();
+    if (organization) params.set("org", organization);
+    if (collections) params.set("view", "collections");
+    return params.size ? `/admin/billing/invoices?${params}` : "/admin/billing/invoices";
+  };
   const [{ data, error }, t, format, locale] = await Promise.all([query, getTranslations("admin.invoices"), getFormatter(), getLocale()]);
   if (error) throw new Error("Could not load Stripe invoices");
   const date = (value: string) => format.dateTime(new Date(value), { dateStyle: "medium", timeZone: "UTC" });
@@ -39,10 +49,13 @@ export default async function AdminInvoicesPage({ searchParams }: {
 
   return <div className="container mx-auto max-w-7xl space-y-4 px-4 py-8 sm:px-6">
     <Link href="/admin/billing" className="underline">{t("back")}</Link>
-    <h2 className="text-2xl font-bold">{t("title")}</h2>
-    <p className="text-muted-foreground">{t("description")}</p>
-    {scoped && <Link href="/admin/billing/invoices" className="underline">{t("clear")}</Link>}
-    {hasAdminPermission(role, "billing.invoices.import") && !hasDirectDatabase() && isBillingConfigured() &&
+    <h2 className="text-2xl font-bold">{t(overdue ? "collections" : "title")}</h2>
+    <p className="text-muted-foreground">{t(overdue ? "collectionsDescription" : "description")}</p>
+    <div className="flex flex-wrap gap-4">
+      <Link href={invoiceHref(scoped ? org : undefined, !overdue)} className="underline">{t(overdue ? "title" : "collections")}</Link>
+      {scoped && <Link href={invoiceHref()} className="underline">{t("clear")}</Link>}
+    </div>
+    {!overdue && hasAdminPermission(role, "billing.invoices.import") && !hasDirectDatabase() && isBillingConfigured() &&
       <ImportInvoices key={scoped ? org : "all"} organizationId={scoped ? org : undefined} />}
     {data.length ? <div className="overflow-x-auto rounded-xl border">
       <table className="w-full text-sm">
@@ -63,8 +76,10 @@ export default async function AdminInvoicesPage({ searchParams }: {
                     {payment.last4 && ` · •••• ${payment.last4}`}
                   </li>)}</ul>
                 </details>}
+                {overdue && retryEnabled && <RetryInvoice key={`${invoice.invoice_id}:${invoice.amount_remaining}`}
+                  id={invoice.invoice_id} amount={Number(invoice.amount_remaining)} currency={invoice.currency} />}
               </td>
-              <td><Link className="underline" href={`/admin/billing/invoices?org=${invoice.organization_id}`}>{invoice.organization_id}</Link></td>
+              <td><Link className="underline" href={invoiceHref(invoice.organization_id)}>{invoice.organization_id}</Link></td>
               <td>{invoice.status}</td>
               <td>{amount(invoice.amount_due, invoice.currency)}</td>
               <td>{amount(invoice.amount_paid, invoice.currency)}</td>

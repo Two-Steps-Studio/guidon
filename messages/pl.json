@@ -1716,6 +1716,13 @@
   },
   "admin": {
     "invoices": {
+      "collections": "Kolejka zaległości",
+      "collectionsDescription": "Otwarte faktury z pozostałą kwotą i co najmniej jedną próbą płatności.",
+      "retryConfirm": "Wpisz {id}, aby potwierdzić nową próbę obciążenia",
+      "retry": "Ponów płatność",
+      "retryPaid": "Stripe potwierdził płatność.",
+      "retryStale": "Faktura się zmieniła lub ponowienie jest niedostępne. Odśwież kolejkę.",
+      "retryFailed": "Nie udało się potwierdzić płatności. Sprawdź fakturę przed kolejną próbą.",
       "organizationId": "ID organizacji",
       "import": "Importuj starsze faktury",
       "importNext": "Importuj kolejną partię",

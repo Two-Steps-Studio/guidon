@@ -1704,6 +1704,13 @@
   },
   "admin": {
     "invoices": {
+      "collections": "Offene Forderungen",
+      "collectionsDescription": "Offene Rechnungen mit Restbetrag und mindestens einem Zahlungsversuch.",
+      "retryConfirm": "Gib {id} ein, um einen erneuten Zahlungsversuch zu bestätigen",
+      "retry": "Zahlung erneut versuchen",
+      "retryPaid": "Stripe hat die Zahlung bestätigt.",
+      "retryStale": "Rechnung geändert oder nicht erneut zahlbar. Aktualisiere die Warteschlange.",
+      "retryFailed": "Zahlung konnte nicht bestätigt werden. Prüfe die Rechnung vor einem neuen Versuch.",
       "organizationId": "Organisations-ID",
       "import": "Ältere Rechnungen importieren",
       "importNext": "Nächste Gruppe importieren",
