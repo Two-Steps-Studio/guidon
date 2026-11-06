@@ -268,8 +268,7 @@ export function pricingMarkdown(plans: PricingPlan[], siteUrl: string): string {
         ? "Custom pricing - contact us"
         : plan.price_cents === 0
           ? "Free"
-          : `€${(plan.price_cents / 100).toFixed(2)} per month` +
-            (plan.price_pln_cents ? ` (${(plan.price_pln_cents / 100).toFixed(2)} zł)` : "");
+          : `€${(plan.price_cents / 100).toFixed(2)} per month`;
     const features = [
       plan.has_ai_features && "AI Task API and MCP server for agents",
       plan.has_github_integration && "GitHub integration",
