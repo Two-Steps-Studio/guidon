@@ -46,7 +46,8 @@ export function contentSecurityPolicy({
 }): string {
   const supabase = originOf(supabaseUrl);
   const posthog = originOf(posthogHost);
-  // posthog-js loads its extra bundles from the assets host next to the API host.
+  // posthog-js loads its extra bundles from the assets host next to the API host;
+  // connect-src too, or DevTools reports their source maps as CSP-blocked.
   const posthogAssets = posthog.replace(".i.", "-assets.i.");
   const list = (...sources: string[]) => sources.filter(Boolean).join(" ");
 
@@ -56,7 +57,7 @@ export function contentSecurityPolicy({
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https:`,
     `font-src 'self' data:`,
-    `connect-src ${list("'self'", supabase, posthog, originOf(sentryDsn))}`,
+    `connect-src ${list("'self'", supabase, posthog, posthogAssets, originOf(sentryDsn))}`,
     `media-src ${list("'self'", supabase)}`,
     `frame-src ${list("'self'", supabase)}`,
     `worker-src 'self' blob:`,

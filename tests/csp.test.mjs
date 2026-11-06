@@ -17,6 +17,7 @@ assert.ok(!scripts.includes("'unsafe-inline'") && !scripts.includes("'unsafe-eva
 assert.ok(!/ https?:(\s|$)/.test(scripts) && !scripts.includes("data:"), "No scheme-wide script sources");
 assert.ok(scripts.includes("https://eu-assets.i.posthog.com"));
 assert.ok(directive(page, "connect-src").includes("https://x.supabase.co"));
+assert.ok(directive(page, "connect-src").includes("https://eu-assets.i.posthog.com"), "source maps of PostHog bundles");
 assert.equal(directive(page, "object-src"), "object-src 'none'");
 assert.equal(directive(page, "frame-ancestors"), "frame-ancestors 'none'");
 

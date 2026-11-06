@@ -233,7 +233,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
             {t("haveAccount")}{" "}
             <Link
               href={searchParams.get("redirect") ? `/auth/login?redirect=${encodeURIComponent(redirectTarget)}` : "/auth/login"}
-              className="text-primary hover:underline"
+              className="text-primary underline underline-offset-2"
             >
               {t("signIn")}
             </Link>

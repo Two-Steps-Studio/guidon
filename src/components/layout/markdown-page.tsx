@@ -35,6 +35,8 @@ export function MarkdownPage({ markdown }: { markdown: string }) {
           remarkPlugins={[remarkGfm]}
           components={{
             h2: ({ children }) => <h2 id={slug(children)}>{children}</h2>,
+            // tabIndex: keyboard users can scroll a long code line into view (WCAG 2.1.1).
+            pre: ({ children }) => <pre tabIndex={0}>{children}</pre>,
             // Wide tables scroll on their own instead of widening the page on a phone.
             table: ({ children }) => (
               <div className="mb-4 overflow-x-auto">
