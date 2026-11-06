@@ -110,6 +110,7 @@
       "haveAccount": "Bereits ein Konto?",
       "signIn": "Anmelden",
       "confirmEmailMessage": "Bestätige dein Konto über den Link in deiner E-Mail",
+      "confirmedOtherBrowser": "Deine E-Mail ist bestätigt. Der Link wurde in einem anderen Browser geöffnet als bei der Registrierung, melde dich daher hier an.",
       "emailAlreadyRegistered": "Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melde dich an.",
       "invalidEmail": "Gib eine gültige E-Mail-Adresse ein."
     },

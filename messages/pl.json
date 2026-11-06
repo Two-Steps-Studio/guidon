@@ -110,6 +110,7 @@
       "haveAccount": "Masz już konto?",
       "signIn": "Zaloguj się",
       "confirmEmailMessage": "Sprawdź e-mail, aby potwierdzić konto",
+      "confirmedOtherBrowser": "E-mail potwierdzony. Link otworzył się w innej przeglądarce niż ta, w której założono konto, więc zaloguj się tutaj.",
       "emailAlreadyRegistered": "Konto z tym adresem e-mail już istnieje. Zaloguj się.",
       "invalidEmail": "Podaj prawidłowy adres e-mail."
     },

@@ -110,6 +110,7 @@
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
       "confirmEmailMessage": "Check your email to confirm your account",
+      "confirmedOtherBrowser": "Your email is confirmed. The link opened in a different browser than the one you signed up in, so sign in here to continue.",
       "emailAlreadyRegistered": "An account with this email already exists. Log in instead.",
       "invalidEmail": "Enter a valid email address."
     },
