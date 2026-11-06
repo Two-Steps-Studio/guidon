@@ -17,6 +17,13 @@ const PinnedProjectsContext = createContext<PinnedProjectsValue | null>(null);
 export function PinnedProjectsProvider({ initial, children }: { initial: PinnedProject[]; children: React.ReactNode }) {
   const t = useTranslations("projects.list");
   const [projects, setProjects] = useState(initial);
+  // A new server render (an icon or name changed, a pin made elsewhere) wins
+  // over the local copy; only toggling between renders uses the copy.
+  const [rendered, setRendered] = useState(initial);
+  if (rendered !== initial) {
+    setRendered(initial);
+    setProjects(initial);
+  }
 
   const isPinned = useCallback((projectId: string) => projects.some((project) => project.id === projectId), [projects]);
 
