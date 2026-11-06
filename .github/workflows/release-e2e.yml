@@ -34,7 +34,7 @@ permissions:
 jobs:
   application:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,7 +84,8 @@ jobs:
       - run: npm run test:db
       - run: npm run test:migrations
       - run: npm run test:task-editing
-      - run: npm run test:e2e
+      # Firefox and WebKit run in parallel in application-browsers.
+      - run: node tests/e2e/isolation.test.mjs && node tests/e2e/run.mjs --browser=chromium
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -186,6 +187,33 @@ jobs:
         if: always()
         with:
           name: write-safety-e2e
+          path: output/e2e/
+          if-no-files-found: warn
+          retention-days: 7
+
+  application-browsers:
+    # The same application e2e as the job above, in the other two browsers.
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: node tests/e2e/run.mjs --browser=${{ matrix.browser }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-application-e2e-${{ matrix.browser }}
           path: output/e2e/
           if-no-files-found: warn
           retention-days: 7
