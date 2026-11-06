@@ -18,6 +18,7 @@ import { normalizeProjectLanguage } from "@/lib/project-language";
 
 export type SettingsFormState = {
   error: string | null;
+  field?: "name" | "status" | "projectType" | "colorHex";
 };
 
 const VALID_STATUSES: ProjectStatus[] = ["active", "archived", "deleted"];
@@ -133,16 +134,16 @@ export async function updateProjectSettings(
   const projectTypeRaw = formData.get("projectType");
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return { error: await tr("Project name is required.") };
+    return { error: await tr("Project name is required."), field: "name" };
   }
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as ProjectStatus)) {
-    return { error: await tr("Invalid status.") };
+    return { error: await tr("Invalid status."), field: "status" };
   }
 
   let projectType: ProjectType | null = null;
   if (typeof projectTypeRaw === "string" && projectTypeRaw.trim()) {
     if (!VALID_PROJECT_TYPES.includes(projectTypeRaw as ProjectType)) {
-      return { error: await tr("Invalid project type.") };
+      return { error: await tr("Invalid project type."), field: "projectType" };
     }
     projectType = projectTypeRaw as ProjectType;
   }
@@ -220,7 +221,7 @@ export async function updateProjectSettings(
     if (colorMatch) {
       trimmedColor = colorMatch[0];
     } else {
-      return { error: await tr("Invalid color format. Use hex format like #1D4FD8.") };
+      return { error: await tr("Invalid color format. Use hex format like #1D4FD8."), field: "colorHex" };
     }
   }
 

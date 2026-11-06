@@ -13,6 +13,7 @@ import { dataClient } from "@/lib/data-client";
 
 export type ProfileFormState = {
   error: string | null;
+  field?: "full_name" | "avatar";
 };
 
 /**
@@ -34,7 +35,7 @@ export async function updateProfile(
   const avatarFile = formData.get("avatar") as File | null;
 
   if (typeof fullName !== "string" || fullName.trim().length === 0) {
-    return { error: await tr("Name is required.") };
+    return { error: await tr("Name is required."), field: "full_name" };
   }
 
   const trimmedName = fullName.trim();
@@ -55,12 +56,12 @@ export async function updateProfile(
       // project files - see SAFE_INLINE_IMAGE_TYPES's own comment), so an
       // SVG's embedded <script> would execute when the URL is opened.
       if (!(SAFE_INLINE_IMAGE_TYPES as readonly string[]).includes(avatarFile.type)) {
-        return { error: await tr("Avatar must be a JPEG, PNG, GIF, or WebP image.") };
+        return { error: await tr("Avatar must be a JPEG, PNG, GIF, or WebP image."), field: "avatar" };
       }
 
       // Validate file size (max 2MB)
       if (avatarFile.size > 2 * 1024 * 1024) {
-        return { error: await tr("Avatar file is too large. Maximum size: 2MB") };
+        return { error: await tr("Avatar file is too large. Maximum size: 2MB"), field: "avatar" };
       }
 
       // Generate safe file path
