@@ -1,4 +1,5 @@
 "use client";
+import { CopyStateIcon } from "@/components/ui/copy-state-icon";
 
 import { useSafeActionState } from "@/lib/forms/use-safe-action-state";
 
@@ -6,7 +7,7 @@ import { confirmAction } from "@/components/ui/confirm-action";
 
 import { useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertCircle, Check, Copy, Send, Trash2, Webhook } from "lucide-react";
+import { AlertCircle, Send, Trash2, Webhook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { detectWebhookFormat } from "@/lib/webhooks/formats";
@@ -158,7 +159,7 @@ function SecretNotice({ secret }: { secret: string }) {
           }}
           aria-label={t("copySecret")}
         >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          <CopyStateIcon copied={copied} className="h-4 w-4" />
         </Button>
       </div>
     </div>

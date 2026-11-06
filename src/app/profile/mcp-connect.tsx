@@ -1,8 +1,9 @@
 "use client";
+import { CopyStateIcon } from "@/components/ui/copy-state-icon";
 
 import { useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { AlertCircle, Bot, Check, CheckCircle2, Copy, Loader2 } from "lucide-react";
+import { AlertCircle, Bot, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createMcpConnectionKey, getMcpKeyStatus, revokeApiKey } from "./api-keys-actions";
@@ -27,7 +28,7 @@ function CopyBlock({ text, copyLabel, errorLabel }: { text: string; copyLabel: s
           {text}
         </code>
         <Button type="button" size="sm" variant="outline" onClick={copy} aria-label={copyLabel}>
-          {state === "copied" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          <CopyStateIcon copied={state === "copied"} className="h-3 w-3" />
         </Button>
       </div>
       {state === "error" && <p className="text-xs text-destructive">{errorLabel}</p>}

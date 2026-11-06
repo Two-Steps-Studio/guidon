@@ -1,9 +1,10 @@
 "use client";
+import { CopyStateIcon } from "@/components/ui/copy-state-icon";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGuardedClose } from "@/components/ui/use-guarded-close";
 import { confirmAction } from "@/components/ui/confirm-action";
-import { Check, Copy, Eye, Link2, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
+import { Copy, Eye, Link2, Loader2, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import { toast } from "sonner";
 import { timeAction } from "@/lib/perf/action-timing";
 import { clearTaskDraft, isNetworkError, readTaskDraft, taskDraftKey, writeTaskDraft } from "@/lib/work/task-drafts";
@@ -467,7 +468,7 @@ function TaskDetailDialogInner({
               aria-label={t("copyGitRef")}
               title={t("copyGitRef")}
             >
-              {gitRefCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              <CopyStateIcon copied={gitRefCopied} className="h-3.5 w-3.5" />
             </Button>
             {pinnedTasks && (
               <Button

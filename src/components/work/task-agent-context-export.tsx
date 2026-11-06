@@ -1,8 +1,9 @@
 "use client";
+import { CopyStateIcon } from "@/components/ui/copy-state-icon";
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Bot, Check, Copy, Loader2 } from "lucide-react";
+import { Bot, Loader2 } from "lucide-react";
 import { getTaskAgentContext } from "@/lib/context/agent-context";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -86,7 +87,7 @@ export function TaskAgentContextExport({ projectId, taskId }: { projectId: strin
               />
               <div className="flex justify-end">
                 <Button type="button" size="sm" onClick={() => void handleCopyAgentContext()}>
-                  {agentContextCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <CopyStateIcon copied={agentContextCopied} className="h-4 w-4" />
                   {agentContextCopied ? t("copied") : t("copyToClipboard")}
                 </Button>
               </div>
