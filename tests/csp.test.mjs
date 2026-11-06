@@ -23,5 +23,7 @@ assert.equal(directive(page, "frame-ancestors"), "frame-ancestors 'none'");
 assert.equal(directive(contentSecurityPolicy({}), "script-src"), "script-src 'self'", "Without a nonce no inline script runs");
 assert.ok(directive(contentSecurityPolicy({ nonce: "n", isDev: true }), "script-src").includes("'unsafe-eval'"), "Dev keeps React's eval");
 assert.equal(directive(contentSecurityPolicy({ posthogHost: "not a url" }), "connect-src"), "connect-src 'self'");
+const withSentry = directive(contentSecurityPolicy({ sentryDsn: "https://publickey@o123.ingest.de.sentry.io/456" }), "connect-src");
+assert.equal(withSentry, "connect-src 'self' https://o123.ingest.de.sentry.io", "Sentry's ingest origin, without the key from the DSN");
 
 console.log("pass CSP: nonce + strict-dynamic, sandbox hash current, no unsafe-inline/eval, static fallback");

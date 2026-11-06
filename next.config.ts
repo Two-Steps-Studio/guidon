@@ -131,7 +131,7 @@ const nextConfig: NextConfig = {
           // behind the user's own reverse proxy) deployment too.
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
           // Static files the proxy skips; pages get a per-request nonce policy from src/proxy.ts.
-          { key: "Content-Security-Policy", value: contentSecurityPolicy({ isDev: process.env.NODE_ENV === "development", supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL, posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST }) },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy({ isDev: process.env.NODE_ENV === "development", supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL, posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST, sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN }) },
           // Browser isolation (ZAP). Sign-in, Stripe and OAuth are redirects, and
           // the only window.open uses noopener, so no page needs its opener.
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },

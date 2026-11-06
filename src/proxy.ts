@@ -246,7 +246,7 @@ export async function proxy(request: NextRequest) {
     nonce: btoa(crypto.randomUUID()),
     isDev: process.env.NODE_ENV === 'development',
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST, sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   })
   request.headers.set('Content-Security-Policy', csp)
   const response = await route(request)
