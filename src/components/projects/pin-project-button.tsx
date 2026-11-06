@@ -29,9 +29,7 @@ export function PinProjectButton({ projectId, projectName, avatarUrl, pinned }: 
       aria-label={isPinned ? t("unpin") : t("pin")}
       title={isPinned ? t("unpin") : t("pin")}
       disabled={pending}
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
+      onClick={() => {
         const next = !isPinned;
         if (pinnedProjects) {
           startTransition(async () => {
@@ -51,9 +49,9 @@ export function PinProjectButton({ projectId, projectName, avatarUrl, pinned }: 
         });
       }}
       className={cn(
-        "ml-auto shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        "touch-target relative z-10 ml-auto inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isPinned ? "text-primary" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
+        isPinned ? "text-primary" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 max-md:opacity-100"
       )}
     >
       <Pin className={cn("h-4 w-4", isPinned && "fill-current")} />

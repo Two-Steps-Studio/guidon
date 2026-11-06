@@ -221,12 +221,11 @@ export default async function ProjectsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.id}`} className="group">
-                <Card
+                <Card key={project.id}
                   className={
                     pinnedSet.has(project.id)
-                      ? "h-full cursor-pointer border-primary/40 transition-shadow hover:shadow-lg"
-                      : "h-full cursor-pointer transition-shadow hover:shadow-lg"
+                      ? "group relative h-full border-primary/40 transition-shadow hover:shadow-lg"
+                      : "group relative h-full transition-shadow hover:shadow-lg"
                   }
                 >
                   <CardHeader>
@@ -237,7 +236,9 @@ export default async function ProjectsPage() {
                           <FolderKanban className="h-5 w-5" />
                         </AvatarFallback>
                       </Avatar>
-                      <span className="min-w-0 truncate">{project.name}</span>
+                      <Link href={`/projects/${project.id}`} className="min-w-0 truncate after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-ring">
+                        {project.name}
+                      </Link>
                       <PinProjectButton projectId={project.id} projectName={project.name} avatarUrl={project.avatar_url} pinned={pinnedSet.has(project.id)} />
                     </CardTitle>
                     <CardDescription>{project.organizations?.name}</CardDescription>
@@ -259,7 +260,6 @@ export default async function ProjectsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
             ))}
           </div>
         )}
