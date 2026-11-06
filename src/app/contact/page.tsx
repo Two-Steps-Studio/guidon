@@ -5,7 +5,7 @@ import { SITE_URL } from "@/lib/site-url";
 import { companyPageJsonLd } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
-  title: "Contact Guidon",
+  title: { absolute: "Contact Guidon - support, privacy and security" },
   description: "How to reach the Guidon team: support, privacy requests, bug reports and security issues.",
   alternates: { canonical: "/contact", types: { "text/markdown": "/contact.md" } },
 };

@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("onboarding");
-  return { title: t("metaTitle") };
+  return { title: t("metaTitle"), alternates: { canonical: "/start" } };
 }
 
 async function isSignedIn(): Promise<boolean> {
