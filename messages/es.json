@@ -1703,6 +1703,26 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "directory": {
+      "command": "Buscar usuarios",
+      "filter": "Buscar por",
+      "value": "Valor de búsqueda",
+      "id": "ID de usuario",
+      "email": "Correo",
+      "name": "Inicio del nombre",
+      "domain": "Dominio de correo",
+      "stripe": "ID de cliente o suscripción de Stripe",
+      "submit": "Buscar",
+      "clear": "Borrar",
+      "invalid": "Introduce un valor válido para el filtro.",
+      "unavailable": "El directorio no está disponible temporalmente.",
+      "empty": "No se encontraron usuarios.",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "detail": "Detalles del usuario",
+      "memberships": "Organizaciones",
+      "membershipLimit": "Se muestran las primeras 50 membresías."
+    },
     "pii": {
       "userId": "ID de usuario",
       "profile": "Datos del perfil",
