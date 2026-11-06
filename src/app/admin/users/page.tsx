@@ -4,10 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listUsersForAdmin } from "@/lib/data/admin";
+import { hasAdminPermission } from "@/lib/admin/permissions";
+import { ProfileDisclosure } from "./profile-disclosure";
 
 export default async function AdminUsersPage() {
-  await requireAdminAccess("users.read");
+  const { role } = await requireAdminAccess("users.read");
   const t = await getTranslations("admin");
+  const canReveal = hasAdminPermission(role, "users.pii.reveal");
 
   const { rows, truncated } = await listUsersForAdmin();
 
@@ -30,16 +33,16 @@ export default async function AdminUsersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground [&>th]:px-4 [&>th]:py-2 [&>th]:font-medium">
-                  <th>{t("colEmail")}</th>
-                  <th>{t("colFullName")}</th>
+                  <th>{t("pii.userId")}</th>
+                  <th>{t("pii.profile")}</th>
                   <th>{t("colCreated")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((user) => (
                   <tr key={user.id} className="[&>td]:px-4 [&>td]:py-3 hover:bg-surface-hover">
-                    <td className="font-medium">{user.email}</td>
-                    <td className="text-muted-foreground">{user.full_name || "-"}</td>
+                    <td className="break-all font-mono">{user.id}</td>
+                    <td>{canReveal ? <ProfileDisclosure userId={user.id} /> : t("pii.hidden")}</td>
                     <td className="text-muted-foreground">{new Date(user.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))}

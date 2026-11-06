@@ -1715,6 +1715,17 @@
     "versionPlaceholder": "5.4"
   },
   "admin": {
+    "pii": {
+      "userId": "User ID",
+      "profile": "Profile data",
+      "hidden": "Hidden",
+      "reveal": "Reveal profile",
+      "hide": "Hide profile",
+      "loading": "Revealing…",
+      "limited": "Disclosure limit reached. Try again in a minute.",
+      "failed": "Profile unavailable.",
+      "unavailable": "Disclosure is temporarily unavailable."
+    },
     "audit": {
       "title": "Admin audit",
       "description": "Administrative changes, access denials and their outcomes. Entries ending in .requested record the start of an operation.",

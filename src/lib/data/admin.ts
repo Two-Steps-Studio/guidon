@@ -44,7 +44,7 @@ export interface AdminOrganizationRow {
   planId: string;
   planName: string;
   memberCount: number;
-  owner: { email: string; full_name: string | null } | null;
+  owner: string | null;
 }
 
 /**
@@ -75,19 +75,15 @@ export async function listOrganizationsForAdmin(includeOwners: boolean): Promise
     db.from<{ id: string; name: string }>("plans").select("id, name"),
   ]);
 
-  const ownerIds = [...new Set(members.filter((m) => m.role === "owner").map((m) => m.user_id))];
-  const owners = includeOwners ? await resolveProfilesForAdmin(ownerIds) : [];
-  const profileById = new Map(owners.map((p) => [p.id, { email: p.email, full_name: p.full_name }]));
   const planName = new Map(plans.map((p) => [p.id, p.name]));
   const planIdByOrg = new Map(subscriptions.map((s) => [s.organization_id, s.plan_id]));
 
   const countByOrg = new Map<string, number>();
-  const ownerByOrg = new Map<string, { email: string; full_name: string | null }>();
+  const ownerByOrg = new Map<string, string>();
   for (const member of members) {
     countByOrg.set(member.organization_id, (countByOrg.get(member.organization_id) ?? 0) + 1);
-    const profile = profileById.get(member.user_id);
-    if (member.role === "owner" && profile && !ownerByOrg.has(member.organization_id)) {
-      ownerByOrg.set(member.organization_id, profile);
+    if (includeOwners && member.role === "owner" && !ownerByOrg.has(member.organization_id)) {
+      ownerByOrg.set(member.organization_id, member.user_id);
     }
   }
 
@@ -111,8 +107,6 @@ export async function listOrganizationsForAdmin(includeOwners: boolean): Promise
 
 export interface AdminUserRow {
   id: string;
-  email: string;
-  full_name: string | null;
   created_at: string;
 }
 
@@ -122,7 +116,7 @@ export async function listUsersForAdmin(): Promise<{
 }> {
   const { data: rows } = await serviceDataClient()
     .from<AdminUserRow>("profiles")
-    .select("id, email, full_name, created_at")
+    .select("id, created_at")
     .order("created_at", { ascending: false })
     .limit(LIST_LIMIT);
   return { rows, truncated: rows.length === LIST_LIMIT };
@@ -137,7 +131,6 @@ export interface AdminActivityRow {
   entity_type: string | null;
   entity_id: string | null;
   created_at: string;
-  actor_label: string | null;
 }
 
 /**
@@ -147,28 +140,9 @@ export interface AdminActivityRow {
 export async function listRecentActivityForAdmin(limit = 100): Promise<AdminActivityRow[]> {
   const { data } = await serviceDataClient()
     .from<AdminActivityRow>("activity_logs")
-    .select("id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at, actor_label")
+    .select("id, project_id, organization_id, user_id, action, entity_type, entity_id, created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
-  return data;
-}
-
-export interface AdminActorProfile {
-  id: string;
-  full_name: string | null;
-  email: string;
-}
-
-/**
- * Resolves user ids (e.g. activity_logs.user_id, ON DELETE SET NULL) to
- * display names - service role because this spans every tenant's users.
- */
-export async function resolveProfilesForAdmin(userIds: string[]): Promise<AdminActorProfile[]> {
-  if (userIds.length === 0) return [];
-  const { data } = await serviceDataClient()
-    .from<AdminActorProfile>("profiles")
-    .select("id, full_name, email")
-    .in("id", userIds);
   return data;
 }
 
