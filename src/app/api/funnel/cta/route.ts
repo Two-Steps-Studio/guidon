@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serviceDataClient } from "@/lib/data-client";
 import { isFunnelCta } from "@/lib/funnel";
+import { ipRateLimit } from "@/lib/ip-rate-limit";
 
 /**
  * Counts a click on a landing-page sign-up button (migration 096): adds one
@@ -10,6 +11,10 @@ import { isFunnelCta } from "@/lib/funnel";
  * role may write the counters.
  */
 export async function POST(request: NextRequest) {
+  // A real visitor clicks a sign-up button a few times at most; without a cap
+  // anyone could loop this and skew the admin funnel.
+  const rate = ipRateLimit("funnel-cta", request, 10);
+  if (rate.limited) return new NextResponse(null, { status: 429, headers: rate.headers });
   const declaredLength = Number(request.headers.get("content-length") ?? "0");
   if (declaredLength > 200) return new NextResponse(null, { status: 413 });
   const cta = (await request.text()).trim();
