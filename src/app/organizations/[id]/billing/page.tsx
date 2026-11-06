@@ -11,7 +11,7 @@ import { getOrgPlanLimits, getOrganizationMemberCount } from "@/lib/limits";
 import { getOrganizationStorageUsage } from "@/lib/storage/storage";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { createServiceClient } from "@/lib/supabase-server";
-import { isBillingConfigured } from "@/lib/billing/stripe";
+import { getStripe, isBillingConfigured } from "@/lib/billing/stripe";
 import {
   BILLING_INTERVALS,
   TRIAL_PERIOD_DAYS,
@@ -75,12 +75,12 @@ export default async function BillingPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ checkout?: string; plan?: string; interval?: string }>;
+  searchParams: Promise<{ checkout?: string; session_id?: string; plan?: string; interval?: string }>;
 }) {
   const { id: orgId } = await params;
   // `plan` comes from /upgrade (e.g. a pricing-section link) and only
   // highlights that row - nothing is bought until the user clicks Upgrade.
-  const { checkout, plan: requestedPlanId, interval: requestedInterval } = await searchParams;
+  const { checkout, session_id: checkoutSessionId, plan: requestedPlanId, interval: requestedInterval } = await searchParams;
   const interval: BillingInterval = isBillingInterval(requestedInterval) ? requestedInterval : "month";
   const t = await getTranslations("organizations.billing");
   const [access, user] = await Promise.all([requireOrgAccess(orgId), getCurrentUser()]);
@@ -132,8 +132,22 @@ export default async function BillingPage({
     plan_id: string;
     status: string;
     stripe_customer_id?: string | null;
+    stripe_subscription_id?: string | null;
     trial_used_at?: string | null;
   } | null;
+  const validSessionId = typeof checkoutSessionId === "string" && /^cs_(test|live)_[a-zA-Z0-9]{1,200}$/.test(checkoutSessionId)
+    ? checkoutSessionId
+    : null;
+  let checkoutConfirmed = false;
+  if (checkout === "success" && canManageBilling && validSessionId) {
+    const session = await getStripe().checkout.sessions.retrieve(validSessionId, {}, { timeout: 3_000, maxNetworkRetries: 0 }).catch(() => null);
+    checkoutConfirmed = Boolean(
+      session?.status === "complete" && session.mode === "subscription" &&
+      session.client_reference_id === orgId && typeof session.subscription === "string" &&
+      session.subscription === subscription?.stripe_subscription_id &&
+      (subscription.status === "active" || subscription.status === "trialing")
+    );
+  }
   const trialAvailable = canStartTrial(subscription?.trial_used_at);
   const priceFor = (plan: PlanRow, wanted: BillingInterval) =>
     prices.find((price) => price.plan_id === plan.id && price.billing_interval === wanted) ?? null;
@@ -211,9 +225,16 @@ export default async function BillingPage({
           action={canManageBilling ? <ManageBillingButton organizationId={orgId} label={t("updatePayment")} /> : null}
         />
 
-        {checkout === "success" && (
-          <Card className="mb-6 border-success/30 bg-success/5">
-            <CardContent className="py-4 text-success">{t("checkoutSuccess")}</CardContent>
+        {checkout === "success" && canManageBilling && (
+          <Card className={cn("mb-6", checkoutConfirmed && "border-success/30 bg-success/5")}>
+            <CardContent role="status" className={cn("py-4", checkoutConfirmed ? "text-success" : "text-muted-foreground")}>
+              {t(checkoutConfirmed ? "checkoutSuccess" : "checkoutPending")}
+              {!checkoutConfirmed && validSessionId && (
+                <a href={`/organizations/${orgId}/billing?checkout=success&session_id=${encodeURIComponent(validSessionId)}`} className="ml-2 underline underline-offset-2">
+                  {t("checkoutRefresh")}
+                </a>
+              )}
+            </CardContent>
           </Card>
         )}
         {checkout === "cancelled" && (

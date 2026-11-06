@@ -74,6 +74,7 @@ export async function createCheckoutSession(
       customer: existingCustomerId,
       customer_email: existingCustomerId ? undefined : guard.userEmail,
       line_items: [{ price: priceId, quantity: 1 }],
+      client_reference_id: organizationId,
       // Discounts are Stripe's own promotion codes (Dashboard -> Products ->
       // Coupons), typed on the checkout page - Stripe then handles the
       // discount, taxes and renewals. Guidon's own codes (migration 062)
@@ -94,7 +95,7 @@ export async function createCheckoutSession(
         // customer.subscription.updated/deleted event carries it too.
         metadata: { organization_id: organizationId },
       },
-      success_url: `${SITE_URL}/organizations/${organizationId}/billing?checkout=success`,
+      success_url: `${SITE_URL}/organizations/${organizationId}/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${SITE_URL}/organizations/${organizationId}/billing?checkout=cancelled`,
     });
     checkoutUrl = session.url;
