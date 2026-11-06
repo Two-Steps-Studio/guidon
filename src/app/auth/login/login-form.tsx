@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
+import { useAuthFieldErrors } from "@/components/auth/use-auth-field-errors"
 import type { OAuthSetup } from "@/lib/auth/oauth-providers"
 import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { loginLocalAction } from "./actions"
@@ -37,6 +38,8 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
   const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated)
   const t = useTranslations("auth.login")
   const tCommon = useTranslations("auth.common")
+  const tSignup = useTranslations("auth.signup")
+  const { errors, fieldProps } = useAuthFieldErrors()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -58,7 +61,10 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
     try {
       if (local) {
         const result = await loginLocalAction(email, password)
-        if ("error" in result) throw new Error(result.error)
+        if ("error" in result) {
+          setError(tCommon(result.error === "Invalid email or password." ? "invalidCredentials" : "tryAgainLater"))
+          return
+        }
         if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== result.userId) posthog.reset()
         posthog.identify(result.userId, { email: email.trim().toLowerCase() })
         posthog.capture("login_completed", { method: "local_password" })
@@ -73,7 +79,11 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
         password,
       })
 
-      if (signInError) throw signInError
+      if (signInError) {
+        if (signInError.code === "email_not_confirmed") setError(tSignup("confirmEmailMessage"))
+        else setError(tCommon(signInError.code === "invalid_credentials" ? "invalidCredentials" : "tryAgainLater"))
+        return
+      }
       if (data.user) {
         if (posthog.get_property("$user_id") && posthog.get_distinct_id() !== data.user.id) posthog.reset()
         posthog.identify(data.user.id, { email: data.user.email ?? email.trim().toLowerCase() })
@@ -81,8 +91,8 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
       }
 
       router.push(redirectTarget)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tCommon("somethingWentWrong"))
+    } catch {
+      setError(tCommon("tryAgainLater"))
     } finally {
       setLoading(false)
     }
@@ -115,6 +125,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
             <div className="space-y-2">
               <Label htmlFor="email">{t("emailLabel")}</Label>
               <Input
+                {...fieldProps("email")}
                 id="email"
                 disabled={!hydrated || loading}
                 type="email"
@@ -125,6 +136,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
                 autoFocus
                 required
               />
+              {errors.email && <p id="auth-error-email" role="alert" className="text-sm text-destructive">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -136,6 +148,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
                 )}
               </div>
               <PasswordInput
+                {...fieldProps("password")}
                 id="password"
                 disabled={!hydrated || loading}
                 placeholder="••••••••"
@@ -146,6 +159,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
                 hideLabel={tCommon("hidePassword")}
                 required
               />
+              {errors.password && <p id="auth-error-password" role="alert" className="text-sm text-destructive">{errors.password}</p>}
             </div>
             {error && (
               <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
