@@ -4,7 +4,7 @@ import { initialsFor } from "@/lib/people";
 import { isModuleVisible } from "@/lib/work/project-modules";
 import Link from "next/link";
 import Image from "next/image";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { writeCollapsedGroups } from "@/lib/sidebar-groups";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -296,6 +296,17 @@ export function AppSidebar({
     if (href === "") return pathname === `/projects/${projectId}`;
     return pathname === `/projects/${projectId}/${href}`;
   };
+  const extensions = fold("extensions", "nav-group-extensions", t("extensionsGroup"));
+  const globalLink = (item: (typeof GLOBAL_NAV)[number]) => (
+    <SidebarMenuItem key={item.href}>
+      <SidebarMenuButton asChild isActive={isGlobalActive(item.href)} tooltip={t(item.labelKey)}>
+        <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
+          <item.icon />
+          <span>{t(item.labelKey)}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 
   // Custom modules: one sidebar group per category the project gave them
   // (alphabetical), the uncategorized ones first under "Custom modules".
@@ -337,23 +348,13 @@ export function AppSidebar({
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {GLOBAL_NAV.map((item,index) => (
-              <Fragment key={item.href}>
-              {index === 4 && <SidebarMenuItem><SidebarGroupLabel>{t("extensionsGroup")}</SidebarGroupLabel></SidebarMenuItem>}
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isGlobalActive(item.href)}
-                  tooltip={t(item.labelKey)}
-                >
-                  <Link href={item.href}>
-                    <item.icon />
-                    <span>{t(item.labelKey)}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              </Fragment>
-            ))}
+            {GLOBAL_NAV.slice(0, 4).map(globalLink)}
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          {extensions.label}
+          <SidebarMenu id={extensions.id}>
+            {GLOBAL_NAV.slice(4).filter(item => extensions.shows(isGlobalActive(item.href))).map(globalLink)}
           </SidebarMenu>
         </SidebarGroup>
 
@@ -386,7 +387,7 @@ export function AppSidebar({
                         }
                         style={active ? activeStyle : undefined}
                       >
-                        <Link href={href}>
+                        <Link href={href} aria-current={active ? "page" : undefined}>
                           <item.icon />
                           <span>{t(item.labelKey)}</span>
                         </Link>
@@ -425,7 +426,7 @@ export function AppSidebar({
                     isActive={pathname === item.href}
                     tooltip={t(item.labelKey)}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
                       <item.icon />
                       <span>{t(item.labelKey)}</span>
                     </Link>
