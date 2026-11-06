@@ -73,10 +73,14 @@ function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
     onOpenChange(false);
   }, [userId, onOpenChange]);
 
-  // Wejście: zbierz kroki (tylko te, których element faktycznie istnieje),
-  // pod eskortą rAF — dokument jest gotowy efektem po nawodnieniu.
+  // Steps are collected from the page as it is. The tour can open while the
+  // page is still streaming in (a redirect from /start, loading.tsx), so until
+  // the person moves past the first step the list follows the DOM; after that
+  // it stays put. Each collect is batched into one frame.
+  const pastFirstStep = index > 0;
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
+    if (pastFirstStep) return;
+    const collect = () => {
       // Steps whose control isn't on this page, isn't visible (mobile
       // sidebar, collapsed section) or isn't allowed for this role are skipped.
       const all: TourStep[] = [
@@ -89,16 +93,25 @@ function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
         { selector: '[data-tour="command"]', title: t("searchTitle"), body: t("searchBody") },
         { selector: '[data-tour="walkthrough"]', title: t("replayTitle"), body: t("replayBody") },
       ];
-      setSteps(
-        all.filter((step) => {
-          const el = document.querySelector(step.selector);
-          return el instanceof HTMLElement && el.offsetParent !== null;
-        })
+      const found = all.filter((step) => {
+        const el = document.querySelector(step.selector);
+        return el instanceof HTMLElement && el.offsetParent !== null;
+      });
+      setSteps((current) =>
+        current.map((step) => step.selector).join() === found.map((step) => step.selector).join() ? current : found
       );
+    };
+    let raf = requestAnimationFrame(collect);
+    const observer = new MutationObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(collect);
     });
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [pastFirstStep, t]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -192,8 +205,11 @@ function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
           const inHole =
             event.clientX >= highlight.left && event.clientX <= highlight.left + highlight.width &&
             event.clientY >= highlight.top && event.clientY <= highlight.top + highlight.height;
+          const target = inHole ? document.querySelector<HTMLElement>(current.selector) : null;
           finish();
-          if (inHole) document.querySelector<HTMLElement>(current.selector)?.click();
+          // Clicked once the tour is gone: a dialog opened from inside this
+          // click (and the overlay's focus change) closed again in Firefox.
+          if (target) requestAnimationFrame(() => target.click());
         }}
       />
 
