@@ -8,8 +8,11 @@ import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
 import { ProfileDisclosure } from "../profile-disclosure";
 import { StartUserDiagnostics } from "../diagnostics-controls";
+import { SupportRecord } from "../support-record";
 
-export default async function AdminUserDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminUserDetail({ params, searchParams }: {
+  params: Promise<{ id: string }>; searchParams: Promise<{ support?: string }>;
+}) {
   const { role } = await requireAdminAccess("users.read");
   const { id } = await params;
   if (!AUDIT_UUID.test(id)) notFound();
@@ -39,5 +42,6 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
     </ul> : <p>—</p>}
     {memberships.data.length > 50 && <p>{t("directory.membershipLimit")}</p>}
     {hasAdminPermission(role, "users.diagnostics.start") && <StartUserDiagnostics targetId={user.id} />}
+    {hasAdminPermission(role, "users.support.manage") && <SupportRecord userId={user.id} result={(await searchParams).support} />}
   </div>;
 }

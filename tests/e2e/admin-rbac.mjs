@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 export async function adminRbacCoverage({ page, origin, fixture, client }) {
   const owner = fixture.users[0];
@@ -144,6 +145,37 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
     "SELECT target_id, before_state, after_state FROM platform_admin_audit_events WHERE action = 'users.directory.search' AND outcome = 'succeeded'",
   );
   assert.deepEqual(searchAudit, { target_id: null, before_state: null, after_state: null });
+  await page.getByLabel("Private note").fill("Synthetic private note");
+  await page.getByRole("button", { name: "Add note" }).click();
+  await page.getByText("Synthetic private note", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Pin note", exact: true }).click();
+  await page.getByRole("button", { name: "Unpin note", exact: true }).waitFor();
+  await page.goto(`${origin}/admin/flags`);
+  const flag = JSON.parse(await page.getByLabel("Configuration").inputValue());
+  await page.getByLabel("Configuration").fill(JSON.stringify({ ...flag, killed: true }));
+  await page.getByRole("button", { name: "Save flag" }).click();
+  await page.getByText("Flag saved.", { exact: true }).waitFor();
+  await page.goto(`${origin}/admin/users/bulk`);
+  await page.getByLabel("Up to 25 account IDs").fill(target.id);
+  await page.getByLabel("Tag", { exact: true }).fill("synthetic");
+  await page.getByRole("button", { name: "Preview changes" }).click();
+  await page.getByText(`${target.id} · ready`, { exact: true }).waitFor();
+  assert.equal((await client.query("SELECT 1 FROM platform_admin_user_tags WHERE user_id = $1", [target.id])).rowCount, 0);
+  await page.getByLabel("Type APPLY to confirm").fill("APPLY");
+  await page.getByRole("button", { name: "Apply tag" }).click();
+  await page.getByText(`${target.id} · saved`, { exact: true }).waitFor();
+  await page.getByLabel("Optional tag filter").fill("synthetic");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download CSV" }).click();
+  const csv = await readFile(await (await download).path(), "utf8");
+  assert.match(csv, /^user_id,created_at\r\n/);
+  assert.ok(csv.includes(target.id));
+  assert.ok(!csv.includes(target.email));
+  const { rows: operationalAudit } = await client.query(`
+    SELECT action FROM platform_admin_audit_events
+    WHERE outcome = 'succeeded' AND action IN ('users.support.manage', 'flags.manage', 'users.bulk')
+  `);
+  assert.equal(operationalAudit.length, 5);
   await setRole("finance");
   const invoice = {
     invoice_id: "in_fixture", organization_id: fixture.users[0].organizationId, invoice_number: "TEST-001",
@@ -191,7 +223,7 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await setRole("support");
   await page.goto(`${origin}/admin/users`);
   await page.locator("main table").waitFor();
-  assert.deepEqual(await page.getByLabel("Search by").locator("option").allTextContents(), ["User ID"]);
+  assert.deepEqual(await page.getByLabel("Search by").locator("option").allTextContents(), ["User ID", "Account tag"]);
   assert.equal(await page.getByRole("button", { name: "Reveal profile" }).count(), 0);
   await page.goto(`${origin}/admin/users/${target.id}`);
   await page.getByLabel("Reason").selectOption("access");
@@ -222,6 +254,27 @@ export async function adminRbacCoverage({ page, origin, fixture, client }) {
   await page.waitForURL(url => url.pathname === "/admin");
 
   await setRole("engineering");
+  const { rows: [webhook] } = await client.query(`
+    INSERT INTO organization_webhooks (organization_id, url, events, secret_encrypted, enabled)
+    VALUES ($1, 'https://example.test/webhook', ARRAY['task.created'], 'synthetic', false) RETURNING id
+  `, [owner.organizationId]);
+  const { rows: [job] } = await client.query(`
+    INSERT INTO organization_webhook_deliveries (webhook_id, organization_id, event_type, payload, status, attempts)
+    VALUES ($1, $2, 'task.created', '{}', 'failed', 1) RETURNING id
+  `, [webhook.id, owner.organizationId]);
+  await client.query(`
+    INSERT INTO module_catalog_entries (module_id, version, organization_id, category, description, manifest, published, status, visibility)
+    VALUES ('synthetic-report', '1.0.0', $1, 'research', 'Synthetic listing', '{}', false, 'draft', 'private')
+  `, [owner.organizationId]);
+  await client.query(`
+    INSERT INTO module_reports (module_id, version, reporter_id, reason)
+    VALUES ('synthetic-report', '1.0.0', $1, 'spam')
+  `, [target.id]);
+  await page.goto(`${origin}/admin/operations`);
+  await page.getByRole("link", { name: "Open abuse reports" }).waitFor();
+  await page.locator("li").filter({ hasText: job.id }).getByRole("button", { name: "Schedule retry" }).click();
+  await page.getByText("Retry scheduled.", { exact: true }).waitFor();
+  assert.equal((await client.query("SELECT status FROM organization_webhook_deliveries WHERE id = $1", [job.id])).rows[0].status, "pending");
   await page.goto(`${origin}/admin/search`);
   assert.equal(new URL(page.url()).pathname, "/admin/search");
   assert.equal(await page.locator('a[href="/admin/organizations"]').count(), 0);

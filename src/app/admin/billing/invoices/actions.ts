@@ -7,13 +7,22 @@ import { importStripeInvoiceBatch } from "@/lib/billing/stripe-invoice-sync";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { serviceDataClient } from "@/lib/data-client";
 import { canRetryStripeInvoice } from "@/lib/billing/stripe-invoice-core";
+import { evaluateFlag, FLAG_KEY } from "@/lib/admin/flag-policy";
+import { readFeatureFlag } from "@/lib/admin/feature-flags";
 
 export async function importOrganizationInvoices(organizationId: string, after: string | null) {
   return auditAdminMutation<{ error: string | null; next?: string | null; imported?: number }>(
-    "billing.invoices.import", organizationId, async (_admin, changes) => {
+    "billing.invoices.import", organizationId, async (admin, changes) => {
       if (typeof organizationId !== "string" || !AUDIT_UUID.test(organizationId) ||
           (after !== null && (typeof after !== "string" || !/^in_[a-z\d]{1,100}$/i.test(after)))) return { error: "invalid" };
       if (hasDirectDatabase() || !isBillingConfigured()) return { error: "unavailable" };
+      const [flag, subscription] = await Promise.all([
+        readFeatureFlag(FLAG_KEY),
+        serviceDataClient().from<{ plan_id: string }>("subscriptions").select("plan_id").eq("organization_id", organizationId).maybeSingle(),
+      ]);
+      if (!flag || subscription.error || !evaluateFlag(FLAG_KEY, flag, {
+        user: admin.id, organization: organizationId, plan: subscription.data?.plan_id,
+      })) return { error: "unavailable" };
       try {
         const batch = await importStripeInvoiceBatch(getStripe(), organizationId, after);
         if (!batch) return { error: "unavailable" };

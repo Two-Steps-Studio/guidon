@@ -5,6 +5,7 @@ import { AUDIT_UUID, auditAdminMutation } from "@/lib/admin/audit";
 import { serviceDataClient } from "@/lib/data-client";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listUsersForAdmin, type AdminUserRow } from "@/lib/data/admin";
+import { ADMIN_TAG } from "@/lib/admin/support-policy";
 
 const searchPatterns = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -16,6 +17,12 @@ const searchPatterns = {
 export async function searchAdminUsers(kind: string, value: string, cursor: string | null) {
   const after = typeof cursor === "string" && AUDIT_UUID.test(cursor) ? cursor : null;
   const term = typeof value === "string" ? value.trim() : "";
+  if (kind === "tag") {
+    await requireAdminAccess("users.support.manage");
+    if (!ADMIN_TAG.test(term)) return { error: "invalid" };
+    const { data, error } = await serviceDataClient().rpcRows<AdminUserRow>("platform_admin_search_tag", { p_tag: term, p_after: after });
+    return error ? { error: "unavailable" } : { error: null, rows: data };
+  }
   if (kind === "all" || kind === "id") {
     await requireAdminAccess("users.read");
     if (kind === "id" && !AUDIT_UUID.test(term)) return { error: "invalid" };

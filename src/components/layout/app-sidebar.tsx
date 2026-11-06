@@ -178,6 +178,8 @@ const ADMIN_NAV = [
   { href: "/admin/promo-codes", labelKey: "promoCodes", icon: Ticket },
   { href: "/admin/billing", labelKey: "billingPrices", icon: CreditCard },
   { href: "/admin/modules", labelKey: "moduleReview", icon: Blocks },
+  { href: "/admin/flags", labelKey: "adminFlags", icon: ShieldCheck },
+  { href: "/admin/operations", labelKey: "adminOperations", icon: ScrollText },
 ] as const;
 
 export interface AppSidebarProps {

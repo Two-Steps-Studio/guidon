@@ -11,6 +11,9 @@ export const ADMIN_PAGE_PERMISSIONS = {
   "/admin/promo-codes": "promos.read",
   "/admin/billing": "billing.read",
   "/admin/modules": "modules.read",
+  "/admin/flags": "flags.manage",
+  "/admin/operations": "operations.manage",
+  "/admin/users/bulk": "users.bulk",
 } as const;
 
 export type AdminPage = keyof typeof ADMIN_PAGE_PERMISSIONS;
@@ -18,7 +21,7 @@ export type AdminPermission = (typeof ADMIN_PAGE_PERMISSIONS)[AdminPage]
   | "organizations.limits.edit" | "organizations.plan.edit"
   | "billing.prices.sync" | "billing.invoices.import" | "billing.invoices.retry" | "promos.create" | "promos.toggle"
   | "modules.review" | "modules.withdraw" | "modules.reports.resolve"
-  | "users.pii.reveal" | "users.directory.search" | "users.diagnostics.start" | "users.diagnostics.end";
+  | "users.pii.reveal" | "users.directory.search" | "users.diagnostics.start" | "users.diagnostics.end" | "users.support.manage";
 
 const ROLE_PERMISSIONS = {
   super_admin: [
@@ -26,17 +29,18 @@ const ROLE_PERMISSIONS = {
     "users.pii.reveal",
     "users.directory.search",
     "users.diagnostics.start", "users.diagnostics.end",
+    "users.support.manage",
     "organizations.limits.edit", "organizations.plan.edit", "billing.prices.sync",
     "billing.invoices.import", "billing.invoices.retry",
     "promos.create", "promos.toggle", "modules.review", "modules.withdraw", "modules.reports.resolve",
   ],
-  support: ["overview.read", "users.read", "organizations.read", "feedback.read", "users.diagnostics.start", "users.diagnostics.end"],
+  support: ["overview.read", "users.read", "organizations.read", "feedback.read", "users.diagnostics.start", "users.diagnostics.end", "users.support.manage"],
   finance: [
     "overview.read", "organizations.read", "funnel.read", "promos.read", "billing.read",
     "organizations.plan.edit", "billing.prices.sync", "billing.invoices.import", "billing.invoices.retry", "promos.create", "promos.toggle",
   ],
   engineering: [
-    "overview.read", "integrations.read", "activity.read", "search.read", "modules.read",
+    "overview.read", "integrations.read", "activity.read", "search.read", "modules.read", "operations.manage",
     "modules.review", "modules.withdraw", "modules.reports.resolve",
   ],
   read_only: ["overview.read", "funnel.read"],

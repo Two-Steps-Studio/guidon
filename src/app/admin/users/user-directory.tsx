@@ -10,7 +10,7 @@ import { searchAdminUsers } from "./actions";
 import { ProfileDisclosure } from "./profile-disclosure";
 
 const PAGE_SIZE = 25;
-const searchKinds = ["id", "email", "name", "domain", "stripe"] as const;
+const searchKinds = ["id", "tag", "email", "name", "domain", "stripe"] as const;
 type SearchKind = typeof searchKinds[number];
 type Filter = { kind: SearchKind | "all"; term: string };
 const noFilter: Filter = { kind: "all", term: "" };
@@ -57,7 +57,9 @@ export function UserDirectory({ initial, canSearch, canReveal }: {
         {t("directory.filter")}
         <select value={kind} onChange={event => { setKind(event.target.value as SearchKind); setTerm(""); }}
           disabled={pending} className="h-9 rounded-md border border-input bg-background px-2">
-          {(canSearch ? searchKinds : ["id"] as const).map(key => <option key={key} value={key}>{t(`directory.${key}`)}</option>)}
+          {(canSearch ? searchKinds : ["id", "tag"] as const).map(key => <option key={key} value={key}>
+            {key === "tag" ? "Account tag" : t(`directory.${key}`)}
+          </option>)}
         </select>
       </label>
       <label className="grid min-w-0 flex-1 gap-1 text-sm">

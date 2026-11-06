@@ -21,6 +21,10 @@ export const AUDIT_TARGETS = {
   "users.directory.search": "user",
   "users.diagnostics.start": "user",
   "users.diagnostics.end": "user",
+  "flags.manage": "feature_flag",
+  "users.support.manage": "user",
+  "operations.manage": "queue_job",
+  "users.bulk": "user_directory",
 } as const satisfies Partial<Record<AdminPermission, string>>;
 
 export type AuditAction = keyof typeof AUDIT_TARGETS;
@@ -34,6 +38,13 @@ type AuditState = {
   invoice_payment_status?: "open" | "paid" | "unconfirmed";
   diagnostic_reason?: DiagnosticReason;
   diagnostic_id?: string;
+  flag_enabled?: boolean;
+  flag_killed?: boolean;
+  flag_rollout?: number;
+  support_operation?: "note" | "pin" | "unpin" | "tag" | "untag";
+  queue?: "webhooks" | "automations";
+  bulk_operation?: "export" | "tag";
+  bulk_processed?: number;
 };
 
 export const AUDIT_UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
@@ -50,7 +61,8 @@ export async function auditAdminMutation<T extends { error: string | null }>(
   const safeTarget = typeof targetId === "string" && (
     targetType === "module_version"
       ? /^[a-z][a-z0-9-]{0,63}@[0-9A-Za-z.+-]{1,128}$/.test(targetId)
-      : targetType === "stripe_invoice" ? /^in_[a-z\d]{1,100}$/i.test(targetId) : AUDIT_UUID.test(targetId)
+      : targetType === "stripe_invoice" ? /^in_[a-z\d]{1,100}$/i.test(targetId)
+      : targetType === "feature_flag" ? /^[a-z][a-z0-9-]{1,63}$/.test(targetId) : AUDIT_UUID.test(targetId)
   ) ? targetId : null;
   const requestId = randomUUID();
   const changes: { before?: AuditState; after?: AuditState } = {};

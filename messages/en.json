@@ -176,6 +176,8 @@
     "createOrganization": "Create organization"
   },
   "nav": {
+    "adminFlags": "Feature flags",
+    "adminOperations": "Operations",
     "adminAudit": "Admin audit",
     "searchQuality": "Search quality",
     "upgradePlan": "Upgrade plan",
