@@ -46,7 +46,8 @@ export function PhaseFormFields({
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-end`}>{t("endDateLabel")}</Label>
-          <DatePicker id={`${idPrefix}-end`} name="planned_end_date" defaultValue={toDayValue(defaults?.planned_end_date)} {...issueProps("end")} />
+          <DatePicker id={`${idPrefix}-end`} name="planned_end_date" defaultValue={toDayValue(defaults?.planned_end_date)}
+            invalid={issue?.field === "end"} aria-describedby={issue?.field === "end" ? errorId : undefined} />
           {message("end")}
         </div>
       </div>
