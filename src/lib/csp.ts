@@ -24,6 +24,8 @@ function originOf(value: string | undefined): string {
  * Styles keep 'unsafe-inline' for now: Radix positions popovers with inline styles.
  * - Supabase origin in connect/media/frame: browser-side Auth, and attachment
  *   previews (img/video/PDF iframe) from signed storage URLs in hosted mode.
+ * - Sentry's ingest origin in connect-src: browser errors go there straight
+ *   (no tunnel route); the DSN's user part (the public key) is dropped.
  * - img-src https:: OAuth avatars come from whichever provider signed the user in.
  * - worker-src blob:: Monaco's editor workers and the module sandbox.
  * - No upgrade-insecure-requests: self-hosted installs may run plain HTTP behind
@@ -34,11 +36,13 @@ export function contentSecurityPolicy({
   isDev = false,
   supabaseUrl,
   posthogHost,
+  sentryDsn,
 }: {
   nonce?: string;
   isDev?: boolean;
   supabaseUrl?: string;
   posthogHost?: string;
+  sentryDsn?: string;
 }): string {
   const supabase = originOf(supabaseUrl);
   const posthog = originOf(posthogHost);
@@ -52,7 +56,7 @@ export function contentSecurityPolicy({
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https:`,
     `font-src 'self' data:`,
-    `connect-src ${list("'self'", supabase, posthog)}`,
+    `connect-src ${list("'self'", supabase, posthog, originOf(sentryDsn))}`,
     `media-src ${list("'self'", supabase)}`,
     `frame-src ${list("'self'", supabase)}`,
     `worker-src 'self' blob:`,
