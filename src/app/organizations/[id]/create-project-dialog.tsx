@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import { createProject, type CreateProjectState } from "./actions";
 import { importGuidonFile, previewGuidonImport, type GuidonImportPreview } from "@/app/projects/import-actions";
 import { type ProjectType, type ProjectMethodology } from "@/types/project";
-import { PROJECT_TEMPLATES, type ProjectTemplate } from "@/lib/work/project-modules";
+import { PROJECT_TEMPLATES, isProjectTemplate, type ProjectTemplate } from "@/lib/work/project-modules";
+import { ModuleSwitches } from "@/app/projects/[id]/settings/modules-form";
 import { Select } from "@/components/ui/select";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
 import posthog from "posthog-js";
@@ -109,6 +110,15 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
   const tSettings = useTranslations("settings");
   const createProjectWithOrg = createProject.bind(null, orgId);
   const [state, formAction, pending] = useSafeActionState(createProjectWithOrg, initialState);
+  // The template presets which modules start hidden; the switches below can change that.
+  const [disabledModules, setDisabledModules] = useState<ReadonlySet<string>>(new Set());
+  const toggleModule = (module: string) =>
+    setDisabledModules((prev) => {
+      const next = new Set(prev);
+      if (next.has(module)) next.delete(module);
+      else next.add(module);
+      return next;
+    });
 
   return (
     <form onSubmit={(event) => {
@@ -154,6 +164,10 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
           id="projectTemplate"
           name="template"
           defaultValue=""
+          onChange={(event) => {
+            const value = event.target.value;
+            setDisabledModules(new Set(isProjectTemplate(value) ? PROJECT_TEMPLATES[value].disabledModules : []));
+          }}
         >
           <option value="">{t("templateNone")}</option>
           {TEMPLATE_VALUES.map((value) => (
@@ -164,6 +178,11 @@ function ProjectForm({ orgId, onCancel }: { orgId: string; onCancel: () => void 
         </Select>
         <p className="text-xs text-muted-foreground">{t("templateHelp")}</p>
       </div>
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">{tSettings("modulesTitle")}</legend>
+        <input type="hidden" name="modulesChosen" value="1" />
+        <ModuleSwitches disabled={disabledModules} onToggle={toggleModule} locked={pending} name="module" />
+      </fieldset>
       <div className="space-y-2">
         <Label>{t("workflowLabel")}</Label>
         <div className="flex gap-4">

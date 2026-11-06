@@ -11,7 +11,7 @@ import { ensureBucketExists, uploadFile } from "@/lib/storage/storage";
 import { assertSafeStoragePath } from "@/lib/storage/provider";
 import { AVATAR_EXTENSION_BY_MIME, SAFE_INLINE_IMAGE_TYPES } from "@/lib/storage/storage-constants";
 import type { ProjectMethodology, ProjectType } from "@/types/project";
-import { PROJECT_TEMPLATES, isProjectTemplate, type ProjectTemplate } from "@/lib/work/project-modules";
+import { PROJECT_MODULES, PROJECT_TEMPLATES, isProjectTemplate, type ProjectTemplate } from "@/lib/work/project-modules";
 import { addTemplateLabels } from "@/lib/work/template-labels";
 import { tr } from "@/lib/i18n/server-errors";
 
@@ -74,6 +74,12 @@ export async function createProject(
     template = templateRaw;
   }
 
+  // The form's module switches (sent only while on) win over the template's
+  // preset; without them (an older form, a direct call) the template decides.
+  const disabledModules = formData.get("modulesChosen")
+    ? PROJECT_MODULES.filter((module) => !formData.getAll("module").includes(module))
+    : template ? [...PROJECT_TEMPLATES[template].disabledModules] : null;
+
   // The owner membership is created by private.handle_new_project(); do not
   // insert it again here (see migration 005/README for the duplicate-key bug
   // that caused). Requires migration 009 for the RETURNING select below.
@@ -102,7 +108,7 @@ export async function createProject(
       project_type: projectType,
       methodology,
       ai_enabled: aiEnabled,
-      ...(template ? { disabled_modules: [...PROJECT_TEMPLATES[template].disabledModules] } : {}),
+      ...(disabledModules ? { disabled_modules: disabledModules } : {}),
       created_by: access.userId,
     })
     .select("id")
