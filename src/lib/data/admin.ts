@@ -52,7 +52,7 @@ export interface AdminOrganizationRow {
  * plan. Members, their profiles, subscriptions and plan names are four
  * batched lookups by id - never one query per organization.
  */
-export async function listOrganizationsForAdmin(): Promise<{
+export async function listOrganizationsForAdmin(includeOwners: boolean): Promise<{
   rows: AdminOrganizationRow[];
   truncated: boolean;
 }> {
@@ -76,7 +76,7 @@ export async function listOrganizationsForAdmin(): Promise<{
   ]);
 
   const ownerIds = [...new Set(members.filter((m) => m.role === "owner").map((m) => m.user_id))];
-  const owners = await resolveProfilesForAdmin(ownerIds);
+  const owners = includeOwners ? await resolveProfilesForAdmin(ownerIds) : [];
   const profileById = new Map(owners.map((p) => [p.id, { email: p.email, full_name: p.full_name }]));
   const planName = new Map(plans.map((p) => [p.id, p.name]));
   const planIdByOrg = new Map(subscriptions.map((s) => [s.organization_id, s.plan_id]));

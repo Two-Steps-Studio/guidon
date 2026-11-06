@@ -48,6 +48,7 @@ const writeSafetyMode=process.argv.includes("--write-safety");
 const searchMode=process.argv.includes("--search");
 const landingAssetsMode=process.argv.includes("--landing-assets");
 const landingMode=process.argv.includes("--landing");
+const adminRbacMode=process.argv.includes("--admin-rbac");
 const taskQueueMode=process.argv.includes("--task-queue");
 const accessibilityMode=process.argv.includes("--accessibility-audit");
 const mobileMode=process.argv.includes("--mobile-audit");
@@ -112,6 +113,7 @@ try{
   await waitFor(async()=>{const probe=new pg.Client({connectionString});try{await probe.connect();return true;}finally{await probe.end();}},"test database");
   const appPort=await port();const tlsPort=await port();const origin=`https://127.0.0.1:${tlsPort}`;
   Object.assign(environment,{DATABASE_URL:connectionString,DATABASE_POOL_MAX:"4",AUTH_SECRET:randomBytes(32).toString("hex"),STORAGE_PROVIDER:"local",STORAGE_PATH:path.join(directory,"runtime-e2e-files"),APP_URL:origin,NEXT_PUBLIC_APP_URL:origin,ADMIN_EMAILS:"alpha@guidon.example.test"});
+  if(adminRbacMode)environment.PLATFORM_ADMIN_ACCESS="grants";
   // Generated non-secret canaries prove that packaging excludes configuration,
   // default/custom local storage and diagnostic output, preserving the source.
   const canaries=[".env.production","storage/package-canary.txt","runtime-e2e-files/package-canary.txt","output/package-canary.txt"];
@@ -195,7 +197,10 @@ try{
     const page=await context.newPage();page.setDefaultTimeout(name==='webkit'?30000:15000);
     const started=Date.now();
     try{
-      if(searchMode){
+      if(adminRbacMode){
+        const { adminRbacCoverage } = await import("./admin-rbac.mjs");
+        await adminRbacCoverage({page,origin,fixture,client});
+      }else if(searchMode){
         const { searchDiagnosticsCoverage } = await import("./search-diagnostics.mjs");
         await searchDiagnosticsCoverage({page,origin,fixture,client,browserName:name,artifacts});
       }else if(landingMode){

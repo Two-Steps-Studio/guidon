@@ -20,7 +20,7 @@ export async function updateOrganizationProjectLimit(
   orgId: string,
   newLimit: number
 ): Promise<UpdateProjectLimitState> {
-  await requireAdminAccess();
+  await requireAdminAccess("organizations.limits.edit");
 
   if (!Number.isInteger(newLimit) || newLimit < 1) {
     return { error: await tr("Project limit must be a whole number of 1 or more.") };
@@ -61,7 +61,7 @@ export async function updateOrganizationPlan(
   orgId: string,
   planId: string
 ): Promise<UpdatePlanState> {
-  await requireAdminAccess();
+  await requireAdminAccess("organizations.plan.edit");
 
   const validPlanIds = ["free", "pro", "team", "business", "enterprise"];
   if (!validPlanIds.includes(planId)) {

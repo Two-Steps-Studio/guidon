@@ -13,7 +13,7 @@ import { tr } from "@/lib/i18n/server-errors";
  * for one plan and period.
  */
 export async function syncPricesFromStripe(): Promise<{ error: string | null; changed?: number }> {
-  await requireAdminAccess();
+  await requireAdminAccess("billing.prices.sync");
   if (hasDirectDatabase()) return { error: await tr("Billing is not available for self-hosted installations.") };
   if (!isBillingConfigured()) return { error: await tr("Billing is not configured on this server yet.") };
 

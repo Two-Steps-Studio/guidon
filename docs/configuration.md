@@ -44,15 +44,23 @@ request `Host` or forwarded headers, which may differ between proxy hops.
 | Variable | Meaning |
 |---|---|
 | `ADMIN_EMAILS` | Comma-separated emails allowed into `/admin`, matched case-insensitively. |
+| `PLATFORM_ADMIN_ACCESS` | Unset or `legacy` uses the email allowlist. `grants` also requires an active `platform_admin_grants` row for the verified user ID and applies its role. Unknown values deny access. Use `grants` in disposable tests until the dedicated admin session and MFA rollout is ready. |
 
-There is no admin role in the database - `src/lib/data/admin-access.ts`
-checks the signed-in user's email against this list and nothing else.
-Unset (the default) means `/admin` is unreachable by anyone, which is the
-safe default: nobody becomes an instance admin just by being first to sign
-in.
+An empty `ADMIN_EMAILS` closes `/admin` in both modes. The check uses the
+authenticated account's email. In grants mode, apply migration 108 and have
+the database operator assign a role to the verified account UUID. Missing,
+revoked or invalid grants deny access. A grant does not bypass the allowlist.
+
+Support can read accounts, organizations and feedback. Finance can manage
+billing prices, organization plans and promotions. Engineering can access
+diagnostics and moderate modules. Read-only sees aggregate counts and the
+funnel. Super admins also manage project limits. Each page and Server Action
+checks its own permission. Grant mode does not provide SSO, MFA or a separate
+idle timeout yet. Use `npm run test:admin` for the role matrix and
+`node tests/e2e/run.mjs --admin-rbac --browser=chromium` for local enforcement.
 
 **Docker Compose note:** `docker-compose.yml`'s `app` service forwards
-`ADMIN_EMAILS` through to the container, same as the bare-metal path - see
+`ADMIN_EMAILS` and `PLATFORM_ADMIN_ACCESS` through to the container. See
 [self-hosting.md](./self-hosting.md#admin-panel-access).
 
 ---

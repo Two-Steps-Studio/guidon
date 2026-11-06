@@ -6,7 +6,7 @@ import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listUsersForAdmin } from "@/lib/data/admin";
 
 export default async function AdminUsersPage() {
-  await requireAdminAccess();
+  await requireAdminAccess("users.read");
   const t = await getTranslations("admin");
 
   const { rows, truncated } = await listUsersForAdmin();

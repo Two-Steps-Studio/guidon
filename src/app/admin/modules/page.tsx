@@ -5,6 +5,7 @@ import { CATALOG_COLUMNS, decodeCatalogRow, type CatalogEntry, type CatalogRow }
 import { reviewModuleSubmission } from "@/lib/work/module-review";
 import { ModulePermissionList } from "@/lib/work/module-catalog";
 import { ReportControls, ReviewControls } from "./review-controls";
+import { hasAdminPermission } from "@/lib/admin/permissions";
 
 type Report = { id: string; module_id: string; version: string; reason: "malicious" | "misleading" | "privacy" | "copyright" | "spam" | "other"; details: string; created_at: string };
 type Event = { id: number; module_id: string; version: string | null; action: "submitted" | "published" | "approved" | "rejected" | "withdrawn" | "reported" | "report_resolved" | "signed"; note: string | null; created_at: string | Date };
@@ -15,7 +16,10 @@ type Event = { id: number; module_id: string; version: string | null; action: "s
  * admins see every version regardless of visibility.
  */
 export default async function AdminModulesPage() {
-  const admin = await requireAdminAccess();
+  const admin = await requireAdminAccess("modules.read");
+  const canReview = hasAdminPermission(admin.role, "modules.review");
+  const canResolve = hasAdminPermission(admin.role, "modules.reports.resolve");
+  const canWithdraw = hasAdminPermission(admin.role, "modules.withdraw");
   const t = await getTranslations("moduleRegistry");
   const runtime = await getTranslations("moduleRuntime");
   const db = serviceDataClient();
@@ -38,7 +42,7 @@ export default async function AdminModulesPage() {
     <section className="space-y-4" aria-labelledby="review-queue">
       <h3 id="review-queue" className="text-lg font-semibold">{t("queueTitle", { count: queue.length })}</h3>
       {!queue.length && <p className="text-sm text-muted-foreground">{t("queueEmpty")}</p>}
-      {queue.map((entry) => <Submission key={`${entry.moduleId}@${entry.version}`} entry={entry} submitter={entry.submittedBy ? submitters.get(entry.submittedBy) ?? "?" : "-"} own={entry.submittedBy === admin.id} labels={labels} t={t} />)}
+      {queue.map((entry) => <Submission key={`${entry.moduleId}@${entry.version}`} entry={entry} submitter={entry.submittedBy ? submitters.get(entry.submittedBy) ?? "?" : "-"} own={entry.submittedBy === admin.id} labels={labels} t={t} canReview={canReview} />)}
     </section>
     <section className="space-y-3" aria-labelledby="open-reports">
       <h3 id="open-reports" className="text-lg font-semibold">{t("reportsTitle", { count: reports.data.length })}</h3>
@@ -46,7 +50,7 @@ export default async function AdminModulesPage() {
       <ul className="space-y-3">{reports.data.map((report) => <li key={report.id} className="space-y-2 rounded-lg border bg-card p-4 text-sm">
         <p className="font-medium"><a className="text-primary underline" href={`/marketplace/${encodeURIComponent(report.module_id)}/${encodeURIComponent(report.version)}`}>{report.module_id}@{report.version}</a> · {t(`reason.${report.reason}`)}</p>
         {report.details && <p className="whitespace-pre-wrap break-words">{report.details}</p>}
-        <ReportControls reportId={report.id} moduleId={report.module_id} version={report.version} />
+        {(canResolve || canWithdraw) && <ReportControls reportId={report.id} moduleId={report.module_id} version={report.version} canResolve={canResolve} canWithdraw={canWithdraw} />}
       </li>)}</ul>
     </section>
     <section className="space-y-2" aria-labelledby="registry-log">
@@ -56,7 +60,7 @@ export default async function AdminModulesPage() {
   </div>;
 }
 
-function Submission({ entry, submitter, own, labels, t }: { entry: CatalogEntry; submitter: string; own: boolean; labels: { read: string; write: string; none: string }; t: Awaited<ReturnType<typeof getTranslations<"moduleRegistry">>> }) {
+function Submission({ entry, submitter, own, labels, t, canReview }: { entry: CatalogEntry; submitter: string; own: boolean; labels: { read: string; write: string; none: string }; t: Awaited<ReturnType<typeof getTranslations<"moduleRegistry">>>; canReview: boolean }) {
   const review = reviewModuleSubmission(entry.manifest, { description: entry.description, changelog: entry.changelog });
   return <article className="space-y-3 rounded-lg border bg-card p-4">
     <header><h4 className="break-words font-semibold">{entry.manifest.name} <span className="font-normal text-muted-foreground">{entry.moduleId}@{entry.version}</span></h4>
@@ -68,6 +72,6 @@ function Submission({ entry, submitter, own, labels, t }: { entry: CatalogEntry;
     {review.blocking.length + review.warnings.length > 0 && <div className="space-y-1 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm"><p className="font-medium">{t("warningsTitle")}</p>
       <ul className="list-inside list-disc">{[...review.blocking, ...review.warnings].map((finding, index) => <li key={index} className="break-words">{t(`finding.${finding.code}`)} - <code>{finding.path}</code>{finding.excerpt ? `: ${finding.excerpt}` : ""}</li>)}</ul></div>}
     <details className="text-sm"><summary className="cursor-pointer">{t("manifestJson")}</summary><pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-xs">{JSON.stringify(entry.manifest, null, 2)}</pre></details>
-    <ReviewControls moduleId={entry.moduleId} version={entry.version} ownSubmission={own} />
+    {canReview && <ReviewControls moduleId={entry.moduleId} version={entry.version} ownSubmission={own} />}
   </article>;
 }

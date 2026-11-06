@@ -100,6 +100,7 @@ services:
       APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-3000}}
 
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      PLATFORM_ADMIN_ACCESS: ${PLATFORM_ADMIN_ACCESS:-}
 
       AI_PROVIDER: ${AI_PROVIDER:-}
       AI_BASE_URL: ${AI_BASE_URL:-}

@@ -6,12 +6,14 @@ import { requireAdminAccess } from "@/lib/data/admin-access";
 import { listOrganizationsForAdmin } from "@/lib/data/admin";
 import { ProjectLimitEditor } from "./project-limit-editor";
 import { PlanEditor } from "./plan-editor";
+import { hasAdminPermission } from "@/lib/admin/permissions";
+import { ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL } from "./constants";
 
 export default async function AdminOrganizationsPage() {
-  await requireAdminAccess();
+  const { role } = await requireAdminAccess("organizations.read");
   const t = await getTranslations("admin");
 
-  const { rows, truncated } = await listOrganizationsForAdmin();
+  const { rows, truncated } = await listOrganizationsForAdmin(hasAdminPermission(role, "users.read"));
 
   return (
     <div className="container mx-auto max-w-7xl space-y-4 px-6 py-8">
@@ -54,10 +56,14 @@ export default async function AdminOrganizationsPage() {
                     <td>{org.memberCount}</td>
                     <td className="text-muted-foreground">{new Date(org.created_at).toLocaleDateString()}</td>
                     <td>
-                      <ProjectLimitEditor orgId={org.id} orgName={org.name} initialLimit={org.project_limit} />
+                      {hasAdminPermission(role, "organizations.limits.edit")
+                        ? <ProjectLimitEditor orgId={org.id} orgName={org.name} initialLimit={org.project_limit} />
+                        : org.project_limit === ORG_PROJECT_LIMIT_UNLIMITED_SENTINEL ? "∞" : org.project_limit}
                     </td>
                     <td>
-                      <PlanEditor orgId={org.id} orgName={org.name} initialPlanId={org.planId} />
+                      {hasAdminPermission(role, "organizations.plan.edit")
+                        ? <PlanEditor orgId={org.id} orgName={org.name} initialPlanId={org.planId} />
+                        : org.planName}
                     </td>
                   </tr>
                 ))}
