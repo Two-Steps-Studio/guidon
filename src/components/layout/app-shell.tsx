@@ -75,7 +75,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
           <Separator orientation="vertical" className="h-4" />
           <BetaBadge />
           <div className="flex-1" />
-          <CommandPalette currentProjectId={sidebarProps.projectId} disabledModules={sidebarProps.disabledModules}
+          <CommandPalette key={sidebarProps.projectId ?? "global"} currentProjectId={sidebarProps.projectId} disabledModules={sidebarProps.disabledModules}
             adminUserDirectory={sidebarProps.adminPages?.includes("/admin/users")} />
           <NotificationsBell />
         </header>

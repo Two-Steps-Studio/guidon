@@ -1097,6 +1097,7 @@
     "importPastePlaceholder": "…albo wklej tu CSV / JSON",
     "importPasteAria": "Wklejone dane do importu",
     "importFileTooLarge": "Ten plik ma ponad 5 MB.",
+    "importFileReadFailed": "Nie udało się odczytać pliku. Wybierz go ponownie lub wklej jego zawartość.",
     "importFound": "Znaleziono {count, plural, one {# zadanie} few {# zadania} many {# zadań} other {# zadania}} ({format})",
     "importNothingFound": "Nie znaleziono zadań - plik potrzebuje kolumny tytuł/nazwa/summary.",
     "importUnmatchedStatuses": "Brak pasującej kolumny dla: {values} - te zadania trafią do „{column}”.",

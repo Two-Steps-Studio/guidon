@@ -77,7 +77,7 @@ export function descriptionKeyDown(
   }
 
   if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
-    const key = event.key.toLowerCase();
+    const key = event.key?.toLowerCase();
     if (key === "b" || key === "i") {
       event.preventDefault();
       const item = ITEMS.find((candidate) => candidate.key === (key === "b" ? "bold" : "italic"));
