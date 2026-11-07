@@ -5,6 +5,9 @@ import { docPages, docSections } from "@/lib/docs-index";
 import { searchSections } from "@/lib/docs-search-core";
 import { ipRateLimit, withHeaders } from "@/lib/ip-rate-limit";
 import { SITE_URL } from "@/lib/site-url";
+import { readLimitedText } from "@/lib/api/limited-text";
+
+const MAX_A2A_BODY_BYTES = 64 * 1024;
 
 /**
  * A2A docs agent (card: /.well-known/agent-card.json). Public, like the docs
@@ -29,7 +32,16 @@ export async function POST(request: NextRequest) {
   if (rate.limited) {
     return withHeaders(NextResponse.json(rpcError(null, -32000, "Rate limit exceeded. Try again shortly."), { status: 429 }), rate.headers);
   }
-  const body = (await request.json().catch(() => null)) as JsonRpcRequest | null;
+  const input = await readLimitedText(request, MAX_A2A_BODY_BYTES);
+  if (!input.ok) {
+    const error = input.status === 413
+      ? rpcError(null, -32600, "Request body is too large.")
+      : rpcError(null, -32700, "Could not read the request body.");
+    return withHeaders(NextResponse.json(error, { status: input.status }), rate.headers);
+  }
+  let body: JsonRpcRequest | null;
+  try { body = JSON.parse(input.text); }
+  catch { body = null; }
   if (!body) return withHeaders(NextResponse.json(rpcError(null, -32700, "Parse error: the body must be JSON.")), rate.headers);
   return withHeaders(NextResponse.json(handleA2a(body, answer, randomUUID)), rate.headers);
 }
