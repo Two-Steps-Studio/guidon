@@ -23,7 +23,7 @@ export function HeroLaser() {
   return (
     <div aria-hidden="true" className={styles.heroLaser} data-hero-laser>
       <LaserFlow surfaceRef={surfaceRef} theme={theme} color={theme === "dark" ? BRAND_COLORS.electricBlue : BRAND_COLORS.blue}
-        beamPosition={mobile ? 0.91 : 0.84} intensity={mobile ? 1.1 : 1.45}
+        beamPosition={mobile ? 0.96 : 0.91} intensity={mobile ? 1.1 : 1.45}
         beamWidth={mobile ? 0.8 : 1.1} fog={mobile ? 0.3 : 0.5} speed={0.65}
         mouseInteraction={false} intro={false} paused={motion === "off"} dpr={1} />
     </div>
