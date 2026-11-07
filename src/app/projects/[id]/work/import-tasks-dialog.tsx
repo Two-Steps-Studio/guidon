@@ -65,9 +65,8 @@ export function ImportTasksDialog({
   const fileReadVersion = useRef(0);
   const [importing, startImport] = useTransition();
   const [skipDuplicates, setSkipDuplicates] = useState(true);
-  const [imported, setImported] = useState<Task[] | null>(null);
-  const [importedCount, setImportedCount] = useState(0);
-  const [undoMessage, setUndoMessage] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<{ count: number; receipt: string | null; undoMessage?: string }>();
+  const pendingUndos = useRef(new Set<string>());
 
   const parsed: ParseResult | null = useMemo(() => (text.trim() ? parseTaskImport(text, fileName) : null), [text, fileName]);
   const resolved = useMemo(
@@ -104,8 +103,7 @@ export function ImportTasksDialog({
     setText("");
     setFileName("");
     setFileError(null);
-    setImported(null);
-    setUndoMessage(null);
+    setImportResult(undefined);
     setSkipDuplicates(true);
   };
 
@@ -136,16 +134,11 @@ export function ImportTasksDialog({
     startImport(async () => {
       const result = await importTasks(projectId, toImport);
       onImported(result.tasks);
+      if (result.count) setImportResult({ count: result.count, receipt: result.undoReceipt ?? null });
       if (result.error) {
         toast.error(result.error);
-        if (result.tasks.length) {
-          setImported(result.tasks);
-          setImportedCount(result.tasks.length);
-        }
         return;
       }
-      setImported(result.tasks);
-      setImportedCount(result.tasks.length);
       posthog.capture("tasks_imported", {
         task_count: result.tasks.length,
         import_format: parsed?.format ?? "unknown",
@@ -154,23 +147,48 @@ export function ImportTasksDialog({
     });
   };
 
-  const undo = () => {
-    if (!imported?.length) return;
+  function undo(receipt: string, notify: boolean) {
+    if (!canUndo || pendingUndos.current.has(receipt)) return;
+    pendingUndos.current.add(receipt);
     startImport(async () => {
-      const result = await undoImport(projectId, imported.map((task) => task.id));
-      if (result.removed.length) onUndone(result.removed);
-      if (result.error) {
-        toast.error(result.error);
-        return;
+      try {
+        const result = await undoImport(projectId, receipt);
+        if (result.error === "failed") {
+          toast.error(t("importUndoFailed"));
+          return;
+        }
+        if (result.error) {
+          toast.error(t(result.error === "permission" ? "importUndoNotAllowed" : "importUndoUnavailable"));
+          setImportResult(current => current?.receipt === receipt ? { ...current, receipt: null } : current);
+          return;
+        }
+        if (result.removed.length) onUndone(result.removed);
+        const message = [
+          t("importUndone", { count: result.removed.length }),
+          result.kept ? t("importUndoKept", { count: result.kept }) : "",
+        ].filter(Boolean).join(" ");
+        if (notify) toast.success(message);
+        setImportResult(current => current?.receipt === receipt ? { ...current, receipt: null, undoMessage: message } : current);
+      } catch {
+        toast.error(t("importUndoFailed"));
+      } finally {
+        pendingUndos.current.delete(receipt);
       }
-      const message = [
-        t("importUndone", { count: result.removed.length }),
-        result.kept ? t("importUndoKept", { count: result.kept }) : "",
-      ].filter(Boolean).join(" ");
-      setUndoMessage(message);
-      setImported((current) => current?.filter((task) => !result.removed.includes(task.id)) ?? null);
     });
-  };
+  }
+
+  function close() {
+    if (importing) return;
+    if (canUndo && importResult?.receipt) {
+      const { count, receipt } = importResult;
+      toast.success(t("importDoneTitle", { count }), {
+        duration: 10_000,
+        action: { label: t("importUndo"), onClick: () => undo(receipt, true) },
+      });
+    }
+    reset();
+    onOpenChange(false);
+  }
 
   const columnLabel = (status: string) => columns.find((c) => c.status === status)?.label ?? status;
   const memberName = (id: string | null) => {
@@ -188,15 +206,14 @@ export function ImportTasksDialog({
     ...(unmatched?.assignees.length ? [t("importUnmatchedAssignees", { values: unmatched.assignees.join(", ") })] : []),
   ];
 
-  const { ref: resultRef, inputHandlers: resultInputHandlers } = useStateMotion<HTMLSpanElement>(imported);
+  const { ref: resultRef, inputHandlers: resultInputHandlers } = useStateMotion<HTMLSpanElement>(importResult?.count);
 
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next && importing) return;
-        if (!next) reset();
-        onOpenChange(next);
+        if (next) onOpenChange(true);
+        else close();
       }}
     >
       <DialogContent {...resultInputHandlers} className="max-w-3xl">
@@ -205,32 +222,31 @@ export function ImportTasksDialog({
           <DialogDescription>{t("importDescription")}</DialogDescription>
         </DialogHeader>
 
-        {imported ? (
+        {importResult ? (
           <div className="space-y-3">
             <p className="flex items-center gap-2 text-sm font-medium">
               <span ref={resultRef} className="inline-flex" data-state-motion="import-result"><CheckCircle2 className="h-4 w-4 text-success" /></span>
-              {t("importDoneTitle", { count: importedCount })}
+              {t("importDoneTitle", { count: importResult.count })}
             </p>
-            {undoMessage ? (
-              <p role="status" className="text-sm text-muted-foreground">{undoMessage}</p>
-            ) : canUndo ? (
+            {importResult.undoMessage ? (
+              <p role="status" className="text-sm text-muted-foreground">{importResult.undoMessage}</p>
+            ) : canUndo && importResult.receipt ? (
               <p className="text-sm text-muted-foreground">{t("importDoneHint")}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">{t("importUndoNotAllowed")}</p>
+              <p className="text-sm text-muted-foreground">{t(canUndo ? "importUndoUnavailable" : "importUndoNotAllowed")}</p>
             )}
             <div className="flex justify-end gap-2">
-              {canUndo && !undoMessage && imported.length > 0 && (
-                <Button type="button" variant="outline" onClick={undo} disabled={importing}>
+              {canUndo && importResult.receipt && (
+                <Button type="button" variant="outline" onClick={() => {
+                  if (importResult.receipt) undo(importResult.receipt, false);
+                }} disabled={importing}>
                   {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />}
                   {t("importUndo")}
                 </Button>
               )}
               <Button
                 type="button"
-                onClick={() => {
-                  reset();
-                  onOpenChange(false);
-                }}
+                onClick={close}
                 disabled={importing}
               >
                 {t("importClose")}
@@ -357,10 +373,7 @@ export function ImportTasksDialog({
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => {
-              reset();
-              onOpenChange(false);
-            }} disabled={importing}>
+            <Button type="button" variant="outline" onClick={close} disabled={importing}>
               {t("cancel")}
             </Button>
             <Button type="button" onClick={submit} disabled={importing || readingFile || !!fileError || !toImport.length}>

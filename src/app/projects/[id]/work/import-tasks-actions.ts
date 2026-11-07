@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { canManageProject, canWriteProject, getProjectAccess } from "@/lib/data/project-access";
-import { isValidUuid } from "@/lib/api/validate-id";
 import { dataClient, serviceDataClient } from "@/lib/data-client";
 import { logActivity } from "@/lib/data/log-activity";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { getOrgPlanLimits } from "@/lib/limits";
 import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import { MAX_IMPORT_TASKS, type ResolvedImportTask } from "@/lib/work/task-import";
+import { createImportReceipt, verifyImportReceipt } from "@/lib/work/import-receipt";
 import type { Task } from "@/types/task";
 import { tr } from "@/lib/i18n/server-errors";
 
@@ -25,7 +25,7 @@ const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 export async function importTasks(
   projectId: string,
   tasks: ResolvedImportTask[]
-): Promise<{ error: string | null; count: number; tasks: Task[] }> {
+): Promise<{ error: string | null; count: number; tasks: Task[]; undoReceipt?: string | null }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canWriteProject(access.role)) return { error: await tr("You do not have permission to create tasks."), count: 0, tasks: [] };
   if (!Array.isArray(tasks) || tasks.length === 0) return { error: await tr("Nothing to import."), count: 0, tasks: [] };
@@ -86,59 +86,55 @@ export async function importTasks(
   // database's message instead of the whole import half-written row by row.
   // The created rows go back to the board, which keeps its own task state.
   const created: Task[] = [];
+  let importError: string | null = null;
   for (let i = 0; i < rows.length; i += 200) {
     const { data, error } = await db.from<Task>("tasks").insert(rows.slice(i, i + 200)).select("*");
     if (error) {
-      if (created.length) revalidatePath(`/projects/${projectId}/work`);
-      const count = created.length;
-      return { error: count ? `Imported ${count}, then stopped: ${error.message}` : error.message, count, tasks: created };
+      importError = created.length ? `Imported ${created.length}, then stopped: ${error.message}` : error.message;
+      break;
     }
     created.push(...data);
   }
   const count = created.length;
+  if (!count) return { error: importError, count, tasks: created };
+  const taskIds = created.map(task => task.id);
 
   await logActivity({
     userId: access.userId,
     action: "tasks_imported",
     projectId,
     entityType: "task",
-    // The ids make the import auditable and undoable (undoImport below).
-    details: { count, task_ids: created.map((task) => task.id) },
+    details: { count, task_ids: taskIds },
   });
   revalidatePath(`/projects/${projectId}/work`);
-  return { error: null, count, tasks: created };
+  const undoReceipt = canManageProject(access.role) ? createImportReceipt(projectId, access.userId, taskIds) : null;
+  return { error: importError, count, tasks: created, undoReceipt };
 }
 
 /**
- * Takes an import back: deletes the tasks it created that nobody has touched
- * since (revision 0, migration 086) - a task someone already edited, moved
- * or commented on stays, and is reported as kept. Owners and admins only,
- * like any task deletion (tasks_delete, 001).
+ * The signed receipt proves which rows this import created. The database
+ * checks membership and preserves tasks with revisions or dependent work.
  */
 export async function undoImport(
   projectId: string,
-  taskIds: string[]
-): Promise<{ error: string | null; removed: string[]; kept: number }> {
+  receipt: string
+): Promise<{ error: "permission" | "invalid_receipt" | "failed" | null; removed: string[]; kept: number }> {
   const access = await getProjectAccess(projectId);
   if (!access || !canManageProject(access.role)) {
-    return { error: await tr("Only project owners and admins can undo an import."), removed: [], kept: 0 };
+    return { error: "permission", removed: [], kept: 0 };
   }
-  const ids = Array.isArray(taskIds) ? [...new Set(taskIds.filter((id) => typeof id === "string" && isValidUuid(id)))] : [];
-  if (ids.length === 0 || ids.length > MAX_IMPORT_TASKS) return { error: await tr("Nothing to import."), removed: [], kept: 0 };
+  const ids = verifyImportReceipt(receipt, projectId, access.userId);
+  if (!ids) return { error: "invalid_receipt", removed: [], kept: 0 };
 
-  const db = dataClient(access.userId);
-  const removed: string[] = [];
-  for (let i = 0; i < ids.length; i += 200) {
-    const { data, error } = await db
-      .from<{ id: string }>("tasks")
-      .delete()
-      .eq("project_id", projectId)
-      .in("id", ids.slice(i, i + 200))
-      .eq("revision", 0)
-      .select("id");
-    if (error) return { error: error.message, removed, kept: ids.length - removed.length };
-    removed.push(...data.map((row) => row.id));
-  }
+  const { data, error } = await serviceDataClient().rpc<{ removed: string[]; kept: number }>("undo_task_import", {
+    p_project_id: projectId,
+    p_actor_id: access.userId,
+    p_task_ids: ids,
+  });
+  if (error || !data) return {
+    error: error?.code === "42501" ? "permission" : "failed", removed: [], kept: 0,
+  };
+  const { removed, kept } = data;
 
   if (removed.length) {
     await logActivity({
@@ -146,9 +142,9 @@ export async function undoImport(
       action: "tasks_import_undone",
       projectId,
       entityType: "task",
-      details: { count: removed.length, task_ids: removed, kept: ids.length - removed.length },
+      details: { count: removed.length, task_ids: removed, kept },
     });
     revalidatePath(`/projects/${projectId}/work`);
   }
-  return { error: null, removed, kept: ids.length - removed.length };
+  return { error: null, removed, kept };
 }

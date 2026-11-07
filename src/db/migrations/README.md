@@ -249,3 +249,11 @@ roles exist in every organization; advanced analytics and organization audit
 logs are switched off until they are built. Paid plans differ by limits and
 support. Apply with the usual runner; until then the pricing page keeps
 listing the old flags.
+
+## Safe task import undo (120)
+
+`120_safe_task_import_undo.sql` adds a service-only operation for undoing a
+verified import. It checks project membership, locks the candidate tasks, and
+preserves tasks with edits or dependent work. Apply before releasing the app
+that calls it. If the function is missing, the new undo reports an error and
+leaves tasks intact.
