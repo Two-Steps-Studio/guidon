@@ -5,6 +5,7 @@ import { useEffect, useRef, type HTMLAttributes, type RefObject } from 'react';
 
 export interface LaserFlowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'color'> {
   surfaceRef?: RefObject<HTMLElement | null>;
+  /** Fraction across the measured surface, or across the canvas without one. */
   beamPosition?: number;
   surfaceLevel?: number;
   color?: string;
@@ -733,15 +734,12 @@ export const LaserFlow = ({
       resolveColor(s);
       const { width, height } = state;
       const scale = Math.max(0.2, Math.min(width / 585, height / 507));
-      let surface = measure(s, width, height);
+      const surface = measure(s, width, height);
       let beamX = s.beamPosition * width;
       if (surface.real) {
-        const margin = surface.radius + 6;
-        if (beamX >= surface.left && beamX <= surface.right) {
-          beamX = clamp(beamX, surface.left + margin, surface.right - margin);
-        } else {
-          surface = { left: -width * 2, top: height, right: width * 3, bottom: height * 3, radius: 0, real: false };
-        }
+        const surfaceWidth = surface.right - surface.left;
+        const margin = Math.min(surfaceWidth / 2, surface.radius + 6);
+        beamX = clamp(surface.left + s.beamPosition * surfaceWidth, surface.left + margin, surface.right - margin);
       }
       const startY = -0.15 * height;
       const span = surface.top - startY + 0.3 * height;
