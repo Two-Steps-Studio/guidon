@@ -12,6 +12,19 @@
   padding-top: var(--landing-navigation-height);
 }
 .landing *, .landing *::before, .landing *::after { box-sizing: border-box; }
+.landing { position: relative; }
+.heroLaser {
+  position: absolute;
+  inset: 0 0 auto;
+  height: min(72rem, calc(100svh + 15rem));
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(#000 72%, transparent),
+    radial-gradient(ellipse 42% 28% at 49% 29%, transparent, #000),
+    radial-gradient(ellipse 32% 16% at 50% 52%, transparent 38%, #000);
+  mask-composite: intersect;
+}
+.hero, .productSection { position: relative; }
 .landing :is(a,button,summary):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .landing :is(section,main) { scroll-margin-top: 8rem; }
 .container { width: min(var(--landing-width), calc(100% - var(--landing-gutter) * 2)); margin-inline: auto; }
