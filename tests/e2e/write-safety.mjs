@@ -56,6 +56,44 @@ export async function writeSafetyCoverage({context,origin,fixture,client,browser
     await importDialog.getByRole("button",{name:"Cancel",exact:true}).click();
     await importDialog.waitFor({state:"hidden"});
 
+    // Undo from the toast must preserve a task whose comment commits while undo waits.
+    const importedTitles=["untouched","commented","edited"].map(suffix=>`${prefix} imported ${suffix}`);
+    await page.getByRole("button",{name:"Import",exact:true}).click();
+    await importText.fill(JSON.stringify(importedTitles.map(title=>({title}))));
+    await importDialog.getByRole("button",{name:"Import 3 tasks",exact:true}).click();
+    await importDialog.getByText("3 tasks imported",{exact:true}).waitFor();
+    const importedRows=(await client.query("SELECT id,title FROM tasks WHERE project_id=$1 AND title=ANY($2::text[])",[owner.projectId,importedTitles])).rows;
+    assert.equal(importedRows.length,3);
+    const [untouched,commented,changed]=importedTitles.map(title=>importedRows.find(row=>row.title===title).id);
+    await client.query("UPDATE tasks SET description='Edited after import' WHERE id=$1",[changed]);
+
+    const rpc="SELECT public.undo_task_import($1,$2,$3::uuid[])";
+    await client.query("BEGIN");
+    try {
+      await client.query("SET LOCAL ROLE authenticated");
+      await assert.rejects(client.query(rpc,[owner.projectId,owner.id,[untouched]]),error=>error.code==="42501");
+    } finally { await client.query("ROLLBACK"); }
+    await client.query("BEGIN");
+    try {
+      await client.query("INSERT INTO task_comments(task_id,author_id,content) VALUES ($1,$2,$3)",[commented,owner.id,"Keep this comment"]);
+      await importDialog.getByRole("button",{name:"Done",exact:true}).click();
+      await page.locator("[data-sonner-toast]").getByRole("button",{name:"Undo import",exact:true}).click();
+      await expectEventually(async()=>{
+        await client.query("SELECT pg_stat_clear_snapshot()");
+        const {rows}=await client.query("SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND wait_event_type='Lock' AND query LIKE '%undo_task_import%') AS waiting");
+        return rows[0].waiting;
+      },"undo waits for the concurrent comment");
+      await client.query("COMMIT");
+    } catch(error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
+    await page.getByText("1 imported task removed. 2 tasks were kept because of edits or related work.",{exact:true}).waitFor();
+    assert.equal(await row(untouched),undefined);
+    assert.equal((await row(commented)).revision,0);
+    assert.ok(await row(changed));
+    assert.equal((await client.query("SELECT content FROM task_comments WHERE task_id=$1",[commented])).rows[0].content,"Keep this comment");
+
     // 1. A move that never reaches the server puts the card back and offers a retry.
     await isolated.setOffline(true);
     await page.getByRole("button",{name:`Move task "${prefix} move"`,exact:true}).click();
