@@ -478,6 +478,7 @@
       "actualPrices": "Precios por periodo de facturación. Los pagos se procesan en EUR. Cada plan indica los periodos no disponibles."
     },
     "footer": {
+      "brand": "Guía de marca",
       "developers": "Desarrolladores",
       "terms": "Términos del servicio",
       "privacy": "Política de privacidad",
@@ -1085,6 +1086,7 @@
     "importPastePlaceholder": "…o pega CSV / JSON aquí",
     "importPasteAria": "Datos de importación pegados",
     "importFileTooLarge": "Ese archivo supera los 5 MB.",
+    "importFileReadFailed": "No se pudo leer el archivo. Selecciónalo de nuevo o pega su contenido.",
     "importFound": "{count, plural, one {# tarea encontrada} other {# tareas encontradas}} ({format})",
     "importNothingFound": "No se encontraron tareas - el archivo necesita una columna título/nombre/summary.",
     "importUnmatchedStatuses": "Sin columna para: {values} - esas tareas van a «{column}».",

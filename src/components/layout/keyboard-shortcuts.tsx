@@ -56,9 +56,9 @@ export function KeyboardShortcuts() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
+      if (event.defaultPrevented || event.isComposing) return;
 
-      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "s") {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key?.toLowerCase() === "s") {
         event.preventDefault();
         const form = formToSave();
         if (form && !submitButtonDisabled(form)) form.requestSubmit();

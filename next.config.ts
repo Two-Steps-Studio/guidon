@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
   // "X-Powered-By: Next.js" only helps fingerprint the stack (ZAP, Seobility).
   poweredByHeader: false,
   images: { remotePatterns: publicAvatarPatterns() },
+  // Sharp's native addon loads these libraries at runtime on Windows.
+  outputFileTracingIncludes: process.platform === "win32"
+    ? { "/*": [`./node_modules/@img/sharp-win32-${process.arch}/lib/*.dll`] }
+    : undefined,
   // Local storage is mutable runtime data, never a server build input. Newer
   // filesystem tracing can otherwise include the whole repo through its root.
   outputFileTracingExcludes: {

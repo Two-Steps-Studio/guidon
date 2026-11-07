@@ -241,7 +241,7 @@ export function CodeWorkspace({ projectId, defaultBranch, canWrite }: CodeWorksp
       // marks the key handled so the app-wide shortcut (keyboard-shortcuts.tsx)
       // doesn't also submit some other form.
       onKeyDownCapture={(event) => {
-        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "s") {
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key?.toLowerCase() === "s") {
           event.preventDefault();
           if (activeTab?.dirty && !activeTab.saving) void handleSave();
         }

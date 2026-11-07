@@ -27,6 +27,35 @@ export async function writeSafetyCoverage({context,origin,fixture,client,browser
     await page.locator('button[type="submit"]').click();await page.waitForURL(url=>url.pathname==="/dashboard");
     await page.goto(board);await page.locator(`[data-card-id="${moved}"]`).waitFor();
 
+    // A slow file read must not replace newer pasted data in the import preview.
+    await page.evaluate(()=>{
+      const read=File.prototype.text;
+      File.prototype.text=function() {
+        if(this.name==="slow-import.csv") return new Promise(resolve=>{window.finishImportRead=resolve;});
+        if(this.name==="unreadable.csv") return Promise.reject(new Error("Unreadable file"));
+        return read.call(this);
+      };
+    });
+    await page.getByRole("button",{name:"Import",exact:true}).click();
+    const importDialog=page.getByRole("dialog",{name:"Import tasks",exact:true});
+    const fileInput=importDialog.locator('input[type="file"]');
+    const importText=importDialog.getByRole("textbox",{name:"Pasted import data"});
+    const importFile=name=>fileInput.setInputFiles({name,mimeType:"text/csv",buffer:Buffer.from("title,description\nFile task,From CSV")});
+    await importFile("slow-import.csv");
+    await importDialog.getByRole("status").filter({hasText:"Loading"}).waitFor();
+    const pasted=JSON.stringify([{title:`${prefix} pasted import`}]);
+    await importText.fill(pasted);
+    await page.evaluate(async()=>{
+      window.finishImportRead("title,description\nStale task,From older file");
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    });
+    assert.equal(await importText.inputValue(),pasted);
+    await importFile("unreadable.csv");
+    await importDialog.getByRole("alert").filter({hasText:"This file couldn't be read"}).waitFor();
+    assert.equal(await importDialog.getByRole("button",{name:"Import 1 task",exact:true}).isDisabled(),true);
+    await importDialog.getByRole("button",{name:"Cancel",exact:true}).click();
+    await importDialog.waitFor({state:"hidden"});
+
     // 1. A move that never reaches the server puts the card back and offers a retry.
     await isolated.setOffline(true);
     await page.getByRole("button",{name:`Move task "${prefix} move"`,exact:true}).click();

@@ -58,10 +58,36 @@ export async function searchDiagnosticsCoverage({page,origin,fixture,client,brow
     // No async index: a committed title change is searchable on the next request.
     await client.query("UPDATE tasks SET title='Freshly renamed sentinel' WHERE id=$1",[target]);
     assert.equal((await search('Freshly renamed sentinel')).results[0]?.id,target);
-    await page.goto(`${origin}/projects/${owner.projectId}/work`);
+    assert.equal((await page.goto(`${origin}/projects/${owner.projectId}/work`)).status(),200);
+    await page.locator('[data-tour="command"]').click();
+    const input=page.getByRole('combobox');
+    await input.waitFor();
+    await page.keyboard.press('Escape');
+    await input.waitFor({state:'hidden'});
+    const keyboardErrors=[];
+    const recordKeyboardError=error=>keyboardErrors.push(error.message);
+    page.on('pageerror',recordKeyboardError);
+    await page.evaluate(()=>{
+      const event=new KeyboardEvent('keydown',{ctrlKey:true,bubbles:true});
+      Object.defineProperty(event,'key',{value:undefined});
+      document.dispatchEvent(event);
+    });
     await page.keyboard.press('Control+k');
-    const input=page.getByRole('combobox');await input.fill('No possible result qxzvjqpl');
+    await input.waitFor();
     const dialog=page.getByRole('dialog');
+    assert.deepEqual(keyboardErrors,[]);
+    page.off('pageerror',recordKeyboardError);
+    await input.fill('Freshly renamed sentinel');
+    const oldResult=dialog.getByRole('option').filter({hasText:'Freshly renamed sentinel'});
+    await oldResult.waitFor();
+    const routePattern='**/api/v1/search?*';
+    const failOnce=route=>route.fulfill({status:503,body:'Temporarily unavailable'});
+    await page.route(routePattern,failOnce,{times:1});
+    await input.fill('No possible result qxzvjqpl');
+    await oldResult.waitFor({state:'hidden'});
+    await dialog.getByRole('button',{name:'Try again',exact:true}).click();
+    assert.equal(await input.inputValue(),'No possible result qxzvjqpl');
+    assert.equal(await input.evaluate(node=>node===document.activeElement),true);
     await dialog.getByText('Try a full task title or task ID, or check the selected project.',{exact:true}).waitFor();
     await dialog.getByText('For older tasks, try a more precise title or the full task ID.',{exact:true}).waitFor();
     await page.screenshot({path:path.join(artifacts,browserName+'-search-empty.png')});

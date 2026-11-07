@@ -1097,6 +1097,7 @@
     "importPastePlaceholder": "…or paste CSV / JSON here",
     "importPasteAria": "Pasted import data",
     "importFileTooLarge": "That file is over 5 MB.",
+    "importFileReadFailed": "This file couldn't be read. Choose it again or paste its contents.",
     "importFound": "{count, plural, one {# task} other {# tasks}} found ({format})",
     "importNothingFound": "No tasks found - the file needs a title/name/summary column.",
     "importUnmatchedStatuses": "No matching column for: {values} - those tasks go to \"{column}\".",

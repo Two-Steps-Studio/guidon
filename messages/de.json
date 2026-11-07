@@ -478,6 +478,7 @@
       "actualPrices": "Preise pro Abrechnungszeitraum. Zahlungen werden in EUR abgewickelt. Nicht verfügbare Zeiträume sind beim jeweiligen Tarif gekennzeichnet."
     },
     "footer": {
+      "brand": "Markenrichtlinien",
       "developers": "Für Entwickler",
       "terms": "Nutzungsbedingungen",
       "privacy": "Datenschutzerklärung",
@@ -1085,6 +1086,7 @@
     "importPastePlaceholder": "…oder CSV / JSON hier einfügen",
     "importPasteAria": "Eingefügte Importdaten",
     "importFileTooLarge": "Die Datei ist größer als 5 MB.",
+    "importFileReadFailed": "Die Datei konnte nicht gelesen werden. Wähle sie erneut aus oder füge den Inhalt ein.",
     "importFound": "{count, plural, one {# Aufgabe} other {# Aufgaben}} gefunden ({format})",
     "importNothingFound": "Keine Aufgaben gefunden - die Datei braucht eine Spalte Titel/Name/Summary.",
     "importUnmatchedStatuses": "Keine passende Spalte für: {values} - diese Aufgaben landen in „{column}“.",

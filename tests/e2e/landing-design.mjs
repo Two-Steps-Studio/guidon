@@ -101,6 +101,7 @@ export async function landingDesignCoverage({page,origin,browserName,artifacts})
       await fallback.getByRole('heading',{level:1}).waitFor();
       // Wait for actual browser network loading. Firefox with page JS disabled
       // does not consistently settle the image.decode() promise.
+      await fallback.locator('[data-product-screen] img:visible').scrollIntoViewIfNeeded();
       await fallback.waitForLoadState('networkidle');
       await fallback.screenshot({path:path.join(artifacts,`${browserName}-landing-no-js.png`)});
       const imageState=await fallback.locator('[data-product-screen] img').evaluateAll(nodes=>nodes.map(node=>({src:node.currentSrc,complete:node.complete,width:node.naturalWidth,display:getComputedStyle(node).display,loading:node.loading})));

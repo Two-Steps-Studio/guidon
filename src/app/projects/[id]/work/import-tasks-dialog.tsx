@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, FileUp, Loader2, Undo2, Upload } from "lucide-react";
@@ -57,9 +57,12 @@ export function ImportTasksDialog({
   onUndone: (taskIds: string[]) => void;
 }) {
   const t = useTranslations("work");
+  const common = useTranslations("common");
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileError, setFileError] = useState<string | null>(null);
+  const [readingFile, setReadingFile] = useState(false);
+  const fileReadVersion = useRef(0);
   const [importing, startImport] = useTransition();
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [imported, setImported] = useState<Task[] | null>(null);
@@ -96,6 +99,8 @@ export function ImportTasksDialog({
   const duplicateCount = (duplicates?.onBoard.size ?? 0) + (duplicates?.inFile.size ?? 0);
 
   const reset = () => {
+    fileReadVersion.current += 1;
+    setReadingFile(false);
     setText("");
     setFileName("");
     setFileError(null);
@@ -105,18 +110,29 @@ export function ImportTasksDialog({
   };
 
   const readFile = async (file: File | undefined) => {
+    if (!file || importing) return;
+    const version = ++fileReadVersion.current;
     setFileError(null);
-    if (!file) return;
     if (file.size > MAX_FILE_BYTES) {
+      setReadingFile(false);
       setFileError(t("importFileTooLarge"));
       return;
     }
-    setFileName(file.name);
-    setText(await file.text());
+    setReadingFile(true);
+    try {
+      const contents = await file.text();
+      if (fileReadVersion.current !== version) return;
+      setFileName(file.name);
+      setText(contents);
+    } catch {
+      if (fileReadVersion.current === version) setFileError(t("importFileReadFailed"));
+    } finally {
+      if (fileReadVersion.current === version) setReadingFile(false);
+    }
   };
 
   const submit = () => {
-    if (!toImport.length) return;
+    if (readingFile || fileError || importing || !toImport.length) return;
     startImport(async () => {
       const result = await importTasks(projectId, toImport);
       onImported(result.tasks);
@@ -178,7 +194,8 @@ export function ImportTasksDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next && !importing) reset();
+        if (!next && importing) return;
+        if (!next) reset();
         onOpenChange(next);
       }}
     >
@@ -236,6 +253,7 @@ export function ImportTasksDialog({
               type="file"
               accept=".csv,.tsv,.txt,.json,text/csv,application/json"
               className="sr-only"
+              disabled={importing}
               onChange={(event) => {
                 void readFile(event.target.files?.[0]);
                 event.target.value = "";
@@ -245,7 +263,11 @@ export function ImportTasksDialog({
 
           <Textarea
             value={text}
+            disabled={importing}
             onChange={(event) => {
+              fileReadVersion.current += 1;
+              setReadingFile(false);
+              setFileError(null);
               setText(event.target.value);
               setFileName("");
             }}
@@ -255,9 +277,10 @@ export function ImportTasksDialog({
             aria-label={t("importPasteAria")}
           />
 
-          {fileError && <p className="text-sm text-destructive">{fileError}</p>}
+          {readingFile && <p role="status" className="text-sm text-muted-foreground">{common("loading")}</p>}
+          {fileError && <p role="alert" className="text-sm text-destructive">{fileError}</p>}
 
-          {parsed && resolved && (
+          {!readingFile && !fileError && parsed && resolved && (
             <div className="space-y-2">
               <p className="text-sm font-medium">
                 {resolved.tasks.length
@@ -334,10 +357,13 @@ export function ImportTasksDialog({
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={importing}>
+            <Button type="button" variant="outline" onClick={() => {
+              reset();
+              onOpenChange(false);
+            }} disabled={importing}>
               {t("cancel")}
             </Button>
-            <Button type="button" onClick={submit} disabled={importing || !toImport.length}>
+            <Button type="button" onClick={submit} disabled={importing || readingFile || !!fileError || !toImport.length}>
               {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
               {t("importSubmit", { count: toImport.length })}
             </Button>

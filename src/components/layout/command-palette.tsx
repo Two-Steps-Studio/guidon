@@ -65,16 +65,13 @@ function resultHref(result: SearchResult, currentProjectId?: string): string {
 
 const MIN_QUERY_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 200;
+type SearchOutcome = { results: SearchResult[]; limited: boolean } | "failed";
 
 export function CommandPalette({ currentProjectId, disabledModules, adminUserDirectory }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [limited, setLimited] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [retry, setRetry] = useState(0);
+  const [search, setSearch] = useState({ value: "", version: 0 });
+  const [response, setResponse] = useState<{ projectId?: string; version: number; outcome: SearchOutcome }>();
   const router = useRouter();
   const tNav = useTranslations("nav");
   const t = useTranslations("commandPalette");
@@ -90,8 +87,11 @@ export function CommandPalette({ currentProjectId, disabledModules, adminUserDir
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      if (event.defaultPrevented || event.isComposing || event.altKey) return;
+      if ((event.metaKey || event.ctrlKey) && event.key?.toLowerCase() === "k") {
         event.preventDefault();
+        if (event.repeat) return;
+        setSearch(previous => ({ value: "", version: previous.version + 1 }));
         setOpen((prev) => !prev);
       }
     }
@@ -105,96 +105,100 @@ export function CommandPalette({ currentProjectId, disabledModules, adminUserDir
     };
   }, []);
 
-  function resetSearch() {
-    setQuery("");
-    setResults([]);
-    setLimited(false);
-    setLoading(false);
-    setFailed(false);
+  function changeQuery(value: string) {
+    setSearch(previous => ({
+      value,
+      version: previous.value.trim() === value.trim() ? previous.version : previous.version + 1,
+    }));
   }
 
-  // Reset on close so reopening never flashes the previous search.
-  useEffect(() => {
-    if (!open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      resetSearch();
-    }
-  }, [open]);
+  function changeOpen(next: boolean) {
+    if (!next) changeQuery("");
+    setOpen(next);
+  }
+
+  const query = search.value.trim();
+  const version = search.version;
+  const showResults = query.length >= MIN_QUERY_LENGTH;
+  const current = response && response.version === version && response.projectId === currentProjectId
+    ? response.outcome : undefined;
+  const failed = current === "failed";
+  const results = current && current !== "failed" ? current.results : [];
+  const limited = current && current !== "failed" && current.limited;
+  const loading = current === undefined;
 
   useEffect(() => {
-    const trimmed = query.trim();
-    if (!open || trimmed.length < MIN_QUERY_LENGTH) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setResults([]);
-      setLimited(false);
-      setLoading(false);
-      return;
-    }
-
+    if (!open || !showResults) return;
     const controller = new AbortController();
-    setLoading(true);
-    setFailed(false);
-    setResults([]);
-    setLimited(false);
     const timer = setTimeout(() => {
-      const params = new URLSearchParams({ q: trimmed });
+      const params = new URLSearchParams({ q: query });
       if (currentProjectId) params.set("project_id", currentProjectId);
       fetch(`/api/v1/search?${params.toString()}`, { signal: controller.signal })
-        .then((res) => { if (!res.ok) throw new Error("Search failed");return res.json(); })
-        .then((data: { results?: SearchResult[]; diagnostics?: {taskCandidatesLimited?: boolean} }) => { if (!controller.signal.aborted) { setResults(data.results ?? []); countSearchEvent(data.results?.length ? "results" : "zero"); setLimited(data.diagnostics?.taskCandidatesLimited === true); } })
-        .catch((err: unknown) => {
-          if (controller.signal.aborted || (err instanceof DOMException && err.name === "AbortError")) return;
-          countSearchEvent("failed");
-          setFailed(true);setResults([]);
-          setLimited(false);
+        .then((res) => {
+          if (!res.ok) throw new Error("Search failed");
+          return res.json();
         })
-        .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+        .then((data: { results?: SearchResult[]; diagnostics?: { taskCandidatesLimited?: boolean } }) => {
+          if (controller.signal.aborted) return;
+          const results = data.results ?? [];
+          setResponse({ projectId: currentProjectId, version, outcome: {
+            results,
+            limited: data.diagnostics?.taskCandidatesLimited === true,
+          } });
+          countSearchEvent(results.length ? "results" : "zero");
+        })
+        .catch(() => {
+          if (controller.signal.aborted) return;
+          countSearchEvent("failed");
+          setResponse({ projectId: currentProjectId, version, outcome: "failed" });
+        });
     }, SEARCH_DEBOUNCE_MS);
 
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, currentProjectId, open, retry]);
+  }, [query, currentProjectId, open, showResults, version]);
 
   function go(href: string) {
-    setOpen(false);
+    changeOpen(false);
     router.push(href);
   }
-
-  const showResults = query.trim().length >= MIN_QUERY_LENGTH;
 
   return (
     <>
       <button
         type="button"
-        aria-label={`${t("triggerLabel")} ⌘K`}
+        aria-label={t("triggerLabel")}
         aria-keyshortcuts="Meta+K Control+K"
         // Stabilny uchwyt dla spotlight tour (przewodnik po aplikacji).
         data-tour="command"
         data-slot="button"
         onClick={() => setOpen(true)}
-        className="flex h-8 w-11 shrink-0 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:w-full md:max-w-64 md:shrink"
+        className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:h-8 md:w-full md:max-w-64 md:shrink"
       >
         <Search className="size-4 shrink-0" />
         <span className="hidden flex-1 truncate text-left md:block">{t("triggerLabel")}</span>
-        {" "}<CommandShortcut aria-hidden className="ml-0 hidden md:inline">⌘K</CommandShortcut>
+        <CommandShortcut aria-hidden className="ml-0 hidden md:inline">Ctrl / ⌘ K</CommandShortcut>
       </button>
 
       <CommandDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={changeOpen}
         title={t("title")}
         description={t("description")}
         shouldFilter={false}
       >
-        <CommandInput ref={inputRef} maxLength={200} placeholder={t("placeholder")} value={query} onValueChange={setQuery} />
+        <CommandInput ref={inputRef} maxLength={200} placeholder={t("placeholder")} value={search.value} onValueChange={changeQuery} />
         <CommandList>
           {showResults ? (
             <>
               {loading && <p role="status" className="p-4 text-sm text-muted-foreground">{t("searching")}</p>}
-              {failed && <div className="p-4 text-sm"><p role="alert">{t("searchFailed")}</p><button className="mt-2 rounded border px-3 py-2" onClick={() => setRetry(value => value + 1)}>{t("retry")}</button></div>}
-              {!loading && !failed && results.length === 0 && <CommandEmpty><p>{t("noResults")}</p><p className="mt-2 text-xs">{t("noResultsHint")}</p><button type="button" className="mt-3 rounded border px-3 py-2" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>{t("clearSearch")}</button></CommandEmpty>}
+              {failed && <div className="p-4 text-sm"><p role="alert">{t("searchFailed")}</p><button type="button" className="mt-2 min-h-11 rounded border px-3 py-2" onClick={() => {
+                setSearch(previous => ({ ...previous, version: previous.version + 1 }));
+                inputRef.current?.focus();
+              }}>{t("retry")}</button></div>}
+              {!loading && !failed && results.length === 0 && <CommandEmpty><p>{t("noResults")}</p><p className="mt-2 text-xs">{t("noResultsHint")}</p><button type="button" className="mt-3 min-h-11 rounded border px-3 py-2" onClick={() => { changeQuery(""); inputRef.current?.focus(); }}>{t("clearSearch")}</button></CommandEmpty>}
               {!loading && !failed && limited && <p role="status" className="px-4 py-2 text-xs text-muted-foreground">{t("limitedResults")}</p>}
               {results.length > 0 && results.every((result) => result.metadata.match === "fuzzy") && (
                 <p role="status" className="px-4 pt-3 text-xs text-muted-foreground">{t("closestMatches")}</p>
