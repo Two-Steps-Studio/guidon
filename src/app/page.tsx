@@ -7,10 +7,11 @@ import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
 import { PricingSection, type PlanRow } from "./pricing-section";
-import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
+import { SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
 import { BetaBadge } from "@/components/layout/beta-badge";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { AnimatedFaq } from "@/components/landing/animated-faq";
 import { RevealGroup } from "@/components/landing/reveal-group";
 import { ProductScreen } from "@/components/landing/product-screen";
@@ -84,11 +85,6 @@ export default async function Home() {
     {href:"#features", label:d("navFeatures")},
     {href:"#integrations", label:d("navIntegrations")},
     {href:plans.length ? "#pricing" : "#self-hosted", label:plans.length ? d("navPricing") : t("footer.selfHosting")},
-  ];
-  const footerGroups = [
-    {title:d("footerProduct"), links:[...links.slice(0,3), {href:"/start",label:t("getStarted")} ]},
-    {title:d("footerResources"), links:[{href:"/developers",label:t("footer.developers")},{href:SELF_HOSTING_DOCS_URL,label:t("footer.selfHosting")},{href:GITHUB_REPO_URL,label:"GitHub"},{href:"/contact",label:t("footer.contact")},{href:"/brand",label:t("footer.brand")}]},
-    {title:d("footerLegal"),links:[{href:"/legal/terms",label:t("footer.terms")},{href:"/legal/privacy",label:t("footer.privacy")},{href:"/legal/refunds",label:t("footer.refunds")},{href:"/legal/eula",label:t("footer.eula")},{href:"/legal/cookies",label:t("footer.cookies")}]},
   ];
 
   return (
@@ -219,13 +215,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer data-site-footer className={styles.footer}>
-        <div className={`${styles.container} ${styles.footerGrid}`}>
-          <div className={styles.footerBrand}><Link href="/" className={styles.logo} aria-label="Guidon"><Image src="/brand/guidon-wordmark-blue.png" alt="Guidon" width={200} height={74} className="dark:hidden"/><Image src="/brand/guidon-wordmark-white.png" alt="Guidon" width={200} height={74} className="hidden dark:block"/></Link><p>{d("footerDescription")}</p><BetaBadge/></div>
-          {footerGroups.map(group=><div key={group.title}><h2>{group.title}</h2><ul>{group.links.map(link=><li key={link.href}><Link prefetch={false} href={link.href}>{link.label}</Link></li>)}</ul></div>)}
-        </div>
-        <div className={`${styles.container} ${styles.footerBottom}`}><span>{t("footer.copyright",{year:new Date().getFullYear()})} · Two Steps Studio</span><Link href="/about">{t("footer.about")}</Link></div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
