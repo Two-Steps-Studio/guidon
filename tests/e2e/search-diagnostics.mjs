@@ -58,7 +58,12 @@ export async function searchDiagnosticsCoverage({page,origin,fixture,client,brow
     // No async index: a committed title change is searchable on the next request.
     await client.query("UPDATE tasks SET title='Freshly renamed sentinel' WHERE id=$1",[target]);
     assert.equal((await search('Freshly renamed sentinel')).results[0]?.id,target);
-    await page.goto(`${origin}/projects/${owner.projectId}/work`);
+    assert.equal((await page.goto(`${origin}/projects/${owner.projectId}/work`)).status(),200);
+    await page.locator('[data-tour="command"]').click();
+    const input=page.getByRole('combobox');
+    await input.waitFor();
+    await page.keyboard.press('Escape');
+    await input.waitFor({state:'hidden'});
     const keyboardErrors=[];
     const recordKeyboardError=error=>keyboardErrors.push(error.message);
     page.on('pageerror',recordKeyboardError);
@@ -68,7 +73,7 @@ export async function searchDiagnosticsCoverage({page,origin,fixture,client,brow
       document.dispatchEvent(event);
     });
     await page.keyboard.press('Control+k');
-    const input=page.getByRole('combobox');
+    await input.waitFor();
     const dialog=page.getByRole('dialog');
     assert.deepEqual(keyboardErrors,[]);
     page.off('pageerror',recordKeyboardError);

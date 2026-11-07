@@ -478,6 +478,7 @@
       "actualPrices": "Precios por periodo de facturación. Los pagos se procesan en EUR. Cada plan indica los periodos no disponibles."
     },
     "footer": {
+      "brand": "Guía de marca",
       "developers": "Desarrolladores",
       "terms": "Términos del servicio",
       "privacy": "Política de privacidad",
