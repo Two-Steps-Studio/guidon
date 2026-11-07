@@ -12,13 +12,27 @@
   padding-top: var(--landing-navigation-height);
 }
 .landing *, .landing *::before, .landing *::after { box-sizing: border-box; }
+.landing { position: relative; }
+.heroLaser {
+  position: absolute;
+  inset: 0 0 auto;
+  height: min(72rem, calc(100svh + 15rem));
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(#000 72%, transparent),
+    radial-gradient(ellipse 42% 28% at 49% 29%, transparent, #000),
+    radial-gradient(ellipse 32% 16% at 50% 52%, transparent 38%, #000);
+  mask-composite: intersect;
+}
+.hero, .productSection { position: relative; }
 .landing :is(a,button,summary):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .landing :is(section,main) { scroll-margin-top: 8rem; }
 .container { width: min(var(--landing-width), calc(100% - var(--landing-gutter) * 2)); margin-inline: auto; }
 .productContainer { width: min(var(--landing-product-width), calc(100% - var(--landing-gutter) * 2)); margin-inline: auto; }
 .skip { position: fixed; left: 1rem; top: -8rem; z-index: 100; padding: .75rem 1rem; background: var(--color-background); border: 1px solid var(--color-border); }
 .skip:focus { top: 1rem; }
-.header { position: fixed; inset: 0 0 auto; z-index: 40; background: var(--color-background); border-bottom: 1px solid var(--color-border); }
+/* Chromium can cull the fixed WebGL background at the opposite edge of an opaque header. */
+.header { position: fixed; inset: 0 0 auto; z-index: 40; background: color-mix(in srgb, var(--color-background) 98%, transparent); border-bottom: 1px solid var(--color-border); }
 .navigation { width: min(var(--landing-product-width), calc(100% - var(--landing-gutter) * 2)); min-height: 76px; margin-inline: auto; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; }
 .logo { display: inline-flex; align-items: center; width: 100px; flex-shrink: 0; }
 .logo img { width: 100%; height: auto; }

@@ -14,6 +14,7 @@ import { BetaBadge } from "@/components/layout/beta-badge";
 import { AnimatedFaq } from "@/components/landing/animated-faq";
 import { RevealGroup } from "@/components/landing/reveal-group";
 import { ProductScreen } from "@/components/landing/product-screen";
+import { HeroLaser } from "@/components/landing/hero-laser";
 import type { PublicPlanPrice } from "@/lib/billing/public-pricing";
 import styles from "@/components/landing/landing.module.css";
 import { CtaLink } from "@/components/landing/cta-link";
@@ -93,6 +94,7 @@ export default async function Home() {
 
   return (
     <div data-landing className={styles.landing}>
+      <HeroLaser />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd(SITE_URL, plans, FEATURE_SECTIONS.map(({ key }) => ({ title: t(`features.${key}.title`), description: t(`features.${key}.description`) })), faq)).replace(/</g, "\\u003c") }} />
       <a href="#landing-main" className={styles.skip}>{d("skip")}</a>
       <header className={styles.header}>
@@ -123,7 +125,7 @@ export default async function Home() {
         <section id="product" className={styles.productSection} aria-labelledby="hero-shot-title">
           <div className={styles.productContainer}>
             <h2 id="hero-shot-title" className="sr-only">{t("heroShotTitle")}</h2>
-            <div className={styles.productFrame}>
+            <div id="product-preview-frame" className={styles.productFrame}>
               <ProductScreen label={t("exploreProduct")} views={[
                 {key:"hero-dashboard",title:t("previewDashboard"),alt:t("heroShotAlt")},
                 {key:"taskBoard",title:d("taskDetails"),alt:d("taskDetails")},
