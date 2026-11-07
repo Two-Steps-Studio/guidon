@@ -284,7 +284,9 @@ export function WorkBoard({
   useEffect(() => {
     if (!canEdit) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== "n" || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
+      // key is undefined on the keydown Chrome fires when it fills an input from
+      // autocomplete; reading it threw on every such pick (Sentry GUIDON-4).
+      if (event.key?.toLowerCase() !== "n" || event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
       if (isTypingTarget(event.target) || document.querySelector('[role="dialog"]')) return;
       event.preventDefault();
       openCreate(columns[0]?.status ?? "todo");
