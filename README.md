@@ -13,6 +13,7 @@ game-development-friendly teams.
 [Plugins](https://useguidon.com/plugins)
 
 [![Guidon skills on skills.sh](https://skills.sh/b/two-steps-studio/guidon)](https://skills.sh/two-steps-studio/guidon)
+https://www.npmjs.com/package/@two_steps_studio/guidon-sdk
 
 ![Guidon task board](./public/landing/taskBoard-light.webp)
 
