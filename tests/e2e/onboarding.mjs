@@ -10,11 +10,24 @@ export async function onboardingCoverage({page,context,origin,fixture,client,bro
     await context.clearCookies();await page.goto(`${origin}/auth/login`);await page.waitForLoadState("networkidle");
     await page.locator("#email").fill(email);await page.locator("#password").fill(fixture.password);
     await page.locator('button[type="submit"]').click();await page.waitForURL(url=>url.pathname==="/start");
+    // A cold response renders the form before JavaScript can accept input.
+    const staticPage = await context.newPage();
+    try {
+      await staticPage.route("**/_next/static/**/*.js", route => route.abort());
+      await staticPage.goto(`${origin}/start`);
+      assert.ok(await staticPage.locator("#onboarding-project").isDisabled());
+      assert.ok(await staticPage.locator("#onboarding-studio").isDisabled());
+    } finally {
+      await staticPage.close();
+    }
     // Only the name is required; the rest is skippable (competitive task a5b26251:
     // a first task within 60 s, no workflow setup forced on anyone).
     const started=Date.now();
     assert.ok(await page.getByRole("button",{name:"Continue",exact:true}).isDisabled());
     await page.locator("#onboarding-project").fill(name);await page.locator("#onboarding-studio").fill(studio);
+    await page.getByRole("button",{name:"Continue",exact:true}).click();
+    await page.getByRole("button",{name:"Back",exact:true}).click();
+    assert.equal(await page.locator("#onboarding-project").inputValue(),name);
     await page.getByRole("button",{name:"Continue",exact:true}).click();
     await page.getByRole("button",{name:/Website/}).click();
     await page.getByRole("button",{name:"Skip - set up later",exact:true}).click();
