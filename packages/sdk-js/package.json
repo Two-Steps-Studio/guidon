@@ -1,5 +1,5 @@
 {
-  "name": "@guidon/sdk",
+  "name": "@two_steps_studio/guidon-sdk",
   "version": "0.1.0",
   "description": "Official JavaScript/TypeScript SDK for the Guidon REST API (/api/v1).",
   "keywords": ["guidon", "project-management", "tasks", "api", "sdk"],

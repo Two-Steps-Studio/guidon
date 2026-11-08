@@ -1,5 +1,6 @@
+
 {
-  "name": "guidon-cli",
+  "name": "@two_steps_studio/guidon-cli",
   "version": "0.1.0",
   "description": "Official command-line client for Guidon: list projects, create and move tasks, comment - from your terminal or CI.",
   "keywords": ["guidon", "cli", "project-management", "tasks"],
@@ -28,7 +29,7 @@
     "prepublishOnly": "node scripts/check-publishable.mjs && npm run clean && npm test"
   },
   "dependencies": {
-    "@guidon/sdk": "^0.1.0"
+    "@two_steps_studio/guidon-sdk": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.0",
