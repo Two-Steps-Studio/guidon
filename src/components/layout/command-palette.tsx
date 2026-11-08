@@ -170,7 +170,6 @@ export function CommandPalette({ currentProjectId, disabledModules, showCustomMo
     <>
       <button
         type="button"
-        aria-label={t("triggerLabel")}
         aria-keyshortcuts="Meta+K Control+K"
         // Stabilny uchwyt dla spotlight tour (przewodnik po aplikacji).
         data-tour="command"
@@ -178,9 +177,9 @@ export function CommandPalette({ currentProjectId, disabledModules, showCustomMo
         onClick={() => setOpen(true)}
         className="flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:h-8 md:w-full md:max-w-64 md:shrink"
       >
-        <Search className="size-4 shrink-0" />
-        <span className="hidden flex-1 truncate text-left md:block">{t("triggerLabel")}</span>
-        <CommandShortcut aria-hidden className="ml-0 hidden md:inline">Ctrl / ⌘ K</CommandShortcut>
+        <Search aria-hidden className="size-4 shrink-0" />
+        <span className="sr-only flex-1 truncate text-left md:not-sr-only md:block">{t("triggerLabel")}</span>
+        <CommandShortcut className="ml-0 hidden md:inline">Ctrl / ⌘ K</CommandShortcut>
       </button>
 
       <CommandDialog
