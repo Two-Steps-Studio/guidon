@@ -3,7 +3,7 @@
 // Same values as lib/project-links.ts (test:agent-web checks they match).
 const GITHUB_REPO_URL = "https://github.com/two-steps-studio/guidon";
 const GITHUB_ORG_URL = "https://github.com/Two-Steps-Studio";
-const SUPPORT_EMAIL = "guidon.support@gmail.com";
+const SUPPORT_EMAIL = "support@useguidon.com";
 
 /**
  * schema.org JSON-LD for the public pages. Only what the page itself shows

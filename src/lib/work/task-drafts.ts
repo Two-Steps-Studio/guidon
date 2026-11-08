@@ -12,7 +12,7 @@
 const PREFIX = "guidon:task-draft:v1:";
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-export type TaskDraft<T> = { userId: string; revision: number; savedAt: number; form: T; clientId?: string };
+export type TaskDraft<T> = { userId: string; revision: number; savedAt: number; form: T; base?: T; clientId?: string };
 
 export function taskDraftKey(userId: string, scope: string) {
   return `${PREFIX}${userId}:${scope}`;

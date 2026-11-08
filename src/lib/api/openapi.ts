@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/work/task-board";
+import { SUPPORT_EMAIL } from "@/lib/project-links";
 
 const statusSchema = {
   type: "string",
@@ -253,7 +254,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         "(RFC 9745) and `Sunset` (RFC 8594) headers at least 6 months before it goes, and is announced on " + `${siteUrl}/developers#versioning.\n\n` +
         `The same operations are available as an MCP server (Streamable HTTP) at ${siteUrl}/api/mcp. ` +
         `Guide for agents: ${siteUrl}/llms.txt`,
-      contact: { name: "Guidon", url: `${siteUrl}/contact`, email: "guidon.support@gmail.com" },
+      contact: { name: "Guidon", url: `${siteUrl}/contact`, email: SUPPORT_EMAIL },
       termsOfService: `${siteUrl}/legal/terms`,
     },
     externalDocs: { description: "Developer guide", url: `${siteUrl}/developers` },
