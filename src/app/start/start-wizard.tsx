@@ -135,7 +135,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
         <p className="text-xs text-muted-foreground">{t("stepOf", { step: step + 1, total: STEPS.length })}</p>
       </div>
 
-      <form ref={stepRef} data-state-motion="onboarding"
+      <form ref={stepRef} data-state-motion="onboarding" aria-busy={!restored}
         onSubmit={(event) => {
           event.preventDefault();
           next();
@@ -167,6 +167,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
               <Input
                 id="onboarding-project"
                 autoFocus
+                disabled={!restored}
                 value={projectName}
                 maxLength={100}
                 placeholder={t("projectNamePlaceholder")}
@@ -177,6 +178,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
               <Label htmlFor="onboarding-studio">{t("studioNameLabel")}</Label>
               <Input
                 id="onboarding-studio"
+                disabled={!restored}
                 value={studioName}
                 maxLength={100}
                 placeholder={t("studioNamePlaceholder")}
