@@ -30,7 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --location --proto '=https' --tlsv1.2 --output "$RUNNER_TEMP/publisher.tar.gz" https://github.com/modelcontextprotocol/registry/releases/download/v1.8.7/mcp-publisher_linux_amd64.tar.gz
+          # Official GitHub API asset for mcp-publisher_linux_amd64.tar.gz from v1.8.7.
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --retry-max-time 60 --connect-timeout 15 --max-time 30 --header 'Accept: application/octet-stream' --output "$RUNNER_TEMP/publisher.tar.gz" https://api.github.com/repos/modelcontextprotocol/registry/releases/assets/691911080
           echo "00b21004149a4ce66f0782508ae4a2bce67d1bea395a8da0bd8028159fb59579  $RUNNER_TEMP/publisher.tar.gz" | sha256sum --check --strict
           tar -xzf "$RUNNER_TEMP/publisher.tar.gz" -C "$RUNNER_TEMP" mcp-publisher
       - run: '"$RUNNER_TEMP/mcp-publisher" validate server.json'
@@ -51,7 +52,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --location --proto '=https' --tlsv1.2 --output "$RUNNER_TEMP/publisher.tar.gz" https://github.com/modelcontextprotocol/registry/releases/download/v1.8.7/mcp-publisher_linux_amd64.tar.gz
+          # Use the same pinned release asset and checksum as the validation job.
+          curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --retry-max-time 60 --connect-timeout 15 --max-time 30 --header 'Accept: application/octet-stream' --output "$RUNNER_TEMP/publisher.tar.gz" https://api.github.com/repos/modelcontextprotocol/registry/releases/assets/691911080
           echo "00b21004149a4ce66f0782508ae4a2bce67d1bea395a8da0bd8028159fb59579  $RUNNER_TEMP/publisher.tar.gz" | sha256sum --check --strict
           tar -xzf "$RUNNER_TEMP/publisher.tar.gz" -C "$RUNNER_TEMP" mcp-publisher
       - name: Publish with repository-bound OIDC
