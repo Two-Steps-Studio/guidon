@@ -8,4 +8,4 @@ export const GITHUB_REPO_URL = "https://github.com/two-steps-studio/guidon";
 export const SELF_HOSTING_DOCS_URL = `${GITHUB_REPO_URL}/blob/main/docs/self-hosting.md`;
 
 /** Where people (and the Organization JSON-LD) reach Guidon support. */
-export const SUPPORT_EMAIL = "guidon.support@gmail.com";
+export const SUPPORT_EMAIL = "support@useguidon.com";

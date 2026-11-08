@@ -2,7 +2,7 @@
 
 // Same values as lib/project-links.ts (test:agent-web checks they match).
 const GITHUB_REPO_URL = "https://github.com/two-steps-studio/guidon";
-const SUPPORT_EMAIL = "guidon.support@gmail.com";
+const SUPPORT_EMAIL = "support@useguidon.com";
 
 /**
  * /about and /contact: one Markdown source each for the HTML page and its
