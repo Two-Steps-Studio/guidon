@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl";
 import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { taskRef } from "@/lib/github/task-refs";
 import { deleteTask, updateTask } from "@/app/projects/[id]/work/actions";
+import { loadTaskById } from "@/app/projects/[id]/work/relations-actions";
 import { getTaskWhyContext, type TaskWhyContext } from "@/lib/context/task-why";
 import { TaskWhyPanel } from "@/components/work/task-why-panel";
 import { TaskLinksPanel } from "@/components/work/task-links-panel";
@@ -56,7 +57,7 @@ import { useLabelPresets } from "@/components/work/label-presets-context";
 import { DescriptionToolbar, descriptionKeyDown } from "@/components/work/description-toolbar";
 import { MAX_RECURRENCE_INTERVAL, isRecurrenceRule, type RecurrenceRule } from "@/lib/work/recurrence-core";
 import { toggleTaskAtLine, type EditResult } from "@/lib/work/markdown-edit";
-import type { Task, TaskPriority, TaskStatus, UpdateTaskData } from "@/types/task";
+import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import { playSound } from "@/lib/sounds";
 
 interface TaskDetailDialogProps {
@@ -104,6 +105,23 @@ function formToTask(task: Task): TaskForm {
     tags: (task.tags ?? []).join(", "),
     recurrence_rule: isRecurrenceRule(task.recurrence_rule) ? task.recurrence_rule : "",
     recurrence_interval: String(task.recurrence_interval ?? 1),
+  };
+}
+
+function taskFormPatch(form: TaskForm, base: TaskForm | null, isSubtask: boolean): Parameters<typeof updateTask>[2] {
+  const changed = (key: keyof TaskForm) => !base || base[key] !== form[key];
+  return {
+    ...(changed("title") ? { title: form.title.trim() } : {}),
+    ...(changed("description") ? { description: form.description.trim() || null } : {}),
+    ...(changed("status") ? { status: form.status } : {}),
+    ...(changed("priority") ? { priority: form.priority } : {}),
+    ...(changed("assignee_id") ? { assignee_id: form.assignee_id || null } : {}),
+    ...(changed("due_date") ? { due_date: form.due_date ? new Date(form.due_date).toISOString() : null } : {}),
+    ...(changed("tags") ? { tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean) } : {}),
+    ...(!isSubtask && (changed("recurrence_rule") || changed("recurrence_interval")) ? {
+      recurrence_rule: form.recurrence_rule || null,
+      recurrence_interval: form.recurrence_rule ? Number(form.recurrence_interval) : null,
+    } : {}),
   };
 }
 
@@ -181,7 +199,11 @@ function TaskDetailDialogInner({
   // This version belongs to the form's initial snapshot, even if parent props
   // change while the person is typing. Never advance it behind their edits -
   // a restored draft keeps the version it was written against.
-  const [editRevision, setEditRevision] = useState(task?.revision ?? -1);
+  const [editSnapshot, setEditSnapshot] = useState(() => ({
+    revision: task?.revision ?? -1,
+    base: task ? formToTask(task) : null,
+  }));
+  const { revision: editRevision, base: editBase } = editSnapshot;
   const [draftRestoredAt, setDraftRestoredAt] = useState<number | null>(null);
   const [editConflict, setEditConflict] = useState(false);
   // A written description opens rendered (links clickable, lists and
@@ -282,14 +304,20 @@ function TaskDetailDialogInner({
     if (JSON.stringify(restored) === JSON.stringify(current)) return clearTaskDraft(draftKey);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(restored);
-    setEditRevision(draft.revision);
+    setEditSnapshot({
+      revision: draft.revision,
+      // Older drafts only have a trustworthy baseline if the revision matches.
+      base: draft.base ?? (draft.revision === task.revision ? current : null),
+    });
     setDraftRestoredAt(draft.savedAt);
   }, [draftKey, task, currentUserId]);
   useEffect(() => {
     if (!draftKey || !currentUserId || !dirty || !restoreChecked.current) return;
-    const timer = window.setTimeout(() => !draftDone.current && writeTaskDraft(draftKey, { userId: currentUserId, revision: editRevision, form }), 300);
+    const timer = window.setTimeout(() => !draftDone.current && writeTaskDraft(draftKey, {
+      userId: currentUserId, revision: editRevision, form, base: editBase ?? undefined,
+    }), 300);
     return () => window.clearTimeout(timer);
-  }, [draftKey, currentUserId, dirty, editRevision, form]);
+  }, [draftKey, currentUserId, dirty, editRevision, editBase, form]);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -299,35 +327,28 @@ function TaskDetailDialogInner({
     setError(null);
 
     try {
-      const patch: Omit<UpdateTaskData, "id"> = {
-        title: form.title.trim(),
-        description: form.description.trim() || undefined,
-        status: form.status,
-        priority: form.priority,
-        assignee_id: form.assignee_id || undefined,
-        due_date: form.due_date
-          ? new Date(form.due_date).toISOString()
-          : undefined,
-        tags: form.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-      };
+      const isSubtask = Boolean(task.parent_task_id);
+      const patch = taskFormPatch(form, editBase, isSubtask);
+      if (Object.keys(patch).length === 0) {
+        discardDraft();
+        onClose();
+        return;
+      }
 
-      const result = await timeAction("task.save", () => updateTask(projectId, task.id, {
-        ...patch,
-        // Explicit nulls: an empty field means "clear", not "leave alone".
-        description: form.description.trim() || null,
-        assignee_id: form.assignee_id || null,
-        due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
-        // Subtasks don't repeat (063) - only sent for a top-level task.
-        ...(task.parent_task_id
-          ? {}
-          : {
-              recurrence_rule: form.recurrence_rule || null,
-              recurrence_interval: form.recurrence_rule ? Number(form.recurrence_interval) : null,
-            }),
-      }, editRevision));
+      const result = await timeAction("task.save", async () => {
+        const saved = await updateTask(projectId, task.id, patch, editRevision);
+        if (saved.code !== "conflict" || !editBase) return saved;
+
+        const { task: latest } = await loadTaskById(projectId, task.id);
+        if (!latest || latest.revision === undefined) return saved;
+        const remoteChanges = taskFormPatch(formToTask(latest), editBase, isSubtask);
+        if (Object.keys(patch).some((key) => Object.hasOwn(remoteChanges, key))) return saved;
+
+        // A move, reorder or other edit can bump the revision without
+        // touching these fields. Retry once and still require the version
+        // we just read, so a write during the retry remains protected.
+        return updateTask(projectId, task.id, patch, latest.revision);
+      });
 
       if (result.error || !result.task) { setEditConflict(result.code === "conflict" || result.code === "version_unavailable"); throw new Error(result.error ?? t("failedToSaveTask")); }
 
@@ -772,7 +793,7 @@ function TaskDetailDialogInner({
               <Button type="button" size="sm" variant="ghost" onClick={() => {
                 clearTaskDraft(draftKey!);
                 setForm(formToTask(task));
-                setEditRevision(task.revision ?? -1);
+                setEditSnapshot({ revision: task.revision ?? -1, base: formToTask(task) });
                 setDraftRestoredAt(null);
               }}>{t("discardDraft")}</Button>
             </div>
@@ -810,7 +831,7 @@ function TaskDetailDialogInner({
             // them and its old revision, so saving gets the conflict screen.
             if (!dirty) {
               setForm(formToTask(undone));
-              setEditRevision(undone.revision ?? -1);
+              setEditSnapshot({ revision: undone.revision ?? -1, base: formToTask(undone) });
             }
             onSaved(undone);
           }}

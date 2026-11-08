@@ -75,6 +75,8 @@ export async function taskEditingCoverage({page,context,origin,fixture,client,br
     // The same actual task continues through comments, subtasks, attachments,
     // assignment, filters, status changes and deletion, with reload checks.
     await loser.locator(`[data-card-id="${task.id}"] [data-task-open]`).click();await loser.locator("#task-title").waitFor();
+    // A change to another field after opening the dialog must survive a save.
+    await client.query("UPDATE tasks SET description='Concurrent description' WHERE id=$1",[task.id]);
     await loser.getByRole("textbox",{name:"Add a comment",exact:true}).fill(`Persisted comment ${browserName}`);
     await loser.getByRole("button",{name:"Post comment",exact:true}).click();await loser.getByText(`Persisted comment ${browserName}`,{exact:true}).waitFor();
     await loser.getByRole("textbox",{name:"Add a subtask",exact:true}).fill(`Persisted subtask ${browserName}`);
@@ -91,8 +93,9 @@ export async function taskEditingCoverage({page,context,origin,fixture,client,br
     await loser.locator("#task-tags").fill("regression");
     await loser.getByRole("button",{name:"Save changes",exact:true}).click();await loser.locator("#task-title").waitFor({state:"hidden"});
     await loser.reload();
-    const saved=(await client.query("SELECT priority,assignee_id,tags FROM tasks WHERE id=$1",[task.id])).rows[0];
+    const saved=(await client.query("SELECT priority,assignee_id,tags,description FROM tasks WHERE id=$1",[task.id])).rows[0];
     assert.equal(saved.priority,"high");assert.equal(saved.assignee_id,owner.id);assert.deepEqual(saved.tags,["regression"]);
+    assert.equal(saved.description,"Concurrent description");
     assert.equal((await client.query("SELECT count(*)::int AS n FROM task_comments WHERE task_id=$1 AND content=$2",[task.id,`Persisted comment ${browserName}`])).rows[0].n,1);
     assert.equal((await client.query("SELECT count(*)::int AS n FROM tasks WHERE parent_task_id=$1",[task.id])).rows[0].n,1);
     assert.equal((await client.query("SELECT count(*)::int AS n FROM task_attachments WHERE task_id=$1",[task.id])).rows[0].n,1);
