@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicOpenGraph } from "@/lib/public-open-graph";
 import { MarkdownPage } from "@/components/layout/markdown-page";
 import { contactMarkdown } from "@/lib/company-pages";
 import { SITE_URL } from "@/lib/site-url";
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   title: { absolute: "Contact Guidon - support, privacy and security" },
   description: "How to reach the Guidon team: support, privacy requests, bug reports and security issues.",
   alternates: { canonical: "/contact", types: { "text/markdown": "/contact.md" } },
+  openGraph: publicOpenGraph("/contact"),
 };
 
 /** Same Markdown as /contact.md (src/lib/company-pages.ts). */

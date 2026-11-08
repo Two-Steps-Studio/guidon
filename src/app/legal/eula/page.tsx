@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { publicOpenGraph } from "@/lib/public-open-graph";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SUPPORT_EMAIL } from "@/lib/project-links";
 import { OperatorContact } from "@/components/legal/legal-document";
@@ -8,7 +9,9 @@ import { LEGAL_VERSION, legalRobots } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "End User License Agreement",
+  description: "Read the license terms for Guidon software, including installation, permitted use and distribution.",
   alternates: { canonical: "/legal/eula" },
+  openGraph: publicOpenGraph("/legal/eula"),
   robots: legalRobots,
 };
 

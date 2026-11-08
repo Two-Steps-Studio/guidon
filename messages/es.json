@@ -498,7 +498,7 @@
       "apiDocs": "Docs de API y MCP"
     },
     "heroShotTitle": "El panel de Guidon",
-    "heroShotAlt": "Panel de Guidon: tus tareas abiertas y vencidas, lo siguiente, la actividad reciente del equipo y el progreso de los proyectos",
+    "heroShotAlt": "Panel de Guidon: tareas abiertas, actividad reciente y progreso de los proyectos",
     "faq": {
       "title": "Preguntas frecuentes",
       "items": [
@@ -2374,7 +2374,8 @@
     "aiBadge": "IA"
   },
   "onboarding": {
-    "metaTitle": "Empezar",
+    "metaTitle": "Configura tu espacio de proyectos",
+    "metaDescription": "Configura un espacio de Guidon para tu equipo o prueba el entorno con tareas de ejemplo.",
     "stepOf": "Paso {step} de {total}",
     "back": "Atrás",
     "continue": "Continuar",

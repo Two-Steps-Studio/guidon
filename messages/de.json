@@ -498,7 +498,7 @@
       "apiDocs": "API- & MCP-Doku"
     },
     "heroShotTitle": "Das Guidon-Dashboard",
-    "heroShotAlt": "Guidon-Dashboard: deine offenen und überfälligen Aufgaben, was als Nächstes kommt, letzte Team-Aktivität und Projektfortschritt",
+    "heroShotAlt": "Guidon-Dashboard: offene Aufgaben, aktuelle Aktivitäten und Projektfortschritt",
     "faq": {
       "title": "Häufige Fragen",
       "items": [
@@ -2374,7 +2374,8 @@
     "aiBadge": "KI"
   },
   "onboarding": {
-    "metaTitle": "Los geht's",
+    "metaTitle": "Richte deinen Projektbereich ein",
+    "metaDescription": "Richte einen Guidon-Arbeitsbereich für dein Team ein oder teste die Sandbox mit Beispielaufgaben.",
     "stepOf": "Schritt {step} von {total}",
     "back": "Zurück",
     "continue": "Weiter",

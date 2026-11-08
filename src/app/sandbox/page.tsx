@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicOpenGraph } from "@/lib/public-open-graph";
 import { MarkdownPage } from "@/components/layout/markdown-page";
 import { sandboxMarkdown } from "@/lib/company-pages";
 import { SITE_URL } from "@/lib/site-url";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
   title: "Sandbox - try the Guidon API and agents",
   description: DESCRIPTION,
   alternates: { canonical: "/sandbox", types: { "text/markdown": "/sandbox.md" } },
+  openGraph: publicOpenGraph("/sandbox"),
 };
 
 /** Same Markdown as /sandbox.md (src/lib/company-pages.ts); /sandbox/start opens the signed-in user's own. */

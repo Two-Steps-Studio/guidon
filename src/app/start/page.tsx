@@ -7,12 +7,18 @@ import { getLocalSessionUserId } from "@/lib/auth/local-auth";
 import { createClient } from "@/lib/supabase-server";
 import { StartWizard } from "./start-wizard";
 import { BetaBadge } from "@/components/layout/beta-badge";
+import { publicOpenGraph } from "@/lib/public-open-graph";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("onboarding");
-  return { title: t("metaTitle"), alternates: { canonical: "/start" } };
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    alternates: { canonical: "/start" },
+    openGraph: publicOpenGraph("/start"),
+  };
 }
 
 async function isSignedIn(): Promise<boolean> {

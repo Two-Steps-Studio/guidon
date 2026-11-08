@@ -509,7 +509,7 @@
       "apiDocs": "Dokumentacja API i MCP"
     },
     "heroShotTitle": "Pulpit Guidona",
-    "heroShotAlt": "Pulpit Guidona: Twoje otwarte i zaległe zadania, co dalej, ostatnia aktywność zespołu i postęp projektów",
+    "heroShotAlt": "Pulpit Guidona: otwarte zadania, ostatnia aktywność i postęp projektów",
     "faq": {
       "title": "Najczęstsze pytania",
       "items": [
@@ -2385,7 +2385,8 @@
     "aiBadge": "AI"
   },
   "onboarding": {
-    "metaTitle": "Zaczynamy",
+    "metaTitle": "Skonfiguruj przestrzeń projektu",
+    "metaDescription": "Utwórz przestrzeń Guidona dla swojego zespołu lub wypróbuj sandbox z przykładowymi zadaniami.",
     "stepOf": "Krok {step} z {total}",
     "back": "Wstecz",
     "continue": "Dalej",
