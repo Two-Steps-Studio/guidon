@@ -12,6 +12,9 @@ export async function releaseSmoke({page,context,origin,fixture}) {
   // API answers stay out of shared caches; the public server card keeps its hour.
   assert.equal((await context.request.get(`${origin}/api/v1/projects`)).headers()["cache-control"],"private, no-store");
   assert.equal((await context.request.get(`${origin}/api/mcp/server-card`)).headers()["cache-control"],"public, max-age=3600");
+  const redirectToLogin=await context.request.get(`${origin}/dashboard`,{maxRedirects:0});
+  assert.equal(redirectToLogin.status(),307);
+  assert.equal(redirectToLogin.headers()["cache-control"],"private, no-store");
   const staticPage=await context.newPage();
   await staticPage.route("**/_next/static/**/*.js",route=>route.abort());
   await staticPage.goto(`${origin}/auth/login`);
@@ -33,6 +36,9 @@ export async function releaseSmoke({page,context,origin,fixture}) {
   const session=(await context.cookies()).find(cookie=>cookie.name==="guidon-session");
   assert.ok(session?.httpOnly && session?.secure,"Production login must retain HttpOnly and Secure cookies");
   assert.notEqual(session.sameSite,"None","A cross-site form must not carry the session");
+  const redirectFromLogin=await context.request.get(`${origin}/auth/login`,{maxRedirects:0});
+  assert.equal(redirectFromLogin.status(),307);
+  assert.equal(redirectFromLogin.headers()["cache-control"],"private, no-store");
   // CORS (docs/audits/cors-2026-11-02.md): public documents are readable from
   // any site; nothing answers a foreign Origin with credentials allowed, and
   // signed-in routes don't answer it at all - even with a live session cookie.
