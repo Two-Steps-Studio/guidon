@@ -46,8 +46,7 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     await page.goto(`${root}/work`);
     await page.getByRole("link", { name: "Project settings", exact: true }).click();
     await page.waitForURL(url => url.pathname === `/projects/${owner.projectId}/settings`);
-    // Sidebar sections fold from the keyboard, stay folded after a reload,
-    // and a folded section still shows the page you are on.
+    // Folded sections keep accessible icon links and stay folded after reload.
     await page.goto(`${root}/work`);
     const sidebar = page.locator('[data-sidebar="sidebar"]');
     const knowledge = sidebar.getByRole("button", { name: "Knowledge", exact: true });
@@ -57,11 +56,15 @@ export async function projectSectionCoverage({ page, context, origin, fixture, c
     await work.focus(); await page.keyboard.press("Enter");
     await page.reload();
     assert.equal(await knowledge.getAttribute("aria-expanded"), "false", "A folded section stays folded after a reload");
-    assert.equal(await sidebar.getByRole("link", { name: "Decisions", exact: true }).count(), 0);
-    assert.equal(await sidebar.getByRole("link", { name: "Calendar", exact: true }).count(), 0);
-    assert.equal(await sidebar.getByRole("link", { name: "Task board", exact: true }).count(), 1, "The current page stays visible in its folded section");
+    const decisionsLink = sidebar.getByRole("link", { name: "Decisions", exact: true });
+    const calendarLink = sidebar.getByRole("link", { name: "Calendar", exact: true });
+    await decisionsLink.waitFor();
+    await calendarLink.waitFor();
+    assert.equal(await decisionsLink.locator("[data-nav-label]").evaluate(label => getComputedStyle(label).position), "absolute");
+    assert.equal(await calendarLink.locator("[data-nav-label]").evaluate(label => getComputedStyle(label).position), "absolute");
+    assert.equal(await sidebar.getByRole("link", { name: "Task board", exact: true }).getAttribute("aria-current"), "page");
     await knowledge.click(); await work.click();
-    assert.equal(await sidebar.getByRole("link", { name: "Decisions", exact: true }).count(), 1);
+    assert.equal(await decisionsLink.locator("[data-nav-label]").evaluate(label => getComputedStyle(label).position), "static");
     await create("decisions", "New decision", async dialog => {
       await dialog.getByLabel("Title", { exact: true }).fill(created.decision);
       await dialog.getByLabel("Description", { exact: true }).fill(`<script>window.__sectionXss=1</script>`);

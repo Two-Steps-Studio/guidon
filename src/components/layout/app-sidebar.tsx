@@ -214,9 +214,8 @@ export interface AppSidebarProps {
 }
 
 /**
- * A section heading that folds its items away. In the narrow icon rail every
- * icon stays visible (folding there would hide them with no heading to bring
- * them back); on mobile the sheet always shows labels, so it stays focusable.
+ * A folded section keeps its destinations available as a compact row of
+ * icons. The narrow sidebar rail keeps its usual vertical layout.
  */
 function useSectionFold(collapsed: ReadonlySet<string>, toggle: (key: string) => void) {
   const { state, isMobile } = useSidebar();
@@ -233,8 +232,10 @@ function useSectionFold(collapsed: ReadonlySet<string>, toggle: (key: string) =>
         </SidebarGroupLabel>
       ),
       id,
-      /** Folded: only the current page's link stays, so the active section is still visible. */
-      shows: (active: boolean) => active || !folded || iconRail,
+      menuClassName: folded && !iconRail
+        ? "flex-row flex-wrap [&_[data-sidebar=menu-button]]:w-8 [&_[data-sidebar=menu-button]]:justify-center max-md:[&_[data-sidebar=menu-button]]:size-11 [&_[data-nav-label]]:sr-only"
+        : undefined,
+      tooltip: (name: string) => folded && !isMobile ? { children: name, hidden: false } : name,
     };
   };
 }
@@ -250,16 +251,16 @@ function PinnedProjectsGroup({ fold }: { fold: ReturnType<typeof useSectionFold>
   return (
     <SidebarGroup>
       {section.label}
-      <SidebarMenu id={section.id}>
-        {pinned.projects.filter((project) => section.shows(pathname.startsWith(`/projects/${project.id}`))).map((project) => (
+      <SidebarMenu id={section.id} className={section.menuClassName}>
+        {pinned.projects.map((project) => (
           <SidebarMenuItem key={project.id}>
-            <SidebarMenuButton asChild tooltip={project.name}>
-              <Link href={`/projects/${project.id}`}>
+            <SidebarMenuButton asChild tooltip={section.tooltip(project.name)} isActive={pathname.startsWith(`/projects/${project.id}/`) || pathname === `/projects/${project.id}`}>
+              <Link href={`/projects/${project.id}`} aria-current={pathname === `/projects/${project.id}` ? "page" : undefined}>
                 <Avatar className="size-4 shrink-0 rounded-sm">
                   <AvatarImage src={project.avatar_url || undefined} alt="" className="object-cover" />
                   <AvatarFallback className="rounded-sm bg-transparent"><Pin className="size-4" /></AvatarFallback>
                 </Avatar>
-                <span>{project.name}</span>
+                <span data-nav-label>{project.name}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -302,12 +303,13 @@ export function AppSidebar({
     return pathname === `/projects/${projectId}/${href}`;
   };
   const extensions = fold("extensions", "nav-group-extensions", t("extensionsGroup"));
-  const globalLink = (item: (typeof GLOBAL_NAV)[number]) => (
+  const admin = fold("admin", "nav-group-admin", t("adminGroup"));
+  const globalLink = (item: (typeof GLOBAL_NAV)[number], section?: ReturnType<typeof fold>) => (
     <SidebarMenuItem key={item.href}>
-      <SidebarMenuButton asChild isActive={isGlobalActive(item.href)} tooltip={t(item.labelKey)}>
+      <SidebarMenuButton asChild isActive={isGlobalActive(item.href)} tooltip={section?.tooltip(t(item.labelKey)) ?? t(item.labelKey)}>
         <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
           <item.icon />
-          <span>{t(item.labelKey)}</span>
+          <span data-nav-label>{t(item.labelKey)}</span>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -353,13 +355,13 @@ export function AppSidebar({
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {GLOBAL_NAV.slice(0, 4).map(globalLink)}
+            {GLOBAL_NAV.slice(0, 4).map(item => globalLink(item))}
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
           {extensions.label}
-          <SidebarMenu id={extensions.id}>
-            {GLOBAL_NAV.slice(4).filter(item => extensions.shows(isGlobalActive(item.href))).map(globalLink)}
+          <SidebarMenu id={extensions.id} className={extensions.menuClassName}>
+            {GLOBAL_NAV.slice(4).map(item => globalLink(item, extensions))}
           </SidebarMenu>
         </SidebarGroup>
 
@@ -375,8 +377,8 @@ export function AppSidebar({
             return (
             <SidebarGroup key={group.labelKey ?? `project-group-${groupIndex}`}>
               {section?.label}
-              <SidebarMenu id={section?.id}>
-                {items.filter((item) => section?.shows(isProjectActive(item.href)) ?? true).map((item) => {
+              <SidebarMenu id={section?.id} className={section?.menuClassName}>
+                {items.map((item) => {
                   const active = isProjectActive(item.href);
                   const href = `/projects/${projectId}${item.href ? `/${item.href}` : ""}`;
                   return (
@@ -384,7 +386,7 @@ export function AppSidebar({
                       <SidebarMenuButton
                         asChild
                         isActive={active}
-                        tooltip={t(item.labelKey)}
+                        tooltip={section?.tooltip(t(item.labelKey)) ?? t(item.labelKey)}
                         className={
                           active
                             ? "focus-visible:ring-2 focus-visible:ring-(--tw-ring-color) [&>svg]:text-(--project-color)"
@@ -394,7 +396,7 @@ export function AppSidebar({
                       >
                         <Link href={href} aria-current={active ? "page" : undefined}>
                           <item.icon />
-                          <span>{t(item.labelKey)}</span>
+                          <span data-nav-label>{t(item.labelKey)}</span>
                         </Link>
                       </SidebarMenuButton>
                       {item.href === "approvals" && approvals && approvals.pending > 0 && (
@@ -412,9 +414,9 @@ export function AppSidebar({
           const section = fold(`module:${group.category ?? ""}`, `module-nav-group-${groupIndex}`, group.category ?? t("customModules"));
           return <SidebarGroup key={group.category ?? ""}>
           {section.label}
-          <SidebarMenu id={section.id}>{group.links.filter(module => section.shows(pathname === module.href)).map(module => <SidebarMenuItem key={module.id}>
-            <SidebarMenuButton asChild isActive={pathname === module.href} tooltip={module.name}>
-              <Link href={module.href} aria-current={pathname === module.href ? "page" : undefined}><Puzzle /><span className="truncate">{module.name}</span></Link>
+          <SidebarMenu id={section.id} className={section.menuClassName}>{group.links.map(module => <SidebarMenuItem key={module.id}>
+            <SidebarMenuButton asChild isActive={pathname === module.href} tooltip={section.tooltip(module.name)}>
+              <Link href={module.href} aria-current={pathname === module.href ? "page" : undefined}><Puzzle /><span data-nav-label className="truncate">{module.name}</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>)}</SidebarMenu>
         </SidebarGroup>;
@@ -422,18 +424,18 @@ export function AppSidebar({
 
         {adminPages.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>{t("adminGroup")}</SidebarGroupLabel>
-            <SidebarMenu>
+            {admin.label}
+            <SidebarMenu id={admin.id} className={admin.menuClassName}>
               {ADMIN_NAV.filter(item => adminPages.includes(item.href)).map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
-                    tooltip={t(item.labelKey)}
+                    tooltip={admin.tooltip(t(item.labelKey))}
                   >
                     <Link href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
                       <item.icon />
-                      <span>{t(item.labelKey)}</span>
+                      <span data-nav-label>{t(item.labelKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
