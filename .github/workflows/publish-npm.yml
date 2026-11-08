@@ -61,13 +61,15 @@ jobs:
           npm pack --workspace=@two_steps_studio/guidon-cli --ignore-scripts --pack-destination artifacts/cli
           python scripts/release/validate.py npm
 
-      - name: Install and smoke test tarballs
+      - name: Install and smoke test tarballs outside the workspace
         shell: bash
         run: |
           smoke=$(mktemp -d)
+          sdk_version=$(node -p "require('./packages/sdk-js/package.json').version")
+          cli_version=$(node -p "require('./packages/cli/package.json').version")
           npm install --prefix "$smoke" --ignore-scripts --no-audit --no-fund "$PWD"/artifacts/sdk-js/*.tgz "$PWD"/artifacts/cli/*.tgz
-          (cd "$smoke" && node --input-type=module -e "import { Guidon } from '@two_steps_studio/guidon-sdk'; if (typeof Guidon !== 'function') process.exit(1)")
-          "$smoke/node_modules/.bin/guidon" --version
+          (cd "$smoke" && node --input-type=module -e "import { Guidon, GuidonError, VERSION } from '@two_steps_studio/guidon-sdk'; if (typeof Guidon !== 'function' || typeof GuidonError !== 'function' || VERSION !== process.argv[1]) process.exit(1)" "$sdk_version")
+          test "$("$smoke/node_modules/.bin/guidon" --version)" = "$cli_version"
           "$smoke/node_modules/.bin/guidon" --help
 
       - uses: actions/upload-artifact@v4
@@ -114,7 +116,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
         shell: bash
         run: |
-          test -n "$NODE_AUTH_TOKEN"
+          : "${NODE_AUTH_TOKEN:?Set NPM_BOOTSTRAP_TOKEN in the npm environment}"
+          umask 077
           export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npm-bootstrap-sdk.npmrc"
           trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
           printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$NPM_CONFIG_USERCONFIG"
@@ -122,7 +125,11 @@ jobs:
 
   cli:
     needs: [validate, sdk]
-    if: always() && inputs.publish && inputs.target != 'sdk' && needs.validate.result == 'success' && (needs.sdk.result == 'success' || needs.sdk.result == 'skipped') && github.ref == 'refs/heads/main' && github.repository == 'Two-Steps-Studio/guidon'
+    if: >-
+      !cancelled() && inputs.publish && inputs.target != 'sdk' &&
+      needs.validate.result == 'success' &&
+      (needs.sdk.result == 'success' || (inputs.target == 'cli' && needs.sdk.result == 'skipped')) &&
+      github.ref == 'refs/heads/main' && github.repository == 'Two-Steps-Studio/guidon'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -160,7 +167,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
         shell: bash
         run: |
-          test -n "$NODE_AUTH_TOKEN"
+          : "${NODE_AUTH_TOKEN:?Set NPM_BOOTSTRAP_TOKEN in the npm environment}"
+          umask 077
           export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npm-bootstrap-cli.npmrc"
           trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
           printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$NPM_CONFIG_USERCONFIG"

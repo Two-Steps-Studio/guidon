@@ -1,4 +1,4 @@
-# @guidon/sdk
+# @two_steps_studio/guidon-sdk
 
 Official JavaScript/TypeScript client for the [Guidon](https://useguidon.com)
 REST API (`/api/v1`): projects, tasks, subtasks, comments, attempts, bug reports
@@ -10,10 +10,10 @@ and project knowledge (decisions, knowledge sources, roadmap, memory, tech stack
 
 ## Install
 
-The npm release is pending. The command below will work after `@guidon/sdk` is published.
+Install from the public npm registry:
 
 ```bash
-npm install @guidon/sdk
+npm install @two_steps_studio/guidon-sdk
 ```
 
 ## Authenticate
@@ -23,7 +23,7 @@ to its scopes (`tasks:read`, `tasks:write`, `tasks:status`, `comments:write`,
 `attempts:write`, `project:read`, `project:write`, `reports:write`).
 
 ```ts
-import { Guidon } from "@guidon/sdk";
+import { Guidon } from "@two_steps_studio/guidon-sdk";
 
 const guidon = new Guidon({ apiKey: process.env.GUIDON_API_KEY });
 // Self-hosted (or set GUIDON_BASE_URL):
@@ -87,7 +87,7 @@ await guidon.tasks.create(project.id, { title: "Nightly build failed" }, { idemp
 Every failure is a `GuidonError`:
 
 ```ts
-import { GuidonError } from "@guidon/sdk";
+import { GuidonError } from "@two_steps_studio/guidon-sdk";
 
 try {
   await guidon.tasks.move(taskId, "done");

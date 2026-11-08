@@ -4,6 +4,7 @@ import email
 import json
 from pathlib import Path
 import re
+import subprocess
 import tarfile
 import tomllib
 import zipfile
@@ -28,28 +29,50 @@ def license_check(value, files):
     print(f'License metadata: {value or "UNRESOLVED"}')
 
 if args.ecosystem == 'npm':
-    sdk = json.loads((ROOT / 'packages/sdk-js/package.json').read_text())
-    cli = json.loads((ROOT / 'packages/cli/package.json').read_text())
-    check(cli['dependencies']['@guidon/sdk'] in (sdk['version'], '^' + sdk['version'], '~' + sdk['version']), 'CLI SDK dependency must reference the SDK version in this checkout.')
+    sdk_name = '@two_steps_studio/guidon-sdk'
+    cli_name = '@two_steps_studio/guidon-cli'
+    sdk = json.loads((ROOT / 'packages/sdk-js/package.json').read_text(encoding='utf-8'))
+    cli = json.loads((ROOT / 'packages/cli/package.json').read_text(encoding='utf-8'))
+    check(cli.get('dependencies', {}).get(sdk_name) in (sdk['version'], '^' + sdk['version'], '~' + sdk['version']), 'CLI SDK dependency must reference the SDK version in this checkout.')
     check(f'"{sdk["version"]}"' in (ROOT / 'packages/sdk-js/src/version.ts').read_text(), 'SDK runtime version differs from package.json')
-    for folder, name, required in [('sdk-js', '@guidon/sdk', ['dist/index.js', 'dist/index.d.ts']), ('cli', 'guidon-cli', ['dist/bin.js', 'dist/cli.js'])]:
-        source = json.loads((ROOT / f'packages/{folder}/package.json').read_text())
+    check(sdk.get('exports', {}).get('.') == {'types': './dist/index.d.ts', 'import': './dist/index.js'}, 'SDK must expose its ESM and TypeScript entrypoints.')
+    check(cli.get('bin') == {'guidon': 'dist/bin.js'}, 'CLI must install the guidon command.')
+    for folder, name, source, required in [
+        ('sdk-js', sdk_name, sdk, ['dist/index.js', 'dist/index.d.ts']),
+        ('cli', cli_name, cli, ['dist/bin.js', 'dist/cli.js']),
+    ]:
         check(source['name'] == name and not source.get('private'), f'Unexpected package identity: {name}')
         version(source['version'])
         check(source['repository']['url'] == 'git+https://github.com/Two-Steps-Studio/guidon.git', 'Repository must match npm provenance identity')
+        check(source.get('publishConfig', {}).get('access') == 'public', f'{name} must be a public npm package.')
         for spec in source.get('dependencies', {}).values():
             check(not spec.startswith(('file:', 'link:', 'workspace:')), 'Local dependencies cannot be published')
         archives = list((ROOT / f'artifacts/{folder}').glob('*.tgz'))
         check(len(archives) == 1, f'Expected exactly one {folder} archive')
+        source_dir = Path('packages') / folder / 'src'
+        tracked = subprocess.check_output(
+            ['git', 'ls-files', '-z', '--', source_dir.as_posix()], cwd=ROOT
+        ).decode('utf-8').split('\0')
+        allowed = {'package/package.json', 'package/README.md', 'package/LICENSE'}
+        for path in tracked:
+            if not path.endswith('.ts'):
+                continue
+            relative = Path(path).relative_to(source_dir).as_posix()
+            allowed.add(f'package/src/{relative}')
+            suffixes = ['.js', '.js.map', '.d.ts', '.d.ts.map'] if folder == 'sdk-js' else ['.js', '.js.map']
+            allowed.update(f'package/dist/{relative.removesuffix(".ts")}{suffix}' for suffix in suffixes)
         with tarfile.open(archives[0]) as archive:
-            names = archive.getnames()
-            packed = json.load(archive.extractfile('package/package.json'))
-            check(packed == source, 'Packed metadata differs from source')
-            for entry in ['README.md', *required]:
+            members = archive.getmembers()
+            names = {member.name for member in members}
+            unexpected = sorted(names - allowed)
+            check(not unexpected, f'{name} has unexpected files: {", ".join(unexpected)}')
+            check(len(names) == len(members) and all(member.isfile() for member in members), f'{name} archive must contain unique regular files.')
+            for entry in ['package.json', 'README.md', 'LICENSE', *required]:
                 check('package/' + entry in names, f'Missing {entry} in {name}')
-            check(not any('/node_modules/' in n or n.endswith(('.env', '.npmrc')) for n in names), 'Unexpected private/config files')
+            packed = json.load(archive.extractfile('package/package.json'))
+            check(packed == source, f'Packed metadata differs from source for {name}')
             license_check(packed.get('license'), names)
-        print(f'Validated {name}@{source["version"]}: {archives[0].name}')
+        print(f'Validated {name}@{source["version"]}: {archives[0].name} ({len(names)} files)')
 else:
     source = tomllib.loads((ROOT / 'sdk/python/pyproject.toml').read_text())['project']
     check(source['name'] == 'guidon-sdk', 'Unexpected PyPI name')

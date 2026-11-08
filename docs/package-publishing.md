@@ -3,16 +3,23 @@
 These workflows require no local checkout or terminal. Use Safari (GitHub's app
 may open web pages for Actions and settings). If a control is hidden, tap the
 Safari page menu → **Request Desktop Website**. You need repository admin access,
-npm publishing rights for `@guidon/sdk` and `guidon-cli` (including membership in
-or ownership of the npm `guidon` organization), and ownership of the PyPI project.
+npm publishing rights for the `two_steps_studio` organization, and ownership
+of the PyPI project when publishing Python.
 GitHub and npm organizations are separate; repository access does not grant npm rights.
+
+Install the npm packages after release:
+
+```bash
+npm install @two_steps_studio/guidon-sdk
+npm install -g @two_steps_studio/guidon-cli
+```
 
 ## Current audit and licensing prerequisite
 
 | Directory | Registry name | Current version | License metadata |
 | --- | --- | --- | --- |
-| `packages/sdk-js` | npm `@guidon/sdk` | `0.1.0` | MIT |
-| `packages/cli` | npm `guidon-cli` | `0.1.0` | MIT |
+| `packages/sdk-js` | npm `@two_steps_studio/guidon-sdk` | `0.1.0` | MIT |
+| `packages/cli` | npm `@two_steps_studio/guidon-cli` | `0.1.0` | MIT |
 | `sdk/python` | PyPI `guidon-sdk` (import `guidon`) | `0.1.0` | MIT |
 
 The owner selected MIT for SDKs and CLI. Each package above includes its own
@@ -55,8 +62,8 @@ runs share one non-cancelling concurrency group to avoid simultaneous publicatio
 For **each existing npm package**, sign in at <https://www.npmjs.com> with an
 account that can administer its publishing settings:
 
-1. Open <https://www.npmjs.com/package/@guidon/sdk/access> and then
-   <https://www.npmjs.com/package/guidon-cli/access> (or the package page →
+1. Open <https://www.npmjs.com/package/@two_steps_studio/guidon-sdk/access> and then
+   <https://www.npmjs.com/package/@two_steps_studio/guidon-cli/access> (or the package page →
    **Settings** → **Trusted publishing**).
 2. Add a trusted publisher and select **GitHub Actions**. Enter exactly:
 
@@ -88,16 +95,14 @@ pending publishers, but npm needs a first publication before package settings
 exist. The manual npm workflow includes a temporary **bootstrap-token** mode so
 that even the first publication can happen from your iPhone:
 
-1. On npm, confirm `@guidon/sdk` and `guidon-cli` are available or controlled by
-   your account. If somebody else owns a name, stop and resolve ownership; do not
-   silently rename packages. Create/join the `guidon` npm organization if needed.
-2. npm account menu → **Access Tokens** → **Generate New Token** → granular token.
-   Give it the shortest practical expiry and only the package/scope permissions
-   required to create/publish the missing packages. Enable **Bypass 2FA** for
-   noninteractive publishing if offered/required by your npm account policy.
-   First publication requires creation rights; a token restricted only to an
-   unrelated existing package will fail. If your organization forbids this mode,
-   an npm administrator must arrange the initial publication/ownership.
+1. On npm, verify that your account can create packages in `two_steps_studio`
+   and check whether either target version already exists.
+2. In the npm account menu, open **Access Tokens** → **Generate New Token**.
+   Under **Packages and scopes**, grant **Read and write (publish and stage)**
+   for the `@two_steps_studio` scope and enable **Bypass 2FA** for this
+   noninteractive run. Choose the shortest practical expiry. The separate
+   **Organizations** permission controls organization settings and does not
+   grant publishing access.
 3. GitHub repository → **Settings** → **Environments** → **npm** →
    **Environment secrets** → **Add secret**. Name it **NPM_BOOTSTRAP_TOKEN** and
    paste the token as its value. Never paste it into a file, workflow input, issue,
@@ -109,6 +114,10 @@ that even the first publication can happen from your iPhone:
 5. Configure both trusted publishers using the table above after their first
    publication. Revoke the token on npm and delete the GitHub environment secret.
    Future runs must use **oidc** (the default).
+
+npm plans to remove direct publication with granular tokens in January 2027.
+This bootstrap mode requires npm to still allow direct token publication.
+See [npm access token policy](https://docs.npmjs.com/about-access-tokens/).
 
 If the SDK already exists but the CLI does not, bootstrap with target **cli**;
 first ensure the exact SDK version in this checkout is published. Do not republish

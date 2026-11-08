@@ -92,9 +92,9 @@ npx skills add two-steps-studio/guidon --skill guidon-cli
 
 - \`guidon-tasks\` teaches an agent to read task context, claim work, record attempts and hand a task back for review.
 - \`guidon-api\` explains the REST API, authentication and MCP integration.
-- \`guidon-cli\` explains terminal workflows. The CLI package is not yet published; the skill directs agents to REST or MCP until release.
+- \`guidon-cli\` explains terminal workflows and how to use REST or MCP if the npm package is unavailable.
 
-Browse the [skill source files](${GITHUB_REPO_URL}/tree/main/skills). These are agent instructions; installing them does not install the unpublished SDK or CLI packages.
+Browse the [skill source files](${GITHUB_REPO_URL}/tree/main/skills). The agent skills are installed separately from the SDK and CLI.
 
 ## REST API
 
@@ -174,9 +174,9 @@ Try the API, the MCP server or an agent without touching real work: \`POST /sand
 
 Official client source packages in the [Guidon repository](${GITHUB_REPO_URL}) wrap the same \`/api/v1\` with an API key:
 
-- **JavaScript/TypeScript SDK** \`@guidon/sdk\` - [packages/sdk-js](${GITHUB_REPO_URL}/tree/main/packages/sdk-js): typed methods for projects, tasks, comments and attempts, automatic retries for safe requests, an optional Idempotency-Key on writes.
+- **JavaScript/TypeScript SDK** \`@two_steps_studio/guidon-sdk\` - [packages/sdk-js](${GITHUB_REPO_URL}/tree/main/packages/sdk-js): typed methods for projects, tasks, comments and attempts, automatic retries for safe requests, an optional Idempotency-Key on writes.
 - **Python SDK** \`guidon\` - [sdk/python](${GITHUB_REPO_URL}/tree/main/sdk/python): the same surface for Python 3.9+.
-- **CLI** \`guidon-cli\` (command \`guidon\`) - [packages/cli](${GITHUB_REPO_URL}/tree/main/packages/cli): list projects, create and move tasks, comment, \`guidon whoami\` - from a terminal or CI.
+- **CLI** \`@two_steps_studio/guidon-cli\` (command \`guidon\`) - [packages/cli](${GITHUB_REPO_URL}/tree/main/packages/cli): list projects, create and move tasks, comment, \`guidon whoami\` - from a terminal or CI.
 
 \`\`\`bash
 guidon login                      # asks for an API key
@@ -184,7 +184,7 @@ guidon tasks list --project <project-id>
 guidon tasks create --project <project-id> --title "Fix the login timeout"
 \`\`\`
 
-Each package's README has build steps. The JavaScript SDK and CLI are not yet published to npm, and the Python SDK is not yet published to PyPI. Their registry install commands will work after those releases are published. Until then, integrate directly with the REST API or connect through MCP.
+Each package's README has build steps. The Python SDK is available on [PyPI](https://pypi.org/project/guidon-sdk/). The JavaScript SDK and CLI can be installed from npm after their first release. The REST API and MCP are also available directly.
 
 ## Agent Plugin and skills
 

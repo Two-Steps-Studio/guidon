@@ -1,15 +1,14 @@
-// Refuses `npm publish` while the SDK dependency still points at the local
-// checkout (file:../sdk-js) - a published package with a file: dependency
-// can't be installed by anyone. Publish @guidon/sdk first, then set the
-// dependency to its version range (e.g. "^0.1.0").
+// Ensure the packed CLI can resolve the SDK from npm.
 import { readFileSync } from "node:fs";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const sdk = JSON.parse(readFileSync(new URL("../../sdk-js/package.json", import.meta.url), "utf8"));
 const bad = Object.entries(pkg.dependencies ?? {}).filter(([, spec]) => /^(file|link|workspace):/.test(spec));
 if (bad.length) {
-  console.error(
-    `guidon-cli: refusing to publish with local dependencies: ${bad.map(([n, s]) => `${n}@${s}`).join(", ")}.\n` +
-      `Publish the SDK first and change the dependency to a version range (e.g. "@guidon/sdk": "^0.1.0").`
-  );
+  console.error(`${pkg.name}: local dependencies cannot be published: ${bad.map(([name, spec]) => `${name}@${spec}`).join(", ")}.`);
+  process.exit(1);
+}
+if (![sdk.version, `^${sdk.version}`, `~${sdk.version}`].includes(pkg.dependencies?.[sdk.name])) {
+  console.error(`${pkg.name}: depend on ${sdk.name} at ${sdk.version}, ^${sdk.version}, or ~${sdk.version}.`);
   process.exit(1);
 }

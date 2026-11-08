@@ -11,9 +11,9 @@ metadata:
 
 Use `https://useguidon.com/api/v1` for the REST API. Read the [OpenAPI document](https://useguidon.com/openapi.json) and [authentication guide](https://useguidon.com/auth.md) before implementing an integration.
 
-- JavaScript/TypeScript SDK source: `packages/sdk-js/` in the official repository; the npm release is pending and `@guidon/sdk` is not installable yet.
+- JavaScript/TypeScript SDK: `@two_steps_studio/guidon-sdk` on npm after release. Source: `packages/sdk-js/`.
 - Python SDK source: `sdk/python/` in the official repository; the PyPI release of `guidon-sdk` is pending (import name: `guidon`).
-- CLI source: `packages/cli/` in the official repository; the npm release is pending and `guidon-cli` is not installable yet.
+- CLI: `@two_steps_studio/guidon-cli` on npm after release. Source: `packages/cli/`.
 - MCP product tools: `https://useguidon.com/api/mcp` (OAuth or API key).
 - MCP documentation search: `https://useguidon.com/api/mcp/docs` (public).
 

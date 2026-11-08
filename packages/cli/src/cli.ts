@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { Guidon, GuidonError, DEFAULT_BASE_URL, normalizeBaseUrl, type Task } from "@guidon/sdk";
+import { Guidon, GuidonError, DEFAULT_BASE_URL, normalizeBaseUrl, type Task } from "@two_steps_studio/guidon-sdk";
 import { configPath, deleteConfig, readConfig, writeConfig } from "./config.js";
 import { json, table } from "./format.js";
 

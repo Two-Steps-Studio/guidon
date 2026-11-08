@@ -1,15 +1,15 @@
-# guidon-cli
+# @two_steps_studio/guidon-cli
 
 Official command-line client for [Guidon](https://useguidon.com): list projects
 and tasks, create and move tasks, comment - from a terminal, a script or CI.
-Built on [`@guidon/sdk`](../sdk-js); Node 18.11+.
+Built on [`@two_steps_studio/guidon-sdk`](https://www.npmjs.com/package/@two_steps_studio/guidon-sdk) and requires Node 18.11+.
 
 ## Install
 
-The npm release is pending. The command below will work after `guidon-cli` is published.
+Install from the public npm registry:
 
 ```bash
-npm install -g guidon-cli
+npm install -g @two_steps_studio/guidon-cli
 guidon --help
 ```
 
@@ -78,9 +78,10 @@ guidon tasks list --project "$PROJECT" --status review --json | jq -r '.[].title
 ## Development
 
 ```bash
-npm ci                                            # from the repository root
-npm run build --workspace @guidon/sdk              # builds the linked local SDK
-npm test --workspace guidon-cli                    # build + local mock-server tests
+# From the repository root
+npm ci
+npm run build --workspace @two_steps_studio/guidon-sdk
+npm test --workspace @two_steps_studio/guidon-cli
 node packages/cli/dist/bin.js --help
 ```
 

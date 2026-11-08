@@ -49,7 +49,7 @@
     // (@types/vscode installed only by its own `npm install`), so the root
     // type-check passed locally and failed on Vercel.
     "plugins",
-    // packages/ (the @guidon/sdk and guidon-cli npm packages) and sdk/
+    // packages/ (the Guidon SDK and CLI npm packages) and sdk/
     // (the Python SDK) - same: own package.json/tsconfig/node_modules, built
     // and tested on their own.
     "packages",
