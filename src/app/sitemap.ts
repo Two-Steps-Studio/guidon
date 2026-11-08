@@ -1,6 +1,25 @@
-import { MetadataRoute } from 'next'
+import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site-url'
 import { legalPublicationReady } from '@/lib/legal'
+
+// Dates of meaningful edits to the published content. Update the affected
+// routes (including document twins) when their content changes. Never use
+// the build or request date, and omit the date when it is not known.
+const contentDates: Partial<Record<string, string>> = {
+  '/': '2026-11-08',
+  '/about': '2026-11-08',
+  '/contact': '2026-11-08',
+  '/sandbox': '2026-11-08',
+  '/developers': '2026-11-08',
+  '/developers.md': '2026-10-28',
+  '/developers/llms.txt': '2026-10-28',
+  '/openapi.json': '2026-11-08',
+  '/auth.md': '2026-10-25',
+  '/auth/llms.txt': '2026-10-25',
+  '/pricing.md': '2026-11-06',
+  '/llms.txt': '2026-10-28',
+  '/brand': '2026-11-08',
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = SITE_URL
@@ -77,5 +96,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }
 
   if (legalPublicationReady) routes.push({ url: `${baseUrl}/legal/cookies`, changeFrequency: 'yearly', priority: 0.2 })
-  return routes.filter(route => legalPublicationReady || !new URL(route.url).pathname.startsWith('/legal/'))
+  return routes.flatMap(route => {
+    const { pathname } = new URL(route.url)
+    if (!legalPublicationReady && pathname.startsWith('/legal/')) return []
+    const lastModified = contentDates[pathname]
+    return [lastModified ? { ...route, lastModified } : route]
+  })
 }

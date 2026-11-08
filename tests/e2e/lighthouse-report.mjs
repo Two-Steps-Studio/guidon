@@ -60,7 +60,12 @@ export async function lighthouseReportCoverage({page,origin,fixture,client,stora
     await client.query("DELETE FROM task_attachments WHERE task_id=$1",[tasks[0]]);
     assert.equal((await page.request.get(origin+url)).status(),404,"Deleting attachment metadata revokes cached preview access");
     const robots=await anonymous.get(origin+"/robots.txt"),body=await robots.text();
-    for(const line of body.split(/\r?\n/).filter(line=>line.trim()&&!line.trim().startsWith("#")))assert.ok(/^(User-agent|Allow|Disallow|Sitemap):/i.test(line),"robots contains only standard directives");
+    for(const line of body.split(/\r?\n/).filter(line=>line.trim()&&!line.trim().startsWith("#")))assert.ok(/^(User-agent|Allow|Disallow|Sitemap|Schemamap):/i.test(line),"robots contains standard directives and the Schema Feeds extension");
+    const schemaMapUrl=body.match(/^Schemamap: (\S+)$/mi)?.[1];
+    assert.equal(schemaMapUrl,origin+"/schemamap.xml");
+    const schemaMap=await anonymous.get(schemaMapUrl);
+    assert.ok(schemaMap.ok());
+    assert.ok((await schemaMap.text()).includes(`<loc>${origin}/feeds/site.jsonl</loc>`));
     assert.ok(body.includes("Disallow: /projects"));assert.ok(robots.headers().link.includes('rel="ard"'));
     const skill=await anonymous.get(origin+"/.well-known/agent-skills/guidon-tasks/SKILL.md");
     assert.ok(skill.headers()["content-type"].includes('profile="urn:air:agent-skills"'));

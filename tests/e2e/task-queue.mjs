@@ -122,7 +122,11 @@ export async function taskQueueCoverage({ page, origin, fixture, client, browser
       assert.ok((await page.locator('meta[name="robots"]').getAttribute("content")).includes("noindex"), "Removing the banner must not claim legal approval or index unfinished documents");
     }
     const sitemap = await (await page.request.get(origin+"/sitemap.xml")).text();
-    assert.doesNotMatch(sitemap,/\/auth\/login|\/auth\/signup|<lastmod>/);
+    assert.doesNotMatch(sitemap,/\/auth\/login|\/auth\/signup/);
+    const sitemapUrls=[...sitemap.matchAll(/<url>[\s\S]*?<\/url>/g)].map(([url])=>url);
+    const datedUrls=sitemapUrls.filter(url=>url.includes("<lastmod>"));
+    assert.ok(sitemapUrls.length > 0 && datedUrls.length >= Math.ceil(sitemapUrls.length / 2));
+    assert.ok(datedUrls.every(url=>/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/.test(url)));
     await page.goto(origin+"/auth/logout");
     await page.waitForURL(url => url.pathname === "/");
     const { brandPageCoverage } = await import("./brand-page.mjs");
