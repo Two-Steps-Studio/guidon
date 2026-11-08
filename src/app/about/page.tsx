@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicOpenGraph } from "@/lib/public-open-graph";
 import { MarkdownPage } from "@/components/layout/markdown-page";
 import { aboutMarkdown } from "@/lib/company-pages";
 import { SITE_URL } from "@/lib/site-url";
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   title: { absolute: "About Guidon - who builds it and why" },
   description: "Who makes Guidon - context-first project management for development teams - and what makes it different.",
   alternates: { canonical: "/about", types: { "text/markdown": "/about.md" } },
+  openGraph: publicOpenGraph("/about"),
 };
 
 /** Same Markdown as /about.md (src/lib/company-pages.ts). */

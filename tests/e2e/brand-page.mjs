@@ -14,6 +14,12 @@ export async function brandPageCoverage({page, origin, browserName, artifacts}) 
       assert.equal(new URL(page.url()).pathname, '/brand');
       await page.getByRole('heading', {level:1, name:heading, exact:true}).waitFor();
       assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), origin + '/brand');
+      assert.equal(await page.locator('meta[property="og:url"]').getAttribute('content'), origin + '/brand');
+      const cardImage = await page.locator('meta[property="og:image"]').getAttribute('content');
+      assert.ok(cardImage, 'Brand cards have a preview image');
+      const card = await page.request.get(cardImage);
+      assert.match(card.headers()['content-type'], /^image\/png/);
+      assert.ok((await card.body()).length < 100000);
       for (const hex of ['#1D4FD8','#4D8DFF','#07142D','#FFFFFF','#0F172A']) {
         await page.getByText(hex, {exact:true}).waitFor();
       }

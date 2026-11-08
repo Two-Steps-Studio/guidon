@@ -81,6 +81,10 @@ export const GLOBAL_NAV = [
   { href: "/my-modules", labelKey: "myModules", icon: Boxes },
 ] as const;
 
+export function visibleGlobalNav(showCustomModules: boolean) {
+  return showCustomModules ? GLOBAL_NAV : GLOBAL_NAV.filter((item) => item.href !== "/marketplace" && item.href !== "/my-modules");
+}
+
 export interface ProjectNavItem {
   href: string;
   labelKey: string;
@@ -160,9 +164,10 @@ export const PROJECT_NAV = [
  */
 export function visibleNavItems<T extends readonly { href: string }[]>(
   items: T,
-  disabledModules: readonly string[] | null | undefined
+  disabledModules: readonly string[] | null | undefined,
+  showCustomModules = true,
 ): T[number][] {
-  return items.filter((item) => isModuleVisible(item.href, disabledModules));
+  return items.filter((item) => (showCustomModules || item.href !== "modules") && isModuleVisible(item.href, disabledModules));
 }
 
 const ADMIN_NAV = [
@@ -203,6 +208,7 @@ export interface AppSidebarProps {
   /** projects.disabled_modules (migration 055) - sections hidden from the project nav. */
   disabledModules?: string[];
   moduleLinks?: ProjectModuleLink[];
+  showCustomModules?: boolean;
   /**
    * Agents' approval requests (migration 102): null hides the Approvals link
    * (no agent ever asked here, so a team without AI never sees it); `pending`
@@ -281,6 +287,7 @@ export function AppSidebar({
   showUpgrade = false,
   disabledModules,
   moduleLinks = [],
+  showCustomModules = true,
   approvals = null,
   collapsedGroups = [],
   adminPages = [],
@@ -317,7 +324,8 @@ export function AppSidebar({
 
   // Custom modules: one sidebar group per category the project gave them
   // (alphabetical), the uncategorized ones first under "Custom modules".
-  const moduleGroups = groupModuleLinks(moduleLinks);
+  const moduleGroups = groupModuleLinks(showCustomModules ? moduleLinks : []);
+  const globalItems = visibleGlobalNav(showCustomModules);
 
   const activeStyle = projectColor
     ? ({
@@ -355,13 +363,13 @@ export function AppSidebar({
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {GLOBAL_NAV.slice(0, 4).map(item => globalLink(item))}
+            {globalItems.slice(0, 4).map(item => globalLink(item))}
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
           {extensions.label}
           <SidebarMenu id={extensions.id} className={extensions.menuClassName}>
-            {GLOBAL_NAV.slice(4).map(item => globalLink(item, extensions))}
+            {globalItems.slice(4).map(item => globalLink(item, extensions))}
           </SidebarMenu>
         </SidebarGroup>
 
@@ -369,7 +377,7 @@ export function AppSidebar({
 
         {projectId &&
           PROJECT_NAV.map((group, groupIndex) => {
-            const items = visibleNavItems(group.items, disabledModules).filter(
+            const items = visibleNavItems(group.items, disabledModules, showCustomModules).filter(
               (item) => item.href !== "approvals" || approvals !== null
             );
             if (items.length === 0) return null;

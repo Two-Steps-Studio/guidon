@@ -15,7 +15,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/layout/keyboard-shortcuts";
-import { GLOBAL_NAV, PROJECT_NAV, visibleNavItems } from "@/components/layout/app-sidebar";
+import { PROJECT_NAV, visibleGlobalNav, visibleNavItems } from "@/components/layout/app-sidebar";
 
 interface SearchResult {
   type: string;
@@ -32,6 +32,7 @@ interface CommandPaletteProps {
   currentProjectId?: string;
   /** projects.disabled_modules (migration 055) - hidden sections aren't offered either. */
   disabledModules?: string[];
+  showCustomModules?: boolean;
   adminUserDirectory?: boolean;
 }
 
@@ -67,7 +68,7 @@ const MIN_QUERY_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 200;
 type SearchOutcome = { results: SearchResult[]; limited: boolean } | "failed";
 
-export function CommandPalette({ currentProjectId, disabledModules, adminUserDirectory }: CommandPaletteProps) {
+export function CommandPalette({ currentProjectId, disabledModules, showCustomModules = true, adminUserDirectory }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState({ value: "", version: 0 });
@@ -226,7 +227,7 @@ export function CommandPalette({ currentProjectId, disabledModules, adminUserDir
                 {adminUserDirectory && <CommandItem value="/admin/users" onSelect={() => go("/admin/users")}>
                   <Search />{tAdmin("command")}
                 </CommandItem>}
-                {GLOBAL_NAV.map((item) => (
+                {visibleGlobalNav(showCustomModules).map((item) => (
                   <CommandItem key={item.href} value={item.href} onSelect={() => go(item.href)}>
                     <item.icon />
                     {tNav(item.labelKey)}
@@ -243,7 +244,7 @@ export function CommandPalette({ currentProjectId, disabledModules, adminUserDir
                 // labelKey to plain `string` and next-intl's typed t()
                 // rejects that.
                 PROJECT_NAV.map((group, groupIndex) => {
-                  const items = visibleNavItems(group.items, disabledModules);
+                  const items = visibleNavItems(group.items, disabledModules, showCustomModules);
                   if (items.length === 0) return null;
                   return (
                   <CommandGroup

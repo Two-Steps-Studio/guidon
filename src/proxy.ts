@@ -135,6 +135,7 @@ const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plug
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])
+const PRIVATE_RESPONSE_HEADERS = { 'Cache-Control': 'private, no-store' }
 
 function isPublicRoute(pathname: string): boolean {
   if (EXACT_PUBLIC_ROUTES.has(pathname)) return true
@@ -148,7 +149,7 @@ function redirectToLogin(request: NextRequest, pathname: string) {
     // The challenge tells an agent where the OAuth metadata is (RFC 9728).
     return NextResponse.json(
       { error: 'Authentication required.', code: 'unauthorized' },
-      { status: 401, headers: { 'WWW-Authenticate': bearerChallenge(SITE_URL, '/api/v1') } }
+      { status: 401, headers: { ...PRIVATE_RESPONSE_HEADERS, 'WWW-Authenticate': bearerChallenge(SITE_URL, '/api/v1') } }
     )
   }
   const redirectUrl = new URL('/auth/login', request.url)
@@ -156,7 +157,7 @@ function redirectToLogin(request: NextRequest, pathname: string) {
   // it, and dropping it would send the user back to the page without it.
   // safeRedirect() still only accepts same-site paths.
   redirectUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
-  return NextResponse.redirect(redirectUrl)
+  return NextResponse.redirect(redirectUrl, { headers: PRIVATE_RESPONSE_HEADERS })
 }
 
 /**
@@ -167,8 +168,8 @@ function redirectToLogin(request: NextRequest, pathname: string) {
  */
 function redirectSignedIn(request: NextRequest) {
   const target = new URL(safeRedirect(request.nextUrl.searchParams.get('redirect')), request.url)
-  if (target.origin !== request.nextUrl.origin) return NextResponse.redirect(new URL('/dashboard', request.url))
-  return NextResponse.redirect(target)
+  const destination = target.origin === request.nextUrl.origin ? target : new URL('/dashboard', request.url)
+  return NextResponse.redirect(destination, { headers: PRIVATE_RESPONSE_HEADERS })
 }
 
 /**
@@ -299,6 +300,7 @@ async function route(request: NextRequest) {
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options)
           }
+          response.headers.set('Cache-Control', PRIVATE_RESPONSE_HEADERS['Cache-Control'])
         },
       },
     }
@@ -312,17 +314,15 @@ async function route(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (!user && !isPublicRoute(pathname)) {
-    // Same as self-hosted: API callers get a JSON 401, not a 307 to an HTML
-    // login form they can't follow.
-    return redirectToLogin(request, pathname)
-  }
+  const authResponse = !user && !isPublicRoute(pathname)
+    ? redirectToLogin(request, pathname)
+    : user && AUTH_ENTRY_ROUTES.has(pathname) ? redirectSignedIn(request) : null
+  if (!authResponse) return response
 
-  if (user && AUTH_ENTRY_ROUTES.has(pathname)) {
-    return redirectSignedIn(request)
-  }
-
-  return response
+  // Supabase may have refreshed or cleared cookies while checking the
+  // session. Send those changes even when this request ends in a redirect.
+  for (const cookie of response.cookies.getAll()) authResponse.cookies.set(cookie)
+  return authResponse
 }
 
 export const config = {

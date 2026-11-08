@@ -4,12 +4,14 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { BRAND_COLORS } from "@/lib/brand-colors";
+import { publicOpenGraph } from "@/lib/public-open-graph";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("brandPage");
   return {
     title: t("title"), description: t("description"),
     alternates: { canonical: "/brand" },
+    openGraph: publicOpenGraph("/brand"),
   };
 }
 
@@ -54,12 +56,12 @@ export default async function BrandPage() {
             </div>
             <div className="min-w-0">
               <div className="flex aspect-[2/1] items-center justify-center rounded-xl border border-border bg-muted p-5">
-                <Image src="/brand/social/profile-avatar-dark.png" alt={t("avatar")} width={144} height={144} className="aspect-square h-full w-auto max-w-full rounded-full object-contain" />
+                <Image src="/brand/social/profile-avatar-dark-400.png" alt={t("avatar")} width={144} height={144} className="aspect-square h-full w-auto max-w-full rounded-full object-contain" />
               </div>
               <h3 className="mt-5 font-semibold">{t("avatar")}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("avatarUse")}</p>
               <div className="mt-3 flex flex-col items-start">
-                <a download href="/brand/social/profile-avatar-dark.png" className={downloadClass}>{t("downloadAvatar")}</a>
+                <a download="profile-avatar-dark.png" href="/brand/social/profile-avatar-dark-400.png" className={downloadClass}>{t("downloadAvatar")}</a>
                 <a download href="/brand/guidon-symbol-blue.svg" className={downloadClass}>{t("downloadSymbol")}</a>
               </div>
             </div>

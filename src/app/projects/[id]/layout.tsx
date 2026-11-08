@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/data/current-user";
 import { AppShell } from "@/components/layout/app-shell";
 import { AIChat } from "@/components/ai/AIChat";
 import { getProjectModuleLinks } from "@/lib/data/project-module-navigation";
+import { showCustomModuleNavigation } from "@/lib/data/custom-module-navigation";
 import { approvalSummary } from "@/lib/data/agent-approvals";
 
 export async function generateMetadata({
@@ -37,7 +38,7 @@ export default async function ProjectLayout({
   const [access, user] = await Promise.all([requireProjectAccess(id), getCurrentUser()]);
   const [switchableProjects, moduleLinks, approvals] = await Promise.all([
     getSwitchableProjects(access.project.organization_id),
-    getProjectModuleLinks(access.userId, id),
+    showCustomModuleNavigation() ? getProjectModuleLinks(access.userId, id) : [],
     approvalSummary(access.userId, id),
   ]);
 

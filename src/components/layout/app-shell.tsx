@@ -20,6 +20,7 @@ import { PinnedProjectsProvider } from "@/components/projects/pinned-projects-co
 import { AppMessages } from "@/components/layout/app-messages";
 import { WalkthroughAutoOpen } from "@/components/layout/walkthrough-tour";
 import { BetaBadge } from "@/components/layout/beta-badge";
+import { showCustomModuleNavigation } from "@/lib/data/custom-module-navigation";
 
 type AppShellProps = AppSidebarProps & { children: React.ReactNode };
 
@@ -31,6 +32,7 @@ type AppShellProps = AppSidebarProps & { children: React.ReactNode };
  * back before rendering instead of always defaulting to expanded.
  */
 export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
+  const showCustomModules = showCustomModuleNavigation();
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
   const themeCookie = cookieStore.get(THEME_COOKIE)?.value;
@@ -57,6 +59,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
         {...sidebarProps}
+        showCustomModules={showCustomModules}
         userId={userId ?? undefined}
         currentTheme={currentTheme}
         collapsedGroups={parseCollapsedGroups(cookieStore.get(SIDEBAR_GROUPS_COOKIE)?.value)}
@@ -75,7 +78,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
           <Separator orientation="vertical" className="h-4" />
           <BetaBadge />
           <div className="flex-1" />
-          <CommandPalette key={sidebarProps.projectId ?? "global"} currentProjectId={sidebarProps.projectId} disabledModules={sidebarProps.disabledModules}
+          <CommandPalette key={sidebarProps.projectId ?? "global"} currentProjectId={sidebarProps.projectId} disabledModules={sidebarProps.disabledModules} showCustomModules={showCustomModules}
             adminUserDirectory={sidebarProps.adminPages?.includes("/admin/users")} />
           <NotificationsBell />
         </header>

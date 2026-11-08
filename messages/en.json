@@ -509,7 +509,7 @@
       "apiDocs": "API & MCP docs"
     },
     "heroShotTitle": "The Guidon dashboard",
-    "heroShotAlt": "Guidon dashboard: your open and overdue tasks, what's next, recent team activity and project progress",
+    "heroShotAlt": "Guidon dashboard: open tasks, recent activity and project progress",
     "faq": {
       "title": "Frequently asked questions",
       "items": [
@@ -2385,7 +2385,8 @@
     "aiBadge": "AI"
   },
   "onboarding": {
-    "metaTitle": "Get started",
+    "metaTitle": "Set up your project workspace",
+    "metaDescription": "Set up a Guidon workspace for your team, or try the sandbox with sample tasks.",
     "stepOf": "Step {step} of {total}",
     "back": "Back",
     "continue": "Continue",

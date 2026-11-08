@@ -10,6 +10,7 @@ import { PricingSection, type PlanRow } from "./pricing-section";
 import { SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
+import { publicOpenGraph } from "@/lib/public-open-graph";
 import { BetaBadge } from "@/components/layout/beta-badge";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { AnimatedFaq } from "@/components/landing/animated-faq";
@@ -57,6 +58,7 @@ export const revalidate = 3600;
 // advertised in the head, for clients that look for it there.
 export const metadata: Metadata = {
   alternates: { canonical: "/", types: { "text/markdown": "/index.md" } },
+  openGraph: publicOpenGraph("/"),
 };
 
 export default async function Home() {
