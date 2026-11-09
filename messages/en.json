@@ -299,9 +299,9 @@
       "eyebrow": "Project management, with context",
       "heroFirst": "Keep the why",
       "heroSecond": "with the work.",
-      "heroDescription": "Tasks, decisions and project knowledge, connected. A clear workspace for your team, with AI on your terms.",
+      "heroDescription": "Tasks, decisions and what was already tried, in one place. Guidon keeps what your team verified apart from what AI guessed, so nobody - person or agent - walks into the same dead end twice.",
       "explore": "Explore Guidon",
-      "heroNote": "Free to start · Cloud or self-hosted · AI optional",
+      "heroNote": "Free to start · Self-hosted with no limits, ever · AI optional",
       "previewNote": "Guidon, shown with a demo project. Choose a view to explore.",
       "benefitsLabel": "A shared understanding",
       "benefitsTitle": "Less catching up. More moving forward.",
@@ -503,7 +503,7 @@
     },
     "selfHost": {
       "title": "Run Guidon on your own server",
-      "description": "The same app, on infrastructure you control: Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama). No plan limits on your own install.",
+      "description": "The same app, on infrastructure you control: Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama). Every feature, no plan limits on your own install - and that stays true.",
       "guide": "Self-hosting guide",
       "github": "Code on GitHub",
       "apiDocs": "API & MCP docs"
