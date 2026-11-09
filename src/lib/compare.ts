@@ -54,7 +54,7 @@ const SHARED = {
   },
   source: {
     topic: "Source code",
-    guidon: "Public on GitHub (the application licence is still being settled).",
+    guidon: "Open source (AGPL-3.0).",
   },
 } as const;
 type SharedTopic = keyof typeof SHARED;
@@ -107,20 +107,22 @@ export const COMPARISONS: Comparison[] = [
       "You self-host and want every feature without plan limits",
     ],
     chooseThem: [
-      "You want an open-source licence (AGPL-3.0) today",
       "You need cycles, modules and many views out of the box",
       "You want the larger community and ecosystem",
     ],
     overrides: {
       selfHosted: { them: "Self-hostable Community Edition; some features are in paid editions.", better: null },
-      source: { them: "Better: open source (AGPL-3.0).", better: "them" },
+      source: { them: "Open source (AGPL-3.0).", better: null },
       mcp: { them: "MCP server and its own agents.", better: null },
     },
-    rows: [{ topic: "Planning", guidon: "Board, roadmap phases, calendar, recurring tasks.", them: "Better: cycles, modules, more views.", better: "them" }],
+    rows: [
+      { topic: "Planning", guidon: "Board, roadmap phases, calendar, recurring tasks.", them: "Better: cycles, modules, more views.", better: "them" },
+      { topic: "Community", guidon: "Young project.", them: "Better: large community and ecosystem.", better: "them" },
+    ],
     switching: IMPORT("Plane"),
     faq: [
       { q: "Can I move from Plane to Guidon?", a: "Yes - Plane's CSV export imports directly, including state, priority, labels, assignees and target dates." },
-      { q: "Is Guidon open source like Plane?", a: "Guidon's code is public on GitHub, but its application licence isn't settled yet; Plane is AGPL-3.0 today." },
+      { q: "Is Guidon open source like Plane?", a: "Yes - both are AGPL-3.0. Guidon's self-hosted install has every feature, with no paid edition." },
     ],
   },
   {

@@ -235,9 +235,12 @@ does not cover the Guidon application, hosted service or brand.
 
 ### Application licence
 
-**Unresolved.** Historical proprietary and GPL references have not been
-reconciled into an application-wide licence. The package-specific MIT grants
-above apply only to their respective SDK/CLI directories.
+The Guidon application - this repository outside the SDK/CLI directories
+above - is licensed under the **GNU Affero General Public License v3.0**
+(`AGPL-3.0-only`, see [`LICENSE`](LICENSE)). You may run, study, modify and
+self-host it; if you offer a modified version to others over a network, you
+must make your changes available to them under the same licence. The Guidon
+name and logo are not covered by the licence (see `/brand`).
 
 ## Support
 
