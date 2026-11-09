@@ -451,6 +451,15 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
           parameters: [{ name: "version", in: "query", required: false, schema: { type: "integer", minimum: 1 } }],
         }),
       },
+      "/projects/{projectId}/agents.md": {
+        parameters: [projectIdParam],
+        get: op("getAgentsMd", "The project as an AGENTS.md file (Markdown)", "tasks:read", {
+          "200": {
+            description: "The approved agent brief, facts a person verified and known dead ends (failed or partial attempts), as one file to keep in a repository.",
+            content: { "text/markdown": { schema: { type: "string" } } },
+          },
+        }, { tags: ["Context"] }),
+      },
       "/tasks/{taskId}/attempts": {
         parameters: [taskIdParam],
         get: op("listAttempts", "List the attempts recorded on a task, newest first", "tasks:read", ok("Attempts", wrap("attempts", { type: "array", items: ref("Attempt") })), { tags: ["Attempts"] }),

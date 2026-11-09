@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 const { packContext, clampBudget, redactSecrets, neutralize, looksLikeInstructions, scoreItem, relevance, memoryReviewReasons, githubFreshnessNote, STALE_AFTER_DAYS, CONTEXT_WEIGHTS: W } = await import("../src/lib/context/context-pack-core.ts");
 
 const { generateBrief, markUnsourcedClaims, briefStats } = await import("../src/lib/context/agent-brief-core.ts");
+const { generateAgentsMd } = await import("../src/lib/context/agents-md-core.ts");
 
 let passed = 0;
 function test(name, run) { run(); passed++; console.log(`pass ${name}`); }
@@ -209,6 +210,32 @@ test("the cap holds for the whole document: many omitted ids, the minimum budget
 test("the footer reports the budget honestly", () => {
   const result = pack([item("memory", "a", "One", W.memory)], 2000);
   assert.match(result.markdown, /Context budget: ~\d+ of 2000 tokens, 1 items included/);
+});
+
+test("AGENTS.md export: brief nested under one title, facts the brief cites not repeated, dead ends with their reason", () => {
+  const md = generateAgentsMd({
+    project: { id: "p0000000-1", name: "Mine\nGame" },
+    siteUrl: "https://useguidon.com",
+    generatedAt: new Date("2026-11-09T10:00:00Z"),
+    brief: { version: 3, content: "# Agent brief: Mine Game\n\n## Stack\n\n- Godot 4.3 _[technology t0000000]_\n- Saves are SQLite _[memory m1111111]_\n" },
+    facts: [
+      { id: "m1111111-x", content: "Saves are SQLite", verified_at: "2026-11-01T00:00:00Z" },
+      { id: "m2222222-x", content: "Target 60 fps on a Pixel 4", verified_at: "2026-11-02T00:00:00Z" },
+    ],
+    deadEnds: [{ id: "a3333333-x", task_title: "Fix jitter", approach: "Move physics to _process", outcome: "failed", failure_reason: "Tunneling at low fps" }],
+  });
+  assert.match(md, /^# AGENTS\.md - Mine Game\n/, "one-line title");
+  assert.equal((md.match(/^# /gm) ?? []).length, 1, "the brief's own H1 moved down a level");
+  assert.match(md, /## Agent brief \(v3\)\n\n## Agent brief: Mine Game\n\n### Stack/);
+  assert.equal((md.match(/Saves are SQLite/g) ?? []).length, 1, "a fact the brief cites isn't repeated");
+  assert.match(md, /- Target 60 fps on a Pixel 4 _\[memory m2222222, verified 2026-11-02\]_/);
+  assert.match(md, /- \*\*Fix jitter\*\*: Move physics to _process - failed: Tunneling at low fps _\[attempt a3333333\]_/);
+  assert.match(md, /Exported from Guidon \(https:\/\/useguidon\.com\/projects\/p0000000-1\) on 2026-11-09/);
+
+  const empty = generateAgentsMd({ project: { id: "p", name: "X" }, siteUrl: "https://g", generatedAt: new Date(0), brief: null, facts: [], deadEnds: [] });
+  assert.match(empty, /No approved agent brief yet - a project owner or admin can approve one at https:\/\/g\/projects\/p\/brief\./);
+  assert.match(empty, /- None beyond the brief yet\./);
+  assert.match(empty, /- None recorded yet\./);
 });
 
 console.log(`${passed} context pack tests passed`);

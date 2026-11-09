@@ -3,6 +3,8 @@ import { canManageProject, requireProjectAccess } from "@/lib/data/project-acces
 import { listBriefVersions } from "@/lib/data/agent-brief";
 import { dataClient } from "@/lib/data-client";
 import { AgentBriefEditor } from "./agent-brief-editor";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default async function AgentBriefPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: projectId } = await params;
@@ -21,6 +23,16 @@ export default async function AgentBriefPage({ params }: { params: Promise<{ id:
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          {/* A file download, not a page: a plain anchor so the browser saves it. */}
+          <Button asChild variant="outline" size="sm">
+            <a href={`/projects/${projectId}/brief/agents.md`} download="AGENTS.md">
+              <Download className="h-4 w-4" aria-hidden />
+              {t("exportAgentsMd")}
+            </a>
+          </Button>
+          <span className="text-sm text-muted-foreground">{t("exportAgentsMdHint")}</span>
+        </div>
       </div>
       <AgentBriefEditor projectId={projectId} versions={versions} names={names} canApprove={canManageProject(access.role)} />
     </div>

@@ -2969,6 +2969,8 @@
     }
   },
   "agentBrief": {
+    "exportAgentsMd": "AGENTS.md herunterladen",
+    "exportAgentsMdHint": "Das freigegebene Briefing, verifizierte Fakten und bekannte Sackgassen als eine Datei für dein Repository - Codex, Cursor und Claude Code lesen sie.",
     "title": "Agenten-Briefing",
     "subtitle": "Eine kurze Beschreibung des Projekts für KI-Agenten - Zweck, Stack, Konventionen, Einschränkungen und was sie tun dürfen. Aus den Projektdaten erzeugt, von Menschen geprüft und freigegeben.",
     "generate": "Aus dem Projekt erzeugen",

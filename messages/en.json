@@ -2980,6 +2980,8 @@
     }
   },
   "agentBrief": {
+    "exportAgentsMd": "Download AGENTS.md",
+    "exportAgentsMdHint": "The approved brief, verified facts and known dead ends as one file for your repository - Codex, Cursor and Claude Code read it.",
     "title": "Agent brief",
     "subtitle": "A short description of this project for AI agents - purpose, stack, conventions, constraints and what they may do. Generated from the project's data, checked and approved by people.",
     "generate": "Generate from the project",

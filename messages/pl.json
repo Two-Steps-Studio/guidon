@@ -2980,6 +2980,8 @@
     }
   },
   "agentBrief": {
+    "exportAgentsMd": "Pobierz AGENTS.md",
+    "exportAgentsMdHint": "Zatwierdzony brief, zweryfikowane fakty i znane ślepe uliczki w jednym pliku do repozytorium - czytają go Codex, Cursor i Claude Code.",
     "title": "Brief dla agentów",
     "subtitle": "Krótki opis projektu dla agentów AI - cel, stack, konwencje, ograniczenia i to, co mogą robić. Generowany z danych projektu, sprawdzany i zatwierdzany przez ludzi.",
     "generate": "Wygeneruj z projektu",

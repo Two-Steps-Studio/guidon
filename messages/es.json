@@ -2969,6 +2969,8 @@
     }
   },
   "agentBrief": {
+    "exportAgentsMd": "Descargar AGENTS.md",
+    "exportAgentsMdHint": "El brief aprobado, los hechos verificados y los callejones sin salida conocidos en un solo archivo para tu repositorio: lo leen Codex, Cursor y Claude Code.",
     "title": "Resumen para agentes",
     "subtitle": "Una descripción breve del proyecto para agentes de IA: propósito, stack, convenciones, restricciones y lo que pueden hacer. Generado a partir de los datos del proyecto, revisado y aprobado por personas.",
     "generate": "Generar desde el proyecto",
