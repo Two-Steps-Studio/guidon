@@ -99,6 +99,24 @@ services:
       # origin in its own meta tags/robots.txt/sitemap.xml.
       APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-3000}}
 
+      # Self-hosted sign-in through Guidon's own OAuth/OIDC client
+      # (src/lib/auth/oauth-local-core.ts, docs/configuration.md): a provider
+      # is on when its id and secret are set. Without these lines a provider
+      # configured in .env never reached the container.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_OAUTH_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID:-}
+      GITHUB_OAUTH_CLIENT_SECRET: ${GITHUB_OAUTH_CLIENT_SECRET:-}
+      DISCORD_OAUTH_CLIENT_ID: ${DISCORD_OAUTH_CLIENT_ID:-}
+      DISCORD_OAUTH_CLIENT_SECRET: ${DISCORD_OAUTH_CLIENT_SECRET:-}
+      GITLAB_CLIENT_ID: ${GITLAB_CLIENT_ID:-}
+      GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET:-}
+      GITLAB_URL: ${GITLAB_URL:-}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_NAME: ${OIDC_NAME:-}
+
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       PLATFORM_ADMIN_ACCESS: ${PLATFORM_ADMIN_ACCESS:-}
       PLATFORM_ADMIN_SSO_PROVIDER_ID: ${PLATFORM_ADMIN_SSO_PROVIDER_ID:-}

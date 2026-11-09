@@ -51,12 +51,14 @@ Concretely, as of today:
 - **Authentication is genuinely pluggable.** When `DATABASE_URL` is set
   (self-hosted), `src/proxy.ts` (route protection), sign-up, sign-in,
   sign-out, and `src/lib/data/current-user.ts` (the signed-in user) all run
-  against `auth.users` directly - email/password only, hashed with `scrypt`,
+  against `auth.users` directly - email/password hashed with `scrypt`, plus
+  optional Google/GitHub/Discord/GitLab/OIDC sign-in through Guidon's own
+  OAuth client,
   sessions are a self-signed cookie (`src/lib/auth/local-auth.ts`,
   `src/lib/auth/session-cookie.ts`). No `NEXT_PUBLIC_SUPABASE_URL` reachable
-  at runtime is required for this path. OAuth (Google/Discord) is not
-  available in this mode - there is no GoTrue to redirect to, so the
-  sign-in/sign-up pages hide those buttons automatically when self-hosted.
+  at runtime is required for this path. Supabase's own OAuth (GoTrue) isn't
+  used here; the providers you configure for Guidon's client are shown
+  instead, and none when none are set.
 - **Data access is pluggable everywhere the UI and API reach.** Dashboard,
   organizations, projects, work (the kanban board), roadmap, knowledge,
   decisions, files, memory (including the FACT/AI INSIGHT review workflow),
@@ -125,6 +127,21 @@ more than one project on Cloud, or self-host for no limit at all. See
 - A Supabase project - not needed at all (see the callout above)
 - `openssl` or any way to generate a random hex string, for `AUTH_SECRET`
 
+## Quick start (one command)
+
+```bash
+git clone https://github.com/two-steps-studio/guidon.git && cd guidon
+./scripts/self-host.sh
+```
+
+On the first run it writes `.env` from `.env.example` with random
+`POSTGRES_PASSWORD` and `AUTH_SECRET` and the self-hosted settings (local file
+storage, no Supabase, `APP_URL` on port 3000 - set `APP_PORT=8080` or
+`GUIDON_URL=https://guidon.example.com` in the environment to change them),
+builds and starts the stack below, and waits until `/api/health` answers.
+Run it again to update after a `git pull`: your `.env` is kept. Everything
+after this section is what the script does, for doing it by hand.
+
 ## Docker Compose (primary path)
 
 This is what `docker-compose.yml` actually supports: three services -
@@ -137,6 +154,10 @@ cp .env.example .env
 # fill in .env - see below for what's required
 docker compose up -d
 ```
+
+`.env.example` is written for development: set `STORAGE_PROVIDER=local` (it
+says `supabase`) and `APP_URL`/`NEXT_PUBLIC_APP_URL` to your real address (it
+says port 5803), or uploads and links break. The quick-start script does both.
 
 Required in `.env` for this to start:
 
@@ -239,10 +260,26 @@ walkthrough - not repeated here. Set
 configured; leaving it unset keeps the install password-only, which is a
 valid default for a fresh instance.
 
-**With `DATABASE_URL` set and no Supabase project configured at all**, OAuth
-is not available - the sign-in and sign-up pages detect this and don't render
-the buttons, rather than showing something that fails on click. Email and
-password is the only sign-in method in that mode today.
+**With `DATABASE_URL` set and no Supabase project configured at all**, Guidon
+uses its own OAuth/OpenID Connect client instead: Google, GitHub, Discord,
+GitLab or any OIDC provider (Keycloak, Authentik, Entra ID...), configured in
+`.env` with `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`,
+`DISCORD_OAUTH_CLIENT_ID/SECRET`, `GITLAB_CLIENT_ID/SECRET` (+ `GITLAB_URL`)
+or `OIDC_ISSUER` + `OIDC_CLIENT_ID/SECRET` (+ `OIDC_NAME`) - see
+[configuration.md](./configuration.md#self-hosted-mode-database_url-set). Without any of them the install is
+email and password only, and the sign-in page shows no provider buttons.
+
+### Resetting a forgotten password
+
+A self-hosted install sends no email, so password reset is done by whoever
+runs the server:
+
+```bash
+docker compose exec app node scripts/reset-password.mjs user@example.com
+```
+
+It sets a new random password for that account and prints it once; hand it to
+the person privately.
 
 ## Related
 
