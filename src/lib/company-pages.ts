@@ -21,7 +21,7 @@ Guidon is built by **Two Steps Studio**, an independent studio from Poland. It s
 ## What makes it different
 
 - **Built for people and AI agents together.** Agents connect through an [MCP server and a REST API](${siteUrl}/developers): they find a task, read its full context, claim it, record what they tried and hand the work back to a human for review.
-- **Open source and self-hostable.** The code is public on [GitHub](${GITHUB_REPO_URL}); you can run Guidon on your own server with plain PostgreSQL, with no limits from our side.
+- **Open source (AGPL-3.0) and self-hostable.** The code is on [GitHub](${GITHUB_REPO_URL}); you can run Guidon on your own server with plain PostgreSQL, with no limits from our side.
 - **Made for game studios too.** Plugins for Unity, Unreal Engine, Godot and Blender, in-game bug reports, and Guidon Desktop.
 
 ## Get in touch
