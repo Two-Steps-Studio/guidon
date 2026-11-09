@@ -442,8 +442,17 @@
       }
     },
     "pricing": {
-      "title": "Einfache, transparente Preise",
-      "subtitle": "Kostenlos starten. Upgrade, wenn du mehr brauchst.",
+      "cloudFreeNote": "Guidon Cloud ist kostenlos. Organisationen, die in der Cloud mehr brauchen, können <link>uns kontaktieren</link>.",
+      "cloudName": "Guidon Cloud",
+      "selfHostedBadge": "Empfohlen",
+      "selfHostedName": "Self-hosted",
+      "selfHostedF1": "Alle Funktionen, keine Planlimits",
+      "selfHostedF2": "Deine Daten auf deinem Server",
+      "selfHostedF3": "Jede Funktion anpassbar - Open Source (AGPL-3.0)",
+      "selfHostedF4": "Docker Compose mit einfachem PostgreSQL",
+      "selfHostedCta": "Self-Hosting-Anleitung",
+      "title": "Kostenlos in der Cloud. Unbegrenzt auf deinem Server.",
+      "subtitle": "Teste Guidon Cloud kostenlos oder betreibe es selbst mit allen Funktionen.",
       "currencyLabel": "Währung",
       "mostPopular": "Am beliebtesten",
       "perMonth": "/Monat",
@@ -510,7 +519,7 @@
         },
         {
           "q": "Ist Guidon kostenlos?",
-          "a": "Ja, es gibt einen kostenlosen Plan. Bezahlpläne in Guidon Cloud erhöhen die Limits für Projekte, Mitglieder und KI-Nutzung; sie werden monatlich oder jährlich abgerechnet und beginnen mit einer 14-tägigen kostenlosen Testphase. Selbst gehostetes Guidon hat gar keine Limits."
+          "a": "Ja. Guidon Cloud ist kostenlos, mit Limits für Projekte, Mitglieder und Dateispeicher. Self-hosted Guidon ist ebenfalls kostenlos, mit allen Funktionen und ganz ohne Limits. Organisationen, die in der Cloud mehr brauchen, können uns kontaktieren."
         },
         {
           "q": "Können KI-Agenten an meinen Aufgaben arbeiten?",
@@ -518,7 +527,7 @@
         },
         {
           "q": "Kann ich Guidon selbst hosten?",
-          "a": "Ja. Guidon ist Open Source auf GitHub und läuft auf Ihrem eigenen Server mit einfachem PostgreSQL. Die Self-Hosting-Anleitung führt durch die Einrichtung."
+          "a": "Ja - das ist der empfohlene Weg. Guidon ist Open Source (AGPL-3.0) und läuft auf deinem Server mit Docker Compose und einfachem PostgreSQL: alle Funktionen, keine Planlimits, deine Daten, und du kannst jede Funktion ändern. Die Self-Hosting-Anleitung führt durch die Einrichtung."
         },
         {
           "q": "Wie teste ich die API, ohne echte Arbeit zu berühren?",

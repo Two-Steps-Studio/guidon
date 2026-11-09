@@ -137,6 +137,8 @@
 .pricingHeader h2 { font-size: clamp(2rem,3.5vw,3rem); line-height: 1.15; letter-spacing: -.035em; font-weight: 600; }
 .pricingHeader > p { color: var(--color-text-secondary); }
 .pricingGrid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,190px),1fr)); gap: 1rem; }
+/* Two cards (free cloud + self-hosted) stay card-sized instead of spanning the page. */
+.pricingGridNarrow { max-width: 46rem; margin-inline: auto; }
 /* Period/currency switches change instantly: crossfading text and its background
    creates low-contrast intermediate states and delays keyboard feedback. */
 .pricing button[aria-pressed] { min-height: 44px; transition: none; }

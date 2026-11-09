@@ -265,3 +265,11 @@ server when an app (API, MCP, built-in assistant) creates or changes an entry,
 cleared when a person accepts it from the Memory page's review queue. Existing
 unverified AI insights start in the queue. Apply it **before** deploying the
 code that writes the column - API/MCP memory writes fail until it exists.
+
+## Free cloud storage (122)
+
+`122_free_cloud_storage.sql` sets the Free plan's file storage to 50 MB per
+organization (was 500 MB): Guidon Cloud is free-only and keeps its storage
+costs near zero, while self-hosted installs have no limits. Existing files are
+kept; only new uploads past the limit are refused. Paid plan rows stay for
+organizations set up manually in the admin panel.

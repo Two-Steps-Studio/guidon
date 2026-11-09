@@ -10,6 +10,7 @@ import { BILLING_INTERVALS, type BillingInterval } from "@/lib/billing/billing-c
 import { publicPlanPrice, type PublicPlanPrice } from "@/lib/billing/public-pricing";
 import { RevealGroup } from "@/components/landing/reveal-group";
 import { Check } from "lucide-react";
+import { SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 
 import styles from "@/components/landing/landing.module.css";
 
@@ -83,6 +84,8 @@ function planFeatures(plan: PlanRow, t: PricingTranslator): string[] {
 export function PricingSection({ plans, prices = [], checkoutAvailable = true }: { plans: PlanRow[]; prices?: PublicPlanPrice[]; checkoutAvailable?: boolean }) {
   const t = useTranslations("landing.pricing");
   const [interval, setInterval] = useState<BillingInterval>("month");
+  // Self-hosted first: the page lists only free cloud plans (page.tsx) - no periods to pick.
+  const paidShown = plans.some((plan) => plan.price_cents !== 0);
   const periods = () => <div role="group" aria-label={t("intervalLabel")} className="inline-flex max-w-full flex-wrap justify-center gap-1 rounded-xl border border-border bg-background p-1">
     {BILLING_INTERVALS.map(option => <button key={option} type="button" aria-pressed={interval === option}
       onClick={() => setInterval(option)}
@@ -97,13 +100,18 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
         <div className={styles.pricingHeader}>
           <h2>{t("title")}</h2>
           <p className="text-text-secondary">{t("subtitle")}</p>
-          {!checkoutAvailable && <p className="text-sm text-text-secondary" role="note">{t("paidSoon")}</p>}
-
-          <div>{periods()}</div>
-          <p className="text-xs text-text-muted">{t("actualPrices")}</p>
+          {paidShown ? (
+            <>
+              {!checkoutAvailable && <p className="text-sm text-text-secondary" role="note">{t("paidSoon")}</p>}
+              <div>{periods()}</div>
+              <p className="text-xs text-text-muted">{t("actualPrices")}</p>
+            </>
+          ) : (
+            <p className="text-sm text-text-secondary" role="note">{t.rich("cloudFreeNote", { link: (chunks) => <a href="/contact" className="text-primary underline underline-offset-2">{chunks}</a> })}</p>
+          )}
         </div>
 
-        <RevealGroup className={styles.pricingGrid}>
+        <RevealGroup className={paidShown ? styles.pricingGrid : `${styles.pricingGrid} ${styles.pricingGridNarrow}`}>
           {plans.map((plan) => {
             const isPopular = plan.id === "pro";
             // The Stripe sync and organization checkout use the EUR catalogue.
@@ -117,7 +125,7 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">{t("mostPopular")}</Badge>
                 )}
                 <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
+                  <CardTitle>{paidShown ? plan.name : t("cloudName")}</CardTitle>
                   <div data-price className="font-semibold">
                     {formatPrice(price, t)}
                     {price.cents != null && price.cents > 0 && (
@@ -159,6 +167,26 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
               </Card>
             );
           })}
+          <Card className={`${styles.priceCard} relative flex flex-col border-primary`}>
+            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">{t("selfHostedBadge")}</Badge>
+            <CardHeader>
+              <CardTitle>{t("selfHostedName")}</CardTitle>
+              <div data-price className="font-semibold">{t("free")}</div>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col">
+              <ul className="flex-1 space-y-2 text-sm text-text-secondary">
+                {(["selfHostedF1", "selfHostedF2", "selfHostedF3", "selfHostedF4"] as const).map((key) => (
+                  <li key={key} className="flex items-center gap-2">
+                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                    {t(key)}
+                  </li>
+                ))}
+              </ul>
+              <Button className="mt-6 w-full" asChild>
+                <a href={SELF_HOSTING_DOCS_URL}>{t("selfHostedCta")}</a>
+              </Button>
+            </CardContent>
+          </Card>
         </RevealGroup>
       </div>
 
