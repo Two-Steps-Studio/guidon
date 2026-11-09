@@ -4,6 +4,8 @@ import { setTaskStatus } from "@/lib/api/task-transitions";
 import { isValidUuid, invalidIdResponse } from "@/lib/api/validate-id";
 import { WORKFLOW_KEY_RE } from "@/lib/work/task-board";
 import { apiRoute } from "@/lib/api/api-route";
+import { apiDataClient } from "@/lib/api/api-data-client";
+import { missingAttemptReminder, ownClaimStart } from "@/lib/api/attempt-reminder";
 
 async function handlePATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const guard = await guardApiRequest(request, "tasks:status");
@@ -23,6 +25,9 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
 
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");
+  // Read before the move: leaving AI Working releases the claim.
+  const db = apiDataClient(guard.userId);
+  const claimStart = status === "ai_working" || status === "in_progress" ? null : await ownClaimStart(db, taskId, guard.apiKeyId);
   const result = await setTaskStatus(guard.userId, taskId, status, {
     botLabel: guard.botLabel,
     keyName: guard.keyName,
@@ -31,7 +36,8 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
-  return NextResponse.json({ task: result.task });
+  const reminder = claimStart ? await missingAttemptReminder(db, taskId, claimStart) : null;
+  return NextResponse.json({ task: result.task, ...(reminder ? { reminder } : {}) });
 }
 
 export const PATCH = apiRoute(handlePATCH);
