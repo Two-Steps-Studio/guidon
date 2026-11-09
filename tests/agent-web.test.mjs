@@ -168,6 +168,8 @@ check("every MCP tool named in llms.txt exists", listed.length > 0 && listed.eve
   const memory = PROJECT_RESOURCES.find((r) => r.path === "memory");
   const reset = memory?.onUpdate?.() ?? {};
   check("memory edited through the API returns to unverified", reset.verified === false && reset.verified_by === null && reset.verified_at === null, JSON.stringify(reset));
+  const created = memory?.onCreate?.("u") ?? {};
+  check("memory written through the API goes to the review queue", reset.needs_review === true && created.needs_review === true && created.verified === false, JSON.stringify({ reset, created }));
 }
 
 

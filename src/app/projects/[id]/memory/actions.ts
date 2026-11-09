@@ -207,13 +207,24 @@ async function verifyInsight(projectId: string, memoryId: string, content: strin
     return { error: await tr("You do not have permission to review insights.") };
   }
 
+  // An insight becomes a fact; anything else an app wrote (a rule, a
+  // constraint...) keeps its type - accepting confirms it, it doesn't recast it.
+  const { data: row } = await dataClient(access.userId)
+    .from<{ memory_type: string }>("project_memory")
+    .select("memory_type")
+    .eq("id", memoryId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (!row) return { error: INSIGHT_NOT_FOUND };
+
   const error = await updateMemoryRow(
     access.userId,
     projectId,
     memoryId,
     {
       ...(content !== null ? { content } : {}),
-      memory_type: "fact",
+      ...(row.memory_type === "ai_insight" ? { memory_type: "fact" } : {}),
+      needs_review: false,
       verified: true,
       verified_by: access.userId,
       verified_at: new Date().toISOString(),

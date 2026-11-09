@@ -206,11 +206,12 @@ export const PROJECT_RESOURCES: ProjectResource[] = [
     table: "project_memory",
     create: z.object(memoryFields).strict(),
     update: patchOf(memoryFields, ["confidence"]),
-    // Never verified by an API caller - a person does that in the app.
-    onCreate: (userId) => ({ created_by: userId, verified: false }),
+    // Never verified by an API caller - a person does that in the app, from
+    // the review queue (migration 121).
+    onCreate: (userId) => ({ created_by: userId, verified: false, needs_review: true }),
     // An app editing a verified fact makes it its claim again: back to the
     // review queue, so "verified" always means a person checked this text.
-    onUpdate: () => ({ verified: false, verified_by: null, verified_at: null }),
+    onUpdate: () => ({ verified: false, verified_by: null, verified_at: null, needs_review: true }),
     numeric: ["confidence"],
     order: [{ column: "created_at", ascending: false }],
     activity: { entityType: "memory", created: "memory_created", updated: "memory_updated", title: titleOf("content") },

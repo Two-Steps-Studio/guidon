@@ -199,6 +199,8 @@ export interface ProjectMemory {
   created_at: string;
   updated_at: string;
   confidence: number | null; // 0-1, for AI-generated insights
+  /** Written by an app (API, MCP, assistant) and not reviewed by a person yet (migration 121). */
+  needs_review?: boolean;
 }
 
 export interface CreateMemoryData {

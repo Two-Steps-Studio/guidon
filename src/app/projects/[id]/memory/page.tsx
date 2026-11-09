@@ -80,8 +80,11 @@ export default async function ProjectMemoryPage({
   // distinct section and a review flow (Accept/Correct/Reject) instead of
   // the normal Edit/Delete menu. Everything else (including already-accepted
   // insights, now memory_type 'fact') renders through the regular list.
-  const pending = memories.filter((memory) => memory.memory_type === "ai_insight" && !memory.verified);
-  const rest = memories.filter((memory) => !(memory.memory_type === "ai_insight" && !memory.verified));
+  // Also anything an app (API, MCP, assistant) wrote or changed and no person
+  // has reviewed yet - any type, not only insights (migration 121).
+  const isPending = (memory: ProjectMemory) => memory.needs_review === true || (memory.memory_type === "ai_insight" && !memory.verified);
+  const pending = memories.filter(isPending);
+  const rest = memories.filter((memory) => !isPending(memory));
 
   // verified_by and created_by both reference profiles(id) (001) - fetched
   // separately rather than embedded, since PostgREST needs an explicit FK

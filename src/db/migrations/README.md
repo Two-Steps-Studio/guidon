@@ -257,3 +257,11 @@ verified import. It checks project membership, locks the candidate tasks, and
 preserves tasks with edits or dependent work. Apply before releasing the app
 that calls it. If the function is missing, the new undo reports an error and
 leaves tasks intact.
+
+## Memory review queue (121)
+
+`121_memory_needs_review.sql` adds `project_memory.needs_review`: set by the
+server when an app (API, MCP, built-in assistant) creates or changes an entry,
+cleared when a person accepts it from the Memory page's review queue. Existing
+unverified AI insights start in the queue. Apply it **before** deploying the
+code that writes the column - API/MCP memory writes fail until it exists.
