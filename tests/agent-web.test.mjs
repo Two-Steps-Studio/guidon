@@ -162,6 +162,14 @@ const mcpTools = readdirSync(join(root, "src/lib/mcp"), { recursive: true })
     .join("\n");
 const listed = [...llms.matchAll(/`([a-z_]+)`/g)].map((m) => m[1]).filter((name) => /^(list|get|create|update|delete|start|set|complete|comment|record)_/.test(name));
 check("every MCP tool named in llms.txt exists", listed.length > 0 && listed.every((name) => mcpTools.includes(`"${name}"`)), listed.filter((name) => !mcpTools.includes(`"${name}"`)).join(", "));
+{
+  // An app (API, MCP, assistant) editing a verified fact must not keep the
+  // person's verification: the agent brief shows verified facts as established.
+  const memory = PROJECT_RESOURCES.find((r) => r.path === "memory");
+  const reset = memory?.onUpdate?.() ?? {};
+  check("memory edited through the API returns to unverified", reset.verified === false && reset.verified_by === null && reset.verified_at === null, JSON.stringify(reset));
+}
+
 
 console.log("\n  withFrontmatter");
 const fm = withFrontmatter("# Title\n", { title: 'A "quoted" title', canonical: "https://x/a" });
