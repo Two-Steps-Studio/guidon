@@ -186,7 +186,7 @@ guidon tasks list --project <project-id>
 guidon tasks create --project <project-id> --title "Fix the login timeout"
 \`\`\`
 
-Each package's README has build steps. The Python SDK is available on [PyPI](https://pypi.org/project/guidon-sdk/). The JavaScript SDK and CLI can be installed from npm after their first release. The REST API and MCP are also available directly.
+Each package's README has build steps. Install them from the package registries: the JavaScript SDK as [\`@two_steps_studio/guidon-sdk\`](https://www.npmjs.com/package/@two_steps_studio/guidon-sdk) on npm, the CLI as [\`@two_steps_studio/guidon-cli\`](https://www.npmjs.com/package/@two_steps_studio/guidon-cli) on npm and the Python SDK as [\`guidon-sdk\`](https://pypi.org/project/guidon-sdk/) on PyPI. The REST API and MCP are also available directly.
 
 ## Agent Plugin and skills
 
