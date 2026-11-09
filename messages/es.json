@@ -299,9 +299,9 @@
       "eyebrow": "Gestión de proyectos con contexto",
       "heroFirst": "El porqué, siempre",
       "heroSecond": "junto al trabajo.",
-      "heroDescription": "Tareas, decisiones y conocimiento del proyecto, conectados. Un espacio claro para tu equipo, con IA a tu manera.",
+      "heroDescription": "Tareas, decisiones y lo que ya se intentó, en un solo lugar. Guidon separa lo que tu equipo verificó de lo que la IA supuso, para que nadie - persona o agente - caiga dos veces en el mismo callejón sin salida.",
       "explore": "Explorar Guidon",
-      "heroNote": "Empieza gratis · Nube o servidor propio · IA opcional",
+      "heroNote": "Gratis para empezar · Self-hosted sin límites, para siempre · IA opcional",
       "previewNote": "Guidon con un proyecto de ejemplo. Elige una vista para explorar.",
       "benefitsLabel": "Entendimiento compartido",
       "benefitsTitle": "Menos ponerse al día. Más avanzar.",
@@ -492,7 +492,7 @@
     },
     "selfHost": {
       "title": "Ejecuta Guidon en tu propio servidor",
-      "description": "La misma app en infraestructura que tú controlas: Docker Compose con un PostgreSQL normal, almacenamiento local de archivos e IA local opcional (Ollama). Sin límites de plan en tu propia instalación.",
+      "description": "La misma app en tu propia infraestructura: Docker Compose con PostgreSQL normal, archivos locales e IA local opcional (Ollama). Todas las funciones y sin límites de plan en tu instalación, y así seguirá.",
       "guide": "Guía de autoalojamiento",
       "github": "Código en GitHub",
       "apiDocs": "Docs de API y MCP"

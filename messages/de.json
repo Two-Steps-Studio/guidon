@@ -299,9 +299,9 @@
       "eyebrow": "Projektmanagement mit Kontext",
       "heroFirst": "Das Warum bleibt",
       "heroSecond": "bei der Arbeit.",
-      "heroDescription": "Aufgaben, Entscheidungen und Projektwissen, miteinander verbunden. Ein klarer Arbeitsraum für dein Team, mit KI nach deinen Regeln.",
+      "heroDescription": "Aufgaben, Entscheidungen und was schon versucht wurde, an einem Ort. Guidon trennt, was dein Team geprüft hat, von dem, was die KI vermutet - damit niemand, ob Mensch oder Agent, zweimal in dieselbe Sackgasse läuft.",
       "explore": "Guidon entdecken",
-      "heroNote": "Kostenlos starten · Cloud oder Self-Hosting · KI optional",
+      "heroNote": "Kostenlos starten · Self-hosted ohne Limits, für immer · KI optional",
       "previewNote": "Guidon mit einem Demoprojekt. Wähle eine Ansicht zum Erkunden.",
       "benefitsLabel": "Gemeinsam verstehen",
       "benefitsTitle": "Weniger nachholen. Mehr vorankommen.",
@@ -492,7 +492,7 @@
     },
     "selfHost": {
       "title": "Guidon auf dem eigenen Server betreiben",
-      "description": "Dieselbe App auf Infrastruktur, die du kontrollierst: Docker Compose mit einfachem PostgreSQL, lokalem Dateispeicher und optional lokaler KI (Ollama). Auf der eigenen Installation gibt es keine Planlimits.",
+      "description": "Dieselbe App auf deiner eigenen Infrastruktur: Docker Compose mit einfachem PostgreSQL, lokaler Dateispeicher und optional lokale KI (Ollama). Alle Funktionen, keine Planlimits auf deiner Installation - und dabei bleibt es.",
       "guide": "Self-Hosting-Anleitung",
       "github": "Code auf GitHub",
       "apiDocs": "API- & MCP-Doku"

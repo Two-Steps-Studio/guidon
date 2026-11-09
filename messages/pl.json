@@ -299,9 +299,9 @@
       "eyebrow": "Zarządzanie projektami z kontekstem",
       "heroFirst": "Nie gub kontekstu",
       "heroSecond": "swojej pracy.",
-      "heroDescription": "Zadania, decyzje i wiedza o projekcie połączone w jednym miejscu. Przejrzysta przestrzeń dla zespołu, z AI na Twoich zasadach.",
+      "heroDescription": "Zadania, decyzje i to, co już próbowano, w jednym miejscu. Guidon oddziela to, co zespół sprawdził, od tego, co zgadło AI, więc nikt - ani człowiek, ani agent - nie wchodzi dwa razy w tę samą ślepą uliczkę.",
       "explore": "Zobacz Guidona",
-      "heroNote": "Zacznij bezpłatnie · Chmura lub własny serwer · AI opcjonalnie",
+      "heroNote": "Za darmo na start · Self-hosted bez limitów, na zawsze · AI opcjonalnie",
       "previewNote": "Guidon na przykładowym projekcie. Wybierz widok i poznaj produkt.",
       "benefitsLabel": "Wspólne zrozumienie",
       "benefitsTitle": "Mniej nadrabiania. Więcej działania.",
@@ -503,7 +503,7 @@
     },
     "selfHost": {
       "title": "Postaw Guidona na własnym serwerze",
-      "description": "Ta sama aplikacja na infrastrukturze, którą kontrolujesz: Docker Compose ze zwykłym PostgreSQL, lokalnymi plikami i opcjonalnym lokalnym AI (Ollama). Na własnej instalacji nie ma limitów planów.",
+      "description": "Ta sama aplikacja na Twojej infrastrukturze: Docker Compose ze zwykłym PostgreSQL, lokalne pliki i opcjonalnie lokalne AI (Ollama). Wszystkie funkcje i żadnych limitów planu na Twojej instalacji - i tak zostanie.",
       "guide": "Instrukcja self-hostingu",
       "github": "Kod na GitHubie",
       "apiDocs": "Dokumentacja API i MCP"
