@@ -34,6 +34,8 @@ export interface ProjectResource {
   update: z.ZodObject<z.ZodRawShape>;
   /** Columns the server sets on create from the caller's identity. */
   onCreate?: (userId: string) => Record<string, unknown>;
+  /** Columns the server sets on every update (API, MCP, assistant - never a person in the app). */
+  onUpdate?: () => Record<string, unknown>;
   /**
    * numeric columns: Postgres returns them as strings through `pg` (self-
    * hosted) but as numbers through PostgREST - turned into numbers so both
@@ -200,12 +202,15 @@ export const PROJECT_RESOURCES: ProjectResource[] = [
     noun: "memory",
     plural: "memories",
     summary:
-      "Project memory: facts, rules, constraints and observations agents should know. Entries added here start unverified until a person verifies them",
+      "Project memory: facts, rules, constraints and observations agents should know. Entries added or changed here are unverified until a person verifies them",
     table: "project_memory",
     create: z.object(memoryFields).strict(),
     update: patchOf(memoryFields, ["confidence"]),
     // Never verified by an API caller - a person does that in the app.
     onCreate: (userId) => ({ created_by: userId, verified: false }),
+    // An app editing a verified fact makes it its claim again: back to the
+    // review queue, so "verified" always means a person checked this text.
+    onUpdate: () => ({ verified: false, verified_by: null, verified_at: null }),
     numeric: ["confidence"],
     order: [{ column: "created_at", ascending: false }],
     activity: { entityType: "memory", created: "memory_created", updated: "memory_updated", title: titleOf("content") },

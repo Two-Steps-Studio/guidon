@@ -122,7 +122,7 @@ export function resourceOps(resource: ProjectResource, db: DataClient, userId: s
       // column UPDATE grants, migration 017).
       const { data, error } = await db
         .from<Row>(resource.table)
-        .update(changes)
+        .update({ ...changes, ...resource.onUpdate?.() })
         .eq("id", id)
         .eq("project_id", projectId)
         .select("*");
