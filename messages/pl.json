@@ -453,8 +453,17 @@
       }
     },
     "pricing": {
-      "title": "Proste, przejrzyste ceny",
-      "subtitle": "Zacznij za darmo. Zaktualizuj, gdy potrzebujesz więcej.",
+      "cloudFreeNote": "Guidon Cloud jest darmowy. Organizacje, które potrzebują więcej w chmurze, mogą się <link>z nami skontaktować</link>.",
+      "cloudName": "Guidon Cloud",
+      "selfHostedBadge": "Polecane",
+      "selfHostedName": "Self-hosted",
+      "selfHostedF1": "Wszystkie funkcje, bez limitów planu",
+      "selfHostedF2": "Twoje dane na Twoim serwerze",
+      "selfHostedF3": "Zmieniasz dowolną funkcję - open source (AGPL-3.0)",
+      "selfHostedF4": "Docker Compose ze zwykłym PostgreSQL",
+      "selfHostedCta": "Przewodnik self-hosting",
+      "title": "Za darmo w chmurze. Bez limitów na własnym serwerze.",
+      "subtitle": "Wypróbuj Guidon Cloud za darmo albo uruchom go u siebie ze wszystkimi funkcjami.",
       "currencyLabel": "Waluta",
       "mostPopular": "Najpopularniejszy",
       "perMonth": "/mies.",
@@ -521,7 +530,7 @@
         },
         {
           "q": "Czy Guidon jest darmowy?",
-          "a": "Tak, jest darmowy plan. Płatne plany w Guidon Cloud podnoszą limity projektów, członków i użycia AI; rozlicza się je miesięcznie lub rocznie, a zaczynają się od 14-dniowego darmowego okresu próbnego. Guidon na własnym serwerze nie ma żadnych limitów."
+          "a": "Tak. Guidon Cloud jest darmowy, z limitami projektów, osób i miejsca na pliki. Self-hosted Guidon też jest darmowy, ze wszystkimi funkcjami i bez żadnych limitów. Organizacje, które potrzebują więcej w chmurze, mogą się z nami skontaktować."
         },
         {
           "q": "Czy agenci AI mogą pracować nad moimi zadaniami?",
@@ -529,7 +538,7 @@
         },
         {
           "q": "Czy mogę hostować Guidona sam?",
-          "a": "Tak. Guidon jest open source na GitHubie i działa na Twoim serwerze ze zwykłym PostgreSQL. Przewodnik po self-hostingu prowadzi przez instalację."
+          "a": "Tak - to polecany sposób. Guidon jest open source (AGPL-3.0) i działa na Twoim serwerze z Docker Compose i zwykłym PostgreSQL: wszystkie funkcje, bez limitów planu, Twoje dane i możliwość zmiany dowolnej funkcji. Przewodnik self-hosting prowadzi przez instalację."
         },
         {
           "q": "Jak wypróbować API bez ruszania prawdziwej pracy?",

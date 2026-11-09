@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const plans = hasDirectDatabase()
     ? []
-    : (((await createServiceClient().from("plans").select("*").order("sort_order")).data as PricingPlan[] | null) ?? []);
+    : (((await createServiceClient().from("plans").select("*").eq("id", "free")).data as PricingPlan[] | null) ?? []);
   const body = withFrontmatter(pricingMarkdown(plans, SITE_URL), {
     title: "Guidon pricing",
     description: "Guidon Cloud plans: prices, limits and features.",

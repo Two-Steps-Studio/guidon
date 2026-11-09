@@ -293,10 +293,10 @@ export function pricingMarkdown(plans: PricingPlan[], siteUrl: string): string {
   return [
     "# Guidon pricing",
     "",
-    "Plans for Guidon Cloud (https://useguidon.com), billed per organization. Guidon can also be self-hosted, where these limits and prices don't apply.",
+    "Guidon Cloud (https://useguidon.com) is free, with the limits below; paid cloud plans are arranged individually for organizations - contact us. Self-hosted Guidon has every feature and no plan limits, under AGPL-3.0.",
     "",
     ...(sections.length ? sections : ["Pricing is not available right now - see the homepage.", ""]),
-    `Sign up: ${siteUrl}/auth/signup - Upgrade from an organization's billing page.`,
+    `Sign up: ${siteUrl}/auth/signup - Self-hosting guide: https://github.com/two-steps-studio/guidon/blob/main/docs/self-hosting.md - Contact: ${siteUrl}/contact`,
     "",
   ].join("\n");
 }

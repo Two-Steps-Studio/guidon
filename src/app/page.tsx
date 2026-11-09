@@ -78,7 +78,7 @@ export default async function Home() {
   // copy, not anything user-scoped.
   const plans = hasDirectDatabase()
     ? []
-    : ((await createServiceClient().from("plans").select("*").order("sort_order")).data as PlanRow[] | null) ?? [];
+    : ((await createServiceClient().from("plans").select("*").eq("id", "free")).data as PlanRow[] | null) ?? [];
 
   const prices = hasDirectDatabase() ? [] : ((await createServiceClient()
     .from("plan_prices").select("plan_id, billing_interval, amount_cents").eq("active", true)).data as PublicPlanPrice[] | null) ?? [];

@@ -453,8 +453,17 @@
       }
     },
     "pricing": {
-      "title": "Simple, transparent pricing",
-      "subtitle": "Start free. Upgrade when you need more.",
+      "cloudFreeNote": "Guidon Cloud is free. Organizations that need more in the cloud can <link>contact us</link>.",
+      "cloudName": "Guidon Cloud",
+      "selfHostedBadge": "Recommended",
+      "selfHostedName": "Self-hosted",
+      "selfHostedF1": "Every feature, no plan limits",
+      "selfHostedF2": "Your data on your own server",
+      "selfHostedF3": "Change any feature - open source (AGPL-3.0)",
+      "selfHostedF4": "Docker Compose with plain PostgreSQL",
+      "selfHostedCta": "Self-hosting guide",
+      "title": "Free in the cloud. Unlimited on your own server.",
+      "subtitle": "Try Guidon Cloud for free, or run it yourself with every feature.",
       "currencyLabel": "Currency",
       "mostPopular": "Most popular",
       "perMonth": "/mo",
@@ -521,7 +530,7 @@
         },
         {
           "q": "Is Guidon free?",
-          "a": "Yes, there is a free plan. Paid plans on Guidon Cloud raise the limits on projects, members and AI use; they are billed monthly or yearly and start with a 14-day free trial. Self-hosted Guidon has no limits at all."
+          "a": "Yes. Guidon Cloud is free, with limits on projects, members and file storage. Self-hosted Guidon is free too, with every feature and no limits at all. Organizations that need more in the cloud can contact us."
         },
         {
           "q": "Can AI agents work on my tasks?",
@@ -529,7 +538,7 @@
         },
         {
           "q": "Can I host Guidon myself?",
-          "a": "Yes. Guidon is open source on GitHub and runs on your own server with plain PostgreSQL. The self-hosting guide walks through the setup."
+          "a": "Yes - it's the recommended way. Guidon is open source (AGPL-3.0) and runs on your own server with Docker Compose and plain PostgreSQL: every feature, no plan limits, your data, and you can change any feature. The self-hosting guide walks through the setup."
         },
         {
           "q": "How can I try the API without touching real work?",

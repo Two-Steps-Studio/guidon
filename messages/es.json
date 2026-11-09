@@ -442,8 +442,17 @@
       }
     },
     "pricing": {
-      "title": "Precios simples y transparentes",
-      "subtitle": "Empieza gratis. Mejora tu plan cuando necesites más.",
+      "cloudFreeNote": "Guidon Cloud es gratis. Las organizaciones que necesiten más en la nube pueden <link>contactarnos</link>.",
+      "cloudName": "Guidon Cloud",
+      "selfHostedBadge": "Recomendado",
+      "selfHostedName": "Self-hosted",
+      "selfHostedF1": "Todas las funciones, sin límites de plan",
+      "selfHostedF2": "Tus datos en tu propio servidor",
+      "selfHostedF3": "Cambia cualquier función - código abierto (AGPL-3.0)",
+      "selfHostedF4": "Docker Compose con PostgreSQL normal",
+      "selfHostedCta": "Guía de self-hosting",
+      "title": "Gratis en la nube. Sin límites en tu propio servidor.",
+      "subtitle": "Prueba Guidon Cloud gratis o ejecútalo tú mismo con todas las funciones.",
       "currencyLabel": "Moneda",
       "mostPopular": "Más popular",
       "perMonth": "/mes",
@@ -510,7 +519,7 @@
         },
         {
           "q": "¿Guidon es gratis?",
-          "a": "Sí, hay un plan gratuito. Los planes de pago en Guidon Cloud amplían los límites de proyectos, miembros y uso de IA; se facturan mensual o anualmente y empiezan con una prueba gratuita de 14 días. Guidon autoalojado no tiene ningún límite."
+          "a": "Sí. Guidon Cloud es gratis, con límites de proyectos, miembros y almacenamiento de archivos. Guidon self-hosted también es gratis, con todas las funciones y sin ningún límite. Las organizaciones que necesiten más en la nube pueden contactarnos."
         },
         {
           "q": "¿Pueden los agentes de IA trabajar en mis tareas?",
@@ -518,7 +527,7 @@
         },
         {
           "q": "¿Puedo alojar Guidon yo mismo?",
-          "a": "Sí. Guidon es de código abierto en GitHub y funciona en tu propio servidor con PostgreSQL. La guía de autoalojamiento explica la instalación."
+          "a": "Sí, es la forma recomendada. Guidon es código abierto (AGPL-3.0) y se ejecuta en tu servidor con Docker Compose y PostgreSQL normal: todas las funciones, sin límites de plan, tus datos, y puedes cambiar cualquier función. La guía de self-hosting explica la instalación."
         },
         {
           "q": "¿Cómo pruebo la API sin tocar el trabajo real?",
