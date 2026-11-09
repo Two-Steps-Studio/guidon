@@ -89,6 +89,7 @@ const PUBLIC_SECTIONS = new Set([
   "contact",
   "contact.md",
   "sandbox",
+  "compare",
   "sandbox.md",
   "mcp.json",
   "auth.md",

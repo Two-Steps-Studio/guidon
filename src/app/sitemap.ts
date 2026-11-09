@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site-url'
 import { legalPublicationReady } from '@/lib/legal'
+import { CHECKED, COMPARISONS } from '@/lib/compare'
 
 // Dates of meaningful edits to the published content. Update the affected
 // routes (including document twins) when their content changes. Never use
@@ -93,6 +94,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     })
+  }
+
+  // Comparisons (src/lib/compare.ts): the index, then one page per tool.
+  for (const path of ['/compare', ...COMPARISONS.map((c) => `/compare/${c.slug}`)]) {
+    routes.push({ url: `${baseUrl}${path}`, lastModified: CHECKED, changeFrequency: 'monthly', priority: 0.5 })
   }
 
   if (legalPublicationReady) routes.push({ url: `${baseUrl}/legal/cookies`, changeFrequency: 'yearly', priority: 0.2 })

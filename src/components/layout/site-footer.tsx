@@ -4,6 +4,10 @@ import { getTranslations } from "next-intl/server";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { BetaBadge } from "@/components/layout/beta-badge";
 import styles from "@/components/landing/landing.module.css";
+import { comparison } from "@/lib/compare";
+
+// The most-searched rivals; every comparison is on /compare.
+const FOOTER_COMPARISONS = ["plane", "linear", "jira", "notion", "trello", "codecks"];
 
 /** The one footer of every page - the landing page, public pages and the app. */
 export async function SiteFooter() {
@@ -27,6 +31,13 @@ export async function SiteFooter() {
         { href: GITHUB_REPO_URL, label: "GitHub" },
         { href: "/contact", label: t("footer.contact") },
         { href: "/brand", label: t("footer.brand") },
+      ],
+    },
+    {
+      title: d("footerCompare"),
+      links: [
+        ...FOOTER_COMPARISONS.map((slug) => ({ href: `/compare/${slug}`, label: `Guidon vs ${comparison(slug)?.name ?? slug}` })),
+        { href: "/compare", label: d("footerAllComparisons") },
       ],
     },
     {

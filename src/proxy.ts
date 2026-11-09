@@ -101,6 +101,8 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // The sandbox explained (src/app/sandbox) - /sandbox/start needs a session.
   '/sandbox',
   '/sandbox.md',
+  // "Guidon vs X" pages (src/app/compare).
+  '/compare',
   // The MCP manifest, also under /.well-known/ (src/app/.well-known/mcp.json).
   '/mcp.json',
   // Webhook retry worker (src/app/api/cron/webhooks) - authenticates with
@@ -131,7 +133,7 @@ const EXACT_PUBLIC_ROUTES = new Set([
 // /widget/ holds the embeddable bug-report widget (public/widget/report.js),
 // loaded by other people's websites with no Guidon session.
 // /.well-known/ holds discovery documents (RFC 9727 API catalog) for agents.
-const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/', '/widget/', '/.well-known/']
+const PUBLIC_ROUTE_PREFIXES = ['/auth/', '/api/v1/', '/legal/', '/downloads/plugins/', '/widget/', '/.well-known/', '/compare/']
 
 /** Signed-in users are bounced away from these. */
 const AUTH_ENTRY_ROUTES = new Set(['/auth/login', '/auth/signup'])
