@@ -177,13 +177,25 @@ func add_comment(task_id: String, content: String) -> Dictionary:
 	return _field(await _send(HTTPClient.METHOD_POST, "/api/v1/tasks/%s/comment" % task_id, {"content": content}), "comment", null)
 
 
+## What was already tried on a task, newest first - failed and partial
+## attempts are the dead ends an agent or teammate shouldn't repeat.
+func list_attempts(task_id: String) -> Dictionary:
+	return _field(await _send(HTTPClient.METHOD_GET, "/api/v1/tasks/%s/attempts" % task_id), "attempts", [])
+
+
+## The project as an AGENTS.md file (Markdown text in `data`): brief,
+## verified facts and known dead ends, for agents working in this folder.
+func agents_md(project_id: String) -> Dictionary:
+	return await _send(HTTPClient.METHOD_GET, "/api/v1/projects/%s/agents.md" % project_id, null, true)
+
+
 ## A reports:write key bound to this project, for the in-game reporter (the
 ## full key comes back once). Needs owner/admin/developer in the project.
 func create_report_key(project_id: String) -> Dictionary:
 	return _field(await _send(HTTPClient.METHOD_POST, "/api/v1/projects/%s/report-keys" % project_id, {"client": "godot"}), "key", "")
 
 
-func _send(method: int, path: String, body = null) -> Dictionary:
+func _send(method: int, path: String, body = null, raw := false) -> Dictionary:
 	if _base_url == "" or _api_key == "":
 		return {"ok": false, "data": null, "error": "Log in first."}
 	if not is_instance_valid(_host) or not _host.is_inside_tree():
@@ -210,6 +222,8 @@ func _send(method: int, path: String, body = null) -> Dictionary:
 	if result != HTTPRequest.RESULT_SUCCESS:
 		return {"ok": false, "data": null, "error": "Request failed (%s)." % _result_name(result)}
 
+	if raw and code >= 200 and code < 300:
+		return {"ok": true, "data": text, "error": ""}
 	var parsed = JSON.parse_string(text) if text != "" else {}
 	if code < 200 or code >= 300:
 		var server_error := ""

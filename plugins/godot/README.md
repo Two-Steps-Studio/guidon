@@ -42,6 +42,16 @@ using the same public API (`/api/v1`).
   done), comments, delete and **Copy Git ref** (`guidon#1a2b3c4d`). Put it in a
   commit, PR or branch name, and the GitHub integration links and moves the
   task.
+- **Earlier attempts** in the details panel list what was already tried on
+  the task, newest first - the approach, whether it failed, and why. Agents
+  record them (MCP `record_attempt`, e.g. Claude Code working in your Godot
+  project); a `res://` file an attempt touched is a link that opens the scene
+  (or shows the file) in the editor, so a dead end is one click from where it
+  happened.
+- **Update AGENTS.md** (toolbar) writes the project's approved brief, verified
+  facts and known dead ends to `res://AGENTS.md`, which Claude Code, Codex and
+  Cursor read when they work in this folder. The file is generated - edit the
+  brief and facts in Guidon and press the button again.
 - **Auto-refresh** (toolbar checkbox, on by default) reloads the board and
   the open task's comments every 30 seconds while the panel is visible. It
   waits while you drag a card or type in one of the panel's fields, and a
