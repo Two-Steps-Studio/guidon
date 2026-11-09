@@ -19,6 +19,7 @@ const Moodboard := preload("res://addons/guidon/moodboard.gd")
 const COLUMN_WIDTH := 272  # the site's w-72 column
 const AUTO_REFRESH_SECONDS := 30.0
 const AGENTS_MD_PATH := "res://AGENTS.md"
+const OUTCOMES := ["failed", "partial", "succeeded"]
 
 # --- state
 var projects: Array = []
@@ -34,7 +35,7 @@ var busy := 0
 var _login: RefCounted
 
 # details edit buffers - survive rebuilds, reset when another task is opened
-var _edit := {"title": "", "description": "", "priority": "medium", "due": "", "subtask": "", "comment": ""}
+var _edit := {"title": "", "description": "", "priority": "medium", "due": "", "subtask": "", "comment": "", "approach": "", "outcome": "failed", "reason": ""}
 var _rebuild_queued := false
 var _p: RefCounted  # Palette - the website's colors
 
@@ -679,9 +680,10 @@ func _rebuild_details() -> void:
 ## end; its res:// files open in the editor, so the scene it touched is a click away.
 func _build_attempts(task_id: String) -> void:
 	var list = attempts.get(task_id)
-	if list == null or list.is_empty():
-		return
 	_details.add_child(_section("Earlier attempts"))
+	if list == null or list.is_empty():
+		_details.add_child(_muted("Nothing recorded yet."))
+		list = []
 	for attempt in list:
 		var outcome := Api._str(attempt.get("outcome"))
 		var box := PanelContainer.new()
@@ -704,6 +706,79 @@ func _build_attempts(task_id: String) -> void:
 				elif path != "":
 					body.add_child(_muted(path))
 		_details.add_child(box)
+	_build_attempt_form()
+
+
+## What you just tried, so it isn't tried again. The scene open in the editor
+## is attached, so the attempt links back to it.
+func _build_attempt_form() -> void:
+	var approach := LineEdit.new()
+	_p.style_input(approach)
+	approach.placeholder_text = "What did you try?"
+	approach.text = _edit.approach
+	approach.text_changed.connect(func(text): _edit.approach = text)
+	_details.add_child(approach)
+	var row := HBoxContainer.new()
+	_details.add_child(row)
+	var outcome := OptionButton.new()
+	_p.style_button(outcome)
+	for key in OUTCOMES:
+		outcome.add_item(key.capitalize())
+		outcome.set_item_metadata(outcome.item_count - 1, key)
+		if key == _edit.outcome:
+			outcome.select(outcome.item_count - 1)
+	outcome.item_selected.connect(func(index): _edit.outcome = str(outcome.get_item_metadata(index)))
+	row.add_child(outcome)
+	var reason := LineEdit.new()
+	_p.style_input(reason)
+	reason.placeholder_text = "Why it didn't work"
+	reason.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reason.text = _edit.reason
+	reason.text_changed.connect(func(text): _edit.reason = text)
+	row.add_child(reason)
+	var scene := _open_scene_path()
+	var record_row := HBoxContainer.new()
+	record_row.alignment = BoxContainer.ALIGNMENT_END
+	_details.add_child(record_row)
+	if scene != "":
+		record_row.add_child(_muted("with " + scene))
+	_toolbar_button(record_row, "Record attempt", record_attempt)
+
+
+func _open_scene_path() -> String:
+	if not Engine.is_editor_hint():
+		return ""
+	var root := EditorInterface.get_edited_scene_root()
+	return root.scene_file_path if root != null else ""
+
+
+func record_attempt() -> void:
+	var task = _find(selected_task_id)
+	var approach := str(_edit.approach).strip_edges()
+	if task == null or approach == "":
+		return
+	var task_id := selected_task_id
+	var fields := {"problem": str(task.get("title", "")), "approach": approach, "outcome": _edit.outcome}
+	if str(_edit.reason).strip_edges() != "":
+		fields.failure_reason = str(_edit.reason).strip_edges()
+	var scene := _open_scene_path()
+	if scene != "":
+		fields.files_changed = [scene]
+	_begin()
+	var result: Dictionary = await _api().record_attempt(task_id, fields)
+	_end()
+	if not result.ok:
+		# Keys from before attempts:write was added get 403 until the next login.
+		_show_error(("Log out and in again to record attempts (%s)." % result.error) if result.error.begins_with("403") else result.error)
+		return
+	_show_error("")
+	var list: Array = attempts.get(task_id, [])
+	list.push_front(result.data)
+	attempts[task_id] = list
+	if selected_task_id == task_id:
+		_edit.approach = ""
+		_edit.reason = ""
+		_schedule_rebuild()
 
 
 func _open_in_editor(path: String) -> void:
@@ -991,6 +1066,7 @@ func select_task(task_id: String) -> void:
 		"title": str(task.get("title", "")), "description": Api._str(task.get("description")),
 		"priority": Api._str(task.get("priority")) if Api._str(task.get("priority")) != "" else "medium",
 		"due": Api._str(task.get("due_date")).substr(0, 10), "subtask": "", "comment": "",
+		"approach": "", "outcome": "failed", "reason": "",
 	}
 	_schedule_rebuild()
 	load_comments(task_id)
