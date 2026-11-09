@@ -32,6 +32,14 @@ export type Comparison = {
 };
 
 const SHARED = {
+  selfHosted: {
+    topic: "Self-hosting",
+    guidon: "Docker Compose with plain PostgreSQL; every feature, no plan limits on your own install.",
+  },
+  source: {
+    topic: "Source code",
+    guidon: "Open source (AGPL-3.0).",
+  },
   deadEnds: {
     topic: "What was already tried",
     guidon: "Better: attempts are part of every task - approach, outcome and why it failed. An agent starting the task gets the dead ends with start_task, and is reminded to record its own.",
@@ -44,17 +52,9 @@ const SHARED = {
     topic: "Context in your repository",
     guidon: "Better: export the project as AGENTS.md - approved brief, verified facts, known dead ends - for Claude Code, Codex and Cursor.",
   },
-  selfHosted: {
-    topic: "Self-hosting",
-    guidon: "Docker Compose with plain PostgreSQL; every feature, no plan limits on your own install.",
-  },
   mcp: {
     topic: "AI agents (MCP)",
     guidon: "MCP server and REST API; works with Claude, ChatGPT, Cursor, Codex and any MCP client. You bring the AI - no AI credits.",
-  },
-  source: {
-    topic: "Source code",
-    guidon: "Open source (AGPL-3.0).",
   },
 } as const;
 type SharedTopic = keyof typeof SHARED;
@@ -374,7 +374,7 @@ export function compareIndexMarkdown(): string {
   return [
     "# Compare Guidon",
     "",
-    "How Guidon compares with the project tools teams use most. Each page says who should choose which - including where the other tool is better.",
+    "How Guidon compares with the project tools teams use most. Guidon is open source (AGPL-3.0) and built to run on your own server with every feature and no plan limits; Guidon Cloud is free to try. Each page says who should choose which - including where the other tool is better.",
     "",
     ...COMPARISONS.flatMap((c) => [`## [Guidon vs ${c.name}](/compare/${c.slug})`, "", c.summary, ""]),
   ].join("\n");
