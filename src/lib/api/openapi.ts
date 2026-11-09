@@ -417,7 +417,7 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
       },
       "/tasks/{taskId}/start": {
         parameters: [taskIdParam],
-        post: op("startTask", "Claim a task (moves it to in progress / AI working)", "tasks:status", ok("The started task", wrap("task", ref("Task"))), { tags: ["Tasks"] }),
+        post: op("startTask", "Claim a task (moves it to in progress / AI working)", "tasks:status", ok("The started task", wrap("task", ref("Task"))), { tags: ["Tasks"], description: "The response also carries `claim` (an agent's 2-hour lease) and, when earlier attempts on this task failed or were partial, `dead_ends`: the newest five, each with `approach`, `outcome`, `failure_reason` and `created_at`." }),
       },
       "/tasks/{taskId}/status": {
         parameters: [taskIdParam],
