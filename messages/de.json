@@ -1081,7 +1081,7 @@
     "connectAgentTitle": "Deinen KI-Agenten verbinden",
     "connectAgentDescription": "Claude Code, Codex, Cursor oder jede MCP-App nimmt Aufgaben von diesem Board, liest ihren Kontext (Entscheidungen, Gedächtnis, frühere Versuche) und gibt sie zur Prüfung zurück. Wähle deine App und füge die Einrichtung unten ein.",
     "importTitle": "Aufgaben importieren",
-    "importDescription": "Übernimm Aufgaben aus Jira, Trello, GitHub, Linear, Asana, Notion oder einer Tabelle - als CSV- oder JSON-Export. Sie werden diesem Board hinzugefügt; Bestehendes bleibt unverändert.",
+    "importDescription": "Übernimm Aufgaben aus Jira, Plane, Trello, GitHub, Linear, Asana, Notion oder einer Tabelle - als CSV- oder JSON-Export. Sie werden diesem Board hinzugefügt; Bestehendes bleibt unverändert.",
     "importChooseFile": "CSV- oder JSON-Datei wählen oder hier ablegen",
     "importPastePlaceholder": "…oder CSV / JSON hier einfügen",
     "importPasteAria": "Eingefügte Importdaten",

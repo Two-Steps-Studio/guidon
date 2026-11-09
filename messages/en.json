@@ -1092,7 +1092,7 @@
     "connectAgentTitle": "Connect your AI agent",
     "connectAgentDescription": "Claude Code, Codex, Cursor or any MCP app takes tasks from this board, reads their context (decisions, memory, earlier attempts) and hands them back for review. Pick your app and paste the setup below.",
     "importTitle": "Import tasks",
-    "importDescription": "Bring tasks over from Jira, Trello, GitHub, Linear, Asana, Notion or a spreadsheet - a CSV or JSON export. They're added to this board; nothing existing changes.",
+    "importDescription": "Bring tasks over from Jira, Plane, Trello, GitHub, Linear, Asana, Notion or a spreadsheet - a CSV or JSON export. They're added to this board; nothing existing changes.",
     "importChooseFile": "Choose a CSV or JSON file, or drop it here",
     "importPastePlaceholder": "…or paste CSV / JSON here",
     "importPasteAria": "Pasted import data",

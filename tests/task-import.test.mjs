@@ -128,5 +128,21 @@ check("garbage date dropped", normalizeDate("soon") === null);
   check("every due date kept", tasks.every((task, i) => task.dueDate === `2026-12-${String(((i + 1) % 28) + 1).padStart(2, "0")}`));
 }
 
+{
+  // Plane's CSV export: Name/State/Priority/Assignee/Labels/Target Date, "None" for an unset priority.
+  const plane = `ID,Project,Name,Description,State,Priority,Assignee,Labels,Cycle Name,Module Name,Start Date,Target Date,Created At
+GAME-12,Game,Player jitter on slopes,"Happens at 30 fps",In Progress,Urgent,ana@studio.dev,"bug, physics",Sprint 4,Movement,2026-10-01,2026-11-20,2026-09-30 10:00:00
+GAME-13,Game,Save system,,Backlog,None,,feature,,,,,2026-09-30 11:00:00`;
+  const parsed = parseTaskImport(plane, "plane.csv");
+  check("Plane CSV: both rows, no warnings", parsed.tasks.length === 2 && parsed.warnings.length === 0, JSON.stringify(parsed.warnings));
+  const { tasks, unmatched } = resolveImportedTasks(parsed.tasks, {
+    columns: [{ status: "backlog", label: "Backlog" }, { status: "in_progress", label: "In Progress" }],
+    priorities: [{ key: "critical", label: "Critical" }, { key: "medium", label: "Medium" }],
+    members: [{ id: "u1", email: "ana@studio.dev", full_name: "Ana" }],
+  });
+  check("Plane CSV: state, Urgent, assignee, labels and target date map", tasks[0].status === "in_progress" && tasks[0].priority === "critical" && tasks[0].assigneeId === "u1" && tasks[0].tags.join() === "bug,physics" && tasks[0].dueDate === "2026-11-20", JSON.stringify(tasks[0]));
+  check("Plane CSV: priority None is the default, not a mismatch", tasks[1].priority === "medium" && unmatched.priorities.length === 0, JSON.stringify(unmatched));
+}
+
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

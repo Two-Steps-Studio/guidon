@@ -7,7 +7,7 @@
  *
  * Accepted:
  * - CSV/TSV with a header row (comma, semicolon or tab; RFC 4180 quoting),
- *   with the column names Jira, GitHub, Linear, Asana, Trello (CSV), Notion
+ *   with the column names Jira, GitHub, Linear, Plane, Asana, Trello (CSV), Notion
  *   and spreadsheets commonly use - see HEADER_ALIASES.
  * - JSON: an array of task objects, `{ "tasks": [...] }`, or a Trello board
  *   export (`cards` + `lists` + `labels`).
@@ -300,6 +300,9 @@ const PRIORITY_SYNONYMS: Record<string, string> = {
   p1: "high",
   major: "high",
   normal: "medium",
+  // Plane and Linear export an unset priority as "None"/"No priority": the board default, not a mismatch.
+  none: "medium",
+  "no priority": "medium",
   p2: "medium",
   minor: "low",
   lowest: "low",
