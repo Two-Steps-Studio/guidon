@@ -183,6 +183,12 @@ func list_attempts(task_id: String) -> Dictionary:
 	return _field(await _send(HTTPClient.METHOD_GET, "/api/v1/tasks/%s/attempts" % task_id), "attempts", [])
 
 
+## Records what was tried: `fields` has problem, approach, outcome
+## (failed/partial/succeeded) and optional failure_reason, files_changed.
+func record_attempt(task_id: String, fields: Dictionary) -> Dictionary:
+	return _field(await _send(HTTPClient.METHOD_POST, "/api/v1/tasks/%s/attempts" % task_id, fields), "attempt", null)
+
+
 ## The project as an AGENTS.md file (Markdown text in `data`): brief,
 ## verified facts and known dead ends, for agents working in this folder.
 func agents_md(project_id: String) -> Dictionary:

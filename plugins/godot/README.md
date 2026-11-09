@@ -48,6 +48,10 @@ using the same public API (`/api/v1`).
   project); a `res://` file an attempt touched is a link that opens the scene
   (or shows the file) in the editor, so a dead end is one click from where it
   happened.
+- **Record attempt** under that list: what you tried, whether it failed,
+  partly worked or succeeded, and why. The scene open in the editor is
+  attached to it, so the next person (or agent) sees which scene the dead end
+  was in. Keys from before this feature need one log out and in.
 - **Update AGENTS.md** (toolbar) writes the project's approved brief, verified
   facts and known dead ends to `res://AGENTS.md`, which Claude Code, Codex and
   Cursor read when they work in this folder. The file is generated - edit the

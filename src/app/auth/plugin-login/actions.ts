@@ -9,7 +9,8 @@ import { generateApiKey, hashApiKey, keyPrefix } from "@/lib/api/api-keys";
 import type { ApiKeyScope } from "@/lib/api/scopes";
 import { isSafeLoopbackRedirect, pluginKeyName, resolvePluginClient } from "./loopback";
 
-const PLUGIN_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:write", "tasks:status", "comments:write"];
+// attempts:write: plugins record what was tried on a task (Godot: from the editor, with the open scene).
+const PLUGIN_KEY_SCOPES: ApiKeyScope[] = ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"];
 
 /**
  * The "Authorize" button on /auth/plugin-login. Runs as the already
