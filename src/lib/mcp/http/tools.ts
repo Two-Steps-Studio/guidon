@@ -295,7 +295,8 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     {
       description:
         "Move a task to a board column. When the work is finished, set `review` so a human can check it - " +
-        "prefer this over complete_task. The project may restrict which status changes AI keys are allowed to make.",
+        "prefer this over complete_task. The project may restrict which status changes AI keys are allowed to make. " +
+        "If the result has a `reminder`, you started this task but recorded no attempt - call record_attempt.",
       inputSchema: { task_id: taskId, ...setStatusFields },
       annotations: { title: "Set task status", ...WRITE, idempotentHint: true },
     },
