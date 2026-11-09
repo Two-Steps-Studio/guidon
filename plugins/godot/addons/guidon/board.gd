@@ -18,6 +18,7 @@ const Moodboard := preload("res://addons/guidon/moodboard.gd")
 
 const COLUMN_WIDTH := 272  # the site's w-72 column
 const AUTO_REFRESH_SECONDS := 30.0
+const AGENTS_MD_PATH := "res://AGENTS.md"
 
 # --- state
 var projects: Array = []
@@ -25,6 +26,7 @@ var tasks: Array = []
 var columns: Array = Api.default_columns()
 var priorities: Array = Api.default_priorities()  # most important first
 var comments := {}  # task_id -> Array
+var attempts := {}  # task_id -> Array, newest first
 var current_project_id := ""
 var selected_task_id := ""
 var adding_in_status := ""
@@ -123,6 +125,9 @@ func _build() -> void:
 	_reports_button = _toolbar_button(toolbar, "Reports", _toggle_reports)
 	_reports_button.tooltip_text = "Show only bug reports from your game and website, and set up in-game reports"
 	_logged_in_controls.append(_reports_button)
+	var agents_button := _toolbar_button(toolbar, "Update AGENTS.md", update_agents_md)
+	agents_button.tooltip_text = "Write the project's brief, verified facts and known dead ends to res://AGENTS.md, where Claude Code, Codex and Cursor read them"
+	_logged_in_controls.append(agents_button)
 	_logged_in_controls.append(_toolbar_button(toolbar, "Open in Browser", func():
 		if current_project_id != "":
 			OS.shell_open("%s/projects/%s/work" % [Settings.base_url().trim_suffix("/"), current_project_id])))
@@ -246,6 +251,7 @@ func _api() -> RefCounted:
 
 func _begin() -> void:
 	busy += 1
+	_busy_label.text = "Loading…"
 	_actions += 1
 	_update_chrome()
 
@@ -636,6 +642,8 @@ func _rebuild_details() -> void:
 				create_task(text.strip_edges(), "", task_id))
 		_details.add_child(new_sub)
 
+	_build_attempts(task_id)
+
 	_details.add_child(_section("Comments"))
 	var task_comments = comments.get(task_id)
 	if task_comments == null:
@@ -665,6 +673,47 @@ func _rebuild_details() -> void:
 	post_row.alignment = BoxContainer.ALIGNMENT_END
 	_details.add_child(post_row)
 	_toolbar_button(post_row, "Post", post_comment, "primary")
+
+
+## What was already tried, newest first. A failed or partial one is a dead
+## end; its res:// files open in the editor, so the scene it touched is a click away.
+func _build_attempts(task_id: String) -> void:
+	var list = attempts.get(task_id)
+	if list == null or list.is_empty():
+		return
+	_details.add_child(_section("Earlier attempts"))
+	for attempt in list:
+		var outcome := Api._str(attempt.get("outcome"))
+		var box := PanelContainer.new()
+		box.add_theme_stylebox_override("panel", _p.box("column", "danger" if outcome == "failed" else "border", 8, 10))
+		var body := VBoxContainer.new()
+		box.add_child(body)
+		body.add_child(_muted("%s - %s" % [outcome.to_upper(), Api._str(attempt.get("created_at")).substr(0, 10)]))
+		var approach: Label = _p.label(Api._str(attempt.get("approach")))
+		approach.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		body.add_child(approach)
+		var reason := Api._str(attempt.get("failure_reason"))
+		if reason != "":
+			body.add_child(_muted("Why: " + reason))
+		var files = attempt.get("files_changed")
+		if files is Array:
+			for file in files:
+				var path := str(file)
+				if path.begins_with("res://"):
+					body.add_child(_link(path, func(): _open_in_editor(path)))
+				elif path != "":
+					body.add_child(_muted(path))
+		_details.add_child(box)
+
+
+func _open_in_editor(path: String) -> void:
+	if not Engine.is_editor_hint() or not FileAccess.file_exists(path):
+		_show_error("%s isn't in this project." % path)
+		return
+	if path.get_extension() in ["tscn", "scn"]:
+		EditorInterface.open_scene_from_path(path)
+	else:
+		EditorInterface.get_file_system_dock().navigate_to_path(path)
 
 
 ## A small round swatch for OptionButton items (the priority picker).
@@ -742,6 +791,7 @@ func _select_project(project_id: String) -> void:
 	columns = Api.default_columns()
 	priorities = Api.default_priorities()
 	comments = {}
+	attempts = {}
 	selected_task_id = ""
 	adding_in_status = ""
 	_schedule_rebuild()
@@ -909,6 +959,7 @@ func refresh_tasks() -> void:
 	_schedule_rebuild()
 	if selected_task_id != "":
 		load_comments(selected_task_id)
+		load_attempts(selected_task_id)
 
 
 func load_comments(task_id: String) -> void:
@@ -919,6 +970,14 @@ func load_comments(task_id: String) -> void:
 		_show_error(result.error)
 		return
 	comments[task_id] = result.data
+	if selected_task_id == task_id:
+		_schedule_rebuild()
+
+
+## Quietly: an older server without attempts just shows none.
+func load_attempts(task_id: String) -> void:
+	var result: Dictionary = await _api().list_attempts(task_id)
+	attempts[task_id] = result.data if result.ok else []
 	if selected_task_id == task_id:
 		_schedule_rebuild()
 
@@ -935,6 +994,7 @@ func select_task(task_id: String) -> void:
 	}
 	_schedule_rebuild()
 	load_comments(task_id)
+	load_attempts(task_id)
 
 
 ## Optimistic, like the other plugins: move now, revert if the server refuses.
@@ -1052,6 +1112,33 @@ func post_comment() -> void:
 		_schedule_rebuild()
 
 
+## Overwrites res://AGENTS.md - the file says it's generated and where to edit it.
+func update_agents_md() -> void:
+	if current_project_id == "":
+		return
+	_begin()
+	var result: Dictionary = await _api().agents_md(current_project_id)
+	_end()
+	if not result.ok:
+		_show_error("AGENTS.md: " + result.error)
+		return
+	var file := FileAccess.open(AGENTS_MD_PATH, FileAccess.WRITE)
+	if file == null:
+		_show_error("Can't write %s (%s)." % [AGENTS_MD_PATH, error_string(FileAccess.get_open_error())])
+		return
+	file.store_string(str(result.data))
+	file.close()
+	_show_error("")
+	if Engine.is_editor_hint():
+		EditorInterface.get_resource_filesystem().scan()
+	_busy_label.text = "AGENTS.md updated"
+	_busy_label.visible = true
+	get_tree().create_timer(3.0).timeout.connect(func():
+		if busy == 0:
+			_busy_label.visible = false
+			_busy_label.text = "Loading…")
+
+
 ## `open_url` is for the tests; the editor opens the system browser.
 func log_in(open_url: Callable = Callable()) -> void:
 	_show_error("")
@@ -1079,6 +1166,7 @@ func log_out() -> void:
 	projects = []
 	tasks = []
 	comments = {}
+	attempts = {}
 	selected_task_id = ""
 	adding_in_status = ""
 	_project_picker.clear()
