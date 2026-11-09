@@ -458,6 +458,10 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* viewport-fit=cover (layout.tsx): keep content out of the notch on a
+     phone held sideways. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* Restrained, product-grade scrollbars for the dense board/list views. */
@@ -479,6 +483,15 @@ body {
   h3 {
     letter-spacing: -0.02em;
     line-height: 1.15;
+    /* Even line lengths in headings instead of one word on the last line. */
+    text-wrap: balance;
+  }
+
+  /* No single-word last lines (widows) in running text. */
+  p,
+  li,
+  blockquote {
+    text-wrap: pretty;
   }
 
   h4,
