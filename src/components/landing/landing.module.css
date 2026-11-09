@@ -126,7 +126,7 @@
 /* SiteFooter outside the landing page: the variables and type .landing gives it there. */
 .siteFooter { --landing-width: 70rem; --landing-gutter: clamp(1.25rem, 3vw, 2rem); color: var(--color-text); font-family: var(--font-geist-sans), sans-serif; line-height: 1.65; }
 .siteFooter :is(a,button):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
-.footerGrid { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr; gap: 3rem; }
+.footerGrid { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 2.5rem; }
 .footerBrand p { margin: 1rem 0; max-width: 16rem; color: var(--color-text-muted); font-size: 13px; }
 .footer h2 { margin-bottom: 1rem; font-size: 13px; font-weight: 600; }
 .footer li a { display: inline-flex; align-items: center; min-height: 32px; color: var(--color-text-secondary); font-size: 13px; }
@@ -155,7 +155,7 @@
   .benefits > div + div { padding-left: 1.5rem; }
   .featurePrimary { grid-template-columns: 1fr; }
   .featurePrimary .featureImage { margin: 0 2rem; border: 1px solid var(--color-border); border-bottom: 0; border-radius: 8px 8px 0 0; }
-  .footerGrid { grid-template-columns: 1.5fr 1fr 1fr; gap: 2rem; }
+  .footerGrid { grid-template-columns: repeat(4, 1fr); gap: 2rem; }
   .footerBrand { grid-column: 1 / -1; }
 }
 @media (max-width: 699px) {
