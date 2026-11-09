@@ -59,9 +59,9 @@ const SHARED = {
 } as const;
 type SharedTopic = keyof typeof SHARED;
 
-const NO_ATTEMPTS = "No built-in record of failed attempts; it lives in comments, if anywhere.";
-const NO_VERIFIED = "No separate status for verified versus AI-written knowledge.";
-const NO_AGENTS_MD = "No AGENTS.md export.";
+const NO_ATTEMPTS = `Not a built-in feature in their docs (as of ${CHECKED}); attempts end up in comments, if anywhere.`;
+const NO_VERIFIED = `No separate verified-vs-AI status in their docs (as of ${CHECKED}).`;
+const NO_AGENTS_MD = `No AGENTS.md export in their docs (as of ${CHECKED}).`;
 const CLOUD_ONLY = "Cloud only.";
 const CLOSED = "Closed source.";
 
@@ -232,13 +232,13 @@ export const COMPARISONS: Comparison[] = [
     slug: "trello",
     name: "Trello",
     angle: "a simple board that keeps the why",
-    summary: "Trello is the simplest Kanban board. Guidon stays simple but adds the reasoning, dead ends and AI agents to every card.",
+    summary: "Trello is the simplest Kanban board. Guidon stays simple but adds the reasoning and the dead ends to every card.",
     url: "https://trello.com",
     shortAnswer:
-      "Trello made Kanban simple. Guidon keeps that simplicity and adds what a growing project needs: decisions and attempts on each task, verified knowledge, and AI agents that can read and update the board.",
-    chooseGuidon: ["Your Trello cards keep losing their context", "You want AI agents to work on your board", "You want to self-host"],
+      "Trello made Kanban simple. Guidon keeps that simplicity and adds what a growing project needs: decisions and attempts on each task, and knowledge a person verified - which AI agents get too, before they start.",
+    chooseGuidon: ["Your Trello cards keep losing their context", "You want AI agents to see what was already tried before they start", "You want to self-host"],
     chooseThem: ["You only need the simplest possible board", "You rely on Power-Ups", "Your team already knows Trello"],
-    overrides: { mcp: { them: "No official MCP server for Trello (community ones exist).", better: "guidon" } },
+    overrides: { mcp: { them: "Official Trello MCP server (hosted by Atlassian).", better: null } },
     rows: [{ topic: "Simplicity", guidon: "A board first, with more one click away.", them: "Better: nothing simpler to learn.", better: "them" }],
     switching: "Export your Trello board as JSON (Menu → Print, export and share → Export as JSON) and use **Import** on a Guidon board: cards, lists, labels and due dates come over, with a preview first.",
     faq: [{ q: "Does Guidon import Trello's JSON export?", a: "Yes - the board export's cards, lists and labels are read directly, archived cards skipped." }],
@@ -286,9 +286,9 @@ export const COMPARISONS: Comparison[] = [
       "Codecks is made for game development, with decks, Discord integration and public roadmaps. Guidon is for game developers who build with AI agents: tasks remember what was tried (physics, shaders, builds), and the Godot plugin shows those dead ends in the editor.",
     chooseGuidon: ["You use Claude Code or Cursor on your game", "You want failed attempts linked to the scenes they touched", "You want to self-host"],
     chooseThem: ["You want its card-and-deck style", "You run a public roadmap with community voting", "Your community lives on Discord and you want that integration"],
-    overrides: { mcp: { them: "Official MCP server announced in October 2026.", better: null } },
+    overrides: { mcp: { them: `No official MCP server listed on their site (as of ${CHECKED}); community servers exist.`, better: null } },
     rows: [
-      { topic: "Game engines", guidon: "Better: plugins for Godot, Unity, Unreal and Blender; Godot shows dead ends and opens their scenes.", them: "Not engine plugins.", better: "guidon" },
+      { topic: "Game engines", guidon: "Better: plugins for Godot, Unity, Unreal and Blender; Godot shows dead ends and opens their scenes.", them: `No engine plugins listed on their site (as of ${CHECKED}).`, better: "guidon" },
       { topic: "Community features", guidon: "In-game bug reports from players.", them: "Better: public roadmaps and Discord integration.", better: "them" },
     ],
     switching: IMPORT("Codecks"),
@@ -304,7 +304,7 @@ export const COMPARISONS: Comparison[] = [
       "HacknPlan links tasks to a living game design document. Guidon is for developers who build with AI agents: an official MCP server, dead ends with each task, and engine plugins that bring them into the editor.",
     chooseGuidon: ["You want AI agents with an official MCP server", "You want dead ends linked to scenes in Godot", "You want to self-host"],
     chooseThem: ["You plan around a game design model (GDD)", "Your team already uses it for production"],
-    overrides: { mcp: { them: "No official MCP server (community ones exist).", better: "guidon" } },
+    overrides: { mcp: { them: `No official MCP server listed (as of ${CHECKED}); community servers wrap its API.`, better: "guidon" } },
     rows: [{ topic: "Game design document", guidon: "Decisions and knowledge per project.", them: "Better: a game design model linked to tasks.", better: "them" }],
     switching: IMPORT("HacknPlan"),
     faq: [{ q: "Can I keep my game design document?", a: "Keep it where it is and link it as a knowledge source; Guidon's decisions and verified facts sit next to the tasks." }],
