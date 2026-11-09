@@ -1092,7 +1092,7 @@
     "connectAgentTitle": "Podłącz swojego agenta AI",
     "connectAgentDescription": "Claude Code, Codex, Cursor albo dowolna aplikacja MCP bierze zadania z tej tablicy, czyta ich kontekst (decyzje, pamięć, wcześniejsze próby) i oddaje je do review. Wybierz aplikację i wklej konfigurację poniżej.",
     "importTitle": "Import zadań",
-    "importDescription": "Przenieś zadania z Jiry, Trello, GitHuba, Lineara, Asany, Notion albo arkusza - eksport CSV lub JSON. Zostaną dodane do tej tablicy; nic istniejącego się nie zmieni.",
+    "importDescription": "Przenieś zadania z Jiry, Plane, Trello, GitHuba, Lineara, Asany, Notion albo arkusza - eksport CSV lub JSON. Zostaną dodane do tej tablicy; nic istniejącego się nie zmieni.",
     "importChooseFile": "Wybierz plik CSV lub JSON albo upuść go tutaj",
     "importPastePlaceholder": "…albo wklej tu CSV / JSON",
     "importPasteAria": "Wklejone dane do importu",

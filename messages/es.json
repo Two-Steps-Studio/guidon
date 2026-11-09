@@ -1081,7 +1081,7 @@
     "connectAgentTitle": "Conecta tu agente de IA",
     "connectAgentDescription": "Claude Code, Codex, Cursor o cualquier app MCP toma tareas de este tablero, lee su contexto (decisiones, memoria, intentos anteriores) y las devuelve para revisión. Elige tu app y pega la configuración de abajo.",
     "importTitle": "Importar tareas",
-    "importDescription": "Trae tareas de Jira, Trello, GitHub, Linear, Asana, Notion o una hoja de cálculo - una exportación CSV o JSON. Se añaden a este tablero; no cambia nada existente.",
+    "importDescription": "Trae tareas de Jira, Plane, Trello, GitHub, Linear, Asana, Notion o una hoja de cálculo - una exportación CSV o JSON. Se añaden a este tablero; no cambia nada existente.",
     "importChooseFile": "Elige un archivo CSV o JSON, o suéltalo aquí",
     "importPastePlaceholder": "…o pega CSV / JSON aquí",
     "importPasteAria": "Datos de importación pegados",
