@@ -97,6 +97,18 @@ const PAGES: Record<string, string> = {
   sign_up: "/auth/signup",
 };
 
+/** Markdown twins the read_guidon_doc tool can read (src/app/*.md). */
+const DOC_PAGES: Record<string, string> = {
+  home: "/index.md",
+  developers: "/developers.md",
+  auth: "/auth.md",
+  pricing: "/pricing.md",
+  compare: "/compare.md",
+  about: "/about.md",
+  contact: "/contact.md",
+  sandbox: "/sandbox.md",
+};
+
 /** Tools available on every page: search the docs, open a page. */
 export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string; fullName?: string } | null }) {
   const router = useRouter();
@@ -148,6 +160,38 @@ export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string
             const data = (await response.json()) as { results?: { name: string; url: string; description: string }[]; error?: { message: string } };
             if (!data.results?.length) return toolResult(data.error?.message ?? "No matching documentation.");
             return toolResult(data.results.map((r) => `${r.name}\n${r.url}\n${r.description}`).join("\n\n"), data.results);
+          }),
+        },
+        options
+      )
+      .catch(() => undefined);
+    context
+      .registerTool(
+        {
+          name: "read_guidon_doc",
+          title: "Read a Guidon docs page",
+          description:
+            "Use this after search_guidon_docs, or when you know the page, to read one whole page of Guidon's documentation. " +
+            "Returns the page as Markdown: the developer guide (API, MCP), sign-in and tokens, pricing, comparisons, about, contact or the sandbox.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              page: {
+                type: "string",
+                description: "Which page to read, e.g. \"developers\" for the API and MCP guide.",
+                // Same names as DOC_PAGES above.
+                enum: ["home", "developers", "auth", "pricing", "compare", "about", "contact", "sandbox"],
+              },
+            },
+            required: ["page"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: guarded(async ({ page }) => {
+            const path = DOC_PAGES[String(page)];
+            if (!path) return toolResult(`Unknown page. Use one of: ${Object.keys(DOC_PAGES).join(", ")}.`);
+            const response = await fetch(path, { headers: { Accept: "text/markdown" } });
+            if (!response.ok) return { ...toolResult(`Couldn't read ${path} (HTTP ${response.status}).`), isError: true };
+            return toolResult(await response.text());
           }),
         },
         options
