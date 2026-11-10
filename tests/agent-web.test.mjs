@@ -18,8 +18,8 @@ import {
   MARKDOWN_TWINS,
   SIGNED_IN_SECTIONS,
   homepageMarkdown,
-  isAiAgentUserAgent,
   isSignedInSection,
+  markdownTwinRoute,
   notFoundMarkdown,
   prefersMarkdown,
   pricingMarkdown,
@@ -181,13 +181,22 @@ check("opens with a --- block", fm.startsWith("---\ntitle: "));
 check("values are quoted safely", fm.includes('title: "A \\"quoted\\" title"'));
 check("markdown follows the block, starting with a heading", fm.split("---\n").at(-1).startsWith("# Title"));
 
-console.log("\n  isAiAgentUserAgent");
-check("ClaudeBot", isAiAgentUserAgent("Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)"));
-check("GPTBot", isAiAgentUserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)"));
-check("ChatGPT-User", isAiAgentUserAgent("Mozilla/5.0 (compatible; ChatGPT-User/1.0; +https://openai.com/bot)"));
-check("not Googlebot (indexes the HTML)", !isAiAgentUserAgent("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"));
-check("not a browser", !isAiAgentUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36"));
-check("not empty", !isAiAgentUserAgent(null));
+console.log("\n  markdownTwinRoute: Accept decides, never the User-Agent");
+const BROWSER_ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+check("a browser (or ChatGPT/Claude asking for HTML) gets the HTML page", markdownTwinRoute("/", BROWSER_ACCEPT, null) === null);
+check("Accept: */* gets HTML", markdownTwinRoute("/", "*/*", null) === null);
+check("no Accept gets HTML", markdownTwinRoute("/", null, null) === null);
+const asked = markdownTwinRoute("/", "text/markdown", null);
+check("Accept: text/markdown gets the twin, canonical is the page", asked?.serve === "/index.md" && asked.canonical === "/");
+check("?mode=agent gets the twin", markdownTwinRoute("/about", BROWSER_ACCEPT, "agent")?.serve === "/about.md");
+check("a comparison page negotiates too", markdownTwinRoute("/compare/plane", "text/markdown", null)?.serve === "/compare/plane/md");
+const md = markdownTwinRoute("/compare/plane.md", BROWSER_ACCEPT, null);
+check("/compare/<tool>.md always serves Markdown, canonical is the page", md?.serve === "/compare/plane/md" && md.canonical === "/compare/plane");
+const direct = markdownTwinRoute("/index.md", BROWSER_ACCEPT, null);
+check("a twin URL renders itself and points at its page", direct?.serve === null && direct.canonical === "/");
+check("pages without a twin are left alone", markdownTwinRoute("/dashboard", "text/markdown", null) === null);
+const proxySourceForUa = readFileSync(join(root, "src/proxy.ts"), "utf8");
+check("the proxy never chooses Markdown by User-Agent", !/user-agent/i.test(proxySourceForUa.split("function agentResponse")[1]?.split("\nfunction ")[0] ?? ""));
 
 console.log("\n  MARKDOWN_TWINS");
 for (const [page, twin] of Object.entries(MARKDOWN_TWINS)) {
