@@ -64,7 +64,7 @@ curl -s -X PATCH ${siteUrl}/api/v1/tasks/<taskId>/status \\
 
 ## MCP server
 
-\`${siteUrl}/api/mcp\` speaks MCP over Streamable HTTP with the same bearer key. The easiest setup is [Profile → Integrations → Connect an AI app](${siteUrl}/profile): pick Claude Code, Claude Desktop, Cursor, VS Code, Codex CLI, Gemini CLI or another app, and Guidon creates a key with the right scopes and shows that app's exact configuration.
+\`${siteUrl}/api/mcp\` speaks MCP over Streamable HTTP with the same bearer key. It is listed in the official MCP Registry as [\`com.useguidon/guidon\`](https://registry.modelcontextprotocol.io/v0/servers?search=com.useguidon/guidon). The easiest setup is [Profile → Integrations → Connect an AI app](${siteUrl}/profile): pick Claude Code, Claude Desktop, Cursor, VS Code, Codex CLI, Gemini CLI or another app, and Guidon creates a key with the right scopes and shows that app's exact configuration.
 
 Claude Code, by hand:
 
