@@ -17,6 +17,7 @@ import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createSource, type SourceFormState } from "./actions";
 import { SourceFormFields } from "./source-form-fields";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
+import { projectColorFill } from "@/lib/brand-colors";
 
 const initialState: SourceFormState = { error: null };
 
@@ -38,7 +39,7 @@ export function CreateSourceDialog({ projectId, trigger, projectColor }: { proje
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button size="sm" style={projectColor ? { backgroundColor: projectColor } : undefined}>
+          <Button size="sm" style={projectColorFill(projectColor)}>
             <Plus className="h-4 w-4" />
             {t("newEntry")}
           </Button>

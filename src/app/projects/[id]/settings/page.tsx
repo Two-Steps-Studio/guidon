@@ -119,10 +119,10 @@ export default async function ProjectSettingsPage({
       </div>
 
       <nav aria-label={t("title")} className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-primary">
-        <a href="#project-general" className="underline underline-offset-2">{t("general")}</a>
-        <a href="#project-modules" className="underline underline-offset-2">{t("modulesTitle")}</a>
-        <a href="#project-columns" className="underline underline-offset-2">{t("boardColumnsTitle")}</a>
-        <a href="#project-export" className="underline underline-offset-2">{t("exportProjectTitle")}</a>
+        <a href="#project-general" className="touch-target inline-flex items-center underline underline-offset-2">{t("general")}</a>
+        <a href="#project-modules" className="touch-target inline-flex items-center underline underline-offset-2">{t("modulesTitle")}</a>
+        <a href="#project-columns" className="touch-target inline-flex items-center underline underline-offset-2">{t("boardColumnsTitle")}</a>
+        <a href="#project-export" className="touch-target inline-flex items-center underline underline-offset-2">{t("exportProjectTitle")}</a>
       </nav>
       <div id="project-general" className="scroll-mt-24"><SettingsForm
         project={project}

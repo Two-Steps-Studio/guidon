@@ -40,7 +40,7 @@ export default async function MobileLoginPage({
       <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>{t("invalidTitle")}</CardTitle>
+            <CardTitle as="h1">{t("invalidTitle")}</CardTitle>
             <CardDescription>{t("invalidDescription")}</CardDescription>
           </CardHeader>
         </Card>
@@ -60,7 +60,7 @@ export default async function MobileLoginPage({
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle as="h1" className="flex items-center gap-2">
             <Smartphone className="h-5 w-5" />
             {t("title")}
           </CardTitle>

@@ -28,6 +28,7 @@ import { GithubRepoPanel } from "@/components/files/github-repo-panel";
 import type { ProjectFile } from "@/types/api";
 import type { ProjectGithubRepoInfo } from "@/lib/data/github-connection";
 import { deleteFile, getDownloadUrl, uploadFile, type FileActionState } from "./actions";
+import { projectColorFill } from "@/lib/brand-colors";
 
 const FILE_TYPE_ICONS: Record<string, LucideIcon> = {
   "application/pdf": FileText,
@@ -132,7 +133,7 @@ export function FilesBrowser({
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              style={projectColor ? { backgroundColor: projectColor } : undefined}
+              style={projectColorFill(projectColor)}
             >
               {uploading ? (
                 <>
@@ -193,7 +194,7 @@ export function FilesBrowser({
             canWrite ? (
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                style={projectColor ? { backgroundColor: projectColor } : undefined}
+                style={projectColorFill(projectColor)}
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {t("uploadFile")}

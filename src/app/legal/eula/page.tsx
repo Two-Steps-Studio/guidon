@@ -23,9 +23,9 @@ export default function EulaPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/">
-            <Image src="/assets/guidon-wordmark.png" alt="Guidon" width={110} height={41} priority />
+            <Image src="/assets/guidon-wordmark.png" alt="Guidon" width={110} height={41} priority className="dark:invert" />
           </Link>
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/" className="touch-target inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
             Back to home
           </Link>
         </div>

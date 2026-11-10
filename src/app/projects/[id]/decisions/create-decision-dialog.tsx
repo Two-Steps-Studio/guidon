@@ -18,6 +18,7 @@ import { createDecision, type DecisionFormState } from "./actions";
 import { DecisionFormFields } from "./decision-form-fields";
 import type { ContextEntityType, Decision } from "@/types/context";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
+import { projectColorFill } from "@/lib/brand-colors";
 
 const initialState: DecisionFormState = { error: null };
 
@@ -64,7 +65,7 @@ export function CreateDecisionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button style={projectColor ? { backgroundColor: projectColor } : undefined}>
+          <Button style={projectColorFill(projectColor)}>
             <Plus className="h-4 w-4 mr-2" />
             {t("newDecision")}
           </Button>

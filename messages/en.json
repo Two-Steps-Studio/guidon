@@ -226,7 +226,8 @@
     "funnel": "Funnel",
     "moduleReview": "Module review",
     "agentBrief": "Agent brief",
-    "approvals": "Approvals"
+    "approvals": "Approvals",
+    "sidebarLabel": "Main navigation"
   },
   "commandPalette": {
     "noResultsHint": "Try a full task title or task ID, or check the selected project.",
@@ -3146,6 +3147,8 @@
     "proposalsCreate": "{count, plural, one {Create # task} other {Create # tasks}}",
     "proposalsCreated": "{count, plural, one {Created # task} other {Created # tasks}}",
     "proposalsPartlyCreated": "Created {created}, {failed} failed",
-    "proposalsFailed": "Could not create the tasks"
+    "proposalsFailed": "Could not create the tasks",
+    "stickyNode": "Sticky note",
+    "shapeNode": "Shape"
   }
 }

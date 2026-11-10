@@ -125,7 +125,7 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">{t("mostPopular")}</Badge>
                 )}
                 <CardHeader>
-                  <CardTitle>{paidShown ? plan.name : t("cloudName")}</CardTitle>
+                  <CardTitle as="h3">{paidShown ? plan.name : t("cloudName")}</CardTitle>
                   <div data-price className="font-semibold">
                     {formatPrice(price, t)}
                     {price.cents != null && price.cents > 0 && (
@@ -170,7 +170,7 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
           <Card className={`${styles.priceCard} relative flex flex-col border-primary`}>
             <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">{t("selfHostedBadge")}</Badge>
             <CardHeader>
-              <CardTitle>{t("selfHostedName")}</CardTitle>
+              <CardTitle as="h3">{t("selfHostedName")}</CardTitle>
               <div data-price className="font-semibold">{t("free")}</div>
             </CardHeader>
             <CardContent className="flex flex-1 flex-col">

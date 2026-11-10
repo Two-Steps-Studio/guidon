@@ -226,7 +226,8 @@
     "funnel": "Lejek",
     "moduleReview": "Przegląd modułów",
     "agentBrief": "Brief dla agentów",
-    "approvals": "Akceptacje"
+    "approvals": "Akceptacje",
+    "sidebarLabel": "Nawigacja główna"
   },
   "commandPalette": {
     "noResultsHint": "Spróbuj pełnego tytułu lub ID zadania albo sprawdź wybrany projekt.",
@@ -3146,6 +3147,8 @@
     "proposalsCreate": "{count, plural, one {Utwórz # zadanie} few {Utwórz # zadania} many {Utwórz # zadań} other {Utwórz # zadania}}",
     "proposalsCreated": "{count, plural, one {Utworzono # zadanie} few {Utworzono # zadania} many {Utworzono # zadań} other {Utworzono # zadania}}",
     "proposalsPartlyCreated": "Utworzono {created}, nie udało się {failed}",
-    "proposalsFailed": "Nie udało się utworzyć zadań"
+    "proposalsFailed": "Nie udało się utworzyć zadań",
+    "stickyNode": "Karteczka",
+    "shapeNode": "Kształt"
   }
 }

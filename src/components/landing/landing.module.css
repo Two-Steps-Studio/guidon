@@ -188,7 +188,7 @@
   .footerGrid { grid-template-columns: 1fr 1fr; gap: 2rem; }
   .footerGrid > div:last-child { grid-column: 1 / -1; }
   .footerGrid > div:last-child ul { display: flex; flex-wrap: wrap; gap: 0 1.5rem; }
-  .footer li a { min-height: 44px; }
+  .footer li a, .footerBottom a { display: inline-flex; align-items: center; min-height: 44px; }
   .priceCard { max-width: 100%; }
 }
 

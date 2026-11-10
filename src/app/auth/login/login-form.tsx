@@ -110,7 +110,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
       /><BetaBadge /></div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
+          <CardTitle as="h1" className="text-2xl font-bold">{t("title")}</CardTitle>
           <CardDescription>
             {t("description")}
           </CardDescription>

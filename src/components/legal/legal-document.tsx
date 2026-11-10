@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LEGAL_VERSION, legalOperator, type LegalCopy } from "@/lib/legal";
 
+const LEGAL_LINKS = [["/legal/terms", "Terms"], ["/legal/privacy", "Privacy"], ["/legal/refunds", "Refunds"], ["/legal/cookies", "Cookies"], ["/legal/eula", "App licence"]] as const;
+
 export function OperatorContact() {
   return <address className="not-italic">
     <p>{legalOperator.name || "Guidon - service provider identification pending"}</p>
@@ -18,14 +20,13 @@ export function LegalDocument({ copy, templateCredit = true, children }: { copy:
   return <div className="min-h-screen bg-background">
     <header className="border-b"><div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
       <Link href="/"><Image src="/assets/guidon-wordmark.png" alt="Guidon" width={110} height={41} priority className="dark:invert" /></Link>
-      <Link href="/" className="text-sm underline">Back to home</Link>
+      <Link href="/" className="touch-target inline-flex items-center text-sm underline">Back to home</Link>
     </div></header>
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="text-3xl font-bold">{copy.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">Version / last revised: {LEGAL_VERSION}</p>
-      <nav aria-label="Legal documents" className="my-6 flex flex-wrap gap-4 text-sm underline">
-        <Link href="/legal/terms">Terms</Link><Link href="/legal/privacy">Privacy</Link><Link href="/legal/refunds">Refunds</Link>
-        <Link href="/legal/cookies">Cookies</Link><Link href="/legal/eula">App licence</Link>
+      <nav aria-label="Legal documents" className="my-6 flex flex-wrap gap-x-4 text-sm underline">
+        {LEGAL_LINKS.map(([href, label]) => <Link key={href} href={href} className="touch-target inline-flex items-center">{label}</Link>)}
       </nav>
       <p className="mb-8 leading-relaxed">{copy.introduction}</p>
       <section aria-labelledby="operator-contact" className="mb-8 rounded-lg border p-4">

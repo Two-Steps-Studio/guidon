@@ -24,7 +24,7 @@ export function MarkdownPage({ markdown }: { markdown: string }) {
           <Link href="/">
             <Image src="/assets/guidon-wordmark.png" alt="Guidon" width={110} height={41} priority className="dark:invert" />
           </Link>
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/" className="touch-target inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
             Back to home
           </Link>
         </div>

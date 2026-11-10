@@ -226,7 +226,8 @@
     "funnel": "Funnel",
     "moduleReview": "Modulprüfung",
     "agentBrief": "Agenten-Briefing",
-    "approvals": "Freigaben"
+    "approvals": "Freigaben",
+    "sidebarLabel": "Hauptnavigation"
   },
   "commandPalette": {
     "noResultsHint": "Versuche den vollständigen Aufgabentitel oder die Aufgaben-ID und prüfe das ausgewählte Projekt.",
@@ -3101,6 +3102,8 @@
     "proposalsCreate": "{count, plural, one {# Aufgabe erstellen} other {# Aufgaben erstellen}}",
     "proposalsCreated": "{count, plural, one {# Aufgabe erstellt} other {# Aufgaben erstellt}}",
     "proposalsPartlyCreated": "{created} erstellt, {failed} fehlgeschlagen",
-    "proposalsFailed": "Die Aufgaben konnten nicht erstellt werden"
+    "proposalsFailed": "Die Aufgaben konnten nicht erstellt werden",
+    "stickyNode": "Notizzettel",
+    "shapeNode": "Form"
   }
 }

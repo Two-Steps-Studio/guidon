@@ -32,6 +32,7 @@ function StatusBadge({ status, label }: { status: Status; label: string }) {
 export default async function AdminOverviewPage() {
   const { role } = await requireAdminAccess("overview.read");
   const t = await getTranslations("admin");
+  const tNav = await getTranslations("nav");
 
   const STATUS_LABELS: Record<Status, string> = {
     ok: t("statusOk"),
@@ -52,6 +53,7 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="container mx-auto max-w-7xl space-y-10 px-6 py-8">
+      <h1 className="sr-only">{tNav("adminGroup")}</h1>
       {database && storage && ai && auth && billing && <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold">{t("systemStatusTitle")}</h2>

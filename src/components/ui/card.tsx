@@ -29,11 +29,17 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
+/**
+ * h2 by default: most cards sit right under a page's h1, and an h3 there
+ * made screen readers announce a skipped level. Pass `as="h3"` for cards
+ * inside a section that already has its own h2, `as="h1"` when the card is
+ * the page (sign-in forms).
+ */
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement> & { as?: "h1" | "h2" | "h3" | "h4" }
+>(({ className, as: Heading = "h2", ...props }, ref) => (
+  <Heading
     ref={ref}
     className={cn("font-semibold leading-none tracking-tight", className)}
     {...props}

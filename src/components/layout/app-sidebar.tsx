@@ -339,7 +339,7 @@ export function AppSidebar({
     : undefined;
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" label={t("sidebarLabel")}>
       <SidebarHeader>
         <Link href="/dashboard" className="flex items-center justify-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0">
           <GuidonMark className="hidden h-12 w-7 text-sidebar-foreground group-data-[collapsible=icon]:block" />
