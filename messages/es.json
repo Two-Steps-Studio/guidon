@@ -226,7 +226,8 @@
     "funnel": "Embudo",
     "moduleReview": "Revisión de módulos",
     "agentBrief": "Resumen para agentes",
-    "approvals": "Aprobaciones"
+    "approvals": "Aprobaciones",
+    "sidebarLabel": "Navegación principal"
   },
   "commandPalette": {
     "noResultsHint": "Prueba el título completo o el ID de la tarea y comprueba el proyecto seleccionado.",
@@ -3101,6 +3102,8 @@
     "proposalsCreate": "{count, plural, one {Crear # tarea} other {Crear # tareas}}",
     "proposalsCreated": "{count, plural, one {# tarea creada} other {# tareas creadas}}",
     "proposalsPartlyCreated": "{created} creadas, {failed} fallaron",
-    "proposalsFailed": "No se pudieron crear las tareas"
+    "proposalsFailed": "No se pudieron crear las tareas",
+    "stickyNode": "Nota adhesiva",
+    "shapeNode": "Forma"
   }
 }

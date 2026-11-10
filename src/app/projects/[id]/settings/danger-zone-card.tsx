@@ -45,7 +45,7 @@ export function DangerZoneCard({ projectId }: { projectId: string }) {
       <CardContent>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h4 className="font-medium">{t("deleteProjectTitle")}</h4>
+            <h3 className="font-medium">{t("deleteProjectTitle")}</h3>
             <p className="text-sm text-muted-foreground">
               {t("deleteProjectDescription")}
             </p>

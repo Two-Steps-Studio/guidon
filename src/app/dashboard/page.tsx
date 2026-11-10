@@ -289,7 +289,7 @@ export default async function DashboardPage() {
               <Card className="lg:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle className="text-lg">{t("upcomingTitle")}</CardTitle>
-                  <Link href="/my-tasks" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                  <Link href="/my-tasks" className="touch-target flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                     {t("seeAll")}
                     <ArrowRight className="h-4 w-4" />
                   </Link>

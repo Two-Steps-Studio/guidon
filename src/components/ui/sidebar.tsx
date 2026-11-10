@@ -14,7 +14,6 @@ import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
@@ -184,6 +183,8 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
+    /** Accessible name of the navigation landmark (and of the mobile sheet). */
+    label?: string
   }
 >(
   (
@@ -191,6 +192,7 @@ const Sidebar = React.forwardRef<
       side = "left",
       variant = "sidebar",
       collapsible = "offcanvas",
+      label = "Main navigation",
       className,
       children,
       ...props
@@ -235,12 +237,12 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
+            aria-describedby={undefined}
           >
             <SheetHeader className="sr-only">
-              <SheetTitle>Sidebar</SheetTitle>
-              <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+              <SheetTitle>{label}</SheetTitle>
             </SheetHeader>
-            <div className="flex h-full w-full flex-col">{children}</div>
+            <nav aria-label={label} className="flex h-full w-full flex-col">{children}</nav>
           </SheetContent>
         </Sheet>
       )
@@ -280,12 +282,13 @@ const Sidebar = React.forwardRef<
           )}
           {...props}
         >
-          <div
+          <nav
+            aria-label={label}
             data-sidebar="sidebar"
             className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
             {children}
-          </div>
+          </nav>
         </div>
       </div>
     )

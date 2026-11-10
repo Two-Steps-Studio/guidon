@@ -67,6 +67,7 @@ import { isNetworkError } from "@/lib/work/task-drafts";
 import { timeAction } from "@/lib/perf/action-timing";
 import type { Task, TaskStatus } from "@/types/task";
 import type { ProjectRole } from "@/types/project";
+import { projectColorFill } from "@/lib/brand-colors";
 
 interface WorkState {
   tasks: Task[];
@@ -670,7 +671,7 @@ export function WorkBoard({
             <Button
               size="sm"
               onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}
-              style={projectColor ? { backgroundColor: projectColor } : undefined}
+              style={projectColorFill(projectColor)}
               data-tour="new-task"
             >
               <Plus className="h-4 w-4" />

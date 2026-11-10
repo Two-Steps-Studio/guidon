@@ -20,6 +20,7 @@ import { addMember, changeMemberRole, removeMember, type MemberRow } from "./act
 import type { ProjectRole } from "@/types/project";
 import { isAiAccountEmail } from "@/lib/ai-account-email";
 import { RoleMatrix } from "./role-matrix";
+import { projectColorFill } from "@/lib/brand-colors";
 
 const ASSIGNABLE_BY: Record<"owner" | "admin", ProjectRole[]> = {
   owner: ["owner", "admin", "developer", "tester", "viewer"],
@@ -155,7 +156,7 @@ export function MemberList({
               size="sm"
               onClick={() => setAdding(true)}
               disabled={limitReached}
-              style={projectColor ? { backgroundColor: projectColor } : undefined}
+              style={projectColorFill(projectColor)}
             >
               <UserPlus className="h-4 w-4" />
               {t("addMember")}

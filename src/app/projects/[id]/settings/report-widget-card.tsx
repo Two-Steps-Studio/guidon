@@ -114,7 +114,7 @@ export function ReportWidgetCard({
         )}
 
         <div className="relative">
-          <pre className="overflow-x-auto rounded-md border border-border bg-muted p-3 pr-12 text-xs leading-relaxed">
+          <pre tabIndex={0} className="overflow-x-auto rounded-md border border-border bg-muted p-3 pr-12 text-xs leading-relaxed">
             <code>{snippet}</code>
           </pre>
           <Button

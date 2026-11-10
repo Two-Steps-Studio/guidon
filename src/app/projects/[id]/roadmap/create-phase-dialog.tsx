@@ -17,6 +17,7 @@ import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { createPhase, type PhaseFormState } from "./actions";
 import { PhaseFormFields } from "./phase-form-fields";
 import { submitKeepingValues } from "@/lib/forms/submit-keeping-values";
+import { projectColorFill } from "@/lib/brand-colors";
 
 const initialState: PhaseFormState = { error: null };
 
@@ -41,7 +42,7 @@ export function CreatePhaseDialog({ projectId, trigger, projectColor }: { projec
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button style={projectColor ? { backgroundColor: projectColor } : undefined}>
+          <Button style={projectColorFill(projectColor)}>
             <Plus className="h-4 w-4 mr-2" />
             {t("newPhase")}
           </Button>

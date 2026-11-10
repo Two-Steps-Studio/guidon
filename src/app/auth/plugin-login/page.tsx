@@ -51,7 +51,7 @@ export default async function PluginLoginPage({
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Invalid request</CardTitle>
+            <CardTitle as="h1">Invalid request</CardTitle>
             <CardDescription>
               This page is meant to be opened by a Guidon editor plugin (Unity, Unreal Engine, Godot, Blender, JetBrains IDEs, VS Code) - not visited
               directly. If a plugin sent you here, try logging in again from the plugin window.
@@ -75,7 +75,7 @@ export default async function PluginLoginPage({
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Connect the Guidon plugin</CardTitle>
+          <CardTitle as="h1">Connect the Guidon plugin</CardTitle>
           <CardDescription>
             The Guidon {pluginClientLabel(client)} plugin running on this computer wants to view and update tasks as{" "}
             <strong>{user.email}</strong>. It will be able to read your projects and tasks, change

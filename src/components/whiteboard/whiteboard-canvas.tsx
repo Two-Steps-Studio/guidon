@@ -194,10 +194,21 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
   const debouncedNodes = useDebounce(nodes, 1000);
   const debouncedEdges = useDebounce(edges, 1000);
 
+  // Screen readers name each note by kind and text (an empty note had no name).
+  const nodeLabel = useCallback(
+    (type: string | undefined, text: string | undefined) => {
+      const kind = t(type === "sticky" ? "stickyNode" : "shapeNode");
+      return text ? `${kind}: ${text}` : kind;
+    },
+    [t]
+  );
+
   const setText = useCallback(
     (id: string, text: string) =>
-      setNodes((nds) => nds.map((node) => (node.id === id ? { ...node, data: { ...node.data, content: text } } : node))),
-    [setNodes]
+      setNodes((nds) =>
+        nds.map((node) => (node.id === id ? { ...node, ariaLabel: nodeLabel(node.type, text), data: { ...node.data, content: text } } : node))
+      ),
+    [setNodes, nodeLabel]
   );
 
   useEffect(() => {
@@ -209,6 +220,7 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
           id: el.id,
           type: el.type,
           position: { x: el.x, y: el.y },
+          ariaLabel: nodeLabel(el.type, el.content?.text),
           data: { content: el.content?.text, shape: el.content?.shape, color: el.content?.color, editable: loaded.canEdit, onChange: setText },
         }));
         const initialEdges: Edge[] = loaded.edges.map((e) => ({
@@ -238,36 +250,54 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  useEffect(() => {
-    if (!board?.canEdit) return;
-    const changed = changedSince(
-      debouncedNodes.filter((node) => !isTaskNode(node.id)).map(toElementInput),
-      savedElements.current
-    );
-    if (changed.length === 0) return;
-    saveElementsAction(projectId, board.id, changed)
-      .then(() => remember(changed, savedElements.current))
-      .catch((e) => {
+  // Saves what changed since the last save. Also called when the board is
+  // left or hidden, so an edit made within the debounce window isn't lost.
+  const persist = useCallback(
+    (nodeList: Node<NoteData>[], edgeList: Edge[]) => {
+      if (!board?.canEdit) return;
+      const report = (e: unknown) => {
         console.error("Failed to save the board", e);
         toast.error(t("saveError"));
-      });
-  }, [debouncedNodes, board, projectId, t]);
+      };
+      const elements = changedSince(nodeList.filter((node) => !isTaskNode(node.id)).map(toElementInput), savedElements.current);
+      if (elements.length > 0) {
+        remember(elements, savedElements.current);
+        saveElementsAction(projectId, board.id, elements).catch((e) => {
+          for (const element of elements) savedElements.current.delete(element.id);
+          report(e);
+        });
+      }
+      // Arrows to task cards stay local: tasks aren't board elements.
+      const arrows = changedSince(
+        edgeList.filter((edge) => !isTaskNode(edge.source) && !isTaskNode(edge.target)).map(toEdgeInput),
+        savedEdges.current
+      );
+      if (arrows.length > 0) {
+        remember(arrows, savedEdges.current);
+        saveEdgesAction(projectId, board.id, arrows).catch((e) => {
+          for (const arrow of arrows) savedEdges.current.delete(arrow.id);
+          report(e);
+        });
+      }
+    },
+    [board, projectId, t]
+  );
 
+  useEffect(() => persist(debouncedNodes, debouncedEdges), [debouncedNodes, debouncedEdges, persist]);
+
+  const latest = useRef({ nodes, edges });
   useEffect(() => {
-    if (!board?.canEdit) return;
-    // Arrows to task cards stay local: tasks aren't board elements.
-    const changed = changedSince(
-      debouncedEdges.filter((edge) => !isTaskNode(edge.source) && !isTaskNode(edge.target)).map(toEdgeInput),
-      savedEdges.current
-    );
-    if (changed.length === 0) return;
-    saveEdgesAction(projectId, board.id, changed)
-      .then(() => remember(changed, savedEdges.current))
-      .catch((e) => {
-        console.error("Failed to save the board", e);
-        toast.error(t("saveError"));
-      });
-  }, [debouncedEdges, board, projectId, t]);
+    latest.current = { nodes, edges };
+  }, [nodes, edges]);
+  useEffect(() => {
+    const flush = () => persist(latest.current.nodes, latest.current.edges);
+    const onHide = () => document.visibilityState === "hidden" && flush();
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      flush();
+    };
+  }, [persist]);
 
   /** Tworzenie elementu w konkretnym miejscu kanwy (id po stronie klienta). */
   const createNode = useCallback(
@@ -276,6 +306,7 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
         id: crypto.randomUUID(),
         type,
         position: position ?? screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }),
+        ariaLabel: nodeLabel(type, ""),
         data: {
           content: "",
           color: type === "sticky" ? STICKY_COLORS[0] : "#e2e8f0",
@@ -286,7 +317,7 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
       };
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition, setNodes, setText]
+    [screenToFlowPosition, setNodes, setText, nodeLabel]
   );
 
   /**

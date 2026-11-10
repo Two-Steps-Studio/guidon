@@ -39,7 +39,9 @@ export default async function StartPage() {
           <Image src="/assets/guidon-wordmark.png" alt="Guidon" width={769} height={285} priority className="h-7 w-auto dark:invert" />
         </Link><BetaBadge /></div>
       </header>
-      <StartWizard signedIn={await isSignedIn()} />
+      <main>
+        <StartWizard signedIn={await isSignedIn()} />
+      </main>
     </div>
   );
 }
