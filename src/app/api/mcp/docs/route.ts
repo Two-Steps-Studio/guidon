@@ -41,9 +41,16 @@ function buildServer(): McpServer {
     "search_docs",
     {
       description:
-        "Search Guidon's public documentation (REST API, MCP server, authentication/OAuth, errors, rate limits, the agent workflow, company info). " +
-        "Returns the best-matching sections with their URL - read a whole page with read_doc.",
-      inputSchema: { query: z.string().min(1).max(500).describe("What you want to know, in plain words.") },
+        "Use this first to answer a question about Guidon: the REST API, the MCP server, OAuth and API keys, errors, rate limits, " +
+        "the agent workflow (claim, attempts, review) or the company. Returns up to 6 matching sections, each with its title, " +
+        "URL and a short excerpt; call read_doc with the section's page for the whole page.",
+      inputSchema: {
+        query: z
+          .string()
+          .min(1)
+          .max(500)
+          .describe("The question or keywords in plain words, e.g. \"how do I get an API key\" or \"rate limits\"."),
+      },
       annotations: { title: "Search Guidon docs", ...READ_ONLY },
       // MCP Apps: hosts that support it show the results view below; the
       // flat key is the older spelling some hosts still read.
@@ -63,8 +70,14 @@ function buildServer(): McpServer {
   server.registerTool(
     "read_doc",
     {
-      description: `Read one page of Guidon's documentation in full, as Markdown. Pages: ${pages.map((p) => `${p.id} (${p.title})`).join(", ")}.`,
-      inputSchema: { page: z.enum(pages.map((p) => p.id) as [string, ...string[]]).describe("Page id.") },
+      description:
+        "Use after search_docs (or directly when you know the page) to read one whole page of Guidon's documentation. " +
+        `Returns the page as Markdown with its source URL. Pages: ${pages.map((p) => `${p.id} (${p.title})`).join(", ")}.`,
+      inputSchema: {
+        page: z
+          .enum(pages.map((p) => p.id) as [string, ...string[]])
+          .describe("Id of the page to read, e.g. \"developers\" for the API and MCP guide or \"auth\" for sign-in and tokens."),
+      },
       annotations: { title: "Read a Guidon docs page", ...READ_ONLY },
     },
     ({ page }) => {
