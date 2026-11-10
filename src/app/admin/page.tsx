@@ -6,6 +6,7 @@ import { requireAdminAccess } from "@/lib/data/admin-access";
 import { getAdminCounts } from "@/lib/data/admin";
 import { hasAdminPermission } from "@/lib/admin/permissions";
 import { checkAI, checkAuth, checkBilling, checkDatabase, checkStorage, type Status } from "@/lib/health/checks";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 const STATUS_ICONS: Record<Status, { className: string; Icon: typeof CheckCircle2 }> = {
   ok: { className: "border-success/30 bg-success/15 text-success", Icon: CheckCircle2 },
@@ -142,7 +143,7 @@ export default async function AdminOverviewPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">{t("organizations")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{counts.organizations}</p>
+              <p className="text-3xl font-bold"><RollingNumber value={counts.organizations} /></p>
             </CardContent>
           </Card>
           <Card>
@@ -150,7 +151,7 @@ export default async function AdminOverviewPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">{t("projects")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{counts.projects}</p>
+              <p className="text-3xl font-bold"><RollingNumber value={counts.projects} /></p>
             </CardContent>
           </Card>
           <Card>
@@ -158,7 +159,7 @@ export default async function AdminOverviewPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">{t("users")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{counts.users}</p>
+              <p className="text-3xl font-bold"><RollingNumber value={counts.users} /></p>
             </CardContent>
           </Card>
         </div>

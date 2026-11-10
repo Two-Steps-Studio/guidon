@@ -1,6 +1,7 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 /** What public.project_report() (migration 123) returns. */
 export interface ProjectReportData {
@@ -32,7 +33,7 @@ export async function ProjectReport({ report }: { report: ProjectReportData }) {
               const label = format.dateTime(new Date(`${w.week_start}T00:00:00Z`), { day: "numeric", month: "short", timeZone: "UTC" });
               return (
                 <li key={w.week_start} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-                  <span className="text-xs tabular-nums text-muted-foreground" aria-hidden>{w.finished || ""}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground" aria-hidden>{w.finished ? <RollingNumber value={w.finished} /> : ""}</span>
                   <div
                     className="w-full rounded-t-sm bg-primary/80"
                     style={{ height: `${(w.finished / max) * 100}%`, minHeight: w.finished ? 4 : 1 }}
@@ -80,9 +81,9 @@ export async function ProjectReport({ report }: { report: ProjectReportData }) {
                           <span className="truncate">{row.name ?? t("reportUnknownPerson")}</span>
                         </span>
                       </td>
-                      <td className="px-2 py-2 text-right tabular-nums">{row.open}</td>
-                      <td className={`px-2 py-2 text-right tabular-nums ${row.overdue ? "font-medium text-destructive" : "text-muted-foreground"}`}>{row.overdue}</td>
-                      <td className="py-2 pl-2 text-right tabular-nums">{row.finished_30d}</td>
+                      <td className="px-2 py-2 text-right tabular-nums"><RollingNumber value={row.open} /></td>
+                      <td className={`px-2 py-2 text-right tabular-nums ${row.overdue ? "font-medium text-destructive" : "text-muted-foreground"}`}><RollingNumber value={row.overdue} /></td>
+                      <td className="py-2 pl-2 text-right tabular-nums"><RollingNumber value={row.finished_30d} /></td>
                     </tr>
                   ))}
                 </tbody>

@@ -22,6 +22,7 @@ import { getProjectStats } from "@/lib/data/project-stats";
 import { dataClient } from "@/lib/data-client";
 import { EditProjectDialog } from "./edit-project-dialog";
 import { ProjectReport, type ProjectReportData } from "@/components/projects/project-report";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 /**
  * Project overview - Server Component (TODO.md §34).
@@ -169,7 +170,7 @@ export default async function ProjectPage({
                   <FolderKanban className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.total_tasks}</div>
+                  <div className="text-2xl font-bold"><RollingNumber value={stats.total_tasks} /></div>
                   <p className="text-xs text-muted-foreground">{t("completedSuffix", { count: stats.completed_tasks })}</p>
                 </CardContent>
               </Card>
@@ -180,7 +181,7 @@ export default async function ProjectPage({
                   <Clock className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.in_progress_tasks}</div>
+                  <div className="text-2xl font-bold"><RollingNumber value={stats.in_progress_tasks} /></div>
                   <p className="text-xs text-muted-foreground">{t("activeTasks")}</p>
                 </CardContent>
               </Card>
@@ -191,7 +192,7 @@ export default async function ProjectPage({
                   <TrendingUp className="h-4 w-4" style={project.color ? { color: project.color } : undefined} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.completion_percentage}%</div>
+                  <div className="text-2xl font-bold"><RollingNumber value={`${stats.completion_percentage}%`} /></div>
                   <p className="text-xs text-muted-foreground">{t("projectProgress")}</p>
                 </CardContent>
               </Card>
@@ -206,7 +207,7 @@ export default async function ProjectPage({
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats.completed_phases}/{stats.total_phases}
+                  <RollingNumber value={`${stats.completed_phases}/${stats.total_phases}`} />
                 </div>
                 <p className="text-xs text-muted-foreground">{t("phasesCompleted")}</p>
               </CardContent>

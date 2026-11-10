@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { BOARD_COLUMNS, isDone, normalizeTaskStatus, type BoardColumn } from "@/lib/work/task-board";
 import type { Task, TaskStatus } from "@/types/task";
 import { playSound } from "@/lib/sounds";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 /**
  * A subtask can be sitting on a status the project has since hidden from
@@ -191,7 +192,7 @@ export function TaskSubtasksSection({
             {t("subtasksHeading")}
             {visibleSubtasks.length + pendingSubtasks.length > 0 && (
               <span className="ml-1.5 text-xs font-normal tabular-nums text-muted-foreground">
-                {visibleSubtasks.filter((subtask) => isDone(subtask.status)).length}/{visibleSubtasks.length + pendingSubtasks.length}
+                <RollingNumber value={`${visibleSubtasks.filter((subtask) => isDone(subtask.status)).length}/${visibleSubtasks.length + pendingSubtasks.length}`} />
               </span>
             )}
           </h3>

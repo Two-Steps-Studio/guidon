@@ -13,6 +13,7 @@ import { Check } from "lucide-react";
 import { SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 
 import styles from "@/components/landing/landing.module.css";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 export interface PlanRow {
   id: string;
@@ -127,7 +128,7 @@ export function PricingSection({ plans, prices = [], checkoutAvailable = true }:
                 <CardHeader>
                   <CardTitle>{paidShown ? plan.name : t("cloudName")}</CardTitle>
                   <div data-price className="font-semibold">
-                    {formatPrice(price, t)}
+                    <RollingNumber value={formatPrice(price, t)} />
                     {price.cents != null && price.cents > 0 && (
                       <span className="text-sm font-normal text-text-muted">{t(`per_${interval}`)}</span>
                     )}

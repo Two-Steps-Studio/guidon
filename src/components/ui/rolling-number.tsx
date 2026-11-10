@@ -6,9 +6,10 @@ const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 /**
  * A number whose digits roll up from 0 when it first appears. CSS only, so
  * it runs on the server-rendered HTML too; reduced motion shows it still
- * (globals.css). Screen readers get the plain number.
+ * (globals.css). Screen readers get the plain number. A formatted string
+ * ("33%", "2/5", "€0") rolls its digits and keeps the other characters.
  */
-export function RollingNumber({ value, className }: { value: number; className?: string }) {
+export function RollingNumber({ value, className }: { value: number | string; className?: string }) {
   const text = String(value);
   return (
     <span className={cn("inline-flex tabular-nums", className)}>
