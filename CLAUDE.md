@@ -36,6 +36,7 @@ npm run test:context           # Context Engine package for agents: token budget
 npm run test:search            # task search ranking: diacritics, task ids/guidon#refs, typos, ordering, 30 realistic queries over 1200 tasks with the wanted one in the top 5 (src/lib/search/task-search-core.ts)
 npm run test:markdown           # task descriptions as markdown: raw HTML and script URLs never become markup, external links open safely, lists/checklists/code blocks (src/components/files/markdown-preview.tsx)
 npm run test:app-changes       # what an app (API key/MCP/GitHub) changed on a task and undoing it: diffs, stored rows, undo that never overwrites a later edit (src/lib/work/app-changes-core.ts); agents asking for approval: request bodies, expiry, inbox order (src/lib/work/agent-approvals-core.ts)
+npm run test:s3                # S3 request signing (src/lib/storage/s3-sigv4.ts) against AWS's published SigV4 examples, offline
 npm run test:csp               # Content-Security-Policy: pages allow scripts only by per-request nonce (src/proxy.ts) or the module sandbox hash, never 'unsafe-inline'; the hash stays in step with the sandbox frame (src/lib/csp.ts)
 
 cd desktop/src-tauri && cargo test --lib   # Guidon Desktop (Tauri): plugin installer paths/zip-slip, tasks URL; CI: .github/workflows/desktop-ci.yml
@@ -83,7 +84,7 @@ Anything still written per mode needs both branches, and both must enforce the s
 
 ### Storage
 
-`StorageProvider` (`src/lib/storage/provider.ts`) abstracts Supabase Storage vs. a local-filesystem provider served through `/api/storage` with HMAC-signed URLs (`src/lib/storage/providers/local.ts`); an S3 interface is reserved but unimplemented. Inline (non-download) serving is gated by a small, deliberate extension allowlist (`SAFE_INLINE_EXTENSION_TO_MIME` in `src/lib/storage/storage-constants.ts`) - raster images and PDF only. SVG is excluded on purpose (it can carry `<script>`); this is independent of public/private - the signature/RLS governs *authorization*, the extension whitelist governs whether an already-authorized response is safe to render directly rather than force-download.
+`StorageProvider` (`src/lib/storage/provider.ts`) abstracts Supabase Storage, a local-filesystem provider (`src/lib/storage/providers/local.ts`) and any S3-compatible store (`providers/s3.ts`, SigV4 in `s3-sigv4.ts`); local and S3 objects are served through `/api/storage` with HMAC-signed URLs. Inline (non-download) serving is gated by a small, deliberate extension allowlist (`SAFE_INLINE_EXTENSION_TO_MIME` in `src/lib/storage/storage-constants.ts`) - raster images and PDF only. SVG is excluded on purpose (it can carry `<script>`); this is independent of public/private - the signature/RLS governs *authorization*, the extension whitelist governs whether an already-authorized response is safe to render directly rather than force-download.
 
 ### AI
 

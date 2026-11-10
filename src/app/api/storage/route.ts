@@ -1,18 +1,18 @@
 import path from "node:path";
-import { Readable } from "node:stream";
 import { NextRequest, NextResponse } from "next/server";
 import {
   activeStorageProviderName,
   assertSafeBucket,
   assertSafeStoragePath,
+  getStorageProvider,
 } from "@/lib/storage/provider";
 import { SAFE_INLINE_EXTENSION_TO_MIME } from "@/lib/storage/storage-constants";
 
 /**
- * Serves objects for the local storage provider (TODO.md §5).
+ * Serves objects for the local and S3 storage providers (TODO.md §5).
  *
- * Only reachable when STORAGE_PROVIDER=local; Supabase issues its own signed
- * URLs and never routes through here.
+ * Only reachable when STORAGE_PROVIDER is local or s3; Supabase issues its
+ * own signed URLs and never routes through here.
  *
  * Access is granted by the HMAC signature minted in LocalStorageProvider.getUrl,
  * which covers bucket, path and expiry. That keeps STORAGE_PATH off the public
@@ -20,7 +20,8 @@ import { SAFE_INLINE_EXTENSION_TO_MIME } from "@/lib/storage/storage-constants";
  * guessing a name.
  */
 export async function GET(request: NextRequest) {
-  if (activeStorageProviderName() !== "local") {
+  const providerName = activeStorageProviderName();
+  if (providerName !== "local" && providerName !== "s3") {
     return NextResponse.json(
       { error: "Local storage is not enabled" },
       { status: 404 }
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
-  const { LocalStorageProvider, verifyStorageSignature } = await import(
+  const { verifyStorageSignature } = await import(
     "@/lib/storage/providers/local"
   );
 
@@ -74,19 +75,18 @@ export async function GET(request: NextRequest) {
   const inlineMime = SAFE_INLINE_EXTENSION_TO_MIME[extension];
 
   try {
-    const provider = new LocalStorageProvider();
+    const provider = await getStorageProvider();
     // Streamed rather than provider.download() (reads the whole file into
     // one in-process Buffer before responding) - every preview/download
     // request used to hold an entire file in memory at once, up to this
     // app's per-file upload limit (25MB, FILE_SIZE_LIMITS.DOCUMENT), for a
     // route that can see real concurrent traffic on a self-hosted install.
-    // statObject() first, rather than letting createStream()'s ENOENT
-    // surface only after headers would already be sent.
-    const info = await provider.statObject(safeBucket, safePath);
+    // A missing object is known before headers are sent, so it can 404.
+    const info = await provider.serveObject?.(safeBucket, safePath);
     if (!info) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    const body = Readable.toWeb(provider.createStream(safeBucket, safePath)) as ReadableStream;
+    const body = info.body;
 
     return new NextResponse(body, {
       headers: inlineMime

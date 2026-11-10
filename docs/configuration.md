@@ -184,15 +184,19 @@ Compose self-hosting uses by default.
 
 | Variable | Meaning |
 |---|---|
-| `STORAGE_PROVIDER` | `supabase` (default) - managed bucket. `local` - filesystem under `STORAGE_PATH`, served via `/api/storage`. `s3` - interface-ready, not implemented; selecting it throws. |
+| `STORAGE_PROVIDER` | `supabase` (default) - managed bucket. `local` - filesystem under `STORAGE_PATH`, served via `/api/storage`. `s3` - any S3-compatible store (AWS S3, Cloudflare R2, MinIO, Backblaze B2, Wasabi), also served via `/api/storage`. |
+| `S3_ENDPOINT` | `STORAGE_PROVIDER=s3` only. The store's API URL, e.g. `https://s3.eu-central-1.amazonaws.com`, `https://<account>.r2.cloudflarestorage.com`, `http://minio:9000`. Path-style requests (`<endpoint>/<bucket>/<key>`). |
+| `S3_REGION` | `STORAGE_PROVIDER=s3` only. Default `us-east-1`; R2 uses `auto`. |
+| `S3_BUCKET` | `STORAGE_PROVIDER=s3` only. One private bucket you create; Guidon's own buckets become key prefixes in it. No public access or CORS needed. |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | `STORAGE_PROVIDER=s3` only. A key limited to that bucket (read, write, delete, list). |
 | `STORAGE_PATH` | Only used when `STORAGE_PROVIDER=local`. Must be a persistent volume in Docker or uploads vanish on container restart. |
 | `STORAGE_SIGNING_SECRET` | Optional. Signs local-storage URLs instead of reusing `AUTH_SECRET`. |
 
 Unlike the database, storage genuinely is decoupled today: uploads go
 through the `StorageProvider` abstraction (`src/lib/storage/provider.ts`)
-via a Server Action (`src/app/projects/[id]/files/actions.ts`), and both
-`supabase` and `local` implementations exist and are wired in. `local`
-resolves the signing secret as `AUTH_SECRET ?? STORAGE_SIGNING_SECRET`, so
+via a Server Action (`src/app/projects/[id]/files/actions.ts`), and the
+`supabase`, `local` and `s3` implementations exist and are wired in. `local`
+and `s3` resolve the signing secret as `AUTH_SECRET ?? STORAGE_SIGNING_SECRET`, so
 in most setups `STORAGE_SIGNING_SECRET` doesn't need to be set separately.
 
 ---
