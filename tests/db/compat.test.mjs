@@ -4646,5 +4646,29 @@ section("90. Whiteboard: members read, editors write, edges stay on one board (1
       && (await db.query("SELECT count(*)::int n FROM public.whiteboard_edges WHERE source_id = $1", [a])).rows[0].n === 0);
   });
 }
+section("91. Project report: weekly finished tasks and workload, only for project members (123)");
+{
+  let project;
+  await withUser(A, async () => {
+    project = (await db.query("INSERT INTO public.projects (organization_id, name) VALUES ($1, 'Report') RETURNING id", [orgId])).rows[0].id;
+    const add = (title, status, extra = "") => db.query(`INSERT INTO public.tasks (project_id, title, status, assignee_id${extra ? ", due_date" : ""}) VALUES ($1, $2, $3, $4${extra ? ", " + extra : ""}) RETURNING id`, [project, title, status, A]);
+    await add("done this week", "done");
+    await add("open, late", "todo", "now() - interval '2 days'");
+    await add("open, on time", "in_progress", "now() + interval '2 days'");
+    const parent = (await add("parent", "todo")).rows[0].id;
+    await db.query("INSERT INTO public.tasks (project_id, title, status, parent_task_id) VALUES ($1, 'subtask', 'done', $2)", [project, parent]);
+    await db.query("INSERT INTO public.tasks (project_id, title) VALUES ($1, 'nobody yet')", [project]);
+    const r = (await db.query("SELECT public.project_report($1) AS r", [project])).rows[0].r;
+    check("open, overdue and unassigned counts (subtasks left out)", r.open === 4 && r.overdue === 1 && r.unassigned === 1);
+    check("eight weeks, oldest first, this week has the finished task", r.finished_per_week.length === 8 && r.finished_per_week.at(-1).finished === 1 && r.finished_per_week.slice(0, 7).every((w) => w.finished === 0));
+    const me = r.workload.find((row) => row.assignee_id === A);
+    check("workload per person: open, overdue, finished in 30 days, with a name", me?.open === 3 && me.overdue === 1 && me.finished_30d === 1 && typeof me.name === "string");
+    check("weeks are clamped (1..26)", (await db.query("SELECT jsonb_array_length(public.project_report($1, 500) -> 'finished_per_week') AS n", [project])).rows[0].n === 26);
+  });
+  await withUser(B, async () => {
+    const r = (await db.query("SELECT public.project_report($1) AS r", [project])).rows[0].r;
+    check("someone outside the project sees nothing", r.open === 0 && r.workload.length === 0 && r.finished_per_week.every((w) => w.finished === 0));
+  });
+}
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

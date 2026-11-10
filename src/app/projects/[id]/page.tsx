@@ -21,6 +21,7 @@ import { canWriteProject, requireProjectAccess } from "@/lib/data/project-access
 import { getProjectStats } from "@/lib/data/project-stats";
 import { dataClient } from "@/lib/data-client";
 import { EditProjectDialog } from "./edit-project-dialog";
+import { ProjectReport, type ProjectReportData } from "@/components/projects/project-report";
 
 /**
  * Project overview - Server Component (TODO.md §34).
@@ -61,6 +62,12 @@ export default async function ProjectPage({
             .count()
         ).data ?? 0
       : 0;
+
+  // Weekly finished tasks and workload (migration 123). Without the function
+  // (not migrated yet) the report is simply left out.
+  const report = showTasks
+    ? (await dataClient(access.userId).rpc<ProjectReportData>("project_report", { p_project_id: projectId, p_weeks: 8 })).data
+    : null;
 
   const quickAccess = [
     {
@@ -207,6 +214,8 @@ export default async function ProjectPage({
           )}
         </div>
       )}
+
+      {report && <ProjectReport report={report} />}
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">{t("quickAccess")}</h2>
