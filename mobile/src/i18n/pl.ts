@@ -70,6 +70,9 @@ const pl: Messages = {
     addComment: "Dodaj komentarz",
     send: "Wyślij komentarz",
     you: "Ty",
+    reportComment: "Zgłoś komentarz",
+    reportCommentTitle: "Zgłosić ten komentarz?",
+    reportCommentMessage: "Otworzymy maila do pomocy Guidon z odnośnikiem do tego komentarza. Napisz, co jest z nim nie tak.",
     teammate: "Osoba z zespołu",
     notFound: "To zadanie nie jest już dostępne.",
     titleRequired: "Zadanie musi mieć tytuł.",
@@ -121,6 +124,8 @@ const pl: Messages = {
     privacy: "Polityka prywatności",
     terms: "Warunki korzystania",
     eula: "Umowa licencyjna użytkownika (EULA)",
+    contact: "Pomoc i kontakt",
+    report: "Zgłoś problem lub nadużycie",
     manageAccountHint: "Kontem, kluczami API i dostępem tego urządzenia zarządzasz na stronie Guidon.",
   },
   errors: {
