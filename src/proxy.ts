@@ -5,10 +5,10 @@ import { SESSION_COOKIE_NAME, verifySessionCookie } from '@/lib/auth/session-coo
 import { assertValidSupabaseUrl } from '@/lib/supabase-env'
 import {
   MARKDOWN_CONTENT_TYPE,
-  MARKDOWN_TWINS,
-  isAiAgentUserAgent,
   isSignedInSection,
   notFoundMarkdown,
+  HOMEPAGE_LINKS,
+  markdownTwinRoute,
   prefersMarkdown,
 } from '@/lib/agent-web'
 import { SITE_URL } from '@/lib/site-url'
@@ -179,11 +179,10 @@ function redirectSignedIn(request: NextRequest) {
  * Answers that don't depend on who is asking, decided before any session
  * lookup (see src/lib/agent-web.ts):
  * - `/` and other pages in MARKDOWN_TWINS are served their Markdown twin
- *   for `Accept: text/markdown`, `?mode=agent` or an AI user agent, with
- *   `Vary: Accept, User-Agent`. The HTML page can't carry that header too - Next
- *   overwrites `Vary` on every app-router page - but this runs before the
- *   page cache, so the two never share a cache entry here; browsers never
- *   ask for Markdown.
+ *   only when the request asks for it (`Accept: text/markdown` ranked at
+ *   least as high as HTML, or `?mode=agent`) - never by User-Agent, see
+ *   markdownTwinRoute. Twins carry `Vary: Accept` and a canonical Link to
+ *   the HTML page, so search engines index the page, not its twin.
  * - A path that is neither public nor under a signed-in section has no page,
  *   so it must get a real 404 - redirecting it to the login page told agents
  *   every path exists. Next renders the 404 page; agents asking for Markdown
@@ -193,20 +192,12 @@ function agentResponse(request: NextRequest): NextResponse | null {
   const { pathname, searchParams } = request.nextUrl
   const wantsMarkdown = prefersMarkdown(request.headers.get('accept'))
 
-  // /compare/<slug>.md: the comparison's Markdown twin (src/app/compare/[slug]/md).
-  const compareMd = /^\/compare\/([a-z0-9-]+)\.md$/.exec(pathname)
-  if (compareMd) return NextResponse.rewrite(new URL(`/compare/${compareMd[1]}/md`, request.url))
-
-  // Pages with a Markdown twin hand it to agents: by Accept header, by
-  // `?mode=agent`, or to AI crawlers/assistants by User-Agent.
-  const comparePage = /^\/compare\/([a-z0-9-]+)$/.exec(pathname)
-  const twin = MARKDOWN_TWINS[pathname] ?? (comparePage ? `/compare/${comparePage[1]}/md` : undefined)
+  const twin = markdownTwinRoute(pathname, request.headers.get('accept'), searchParams.get('mode'))
   if (twin) {
-    const forAgent =
-      wantsMarkdown || searchParams.get('mode') === 'agent' || isAiAgentUserAgent(request.headers.get('user-agent'))
-    if (!forAgent) return null
-    const response = NextResponse.rewrite(new URL(twin, request.url))
-    response.headers.set('Vary', 'Accept, User-Agent')
+    const response = twin.serve ? NextResponse.rewrite(new URL(twin.serve, request.url)) : NextResponse.next({ request })
+    response.headers.set('Vary', 'Accept')
+    const canonical = `<${SITE_URL}${twin.canonical}>; rel="canonical"`
+    response.headers.set('Link', twin.canonical === '/' ? `${HOMEPAGE_LINKS}, ${canonical}` : canonical)
     return response
   }
   if (isPublicRoute(pathname) || isSignedInSection(pathname)) return null

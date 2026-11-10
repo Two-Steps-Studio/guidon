@@ -206,22 +206,26 @@ export function withFrontmatter(
 }
 
 /**
- * AI crawlers and AI assistants fetching a page for a user. They get the
- * Markdown twin of a page even when they ask for HTML - the same content
- * without the app shell. Search-engine crawlers (Googlebot, Bingbot) are
- * deliberately not here: they index the HTML page itself.
+ * RFC 8288 Link header of the homepage (next.config.ts): where agents find the
+ * sitemap, the Markdown twin, the API description and the API catalog without
+ * parsing HTML. The proxy repeats it on the homepage's Markdown answer, which
+ * would otherwise replace it.
  */
-const AI_BOT_PATTERN =
-  /\b(GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-User|Claude-SearchBot|anthropic-ai|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|DeepSeekBot|ora-agent|cohere-ai|MistralAI-User)\b/i;
-
-export function isAiAgentUserAgent(userAgent: string | null | undefined): boolean {
-  return !!userAgent && AI_BOT_PATTERN.test(userAgent);
-}
+export const HOMEPAGE_LINKS = [
+  '</sitemap.xml>; rel="sitemap"',
+  '</index.md>; rel="alternate"; type="text/markdown"',
+  '</openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
+  '</developers>; rel="service-doc"',
+  '</.well-known/api-catalog>; rel="api-catalog"',
+  '</.well-known/ard.json>; rel="ard"; type="application/ai-catalog+json"',
+  '</llms.txt>; rel="describedby"; type="text/plain"',
+].join(", ");
 
 /**
- * Public HTML pages that have a Markdown twin. The proxy serves the twin to
- * `Accept: text/markdown`, `?mode=agent` and AI user agents; each twin is
- * also reachable at its own URL.
+ * Public HTML pages that have a Markdown twin. The proxy serves the twin on
+ * the page URL only to clients that ask for it: `Accept` ranking text/markdown
+ * at least as high as HTML, or `?mode=agent`. Each twin is also reachable at
+ * its own URL (and announced by `<link rel="alternate" type="text/markdown">`).
  */
 export const MARKDOWN_TWINS: Readonly<Record<string, string>> = {
   "/": "/index.md",
@@ -233,6 +237,35 @@ export const MARKDOWN_TWINS: Readonly<Record<string, string>> = {
   "/auth/login": "/auth/login.md",
   "/auth/signup": "/auth/signup.md",
 };
+
+const TWIN_PAGES: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(MARKDOWN_TWINS).map(([page, twin]) => [twin, page])
+);
+
+/**
+ * How the proxy answers a page or twin URL. `serve` is the route to render
+ * (a rewrite target), `canonical` the HTML page the Markdown stands for.
+ *
+ * The format follows the Accept header alone - never the User-Agent. AI
+ * assistants (ChatGPT, Claude, Perplexity...) that ask for HTML get HTML:
+ * serving them Markdown by User-Agent broke tools that render the page, and
+ * a shared cache keyed on Accept could hand that Markdown to a browser.
+ */
+export function markdownTwinRoute(
+  pathname: string,
+  accept: string | null | undefined,
+  mode: string | null
+): { serve: string | null; canonical: string } | null {
+  const compareMd = /^\/compare\/([a-z0-9-]+)\.md$/.exec(pathname);
+  if (compareMd) return { serve: `/compare/${compareMd[1]}/md`, canonical: `/compare/${compareMd[1]}` };
+  const twinPage = TWIN_PAGES[pathname];
+  if (twinPage) return { serve: null, canonical: twinPage };
+
+  const comparePage = /^\/compare\/([a-z0-9-]+)$/.exec(pathname);
+  const twin = MARKDOWN_TWINS[pathname] ?? (comparePage ? `/compare/${comparePage[1]}/md` : undefined);
+  if (!twin || !(prefersMarkdown(accept) || mode === "agent")) return null;
+  return { serve: twin, canonical: pathname };
+}
 
 /** Plan fields the pricing Markdown needs (the `plans` table, migration 015 and later). */
 export interface PricingPlan {

@@ -4,6 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 import path from "node:path";
 import { contentSecurityPolicy } from "./src/lib/csp";
 import { normalizeSiteUrl } from "./src/lib/oauth/oauth-core";
+import { HOMEPAGE_LINKS } from "./src/lib/agent-web";
 
 // One canonical address: www.<APP_URL host> answers 301 to APP_URL, path and query kept (SEO audit).
 const SITE_ORIGIN = normalizeSiteUrl(process.env.APP_URL?.trim() || "https://useguidon.com");
@@ -108,15 +109,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Link",
-            value: [
-              '</sitemap.xml>; rel="sitemap"',
-              '</index.md>; rel="alternate"; type="text/markdown"',
-              '</openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
-              '</developers>; rel="service-doc"',
-              '</.well-known/api-catalog>; rel="api-catalog"',
-              '</.well-known/ard.json>; rel="ard"; type="application/ai-catalog+json"',
-              '</llms.txt>; rel="describedby"; type="text/plain"',
-            ].join(", "),
+            value: HOMEPAGE_LINKS,
           },
         ],
       },
