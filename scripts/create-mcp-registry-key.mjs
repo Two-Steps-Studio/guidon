@@ -19,7 +19,8 @@ const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 const seedHex = privateKey.export({ format: "der", type: "pkcs8" }).subarray(-32).toString("hex");
 const publicB64 = publicKey.export({ format: "der", type: "spki" }).subarray(-32).toString("base64");
 try {
-  writeFileSync(resolve(out), seedHex + "\n", { flag: "wx", mode: 0o600 });
+  // No trailing newline: the whole file is pasted into a secret as is.
+  writeFileSync(resolve(out), seedHex, { flag: "wx", mode: 0o600 });
 } catch {
   console.error("Could not create the private key file. Use a new filename in an existing private directory.");
   process.exit(1);
