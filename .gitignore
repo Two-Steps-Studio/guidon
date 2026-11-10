@@ -71,3 +71,6 @@ plugins/**/*.vsix
 
 # Affinity Designer lock files
 *~lock~
+
+# ./scripts/self-host.sh backup (contains secrets)
+/backups/
