@@ -16,7 +16,11 @@ export const DESCRIPTION =
   "A project board for teams: plan, assign and finish tasks together, with the decisions and history behind each one kept next to it. Optional AI: connect Claude, ChatGPT, Cursor, Codex or any MCP app, plus a REST API, webhooks and GitHub, and it works from the same tasks under your review.";
 
 /** Profiles that are the same entity, for disambiguation - add LinkedIn/X/Wikidata here once they exist. */
-export const SAME_AS: readonly string[] = [GITHUB_REPO_URL];
+export const SAME_AS: readonly string[] = [
+  GITHUB_REPO_URL,
+  "https://www.npmjs.com/package/@two_steps_studio/guidon-sdk",
+  "https://pypi.org/project/guidon-sdk/",
+];
 
 export function organizationNode(siteUrl: string) {
   return {

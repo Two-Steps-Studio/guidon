@@ -53,9 +53,9 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 ## Docs
 
 - [Developer guide](https://useguidon.com/developers.md): API keys and scopes, MCP setup for Claude, Cursor, VS Code, Codex and Gemini, endpoints, errors. Section index: [/developers/llms.txt](https://useguidon.com/developers/llms.txt).
-- [JavaScript/TypeScript SDK source](https://github.com/two-steps-studio/guidon/tree/main/packages/sdk-js): typed REST API client; npm release pending.
-- [Python SDK source](https://github.com/two-steps-studio/guidon/tree/main/sdk/python): typed Python REST API client; PyPI release pending.
-- [CLI source](https://github.com/two-steps-studio/guidon/tree/main/packages/cli): terminal and CI client; npm release pending.
+- [JavaScript/TypeScript SDK](https://www.npmjs.com/package/@two_steps_studio/guidon-sdk): typed REST API client, `npm install @two_steps_studio/guidon-sdk` ([source](https://github.com/two-steps-studio/guidon/tree/main/packages/sdk-js)).
+- [Python SDK](https://pypi.org/project/guidon-sdk/): typed Python REST API client, `pip install guidon-sdk` ([source](https://github.com/two-steps-studio/guidon/tree/main/sdk/python)).
+- [CLI](https://www.npmjs.com/package/@two_steps_studio/guidon-cli): terminal and CI client, `npx @two_steps_studio/guidon-cli` ([source](https://github.com/two-steps-studio/guidon/tree/main/packages/cli)).
 - [Agent Plugin](https://github.com/two-steps-studio/guidon/blob/main/plugin.json): portable product/docs MCP connections and agent skills.
 - Authentication section index: [/auth/llms.txt](https://useguidon.com/auth/llms.txt).
 - [Docs MCP server](https://useguidon.com/api/mcp/docs): search and read these docs over MCP, no sign-in (tools `search_docs`, `read_doc`).
@@ -69,6 +69,7 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 - [Developers](https://useguidon.com/developers)
 - [About](https://useguidon.com/about): who makes Guidon ([Markdown](https://useguidon.com/about.md))
 - [Contact](https://useguidon.com/contact): support email, privacy requests, bug reports ([Markdown](https://useguidon.com/contact.md))
+- [Compare](https://useguidon.com/compare): Guidon vs Jira, Linear, Plane, Notion, Trello and others ([Markdown](https://useguidon.com/compare.md); each comparison also at `/compare/<tool>.md`)
 - [Sign up](https://useguidon.com/auth/signup)
 - [Terms of Service](https://useguidon.com/legal/terms)
 - [Privacy Policy](https://useguidon.com/legal/privacy)
