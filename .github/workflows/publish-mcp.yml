@@ -66,8 +66,10 @@ jobs:
           MCP_REGISTRY_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          test -n "$MCP_REGISTRY_PRIVATE_KEY" || { echo "Set the MCP_REGISTRY_PRIVATE_KEY secret in the mcp-registry environment." >&2; exit 1; }
+          # A pasted file brings its trailing newline along; the publisher wants bare hex.
+          key="$(printf '%s' "$MCP_REGISTRY_PRIVATE_KEY" | tr -d '[:space:]')"
+          [[ "$key" =~ ^[0-9a-fA-F]{64}$ ]] || { echo "MCP_REGISTRY_PRIVATE_KEY (mcp-registry environment) must be the 64 hex characters from scripts/create-mcp-registry-key.mjs." >&2; exit 1; }
           cp "$GITHUB_WORKSPACE/server.json" ./server.json
           ./mcp-publisher validate server.json
-          ./mcp-publisher login http --domain=useguidon.com --private-key="$MCP_REGISTRY_PRIVATE_KEY" --registry=https://registry.modelcontextprotocol.io
+          ./mcp-publisher login http --domain=useguidon.com --private-key="$key" --registry=https://registry.modelcontextprotocol.io
           ./mcp-publisher publish server.json
