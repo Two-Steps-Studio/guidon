@@ -826,7 +826,18 @@
       "settingsDescription": "Project configuration",
       "settingsMetric": "Manage team",
       "pendingInsights": "{count, plural, one {AI suggested # thing to remember from finished work} other {AI suggested # things to remember from finished work}} - nothing is added to the project's memory until you accept it.",
-      "reviewInsights": "Review"
+      "reviewInsights": "Review",
+      "reportFinishedTitle": "Finished per week",
+      "reportFinishedSummary": "{count, plural, one {# task} other {# tasks}} finished in the last {weeks} weeks",
+      "reportWeekItem": "Week of {week}: {count, plural, one {# task} other {# tasks}} finished",
+      "reportWorkloadTitle": "Who has what",
+      "reportOpenSummary": "{open} open · {overdue} overdue · {unassigned} without a person",
+      "reportWorkloadEmpty": "No one has tasks assigned yet.",
+      "reportPerson": "Person",
+      "reportOpen": "Open",
+      "reportOverdue": "Overdue",
+      "reportFinished30": "Done, 30 days",
+      "reportUnknownPerson": "Unknown"
     },
     "edit": {
       "trigger": "Edit project",

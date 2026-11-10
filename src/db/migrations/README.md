@@ -273,3 +273,14 @@ organization (was 500 MB): Guidon Cloud is free-only and keeps its storage
 costs near zero, while self-hosted installs have no limits. Existing files are
 kept; only new uploads past the limit are refused. Paid plan rows stay for
 organizations set up manually in the admin panel.
+
+## Project report (123)
+
+`123_project_report.sql` adds `project_report(project_id, weeks)`, a
+`SECURITY INVOKER` function that returns the project overview's report as
+JSON: open, overdue and unassigned task counts, tasks finished per week
+(Monday-based UTC weeks, 1-26, default 8) and workload per person (open,
+overdue, finished in 30 days). Top-level tasks only, like the overview's
+counters. RLS decides what the caller sees; there are no new tables or
+policies. The page leaves the report out until the function exists.
+

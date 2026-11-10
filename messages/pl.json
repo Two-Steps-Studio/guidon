@@ -826,7 +826,18 @@
       "settingsDescription": "Konfiguracja projektu",
       "settingsMetric": "Zarządzaj zespołem",
       "pendingInsights": "{count, plural, one {AI zaproponowało # rzecz do zapamiętania z ukończonej pracy} few {AI zaproponowało # rzeczy do zapamiętania z ukończonej pracy} many {AI zaproponowało # rzeczy do zapamiętania z ukończonej pracy} other {AI zaproponowało # rzeczy do zapamiętania z ukończonej pracy}} - nic nie trafi do pamięci projektu, dopóki tego nie zaakceptujesz.",
-      "reviewInsights": "Przejrzyj"
+      "reviewInsights": "Przejrzyj",
+      "reportFinishedTitle": "Ukończone w tygodniu",
+      "reportFinishedSummary": "{count, plural, one {# zadanie ukończone} few {# zadania ukończone} many {# zadań ukończonych} other {# zadania ukończone}} w ostatnich {weeks} tygodniach",
+      "reportWeekItem": "Tydzień od {week}: {count, plural, one {# zadanie ukończone} few {# zadania ukończone} many {# zadań ukończonych} other {# zadania ukończone}}",
+      "reportWorkloadTitle": "Kto ma co",
+      "reportOpenSummary": "{open} otwartych · {overdue} po terminie · {unassigned} bez osoby",
+      "reportWorkloadEmpty": "Nikt nie ma jeszcze przypisanych zadań.",
+      "reportPerson": "Osoba",
+      "reportOpen": "Otwarte",
+      "reportOverdue": "Po terminie",
+      "reportFinished30": "Ukończone, 30 dni",
+      "reportUnknownPerson": "Nieznana osoba"
     },
     "edit": {
       "trigger": "Edytuj projekt",
