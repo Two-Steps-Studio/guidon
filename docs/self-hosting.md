@@ -139,8 +139,15 @@ On the first run it writes `.env` from `.env.example` with random
 storage, no Supabase, `APP_URL` on port 3000 - set `APP_PORT=8080` or
 `GUIDON_URL=https://guidon.example.com` in the environment to change them),
 builds and starts the stack below, and waits until `/api/health` answers.
-Run it again to update after a `git pull`: your `.env` is kept. Everything
-after this section is what the script does, for doing it by hand.
+Your `.env` is kept on later runs. The same script looks after the instance:
+
+| Command | What it does |
+|---|---|
+| `./scripts/self-host.sh update` | Backup, `git pull`, rebuild, migrate, restart ([upgrading.md](./upgrading.md)) |
+| `./scripts/self-host.sh backup` | Database, roles, uploaded files and `.env` into `backups/<date>/` ([backups.md](./backups.md)) |
+| `./scripts/self-host.sh restore backups/<date>` | Replace all data with a backup (asks first) |
+
+Everything after this section is what the script does, for doing it by hand.
 
 ## Docker Compose (primary path)
 

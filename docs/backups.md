@@ -19,6 +19,33 @@ PITR are configured for your plan.
 If `STORAGE_PROVIDER=supabase`, uploaded files are covered by Supabase's own
 Storage, not by anything below.
 
+## One-command backups (Docker Compose)
+
+If you installed with `./scripts/self-host.sh`:
+
+```bash
+./scripts/self-host.sh backup                         # -> backups/<date>/
+./scripts/self-host.sh restore backups/20261110-0630  # asks you to type RESTORE
+```
+
+A backup folder holds `roles.sql` (`pg_dumpall --roles-only`),
+`database.dump` (`pg_dump -Fc`), `storage.tar.gz` (uploaded files, when
+`STORAGE_PROVIDER=local`) and `env` (a copy of `.env`). It contains your
+secrets, so it is readable only by you - copy it somewhere safe and private,
+off the server. `restore` replaces the database and the files with the
+backup, on this server or a new one: install with `./scripts/self-host.sh`
+first, copy the backup's `env` to `.env` if you want the same secrets, then
+restore. `./scripts/self-host.sh update` takes a backup before every update.
+
+Daily backups with cron (keeps the last 14):
+
+```bash
+0 3 * * * cd /path/to/guidon && ./scripts/self-host.sh backup && ls -1d backups/* | head -n -14 | xargs -r rm -rf
+```
+
+The rest of this page is the same thing by hand, and for installs without
+the script.
+
 ## Self-hosted PostgreSQL (DATABASE_URL / docker-compose db service)
 
 When `DATABASE_URL` is set, this Postgres instance **is** the live data
@@ -121,8 +148,8 @@ tar czf guidon-storage-$(date +%F).tar.gz -C "$STORAGE_PATH" .
 
 ## What's not here
 
-- No scheduled/automated backup job - set one up with cron, a systemd timer,
-  or your platform's equivalent, calling the commands above.
+- No scheduled job built in - add the cron line above, a systemd timer, or
+  your platform's equivalent.
 - No scheduled restore check against *your* backups. `npm run test:restore`
   proves the procedure on scratch data; still restore one of your real backups
   onto a scratch server now and then, because a backup nobody has restored

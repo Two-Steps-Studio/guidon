@@ -74,3 +74,6 @@ plugins/**/*.vsix
 
 # graphify knowledge-graph output (regenerate locally)
 /graphify-out/
+
+# ./scripts/self-host.sh backup (contains secrets)
+/backups/

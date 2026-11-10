@@ -25,6 +25,19 @@ notes are in [release-runbook.md](./release-runbook.md).
 
 ## Docker Compose
 
+If you installed with `./scripts/self-host.sh`, one command does it all:
+
+```bash
+./scripts/self-host.sh update
+```
+
+It backs everything up first (see [backups.md](./backups.md#one-command-backups-docker-compose)),
+then runs `git pull --ff-only`, rebuilds, migrates, restarts and waits for
+`/api/health`. If the new version misbehaves, go back with
+`./scripts/self-host.sh restore backups/<date>`.
+
+The same steps by hand:
+
 ```bash
 git pull                      # or pull whatever registry/tag you deploy from
 docker compose build          # rebuilds db/migrate/app images from the new code
