@@ -156,7 +156,7 @@ export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string
     context
       .registerTool(
         {
-          name: "open_guidon_page",
+          name: "navigate_to_page",
           title: "Open a Guidon page",
           description:
             "Use this to take the person to a page of Guidon, such as their projects, tasks, profile, pricing or the developer guide. " +

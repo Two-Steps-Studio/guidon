@@ -58,6 +58,7 @@ Base URL `https://useguidon.com/api/v1`, JSON in and out, same bearer key. Full 
 - [CLI](https://www.npmjs.com/package/@two_steps_studio/guidon-cli): terminal and CI client, `npx @two_steps_studio/guidon-cli` ([source](https://github.com/two-steps-studio/guidon/tree/main/packages/cli)).
 - [Agent Plugin](https://github.com/two-steps-studio/guidon/blob/main/plugin.json): portable product/docs MCP connections and agent skills.
 - Authentication section index: [/auth/llms.txt](https://useguidon.com/auth/llms.txt).
+- [MCP Registry entry](https://registry.modelcontextprotocol.io/v0/servers?search=com.useguidon/guidon): the product MCP server, `com.useguidon/guidon`, in the official MCP Registry.
 - [Docs MCP server](https://useguidon.com/api/mcp/docs): search and read these docs over MCP, no sign-in (tools `search_docs`, `read_doc`).
 - [Ask](https://useguidon.com/ask): NLWeb endpoint - `POST {"query":{"text":"..."}}` answers from the public docs.
 - [Authentication](https://useguidon.com/auth.md): OAuth 2.1 for MCP clients and apps, API keys for scripts - discovery, registration, tokens, scopes, errors, revocation.
