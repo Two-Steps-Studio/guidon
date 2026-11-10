@@ -58,6 +58,12 @@ export interface StorageProvider {
    * fail for a missing object (Supabase) don't need it.
    */
   exists?(bucket: string, path: string): Promise<boolean>;
+
+  /**
+   * Size and body of an object, or null if it is missing - for providers
+   * whose files are served through /api/storage (local, s3).
+   */
+  serveObject?(bucket: string, path: string): Promise<{ size: number; body: ReadableStream } | null>;
 }
 
 // ============================================
@@ -152,13 +158,11 @@ export async function getStorageProvider(): Promise<StorageProvider> {
       break;
     }
 
-    case "s3":
-      // Deliberately not implemented rather than stubbed: a provider that
-      // silently drops uploads is worse than a clear failure. The interface
-      // above is what an S3 implementation needs to satisfy.
-      throw new Error(
-        "STORAGE_PROVIDER=s3 is not implemented yet. Use 'supabase' or 'local'."
-      );
+    case "s3": {
+      const { S3StorageProvider } = await import("./providers/s3");
+      cached = new S3StorageProvider();
+      break;
+    }
 
     case "supabase":
     default: {

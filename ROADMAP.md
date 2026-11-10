@@ -13,7 +13,7 @@ limits. Self-hosted instances have no limits.
 - Plugins for Unity, Unreal Engine, Godot, Blender, JetBrains and VS Code; desktop app, mobile app and Discord bot
 - Task import from CSV, JSON and Trello
 - English, Polish, German and Spanish
-- Self-hosting on plain PostgreSQL with local storage and optional Ollama, installed with one command
+- Self-hosting on plain PostgreSQL with local or S3-compatible storage (AWS S3, R2, MinIO) and optional Ollama, installed with one command
 
 ## Now
 
@@ -23,7 +23,6 @@ limits. Self-hosted instances have no limits.
 
 ## Next
 
-- [ ] S3-compatible file storage (`STORAGE_PROVIDER=s3` is reserved but not built)
 - [ ] Reports: project progress and team workload
 - [ ] Simpler defaults for new projects (fewer modules on at the start)
 

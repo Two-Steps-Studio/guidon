@@ -153,13 +153,6 @@ export async function checkStorage(): Promise<StorageCheck> {
 
     return { status: "ok", provider: instance.name };
   } catch (error) {
-    // s3 throws by design until implemented - report it as configuration,
-    // not as an outage.
-    const raw = error instanceof Error ? error.message : "";
-    if (/not implemented/i.test(raw)) {
-      return { status: "not_configured", provider, detail: "not implemented" };
-    }
-
     return { status: "down", provider, detail: safeReason(error) };
   }
 }
@@ -175,8 +168,7 @@ export async function checkAI(): Promise<AICheck> {
 
   // §6/§7 - AI is an optional subsystem: an unset AI_PROVIDER is a
   // legitimate "not configured" state, not a failure (same treatment as
-  // checkStorage's "not implemented" branch and checkAuth's
-  // no-Supabase-configured branch).
+  // checkAuth's no-Supabase-configured branch).
   if (!provider) {
     return { status: "not_configured", detail: "no AI provider configured" };
   }

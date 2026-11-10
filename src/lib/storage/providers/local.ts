@@ -4,6 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { mkdir, readFile, rm, stat, readdir } from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
 import {
   assertSafeBucket,
   assertSafeStoragePath,
@@ -125,32 +126,7 @@ export class LocalStorageProvider implements StorageProvider {
     objectPath: string,
     options?: { expiresInSeconds?: number; public?: boolean }
   ): Promise<string> {
-    assertSafeBucket(bucket);
-    const safePath = assertSafeStoragePath(objectPath);
-
-    const isPublic = Boolean(options?.public);
-    const ttl = isPublic ? PUBLIC_URL_TTL_SECONDS : options?.expiresInSeconds ?? 600;
-    const expires = Math.floor(Date.now() / 1000) + ttl;
-    const signature = signStoragePath(bucket, safePath, expires, isPublic);
-
-    const params = new URLSearchParams({
-      bucket,
-      path: safePath,
-      expires: String(expires),
-      signature,
-      ...(isPublic ? { public: "1" } : {}),
-    });
-
-    // SITE_URL (lib/site-url.ts), not a direct NEXT_PUBLIC_APP_URL read - this
-    // method runs server-side only (this whole provider does real filesystem
-    // I/O), so it doesn't need the client-exposed var, and reading it
-    // directly here was a second, unnormalized "site origin" source that the
-    // APP_URL fix didn't cover: a bare-domain NEXT_PUBLIC_APP_URL wouldn't
-    // crash (this is plain string concatenation, not new URL()), but would
-    // silently produce a broken signed URL like "useguidon.com/api/storage?..."
-    // that browsers resolve as a relative path against the current page
-    // instead of the intended origin.
-    return `${SITE_URL}/api/storage?${params.toString()}`;
+    return signedAppStorageUrl(bucket, objectPath, options);
   }
 
   async usage(bucket: string, prefix: string): Promise<number> {
@@ -195,6 +171,43 @@ export class LocalStorageProvider implements StorageProvider {
   createStream(bucket: string, objectPath: string) {
     return createReadStream(this.resolve(bucket, objectPath));
   }
+
+  async serveObject(bucket: string, objectPath: string): Promise<{ size: number; body: ReadableStream } | null> {
+    const info = await this.statObject(bucket, objectPath);
+    if (!info) return null;
+    return { size: info.size, body: Readable.toWeb(this.createStream(bucket, objectPath)) as ReadableStream };
+  }
+}
+
+/**
+ * The /api/storage link for an object, shared by the local and S3 providers.
+ * The signature covers bucket, path, expiry and the public flag (see
+ * signStoragePath). `public: true` only changes the lifetime.
+ */
+export function signedAppStorageUrl(
+  bucket: string,
+  objectPath: string,
+  options?: { expiresInSeconds?: number; public?: boolean }
+): string {
+  assertSafeBucket(bucket);
+  const safePath = assertSafeStoragePath(objectPath);
+
+  const isPublic = Boolean(options?.public);
+  const ttl = isPublic ? PUBLIC_URL_TTL_SECONDS : options?.expiresInSeconds ?? 600;
+  const expires = Math.floor(Date.now() / 1000) + ttl;
+  const signature = signStoragePath(bucket, safePath, expires, isPublic);
+
+  const params = new URLSearchParams({
+    bucket,
+    path: safePath,
+    expires: String(expires),
+    signature,
+    ...(isPublic ? { public: "1" } : {}),
+  });
+
+  // SITE_URL, not NEXT_PUBLIC_APP_URL: a bare-domain value would make a
+  // relative, broken link (lib/site-url.ts normalizes it).
+  return `${SITE_URL}/api/storage?${params.toString()}`;
 }
 
 // ============================================

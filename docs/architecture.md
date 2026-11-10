@@ -81,13 +81,14 @@ requirement, not a hypothetical, so anything that would otherwise hard-code
 a managed cloud service is behind an interface instead.
 
 **Storage** (`src/lib/storage/provider.ts`) - `StorageProvider` defines
-`ensureBucket`, `upload`, `download`, `remove`, `getUrl`, `usage`. Two
-implementations exist: `providers/supabase.ts` (managed bucket) and
-`providers/local.ts` (filesystem under `STORAGE_PATH`, served through
+`ensureBucket`, `upload`, `download`, `remove`, `getUrl`, `usage`. Three
+implementations exist: `providers/supabase.ts` (managed bucket),
+`providers/local.ts` (filesystem under `STORAGE_PATH`) and `providers/s3.ts`
+(any S3-compatible store, SigV4 signing in `s3-sigv4.ts`, one bucket with
+Guidon's buckets as key prefixes). Local and S3 objects are served through
 `GET /api/storage` with an HMAC-signed URL - nothing is statically served,
-so an object can't be reached by guessing a path). `s3` is a recognized
-provider name that throws "not implemented" rather than silently no-oping -
-the interface is ready for it, the implementation isn't written. This one
+so an object can't be reached by guessing a path, and an S3 bucket stays
+private. This one
 actually is used end-to-end: file uploads go through a Server Action
 (`src/app/projects/[id]/files/actions.ts`) specifically because `local`
 needs to write to the server's disk, which the browser can't reach directly.
