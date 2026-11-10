@@ -37,6 +37,7 @@ import {
   TECHNOLOGY_CATEGORY_ORDER,
   guessTechnologyCategory,
 } from "@/types/technology";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 const CATEGORY_ICONS: Record<TechnologyCategory, typeof Code> = {
   frontend: Code,
@@ -132,7 +133,7 @@ export function TechnologyList({
               {technologies.length > 0 && (
                 <>
                   {" · "}
-                  <span className="tabular-nums">{technologies.length}</span>
+                  <span className="tabular-nums"><RollingNumber value={technologies.length} /></span>
                 </>
               )}
             </p>
@@ -190,7 +191,7 @@ export function TechnologyList({
                   <h2 className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     <Icon className={cn("h-3.5 w-3.5", CATEGORY_ACCENT[category])} aria-hidden />
                     {tCommon("technologyCategory", { category })}
-                    <span className="tabular-nums">{items.length}</span>
+                    <span className="tabular-nums"><RollingNumber value={items.length} /></span>
                   </h2>
 
                   <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">

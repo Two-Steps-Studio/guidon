@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadAgentMonitoring, MONITOR_LIMIT } from "@/lib/data/agent-monitoring";
 import { getWorkflowOverrides } from "@/lib/data/workflow";
 import { resolveBoardColumns } from "@/lib/work/task-board";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 export async function AgentMonitoringReport({ userId, projectId }: { userId: string; projectId: string }) {
   const t = await getTranslations("agentMonitoring");
@@ -23,10 +24,10 @@ export async function AgentMonitoringReport({ userId, projectId }: { userId: str
       {report.truncated && <p role="status" className="text-sm text-warning">{t("truncated")}</p>}
     </div>
     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map(([key,value])=><div key={key} className="rounded-xl border bg-card p-4"><dt className="text-sm text-muted-foreground">{t(key)}</dt><dd className="mt-2 text-3xl font-semibold tabular-nums">{value}</dd></div>)}
+      {stats.map(([key,value])=><div key={key} className="rounded-xl border bg-card p-4"><dt className="text-sm text-muted-foreground">{t(key)}</dt><dd className="mt-2 text-3xl font-semibold tabular-nums"><RollingNumber value={value} /></dd></div>)}
     </dl>
     <Card><CardHeader><CardTitle>{t("statuses")}</CardTitle></CardHeader><CardContent>
-      {report.tasks.length ? <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">{Object.entries(report.statuses).map(([status,count])=><div key={status}><dt className="break-words text-sm text-muted-foreground">{columns.find(column=>column.status===status)?.label??status}</dt><dd className="font-semibold tabular-nums">{count}</dd></div>)}</dl> : <p>{t("empty")}</p>}
+      {report.tasks.length ? <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">{Object.entries(report.statuses).map(([status,count])=><div key={status}><dt className="break-words text-sm text-muted-foreground">{columns.find(column=>column.status===status)?.label??status}</dt><dd className="font-semibold tabular-nums"><RollingNumber value={count} /></dd></div>)}</dl> : <p>{t("empty")}</p>}
     </CardContent></Card>
     <Card><CardHeader><CardTitle>{t("claims")}</CardTitle></CardHeader><CardContent>
       {report.claims.length ? <ul className="divide-y">{report.claims.map(claim=><li key={claim.task_id} className="space-y-1 py-3">

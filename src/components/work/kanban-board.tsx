@@ -27,6 +27,7 @@ import { TaskCard, type TaskCardMember } from "@/components/work/task-card";
 import type { Task, TaskStatus } from "@/types/task";
 import { usePriorities } from "@/components/work/workflow-context";
 import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -578,7 +579,7 @@ function KanbanBoardComponent({
                 {column.label}
               </h2>
               <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[11px] tabular-nums text-foreground/75">
-                {columnTasks.length}
+                <RollingNumber value={columnTasks.length} />
               </span>
               {canEdit && (
                 <Button

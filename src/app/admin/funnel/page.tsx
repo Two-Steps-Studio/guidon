@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { requireAdminAccess } from "@/lib/data/admin-access";
 import { serviceDataClient } from "@/lib/data-client";
 import { recentCtaTotals, toFunnelCohort } from "@/lib/funnel";
+import { RollingNumber } from "@/components/ui/rolling-number";
 
 /**
  * Sign-up -> activation -> subscription funnel (migration 096): weekly
@@ -81,7 +82,7 @@ export default async function AdminFunnelPage() {
           {ctaTotals.map((row) => (
             <li key={row.cta} className="rounded-lg border p-3">
               <p className="text-sm text-muted-foreground">{t(`cta.${row.cta}`)}</p>
-              <p className="text-2xl font-semibold tabular-nums">{row.count}</p>
+              <p className="text-2xl font-semibold tabular-nums"><RollingNumber value={row.count} /></p>
             </li>
           ))}
         </ul>
