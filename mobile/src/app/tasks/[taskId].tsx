@@ -4,7 +4,9 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   RefreshControl,
@@ -15,6 +17,7 @@ import {
   View,
 } from "react-native";
 import { isApiError, type Comment } from "@/api";
+import { SUPPORT_EMAIL } from "@/api/client";
 import { useSession } from "@/auth/session";
 import { DueDateField } from "@/components/DueDateField";
 import { OptionSheet } from "@/components/OptionSheet";
@@ -135,6 +138,18 @@ export default function TaskScreen() {
     setRefreshing(true);
     await Promise.allSettled([taskQuery.refetch(), comments.refetch()]);
     setRefreshing(false);
+  };
+
+  // App Store guideline 1.2: content other people wrote can be reported.
+  const canReport = (comment: Comment) =>
+    !isTempId(comment.id) && !(session.selfUserId && comment.author_id === session.selfUserId);
+  const reportComment = (comment: Comment) => {
+    const body = `Server: ${session.server}\nTask: ${taskId}\nComment: ${comment.id}\n\n`;
+    const url = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Guidon app: reported comment")}&body=${encodeURIComponent(body)}`;
+    Alert.alert(t("task.reportCommentTitle"), t("task.reportCommentMessage"), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("task.reportComment"), style: "destructive", onPress: () => void Linking.openURL(url).catch(() => {}) },
+    ]);
   };
 
   const authorName = (comment: Comment) => {
@@ -286,8 +301,11 @@ export default function TaskScreen() {
               <Text style={[styles.placeholder, { color: colors.textFaint }]}>{t("task.noComments")}</Text>
             ) : (
               (comments.data ?? []).map((comment, index) => (
-                <View
+                <Pressable
                   key={comment.id}
+                  onLongPress={canReport(comment) ? () => reportComment(comment) : undefined}
+                  accessibilityActions={canReport(comment) ? [{ name: "longpress", label: t("task.reportComment") }] : undefined}
+                  onAccessibilityAction={canReport(comment) ? () => reportComment(comment) : undefined}
                   style={[
                     styles.comment,
                     index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
@@ -301,7 +319,7 @@ export default function TaskScreen() {
                     </Text>
                   </View>
                   <RichText text={comment.content} />
-                </View>
+                </Pressable>
               ))
             )}
           </View>

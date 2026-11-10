@@ -4,6 +4,8 @@
  */
 
 export const DEFAULT_SERVER = "https://useguidon.com";
+/** The app publisher's support inbox (App Store 1.2 reports, contact). */
+export const SUPPORT_EMAIL = "support@useguidon.com";
 const TIMEOUT_MS = 20_000;
 
 type Credentials = { server: string; apiKey: string | null };

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Seed demo dla walkthrough Guidon (guidon-walkthrough-pl.md).
+ * Seed demo dla walkthrough Guidon (docs/walkthrough-pl.md).
  *
  * Tworzy organizację i projekt demo z pełnym zestawem danych, by każdy
  * rozdział prezentacji dalo się nagrać „na żywo":
