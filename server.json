@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.two-steps-studio/guidon",
+  "name": "com.useguidon/guidon",
   "title": "Guidon Project Management",
   "description": "Find, claim, update and hand back Guidon tasks with their project context.",
   "repository": {

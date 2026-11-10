@@ -43,7 +43,6 @@ jobs:
     environment: mcp-registry
     permissions:
       contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,12 +55,19 @@ jobs:
           curl --fail --location --proto '=https' --tlsv1.2 --retry 3 --retry-max-time 60 --connect-timeout 15 --max-time 30 --header 'Accept: application/octet-stream' --output "$RUNNER_TEMP/publisher.tar.gz" https://api.github.com/repos/modelcontextprotocol/registry/releases/assets/691911080
           echo "00b21004149a4ce66f0782508ae4a2bce67d1bea395a8da0bd8028159fb59579  $RUNNER_TEMP/publisher.tar.gz" | sha256sum --check --strict
           tar -xzf "$RUNNER_TEMP/publisher.tar.gz" -C "$RUNNER_TEMP" mcp-publisher
-      - name: Publish with repository-bound OIDC
+      # com.useguidon/* is proven by domain: the registry checks the signature
+      # against https://useguidon.com/.well-known/mcp-registry-auth
+      # (MCP_REGISTRY_PUBLIC_KEY on the deployment). The private key (64 hex
+      # characters) lives only in this environment's secret.
+      - name: Publish under the useguidon.com namespace
         shell: bash
         working-directory: ${{ runner.temp }}
+        env:
+          MCP_REGISTRY_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
         run: |
           set -euo pipefail
+          test -n "$MCP_REGISTRY_PRIVATE_KEY" || { echo "Set the MCP_REGISTRY_PRIVATE_KEY secret in the mcp-registry environment." >&2; exit 1; }
           cp "$GITHUB_WORKSPACE/server.json" ./server.json
           ./mcp-publisher validate server.json
-          ./mcp-publisher login github-oidc --registry=https://registry.modelcontextprotocol.io
+          ./mcp-publisher login http --domain=useguidon.com --private-key="$MCP_REGISTRY_PRIVATE_KEY" --registry=https://registry.modelcontextprotocol.io
           ./mcp-publisher publish server.json

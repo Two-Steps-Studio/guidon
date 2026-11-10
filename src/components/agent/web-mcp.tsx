@@ -38,6 +38,17 @@ export function toolResult(text: string, data?: unknown) {
   return { content: [{ type: "text", text }], ...(data === undefined ? {} : { structuredContent: data }) };
 }
 
+/** Runs a tool and turns a thrown error into an MCP error result. */
+function guarded(run: (input: Record<string, unknown>) => Promise<unknown> | unknown) {
+  return async (input: Record<string, unknown>) => {
+    try {
+      return await run(input ?? {});
+    } catch (error) {
+      return { ...toolResult(error instanceof Error ? error.message : "The tool failed."), isError: true };
+    }
+  };
+}
+
 /**
  * Registers `tools` while the component is mounted. Executors read the
  * latest props through a ref, so the tools are registered once, not on
@@ -61,14 +72,7 @@ export function useWebMcpTools(tools: WebMcpTool[]) {
         .registerTool(
           {
             ...definition,
-            execute: async (input) => {
-              const current = latest.current.find((candidate) => candidate.name === tool.name);
-              try {
-                return await current!.execute(input ?? {});
-              } catch (error) {
-                return { ...toolResult(error instanceof Error ? error.message : "The tool failed."), isError: true };
-              }
-            },
+            execute: guarded((input) => latest.current.find((candidate) => candidate.name === tool.name)!.execute(input)),
           },
           { signal: controller.signal }
         )
@@ -111,36 +115,75 @@ export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string
       ...(user.fullName ? { name: user.fullName } : {}),
     });
   }, [user]);
-  useWebMcpTools([
-    {
-      name: "search_guidon_docs",
-      title: "Search Guidon docs",
-      description: "Search Guidon's public documentation (API, MCP server, authentication, pricing, the agent workflow). Returns matching sections with links.",
-      inputSchema: { type: "object", properties: { query: { type: "string", description: "The question, in plain words." } }, required: ["query"] },
-      annotations: { readOnlyHint: true },
-      async execute({ query }) {
-        const response = await fetch("/ask", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: { text: String(query ?? "") } }),
-        });
-        const data = (await response.json()) as { results?: { name: string; url: string; description: string }[]; error?: { message: string } };
-        if (!data.results?.length) return toolResult(data.error?.message ?? "No matching documentation.");
-        return toolResult(data.results.map((r) => `${r.name}\n${r.url}\n${r.description}`).join("\n\n"), data.results);
-      },
-    },
-    {
-      name: "open_guidon_page",
-      title: "Open a Guidon page",
-      description: `Navigate to a page of Guidon. Pages: ${Object.keys(PAGES).join(", ")}. Pages that need an account go through sign-in first.`,
-      inputSchema: { type: "object", properties: { page: { type: "string", enum: Object.keys(PAGES) } }, required: ["page"] },
-      async execute({ page }) {
-        const path = PAGES[String(page)];
-        if (!path) return toolResult(`Unknown page. Use one of: ${Object.keys(PAGES).join(", ")}.`);
-        router.push(path);
-        return toolResult(`Opened ${path}.`);
-      },
-    },
-  ]);
+  // Written out as literal registerTool() calls (not through useWebMcpTools)
+  // so the definitions stay readable in the built bundle: agent-readiness
+  // scanners read the tools without running the page.
+  useEffect(() => {
+    const context = modelContext();
+    if (!context) return;
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    context
+      .registerTool(
+        {
+          name: "search_guidon_docs",
+          title: "Search Guidon docs",
+          description:
+            "Use this to answer a question about Guidon: the REST API, MCP server, sign-in and API keys, pricing or the agent workflow. " +
+            "Returns up to 6 matching documentation sections, each with its title, link and a short excerpt.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "The question or keywords in plain words, e.g. \"how do I connect Claude Code\"." },
+            },
+            required: ["query"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: guarded(async ({ query }) => {
+            const response = await fetch("/ask", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ query: { text: String(query ?? "") } }),
+            });
+            const data = (await response.json()) as { results?: { name: string; url: string; description: string }[]; error?: { message: string } };
+            if (!data.results?.length) return toolResult(data.error?.message ?? "No matching documentation.");
+            return toolResult(data.results.map((r) => `${r.name}\n${r.url}\n${r.description}`).join("\n\n"), data.results);
+          }),
+        },
+        options
+      )
+      .catch(() => undefined);
+    context
+      .registerTool(
+        {
+          name: "open_guidon_page",
+          title: "Open a Guidon page",
+          description:
+            "Use this to take the person to a page of Guidon, such as their projects, tasks, profile, pricing or the developer guide. " +
+            "Navigates the current tab and returns the opened path; pages that need an account go through sign-in first.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              page: {
+                type: "string",
+                description: "Which page to open, by the names listed here.",
+                // Same names as PAGES below.
+                enum: ["home", "dashboard", "projects", "my_tasks", "organizations", "profile", "developers", "pricing", "about", "contact", "sign_in", "sign_up"],
+              },
+            },
+            required: ["page"],
+          },
+          execute: guarded(async ({ page }) => {
+            const path = PAGES[String(page)];
+            if (!path) return toolResult(`Unknown page. Use one of: ${Object.keys(PAGES).join(", ")}.`);
+            router.push(path);
+            return toolResult(`Opened ${path}.`);
+          }),
+        },
+        options
+      )
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [router]);
   return null;
 }
