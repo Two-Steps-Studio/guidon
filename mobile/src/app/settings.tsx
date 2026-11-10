@@ -4,6 +4,7 @@ import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text } from "react-native";
 import { DEFAULT_SERVER, api, isApiError } from "@/api";
+import { SUPPORT_EMAIL } from "@/api/client";
 import { useSession } from "@/auth/session";
 import { Row, Section } from "@/components/Rows";
 import { useI18n } from "@/i18n";
@@ -134,6 +135,12 @@ export default function SettingsScreen() {
         <Row label={t("settings.privacy")} icon="shield-checkmark-outline" onPress={() => openPage(LEGAL.privacy)} />
         <Row label={t("settings.terms")} icon="document-text-outline" onPress={() => openPage(LEGAL.terms)} />
         <Row label={t("settings.eula")} icon="reader-outline" onPress={() => openPage(LEGAL.eula)} />
+        <Row label={t("settings.contact")} icon="help-circle-outline" onPress={() => openPage(`${DEFAULT_SERVER}/contact`)} />
+        <Row
+          label={t("settings.report")}
+          icon="flag-outline"
+          onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Guidon app: report")}`).catch(() => {})}
+        />
         <Row label={t("settings.version")} value={build ? `${version} (${build})` : version} last />
       </Section>
 

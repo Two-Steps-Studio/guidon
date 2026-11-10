@@ -1,0 +1,47 @@
+name: Bug report
+description: Something doesn't work as it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a project
+        2. Click ...
+        3. See the error
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where do you run Guidon?
+      options:
+        - Guidon Cloud (useguidon.com)
+        - Self-hosted (Docker)
+        - Self-hosted (without Docker)
+        - Local development
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Part of Guidon
+      placeholder: e.g. task board, MCP server, Godot plugin, desktop app
+  - type: textarea
+    id: env
+    attributes:
+      label: Version and environment
+      description: Commit or release, browser, operating system. For plugins, the editor version.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove passwords, API keys and other secrets first.

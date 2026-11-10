@@ -324,13 +324,11 @@ export function comparisonMarkdown(c: Comparison): string {
   const wins = rows.filter((row) => row.better === "guidon").length;
   const others = COMPARISONS.filter((other) => other.slug !== c.slug);
   return [
-    `[All comparisons](/compare)`,
-    "",
     `# Guidon vs ${c.name}: ${c.angle}`,
     "",
     c.summary,
     "",
-    `_Checked ${CHECKED}. Features change - see [${c.name}'s site](${c.url}) for theirs._`,
+    `_Checked ${CHECKED}. Features change - see [${c.name}'s site](${c.url}) for theirs._ [All comparisons](/compare)`,
     "",
     "## The short answer",
     "",

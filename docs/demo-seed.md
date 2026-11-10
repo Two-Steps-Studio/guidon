@@ -2,7 +2,7 @@
 
 Skrypt `scripts/seed-walkthrough-demo.mjs` tworzy gotowy zestaw danych
 demo odpowiadający rozdziałom przewodnika
-[`guidon-walkthrough-pl.md`](../guidon-walkthrough-pl.md), żeby prezentację
+[`walkthrough-pl.md`](./walkthrough-pl.md), żeby prezentację
 dało się nagrać w prawdziwej aplikacji zamiast opowiadać o niej wyłącznie
 słownie.
 

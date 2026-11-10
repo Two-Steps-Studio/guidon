@@ -1,247 +1,131 @@
-# Guidon
+<div align="center">
 
-**Context-first project management for development teams.** Guidon tracks not
-just what a project's tasks are, but *why* - decisions, context relations,
-project memory, and the provenance behind them - for developer- and
-game-development-friendly teams.
+<img src="./public/assets/guidon-wordmark.png" alt="Guidon" width="220">
+
+**Project management that remembers why.**
+Tasks, decisions and project memory in one place, built for game and software teams and the AI agents that work with them.
 
 [Website](https://useguidon.com) ·
-[Self-hosting guide](./docs/self-hosting.md) ·
-[REST API & MCP for AI agents](https://useguidon.com/developers) ·
-[Agent Plugin](./plugin.json) |
-[MCP Registry metadata](./server.json) |
-[Plugins](https://useguidon.com/plugins)
+[Self-hosting](./docs/self-hosting.md) ·
+[User guide](./docs/user-guide.md) ·
+[API & MCP](https://useguidon.com/developers) ·
+[Compare](https://useguidon.com/compare)
 
-[![Guidon skills on skills.sh](https://skills.sh/b/two-steps-studio/guidon)](https://skills.sh/two-steps-studio/guidon)
-https://www.npmjs.com/package/@two_steps_studio/guidon-sdk
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
+[![npm SDK](https://img.shields.io/npm/v/@two_steps_studio/guidon-sdk?label=sdk)](https://www.npmjs.com/package/@two_steps_studio/guidon-sdk)
+[![Skills](https://skills.sh/b/two-steps-studio/guidon)](https://skills.sh/two-steps-studio/guidon)
 
-![Guidon task board](./public/landing/taskBoard-light.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./public/landing/taskBoard-dark.webp">
+  <img src="./public/landing/taskBoard-light.webp" alt="Guidon task board">
+</picture>
 
-- **Task board** per project - drag and drop, custom columns, labels, subtasks, bulk actions, *My tasks* across projects.
-- **Decisions, knowledge base, moodboard, roadmap, calendar** - the context behind the work, each module switchable per project.
-- **Built for AI agents** - REST API ([OpenAPI](https://useguidon.com/openapi.json)) and an MCP server, so Claude Code, Cursor, Codex and others can pick up, work and hand back tasks.
-- **Where you already work** - plugins for Unity, Unreal Engine, Godot, Blender, JetBrains and VS Code, a desktop app, a Discord bot and in-game bug reports.
-- **Self-hostable** - Docker Compose with a plain PostgreSQL, local file storage and optional local AI (Ollama).
+</div>
 
-Guidon runs three ways: as a hosted Cloud product, self-hosted on your own
-infrastructure, or as a local development server. Self-hosting is a
-first-class product mode here, not an afterthought - see
-[docs/self-hosting.md](./docs/self-hosting.md) for the full story, including
-what's genuinely self-hostable today and what isn't yet.
+## Why Guidon
 
-## Agent skills
+Most boards track *what* is being done. Guidon also keeps *why*: the decision
+behind a task, what was already tried, and what the team knows about the
+project. People and AI agents read the same context, so nobody starts from
+zero.
 
-Install Guidon's API, CLI, and task workflow skills in an AI coding agent with
-the [skills CLI](https://www.skills.sh/docs/cli):
+- **Task board.** Drag and drop, custom columns, labels, subtasks, recurring tasks, bulk actions and *My tasks* across projects.
+- **Context behind the work.** Decisions, knowledge base, project memory, roadmap, calendar, whiteboard and moodboard. Each module can be switched on or off per project.
+- **Built for AI agents.** A REST API ([OpenAPI](https://useguidon.com/openapi.json)) and an MCP server. Claude Code, Cursor, Codex and others can pick up a task, see earlier failed attempts, do the work and hand it back for review.
+- **Where you already work.** Plugins for Unity, Unreal Engine, Godot, Blender, JetBrains and VS Code, a desktop app, a Discord bot and in-game bug reports.
+- **Yours to run.** Self-host with Docker Compose on plain PostgreSQL, with local file storage and optional local AI (Ollama). No limits on a self-hosted instance.
+
+<table>
+<tr>
+<td width="50%"><img src="./public/landing/decisions-light.webp" alt="Decisions"></td>
+<td width="50%"><img src="./public/landing/memoryContext-light.webp" alt="Project memory"></td>
+</tr>
+<tr>
+<td align="center">Decisions</td>
+<td align="center">Project memory</td>
+</tr>
+</table>
+
+## Get started
+
+| | Guidon Cloud | Self-hosted | Development |
+|---|---|---|---|
+| For | Trying Guidon without running anything | Running it on your own server | Changing Guidon's code |
+| Start | [Start free](https://useguidon.com/start) or [try the sandbox](https://useguidon.com/sandbox) | `./scripts/self-host.sh` | `npm install && npm run dev` |
+| Details | [Pricing](https://useguidon.com/#pricing) | [docs/self-hosting.md](./docs/self-hosting.md) | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+
+### Self-host in one command
+
+You need Docker with Compose.
+
+```bash
+git clone https://github.com/Two-Steps-Studio/guidon.git
+cd guidon
+./scripts/self-host.sh
+```
+
+The script writes a `.env` with random secrets, builds the image, runs the
+migrations and waits until the app answers on
+[http://localhost:3000](http://localhost:3000). Then sign up to create the first
+account. Storage, AI, sign-in providers, backups and upgrades are covered in
+[docs/self-hosting.md](./docs/self-hosting.md).
+
+### Connect an AI agent
 
 ```bash
 npx skills add two-steps-studio/guidon
 ```
 
-The skills are in [`skills/`](./skills/). For a connected MCP server, see the
-[agent integration guide](https://useguidon.com/developers).
-
-## Which path do I want?
-
-| | Cloud | Self-hosted | Development |
-|---|---|---|---|
-| For | Using Guidon without running anything | Deploying on infrastructure you control | Changing Guidon's code |
-| Runs on | Guidon Cloud | Your server (Docker Compose or bare Node) | Your machine |
-| Setup | Sign up | `docker compose up -d` | `npm install && npm run dev` |
-| Details | - | [docs/self-hosting.md](./docs/self-hosting.md) | below |
-
-**Before choosing self-hosted:** sign-in, data access, storage
-(`STORAGE_PROVIDER=local`), and AI (`AI_PROVIDER=ollama`) are all genuinely
-self-hostable today - a plain PostgreSQL with zero Supabase software
-running is enough to sign up, create a project, and use the whole
-application, verified live against a real `docker compose up` stack, not
-just by reading the code. Full details, including exactly what runs where,
-in [docs/self-hosting.md](./docs/self-hosting.md#read-this-first-current-state).
-
-## Quickstart - Cloud
-
-Nothing to run. Use the hosted product.
-
-## Quickstart - Self-hosted
-
-```bash
-git clone <this repo>
-cd guidon
-cp .env.example .env
-# fill in .env - see docs/self-hosting.md for what's required
-docker compose up -d
-curl http://localhost:3000/api/health
-```
-
-Full walkthrough, including the non-Docker path, choosing a storage/AI
-backend, and admin access: [docs/self-hosting.md](./docs/self-hosting.md).
-
-## Quickstart - Development
-
-```bash
-npm install
-cp .env.example .env.local
-# fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, AUTH_SECRET
-npm run migrate:status   # optional: see what schema state your Supabase project is in
-npm run dev
-```
-
-Open [http://localhost:5803](http://localhost:5803).
-
-Available scripts (`package.json`):
-
-| Script | What it does |
-|---|---|
-| `npm run dev` | Start the dev server |
-| `npm run build` | Production build |
-| `npm run start` | Start the production server (after `build`) |
-| `npm run lint` | ESLint |
-| `npm run migrate` | Apply pending database migrations |
-| `npm run migrate:status` | Show applied/pending migrations, changes nothing |
-| `npm run test:db` | Verify the migration chain + RLS-compatibility layer against a real PostgreSQL (PGlite, no Docker/Supabase needed) |
-| `npm run test:ai` | Test the AI provider factory's env-resolution logic, no live API key needed |
-| `npm run test:auth` | Test local-auth (self-hosted) compatibility logic |
-| `npm run test:limits` | Test plan/limits logic |
-| `npm run test:reports` | Test in-game report validation |
-| `npm run test:github` | Test GitHub commit/PR -> task rules |
+That installs Guidon's task workflow skills (from [`skills/`](./skills/)). To
+connect an MCP client, see the [agent integration guide](https://useguidon.com/developers).
 
 ## Tech stack
 
-- **Framework**: Next.js 16.3.0, App Router, React 19. Pages read data as
-  Server Components and write through Server Actions - the browser never
-  talks to the database directly (see
-  [docs/architecture.md](./docs/architecture.md)).
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS v4
-- **UI Components**: shadcn/ui (Radix UI primitives)
-- **Database**: PostgreSQL, either Supabase or a self-hosted instance -
-  `hasDirectDatabase()` picks the mode per request based on whether
-  `DATABASE_URL` is set, and both paths enforce the same RLS policies - see
-  [docs/self-hosting.md](./docs/self-hosting.md).
-- **Auth**: Supabase Auth (email/password, plus optional Google/Discord OAuth)
-  on the hosted path; signed-cookie local auth on the self-hosted path
-- **Storage**: pluggable `StorageProvider` - Supabase Storage or local
-  filesystem (`s3` interface-ready, not implemented)
-- **AI**: pluggable `AIProvider` abstraction, seven backends, wired into task
-  chat and project-memory insight generation (see
-  [docs/configuration.md](./docs/configuration.md#ai-todomd-67))
-- **Icons**: Lucide React
+Next.js 16 (App Router, React 19), TypeScript, Tailwind CSS v4, shadcn/ui and
+PostgreSQL. Pages read data in Server Components and write through Server
+Actions. The same Row-Level Security policies guard the data on Supabase and
+on a plain self-hosted PostgreSQL. More in
+[docs/architecture.md](./docs/architecture.md).
 
-## Project structure
+## Repository layout
 
-```
-guidon/
-├── src/
-│   ├── proxy.ts              # Route protection (Next's middleware convention, renamed upstream)
-│   ├── app/                  # Next.js App Router
-│   │   ├── auth/             # Login, signup, logout, OAuth callback - the only client-side data pages
-│   │   ├── dashboard/
-│   │   ├── organizations/    # Server Components + actions.ts (Server Actions)
-│   │   ├── projects/[id]/    # Server Components + actions.ts, files/actions.ts (uploads), context/, decisions/, knowledge/, memory/, roadmap/, settings/, technology/, work/
-│   │   ├── admin/            # Instance-admin panel, gated by ADMIN_EMAILS (dashboard, organizations, users, logs, integrations) - mostly read-only; organizations also exposes admin-only plan/limit overrides
-│   │   └── api/
-│   │       ├── health/       # GET /api/health - reports db/storage/auth/ai status
-│   │       ├── storage/      # Serves objects for STORAGE_PROVIDER=local
-│   │       └── v1/           # Narrow surface for non-UI callers (currently just /search)
-│   ├── components/
-│   │   ├── auth/ context/ decisions/ files/ layout/ memory/ projects/ shared/ tasks/ work/
-│   │   └── ui/                # shadcn/ui components
-│   ├── lib/
-│   │   ├── ai/                 # AIProvider abstraction + 7 backend implementations
-│   │   ├── auth/                # OAuth provider config, auth helpers
-│   │   ├── context/              # Context Layer: agent context, relations, task "why"
-│   │   ├── data/                  # Authorization + data-access modules (current-user, org-access, project-access, admin, admin-access)
-│   │   ├── db/                     # pool.ts (pg Pool) + session.ts (RLS-scoped transactions) - self-hosted-Postgres layer, used whenever DATABASE_URL is set (see docs/architecture.md)
-│   │   ├── health/                  # Shared health-check logic (db/storage/auth/ai)
-│   │   ├── search/                   # Backing logic for /api/v1/search
-│   │   ├── storage/                   # StorageProvider abstraction (Supabase / local / S3-reserved)
-│   │   ├── work/                       # Task-board status normalization
-│   │   ├── supabase.ts                # Browser Supabase client
-│   │   ├── supabase-server.ts         # Server Supabase client(s)
-│   │   └── utils.ts
-│   ├── types/                # Shared TypeScript types
-│   └── db/
-│       ├── bootstrap/
-│       │   └── 000_auth_compat.sql   # Recreates auth.uid()/auth.users/roles on plain PostgreSQL
-│       └── migrations/
-│           ├── 000_baseline_schema.sql  # ... through 012_context_relations_cleanup_triggers.sql
-│           └── README.md                # Per-migration reference (authoritative - not repeated here)
-├── scripts/
-│   └── migrate.mjs         # Migration runner - npm run migrate / migrate:status
-├── tests/
-│   ├── db/compat.test.mjs   # npm run test:db
-│   └── ai/provider.test.mjs # npm run test:ai
-├── docs/
-│   ├── self-hosting.md
-│   ├── configuration.md
-│   ├── upgrading.md
-│   ├── backups.md
-│   ├── architecture.md
-│   ├── auth-setup.md            # Google/Discord OAuth setup
-│   └── self-hosting-audit.md    # Working log of the self-hosting effort
-├── public/                 # Static assets
-├── Dockerfile               # Multi-stage production image
-├── docker-compose.yml       # db + migrate + app services for self-hosting
-├── .env.example             # Full environment variable reference (source of truth)
-├── components.json          # shadcn/ui configuration
-├── next.config.ts            # output: "standalone" for Docker only - see the file's own comment for why not unconditional
-└── package.json
-```
+| Path | What's there |
+|---|---|
+| `src/` | The web app: pages, Server Actions, the `/api/v1` REST API and the MCP server |
+| `src/db/migrations/` | Database schema, one numbered SQL file per change ([reference](./src/db/migrations/README.md)) |
+| `plugins/` | Editor plugins: Unity, Unreal, Godot, Blender, JetBrains, VS Code |
+| `desktop/`, `mobile/`, `discord-bot/` | Desktop app (Tauri), mobile app (Expo), Discord bot |
+| `packages/`, `sdk/` | JavaScript SDK, CLI and Python SDK (MIT) |
+| `skills/`, `agent-plugin/` | Skills and plugin for AI coding agents |
+| `tests/` | Plain Node test scripts (`npm run test:*`) |
+| `docs/` | Guides, architecture, audits and release notes |
 
-## Deeper documentation
+## Documentation
 
-- [docs/user-guide.md](./docs/user-guide.md) - the main web-app workflows,
-  project areas, task board, agent access and integrations.
-- [docs/brand-kit.md](./docs/brand-kit.md) - product positioning, marketing
-  copy and logo exports.
-- [docs/launch-readiness-checklist.md](./docs/launch-readiness-checklist.md) -
-  repository-backed launch checklist.
-- [docs/architecture.md](./docs/architecture.md) - how the pieces fit
-  together and why (Server Components/Actions, the database layer, the
-  provider abstractions, the admin panel, health checks, `/api/v1`).
-- [docs/self-hosting.md](./docs/self-hosting.md) - the complete self-hosting
-  walkthrough.
-- [docs/configuration.md](./docs/configuration.md) - every environment
-  variable, explained.
-- [docs/upgrading.md](./docs/upgrading.md) - upgrading a running self-hosted
-  instance.
-- [docs/backups.md](./docs/backups.md) - backing up a self-hosted instance.
-- [docs/auth-setup.md](./docs/auth-setup.md) - Google/Discord OAuth setup.
-- `src/db/migrations/README.md` - the schema, migration by migration.
+- [User guide](./docs/user-guide.md): the main workflows in the web app
+- [Self-hosting](./docs/self-hosting.md), [configuration](./docs/configuration.md), [upgrading](./docs/upgrading.md), [backups](./docs/backups.md)
+- [Architecture](./docs/architecture.md)
+- [Importing tasks](./docs/importing.md) from CSV, JSON and Trello
+- [Webhooks](./docs/webhooks.md), [Context API](./docs/context-api.md), [custom modules](./docs/custom-modules.md)
+- [Roadmap](./ROADMAP.md)
 
-## Security
+## Contributing
 
-- Row-Level Security (RLS) in PostgreSQL is the actual authorization
-  boundary - 70 policies, not application-level checks alone.
-- Permission checks (organization/project roles) at the data-access layer,
-  on top of RLS.
-- `/api/health` never returns secrets, connection strings, or hostnames -
-  see `src/lib/health/checks.ts`'s `safeReason()`.
-- The local storage provider validates paths against directory traversal
-  (`assertSafeStoragePath` / `assertSafeBucket`) and signs download URLs.
-
-## Package publishing
-
-Manual GitHub Actions workflows can validate and publish the SDKs and CLI without
-a local computer. See [the iPhone setup and publishing guide](docs/package-publishing.md)
-for registry trusted publishers, first npm publication, licensing prerequisites,
-and validation-only runs. No package is published automatically.
+Bug reports, ideas and pull requests are welcome. Start with
+[CONTRIBUTING.md](./CONTRIBUTING.md). Report security problems privately as
+described in [SECURITY.md](./SECURITY.md), not in a public issue.
 
 ## License
 
-The standalone JavaScript SDK (`packages/sdk-js`), CLI (`packages/cli`) and
-Python SDK (`sdk/python`) use MIT; each includes its own `LICENSE`. This grant
-does not cover the Guidon application, hosted service or brand.
+The Guidon application is licensed under the
+**GNU Affero General Public License v3.0** (`AGPL-3.0-only`, see
+[LICENSE](./LICENSE)). You may run, study, change and self-host it. If you
+offer a modified version to others over a network, you must share your
+changes with them under the same licence.
 
-### Application licence
+The JavaScript SDK (`packages/sdk-js`), CLI (`packages/cli`) and Python SDK
+(`sdk/python`) are MIT-licensed; each has its own `LICENSE`. The Guidon name
+and logo are not covered by either licence (see
+[useguidon.com/brand](https://useguidon.com/brand)).
 
-The Guidon application - this repository outside the SDK/CLI directories
-above - is licensed under the **GNU Affero General Public License v3.0**
-(`AGPL-3.0-only`, see [`LICENSE`](LICENSE)). You may run, study, modify and
-self-host it; if you offer a modified version to others over a network, you
-must make your changes available to them under the same licence. The Guidon
-name and logo are not covered by the licence (see `/brand`).
-
-## Support
-
-For issues and questions, contact the development team.
+Made by [Two Steps Studio](https://github.com/Two-Steps-Studio).

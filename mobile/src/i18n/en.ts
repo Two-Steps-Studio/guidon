@@ -68,6 +68,9 @@ const en = {
     addComment: "Add a comment",
     send: "Send comment",
     you: "You",
+    reportComment: "Report comment",
+    reportCommentTitle: "Report this comment?",
+    reportCommentMessage: "We'll open an email to Guidon support with a link to this comment. Tell us what's wrong with it.",
     teammate: "Teammate",
     notFound: "This task isn't available anymore.",
     titleRequired: "A task needs a title.",
@@ -119,6 +122,8 @@ const en = {
     privacy: "Privacy Policy",
     terms: "Terms of Service",
     eula: "End User License Agreement (EULA)",
+    contact: "Help and contact",
+    report: "Report a problem or abuse",
     manageAccountHint: "Manage your account, API keys and this device's access on the Guidon website.",
   },
   errors: {

@@ -229,6 +229,7 @@ export const MARKDOWN_TWINS: Readonly<Record<string, string>> = {
   "/about": "/about.md",
   "/contact": "/contact.md",
   "/sandbox": "/sandbox.md",
+  "/compare": "/compare.md",
   "/auth/login": "/auth/login.md",
   "/auth/signup": "/auth/signup.md",
 };

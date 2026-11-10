@@ -103,6 +103,7 @@ const EXACT_PUBLIC_ROUTES = new Set([
   '/sandbox.md',
   // "Guidon vs X" pages (src/app/compare).
   '/compare',
+  '/compare.md',
   // The MCP manifest, also under /.well-known/ (src/app/.well-known/mcp.json).
   '/mcp.json',
   // Webhook retry worker (src/app/api/cron/webhooks) - authenticates with
@@ -192,9 +193,14 @@ function agentResponse(request: NextRequest): NextResponse | null {
   const { pathname, searchParams } = request.nextUrl
   const wantsMarkdown = prefersMarkdown(request.headers.get('accept'))
 
+  // /compare/<slug>.md: the comparison's Markdown twin (src/app/compare/[slug]/md).
+  const compareMd = /^\/compare\/([a-z0-9-]+)\.md$/.exec(pathname)
+  if (compareMd) return NextResponse.rewrite(new URL(`/compare/${compareMd[1]}/md`, request.url))
+
   // Pages with a Markdown twin hand it to agents: by Accept header, by
   // `?mode=agent`, or to AI crawlers/assistants by User-Agent.
-  const twin = MARKDOWN_TWINS[pathname]
+  const comparePage = /^\/compare\/([a-z0-9-]+)$/.exec(pathname)
+  const twin = MARKDOWN_TWINS[pathname] ?? (comparePage ? `/compare/${comparePage[1]}/md` : undefined)
   if (twin) {
     const forAgent =
       wantsMarkdown || searchParams.get('mode') === 'agent' || isAiAgentUserAgent(request.headers.get('user-agent'))
