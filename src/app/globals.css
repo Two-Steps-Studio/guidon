@@ -642,6 +642,16 @@ button, a, [role="button"] {
   backdrop-filter: blur(8px);
 }
 
+/* Landing page: the wave stays visible around the centred copy on wide
+   screens. On a phone the copy spans the whole width, so the whole wave is
+   toned down evenly instead - text never sits on the raw pattern. */
+[data-landing-scrim] {
+  background: radial-gradient(ellipse 45% 40% at 50% 38%, color-mix(in srgb, var(--color-background) 88%, transparent), color-mix(in srgb, var(--color-background) 45%, transparent));
+}
+@media (max-width: 767px) {
+  [data-landing-scrim] { background: color-mix(in srgb, var(--color-background) 86%, transparent); }
+}
+
 /* Touch comfort without enlarging dense pointer-operated desktop controls. */
 @media (pointer: coarse) {
   [data-slot="button"], [data-slot="dropdown-menu-trigger"],

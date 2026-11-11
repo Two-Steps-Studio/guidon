@@ -104,7 +104,7 @@ export function DitherBackground() {
       />
       </div>
       {/* Fixed veil: thick mid-screen where the copy sits, thin at the edges so the pattern shows. */}
-      {isLandingPage && <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 45% 40% at 50% 38%, color-mix(in srgb, var(--color-background) 88%, transparent), color-mix(in srgb, var(--color-background) 45%, transparent))" }} />}
+      {isLandingPage && <div data-landing-scrim className="absolute inset-0" />}
     </div>
   );
 }

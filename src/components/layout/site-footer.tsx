@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { GITHUB_REPO_URL, SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
-import { BetaBadge } from "@/components/layout/beta-badge";
 import styles from "@/components/landing/landing.module.css";
 import { comparison } from "@/lib/compare";
 
@@ -61,7 +60,6 @@ export async function SiteFooter() {
             <Image src="/brand/guidon-wordmark-white.png" alt="Guidon" width={200} height={74} className="hidden dark:block" />
           </Link>
           <p>{d("footerDescription")}</p>
-          <BetaBadge />
         </div>
         {groups.map((group) => (
           <div key={group.title}>
