@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { ArrowRight, Bot, CheckSquare, Code2, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Globe, MessageSquare, Server, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, Bot, Check, CheckSquare, Code2, Cpu, FileText, BookOpen, Brain, GitBranch, Github, Globe, MessageSquare, Users, type LucideIcon } from "lucide-react";
 import { hasDirectDatabase } from "@/lib/db/pool";
 import { isBillingConfigured } from "@/lib/billing/stripe";
 import { createServiceClient } from "@/lib/supabase-server";
@@ -11,7 +11,6 @@ import { SELF_HOSTING_DOCS_URL } from "@/lib/project-links";
 import { homepageJsonLd, type FaqItem } from "@/lib/structured-data";
 import { SITE_URL } from "@/lib/site-url";
 import { publicOpenGraph } from "@/lib/public-open-graph";
-import { BetaBadge } from "@/components/layout/beta-badge";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { AnimatedFaq } from "@/components/landing/animated-faq";
 import { RevealGroup } from "@/components/landing/reveal-group";
@@ -109,7 +108,6 @@ export default async function Home() {
       <main id="landing-main" tabIndex={-1}>
         <section data-home-hero className={styles.hero} aria-labelledby="hero-title">
           <RevealGroup className={styles.container}>
-            <p className={styles.eyebrow}><span className={styles.brandDot} aria-hidden />{d("eyebrow")}<BetaBadge /></p>
             <h1 id="hero-title">{d("heroFirst")}<br/><span>{d("heroSecond")}</span></h1>
             <p className={styles.lead}>{d("heroDescription")}</p>
             <div className={styles.actions}>
@@ -142,7 +140,7 @@ export default async function Home() {
         <section className={styles.section} aria-labelledby="benefits-title">
           <div className={styles.container}>
             <div className={styles.sectionHeading}>
-              <p className={styles.kicker}>{d("benefitsLabel")}</p>
+              
               <h2 id="benefits-title">{d("benefitsTitle")}</h2>
               <p>{d("benefitsDescription")}</p>
             </div>
@@ -158,7 +156,7 @@ export default async function Home() {
         <section id="features" className={`${styles.section} ${styles.sectionAlt}`} aria-labelledby="features-title">
           <div className={styles.container}>
             <div className={styles.sectionHeading}>
-              <p className={styles.kicker}>{d("featuresLabel")}</p>
+              
               <h2 id="features-title">{d("featuresTitle")}</h2>
               <p>{d("featuresDescription")}</p>
             </div>
@@ -167,7 +165,7 @@ export default async function Home() {
                 <CheckSquare size={24} aria-hidden/>
                 <h3>{t("features.taskBoard.title")}</h3>
                 <p>{t("features.taskBoard.description")}</p>
-                <ul>{(t.raw("features.taskBoard.bullets") as string[]).map(item=><li key={item}><span aria-hidden>✓</span>{item}</li>)}</ul>
+                <ul>{(t.raw("features.taskBoard.bullets") as string[]).map(item=><li key={item}><Check size={14} aria-hidden />{item}</li>)}</ul>
               </div>
               <div className={styles.featureImage}>{["light","dark"].map(theme=><Image key={theme} src={`/landing/taskBoard-${theme}.webp`} alt={t("features.taskBoard.title")} width={1600} height={1000} sizes="(min-width: 960px) 650px, 100vw" className={theme==="light"?"dark:hidden":"hidden dark:block"}/>)}</div>
             </div>
@@ -186,13 +184,13 @@ export default async function Home() {
         <section id="integrations" className={styles.section} aria-labelledby="integrations-title">
           <div className={`${styles.container} ${styles.integrationLayout}`}>
             <div className={styles.sectionHeading}>
-              <p className={styles.kicker}>{d("integrationsLabel")}</p>
+              
               <h2 id="integrations-title">{d("integrationsTitle")}</h2>
               <p>{t("aiOptions.subtitle")}</p>
               <Link href="/developers" className={styles.textLink}>{d("integrationDocs")}<ArrowRight size={16} aria-hidden/></Link>
             </div>
             <div className={styles.integrationPanel}>
-              <div className={styles.apps}><p className={styles.kicker}>{t("aiOptions.appsTitle")}</p><ul>{(t.raw("aiOptions.apps") as string[]).map(app=><li key={app}>{app}</li>)}</ul></div>
+              <div className={styles.apps}><p className={styles.appsTitle}>{t("aiOptions.appsTitle")}</p><ul>{(t.raw("aiOptions.apps") as string[]).map(app=><li key={app}>{app}</li>)}</ul></div>
               {(t.raw("aiOptions.more") as {title:string;description:string}[]).map((option,index)=>{
                 const Icon=AI_OPTION_ICONS[index]??Bot;
                 return <div key={option.title} className={styles.integrationRow}><Icon size={20} aria-hidden/><div><h3>{option.title}</h3><p>{option.description}</p></div></div>;
@@ -204,18 +202,18 @@ export default async function Home() {
         {plans.length > 0 && <PricingSection plans={plans} prices={prices} checkoutAvailable={!hasDirectDatabase() && isBillingConfigured()} />}
 
         <section id="self-hosted" className={`${styles.section} ${styles.hosting}`} aria-labelledby="self-host-title">
-          <div className={styles.container}><Server size={24} aria-hidden/><div><h2 id="self-host-title">{t("selfHost.title")}</h2><p>{t("selfHost.description")}</p></div><a href={SELF_HOSTING_DOCS_URL} className={styles.buttonSecondary}>{t("selfHost.guide")}<ArrowRight size={16} aria-hidden/></a></div>
+          <div className={styles.container}><div><h2 id="self-host-title">{t("selfHost.title")}</h2><p>{t("selfHost.description")}</p></div><a href={SELF_HOSTING_DOCS_URL} className={styles.buttonSecondary}>{t("selfHost.guide")}<ArrowRight size={16} aria-hidden/></a></div>
         </section>
 
         <section id="frequently-asked-questions" className={styles.section} aria-labelledby="faq-title">
           <div className={`${styles.container} ${styles.faqLayout}`}>
-            <div className={styles.sectionHeading}><p className={styles.kicker}>{d("faqLabel")}</p><h2 id="faq-title">{t("faq.title")}</h2><Link href="/contact" className={styles.textLink}>{t("footer.contact")}<ArrowRight size={16} aria-hidden/></Link></div>
+            <div className={styles.sectionHeading}><h2 id="faq-title">{t("faq.title")}</h2><Link href="/contact" className={styles.textLink}>{t("footer.contact")}<ArrowRight size={16} aria-hidden/></Link></div>
             <div className={styles.faq}>{faq.map(item=><AnimatedFaq key={item.q} question={item.q} answer={item.a}/>)}</div>
           </div>
         </section>
 
         <section className={`${styles.section} ${styles.finalCta}`} aria-labelledby="final-title">
-          <div className={styles.container}><p className={styles.kicker}>{d("finalLabel")}</p><h2 id="final-title">{d("finalTitle")}</h2><p>{d("finalDescription")}</p><div className={styles.actions}><CtaLink cta="how-start" href="/start" className={styles.button}>{t("getStarted")}<ArrowRight size={16} aria-hidden/></CtaLink><CtaLink cta="hero-sandbox" prefetch={false} href="/sandbox" className={styles.buttonSecondary}>{d("sandbox")}</CtaLink></div></div>
+          <div className={styles.container}><h2 id="final-title">{d("finalTitle")}</h2><p>{d("finalDescription")}</p><div className={styles.actions}><CtaLink cta="how-start" href="/start" className={styles.button}>{t("getStarted")}<ArrowRight size={16} aria-hidden/></CtaLink><CtaLink cta="hero-sandbox" prefetch={false} href="/sandbox" className={styles.buttonSecondary}>{d("sandbox")}</CtaLink></div></div>
         </section>
       </main>
 
