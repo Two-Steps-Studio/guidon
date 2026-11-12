@@ -44,6 +44,7 @@ yarn-error.log*
 # Self-hosting depends on .env.example being in the repo (TODO.md §11, §26).
 .env*
 !.env.example
+!.env.cloud.example
 
 # vercel
 .vercel

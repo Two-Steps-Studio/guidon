@@ -1,0 +1,63 @@
+# Guidon Cloud on one small server (e.g. Hetzner CX22): the app with Supabase
+# as its database, auth and file storage - the same setup as on Vercel, but
+# at a fixed price with no CPU quota. Caddy gets the HTTPS certificate.
+#
+#   ./scripts/cloud-host.sh        (see docs/cloud-hosting.md)
+#
+# Not for self-hosting with your own database: that is docker-compose.yml.
+services:
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?set it in .env.cloud}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?set it in .env.cloud}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?set it in .env.cloud}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Guidon}
+        NEXT_PUBLIC_AUTH_PROVIDERS: ${NEXT_PUBLIC_AUTH_PROVIDERS:-}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+    restart: unless-stopped
+    # Everything in .env.cloud reaches the app, like Vercel's environment
+    # variables did. No DATABASE_URL there: its absence selects Supabase mode.
+    env_file: .env.cloud
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      GUIDON_DOMAIN: ${GUIDON_DOMAIN:?set it in .env.cloud, e.g. useguidon.com}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+  # The two daily jobs Vercel Cron ran (vercel.json): webhook retries and
+  # admin usage. busybox wget; a failed call is retried the next day.
+  cron:
+    image: busybox:1.36
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?set it in .env.cloud}
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          sleep 86400
+          for job in webhooks admin-usage; do
+            wget -q -O /dev/null --header "Authorization: Bearer $$CRON_SECRET" "http://app:3000/api/cron/$$job" || echo "cron $$job failed"
+          done
+        done
+    depends_on:
+      - app
+
+volumes:
+  caddy-data:
+  caddy-config:

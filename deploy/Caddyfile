@@ -1,0 +1,10 @@
+# HTTPS for Guidon Cloud (docker-compose.cloud.yml). Caddy obtains and renews
+# the certificate itself once the domain's DNS points at this server.
+{$GUIDON_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
+
+www.{$GUIDON_DOMAIN} {
+	redir https://{$GUIDON_DOMAIN}{uri} permanent
+}
