@@ -64,6 +64,9 @@
 
   --color-brand: #1d4fd8;
   --color-brand-accent: #4d8dff;
+  /* Gido, the companion (components/companion): skin and eyes. */
+  --gido-skin: #b0cbf8;
+  --gido-eyes: #111827;
 
   /* Backgrounds */
   --color-background: #ffffff;
@@ -162,6 +165,8 @@
 /* ---- Dark palette (system preference) ---- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --gido-skin: #8fb2f2;
+    --gido-eyes: #0b1220;
     --color-primary: var(--color-brand-accent);
     --color-primary-hover: #6ea3ff;
     --color-primary-active: #3a76e6;
@@ -240,6 +245,8 @@
 
 /* ---- Dark palette (explicit opt-in, wins over system) ---- */
 :root[data-theme="dark"] {
+  --gido-skin: #8fb2f2;
+  --gido-eyes: #0b1220;
   --color-primary: var(--color-brand-accent);
   --color-primary-hover: #6ea3ff;
   --color-primary-active: #3a76e6;
@@ -651,6 +658,20 @@ button, a, [role="button"] {
 @media (max-width: 767px) {
   [data-landing-scrim] { background: color-mix(in srgb, var(--color-background) 86%, transparent); }
 }
+
+/* Gido (components/companion/gido.tsx): floats, petals drift, eyes blink.
+   Transforms only; the global reduced-motion rule above stops all three. */
+.gido-skin { fill: var(--gido-skin); }
+.gido-eye-color { fill: var(--gido-eyes); }
+.gido-eye-stroke { stroke: var(--gido-eyes); }
+.gido-float { animation: gido-float 4.8s ease-in-out infinite; }
+.gido-petals { transform-box: view-box; transform-origin: 200px 195px; animation: gido-drift 48s linear infinite; }
+.gido-blink { transform-box: fill-box; transform-origin: center; animation: gido-blink 6s infinite; }
+.gido[data-mood="sleepy"] .gido-float { animation-duration: 7s; }
+.gido[data-mood="sleepy"] .gido-petals { animation-duration: 120s; }
+@keyframes gido-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes gido-drift { to { transform: rotate(360deg); } }
+@keyframes gido-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
 
 /* Touch comfort without enlarging dense pointer-operated desktop controls. */
 @media (pointer: coarse) {

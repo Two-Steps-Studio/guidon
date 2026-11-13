@@ -3099,5 +3099,51 @@
     "proposalsFailed": "No se pudieron crear las tareas",
     "stickyNode": "Nota adhesiva",
     "shapeNode": "Forma"
+  },
+  "companion": {
+    "name": "Gido",
+    "button": "Gido, tu guía",
+    "buttonNews": "Gido, tu guía: un consejo para esta página",
+    "close": "Cerrar",
+    "nextTip": "Otro consejo",
+    "tour": "Enséñame la app",
+    "sleep": "Dormir",
+    "wake": "Despertar",
+    "sleepingNote": "Zzz... Estoy descansando aquí. Despiértame cuando quieras un consejo.",
+    "tips": {
+      "dashboard": [
+        "Hola, soy Gido. Me quedo aquí, en la esquina. Empieza con un proyecto y su primera tarea: es cuestión de un minuto.",
+        "Aquí ves tu día: lo que es tuyo, lo que va con retraso y lo que ha cambiado."
+      ],
+      "myTasks": [
+        "Todas las tareas que tienes asignadas, de todos tus proyectos, en una lista.",
+        "Las tareas con retraso están arriba. Termina una y desaparecerá de la lista."
+      ],
+      "overview": [
+        "El informe muestra cuánto terminasteis cada semana y quién tiene más trabajo abierto.",
+        "En Ajustes activas o desactivas módulos: deja solo los que usa tu equipo."
+      ],
+      "board": [
+        "Cuando algo no funcione, anota el intento en la tarea. La siguiente persona, o un agente de IA, no caerá en el mismo callejón sin salida.",
+        "Vincula la decisión detrás de una tarea para que quien la retome sepa por qué sin preguntar.",
+        "Conecta Claude Code, Cursor o Codex con «Connect your agent»: toma una tarea con todo su contexto y la devuelve para revisión."
+      ],
+      "decisions": [
+        "Escribe por qué elegisteis algo. Dentro de un mes nadie lo recordará, pero esta página sí.",
+        "Vincula una decisión a sus tareas y aparecerá justo donde se trabaja."
+      ],
+      "memory": [
+        "La memoria del proyecto separa lo que verificaron las personas de lo que supuso la IA.",
+        "Todo lo que escribió una app de IA espera en la cola de revisión hasta que una persona lo acepta."
+      ],
+      "profile": [
+        "Aquí conectas apps de IA y gestionas claves de API. Puedes desconectar una app en cualquier momento.",
+        "Aquí cambias el idioma y el tema: hablo cuatro idiomas."
+      ],
+      "general": [
+        "¿Buscas algo? Ctrl/Cmd + K abre la búsqueda en todos tus proyectos.",
+        "Haz clic en mí cuando quieras: puedo volver a enseñarte la app."
+      ]
+    }
   }
 }

@@ -60,7 +60,7 @@ export interface SpotlightTourProps {
 }
 
 /** Mounted only while open, so every opening starts from the first step. */
-function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
+export function SpotlightTour({ userId, onOpenChange }: SpotlightTourProps) {
   const t = useTranslations("walkthrough");
   const [steps, setSteps] = useState<TourStep[]>([]);
   const [index, setIndex] = useState(0);
