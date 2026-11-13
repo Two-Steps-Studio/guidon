@@ -58,6 +58,9 @@
     "test:dependencies": "node tests/dependencies.test.mjs && node tests/monaco.browser.mjs",
     "module-manifest:schema": "node --experimental-strip-types scripts/generate-module-manifest-schema.mjs",
     "test:attachments": "node tests/attachment-compression.test.mjs",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && wrangler dev",
+    "cf:deploy": "wrangler deploy",
     "test:s3": "node --experimental-strip-types tests/storage/s3.test.mjs",
     "test:api": "node --experimental-strip-types tests/api-route.test.mjs",
     "test:feedback": "node --experimental-strip-types tests/feedback.test.mjs"
@@ -91,7 +94,7 @@
     "lucide-react": "^0.462.0",
     "monaco-editor": "0.57.0",
     "motion": "^13.4.4",
-    "next": "16.4.3",
+    "next": "16.4.6",
     "next-intl": "^4.14.5",
     "pg": "^8.23.0",
     "posthog-js": "^1.444.0",
@@ -113,6 +116,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@electric-sql/pglite": "^0.5.5",
+    "@opennextjs/cloudflare": "^1.20.17",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
@@ -123,7 +127,8 @@
     "eslint-config-next": "16.4.3",
     "playwright": "1.64.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.161.0"
   },
   "overrides": {
     "prismjs": "^1.30.0",
