@@ -28,7 +28,9 @@ if ! grep -q '^CRON_SECRET=.' .env.cloud; then
   grep -v '^CRON_SECRET=' .env.cloud > .env.cloud.tmp && printf 'CRON_SECRET=%s\n' "$secret" >> .env.cloud.tmp && mv .env.cloud.tmp .env.cloud && chmod 600 .env.cloud
 fi
 
-compose="docker compose --env-file .env.cloud -f docker-compose.cloud.yml"
+# A tunnel token means no open ports (home server/NAS); otherwise Caddy on 80/443.
+if grep -q '^TUNNEL_TOKEN=.' .env.cloud; then profile=tunnel; else profile=caddy; fi
+compose="docker compose --env-file .env.cloud -f docker-compose.cloud.yml --profile $profile"
 $compose up -d --build
 
 printf 'Waiting for Guidon '
@@ -45,4 +47,8 @@ until $compose exec -T app node -e "fetch('http://127.0.0.1:3000/api/health').th
 done
 echo
 domain=$(sed -n 's/^GUIDON_DOMAIN=//p' .env.cloud | tail -n 1)
-echo "Guidon is running. Once DNS for $domain points at this server, open https://$domain (the certificate takes a minute)."
+if [ "$profile" = tunnel ]; then
+  echo "Guidon is running behind the Cloudflare tunnel: https://$domain (public hostnames -> http://edge:80)."
+else
+  echo "Guidon is running. Once DNS for $domain points at this server, open https://$domain (the certificate takes a minute)."
+fi

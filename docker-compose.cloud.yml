@@ -1,10 +1,21 @@
 # Guidon Cloud on one small server (e.g. Hetzner CX22): the app with Supabase
 # as its database, auth and file storage - the same setup as on Vercel, but
-# at a fixed price with no CPU quota. Caddy gets the HTTPS certificate.
+# at a fixed price with no CPU quota. Two ways in, picked by the script:
+#   - Caddy on ports 80/443 gets the HTTPS certificate (a VPS);
+#   - with TUNNEL_TOKEN set, a Cloudflare tunnel and no open ports (a home
+#     server or NAS behind a router).
 #
 #   ./scripts/cloud-host.sh        (see docs/cloud-hosting.md)
 #
 # Not for self-hosting with your own database: that is docker-compose.yml.
+x-caddy: &caddy
+  image: caddy:2-alpine
+  restart: unless-stopped
+  environment:
+    GUIDON_DOMAIN: ${GUIDON_DOMAIN:?set it in .env.cloud, e.g. useguidon.com}
+  depends_on:
+    - app
+
 services:
   app:
     build:
@@ -24,19 +35,35 @@ services:
       - "3000"
 
   caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
+    <<: *caddy
+    profiles: [caddy]
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      GUIDON_DOMAIN: ${GUIDON_DOMAIN:?set it in .env.cloud, e.g. useguidon.com}
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy:/etc/caddy:ro
       - caddy-data:/data
       - caddy-config:/config
+
+  # Tunnel mode: the same Caddy rules on plain HTTP, reachable only by the tunnel.
+  edge:
+    <<: *caddy
+    profiles: [tunnel]
+    command: caddy run --config /etc/caddy/Caddyfile.tunnel --adapter caddyfile
+    volumes:
+      - ./deploy:/etc/caddy:ro
+
+  # Cloudflare dashboard > Zero Trust > Networks > Tunnels; both public
+  # hostnames point at http://edge:80 (docs/cloud-hosting.md).
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.7
+    restart: unless-stopped
+    profiles: [tunnel]
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
     depends_on:
-      - app
+      - edge
 
   # The two daily jobs Vercel Cron ran (vercel.json): webhook retries and
   # admin usage. busybox wget; a failed call is retried the next day.
