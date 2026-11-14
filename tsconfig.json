@@ -32,6 +32,9 @@
   ],
   "exclude": [
     "node_modules",
+    // Cloudflare Workers build output and its entry point (bundled by wrangler).
+    ".open-next",
+    "deploy/cloudflare-worker.ts",
     // Self-contained sibling packages (own package.json/tsconfig/node_modules,
     // not part of the Next.js app) - discord-bot/ has real .ts files with
     // dependencies (discord.js) never installed at the repo root, so the

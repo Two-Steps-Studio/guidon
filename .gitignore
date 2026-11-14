@@ -78,3 +78,8 @@ plugins/**/*.vsix
 
 # ./scripts/self-host.sh backup (contains secrets)
 /backups/
+
+# Cloudflare Workers build (npm run cf:build) and local secrets for wrangler dev
+/.open-next/
+/.wrangler/
+.dev.vars

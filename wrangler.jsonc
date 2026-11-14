@@ -1,0 +1,15 @@
+// Guidon Cloud on Cloudflare Workers (OpenNext). Build and deploy:
+//   npm run cf:build && npm run cf:deploy     (see docs/cloudflare.md)
+// Secrets (Supabase keys, AUTH_SECRET, ...) are set with `wrangler secret put`,
+// never in this file.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "guidon",
+  "main": "deploy/cloudflare-worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
+  // The two daily jobs from vercel.json; deploy/cloudflare-worker.ts calls the routes.
+  "triggers": { "crons": ["17 3 * * *", "32 3 * * *"] }
+}
