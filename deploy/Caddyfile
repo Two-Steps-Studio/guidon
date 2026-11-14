@@ -1,0 +1,20 @@
+# HTTPS for Guidon Cloud (docker-compose.cloud.yml). Caddy obtains and renews
+# the certificate itself once the domain's DNS points at this server.
+{$GUIDON_DOMAIN} {
+	encode zstd gzip
+
+	# The app reads a Server Action body (up to 30 MB, for uploads) before it
+	# checks the action. Outside the signed-in sections - which redirect a
+	# request without a session first - nothing needs more than Next's default
+	# 1 MB. Same sections as SIGNED_IN_SECTIONS in src/lib/agent-web.ts.
+	@public not path_regexp ^/(admin|api|dashboard|discord|invite|mini|marketplace|my-modules|my-tasks|oauth|organizations|plugins|profile|projects|sandbox|upgrade)(/|$)
+	request_body @public {
+		max_size 1MB
+	}
+
+	reverse_proxy app:3000
+}
+
+www.{$GUIDON_DOMAIN} {
+	redir https://{$GUIDON_DOMAIN}{uri} permanent
+}
