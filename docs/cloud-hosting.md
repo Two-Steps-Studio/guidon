@@ -28,6 +28,40 @@ pointed at Vercel). Caddy gets the certificate by itself within a minute.
 
 Update later: `git pull && ./scripts/cloud-host.sh`.
 
+## On a home server or NAS (TrueNAS) - Cloudflare Tunnel
+
+A home connection has no open ports (and often no public IPv4), and TrueNAS
+keeps 80/443 for its own web UI. A Cloudflare tunnel avoids both: the
+`tunnel` container dials out to Cloudflare, Cloudflare serves HTTPS, and no
+port is opened on the router. Free.
+
+1. **DNS to Cloudflare.** Cloudflare > Add a site > `useguidon.com` (Free plan).
+   It copies the existing records - check the email ones (MX, and the TXT
+   records Resend asked for) are there. Then change the nameservers at the
+   registrar to the two Cloudflare shows. The domain stays registered where
+   it is.
+2. **Tunnel.** Cloudflare > Zero Trust > Networks > Tunnels > Create a tunnel
+   (Cloudflared). Copy the token from the install command into
+   `TUNNEL_TOKEN` in `.env.cloud`. Public hostnames: `useguidon.com` and
+   `www.useguidon.com`, both type HTTP, URL `edge:80`. Delete the old records
+   that pointed at Vercel if Cloudflare reports a conflict.
+3. **TrueNAS 24.10 or newer** (Docker-based apps). Apps > Configuration >
+   Choose Pool, if not done yet - Docker only runs then. Create a dataset
+   (e.g. `guidon`), open System > Shell, and:
+
+   ```bash
+   cd /mnt/<pool>/guidon
+   git clone https://github.com/Two-Steps-Studio/guidon.git && cd guidon
+   # no git on the NAS? docker run --rm -v "$PWD":/git alpine/git clone https://github.com/Two-Steps-Studio/guidon.git
+   cp .env.cloud.example .env.cloud
+   nano .env.cloud          # the table below, plus TUNNEL_TOKEN
+   sudo ./scripts/cloud-host.sh
+   ```
+
+The containers do not appear under Apps; they start again after a reboot.
+The build needs about 4 GB of free RAM. Keep in mind the site is down
+whenever the NAS, the power or the home internet is.
+
 ## Where the values come from
 
 | Variable | Source |
@@ -37,6 +71,7 @@ Update later: `git pull && ./scripts/cloud-host.sh`.
 | `RESEND_API_KEY` | Resend dashboard (create a new key if the old one can't be read) |
 | GitHub, Discord, AI, Sentry, PostHog keys | Each provider's dashboard |
 | `CRON_SECRET` | Leave empty; the script generates it |
+| `TUNNEL_TOKEN` | Only for the tunnel (section above); empty on a VPS |
 | `MCP_REGISTRY_PUBLIC_KEY` | Printed by `scripts/create-mcp-registry-key.mjs` |
 
 Do not add `DATABASE_URL`: its absence is what selects Supabase.

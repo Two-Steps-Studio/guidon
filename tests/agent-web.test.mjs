@@ -121,8 +121,8 @@ const proxySource = readFileSync(join(root, "src/proxy.ts"), "utf8");
 check("proxy.ts lists /brand as public", proxySource.includes("'/brand'"));
 check("proxy.ts lists /auth/ and /legal/ as public", proxySource.includes("'/auth/'") && proxySource.includes("'/legal/'"));
 check("proxy.ts lists /index.md and /llms.txt as public", proxySource.includes("'/index.md'") && proxySource.includes("'/llms.txt'"));
-// deploy/Caddyfile caps request bodies outside the signed-in sections; a section missing there would get 413 on uploads.
-const caddySections = /path_regexp \^\/\(([^)]+)\)/.exec(readFileSync(join(root, "deploy/Caddyfile"), "utf8"))?.[1].split("|") ?? [];
+// deploy/guidon.caddy caps request bodies outside the signed-in sections; a section missing there would get 413 on uploads.
+const caddySections = /path_regexp \^\/\(([^)]+)\)/.exec(readFileSync(join(root, "deploy/guidon.caddy"), "utf8"))?.[1].split("|") ?? [];
 check("Caddyfile body limit spares exactly the signed-in sections", caddySections.sort().join() === [...SIGNED_IN_SECTIONS].sort().join(), caddySections.join());
 
 console.log("\n  notFoundMarkdown");

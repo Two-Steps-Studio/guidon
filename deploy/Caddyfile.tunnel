@@ -1,0 +1,21 @@
+# Behind a Cloudflare tunnel (docker-compose.cloud.yml, TUNNEL_TOKEN set):
+# Cloudflare terminates HTTPS and the tunnel container forwards both
+# hostnames here. Port 80 is not published, so only the tunnel reaches it.
+{
+	auto_https off
+	servers {
+		# The tunnel container is the only client: keep the address we set below.
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	# The app rate-limits by the first X-Forwarded-For entry, which a client
+	# can prefill; Cloudflare's CF-Connecting-IP is the address it saw.
+	request_header X-Forwarded-For {http.request.header.CF-Connecting-IP}
+
+	@www host www.{$GUIDON_DOMAIN}
+	redir @www https://{$GUIDON_DOMAIN}{uri} permanent
+
+	import guidon.caddy
+}
