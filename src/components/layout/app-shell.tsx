@@ -19,6 +19,7 @@ import { getPinnedProjects, type PinnedProject } from "@/lib/data/pinned-project
 import { PinnedProjectsProvider } from "@/components/projects/pinned-projects-context";
 import { AppMessages } from "@/components/layout/app-messages";
 import { WalkthroughAutoOpen } from "@/components/layout/walkthrough-tour";
+import { Companion } from "@/components/companion/companion";
 import { BetaBadge } from "@/components/layout/beta-badge";
 import { showCustomModuleNavigation } from "@/lib/data/custom-module-navigation";
 
@@ -88,6 +89,8 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
         {/* Przewodnik po aplikacji: automatycznie raz na konto (nowa
             rejestracja też), z opcją „pomiń i nie pokazuj ponownie". */}
         <WalkthroughAutoOpen userId={userId} />
+        {/* Gido, the companion: always in the corner, tips for the current page. */}
+        <Companion userId={userId} />
       </SidebarInset>
     </SidebarProvider>
     </PinnedTasksProvider>

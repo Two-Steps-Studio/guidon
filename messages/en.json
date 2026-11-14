@@ -3144,5 +3144,51 @@
     "proposalsFailed": "Could not create the tasks",
     "stickyNode": "Sticky note",
     "shapeNode": "Shape"
+  },
+  "companion": {
+    "name": "Gido",
+    "button": "Gido, your guide",
+    "buttonNews": "Gido, your guide: a tip for this page",
+    "close": "Close",
+    "nextTip": "Another tip",
+    "tour": "Show me around",
+    "sleep": "Sleep",
+    "wake": "Wake up",
+    "sleepingNote": "Zzz... I'm resting here. Wake me when you want a tip.",
+    "tips": {
+      "dashboard": [
+        "Hi, I'm Gido. I'll stay here in the corner. Start with a project and its first task - it takes a minute.",
+        "This is your day at a glance: what's yours, what's late, what changed."
+      ],
+      "myTasks": [
+        "Every task assigned to you, from all your projects, in one list.",
+        "Late tasks are at the top. Finish one and it rolls off the list."
+      ],
+      "overview": [
+        "The report shows what you finished each week and who has the most open work.",
+        "Turn modules on or off in Settings - keep only what your team uses."
+      ],
+      "board": [
+        "When something doesn't work, record the attempt on the task. The next person - or AI agent - won't walk into the same dead end.",
+        "Link the decision behind a task, so whoever picks it up knows why without asking.",
+        "Connect Claude Code, Cursor or Codex with \"Connect your agent\": it takes a task with all its context and hands it back for review."
+      ],
+      "decisions": [
+        "Write down why you chose something. In a month nobody will remember - but this page will.",
+        "Link a decision to its tasks, and it shows up right where the work happens."
+      ],
+      "memory": [
+        "Project memory keeps what people verified apart from what AI guessed.",
+        "Anything an AI app wrote waits in the review queue until a person accepts it."
+      ],
+      "profile": [
+        "Here you connect AI apps and manage API keys. You can disconnect an app at any time.",
+        "Change the language and theme here - I speak four languages."
+      ],
+      "general": [
+        "Looking for something? Ctrl/Cmd + K opens search across your projects.",
+        "Click me any time - I can show you around the app again."
+      ]
+    }
   }
 }

@@ -3099,5 +3099,51 @@
     "proposalsFailed": "Die Aufgaben konnten nicht erstellt werden",
     "stickyNode": "Notizzettel",
     "shapeNode": "Form"
+  },
+  "companion": {
+    "name": "Gido",
+    "button": "Gido, dein Begleiter",
+    "buttonNews": "Gido, dein Begleiter: ein Tipp für diese Seite",
+    "close": "Schließen",
+    "nextTip": "Noch ein Tipp",
+    "tour": "Führ mich herum",
+    "sleep": "Schlafen",
+    "wake": "Aufwecken",
+    "sleepingNote": "Zzz... Ich ruhe mich hier aus. Weck mich, wenn du einen Tipp möchtest.",
+    "tips": {
+      "dashboard": [
+        "Hallo, ich bin Gido. Ich bleibe hier in der Ecke. Fang mit einem Projekt und seiner ersten Aufgabe an - das dauert eine Minute.",
+        "Hier siehst du deinen Tag: was deins ist, was überfällig ist, was sich geändert hat."
+      ],
+      "myTasks": [
+        "Alle dir zugewiesenen Aufgaben aus allen Projekten in einer Liste.",
+        "Überfällige Aufgaben stehen oben. Erledige eine, und sie verschwindet."
+      ],
+      "overview": [
+        "Der Bericht zeigt, was ihr pro Woche erledigt habt und wer die meiste offene Arbeit hat.",
+        "In den Einstellungen schaltest du Module ein oder aus - behalte nur, was dein Team nutzt."
+      ],
+      "board": [
+        "Wenn etwas nicht klappt, halte den Versuch an der Aufgabe fest. Die nächste Person - oder ein KI-Agent - läuft nicht in dieselbe Sackgasse.",
+        "Verknüpfe die Entscheidung hinter einer Aufgabe, damit jeder weiß, warum, ohne nachzufragen.",
+        "Verbinde Claude Code, Cursor oder Codex über „Connect your agent“: Er nimmt eine Aufgabe mit ihrem ganzen Kontext und gibt sie zur Prüfung zurück."
+      ],
+      "decisions": [
+        "Schreib auf, warum ihr euch für etwas entschieden habt. In einem Monat weiß es niemand mehr - diese Seite schon.",
+        "Verknüpfe eine Entscheidung mit ihren Aufgaben, dann erscheint sie genau dort, wo gearbeitet wird."
+      ],
+      "memory": [
+        "Das Projektgedächtnis trennt, was Menschen geprüft haben, von dem, was die KI vermutet hat.",
+        "Alles, was eine KI-App geschrieben hat, wartet in der Prüfliste, bis ein Mensch es annimmt."
+      ],
+      "profile": [
+        "Hier verbindest du KI-Apps und verwaltest API-Schlüssel. Eine App kannst du jederzeit trennen.",
+        "Hier änderst du Sprache und Design - ich spreche vier Sprachen."
+      ],
+      "general": [
+        "Suchst du etwas? Strg/Cmd + K öffnet die Suche in allen Projekten.",
+        "Klick mich jederzeit an - ich führe dich gern noch einmal durch die App."
+      ]
+    }
   }
 }

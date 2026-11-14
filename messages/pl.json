@@ -3144,5 +3144,51 @@
     "proposalsFailed": "Nie udało się utworzyć zadań",
     "stickyNode": "Karteczka",
     "shapeNode": "Kształt"
+  },
+  "companion": {
+    "name": "Gido",
+    "button": "Gido, Twój przewodnik",
+    "buttonNews": "Gido, Twój przewodnik: wskazówka do tej strony",
+    "close": "Zamknij",
+    "nextTip": "Kolejna wskazówka",
+    "tour": "Oprowadź mnie",
+    "sleep": "Uśpij",
+    "wake": "Obudź",
+    "sleepingNote": "Zzz... Odpoczywam tutaj. Obudź mnie, kiedy będziesz chcieć wskazówki.",
+    "tips": {
+      "dashboard": [
+        "Cześć, jestem Gido. Będę tu w rogu. Zacznij od projektu i pierwszego zadania - to zajmie minutę.",
+        "Tu widzisz swój dzień: co jest Twoje, co po terminie, co się zmieniło."
+      ],
+      "myTasks": [
+        "Wszystkie zadania przypisane do Ciebie, ze wszystkich projektów, na jednej liście.",
+        "Zadania po terminie są na górze. Skończ jedno, a zniknie z listy."
+      ],
+      "overview": [
+        "Raport pokazuje, ile skończyliście w każdym tygodniu i kto ma najwięcej otwartej pracy.",
+        "W Ustawieniach włączysz albo wyłączysz moduły - zostaw tylko te, których zespół używa."
+      ],
+      "board": [
+        "Gdy coś nie działa, zapisz próbę przy zadaniu. Następna osoba - albo agent AI - nie wejdzie w ten sam ślepy zaułek.",
+        "Połącz zadanie z decyzją, żeby każdy, kto je weźmie, wiedział dlaczego bez dopytywania.",
+        "Podłącz Claude Code, Cursora albo Codexa przyciskiem „Connect your agent”: weźmie zadanie z całym kontekstem i odda je do przeglądu."
+      ],
+      "decisions": [
+        "Zapisz, dlaczego coś wybraliście. Za miesiąc nikt nie będzie pamiętał - ta strona tak.",
+        "Połącz decyzję z zadaniami, a pokaże się dokładnie tam, gdzie toczy się praca."
+      ],
+      "memory": [
+        "Pamięć projektu oddziela to, co sprawdzili ludzie, od tego, co zgadło AI.",
+        "Wszystko, co napisała aplikacja AI, czeka w kolejce, aż człowiek to zaakceptuje."
+      ],
+      "profile": [
+        "Tu podłączasz aplikacje AI i zarządzasz kluczami API. Aplikację odłączysz w każdej chwili.",
+        "Tu zmienisz język i motyw - mówię w czterech językach."
+      ],
+      "general": [
+        "Szukasz czegoś? Ctrl/Cmd + K otwiera wyszukiwarkę we wszystkich projektach.",
+        "Kliknij mnie kiedykolwiek - mogę Cię znowu oprowadzić po aplikacji."
+      ]
+    }
   }
 }
