@@ -10,6 +10,8 @@
 # self-hosted settings (local file storage, no Supabase), then builds and
 # starts the stack and waits until it answers. Later runs keep your .env.
 set -eu
+# .env and its .env.tmp copies hold secrets: private from the start.
+umask 077
 cd "$(dirname "$0")/.."
 
 command -v docker >/dev/null 2>&1 || { echo "Docker is required: https://docs.docker.com/get-docker/" >&2; exit 1; }

@@ -33,7 +33,7 @@ Update later: `git pull && ./scripts/cloud-host.sh`.
 | Variable | Source |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` | Supabase dashboard > Project Settings > API |
-| `AUTH_SECRET` | **The same value as before.** It decrypts secrets already saved in the database (organization AI keys, webhook secrets, Discord links). Vercel does not show "sensitive" values again, so take it from where it was first saved (`.env.local`, a password manager). With a new value the app works, but those saved secrets must be entered again. |
+| `AUTH_SECRET` | **The same value as before.** It decrypts secrets already saved in the database (organization AI keys, webhook secrets, Discord links). Vercel does not show "sensitive" values again, so take it from where it was first saved (`.env.local`, a password manager). If it is lost, generate a new one with `openssl rand -hex 32` (the script rejects anything under 32 characters); the app works, but those saved secrets must be entered again. |
 | `RESEND_API_KEY` | Resend dashboard (create a new key if the old one can't be read) |
 | GitHub, Discord, AI, Sentry, PostHog keys | Each provider's dashboard |
 | `CRON_SECRET` | Leave empty; the script generates it |
