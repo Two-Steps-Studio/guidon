@@ -14,7 +14,7 @@ import { agentGate } from "@/lib/api/agent-gate";
  * see is a 404.
  */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
   const { taskId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");

@@ -16,7 +16,7 @@ const ACTION_LABEL = { complete_task: "complete", delete_task: "delete" } as con
 
 /** A task's approval requests, newest first, with expired ones reported as expired (`tasks:read`). */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;
@@ -41,7 +41,7 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ t
  * public.request_agent_approval (102) checks the role and the key.
  */
 async function handlePOST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:write");
+  const guard = await guardApiRequest(request, "tasks:write", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;

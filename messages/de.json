@@ -2094,6 +2094,7 @@
     "mcpStep_other_header": "Sende diesen HTTP-Header bei jeder Anfrage",
     "mcpTry": "Probiere diesen Prompt in deiner KI-App",
     "mcpTryPrompt": "Liste meine Guidon-Projekte auf, zeige die Aufgaben in To do und beginne mit der wichtigsten.",
+    "mcpOnlyProject": "Nur dieses Projekt ({project}) - der Agent erreicht deine anderen Projekte nicht",
     "mcpTryPromptProject": "Nimm in meinem Guidon-Projekt \"{project}\" die wichtigste Aufgabe aus To do: lies ihren Kontext mit get_task_context, erledige die Arbeit, halte fest, was du versucht hast, und verschiebe sie nach Review.",
     "backgroundMotionLabel": "Hintergrundanimation",
     "backgroundMotion_auto": "Automatisch (Systemeinstellung)",

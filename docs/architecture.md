@@ -172,7 +172,10 @@ so its config runs `npx mcp-remote` as a bridge. The Claude Code command uses
 `--scope user`, so the key stays in the user's own config instead of a
 `.mcp.json` that could be committed; Codex reads the key from an environment
 variable rather than its config file. You can also create the
-key by hand under Profile → API Keys with the same scopes. Suggested workflow for the
+key by hand under Profile → API Keys with the same scopes. From a project's board (**Connect your agent**) the key is bound to that
+project by default (migration 054): task routes check the task's project as
+the key's owner, `list_projects` returns only that project, and every other
+project is refused. Suggested workflow for the
 agent: `get_task_context` → `start_task` → work → `record_attempt` →
 `comment_on_task` → `set_task_status` to `review`; `complete_task` only works
 when the project enabled AI auto-complete. `GET /api/v1/search` has no MCP

@@ -15,6 +15,7 @@ import {
   toPage,
 } from "../src/lib/api/api-route-core.ts";
 import { MAX_BATCH_OPERATIONS, matchBatchRoute, parseBatch } from "../src/lib/api/batch-core.ts";
+import { keyProjectAllowed } from "../src/lib/api/api-route-core.ts";
 
 let pass = 0;
 let fail = 0;
@@ -36,6 +37,16 @@ const ID = "0f8fad5b-d9cb-469f-a165-70867728950e";
 
 section("error bodies");
 const notFound = enrichErrorBody({ error: "Task not found." }, 404, DOCS);
+// Project-bound keys (migration 054): own project, own project's task, the narrowing project list - nothing else.
+check("unbound key: allowed (RLS decides)", keyProjectAllowed(null, {}, null));
+check("bound key: own project route", keyProjectAllowed("p1", { projectId: "p1" }, null));
+check("bound key: other project route refused", !keyProjectAllowed("p1", { projectId: "p2" }, null));
+check("bound key: route with no project refused", !keyProjectAllowed("p1", {}, null));
+check("bound key: task of its project", keyProjectAllowed("p1", {}, "p1"));
+check("bound key: task of another project refused", !keyProjectAllowed("p1", {}, "p2"));
+check("bound key: unknown/unreadable task refused", !keyProjectAllowed("p1", {}, null));
+check("bound key: narrowing project list", keyProjectAllowed("p1", { narrowsToKeyProject: true }, null));
+
 check("404 gets code not_found", notFound.code === "not_found");
 check("...a hint and the docs link", typeof notFound.hint === "string" && notFound.docs === DOCS);
 check("the message stays", notFound.error === "Task not found.");

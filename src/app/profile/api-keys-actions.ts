@@ -9,6 +9,7 @@ import { reportsScopeMixedWithOthers } from "@/lib/api/scopes";
 import { canWriteProject, getProjectAccess } from "@/lib/data/project-access";
 import { parseAllowedOrigins } from "@/lib/api/key-origins";
 import { tr } from "@/lib/i18n/server-errors";
+import { isValidUuid } from "@/lib/api/validate-id";
 
 export type ApiKeyRow = MintedApiKeyRow;
 
@@ -85,14 +86,22 @@ const MCP_SCOPES = ["tasks:read", "tasks:write", "tasks:status", "comments:write
 const MCP_CLIENT_NAMES = new Set(["Claude Code", "Claude Desktop", "Cursor", "VS Code", "Codex CLI", "Gemini CLI", "AI app"]);
 
 export async function createMcpConnectionKey(
-  clientName: string
+  clientName: string,
+  /** Bind the key to this project (migration 054): the agent then reaches only it. */
+  projectId: string | null = null
 ): Promise<{ error: string | null; fullKey: string | null; keyId: string | null }> {
   const user = await getCurrentUser();
   const date = new Date().toISOString().slice(0, 10);
   const label = MCP_CLIENT_NAMES.has(clientName) ? clientName : "AI app";
+  if (projectId !== null && !isValidUuid(projectId)) return { error: await tr("Unknown project."), fullKey: null, keyId: null };
 
   try {
-    const result = await mintApiKey(user.id, `${label} (MCP) ${date}`, MCP_SCOPES);
+    const binding = projectId ? { projectId, allowedOrigins: null } : null;
+    const result = await mintApiKey(user.id, `${label} (MCP) ${date}`, MCP_SCOPES, binding);
+    // RLS (api_keys_insert, 054) allows a binding only where the user is owner/admin/developer.
+    if (result.error && binding && /row-level security/i.test(result.error)) {
+      return { error: await tr("A key can be limited to a project only where you are an owner, admin or developer."), fullKey: null, keyId: null };
+    }
     return { error: result.error, fullKey: result.fullKey, keyId: result.row?.id ?? null };
   } catch (error) {
     console.error("Failed to create the MCP connection key:", error);

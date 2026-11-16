@@ -8,7 +8,7 @@ import { apiDataClient } from "@/lib/api/api-data-client";
 import { missingAttemptReminder, ownClaimStart } from "@/lib/api/attempt-reminder";
 
 async function handlePATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:status");
+  const guard = await guardApiRequest(request, "tasks:status", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const body = await request.json().catch(() => null);

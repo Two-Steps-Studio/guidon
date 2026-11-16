@@ -33,7 +33,7 @@ interface Row {
  * every plugin key already has. A project the key's user can't see is 404.
  */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { projectId: (await params).projectId });
   if (isGuardError(guard)) return guard;
 
   const { projectId } = await params;
