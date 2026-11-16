@@ -57,8 +57,10 @@ export async function landingPricingCoverage({page,origin,browserName,artifacts,
     await pricing.scrollIntoViewIfNeeded();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     if(width===1440) {
-      const tops=await pricing.locator('ul').evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().top));
-      assert.ok(Math.max(...tops)-Math.min(...tops)<2,'All plan feature lists align, including the popular plan badge');
+      // Per grid row: the Self-hosted card (2026-11-09) makes six cards, and the grid wraps the sixth to a new row.
+      const rows=await pricing.locator('ul').evaluateAll(nodes=>nodes.map(node=>({row:Math.round(node.parentElement.parentElement.getBoundingClientRect().top),top:node.getBoundingClientRect().top})));
+      const byRow=Map.groupBy(rows,item=>item.row);
+      for(const items of byRow.values()){const tops=items.map(item=>item.top);assert.ok(Math.max(...tops)-Math.min(...tops)<2,'Plan feature lists in a row align, including the popular plan badge');}
     }
     if(browserName==='chromium') {
       const a11y=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
