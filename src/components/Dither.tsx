@@ -408,6 +408,9 @@ const Dither = ({
     // No GPU (software WebGL: CI, some VMs and old laptops) redraws the whole
     // screen on the CPU every frame and slowed the page ~8x: one still frame there.
     const software = isSoftwareWebGL(gl);
+    // globals.css hides this still frame while a dialog's blurred scrim is up:
+    // blurring a full-screen picture on the CPU costs ~130 ms per dialog.
+    if (software) container.dataset.ditherSoftware = "";
 
     const wave = link(gl, WAVE_FRAGMENT);
     const dither = link(gl, DITHER_FRAGMENT);
@@ -621,10 +624,17 @@ const Dither = ({
       if (!raf && visible && !document.hidden) raf = requestAnimationFrame(frame);
     };
 
+    let drawnWidth = 0;
+    let drawnHeight = 0;
     const resize = () => {
       const s = settingsRef.current;
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
+      // Software WebGL: the still frame stretches with CSS, so a dialog hiding
+      // the scrollbar doesn't cost another CPU render - only a real resize does.
+      if (software && drawnWidth && Math.abs(width - drawnWidth) < 64 && Math.abs(height - drawnHeight) < 64) return;
+      drawnWidth = width;
+      drawnHeight = height;
       const ratio = Math.min(s.dpr || window.devicePixelRatio || 1, 2);
       view.width = width;
       view.height = height;
