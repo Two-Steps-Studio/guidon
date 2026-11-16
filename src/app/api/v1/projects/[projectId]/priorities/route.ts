@@ -13,7 +13,7 @@ import { apiRoute } from "@/lib/api/api-route";
  * ones are left out. `tasks:read`-gated, 404 for a project the key can't see.
  */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { projectId: (await params).projectId });
   if (isGuardError(guard)) return guard;
 
   const { projectId } = await params;

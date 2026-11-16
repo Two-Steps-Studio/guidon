@@ -2105,6 +2105,7 @@
     "mcpStep_other_header": "Send this HTTP header with every request",
     "mcpTry": "Try this prompt in your AI app",
     "mcpTryPrompt": "List my Guidon projects, show the tasks in To do, and start on the highest priority one.",
+    "mcpOnlyProject": "Only this project ({project}) - the agent can't reach your other projects",
     "mcpTryPromptProject": "In my Guidon project \"{project}\", take the highest-priority task from To do: read its context with get_task_context, do the work, record what you tried and move it to Review.",
     "backgroundMotionLabel": "Background animation",
     "backgroundMotion_auto": "Automatic (system setting)",

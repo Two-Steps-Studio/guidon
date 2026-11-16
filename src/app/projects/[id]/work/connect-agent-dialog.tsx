@@ -7,17 +7,19 @@ import { McpConnect } from "@/app/profile/mcp-connect";
 /**
  * "Connect your agent" on a project's board: the Profile MCP setup (key with
  * the MCP scopes, per-app instructions, connection check, revoke) in a
- * dialog, with the prompt to try pointed at this project. The key is the
- * person's own and acts under RLS as them - not bound to this project,
- * because /api/mcp doesn't accept project-bound keys yet.
+ * dialog, with the prompt to try pointed at this project. The key acts
+ * under RLS as the person and is, by default, bound to this project
+ * (migration 054), so the agent can't reach their other projects.
  */
 export function ConnectAgentDialog({
   open,
   onOpenChange,
+  projectId,
   projectName,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  projectId: string;
   projectName: string;
 }) {
   const t = useTranslations("work");
@@ -29,7 +31,7 @@ export function ConnectAgentDialog({
           <DialogTitle>{t("connectAgentTitle")}</DialogTitle>
           <DialogDescription>{t("connectAgentDescription")}</DialogDescription>
         </DialogHeader>
-        <McpConnect projectName={projectName} embedded />
+        <McpConnect projectId={projectId} projectName={projectName} embedded />
       </DialogContent>
     </Dialog>
   );

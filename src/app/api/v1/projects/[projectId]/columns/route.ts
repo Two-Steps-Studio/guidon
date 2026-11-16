@@ -18,7 +18,7 @@ import { apiRoute } from "@/lib/api/api-route";
  * is 404, same as there.
  */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { projectId: (await params).projectId });
   if (isGuardError(guard)) return guard;
 
   const { projectId } = await params;

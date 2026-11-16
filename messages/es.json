@@ -2094,6 +2094,7 @@
     "mcpStep_other_header": "Envía esta cabecera HTTP en cada petición",
     "mcpTry": "Prueba este prompt en tu app de IA",
     "mcpTryPrompt": "Muestra mis proyectos de Guidon, enséñame las tareas en To do y empieza por la de mayor prioridad.",
+    "mcpOnlyProject": "Solo este proyecto ({project}): el agente no podrá acceder a tus otros proyectos",
     "mcpTryPromptProject": "En mi proyecto de Guidon \"{project}\", toma la tarea de mayor prioridad de To do: lee su contexto con get_task_context, haz el trabajo, registra lo que intentaste y muévela a Review.",
     "backgroundMotionLabel": "Animación del fondo",
     "backgroundMotion_auto": "Automática (ajuste del sistema)",

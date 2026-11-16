@@ -2105,6 +2105,7 @@
     "mcpStep_other_header": "Wysyłaj ten nagłówek HTTP z każdym zapytaniem",
     "mcpTry": "Wypróbuj ten prompt w swojej aplikacji AI",
     "mcpTryPrompt": "Wypisz moje projekty w Guidon, pokaż zadania w To do i zacznij od tego o najwyższym priorytecie.",
+    "mcpOnlyProject": "Tylko ten projekt ({project}) - agent nie dostanie się do Twoich innych projektów",
     "mcpTryPromptProject": "W moim projekcie Guidon \"{project}\" weź zadanie o najwyższym priorytecie z To do: przeczytaj jego kontekst przez get_task_context, wykonaj pracę, zapisz, co próbowałeś, i przenieś je do Review.",
     "backgroundMotionLabel": "Animacja tła",
     "backgroundMotion_auto": "Automatycznie (ustawienie systemu)",

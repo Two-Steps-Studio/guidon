@@ -28,7 +28,7 @@ import { apiDataClient } from "@/lib/api/api-data-client";
  * see is a 404, and there is no way to pair a task with a foreign project id.
  */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;

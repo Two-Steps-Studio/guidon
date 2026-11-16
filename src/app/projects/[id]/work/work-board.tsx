@@ -892,7 +892,7 @@ export function WorkBoard({
         />
       )}
 
-      {canEdit && aiEnabled && <ConnectAgentDialog open={agentOpen} onOpenChange={setAgentOpen} projectName={projectName} />}
+      {canEdit && aiEnabled && <ConnectAgentDialog open={agentOpen} onOpenChange={setAgentOpen} projectId={projectId} projectName={projectName} />}
 
       <CreateTaskDialog
         key={createFor ?? "no-column"}

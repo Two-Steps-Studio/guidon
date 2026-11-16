@@ -15,7 +15,7 @@ const reviewBody = z.strictObject({ decision: z.enum(["confirm", "reject"]) });
  * context event (task.link_confirmed / task.link_rejected).
  */
 async function handlePATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string; linkId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:write");
+  const guard = await guardApiRequest(request, "tasks:write", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
   const { taskId, linkId } = await params;
   if (!isValidUuid(taskId)) return invalidIdResponse("taskId");

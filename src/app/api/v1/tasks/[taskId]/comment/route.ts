@@ -17,7 +17,7 @@ const AI_NOT_PERMITTED_ERROR = "AI is not permitted to comment on this project."
  * loadComments in src/app/projects/[id]/work/actions.ts.
  */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;
@@ -39,7 +39,7 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ t
 }
 
 async function handlePOST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "comments:write");
+  const guard = await guardApiRequest(request, "comments:write", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const body = await request.json().catch(() => null);
