@@ -98,6 +98,8 @@ export function CreateTaskDialog({
   const [dueDate, setDueDate] = useState(restored?.form.dueDate ?? "");
   const [tags, setTags] = useState(restored?.form.tags ?? "");
   const [files, setFiles] = useState<PendingFile[]>([]);
+  // Added files are listed inside the optional-details group: open it so they never sit hidden.
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -147,6 +149,7 @@ export function CreateTaskDialog({
       inline,
     }));
     setFiles((current) => [...current, ...added]);
+    setDetailsOpen(true);
     if (!inline) return;
     const el = descriptionRef.current;
     const refs = added.map((entry) => `![${entry.file.name.replace(/[[\]]/g, "")}](pending:${entry.id})`).join("\n");
@@ -303,7 +306,7 @@ export function CreateTaskDialog({
             <p className="text-xs text-muted-foreground">{t("pasteImageHint")}</p>
           </div>
 
-          <details className="rounded-md border border-border px-3">
+          <details open={detailsOpen} onToggle={(event) => setDetailsOpen(event.currentTarget.open)} className="rounded-md border border-border px-3">
             <summary className="cursor-pointer py-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
               {t("optionalTaskDetails")}
             </summary>
