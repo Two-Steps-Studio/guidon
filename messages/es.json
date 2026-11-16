@@ -319,7 +319,7 @@
       "footerAllComparisons": "Todas las comparativas",
       "footerDescription": "Gestión de proyectos que mantiene el porqué junto al trabajo."
     },
-    "heroTitle": "Un tablero para el trabajo de tu equipo. Tu IA también puede ayudar.",
+    "heroTitle": "Toma cualquier tarea sin tener que preguntar.",
     "heroSubtitle": "Planificad, asignad y terminad tareas juntos, con las decisiones y el historial de cada una justo al lado. Cuando quieras ayuda, conecta Claude, ChatGPT, Cursor, Codex o cualquier app MCP: trabaja con las mismas tareas y tú revisas lo que hace.",
     "howItWorks": {
       "title": "Cómo funciona",
@@ -2414,11 +2414,6 @@
       "marketing": "Campañas y contenido, poca técnica.",
       "support": "Solo el tablero y los archivos: simple y rápido."
     },
-    "methodologyLabel": "Estilo de tablero",
-    "methodologyHint": {
-      "standard": "Un tablero kanban: mueve tareas entre columnas.",
-      "scrum": "Kanban con etiqueta scrum, para equipos que trabajan en sprints."
-    },
     "teamTitle": "¿Quién trabaja en ello?",
     "teamDescription": "Para que Guidon sugiera los siguientes pasos adecuados.",
     "team": {
@@ -2448,7 +2443,8 @@
     "finishFailed": "No se pudo crear tu espacio.",
     "skipToDashboard": "Ir al panel",
     "welcomeTitle": "Tu proyecto está listo",
-    "welcomeDescription": "Unas cosas rápidas para empezar:",
+    "welcomeDescriptionSolo": "Empieza con un agente: conéctalo y dale las tareas iniciales.",
+    "welcomeDescriptionTeam": "Empieza con tu equipo: invita a personas y luego añade la primera tarea.",
     "welcomeFirstTask": "Añade tu primera tarea",
     "welcomeInvite": "Invita a tu equipo",
     "welcomeImport": "Importa tareas de Trello, Jira o CSV",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
@@ -71,7 +72,8 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
   const [projectName, setProjectName] = useState("");
   const [studioName, setStudioName] = useState("");
   const [template, setTemplate] = useState<ProjectTemplate | null>(null);
-  const [methodology, setMethodology] = useState<ProjectMethodology>("standard");
+  // Scrum only adds a badge, so onboarding doesn't ask; it's in the project's settings.
+  const methodology: ProjectMethodology = "standard";
   const [teamSize, setTeamSize] = useState<OnboardingTeamSize | null>(null);
 
   // Resume an earlier visit.
@@ -84,7 +86,6 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
       setProjectName(saved.projectName);
       setStudioName(saved.studioName);
       setTemplate(saved.template);
-      setMethodology(saved.methodology);
       setTeamSize(saved.teamSize);
       setStep(saved.step);
     }
@@ -99,6 +100,11 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
     if (restored) storeOnboarding({ step, projectType, projectName, studioName, template, methodology, teamSize });
   }, [restored, step, projectType, projectName, studioName, template, methodology, teamSize]);
 
+  // One event per screen (no answers in it), so the funnel shows where people stop.
+  useEffect(() => {
+    if (restored) posthog.capture("onboarding_step_viewed", { step: STEPS[step], index: step });
+  }, [restored, step]);
+
   const canContinue = [Boolean(projectName.trim()), Boolean(projectType), Boolean(template), Boolean(teamSize), true][step];
   const next = () => canContinue && setStep((current) => Math.min(current + 1, STEPS.length - 1));
   const back = () => setStep((current) => Math.max(current - 1, 0));
@@ -112,6 +118,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
 
   // No setup questions forced on anyone: the defaults give a plain board.
   const skipToAccount = () => {
+    posthog.capture("onboarding_setup_skipped", { from: STEPS[step] });
     const type = projectType ?? "other";
     setProjectType(type);
     setTemplate((current) => current ?? defaultTemplateFor(type));
@@ -200,17 +207,6 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
                 </ChoiceCard>
               ))}
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{t("methodologyLabel")}</p>
-              <div className="grid grid-cols-2 gap-3">
-                {(["standard", "scrum"] as const).map((value) => (
-                  <ChoiceCard key={value} selected={methodology === value} onClick={() => setMethodology(value)} align="start">
-                    <span className="font-medium">{tCommon("projectMethodology", { methodology: value })}</span>
-                    <span className="text-xs text-muted-foreground">{t(`methodologyHint.${value}`)}</span>
-                  </ChoiceCard>
-                ))}
-              </div>
-            </div>
           </section>
         )}
 
@@ -250,7 +246,7 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
               <Summary label={t("summaryStudio")} value={answers.studioName || t("studioDefault", { project: answers.projectName })} />
               <Summary
                 label={t("summaryWorkflow")}
-                value={`${tSettings(`labelStarter.${answers.template}.title`)} · ${tCommon("projectMethodology", { methodology: answers.methodology })}`}
+                value={tSettings(`labelStarter.${answers.template}.title`)}
               />
               <Summary label={t("summaryTeam")} value={t(`team.${answers.teamSize}`)} />
             </ul>

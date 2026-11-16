@@ -319,7 +319,7 @@
       "footerAllComparisons": "Alle Vergleiche",
       "footerDescription": "Projektmanagement, das das Warum bei der Arbeit hält."
     },
-    "heroTitle": "Ein Board für die Arbeit deines Teams. Deine KI kann mithelfen.",
+    "heroTitle": "Jede Aufgabe übernehmen, ohne nachzufragen.",
     "heroSubtitle": "Plant, verteilt und erledigt Aufgaben gemeinsam - Entscheidungen und Verlauf jeder Aufgabe liegen direkt daneben. Wenn du Hilfe willst, verbinde Claude, ChatGPT, Cursor, Codex oder jede MCP-App: Sie arbeitet mit denselben Aufgaben, und du prüfst, was sie tut.",
     "howItWorks": {
       "title": "So funktioniert's",
@@ -2414,11 +2414,6 @@
       "marketing": "Kampagnen und Inhalte, wenig Technik.",
       "support": "Nur Board und Dateien - einfach und schnell."
     },
-    "methodologyLabel": "Board-Stil",
-    "methodologyHint": {
-      "standard": "Ein Kanban-Board: Aufgaben über Spalten verschieben.",
-      "scrum": "Kanban mit Scrum-Kennzeichnung, für Teams in Sprints."
-    },
     "teamTitle": "Wer arbeitet daran?",
     "teamDescription": "Damit Guidon die richtigen nächsten Schritte vorschlägt.",
     "team": {
@@ -2448,7 +2443,8 @@
     "finishFailed": "Der Arbeitsbereich konnte nicht angelegt werden.",
     "skipToDashboard": "Zum Dashboard",
     "welcomeTitle": "Dein Projekt ist bereit",
-    "welcomeDescription": "Ein paar schnelle Schritte zum Start:",
+    "welcomeDescriptionSolo": "Starte mit einem Agenten: verbinde ihn und gib ihm die Startaufgaben.",
+    "welcomeDescriptionTeam": "Starte mit deinem Team: lade Leute ein, dann füge die erste Aufgabe hinzu.",
     "welcomeFirstTask": "Erste Aufgabe anlegen",
     "welcomeInvite": "Team einladen",
     "welcomeImport": "Aufgaben aus Trello, Jira oder CSV importieren",

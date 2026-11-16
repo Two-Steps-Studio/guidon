@@ -330,7 +330,7 @@
       "agent": "Opcjonalny agent AI",
       "review": "Gotowe do Twojej oceny"
     },
-    "heroTitle": "Jedna tablica na pracę zespołu. AI może pomóc.",
+    "heroTitle": "Weź każde zadanie bez dopytywania.",
     "heroSubtitle": "Planujcie, przydzielajcie i kończcie zadania razem, a decyzje i historia każdego zadania są tuż obok niego. Kiedy chcesz pomocy, podłącz Claude, ChatGPT, Cursor, Codex albo dowolną aplikację MCP: pracuje na tych samych zadaniach, a Ty sprawdzasz, co zrobiła.",
     "howItWorks": {
       "title": "Jak to działa",
@@ -2425,11 +2425,6 @@
       "marketing": "Kampanie i treści, mniej techniki.",
       "support": "Tylko tablica i pliki - prosto i szybko."
     },
-    "methodologyLabel": "Styl tablicy",
-    "methodologyHint": {
-      "standard": "Tablica kanban: przesuwasz zadania między kolumnami.",
-      "scrum": "Kanban z oznaczeniem scrum - dla zespołów pracujących w sprintach."
-    },
     "teamTitle": "Kto nad tym pracuje?",
     "teamDescription": "Żeby Guidon podpowiedział właściwe kolejne kroki.",
     "team": {
@@ -2459,7 +2454,8 @@
     "finishFailed": "Nie udało się utworzyć przestrzeni.",
     "skipToDashboard": "Przejdź do pulpitu",
     "welcomeTitle": "Twój projekt jest gotowy",
-    "welcomeDescription": "Kilka szybkich rzeczy na start:",
+    "welcomeDescriptionSolo": "Zacznij od agenta: podłącz go i daj mu zadania startowe.",
+    "welcomeDescriptionTeam": "Zacznij od zespołu: zaproś osoby, potem dodaj pierwsze zadanie.",
     "welcomeFirstTask": "Dodaj pierwsze zadanie",
     "welcomeInvite": "Zaproś zespół",
     "welcomeImport": "Zaimportuj zadania z Trello, Jiry lub CSV",
