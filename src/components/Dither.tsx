@@ -328,6 +328,13 @@ export interface DitherProps {
   style?: CSSProperties;
 }
 
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|software|basic render/i;
+
+function isSoftwareWebGL(gl: WebGL2RenderingContext): boolean {
+  const info = gl.getExtension("WEBGL_debug_renderer_info");
+  return SOFTWARE_RENDERER.test(String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER)));
+}
+
 const Dither = ({
   waveSpeed = 0.05,
   waveFrequency = 3,
@@ -398,6 +405,9 @@ const Dither = ({
       stencil: false,
     });
     if (!container || !canvas || !gl) return undefined;
+    // No GPU (software WebGL: CI, some VMs and old laptops) redraws the whole
+    // screen on the CPU every frame and slowed the page ~8x: one still frame there.
+    const software = isSoftwareWebGL(gl);
 
     const wave = link(gl, WAVE_FRAGMENT);
     const dither = link(gl, DITHER_FRAGMENT);
@@ -557,7 +567,7 @@ const Dither = ({
       readReduce();
       const dt = last ? clamp((now - last) / 1000, 0.0005, 0.05) : 1 / 60;
       last = now;
-      if (!s.disableAnimation && !reduce) state.time += dt;
+      if (!s.disableAnimation && !reduce && !software) state.time += dt;
 
       const engaged = s.enableMouseInteraction && pointer.inside && !reduce;
       state.presence += ((engaged ? 1 : 0) - state.presence) * (1 - Math.exp(-dt / (engaged ? 0.12 : 0.35)));
@@ -593,12 +603,12 @@ const Dither = ({
         if (ripples[i].age >= RIPPLE_SECONDS) ripples.splice(i, 1);
       }
 
-      if (!s.intro || reduce) state.reveal = 1;
+      if (!s.intro || reduce || software) state.reveal = 1;
       else if (state.reveal < 1) state.reveal = Math.min(1, state.reveal + dt / INTRO_SECONDS);
 
       render();
       const busy =
-        !s.disableAnimation ||
+        (!s.disableAnimation && !software) ||
         state.reveal < 1 ||
         ripples.length > 0 ||
         state.presence > 0.002 ||

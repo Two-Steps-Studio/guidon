@@ -10,7 +10,8 @@ async function login(page,origin,email,password){
 }
 
 export async function feedbackCoverage({page,context,origin,fixture,client,browserName,artifacts}){
-  await page.goto(origin);
+  // The landing page dropped its BETA badge on purpose (926d8f62); sign-in and the app keep it.
+  await page.goto(`${origin}/auth/login`);
   await page.locator("[data-beta-badge]").first().waitFor();
   await login(page,origin,fixture.users[0].email,fixture.password);
   await page.locator("header [data-beta-badge]").waitFor();
