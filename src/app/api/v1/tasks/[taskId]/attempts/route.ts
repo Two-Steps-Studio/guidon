@@ -28,7 +28,7 @@ const FORBIDDEN_MESSAGE = "You do not have permission to record an attempt on th
  * loadAttempts in src/app/projects/[id]/work/attempts-actions.ts.
  */
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;
@@ -64,7 +64,7 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ t
  * rather than filtering rows, so it is mapped to 403 below.
  */
 async function handlePOST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "attempts:write");
+  const guard = await guardApiRequest(request, "attempts:write", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;

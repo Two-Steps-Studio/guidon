@@ -9,7 +9,7 @@ import { apiDataClient } from "@/lib/api/api-data-client";
 const DEAD_END_LIMIT = 5;
 
 async function handlePOST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:status");
+  const guard = await guardApiRequest(request, "tasks:status", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;

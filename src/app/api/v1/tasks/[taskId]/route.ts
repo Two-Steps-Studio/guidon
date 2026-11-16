@@ -10,7 +10,7 @@ import { TRACKED_TASK_FIELDS, appChangeDetails, diffTaskFields } from "@/lib/wor
 import { agentGate } from "@/lib/api/agent-gate";
 
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;
@@ -42,7 +42,7 @@ function isValidTaskPriority(value: unknown): value is TaskPriority {
  * identity here comes from an API key, not a browser session.
  */
 async function handlePATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:write");
+  const guard = await guardApiRequest(request, "tasks:write", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;
@@ -132,7 +132,7 @@ async function handlePATCH(request: NextRequest, { params }: { params: Promise<{
 
 /** Mirrors deleteTask in src/app/projects/[id]/work/actions.ts - see PATCH's doc comment for why this isn't a direct call into it. */
 async function handleDELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:write");
+  const guard = await guardApiRequest(request, "tasks:write", { taskId: (await params).taskId });
   if (isGuardError(guard)) return guard;
 
   const { taskId } = await params;

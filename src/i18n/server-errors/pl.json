@@ -232,5 +232,7 @@
   "The comment is too long.": "Komentarz jest za długi.",
   "Someone already decided this request.": "Ktoś już rozpatrzył tę prośbę.",
   "This request expired. The agent can ask again.": "Ta prośba wygasła. Agent może poprosić ponownie.",
-  "The task no longer exists, so there is nothing to approve.": "To zadanie już nie istnieje, więc nie ma czego akceptować."
+  "The task no longer exists, so there is nothing to approve.": "To zadanie już nie istnieje, więc nie ma czego akceptować.",
+  "Unknown project.": "Nieznany projekt.",
+  "A key can be limited to a project only where you are an owner, admin or developer.": "Klucz można ograniczyć tylko do projektu, w którym jesteś właścicielem, administratorem lub deweloperem."
 }

@@ -233,14 +233,16 @@ function ConnectionStatus({ keyId }: { keyId: string }) {
  * connect any MCP-capable AI app to Guidon's /api/mcp. One click creates a
  * key with exactly the scopes the MCP tools need, then the setup for the
  * chosen app is shown with the key filled in. With `projectName` the prompt
- * to try points the agent at that project.
+ * to try points the agent at that project; with `projectId` the key is, by
+ * default, limited to that project.
  */
-export function McpConnect({ projectName, embedded = false }: { projectName?: string; embedded?: boolean } = {}) {
+export function McpConnect({ projectId, projectName, embedded = false }: { projectId?: string; projectName?: string; embedded?: boolean } = {}) {
   const t = useTranslations("profile");
   const [client, setClient] = useState<McpClient>("claude-code");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connection, setConnection] = useState<{ key: string; url: string; keyId: string | null } | null>(null);
+  const [onlyProject, setOnlyProject] = useState(true);
 
   const clientName = (id: McpClient) => CLIENT_NAMES[id] || t("mcpClientOther");
   const usesOAuth = OAUTH_CLIENTS.has(client);
@@ -250,7 +252,7 @@ export function McpConnect({ projectName, embedded = false }: { projectName?: st
     setPending(true);
     setError(null);
     try {
-      const result = await createMcpConnectionKey(client === "other" ? "AI app" : CLIENT_NAMES[client]);
+      const result = await createMcpConnectionKey(client === "other" ? "AI app" : CLIENT_NAMES[client], projectId && onlyProject ? projectId : null);
       if (result.error || !result.fullKey) {
         setError(result.error ?? t("mcpError"));
         return;
@@ -313,6 +315,12 @@ export function McpConnect({ projectName, embedded = false }: { projectName?: st
 
       {!usesOAuth && !connection && (
         <div className="space-y-2">
+          {projectId && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" className="h-4 w-4" checked={onlyProject} onChange={(event) => setOnlyProject(event.target.checked)} />
+              {t("mcpOnlyProject", { project: projectName ?? "" })}
+            </label>
+          )}
           <Button type="button" size="sm" onClick={handleCreate} disabled={pending}>
             {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
             {pending ? t("mcpCreating") : t("mcpCreateButton", { client: clientName(client) })}

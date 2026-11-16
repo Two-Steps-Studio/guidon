@@ -17,10 +17,11 @@ import { apiRoute } from "@/lib/api/api-route";
  * No WHERE clause needed on either branch - same pattern as
  * src/app/projects/(list)/page.tsx's direct-DB query: RLS (projects_select,
  * private.is_org_member) already filters to exactly the caller's visible
- * projects via withUser()/getApiUserClient()'s scoped identity.
+ * projects via withUser()/getApiUserClient()'s scoped identity. A key bound
+ * to one project (migration 054) lists only that project.
  */
 async function handleGET(request: NextRequest) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { narrowsToKeyProject: true });
   if (isGuardError(guard)) return guard;
 
   // ?limit= (1-1000), alphabetical; the safety cap is also the default.
@@ -29,19 +30,17 @@ async function handleGET(request: NextRequest) {
   if (hasDirectDatabase()) {
     const result = await withUser(guard.userId, ({ query }) =>
       query(
-        `SELECT id, name, organization_id FROM projects ORDER BY name ASC LIMIT $1`,
-        [limit]
+        `SELECT id, name, organization_id FROM projects WHERE ($2::uuid IS NULL OR id = $2) ORDER BY name ASC LIMIT $1`,
+        [limit, guard.projectId]
       )
     );
     return NextResponse.json({ projects: result.rows });
   }
 
   const supabase = await getApiUserClient(guard.userId);
-  const { data, error } = await supabase
-    .from("projects")
-    .select("id, name, organization_id")
-    .order("name", { ascending: true })
-    .limit(limit);
+  let query = supabase.from("projects").select("id, name, organization_id");
+  if (guard.projectId) query = query.eq("id", guard.projectId);
+  const { data, error } = await query.order("name", { ascending: true }).limit(limit);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ projects: data ?? [] });

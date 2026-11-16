@@ -18,7 +18,7 @@ const MAX_IMPORT = 500;
  * limits), and the job records what was created and what failed.
  */
 async function handlePOST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:write");
+  const guard = await guardApiRequest(request, "tasks:write", { projectId: (await params).projectId });
   if (isGuardError(guard)) return guard;
   const { projectId } = await params;
   if (!isValidUuid(projectId)) return invalidIdResponse("projectId");

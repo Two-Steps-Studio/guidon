@@ -128,3 +128,18 @@ export function parseLimit(value: string | null, fallback: number, max: number):
   if (!value || !Number.isFinite(parsed)) return fallback;
   return Math.min(max, Math.max(1, Math.floor(parsed)));
 }
+
+/**
+ * Whether a key bound to one project (migration 054) may use a route: the
+ * route's project matches, the route narrows its own result to that project
+ * (the project list), or the task the route acts on belongs to it. An
+ * unbound key (null) is always allowed here - RLS still decides.
+ */
+export function keyProjectAllowed(
+  boundProjectId: string | null,
+  route: { projectId?: string; narrowsToKeyProject?: boolean },
+  taskProjectId: string | null
+): boolean {
+  if (!boundProjectId) return true;
+  return boundProjectId === route.projectId || route.narrowsToKeyProject === true || boundProjectId === taskProjectId;
+}

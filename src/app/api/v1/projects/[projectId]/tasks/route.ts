@@ -12,7 +12,7 @@ import { apiRoute } from "@/lib/api/api-route";
 import { decodeCursor, parseLimit, toPage } from "@/lib/api/api-route-core";
 
 async function handleGET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:read");
+  const guard = await guardApiRequest(request, "tasks:read", { projectId: (await params).projectId });
   if (isGuardError(guard)) return guard;
 
   const { projectId } = await params;
@@ -70,7 +70,7 @@ async function handleGET(request: NextRequest, { params }: { params: Promise<{ p
  * mutation (create/update/delete).
  */
 async function handlePOST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
-  const guard = await guardApiRequest(request, "tasks:write");
+  const guard = await guardApiRequest(request, "tasks:write", { projectId: (await params).projectId });
   if (isGuardError(guard)) return guard;
 
   const { projectId } = await params;
