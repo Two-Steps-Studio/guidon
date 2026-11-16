@@ -91,7 +91,11 @@ async function handle(request: NextRequest): Promise<Response> {
   }
 
   // Project-bound keys (migration 054) pass: every tool's v1 route enforces
-  // the binding (guardApiRequest), and a reports:write key has no tool scope.
+  // the binding (guardApiRequest). A reports:write-only key ships inside game
+  // builds and opens no tool, so it gets no MCP session at all.
+  if (!identity.scopes.some((scope) => scope !== "reports:write")) {
+    return NextResponse.json({ error: "This API key can't be used here." }, { status: 403 });
+  }
 
   // Same status and body as guardApiRequest in src/lib/api/route-guard.ts.
   if (isRateLimited(identity.apiKeyId)) {
