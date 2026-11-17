@@ -10,6 +10,8 @@ import { Bot, ListChecks, Loader2, Plus, Settings, Upload, X } from "lucide-reac
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import posthog from "posthog-js";
+import type { OnboardingTeamSize } from "@/lib/onboarding";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { KanbanBoard } from "@/components/work/kanban-board";
@@ -95,7 +97,7 @@ export function WorkBoard({
   aiEnabled = true,
   labelPresets = NO_LABEL_PRESETS,
   priorities,
-  welcome = false,
+  welcome = null,
   boardLimit = null,
 }: {
   projectId: string;
@@ -117,8 +119,8 @@ export function WorkBoard({
   labelPresets?: LabelPreset[];
   /** The project's priorities in importance order (resolvePriorities). */
   priorities: PriorityDef[];
-  /** Just created through onboarding - show the first-steps card. */
-  welcome?: boolean;
+  /** Just created through onboarding: the first-steps card, ordered for the team size answered there. */
+  welcome?: OnboardingTeamSize | null;
   /** Set when the project has more tasks than the board loads (page.tsx's TASK_LIMIT). */
   boardLimit?: number | null;
 }) {
@@ -143,7 +145,13 @@ export function WorkBoard({
   const [importOpen, setImportOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
   const [starterPending, setStarterPending] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(welcome);
+  const [showWelcome, setShowWelcome] = useState(welcome !== null);
+  // Solo starts with an agent (nobody to invite); a team starts with inviting people.
+  const solo = welcome === "solo";
+  const trackWelcome = (action: string) => posthog.capture("onboarding_welcome_action", { action, team_size: welcome });
+  useEffect(() => {
+    if (welcome !== null) posthog.capture("onboarding_step_viewed", { step: "welcome", team_size: welcome });
+  }, [welcome]);
   const tOnboarding = useTranslations("onboarding");
 
   // Deep link from the command palette (command-palette.tsx's resultHref) -
@@ -431,6 +439,7 @@ export function WorkBoard({
     }));
 
   const addStarterTasks = async () => {
+    if (welcome !== null) trackWelcome("starter_tasks");
     setStarterPending(true);
     try {
       const result = await addAgentStarterTasks(projectId);
@@ -682,26 +691,35 @@ export function WorkBoard({
 
         {showWelcome && canEdit && (
           <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 basis-72">
               <p className="text-sm font-medium text-foreground">{tOnboarding("welcomeTitle")}</p>
-              <p className="text-xs text-muted-foreground">{tOnboarding("welcomeDescription")}</p>
+              <p className="text-xs text-muted-foreground">{tOnboarding(solo ? "welcomeDescriptionSolo" : "welcomeDescriptionTeam")}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}>
-                <Plus className="h-4 w-4" />
-                {tOnboarding("welcomeFirstTask")}
-              </Button>
-              <Button size="sm" variant="outline" asChild>
-                <Link href={`/projects/${projectId}/members`}>{tOnboarding("welcomeInvite")}</Link>
-              </Button>
-              {aiEnabled && (
-                <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)}>
+              {solo && aiEnabled && (
+                <Button size="sm" onClick={() => { trackWelcome("connect_agent"); setAgentOpen(true); }}>
                   <Bot className="h-4 w-4" />
                   {tOnboarding("welcomeConnectAgent")}
                 </Button>
               )}
-              {aiEnabled && topLevelTasks.length === 0 && starterButton}
-              <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              {solo && aiEnabled && topLevelTasks.length === 0 && starterButton}
+              {!solo && (
+                <Button size="sm" asChild>
+                  <Link href={`/projects/${projectId}/members`} onClick={() => trackWelcome("invite")}>{tOnboarding("welcomeInvite")}</Link>
+                </Button>
+              )}
+              <Button size="sm" variant={solo && !aiEnabled ? "default" : "outline"} onClick={(event) => { trackWelcome("first_task"); openCreate(columns[0]?.status ?? "todo", event.currentTarget); }}>
+                <Plus className="h-4 w-4" />
+                {tOnboarding("welcomeFirstTask")}
+              </Button>
+              {!solo && aiEnabled && (
+                <Button size="sm" variant="outline" onClick={() => { trackWelcome("connect_agent"); setAgentOpen(true); }}>
+                  <Bot className="h-4 w-4" />
+                  {tOnboarding("welcomeConnectAgent")}
+                </Button>
+              )}
+              {!solo && aiEnabled && topLevelTasks.length === 0 && starterButton}
+              <Button size="sm" variant="outline" onClick={() => { trackWelcome("import"); setImportOpen(true); }}>
                 <Upload className="h-4 w-4" />
                 {tOnboarding("welcomeImport")}
               </Button>

@@ -330,7 +330,7 @@
       "agent": "Optional AI agent",
       "review": "Ready for your review"
     },
-    "heroTitle": "One board for your team's work. Your AI can help too.",
+    "heroTitle": "Pick up any task without asking around.",
     "heroSubtitle": "Plan, assign and finish tasks together, with the decisions and history behind each one kept right next to it. When you want help, connect Claude, ChatGPT, Cursor, Codex or any MCP app: it works from the same tasks, and you review what it does.",
     "howItWorks": {
       "title": "How it works",
@@ -2426,11 +2426,6 @@
       "marketing": "Campaigns and content, light on tech.",
       "support": "Just the board and files - simple and quick."
     },
-    "methodologyLabel": "Board style",
-    "methodologyHint": {
-      "standard": "A kanban board: move tasks across columns.",
-      "scrum": "Kanban plus a scrum label, for teams working in sprints."
-    },
     "teamTitle": "Who's working on it?",
     "teamDescription": "So Guidon can suggest the right next steps.",
     "team": {
@@ -2460,7 +2455,8 @@
     "finishFailed": "Couldn't create your workspace.",
     "skipToDashboard": "Go to the dashboard",
     "welcomeTitle": "Your project is ready",
-    "welcomeDescription": "A few quick things to get going:",
+    "welcomeDescriptionSolo": "Start with an agent: connect it and give it the starter tasks.",
+    "welcomeDescriptionTeam": "Start with your team: invite people, then add the first task.",
     "welcomeFirstTask": "Add your first task",
     "welcomeInvite": "Invite your team",
     "welcomeImport": "Import tasks from Trello, Jira or CSV",

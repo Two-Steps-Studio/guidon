@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
+import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { readStoredOnboarding, storeOnboarding } from "@/lib/onboarding";
 import { completeOnboarding } from "./actions";
@@ -29,8 +30,10 @@ export function FinishOnboarding() {
         setError(result.error ?? t("finishFailed"));
         return;
       }
+      posthog.capture("onboarding_completed", { project_type: answers.projectType, template: answers.template, team_size: answers.teamSize });
       storeOnboarding(null);
-      router.replace(`/projects/${result.projectId}/work?welcome=1`);
+      // The team size decides what the board's welcome panel puts first.
+      router.replace(`/projects/${result.projectId}/work?welcome=${answers.teamSize}`);
     });
   }, [router, t]);
 

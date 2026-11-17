@@ -33,6 +33,10 @@ export type OnboardingDraft = Omit<OnboardingAnswers, "projectType" | "template"
 };
 
 /** A sensible template for what's being built - pre-selected, still changeable. */
+export function isOnboardingTeamSize(value: unknown): value is OnboardingTeamSize {
+  return (ONBOARDING_TEAM_SIZES as readonly unknown[]).includes(value);
+}
+
 export function defaultTemplateFor(type: ProjectType): ProjectTemplate {
   if (type === "game") return "gamedev";
   if (type === "website") return "design";

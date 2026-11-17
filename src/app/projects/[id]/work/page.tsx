@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { isOnboardingTeamSize } from "@/lib/onboarding";
 import { showAi } from "@/lib/data/ai-preference";
 import { canCommentOnProject, canWriteProject, requireProjectAccess } from "@/lib/data/project-access";
 import { getLabelPresets } from "@/lib/data/label-presets";
@@ -141,7 +142,7 @@ export default async function ProjectWorkPage({
   searchParams: Promise<{ welcome?: string }>;
 }) {
   const { id: projectId } = await params;
-  // ?welcome=1: just created through onboarding (app/start/finish).
+  // ?welcome=<team size> (or 1): just created through onboarding (app/start/finish).
   const { welcome } = await searchParams;
   const tWork = await getTranslations("work");
   const access = await requireProjectAccess(projectId);
@@ -263,7 +264,7 @@ export default async function ProjectWorkPage({
 
   return (
     <WorkBoard
-      welcome={welcome === "1"}
+      welcome={welcome === undefined ? null : isOnboardingTeamSize(welcome) ? welcome : welcome === "1" ? "small" : null}
       projectId={projectId}
       projectName={access.project.name}
       userId={access.userId}
