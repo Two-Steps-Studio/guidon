@@ -81,8 +81,9 @@ Do not add `DATABASE_URL`: its absence is what selects Supabase.
 - Supabase > Authentication > URL configuration and the OAuth apps (Google,
   GitHub, Discord) keep working: the domain does not change.
 - The Stripe and GitHub webhooks keep working for the same reason.
-- The two daily jobs from `vercel.json` (webhook retries, admin usage) run
-  from the `cron` container.
+- The jobs from `vercel.json` run from the `cron` container: webhook and
+  automation retries every 5 minutes (retries fall due 1, 5 and 30 minutes
+  after a failure), admin usage once a day.
 - Migrations: Supabase is migrated as before (`npm run migrate` with the
   Supabase connection string), not by this script.
 - Logs: `docker compose --env-file .env.cloud -f docker-compose.cloud.yml logs -f app`

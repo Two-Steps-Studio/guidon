@@ -65,8 +65,10 @@ services:
     depends_on:
       - edge
 
-  # The two daily jobs Vercel Cron ran (vercel.json): webhook retries and
-  # admin usage. busybox wget; a failed call is retried the next day.
+  # The jobs from vercel.json. Webhook and automation retries fall due 1, 5
+  # and 30 minutes after a failure (src/lib/webhooks/retry.ts), so
+  # /api/cron/webhooks runs every 5 minutes; admin usage once a day (288
+  # rounds). busybox wget; a failed call is simply tried on the next round.
   cron:
     image: busybox:1.36
     restart: unless-stopped
@@ -76,11 +78,13 @@ services:
       - sh
       - -c
       - |
+        call() { wget -q -O /dev/null --header "Authorization: Bearer $$CRON_SECRET" "http://app:3000/api/cron/$$1" || echo "cron $$1 failed"; }
+        round=0
         while true; do
-          sleep 86400
-          for job in webhooks admin-usage; do
-            wget -q -O /dev/null --header "Authorization: Bearer $$CRON_SECRET" "http://app:3000/api/cron/$$job" || echo "cron $$job failed"
-          done
+          sleep 300
+          call webhooks
+          round=$$((round + 1))
+          if [ "$$round" -ge 288 ]; then call admin-usage; round=0; fi
         done
     depends_on:
       - app

@@ -39,7 +39,8 @@ until $compose exec -T app node -e "fetch('http://127.0.0.1:3000/api/health').th
   tries=$((tries + 1))
   if [ "$tries" -gt 60 ]; then
     echo
-    echo "Not healthy after 5 minutes. Logs: $compose logs app caddy" >&2
+    if [ "$profile" = tunnel ]; then proxy="edge tunnel"; else proxy=caddy; fi
+    echo "Not healthy after 5 minutes. Logs: $compose logs app $proxy" >&2
     exit 1
   fi
   printf '.'
