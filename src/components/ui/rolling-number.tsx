@@ -11,6 +11,14 @@ const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
  */
 export function RollingNumber({ value, className }: { value: number | string; className?: string }) {
   const text = String(value);
+  // Nothing to roll ("Not available"): the same box, the text once - no hidden duplicate.
+  if (!/\d/.test(text)) {
+    return (
+      <span className={cn("inline-flex tabular-nums", className)}>
+        <span className="inline-flex h-[1em] overflow-hidden leading-none">{text}</span>
+      </span>
+    );
+  }
   return (
     <span className={cn("inline-flex tabular-nums", className)}>
       <span className="sr-only">{text}</span>

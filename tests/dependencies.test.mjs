@@ -4,7 +4,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 const root=fileURLToPath(new URL("../",import.meta.url));
 const pkg=JSON.parse(await readFile(path.join(root,"package.json"),"utf8"));
-const expected={next:"16.4.3","@next/third-parties":"16.4.3","@modelcontextprotocol/sdk":"1.32.2",sharp:"0.35.5",zod:"4.6.7",dompurify:"3.4.17","monaco-editor":"0.57.0"};
+const expected={next:"16.4.6","@next/third-parties":"16.4.6","@modelcontextprotocol/sdk":"1.32.2",sharp:"0.35.5",zod:"4.6.7",dompurify:"3.4.17","monaco-editor":"0.57.0"};
 for(const [name,version] of Object.entries(expected)){
   assert.equal(pkg.dependencies[name],version,`${name} must keep its reviewed exact version`);
   const installed=JSON.parse(await readFile(path.join(root,"node_modules",name,"package.json"),"utf8"));

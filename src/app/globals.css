@@ -689,6 +689,11 @@ button, a, [role="button"] {
 @keyframes gido-wave { 0%, 100% { transform: skewY(0); } 50% { transform: skewY(-8deg) scaleX(0.92); } }
 @keyframes gido-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
 
+/* Dither (components/Dither.tsx) on software WebGL: while a dialog's blurred
+   scrim is up, the CPU would blur the full-screen pattern on every frame of the
+   dialog animation (~130 ms). Under the dim scrim it barely shows anyway. */
+body:has([data-slot="dialog-overlay"]) [data-dither-software] { visibility: hidden; }
+
 /* Touch comfort without enlarging dense pointer-operated desktop controls. */
 @media (pointer: coarse) {
   [data-slot="button"], [data-slot="dropdown-menu-trigger"],
