@@ -5,7 +5,7 @@ import { getClient } from "./oauth";
 import { normalizeResource, parseScopes, isMetadataDocumentClientId } from "./oauth-core";
 import { SITE_URL } from "@/lib/site-url";
 import { CLAIM_INTERVAL, CLAIM_TTL_SECONDS, DEFAULT_AGENT_SCOPES, agentSigningKey, claimEmailHash,
-  createClaimSecrets, hashClaimSecret, isClaimHandle, mintAgentAssertion, verifyAgentAssertion } from "./agent-claims-core";
+  createClaimSecrets, hashClaimSecret, isClaimHandle, isClaimScopeAllowed, mintAgentAssertion, verifyAgentAssertion } from "./agent-claims-core";
 
 export type AgentRegistration = {
   id: string; client_name: string; email_hash: string; scopes: string[];
@@ -26,6 +26,9 @@ export async function startAgentClaim(input: Record<string, string>) {
   if (!found.client || found.client.kind !== "dcr") return { error: "invalid_client" };
   const scopes = parseScopes(input.scope?.trim() || DEFAULT_AGENT_SCOPES);
   if ("error" in scopes) return { error: "invalid_scope" };
+  if (!isClaimScopeAllowed(scopes.scopes)) {
+    return { error: "invalid_scope", error_description: "This flow grants tasks:read and project:read only. Use the OAuth authorization flow for more." };
+  }
   const resource = normalizeResource(input.resource, SITE_URL) ?? null;
   if (input.resource && !resource) return { error: "invalid_target" };
   const resolvedResource = resource || `${SITE_URL}/api/mcp`;
