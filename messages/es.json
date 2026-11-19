@@ -3053,7 +3053,7 @@
     "skip": "Omitir",
     "done": "Empecemos",
     "projectsTitle": "Proyectos",
-    "projectsBody": "Los proyectos de tu equipo. Cada uno tiene en esta barra su tablero, decisiones y archivos.",
+    "projectsBody": "Los proyectos de tu equipo. Ahora abriremos uno: cada uno tiene su propio tablero, decisiones, memoria y archivos.",
     "newTaskTitle": "Añade una tarea",
     "newTaskBody": "Haz clic aquí para añadir ya tu primera tarea; no hace falta terminar el recorrido.",
     "boardTitle": "Tablero",
@@ -3067,7 +3067,15 @@
     "searchTitle": "Búsqueda",
     "searchBody": "Ctrl+K (Cmd+K) salta a tareas, proyectos y acciones.",
     "replayTitle": "Repetir el recorrido",
-    "replayBody": "Aquí puedes volver a abrir este recorrido cuando quieras."
+    "replayBody": "Aquí puedes volver a abrir este recorrido cuando quieras.",
+    "dashboardTitle": "Panel",
+    "dashboardBody": "Empieza el día aquí: qué ha cambiado en tus proyectos y qué te espera.",
+    "myTasksTitle": "Mis tareas",
+    "myTasksBody": "Todas las tareas asignadas a ti, de todos los proyectos, en un solo lugar.",
+    "memoryTitle": "Memoria del proyecto",
+    "memoryBody": "Conclusiones y lecciones del trabajo terminado. Las personas y los agentes de IA las leen antes de empezar una tarea nueva.",
+    "organizationsTitle": "Organizaciones",
+    "organizationsBody": "Tu equipo: miembros, roles, plan y ajustes comunes a todos los proyectos."
   },
   "whiteboard": {
     "boardDefaultName": "Pizarra principal",

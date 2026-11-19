@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import { SpotlightTour } from "@/components/layout/walkthrough-tour";
+import { startWalkthrough } from "@/components/layout/walkthrough-tour";
 import { Gido } from "./gido";
 
 /** Which set of tips a page gets (messages: companion.tips.<key>). */
@@ -68,7 +68,7 @@ function save(key: string, value: string | null) {
  * tip for the page you're on, a click for that tip or the guided tour.
  * It never pops up on its own; it can be put to sleep and woken again.
  */
-export function Companion({ userId }: { userId: string | null }) {
+export function Companion() {
   const t = useTranslations("companion");
   const pathname = usePathname() ?? "/";
   const { state, isMobile } = useSidebar();
@@ -83,7 +83,6 @@ export function Companion({ userId }: { userId: string | null }) {
   // The tip index belongs to the page it was shown on; a new page starts at 0.
   const [tipState, setTipState] = useState({ key, index: 0 });
   const tip = tipState.key === key ? tipState.index : 0;
-  const [tourOpen, setTourOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -151,7 +150,7 @@ export function Companion({ userId }: { userId: string | null }) {
                     size="sm"
                     onClick={() => {
                       setOpen(false);
-                      setTourOpen(true);
+                      startWalkthrough();
                     }}
                   >
                     {t("tour")}
@@ -174,7 +173,6 @@ export function Companion({ userId }: { userId: string | null }) {
           {hasNews && <span aria-hidden className="absolute right-1 top-1 size-3 rounded-full border-2 border-background bg-primary" />}
         </button>
       </div>
-      {tourOpen && <SpotlightTour userId={userId} onOpenChange={setTourOpen} />}
     </>
   );
 }

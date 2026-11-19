@@ -194,9 +194,6 @@ export interface AppSidebarProps {
     full_name?: string;
     avatar_url?: string;
   };
-  /** User id (from AppShell's getCurrentUser): keys the walkthrough's
-   *  per-account "seen" marker in localStorage. Undefined when signed out. */
-  userId?: string;
   projectId?: string;
   currentProjectName?: string;
   projects?: SwitchableProject[];
@@ -278,7 +275,6 @@ function PinnedProjectsGroup({ fold }: { fold: ReturnType<typeof useSectionFold>
 
 export function AppSidebar({
   user,
-  userId,
   projectId,
   currentProjectName,
   projects,
@@ -506,7 +502,7 @@ export function AppSidebar({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <WalkthroughMenuItem userId={userId ?? null} />
+            <WalkthroughMenuItem />
             <FeedbackMenuItem />
             <SidebarMenuItem className="px-2 group-data-[collapsible=icon]:px-0">
               <ThemeSwitcher currentTheme={currentTheme} />
