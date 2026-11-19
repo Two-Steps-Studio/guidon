@@ -15,9 +15,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requestPasswordReset } from "./actions";
+import { GidoGuide } from "@/components/companion/gido-guide";
 
 export function ForgotPasswordForm() {
   const t = useTranslations("auth.forgotPassword");
+  const tGuide = useTranslations("companion.guide");
   const tCommon = useTranslations("auth.common");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,6 +52,7 @@ export function ForgotPasswordForm() {
         priority
         className="h-8 w-auto dark:invert"
       />
+      <GidoGuide message={tGuide("forgotPassword")} />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle as="h1" className="text-2xl font-bold">{t("title")}</CardTitle>

@@ -36,6 +36,7 @@ import {
 } from "@/lib/onboarding";
 import { PROJECT_TEMPLATES, type ProjectTemplate } from "@/lib/work/project-modules";
 import type { ProjectMethodology, ProjectType } from "@/types/project";
+import { GidoGuide } from "@/components/companion/gido-guide";
 
 const TYPE_ICONS: Record<ProjectType, LucideIcon> = {
   game: Gamepad2,
@@ -61,6 +62,7 @@ const STEPS = ["name", "type", "workflow", "team", "account"] as const;
  */
 export function StartWizard({ signedIn }: { signedIn: boolean }) {
   const t = useTranslations("onboarding");
+  const tGuide = useTranslations("companion.guide");
   const tCommon = useTranslations("common");
   const tSettings = useTranslations("settings");
   const tLanding = useTranslations("landing.design");
@@ -141,6 +143,8 @@ export function StartWizard({ signedIn }: { signedIn: boolean }) {
         </div>
         <p className="text-xs text-muted-foreground">{t("stepOf", { step: step + 1, total: STEPS.length })}</p>
       </div>
+
+      <GidoGuide message={tGuide(`steps.${STEPS[step]}`)} mood={step === STEPS.length - 1 ? "happy" : "awake"} />
 
       <form ref={stepRef} data-state-motion="onboarding" aria-busy={!restored}
         onSubmit={(event) => {

@@ -2440,7 +2440,6 @@
     "createWorkspace": "Meinen Arbeitsbereich anlegen",
     "haveAccount": "Schon ein Konto?",
     "signIn": "Anmelden",
-    "finishing": "Dein Arbeitsbereich wird eingerichtet...",
     "finishFailed": "Der Arbeitsbereich konnte nicht angelegt werden.",
     "skipToDashboard": "Zum Dashboard",
     "welcomeTitle": "Dein Projekt ist bereit",
@@ -3141,6 +3140,21 @@
         "Suchst du etwas? Strg/Cmd + K öffnet die Suche in allen Projekten.",
         "Klick mich jederzeit an - ich führe dich gern noch einmal durch die App."
       ]
+    },
+    "guide": {
+      "login": "Willkommen zurück! Melde dich an und ich bringe dich direkt zu deinen Projekten.",
+      "signup": "Hallo, ich bin Gido. Erstelle ein Konto und ich führe dich durch dein erstes Projekt.",
+      "forgotPassword": "Passiert jedem. Gib deine E-Mail ein und ich schicke dir einen Link für ein neues Passwort.",
+      "resetPassword": "Fast geschafft. Wähle ein neues Passwort, das du dir merken kannst.",
+      "steps": {
+        "name": "Hallo, ich bin Gido! Lass uns dein erstes Projekt einrichten. Fang mit einem Namen an - du kannst ihn später ändern.",
+        "type": "Was baust du? Ich wähle das passende Board und die Labels dafür.",
+        "workflow": "Wähle, wie dein Team arbeitet. Ich lege die Spalten passend an.",
+        "team": "Arbeitest du allein oder im Team? Ich zeige dir die passenden nächsten Schritte.",
+        "account": "Letzter Schritt: Erstelle dein Konto und dein Projekt wartet auf dich."
+      },
+      "finishing": "Ich richte dein Projekt ein... einen Moment.",
+      "finishFailed": "Etwas ist schiefgelaufen. Geh zurück und versuch es noch einmal - deine Antworten sind gespeichert."
     }
   }
 }

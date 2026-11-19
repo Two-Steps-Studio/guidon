@@ -2451,7 +2451,6 @@
     "createWorkspace": "Utwórz moją przestrzeń",
     "haveAccount": "Masz już konto?",
     "signIn": "Zaloguj się",
-    "finishing": "Przygotowuję Twoją przestrzeń...",
     "finishFailed": "Nie udało się utworzyć przestrzeni.",
     "skipToDashboard": "Przejdź do pulpitu",
     "welcomeTitle": "Twój projekt jest gotowy",
@@ -3186,6 +3185,21 @@
         "Szukasz czegoś? Ctrl/Cmd + K otwiera wyszukiwarkę we wszystkich projektach.",
         "Kliknij mnie kiedykolwiek - mogę Cię znowu oprowadzić po aplikacji."
       ]
+    },
+    "guide": {
+      "login": "Witaj z powrotem! Zaloguj się, a zaprowadzę Cię prosto do Twoich projektów.",
+      "signup": "Cześć, jestem Gido. Załóż konto, a przeprowadzę Cię przez pierwszy projekt.",
+      "forgotPassword": "Każdemu się zdarza. Podaj e-mail, a wyślę Ci link do ustawienia nowego hasła.",
+      "resetPassword": "Prawie gotowe. Wybierz nowe hasło, które zapamiętasz.",
+      "steps": {
+        "name": "Cześć, jestem Gido! Ustawmy Twój pierwszy projekt. Zacznij od nazwy - zmienisz ją później.",
+        "type": "Co tworzysz? Dobiorę do tego tablicę i etykiety.",
+        "workflow": "Wybierz, jak pracuje Twój zespół. Ułożę kolumny pod to.",
+        "team": "Pracujesz sam czy z innymi? Pokażę Ci pasujące kolejne kroki.",
+        "account": "Ostatni krok: załóż konto, a projekt będzie na Ciebie czekał."
+      },
+      "finishing": "Przygotowuję Twój projekt... chwileczkę.",
+      "finishFailed": "Coś poszło nie tak. Wróć i spróbuj jeszcze raz - Twoje odpowiedzi są zapisane."
     }
   }
 }

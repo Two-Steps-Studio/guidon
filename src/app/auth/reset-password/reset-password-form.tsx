@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GidoGuide } from "@/components/companion/gido-guide";
 
 export function ResetPasswordForm() {
   const t = useTranslations("auth.resetPassword");
+  const tGuide = useTranslations("companion.guide");
   const tCommon = useTranslations("auth.common");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -63,6 +65,7 @@ export function ResetPasswordForm() {
         priority
         className="h-8 w-auto dark:invert"
       />
+      <GidoGuide message={tGuide("resetPassword")} />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle as="h1" className="text-2xl font-bold">{t("title")}</CardTitle>

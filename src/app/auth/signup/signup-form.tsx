@@ -20,6 +20,7 @@ import { signupLocalAction } from "./actions"
 import { isAiAccountEmail } from "@/lib/ai-account-email"
 import { BetaBadge } from "@/components/layout/beta-badge"
 import posthog from "posthog-js"
+import { GidoGuide } from "@/components/companion/gido-guide"
 
 const subscribeHydration = () => () => {}
 const clientHydrated = () => true
@@ -29,6 +30,7 @@ const serverHydrated = () => false
 export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup }) {
   const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated)
   const t = useTranslations("auth.signup")
+  const tGuide = useTranslations("companion.guide")
   const tCommon = useTranslations("auth.common")
   const { errors, fieldProps, setFieldError } = useAuthFieldErrors()
   const [email, setEmail] = useState("")
@@ -149,6 +151,7 @@ export function SignupForm({ local, oauth }: { local: boolean; oauth: OAuthSetup
         priority
         className="h-8 w-auto dark:invert"
       /><BetaBadge /></div>
+      <GidoGuide message={tGuide("signup")} />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle as="h1" className="text-2xl font-bold">{t("title")}</CardTitle>
