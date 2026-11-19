@@ -151,10 +151,10 @@ function projectInPath(pathname: string): string | null {
   return /^\/projects\/([0-9a-f-]{36})(\/|$)/.exec(pathname)?.[1] ?? null;
 }
 
-/** The first step on the page the tour opens on, so it never leads the person away first. */
+/** The first step on the page the tour opens on (-1: a page off the route). */
 function startFor(pathname: string): number {
   const projectId = projectInPath(pathname);
-  return Math.max(0, STEPS.slice(0, PAGE_STEPS).findIndex((step) => stepPath(step, projectId) === pathname));
+  return STEPS.slice(0, PAGE_STEPS).findIndex((step) => stepPath(step, projectId) === pathname);
 }
 
 function stepPath(step: TourStep, projectId: string | null): string | null {
@@ -188,11 +188,11 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   const t = useTranslations("walkthrough");
   const router = useRouter();
   const pathname = usePathname() ?? "/";
-  const [start] = useState(() => initial.start ?? startFor(pathname));
+  const [start] = useState(() => initial.start ?? Math.max(0, startFor(pathname)));
   const [index, setIndex] = useState(initial.index);
   const [projectId, setProjectId] = useState(() => initial.projectId ?? projectInPath(pathname));
-  // True while the tour itself opens the step's page; a fresh run may open its
-  // first step's page (it opened somewhere off the route).
+  // True while the tour itself opens the step's page; a run launched by hand
+  // (start not chosen yet) may open its first step's page.
   const moving = useRef(initial.start === null);
   // `smooth`: slide to the new box (a step change), not while following a scroll.
   const [view, setView] = useState<{ rect: Rect | null; smooth: boolean; found: boolean }>({
@@ -394,6 +394,7 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
  * starts one when a launcher calls startWalkthrough().
  */
 export function WalkthroughAutoOpen({ userId }: { userId: string | null }) {
+  const pathname = usePathname() ?? "/";
   // Storage is read only after hydration (server and first render show nothing).
   const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   const [run, setRun] = useState<{ id: number; state: TourState } | null | undefined>(undefined);
@@ -407,17 +408,20 @@ export function WalkthroughAutoOpen({ userId }: { userId: string | null }) {
   const close = useCallback(() => setRun(null), []);
   if (!hydrated || !userId) return null;
   // undefined = nothing decided yet on this page: resume a tour in progress, or the first one.
-  const current = run === undefined ? initialRun(userId) : run;
+  const current = run === undefined ? initialRun(userId, pathname) : run;
   return current ? <SpotlightTour key={current.id} userId={userId} initial={current.state} onClose={close} /> : null;
 }
 
 const FIRST_STEP: TourState = { start: null, index: 0, projectId: null, rect: null };
 const noSubscribe = () => () => {};
 
-function initialRun(userId: string): { id: number; state: TourState } | null {
+function initialRun(userId: string, pathname: string): { id: number; state: TourState } | null {
   const saved = readState();
   if (saved) return { id: 0, state: saved };
-  return isWalkthroughSeen(userId) ? null : { id: 0, state: FIRST_STEP };
+  // The first tour opens by itself only on a page of the route, and starts
+  // there: it never moves a new account off the page it landed on.
+  const start = startFor(pathname);
+  return isWalkthroughSeen(userId) || start < 0 ? null : { id: 0, state: { ...FIRST_STEP, start } };
 }
 
 /** Ręczne uruchomienie: wpis „Przewodnik" w stopce sidebara (wzór: FeedbackMenuItem). */
