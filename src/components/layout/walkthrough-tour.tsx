@@ -51,6 +51,9 @@ type Rect = { top: number; left: number; width: number; height: number };
 
 /** Progress of a running tour; survives the page changes the tour makes. */
 interface TourState {
+  /** First page step of this run (the page it opened on); null = not chosen yet. */
+  start: number | null;
+  /** Position along the route (routeOrder), not an index into STEPS. */
   index: number;
   projectId: string | null;
   /** Where the highlight was, so the next page's tour slides on from there. */
@@ -64,7 +67,11 @@ function readState(): TourState | null {
   try {
     const raw = window.sessionStorage.getItem(STATE_KEY);
     const state = raw ? (JSON.parse(raw) as TourState) : null;
-    return state && Number.isInteger(state.index) && state.index >= 0 && state.index < STEPS.length ? state : null;
+    const valid =
+      state &&
+      Number.isInteger(state.index) && state.index >= 0 && state.index < STEPS.length &&
+      (state.start === null || (Number.isInteger(state.start) && state.start >= 0 && state.start < PAGE_STEPS));
+    return valid ? state : null;
   } catch {
     return null;
   }
@@ -79,7 +86,7 @@ function writeState(state: TourState | null): void {
   }
 }
 
-/** Starts the tour from the first step, from any page. */
+/** Starts the tour on the page the person is on, from any page. */
 export function startWalkthrough(): void {
   writeState(FIRST_STEP);
   window.dispatchEvent(new Event(START_EVENT));
@@ -130,6 +137,26 @@ const STEPS: TourStep[] = [
   { key: "replay", path: null, selector: () => '[data-tour="walkthrough"]' },
 ];
 
+/** The steps that open a page; search and replay always close the route. */
+const PAGE_STEPS = STEPS.length - 2;
+
+/** The whole route, starting at `start` and going round to the steps before it. */
+function routeOrder(start: number): number[] {
+  const pages = Array.from({ length: PAGE_STEPS }, (_, i) => i);
+  return [...pages.slice(start), ...pages.slice(0, start), PAGE_STEPS, PAGE_STEPS + 1];
+}
+
+/** The project open at `pathname`, if any. */
+function projectInPath(pathname: string): string | null {
+  return /^\/projects\/([0-9a-f-]{36})(\/|$)/.exec(pathname)?.[1] ?? null;
+}
+
+/** The first step on the page the tour opens on, so it never leads the person away first. */
+function startFor(pathname: string): number {
+  const projectId = projectInPath(pathname);
+  return Math.max(0, STEPS.slice(0, PAGE_STEPS).findIndex((step) => stepPath(step, projectId) === pathname));
+}
+
 function stepPath(step: TourStep, projectId: string | null): string | null {
   if (typeof step.path === "function") return projectId ? step.path(projectId) : null;
   return step.path;
@@ -137,8 +164,8 @@ function stepPath(step: TourStep, projectId: string | null): string | null {
 
 /** The project the tour shows: the one open now, else the first on the projects list. */
 function findProjectId(pathname: string): string | null {
-  const open = /^\/projects\/([0-9a-f-]{36})(\/|$)/.exec(pathname);
-  if (open) return open[1];
+  const open = projectInPath(pathname);
+  if (open) return open;
   for (const link of document.querySelectorAll<HTMLAnchorElement>('main a[href^="/projects/"]')) {
     const match = /^\/projects\/([0-9a-f-]{36})$/.exec(link.getAttribute("href") ?? "");
     if (match) return match[1];
@@ -161,8 +188,12 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   const t = useTranslations("walkthrough");
   const router = useRouter();
   const pathname = usePathname() ?? "/";
+  const [start] = useState(() => initial.start ?? startFor(pathname));
   const [index, setIndex] = useState(initial.index);
-  const [projectId, setProjectId] = useState(initial.projectId);
+  const [projectId, setProjectId] = useState(() => initial.projectId ?? projectInPath(pathname));
+  // True while the tour itself opens the step's page; a fresh run may open its
+  // first step's page (it opened somewhere off the route).
+  const moving = useRef(initial.start === null);
   // `smooth`: slide to the new box (a step change), not while following a scroll.
   const [view, setView] = useState<{ rect: Rect | null; smooth: boolean; found: boolean }>({
     rect: initial.rect,
@@ -172,7 +203,8 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   const [popoverHeight, setPopoverHeight] = useState(0);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
-  const step = STEPS[Math.min(index, STEPS.length - 1)];
+  const order = routeOrder(start);
+  const step = STEPS[order[Math.min(index, order.length - 1)]];
   const path = stepPath(step, projectId);
   const selector = step.selector(projectId ?? "");
   const onPage = path === null || path === pathname;
@@ -184,22 +216,26 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   }, [userId, onClose]);
 
   useEffect(() => {
-    writeState({ index, projectId, rect: view.rect });
-  }, [index, projectId, view.rect]);
+    writeState({ start, index, projectId, rect: view.rect });
+  }, [start, index, projectId, view.rect]);
 
-  // Off its page (a fresh start, Back, a link the person used): go there.
+  // Off the step's page: open it when the tour moved on, otherwise the person
+  // went somewhere themselves, and the tour steps aside instead of pulling them back.
   useEffect(() => {
-    if (!onPage && path) router.push(path);
-  }, [onPage, path, router]);
+    if (onPage) moving.current = false;
+    else if (moving.current && path) router.push(path);
+    else finish();
+  }, [onPage, path, router, finish]);
 
   /** Moves by `direction`, skipping project steps when there is no project. */
   const go = (direction: 1 | -1) => {
     const project = projectId ?? findProjectId(pathname);
     let next = index + direction;
-    while (STEPS[next]?.needsProject && !project) next += direction;
+    while (next >= 0 && next < order.length && STEPS[order[next]].needsProject && !project) next += direction;
     if (next < 0) return;
-    if (next >= STEPS.length) return finish();
+    if (next >= order.length) return finish();
     setProjectId(project);
+    moving.current = true;
     setIndex(next);
   };
 
@@ -265,10 +301,10 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   }, [step.key]);
 
   // Until the tour is past the projects step it can't know there is no project.
-  const noProject = !projectId && index > STEPS.findIndex((s) => s.needsProject);
-  const total = STEPS.filter((s) => !s.needsProject || !noProject).length;
-  const shown = STEPS.slice(0, index + 1).filter((s) => !s.needsProject || projectId).length;
-  const isLast = index === STEPS.length - 1;
+  const noProject = !projectId && index > order.findIndex((i) => STEPS[i].needsProject);
+  const total = order.filter((i) => !STEPS[i].needsProject || !noProject).length;
+  const shown = order.slice(0, index + 1).filter((i) => !STEPS[i].needsProject || projectId).length;
+  const isLast = index === order.length - 1;
 
   // No box yet (or none on this page): a zero-size hole in the middle, so the
   // backdrop still dims and the bubble sits centred.
@@ -375,7 +411,7 @@ export function WalkthroughAutoOpen({ userId }: { userId: string | null }) {
   return current ? <SpotlightTour key={current.id} userId={userId} initial={current.state} onClose={close} /> : null;
 }
 
-const FIRST_STEP: TourState = { index: 0, projectId: null, rect: null };
+const FIRST_STEP: TourState = { start: null, index: 0, projectId: null, rect: null };
 const noSubscribe = () => () => {};
 
 function initialRun(userId: string): { id: number; state: TourState } | null {
