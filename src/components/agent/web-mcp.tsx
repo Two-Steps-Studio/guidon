@@ -104,15 +104,15 @@ const PAGES: Record<string, string> = {
 };
 
 /** Markdown twins the read_guidon_doc tool can read (src/app/*.md). */
-const DOC_PAGES: Record<string, string> = {
-  home: "/index.md",
-  developers: "/developers.md",
-  auth: "/auth.md",
-  pricing: "/pricing.md",
-  compare: "/compare.md",
-  about: "/about.md",
-  contact: "/contact.md",
-  sandbox: "/sandbox.md",
+const DOC_PAGES: Record<string, { path: string; title: string }> = {
+  home: { path: "/index.md", title: "What Guidon is and how it works" },
+  developers: { path: "/developers.md", title: "Developer guide: REST API, MCP server, SDKs" },
+  auth: { path: "/auth.md", title: "Sign-in for agents: OAuth, API keys and tokens" },
+  pricing: { path: "/pricing.md", title: "Plans and limits" },
+  compare: { path: "/compare.md", title: "Guidon compared with other tools" },
+  about: { path: "/about.md", title: "About the company" },
+  contact: { path: "/contact.md", title: "Contact and support" },
+  sandbox: { path: "/sandbox.md", title: "Sandbox: try the API with sample data" },
 };
 
 /** Tools available on every page: search the docs, open a page. */
@@ -174,10 +174,28 @@ export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string
     context
       .registerTool(
         {
+          name: "list_guidon_docs",
+          title: "List Guidon docs pages",
+          description:
+            "Use this to see which pages Guidon's documentation has, for example to find the other pages in the same section. " +
+            "Returns every docs page with its name (for read_guidon_doc) and a one-line summary.",
+          inputSchema: { type: "object", properties: {} },
+          annotations: { readOnlyHint: true },
+          execute: guarded(async () => {
+            const pages = Object.entries(DOC_PAGES).map(([name, { title }]) => ({ name, title }));
+            return toolResult(pages.map((p) => `${p.name}: ${p.title}`).join("\n"), pages);
+          }),
+        },
+        options
+      )
+      .catch(() => undefined);
+    context
+      .registerTool(
+        {
           name: "read_guidon_doc",
           title: "Read a Guidon docs page",
           description:
-            "Use this after search_guidon_docs, or when you know the page, to read one whole page of Guidon's documentation. " +
+            "Use this after search_guidon_docs or list_guidon_docs, or when you know the page, to read one whole page of Guidon's documentation. " +
             "Returns the page as Markdown: the developer guide (API, MCP), sign-in and tokens, pricing, comparisons, about, contact or the sandbox.",
           inputSchema: {
             type: "object",
@@ -193,7 +211,7 @@ export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string
           },
           annotations: { readOnlyHint: true },
           execute: guarded(async ({ page }) => {
-            const path = DOC_PAGES[String(page)];
+            const path = DOC_PAGES[String(page)]?.path;
             if (!path) return toolResult(`Unknown page. Use one of: ${Object.keys(DOC_PAGES).join(", ")}.`);
             const response = await fetch(path, { headers: { Accept: "text/markdown" } });
             if (!response.ok) return { ...toolResult(`Couldn't read ${path} (HTTP ${response.status}).`), isError: true };
@@ -223,6 +241,8 @@ export function GlobalWebMcpTools({ user }: { user: { id: string; email?: string
             },
             required: ["page"],
           },
+          // Moves the person's tab but changes no data.
+          annotations: { readOnlyHint: false, consequentialHint: false },
           execute: guarded(async ({ page }) => {
             const path = PAGES[String(page)];
             if (!path) return toolResult(`Unknown page. Use one of: ${Object.keys(PAGES).join(", ")}.`);
