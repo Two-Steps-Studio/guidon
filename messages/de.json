@@ -3074,7 +3074,9 @@
     "memoryTitle": "Projektgedächtnis",
     "memoryBody": "Erkenntnisse und Lektionen aus abgeschlossener Arbeit. Menschen und KI-Agenten lesen sie, bevor sie eine neue Aufgabe beginnen.",
     "organizationsTitle": "Organisationen",
-    "organizationsBody": "Dein Team: Mitglieder, Rollen, Plan und Einstellungen für alle Projekte."
+    "organizationsBody": "Dein Team: Mitglieder, Rollen, Plan und Einstellungen für alle Projekte.",
+    "menuHint": "Auf dem Handy findest du das im Menü: die Schaltfläche oben links.",
+    "searchBodyMobile": "Die Lupe oben bringt dich zu Aufgaben, Projekten und Aktionen."
   },
   "whiteboard": {
     "boardDefaultName": "Hauptboard",
