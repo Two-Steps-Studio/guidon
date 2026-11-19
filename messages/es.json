@@ -3074,7 +3074,9 @@
     "memoryTitle": "Memoria del proyecto",
     "memoryBody": "Conclusiones y lecciones del trabajo terminado. Las personas y los agentes de IA las leen antes de empezar una tarea nueva.",
     "organizationsTitle": "Organizaciones",
-    "organizationsBody": "Tu equipo: miembros, roles, plan y ajustes comunes a todos los proyectos."
+    "organizationsBody": "Tu equipo: miembros, roles, plan y ajustes comunes a todos los proyectos.",
+    "menuHint": "En el móvil lo encontrarás en el menú: el botón de la esquina superior izquierda.",
+    "searchBodyMobile": "La lupa de arriba te lleva a tareas, proyectos y acciones."
   },
   "whiteboard": {
     "boardDefaultName": "Pizarra principal",

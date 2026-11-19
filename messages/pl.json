@@ -3119,7 +3119,9 @@
     "memoryTitle": "Pamięć projektu",
     "memoryBody": "Wnioski i lekcje z ukończonej pracy. Ludzie i agenci AI czytają je, zanim zaczną nowe zadanie.",
     "organizationsTitle": "Organizacje",
-    "organizationsBody": "Twój zespół: członkowie, role, plan i ustawienia wspólne dla wszystkich projektów."
+    "organizationsBody": "Twój zespół: członkowie, role, plan i ustawienia wspólne dla wszystkich projektów.",
+    "menuHint": "Na telefonie znajdziesz to w menu: przycisk w lewym górnym rogu.",
+    "searchBodyMobile": "Lupa u góry przenosi do zadań, projektów i akcji."
   },
   "whiteboard": {
     "boardDefaultName": "Główna tablica",

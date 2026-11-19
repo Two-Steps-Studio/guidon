@@ -3119,7 +3119,9 @@
     "memoryTitle": "Project memory",
     "memoryBody": "Insights and lessons from finished work. People and AI agents read them before starting a new task.",
     "organizationsTitle": "Organizations",
-    "organizationsBody": "Your team: members, roles, plan and settings shared by every project."
+    "organizationsBody": "Your team: members, roles, plan and settings shared by every project.",
+    "menuHint": "On a phone you will find this in the menu: the button in the top left corner.",
+    "searchBodyMobile": "The magnifier at the top takes you to tasks, projects and actions."
   },
   "whiteboard": {
     "boardDefaultName": "Main board",

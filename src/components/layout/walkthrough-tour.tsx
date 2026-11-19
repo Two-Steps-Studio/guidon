@@ -22,7 +22,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Gido } from "@/components/companion/gido";
 import { cn } from "@/lib/utils";
 
@@ -117,24 +117,26 @@ interface TourStep {
   path: ((projectId: string) => string) | string | null;
   selector: (projectId: string) => string;
   needsProject?: boolean;
+  /** The control sits in the sidebar, which a phone keeps behind the menu button. */
+  inSidebar?: boolean;
 }
 
 /** The sidebar entry for a page (the logo also links to /dashboard). */
 const navLink = (href: string) => `a[data-sidebar="menu-button"][href="${href}"]`;
 
 const STEPS: TourStep[] = [
-  { key: "dashboard", path: "/dashboard", selector: () => navLink("/dashboard") },
-  { key: "myTasks", path: "/my-tasks", selector: () => navLink("/my-tasks") },
-  { key: "projects", path: "/projects", selector: () => navLink("/projects") },
+  { key: "dashboard", path: "/dashboard", selector: () => navLink("/dashboard"), inSidebar: true },
+  { key: "myTasks", path: "/my-tasks", selector: () => navLink("/my-tasks"), inSidebar: true },
+  { key: "projects", path: "/projects", selector: () => navLink("/projects"), inSidebar: true },
   { key: "board", path: (p) => `/projects/${p}/work`, selector: () => '[data-tour="board"]', needsProject: true },
   { key: "newTask", path: (p) => `/projects/${p}/work`, selector: () => '[data-tour="new-task"]', needsProject: true },
   { key: "agent", path: (p) => `/projects/${p}/work`, selector: () => '[data-tour="connect-agent"]', needsProject: true },
-  { key: "decisions", path: (p) => `/projects/${p}/decisions`, selector: (p) => navLink(`/projects/${p}/decisions`), needsProject: true },
-  { key: "memory", path: (p) => `/projects/${p}/memory`, selector: (p) => navLink(`/projects/${p}/memory`), needsProject: true },
-  { key: "files", path: (p) => `/projects/${p}/files`, selector: (p) => navLink(`/projects/${p}/files`), needsProject: true },
-  { key: "organizations", path: "/organizations", selector: () => navLink("/organizations") },
+  { key: "decisions", path: (p) => `/projects/${p}/decisions`, selector: (p) => navLink(`/projects/${p}/decisions`), needsProject: true, inSidebar: true },
+  { key: "memory", path: (p) => `/projects/${p}/memory`, selector: (p) => navLink(`/projects/${p}/memory`), needsProject: true, inSidebar: true },
+  { key: "files", path: (p) => `/projects/${p}/files`, selector: (p) => navLink(`/projects/${p}/files`), needsProject: true, inSidebar: true },
+  { key: "organizations", path: "/organizations", selector: () => navLink("/organizations"), inSidebar: true },
   { key: "search", path: null, selector: () => '[data-tour="command"]' },
-  { key: "replay", path: null, selector: () => '[data-tour="walkthrough"]' },
+  { key: "replay", path: null, selector: () => '[data-tour="walkthrough"]', inSidebar: true },
 ];
 
 /** The steps that open a page; search and replay always close the route. */
@@ -187,6 +189,7 @@ interface SpotlightTourProps {
 function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   const t = useTranslations("walkthrough");
   const router = useRouter();
+  const { isMobile } = useSidebar();
   const pathname = usePathname() ?? "/";
   const [start] = useState(() => initial.start ?? Math.max(0, startFor(pathname)));
   const [index, setIndex] = useState(initial.index);
@@ -206,7 +209,9 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   const order = routeOrder(start);
   const step = STEPS[order[Math.min(index, order.length - 1)]];
   const path = stepPath(step, projectId);
-  const selector = step.selector(projectId ?? "");
+  // On a phone the sidebar is hidden: point at the menu button that opens it.
+  const viaMenu = isMobile && !!step.inSidebar;
+  const selector = viaMenu ? '[data-sidebar="trigger"]' : step.selector(projectId ?? "");
   const onPage = path === null || path === pathname;
 
   const finish = useCallback(() => {
@@ -298,7 +303,7 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
   // The bubble's height follows its text, so it is measured once per step.
   useLayoutEffect(() => {
     if (popoverRef.current) setPopoverHeight(popoverRef.current.offsetHeight);
-  }, [step.key]);
+  }, [step.key, viaMenu]);
 
   // Until the tour is past the projects step it can't know there is no project.
   const noProject = !projectId && index > order.findIndex((i) => STEPS[i].needsProject);
@@ -314,15 +319,23 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
     ? { top: view.rect.top - PAD, left: view.rect.left - PAD, width: view.rect.width + PAD * 2, height: view.rect.height + PAD * 2 }
     : { top: viewportH / 2, left: viewportW / 2, width: 0, height: 0 };
 
+  // A phone gets the bubble edge to edge (12px gutters), a wider screen 340px.
+  const popoverWidth = isMobile ? viewportW - 24 : Math.min(POPOVER_WIDTH, viewportW - 24);
   const below = highlight.top + highlight.height + GAP;
-  const popoverTop = !view.rect
-    ? viewportH / 2 - popoverHeight / 2
-    : below + popoverHeight + 12 < viewportH
-      ? below
-      : Math.max(12, highlight.top - GAP - popoverHeight);
+  // A phone docks the bubble across the bottom, where the thumb is; at the top
+  // only when the highlighted control sits low on the screen.
+  const popoverTop = isMobile
+    ? view.rect && highlight.top + highlight.height > viewportH * 0.6
+      ? 12
+      : viewportH - popoverHeight - 16
+    : !view.rect
+      ? viewportH / 2 - popoverHeight / 2
+      : below + popoverHeight + 12 < viewportH
+        ? below
+        : Math.max(12, highlight.top - GAP - popoverHeight);
   const popoverLeft = Math.min(
-    Math.max(12, highlight.left + highlight.width / 2 - POPOVER_WIDTH / 2),
-    Math.max(12, viewportW - POPOVER_WIDTH - 12)
+    Math.max(12, highlight.left + highlight.width / 2 - popoverWidth / 2),
+    Math.max(12, viewportW - popoverWidth - 12)
   );
   const motion = view.smooth ? "transition-all duration-300 ease-out motion-reduce:transition-none" : "";
 
@@ -352,10 +365,10 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
         role="dialog"
         aria-label={t(`${step.key}Title`)}
         className={cn(
-          "pointer-events-auto fixed left-0 top-0 w-[min(340px,calc(100vw-1.5rem))] rounded-xl border border-border bg-background p-4 shadow-lg",
+          "pointer-events-auto fixed left-0 top-0 rounded-xl border border-border bg-background p-4 shadow-lg",
           motion
         )}
-        style={{ transform: `translate(${popoverLeft}px, ${popoverTop}px)` }}
+        style={{ width: popoverWidth, transform: `translate(${popoverLeft}px, ${popoverTop}px)` }}
       >
         <div className="flex items-start gap-3">
           <Gido mood={isLast ? "happy" : "awake"} className="size-10 shrink-0" />
@@ -366,7 +379,8 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
                 {t("stepOf", { step: shown, total })}
               </p>
             </div>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t(`${step.key}Body`)}</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t(isMobile && step.key === "search" ? "searchBodyMobile" : `${step.key}Body`)}</p>
+            {viaMenu && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("menuHint")}</p>}
           </div>
         </div>
 
