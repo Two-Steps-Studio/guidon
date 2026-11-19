@@ -2451,7 +2451,6 @@
     "createWorkspace": "Create my workspace",
     "haveAccount": "Already have an account?",
     "signIn": "Sign in",
-    "finishing": "Setting up your workspace...",
     "finishFailed": "Couldn't create your workspace.",
     "skipToDashboard": "Go to the dashboard",
     "welcomeTitle": "Your project is ready",
@@ -3186,6 +3185,21 @@
         "Looking for something? Ctrl/Cmd + K opens search across your projects.",
         "Click me any time - I can show you around the app again."
       ]
+    },
+    "guide": {
+      "login": "Welcome back! Sign in and I'll take you straight to your projects.",
+      "signup": "Hi, I'm Gido. Create an account and I'll walk you through your first project.",
+      "forgotPassword": "Happens to everyone. Enter your email and I'll send you a link to set a new password.",
+      "resetPassword": "Almost there. Choose a new password you'll remember.",
+      "steps": {
+        "name": "Hi, I'm Gido! Let's set up your first project. Start with a name - you can change it later.",
+        "type": "What are you making? I'll pick the right board and labels for it.",
+        "workflow": "Pick how your team works. I'll lay out the columns to match.",
+        "team": "Working alone or with others? I'll show you the next steps that fit.",
+        "account": "Last step: create your account and your project will be waiting for you."
+      },
+      "finishing": "Setting up your project... one moment.",
+      "finishFailed": "Something went wrong. Go back and try again - your answers are saved."
     }
   }
 }

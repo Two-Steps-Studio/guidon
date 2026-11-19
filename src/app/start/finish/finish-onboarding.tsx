@@ -9,9 +9,11 @@ import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { readStoredOnboarding, storeOnboarding } from "@/lib/onboarding";
 import { completeOnboarding } from "./actions";
+import { GidoGuide } from "@/components/companion/gido-guide";
 
 export function FinishOnboarding() {
   const t = useTranslations("onboarding");
+  const tGuide = useTranslations("companion.guide");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const started = useRef(false);
@@ -41,6 +43,7 @@ export function FinishOnboarding() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
       {error ? (
         <>
+          <GidoGuide message={tGuide("finishFailed")} mood="sleepy" />
           <p className="max-w-sm text-sm text-destructive">{error}</p>
           <div className="flex gap-2">
             <Button asChild variant="outline">
@@ -53,8 +56,8 @@ export function FinishOnboarding() {
         </>
       ) : (
         <>
+          <GidoGuide message={tGuide("finishing")} mood="happy" />
           <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
-          <p className="text-sm text-muted-foreground">{t("finishing")}</p>
         </>
       )}
     </div>

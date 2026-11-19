@@ -19,6 +19,7 @@ import { safeRedirect } from "@/lib/auth/safe-redirect"
 import { loginLocalAction } from "./actions"
 import { BetaBadge } from "@/components/layout/beta-badge"
 import posthog from "posthog-js"
+import { GidoGuide } from "@/components/companion/gido-guide"
 
 // The server HTML is visible before React attaches controlled-input handlers.
 // Prevent early typing from being discarded when hydration initializes state.
@@ -37,6 +38,7 @@ const serverHydrated = () => false
 export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup }) {
   const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated)
   const t = useTranslations("auth.login")
+  const tGuide = useTranslations("companion.guide")
   const tCommon = useTranslations("auth.common")
   const tSignup = useTranslations("auth.signup")
   const { errors, fieldProps } = useAuthFieldErrors()
@@ -108,6 +110,7 @@ export function LoginForm({ local, oauth }: { local: boolean; oauth: OAuthSetup 
         priority
         className="h-8 w-auto dark:invert"
       /><BetaBadge /></div>
+      <GidoGuide message={tGuide("login")} />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle as="h1" className="text-2xl font-bold">{t("title")}</CardTitle>

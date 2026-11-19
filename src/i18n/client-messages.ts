@@ -22,6 +22,8 @@ export const PUBLIC_CLIENT_NAMESPACES = [
   "invitation",
   // The template names on /start's workflow step.
   "settings.labelStarter",
+  // Gido's speech bubble on sign-in, sign-up, password reset and /start.
+  "companion.guide",
 ] as const;
 
 type Messages = Record<string, unknown>;
