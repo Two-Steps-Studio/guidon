@@ -277,9 +277,12 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
       setView({ rect: { top: box.top, left: box.left, width: box.width, height: box.height }, smooth, found: true });
     };
     const follow = () => requestAnimationFrame(() => measure(false));
-    const poll = window.setInterval(() => {
+    let found = false;
+    const tick = () => {
+      if (found) return;
       element = visibleElement(selector);
       if (element) {
+        found = true;
         window.clearInterval(poll);
         element.scrollIntoView({ block: "nearest", inline: "nearest" });
         measure(true);
@@ -291,8 +294,13 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
         window.clearInterval(poll);
         setView({ rect: null, smooth: true, found: false });
       }
-    }, 100);
+    };
+    // First look on the next frame, so the hole reaches the new control before
+    // a quick click can; then every 100ms while the page streams in.
+    const first = requestAnimationFrame(tick);
+    const poll = window.setInterval(tick, 100);
     return () => {
+      cancelAnimationFrame(first);
       window.clearInterval(poll);
       window.clearTimeout(settle);
       window.removeEventListener("scroll", follow, { capture: true });
@@ -357,7 +365,16 @@ function SpotlightTour({ userId, initial, onClose }: SpotlightTourProps) {
           zIndex: -1,
           clipPath: `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${highlight.left}px ${highlight.top}px, ${highlight.left + highlight.width}px ${highlight.top}px, ${highlight.left + highlight.width}px ${highlight.top + highlight.height}px, ${highlight.left}px ${highlight.top + highlight.height}px, ${highlight.left}px ${highlight.top}px)`,
         }}
-        onClick={finish}
+        onClick={(event) => {
+          // While the hole is still sliding to this step, a quick click on the
+          // new control lands here: hand it on when it is over that control
+          // (live box), so the click does what the step points at.
+          const target = document.querySelector<HTMLElement>(selector);
+          const box = target?.getBoundingClientRect();
+          const onTarget = !!box && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+          finish();
+          if (onTarget) target?.click();
+        }}
       />
 
       <div
