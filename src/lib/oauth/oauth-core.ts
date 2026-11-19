@@ -325,6 +325,8 @@ This deployment supports the service_auth email-claim profile. It does not accep
 {"type":"service_auth","client_id":"<registered-client-id>","login_hint":"<user-email>","scope":"tasks:read project:read","resource":"${siteUrl}/api/mcp"}
 \`\`\`
 
+This flow grants \`tasks:read\` and \`project:read\` only; a wider scope returns \`invalid_scope\`. For write access use the authorization-code flow (Authorize, below).
+
 The response has registration_id, claim_token, claim_token_expires, post_claim_scopes, and a claim object containing user_code (six digits), verification_uri, expires_in (600 seconds), and interval (5 seconds). No access token or identity_assertion is returned at registration. Present the verification URI and code to the person; never ask for their password. They must sign in to the matching Guidon account, enter the code and approve the displayed permissions. Five incorrect code attempts deny the request.
 
 3. Poll \`${siteUrl}/oauth/token\` with form fields grant_type=urn:workos:agent-auth:grant-type:claim, claim_token and the same resource. Wait at least interval seconds between polls. authorization_pending means wait; slow_down means increase the interval by five seconds; expired_token or access_denied means stop. The claim token is consumed once on successful exchange.

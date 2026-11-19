@@ -129,6 +129,8 @@ try {
       assert.equal(signedClient.error,"invalid_client");
       const defaults=await service.startAgentClaim({type:"service_auth",client_id:"claim-client",login_hint:"a@example.test",scope:"   "});
       assert.deepEqual(Array.from(defaults.post_claim_scopes),["tasks:read","project:read"]);
+      const wide=await service.startAgentClaim({type:"service_auth",client_id:"claim-client",login_hint:"a@example.test",scope:"tasks:read project:write"});
+      assert.equal(wide.error,"invalid_scope");
       const begun = await service.startAgentClaim({type:"service_auth",client_id:"claim-client",login_hint:"a@example.test",scope:"tasks:read"});
       assert.ok(begun.registration_id);
       assert.equal(begun.access_token,undefined);

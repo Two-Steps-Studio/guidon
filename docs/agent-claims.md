@@ -36,7 +36,10 @@ anonymous project access or trust third-party identity assertions.
   signed-client/browser OAuth policy and cannot use this public-client ceremony.
 - The agent posts JSON with `type: service_auth`, registered `client_id`,
   `login_hint` email and optional `scope`/`resource` to `/oauth/agent/identity`.
-  Defaults are read-only `tasks:read project:read` and the product MCP resource.
+  The default resource is the product MCP. Only the read-only `tasks:read` and
+  `project:read` scopes (the default) can be requested; anything wider is refused
+  with `invalid_scope`. The code is shown to whoever starts the claim, so write
+  access goes through browser OAuth consent instead.
 - The response contains separate 256-bit machine/browser handles and a random
   six-digit code. The verification URI carries only the browser handle, not
   the code or machine secret. No credential is issued at this stage. The agent

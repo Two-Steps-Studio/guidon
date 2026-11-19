@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync } from "node:crypto";
 import { test } from "node:test";
 import { importJWK, SignJWT } from "jose";
-import { agentSigningKey, claimEmailHash, createClaimSecrets, hashClaimSecret, mintAgentAssertion, verifyAgentAssertion } from "../../src/lib/oauth/agent-claims-core.ts";
+import { agentSigningKey, claimEmailHash, createClaimSecrets, hashClaimSecret, isClaimScopeAllowed, mintAgentAssertion, verifyAgentAssertion } from "../../src/lib/oauth/agent-claims-core.ts";
 import { authorizationServerMetadata, authMarkdown } from "../../src/lib/oauth/oauth-core.ts";
 
 const issuer = "https://guidon.test";
@@ -21,6 +21,12 @@ try {
     assert.notEqual(first.claimToken, first.attemptToken);
     assert.equal(claimEmailHash(" Alice@Example.com "), claimEmailHash("alice@example.com"));
     assert.match(hashClaimSecret(first.claimToken), /^[a-f0-9]{64}$/);
+  });
+  await test("the claim flow grants read scopes only", () => {
+    assert.equal(isClaimScopeAllowed(["tasks:read", "project:read"]), true);
+    assert.equal(isClaimScopeAllowed(["tasks:read"]), true);
+    assert.equal(isClaimScopeAllowed(["tasks:read", "project:write"]), false);
+    assert.equal(isClaimScopeAllowed(["tasks:write"]), false);
   });
   await test("only the enabled service_auth profile is advertised, without anonymous or provider assertions", () => {
     assert.equal(authorizationServerMetadata(issuer).agent_auth, undefined);

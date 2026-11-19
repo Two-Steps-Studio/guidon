@@ -7,6 +7,9 @@ export const ASSERTION_GRANT = "urn:ietf:params:oauth:grant-type:jwt-bearer";
 export const CLAIM_TTL_SECONDS = 600;
 export const CLAIM_INTERVAL = 5;
 export const DEFAULT_AGENT_SCOPES = "tasks:read project:read";
+/** The code is shown to whoever starts the claim, so it can be phished: the claim grants read access only; anything more goes through browser OAuth consent. */
+const CLAIM_SCOPES: ReadonlySet<string> = new Set(DEFAULT_AGENT_SCOPES.split(" "));
+export const isClaimScopeAllowed = (scopes: readonly string[]) => scopes.every((scope) => CLAIM_SCOPES.has(scope));
 
 export const hashClaimSecret = (value: string) => createHash("sha256").update(value).digest("hex");
 export const claimEmailHash = (value: string) => hashClaimSecret(value.trim().toLowerCase());
