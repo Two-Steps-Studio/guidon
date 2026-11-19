@@ -3097,7 +3097,7 @@
     "skip": "Skip",
     "done": "Let's go",
     "projectsTitle": "Projects",
-    "projectsBody": "Your team's projects. Each one has its own board, decisions and files in this sidebar.",
+    "projectsBody": "Your team's projects. Next we'll open one - each has its own board, decisions, memory and files.",
     "newTaskTitle": "Add a task",
     "newTaskBody": "Click here to add your first task now - you don't have to finish the tour.",
     "boardTitle": "Board",
@@ -3111,7 +3111,15 @@
     "searchTitle": "Search",
     "searchBody": "Ctrl+K (Cmd+K) jumps to tasks, projects and actions.",
     "replayTitle": "Replay the tour",
-    "replayBody": "You can open this tour again here at any time."
+    "replayBody": "You can open this tour again here at any time.",
+    "dashboardTitle": "Dashboard",
+    "dashboardBody": "Start your day here: what changed in your projects and what is waiting for you.",
+    "myTasksTitle": "My tasks",
+    "myTasksBody": "Every task assigned to you, across all projects, in one place.",
+    "memoryTitle": "Project memory",
+    "memoryBody": "Insights and lessons from finished work. People and AI agents read them before starting a new task.",
+    "organizationsTitle": "Organizations",
+    "organizationsBody": "Your team: members, roles, plan and settings shared by every project."
   },
   "whiteboard": {
     "boardDefaultName": "Main board",

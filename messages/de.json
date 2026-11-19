@@ -3052,7 +3052,7 @@
     "skip": "Überspringen",
     "done": "Los geht's",
     "projectsTitle": "Projekte",
-    "projectsBody": "Die Projekte deines Teams. Jedes hat in dieser Leiste ein eigenes Board, Entscheidungen und Dateien.",
+    "projectsBody": "Die Projekte deines Teams. Gleich öffnen wir eins - jedes hat sein eigenes Board, Entscheidungen, Gedächtnis und Dateien.",
     "newTaskTitle": "Aufgabe anlegen",
     "newTaskBody": "Klicke hier, um gleich deine erste Aufgabe anzulegen - du musst die Tour nicht beenden.",
     "boardTitle": "Board",
@@ -3066,7 +3066,15 @@
     "searchTitle": "Suche",
     "searchBody": "Mit Strg+K (Cmd+K) springst du zu Aufgaben, Projekten und Aktionen.",
     "replayTitle": "Tour wiederholen",
-    "replayBody": "Hier kannst du diese Tour jederzeit erneut öffnen."
+    "replayBody": "Hier kannst du diese Tour jederzeit erneut öffnen.",
+    "dashboardTitle": "Dashboard",
+    "dashboardBody": "Hier beginnt dein Tag: was sich in deinen Projekten geändert hat und was auf dich wartet.",
+    "myTasksTitle": "Meine Aufgaben",
+    "myTasksBody": "Alle dir zugewiesenen Aufgaben aus allen Projekten an einem Ort.",
+    "memoryTitle": "Projektgedächtnis",
+    "memoryBody": "Erkenntnisse und Lektionen aus abgeschlossener Arbeit. Menschen und KI-Agenten lesen sie, bevor sie eine neue Aufgabe beginnen.",
+    "organizationsTitle": "Organisationen",
+    "organizationsBody": "Dein Team: Mitglieder, Rollen, Plan und Einstellungen für alle Projekte."
   },
   "whiteboard": {
     "boardDefaultName": "Hauptboard",

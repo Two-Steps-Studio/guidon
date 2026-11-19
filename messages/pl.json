@@ -3097,7 +3097,7 @@
     "skip": "Pomiń",
     "done": "Zaczynamy",
     "projectsTitle": "Projekty",
-    "projectsBody": "Projekty zespołu. Każdy ma w tym pasku własną tablicę, decyzje i pliki.",
+    "projectsBody": "Projekty zespołu. Zaraz wejdziemy do jednego z nich - każdy ma własną tablicę, decyzje, pamięć i pliki.",
     "newTaskTitle": "Dodaj zadanie",
     "newTaskBody": "Kliknij tutaj, żeby od razu dodać pierwsze zadanie - nie musisz kończyć przewodnika.",
     "boardTitle": "Tablica",
@@ -3111,7 +3111,15 @@
     "searchTitle": "Wyszukiwanie",
     "searchBody": "Ctrl+K (Cmd+K) przenosi do zadań, projektów i akcji.",
     "replayTitle": "Powtórz przewodnik",
-    "replayBody": "Tutaj w każdej chwili otworzysz ten przewodnik ponownie."
+    "replayBody": "Tutaj w każdej chwili otworzysz ten przewodnik ponownie.",
+    "dashboardTitle": "Pulpit",
+    "dashboardBody": "Tu zaczynasz dzień: co się zmieniło w twoich projektach i co czeka na ciebie.",
+    "myTasksTitle": "Moje zadania",
+    "myTasksBody": "Wszystkie zadania przypisane do ciebie, ze wszystkich projektów, w jednym miejscu.",
+    "memoryTitle": "Pamięć projektu",
+    "memoryBody": "Wnioski i lekcje z ukończonej pracy. Ludzie i agenci AI czytają je, zanim zaczną nowe zadanie.",
+    "organizationsTitle": "Organizacje",
+    "organizationsBody": "Twój zespół: członkowie, role, plan i ustawienia wspólne dla wszystkich projektów."
   },
   "whiteboard": {
     "boardDefaultName": "Główna tablica",

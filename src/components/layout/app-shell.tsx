@@ -61,7 +61,6 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
       <AppSidebar
         {...sidebarProps}
         showCustomModules={showCustomModules}
-        userId={userId ?? undefined}
         currentTheme={currentTheme}
         collapsedGroups={parseCollapsedGroups(cookieStore.get(SIDEBAR_GROUPS_COOKIE)?.value)}
         // Plans only exist on Guidon Cloud (self-hosted has no limits - see
@@ -90,7 +89,7 @@ export async function AppShell({ children, ...sidebarProps }: AppShellProps) {
             rejestracja też), z opcją „pomiń i nie pokazuj ponownie". */}
         <WalkthroughAutoOpen userId={userId} />
         {/* Gido, the companion: always in the corner, tips for the current page. */}
-        <Companion userId={userId} />
+        <Companion />
       </SidebarInset>
     </SidebarProvider>
     </PinnedTasksProvider>
