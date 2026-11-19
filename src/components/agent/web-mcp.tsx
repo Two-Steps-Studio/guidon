@@ -8,8 +8,9 @@ import posthog from "posthog-js";
  * WebMCP (webmachinelearning/webmcp): tools a browser agent - Chrome's,
  * ChatGPT's built-in browser - can call on the page the person has open,
  * as that person, instead of clicking through the UI. Registered with
- * document.modelContext.registerTool() and removed through the
- * registration's AbortSignal; a no-op in browsers without WebMCP.
+ * document.modelContext.registerTool() (navigator.modelContext as a fallback)
+ * and removed through the registration's AbortSignal; a no-op in browsers
+ * without WebMCP.
  */
 
 export interface WebMcpTool {
@@ -30,7 +31,12 @@ interface ModelContext {
 
 function modelContext(): ModelContext | null {
   if (typeof document === "undefined") return null;
-  return (document as Document & { modelContext?: ModelContext }).modelContext ?? null;
+  // document.modelContext is the spec; navigator.modelContext is what earlier Chrome origin-trial builds exposed.
+  return (
+    (document as Document & { modelContext?: ModelContext }).modelContext ??
+    (navigator as Navigator & { modelContext?: ModelContext }).modelContext ??
+    null
+  );
 }
 
 /** MCP-style tool result: text for the model, structured data alongside. */
