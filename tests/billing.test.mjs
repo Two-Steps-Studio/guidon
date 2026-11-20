@@ -6,6 +6,7 @@
 import {
   GRACE_PERIOD_DAYS,
   canStartTrial,
+  trialDaysLeft,
   graceEndsAt,
   intervalFromStripe,
   isBillingInterval,
@@ -45,6 +46,10 @@ check("missing -> null", intervalFromStripe(undefined) === null);
 section("trial once per organization");
 check("never trialed -> can start", canStartTrial(null));
 check("trialed before -> cannot", !canStartTrial("2026-01-01T00:00:00Z"));
+check("trial days left round up", trialDaysLeft("2026-01-15T12:00:00Z", new Date("2026-01-01T13:00:00Z")) === 14);
+check("trial ending today counts as 1 day", trialDaysLeft("2026-01-01T20:00:00Z", new Date("2026-01-01T08:00:00Z")) === 1);
+check("trial over -> 0 days", trialDaysLeft("2026-01-01T00:00:00Z", new Date("2026-01-02T00:00:00Z")) === 0);
+check("no or bad period end -> null", trialDaysLeft(null, new Date()) === null && trialDaysLeft("nope", new Date()) === null);
 const firstTrial = nextTrialUsedAt("trialing", null, now);
 check("first trialing sync records the date", firstTrial === now.toISOString());
 check("later syncs keep the first date", nextTrialUsedAt("active", firstTrial, new Date(now.getTime() + 30 * day)) === firstTrial);

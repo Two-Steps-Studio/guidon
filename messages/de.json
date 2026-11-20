@@ -725,6 +725,8 @@
       "upgrade": "Upgrade",
       "manageBilling": "Abrechnung verwalten",
       "currentPlanBadge": "Aktueller Plan",
+      "trialEndsIn": "{days, plural, =0 {Deine Testphase endet heute} one {Noch # Tag in deiner Testphase} other {Noch # Tage in deiner Testphase}} (bis {date}).",
+      "trialEndsHint": "Um den Plan zu behalten, hinterlege vorher unter „Abrechnung verwalten“ eine Karte. Sonst wechselt die Organisation an diesem Tag zurück zu Free - es wird nichts gelöscht.",
       "checkoutSuccess": "Abonnement bestätigt.",
       "checkoutPending": "Das Abonnement wurde noch nicht bestätigt. Den aktuellen Tarif findest du unten.",
       "checkoutRefresh": "Erneut prüfen",

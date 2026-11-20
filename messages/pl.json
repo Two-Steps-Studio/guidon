@@ -736,6 +736,8 @@
       "upgrade": "Ulepsz",
       "manageBilling": "Zarządzaj płatnością",
       "currentPlanBadge": "Bieżący plan",
+      "trialEndsIn": "{days, plural, =0 {Okres próbny kończy się dziś} one {Został # dzień okresu próbnego} few {Zostały # dni okresu próbnego} many {Zostało # dni okresu próbnego} other {Zostało # dni okresu próbnego}} (do {date}).",
+      "trialEndsHint": "Żeby zachować plan, dodaj kartę w „Zarządzaj płatnością” przed tym dniem. Inaczej organizacja wróci wtedy na plan Free - nic nie zostanie usunięte.",
       "checkoutSuccess": "Subskrypcja potwierdzona.",
       "checkoutPending": "Subskrypcja nie została jeszcze potwierdzona. Aktualny plan znajdziesz poniżej.",
       "checkoutRefresh": "Sprawdź ponownie",

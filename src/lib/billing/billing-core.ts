@@ -46,6 +46,14 @@ export function canStartTrial(trialUsedAt: string | null | undefined): boolean {
   return !trialUsedAt;
 }
 
+/** Whole days left in a trial that ends at `periodEnd` (Stripe's current_period_end while trialing); 0 once it's over. */
+export function trialDaysLeft(periodEnd: string | null | undefined, now: Date): number | null {
+  if (!periodEnd) return null;
+  const end = new Date(periodEnd).getTime();
+  if (Number.isNaN(end)) return null;
+  return Math.max(0, Math.ceil((end - now.getTime()) / DAY_MS));
+}
+
 export function graceEndsAt(pastDueSince: string | null | undefined): Date | null {
   if (!pastDueSince) return null;
   const start = new Date(pastDueSince).getTime();
