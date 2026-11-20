@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Check, Minus } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +17,7 @@ import {
   TRIAL_PERIOD_DAYS,
   canStartTrial,
   isBillingInterval,
+  trialDaysLeft,
   yearlySavingsPercent,
   type BillingInterval,
 } from "@/lib/billing/billing-core";
@@ -134,6 +135,7 @@ export default async function BillingPage({
     stripe_customer_id?: string | null;
     stripe_subscription_id?: string | null;
     trial_used_at?: string | null;
+    current_period_end?: string | null;
   } | null;
   const validSessionId = typeof checkoutSessionId === "string" && /^cs_(test|live)_[a-zA-Z0-9]{1,200}$/.test(checkoutSessionId)
     ? checkoutSessionId
@@ -149,6 +151,9 @@ export default async function BillingPage({
     );
   }
   const trialAvailable = canStartTrial(subscription?.trial_used_at);
+  // While trialing, Stripe's current period ends when the trial does.
+  const trialLeft = subscription?.status === "trialing" ? trialDaysLeft(subscription.current_period_end, new Date()) : null;
+  const format = await getFormatter();
   const priceFor = (plan: PlanRow, wanted: BillingInterval) =>
     prices.find((price) => price.plan_id === plan.id && price.billing_interval === wanted) ?? null;
   // The monthly price from before plan_prices (071) still counts.
@@ -224,6 +229,17 @@ export default async function BillingPage({
           className="mb-6"
           action={canManageBilling ? <ManageBillingButton organizationId={orgId} label={t("updatePayment")} /> : null}
         />
+
+        {trialLeft !== null && subscription?.current_period_end && (
+          <Card className="mb-6 border-primary/30 bg-primary/5">
+            <CardContent role="status" className="py-4 text-sm">
+              <p className="font-medium">
+                {t("trialEndsIn", { days: trialLeft, date: format.dateTime(new Date(subscription.current_period_end), { dateStyle: "long" }) })}
+              </p>
+              <p className="mt-1 text-muted-foreground">{t("trialEndsHint")}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {checkout === "success" && canManageBilling && (
           <Card className={cn("mb-6", checkoutConfirmed && "border-success/30 bg-success/5")}>

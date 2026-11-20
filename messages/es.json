@@ -725,6 +725,8 @@
       "upgrade": "Mejorar plan",
       "manageBilling": "Gestionar facturación",
       "currentPlanBadge": "Plan actual",
+      "trialEndsIn": "{days, plural, =0 {Tu prueba termina hoy} one {Queda # día de prueba} other {Quedan # días de prueba}} (hasta el {date}).",
+      "trialEndsHint": "Para conservar el plan, añade una tarjeta en «Gestionar facturación» antes de esa fecha. Si no, la organización vuelve a Free ese día; no se borra nada.",
       "checkoutSuccess": "Suscripción confirmada.",
       "checkoutPending": "Aún no se ha confirmado la suscripción. Consulta el plan actual a continuación.",
       "checkoutRefresh": "Comprobar de nuevo",

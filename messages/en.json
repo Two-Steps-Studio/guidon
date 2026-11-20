@@ -736,6 +736,8 @@
       "upgrade": "Upgrade",
       "manageBilling": "Manage billing",
       "currentPlanBadge": "Current plan",
+      "trialEndsIn": "{days, plural, =0 {Your trial ends today} one {# day left in your trial} other {# days left in your trial}} (until {date}).",
+      "trialEndsHint": "To keep the plan, add a card in Manage billing before then. Otherwise the organization goes back to Free on that day - nothing is deleted.",
       "checkoutSuccess": "Subscription confirmed.",
       "checkoutPending": "We couldn't confirm the subscription yet. Check the current plan below.",
       "checkoutRefresh": "Check again",
