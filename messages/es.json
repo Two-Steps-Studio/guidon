@@ -1216,7 +1216,13 @@
         "checklist": "la checklist",
         "other": "otros detalles"
       }
-    }
+    },
+    "viewLabel": "Vista del tablero",
+    "viewBoard": "Columnas",
+    "viewTree": "Árbol",
+    "treeLabel": "Tareas en árbol",
+    "treeExpand": "Mostrar subtareas de {title}",
+    "treeCollapse": "Ocultar subtareas de {title}"
   },
   "roadmap": {
     "dialogTitle": "Crear fase",

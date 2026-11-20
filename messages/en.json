@@ -1227,7 +1227,13 @@
         "checklist": "the checklist",
         "other": "other details"
       }
-    }
+    },
+    "viewLabel": "Board view",
+    "viewBoard": "Columns",
+    "viewTree": "Tree",
+    "treeLabel": "Tasks as a tree",
+    "treeExpand": "Show subtasks of {title}",
+    "treeCollapse": "Hide subtasks of {title}"
   },
   "roadmap": {
     "dialogTitle": "Create phase",
