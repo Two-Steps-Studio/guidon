@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import Link from "next/link";
-import { Bot, Check, Loader2, Send, Sparkles, User, X } from "lucide-react";
+import { Check, Loader2, Send, User, X } from "lucide-react";
+import { Gido } from "@/components/companion/gido";
 import { cn } from "@/lib/utils";
 import { BOARD_COLUMNS } from "@/lib/work/task-board";
 import { newBrowserUuid } from "@/lib/work/task-drafts";
+import { registerAiChat } from "./ai-chat-opener";
 
 interface FoundTask {
   id: string;
@@ -37,8 +39,18 @@ export function AIChat({ projectId }: { projectId: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRequest = useRef<AbortController | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => () => activeRequest.current?.abort(), []);
+  // Gido (the companion) is the way in: it opens this chat.
+  useEffect(
+    () =>
+      registerAiChat((returnFocus) => {
+        returnFocusRef.current = returnFocus ?? null;
+        setIsOpen(true);
+      }),
+    []
+  );
   function changeOpen(open: boolean) {
     if (!open) activeRequest.current?.abort();
     setIsOpen(open);
@@ -126,17 +138,19 @@ export function AIChat({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-40">
-        <Button aria-label={t("title")} aria-expanded={isOpen} onClick={() => setIsOpen(true)} size="icon" className="rounded-full h-12 w-12 shadow-lg">
-          <Sparkles className="h-6 w-6" />
-        </Button>
-      </div>
-
       <Sheet open={isOpen} onOpenChange={changeOpen}>
-        <SheetContent className="w-full max-w-full sm:w-[540px] flex flex-col p-0">
+        <SheetContent
+          className="w-full max-w-full sm:w-[540px] flex flex-col p-0"
+          onCloseAutoFocus={(event) => {
+            // The button that opened the chat lived in Gido's bubble, which is gone: focus Gido instead.
+            if (!returnFocusRef.current) return;
+            event.preventDefault();
+            returnFocusRef.current.focus();
+          }}
+        >
           <SheetHeader className="p-4 pr-14 border-b">
             <SheetTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
+              <Gido className="size-7" />
               {t("title")}
             </SheetTitle>
           </SheetHeader>
@@ -144,7 +158,7 @@ export function AIChat({ projectId }: { projectId: string }) {
           <div ref={scrollRef} role="log" aria-label={t("title")} aria-live="polite" aria-relevant="additions" className="min-h-0 flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground mt-10 space-y-2">
-                <Bot className="h-10 w-10 mx-auto opacity-20" />
+                <Gido className="mx-auto size-16" />
                 <p>{t("emptyTitle")}</p>
                 <p className="text-xs">{t("emptyHint")}</p>
               </div>
@@ -157,7 +171,7 @@ export function AIChat({ projectId }: { projectId: string }) {
                     m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                   )}
                 >
-                  {m.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                  {m.role === "user" ? <User className="h-4 w-4" /> : <Gido className="size-7" />}
                 </div>
                 <div className="max-w-[80%] space-y-1.5">
                   {m.actions?.map((action, actionIndex) => (

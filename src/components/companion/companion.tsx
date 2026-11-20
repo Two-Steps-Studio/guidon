@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { startWalkthrough } from "@/components/layout/walkthrough-tour";
+import { useAiChatOpener } from "@/components/ai/ai-chat-opener";
 import { Gido } from "./gido";
 
 /** Which set of tips a page gets (messages: companion.tips.<key>). */
@@ -67,9 +68,12 @@ function save(key: string, value: string | null) {
  * Gido stays in the corner of the app on every page: a dot when it has a
  * tip for the page you're on, a click for that tip or the guided tour.
  * It never pops up on its own; it can be put to sleep and woken again.
+ * Where the project has the AI assistant, Gido is it: "Ask Gido" opens the chat.
  */
 export function Companion() {
   const t = useTranslations("companion");
+  const tChat = useTranslations("aiChat");
+  const openChat = useAiChatOpener();
   const pathname = usePathname() ?? "/";
   const { state, isMobile } = useSidebar();
   const key = tipKeyFor(pathname);
@@ -116,7 +120,18 @@ export function Companion() {
 
   const hasNews = !!seen && !sleeping && !seen.includes(key);
   const mood = sleeping ? "sleepy" : open ? "happy" : "awake";
-  // Beside the sidebar, never on top of it (the AI chat owns the right corner).
+  const askGido = openChat && (
+    <Button
+      size="sm"
+      onClick={() => {
+        setOpen(false);
+        openChat(buttonRef.current);
+      }}
+    >
+      {tChat("title")}
+    </Button>
+  );
+  // Beside the sidebar, never on top of it.
   const left = isMobile ? "1rem" : state === "collapsed" ? "calc(var(--sidebar-width-icon) + 1rem)" : "calc(var(--sidebar-width) + 1rem)";
 
   return (
@@ -140,14 +155,19 @@ export function Companion() {
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {sleeping ? (
-                <Button size="sm" onClick={() => setSleep(false)}>{t("wake")}</Button>
+                <>
+                  {askGido}
+                  <Button size="sm" variant={askGido ? "outline" : "default"} onClick={() => setSleep(false)}>{t("wake")}</Button>
+                </>
               ) : (
                 <>
+                  {askGido}
                   {tips.length > 1 && (
                     <Button size="sm" variant="outline" onClick={() => setTipState({ key, index: tip + 1 })}>{t("nextTip")}</Button>
                   )}
                   <Button
                     size="sm"
+                    variant={askGido ? "outline" : "default"}
                     onClick={() => {
                       setOpen(false);
                       startWalkthrough();
