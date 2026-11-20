@@ -1538,6 +1538,23 @@ await withUser(A, async () => {
   );
 });
 
+// Klucz bota przypisany do projektu (bezpieczenstwo: Manage Server w Discordzie
+// nie siega zadan w innych projektach) - te same instrukcje co w linkDiscordGuildToProject.
+await withUser(A, async () => {
+  const key = await db.query(
+    `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label, project_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id`,
+    [A, "Discord bot", "guidon_dc01", "hash-dc-p1", ["tasks:read", "tasks:status", "comments:write"], "Discord bot", moveP1]
+  );
+  check("klucz bota zapisany z project_id projektu", key.rows.length === 1);
+  const revoked = await db.query(
+    "UPDATE api_keys SET revoked_at = now() WHERE user_id = $1 AND name = $2 AND revoked_at IS NULL AND (project_id = ANY($3::uuid[]) OR project_id IS NULL)",
+    [A, "Discord bot", [moveP2, moveP1]]
+  );
+  check("przenosiny uniewazniaja klucz bota opuszczonego projektu", revoked.rowCount === 1, revoked.rowCount);
+});
+
 // Dlaczego LINK_GUILD_SQL nie uzywa EXCLUDED.<kol>: odczyt EXCLUDED to SELECT
 // na kolumnie, a linked_api_key_encrypted nie ma GRANT SELECT dla authenticated.
 await expectRejected(
