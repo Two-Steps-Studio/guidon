@@ -4,6 +4,8 @@ How to run the hosted product (useguidon.com) on a small VPS instead of
 Vercel: the app in Docker, **Supabase unchanged** as database, auth and file
 storage, Caddy for HTTPS. A fixed monthly price and no CPU quota.
 
+With [Coolify](./coolify.md) instead of this script: the same image, built on every push, with HTTPS, variables and rollback in its UI.
+
 This is not self-hosting with your own database - that is
 [self-hosting.md](./self-hosting.md) and `./scripts/self-host.sh`.
 
