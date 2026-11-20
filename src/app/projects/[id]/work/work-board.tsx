@@ -57,6 +57,7 @@ import {
   type RelativeTaskPosition,
 } from "@/lib/work/task-board";
 import { createTask, moveTask } from "./actions";
+import { markJustCompleted } from "@/lib/work/just-completed";
 import { toolResult, useWebMcpTools } from "@/components/agent/web-mcp";
 import { playSound } from "@/lib/sounds";
 import { CreateTaskDialog } from "./create-task-dialog";
@@ -323,7 +324,10 @@ export function WorkBoard({
       toast.error(result.error);
       return;
     }
-    if (operation.kind === "move" && isDone(operation.status, columns)) playSound("complete");
+    if (operation.kind === "move" && isDone(operation.status, columns)) {
+      playSound("complete");
+      markJustCompleted(ids);
+    }
     const chosen = new Set(ids);
     setState((current) => {
       if (operation.kind === "delete") {
@@ -376,7 +380,10 @@ export function WorkBoard({
     const previousSortOrder = task.sort_order;
 
     // Optimistic: the board should feel instant on drop - the sound too.
-    if (isDone(status, columns) && !isDone(previousStatus, columns)) playSound("complete");
+    if (isDone(status, columns) && !isDone(previousStatus, columns)) {
+      playSound("complete");
+      markJustCompleted([task.id]);
+    }
     setState((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>

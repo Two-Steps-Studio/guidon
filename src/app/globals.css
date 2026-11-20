@@ -587,6 +587,29 @@ input[type="checkbox"].switch:checked { background: var(--color-primary); }
 input[type="checkbox"].switch:checked::before { transform: translateX(1rem); }
 input[type="checkbox"].switch:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
 input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
+/* Finishing a task (src/lib/work/just-completed.ts): the check pops past
+   full size and settles back (follow-through), the card's ring flashes
+   once, Gido hops - the peak of the work, so it ends on a good note. */
+.done-pop { animation: done-pop 420ms var(--ease-out) both; }
+@keyframes done-pop {
+  0% { transform: scale(0.3); }
+  55% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.done-flash { animation: done-flash 700ms var(--ease-out); }
+@keyframes done-flash {
+  from { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 55%, transparent); }
+  to { box-shadow: 0 0 0 3px transparent; }
+}
+.gido-cheer { transform-origin: 50% 100%; animation: gido-cheer 560ms var(--ease-out); }
+@keyframes gido-cheer {
+  0% { transform: translateY(0) scale(1); }
+  20% { transform: translateY(2px) scale(1.06, 0.92); }
+  55% { transform: translateY(-14px) scale(0.96, 1.05); }
+  85% { transform: translateY(1px) scale(1.03, 0.97); }
+  100% { transform: translateY(0) scale(1); }
+}
+
 /* <RollingNumber>: each digit column rolls from 0 to its digit (--digit). */
 .number-roll {
   transform: translateY(calc(var(--digit) * -1em));
