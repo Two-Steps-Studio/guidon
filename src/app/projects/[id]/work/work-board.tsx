@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import posthog from "posthog-js";
 import type { OnboardingTeamSize } from "@/lib/onboarding";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
 import { KanbanBoard } from "@/components/work/kanban-board";
 import { TaskTree } from "@/components/work/task-tree";
@@ -615,7 +616,7 @@ export function WorkBoard({
         className="mx-auto min-w-0 w-full max-w-[1600px] p-6 md:flex md:h-[calc(100svh-3rem)] md:flex-col md:overflow-hidden"
       >
         <p data-slot="task-move-status" role="status" aria-live="polite" aria-atomic="true" className="sr-only">{moveAnnouncement}</p>
-        <header className="mb-6 flex flex-wrap items-end gap-4">
+        <header className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-3 sm:gap-x-3">
           <div className="min-w-0 basis-full sm:flex-[1_1_14rem]">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">{t("title")}</h1>
             <p className="mt-0.5 break-words text-sm text-muted-foreground">
@@ -639,14 +640,15 @@ export function WorkBoard({
 
           {/* Owners and admins change settings; everyone else still reaches the read-only page from the sidebar. */}
           {canDelete && (
-            <Button size="sm" variant="ghost" className="h-8 w-8 shrink-0 p-0" asChild>
+            <Button size="sm" variant="outline" className="h-8 w-8 shrink-0 p-0" asChild>
               <Link href={`/projects/${projectId}/settings`} aria-label={t("projectSettings")} title={t("projectSettings")}>
                 <Settings className="h-4 w-4" />
               </Link>
             </Button>
           )}
 
-          <div role="group" aria-label={t("viewLabel")} className="flex shrink-0 rounded-md border border-input p-0.5">
+          {/* The border is an inset shadow so the group is exactly one button tall, on touch too (44px). */}
+          <div role="group" aria-label={t("viewLabel")} className="flex shrink-0 overflow-hidden rounded-md bg-background shadow-[inset_0_0_0_1px_var(--color-input)]">
             {([
               ["board", Columns3, t("viewBoard")],
               ["tree", ListTree, t("viewTree")],
@@ -656,7 +658,7 @@ export function WorkBoard({
                 type="button"
                 size="icon"
                 variant={layout === value ? "secondary" : "ghost"}
-                className="size-7 max-md:size-10"
+                className={cn("size-8 rounded-none", layout !== value && "bg-transparent")}
                 aria-pressed={layout === value}
                 aria-label={label}
                 title={label}
@@ -689,17 +691,17 @@ export function WorkBoard({
           )}
 
           {canEdit && (
-            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)} title={t("importButton")}>
               <Upload className="h-4 w-4" />
-              {t("importButton")}
+              <span className="max-sm:sr-only">{t("importButton")}</span>
             </Button>
           )}
 
           {/* AI off for the project (046) or hidden by this person (099): no AI calls to action. */}
           {canEdit && aiEnabled && (
-            <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)} data-tour="connect-agent">
+            <Button size="sm" variant="outline" onClick={() => setAgentOpen(true)} data-tour="connect-agent" title={t("connectAgent")}>
               <Bot className="h-4 w-4" />
-              {t("connectAgent")}
+              <span className="max-sm:sr-only">{t("connectAgent")}</span>
             </Button>
           )}
 
@@ -709,6 +711,7 @@ export function WorkBoard({
               onClick={(event) => openCreate(columns[0]?.status ?? "todo", event.currentTarget)}
               style={projectColorFill(projectColor)}
               data-tour="new-task"
+              className="max-sm:ml-auto"
             >
               <Plus className="h-4 w-4" />
               {t("newTask")}

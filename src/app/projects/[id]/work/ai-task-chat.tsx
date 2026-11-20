@@ -234,9 +234,10 @@ export function AiTaskChat({
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" title={t("aiTaskAssistant")}>
           <Sparkles className="h-4 w-4" />
-          {t("aiTaskAssistant")}
+          {/* Icon only on phones, so the board's toolbar fits two rows. */}
+          <span className="max-sm:sr-only">{t("aiTaskAssistant")}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-lg">
