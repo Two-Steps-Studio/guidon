@@ -1,0 +1,58 @@
+# Guidon Cloud as a TrueNAS app: Apps > Discover > ⋮ > Install via YAML,
+# name it "guidon", paste this file. See docs/truenas-app.md.
+#
+# The image is built by GitHub (.github/workflows/docker-image.yml) - the NAS
+# only pulls it. Updates: Apps > guidon > Update (or "Pull image" + restart).
+#
+# /mnt/Main/guidon is the folder with this repository and its .env.cloud
+# (the same one ./scripts/cloud-host.sh used). Change it if yours differs.
+services:
+  app:
+    image: ghcr.io/two-steps-studio/guidon:latest
+    pull_policy: always
+    restart: unless-stopped
+    env_file: /mnt/Main/guidon/.env.cloud
+    expose:
+      - "3000"
+
+  # The Caddy rules from deploy/ on plain HTTP; only the tunnel reaches it.
+  edge:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    command: caddy run --config /etc/caddy/Caddyfile.tunnel --adapter caddyfile
+    env_file: /mnt/Main/guidon/.env.cloud
+    volumes:
+      - /mnt/Main/guidon/deploy:/etc/caddy:ro
+    depends_on:
+      - app
+
+  # Cloudflare Zero Trust > Networks > Tunnels; both public hostnames point
+  # at http://edge:80. Reads TUNNEL_TOKEN from .env.cloud.
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.7
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    env_file: /mnt/Main/guidon/.env.cloud
+    depends_on:
+      - edge
+
+  # Webhook/automation retries every 5 minutes, admin usage once a day
+  # (the jobs from vercel.json). Reads CRON_SECRET from .env.cloud.
+  cron:
+    image: busybox:1.36
+    restart: unless-stopped
+    env_file: /mnt/Main/guidon/.env.cloud
+    command:
+      - sh
+      - -c
+      - |
+        call() { wget -q -O /dev/null --header "Authorization: Bearer $$CRON_SECRET" "http://app:3000/api/cron/$$1" || echo "cron $$1 failed"; }
+        round=0
+        while true; do
+          sleep 300
+          call webhooks
+          round=$$((round + 1))
+          if [ "$$round" -ge 288 ]; then call admin-usage; round=0; fi
+        done
+    depends_on:
+      - app
