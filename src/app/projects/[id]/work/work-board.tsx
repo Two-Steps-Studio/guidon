@@ -3,7 +3,7 @@
 import { LabelPresetsProvider } from "@/components/work/label-presets-context";
 import { WorkflowProvider } from "@/components/work/workflow-context";
 import type { LabelPreset } from "@/lib/work/label-presets";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Bot, ListChecks, Loader2, Plus, Settings, Upload, X } from "lucide-react";
@@ -194,15 +194,17 @@ export function WorkBoard({
     // every state.tasks update (which would refire a stale lookup).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openTaskParam]);
-  // View-only preference, not persisted - resets to "manual" on reload/
-  // navigation. See KanbanBoard's sortMode prop doc comment for why
-  // dragging is disabled while sorted by due date.
-  const [sortMode, setSortMode] = useState<"manual" | "due_date">("manual");
-  // Quick filters, also view-only and not persisted. "all" means the
-  // filter isn't restricting anything - AND-combined with the other two.
-  const [assigneeFilter, setAssigneeFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [tagFilter, setTagFilter] = useState("all");
+  // Sort and quick filters are this person's view of the board, remembered
+  // per project in this browser (returning to the project keeps them). See
+  // KanbanBoard's sortMode prop doc comment for why dragging is disabled
+  // while sorted by due date. "all" means a filter isn't restricting
+  // anything - AND-combined with the other two.
+  const [view, updateView] = useBoardView(projectId);
+  const { sortMode, assigneeFilter, priorityFilter, tagFilter } = view;
+  const setSortMode = (value: BoardView["sortMode"]) => updateView({ sortMode: value });
+  const setAssigneeFilter = (value: string) => updateView({ assigneeFilter: value });
+  const setPriorityFilter = (value: string) => updateView({ priorityFilter: value });
+  const setTagFilter = (value: string) => updateView({ tagFilter: value });
 
   // Subtasks (migration 010) are plain rows in `tasks` with a parent_task_id.
   // They are not shown as their own board cards - only nested under their
@@ -244,11 +246,7 @@ export function WorkBoard({
   const filtersActive =
     assigneeFilter !== "all" || priorityFilter !== "all" || tagFilter !== "all";
 
-  const clearFilters = () => {
-    setAssigneeFilter("all");
-    setPriorityFilter("all");
-    setTagFilter("all");
-  };
+  const clearFilters = () => updateView({ assigneeFilter: "all", priorityFilter: "all", tagFilter: "all" });
   const filteredTasks = useMemo(() => {
     return topLevelTasks.filter((task) => {
       if (assigneeFilter !== "all" && task.assignee_id !== assigneeFilter) {
@@ -927,4 +925,72 @@ export function WorkBoard({
     </LabelPresetsProvider>
     </WorkflowProvider>
   );
+}
+
+interface BoardView {
+  sortMode: "manual" | "due_date";
+  assigneeFilter: string;
+  priorityFilter: string;
+  tagFilter: string;
+}
+
+const DEFAULT_VIEW: BoardView = { sortMode: "manual", assigneeFilter: "all", priorityFilter: "all", tagFilter: "all" };
+const viewListeners = new Set<() => void>();
+/** Fallback when localStorage is blocked: the filters still work, they just aren't remembered. */
+const viewsInMemory = new Map<string, string>();
+
+function subscribeView(listener: () => void) {
+  viewListeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    viewListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+function readStorage(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The board's sort and filters for this person, kept per project in
+ * localStorage (a per-viewer convenience, so not in the database). Read as
+ * an external store: the server and hydration render the defaults, then the
+ * browser shows the saved view - no mismatch. With storage blocked the view
+ * lives in memory and resets on reload, as it did before.
+ */
+function useBoardView(projectId: string): [BoardView, (patch: Partial<BoardView>) => void] {
+  const key = `guidon.board.view.v1:${projectId}`;
+  const raw = useSyncExternalStore(subscribeView, () => readStorage(key) ?? viewsInMemory.get(key) ?? null, () => null);
+  const view = useMemo<BoardView>(() => {
+    try {
+      const saved = raw ? (JSON.parse(raw) as Partial<BoardView>) : {};
+      return {
+        sortMode: saved.sortMode === "due_date" ? "due_date" : "manual",
+        assigneeFilter: typeof saved.assigneeFilter === "string" ? saved.assigneeFilter : "all",
+        priorityFilter: typeof saved.priorityFilter === "string" ? saved.priorityFilter : "all",
+        tagFilter: typeof saved.tagFilter === "string" ? saved.tagFilter : "all",
+      };
+    } catch {
+      return DEFAULT_VIEW;
+    }
+  }, [raw]);
+  const update = useCallback(
+    (patch: Partial<BoardView>) => {
+      const next = JSON.stringify({ ...view, ...patch });
+      viewsInMemory.set(key, next);
+      try {
+        window.localStorage.setItem(key, next);
+      } catch {
+        // Private mode or blocked storage: nothing to remember the view in.
+      }
+      viewListeners.forEach((listener) => listener());
+    },
+    [key, view]
+  );
+  return [view, update];
 }
