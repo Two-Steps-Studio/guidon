@@ -4,7 +4,7 @@ import { AxeBuilder } from "@axe-core/playwright";
 
 const frames = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 const settled = locator => locator.evaluate(async node => {
-  await Promise.all(node.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {})));
+  await Promise.all(node.getAnimations({ subtree: true }).filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {})));
 });
 
 /** Exercises the real shared surfaces, not copies of their CSS or components. */
