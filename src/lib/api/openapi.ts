@@ -300,6 +300,25 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
         parameters: [projectIdParam],
         get: op("listColumns", "The project's visible board columns, in order", "tasks:read", ok("Columns", wrap("columns", { type: "array", items: ref("Column") })), { tags: ["Projects"] }),
       },
+      "/projects/{projectId}/cleanup": {
+        parameters: [projectIdParam],
+        get: op("reviewProjectCleanup", "A cleanup review of the project's tasks", "tasks:read", ok("The review", {
+          type: "object",
+          properties: {
+            summary: { type: "string", description: "The findings as text, with task ids." },
+            reviewed: { type: "integer", description: "Tasks reviewed (the 2000 most recently updated)." },
+            duplicates: {
+              type: "array",
+              description: "Likely duplicates among sibling tasks; `keep` is open over done, then the most recently updated.",
+              items: { type: "object", properties: { keep: ref("CleanupTask"), duplicates: { type: "array", items: ref("CleanupTask") } }, required: ["keep", "duplicates"] },
+            },
+            overdue: { type: "array", items: ref("CleanupTask"), description: "Open tasks past their due date." },
+            stale: { type: "array", items: ref("CleanupTask"), description: "Open tasks not updated for 60+ days." },
+            unassigned_in_progress: { type: "array", items: ref("CleanupTask"), description: "In progress with nobody assigned." },
+          },
+          required: ["summary", "reviewed", "duplicates", "overdue", "stale", "unassigned_in_progress"],
+        }), { tags: ["Projects"], description: "Read-only: change tasks with the usual endpoints, after asking the person." }),
+      },
       "/projects/{projectId}/events": {
         parameters: [projectIdParam],
         get: op("listEvents", "The project's event log, oldest first", "project:read", ok("Events", {
@@ -782,6 +801,20 @@ export function buildOpenApiDocument(siteUrl: string): Record<string, unknown> {
             payload: { type: "object", additionalProperties: true },
           },
           required: ["id", "seq", "organization_id", "project_id", "source", "entity_type", "entity_id", "event_type", "occurred_at", "received_at", "dedupe_key", "payload"],
+        },
+        CleanupTask: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            title: { type: "string" },
+            status: { type: "string" },
+            is_done: { type: "boolean" },
+            parent_task_id: { type: ["string", "null"], format: "uuid" },
+            assignee_id: { type: ["string", "null"], format: "uuid" },
+            due_date: { type: ["string", "null"], format: "date" },
+            updated_at: { type: "string", format: "date-time" },
+          },
+          required: ["id", "title", "status", "is_done", "parent_task_id", "assignee_id", "due_date", "updated_at"],
         },
         Column: {
           type: "object",

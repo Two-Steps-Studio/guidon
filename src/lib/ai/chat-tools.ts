@@ -8,6 +8,7 @@ import { createTask, updateTask } from "@/app/projects/[id]/work/actions";
 import { postComment } from "@/app/projects/[id]/work/comments-actions";
 import { loadAttempts, createAttempt } from "@/app/projects/[id]/work/attempts-actions";
 import { getTaskAgentContext } from "@/lib/context/agent-context";
+import { loadCleanupReport } from "@/lib/work/task-cleanup";
 import { z } from "zod";
 import { PROJECT_RESOURCES, type ProjectResource } from "@/lib/api/project-resources";
 import { resourceOps } from "@/lib/api/project-resource-routes";
@@ -134,6 +135,14 @@ export const CHAT_TOOLS = [
       },
       required: ["task_id", "problem", "approach", "outcome"],
     },
+  },
+  {
+    name: "review_project_cleanup",
+    description:
+      "Review the whole project for cleanup: likely duplicate tasks (and which one to keep), overdue tasks, tasks nobody touched " +
+      "for 60+ days, and tasks in progress with nobody assigned. Read-only. Use it when the user asks to clean up, tidy, " +
+      "organize or deduplicate the project.",
+    input_schema: { type: "object", properties: {} },
   },
   {
     name: "propose_delete_task",
@@ -456,6 +465,21 @@ export async function runChatTool(
       });
       if (result.error || !result.attempt) return { ok: false, summary: `Could not record attempt: ${result.error}` };
       return { ok: true, summary: "Recorded attempt" };
+    }
+
+    case "review_project_cleanup": {
+      const result = await loadCleanupReport(dataClient(userId), projectId);
+      if (result.error !== null) return { ok: false, summary: `Could not review the project: ${result.error}`, label: "Project review failed" };
+      const { report, total } = result;
+      const twins = report.duplicates.flatMap((group) => [group.keep, ...group.duplicates]);
+      return {
+        ok: true,
+        summary: result.text,
+        label:
+          `Reviewed ${total} task(s): ${report.duplicates.length} duplicate group(s), ${report.overdue.length} overdue, ` +
+          `${report.stale.length} stale, ${report.unassignedInProgress.length} in progress unassigned`,
+        tasks: twins.slice(0, 25).map(({ id, title, status }) => ({ id, title, status, priority: "" })),
+      };
     }
 
     case "propose_delete_task": {

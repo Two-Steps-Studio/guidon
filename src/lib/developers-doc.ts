@@ -72,7 +72,7 @@ Claude Code, by hand:
 claude mcp add --transport http --scope user guidon ${siteUrl}/api/mcp --header "Authorization: Bearer guidon_..."
 \`\`\`
 
-Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`list_events\`, \`list_modules\`, \`install_module\`, \`configure_module\`, \`list_module_runs\`, \`get_task\`, \`get_task_context\`, \`get_project_context\`, \`get_agent_brief\`, \`list_task_links\`, \`review_task_link\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\`, \`request_approval\`, \`list_approval_requests\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
+Tools: \`list_projects\`, \`list_tasks\`, \`list_columns\`, \`list_priorities\`, \`review_project_cleanup\`, \`list_events\`, \`list_modules\`, \`install_module\`, \`configure_module\`, \`list_module_runs\`, \`get_task\`, \`get_task_context\`, \`get_project_context\`, \`get_agent_brief\`, \`list_task_links\`, \`review_task_link\`, \`create_task\`, \`update_task\`, \`delete_task\`, \`start_task\`, \`set_task_status\`, \`complete_task\`, \`comment_on_task\`, \`list_attempts\`, \`record_attempt\`, \`request_approval\`, \`list_approval_requests\` - and for the rest of the project, five tools each (list, get, create, update, delete) for \`decision\`, \`knowledge_source\`, \`roadmap_phase\`, \`memory\` and \`technology\` (e.g. \`list_decisions\`, \`create_memory\`, \`update_roadmap_phase\`).
 
 When starting on a project, read \`get_agent_brief\` (\`GET /api/v1/projects/{id}/brief\`): a short Markdown brief the project's owners/admins approved - purpose, stack, conventions, constraints and allowed actions - with each line's source in \`_[...]_\`; \`?version=N\` returns an earlier version exactly as approved, and a 404 means none was approved yet.
 
@@ -107,6 +107,7 @@ Base URL \`${siteUrl}/api/v1\`, JSON in and out. The full description is the [Op
 | GET | \`/projects\` | Projects the key's user belongs to |
 | GET, POST | \`/projects/{projectId}/tasks\` | List or create tasks |
 | GET | \`/projects/{projectId}/columns\` | The project's board columns - built-in and its own, with \`is_done\` |
+| GET | \`/projects/{projectId}/cleanup\` | Cleanup review: likely duplicates, overdue, stale, in progress unassigned (read-only) |
 | GET | \`/projects/{projectId}/priorities\` | The project's priorities, most important first |
 | GET, PATCH, DELETE | \`/tasks/{taskId}\` | Read, edit or delete a task |
 | GET | \`/tasks/{taskId}/context\` | The task's working context (Markdown), ranked within \`max_tokens\` (default 6000), optional \`focus\` |
