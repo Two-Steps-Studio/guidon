@@ -3176,7 +3176,10 @@
     "proposalsPartlyCreated": "Created {created}, {failed} failed",
     "proposalsFailed": "Could not create the tasks",
     "stickyNode": "Sticky note",
-    "shapeNode": "Shape"
+    "shapeNode": "Shape",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "notSaved": "Not saved"
   },
   "companion": {
     "name": "Gido",

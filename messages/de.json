@@ -3131,7 +3131,10 @@
     "proposalsPartlyCreated": "{created} erstellt, {failed} fehlgeschlagen",
     "proposalsFailed": "Die Aufgaben konnten nicht erstellt werden",
     "stickyNode": "Notizzettel",
-    "shapeNode": "Form"
+    "shapeNode": "Form",
+    "saving": "Wird gespeichert…",
+    "saved": "Gespeichert",
+    "notSaved": "Nicht gespeichert"
   },
   "companion": {
     "name": "Gido",

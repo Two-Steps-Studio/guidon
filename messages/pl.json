@@ -3176,7 +3176,10 @@
     "proposalsPartlyCreated": "Utworzono {created}, nie udało się {failed}",
     "proposalsFailed": "Nie udało się utworzyć zadań",
     "stickyNode": "Karteczka",
-    "shapeNode": "Kształt"
+    "shapeNode": "Kształt",
+    "saving": "Zapisywanie…",
+    "saved": "Zapisano",
+    "notSaved": "Nie zapisano"
   },
   "companion": {
     "name": "Gido",
