@@ -589,7 +589,8 @@
       "createProject": "Utwórz projekt",
       "changeImage": "Zmień obraz organizacji",
       "changeImageAria": "Zmień obraz dla {name}",
-      "aiAccounts": "Konta AI"
+      "aiAccounts": "Konta AI",
+      "screen": "Ekran TV"
     },
     "members": {
       "backToOrganization": "Powrót do organizacji",
@@ -770,6 +771,21 @@
       "paymentSuspendedTitle": "Subskrypcja nieopłacona - obowiązują limity planu Free",
       "paymentSuspendedDescription": "Płatność dalej nie przeszła, więc organizacja ma limity planu Free. Nic nie zostało usunięte - po zmianie metody płatności plan wraca od razu.",
       "paidSoon": "Płatnych planów nie da się jeszcze kupić. Organizacja zostaje na planie Free i nic nie przepadnie, gdy płatne plany się pojawią."
+    },
+    "screen": {
+      "eyebrow": "Ekran zespołu",
+      "summary": "Podsumowanie",
+      "open": "Otwarte zadania",
+      "inProgress": "W toku",
+      "review": "Do przeglądu",
+      "overdue": "Po terminie",
+      "doneWeek": "Zrobione w 7 dni",
+      "projects": "Projekty",
+      "noProjects": "Brak projektów.",
+      "progress": "{done} / {total} · {percent}%",
+      "recentlyDone": "Ostatnio zrobione",
+      "nothingDone": "Nic jeszcze nie skończono.",
+      "updated": "Zaktualizowano {time}"
     }
   },
   "projects": {

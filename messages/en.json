@@ -589,7 +589,8 @@
       "createProject": "Create project",
       "changeImage": "Change organization image",
       "changeImageAria": "Change image for {name}",
-      "aiAccounts": "AI accounts"
+      "aiAccounts": "AI accounts",
+      "screen": "TV screen"
     },
     "members": {
       "backToOrganization": "Back to organization",
@@ -770,6 +771,21 @@
       "paymentSuspendedTitle": "Subscription unpaid - Free plan limits apply",
       "paymentSuspendedDescription": "The payment still hasn't gone through, so this organization is limited to the Free plan. Nothing was deleted - update the payment method and the plan comes back right away.",
       "paidSoon": "Paid plans aren't available to buy yet. Your organization keeps the Free plan, and nothing is lost when paid plans open."
+    },
+    "screen": {
+      "eyebrow": "Team screen",
+      "summary": "Summary",
+      "open": "Open tasks",
+      "inProgress": "In progress",
+      "review": "In review",
+      "overdue": "Overdue",
+      "doneWeek": "Done in 7 days",
+      "projects": "Projects",
+      "noProjects": "No projects yet.",
+      "progress": "{done} / {total} · {percent}%",
+      "recentlyDone": "Recently done",
+      "nothingDone": "Nothing finished yet.",
+      "updated": "Updated {time}"
     }
   },
   "projects": {
