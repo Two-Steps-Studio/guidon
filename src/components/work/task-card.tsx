@@ -28,6 +28,7 @@ import { LabelChip } from "@/components/work/label-chip";
 import { useLabelPresets } from "@/components/work/label-presets-context";
 import { usePriorities } from "@/components/work/workflow-context";
 import { findLabelPreset } from "@/lib/work/label-presets";
+import { wasJustCompleted } from "@/lib/work/just-completed";
 
 export interface TaskCardMember {
   id: string;
@@ -189,6 +190,7 @@ function TaskCardComponent({
   const preview = descriptionPreview(task.description);
   const fresh = isNewTask(task);
   const done = isTaskDone(task);
+  const celebrate = done && wasJustCompleted(task.id);
   const due = dueState(task.due_date, task.status, done);
   const tags = task.tags ?? [];
   const labelPresets = useLabelPresets();
@@ -365,6 +367,7 @@ function TaskCardComponent({
         // would otherwise pop up alongside the drag.
         draggable && "cursor-grab touch-manipulation [-webkit-touch-callout:none] active:cursor-grabbing",
         done && "opacity-70 hover:opacity-100",
+        celebrate && "done-flash",
         isDragging && "opacity-40",
         selected && "border-primary bg-primary/5 ring-2 ring-primary/60 hover:border-primary"
       )}
@@ -389,7 +392,7 @@ function TaskCardComponent({
       )}
       <div className="flex items-start gap-2">
         {done ? (
-          <CheckCircle2 aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+          <CheckCircle2 aria-hidden className={cn("mt-0.5 h-3.5 w-3.5 shrink-0 text-success", celebrate && "done-pop")} />
         ) : (
           <span
             aria-hidden

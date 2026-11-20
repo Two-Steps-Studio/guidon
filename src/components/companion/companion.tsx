@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 import { startWalkthrough } from "@/components/layout/walkthrough-tour";
 import { useAiChatOpener } from "@/components/ai/ai-chat-opener";
+import { TASK_COMPLETED_EVENT } from "@/lib/work/just-completed";
 import { Gido } from "./gido";
 
 /** Which set of tips a page gets (messages: companion.tips.<key>). */
@@ -90,6 +92,21 @@ export function Companion() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // A hop when the person finishes a task (see just-completed.ts).
+  const [cheering, setCheering] = useState(false);
+  useEffect(() => {
+    let timer: number | undefined;
+    const cheer = () => {
+      setCheering(true);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setCheering(false), 600);
+    };
+    window.addEventListener(TASK_COMPLETED_EVENT, cheer);
+    return () => {
+      window.removeEventListener(TASK_COMPLETED_EVENT, cheer);
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   const close = () => {
     setOpen(false);
@@ -119,7 +136,7 @@ export function Companion() {
   };
 
   const hasNews = !!seen && !sleeping && !seen.includes(key);
-  const mood = sleeping ? "sleepy" : open ? "happy" : "awake";
+  const mood = sleeping ? "sleepy" : open || cheering ? "happy" : "awake";
   const askGido = openChat && (
     <Button
       size="sm"
@@ -189,7 +206,7 @@ export function Companion() {
           aria-label={hasNews ? t("buttonNews") : t("button")}
           className="relative size-14 rounded-full transition-transform duration-100 ease-out active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <Gido mood={mood} className="size-full drop-shadow-sm" />
+          <Gido mood={mood} className={cn("size-full drop-shadow-sm", cheering && !sleeping && "gido-cheer")} />
           {hasNews && <span aria-hidden className="absolute right-1 top-1 size-3 rounded-full border-2 border-background bg-primary" />}
         </button>
       </div>
