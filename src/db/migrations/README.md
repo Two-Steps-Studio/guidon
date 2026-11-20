@@ -284,3 +284,15 @@ overdue, finished in 30 days). Top-level tasks only, like the overview's
 counters. RLS decides what the caller sees; there are no new tables or
 policies. The page leaves the report out until the function exists.
 
+
+## One stored file, one row (124)
+
+`124_storage_path_no_alias.sql` adds a `SECURITY DEFINER` trigger on
+`task_attachments`, `project_files` and `project_references`: a new row can't
+use a `storage_path` that another row in any of the three already has. 077
+kept paths inside the row's project, but two rows could still point at the
+same object, so a tester could add an attachment or reference aliasing
+another member's file and delete their own row - the app then removed the
+other file with the service role. Uploads always create a new path, so normal
+writes are unaffected; existing rows are left as they are. Adds an index on
+`storage_path` in each table for the check. No new policies or grants.
