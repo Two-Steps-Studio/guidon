@@ -18,6 +18,17 @@ export const MOBILE_KEY_SCOPES = [
   "project:write",
 ] as const;
 
+/**
+ * The mobile app's own key: the only API credential that may delete the
+ * account (DELETE /api/v1/account). human_client is set by the server alone,
+ * and the full app scope set rules out the other human_client keys - the
+ * Discord bot's and the editor plugins' task-only keys - even if one were
+ * given the app's name, so a leaked narrow key can't erase the account.
+ */
+export function isMobileAppKey(identity: { humanClient: boolean; keyName: string | null; scopes: readonly string[] }): boolean {
+  return identity.humanClient && identity.keyName === MOBILE_KEY_NAME && MOBILE_KEY_SCOPES.every((scope) => identity.scopes.includes(scope));
+}
+
 const CHALLENGE_RE = /^[A-Za-z0-9_-]{43}$/;
 // RFC 7636: 43-128 characters of [A-Z a-z 0-9 - . _ ~].
 const VERIFIER_RE = /^[A-Za-z0-9._~-]{43,128}$/;

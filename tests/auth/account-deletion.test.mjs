@@ -3,6 +3,7 @@
  * organizations go with it, which are left, which block it.
  */
 import { confirmationMatches, planAccountDeletion } from "../../src/lib/account/account-deletion-core.ts";
+import { isMobileAppKey, MOBILE_KEY_NAME, MOBILE_KEY_SCOPES } from "../../src/lib/auth/mobile-login-core.ts";
 
 let pass = 0;
 let fail = 0;
@@ -39,6 +40,14 @@ check("another email doesn't", !confirmationMatches("bob@example.com", "ana@exam
 check("empty doesn't", !confirmationMatches("", "ana@example.com"));
 check("non-string doesn't", !confirmationMatches(undefined, "ana@example.com") && !confirmationMatches(42, "ana@example.com"));
 check("no email on the account never confirms", !confirmationMatches("", null));
+
+console.log("\n  which key may delete the account");
+const mobile = { humanClient: true, keyName: MOBILE_KEY_NAME, scopes: [...MOBILE_KEY_SCOPES] };
+check("the mobile app's own key may", isMobileAppKey(mobile));
+check("the Discord bot's task-only human_client key may not", !isMobileAppKey({ humanClient: true, keyName: "Discord bot", scopes: ["tasks:read", "tasks:status", "comments:write"] }));
+check("an editor plugin's human_client key may not", !isMobileAppKey({ humanClient: true, keyName: "Godot plugin", scopes: ["tasks:read", "tasks:write", "tasks:status", "comments:write", "attempts:write"] }));
+check("a narrow key named like the app may not", !isMobileAppKey({ ...mobile, scopes: ["tasks:read", "tasks:status", "comments:write"] }));
+check("a personal key named like the app may not (human_client is server-set)", !isMobileAppKey({ ...mobile, humanClient: false }));
 
 console.log(`\n  ${pass} pass / ${fail} fail\n`);
 process.exit(fail ? 1 : 0);

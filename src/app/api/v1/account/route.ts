@@ -6,15 +6,16 @@ import { deleteAccount, getAccountDeletionPlan } from "@/lib/account/delete-acco
 import { confirmationMatches } from "@/lib/account/account-deletion-core";
 import { bearerChallenge } from "@/lib/oauth/oauth-core";
 import { SITE_URL } from "@/lib/site-url";
+import { isMobileAppKey } from "@/lib/auth/mobile-login-core";
 
 /**
  * Account deletion from the mobile app (App Store guideline 5.1.1(v): an app
  * that lets people sign in must let them delete the account in the app).
  *
- * Only a key a person uses directly - human_client, i.e. the mobile app or
- * an editor plugin - and only with the account's email in the body. An AI
- * agent's key or an OAuth token for some MCP client can never delete the
- * account that authorised it.
+ * Only the mobile app's own key (isMobileAppKey), and only with the
+ * account's email in the body. An AI agent's key, an OAuth token for some
+ * MCP client, or a task-only human_client key (the Discord bot's, an editor
+ * plugin's) can never delete the account that authorised it.
  *
  * GET says what would happen (the same plan the profile page shows);
  * DELETE { "confirm_email": "..." } does it.
@@ -31,7 +32,7 @@ async function personalIdentity(
       ),
     };
   }
-  if (!identity.humanClient) {
+  if (!isMobileAppKey(identity)) {
     return {
       error: NextResponse.json(
         { error: "Only the Guidon app itself can delete an account. Use Profile -> Delete account on the website." },
