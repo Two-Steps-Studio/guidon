@@ -8,7 +8,9 @@ import { SITE_URL } from "@/lib/site-url";
 /**
  * Who the token acts as - for `guidon whoami`, the mobile app's settings and
  * agents checking their credentials. Any valid key or OAuth token, no scope
- * needed: it only says what the caller already holds.
+ * needed: it only says what the caller already holds. Except a reports-only
+ * key: it ships inside game builds and web widgets, so it is public by
+ * design and must not reveal whose it is (email, name, user id).
  */
 async function handleGET(request: NextRequest) {
   const identity = await authenticateApiKey(request.headers.get("authorization"));
@@ -18,6 +20,8 @@ async function handleGET(request: NextRequest) {
       { status: 401, headers: { "WWW-Authenticate": bearerChallenge(SITE_URL, "/api/v1") } }
     );
   }
+  const token = { scopes: identity.scopes, project_id: identity.projectId, human_client: identity.humanClient };
+  if (identity.scopes.every((scope) => scope === "reports:write")) return NextResponse.json({ user: null, token });
   const { data: profile } = await serviceDataClient()
     .from<{ id: string; email: string; full_name: string | null }>("profiles")
     .select("id, email, full_name")
@@ -25,7 +29,7 @@ async function handleGET(request: NextRequest) {
     .maybeSingle();
   return NextResponse.json({
     user: { id: identity.userId, email: profile?.email ?? null, name: profile?.full_name ?? null },
-    token: { scopes: identity.scopes, project_id: identity.projectId, human_client: identity.humanClient },
+    token,
   });
 }
 
