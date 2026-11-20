@@ -1200,6 +1200,33 @@
         "priority": "Priorytet",
         "due_date": "Termin"
       }
+    },
+    "history": {
+      "title": "Historia",
+      "someone": "Ktoś",
+      "created": "utworzył(a) zadanie",
+      "statusChanged": "przeniósł(a) z {from} do {to}",
+      "changed": "zmienił(a): {fields}",
+      "showAll": "Pokaż wszystko ({count})",
+      "showLess": "Pokaż mniej",
+      "loadFailed": "Nie udało się wczytać historii zadania.",
+      "field": {
+        "title": "tytuł",
+        "description": "opis",
+        "status": "kolumnę",
+        "priority": "priorytet",
+        "assignee_id": "osobę przypisaną",
+        "due_date": "termin",
+        "tags": "etykiety",
+        "parent_task_id": "zadanie nadrzędne",
+        "progress_percent": "postęp",
+        "estimated_hours": "szacunek",
+        "actual_hours": "czas pracy",
+        "decision_id": "powiązaną decyzję",
+        "recurrence_rule": "powtarzanie",
+        "checklist": "checklistę",
+        "other": "inne szczegóły"
+      }
     }
   },
   "roadmap": {

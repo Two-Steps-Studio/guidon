@@ -1200,6 +1200,33 @@
         "priority": "Priority",
         "due_date": "Due date"
       }
+    },
+    "history": {
+      "title": "History",
+      "someone": "Someone",
+      "created": "created the task",
+      "statusChanged": "moved it from {from} to {to}",
+      "changed": "changed {fields}",
+      "showAll": "Show all ({count})",
+      "showLess": "Show less",
+      "loadFailed": "Couldn't load the task's history.",
+      "field": {
+        "title": "the title",
+        "description": "the description",
+        "status": "the column",
+        "priority": "the priority",
+        "assignee_id": "the assignee",
+        "due_date": "the due date",
+        "tags": "the labels",
+        "parent_task_id": "the parent task",
+        "progress_percent": "the progress",
+        "estimated_hours": "the estimate",
+        "actual_hours": "the time spent",
+        "decision_id": "the linked decision",
+        "recurrence_rule": "the repeat",
+        "checklist": "the checklist",
+        "other": "other details"
+      }
     }
   },
   "roadmap": {
