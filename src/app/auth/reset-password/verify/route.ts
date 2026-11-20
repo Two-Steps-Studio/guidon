@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { appOrigin } from "@/lib/site-url";
 
 /**
  * Establishes the session from a password-recovery email link. This has to
@@ -16,7 +17,8 @@ import { createClient } from "@/lib/supabase-server";
  * - keeping this isolated means a bug here can't regress that.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = appOrigin(request);
 
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");

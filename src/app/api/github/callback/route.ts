@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyGithubOAuthState } from "@/lib/github/oauth-state";
 import { getAuthenticatedUser } from "@/lib/github/client";
 import { setPendingGithubConnection } from "@/lib/github/pending-connection";
+import { appOrigin } from "@/lib/site-url";
 
 /**
  * Callback for the "connect a GitHub repo" flow (src/app/api/github/connect).
@@ -10,7 +11,8 @@ import { setPendingGithubConnection } from "@/lib/github/pending-connection";
  * github_connections until they actually choose a repository there.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = appOrigin(request);
 
   const code = searchParams.get("code");
   const state = searchParams.get("state");
