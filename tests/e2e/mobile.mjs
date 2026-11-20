@@ -3,7 +3,7 @@ import path from "node:path";
 import {readFile,writeFile} from "node:fs/promises";
 
 const frames=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getAnimations({subtree:true}).map(animation=>animation.finished.catch(()=>{})));});
+const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getAnimations({subtree:true}).filter(animation=>animation.effect?.getComputedTiming().iterations!==Infinity).map(animation=>animation.finished.catch(()=>{})));});
 async function reachable(locator){
   await locator.scrollIntoViewIfNeeded();
   const r=await locator.evaluate(node=>{const b=node.getBoundingClientRect();return {x:b.x,y:b.y,w:b.width,h:b.height,vw:innerWidth,vh:innerHeight,hit:node.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))};});

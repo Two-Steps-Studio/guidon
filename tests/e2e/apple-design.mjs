@@ -4,7 +4,8 @@ import path from 'node:path';
 import {allowBrowserRequest,skipWalkthrough} from './isolation.mjs';
 
 const frames=page=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getAnimations({subtree:true}).map(animation=>animation.finished.catch(()=>{})));});
+// Looping animations (Gido floating and blinking) never finish; settled means the finite ones are done.
+const settled=locator=>locator.evaluate(async node=>{await Promise.all(node.getAnimations({subtree:true}).filter(animation=>animation.effect?.getComputedTiming().iterations!==Infinity).map(animation=>animation.finished.catch(()=>{})));});
 
 export async function appleDesignCoverage({page,context,origin,fixture,client,browserName,artifacts}) {
   const owner=fixture.users[0], created=[], errors=[];

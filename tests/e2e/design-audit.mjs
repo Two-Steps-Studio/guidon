@@ -60,7 +60,7 @@ export async function designAudit({page,context,origin,fixture,browserName,artif
     const ai=page.locator('div.fixed.bottom-6.right-6 button');
     if(await ai.count()){
       await ai.click();const dialog=page.getByRole('dialog');await dialog.waitFor();
-      await dialog.evaluate(async node=>{await Promise.all(node.getAnimations({subtree:true}).map(animation=>animation.finished.catch(()=>{})));});
+      await dialog.evaluate(async node=>{await Promise.all(node.getAnimations({subtree:true}).filter(animation=>animation.effect?.getComputedTiming().iterations!==Infinity).map(animation=>animation.finished.catch(()=>{})));});
       rows.push({scenario:'ai-chat-phone',bounds:await dialog.boundingBox(),viewport:page.viewportSize(),sendButtonLabel:await dialog.locator('button[type="submit"]').getAttribute('aria-label'),liveRegions:await dialog.locator('[aria-live],[role="log"]').count()});
       await page.screenshot({path:path.join(artifacts,'audit-ai-chat-phone.png')});
       await page.keyboard.press('Escape');
