@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { GET as listProjects } from "@/app/api/v1/projects/route";
 import { GET as listTasks, POST as createTask } from "@/app/api/v1/projects/[projectId]/tasks/route";
 import { GET as listColumns } from "@/app/api/v1/projects/[projectId]/columns/route";
+import { GET as reviewProjectCleanup } from "@/app/api/v1/projects/[projectId]/cleanup/route";
 import { GET as listPriorities } from "@/app/api/v1/projects/[projectId]/priorities/route";
 import { GET as listEvents } from "@/app/api/v1/projects/[projectId]/events/route";
 import { GET as listModules, POST as installModule } from "@/app/api/v1/projects/[projectId]/modules/route";
@@ -105,6 +106,22 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     },
     ({ project_id }) =>
       dispatch(listColumns, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/columns` })
+  );
+
+  server.registerTool(
+    "review_project_cleanup",
+    {
+      description:
+        "Review a project for cleanup: likely duplicate tasks (with the one to keep), overdue tasks, tasks nobody touched for " +
+        "60+ days, and tasks in progress with nobody assigned. Read-only. Use it when the person asks to clean up, tidy or " +
+        "deduplicate a project; show them the findings and ask before changing tasks. Confirm a duplicate with get_task " +
+        "first; to merge, copy what the kept task lacks into it, comment \"Duplicate of <kept title>\" on the other and move it " +
+        "to a done column (or delete_task if the person prefers).",
+      inputSchema: { project_id: projectId },
+      annotations: { title: "Review project for cleanup", ...READ_ONLY },
+    },
+    ({ project_id }) =>
+      dispatch(reviewProjectCleanup, { projectId: project_id }, { method: "GET", path: `/api/v1/projects/${project_id}/cleanup` })
   );
 
   server.registerTool(

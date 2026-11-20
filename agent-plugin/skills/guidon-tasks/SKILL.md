@@ -30,6 +30,7 @@ Guidon keeps each project's tasks on a board together with the context behind th
 ## Good practice
 
 - Follow the project's decisions and constraints from the context; if a decision blocks the task, say so in a comment instead of working around it.
+- Asked to clean up a project? `review_project_cleanup` lists likely duplicates, overdue, stale and unassigned in-progress tasks; show the person and ask before merging or moving anything.
 - Create follow-up work as new tasks or subtasks (`create_task` with `parent_task_id`) rather than widening the current one.
 - Send an `Idempotency-Key` header on REST writes so a retry never creates duplicates.
 - On `403`, the token lacks a scope or the person lacks the permission - tell them which, don't retry.
