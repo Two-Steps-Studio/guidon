@@ -2252,10 +2252,10 @@
   "aiChat": {
     "stop": "Zatrzymaj",
     "stopped": "Żądanie zatrzymane. Wykonane już zmiany pozostają zapisane. Odśwież tablicę przed ponowną próbą.",
-    "title": "Asystent AI Guidona",
-    "emptyTitle": "Jak mogę pomóc w tym projekcie?",
+    "title": "Zapytaj Gido",
+    "emptyTitle": "Cześć, jestem Gido. Jak mogę pomóc w tym projekcie?",
     "emptyHint": "Mogę wyszukiwać, tworzyć i edytować zadania, komentować i odpowiadać na pytania.",
-    "placeholder": "Poproś AI o coś...",
+    "placeholder": "Poproś Gido o coś...",
     "thinking": "Myślę...",
     "confirmDelete": "Potwierdź usunięcie",
     "cancel": "Anuluj",

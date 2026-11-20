@@ -2241,10 +2241,10 @@
   "aiChat": {
     "stop": "Anfrage stoppen",
     "stopped": "Anfrage gestoppt. Bereits ausgeführte Änderungen bleiben gespeichert. Lade das Board vor einem erneuten Versuch neu.",
-    "title": "Guidon-KI-Assistent",
-    "emptyTitle": "Wie kann ich bei diesem Projekt helfen?",
+    "title": "Gido fragen",
+    "emptyTitle": "Hallo, ich bin Gido. Wie kann ich bei diesem Projekt helfen?",
     "emptyHint": "Ich kann Aufgaben finden, erstellen und bearbeiten, kommentieren und Fragen beantworten.",
-    "placeholder": "Bitte die KI um etwas...",
+    "placeholder": "Bitte Gido um etwas...",
     "thinking": "Denke nach...",
     "confirmDelete": "Löschen bestätigen",
     "cancel": "Abbrechen",

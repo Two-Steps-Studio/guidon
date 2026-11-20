@@ -2252,10 +2252,10 @@
   "aiChat": {
     "stop": "Stop request",
     "stopped": "Request stopped. Changes already completed remain saved. Refresh the board before trying again.",
-    "title": "Guidon AI Assistant",
-    "emptyTitle": "How can I help you with this project?",
+    "title": "Ask Gido",
+    "emptyTitle": "Hi, I'm Gido. How can I help with this project?",
     "emptyHint": "I can find, create and update tasks, comment, and answer questions.",
-    "placeholder": "Ask AI to do something...",
+    "placeholder": "Ask Gido to do something...",
     "thinking": "Thinking...",
     "confirmDelete": "Confirm delete",
     "cancel": "Cancel",
