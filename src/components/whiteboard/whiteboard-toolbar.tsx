@@ -25,7 +25,9 @@ interface WhiteboardToolbarProps {
 /**
  * Pasek narzędzi tablicy - elementy tworzy kanwa na środku widoku (toolbar
  * tylko prosi), a podwójny klik na tle tworzy karteczkę pod kursorem,
- * także w trybie przewijania czy zaznaczania.
+ * także w trybie przewijania czy zaznaczania. Na telefonie same ikony
+ * (podpisy dla czytników ekranu) z polami dotyku 44px, żeby pasek nie
+ * zasłaniał płótna.
  */
 export function WhiteboardToolbar({
   canEdit,
@@ -49,21 +51,21 @@ export function WhiteboardToolbar({
   return (
     <div
       data-tour-toolbar
-      className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 flex max-w-[95%] flex-wrap items-center justify-center gap-2 rounded-full border border-border bg-background/80 p-2 shadow-lg backdrop-blur-md"
+      className="absolute inset-x-0 bottom-6 z-50 mx-auto max-sm:bottom-24 flex w-fit max-w-[95%] flex-wrap items-center justify-center gap-2 rounded-full border border-border bg-background/80 p-2 shadow-lg backdrop-blur-md"
     >
       {canEdit && (
         <>
-          <Button variant="ghost" size="sm" onClick={onAddSticky} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={onAddSticky} className="gap-2 max-sm:size-11 max-sm:px-0">
             <Plus size={16} />
-            <span>{t("addSticky")}</span>
+            <span className="max-sm:sr-only">{t("addSticky")}</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={onAddRectangle} className="gap-2" title={t("addRectangle")}>
+          <Button variant="ghost" size="sm" onClick={onAddRectangle} className="gap-2 max-sm:size-11 max-sm:px-0" title={t("addRectangle")}>
             <Square size={14} />
-            <span>{t("addRectangle")}</span>
+            <span className="max-sm:sr-only">{t("addRectangle")}</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={onAddCircle} className="gap-2" title={t("addCircle")}>
+          <Button variant="ghost" size="sm" onClick={onAddCircle} className="gap-2 max-sm:size-11 max-sm:px-0" title={t("addCircle")}>
             <Circle />
-            <span>{t("addCircle")}</span>
+            <span className="max-sm:sr-only">{t("addCircle")}</span>
           </Button>
 
           <div className="mx-1 h-4 w-px bg-border" />
@@ -74,10 +76,10 @@ export function WhiteboardToolbar({
         variant={tasksVisible ? "secondary" : "ghost"}
         size="sm"
         onClick={onToggleTasks}
-        className="gap-2"
+        className="gap-2 max-sm:size-11 max-sm:px-0"
       >
         <ClipboardList size={16} />
-        <span>{tasksVisible ? t("hideTasks") : t("showTasks")}</span>
+        <span className="max-sm:sr-only">{tasksVisible ? t("hideTasks") : t("showTasks")}</span>
       </Button>
 
       {ai && (
@@ -88,10 +90,10 @@ export function WhiteboardToolbar({
             size="sm"
             onClick={onAIConvert}
             disabled={selectedColors === 0}
-            className="gap-2 text-primary disabled:opacity-50"
+            className="gap-2 max-sm:size-11 max-sm:px-0 text-primary disabled:opacity-50"
           >
             <Sparkles size={16} />
-            <span>{t("convertToTasks")}</span>
+            <span className="max-sm:sr-only">{t("convertToTasks")}</span>
           </Button>
         </>
       )}
@@ -117,9 +119,9 @@ export function WhiteboardToolbar({
       {canEdit && selectedNodes.length > 0 && (
         <>
           <div className="mx-1 h-4 w-px bg-border" />
-          <Button variant="ghost" size="sm" onClick={onDeleteSelected} className="gap-2 text-destructive">
+          <Button variant="ghost" size="sm" onClick={onDeleteSelected} className="gap-2 max-sm:size-11 max-sm:px-0 text-destructive">
             <Trash2 size={16} />
-            <span>{t("deleteSelected")}</span>
+            <span className="max-sm:sr-only">{t("deleteSelected")}</span>
           </Button>
         </>
       )}

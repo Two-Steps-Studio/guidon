@@ -194,6 +194,9 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
   const savedEdges = useRef(new Map<string, string>());
 
   const debouncedNodes = useDebounce(nodes, 1000);
+  // What the person sees about autosave: saving now, all saved, or the last save failed.
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const pendingSaves = useRef(0);
   const debouncedEdges = useDebounce(edges, 1000);
 
   // Screen readers name each note by kind and text (an empty note had no name).
@@ -260,14 +263,23 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
       const report = (e: unknown) => {
         console.error("Failed to save the board", e);
         toast.error(t("saveError"));
+        setSaveState("error");
+      };
+      const track = (save: Promise<unknown>) => {
+        pendingSaves.current += 1;
+        setSaveState("saving");
+        void save.finally(() => {
+          pendingSaves.current -= 1;
+          if (pendingSaves.current === 0) setSaveState((state) => (state === "saving" ? "saved" : state));
+        });
       };
       const elements = changedSince(nodeList.filter((node) => !isTaskNode(node.id)).map(toElementInput), savedElements.current);
       if (elements.length > 0) {
         remember(elements, savedElements.current);
-        saveElementsAction(projectId, board.id, elements).catch((e) => {
+        track(saveElementsAction(projectId, board.id, elements).catch((e) => {
           for (const element of elements) savedElements.current.delete(element.id);
           report(e);
-        });
+        }));
       }
       // Arrows to task cards stay local: tasks aren't board elements.
       const arrows = changedSince(
@@ -276,10 +288,10 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
       );
       if (arrows.length > 0) {
         remember(arrows, savedEdges.current);
-        saveEdgesAction(projectId, board.id, arrows).catch((e) => {
+        track(saveEdgesAction(projectId, board.id, arrows).catch((e) => {
           for (const arrow of arrows) savedEdges.current.delete(arrow.id);
           report(e);
-        });
+        }));
       }
     },
     [board, projectId, t]
@@ -452,6 +464,14 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
           {t("canvasHint")}
         </div>
       )}
+      {board?.canEdit && saveState !== "idle" && (
+        <p
+          role="status"
+          className={`pointer-events-none absolute right-3 top-3 z-10 rounded-full border border-border bg-background/80 px-3 py-1 text-xs backdrop-blur ${saveState === "error" ? "text-destructive" : "text-muted-foreground"}`}
+        >
+          {t(saveState === "saving" ? "saving" : saveState === "saved" ? "saved" : "notSaved")}
+        </p>
+      )}
 
       <ReactFlow
         nodes={nodes}
@@ -471,8 +491,9 @@ function WhiteboardFlow({ projectId }: { projectId: string }) {
         fitViewOptions={{ padding: 0.25 }}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-        <Controls />
-        <MiniMap pannable />
+        {/* Phones: zoom buttons at the top (Gido and the AI button own the bottom corners), no minimap. */}
+        <Controls className="max-sm:!bottom-auto max-sm:!top-12" />
+        <MiniMap pannable className="max-sm:!hidden" />
       </ReactFlow>
 
       <WhiteboardToolbar

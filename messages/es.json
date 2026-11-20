@@ -3104,7 +3104,10 @@
     "proposalsPartlyCreated": "{created} creadas, {failed} fallaron",
     "proposalsFailed": "No se pudieron crear las tareas",
     "stickyNode": "Nota adhesiva",
-    "shapeNode": "Forma"
+    "shapeNode": "Forma",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "notSaved": "No guardado"
   },
   "companion": {
     "name": "Gido",
