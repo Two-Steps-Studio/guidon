@@ -236,7 +236,8 @@ function useSectionFold(collapsed: ReadonlySet<string>, toggle: (key: string) =>
       ),
       id,
       menuClassName: folded && !iconRail
-        ? "flex-row flex-wrap [&_[data-sidebar=menu-button]]:w-8 [&_[data-sidebar=menu-button]]:justify-center max-md:[&_[data-sidebar=menu-button]]:size-11 [&_[data-nav-label]]:sr-only"
+        // Smaller icons, indented under the section name; phones keep 44px tap targets.
+        ? "flex-row flex-wrap pl-2 [&_[data-sidebar=menu-button]]:justify-center md:[&_[data-sidebar=menu-button]]:size-7 md:[&_[data-sidebar=menu-button]_svg]:size-3.5 max-md:[&_[data-sidebar=menu-button]]:size-11 [&_[data-nav-label]]:sr-only"
         : undefined,
       tooltip: (name: string) => folded && !isMobile ? { children: name, hidden: false } : name,
     };
