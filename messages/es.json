@@ -1189,6 +1189,33 @@
         "priority": "Prioridad",
         "due_date": "Fecha límite"
       }
+    },
+    "history": {
+      "title": "Historial",
+      "someone": "Alguien",
+      "created": "creó la tarea",
+      "statusChanged": "la movió de {from} a {to}",
+      "changed": "cambió {fields}",
+      "showAll": "Mostrar todo ({count})",
+      "showLess": "Mostrar menos",
+      "loadFailed": "No se pudo cargar el historial de la tarea.",
+      "field": {
+        "title": "el título",
+        "description": "la descripción",
+        "status": "la columna",
+        "priority": "la prioridad",
+        "assignee_id": "la persona asignada",
+        "due_date": "la fecha límite",
+        "tags": "las etiquetas",
+        "parent_task_id": "la tarea principal",
+        "progress_percent": "el progreso",
+        "estimated_hours": "la estimación",
+        "actual_hours": "el tiempo dedicado",
+        "decision_id": "la decisión vinculada",
+        "recurrence_rule": "la repetición",
+        "checklist": "la checklist",
+        "other": "otros detalles"
+      }
     }
   },
   "roadmap": {

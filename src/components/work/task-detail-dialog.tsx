@@ -23,6 +23,7 @@ import { TaskAttachmentsSection } from "@/components/work/task-attachments-secti
 import { TaskRelationsSection } from "@/components/work/task-relations-section";
 import { TaskSubtasksSection } from "@/components/work/task-subtasks-section";
 import { TaskCommentsSection } from "@/components/work/task-comments-section";
+import { TaskHistorySection } from "@/components/work/task-history-section";
 import { TaskAgentContextExport } from "@/components/work/task-agent-context-export";
 import { TaskAttachmentsProvider, useTaskAttachments } from "@/components/work/task-attachments-context";
 import { TaskImageGallery, useGalleryImages } from "@/components/work/task-image-gallery";
@@ -885,6 +886,8 @@ function TaskDetailDialogInner({
           onDecisionCreated={() => void loadWhy(task.id)}
           onOpenImage={openImage}
         />
+
+        <TaskHistorySection projectId={projectId} taskId={task.id} members={members} columns={columns} />
         <ImageLightbox
           images={galleryImages}
           index={lightboxIndex}

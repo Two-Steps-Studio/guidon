@@ -1189,6 +1189,33 @@
         "priority": "Priorität",
         "due_date": "Fälligkeit"
       }
+    },
+    "history": {
+      "title": "Verlauf",
+      "someone": "Jemand",
+      "created": "hat die Aufgabe erstellt",
+      "statusChanged": "hat sie von {from} nach {to} verschoben",
+      "changed": "hat {fields} geändert",
+      "showAll": "Alle anzeigen ({count})",
+      "showLess": "Weniger anzeigen",
+      "loadFailed": "Der Verlauf der Aufgabe konnte nicht geladen werden.",
+      "field": {
+        "title": "den Titel",
+        "description": "die Beschreibung",
+        "status": "die Spalte",
+        "priority": "die Priorität",
+        "assignee_id": "die zugewiesene Person",
+        "due_date": "das Fälligkeitsdatum",
+        "tags": "die Labels",
+        "parent_task_id": "die übergeordnete Aufgabe",
+        "progress_percent": "den Fortschritt",
+        "estimated_hours": "die Schätzung",
+        "actual_hours": "die aufgewendete Zeit",
+        "decision_id": "die verknüpfte Entscheidung",
+        "recurrence_rule": "die Wiederholung",
+        "checklist": "die Checkliste",
+        "other": "weitere Details"
+      }
     }
   },
   "roadmap": {
