@@ -4,6 +4,8 @@ How to run the hosted product (useguidon.com) on a small VPS instead of
 Vercel: the app in Docker, **Supabase unchanged** as database, auth and file
 storage, Caddy for HTTPS. A fixed monthly price and no CPU quota.
 
+On TrueNAS as an app under Apps, with the image built by GitHub: [truenas-app.md](./truenas-app.md).
+
 With [Coolify](./coolify.md) instead of this script: the same image, built on every push, with HTTPS, variables and rollback in its UI.
 
 This is not self-hosting with your own database - that is
