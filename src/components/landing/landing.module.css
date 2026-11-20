@@ -53,11 +53,17 @@
 .buttonSecondary { color: var(--color-text); background: var(--color-background); border-color: var(--color-border); }
 .buttonSecondary:hover { background: var(--color-background-secondary); border-color: var(--color-border-hover); }
 .actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .75rem; }
-.hero { padding: clamp(4rem, 7vw, 6rem) 0 3rem; text-align: center; }
+.hero { padding: clamp(4rem, 7vw, 6rem) 0 3rem; text-align: center; isolation: isolate; }
+/* A soft glow of the page colour behind the copy only, so the dither pattern stays
+   around it but no longer runs through the text (readability, both themes). */
+.hero::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 50% 56% at 50% 48%, color-mix(in srgb, var(--color-background) 90%, transparent) 45%, transparent 80%);
+}
 .hero h1 { margin: 1.5rem auto; max-width: 56rem; font-size: clamp(2.75rem, 6vw, 5rem); font-weight: 600; letter-spacing: -.045em; line-height: 1.05; text-wrap: balance; }
 .hero h1 span { color: var(--color-text-secondary); }
 .lead { max-width: 39rem; margin: 0 auto 2rem; font-size: clamp(1.0625rem, 1.5vw, 1.25rem); line-height: 1.65; color: var(--color-text-secondary); text-wrap: pretty; }
-.heroNote { margin-top: 1rem; color: var(--color-text-muted); font-size: 12px; }
+.heroNote { margin-top: 1rem; color: var(--color-text-secondary); font-size: 13px; }
 .productSection { padding-bottom: 0; }
 .productFrame { overflow: hidden; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-background-secondary); box-shadow: 0 16px 48px rgb(7 20 45 / .06); }
 .caption { margin: 1rem 0 0; text-align: center; font-size: 12px; color: var(--color-text-muted); }
@@ -164,7 +170,7 @@
   .buttonSmall { padding-inline: .75rem; font-size: 12px; }
   .hero { padding-top: 3rem; padding-bottom: 2rem; }
   .hero h1 { font-size: clamp(2.5rem,10.5vw,3.5rem); }
-  .heroNote { max-width: 21rem; margin-inline: auto; }
+  .heroNote { max-width: 21rem; margin-inline: auto; font-size: 12px; }
   .caption { max-width: 23rem; margin-inline: auto; font-size: 11px; }
   .sectionHeading { margin-bottom: 2rem; }
   .benefits, .featureGrid, .capabilities, .integrationLayout, .faqLayout { grid-template-columns: 1fr; }
