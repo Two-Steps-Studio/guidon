@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Bot, CreditCard, FolderKanban, Plus, Settings, Users } from "lucide-react";
+import { ArrowLeft, Bot, CreditCard, FolderKanban, Monitor, Plus, Settings, Users } from "lucide-react";
 import { canManageOrg, requireOrgAccess } from "@/lib/data/org-access";
 import { createClient } from "@/lib/supabase-server";
 import { getCurrentUser } from "@/lib/data/current-user";
@@ -77,6 +77,13 @@ export default async function OrganizationDetailPage({
               <Link href={`/organizations/${orgId}/members`}>
                 <Users className="h-4 w-4 mr-2" />
                 {t("members")}
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              {/* The wall-screen view: opens in its own tab, to be left on a TV. */}
+              <Link href={`/organizations/${orgId}/screen`} target="_blank" rel="noopener">
+                <Monitor className="h-4 w-4 mr-2" />
+                {t("screen")}
               </Link>
             </Button>
             <Button variant="outline" asChild>

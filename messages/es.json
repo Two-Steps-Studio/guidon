@@ -578,7 +578,8 @@
       "createProject": "Crear proyecto",
       "changeImage": "Cambiar imagen de la organización",
       "changeImageAria": "Cambiar imagen de {name}",
-      "aiAccounts": "Cuentas de IA"
+      "aiAccounts": "Cuentas de IA",
+      "screen": "Pantalla TV"
     },
     "members": {
       "backToOrganization": "Volver a la organización",
@@ -759,6 +760,21 @@
       "paymentSuspendedTitle": "Suscripción impagada: se aplican los límites del plan Free",
       "paymentSuspendedDescription": "El pago sigue sin completarse, así que esta organización tiene los límites del plan Free. No se ha borrado nada: cambia el método de pago y el plan vuelve al instante.",
       "paidSoon": "Todavía no se pueden comprar planes de pago. Tu organización sigue en el plan Free y no se pierde nada cuando lleguen los planes de pago."
+    },
+    "screen": {
+      "eyebrow": "Pantalla del equipo",
+      "summary": "Resumen",
+      "open": "Tareas abiertas",
+      "inProgress": "En curso",
+      "review": "En revisión",
+      "overdue": "Vencidas",
+      "doneWeek": "Hechas en 7 días",
+      "projects": "Proyectos",
+      "noProjects": "Aún no hay proyectos.",
+      "progress": "{done} / {total} · {percent} %",
+      "recentlyDone": "Hecho recientemente",
+      "nothingDone": "Aún no se ha terminado nada.",
+      "updated": "Actualizado {time}"
     }
   },
   "projects": {

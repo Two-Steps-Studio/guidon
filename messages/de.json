@@ -578,7 +578,8 @@
       "createProject": "Projekt erstellen",
       "changeImage": "Organisationsbild ändern",
       "changeImageAria": "Bild für {name} ändern",
-      "aiAccounts": "KI-Konten"
+      "aiAccounts": "KI-Konten",
+      "screen": "TV-Bildschirm"
     },
     "members": {
       "backToOrganization": "Zurück zur Organisation",
@@ -759,6 +760,21 @@
       "paymentSuspendedTitle": "Abo unbezahlt - es gelten die Limits des Free-Plans",
       "paymentSuspendedDescription": "Die Zahlung ist noch nicht durchgegangen, daher gelten für diese Organisation die Limits des Free-Plans. Es wurde nichts gelöscht - nach dem Ändern der Zahlungsmethode ist der Plan sofort wieder da.",
       "paidSoon": "Bezahlte Pläne können noch nicht gekauft werden. Deine Organisation bleibt im Free-Plan, und nichts geht verloren, wenn bezahlte Pläne starten."
+    },
+    "screen": {
+      "eyebrow": "Team-Bildschirm",
+      "summary": "Übersicht",
+      "open": "Offene Aufgaben",
+      "inProgress": "In Arbeit",
+      "review": "Im Review",
+      "overdue": "Überfällig",
+      "doneWeek": "Erledigt in 7 Tagen",
+      "projects": "Projekte",
+      "noProjects": "Noch keine Projekte.",
+      "progress": "{done} / {total} · {percent} %",
+      "recentlyDone": "Zuletzt erledigt",
+      "nothingDone": "Noch nichts erledigt.",
+      "updated": "Aktualisiert {time}"
     }
   },
   "projects": {
