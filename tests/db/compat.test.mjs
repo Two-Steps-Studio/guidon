@@ -3504,6 +3504,11 @@ section("63. sciezka pliku nalezy do projektu wiersza (migracja 077)");
     check("zalacznik z wlasna sciezka przechodzi", ok.rows.length === 1);
     check("plik projektu ze sciezka innego projektu odrzucony", await throwsInSavepoint("INSERT INTO public.project_files (project_id, name, storage_path, uploaded_by) VALUES ($1, 'f.txt', $2, $3)", [projectId, foreign, A]));
     check("referencja ze sciezka innego projektu odrzucona", await throwsInSavepoint("INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'r.png', $2, 'image/png', $3)", [projectId, foreign, A]));
+    // 124: a second row can't alias an object another row owns - deleting it would delete that file.
+    const shared = `projects/${projectId}/tasks/ok.pdf`;
+    check("drugi zalacznik z ta sama sciezka odrzucony (124)", await throwsInSavepoint("INSERT INTO public.task_attachments (task_id, name, storage_path, uploaded_by) VALUES ($1, 'alias.pdf', $2, $3)", [tid, shared, A]));
+    check("referencja ze sciezka cudzego zalacznika odrzucona (124)", await throwsInSavepoint("INSERT INTO public.project_references (project_id, name, storage_path, mime_type, uploaded_by) VALUES ($1, 'alias.png', $2, 'image/png', $3)", [projectId, shared, A]));
+    check("plik projektu ze sciezka cudzego zalacznika odrzucony (124)", await throwsInSavepoint("INSERT INTO public.project_files (project_id, name, storage_path, uploaded_by) VALUES ($1, 'alias.txt', $2, $3)", [projectId, shared, A]));
   });
 }
 
