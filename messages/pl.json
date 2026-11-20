@@ -1379,7 +1379,7 @@
     "permDeleteTasks": "Usuwanie zadań",
     "permDeleteTasksHint": "Usuwanie zadań. Zmiany aplikacji można cofnąć, ale usunięcia nie.",
     "allowAutoComplete": "Zezwól AI na automatyczne kończenie zadań",
-    "allowAutoCompleteHelp": "Bez tego AI może przenosić zadania do Przeglądu, ale ostateczną decyzję o oznaczeniu jako Zrobione zawsze podejmuje człowiek.",
+    "allowAutoCompleteHelp": "Bez tego AI przenosi skończone zadania do Przeglądu, a ostateczną decyzję podejmuje człowiek. Z tym agent, którego klucz może kończyć zadania, przeniesie zadanie od razu do Zrobione, gdy jest pewny, że praca jest skończona i sprawdzona; wszystko niepewne nadal trafia do Przeglądu.",
     "saveAiSettings": "Zapisz ustawienia AI",
     "aiSettingsSavedToast": "Zapisano uprawnienia AI.",
     "labelAiSuggest": "Zaproponuj tagi z AI",

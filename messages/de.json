@@ -1368,7 +1368,7 @@
     "permDeleteTasks": "Aufgaben löschen",
     "permDeleteTasksHint": "Aufgaben löschen. Änderungen einer App lassen sich rückgängig machen, eine Löschung nicht.",
     "allowAutoComplete": "KI erlauben, Aufgaben automatisch abzuschließen",
-    "allowAutoCompleteHelp": "Ohne dies kann die KI Aufgaben zu Überprüfung verschieben, aber ein Mensch entscheidet immer endgültig über Erledigt.",
+    "allowAutoCompleteHelp": "Ohne dies verschiebt die KI fertige Aufgaben zu Überprüfung und ein Mensch entscheidet endgültig. Damit kann ein Agent, dessen Schlüssel Aufgaben abschließen darf, eine Aufgabe direkt auf Erledigt setzen, wenn er sicher ist, dass die Arbeit fertig und geprüft ist; alles Unsichere geht weiter zu Überprüfung.",
     "saveAiSettings": "KI-Einstellungen speichern",
     "aiSettingsSavedToast": "KI-Berechtigungen gespeichert.",
     "labelAiSuggest": "Labels mit KI vorschlagen",
