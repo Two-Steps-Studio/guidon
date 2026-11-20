@@ -36,6 +36,7 @@ import {
   saveEdgesAction,
   saveElementsAction,
 } from "@/app/projects/[id]/whiteboard/actions";
+import { projectColorFill } from "@/lib/brand-colors";
 
 interface NoteData {
   content?: string;
@@ -83,7 +84,8 @@ function EditableText({ id, data }: { id: string; data: NoteData }) {
 const StickyNode = ({ data, id }: { data: NoteData; id: string }) => (
   <div
     className="p-3 rounded-sm shadow-sm border border-border min-w-[150px] min-h-[100px] text-foreground"
-    style={{ backgroundColor: data.color }}
+    // Text colour follows the note colour (WCAG contrast), not the theme: dark text on a pastel note in dark mode too.
+    style={projectColorFill(data.color) ?? { backgroundColor: data.color }}
   >
     <EditableText id={id} data={data} />
   </div>
@@ -94,7 +96,7 @@ const ShapeNode = ({ data, id }: { data: NoteData; id: string }) => (
     className={`p-3 shadow-sm border border-border min-w-[150px] min-h-[100px] text-foreground flex items-center justify-center text-center ${
       data.shape === "circle" ? "rounded-full" : "rounded-sm"
     }`}
-    style={{ backgroundColor: data.color }}
+    style={projectColorFill(data.color) ?? { backgroundColor: data.color }}
   >
     <EditableText id={id} data={data} />
   </div>
