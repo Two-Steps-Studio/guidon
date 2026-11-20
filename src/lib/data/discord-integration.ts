@@ -217,11 +217,12 @@ export async function linkDiscordGuildToProject(
     try {
       await withUser(userId, async ({ query }) => {
         // Sequential on purpose: one client, one query at a time.
-        await query(
+        const cleared = await query(
           `UPDATE discord_integrations
               SET guild_id = NULL, guild_name = NULL, linked_api_key_encrypted = NULL, linked_by = NULL,
                   updated_at = now()
-            WHERE guild_id = $1 AND project_id <> $2`,
+            WHERE guild_id = $1 AND project_id <> $2
+            RETURNING project_id`,
           [guildId, projectId]
         );
         const link = await query(
@@ -244,15 +245,17 @@ export async function linkDiscordGuildToProject(
 
         // Same revoke-then-insert hygiene as authorizePluginLogin, so
         // reconnecting doesn't leave a dead key behind under Profile > API Keys.
+        // Only this project's key (or an old unbound one) - another
+        // project's bot keeps working.
         await query(
-          "UPDATE api_keys SET revoked_at = now() WHERE user_id = $1 AND name = $2 AND revoked_at IS NULL",
-          [userId, DISCORD_BOT_KEY_NAME]
+          "UPDATE api_keys SET revoked_at = now() WHERE user_id = $1 AND name = $2 AND revoked_at IS NULL AND (project_id = ANY($3::uuid[]) OR project_id IS NULL)",
+          [userId, DISCORD_BOT_KEY_NAME, [projectId, ...cleared.rows.map((row) => row.project_id as string)]]
         );
         const key = await query(
-          `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label)
-           VALUES ($1, $2, $3, $4, $5, $6)
+          `INSERT INTO api_keys (user_id, name, key_prefix, key_hash, scopes, bot_label, project_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING id`,
-          [userId, DISCORD_BOT_KEY_NAME, prefix, hash, DISCORD_BOT_KEY_SCOPES, "Discord bot"]
+          [userId, DISCORD_BOT_KEY_NAME, prefix, hash, DISCORD_BOT_KEY_SCOPES, "Discord bot", projectId]
         );
         if (key.rows.length !== 1) throw new LinkFailure("Could not create the Discord bot's API key.");
         newKeyId = key.rows[0].id as string;
@@ -276,12 +279,16 @@ export async function linkDiscordGuildToProject(
 
   // Same revoke-then-insert hygiene as authorizePluginLogin, so reconnecting
   // doesn't leave a dead key behind under Profile > API Keys.
-  await supabase
-    .from("api_keys")
-    .update({ revoked_at: new Date().toISOString() })
-    .eq("user_id", userId)
-    .eq("name", DISCORD_BOT_KEY_NAME)
-    .is("revoked_at", null);
+  // Only this project's key and any old unbound one - another project's bot keeps working.
+  for (const bound of [projectId, null]) {
+    const revoke = supabase
+      .from("api_keys")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("name", DISCORD_BOT_KEY_NAME)
+      .is("revoked_at", null);
+    await (bound ? revoke.eq("project_id", bound) : revoke.is("project_id", null));
+  }
 
   const { data: keyRow, error: keyError } = await supabase
     .from("api_keys")
@@ -292,6 +299,9 @@ export async function linkDiscordGuildToProject(
       key_hash: hash,
       scopes: DISCORD_BOT_KEY_SCOPES,
       bot_label: "Discord bot",
+      // Bound to the linked project (migration 054): Manage Server members
+      // in Discord can't reach the linker's tasks anywhere else.
+      project_id: projectId,
     })
     .select("id")
     .single();
@@ -375,6 +385,17 @@ export async function linkDiscordGuildToProject(
       );
     }
     return failure(linkError, "writing the new link failed");
+  }
+
+  // The server left those projects, so their bot keys (ours, if any) are unused now.
+  if (clearedProjectIds.length > 0) {
+    await supabase
+      .from("api_keys")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("name", DISCORD_BOT_KEY_NAME)
+      .in("project_id", clearedProjectIds)
+      .is("revoked_at", null);
   }
 
   await markKeyAsHumanClient(keyRow.id as string);
