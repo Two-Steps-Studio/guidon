@@ -117,6 +117,9 @@ export async function auditFollowupCoverage({ page, origin, fixture, client, art
     await page.screenshot({ path: path.join(artifacts, "audit-followup.png") });
   } finally {
     page.off("download", onDownload);
+    // The board remembers its filters per project (localStorage); the High
+    // filter set above must not hide tasks from the tests that follow.
+    await page.evaluate(() => { for (const key of Object.keys(localStorage)) if (key.startsWith("guidon.board.view.")) localStorage.removeItem(key); }).catch(() => undefined);
     await page.unroute("**/api/storage?**", denyStorage);
     if (taskIds.length) await client.query("DELETE FROM tasks WHERE id=ANY($1::uuid[]) AND project_id=$2", [taskIds, owner.projectId]);
     if (fileIds.length) await client.query("DELETE FROM project_files WHERE id=ANY($1::uuid[]) AND project_id=$2", [fileIds, owner.projectId]);
