@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyGithubOAuthState } from "@/lib/github/oauth-state";
+import { appOrigin } from "@/lib/site-url";
 
 /**
  * GitHub App "Setup URL" - hit after a user installs (or updates) the app
@@ -12,7 +13,8 @@ import { verifyGithubOAuthState } from "@/lib/github/oauth-state";
  * back to connect-repo lets the picker just re-list installations with it.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = appOrigin(request);
   const state = searchParams.get("state");
   const projectId = verifyGithubOAuthState(state);
 

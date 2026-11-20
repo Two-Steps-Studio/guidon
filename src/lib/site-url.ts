@@ -16,3 +16,13 @@ const DEFAULT_SITE_URL = "https://useguidon.com";
  * either crashing or working correctly.
  */
 export const SITE_URL = normalizeSiteUrl(process.env.APP_URL?.trim() || DEFAULT_SITE_URL);
+
+/**
+ * The public origin for redirects and OAuth callbacks: APP_URL when set, else
+ * the request's own origin. Behind a reverse proxy or tunnel the request URL
+ * is the internal address (http://app:3000), so it is only the fallback for a
+ * setup without APP_URL - never SITE_URL's useguidon.com default.
+ */
+export function appOrigin(request: Request): string {
+  return process.env.APP_URL?.trim().replace(/\/+$/, "") || new URL(request.url).origin;
+}

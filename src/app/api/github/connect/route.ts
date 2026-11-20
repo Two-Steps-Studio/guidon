@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProjectAccess, canManageProject } from "@/lib/data/project-access";
 import { createGithubOAuthState } from "@/lib/github/oauth-state";
+import { appOrigin } from "@/lib/site-url";
 
 /**
  * Starts the "connect a GitHub repo to this project" flow. Distinct from
@@ -15,7 +16,8 @@ import { createGithubOAuthState } from "@/lib/github/oauth-state";
  * installed the app - see /api/github/setup for the install flow.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = appOrigin(request);
   const projectId = searchParams.get("projectId");
 
   if (!projectId) {

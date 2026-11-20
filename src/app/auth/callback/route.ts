@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase-server";
 import { safeRedirect } from "@/lib/auth/safe-redirect";
 import { ADMIN_SIGN_IN_PATH } from "@/lib/admin/session-policy";
-import { SITE_URL } from "@/lib/site-url";
+import { SITE_URL, appOrigin } from "@/lib/site-url";
 
 /**
  * OAuth callback. Supabase redirects here with a one-time `code`, which is
@@ -11,7 +11,8 @@ import { SITE_URL } from "@/lib/site-url";
  * client and the proxy keeps them refreshed from then on.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = appOrigin(request);
 
   const code = searchParams.get("code");
   const redirect = safeRedirect(searchParams.get("redirect"));
