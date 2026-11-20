@@ -1243,7 +1243,13 @@
         "checklist": "checklistę",
         "other": "inne szczegóły"
       }
-    }
+    },
+    "viewLabel": "Widok tablicy",
+    "viewBoard": "Kolumny",
+    "viewTree": "Drzewo",
+    "treeLabel": "Zadania jako drzewo",
+    "treeExpand": "Pokaż podzadania: {title}",
+    "treeCollapse": "Ukryj podzadania: {title}"
   },
   "roadmap": {
     "dialogTitle": "Utwórz fazę",

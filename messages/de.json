@@ -1232,7 +1232,13 @@
         "checklist": "die Checkliste",
         "other": "weitere Details"
       }
-    }
+    },
+    "viewLabel": "Board-Ansicht",
+    "viewBoard": "Spalten",
+    "viewTree": "Baum",
+    "treeLabel": "Aufgaben als Baum",
+    "treeExpand": "Unteraufgaben von {title} anzeigen",
+    "treeCollapse": "Unteraufgaben von {title} ausblenden"
   },
   "roadmap": {
     "dialogTitle": "Phase erstellen",

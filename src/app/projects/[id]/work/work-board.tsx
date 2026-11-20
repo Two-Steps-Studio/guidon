@@ -6,7 +6,7 @@ import type { LabelPreset } from "@/lib/work/label-presets";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bot, ListChecks, Loader2, Plus, Settings, Upload, X } from "lucide-react";
+import { Bot, Columns3, ListChecks, ListTree, Loader2, Plus, Settings, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import type { OnboardingTeamSize } from "@/lib/onboarding";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { KanbanBoard } from "@/components/work/kanban-board";
+import { TaskTree } from "@/components/work/task-tree";
 import { usePinnedTasks } from "@/components/work/pinned-tasks-context";
 import { isTypingTarget } from "@/components/layout/keyboard-shortcuts";
 
@@ -200,7 +201,7 @@ export function WorkBoard({
   // while sorted by due date. "all" means a filter isn't restricting
   // anything - AND-combined with the other two.
   const [view, updateView] = useBoardView(projectId);
-  const { sortMode, assigneeFilter, priorityFilter, tagFilter } = view;
+  const { sortMode, assigneeFilter, priorityFilter, tagFilter, layout } = view;
   const setSortMode = (value: BoardView["sortMode"]) => updateView({ sortMode: value });
   const setAssigneeFilter = (value: string) => updateView({ assigneeFilter: value });
   const setPriorityFilter = (value: string) => updateView({ priorityFilter: value });
@@ -638,6 +639,27 @@ export function WorkBoard({
             </Button>
           )}
 
+          <div role="group" aria-label={t("viewLabel")} className="flex shrink-0 rounded-md border border-input p-0.5">
+            {([
+              ["board", Columns3, t("viewBoard")],
+              ["tree", ListTree, t("viewTree")],
+            ] as const).map(([value, Icon, label]) => (
+              <Button
+                key={value}
+                type="button"
+                size="icon"
+                variant={layout === value ? "secondary" : "ghost"}
+                className="size-7 max-md:size-10"
+                aria-pressed={layout === value}
+                aria-label={label}
+                title={label}
+                onClick={() => updateView({ layout: value })}
+              >
+                <Icon className="size-4" />
+              </Button>
+            ))}
+          </div>
+
           <Select
             aria-label={t("sortBy")}
             className="h-8 w-40 shrink-0 "
@@ -835,6 +857,8 @@ export function WorkBoard({
               {t("clearFilters")}
             </Button>
           </div>
+        ) : layout === "tree" ? (
+          <TaskTree tasks={filteredTasks} subtasksByParent={subtasksByParent} columns={columns} members={members} onOpenTask={setOpenTask} />
         ) : (
           <KanbanBoard
             tasks={filteredTasks}
@@ -928,13 +952,15 @@ export function WorkBoard({
 }
 
 interface BoardView {
+  /** Columns (Kanban) or the tree of tasks and their subtasks. */
+  layout: "board" | "tree";
   sortMode: "manual" | "due_date";
   assigneeFilter: string;
   priorityFilter: string;
   tagFilter: string;
 }
 
-const DEFAULT_VIEW: BoardView = { sortMode: "manual", assigneeFilter: "all", priorityFilter: "all", tagFilter: "all" };
+const DEFAULT_VIEW: BoardView = { layout: "board", sortMode: "manual", assigneeFilter: "all", priorityFilter: "all", tagFilter: "all" };
 const viewListeners = new Set<() => void>();
 /** Fallback when localStorage is blocked: the filters still work, they just aren't remembered. */
 const viewsInMemory = new Map<string, string>();
@@ -970,6 +996,7 @@ function useBoardView(projectId: string): [BoardView, (patch: Partial<BoardView>
     try {
       const saved = raw ? (JSON.parse(raw) as Partial<BoardView>) : {};
       return {
+        layout: saved.layout === "tree" ? "tree" : "board",
         sortMode: saved.sortMode === "due_date" ? "due_date" : "manual",
         assigneeFilter: typeof saved.assigneeFilter === "string" ? saved.assigneeFilter : "all",
         priorityFilter: typeof saved.priorityFilter === "string" ? saved.priorityFilter : "all",
