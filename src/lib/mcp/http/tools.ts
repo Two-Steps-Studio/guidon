@@ -295,7 +295,7 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     {
       description:
         "Move a task to a board column. When the work is finished, set `review` so a human can check it - " +
-        "prefer this over complete_task. The project may restrict which status changes AI keys are allowed to make. " +
+        "unless you are certain it is done (see complete_task). The project may restrict which status changes AI keys are allowed to make. " +
         "If the result has a `reminder`, you started this task but recorded no attempt - call record_attempt.",
       inputSchema: { task_id: taskId, ...setStatusFields },
       annotations: { title: "Set task status", ...WRITE, idempotentHint: true },
@@ -308,9 +308,11 @@ export function registerGuidonTools(server: McpServer, dispatch: Dispatch): void
     "complete_task",
     {
       description:
-        "Mark a task as done. This only works if the project has enabled AI auto-complete and granted this " +
-        "key permission to complete tasks; otherwise it fails - then ask with request_approval instead. Prefer " +
-        "set_task_status with `review` so a human confirms the result.",
+        "Mark a task as done, skipping review. Use it only when you are certain the task is fully done: every " +
+        "part of it is finished, you verified the result yourself (tests or checks pass, the change is merged or " +
+        "live) and nothing is left for a person to check or decide. If any of that is in doubt, use " +
+        "set_task_status with `review` instead. This only works if the project has enabled AI auto-complete and " +
+        "granted this key permission to complete tasks; otherwise it fails - then use `review` or request_approval.",
       inputSchema: { task_id: taskId },
       annotations: { title: "Complete task", ...WRITE, idempotentHint: true },
     },

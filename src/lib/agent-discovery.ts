@@ -48,7 +48,7 @@ Guidon keeps each project's tasks on a board together with the context behind th
 5. Do the work.
 6. \`record_attempt\` -> what you tried and the outcome (\`succeeded\`, \`partial\`, \`failed\` with the reason). Failed attempts are valuable - record them too.
 7. \`comment_on_task\` -> a short summary for the person: what changed, links (PR), anything they must check.
-8. \`set_task_status\` with \`review\`. Only use \`complete_task\` when the person asked for it and the project allows it.
+8. \`set_task_status\` with \`review\`. Use \`complete_task\` instead only when you are certain the task is fully done and verified (tests pass, merged or live, nothing left to check) and the project allows it.
 
 ## Good practice
 

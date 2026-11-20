@@ -1368,7 +1368,7 @@
     "permDeleteTasks": "Eliminar tareas",
     "permDeleteTasksHint": "Eliminar tareas. Los cambios de una app se pueden deshacer, una eliminación no.",
     "allowAutoComplete": "Permitir que la IA complete tareas automáticamente",
-    "allowAutoCompleteHelp": "Sin esto, la IA puede mover tareas a Revisión, pero una persona siempre toma la decisión final de marcarlas como Hecho.",
+    "allowAutoCompleteHelp": "Sin esto, la IA mueve las tareas terminadas a Revisión y una persona toma la decisión final. Con esto, un agente cuya clave puede completar tareas puede marcar una tarea directamente como Hecho cuando está seguro de que el trabajo está terminado y verificado; lo dudoso sigue yendo a Revisión.",
     "saveAiSettings": "Guardar ajustes de IA",
     "aiSettingsSavedToast": "Permisos de IA guardados.",
     "labelAiSuggest": "Sugerir etiquetas con IA",

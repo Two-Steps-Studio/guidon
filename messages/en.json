@@ -1379,7 +1379,7 @@
     "permDeleteTasks": "Delete tasks",
     "permDeleteTasksHint": "Deleting tasks. People can always undo what an app changed, but not a deletion.",
     "allowAutoComplete": "Allow AI to auto-complete tasks",
-    "allowAutoCompleteHelp": "Without this, AI can move tasks to Review but a human always makes the final call to Done.",
+    "allowAutoCompleteHelp": "Without this, AI moves finished tasks to Review and a person makes the final call. With it, an agent whose key may complete tasks can move a task straight to Done when it is certain the work is finished and verified; anything uncertain still goes to Review.",
     "saveAiSettings": "Save AI Settings",
     "aiSettingsSavedToast": "AI permissions saved.",
     "labelAiSuggest": "Suggest labels with AI",
