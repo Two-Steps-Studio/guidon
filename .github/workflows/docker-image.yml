@@ -33,27 +33,42 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      # Not set up for the image yet (none of the three set): skip quietly, so
+      # every merge doesn't turn main red. Only some set: that's a mistake, fail.
       - name: Required variables are set
+        id: config
         env:
           SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
         run: |
-          missing=0
+          missing=()
           for name in SUPABASE_URL SUPABASE_ANON_KEY APP_URL; do
-            if [ -z "${!name}" ]; then echo "::error::Repository variable NEXT_PUBLIC_$name is not set (docs/truenas-app.md)"; missing=1; fi
+            [ -n "${!name}" ] || missing+=("NEXT_PUBLIC_$name")
           done
-          exit $missing
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+          if [ ${#missing[@]} -eq 3 ]; then
+            echo "::notice::Image not built: set the repository variables from docs/truenas-app.md to turn it on."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          elif [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Repository variables not set: ${missing[*]} (docs/truenas-app.md)"
+            exit 1
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.config.outputs.build == 'true'
+        uses: docker/setup-buildx-action@v3
+      - if: steps.config.outputs.build == 'true'
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Image name (lowercase, as the registry requires)
+      - if: steps.config.outputs.build == 'true'
+        name: Image name (lowercase, as the registry requires)
         id: name
         run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-      - uses: docker/build-push-action@v6
+      - if: steps.config.outputs.build == 'true'
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
