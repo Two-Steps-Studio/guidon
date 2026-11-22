@@ -85,6 +85,7 @@ const PUBLIC_SECTIONS = new Set([
   "start",
   "about",
   "brand",
+  "download",
   "about.md",
   "compare.md",
   "contact",

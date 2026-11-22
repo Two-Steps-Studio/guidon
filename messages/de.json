@@ -494,7 +494,8 @@
       "about": "Über uns",
       "contact": "Kontakt",
       "cookies": "Cookies",
-      "refunds": "Rückerstattung"
+      "refunds": "Rückerstattung",
+      "download": "Desktop-App"
     },
     "selfHost": {
       "title": "Guidon auf dem eigenen Server betreiben",
@@ -3220,5 +3221,60 @@
       "finishing": "Ich richte dein Projekt ein... einen Moment.",
       "finishFailed": "Etwas ist schiefgelaufen. Geh zurück und versuch es noch einmal - deine Antworten sind gespeichert."
     }
+  },
+  "downloadPage": {
+    "title": "Guidon Desktop für Windows und Linux herunterladen",
+    "description": "Guidon als Desktop-App: Tray-Symbol, ein kleines Aufgabenfenster immer im Vordergrund, Editor-Plugins und automatische Updates. Kostenlos für Windows und Linux.",
+    "back": "Zurück zu Guidon",
+    "heading": "Guidon auf deinem Desktop",
+    "lead": "Deine Boards im eigenen Fenster, ein Aufgabenfenster neben deinem Editor und Updates, die sich selbst installieren. Gleiches Konto - kein Browser-Tab nötig.",
+    "version": "Version {version}",
+    "notes": "Neuigkeiten",
+    "installers": "Installationsprogramme",
+    "platform": {
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "requirements": {
+      "windows": "Windows 10 oder 11, 64-Bit",
+      "linux": "64-Bit, die meisten Distributionen"
+    },
+    "kind": {
+      "windowsSetup": "Für Windows herunterladen",
+      "windowsMsi": "MSI-Installer (für IT-Verteilung)",
+      "appImage": "AppImage herunterladen",
+      "deb": "Debian / Ubuntu (.deb)",
+      "rpm": "Fedora / openSUSE (.rpm)"
+    },
+    "comingTitle": "Die erste Version ist unterwegs",
+    "comingBody": "Guidon Desktop ist noch nicht veröffentlicht. Bis dahin funktioniert alles im Browser.",
+    "useWeb": "Guidon im Browser verwenden",
+    "featuresTitle": "Gemacht, um sich wie eine App anzufühlen",
+    "features": [
+      {
+        "title": "Öffnet bei deiner Arbeit",
+        "body": "Direkt zum Dashboard, mit Kürzeln im Menü Gehe zu für Dashboard, Meine Aufgaben, Zurück, Vor und Neu laden."
+      },
+      {
+        "title": "Aufgabenfenster",
+        "body": "Strg+Umschalt+T öffnet ein kleines Fenster mit deinen Aufgaben, das über Editor oder Game-Engine bleibt."
+      },
+      {
+        "title": "Lebt im Tray",
+        "body": "Das Schließen des Fensters lässt Guidon im Tray; es kann mit dem Computer starten und öffnet sich nie doppelt."
+      },
+      {
+        "title": "Editor-Plugins",
+        "body": "Installiere das Unity-, Unreal-, Godot- oder Blender-Plugin mit wenigen Klicks in ein Projekt."
+      },
+      {
+        "title": "Links öffnen sich am richtigen Ort",
+        "body": "Links zu anderen Seiten öffnen sich im Browser; zoome mit Strg + und Strg -, wie in jeder App."
+      },
+      {
+        "title": "Aktualisiert sich selbst",
+        "body": "Sucht beim Start nach einer neuen Version und fragt vor der Installation. Funktioniert mit Guidon Cloud oder deinem eigenen Server."
+      }
+    ]
   }
 }

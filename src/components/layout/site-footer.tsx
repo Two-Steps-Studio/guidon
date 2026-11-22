@@ -20,6 +20,7 @@ export async function SiteFooter() {
         { href: "/#features", label: d("navFeatures") },
         { href: "/#integrations", label: d("navIntegrations") },
         { href: "/start", label: t("getStarted") },
+        { href: "/download", label: t("footer.download") },
       ],
     },
     {

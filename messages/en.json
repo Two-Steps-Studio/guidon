@@ -505,7 +505,8 @@
       "about": "About",
       "contact": "Contact",
       "cookies": "Cookies",
-      "refunds": "Refunds"
+      "refunds": "Refunds",
+      "download": "Desktop app"
     },
     "selfHost": {
       "title": "Run Guidon on your own server",
@@ -3265,5 +3266,60 @@
       "finishing": "Setting up your project... one moment.",
       "finishFailed": "Something went wrong. Go back and try again - your answers are saved."
     }
+  },
+  "downloadPage": {
+    "title": "Download Guidon Desktop for Windows and Linux",
+    "description": "Guidon as a desktop app: tray icon, a small always-on-top Tasks window, editor plugins and automatic updates. Free for Windows and Linux.",
+    "back": "Back to Guidon",
+    "heading": "Guidon on your desktop",
+    "lead": "Your boards in their own window, a Tasks window that stays beside your editor, and updates that install themselves. Sign in with the same account - no browser tab to keep open.",
+    "version": "Version {version}",
+    "notes": "What's new",
+    "installers": "Installers",
+    "platform": {
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "requirements": {
+      "windows": "Windows 10 or 11, 64-bit",
+      "linux": "64-bit, most distributions"
+    },
+    "kind": {
+      "windowsSetup": "Download for Windows",
+      "windowsMsi": "MSI installer (for IT deployment)",
+      "appImage": "Download AppImage",
+      "deb": "Debian / Ubuntu (.deb)",
+      "rpm": "Fedora / openSUSE (.rpm)"
+    },
+    "comingTitle": "The first version is on its way",
+    "comingBody": "Guidon Desktop isn't published yet. Until then, everything works in the browser.",
+    "useWeb": "Use Guidon in the browser",
+    "featuresTitle": "Made to feel like an app",
+    "features": [
+      {
+        "title": "Opens on your work",
+        "body": "Straight to your dashboard, with Go menu shortcuts for Dashboard, My Tasks, Back, Forward and Reload."
+      },
+      {
+        "title": "Tasks window",
+        "body": "Ctrl+Shift+T opens a small window with your tasks that stays on top of the editor or game engine."
+      },
+      {
+        "title": "Lives in the tray",
+        "body": "Closing the window keeps Guidon in the tray; it can start with your computer and never opens twice."
+      },
+      {
+        "title": "Editor plugins",
+        "body": "Install the Unity, Unreal, Godot or Blender plugin into a project in a few clicks."
+      },
+      {
+        "title": "Links open where they belong",
+        "body": "Links to other sites open in your browser; zoom with Ctrl + and Ctrl -, like any app."
+      },
+      {
+        "title": "Updates itself",
+        "body": "Checks for a new version on start and asks before installing. Works with Guidon Cloud or your own server."
+      }
+    ]
   }
 }

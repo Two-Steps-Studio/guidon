@@ -505,7 +505,8 @@
       "about": "O nas",
       "contact": "Kontakt",
       "cookies": "Pliki cookie",
-      "refunds": "Zwroty"
+      "refunds": "Zwroty",
+      "download": "Aplikacja na komputer"
     },
     "selfHost": {
       "title": "Postaw Guidona na własnym serwerze",
@@ -3265,5 +3266,60 @@
       "finishing": "Przygotowuję Twój projekt... chwileczkę.",
       "finishFailed": "Coś poszło nie tak. Wróć i spróbuj jeszcze raz - Twoje odpowiedzi są zapisane."
     }
+  },
+  "downloadPage": {
+    "title": "Pobierz Guidon Desktop na Windows i Linuxa",
+    "description": "Guidon jako aplikacja na komputer: ikona w zasobniku, małe okno zadań zawsze na wierzchu, wtyczki do edytorów i automatyczne aktualizacje. Za darmo na Windows i Linuxa.",
+    "back": "Wróć do Guidona",
+    "heading": "Guidon na Twoim komputerze",
+    "lead": "Tablice we własnym oknie, okno zadań obok edytora i aktualizacje, które instalują się same. Logujesz się tym samym kontem - bez karty w przeglądarce.",
+    "version": "Wersja {version}",
+    "notes": "Co nowego",
+    "installers": "Instalatory",
+    "platform": {
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "requirements": {
+      "windows": "Windows 10 lub 11, 64-bit",
+      "linux": "64-bit, większość dystrybucji"
+    },
+    "kind": {
+      "windowsSetup": "Pobierz na Windows",
+      "windowsMsi": "Instalator MSI (dla działów IT)",
+      "appImage": "Pobierz AppImage",
+      "deb": "Debian / Ubuntu (.deb)",
+      "rpm": "Fedora / openSUSE (.rpm)"
+    },
+    "comingTitle": "Pierwsza wersja jest w drodze",
+    "comingBody": "Guidon Desktop nie został jeszcze opublikowany. Do tego czasu wszystko działa w przeglądarce.",
+    "useWeb": "Używaj Guidona w przeglądarce",
+    "featuresTitle": "Zrobiony jak aplikacja",
+    "features": [
+      {
+        "title": "Otwiera się na Twojej pracy",
+        "body": "Od razu pulpit, a w menu Przejdź skróty do pulpitu, moich zadań, wstecz, dalej i odświeżania."
+      },
+      {
+        "title": "Okno zadań",
+        "body": "Ctrl+Shift+T otwiera małe okno z zadaniami, które zostaje nad edytorem albo silnikiem gry."
+      },
+      {
+        "title": "Mieszka w zasobniku",
+        "body": "Zamknięcie okna zostawia Guidona w zasobniku; może startować z komputerem i nigdy nie otworzy się dwa razy."
+      },
+      {
+        "title": "Wtyczki do edytorów",
+        "body": "Wtyczka do Unity, Unreala, Godota albo Blendera w projekcie w kilka kliknięć."
+      },
+      {
+        "title": "Linki otwierają się tam, gdzie trzeba",
+        "body": "Linki do innych stron otwierają się w przeglądarce; powiększasz Ctrl + i Ctrl -, jak w każdej aplikacji."
+      },
+      {
+        "title": "Aktualizuje się sam",
+        "body": "Przy starcie sprawdza nową wersję i pyta przed instalacją. Działa z Guidon Cloud albo z Twoim serwerem."
+      }
+    ]
   }
 }

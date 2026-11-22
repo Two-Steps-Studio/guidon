@@ -20,6 +20,7 @@ const contentDates: Partial<Record<string, string>> = {
   '/pricing.md': '2026-11-06',
   '/llms.txt': '2026-10-28',
   '/brand': '2026-11-08',
+  '/download': '2026-11-22',
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -41,6 +42,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/about`,
       changeFrequency: 'monthly',
       priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/download`,
+      changeFrequency: 'weekly',
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/sandbox`,

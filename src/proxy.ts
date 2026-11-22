@@ -95,6 +95,8 @@ const EXACT_PUBLIC_ROUTES = new Set([
   // Who runs Guidon and how to reach them, plus their Markdown twins.
   '/about',
   '/brand',
+  // Guidon Desktop installers (src/app/download).
+  '/download',
   '/about.md',
   '/contact',
   '/contact.md',
