@@ -494,7 +494,8 @@
       "about": "Acerca de",
       "contact": "Contacto",
       "cookies": "Cookies",
-      "refunds": "Reembolsos"
+      "refunds": "Reembolsos",
+      "download": "App de escritorio"
     },
     "selfHost": {
       "title": "Ejecuta Guidon en tu propio servidor",
@@ -3220,5 +3221,60 @@
       "finishing": "Preparando tu proyecto... un momento.",
       "finishFailed": "Algo salió mal. Vuelve e inténtalo de nuevo: tus respuestas están guardadas."
     }
+  },
+  "downloadPage": {
+    "title": "Descarga Guidon Desktop para Windows y Linux",
+    "description": "Guidon como app de escritorio: icono en la bandeja, una pequeña ventana de tareas siempre visible, plugins para editores y actualizaciones automáticas. Gratis para Windows y Linux.",
+    "back": "Volver a Guidon",
+    "heading": "Guidon en tu escritorio",
+    "lead": "Tus tableros en su propia ventana, una ventana de tareas junto a tu editor y actualizaciones que se instalan solas. Misma cuenta, sin pestaña del navegador.",
+    "version": "Versión {version}",
+    "notes": "Novedades",
+    "installers": "Instaladores",
+    "platform": {
+      "windows": "Windows",
+      "linux": "Linux"
+    },
+    "requirements": {
+      "windows": "Windows 10 u 11, 64 bits",
+      "linux": "64 bits, la mayoría de distribuciones"
+    },
+    "kind": {
+      "windowsSetup": "Descargar para Windows",
+      "windowsMsi": "Instalador MSI (para despliegue de TI)",
+      "appImage": "Descargar AppImage",
+      "deb": "Debian / Ubuntu (.deb)",
+      "rpm": "Fedora / openSUSE (.rpm)"
+    },
+    "comingTitle": "La primera versión está en camino",
+    "comingBody": "Guidon Desktop aún no se ha publicado. Mientras tanto, todo funciona en el navegador.",
+    "useWeb": "Usar Guidon en el navegador",
+    "featuresTitle": "Hecho para sentirse como una app",
+    "features": [
+      {
+        "title": "Se abre en tu trabajo",
+        "body": "Directo al panel, con atajos en el menú Ir para Panel, Mis tareas, Atrás, Adelante y Recargar."
+      },
+      {
+        "title": "Ventana de tareas",
+        "body": "Ctrl+Mayús+T abre una pequeña ventana con tus tareas que se queda sobre el editor o el motor del juego."
+      },
+      {
+        "title": "Vive en la bandeja",
+        "body": "Cerrar la ventana deja Guidon en la bandeja; puede iniciarse con el equipo y nunca se abre dos veces."
+      },
+      {
+        "title": "Plugins para editores",
+        "body": "Instala el plugin de Unity, Unreal, Godot o Blender en un proyecto en pocos clics."
+      },
+      {
+        "title": "Los enlaces se abren donde deben",
+        "body": "Los enlaces a otros sitios se abren en tu navegador; amplía con Ctrl + y Ctrl -, como en cualquier app."
+      },
+      {
+        "title": "Se actualiza solo",
+        "body": "Busca una nueva versión al iniciar y pregunta antes de instalar. Funciona con Guidon Cloud o con tu propio servidor."
+      }
+    ]
   }
 }

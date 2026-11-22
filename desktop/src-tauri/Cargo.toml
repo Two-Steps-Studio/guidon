@@ -34,6 +34,9 @@ reqwest = { version = "0.13", default-features = false, features = ["rustls-no-p
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 zip = { version = "4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 sha2 = "0.10"
+# Opens links that leave the app in the system browser (windows.rs). Rust
+# only - no JS can reach it, unlike tauri-plugin-opener (see lib.rs).
+open = "5"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

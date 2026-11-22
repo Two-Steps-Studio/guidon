@@ -78,6 +78,7 @@ jobs:
       - run: npm run test:context
       - run: npm run test:search
       - run: npm run test:cleanup
+      - run: npm run test:download
       - run: npm run test:markdown
       - run: npm run test:csp
       - run: npm run test:app-changes

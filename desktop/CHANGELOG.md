@@ -9,6 +9,16 @@ version being released into the GitHub Release and the updater's
 
 First stable release, for Windows and Linux.
 
+- **Feels like an app, not a website.** It opens on your dashboard (and
+  goes back there after signing out) instead of the home page, the site
+  footer is gone, buttons and menus aren't selectable text, and the
+  browser's right-click menu only appears in text fields.
+- **Go menu.** Dashboard (Ctrl+Shift+D), My Tasks (Ctrl+Shift+M), Back
+  (Alt+Left), Forward (Alt+Right) and Reload (Ctrl+R). Ctrl +, Ctrl - and
+  Ctrl 0 zoom.
+- **Links to other sites open in your browser** instead of a second window
+  inside the app.
+
 - **Install editor plugins into your project.** Guidon Desktop → Install
   Editor Plugins (also in the tray): pick Unity, Unreal Engine, Godot or
   Blender, choose your project folder, and the plugin lands where the

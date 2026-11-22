@@ -587,6 +587,18 @@ input[type="checkbox"].switch:checked { background: var(--color-primary); }
 input[type="checkbox"].switch:checked::before { transform: translateX(1rem); }
 input[type="checkbox"].switch:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
 input[type="checkbox"].switch:disabled { cursor: default; opacity: 0.5; }
+/* Inside Guidon Desktop (its init script sets html[data-desktop],
+   desktop/src-tauri/src/windows.rs): an app, not a website - no site
+   footer, no rubber-band scrolling, controls aren't text to select, and
+   links and images aren't dragged out like web content. */
+html[data-desktop] [data-site-footer] { display: none; }
+html[data-desktop], html[data-desktop] body { overscroll-behavior: none; }
+html[data-desktop] :is(button, [role="button"], [role="tab"], [role="menuitem"], [role="option"], nav, label, [data-sidebar]) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+html[data-desktop] :is(a, img) { -webkit-user-drag: none; }
+
 /* Finishing a task (src/lib/work/just-completed.ts): the check pops past
    full size and settles back (follow-through), the card's ring flashes
    once, Gido hops - the peak of the work, so it ends on a good note. */

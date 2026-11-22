@@ -35,6 +35,7 @@ npm run test:billing           # billing rules: weekly/monthly/yearly intervals,
 npm run test:context           # Context Engine package for agents: token budget over the whole document, ranking/relevance, freshness, secret redaction, untrusted-text neutralization and instruction flagging (src/lib/context/context-pack-core.ts, docs/context-api.md)
 npm run test:search            # task search ranking: diacritics, task ids/guidon#refs, typos, ordering, 30 realistic queries over 1200 tasks with the wanted one in the top 5 (src/lib/search/task-search-core.ts)
 npm run test:cleanup            # project cleanup review for AI: which titles count as duplicates and which twin is kept, stale/overdue/unassigned lists (src/lib/work/task-cleanup-core.ts)
+npm run test:download           # which Guidon Desktop installers /download offers from the GitHub releases (src/lib/desktop/desktop-release-core.ts)
 npm run test:markdown           # task descriptions as markdown: raw HTML and script URLs never become markup, external links open safely, lists/checklists/code blocks (src/components/files/markdown-preview.tsx)
 npm run test:app-changes       # what an app (API key/MCP/GitHub) changed on a task and undoing it: diffs, stored rows, undo that never overwrites a later edit (src/lib/work/app-changes-core.ts); agents asking for approval: request bodies, expiry, inbox order (src/lib/work/agent-approvals-core.ts)
 npm run test:s3                # S3 request signing (src/lib/storage/s3-sigv4.ts) against AWS's published SigV4 examples, offline
